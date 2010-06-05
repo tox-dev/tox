@@ -14,7 +14,10 @@ class VirtualEnv(object):
 
     def getcommandpath(self, name=None):
         if name is None:
-            name = "python"
+            if "jython" in str(self.envconfig.python):
+                name = "jython"
+            else:
+                name = "python"
         if sys.platform == "win32":
             return self.path.join("Scripts", name)
         else:
