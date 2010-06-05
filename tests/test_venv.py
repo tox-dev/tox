@@ -30,7 +30,7 @@ def test_create(tmpdir, monkeypatch):
         python = "xyz"
     l = []
     class MyProj:
-        def pcall(self, args, out):
+        def pcall(self, args, out, cwd):
             l.append(args)
     venv = VirtualEnv(Envconfig, project=MyProj())
     assert venv.path == Envconfig.envdir
@@ -54,7 +54,7 @@ def test_install_downloadcache(tmpdir):
         python = sys.executable
     l = []
     class MyProj:
-        def pcall(self, args, out):
+        def pcall(self, args, out, cwd):
             l.append(args)
         
     venv = VirtualEnv(Envconfig, project=MyProj())
@@ -64,7 +64,7 @@ def test_install_downloadcache(tmpdir):
     venv.install(["hello", "world"])
     assert len(l) == 2
     args = l[1]
-    assert "pip" in args[0]
+    assert "pip" in str(args[0])
     assert args[1] == "install"
     arg = "--download-cache=" + str(Envconfig.downloadcache)
     assert arg in args[2:]
@@ -81,7 +81,7 @@ def test_install_python3(tmpdir):
         python = "python3.1"
     l = []
     class MyProj:
-        def pcall(self, args, out):
+        def pcall(self, args, out, cwd):
             l.append(args)
     venv = VirtualEnv(Envconfig, project=MyProj())
     venv.create()
@@ -92,6 +92,6 @@ def test_install_python3(tmpdir):
     venv.install(["hello"])
     assert len(l) == 1
     args = l[0]
-    assert 'easy_install' in args[0]
+    assert 'easy_install' in str(args[0])
     for x in args:
         assert "--download-cache" not in args, args

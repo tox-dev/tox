@@ -44,9 +44,12 @@ def test_test_simple(cmd, initproj):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'tox.ini': '''
-            [package]
-            include=
+            [project]
+            distpaths = 
                 example123
+                setup.py
+            testpaths = 
+                tests 
             [test]
             command=py.test --junitxml=junit-%(envname)s.xml tests
             deps=py
@@ -66,9 +69,10 @@ def test_test_simple(cmd, initproj):
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
-        [package]
-        include=
+        [project]
+        distpaths=
             example123
+            setup.py
         [test]
         command=pip -h
         [testenv:py25]

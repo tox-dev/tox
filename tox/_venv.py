@@ -12,7 +12,9 @@ class VirtualEnv(object):
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
 
-    def getcommandpath(self, name):
+    def getcommandpath(self, name=None):
+        if name is None:
+            name = "python"
         if sys.platform == "win32":
             return self.path.join("Scripts", name)
         else:
@@ -44,30 +46,27 @@ class VirtualEnv(object):
     def install(self, deps):
         if not deps:
             return
-        deps = [str(x) for x in deps]
         if self._ispython3():
             args = ["easy_install"] + deps
         else:
             args = ["pip", "install"] + deps
             if self.envconfig.downloadcache:
                 self.envconfig.downloadcache.ensure(dir=1)
-                args.append("--download-cache=%s" % self.envconfig.downloadcache)
+                args.append("--download-cache=%s" % 
+                    self.envconfig.downloadcache)
         self._pcall(args)
 
-    def test(self):
+    def test(self, cwd=None):
         cmd = self.envconfig.command % {'envname': self.envconfig.name}
         try:
-            self._pcall(cmd.split(" "), out="passthrough")
+            self._pcall(cmd.split(" "), out="passthrough", cwd=cwd)
         except tox.exception.InvocationError:
             return True
 
-    def getpythonpath(self):
-        return self.getcommandpath("python")
-
-    def _pcall(self, args, venv=True, out=None):
+    def _pcall(self, args, venv=True, out=None, cwd=None):
         if venv:
-            args = [str(self.getcommandpath(args[0]))] + args[1:]
-        return self.project.pcall(args, out=out)
+            args = [self.getcommandpath(args[0])] + args[1:]
+        return self.project.pcall(args, out=out, cwd=cwd)
 
 def find_executable(name):
     p = py.path.local(name) 

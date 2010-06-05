@@ -7,13 +7,14 @@ class Config:
         self.envconfigs = {}
         #self.downloadcache = downloadcache
 
-    def getpackagelist(self):
-        l = self._parser.getlist("package", "include")
+    def getdistlist(self):
+        l = self._parser.getlist("project", "distpaths")
         if not l:
-            raise ValueError("[package] defines no 'include' value")
-        if "setup.py" not in l:
-            l.append("setup.py")
+            raise ValueError("[project] defines no 'distpaths' value")
         return l
+
+    def gettestlist(self):
+        return self._parser.getlist("project", "testpaths")
 
 class ConfigError(Exception):
     """ error in tox configuration. """

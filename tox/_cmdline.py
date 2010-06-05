@@ -69,6 +69,9 @@ class Reporter:
     def section(self, name):
         self.tw.sep("=", name, bold=True)
 
+    def using(self, msg):
+        self.tw.line("using %s" %(msg,), bold=True)
+
     def popen(self, args):
         cwd = os.getcwd()
         self.tw.line("%s$ %s" %(cwd, " ".join(args)))
@@ -103,15 +106,11 @@ class Session:
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
         self.report = Reporter(self.config)
+        self.report.using("tox-%s from %s" %(tox.__version__, tox.__file__))
         getattr(self, "subcommand_" + self.config.opts.subcommand)()
 
-    def getsdist(self, venv):
-        destdir = self.config.toxdir.join("_makepackage")
-        distdir = destdir.join("dist")
-
-        self.report.line("copying package files")
-        srcdir = self.config.projdir 
-        for relpath in self.config.getpackagelist():
+    def _copyfiles(self, srcdir, pathlist, destdir):
+        for relpath in pathlist:
             src = srcdir.join(relpath)
             if not src.check():
                 self.report.error("missing source file: %s" %(src,))
@@ -119,16 +118,17 @@ class Session:
             target = destdir.join(relpath)
             target.dirpath().ensure(dir=1)
             src.copy(target)
-        
-        old = destdir.chdir()
-        try:
-            if distdir.check():
-                distdir.remove()
-            py = destdir.bestrelpath(venv.getcommandpath("python"))
-            self.pcall([py, "setup.py", "sdist"])
-            return distdir.listdir()[0]
-        finally:
-            old.chdir()
+
+    def getsdist(self, venv):
+        destdir = venv.path.ensure("makepkg", dir=1)
+        self._copyfiles(self.config.projdir, 
+                        self.config.getdistlist(), destdir)
+        distdir = destdir.join("dist")
+        if distdir.check():
+            distdir.remove()
+        self.pcall([venv.getcommandpath(), destdir.join("setup.py"), 
+            "sdist"], cwd=destdir)
+        return distdir.listdir()[0]
 
     def _gettestenvs(self, envlist):
         for envconfig in self.config.envconfigs.values():
@@ -142,6 +142,7 @@ class Session:
 
     def setupenv(self, envlist):
         self.report.section("setupenv")
+         
         for venv in self._gettestenvs(envlist):
             venv.create()
             venv.install(venv.envconfig.deps)
@@ -153,7 +154,10 @@ class Session:
         self.report.section("test")
         somefailed = False
         for venv in self._gettestenvs(envlist):
-            if venv.test():
+            testdir = venv.path.ensure("test", dir=1)
+            self._copyfiles(self.config.projdir, 
+                            self.config.gettestlist(), testdir)
+            if venv.test(cwd=testdir):
                 somefailed = True
         return somefailed
 
@@ -178,7 +182,16 @@ class Session:
             versions.append("%s-%s" %(tool, version.strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
    
-    def pcall(self, args, out=None):
+    def pcall(self, args, out=None, cwd=None):
+        if cwd is None:
+            cwd = self.config.toxdir
+        cwd.chdir()
+        newargs = []
+        for arg in args:
+            if isinstance(arg, py.path.local):
+                arg = cwd.bestrelpath(arg)
+            newargs.append(arg)
+            
         opts = dict(stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if out == "passthrough":
             opts = {}
@@ -186,8 +199,8 @@ class Session:
         #if os.path.isabs(args[0]):
         #    self.config.toxdir.chdir()
         #    args[0] = py.path.local(args[0]).bestrelto(self.config.toxdir)
-        self.report.popen(args)
-        popen = subprocess.Popen(args, **opts)
+        self.report.popen(newargs)
+        popen = subprocess.Popen(newargs, **opts)
         try:
             out, err = popen.communicate()
         except KeyboardInterrupt:
