@@ -9,7 +9,7 @@ def main():
         name='tox',
         description='automating packaging, testing & release',
         url='http://codespeak.net/tox',
-        version='0.5',
+        version='0.5dev',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
