@@ -7,7 +7,7 @@ class TestVenvConfig:
     def test_config_parsing_minimal(self, tmpdir, makeconfig):
         config = makeconfig("""
             [testenv:py1]
-        """ % (tmpdir))
+        """)
         assert len(config.envconfigs) == 1
         assert config.toxdir == tmpdir.join(".tox")
         assert config.envconfigs['py1'].python == None

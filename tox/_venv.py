@@ -36,16 +36,18 @@ class VirtualEnv(object):
             raise MissingInterpreter("Jython/Windows does not support installing scripts")
         args = ['virtualenv' + (self._ispython3() and "3" or "")]
         args.append('--no-site-packages')
-        if self.envconfig.python:
-            p = find_executable(str(self.envconfig.python))
-            if not p:
-                raise MissingInterpreter(self.envconfig.python)
-            if sys.platform == "win32":
-                f, path, _ = py.std.imp.find_module("virtualenv")
-                f.close()
-                args[:1] = [str(p), str(path)]
-            else:
-                args.extend(["-p", str(p)])
+        python = self.envconfig.python
+        if not python:
+            python = sys.executable
+        p = find_executable(str(python))
+        if not p:
+            raise MissingInterpreter(self.envconfig.python)
+        if sys.platform == "win32":
+            f, path, _ = py.std.imp.find_module("virtualenv")
+            f.close()
+            args[:1] = [str(p), str(path)]
+        else:
+            args.extend(["-p", str(p)])
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
         old = py.path.local()

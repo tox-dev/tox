@@ -20,7 +20,7 @@ def test_find_executable():
         if sys.platform == "win32":
             pydir = "python%s" % ver.replace(".", "")
             x = py.path.local("c:\%s" % pydir)
-            print x
+            print (x)
             if not x.check():
                 continue
         else:
@@ -31,13 +31,13 @@ def test_find_executable():
         popen = py.std.subprocess.Popen([str(p), '-V'], 
                 stderr=py.std.subprocess.PIPE)
         stdout, stderr = popen.communicate()
-        assert ver in stderr
+        assert ver in py.builtin._totext(stderr, "ascii")
 
 def test_create(tmpdir, monkeypatch):
     class Envconfig:
         envbasedir = tmpdir.ensure("basedir", dir=1)
         envdir = envbasedir.join("envbasedir", "xyz123")
-        python = "python"
+        python = None
     l = []
     class MyProj:
         def pcall(self, args, out, cwd):

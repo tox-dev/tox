@@ -46,7 +46,7 @@ class ConfigIniParser:
                 name = section[len(testenvprefix):]
                 config.envconfigs[name] = self._makeenvconfig(name, section)
         if not config.envconfigs:
-            config.envconfigs['python'] = self._makeenvconfig("python", "notexist")
+            config.envconfigs['python'] = self._makeenvconfig("python", "_xz_9")
 
     def _makeenvconfig(self, name, section):
         vc = VenvConfig(name=name)
