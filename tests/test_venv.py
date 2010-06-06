@@ -15,19 +15,29 @@ def test_find_executable():
     from tox._venv import find_executable
     p = find_executable(sys.executable)
     assert p == py.path.local(sys.executable)
-    p = find_executable("python")
-    assert p
-    for ver in "2.4 2.5 2.6 2.7 3.1".split():
+    for ver in [""] + "2.4 2.5 2.6 2.7 3.1".split():
         name = "python%s" % ver
-        if py.path.local.sysfind(name):
-            p = find_executable(name)
-            assert p
+        if sys.platform == "win32":
+            pydir = "python%s" % ver.replace(".", "")
+            x = py.path.local("c:\%s" % pydir)
+            print x
+            if not x.check():
+                continue
+        else:
+            if not py.path.local.sysfind(name):
+                continue
+        p = find_executable(name)
+        assert p
+        popen = py.std.subprocess.Popen([str(p), '-V'], 
+                stderr=py.std.subprocess.PIPE)
+        stdout, stderr = popen.communicate()
+        assert ver in stderr
 
 def test_create(tmpdir, monkeypatch):
     class Envconfig:
         envbasedir = tmpdir.ensure("basedir", dir=1)
         envdir = envbasedir.join("envbasedir", "xyz123")
-        python = "xyz"
+        python = "python"
     l = []
     class MyProj:
         def pcall(self, args, out, cwd):
@@ -38,12 +48,13 @@ def test_create(tmpdir, monkeypatch):
     venv.create()
     assert len(l) == 1
     args = l[0]
-    assert "virtualenv" in args[0]
-    i = args.index("-p")
-    assert i != -1, args
-    assert args[i+1] == "xyz"
-    #assert Envconfig.envbasedir in args
-    assert venv.getcommandpath("easy_install")
+    assert "virtualenv" in " ".join(args[:2])
+    if sys.platform != "win32":
+        i = args.index("-p")
+        assert i != -1, args
+        assert sys.executable == args[i+1]
+        #assert Envconfig.envbasedir in args
+        assert venv.getcommandpath("easy_install")
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
 def test_install_downloadcache(tmpdir):

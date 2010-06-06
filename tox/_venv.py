@@ -29,11 +29,23 @@ class VirtualEnv(object):
     def create(self):
         #if self.getcommandpath("activate").dirpath().check():
         #    return 
+        if sys.platform == "win32" and self._ispython3():
+            raise MissingInterpreter("python3/virtualenv3 is buggy on windows")
+        if sys.platform == "win32" and self.envconfig.python and \
+                "jython" in self.envconfig.python:
+            raise MissingInterpreter("Jython/Windows does not support installing scripts")
         args = ['virtualenv' + (self._ispython3() and "3" or "")]
         args.append('--no-site-packages')
         if self.envconfig.python:
-            args.append('-p')
-            args.append(str(self.envconfig.python))
+            p = find_executable(str(self.envconfig.python))
+            if not p:
+                raise MissingInterpreter(self.envconfig.python)
+            if sys.platform == "win32":
+                f, path, _ = py.std.imp.find_module("virtualenv")
+                f.close()
+                args[:1] = [str(p), str(path)]
+            else:
+                args.extend(["-p", str(p)])
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
         old = py.path.local()
@@ -71,11 +83,36 @@ class VirtualEnv(object):
             args = [self.getcommandpath(args[0])] + args[1:]
         return self.project.pcall(args, out=out, cwd=cwd)
 
-def find_executable(name):
-    p = py.path.local(name) 
-    if p.check():
-        return p
-    p = py.path.local.sysfind(name)
-    if p is not None:
-        return p
+if sys.platform != "win32":
+    def find_executable(name):
+        p = py.path.local(name) 
+        if p.check():
+            return p
+        return py.path.local.sysfind(name)
 
+else:
+    win32map = {
+            'python': sys.executable,
+            'python2.4': "c:\python24\python.exe",
+            'python2.5': "c:\python25\python.exe",
+            'python2.6': "c:\python26\python.exe",
+            'python2.7': "c:\python27\python.exe",
+            'python3.1': "c:\python31\python.exe",
+            'jython': "c:\jython2.5.1\jython.bat",
+    }
+    def find_executable(name):
+        p = py.path.local(name) 
+        if p.check():
+            return p
+        #p = py.path.local.sysfind(name)
+        #if p and p.check():
+        #    return p
+        actual = win32map.get(name, None)
+        if actual:
+            actual = py.path.local(actual)
+            if actual.check():
+                return actual
+
+
+class MissingInterpreter(Exception):
+    "signals an unknown or missing interpreter"

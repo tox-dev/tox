@@ -78,7 +78,7 @@ def test_test_piphelp(initproj, cmd):
         [testenv:py25]
         python=python2.5
         [testenv:py26]
-        python=python2.5
+        python=python2.6
     """})
     result = cmd.run("tox", "test")
     assert not result.ret
