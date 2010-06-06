@@ -10,6 +10,11 @@ def test_help(cmd):
         "*help*",
     ])
 
+def test_version(cmd):
+    result = cmd.run("tox", "--version")
+    assert not result.ret
+    assert tox.__version__ in result.stdout.str()
+
 def test_unkonwn_ini(cmd):
     result = cmd.run("tox", "test")
     assert result.ret

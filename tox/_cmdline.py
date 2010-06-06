@@ -30,12 +30,20 @@ def main(args=None):
 def feedback(msg, sysexit=False):
     py.builtin.print_(msg, file=sys.stderr)
 
+class VersionAction(argparse.Action):
+    def __call__(self, *args, **kwargs):
+        py.builtin.print_(tox.__version__)
+        raise SystemExit(0)
+
 def prepare_parse():
     parser = argparse.ArgumentParser(description=__doc__,)
         #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-c", action="store", default="tox.ini", 
         dest="configfile",
         help="use the specified config file.")
+    parser.add_argument("--version", nargs=0, action=VersionAction, 
+        dest="version",
+        help="report version information to stdout.")
     subparsers = parser.add_subparsers(title="subcommands")
 
     # common options
