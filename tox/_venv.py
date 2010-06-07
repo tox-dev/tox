@@ -74,7 +74,14 @@ class VirtualEnv(object):
         self._pcall(args)
 
     def test(self, cwd=None):
-        cmd = self.envconfig.command % {'envname': self.envconfig.name}
+        envtmpdir = self.envconfig.envdir.join("tmp")
+        if envtmpdir.check():
+            py.std.shutil.rmtree(str(envtmpdir), ignore_errors=True)
+            envtmpdir.mkdir()
+        cmd = self.envconfig.command % {
+            'envname': self.envconfig.name,
+            'envtmpdir': envtmpdir, 
+        }
         try:
             self._pcall(cmd.split(" "), out="passthrough", cwd=cwd)
         except tox.exception.InvocationError:

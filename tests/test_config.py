@@ -41,16 +41,12 @@ class TestConfigPackage:
         config = makeconfig("")
         assert config.package.method == "sdist"
 
-    def test_project_paths(self, makeconfig):
+    def test_project_paths(self, tmpdir, makeconfig):
         config = makeconfig("""
-            [project]
-            distpaths = 
-                xyz
-            testpaths = 
-                abc
-        """)
-        assert ["xyz"] == config.getdistlist()
-        assert ["abc"] == config.gettestlist()
+            [global]
+            toxdir=%s
+        """ % tmpdir)
+        assert config.toxdir == tmpdir
 
 class TestConfigTestEnv:
     def test_defaults(self, tmpdir, makeconfig):

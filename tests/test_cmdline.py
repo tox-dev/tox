@@ -3,6 +3,28 @@ import py
 
 pytest_plugins = "pytester"
 
+from tox._cmdline import Session, parseini
+
+class TestSession:
+    def test_make_sdist(self, initproj):
+        initproj("example123-0.5", filedefs={
+            'tests': {'test_hello.py': "def test_hello(): pass"},
+            'tox.ini': '''
+            '''
+        })
+        config = parseini("tox.ini")
+        session = Session(config)
+        sdist = session.get_fresh_sdist()
+        assert sdist.check()
+        assert sdist == config.toxdir.join("dist", sdist.basename)
+        sdist2 = session.get_fresh_sdist()
+        assert sdist2 == sdist 
+        sdist.write("hello")
+        assert sdist.stat().size < 10
+        sdist_new = Session(config).get_fresh_sdist()
+        assert sdist_new == sdist
+        assert sdist_new.stat().size > 10
+
 def test_help(cmd):
     result = cmd.run("tox", "-h")
     assert not result.ret
@@ -32,39 +54,40 @@ def test_config_specific_ini(tmpdir, cmd):
         "*config-file*hello.ini*",
     ])
 
-@py.test.mark.xfail
-def test_package_sdist(cmd, initproj):
-    initproj("example123-0.5", filedefs={
+# not sure we want this option ATM
+def XXX_test_package(cmd, initproj):
+    initproj("myproj-0.6", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
-        'tox.ini': '''
-            [package]
-            method=sdist
-        '''
+        'MANIFEST.in': """
+            include doc
+            include myproj
+            """,
+        'tox.ini': ''
     })
     result = cmd.run("tox", "package")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*created package*example123-0.5*",
+        "*created sdist package at*",
     ])
 
 def test_test_simple(cmd, initproj):
     initproj("example123-0.5", filedefs={
-        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tests': {'test_hello.py': """
+            def test_hello(pytestconfig):
+                pytestconfig.mktemp("hello")
+            """,
+        },
         'tox.ini': '''
-            [project]
-            distpaths = 
-                example123
-                setup.py
-            testpaths = 
-                tests 
             [test]
-            command=py.test --junitxml=junit-%(envname)s.xml tests
+            changedir=tests 
+            command=py.test --basetemp=%(envtmpdir)s --junitxml=junit-%(envname)s.xml 
             deps=py
         '''
     })
     result = cmd.run("tox", "test")
     assert not result.ret
     result.stdout.fnmatch_lines([
+        "*junit-python.xml*",
         "*1 passed*",
     ])
     result = cmd.run("tox", "test", "--env=python", )
@@ -76,10 +99,6 @@ def test_test_simple(cmd, initproj):
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
-        [project]
-        distpaths=
-            example123
-            setup.py
         [test]
         command=pip -h
         [testenv:py25]

@@ -78,6 +78,9 @@ class Reporter:
     def section(self, name):
         self.tw.sep("=", name, bold=True)
 
+    def action(self, msg):
+        self.tw.line("***" + msg, bold=True)
+
     def using(self, msg):
         self.tw.line("using %s" %(msg,), bold=True)
 
@@ -111,10 +114,10 @@ class Reporter:
 class Session:
     def __init__(self, config):
         self.config = config
+        self.report = Reporter(self.config)
         
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
-        self.report = Reporter(self.config)
         self.report.using("tox-%s from %s" %(tox.__version__, tox.__file__))
         getattr(self, "subcommand_" + self.config.opts.subcommand)()
 
@@ -128,32 +131,46 @@ class Session:
             target.dirpath().ensure(dir=1)
             src.copy(target)
 
-    def getsdist(self, venv):
-        destdir = venv.path.ensure("makepkg", dir=1)
-        self._copyfiles(self.config.projdir, 
-                        self.config.getdistlist(), destdir)
-        distdir = destdir.join("dist")
-        if distdir.check():
-            distdir.remove()
-        self.pcall([venv.getcommandpath(), destdir.join("setup.py"), 
-            "sdist"], cwd=destdir)
-        return distdir.listdir()[0]
-
     def _gettestenvs(self, envlist):
         for envconfig in self.config.envconfigs.values():
             if not envlist or envconfig.name in envlist:
                 yield VirtualEnv(envconfig=envconfig, project=self)
 
     def build_and_install(self, venv):
-        sdist_path = self.getsdist(venv)
+        sdist_path = self.get_fresh_sdist()
         #self.report.venv_installproject(venv, sdist_path)
         venv.install([sdist_path])
 
+    def _makesdist(self):
+        self.report.action("creating sdist package")
+        setup = self.config.projdir.join("setup.py")
+        if not setup.check():
+            raise MissingFile(setup)
+        distdir = self.config.toxdir.join("dist")
+        if distdir.check():
+            distdir.remove() 
+        self.pcall([sys.executable, setup, "sdist", "--dist-dir", distdir],
+                   cwd=self.config.projdir)
+        return distdir.listdir()[0]
+
+    def get_fresh_sdist(self):
+        try:
+            return self._sdistpath
+        except AttributeError:
+            self._sdistpath = x = self._makesdist()
+            return x
+
     def setupenv(self, envlist):
         self.report.section("setupenv")
-         
+        self.get_fresh_sdist() # do it ahead for nicer reporting
         for venv in self._gettestenvs(envlist):
-            venv.create()
+            if venv.path.check():
+                self.report.action("preparing virtualenv %s - using existing" %
+                    venv.envconfig.name)
+            else:
+                self.report.action("preparing virtualenv %s" %
+                    venv.envconfig.name)
+                venv.create()
             venv.install(venv.envconfig.deps)
             self.build_and_install(venv)
 
@@ -163,10 +180,7 @@ class Session:
         self.report.section("test")
         somefailed = False
         for venv in self._gettestenvs(envlist):
-            testdir = venv.path.ensure("test", dir=1)
-            self._copyfiles(self.config.projdir, 
-                            self.config.gettestlist(), testdir)
-            if venv.test(cwd=testdir):
+            if venv.test(cwd=venv.envconfig.changedir):
                 somefailed = True
         return somefailed
 
@@ -223,5 +237,7 @@ class Session:
         return out
 
 class InvocationError(Exception):
+    """ an error while invoking a script. """
+class MissingFile(Exception):
     """ an error while invoking a script. """
 

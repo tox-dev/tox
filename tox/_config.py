@@ -5,16 +5,6 @@ configparser = py.builtin._tryimport("ConfigParser", "configparser")
 class Config:
     def __init__(self):
         self.envconfigs = {}
-        #self.downloadcache = downloadcache
-
-    def getdistlist(self):
-        l = self._parser.getlist("project", "distpaths")
-        if not l:
-            raise ValueError("[project] defines no 'distpaths' value")
-        return l
-
-    def gettestlist(self):
-        return self._parser.getlist("project", "testpaths")
 
 class ConfigError(Exception):
     """ error in tox configuration. """
@@ -50,16 +40,18 @@ class ConfigIniParser:
 
     def _makeenvconfig(self, name, section):
         vc = VenvConfig(name=name)
+        vc.envdir = self.config.toxdir.join(name)
         vc.python = self.getdefault(section, "python", None)
         vc.command = self.getdefault(section, "command", None)
         vc.deps = self.getlist(section, "deps")
+        vc.changedir = py.path.local(
+            self.getdefault(section, "changedir", self.config.projdir))
         downloadcache = self.getdefault(section, "downloadcache")
         if downloadcache is None:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", "")
             if not downloadcache:
                 downloadcache = self.config.toxdir.join("_download")
         vc.downloadcache = py.path.local(downloadcache)
-        vc.envdir = self.config.toxdir.join(name)
         return vc
 
     def getlist(self, section, name, sep="\n"):
