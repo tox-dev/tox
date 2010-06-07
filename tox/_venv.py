@@ -87,9 +87,6 @@ class VirtualEnv(object):
 
 if sys.platform != "win32":
     def find_executable(name):
-        p = py.path.local(name) 
-        if p.check():
-            return p
         return py.path.local.sysfind(name)
 
 else:
@@ -104,11 +101,8 @@ else:
     }
     def find_executable(name):
         p = py.path.local(name) 
-        if p.check():
+        if p.check(file=1):
             return p
-        #p = py.path.local.sysfind(name)
-        #if p and p.check():
-        #    return p
         actual = win32map.get(name, None)
         if actual:
             actual = py.path.local(actual)

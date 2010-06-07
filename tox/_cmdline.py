@@ -32,7 +32,8 @@ def feedback(msg, sysexit=False):
 
 class VersionAction(argparse.Action):
     def __call__(self, *args, **kwargs):
-        py.builtin.print_(tox.__version__)
+        py.builtin.print_("%s imported from %s" %(tox.__version__,
+                          tox.__file__))
         raise SystemExit(0)
 
 def prepare_parse():

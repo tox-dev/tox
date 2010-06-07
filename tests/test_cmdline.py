@@ -13,7 +13,9 @@ def test_help(cmd):
 def test_version(cmd):
     result = cmd.run("tox", "--version")
     assert not result.ret
-    assert tox.__version__ in result.stdout.str()
+    stdout = result.stdout.str()
+    assert tox.__version__ in stdout
+    assert "imported from" in stdout
 
 def test_unkonwn_ini(cmd):
     result = cmd.run("tox", "test")
