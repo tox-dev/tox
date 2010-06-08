@@ -108,6 +108,22 @@ def XXX_test_package(cmd, initproj):
         "*created sdist package at*",
     ])
 
+def test_unknown_interpreter(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [testenv:python]
+            python=xyz_unknown_interpreter 
+            [test]
+            changedir=tests 
+        '''
+    })
+    result = cmd.run("tox", "test")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*FAIL*could not create*xyz_unknown_interpreter*",
+    ])
+
 def test_test_simple(cmd, initproj):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': """

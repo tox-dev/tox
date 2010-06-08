@@ -8,5 +8,6 @@ apipkg.initpkg(__name__, dict(
     exception = dict(
         ConfigError = '._config:ConfigError',
         InvocationError = '._cmdline:InvocationError',
+        MissingInterpreter = '._venv:MissingInterpreter',
     )
 ))

@@ -131,6 +131,7 @@ class Session:
             self.config.logdir.remove()
         self.report.using("logdir %s" %(self.config.logdir,))
         self.config.logdir.ensure(dir=1)
+        self.venvisvalid = {}
         
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
@@ -180,6 +181,7 @@ class Session:
         self.report.section("setupenv")
         self.get_fresh_sdist() # do it ahead for nicer reporting
         for venv in self._gettestenvs(envlist):
+            self.venvisvalid[venv.path] = True
             if venv.path.check():
                 self.report.action("preparing virtualenv %s - "
                     "reusing existing" %
@@ -187,7 +189,14 @@ class Session:
             else:
                 self.report.action("preparing virtualenv %s" %
                     venv.envconfig.name)
-                venv.create()
+                try:
+                    venv.create()
+                except tox.exception.MissingInterpreter:
+                    v = sys.exc_info()[1]
+                    self.report.error("FAIL could not create: %s" %
+                        (str(v)))
+                    self.venvisvalid[venv.path] = False
+                    continue
                 venv.install(venv.envconfig.deps)
             self.build_and_install(venv)
 
@@ -197,6 +206,8 @@ class Session:
         self.report.section("test")
         somefailed = False
         for venv in self._gettestenvs(envlist):
+            if not self.venvisvalid[venv.path]:
+                continue
             if venv.test(cwd=venv.envconfig.changedir):
                 somefailed = True
         return somefailed
