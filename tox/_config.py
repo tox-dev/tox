@@ -30,6 +30,7 @@ class ConfigIniParser:
         config._parser = self
         config.toxdir = py.path.local(
             self.getdefault("global", "toxdir", ".tox"))
+        config.logdir = config.toxdir.join("log")
         sections = cfg.sections()
         for section in sections:
             if section.startswith(testenvprefix):

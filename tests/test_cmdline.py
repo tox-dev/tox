@@ -25,6 +25,44 @@ class TestSession:
         assert sdist_new == sdist
         assert sdist_new.stat().size > 10
 
+    def test_log_pcall(self, initproj, tmpdir, capfd):
+        initproj("logexample123-0.5", filedefs={
+            'tests': {'test_hello.py': "def test_hello(): pass"},
+            'tox.ini': '''
+            '''
+        })
+        config = parseini("tox.ini")
+        session = Session(config)
+        assert not session.config.logdir.listdir()
+        opts = {}
+        capfd.readouterr()
+        session.report.popen(["ls", ], log=None, opts=opts)
+        out, err = capfd.readouterr()
+        assert '0.log' in out 
+        assert 'stdout' in opts
+        assert opts['stdout'].write
+        assert opts['stderr'] == py.std.subprocess.STDOUT
+        x = opts['stdout'].name
+        assert x.startswith(str(session.config.logdir))
+
+        opts={}
+        session.report.popen(["ls", ], log=None, opts=opts)
+        out, err = capfd.readouterr()
+        assert '1.log' in out 
+
+        opts={}
+        newlogdir = tmpdir.mkdir("newlogdir")
+        cwd = newlogdir.dirpath()
+        cwd.chdir()
+        session.report.popen(["xyz",], log=newlogdir, opts=opts)
+        l = newlogdir.listdir()
+        assert len(l) == 1
+        assert l[0].basename == "0.log"
+        out, err = capfd.readouterr()
+        relpath = l[0].relto(cwd)
+        expect = ">%s/0.log" % (newlogdir.basename)
+        assert expect in out
+
 def test_help(cmd):
     result = cmd.run("tox", "-h")
     assert not result.ret

@@ -83,14 +83,16 @@ class VirtualEnv(object):
             'envtmpdir': envtmpdir, 
         }
         try:
-            self._pcall(cmd.split(" "), out="passthrough", cwd=cwd)
+            self._pcall(cmd.split(" "), log=-1, cwd=cwd)
         except tox.exception.InvocationError:
             return True
 
-    def _pcall(self, args, venv=True, out=None, cwd=None):
+    def _pcall(self, args, venv=True, log=None, cwd=None):
         if venv:
             args = [self.getcommandpath(args[0])] + args[1:]
-        return self.session.pcall(args, out=out, cwd=cwd)
+        if log is None:
+            log = self.path.ensure("log", dir=1)
+        return self.session.pcall(args, log=log, cwd=cwd)
 
 if sys.platform != "win32":
     def find_executable(name):

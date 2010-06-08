@@ -84,9 +84,21 @@ class Reporter:
     def using(self, msg):
         self.tw.line("using %s" %(msg,), bold=True)
 
-    def popen(self, args):
-        cwd = os.getcwd()
-        self.tw.line("%s$ %s" %(cwd, " ".join(args)))
+    def popen(self, args, log, opts):
+        cwd = py.path.local()
+        logged_command = "%s$ %s" %(cwd, " ".join(args))
+        if log != -1: # no passthrough mode 
+            if log is None:
+                log = self.config.logdir
+            l = log.listdir()
+            num = len(l)
+            path = log.join("%s.log" % num)
+            f = open(str(path), 'w')
+            rellog = cwd.bestrelpath(path)
+            logged_command += " >%s" % rellog
+            f.write(logged_command+"\n")
+            opts.update(dict(stdout=f, stderr=subprocess.STDOUT))
+        self.tw.line(logged_command)
 
     def keyboard_interrupt(self):
         self.tw.line("KEYBOARDINTERRUPT", red=True)
@@ -115,6 +127,10 @@ class Session:
     def __init__(self, config):
         self.config = config
         self.report = Reporter(self.config)
+        if self.config.logdir.check():
+            self.config.logdir.remove()
+        self.report.using("logdir %s" %(self.config.logdir,))
+        self.config.logdir.ensure(dir=1)
         
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
@@ -165,13 +181,14 @@ class Session:
         self.get_fresh_sdist() # do it ahead for nicer reporting
         for venv in self._gettestenvs(envlist):
             if venv.path.check():
-                self.report.action("preparing virtualenv %s - using existing" %
+                self.report.action("preparing virtualenv %s - "
+                    "reusing existing" %
                     venv.envconfig.name)
             else:
                 self.report.action("preparing virtualenv %s" %
                     venv.envconfig.name)
                 venv.create()
-            venv.install(venv.envconfig.deps)
+                venv.install(venv.envconfig.deps)
             self.build_and_install(venv)
 
     def subcommand_test(self):
@@ -205,7 +222,7 @@ class Session:
             versions.append("%s-%s" %(tool, version.strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
    
-    def pcall(self, args, out=None, cwd=None):
+    def pcall(self, args, log=None, cwd=None):
         if cwd is None:
             cwd = self.config.toxdir
         cwd.chdir()
@@ -214,15 +231,10 @@ class Session:
             if isinstance(arg, py.path.local):
                 arg = cwd.bestrelpath(arg)
             newargs.append(arg)
-            
-        opts = dict(stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if out == "passthrough":
-            opts = {}
+           
+        opts = {} 
         args = [str(x) for x in args]
-        #if os.path.isabs(args[0]):
-        #    self.config.toxdir.chdir()
-        #    args[0] = py.path.local(args[0]).bestrelto(self.config.toxdir)
-        self.report.popen(newargs)
+        self.report.popen(newargs, log, opts)
         popen = subprocess.Popen(newargs, **opts)
         try:
             out, err = popen.communicate()

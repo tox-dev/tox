@@ -14,7 +14,7 @@ from tox._venv import VirtualEnv
 def pytest_funcarg__mocksession(request):
     class MockSession:
         l = []
-        def pcall(self, args, out, cwd):
+        def pcall(self, args, log, cwd):
             self.l.append(args)
     return MockSession()
 
