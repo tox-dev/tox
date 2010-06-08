@@ -52,22 +52,23 @@ class TestConfigTestEnv:
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("""
             [test]
-            command=xyz
+            cmdargs=xyz
+                --abc
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
-        assert envconfig.command == "xyz"
+        assert envconfig.cmdargs == ["xyz", "--abc"]
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""
             [test]
-            command=xyz
+            cmdargs=xyz
             [testenv:py30]
-            command=abc
+            cmdargs=abc
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['py30']
-        assert envconfig.command == "abc"
+        assert envconfig.cmdargs == ["abc"]
 
     def test_simple(tmpdir, makeconfig):
         config = makeconfig("""

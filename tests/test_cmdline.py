@@ -214,7 +214,9 @@ def test_test_simple(cmd, initproj):
         'tox.ini': '''
             [test]
             changedir=tests 
-            command=py.test --basetemp=%(envtmpdir)s --junitxml=junit-%(envname)s.xml 
+            cmdargs=py.test 
+                --basetemp=%(envtmpdir)s 
+                --junitxml=junit-%(envname)s.xml 
             deps=py
         '''
     })
@@ -236,7 +238,8 @@ def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
         [test]
-        command=pip -h
+        cmdargs=pip 
+            -h
         [testenv:py25]
         python=python2.5
         [testenv:py26]

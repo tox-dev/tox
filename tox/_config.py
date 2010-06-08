@@ -43,7 +43,7 @@ class ConfigIniParser:
         vc = VenvConfig(name=name)
         vc.envdir = self.config.toxdir.join(name)
         vc.python = self.getdefault(section, "python", None)
-        vc.command = self.getdefault(section, "command", None)
+        vc.cmdargs = self.getlist(section, "cmdargs")
         vc.deps = self.getlist(section, "deps")
         vc.changedir = py.path.local(
             self.getdefault(section, "changedir", self.config.projdir))

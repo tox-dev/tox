@@ -264,7 +264,7 @@ class Session:
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.name, bold=True)
             self.report.line("    python=%s" % envconfig.python)
-            self.report.line("    command=%s" % envconfig.command)
+            self.report.line("    cmdargs=%s" % envconfig.cmdargs)
             self.report.line("    deps=%s" % envconfig.deps)
             self.report.line("    envdir=    %s" % envconfig.envdir)
             self.report.line("    downloadcache=%s" % envconfig.downloadcache)
