@@ -75,9 +75,7 @@ class VirtualEnv(object):
 
     def test(self, cwd=None):
         envtmpdir = self.envconfig.envdir.join("tmp")
-        if envtmpdir.check():
-            py.std.shutil.rmtree(str(envtmpdir), ignore_errors=True)
-            envtmpdir.mkdir()
+        self.session.make_emptydir(envtmpdir)
         cmd = self.envconfig.command % {
             'envname': self.envconfig.name,
             'envtmpdir': envtmpdir, 

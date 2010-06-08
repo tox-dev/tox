@@ -63,6 +63,32 @@ class TestSession:
         expect = ">%s/0.log" % (newlogdir.basename)
         assert expect in out
 
+    def test_summary_status(self, initproj, capfd):
+        initproj("logexample123-0.5", filedefs={
+            'tests': {'test_hello.py': "def test_hello(): pass"},
+            'tox.ini': '''
+            [testenv:hello]
+            [testenv:world]
+            '''
+        })
+        config = parseini("tox.ini")
+        session = Session(config)
+        envlist = ['hello', 'world']
+        envs = list(session._gettestenvs(envlist))
+        assert len(envs) == 2
+        env1, env2 = envs
+        session.setenvstatus(env1, "FAIL XYZ")
+        assert session.venvstatus[env1.path]
+        session.setenvstatus(env2, 0)
+        assert not session.venvstatus[env2.path]
+        session._summary(envlist)
+        out, err = capfd.readouterr()
+        exp = "%s: FAIL XYZ" % env1.envconfig.name 
+        assert exp in out
+        exp = "%s: no failures" % env2.envconfig.name 
+        assert exp in out
+        
+
 def test_help(cmd):
     result = cmd.run("tox", "-h")
     assert not result.ret
@@ -124,6 +150,60 @@ def test_unknown_interpreter(cmd, initproj):
         "*FAIL*could not create*xyz_unknown_interpreter*",
     ])
 
+def test_unknown_dep(cmd, initproj):
+    initproj("dep123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [test]
+            deps=qweqwe123
+            changedir=tests 
+        '''
+    })
+    result = cmd.run("tox", "test")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*FAIL*could not install*qweqwe123*",
+    ])
+
+def test_sdist_fails(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'setup.py': """
+            syntax error
+        """
+        ,
+        'tox.ini': '',
+    })
+    result = cmd.run("tox", "test")
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*FAIL*could not package project*",
+    ])
+
+def test_package_install_fails(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'setup.py': """
+            from setuptools import setup
+            setup(
+                name='pkg123',
+                description='pkg123 project',
+                version='0.7',
+                license='GPLv2 or later',
+                platforms=['unix', 'win32'],
+                packages=['pkg123',],
+                install_requires=['qweqwe123'],
+                )
+            """
+        ,
+        'tox.ini': '',
+    })
+    result = cmd.run("tox", "test")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*FAIL*could not install package*",
+    ])
+
 def test_test_simple(cmd, initproj):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': """
@@ -148,6 +228,8 @@ def test_test_simple(cmd, initproj):
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*1 passed*",
+        "*summary*",
+        "python: no failures"
     ])
 
 def test_test_piphelp(initproj, cmd):

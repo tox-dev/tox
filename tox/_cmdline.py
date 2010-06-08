@@ -116,6 +116,9 @@ class Reporter:
     def line(self, msg, **opts):
         self.tw.line(msg, **opts)
 
+    def good(self, msg):
+        self.tw.line(msg, green=True)
+
     def error(self, msg):
         self.tw.line(msg, red=True)
 
@@ -127,11 +130,10 @@ class Session:
     def __init__(self, config):
         self.config = config
         self.report = Reporter(self.config)
-        if self.config.logdir.check():
-            self.config.logdir.remove()
+        self.make_emptydir(config.logdir)
         self.report.using("logdir %s" %(self.config.logdir,))
         self.config.logdir.ensure(dir=1)
-        self.venvisvalid = {}
+        self.venvstatus = {}
         
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
@@ -153,10 +155,16 @@ class Session:
             if not envlist or envconfig.name in envlist:
                 yield VirtualEnv(envconfig=envconfig, session=self)
 
+    def setenvstatus(self, venv, msg):
+        self.venvstatus[venv.path] = msg 
+
     def build_and_install(self, venv):
         sdist_path = self.get_fresh_sdist()
         #self.report.venv_installproject(venv, sdist_path)
-        venv.install([sdist_path])
+        try:
+            venv.install([sdist_path])
+        except tox.exception.InvocationError:
+            self.setenvstatus(venv, "FAIL could not install package")
 
     def _makesdist(self):
         self.report.action("creating sdist package")
@@ -174,43 +182,78 @@ class Session:
         try:
             return self._sdistpath
         except AttributeError:
-            self._sdistpath = x = self._makesdist()
+            try:
+                self._sdistpath = x = self._makesdist()
+            except tox.exception.InvocationError:
+                v = sys.exc_info()[1]
+                self.report.error("FAIL could not package project")
+                return None
             return x
+
+    def make_emptydir(self, path):
+        if path.check():
+            py.std.shutil.rmtree(str(path), ignore_errors=True)
+            path.mkdir()
 
     def setupenv(self, envlist):
         self.report.section("setupenv")
-        self.get_fresh_sdist() # do it ahead for nicer reporting
+        x = self.get_fresh_sdist() # do it ahead for nicer reporting
+        if x is None:
+            self.report.error("aborting tox run")
+            raise SystemExit(1)
         for venv in self._gettestenvs(envlist):
-            self.venvisvalid[venv.path] = True
-            if venv.path.check():
+            self.venvstatus[venv.path] = 0
+            if venv.path.join("VALID").check():
                 self.report.action("preparing virtualenv %s - "
                     "reusing existing" %
                     venv.envconfig.name)
             else:
-                self.report.action("preparing virtualenv %s" %
+                self.report.action("preparing fresh virtualenv %s" %
                     venv.envconfig.name)
+                self.make_emptydir(venv.path)
                 try:
                     venv.create()
                 except tox.exception.MissingInterpreter:
                     v = sys.exc_info()[1]
-                    self.report.error("FAIL could not create: %s" %
-                        (str(v)))
-                    self.venvisvalid[venv.path] = False
+                    self.setenvstatus(venv, 
+                        "FAIL could not create: %s" % (str(v)))
                     continue
-                venv.install(venv.envconfig.deps)
+                try:
+                    venv.install(venv.envconfig.deps)
+                except tox.exception.InvocationError:
+                    v = sys.exc_info()[1]
+                    self.setenvstatus(venv, 
+                        "FAIL could not install deps %r" %
+                            ",".join(venv.envconfig.deps))
+                    continue
+            venv.path.ensure("VALID")
             self.build_and_install(venv)
 
     def subcommand_test(self):
         envlist = self.config.opts.env
         self.setupenv(envlist)
         self.report.section("test")
-        somefailed = False
         for venv in self._gettestenvs(envlist):
-            if not self.venvisvalid[venv.path]:
+            if self.venvstatus[venv.path]:
                 continue
             if venv.test(cwd=venv.envconfig.changedir):
-                somefailed = True
-        return somefailed
+                self.setenvstatus(venv, "tests failed")
+        retcode = self._summary(envlist)
+        return retcode
+
+    def _summary(self, envlist):
+        self.report.section("tox summary")
+        retcode = 0
+        for venv in self._gettestenvs(envlist):
+            status = self.venvstatus[venv.path]
+            if status:
+                retcode = 1
+                self.report.error("%s: %s" %(venv.envconfig.name, status))
+            else:
+                self.report.good("%s: no failures" %(venv.envconfig.name, ))
+        if not retcode:
+            self.report.good("congrats :)")
+        return retcode 
 
     def subcommand_config(self):
         self.info_versions()
