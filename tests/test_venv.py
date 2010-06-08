@@ -10,6 +10,13 @@ from tox._venv import VirtualEnv
 #    out, err = capfd.readouterr()
 #    assert not out
 #    assert not err
+#
+def pytest_funcarg__mocksession(request):
+    class MockSession:
+        l = []
+        def pcall(self, args, out, cwd):
+            self.l.append(args)
+    return MockSession()
 
 def test_find_executable():
     from tox._venv import find_executable
@@ -33,19 +40,16 @@ def test_find_executable():
         stdout, stderr = popen.communicate()
         assert ver in py.builtin._totext(stderr, "ascii")
 
-def test_create(tmpdir, monkeypatch):
+def test_create(tmpdir, monkeypatch, mocksession):
     class Envconfig:
         envbasedir = tmpdir.ensure("basedir", dir=1)
         envdir = envbasedir.join("envbasedir", "xyz123")
         python = None
-    l = []
-    class MyProj:
-        def pcall(self, args, out, cwd):
-            l.append(args)
-    venv = VirtualEnv(Envconfig, project=MyProj())
+    venv = VirtualEnv(Envconfig, session=mocksession)
     assert venv.path == Envconfig.envdir
     assert not venv.path.check()
     venv.create()
+    l = mocksession.l
     assert len(l) == 1
     args = l[0]
     assert "virtualenv" in " ".join(args[:2])
@@ -57,19 +61,15 @@ def test_create(tmpdir, monkeypatch):
         assert venv.getcommandpath("easy_install")
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
-def test_install_downloadcache(tmpdir):
+def test_install_downloadcache(tmpdir, mocksession):
     class Envconfig:
         downloadcache = tmpdir.ensure("download", dir=1)
         envbasedir = tmpdir.ensure("basedir", dir=1)
         envdir = envbasedir.join("envbasedir", "xyz123")
         python = sys.executable
-    l = []
-    class MyProj:
-        def pcall(self, args, out, cwd):
-            l.append(args)
-        
-    venv = VirtualEnv(Envconfig, project=MyProj())
+    venv = VirtualEnv(Envconfig, session=mocksession)
     venv.create()
+    l = mocksession.l
     assert len(l) == 1
 
     venv.install(["hello", "world"])
@@ -82,7 +82,7 @@ def test_install_downloadcache(tmpdir):
     assert "hello" in args
     assert "world" in args
 
-def test_install_python3(tmpdir):
+def test_install_python3(tmpdir, mocksession):
     if not py.path.local.sysfind('python3.1'):
         py.test.skip("needs python3.1")
     class Envconfig:
@@ -90,12 +90,9 @@ def test_install_python3(tmpdir):
         envbasedir = tmpdir.ensure("basedir", dir=1)
         envdir = envbasedir.join("envbasedir", "xyz123")
         python = "python3.1"
-    l = []
-    class MyProj:
-        def pcall(self, args, out, cwd):
-            l.append(args)
-    venv = VirtualEnv(Envconfig, project=MyProj())
+    venv = VirtualEnv(Envconfig, session=mocksession)
     venv.create()
+    l = mocksession.l
     assert len(l) == 2
     args = l[0]
     assert 'virtualenv3' in args[0]

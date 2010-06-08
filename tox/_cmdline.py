@@ -134,7 +134,7 @@ class Session:
     def _gettestenvs(self, envlist):
         for envconfig in self.config.envconfigs.values():
             if not envlist or envconfig.name in envlist:
-                yield VirtualEnv(envconfig=envconfig, project=self)
+                yield VirtualEnv(envconfig=envconfig, session=self)
 
     def build_and_install(self, venv):
         sdist_path = self.get_fresh_sdist()

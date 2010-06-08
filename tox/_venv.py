@@ -4,10 +4,10 @@ import py
 import tox
 
 class VirtualEnv(object):
-    def __init__(self, envconfig=None, project=None):
+    def __init__(self, envconfig=None, session=None):
         self.envconfig = envconfig
         self.path = envconfig.envdir
-        self.project = project
+        self.session = session
 
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
@@ -90,7 +90,7 @@ class VirtualEnv(object):
     def _pcall(self, args, venv=True, out=None, cwd=None):
         if venv:
             args = [self.getcommandpath(args[0])] + args[1:]
-        return self.project.pcall(args, out=out, cwd=cwd)
+        return self.session.pcall(args, out=out, cwd=cwd)
 
 if sys.platform != "win32":
     def find_executable(name):
