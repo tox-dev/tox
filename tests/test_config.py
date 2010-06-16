@@ -64,6 +64,7 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
         assert envconfig.cmdargs == ["xyz", "--abc"]
+        assert envconfig.changedir == config.packagedir
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""
@@ -75,6 +76,37 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['py30']
         assert envconfig.cmdargs == ["abc"]
+
+    def test_changedir(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [test]
+            changedir=xyz
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert envconfig.changedir.basename == "xyz"
+        assert envconfig.changedir == config.packagedir.join("xyz")
+
+    def test_changedir_override(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [test]
+            changedir=xyz
+            [testenv:python]
+            changedir=abc
+            python=python2.6
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert envconfig.changedir.basename == "abc"
+        assert envconfig.changedir == config.packagedir.join("abc")
+
+    def test_getpath(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [xyz]
+            path=xyz
+        """)
+        x = config._parser.getpath("xyz", "path", tmpdir)
+        assert x == tmpdir.join("xyz")
 
     def test_simple(tmpdir, makeconfig):
         config = makeconfig("""

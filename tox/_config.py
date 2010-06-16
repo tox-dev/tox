@@ -55,10 +55,7 @@ class ConfigIniParser:
         return vc
 
     def getpath(self, section, name, basedir, basename=None):
-        try:
-            basename = self._cfg.get(section, name)
-        except (configparser.NoSectionError, configparser.NoOptionError):
-            pass
+        basename = self.getdefault(section, name, basename)
         if basename is None:
             return basedir
         return basedir.join(basename, abs=True)
