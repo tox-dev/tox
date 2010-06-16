@@ -74,14 +74,14 @@ class TestSession:
         config = parseini("tox.ini")
         session = Session(config)
         envlist = ['hello', 'world']
-        envs = list(session._gettestenvs(envlist))
+        envs = session.venvlist
         assert len(envs) == 2
         env1, env2 = envs
         session.setenvstatus(env1, "FAIL XYZ")
         assert session.venvstatus[env1.path]
         session.setenvstatus(env2, 0)
         assert not session.venvstatus[env2.path]
-        session._summary(envlist)
+        session._summary()
         out, err = capfd.readouterr()
         exp = "%s: FAIL XYZ" % env1.envconfig.name 
         assert exp in out
@@ -171,6 +171,16 @@ def test_unknown_dep(cmd, initproj):
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*FAIL*could not install*qweqwe123*",
+    ])
+
+def test_unknown_environment(cmd, initproj):
+    initproj("env123-0.7", filedefs={
+        'tox.ini': ''
+    })
+    result = cmd.run("tox", "-e", "qpwoei")
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*ERROR*unknown*environment*qpwoei*",
     ])
 
 def test_sdist_fails(cmd, initproj):

@@ -49,7 +49,7 @@ def prepare_parse():
     parser.add_argument("-c", action="store", default="tox.ini", 
         dest="configfile",
         help="use the specified config file.")
-    parser.add_argument("-e", "--env", action="append", dest="env", 
+    parser.add_argument("-e", "--env", action="append", dest="envlist", 
         help="work against specified environment (multi-allowed).")
     parser.add_argument("testpath", nargs="*", help="a path to a test")
     return parser
@@ -104,7 +104,7 @@ class Reporter:
         self.tw.line(msg, green=True)
 
     def error(self, msg):
-        self.tw.line(msg, red=True)
+        self.tw.line("ERROR: " + msg, red=True)
 
     def log(self, msg):
         py.builtin.print_(msg, file=sys.stderr)
@@ -115,10 +115,11 @@ class Session:
         self.config = config
         self.report = Reporter(self.config)
         self.make_emptydir(config.logdir)
+        config.logdir.ensure(dir=1)
         #self.report.using("logdir %s" %(self.config.logdir,))
         self.report.using("tox.ini: %s" %(self.config.toxinipath,))
-        self.config.logdir.ensure(dir=1)
         self.venvstatus = {}
+        self.venvlist = self._makevenvlist()
         
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
@@ -138,10 +139,21 @@ class Session:
             target.dirpath().ensure(dir=1)
             src.copy(target)
 
-    def _gettestenvs(self, envlist):
-        for envconfig in self.config.envconfigs.values():
-            if not envlist or envconfig.name in envlist:
-                yield VirtualEnv(envconfig=envconfig, session=self)
+    def _makevenvlist(self):
+        try:
+            envlist = self.config.opts.envlist
+        except AttributeError:
+            envlist = None
+        if not envlist:
+            envlist = self.config.envconfigs.keys()
+        l = []
+        for name in envlist:
+            envconfig = self.config.envconfigs.get(name, None)
+            if envconfig is None:
+                self.report.error("unknown environment %r" % name)
+                raise SystemExit(1)
+            l.append(VirtualEnv(envconfig=envconfig, session=self))
+        return l
 
     def setenvstatus(self, venv, msg):
         self.venvstatus[venv.path] = msg 
@@ -183,13 +195,13 @@ class Session:
             py.std.shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir()
 
-    def setupenv(self, envlist):
+    def setupenv(self):
         self.report.section("setupenv")
         x = self.get_fresh_sdist() # do it ahead for nicer reporting
         if x is None:
             self.report.error("aborting tox run")
             raise SystemExit(1)
-        for venv in self._gettestenvs(envlist):
+        for venv in self.venvlist:
             self.venvstatus[venv.path] = 0
             if venv.path.join("VALID").check():
                 self.report.action("preparing virtualenv %s - "
@@ -218,21 +230,20 @@ class Session:
             self.build_and_install(venv)
 
     def subcommand_test(self):
-        envlist = self.config.opts.env
-        self.setupenv(envlist)
+        self.setupenv()
         self.report.section("test")
-        for venv in self._gettestenvs(envlist):
+        for venv in self.venvlist:
             if self.venvstatus[venv.path]:
                 continue
             if venv.test(cwd=venv.envconfig.changedir):
                 self.setenvstatus(venv, "tests failed")
-        retcode = self._summary(envlist)
+        retcode = self._summary()
         return retcode
 
-    def _summary(self, envlist):
+    def _summary(self):
         self.report.section("tox summary")
         retcode = 0
-        for venv in self._gettestenvs(envlist):
+        for venv in self.venvlist:
             status = self.venvstatus[venv.path]
             if status:
                 retcode = 1
