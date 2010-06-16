@@ -28,7 +28,9 @@ def main(args=None):
         raise SystemExit(2)
 
 def feedback(msg, sysexit=False):
-    py.builtin.print_(msg, file=sys.stderr)
+    py.builtin.print_("ERROR: " + msg, file=sys.stderr)
+    if sysexit:
+        raise SystemExit(1)
 
 class VersionAction(argparse.Action):
     def __call__(self, *args, **kwargs):
@@ -131,7 +133,8 @@ class Session:
         self.config = config
         self.report = Reporter(self.config)
         self.make_emptydir(config.logdir)
-        self.report.using("logdir %s" %(self.config.logdir,))
+        #self.report.using("logdir %s" %(self.config.logdir,))
+        self.report.using("tox.ini: %s" %(self.config.toxinipath,))
         self.config.logdir.ensure(dir=1)
         self.venvstatus = {}
         
@@ -168,14 +171,14 @@ class Session:
 
     def _makesdist(self):
         self.report.action("creating sdist package")
-        setup = self.config.projdir.join("setup.py")
+        setup = self.config.packagedir.join("setup.py")
         if not setup.check():
             raise MissingFile(setup)
         distdir = self.config.toxdir.join("dist")
         if distdir.check():
             distdir.remove() 
         self.pcall([sys.executable, setup, "sdist", "--dist-dir", distdir],
-                   cwd=self.config.projdir)
+                   cwd=self.config.packagedir)
         return distdir.listdir()[0]
 
     def get_fresh_sdist(self):
@@ -258,7 +261,7 @@ class Session:
     def subcommand_config(self):
         self.info_versions()
         self.report.keyvalue("config-file:", self.config.opts.configfile)
-        self.report.keyvalue("project directory:", self.config.projdir)
+        self.report.keyvalue("package directory:", self.config.packagedir)
         self.report.keyvalue("toxdir:", self.config.toxdir)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():

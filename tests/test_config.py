@@ -36,10 +36,16 @@ class TestVenvConfig:
         assert config.envconfigs['py2'].deps == ['world1', 'world2']
 
 class TestConfigPackage:
-    @py.test.mark.xfail
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("")
-        assert config.package.method == "sdist"
+        assert config.packagedir == tmpdir
+        assert config.toxdir == tmpdir.join(".tox")
+
+    def test_defaults_changed_dir(self, tmpdir, makeconfig):
+        tmpdir.mkdir("abc").chdir()
+        config = makeconfig("")
+        assert config.packagedir == tmpdir
+        assert config.toxdir == tmpdir.join(".tox")
 
     def test_project_paths(self, tmpdir, makeconfig):
         config = makeconfig("""

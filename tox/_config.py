@@ -18,18 +18,18 @@ testenvprefix = "testenv:"
 def parseini(path):
     cfg = configparser.RawConfigParser()
     cfg.read(str(path))
-    projdir = py.path.local(path).dirpath()
-    parser = ConfigIniParser(cfg, projdir)
+    parser = ConfigIniParser(cfg, path)
     return parser.config
 
 class ConfigIniParser:
-    def __init__(self, cfg, projdir):
+    def __init__(self, cfg, toxinipath):
         self._cfg = cfg
         self.config = config = Config()
-        config.projdir = projdir
         config._parser = self
-        config.toxdir = py.path.local(
-            self.getdefault("global", "toxdir", ".tox"))
+        config.toxinipath = py.path.local(toxinipath)
+        toxinidir = config.toxinipath.dirpath()
+        config.toxdir = self.getpath("global", "toxdir", toxinidir, ".tox")
+        config.packagedir = self.getpath("global", "packagedir", toxinidir)
         config.logdir = config.toxdir.join("log")
         sections = cfg.sections()
         for section in sections:
@@ -45,8 +45,7 @@ class ConfigIniParser:
         vc.python = self.getdefault(section, "python", None)
         vc.cmdargs = self.getlist(section, "cmdargs")
         vc.deps = self.getlist(section, "deps")
-        vc.changedir = py.path.local(
-            self.getdefault(section, "changedir", self.config.projdir))
+        vc.changedir = self.getpath(section, "changedir", self.config.packagedir)
         downloadcache = self.getdefault(section, "downloadcache")
         if downloadcache is None:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", "")
@@ -54,6 +53,15 @@ class ConfigIniParser:
                 downloadcache = self.config.toxdir.join("_download")
         vc.downloadcache = py.path.local(downloadcache)
         return vc
+
+    def getpath(self, section, name, basedir, basename=None):
+        try:
+            basename = self._cfg.get(section, name)
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            pass
+        if basename is None:
+            return basedir
+        return basedir.join(basename, abs=True)
 
     def getlist(self, section, name, sep="\n"):
         s = self.getdefault(section, name, None)

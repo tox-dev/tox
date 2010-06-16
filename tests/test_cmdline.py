@@ -134,6 +134,14 @@ def XXX_test_package(cmd, initproj):
         "*created sdist package at*",
     ])
 
+def test_no_tox_ini(cmd, initproj):
+    initproj("noini-0.5", )
+    result = cmd.run("tox")
+    assert result.ret
+    result.stderr.fnmatch_lines([
+        "*ERROR*tox.ini*does not exist*",
+    ])
+
 def test_unknown_interpreter(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
