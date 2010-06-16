@@ -41,35 +41,17 @@ class VersionAction(argparse.Action):
 def prepare_parse():
     parser = argparse.ArgumentParser(description=__doc__,)
         #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-c", action="store", default="tox.ini", 
-        dest="configfile",
-        help="use the specified config file.")
     parser.add_argument("--version", nargs=0, action=VersionAction, 
         dest="version",
         help="report version information to stdout.")
-    subparsers = parser.add_subparsers(title="subcommands")
-
-    # common options
-    common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("-e", "--env", action="append", dest="env", 
+    parser.add_argument("--showconfig", action="store_true", dest="showconfig", 
+        help="show configuration information. ")
+    parser.add_argument("-c", action="store", default="tox.ini", 
+        dest="configfile",
+        help="use the specified config file.")
+    parser.add_argument("-e", "--env", action="append", dest="env", 
         help="work against specified environment (multi-allowed).")
-
-    # config subcommand
-    parser_info = subparsers.add_parser("config", 
-        help="show meta versioning and configuration information.", 
-        parents=(common,))
-    parser_info.set_defaults(subcommand="config")
-
-    # package subcommand
-    #parser_package = subparsers.add_parser("package", parents=(common,),
-    #    help="package project for distribution and testing. ")
-    #parser_package.set_defaults(func=self.package)
-
-    # test subcommand
-    parser_test = subparsers.add_parser("test", parents=(common,),
-        help="run tests in virtual environments.")
-    parser_test.add_argument("testpath", nargs="*", help="a path to a test")
-    parser_test.set_defaults(subcommand="test")
+    parser.add_argument("testpath", nargs="*", help="a path to a test")
     return parser
 
 class Reporter:
@@ -141,7 +123,10 @@ class Session:
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
         self.report.using("tox-%s from %s" %(tox.__version__, tox.__file__))
-        getattr(self, "subcommand_" + self.config.opts.subcommand)()
+        if self.config.opts.showconfig:
+            self.subcommand_config()
+        else:
+            self.subcommand_test()
 
     def _copyfiles(self, srcdir, pathlist, destdir):
         for relpath in pathlist:

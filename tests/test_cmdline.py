@@ -112,7 +112,7 @@ def test_unkonwn_ini(cmd):
 
 def test_config_specific_ini(tmpdir, cmd):
     ini = tmpdir.ensure("hello.ini")
-    result = cmd.run("tox", "-c", ini, "config")
+    result = cmd.run("tox", "-c", ini, "--showconfig")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*config-file*hello.ini*",
@@ -167,7 +167,7 @@ def test_unknown_dep(cmd, initproj):
             changedir=tests 
         '''
     })
-    result = cmd.run("tox", "test")
+    result = cmd.run("tox", )
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*FAIL*could not install*qweqwe123*",
@@ -182,7 +182,7 @@ def test_sdist_fails(cmd, initproj):
         ,
         'tox.ini': '',
     })
-    result = cmd.run("tox", "test")
+    result = cmd.run("tox", )
     assert result.ret
     result.stdout.fnmatch_lines([
         "*FAIL*could not package project*",
