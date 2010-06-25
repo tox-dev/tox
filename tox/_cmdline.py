@@ -50,6 +50,7 @@ def prepare_parse():
         dest="configfile",
         help="use the specified config file.")
     parser.add_argument("-e", "--env", action="append", dest="envlist", 
+        metavar="ENV",
         help="work against specified environment (multi-allowed).")
     parser.add_argument("testpath", nargs="*", help="a path to a test")
     return parser
