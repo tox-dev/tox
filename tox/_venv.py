@@ -76,8 +76,16 @@ class VirtualEnv(object):
     def test(self, cwd=None):
         envtmpdir = self.envconfig.envtmpdir
         self.session.make_emptydir(envtmpdir)
+        argv = list(self.envconfig.argv)
+        cwd = cwd or py.path.local()
+        config = self.session.config
+        testpaths = []
+        for x in config.opts.testpath:
+            origpath = config.invocationcwd.join(x)
+            testpaths.append(cwd.bestrelpath(origpath))
+        argv.extend(testpaths)
         try:
-            self._pcall(self.envconfig.cmdargs, log=-1, cwd=cwd)
+            self._pcall(argv, log=-1, cwd=cwd)
         except tox.exception.InvocationError:
             return True
 

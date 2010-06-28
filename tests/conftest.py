@@ -36,7 +36,7 @@ class Cmd:
     def chdir(self, target):
         target.chdir()
 
-    def popen(self, cmdargs, stdout, stderr, **kw):
+    def popen(self, argv, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
             py.test.skip("no subprocess module")
         env = os.environ.copy()
@@ -44,17 +44,17 @@ class Cmd:
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
         #print "env", env
-        return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
+        return py.std.subprocess.Popen(argv, stdout=stdout, stderr=stderr, **kw)
 
-    def run(self, *cmdargs):
-        cmdargs = [str(x) for x in cmdargs]
+    def run(self, *argv):
+        argv = [str(x) for x in argv]
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
-        print("%s$ %s" % (os.getcwd(), " ".join(cmdargs)))
+        print("%s$ %s" % (os.getcwd(), " ".join(argv)))
         f1 = p1.open("wb")
         f2 = p2.open("wb")
         now = time.time()
-        popen = self.popen(cmdargs, stdout=f1, stderr=f2, 
+        popen = self.popen(argv, stdout=f1, stderr=f2, 
             close_fds=(sys.platform != "win32"))
         ret = popen.wait()
         f1.close()

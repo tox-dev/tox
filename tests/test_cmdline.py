@@ -232,19 +232,19 @@ def test_test_simple(cmd, initproj):
         'tox.ini': '''
             [test]
             changedir=tests 
-            cmdargs=py.test 
+            argv=py.test 
                 --basetemp={envtmpdir}
                 --junitxml=junit-{envname}.xml 
             deps=py
         '''
     })
-    result = cmd.run("tox", "test")
+    result = cmd.run("tox", "tests")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*junit-python.xml*",
         "*1 passed*",
     ])
-    result = cmd.run("tox", "test", "--env=python", )
+    result = cmd.run("tox", "--env=python", )
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*1 passed*",
@@ -256,7 +256,7 @@ def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
         [test]
-        cmdargs=pip 
+        argv=pip 
             -h
         [testenv:py25]
         python=python2.5

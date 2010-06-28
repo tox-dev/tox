@@ -125,24 +125,24 @@ class TestConfigTestEnv:
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("""
             [test]
-            cmdargs=xyz
+            argv=xyz
                 --abc
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
-        assert envconfig.cmdargs == ["xyz", "--abc"]
+        assert envconfig.argv == ["xyz", "--abc"]
         assert envconfig.changedir == config.packagedir
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""
             [test]
-            cmdargs=xyz
+            argv=xyz
             [testenv:py30]
-            cmdargs=abc
+            argv=abc
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['py30']
-        assert envconfig.cmdargs == ["abc"]
+        assert envconfig.argv == ["abc"]
 
     def test_changedir(self, tmpdir, makeconfig):
         config = makeconfig("""

@@ -5,6 +5,7 @@ configparser = py.builtin._tryimport("ConfigParser", "configparser")
 class Config:
     def __init__(self):
         self.envconfigs = {}
+        self.invocationcwd = py.path.local()
 
 class ConfigError(Exception):
     """ error in tox configuration. """
@@ -47,7 +48,7 @@ class ConfigIniParser:
         vc.envtmpdir = reader.getpath(section, "tmpdir", vc.envdir.join("tmp"))
         reader.addsubstitions(envname=vc.name, envtmpdir=vc.envtmpdir)
         vc.python = reader.getdefault(section, "python", None)
-        vc.cmdargs = reader.getlist(section, "cmdargs")
+        vc.argv = reader.getlist(section, "argv")
         vc.deps = reader.getlist(section, "deps")
         vc.changedir = reader.getpath(section, "changedir", self.config.packagedir)
         downloadcache = reader.getdefault(section, "downloadcache")
