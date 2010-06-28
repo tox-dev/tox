@@ -25,11 +25,12 @@ class ConfigIniParser:
     def __init__(self, cfg, toxinipath):
         self._cfg = cfg
         self.config = config = Config()
-        config._parser = self
         config.toxinipath = py.path.local(toxinipath)
+        config._cfg = cfg
         toxinidir = config.toxinipath.dirpath()
-        config.toxdir = self.getpath("global", "toxdir", toxinidir, ".tox")
-        config.packagedir = self.getpath("global", "packagedir", toxinidir)
+        reader = IniReader(self._cfg)
+        config.toxdir = reader.getpath("global", "toxdir", toxinidir, ".tox")
+        config.packagedir = reader.getpath("global", "packagedir", toxinidir)
         config.logdir = config.toxdir.join("log")
         sections = cfg.sections()
         for section in sections:
@@ -42,17 +43,29 @@ class ConfigIniParser:
     def _makeenvconfig(self, name, section):
         vc = VenvConfig(name=name)
         vc.envdir = self.config.toxdir.join(name)
-        vc.python = self.getdefault(section, "python", None)
-        vc.cmdargs = self.getlist(section, "cmdargs")
-        vc.deps = self.getlist(section, "deps")
-        vc.changedir = self.getpath(section, "changedir", self.config.packagedir)
-        downloadcache = self.getdefault(section, "downloadcache")
+        reader = IniReader(self._cfg, fallbacksections=["test"])
+        vc.envtmpdir = reader.getpath(section, "tmpdir", vc.envdir.join("tmp"))
+        reader.addsubstitions(envname=vc.name, envtmpdir=vc.envtmpdir)
+        vc.python = reader.getdefault(section, "python", None)
+        vc.cmdargs = reader.getlist(section, "cmdargs")
+        vc.deps = reader.getlist(section, "deps")
+        vc.changedir = reader.getpath(section, "changedir", self.config.packagedir)
+        downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache is None:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", "")
             if not downloadcache:
                 downloadcache = self.config.toxdir.join("_download")
         vc.downloadcache = py.path.local(downloadcache)
         return vc
+
+class IniReader:
+    def __init__(self, cfgparser, fallbacksections=None):
+        self._cfg = cfgparser
+        self.fallbacksections = fallbacksections or []
+        self._subs = {}
+
+    def addsubstitions(self, **kw):
+        self._subs.update(kw)
 
     def getpath(self, section, name, basedir, basename=None):
         basename = self.getdefault(section, name, basename)
@@ -68,10 +81,20 @@ class ConfigIniParser:
 
     def getdefault(self, section, name, default=None):
         try:
-            return self._cfg.get(section, name)
+            x = self._cfg.get(section, name)
         except (configparser.NoSectionError, configparser.NoOptionError):
-            try:
-                return self._cfg.get("test", name)
-            except (configparser.NoSectionError, configparser.NoOptionError):
-                return default
+            for fallbacksection in self.fallbacksections:
+                try:
+                    x = self._cfg.get(fallbacksection, name)
+                except (configparser.NoSectionError, configparser.NoOptionError):
+                    pass
+                else:
+                    break
+            else:
+                x = default
+        if self._subs and x:
+            for name, value in self._subs.items():
+                substname = "{%s}" % name
+                x = x.replace(substname, str(value))
+        return x
 

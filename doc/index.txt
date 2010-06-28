@@ -34,7 +34,7 @@ want your project to run in into a ``tox.ini`` file::
 
     # content of: tox.ini
     [test]
-    command=py.test --junitxml=%(envname)s.xml 
+    command=py.test --junitxml={envname}.xml 
     [testenv:py25]
     python=python2.5
     [testenv:py26]

@@ -74,19 +74,10 @@ class VirtualEnv(object):
         self._pcall(args)
 
     def test(self, cwd=None):
-        envtmpdir = self.envconfig.envdir.join("tmp")
+        envtmpdir = self.envconfig.envtmpdir
         self.session.make_emptydir(envtmpdir)
-        ns = {
-            'envname': self.envconfig.name,
-            'envtmpdir': envtmpdir, 
-        }
-        cmdargs = []
-        for arg in self.envconfig.cmdargs:
-            if '%' in arg:
-                arg = arg % ns 
-            cmdargs.append(arg)
         try:
-            self._pcall(cmdargs, log=-1, cwd=cwd)
+            self._pcall(self.envconfig.cmdargs, log=-1, cwd=cwd)
         except tox.exception.InvocationError:
             return True
 

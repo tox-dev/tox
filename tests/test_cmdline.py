@@ -233,8 +233,8 @@ def test_test_simple(cmd, initproj):
             [test]
             changedir=tests 
             cmdargs=py.test 
-                --basetemp=%(envtmpdir)s 
-                --junitxml=junit-%(envname)s.xml 
+                --basetemp={envtmpdir}
+                --junitxml=junit-{envname}.xml 
             deps=py
         '''
     })
