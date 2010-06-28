@@ -121,6 +121,17 @@ class TestIniParser:
         x = reader.getpath("section", "path1", tmpdir)
         assert x == tmpdir.join("mypath")
 
+    def test_getbool(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [section]
+            key1=True
+            key2=False
+        """)
+        reader = IniReader(config._cfg)
+        assert reader.getbool("section", "key1") == True
+        assert reader.getbool("section", "key2") == False
+        py.test.raises(KeyError, 'reader.getbool("section", "key3")')
+
 class TestConfigTestEnv:
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("""
@@ -132,6 +143,7 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.argv == ["xyz", "--abc"]
         assert envconfig.changedir == config.packagedir
+        assert envconfig.distribute == False
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""

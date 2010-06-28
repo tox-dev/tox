@@ -45,6 +45,7 @@ def test_create(tmpdir, monkeypatch, mocksession):
         envbasedir = tmpdir.ensure("basedir", dir=1)
         envdir = envbasedir.join("envbasedir", "xyz123")
         python = None
+        distribute=True
     venv = VirtualEnv(Envconfig, session=mocksession)
     assert venv.path == Envconfig.envdir
     assert not venv.path.check()
@@ -53,12 +54,28 @@ def test_create(tmpdir, monkeypatch, mocksession):
     assert len(l) == 1
     args = l[0]
     assert "virtualenv" in " ".join(args[:2])
+    assert "--distribute" in " ".join(args)
     if sys.platform != "win32":
         i = args.index("-p")
         assert i != -1, args
         assert sys.executable == args[i+1]
         #assert Envconfig.envbasedir in args
         assert venv.getcommandpath("easy_install")
+
+def test_create_distribute_false(tmpdir, monkeypatch, mocksession):
+    class Envconfig:
+        envbasedir = tmpdir.ensure("basedir", dir=1)
+        envdir = envbasedir.join("envbasedir", "xyz123")
+        python = None
+        distribute = False
+    venv = VirtualEnv(Envconfig, session=mocksession)
+    assert venv.path == Envconfig.envdir
+    assert not venv.path.check()
+    venv.create()
+    l = mocksession.l
+    assert len(l) == 1
+    args = l[0]
+    assert "--distribute" not in " ".join(args[:2])
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
 def test_install_downloadcache(tmpdir, mocksession):
@@ -67,6 +84,7 @@ def test_install_downloadcache(tmpdir, mocksession):
         envbasedir = tmpdir.ensure("basedir", dir=1)
         envdir = envbasedir.join("envbasedir", "xyz123")
         python = sys.executable
+        distribute = True
     venv = VirtualEnv(Envconfig, session=mocksession)
     venv.create()
     l = mocksession.l

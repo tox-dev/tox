@@ -36,6 +36,8 @@ class VirtualEnv(object):
             raise MissingInterpreter("Jython/Windows does not support installing scripts")
         args = ['virtualenv' + (self._ispython3() and "3" or "")]
         args.append('--no-site-packages')
+        if not self._ispython3() and self.envconfig.distribute:
+            args.append('--distribute')
         python = self.envconfig.python
         if not python:
             python = sys.executable

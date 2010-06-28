@@ -51,6 +51,7 @@ class ConfigIniParser:
         vc.argv = reader.getlist(section, "argv")
         vc.deps = reader.getlist(section, "deps")
         vc.changedir = reader.getpath(section, "changedir", self.config.packagedir)
+        vc.distribute = reader.getbool(section, "distribute", False)
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache is None:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", "")
@@ -80,6 +81,15 @@ class IniReader:
             return []
         return [x.strip() for x in s.split(sep) if x.strip()]
 
+    def getbool(self, section, name, default=None):
+        s = self.getdefault(section, name, default)
+        if s is None:
+            raise KeyError("no config value [%s] %s found" % (
+                section, name))
+        if not isinstance(s, bool):
+            s = (s == "True" and True or False)
+        return s
+
     def getdefault(self, section, name, default=None):
         try:
             x = self._cfg.get(section, name)
@@ -93,7 +103,7 @@ class IniReader:
                     break
             else:
                 x = default
-        if self._subs and x:
+        if self._subs and x and hasattr(x, 'replace'):
             for name, value in self._subs.items():
                 substname = "{%s}" % name
                 x = x.replace(substname, str(value))
