@@ -16,7 +16,7 @@ from tox._config import parseini
 def main(args=None):
     try:
         parser = prepare_parse()
-        opts = parser.parse_args(args or sys.argv[1:] or ["test"])
+        opts = parser.parse_args(args or sys.argv[1:])
         opts.configfile = py.path.local(opts.configfile)
         if not opts.configfile.check():
             feedback("config file %r does not exist" %(
