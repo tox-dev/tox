@@ -49,9 +49,11 @@ def prepare_parse():
     parser.add_argument("-c", action="store", default="tox.ini", 
         dest="configfile",
         help="use the specified config file.")
-    parser.add_argument("-e", "--env", action="append", dest="envlist", 
-        metavar="ENV",
-        help="work against specified environment (multi-allowed).")
+    parser.add_argument("-e", "--env", action="store", dest="env", 
+        metavar="envs",
+        help="work against specified comma-separated environments.")
+    parser.add_argument("--notest", action="store_true", dest="notest", 
+        help="perform packaging & setup, but no tests.")
     parser.add_argument("testpath", nargs="*", help="a path to a test")
     return parser
 
@@ -61,10 +63,13 @@ class Reporter:
         self.tw = py.io.TerminalWriter()
 
     def section(self, name):
-        self.tw.sep("=", name, bold=True)
+        self.tw.sep("=", "[tox %s]" % name, bold=True)
 
     def action(self, msg):
         self.logline("***" + msg, bold=True)
+
+    def info(self, msg):
+        self.logline(msg)
 
     def using(self, msg):
         self.logline("using %s" %(msg,), bold=True)
@@ -145,11 +150,13 @@ class Session:
 
     def _makevenvlist(self):
         try:
-            envlist = self.config.opts.envlist
+            env = self.config.opts.env
         except AttributeError:
-            envlist = None
-        if not envlist:
+            env = None
+        if not env:
             envlist = self.config.envconfigs.keys()
+        else:
+            envlist = env.split(",")
         l = []
         for name in envlist:
             envconfig = self.config.envconfigs.get(name, None)
@@ -216,6 +223,9 @@ class Session:
 
     def subcommand_test(self):
         self.setupenv()
+        if self.config.opts.notest:
+            self.report.info("skipping test run because '--notest' was specified")
+            return 0
         self.report.section("test")
         for venv in self.venvlist:
             if self.venvstatus[venv.path]:
@@ -226,7 +236,7 @@ class Session:
         return retcode
 
     def _summary(self):
-        self.report.section("[tox] summary")
+        self.report.section("summary")
         retcode = 0
         for venv in self.venvlist:
             status = self.venvstatus[venv.path]

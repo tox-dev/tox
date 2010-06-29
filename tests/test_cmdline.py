@@ -265,3 +265,26 @@ def test_test_piphelp(initproj, cmd):
     """})
     result = cmd.run("tox")
     assert not result.ret
+
+def test_notest(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+        # content of: tox.ini
+        [testenv:py25]
+        python=python2.5
+        [testenv:py26]
+        python=python2.6
+    """})
+    result = cmd.run("tox", "--notest")
+    assert not result.ret
+    assert "tox summary" not in result.stdout.str()
+    result = cmd.run("tox", "--notest", "--env=py25")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*reusing*py25",
+    ])
+    result = cmd.run("tox", "--notest", "--env=py25,py26")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*reusing*py25",
+        "*reusing*py26",
+    ])
