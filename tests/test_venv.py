@@ -2,6 +2,7 @@ import py
 import tox
 import sys
 from tox._venv import VirtualEnv
+from fnmatch import fnmatch
 
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -11,11 +12,39 @@ from tox._venv import VirtualEnv
 #    assert not out
 #    assert not err
 #
+class ReportExpectMock:
+    def __init__(self):
+        self._calls = []
+        self._index = -1
+
+    def __getattr__(self, name):
+        if name[0] == "_":
+            raise AttributeError(name)
+        return lambda *args: self._calls.append((name,)+ args)
+
+    def expect(self, cat, messagepattern):
+        newindex = self._index + 1
+        while newindex < len(self._calls):
+            lcat, lmsg = self._calls[newindex]
+            if lcat == cat and fnmatch(lmsg, messagepattern):
+                self._index = newindex
+                return
+            newindex += 1
+        raise AssertionError(
+            "looking for %s(%r), no reports found at >=%d in %r" %
+            (cat, messagepattern, self._index+1, self._calls))
+    
 def pytest_funcarg__mocksession(request):
     class MockSession:
-        l = []
+        def __init__(self):
+            self._clearmocks()
+            self.report = ReportExpectMock()
+        def _clearmocks(self):
+            self._pcalls = []
+            self._reports = []
+            
         def pcall(self, args, log, cwd):
-            self.l.append(args)
+            self._pcalls.append(args)
     return MockSession()
 
 def test_find_executable():
@@ -40,6 +69,28 @@ def test_find_executable():
         stdout, stderr = popen.communicate()
         assert ver in py.builtin._totext(stderr, "ascii")
 
+def test_getsupportedinterpreter(monkeypatch, makeconfig, mocksession):
+    config = makeconfig("""
+        [testenv:python]
+        python=%s
+    """ % sys.executable)
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
+    interp = venv.getsupportedinterpreter()
+    assert interp == sys.executable
+    monkeypatch.setattr(sys, 'platform', "win32")
+    monkeypatch.setattr(venv.envconfig, 'python', 'python3')
+    py.test.raises(tox.exception.UnsupportedInterpreter, 
+                   venv.getsupportedinterpreter)
+    monkeypatch.undo()
+    monkeypatch.setattr(sys, 'platform', "win32")
+    monkeypatch.setattr(venv.envconfig, 'python', 'jython')
+    py.test.raises(tox.exception.UnsupportedInterpreter, 
+                   venv.getsupportedinterpreter)
+    monkeypatch.undo()
+    monkeypatch.setattr(venv.envconfig, 'python', 'notexistingpython')
+    py.test.raises(tox.exception.InterpreterNotFound, 
+                   venv.getsupportedinterpreter)
+
 def test_create(tmpdir, monkeypatch, mocksession):
     class Envconfig:
         envbasedir = tmpdir.ensure("basedir", dir=1)
@@ -50,7 +101,7 @@ def test_create(tmpdir, monkeypatch, mocksession):
     assert venv.path == Envconfig.envdir
     assert not venv.path.check()
     venv.create()
-    l = mocksession.l
+    l = mocksession._pcalls
     assert len(l) == 1
     args = l[0]
     assert "virtualenv" in " ".join(args[:2])
@@ -61,6 +112,8 @@ def test_create(tmpdir, monkeypatch, mocksession):
         assert sys.executable == args[i+1]
         #assert Envconfig.envbasedir in args
         assert venv.getcommandpath("easy_install")
+    interp = venv.path_python.read()
+    assert interp == venv.getconfigexecutable()
 
 def test_create_distribute_false(tmpdir, monkeypatch, mocksession):
     class Envconfig:
@@ -72,7 +125,7 @@ def test_create_distribute_false(tmpdir, monkeypatch, mocksession):
     assert venv.path == Envconfig.envdir
     assert not venv.path.check()
     venv.create()
-    l = mocksession.l
+    l = mocksession._pcalls
     assert len(l) == 1
     args = l[0]
     assert "--distribute" not in " ".join(args[:2])
@@ -85,12 +138,13 @@ def test_install_downloadcache(tmpdir, mocksession):
         envdir = envbasedir.join("envbasedir", "xyz123")
         python = sys.executable
         distribute = True
+        deps=['hello', 'world']
     venv = VirtualEnv(Envconfig, session=mocksession)
     venv.create()
-    l = mocksession.l
+    l = mocksession._pcalls
     assert len(l) == 1
 
-    venv.install(["hello", "world"])
+    venv.install_deps()
     assert len(l) == 2
     args = l[1]
     assert "pip" in str(args[0])
@@ -99,6 +153,8 @@ def test_install_downloadcache(tmpdir, mocksession):
     assert arg in args[2:]
     assert "hello" in args
     assert "world" in args
+    deps = filter(None, venv.path_deps.readlines(cr=0))
+    assert deps == ['hello', 'world']
 
 def test_install_python3(tmpdir, mocksession):
     if not py.path.local.sysfind('python3.1'):
@@ -110,14 +166,74 @@ def test_install_python3(tmpdir, mocksession):
         python = "python3.1"
     venv = VirtualEnv(Envconfig, session=mocksession)
     venv.create()
-    l = mocksession.l
+    l = mocksession._pcalls
     assert len(l) == 2
     args = l[0]
     assert 'virtualenv3' in args[0]
     l[:] = []
-    venv.install(["hello"])
+    venv._install(["hello"])
     assert len(l) == 1
     args = l[0]
     assert 'easy_install' in str(args[0])
     for x in args:
         assert "--download-cache" not in args, args
+
+class TestVenvUpdate:
+
+    def test_iscorrectpythonenv(self, makeconfig, mocksession):
+        config = makeconfig("")
+        envconfig = config.envconfigs['python'] 
+        venv = VirtualEnv(envconfig, session=mocksession)
+        assert not venv.iscorrectpythonenv()
+        ex = venv.getconfigexecutable() 
+        assert ex
+        venv.path_python.ensure().write(str(ex))
+        venv.path_deps.write("")
+        assert venv.iscorrectpythonenv()
+
+    def test_matchingdependencies(self, makeconfig, mocksession):
+        config = makeconfig("""
+            [test]
+            deps=abc
+        """)
+        envconfig = config.envconfigs['python'] 
+        venv = VirtualEnv(envconfig, session=mocksession)
+        assert not venv.matchingdependencies()
+        venv.path_deps.ensure().write("abc\n")
+        assert venv.matchingdependencies()
+        venv.path_deps.ensure().write("abc\nxyz\n")
+        assert not venv.matchingdependencies()
+
+    def test_python_recreation(self, makeconfig, mocksession):
+        config = makeconfig("")
+        envconfig = config.envconfigs['python']
+        venv = VirtualEnv(envconfig, session=mocksession)
+        assert not venv.path_python.check()
+        venv.update()
+        assert mocksession._pcalls
+        args1 = mocksession._pcalls[0]
+        assert 'virtualenv' in " ".join(args1)
+        s = venv.path_python.read()
+        assert s == sys.executable
+        mocksession.report.expect("action", "creating virtualenv*")
+        # modify config and check that recreation happens
+        venv.path_python.write("hullabulla")
+        mocksession._clearmocks()
+        venv.update()
+        mocksession.report.expect("action", "recreating virtualenv*")
+
+    def test_python_recreate_deps(self, makeconfig, mocksession):
+        config = makeconfig("""
+                [test]
+                deps=abc123
+        """)
+        envconfig = config.envconfigs['python']
+        venv = VirtualEnv(envconfig, session=mocksession)
+        venv.path_python.ensure().write(venv.getconfigexecutable())
+        venv.path_deps.write("\n".join(venv.envconfig.deps))
+        venv.update()
+        assert not mocksession._pcalls
+        mocksession.report.expect("action", "reusing existing matching virtualenv*")
+        venv.path_deps.write("xyz\n")
+        msg = venv.update() 
+        mocksession.report.expect("action", "recreating virtualenv*")

@@ -64,10 +64,10 @@ class Reporter:
         self.tw.sep("=", name, bold=True)
 
     def action(self, msg):
-        self.tw.line("***" + msg, bold=True)
+        self.logline("***" + msg, bold=True)
 
     def using(self, msg):
-        self.tw.line("using %s" %(msg,), bold=True)
+        self.logline("using %s" %(msg,), bold=True)
 
     def popen(self, args, log, opts):
         cwd = py.path.local()
@@ -83,13 +83,13 @@ class Reporter:
             logged_command += " >%s" % rellog
             f.write(logged_command+"\n")
             opts.update(dict(stdout=f, stderr=subprocess.STDOUT))
-        self.tw.line(logged_command)
+        self.logline(logged_command)
 
     def keyboard_interrupt(self):
         self.tw.line("KEYBOARDINTERRUPT", red=True)
 
     def venv_installproject(self, venv, pkg):
-        self.tw.line("installing to %s: %s" % (venv.envconfig.name, pkg))
+        self.logline("installing to %s: %s" % (venv.envconfig.name, pkg))
 
     def keyvalue(self, name, value):
         if name.endswith(":"):
@@ -99,16 +99,19 @@ class Reporter:
         self.tw.line()
 
     def line(self, msg, **opts):
-        self.tw.line(msg, **opts)
+        self.logline(msg, **opts)
 
     def good(self, msg):
-        self.tw.line(msg, green=True)
+        self.logline(msg, green=True)
 
     def error(self, msg):
-        self.tw.line("ERROR: " + msg, red=True)
+        self.logline("ERROR: " + msg, red=True)
 
-    def log(self, msg):
-        py.builtin.print_(msg, file=sys.stderr)
+    def logline(self, msg, **opts):
+        self.tw.line("[TOX] %s" % msg, **opts)
+
+    #def log(self, msg):
+    #    py.builtin.print_(msg, file=sys.stderr)
 
         
 class Session:
@@ -163,7 +166,7 @@ class Session:
         sdist_path = self.get_fresh_sdist()
         #self.report.venv_installproject(venv, sdist_path)
         try:
-            venv.install([sdist_path])
+            venv.install_sdist(sdist_path)
         except tox.exception.InvocationError:
             self.setenvstatus(venv, "FAIL could not install package")
 
@@ -204,31 +207,12 @@ class Session:
             raise SystemExit(1)
         for venv in self.venvlist:
             self.venvstatus[venv.path] = 0
-            if venv.path.join("VALID").check():
-                self.report.action("preparing virtualenv %s - "
-                    "reusing existing" %
-                    venv.envconfig.name)
+            status = venv.update()
+            if status:
+                self.setenvstatus(venv, status)
+                self.report.error(str(status))
             else:
-                self.report.action("preparing fresh virtualenv %s" %
-                    venv.envconfig.name)
-                self.make_emptydir(venv.path)
-                try:
-                    venv.create()
-                except tox.exception.MissingInterpreter:
-                    v = sys.exc_info()[1]
-                    self.setenvstatus(venv, 
-                        "FAIL could not create: %s" % (str(v)))
-                    continue
-                try:
-                    venv.install(venv.envconfig.deps)
-                except tox.exception.InvocationError:
-                    v = sys.exc_info()[1]
-                    self.setenvstatus(venv, 
-                        "FAIL could not install deps %r" %
-                            ",".join(venv.envconfig.deps))
-                    continue
-            venv.path.ensure("VALID")
-            self.build_and_install(venv)
+                self.build_and_install(venv)
 
     def subcommand_test(self):
         self.setupenv()
@@ -242,7 +226,7 @@ class Session:
         return retcode
 
     def _summary(self):
-        self.report.section("tox summary")
+        self.report.section("[tox] summary")
         retcode = 0
         for venv in self.venvlist:
             status = self.venvstatus[venv.path]
@@ -252,7 +236,7 @@ class Session:
             else:
                 self.report.good("%s: no failures" %(venv.envconfig.name, ))
         if not retcode:
-            self.report.good("congrats :)")
+            self.report.good("congratulation :)")
         return retcode 
 
     def subcommand_config(self):

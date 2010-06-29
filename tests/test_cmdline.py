@@ -104,7 +104,7 @@ def test_version(cmd):
     assert "imported from" in stdout
 
 def test_unkonwn_ini(cmd):
-    result = cmd.run("tox", "test")
+    result = cmd.run("tox")
     assert result.ret
     result.stderr.fnmatch_lines([
         "*tox.ini*does not exist*",
@@ -152,10 +152,10 @@ def test_unknown_interpreter(cmd, initproj):
             changedir=tests 
         '''
     })
-    result = cmd.run("tox", "test")
+    result = cmd.run("tox")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*FAIL*could not create*xyz_unknown_interpreter*",
+        "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
     ])
 
 def test_unknown_dep(cmd, initproj):
@@ -170,7 +170,7 @@ def test_unknown_dep(cmd, initproj):
     result = cmd.run("tox", )
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*FAIL*could not install*qweqwe123*",
+        "*ERROR*could not install*qweqwe123*",
     ])
 
 def test_unknown_environment(cmd, initproj):
@@ -216,7 +216,7 @@ def test_package_install_fails(cmd, initproj):
         ,
         'tox.ini': '',
     })
-    result = cmd.run("tox", "test")
+    result = cmd.run("tox", )
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*FAIL*could not install package*",
@@ -238,7 +238,7 @@ def test_test_simple(cmd, initproj):
             deps=py
         '''
     })
-    result = cmd.run("tox", "tests")
+    result = cmd.run("tox")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*junit-python.xml*",
@@ -249,7 +249,7 @@ def test_test_simple(cmd, initproj):
     result.stdout.fnmatch_lines([
         "*1 passed*",
         "*summary*",
-        "python: no failures"
+        "*python: no failures"
     ])
 
 def test_test_piphelp(initproj, cmd):
@@ -263,5 +263,5 @@ def test_test_piphelp(initproj, cmd):
         [testenv:py26]
         python=python2.6
     """})
-    result = cmd.run("tox", "test")
+    result = cmd.run("tox")
     assert not result.ret

@@ -6,8 +6,10 @@ import tox
 class VirtualEnv(object):
     def __init__(self, envconfig=None, session=None):
         self.envconfig = envconfig
-        self.path = envconfig.envdir
         self.session = session
+        self.path = envconfig.envdir
+        self.path_deps = self.path.join(".deps")
+        self.path_python = self.path.join(".python")
 
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
@@ -26,30 +28,80 @@ class VirtualEnv(object):
     def _ispython3(self):
         return "python3" in str(self.envconfig.python)
 
+    def update(self):
+        """ return status string for updating actual venv to match configuration. 
+            if status string is empty, all is ok.  
+        """
+        report = self.session.report
+        name = self.envconfig.name 
+        if not self.iscorrectpythonenv():
+            if not self.path_python.check():
+                report.action("creating virtualenv %s" % name)
+            else:
+                report.action("recreating virtualenv %s "
+                    "(configchange/partial install detected)" % name)
+            try:
+                self.create()
+            except tox.exception.UnsupportedInterpreter:
+                return sys.exc_info()[1]
+            except tox.exception.InterpreterNotFound:
+                return sys.exc_info()[1]
+            try:
+                self.install_deps()
+            except tox.exception.InvocationError:
+                v = sys.exc_info()[1]
+                return "could not install deps %r" %(
+                        ",".join(self.envconfig.deps))
+        else:
+            report.action("reusing existing matching virtualenv %s" %
+                (self.envconfig.name,))
+
+    def iscorrectpythonenv(self):
+        if self.path_python.check():
+            s = self.path_python.read()
+            executable = self.getconfigexecutable()
+            if s == executable:
+                return self.matchingdependencies()
+        return False
+
+    def matchingdependencies(self):
+        if self.path_deps.check():
+            deps = [x for x in self.path_deps.readlines(cr=0) if x.strip()]
+            if deps == self.envconfig.deps:
+                return True
+        return False
+
+    def getconfigexecutable(self):
+        python = self.envconfig.python
+        if not python:
+            python = sys.executable
+        return find_executable(str(python))
+
+    def getsupportedinterpreter(self):
+        if sys.platform == "win32" and self._ispython3():
+            raise UnsupportedInterpreter("python3/virtualenv3 is buggy on windows")
+        if sys.platform == "win32" and self.envconfig.python and \
+                "jython" in self.envconfig.python:
+            raise UnsupportedInterpreter("Jython/Windows does not support installing scripts")
+        config_executable = self.getconfigexecutable()
+        if not config_executable:
+            raise InterpreterNotFound(self.envconfig.python)
+        return config_executable
+
     def create(self):
         #if self.getcommandpath("activate").dirpath().check():
         #    return 
-        if sys.platform == "win32" and self._ispython3():
-            raise MissingInterpreter("python3/virtualenv3 is buggy on windows")
-        if sys.platform == "win32" and self.envconfig.python and \
-                "jython" in self.envconfig.python:
-            raise MissingInterpreter("Jython/Windows does not support installing scripts")
+        config_interpreter = self.getsupportedinterpreter()
         args = ['virtualenv' + (self._ispython3() and "3" or "")]
         args.append('--no-site-packages')
         if not self._ispython3() and self.envconfig.distribute:
             args.append('--distribute')
-        python = self.envconfig.python
-        if not python:
-            python = sys.executable
-        p = find_executable(str(python))
-        if not p:
-            raise MissingInterpreter(self.envconfig.python)
         if sys.platform == "win32":
             f, path, _ = py.std.imp.find_module("virtualenv")
             f.close()
-            args[:1] = [str(p), str(path)]
+            args[:1] = [str(config_interpreter), str(path)]
         else:
-            args.extend(["-p", str(p)])
+            args.extend(["-p", str(config_interpreter)])
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
         old = py.path.local()
@@ -58,22 +110,38 @@ class VirtualEnv(object):
             args.append(self.path.basename)
             self._pcall(args, venv=False)
             if self._ispython3():
-                self.install(["-U", "distribute"])
+                self.easy_install(["-U", "distribute"])
         finally:
             old.chdir()
+        self.path_python.write(str(config_interpreter))
 
-    def install(self, deps):
-        if not deps:
+    def install_sdist(self, sdistpath):
+        self._install([sdistpath])
+
+    def install_deps(self):
+        deps = self.envconfig.deps
+        self._install(deps)
+        self.path_deps.write("\n".join(map(str, deps)))
+
+    def easy_install(self, args):
+        argv = ["easy_install"] + args
+        self._pcall(argv)
+
+    def pip_install(self, args):
+        argv = ["pip", "install"] + args
+        if self.envconfig.downloadcache:
+            self.envconfig.downloadcache.ensure(dir=1)
+            argv.append("--download-cache=%s" % 
+                self.envconfig.downloadcache)
+        self._pcall(argv)
+
+    def _install(self, args):
+        if not args:
             return
         if self._ispython3():
-            args = ["easy_install"] + deps
+            self.easy_install(args)
         else:
-            args = ["pip", "install"] + deps
-            if self.envconfig.downloadcache:
-                self.envconfig.downloadcache.ensure(dir=1)
-                args.append("--download-cache=%s" % 
-                    self.envconfig.downloadcache)
-        self._pcall(args)
+            self.pip_install(args)
 
     def test(self, cwd=None):
         envtmpdir = self.envconfig.envtmpdir
@@ -123,5 +191,10 @@ else:
                 return actual
 
 
-class MissingInterpreter(Exception):
-    "signals an unknown or missing interpreter"
+class Error(Exception):
+    def __str__(self):
+        return "%s: %s" %(self.__class__.__name__, self.args[0])
+class UnsupportedInterpreter(Error):
+    "signals an unsupported Interpreter"
+class InterpreterNotFound(Error):
+    "signals that an interpreter could not be found"
