@@ -42,7 +42,8 @@ def pytest_funcarg__mocksession(request):
         def _clearmocks(self):
             self._pcalls = []
             self._reports = []
-            
+        def make_emptydir(self, path):
+            pass
         def pcall(self, args, log, cwd):
             self._pcalls.append(args)
     return MockSession()

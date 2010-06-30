@@ -208,6 +208,7 @@ class Session:
 
     def make_emptydir(self, path):
         if path.check():
+            self.report.info("removing %s" % path)
             py.std.shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir()
 
@@ -302,9 +303,10 @@ class Session:
         if ret:
             if logpath:
                 self.report.error("invocation failed, logfile: %s" % logpath)
+                raise tox.exception.InvocationError(
+                    "invoking %r produced errors, see %s" %(args[0], logpath))
             else:
-                self.report.error("invocation failed")
-            raise tox.exception.InvocationError(
-                "calling %r produced errors, see %s" %(args[0], logpath))
+                raise tox.exception.InvocationError(
+                    "invoking %r failed" %(args[0], ))
         return out
 

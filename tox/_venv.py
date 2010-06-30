@@ -104,6 +104,7 @@ class VirtualEnv(object):
             args[:1] = [str(config_interpreter), str(path)]
         else:
             args.extend(["-p", str(config_interpreter)])
+        self.session.make_emptydir(self.path)
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
         old = py.path.local()
