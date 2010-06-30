@@ -79,13 +79,15 @@ class VirtualEnv(object):
 
     def getsupportedinterpreter(self):
         if sys.platform == "win32" and self._ispython3():
-            raise UnsupportedInterpreter("python3/virtualenv3 is buggy on windows")
+            raise tox.exception.UnsupportedInterpreter(
+                "python3/virtualenv3 is buggy on windows")
         if sys.platform == "win32" and self.envconfig.python and \
                 "jython" in self.envconfig.python:
-            raise UnsupportedInterpreter("Jython/Windows does not support installing scripts")
+            raise tox.exception.UnsupportedInterpreter(
+                "Jython/Windows does not support installing scripts")
         config_executable = self.getconfigexecutable()
         if not config_executable:
-            raise InterpreterNotFound(self.envconfig.python)
+            raise tox.exception.InterpreterNotFound(self.envconfig.python)
         return config_executable
 
     def create(self):
@@ -191,10 +193,3 @@ else:
                 return actual
 
 
-class Error(Exception):
-    def __str__(self):
-        return "%s: %s" %(self.__class__.__name__, self.args[0])
-class UnsupportedInterpreter(Error):
-    "signals an unsupported Interpreter"
-class InterpreterNotFound(Error):
-    "signals that an interpreter could not be found"

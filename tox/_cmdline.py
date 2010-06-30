@@ -26,6 +26,8 @@ def main(args=None):
         Session(config).runcommand()
     except KeyboardInterrupt:
         raise SystemExit(2)
+    except tox.exception.InvocationError:
+        raise SystemExit(3)
 
 def feedback(msg, sysexit=False):
     py.builtin.print_("ERROR: " + msg, file=sys.stderr)
@@ -77,18 +79,21 @@ class Reporter:
     def popen(self, args, log, opts):
         cwd = py.path.local()
         logged_command = "%s$ %s" %(cwd, " ".join(args))
+        path = None
         if log != -1: # no passthrough mode 
             if log is None:
                 log = self.config.logdir
             l = log.listdir()
             num = len(l)
             path = log.join("%s.log" % num)
-            f = open(str(path), 'w')
+            f = path.open('w')
             rellog = cwd.bestrelpath(path)
             logged_command += " >%s" % rellog
             f.write(logged_command+"\n")
+            f.flush()
             opts.update(dict(stdout=f, stderr=subprocess.STDOUT))
         self.logline(logged_command)
+        return path
 
     def keyboard_interrupt(self):
         self.tw.line("KEYBOARDINTERRUPT", red=True)
@@ -181,7 +186,7 @@ class Session:
         self.report.action("creating sdist package")
         setup = self.config.packagedir.join("setup.py")
         if not setup.check():
-            raise MissingFile(setup)
+            raise tox.exception.MissingFile(setup)
         distdir = self.config.toxdir.join("dist")
         if distdir.check():
             distdir.remove() 
@@ -214,7 +219,10 @@ class Session:
             raise SystemExit(1)
         for venv in self.venvlist:
             self.venvstatus[venv.path] = 0
-            status = venv.update()
+            try:
+                status = venv.update()
+            except tox.exception.InvocationError:
+                status = sys.exc_info()[1]
             if status:
                 self.setenvstatus(venv, status)
                 self.report.error(str(status))
@@ -282,7 +290,7 @@ class Session:
            
         opts = {} 
         args = [str(x) for x in args]
-        self.report.popen(newargs, log, opts)
+        logpath = self.report.popen(newargs, log, opts)
         popen = subprocess.Popen(newargs, **opts)
         try:
             out, err = popen.communicate()
@@ -292,12 +300,11 @@ class Session:
             raise
         ret = popen.wait()
         if ret:
-            raise InvocationError(
-                "error %d while calling %r:\n%s" %(ret, args, err))
+            if logpath:
+                self.report.error("invocation failed, logfile: %s" % logpath)
+            else:
+                self.report.error("invocation failed")
+            raise tox.exception.InvocationError(
+                "calling %r produced errors, see %s" %(args[0], logpath))
         return out
-
-class InvocationError(Exception):
-    """ an error while invoking a script. """
-class MissingFile(Exception):
-    """ an error while invoking a script. """
 

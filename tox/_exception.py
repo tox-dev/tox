@@ -1,0 +1,13 @@
+
+class Error(Exception):
+    def __str__(self):
+        return "%s: %s" %(self.__class__.__name__, self.args[0])
+class UnsupportedInterpreter(Error):
+    "signals an unsupported Interpreter"
+class InterpreterNotFound(Error):
+    "signals that an interpreter could not be found"
+class InvocationError(Error):
+    """ an error while invoking a script. """
+class MissingFile(Error):
+    """ an error while invoking a script. """
+
