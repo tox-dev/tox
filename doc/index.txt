@@ -1,5 +1,5 @@
 
-The Python ``tox`` project aims to pave a new way to automate packaging, testing and release of Python software.  
+``tox`` helps you to automate virtualenv creation, python project packaging and testing in multiple virtualenv environments.  
 
 Install
 =============
@@ -12,19 +12,14 @@ Use one of the following commands::
 Features:
 =============
 
-* `tox` command line tool for starting packaging and testing
+* `tox` command line tool, driven by a simple ``tox.ini`` per-project 
+  configuration file and command line options. 
 
-* `tox` package for driving things directly from Python
-
-* automatic creation of virtual environments
+* automatically creates virtual environments
 
 * test-tool agnostic: runs nose, unittest or py.test style tests in a uniform manner
 
-* clean packaging: allows to specify files of a distribution
-
-* cross-Python compatible: handles Python2.4 up to Python3.1, Jython
-
-* (and soon PyPy-c after it grows virtualenv support)
+* cross-Python compatible: handles Python2.4 up to Python3.1, Jython and pypy-c 
 
 Basic Example 
 ================================
@@ -43,10 +38,10 @@ want your project to run in into a ``tox.ini`` file::
 To package, install and test the project, you can type at the command prompt
 (in your project root directory where your ``tox.ini`` and ``setup.py`` file should reside)::
 
-    tox test
+    tox 
 
 This will sdist-package your current project, create virtualenv_
-Environments, install the package into the environments and run
+Environments, install the sdist-package into the environments and run
 the specified command in them - in this case py.test_ which 
 creates XML result files which can be further processed 
 by Continous Integration Servers.  Sometimes it is useful to 
@@ -54,15 +49,12 @@ rather run from a Python script because they work across
 Win32 and Linux uniformly::
 
     import tox
-    tox.cmdline("test")
+    tox.cmdline()
 
 .. _Python: http://www.python.org
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 .. _`py.test`: http://pytest.org 
 .. _`nose`: http://pypi.python.org/pypi/nose
-
-Features
-------------------
 
 .. _`Holger Krekel`: http://twitter.com/hpk42
 
