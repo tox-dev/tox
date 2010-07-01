@@ -7,28 +7,27 @@ py.test and tox
 It is easy to integrate `py.test`_ runs with tox.  If you encounter 
 any issues use the :doc:`support` channels. 
 
-Basic py.test example 
-------------------------------
+Basic py.test example for "extra" test directories 
+--------------------------------------------------------------
 
-Here is an example test environment configuration for running py.test::
+Assuming you have your tests in the ``tests`` directory (relative 
+to the location of the ``tox.ini`` file) the following test-config 
+will change to it and then run the ``py.test`` command as specified::
 
     [test]
     changedir=tests   
     argv=
         py.test 
         --basetemp={envtmpdir}  # have py.test use the per-virtualenv temp dir 
+        --confcutdir=..         # stop looking for conftest files at parent dir
 
-
-Assuming you have your tests in the ``tests`` directory (relative 
-to the location of the ``tox.ini`` file) this will change to it 
-and then run the ``py.test`` command as specified. 
-
-Apart from just invoking ``tox`` you can also invoke it like this::
+Apart from invoking ``tox`` plainly you may also invoke it like this::
 
     tox tests/test_something.py 
 
-These command line positional arguments will be appended to the ``argv`` above so 
+The command line positional argument will be appended to the ``argv`` above so 
 that you can use ``tox`` to trigger testing of a particular test file. 
+
 
 Using multiple CPUs for test runs
 -----------------------------------
@@ -66,7 +65,7 @@ for your ``argv`` parameter::
         --basetemp={envtmpdir}
         --junitxml=junit-{envname}.xml
    
-and then configure your Hudson job to collect ``**/junit-*.xml`` files. 
+and then configure your Hudson job to collect "JUnit test results" with the ``**/junit-*.xml`` pattern. 
 
 For a real-life example see `py.test own Hudson job configuration`_. This actually
 uses a "Parametrized Hudson built" which provides a nice configuration matrix 
@@ -74,3 +73,12 @@ and lets ``tox`` handle all the underlying work of preparing and running things.
 
 .. _`py.test own Hudson job configuration`: http://hudson.testrun.org/view/pytest/job/pytest-multi/configure
 
+Issues and limitations 
+-----------------------------
+
+* tox does not work on the Windows/Python3/Virtualenv3 combination due to limitations of the virtualenv3 project  
+* on Windows you may encounter "too long filenames" for temporarily
+  created files in your py.test run.  Try to not use the "--basetemp" parameter. 
+* If you have a test layout where your test files are subdirectories of
+  your Python package then you will run your tests against the source package
+  and not the installed version.  

@@ -37,7 +37,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 install: clean html
-    rsync -avz $(BUILDDIR)/html/ code:www-tox/
+	rsync -avz $(BUILDDIR)/html/ code:www-tox/
 
 
 html:
