@@ -1,0 +1,46 @@
+tox installation 
+==================================
+
+Install info in a nutshell
+----------------------------------
+
+**Pythons**: 2.4, 2.5, 2.6, 2.7, 3.0, 3.1.x, Jython-2.5.1, PyPy-trunk 
+
+**Operating systems**: Linux, Windows, OSX, Unix 
+
+**Installer Requirements**: setuptools_ or Distribute_
+
+**hg repository**: http://code.google.com/p/pytox/source/checkout
+
+Installation with pip/easy_install 
+--------------------------------------
+
+Use one of the following commands::
+
+   pip install tox  
+   easy_install tox 
+
+It is fine to install ``tox`` itself into a virtualenv_ environment. 
+
+Install from Checkout 
+-------------------------
+
+Consult the Google code page to get a checkout of the mercurial repository: 
+
+    http://code.google.com/p/pytox/source/checkout
+
+To install in your environment perform::
+
+    python setup.py install   
+    
+or to activate your checkout in your environment::
+
+    python setup.py develop   
+
+so that you can do changes and submit patches.
+
+.. _`easy_install`: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _pip: http://pypi.python.org/pypi/pip
+.. _setuptools: http://pypi.python.org/pypi/setuptools
+.. _distribute: http://pypi.python.org/pypi/distribute
+.. _virtualenv: http://pypi.python.org/pypi/virtualenv

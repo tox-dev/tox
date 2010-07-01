@@ -1,0 +1,27 @@
+
+Basic usage example 
+================================
+
+Put basic information about your project and the test environments you
+want your project to run in into a ``tox.ini`` file that should 
+reside next to your ``setup.py`` file::
+
+    # content of: tox.ini , put in same dir as setup.py 
+    [test]
+    argv=py.test  # or 'nosetests' or ...
+    [testenv:py25]
+    python=python2.5
+    [testenv:py26]
+    python=python2.6
+
+To package, install and test your project, you can now type at the command prompt::
+
+    tox 
+
+This will sdist-package your current project, create virtualenv_
+Environments, install the sdist-package into the environments and run
+the specified command in each of them.  With::
+
+    tox -e py26 
+
+you can run only tests on Python2.6.  

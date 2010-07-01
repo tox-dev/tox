@@ -1,66 +1,50 @@
 
-``tox`` helps you to automate virtualenv creation, python project packaging and testing in multiple virtualenv environments.  
+tox features
+=========================================
 
-Install
-=============
+* ``tox`` **automates tedious Python related test activities**
 
-Use one of the following commands::
+* **test your Python package against many interpreter and dependency configs**
 
-   pip install tox  # or 
-   easy_install tox 
+    - automatic (re)creation of virtualenv environments for running tests 
 
-Features:
-=============
+    - packages your ``setup.py`` based project and installs it in each virtual environment
 
-* `tox` command line tool, driven by a simple ``tox.ini`` per-project 
-  configuration file and command line options. 
+    - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
 
-* automatically creates virtual environments
+* **documented** :doc:`examples` and :doc:`configuration <toxini>` 
 
-* test-tool agnostic: runs nose, unittest or py.test style tests in a uniform manner
+* **professionally** :doc:`supported <support>`
 
-* cross-Python compatible: handles Python2.4 up to Python3.1, Jython and pypy-c 
+* **concise reporting** about tool invocations and configuration errors
 
-Basic Example 
-================================
+* **cross-Python compatible**: handles Python2.4 up to Python3.1, Jython and pypy-c (trunk version) 
 
-Put basic information about your project and the test environments you
-want your project to run in into a ``tox.ini`` file::
+* **cross-platform**: runs on windows and unix style environments 
 
-    # content of: tox.ini
-    [test]
-    command=py.test --junitxml={envname}.xml 
-    [testenv:py25]
-    python=python2.5
-    [testenv:py26]
-    python=python2.6
+.. note::
+    Tox was created in July 2010 by `Holger Krekel`_ - feedback and contributions very welcome. 
+    subscribe and post to http://codespeak.net/mailman/listinfo/tox-dev
+    or visit the #pylib channel on freenode. 
 
-To package, install and test the project, you can type at the command prompt
-(in your project root directory where your ``tox.ini`` and ``setup.py`` file should reside)::
 
-    tox 
+.. _`tox.ini`: :doc:configfile
 
-This will sdist-package your current project, create virtualenv_
-Environments, install the sdist-package into the environments and run
-the specified command in them - in this case py.test_ which 
-creates XML result files which can be further processed 
-by Continous Integration Servers.  Sometimes it is useful to 
-rather run from a Python script because they work across
-Win32 and Linux uniformly::
 
-    import tox
-    tox.cmdline()
+.. toctree::
+   :hidden:
+
+   install
+   examples
+   toxini 
+   support
+
 
 .. _Python: http://www.python.org
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _virtualenv3: http://pypi.python.org/pypi/virtualenv3
 .. _`py.test`: http://pytest.org 
 .. _`nose`: http://pypi.python.org/pypi/nose
 
 .. _`Holger Krekel`: http://twitter.com/hpk42
 
-.. toctree::
-   :hidden:
-
-   implementation
-   feature
-   usecases 

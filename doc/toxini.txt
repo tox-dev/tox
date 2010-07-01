@@ -1,0 +1,84 @@
+
+tox configuration
+================================
+
+.. _ConfigParser: http://docs.python.org/library/configparser.html
+
+``tox.ini`` files uses the standard ConfigParser_ "ini-style" format. 
+Below you find the specification, you might want to skim some 
+:doc:`examples` first. 
+
+Global settings
+----------------------
+
+List of optional global options::
+
+    [global]
+    toxdir=path      # tox directory, defaults to .tox
+    packagedir=path  # defaults to dirpath of tox.ini file
+    logdir=path      # defaults to {toxdir}/log
+
+Test environment settings 
+------------------------------
+
+Test environments are defined by a::
+
+    [testenv:NAME]
+    ...
+
+section.  Defaults for each setting come from the::
+
+    [test]
+    ...
+
+testenvironment default section. 
+
+Complete list of settings that you can put into ``testenv*`` sections:
+
+python=NAME-OR-PATH
+    name or path to a Python interpreter which will be used for creating the virtual 
+    environment. 
+
+argv=MULTI-LINE
+    the test command to be called for testing. Each line defines one 
+    item of a list that will be passed to ``subprocess.Popen``. 
+
+tmpdir=path
+    XXX defines a temporary directory of the virtualenv, 
+    available via the ``envtmpdir`` substition, defaults to 
+
+deps=MULTI-LINE-LIST
+    dependencies to be installed into the environment prior to project package installation.
+    Each line defines a dependency, which will be passed to easy_install/pip for processing. 
+
+changedir=path 
+    change to this working directory when executing the test command. 
+    **default**: package setup directory. 
+
+downloadcache=path 
+    (pip only) use this directory for caching downloads - this defaults to the 
+    environment variable ``PIP_DOWNLOAD_CACHE`` if it is set. 
+    **default**: no download cache will be used. 
+    **note**: if creating multiple environments use of a download cache greatly 
+    speeds up the testing process. 
+
+    [testenv:NAME]   # a section defininig a virtualenv test environment
+    python=name-or-path   # name of Python intepreter, to be found on system path
+
+distribute=BOOL
+    Set to ``True`` if you want to use distribute in the virtual environment. 
+    **default:** False. (setuptools will be used)
+
+Substitutions
+---------------------
+
+Settings can generally use string-substitution like this::
+
+    CHANGEDIR={envtmpdir} 
+
+Possible substitions::
+
+envname
+    the name of the virtual environment 
+envtmpdir
+    the environment temporary directory 

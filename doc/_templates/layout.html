@@ -1,0 +1,37 @@
+{% extends "!layout.html" %}
+
+{% block relbar1 %}
+{% endblock %}
+{% block relbar2 %}
+{% endblock %}
+
+{% block rootrellink %}
+{% endblock %}
+{% block sidebarrel %}
+{% endblock %}
+
+{% block header %}
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<h1>tox: automated packaging and testing in many virtualenvs</h1>
+<div style="text-align: left; font-size: 130%; vertical-align: middle;">
+        <a href="{{ pathto('index') }}">features</a>&nbsp;|&nbsp;
+        <a href="{{ pathto('install') }}">install</a>&nbsp;|&nbsp;
+        <a href="{{ pathto('examples') }}">examples</a>&nbsp;|&nbsp;
+        <a href="{{ pathto('toxini') }}">config</a>&nbsp;|&nbsp;
+        <a href="{{ pathto('support') }}">support</a>&nbsp;
+</div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{{ super() }}
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-17241637-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+{% endblock %}

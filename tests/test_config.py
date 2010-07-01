@@ -189,3 +189,25 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 2
         assert "py24" in config.envconfigs
         assert "py25" in config.envconfigs
+
+    def test_simple(tmpdir, makeconfig):
+        config = makeconfig("""
+            [testenv:py24]
+            python=python2.4
+            [testenv:py25]
+            python=python2.5
+        """)
+        assert len(config.envconfigs) == 2
+        assert "py24" in config.envconfigs
+        assert "py25" in config.envconfigs
+
+    def test_simple(tmpdir, makeconfig):
+        config = makeconfig("""
+            [testenv:py24]
+            python=python2.4
+            [testenv:py25]
+            python=python2.5
+        """)
+        assert len(config.envconfigs) == 2
+        assert "py24" in config.envconfigs
+        assert "py25" in config.envconfigs

@@ -1,0 +1,76 @@
+
+py.test and tox 
+=================================
+
+.. _`py.test`: http://pytest.org 
+
+It is easy to integrate `py.test`_ runs with tox.  If you encounter 
+any issues use the :doc:`support` channels. 
+
+Basic py.test example 
+------------------------------
+
+Here is an example test environment configuration for running py.test::
+
+    [test]
+    changedir=tests   
+    argv=
+        py.test 
+        --basetemp={envtmpdir}  # have py.test use the per-virtualenv temp dir 
+
+
+Assuming you have your tests in the ``tests`` directory (relative 
+to the location of the ``tox.ini`` file) this will change to it 
+and then run the ``py.test`` command as specified. 
+
+Apart from just invoking ``tox`` you can also invoke it like this::
+
+    tox tests/test_something.py 
+
+These command line positional arguments will be appended to the ``argv`` above so 
+that you can use ``tox`` to trigger testing of a particular test file. 
+
+Using multiple CPUs for test runs
+-----------------------------------
+
+``py.test`` supports distributing tests to multiple processes and hosts 
+through the `pytest-xdist`_ plugin.  Here is an example configuration 
+to make ``tox`` use this feature::
+
+    [test]
+    deps=pytest-xdist 
+    changedir=tests   
+    argv=
+        py.test 
+        --basetemp={envtmpdir}  # use the per-virtualenv temp dir 
+        --confcutdir=..         # stop looking for conftest files at parent dir
+        -n 3                    # use three sub processes
+
+Using tox, py.test and the Hudson CI 
+-------------------------------------------
+
+The Hudson_ continous integration server allows to define "jobs" with 
+"build steps" which can be test invocations.  If you :doc:`install` ``tox`` on your
+default Python installation on each slave, you can then have a 
+Hudson test build step invoke tox from a Python script like this::
+
+    import tox
+    tox.cmdline()
+
+It makes sense to use something like the following configuration
+for your ``argv`` parameter::
+
+    argv=
+        py.test 
+        --confcutdir=.
+        --basetemp={envtmpdir}
+        --junitxml=junit-{envname}.xml
+   
+and then configure your Hudson job to collect ``**/junit-*.xml`` files. 
+
+For a real-life example see `py.test own Hudson job configuration`_. This actually
+uses a "Parametrized Hudson built" which provides a nice configuration matrix 
+and lets ``tox`` handle all the underlying work of preparing and running things. 
+
+.. _`py.test own Hudson job configuration`: http://hudson.testrun.org/view/pytest/job/pytest-multi/configure
+

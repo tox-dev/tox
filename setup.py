@@ -7,7 +7,7 @@ def main():
         install_requires+=['virtualenv']
     setup(
         name='tox',
-        description='automation tool for packaging and testing in many virtualenvs',
+        description='automated packaging and testing in many virtualenvs',
         url='http://codespeak.net/tox',
         version='0.5dev',
         license='GPLv2 or later',
