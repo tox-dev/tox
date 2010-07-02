@@ -1,5 +1,7 @@
 import os, sys
 import py
+import re
+import tox
 configparser = py.builtin._tryimport("ConfigParser", "configparser")
 
 class Config:
@@ -13,6 +15,14 @@ class ConfigError(Exception):
 class VenvConfig:
     def __init__(self, **kw):
         self.__dict__.update(kw)
+
+    @property
+    def envbindir(self):
+        if sys.platform == "win32" and "jython" not in self.python:
+            return self.envdir.join("Scripts")
+        else:
+            return self.envdir.join("bin")
+
 
 testenvprefix = "testenv:"
 
@@ -28,35 +38,44 @@ class ConfigIniParser:
         self.config = config = Config()
         config.toxinipath = py.path.local(toxinipath)
         config._cfg = cfg
-        toxinidir = config.toxinipath.dirpath()
+        config.toxinidir = toxinidir = config.toxinipath.dirpath()
         reader = IniReader(self._cfg)
-        config.toxdir = reader.getpath("global", "toxdir", toxinidir, ".tox")
+        reader.addsubstitions(toxinidir=config.toxinidir)
+        config.toxworkdir = reader.getpath("global", "toxworkdir", 
+                                        config.toxinidir, ".tox")
+        reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.packagedir = reader.getpath("global", "packagedir", toxinidir)
-        config.logdir = config.toxdir.join("log")
+        config.logdir = config.toxworkdir.join("log")
         sections = cfg.sections()
         for section in sections:
             if section.startswith(testenvprefix):
                 name = section[len(testenvprefix):]
-                config.envconfigs[name] = self._makeenvconfig(name, section)
+                envconfig = self._makeenvconfig(name, section, reader._subs)
+                config.envconfigs[name] = envconfig
         if not config.envconfigs:
-            config.envconfigs['python'] = self._makeenvconfig("python", "_xz_9")
+            config.envconfigs['python'] = \
+                self._makeenvconfig("python", "_xz_9", reader._subs)
 
-    def _makeenvconfig(self, name, section):
-        vc = VenvConfig(name=name)
-        vc.envdir = self.config.toxdir.join(name)
+    def _makeenvconfig(self, name, section, subs):
+        vc = VenvConfig(envname=name)
         reader = IniReader(self._cfg, fallbacksections=["test"])
+        reader.addsubstitions(**subs)
+        vc.envdir = reader.getpath(section, "envdir", subs['toxworkdir'], name)
+        vc.python = reader.getdefault(section, "python", sys.executable)
+        reader.addsubstitions(envdir=vc.envdir, envname=vc.envname,
+                              envbindir=vc.envbindir)
         vc.envtmpdir = reader.getpath(section, "tmpdir", vc.envdir.join("tmp"))
-        reader.addsubstitions(envname=vc.name, envtmpdir=vc.envtmpdir)
-        vc.python = reader.getdefault(section, "python", None)
+        reader.addsubstitions(envtmpdir=vc.envtmpdir)
         vc.argv = reader.getlist(section, "argv")
         vc.deps = reader.getlist(section, "deps")
-        vc.changedir = reader.getpath(section, "changedir", self.config.packagedir)
+        vc.changedir = reader.getpath(section, "changedir", 
+            self.config.packagedir)
         vc.distribute = reader.getbool(section, "distribute", False)
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache is None:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", "")
             if not downloadcache:
-                downloadcache = self.config.toxdir.join("_download")
+                downloadcache = self.config.toxworkdir.join("_download")
         vc.downloadcache = py.path.local(downloadcache)
         return vc
 
@@ -103,9 +122,20 @@ class IniReader:
                     break
             else:
                 x = default
-        if self._subs and x and hasattr(x, 'replace'):
-            for name, value in self._subs.items():
-                substname = "{%s}" % name
-                x = x.replace(substname, str(value))
+        if x and hasattr(x, 'replace'):
+            x = self._replace(x)
+        return x
+
+    def _sub(self, match):
+        key = match.group(0)[1:-1]
+        if key not in self._subs:
+            raise tox.exception.ConfigError(
+                "substitution key %r not found" % key)
+        return str(self._subs[key])
+
+    def _replace(self, x, rexpattern = re.compile("\{\w+?\}")):
+        if '{' in x:
+            print "processing", x
+            return rexpattern.sub(self._sub, x)
         return x
 

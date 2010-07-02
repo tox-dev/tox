@@ -61,7 +61,7 @@ This would Driven by a section of the ``tox.ini`` file::
     search_executeable = *
 
     [setup]
-    envbasedir = toxdir 
+    toxworkdir = toxworkdir 
     virtualenv = 
 
 Effectively     

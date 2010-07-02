@@ -5,7 +5,8 @@ py.test and tox
 .. _`py.test`: http://pytest.org 
 
 It is easy to integrate `py.test`_ runs with tox.  If you encounter 
-any issues use the :doc:`support` channels. 
+issues, please check if they are `listed as a known issue`_ and/or use 
+the :doc:`support channels <../support>`. 
 
 Basic py.test example for "extra" test directories 
 --------------------------------------------------------------
@@ -45,11 +46,13 @@ to make ``tox`` use this feature::
         --confcutdir=..         # stop looking for conftest files at parent dir
         -n 3                    # use three sub processes
 
+.. _`pytest-xdist`: http://codespeak.net/py/dist/test/plugin/xdist.html
+
 Using tox, py.test and the Hudson CI 
 -------------------------------------------
 
 The Hudson_ continous integration server allows to define "jobs" with 
-"build steps" which can be test invocations.  If you :doc:`install` ``tox`` on your
+"build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
 default Python installation on each slave, you can then have a 
 Hudson test build step invoke tox from a Python script like this::
 
@@ -68,12 +71,15 @@ for your ``argv`` parameter::
 and then configure your Hudson job to collect "JUnit test results" with the ``**/junit-*.xml`` pattern. 
 
 For a real-life example see `py.test own Hudson job configuration`_. This actually
-uses a "Parametrized Hudson built" which provides a nice configuration matrix 
+uses a "Parametrized Hudson build" which provides a nice configuration matrix 
 and lets ``tox`` handle all the underlying work of preparing and running things. 
 
 .. _`py.test own Hudson job configuration`: http://hudson.testrun.org/view/pytest/job/pytest-multi/configure
+.. _`Hudson`: http://hudson-ci.org/
 
-Issues and limitations 
+.. _`listed as a known issue`:
+
+Known Issues and limitations 
 -----------------------------
 
 * tox does not work on the Windows/Python3/Virtualenv3 combination due to limitations of the virtualenv3 project  

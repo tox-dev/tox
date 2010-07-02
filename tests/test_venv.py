@@ -93,9 +93,10 @@ def test_getsupportedinterpreter(monkeypatch, makeconfig, mocksession):
                    venv.getsupportedinterpreter)
 
 def test_create(tmpdir, monkeypatch, mocksession):
+    toxworkdir = tmpdir.ensure("basedir", dir=1)
     class Envconfig:
-        envbasedir = tmpdir.ensure("basedir", dir=1)
-        envdir = envbasedir.join("envbasedir", "xyz123")
+        envbindir = tmpdir.ensure("bindir", dir=1)
+        envdir = toxworkdir.join("toxworkdir", "xyz123")
         python = None
         distribute=True
     venv = VirtualEnv(Envconfig, session=mocksession)
@@ -111,15 +112,15 @@ def test_create(tmpdir, monkeypatch, mocksession):
         i = args.index("-p")
         assert i != -1, args
         assert sys.executable == args[i+1]
-        #assert Envconfig.envbasedir in args
+        #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install")
     interp = venv.path_python.read()
     assert interp == venv.getconfigexecutable()
 
 def test_create_distribute_false(tmpdir, monkeypatch, mocksession):
+    toxworkdir = tmpdir.ensure("basedir", dir=1)
     class Envconfig:
-        envbasedir = tmpdir.ensure("basedir", dir=1)
-        envdir = envbasedir.join("envbasedir", "xyz123")
+        envdir = toxworkdir.join("toxworkdir", "xyz123")
         python = None
         distribute = False
     venv = VirtualEnv(Envconfig, session=mocksession)
@@ -133,10 +134,11 @@ def test_create_distribute_false(tmpdir, monkeypatch, mocksession):
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
 def test_install_downloadcache(tmpdir, mocksession):
+    toxworkdir = tmpdir.ensure("basedir", dir=1)
     class Envconfig:
         downloadcache = tmpdir.ensure("download", dir=1)
-        envbasedir = tmpdir.ensure("basedir", dir=1)
-        envdir = envbasedir.join("envbasedir", "xyz123")
+        envdir = toxworkdir.join("toxworkdir", "xyz123")
+        envbindir = toxworkdir.join("envbindir")
         python = sys.executable
         distribute = True
         deps=['hello', 'world']
@@ -160,10 +162,11 @@ def test_install_downloadcache(tmpdir, mocksession):
 def test_install_python3(tmpdir, mocksession):
     if not py.path.local.sysfind('python3.1'):
         py.test.skip("needs python3.1")
+    toxworkdir = tmpdir.ensure("basedir", dir=1)
     class Envconfig:
         downloadcache = tmpdir.ensure("download", dir=1)
-        envbasedir = tmpdir.ensure("basedir", dir=1)
-        envdir = envbasedir.join("envbasedir", "xyz123")
+        envdir = toxworkdir.join("toxworkdir", "xyz123")
+        envbindir = toxworkdir.join("envbindir")
         python = "python3.1"
     venv = VirtualEnv(Envconfig, session=mocksession)
     venv.create()

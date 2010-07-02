@@ -99,7 +99,7 @@ class Reporter:
         self.tw.line("KEYBOARDINTERRUPT", red=True)
 
     def venv_installproject(self, venv, pkg):
-        self.logline("installing to %s: %s" % (venv.envconfig.name, pkg))
+        self.logline("installing to %s: %s" % (venv.envconfig.envname, pkg))
 
     def keyvalue(self, name, value):
         if name.endswith(":"):
@@ -187,7 +187,7 @@ class Session:
         setup = self.config.packagedir.join("setup.py")
         if not setup.check():
             raise tox.exception.MissingFile(setup)
-        distdir = self.config.toxdir.join("dist")
+        distdir = self.config.toxworkdir.join("dist")
         if distdir.check():
             distdir.remove() 
         self.pcall([sys.executable, setup, "sdist", "--dist-dir", distdir],
@@ -251,9 +251,9 @@ class Session:
             status = self.venvstatus[venv.path]
             if status:
                 retcode = 1
-                self.report.error("%s: %s" %(venv.envconfig.name, status))
+                self.report.error("%s: %s" %(venv.envconfig.envname, status))
             else:
-                self.report.good("%s: no failures" %(venv.envconfig.name, ))
+                self.report.good("%s: no failures" %(venv.envconfig.envname, ))
         if not retcode:
             self.report.good("congratulation :)")
         return retcode 
@@ -262,10 +262,10 @@ class Session:
         self.info_versions()
         self.report.keyvalue("config-file:", self.config.opts.configfile)
         self.report.keyvalue("package directory:", self.config.packagedir)
-        self.report.keyvalue("toxdir:", self.config.toxdir)
+        self.report.keyvalue("toxworkdir:", self.config.toxworkdir)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
-            self.report.line("[testenv:%s]" % envconfig.name, bold=True)
+            self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
             self.report.line("    python=%s" % envconfig.python)
             self.report.line("    argv=%s" % envconfig.argv)
             self.report.line("    deps=%s" % envconfig.deps)
@@ -281,7 +281,7 @@ class Session:
    
     def pcall(self, args, log=None, cwd=None):
         if cwd is None:
-            cwd = self.config.toxdir
+            cwd = self.config.toxworkdir
         cwd.chdir()
         newargs = []
         for arg in args:

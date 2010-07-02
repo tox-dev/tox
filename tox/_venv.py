@@ -20,10 +20,7 @@ class VirtualEnv(object):
                 name = "jython"
             else:
                 name = "python"
-        if sys.platform == "win32":
-            return self.path.join("Scripts", name)
-        else:
-            return self.path.join("bin", name)
+        return self.envconfig.envbindir.join(name)
 
     def _ispython3(self):
         return "python3" in str(self.envconfig.python)
@@ -33,7 +30,7 @@ class VirtualEnv(object):
             if status string is empty, all is ok.  
         """
         report = self.session.report
-        name = self.envconfig.name 
+        name = self.envconfig.envname 
         if not self.iscorrectpythonenv():
             if not self.path_python.check():
                 report.action("creating virtualenv %s" % name)
@@ -54,7 +51,7 @@ class VirtualEnv(object):
                         ",".join(self.envconfig.deps))
         else:
             report.action("reusing existing matching virtualenv %s" %
-                (self.envconfig.name,))
+                (self.envconfig.envname,))
 
     def iscorrectpythonenv(self):
         if self.path_python.check():

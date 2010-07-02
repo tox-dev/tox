@@ -16,7 +16,7 @@ class TestSession:
         session = Session(config)
         sdist = session.get_fresh_sdist()
         assert sdist.check()
-        assert sdist == config.toxdir.join("dist", sdist.basename)
+        assert sdist == config.toxworkdir.join("dist", sdist.basename)
         sdist2 = session.get_fresh_sdist()
         assert sdist2 == sdist 
         sdist.write("hello")
@@ -83,9 +83,9 @@ class TestSession:
         assert not session.venvstatus[env2.path]
         session._summary()
         out, err = capfd.readouterr()
-        exp = "%s: FAIL XYZ" % env1.envconfig.name 
+        exp = "%s: FAIL XYZ" % env1.envconfig.envname 
         assert exp in out
-        exp = "%s: no failures" % env2.envconfig.name 
+        exp = "%s: no failures" % env2.envconfig.envname 
         assert exp in out
         
 

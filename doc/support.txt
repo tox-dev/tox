@@ -1,17 +1,22 @@
+
+.. _support:
+
 tox contact and support channels 
 =====================================
 
 You are welcome to:
 
 * join `tox-dev`_ for general discussions
+* hang out on the irc.freenode.net #pylib channel 
+* `report on the issue tracker`_
 * join `tox-commit`_ to be notified of source changes
 * `clone the mercurial repository`_ and submit patches
-* hang out on the irc.freenode.net #pylib channel 
 * follow the `tetamap blog`_ or `Holger's twitter presence`_.
 * contact merlinux_ if you want to buy teaching or other support. 
 
 .. _`Holger's twitter presence`: http://twitter.com/hpk42
 .. _merlinux: http://merlinux.eu
+.. _`report on the issue tracker`: http://code.google.com/p/pytox/issues/list
 .. _`tetamap blog`: http://tetamap.wordpress.com
 .. _`tox-dev`: http://codespeak.net/mailman/listinfo/execnet-dev
 .. _`tox-commit`: http://codespeak.net/mailman/listinfo/execnet-commit

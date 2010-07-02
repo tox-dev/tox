@@ -10,14 +10,14 @@ class TestVenvConfig:
             [testenv:py1]
         """)
         assert len(config.envconfigs) == 1
-        assert config.toxdir == tmpdir.join(".tox")
-        assert config.envconfigs['py1'].python == None
+        assert config.toxworkdir == tmpdir.join(".tox")
+        assert config.envconfigs['py1'].python == sys.executable
         assert config.envconfigs['py1'].deps == []
 
     def test_config_parsing_multienv(self, tmpdir, makeconfig):
         config = makeconfig("""
             [global]
-            toxdir = %s
+            toxworkdir = %s
             [testenv:py1]
             python=xyz
             deps=hello
@@ -27,7 +27,7 @@ class TestVenvConfig:
                 world1
                 world2
         """ % (tmpdir, ))
-        assert config.toxdir == tmpdir
+        assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
         assert config.envconfigs['py1'].envdir == tmpdir.join("py1")
         assert config.envconfigs['py1'].python == "xyz"
@@ -40,20 +40,20 @@ class TestConfigPackage:
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("")
         assert config.packagedir == tmpdir
-        assert config.toxdir == tmpdir.join(".tox")
+        assert config.toxworkdir == tmpdir.join(".tox")
 
     def test_defaults_changed_dir(self, tmpdir, makeconfig):
         tmpdir.mkdir("abc").chdir()
         config = makeconfig("")
         assert config.packagedir == tmpdir
-        assert config.toxdir == tmpdir.join(".tox")
+        assert config.toxworkdir == tmpdir.join(".tox")
 
     def test_project_paths(self, tmpdir, makeconfig):
         config = makeconfig("""
             [global]
-            toxdir=%s
+            toxworkdir=%s
         """ % tmpdir)
-        assert config.toxdir == tmpdir
+        assert config.toxworkdir == tmpdir
 
 class TestIniParser:
     def test_getdefault_single(self, tmpdir, makeconfig):
@@ -67,6 +67,15 @@ class TestIniParser:
         assert not reader.getdefault("section", "hello")
         x = reader.getdefault("section", "hello", "world")
         assert x == "world"
+
+    def test_missing_substitution(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [mydefault]
+            key2={xyz}
+        """)
+        reader = IniReader(config._cfg, fallbacksections=['mydefault'])
+        py.test.raises(tox.exception.ConfigError, 
+            'reader.getdefault("mydefault", "key2")')
 
     def test_getdefault_fallback_sections(self, tmpdir, makeconfig):
         config = makeconfig("""
@@ -190,24 +199,28 @@ class TestConfigTestEnv:
         assert "py24" in config.envconfigs
         assert "py25" in config.envconfigs
 
-    def test_simple(tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_substitution_error(tmpdir, makeconfig):
+        py.test.raises(tox.exception.ConfigError("""
             [testenv:py24]
-            python=python2.4
-            [testenv:py25]
-            python=python2.5
-        """)
-        assert len(config.envconfigs) == 2
-        assert "py24" in config.envconfigs
-        assert "py25" in config.envconfigs
+            python={xyz}
+        """))
 
-    def test_simple(tmpdir, makeconfig):
+    def test_substitution_defaults(tmpdir, makeconfig):
         config = makeconfig("""
             [testenv:py24]
-            python=python2.4
-            [testenv:py25]
-            python=python2.5
+            argv=
+                {toxinidir}
+                {toxworkdir}
+                {envdir}
+                {envbindir}
+                {envtmpdir}
         """)
-        assert len(config.envconfigs) == 2
-        assert "py24" in config.envconfigs
-        assert "py25" in config.envconfigs
+        conf = config.envconfigs['py24']
+        argv = conf.argv 
+        assert argv[0] == config.toxinidir 
+        assert argv[1] == config.toxworkdir 
+        assert argv[2] == conf.envdir 
+        assert argv[3] == conf.envbindir
+        assert argv[4] == conf.envtmpdir
+        
+
