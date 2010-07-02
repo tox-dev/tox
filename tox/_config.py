@@ -135,7 +135,6 @@ class IniReader:
 
     def _replace(self, x, rexpattern = re.compile("\{\w+?\}")):
         if '{' in x:
-            print "processing", x
             return rexpattern.sub(self._sub, x)
         return x
 

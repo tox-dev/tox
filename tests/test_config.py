@@ -200,10 +200,10 @@ class TestConfigTestEnv:
         assert "py25" in config.envconfigs
 
     def test_substitution_error(tmpdir, makeconfig):
-        py.test.raises(tox.exception.ConfigError("""
+        py.test.raises(tox.exception.ConfigError, makeconfig, """
             [testenv:py24]
             python={xyz}
-        """))
+        """)
 
     def test_substitution_defaults(tmpdir, makeconfig):
         config = makeconfig("""
