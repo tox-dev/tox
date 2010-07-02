@@ -16,14 +16,11 @@ class VirtualEnv(object):
 
     def getcommandpath(self, name=None):
         if name is None:
-            if "jython" in str(self.envconfig.python):
-                name = "jython"
-            else:
-                name = "python"
+            return self.envconfig.envpython
         return self.envconfig.envbindir.join(name)
 
     def _ispython3(self):
-        return "python3" in str(self.envconfig.python)
+        return "python3" in str(self.envconfig.basepython)
 
     def update(self):
         """ return status string for updating actual venv to match configuration. 
@@ -69,7 +66,7 @@ class VirtualEnv(object):
         return False
 
     def getconfigexecutable(self):
-        python = self.envconfig.python
+        python = self.envconfig.basepython
         if not python:
             python = sys.executable
         return find_executable(str(python))
@@ -78,13 +75,13 @@ class VirtualEnv(object):
         if sys.platform == "win32" and self._ispython3():
             raise tox.exception.UnsupportedInterpreter(
                 "python3/virtualenv3 is buggy on windows")
-        if sys.platform == "win32" and self.envconfig.python and \
-                "jython" in self.envconfig.python:
+        if sys.platform == "win32" and self.envconfig.basepython and \
+                "jython" in self.envconfig.basepython:
             raise tox.exception.UnsupportedInterpreter(
                 "Jython/Windows does not support installing scripts")
         config_executable = self.getconfigexecutable()
         if not config_executable:
-            raise tox.exception.InterpreterNotFound(self.envconfig.python)
+            raise tox.exception.InterpreterNotFound(self.envconfig.basepython)
         return config_executable
 
     def create(self):
@@ -144,8 +141,7 @@ class VirtualEnv(object):
             self.pip_install(args)
 
     def test(self, cwd=None):
-        envtmpdir = self.envconfig.envtmpdir
-        self.session.make_emptydir(envtmpdir)
+        self.session.make_emptydir(self.envconfig.envtmpdir)
         argv = list(self.envconfig.argv)
         cwd = cwd or py.path.local()
         config = self.session.config

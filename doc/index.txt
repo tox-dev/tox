@@ -12,7 +12,7 @@ tox features
 
     - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
 
-* **documented** :doc:`examples` and :doc:`configuration <toxini>` 
+* **documented** :doc:`examples` and :doc:`configuration <config>` 
 
 * **professionally** :doc:`supported <support>`
 
@@ -36,7 +36,7 @@ tox features
 
    install
    examples
-   toxini 
+   config 
    support
 
 

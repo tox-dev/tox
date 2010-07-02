@@ -14,8 +14,8 @@ Global settings
 List of optional global options::
 
     [global]
-    toxworkdir=path      # tox directory, defaults to .tox
-    packagedir=path  # defaults to dirpath of tox.ini file
+    toxworkdir=path  # tox working directory, defaults to {toxinidir}/.tox
+    setupdir=path    # defaults to {toxinidir} 
     logdir=path      # defaults to {toxworkdir}/log
 
 Test environment settings 
@@ -26,35 +26,37 @@ Test environments are defined by a::
     [testenv:NAME]
     ...
 
-section.  Defaults for each setting come from the::
+section.  The ``NAME`` will be the name of the virtual environment. 
+Defaults for each setting in this section are looked up in the::
 
-    [test]
+    [testenv]
     ...
 
 testenvironment default section. 
 
 Complete list of settings that you can put into ``testenv*`` sections:
 
-``python=NAME-OR-PATH``
+``basepython=NAME-OR-PATH``
     name or path to a Python interpreter which will be used for creating
-    the virtual environment. 
+    the virtual environment. **default**: interpreter used for tox invocation. 
 
 ``argv=MULTI-LINE``
     the test command to be called for testing. Each line defines one 
     item of a list that will be passed to ``subprocess.Popen``. 
 
-``tmpdir=path``
-    XXX defines a temporary directory of the virtualenv, 
-    available via the ``envtmpdir`` substition, defaults to 
+``changedir=path``
+    change to this working directory when executing the test command. 
+    **default**: ``{toxinidir}``
+
+``envtmpdir=path``
+    defines a temporary directory for the virtualenv which will be cleared
+    before invoking the test command.  
+    **default**: ``{envdir}/tmp``
 
 ``deps=MULTI-LINE-LIST``
     dependencies to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
     passed to easy_install/pip for processing. 
-
-``changedir=path``
-    change to this working directory when executing the test command. 
-    **default**: package setup directory. 
 
 ``downloadcache=path``
     (pip only) use this directory for caching downloads - this defaults to the 
@@ -63,9 +65,6 @@ Complete list of settings that you can put into ``testenv*`` sections:
     **note**: if creating multiple environments use of a download cache greatly 
     speeds up the testing process. 
 
-    [testenv:NAME]   # a section defininig a virtualenv test environment
-    python=name-or-path   # name of Python intepreter, to be found on system path
-
 ``distribute=BOOL``
     Set to ``True`` if you want to use distribute in the virtual environment. 
     **default:** False. (setuptools will be used)
@@ -73,12 +72,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
 Substitutions
 ---------------------
 
-Settings can generally use string-substitution like this::
+Any ``key=value`` setting in an ini-file can make use
+of value substitution through the ``{...}`` string-substitution pattern. 
 
-    changedir={envtmpdir} 
-
-Global substitutions
-+++++++++++++++++++++++++++++
+Globally available substitutions
++++++++++++++++++++++++++++++++++++++++++++
 
 ``{toxinidir}`` 
     the directory where tox.ini is located 
@@ -86,11 +84,13 @@ Global substitutions
     the directory where virtual environments are created and sub directories
     for packaging reside. 
     
-substitions related to virtualenvs
+substitions for virtualenv-related sections 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ``{envname}``
     the name of the virtual environment 
+``{envpython}``
+    path to the virtual Python interpreter 
 ``{envdir}``
     directory of the the virtualenv hierarchy
 ``{envbindir}``

@@ -18,11 +18,18 @@ class VenvConfig:
 
     @property
     def envbindir(self):
-        if sys.platform == "win32" and "jython" not in self.python:
+        if sys.platform == "win32" and "jython" not in self.basepython:
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")
 
+    @property
+    def envpython(self):
+        if "jython" in str(self.basepython):
+            name = "jython"
+        else:
+            name = "python"
+        return self.envbindir.join(name)
 
 testenvprefix = "testenv:"
 
@@ -42,9 +49,9 @@ class ConfigIniParser:
         reader = IniReader(self._cfg)
         reader.addsubstitions(toxinidir=config.toxinidir)
         config.toxworkdir = reader.getpath("global", "toxworkdir", 
-                                        config.toxinidir, ".tox")
+                                           "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)
-        config.packagedir = reader.getpath("global", "packagedir", toxinidir)
+        config.setupdir = reader.getpath("global", "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
         sections = cfg.sections()
         for section in sections:
@@ -60,16 +67,18 @@ class ConfigIniParser:
         vc = VenvConfig(envname=name)
         reader = IniReader(self._cfg, fallbacksections=["test"])
         reader.addsubstitions(**subs)
-        vc.envdir = reader.getpath(section, "envdir", subs['toxworkdir'], name)
-        vc.python = reader.getdefault(section, "python", sys.executable)
+        vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
+        if reader.getdefault(section, "python", None):
+            raise tox.exception.ConfigError(
+                "'python=' key was renamed to 'basepython='")
+        vc.basepython = reader.getdefault(section, "basepython", sys.executable)
         reader.addsubstitions(envdir=vc.envdir, envname=vc.envname,
-                              envbindir=vc.envbindir)
-        vc.envtmpdir = reader.getpath(section, "tmpdir", vc.envdir.join("tmp"))
+                              envbindir=vc.envbindir, envpython=vc.envpython)
+        vc.envtmpdir = reader.getpath(section, "tmpdir", "{envdir}/tmp")
         reader.addsubstitions(envtmpdir=vc.envtmpdir)
         vc.argv = reader.getlist(section, "argv")
         vc.deps = reader.getlist(section, "deps")
-        vc.changedir = reader.getpath(section, "changedir", 
-            self.config.packagedir)
+        vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
         vc.distribute = reader.getbool(section, "distribute", False)
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache is None:
@@ -88,11 +97,8 @@ class IniReader:
     def addsubstitions(self, **kw):
         self._subs.update(kw)
 
-    def getpath(self, section, name, basedir, basename=None):
-        basename = self.getdefault(section, name, basename)
-        if basename is None:
-            return basedir
-        return basedir.join(basename, abs=True)
+    def getpath(self, section, name, defaultpath):
+        return py.path.local(self.getdefault(section, name, defaultpath))
 
     def getlist(self, section, name, sep="\n"):
         s = self.getdefault(section, name, None)

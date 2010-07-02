@@ -11,7 +11,7 @@ class TestVenvConfig:
         """)
         assert len(config.envconfigs) == 1
         assert config.toxworkdir == tmpdir.join(".tox")
-        assert config.envconfigs['py1'].python == sys.executable
+        assert config.envconfigs['py1'].basepython == sys.executable
         assert config.envconfigs['py1'].deps == []
 
     def test_config_parsing_multienv(self, tmpdir, makeconfig):
@@ -19,10 +19,10 @@ class TestVenvConfig:
             [global]
             toxworkdir = %s
             [testenv:py1]
-            python=xyz
+            basepython=xyz
             deps=hello
             [testenv:py2]
-            python=hello
+            basepython=hello
             deps=
                 world1
                 world2
@@ -30,22 +30,22 @@ class TestVenvConfig:
         assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
         assert config.envconfigs['py1'].envdir == tmpdir.join("py1")
-        assert config.envconfigs['py1'].python == "xyz"
+        assert config.envconfigs['py1'].basepython == "xyz"
         assert config.envconfigs['py1'].deps == ['hello']
-        assert config.envconfigs['py2'].python == "hello"
+        assert config.envconfigs['py2'].basepython == "hello"
         assert config.envconfigs['py2'].envdir == tmpdir.join("py2")
         assert config.envconfigs['py2'].deps == ['world1', 'world2']
 
 class TestConfigPackage:
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("")
-        assert config.packagedir == tmpdir
+        assert config.setupdir == tmpdir
         assert config.toxworkdir == tmpdir.join(".tox")
 
     def test_defaults_changed_dir(self, tmpdir, makeconfig):
         tmpdir.mkdir("abc").chdir()
         config = makeconfig("")
-        assert config.packagedir == tmpdir
+        assert config.setupdir == tmpdir
         assert config.toxworkdir == tmpdir.join(".tox")
 
     def test_project_paths(self, tmpdir, makeconfig):
@@ -151,7 +151,7 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
         assert envconfig.argv == ["xyz", "--abc"]
-        assert envconfig.changedir == config.packagedir
+        assert envconfig.changedir == config.setupdir
         assert envconfig.distribute == False
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
@@ -173,7 +173,7 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
         assert envconfig.changedir.basename == "xyz"
-        assert envconfig.changedir == config.packagedir.join("xyz")
+        assert envconfig.changedir == config.toxinidir.join("xyz")
 
     def test_changedir_override(self, tmpdir, makeconfig):
         config = makeconfig("""
@@ -181,19 +181,19 @@ class TestConfigTestEnv:
             changedir=xyz
             [testenv:python]
             changedir=abc
-            python=python2.6
+            basepython=python2.6
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
         assert envconfig.changedir.basename == "abc"
-        assert envconfig.changedir == config.packagedir.join("abc")
+        assert envconfig.changedir == config.setupdir.join("abc")
 
     def test_simple(tmpdir, makeconfig):
         config = makeconfig("""
             [testenv:py24]
-            python=python2.4
+            basepython=python2.4
             [testenv:py25]
-            python=python2.5
+            basepython=python2.5
         """)
         assert len(config.envconfigs) == 2
         assert "py24" in config.envconfigs
@@ -202,7 +202,7 @@ class TestConfigTestEnv:
     def test_substitution_error(tmpdir, makeconfig):
         py.test.raises(tox.exception.ConfigError, makeconfig, """
             [testenv:py24]
-            python={xyz}
+            basepython={xyz}
         """)
 
     def test_substitution_defaults(tmpdir, makeconfig):
@@ -214,6 +214,7 @@ class TestConfigTestEnv:
                 {envdir}
                 {envbindir}
                 {envtmpdir}
+                {envpython}
         """)
         conf = config.envconfigs['py24']
         argv = conf.argv 
@@ -222,5 +223,4 @@ class TestConfigTestEnv:
         assert argv[2] == conf.envdir 
         assert argv[3] == conf.envbindir
         assert argv[4] == conf.envtmpdir
-        
-
+        assert argv[5] == conf.envpython

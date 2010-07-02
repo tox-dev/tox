@@ -10,9 +10,9 @@ reside next to your ``setup.py`` file::
     [test]
     argv=py.test  # or 'nosetests' or ...
     [testenv:py25]
-    python=python2.5
+    basepython=python2.5
     [testenv:py26]
-    python=python2.6
+    basepython=python2.6
 
 To package, install and test your project, you can now type at the command prompt::
 

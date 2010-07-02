@@ -147,7 +147,7 @@ def test_unknown_interpreter(cmd, initproj):
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'tox.ini': '''
             [testenv:python]
-            python=xyz_unknown_interpreter 
+            basepython=xyz_unknown_interpreter 
             [test]
             changedir=tests 
         '''
@@ -259,9 +259,9 @@ def test_test_piphelp(initproj, cmd):
         argv=pip 
             -h
         [testenv:py25]
-        python=python2.5
+        basepython=python2.5
         [testenv:py26]
-        python=python2.6
+        basepython=python2.6
     """})
     result = cmd.run("tox")
     assert not result.ret
@@ -270,9 +270,9 @@ def test_notest(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
         [testenv:py25]
-        python=python2.5
+        basepython=python2.5
         [testenv:py26]
-        python=python2.6
+        basepython=python2.6
     """})
     result = cmd.run("tox", "--notest")
     assert not result.ret

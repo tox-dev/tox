@@ -73,41 +73,38 @@ def test_find_executable():
 def test_getsupportedinterpreter(monkeypatch, makeconfig, mocksession):
     config = makeconfig("""
         [testenv:python]
-        python=%s
+        basepython=%s
     """ % sys.executable)
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     interp = venv.getsupportedinterpreter()
     assert interp == sys.executable
     monkeypatch.setattr(sys, 'platform', "win32")
-    monkeypatch.setattr(venv.envconfig, 'python', 'python3')
+    monkeypatch.setattr(venv.envconfig, 'basepython', 'python3')
     py.test.raises(tox.exception.UnsupportedInterpreter, 
                    venv.getsupportedinterpreter)
     monkeypatch.undo()
     monkeypatch.setattr(sys, 'platform', "win32")
-    monkeypatch.setattr(venv.envconfig, 'python', 'jython')
+    monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
     py.test.raises(tox.exception.UnsupportedInterpreter, 
                    venv.getsupportedinterpreter)
     monkeypatch.undo()
-    monkeypatch.setattr(venv.envconfig, 'python', 'notexistingpython')
+    monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
     py.test.raises(tox.exception.InterpreterNotFound, 
                    venv.getsupportedinterpreter)
 
-def test_create(tmpdir, monkeypatch, mocksession):
-    toxworkdir = tmpdir.ensure("basedir", dir=1)
-    class Envconfig:
-        envbindir = tmpdir.ensure("bindir", dir=1)
-        envdir = toxworkdir.join("toxworkdir", "xyz123")
-        python = None
-        distribute=True
-    venv = VirtualEnv(Envconfig, session=mocksession)
-    assert venv.path == Envconfig.envdir
+def test_create(monkeypatch, mocksession, makeconfig):
+    config = makeconfig("""
+        [testenv:py123]
+    """)
+    envconfig = config.envconfigs['py123']
+    venv = VirtualEnv(envconfig, session=mocksession)
+    assert venv.path == envconfig.envdir
     assert not venv.path.check()
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0]
     assert "virtualenv" in " ".join(args[:2])
-    assert "--distribute" in " ".join(args)
     if sys.platform != "win32":
         i = args.index("-p")
         assert i != -1, args
@@ -117,14 +114,14 @@ def test_create(tmpdir, monkeypatch, mocksession):
     interp = venv.path_python.read()
     assert interp == venv.getconfigexecutable()
 
-def test_create_distribute_false(tmpdir, monkeypatch, mocksession):
-    toxworkdir = tmpdir.ensure("basedir", dir=1)
-    class Envconfig:
-        envdir = toxworkdir.join("toxworkdir", "xyz123")
-        python = None
-        distribute = False
-    venv = VirtualEnv(Envconfig, session=mocksession)
-    assert venv.path == Envconfig.envdir
+def test_create_distribute(monkeypatch, mocksession, makeconfig):
+    config = makeconfig("""
+        [testenv:py123]
+        distribute=True
+    """)
+    envconfig = config.envconfigs['py123']
+    venv = VirtualEnv(envconfig, session=mocksession)
+    assert venv.path == envconfig.envdir
     assert not venv.path.check()
     venv.create()
     l = mocksession._pcalls
@@ -133,16 +130,16 @@ def test_create_distribute_false(tmpdir, monkeypatch, mocksession):
     assert "--distribute" not in " ".join(args[:2])
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
-def test_install_downloadcache(tmpdir, mocksession):
-    toxworkdir = tmpdir.ensure("basedir", dir=1)
-    class Envconfig:
-        downloadcache = tmpdir.ensure("download", dir=1)
-        envdir = toxworkdir.join("toxworkdir", "xyz123")
-        envbindir = toxworkdir.join("envbindir")
-        python = sys.executable
-        distribute = True
-        deps=['hello', 'world']
-    venv = VirtualEnv(Envconfig, session=mocksession)
+def test_install_downloadcache(mocksession, makeconfig):
+    config = makeconfig("""
+        [testenv:py123]
+        distribute=True
+        deps=
+            dep1
+            dep2
+    """)
+    envconfig = config.envconfigs['py123']
+    venv = VirtualEnv(envconfig, session=mocksession)
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 1
@@ -152,23 +149,25 @@ def test_install_downloadcache(tmpdir, mocksession):
     args = l[1]
     assert "pip" in str(args[0])
     assert args[1] == "install"
-    arg = "--download-cache=" + str(Envconfig.downloadcache)
+    arg = "--download-cache=" + str(envconfig.downloadcache)
     assert arg in args[2:]
-    assert "hello" in args
-    assert "world" in args
+    assert "dep1" in args
+    assert "dep2" in args
     deps = filter(None, venv.path_deps.readlines(cr=0))
-    assert deps == ['hello', 'world']
+    assert deps == ['dep1', 'dep2']
 
-def test_install_python3(tmpdir, mocksession):
+def test_install_python3(tmpdir, mocksession, makeconfig):
     if not py.path.local.sysfind('python3.1'):
         py.test.skip("needs python3.1")
-    toxworkdir = tmpdir.ensure("basedir", dir=1)
-    class Envconfig:
-        downloadcache = tmpdir.ensure("download", dir=1)
-        envdir = toxworkdir.join("toxworkdir", "xyz123")
-        envbindir = toxworkdir.join("envbindir")
-        python = "python3.1"
-    venv = VirtualEnv(Envconfig, session=mocksession)
+    config = makeconfig("""
+        [testenv:py123]
+        basepython=python3.1
+        deps=
+            dep1
+            dep2
+    """)
+    envconfig = config.envconfigs['py123']
+    venv = VirtualEnv(envconfig, session=mocksession)
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 2

@@ -184,14 +184,14 @@ class Session:
 
     def _makesdist(self):
         self.report.action("creating sdist package")
-        setup = self.config.packagedir.join("setup.py")
+        setup = self.config.setupdir.join("setup.py")
         if not setup.check():
             raise tox.exception.MissingFile(setup)
         distdir = self.config.toxworkdir.join("dist")
         if distdir.check():
             distdir.remove() 
         self.pcall([sys.executable, setup, "sdist", "--dist-dir", distdir],
-                   cwd=self.config.packagedir)
+                   cwd=self.config.setupdir)
         return distdir.listdir()[0]
 
     def get_fresh_sdist(self):
@@ -261,12 +261,12 @@ class Session:
     def subcommand_config(self):
         self.info_versions()
         self.report.keyvalue("config-file:", self.config.opts.configfile)
-        self.report.keyvalue("package directory:", self.config.packagedir)
+        self.report.keyvalue("package directory:", self.config.setupdir)
         self.report.keyvalue("toxworkdir:", self.config.toxworkdir)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
-            self.report.line("    python=%s" % envconfig.python)
+            self.report.line("    python=%s" % envconfig.basepython)
             self.report.line("    argv=%s" % envconfig.argv)
             self.report.line("    deps=%s" % envconfig.deps)
             self.report.line("    envdir=    %s" % envconfig.envdir)
