@@ -240,7 +240,7 @@ class Session:
             if self.venvstatus[venv.path]:
                 continue
             if venv.test(cwd=venv.envconfig.changedir):
-                self.setenvstatus(venv, "tests failed")
+                self.setenvstatus(venv, "test command failed")
         retcode = self._summary()
         return retcode
 
@@ -253,7 +253,8 @@ class Session:
                 retcode = 1
                 self.report.error("%s: %s" %(venv.envconfig.envname, status))
             else:
-                self.report.good("%s: no failures" %(venv.envconfig.envname, ))
+                self.report.good("%s: test command succeeded" %(
+                                 venv.envconfig.envname, ))
         if not retcode:
             self.report.good("congratulation :)")
         return retcode 
@@ -261,12 +262,16 @@ class Session:
     def subcommand_config(self):
         self.info_versions()
         self.report.keyvalue("config-file:", self.config.opts.configfile)
-        self.report.keyvalue("package directory:", self.config.setupdir)
+        self.report.keyvalue("setupdir:", self.config.setupdir)
         self.report.keyvalue("toxworkdir:", self.config.toxworkdir)
+        self.report.keyvalue("toxinidir:", self.config.toxinidir)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
-            self.report.line("    python=%s" % envconfig.basepython)
+            self.report.line("    basepython=%s" % envconfig.basepython)
+            self.report.line("    envpython=%s" % envconfig.envpython)
+            self.report.line("    envtmpdir=%s" % envconfig.envtmpdir)
+            self.report.line("    envbindir=%s" % envconfig.envbindir)
             self.report.line("    argv=%s" % envconfig.argv)
             self.report.line("    deps=%s" % envconfig.deps)
             self.report.line("    envdir=    %s" % envconfig.envdir)

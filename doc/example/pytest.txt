@@ -15,7 +15,7 @@ Assuming you have your tests in the ``tests`` directory (relative
 to the location of the ``tox.ini`` file) the following test-config 
 will change to it and then run the ``py.test`` command as specified::
 
-    [test]
+    [testenv]
     changedir=tests   
     argv=
         py.test 
@@ -37,7 +37,7 @@ Using multiple CPUs for test runs
 through the `pytest-xdist`_ plugin.  Here is an example configuration 
 to make ``tox`` use this feature::
 
-    [test]
+    [testenv]
     deps=pytest-xdist 
     changedir=tests   
     argv=

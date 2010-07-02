@@ -1,5 +1,5 @@
 
-import sys
+import sys, os
 import py
 import tox
 
@@ -17,7 +17,7 @@ class VirtualEnv(object):
     def getcommandpath(self, name=None):
         if name is None:
             return self.envconfig.envpython
-        return self.envconfig.envbindir.join(name)
+        return self.envconfig.envbindir.join(name, abs=True)
 
     def _ispython3(self):
         return "python3" in str(self.envconfig.basepython)

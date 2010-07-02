@@ -7,7 +7,7 @@ want your project to run in into a ``tox.ini`` file that should
 reside next to your ``setup.py`` file::
 
     # content of: tox.ini , put in same dir as setup.py 
-    [test]
+    [testenv]
     argv=py.test  # or 'nosetests' or ...
     [testenv:py25]
     basepython=python2.5
@@ -25,3 +25,6 @@ the specified command in each of them.  With::
     tox -e py26 
 
 you can run only tests on Python2.6.  
+
+.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+

@@ -38,6 +38,8 @@ tox features
    examples
    config 
    support
+   changelog
+   usecases_old
 
 
 .. _Python: http://www.python.org

@@ -65,7 +65,7 @@ class ConfigIniParser:
 
     def _makeenvconfig(self, name, section, subs):
         vc = VenvConfig(envname=name)
-        reader = IniReader(self._cfg, fallbacksections=["test"])
+        reader = IniReader(self._cfg, fallbacksections=["testenv"])
         reader.addsubstitions(**subs)
         vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
         if reader.getdefault(section, "python", None):

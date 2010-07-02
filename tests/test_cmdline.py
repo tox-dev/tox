@@ -85,7 +85,7 @@ class TestSession:
         out, err = capfd.readouterr()
         exp = "%s: FAIL XYZ" % env1.envconfig.envname 
         assert exp in out
-        exp = "%s: no failures" % env2.envconfig.envname 
+        exp = "%s: test command succeeded" % env2.envconfig.envname 
         assert exp in out
         
 
@@ -148,7 +148,7 @@ def test_unknown_interpreter(cmd, initproj):
         'tox.ini': '''
             [testenv:python]
             basepython=xyz_unknown_interpreter 
-            [test]
+            [testenv]
             changedir=tests 
         '''
     })
@@ -162,7 +162,7 @@ def test_unknown_dep(cmd, initproj):
     initproj("dep123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'tox.ini': '''
-            [test]
+            [testenv]
             deps=qweqwe123
             changedir=tests 
         '''
@@ -230,7 +230,7 @@ def test_test_simple(cmd, initproj):
             """,
         },
         'tox.ini': '''
-            [test]
+            [testenv]
             changedir=tests 
             argv=py.test 
                 --basetemp={envtmpdir}
@@ -249,13 +249,13 @@ def test_test_simple(cmd, initproj):
     result.stdout.fnmatch_lines([
         "*1 passed*",
         "*summary*",
-        "*python: no failures"
+        "*python: test command succeeded"
     ])
 
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
-        [test]
+        [testenv]
         argv=pip 
             -h
         [testenv:py25]

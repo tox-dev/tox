@@ -144,7 +144,7 @@ class TestIniParser:
 class TestConfigTestEnv:
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("""
-            [test]
+            [testenv]
             argv=xyz
                 --abc
         """)
@@ -156,7 +156,7 @@ class TestConfigTestEnv:
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""
-            [test]
+            [testenv]
             argv=xyz
             [testenv:py30]
             argv=abc
@@ -167,7 +167,7 @@ class TestConfigTestEnv:
 
     def test_changedir(self, tmpdir, makeconfig):
         config = makeconfig("""
-            [test]
+            [testenv]
             changedir=xyz
         """)
         assert len(config.envconfigs) == 1
@@ -175,9 +175,27 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "xyz"
         assert envconfig.changedir == config.toxinidir.join("xyz")
 
+    def test_envbindir(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [testenv]
+            basepython=python 
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert envconfig.envpython == envconfig.envbindir.join("python")
+
+    def test_envbindir_jython(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [testenv]
+            basepython=jython 
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert envconfig.envpython == envconfig.envbindir.join("jython")
+
     def test_changedir_override(self, tmpdir, makeconfig):
         config = makeconfig("""
-            [test]
+            [testenv]
             changedir=xyz
             [testenv:python]
             changedir=abc

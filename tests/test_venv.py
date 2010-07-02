@@ -102,7 +102,7 @@ def test_create(monkeypatch, mocksession, makeconfig):
     assert not venv.path.check()
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1
+    assert len(l) >= 1
     args = l[0]
     assert "virtualenv" in " ".join(args[:2])
     if sys.platform != "win32":
@@ -125,7 +125,7 @@ def test_create_distribute(monkeypatch, mocksession, makeconfig):
     assert not venv.path.check()
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1
+    assert len(l) >= 1
     args = l[0]
     assert "--distribute" not in " ".join(args[:2])
 
@@ -196,7 +196,7 @@ class TestVenvUpdate:
 
     def test_matchingdependencies(self, makeconfig, mocksession):
         config = makeconfig("""
-            [test]
+            [testenv]
             deps=abc
         """)
         envconfig = config.envconfigs['python'] 
@@ -227,7 +227,7 @@ class TestVenvUpdate:
 
     def test_python_recreate_deps(self, makeconfig, mocksession):
         config = makeconfig("""
-                [test]
+                [testenv]
                 deps=abc123
         """)
         envconfig = config.envconfigs['python']
