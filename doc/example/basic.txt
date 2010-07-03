@@ -8,13 +8,14 @@ reside next to your ``setup.py`` file::
 
     # content of: tox.ini , put in same dir as setup.py 
     [testenv]
-    argv=py.test  # or 'nosetests' or ...
+    commands=py.test  # or 'nosetests' or ...
     [testenv:py25]
     basepython=python2.5
     [testenv:py26]
     basepython=python2.6
 
-To package, install and test your project, you can now type at the command prompt::
+To sdist-package, install and test your project, you can 
+now type at the command prompt::
 
     tox 
 

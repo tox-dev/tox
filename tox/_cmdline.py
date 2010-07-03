@@ -8,56 +8,16 @@ import tox
 import py
 import os
 import sys
-import argparse
 import subprocess
 from tox._venv import VirtualEnv
-from tox._config import parseini
+from tox._config import parseconfig 
 
 def main(args=None):
     try:
-        parser = prepare_parse()
-        opts = parser.parse_args(args or sys.argv[1:])
-        opts.configfile = py.path.local(opts.configfile)
-        if not opts.configfile.check():
-            feedback("config file %r does not exist" %(
-                str(opts.configfile)), sysexit=True)
-        config = parseini(opts.configfile)
-        config.opts = opts
+        config = parseconfig(args)
         Session(config).runcommand()
     except KeyboardInterrupt:
         raise SystemExit(2)
-    except tox.exception.InvocationError:
-        raise SystemExit(3)
-
-def feedback(msg, sysexit=False):
-    py.builtin.print_("ERROR: " + msg, file=sys.stderr)
-    if sysexit:
-        raise SystemExit(1)
-
-class VersionAction(argparse.Action):
-    def __call__(self, *args, **kwargs):
-        py.builtin.print_("%s imported from %s" %(tox.__version__,
-                          tox.__file__))
-        raise SystemExit(0)
-
-def prepare_parse():
-    parser = argparse.ArgumentParser(description=__doc__,)
-        #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--version", nargs=0, action=VersionAction, 
-        dest="version",
-        help="report version information to stdout.")
-    parser.add_argument("--showconfig", action="store_true", dest="showconfig", 
-        help="show configuration information. ")
-    parser.add_argument("-c", action="store", default="tox.ini", 
-        dest="configfile",
-        help="use the specified config file.")
-    parser.add_argument("-e", "--env", action="store", dest="env", 
-        metavar="envs",
-        help="work against specified comma-separated environments.")
-    parser.add_argument("--notest", action="store_true", dest="notest", 
-        help="perform packaging & setup, but no tests.")
-    parser.add_argument("testpath", nargs="*", help="a path to a test")
-    return parser
 
 class Reporter:
     def __init__(self, config):
@@ -208,7 +168,7 @@ class Session:
 
     def make_emptydir(self, path):
         if path.check():
-            self.report.info("removing %s" % path)
+            self.report.info("emptying %s" % path)
             py.std.shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir()
 
@@ -239,8 +199,8 @@ class Session:
         for venv in self.venvlist:
             if self.venvstatus[venv.path]:
                 continue
-            if venv.test(cwd=venv.envconfig.changedir):
-                self.setenvstatus(venv, "test command failed")
+            if venv.test():
+                self.setenvstatus(venv, "commands failed")
         retcode = self._summary()
         return retcode
 
@@ -253,7 +213,7 @@ class Session:
                 retcode = 1
                 self.report.error("%s: %s" %(venv.envconfig.envname, status))
             else:
-                self.report.good("%s: test command succeeded" %(
+                self.report.good("%s: commands succeeded" %(
                                  venv.envconfig.envname, ))
         if not retcode:
             self.report.good("congratulation :)")
@@ -272,7 +232,11 @@ class Session:
             self.report.line("    envpython=%s" % envconfig.envpython)
             self.report.line("    envtmpdir=%s" % envconfig.envtmpdir)
             self.report.line("    envbindir=%s" % envconfig.envbindir)
-            self.report.line("    argv=%s" % envconfig.argv)
+            self.report.line("    changedir=%s" % envconfig.changedir)
+            self.report.line("    args_are_path=%s" % envconfig.args_are_paths)
+            self.report.line("    commands=")
+            for command in envconfig.commands:
+                self.report.line("      %s" % command)
             self.report.line("    deps=%s" % envconfig.deps)
             self.report.line("    envdir=    %s" % envconfig.envdir)
             self.report.line("    downloadcache=%s" % envconfig.downloadcache)

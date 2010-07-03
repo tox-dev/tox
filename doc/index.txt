@@ -1,4 +1,3 @@
-
 tox features
 =========================================
 
@@ -6,11 +5,13 @@ tox features
 
 * **test your Python package against many interpreter and dependency configs**
 
-    - automatic (re)creation of virtualenv environments for running tests 
+    - automatic (re)creation of virtualenvs for running test activities 
 
-    - packages your ``setup.py`` based project and installs it in each virtual environment
+    - installs your ``setup.py`` based project into each virtual environment
 
     - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
+
+* integrates well with continous integration servers like Hudson_ 
 
 * **documented** :doc:`examples` and :doc:`configuration <config>` 
 
@@ -18,9 +19,9 @@ tox features
 
 * **concise reporting** about tool invocations and configuration errors
 
-* **cross-Python compatible**: handles Python2.4 up to Python3.1, Jython and pypy-c (trunk version) 
+* **cross-Python compatible**: Python2.4 up to Python3.1, Jython and pypy-c (trunk version) 
 
-* **cross-platform**: runs on windows and unix style environments 
+* **cross-platform**: Windows and Unix style environments 
 
 .. note::
     Tox was created in July 2010 by `Holger Krekel`_ - feedback and contributions very welcome. 
@@ -39,14 +40,7 @@ tox features
    config 
    support
    changelog
-   usecases_old
+   links
 
 
-.. _Python: http://www.python.org
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
-.. _virtualenv3: http://pypi.python.org/pypi/virtualenv3
-.. _`py.test`: http://pytest.org 
-.. _`nose`: http://pypi.python.org/pypi/nose
-
-.. _`Holger Krekel`: http://twitter.com/hpk42
-
+.. include:: links.txt

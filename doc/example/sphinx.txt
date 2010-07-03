@@ -1,0 +1,32 @@
+testing sphinx documentation 
+=================================
+
+You can specify any command and thus you can easily
+integrate sphinx_ documentation integrity during 
+a tox test run.  Here is an example ``tox.ini`` configuration::
+
+    [testenv:docs]
+    basepython=python
+    changedir=doc
+    deps=sphinx
+    commands=
+        sphinx-build -W -b html -d {envtmpdir}/doctrees .  {envtmpdir}/html
+
+This will create a dedicated environment ``docs`` and install
+the ``sphinx`` dependency which itself will install the ``sphinx-build`` tool 
+which you can then use as a command.  Note that sphinx output is redirected
+to the virtualenv environment temporary directory to prevent sphinx 
+from caching results between runs.  
+
+You can now call::
+
+    tox -e docs 
+
+or just::
+
+    tox 
+
+which will make the sphinx tests part of your test run. 
+
+.. include:: ../links.txt
+

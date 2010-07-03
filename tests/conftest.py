@@ -4,19 +4,29 @@ import os
 import sys
 from py.builtin import print_
 import time
-from tox._config import parseini
+from tox._config import parseconfig
 
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
 
 def pytest_funcarg__makeconfig(request):
-    tmpdir = request.getfuncargvalue("tmpdir")
+    newconfig = request.getfuncargvalue("newconfig")
     def makeconfig(source):
-        s = py.std.textwrap.dedent(source)
-        p = tmpdir.join("example.ini")
-        p.write(s)
-        return parseini(p)
+        return newconfig([], source)
     return makeconfig
+
+def pytest_funcarg__newconfig(request):
+    tmpdir = request.getfuncargvalue("tmpdir")
+    def newconfig(args, source):
+        s = py.std.textwrap.dedent(source)
+        p = tmpdir.join("tox.ini")
+        p.write(s)
+        old = tmpdir.chdir()
+        try:
+            return parseconfig(args)
+        finally:
+            old.chdir()
+    return newconfig 
 
 def pytest_funcarg__tmpdir(request):
     tmpdir = request.getfuncargvalue("tmpdir")

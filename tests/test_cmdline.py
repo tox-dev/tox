@@ -3,7 +3,8 @@ import py
 
 pytest_plugins = "pytester"
 
-from tox._cmdline import Session, parseini
+from tox._cmdline import Session
+from tox._config import parseconfig
 
 class TestSession:
     def test_make_sdist(self, initproj):
@@ -12,7 +13,7 @@ class TestSession:
             'tox.ini': '''
             '''
         })
-        config = parseini("tox.ini")
+        config = parseconfig([])
         session = Session(config)
         sdist = session.get_fresh_sdist()
         assert sdist.check()
@@ -31,7 +32,7 @@ class TestSession:
             'tox.ini': '''
             '''
         })
-        config = parseini("tox.ini")
+        config = parseconfig([])
         session = Session(config)
         assert not session.config.logdir.listdir()
         opts = {}
@@ -71,7 +72,7 @@ class TestSession:
             [testenv:world]
             '''
         })
-        config = parseini("tox.ini")
+        config = parseconfig([])
         session = Session(config)
         envlist = ['hello', 'world']
         envs = session.venvlist
@@ -85,38 +86,9 @@ class TestSession:
         out, err = capfd.readouterr()
         exp = "%s: FAIL XYZ" % env1.envconfig.envname 
         assert exp in out
-        exp = "%s: test command succeeded" % env2.envconfig.envname 
+        exp = "%s: commands succeeded" % env2.envconfig.envname 
         assert exp in out
         
-
-def test_help(cmd):
-    result = cmd.run("tox", "-h")
-    assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*help*",
-    ])
-
-def test_version(cmd):
-    result = cmd.run("tox", "--version")
-    assert not result.ret
-    stdout = result.stdout.str()
-    assert tox.__version__ in stdout
-    assert "imported from" in stdout
-
-def test_unkonwn_ini(cmd):
-    result = cmd.run("tox")
-    assert result.ret
-    result.stderr.fnmatch_lines([
-        "*tox.ini*does not exist*",
-    ])
-
-def test_config_specific_ini(tmpdir, cmd):
-    ini = tmpdir.ensure("hello.ini")
-    result = cmd.run("tox", "-c", ini, "--showconfig")
-    assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*config-file*hello.ini*",
-    ])
 
 # not sure we want this option ATM
 def XXX_test_package(cmd, initproj):
@@ -132,14 +104,6 @@ def XXX_test_package(cmd, initproj):
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*created sdist package at*",
-    ])
-
-def test_no_tox_ini(cmd, initproj):
-    initproj("noini-0.5", )
-    result = cmd.run("tox")
-    assert result.ret
-    result.stderr.fnmatch_lines([
-        "*ERROR*tox.ini*does not exist*",
     ])
 
 def test_unknown_interpreter(cmd, initproj):
@@ -232,9 +196,8 @@ def test_test_simple(cmd, initproj):
         'tox.ini': '''
             [testenv]
             changedir=tests 
-            argv=py.test 
-                --basetemp={envtmpdir}
-                --junitxml=junit-{envname}.xml 
+            commands=
+                py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml [] 
             deps=py
         '''
     })
@@ -249,15 +212,24 @@ def test_test_simple(cmd, initproj):
     result.stdout.fnmatch_lines([
         "*1 passed*",
         "*summary*",
-        "*python: test command succeeded"
+        "*python: commands succeeded"
     ])
+    # see that things work with a different CWD 
+    cmd.tmpdir.chdir()
+    result = cmd.run("tox", "-c", "example123/tox.ini")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+        "*summary*",
+        "*python: commands succeeded"
+    ])
+    
 
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
         [testenv]
-        argv=pip 
-            -h
+        commands=pip -h
         [testenv:py25]
         basepython=python2.5
         [testenv:py26]
@@ -288,3 +260,4 @@ def test_notest(initproj, cmd):
         "*reusing*py25",
         "*reusing*py26",
     ])
+

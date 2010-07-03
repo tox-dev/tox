@@ -2,8 +2,6 @@
 py.test and tox 
 =================================
 
-.. _`py.test`: http://pytest.org 
-
 It is easy to integrate `py.test`_ runs with tox.  If you encounter 
 issues, please check if they are `listed as a known issue`_ and/or use 
 the :doc:`support channels <../support>`. 
@@ -11,24 +9,42 @@ the :doc:`support channels <../support>`.
 Basic py.test example for "extra" test directories 
 --------------------------------------------------------------
 
-Assuming you have your tests in the ``tests`` directory (relative 
-to the location of the ``tox.ini`` file) the following test-config 
-will change to it and then run the ``py.test`` command as specified::
+Assuming the following layout::
+
+    tox.ini      # see below for content
+    setup.py     # a classic distutils/setuptools setup.py file 
+    tests        # the directory containing tests 
+
+and the following ``tox.ini`` content::
 
     [testenv]
     changedir=tests   
-    argv=
-        py.test 
-        --basetemp={envtmpdir}  # have py.test use the per-virtualenv temp dir 
+    deps=py      # the py.test package 
+    args_are_path=True      # rewrite positional args wrt to changedir
+    commands=
+      py.test 
+        --basetemp={envtmpdir}  # py.test uses the per-virtualenv temp dir 
         --confcutdir=..         # stop looking for conftest files at parent dir
+        []                      # substitute with tox' positional arguments 
+    [testenv:py26]
+    basepython=python2.6
+    [testenv:py26]
+    basepython=python3.1
 
-Apart from invoking ``tox`` plainly you may also invoke it like this::
+you can invoke ``tox`` in the directory where your ``tox.ini`` resides
+and will see it sdist-package your project, creating virtualenv environments 
+for ``python2.6`` and ``python3.1`` and then run the specified test command. 
+
+If you invoke it like this::
 
     tox tests/test_something.py 
 
-The command line positional argument will be appended to the ``argv`` above so 
-that you can use ``tox`` to trigger testing of a particular test file. 
-
+this command line positional argument will be substituted exactly where
+the ``[]`` was specified in the ``commands`` setting.  Due to the 
+additional ``args_are_paths`` setting ``tox`` rewrites the 
+``tests/test_something.py`` according to the ``changedir`` into
+``test_something.py`` so that the invoked ``py.test`` process can
+find it (it is invoked with ``changedir`` as current working directory).
 
 Using multiple CPUs for test runs
 -----------------------------------
@@ -40,51 +56,54 @@ to make ``tox`` use this feature::
     [testenv]
     deps=pytest-xdist 
     changedir=tests   
-    argv=
-        py.test 
-        --basetemp={envtmpdir}  # use the per-virtualenv temp dir 
-        --confcutdir=..         # stop looking for conftest files at parent dir
-        -n 3                    # use three sub processes
-
-.. _`pytest-xdist`: http://codespeak.net/py/dist/test/plugin/xdist.html
+    commands=
+        py.test \
+            --basetemp={envtmpdir}  \
+            --confcutdir=..         \
+            -n 3                    \ # use three sub processes
+            []
 
 Using tox, py.test and the Hudson CI 
 -------------------------------------------
 
 The Hudson_ continous integration server allows to define "jobs" with 
 "build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
-default Python installation on each slave, you can then have a 
-Hudson test build step invoke tox from a Python script like this::
+default Python installation on each Hudson slave, you can then have a 
+Hudson test a simple build step invoke tox from a Python script like this::
 
     import tox
     tox.cmdline()
 
 It makes sense to use something like the following configuration
-for your ``argv`` parameter::
+for your ``commands`` parameter::
 
-    argv=
-        py.test 
-        --confcutdir=.
-        --basetemp={envtmpdir}
-        --junitxml=junit-{envname}.xml
+    commands=
+        py.test \
+            --confcutdir=. \
+            --basetemp={envtmpdir} \
+            --junitxml=junit-{envname}.xml
    
-and then configure your Hudson job to collect "JUnit test results" with the ``**/junit-*.xml`` pattern. 
+and then configure your Hudson job to collect "JUnit test results" with
+the ``**/junit-*.xml`` pattern. 
 
-For a real-life example see `py.test own Hudson job configuration`_. This actually
-uses a "Parametrized Hudson build" which provides a nice configuration matrix 
-and lets ``tox`` handle all the underlying work of preparing and running things. 
+For a real-life example see `py.test own Hudson job configuration`_. 
+This actually uses a "Parametrized Hudson build" which provides a 
+nice configuration matrix and lets ``tox`` handle all the 
+underlying work of preparing and running things. 
 
 .. _`py.test own Hudson job configuration`: http://hudson.testrun.org/view/pytest/job/pytest-multi/configure
-.. _`Hudson`: http://hudson-ci.org/
 
 .. _`listed as a known issue`:
 
 Known Issues and limitations 
 -----------------------------
 
-* tox does not work on the Windows/Python3/Virtualenv3 combination due to limitations of the virtualenv3 project  
+* tox does not work on the Windows/Python3/Virtualenv3 combination due
+  to limitations of the virtualenv3 fork project  
 * on Windows you may encounter "too long filenames" for temporarily
   created files in your py.test run.  Try to not use the "--basetemp" parameter. 
 * If you have a test layout where your test files are subdirectories of
   your Python package then you will run your tests against the source package
   and not the installed version.  
+
+.. include:: ../links.txt

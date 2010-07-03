@@ -140,20 +140,15 @@ class VirtualEnv(object):
         else:
             self.pip_install(args)
 
-    def test(self, cwd=None):
+    def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)
-        argv = list(self.envconfig.argv)
-        cwd = cwd or py.path.local()
+        cwd = self.envconfig.changedir
         config = self.session.config
-        testpaths = []
-        for x in config.opts.testpath:
-            origpath = config.invocationcwd.join(x)
-            testpaths.append(cwd.bestrelpath(origpath))
-        argv.extend(testpaths)
-        try:
-            self._pcall(argv, log=-1, cwd=cwd)
-        except tox.exception.InvocationError:
-            return True
+        for argv in self.envconfig.commands:
+            try:
+                self._pcall(argv, log=-1, cwd=cwd)
+            except tox.exception.InvocationError:
+                return True
 
     def _pcall(self, args, venv=True, log=None, cwd=None):
         if venv:

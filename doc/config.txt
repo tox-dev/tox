@@ -5,8 +5,8 @@ tox configuration
 .. _ConfigParser: http://docs.python.org/library/configparser.html
 
 ``tox.ini`` files uses the standard ConfigParser_ "ini-style" format. 
-Below you find the specification, you might want to skim some 
-:doc:`examples` first. 
+Below you find the specification, but you might want to skim some 
+:doc:`examples` first and use this page as a reference. 
 
 Global settings
 ----------------------
@@ -17,6 +17,7 @@ List of optional global options::
     toxworkdir=path  # tox working directory, defaults to {toxinidir}/.tox
     setupdir=path    # defaults to {toxinidir} 
     logdir=path      # defaults to {toxworkdir}/log
+
 
 Test environment settings 
 ------------------------------
@@ -40,13 +41,24 @@ Complete list of settings that you can put into ``testenv*`` sections:
     name or path to a Python interpreter which will be used for creating
     the virtual environment. **default**: interpreter used for tox invocation. 
 
-``argv=MULTI-LINE``
-    the test command to be called for testing. Each line defines one 
-    item of a list that will be passed to ``subprocess.Popen``. 
+``commands=ARGVLIST``
+    the commands to be called for testing. Each command is defined 
+    by one or more lines; a command can have multiple lines if a line 
+    ends with the ``\`` character in which case the subsequent line 
+    will be appended (and may contain another ``\`` character ...). 
+    For eventually performing a call to ``subprocess.Popen(args, ...)`` 
+    ``args`` are determined by splitting the whole command by whitespace. 
 
 ``changedir=path``
     change to this working directory when executing the test command. 
     **default**: ``{toxinidir}``
+
+``args_are_paths=BOOL``
+    treat positional arguments passed to ``tox`` as file system paths
+    and - if they exist on the filesystem - rewrite them according 
+    to the ``changedir``. 
+    **default**: True (due to the exists-on-filesystem check it's usually
+    safe to try rewriting).
 
 ``envtmpdir=path``
     defines a temporary directory for the virtualenv which will be cleared
@@ -65,9 +77,10 @@ Complete list of settings that you can put into ``testenv*`` sections:
     **note**: if creating multiple environments use of a download cache greatly 
     speeds up the testing process. 
 
-``distribute=BOOL``
+``distribute=True|False``
     Set to ``True`` if you want to use distribute in the virtual environment. 
-    **default:** False. (setuptools will be used)
+    **default:** False meaning setuptools, the virtualenv-default setting, 
+    will be used. 
 
 Substitutions
 ---------------------
@@ -84,7 +97,7 @@ Globally available substitutions
     the directory where virtual environments are created and sub directories
     for packaging reside. 
     
-substitions for virtualenv-related sections 
+substitutions for virtualenv-related sections 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ``{envname}``
@@ -97,3 +110,20 @@ substitions for virtualenv-related sections
     directory where executables are located 
 ``{envtmpdir}``
     the environment temporary directory 
+
+substitutions for positional arguments in commands
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+When you specify positional arguments to a ``tox`` run like this::
+
+    tox arg1 arg2 
+
+these arguments will textually replace the ``[.*]`` pattern in
+any ``command`` specification. 
+
+Other Rules and notes
+=========================
+
+* ``path`` specifications: if a specified ``path`` is a relative path 
+  it will be considered as relative to the ``toxinidir``, the directory 
+  where the configuration file resides. 

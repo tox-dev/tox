@@ -41,6 +41,8 @@ class TestConfigPackage:
         config = makeconfig("")
         assert config.setupdir == tmpdir
         assert config.toxworkdir == tmpdir.join(".tox")
+        envconfig = config.envconfigs['python']
+        assert envconfig.args_are_paths 
 
     def test_defaults_changed_dir(self, tmpdir, makeconfig):
         tmpdir.mkdir("abc").chdir()
@@ -120,13 +122,72 @@ class TestIniParser:
         x = reader.getlist("section", "key2")
         assert x == ['item1', 'grr']
 
+    def test_argvlist(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [section]
+            key2=
+                cmd1 {item1} {item2}
+                cmd2 {item2}
+        """)
+        reader = IniReader(config._cfg)
+        reader.addsubstitions(item1="with space", item2="grr")
+        #py.test.raises(tox.exception.ConfigError, 
+        #    "reader.getargvlist('section', 'key1')")
+        assert reader.getargvlist('section', 'key1') == []
+        x = reader.getargvlist("section", "key2")
+        assert x == [["cmd1", "with space", "grr"],
+                     ["cmd2", "grr"]]
+
+    def test_argvlist_multiline(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [section]
+            key2=
+                cmd1 {item1} \ # a comment
+                     {item2}
+        """)
+        reader = IniReader(config._cfg)
+        reader.addsubstitions(item1="with space", item2="grr")
+        #py.test.raises(tox.exception.ConfigError, 
+        #    "reader.getargvlist('section', 'key1')")
+        assert reader.getargvlist('section', 'key1') == []
+        x = reader.getargvlist("section", "key2")
+        assert x == [["cmd1", "with space", "grr"]]
+
+
+    def test_argvlist_positional_substitution(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [section]
+            key2=
+                cmd1 []
+                cmd2 [{item2} \
+                     other]
+        """)
+        reader = IniReader(config._cfg)
+        posargs = ['hello', 'world']
+        reader.addsubstitions(posargs, item2="value2")
+        #py.test.raises(tox.exception.ConfigError, 
+        #    "reader.getargvlist('section', 'key1')")
+        assert reader.getargvlist('section', 'key1') == []
+        argvlist = reader.getargvlist("section", "key2")
+        assert argvlist[0] == ["cmd1"] + posargs
+        assert argvlist[1] == ["cmd2"] + posargs
+
+        reader = IniReader(config._cfg)
+        reader.addsubstitions([], item2="value2")
+        #py.test.raises(tox.exception.ConfigError, 
+        #    "reader.getargvlist('section', 'key1')")
+        assert reader.getargvlist('section', 'key1') == []
+        argvlist = reader.getargvlist("section", "key2")
+        assert argvlist[0] == ["cmd1"]
+        assert argvlist[1] == ["cmd2", "value2", "other"]
+
     def test_getpath(self, tmpdir, makeconfig):
         config = makeconfig("""
             [section]
             path1={HELLO}
         """)
         reader = IniReader(config._cfg)
-        reader.addsubstitions(HELLO="mypath")
+        reader.addsubstitions(toxinidir=tmpdir, HELLO="mypath")
         x = reader.getpath("section", "path1", tmpdir)
         assert x == tmpdir.join("mypath")
 
@@ -145,25 +206,25 @@ class TestConfigTestEnv:
     def test_defaults(self, tmpdir, makeconfig):
         config = makeconfig("""
             [testenv]
-            argv=xyz
-                --abc
+            commands=
+                xyz --abc
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
-        assert envconfig.argv == ["xyz", "--abc"]
+        assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
         assert envconfig.distribute == False
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""
             [testenv]
-            argv=xyz
+            commands=xyz
             [testenv:py30]
-            argv=abc
+            commands=abc
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['py30']
-        assert envconfig.argv == ["abc"]
+        assert envconfig.commands == [["abc"]]
 
     def test_changedir(self, tmpdir, makeconfig):
         config = makeconfig("""
@@ -226,7 +287,7 @@ class TestConfigTestEnv:
     def test_substitution_defaults(tmpdir, makeconfig):
         config = makeconfig("""
             [testenv:py24]
-            argv=
+            commands =
                 {toxinidir}
                 {toxworkdir}
                 {envdir}
@@ -235,10 +296,83 @@ class TestConfigTestEnv:
                 {envpython}
         """)
         conf = config.envconfigs['py24']
-        argv = conf.argv 
-        assert argv[0] == config.toxinidir 
-        assert argv[1] == config.toxworkdir 
-        assert argv[2] == conf.envdir 
-        assert argv[3] == conf.envbindir
-        assert argv[4] == conf.envtmpdir
-        assert argv[5] == conf.envpython
+        argv = conf.commands
+        assert argv[0][0] == config.toxinidir
+        assert argv[1][0] == config.toxworkdir
+        assert argv[2][0] == conf.envdir 
+        assert argv[3][0] == conf.envbindir
+        assert argv[4][0] == conf.envtmpdir
+        assert argv[5][0] == conf.envpython
+
+    def test_substitution_positional(self, newconfig):
+        inisource = """
+            [testenv:py24]
+            commands =
+                cmd1 [hello] \
+                     world 
+        """
+        conf = newconfig([], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello", "world"]
+        conf = newconfig(['brave', 'new'], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "brave", "new", "world"]
+
+    def test_rewrite_posargs(self, tmpdir, newconfig):
+        inisource = """
+            [testenv:py24]
+            args_are_paths = True
+            changedir = tests
+            commands = cmd1 [hello]
+        """
+        conf = newconfig([], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello"]
+
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "tests/hello"]
+
+        tmpdir.ensure("tests", "hello")
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello"]
+
+class TesCmdInvocation:
+    def test_help(self, cmd):
+        result = cmd.run("tox", "-h")
+        assert not result.ret
+        result.stdout.fnmatch_lines([
+            "*help*",
+        ])
+
+    def test_version(self, cmd):
+        result = cmd.run("tox", "--version")
+        assert not result.ret
+        stdout = result.stdout.str()
+        assert tox.__version__ in stdout
+        assert "imported from" in stdout
+
+    def test_unkonwn_ini(self, cmd):
+        result = cmd.run("tox")
+        assert result.ret
+        result.stderr.fnmatch_lines([
+            "*tox.ini*does not exist*",
+        ])
+
+    def test_config_specific_ini(self, tmpdir, cmd):
+        ini = tmpdir.ensure("hello.ini")
+        result = cmd.run("tox", "-c", ini, "--showconfig")
+        assert not result.ret
+        result.stdout.fnmatch_lines([
+            "*config-file*hello.ini*",
+        ])
+
+    def test_no_tox_ini(self, cmd, initproj):
+        initproj("noini-0.5", )
+        result = cmd.run("tox")
+        assert result.ret
+        result.stderr.fnmatch_lines([
+            "*ERROR*tox.ini*does not exist*",
+        ])
+

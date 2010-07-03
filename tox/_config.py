@@ -2,7 +2,49 @@ import os, sys
 import py
 import re
 import tox
+import argparse
 configparser = py.builtin._tryimport("ConfigParser", "configparser")
+
+def parseconfig(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    parser = prepare_parse()
+    opts = parser.parse_args(args)
+    config = Config()
+    config.opts = opts
+    parseini(config)
+    return config 
+
+def feedback(msg, sysexit=False):
+    py.builtin.print_("ERROR: " + msg, file=sys.stderr)
+    if sysexit:
+        raise SystemExit(1)
+
+class VersionAction(argparse.Action):
+    def __call__(self, *args, **kwargs):
+        py.builtin.print_("%s imported from %s" %(tox.__version__,
+                          tox.__file__))
+        raise SystemExit(0)
+
+def prepare_parse():
+    parser = argparse.ArgumentParser(description=__doc__,)
+        #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--version", nargs=0, action=VersionAction, 
+        dest="version",
+        help="report version information to stdout.")
+    parser.add_argument("--showconfig", action="store_true", dest="showconfig", 
+        help="show configuration information. ")
+    parser.add_argument("-c", action="store", default="tox.ini", 
+        dest="configfile",
+        help="use the specified config file.")
+    parser.add_argument("-e", "--env", action="store", dest="env", 
+        metavar="envs",
+        help="work against specified comma-separated environments.")
+    parser.add_argument("--notest", action="store_true", dest="notest", 
+        help="perform packaging & setup, but no tests.")
+    parser.add_argument("args", nargs="*", 
+        help="additional arguments available to command positional substition")
+    return parser
 
 class Config:
     def __init__(self):
@@ -33,19 +75,18 @@ class VenvConfig:
 
 testenvprefix = "testenv:"
 
-def parseini(path):
-    cfg = configparser.RawConfigParser()
-    cfg.read(str(path))
-    parser = ConfigIniParser(cfg, path)
-    return parser.config
-
-class ConfigIniParser:
-    def __init__(self, cfg, toxinipath):
-        self._cfg = cfg
-        self.config = config = Config()
-        config.toxinipath = py.path.local(toxinipath)
-        config._cfg = cfg
+class parseini:
+    def __init__(self, config):
+        config.opts.configfile = py.path.local(config.opts.configfile)
+        config.toxinipath = config.opts.configfile
         config.toxinidir = toxinidir = config.toxinipath.dirpath()
+        if not config.toxinipath.check():
+            feedback("toxini file %r does not exist" %(
+                str(config.toxinipath)), sysexit=True)
+        self._cfg = configparser.RawConfigParser()
+        self._cfg.read(str(config.toxinipath))
+        config._cfg = self._cfg
+        self.config = config 
         reader = IniReader(self._cfg)
         reader.addsubstitions(toxinidir=config.toxinidir)
         config.toxworkdir = reader.getpath("global", "toxworkdir", 
@@ -53,21 +94,23 @@ class ConfigIniParser:
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.setupdir = reader.getpath("global", "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
-        sections = cfg.sections()
+        sections = self._cfg.sections()
         for section in sections:
             if section.startswith(testenvprefix):
                 name = section[len(testenvprefix):]
-                envconfig = self._makeenvconfig(name, section, reader._subs)
+                envconfig = self._makeenvconfig(name, section, reader._subs, 
+                    config)
                 config.envconfigs[name] = envconfig
         if not config.envconfigs:
             config.envconfigs['python'] = \
-                self._makeenvconfig("python", "_xz_9", reader._subs)
+                self._makeenvconfig("python", "_xz_9", reader._subs, config)
 
-    def _makeenvconfig(self, name, section, subs):
+    def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)
         reader = IniReader(self._cfg, fallbacksections=["testenv"])
         reader.addsubstitions(**subs)
         vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
+        vc.args_are_paths = reader.getbool(section, "args_are_paths", True)
         if reader.getdefault(section, "python", None):
             raise tox.exception.ConfigError(
                 "'python=' key was renamed to 'basepython='")
@@ -76,9 +119,19 @@ class ConfigIniParser:
                               envbindir=vc.envbindir, envpython=vc.envpython)
         vc.envtmpdir = reader.getpath(section, "tmpdir", "{envdir}/tmp")
         reader.addsubstitions(envtmpdir=vc.envtmpdir)
-        vc.argv = reader.getlist(section, "argv")
-        vc.deps = reader.getlist(section, "deps")
         vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
+        args = config.opts.args
+        if args:
+            if vc.args_are_paths:
+                args = []
+                for arg in config.opts.args:
+                    origpath = config.invocationcwd.join(arg, abs=True)
+                    if origpath.check():
+                        arg = vc.changedir.bestrelpath(origpath)
+                    args.append(arg)
+            reader.addsubstitions(args)
+        vc.commands = reader.getargvlist(section, "commands")
+        vc.deps = reader.getlist(section, "deps")
         vc.distribute = reader.getbool(section, "distribute", False)
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache is None:
@@ -94,17 +147,58 @@ class IniReader:
         self.fallbacksections = fallbacksections or []
         self._subs = {}
 
-    def addsubstitions(self, **kw):
+    def addsubstitions(self, _posargs=None, **kw):
         self._subs.update(kw)
+        if _posargs:
+            self._subs['_posargs'] = _posargs
 
     def getpath(self, section, name, defaultpath):
-        return py.path.local(self.getdefault(section, name, defaultpath))
+        toxinidir = self._subs['toxinidir']
+        path = self.getdefault(section, name, defaultpath)
+        return toxinidir.join(path, abs=True)
 
     def getlist(self, section, name, sep="\n"):
         s = self.getdefault(section, name, None)
         if s is None:
             return []
         return [x.strip() for x in s.split(sep) if x.strip()]
+
+    def getargvlist(self, section, name):
+        s = self.getdefault(section, name, '', replace=False)
+        #if s is None:
+        #    raise tox.exception.ConfigError(
+        #        "no command list %r defined in section [%s]" %(name, section))
+        commandlist = []
+        current_command = ""
+        for line in s.split("\n"):
+            line = line.rstrip()
+            i = line.find("#")
+            if i != -1:
+                line = line[:i].rstrip()
+            if not line:
+                continue
+            if line.endswith("\\"):
+                current_command += " " + line[:-1]
+                continue 
+            current_command += line
+            commandlist.append(self._processcommand(current_command))
+            current_command = ""
+        else:
+            if current_command:
+                raise tox.exception.ConfigError(
+                    "line-continuation for [%s] %s ends nowhere" % 
+                    (section, name))
+        return commandlist
+
+    def _processcommand(self, command):
+        posargs = self._subs.get('_posargs', None)
+        if posargs:
+            posargstring = " ".join(posargs)
+            command = re.sub("\[.*\]", lambda m: posargstring, command)
+        else:
+            command = command.replace("[", "").replace("]", "")
+        argv = [self._replace(x) for x in command.split()]
+        return argv
 
     def getbool(self, section, name, default=None):
         s = self.getdefault(section, name, default)
@@ -115,7 +209,7 @@ class IniReader:
             s = (s == "True" and True or False)
         return s
 
-    def getdefault(self, section, name, default=None):
+    def getdefault(self, section, name, default=None, replace=True):
         try:
             x = self._cfg.get(section, name)
         except (configparser.NoSectionError, configparser.NoOptionError):
@@ -128,8 +222,9 @@ class IniReader:
                     break
             else:
                 x = default
-        if x and hasattr(x, 'replace'):
+        if replace and x and hasattr(x, 'replace'):
             x = self._replace(x)
+        #print "getedefault", section, name, "returned", repr(x)
         return x
 
     def _sub(self, match):

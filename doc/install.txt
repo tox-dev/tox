@@ -39,8 +39,4 @@ or to activate your checkout in your environment::
 
 so that you can do changes and submit patches.
 
-.. _`easy_install`: http://peak.telecommunity.com/DevCenter/EasyInstall
-.. _pip: http://pypi.python.org/pypi/pip
-.. _setuptools: http://pypi.python.org/pypi/setuptools
-.. _distribute: http://pypi.python.org/pypi/distribute
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. include:: links.txt

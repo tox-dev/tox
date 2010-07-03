@@ -1,0 +1,16 @@
+
+.. _Python: http://www.python.org
+.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _virtualenv3: http://pypi.python.org/pypi/virtualenv3
+.. _`py.test`: http://pytest.org 
+.. _`nose`: http://pypi.python.org/pypi/nose
+.. _`Holger Krekel`: http://twitter.com/hpk42
+.. _`pytest-xdist`: http://codespeak.net/py/dist/test/plugin/xdist.html
+
+.. _`easy_install`: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _pip: http://pypi.python.org/pypi/pip
+.. _setuptools: http://pypi.python.org/pypi/setuptools
+.. _distribute: http://pypi.python.org/pypi/distribute
+.. _`hudson`: http://hudson-ci.org/
+.. _sphinx: http://pypi.python.org/pypi/sphinx 
+
