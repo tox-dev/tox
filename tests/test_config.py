@@ -213,7 +213,7 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
-        assert envconfig.distribute == False
+        assert envconfig.distribute == True
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""

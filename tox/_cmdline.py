@@ -193,7 +193,7 @@ class Session:
     def subcommand_test(self):
         self.setupenv()
         if self.config.opts.notest:
-            self.report.info("skipping test run because '--notest' was specified")
+            self.report.info("skipping test commands because '--notest' was specified")
             return 0
         self.report.section("test")
         for venv in self.venvlist:

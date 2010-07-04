@@ -2,7 +2,44 @@
 nose and tox 
 =================================
 
+It is easy to integrate `nosetests`_ runs with tox.  
+For starters here is a simple ``tox.ini`` config to configure your project 
+for running with nose:
 
-Hudson integration
-----------------------------
+Basic nosetests example
+--------------------------
+
+Assuming the following layout::
+
+    tox.ini      # see below for content
+    setup.py     # a classic distutils/setuptools setup.py file 
+
+and the following ``tox.ini`` content::
+
+    [testenv]
+    deps=nose 
+    commands=
+      nosetests \
+            []        # substitute with tox' positional arguments 
+    [testenv:py26]
+    basepython=python2.6
+    [testenv:py25]
+    basepython=python2.5
+
+you can invoke ``tox`` in the directory where your ``tox.ini`` resides. 
+``tox`` will sdist-package your project create two virtualenv environments 
+with the ``python2.6`` and ``python2.5`` interpreters, respectively, and will
+then run the specified test command. 
+
+
+More examples? 
+------------------------------------------
+
+Analogous to :doc:`pytest` it should be very easy to define additional options
+and to integrate nosetest runs with Hudson.  You are welcome to submit some 
+advanced tips and tricks for nose/tox interaction. 
+
+Also checkout :doc:`general`. 
+    
+.. include:: ../links.txt
 

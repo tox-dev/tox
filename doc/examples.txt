@@ -9,5 +9,5 @@ tox configuration and usage examples
    example/pytest.txt
    example/nose.txt
    example/unittest 
-   example/sphinx.txt 
+   example/general.txt
 

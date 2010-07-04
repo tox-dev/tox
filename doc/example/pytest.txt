@@ -6,8 +6,33 @@ It is easy to integrate `py.test`_ runs with tox.  If you encounter
 issues, please check if they are `listed as a known issue`_ and/or use 
 the :doc:`support channels <../support>`. 
 
-Basic py.test example for "extra" test directories 
---------------------------------------------------------------
+Basic example
+--------------------------
+
+Assuming the following layout::
+
+    tox.ini      # see below for content
+    setup.py     # a classic distutils/setuptools setup.py file 
+
+and the following ``tox.ini`` content::
+
+    [testenv]
+    deps=py           # PYPI package providing py.test
+    commands=
+      py.test \
+            []        # substitute with tox' positional arguments 
+    [testenv:py26]
+    basepython=python2.6
+    [testenv:py31]
+    basepython=python3.1
+
+you can invoke ``tox`` in the directory where your ``tox.ini`` resides. 
+``tox`` will sdist-package your project create two virtualenv environments 
+with the ``python2.6`` and ``python3.1`` interpreters, respectively, and will
+then run the specified test command. 
+
+Extended example: change dir before test and use per-virtualenv tempdir
+--------------------------------------------------------------------------
 
 Assuming the following layout::
 
@@ -19,32 +44,37 @@ and the following ``tox.ini`` content::
 
     [testenv]
     changedir=tests   
-    deps=py      # the py.test package 
-    args_are_path=True      # rewrite positional args wrt to changedir
+    deps=py      
     commands=
-      py.test 
-        --basetemp={envtmpdir}  # py.test uses the per-virtualenv temp dir 
-        --confcutdir=..         # stop looking for conftest files at parent dir
+      py.test \
+        --basetemp={envtmpdir}  \ # py.test uses the per-virtualenv temp dir 
         []                      # substitute with tox' positional arguments 
     [testenv:py26]
     basepython=python2.6
-    [testenv:py26]
+    [testenv:py31]
     basepython=python3.1
 
-you can invoke ``tox`` in the directory where your ``tox.ini`` resides
-and will see it sdist-package your project, creating virtualenv environments 
-for ``python2.6`` and ``python3.1`` and then run the specified test command. 
+you can invoke ``tox`` in the directory where your ``tox.ini`` resides. 
+Differently than in the previous example the ``py.test`` command 
+will be executed with a current working directory set to ``tests``
+and the test run will use the per-virtualenv temporary directory. 
 
-If you invoke it like this::
+.. _`passing positional arguments`: 
 
-    tox tests/test_something.py 
+Avoiding __init__.py files in test directories 
+---------------------------------------------------
 
-this command line positional argument will be substituted exactly where
-the ``[]`` was specified in the ``commands`` setting.  Due to the 
-additional ``args_are_paths`` setting ``tox`` rewrites the 
-``tests/test_something.py`` according to the ``changedir`` into
-``test_something.py`` so that the invoked ``py.test`` process can
-find it (it is invoked with ``changedir`` as current working directory).
+.. _`fully qualified name`: http://codespeak.net/py/dist/test/customize.html#constructing-the-package-name-for-test-modules
+
+``py.test`` collects test modules on the filesystem and then 
+tries to import them under their `fully qualified name`_. This means
+that if your test directory contains an ``__init__.py`` file then your
+``py.test`` invocation may end up importing the package from
+the checkout directory rather than the installed package.  Therefore
+it is better to try to avoid ``__init__.py`` files in test 
+directories and also try to avoid custom ``PYTHONPATH`` settings.  
+After all, it is the job of your ``setup.py`` file and the install 
+tools to care for making the package properly available for importing. 
 
 Using multiple CPUs for test runs
 -----------------------------------
@@ -68,42 +98,47 @@ Using tox, py.test and the Hudson CI
 
 The Hudson_ continous integration server allows to define "jobs" with 
 "build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
-default Python installation on each Hudson slave, you can then have a 
-Hudson test a simple build step invoke tox from a Python script like this::
+default Python installation on each Hudson slave, you can easily create 
+a Hudson multi-configuration job that will drive your tox runs from the CI-server side,
+using these steps: 
+
+* create a "multi-configuration" job, give it a name of your choice 
+* configure your repository so that Hudson can pull it 
+* (optional) configure multiple nodes so that tox-runs are performed
+  on multiple hosts 
+* configure ``axes`` with e.g. using ``ENV`` as an axis name and as values
+  the space-separated test environment names you want Hudson/tox to execute
+  sequentially. 
+* add a Python-build step with this content::
 
     import tox
-    tox.cmdline()
+    import os
+    tox.cmdline(["-e", os.environ['ENV'])
+
+* check ``Publish JUnit test result report`` and enter
+  ``**/junit-*.xml`` as the pattern so that Hudson collects 
+  test results. 
 
 It makes sense to use something like the following configuration
-for your ``commands`` parameter::
+for your ``commands`` parameter in a ``tox.ini``::
 
     commands=
         py.test \
-            --confcutdir=. \
+            --confcutdir=.. \  # Hudson has nested project checkouts and this option 
+                               # lets py.test avoid see conflicting conftest.py files 
             --basetemp={envtmpdir} \
             --junitxml=junit-{envname}.xml
-   
-and then configure your Hudson job to collect "JUnit test results" with
-the ``**/junit-*.xml`` pattern. 
 
-For a real-life example see `py.test own Hudson job configuration`_. 
-This actually uses a "Parametrized Hudson build" which provides a 
-nice configuration matrix and lets ``tox`` handle all the 
-underlying work of preparing and running things. 
+See a real-life example in action with the `py-trunk-multi Hudson job`_
 
-.. _`py.test own Hudson job configuration`: http://hudson.testrun.org/view/pytest/job/pytest-multi/configure
+.. _`py-trunk-multi Hudson job`: http://hudson.testrun.org/view/pytest/job/py-trunk-multi/
 
 .. _`listed as a known issue`:
 
 Known Issues and limitations 
 -----------------------------
 
-* tox does not work on the Windows/Python3/Virtualenv3 combination due
-  to limitations of the virtualenv3 fork project  
 * on Windows you may encounter "too long filenames" for temporarily
   created files in your py.test run.  Try to not use the "--basetemp" parameter. 
-* If you have a test layout where your test files are subdirectories of
-  your Python package then you will run your tests against the source package
-  and not the installed version.  
 
 .. include:: ../links.txt

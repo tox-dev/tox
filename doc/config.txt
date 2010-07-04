@@ -78,7 +78,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
     speeds up the testing process. 
 
 ``distribute=True|False``
-    Set to ``True`` if you want to use distribute in the virtual environment. 
+    Set to ``False`` if you want to use setuptools_ instead of the default
+    distribute_ in the virtual environment. 
     **default:** False meaning setuptools, the virtualenv-default setting, 
     will be used. 
 
@@ -111,6 +112,8 @@ substitutions for virtualenv-related sections
 ``{envtmpdir}``
     the environment temporary directory 
 
+.. _`command positional substitution`: 
+
 substitutions for positional arguments in commands
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -121,9 +124,21 @@ When you specify positional arguments to a ``tox`` run like this::
 these arguments will textually replace the ``[.*]`` pattern in
 any ``command`` specification. 
 
+Use a double ``--`` if you also want to pass options to an underlying
+test command, for example::
+
+    tox -- --opt1 ARG1
+
+will make the `--opt1 ARG1`` appear in all test commands where ``[]`` was 
+specified.  By default (see ``args_are_paths`` setting), ``tox`` rewrites 
+each positional argument if it is a relative path and exists on the 
+filesystem to become a path relative to the ``changedir`` setting. 
+
 Other Rules and notes
 =========================
 
 * ``path`` specifications: if a specified ``path`` is a relative path 
   it will be considered as relative to the ``toxinidir``, the directory 
   where the configuration file resides. 
+
+.. include:: links.txt

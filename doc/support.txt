@@ -1,24 +1,38 @@
 
 .. _support:
 
-tox contact and support channels 
+support and contact channels
 =====================================
 
 You are welcome to:
 
-* join `tox-dev`_ for general discussions
-* hang out on the irc.freenode.net #pylib channel 
-* `report on the issue tracker`_
+* join the `Testing In Python (TIP) mailing list`_ for general and tox/test-tool 
+  interaction questions. 
+* file a `report on the issue tracker`_
+* join `tox-dev`_ for core tox development issues, 
+  contributions and patch discussions. 
 * join `tox-commit`_ to be notified of source changes
+* hang out on the irc.freenode.net #pylib channel 
 * `clone the mercurial repository`_ and submit patches
-* follow the `tetamap blog`_ or `Holger's twitter presence`_.
-* contact merlinux_ if you want to buy teaching or other support. 
+* follow the `tetamap blog`_ or `holger's twitter presence`_ 
 
-.. _`Holger's twitter presence`: http://twitter.com/hpk42
-.. _merlinux: http://merlinux.eu
+professional support 
+----------------------------
+
+If you are looking for on-site teaching and consulting report to setup 
+and use state-of-the-start testing infrastructure with Python, 
+contact holger at `merlinux.eu`_, an association of 
+experienced and `well-known Python developers`_.
+
+.. _`well-known Python developers`: http://merlinux.eu/people.txt
+.. _`Maciej Fijalkowski`: http://www.ohloh.net/accounts/fijal
+.. _`Benjamin Peterson`: http://www.ohloh.net/accounts/gutworth 
+.. _`Testing In Python (TIP) mailing list`: http://lists.idyll.org/listinfo/testing-in-python
+.. _`holger's twitter presence`: http://twitter.com/hpk42
+.. _`merlinux.eu`: http://merlinux.eu
 .. _`report on the issue tracker`: http://code.google.com/p/pytox/issues/list
 .. _`tetamap blog`: http://tetamap.wordpress.com
-.. _`tox-dev`: http://codespeak.net/mailman/listinfo/execnet-dev
-.. _`tox-commit`: http://codespeak.net/mailman/listinfo/execnet-commit
+.. _`tox-dev`: http://codespeak.net/mailman/listinfo/tox-dev
+.. _`tox-commit`: http://codespeak.net/mailman/listinfo/tox-commit
 .. _`clone the mercurial repository`: http://code.google.com/p/pytox/source/checkout
 

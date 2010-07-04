@@ -1,0 +1,73 @@
+General tips and tricks 
+================================
+
+Interactively passing positional arguments 
+-----------------------------------------------
+
+If you invoke ``tox`` like this::
+
+    tox -- -x tests/test_something.py 
+
+the arguments after the `--` will be substituted 
+everywhere where you specify ``[...]`` in your
+test commands, for example using ``py.test``::
+    
+    # in the testenv or testenv:NAME section of your tox.ini 
+    commands =
+        py.test []
+
+or using ``nosetests``::
+
+    commands = 
+        nosetests []
+
+the above ``tox`` invocation will trigger the test runners to 
+stop after the first failure and to only run a particular test file. 
+
+
+Integrating "sphinx" documentation checks
+----------------------------------------------
+
+In a ``testenv`` environment you can specify any command and 
+thus you can easily integrate sphinx_ documentation integrity during 
+a tox test run.  Here is an example ``tox.ini`` configuration::
+
+    [testenv:docs]
+    basepython=python
+    changedir=doc
+    deps=sphinx
+    commands=
+        sphinx-build -W -b html -d {envtmpdir}/doctrees .  {envtmpdir}/html
+
+This will create a dedicated ``docs`` virtual environment and install
+the ``sphinx`` dependency which itself will install the ``sphinx-build`` tool 
+which you can then use as a test command.  Note that sphinx output is redirected
+to the virtualenv environment temporary directory to prevent sphinx 
+from caching results between runs.  
+
+You can now call::
+
+    tox 
+
+which will make the sphinx tests part of your test run. 
+
+Selecting one or more environments to run tests against
+--------------------------------------------------------
+
+Using the ``-e ENV[,ENV2,...]``  option you explicitely list 
+the environments where you want to run tests against. For
+example, given the previous sphinx example you may call::
+
+    tox -e docs
+
+which will make ``tox`` only manage the ``docs`` environment
+and call its test commands.  You may specify more than 
+one environment like this::
+
+    tox -e py25,py26 
+
+which would run the commands of the ``py25`` and ``py26`` testenvironments 
+respectively. 
+
+.. include:: ../links.txt
+

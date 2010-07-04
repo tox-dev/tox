@@ -1,36 +1,72 @@
-tox features
-=========================================
+Welcome to the tox automation project 
+===============================================
 
-* ``tox`` **automates tedious Python related test activities**
+vision: merge testing and deployment 
+----------------------------------------
+
+``tox`` aims to automate state-of-the-art packaging, testing and
+deployment of Python software right from your console *or* CI
+server, invoking your tools of choice.
+
+Current features 
+-------------------
+
+* ``tox`` helps to **automate tedious Python related test activities**
 
 * **test your Python package against many interpreter and dependency configs**
 
-    - automatic (re)creation of virtualenvs for running test activities 
+    - automatic customizable (re)creation of virtualenv_ test environments 
 
     - installs your ``setup.py`` based project into each virtual environment
 
-    - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
+    - test-tool agnostic: runs py.test, nose or unittests a uniform manner
 
-* integrates well with continous integration servers like Hudson_ 
+* uses pip_ and distribute_ by default 
+
+* **driven by a simple ini-style config file**
 
 * **documented** :doc:`examples` and :doc:`configuration <config>` 
+
+* integrates with continous integration servers like Hudson_ and helps
+  you to avoid boilerplatish and platform-specific build-step hacks. 
 
 * **professionally** :doc:`supported <support>`
 
 * **concise reporting** about tool invocations and configuration errors
 
-* **cross-Python compatible**: Python2.4 up to Python3.1, Jython and pypy-c (trunk version) 
+* **cross-Python compatible**: Python2.4 up to Python3.1, Jython (and pypy-c, needs patches)
 
 * **cross-platform**: Windows and Unix style environments 
 
-.. note::
-    Tox was created in July 2010 by `Holger Krekel`_ - feedback and contributions very welcome. 
-    subscribe and post to http://codespeak.net/mailman/listinfo/tox-dev
-    or visit the #pylib channel on freenode. 
+Notes and known limitations 
+----------------------------------
 
+* ``tox`` is fresh on the Python testing scene (first release July 2010) and 
+  needs some battle testing and feedback. 
+  
+* ``tox`` is likely to evolve in possibly incompatible increments as it 
+  provides more power to configure and customize the test process. 
+
+* ``tox`` uses virtualenv_ and virtualenv3_, the latter being a fork
+  which roughly works with Python3 but has less features (no "pip" and
+  other problems).  solution: virtualenv_ needs to merge and grow proper 
+  native Python3 support, preferably in a "single-source" way. 
+
+* tox does not work on the Windows/Python3/Virtualenv3 combination due
+  to limitations of the virtualenv3 fork project. 
+
+* ``tox`` currently uses a ``setup.py sdist`` invocation to create 
+  an installable package and then invokes ``pip`` or ``easy_install`` to 
+  install into each test environment.  There is no support for other
+  installation methods. 
+
+* ``tox`` integrates with Hudson but has no documented concept/support for 
+  artifact management, i.e. transfering the result of one tox-run/job into 
+  another tox-run/job utilizing CI mechanisms.  The challenge is to design 
+  a way that works well both within a CI context like Hudson and on the 
+  developer console outside of a Hudson context. 
 
 .. _`tox.ini`: :doc:configfile
-
 
 .. toctree::
    :hidden:
