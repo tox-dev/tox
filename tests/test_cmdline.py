@@ -61,7 +61,7 @@ class TestSession:
         assert l[0].basename == "0.log"
         out, err = capfd.readouterr()
         relpath = l[0].relto(cwd)
-        expect = ">%s/0.log" % (newlogdir.basename)
+        expect = ">%s%s0.log" % (newlogdir.basename, newlogdir.sep)
         assert expect in out
 
     def test_summary_status(self, initproj, capfd):
