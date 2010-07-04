@@ -143,19 +143,20 @@ class VirtualEnv(object):
     def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)
         cwd = self.envconfig.changedir
-        config = self.session.config
+        env = os.environ.copy()
+        env['PATH'] = str(self.envconfig.envbindir) + os.pathsep + env['PATH']
         for argv in self.envconfig.commands:
             try:
-                self._pcall(argv, log=-1, cwd=cwd)
+                self._pcall(argv, log=-1, cwd=cwd, env=env)
             except tox.exception.InvocationError:
                 return True
 
-    def _pcall(self, args, venv=True, log=None, cwd=None):
+    def _pcall(self, args, venv=True, log=None, cwd=None, env=None):
         if venv:
             args = [self.getcommandpath(args[0])] + args[1:]
         if log is None:
             log = self.path.ensure("log", dir=1)
-        return self.session.pcall(args, log=log, cwd=cwd)
+        return self.session.pcall(args, log=log, cwd=cwd, env=env)
 
 if sys.platform != "win32":
     def find_executable(name):

@@ -33,6 +33,13 @@ class ReportExpectMock:
         raise AssertionError(
             "looking for %s(%r), no reports found at >=%d in %r" %
             (cat, messagepattern, self._index+1, self._calls))
+
+class pcallMock:
+    def __init__(self, args, log, cwd, env=None):
+        self.args = args
+        self.log = log
+        self.cwd = cwd
+        self.env = env
     
 def pytest_funcarg__mocksession(request):
     class MockSession:
@@ -44,8 +51,8 @@ def pytest_funcarg__mocksession(request):
             self._reports = []
         def make_emptydir(self, path):
             pass
-        def pcall(self, args, log, cwd):
-            self._pcalls.append(args)
+        def pcall(self, args, log, cwd, env=None):
+            self._pcalls.append(pcallMock(args, log, cwd, env))
     return MockSession()
 
 def test_find_executable():
@@ -103,7 +110,7 @@ def test_create(monkeypatch, mocksession, makeconfig):
     venv.create()
     l = mocksession._pcalls
     assert len(l) >= 1
-    args = l[0]
+    args = l[0].args
     assert "virtualenv" in " ".join(args[:2])
     if sys.platform != "win32":
         i = args.index("-p")
@@ -126,7 +133,7 @@ def test_create_distribute(monkeypatch, mocksession, makeconfig):
     venv.create()
     l = mocksession._pcalls
     assert len(l) >= 1
-    args = l[0]
+    args = l[0].args
     assert "--distribute" not in " ".join(args[:2])
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
@@ -146,7 +153,7 @@ def test_install_downloadcache(mocksession, makeconfig):
 
     venv.install_deps()
     assert len(l) == 2
-    args = l[1]
+    args = l[1].args
     assert "pip" in str(args[0])
     assert args[1] == "install"
     arg = "--download-cache=" + str(envconfig.downloadcache)
@@ -171,12 +178,12 @@ def test_install_python3(tmpdir, mocksession, makeconfig):
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 2
-    args = l[0]
+    args = l[0].args
     assert 'virtualenv3' in args[0]
     l[:] = []
     venv._install(["hello"])
     assert len(l) == 1
-    args = l[0]
+    args = l[0].args
     assert 'easy_install' in str(args[0])
     for x in args:
         assert "--download-cache" not in args, args
@@ -214,7 +221,7 @@ class TestVenvUpdate:
         assert not venv.path_python.check()
         venv.update()
         assert mocksession._pcalls
-        args1 = mocksession._pcalls[0]
+        args1 = mocksession._pcalls[0].args
         assert 'virtualenv' in " ".join(args1)
         s = venv.path_python.read()
         assert s == sys.executable
@@ -240,3 +247,20 @@ class TestVenvUpdate:
         venv.path_deps.write("xyz\n")
         msg = venv.update() 
         mocksession.report.expect("action", "recreating virtualenv*")
+
+class TestVenvTest:
+
+    def test_path_setting(self, makeconfig, mocksession):
+        config = makeconfig("""
+            [testenv]
+            commands=
+                {envpython} -c pass
+        """)
+        envconfig = config.envconfigs['python'] 
+        venv = VirtualEnv(envconfig, session=mocksession)
+        venv.test()
+        assert len(mocksession._pcalls) >= 1
+        env = mocksession._pcalls[0].env
+        path = env['PATH']
+        assert path.startswith(str(venv.envconfig.envbindir))
+        

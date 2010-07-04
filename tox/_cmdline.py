@@ -248,7 +248,7 @@ class Session:
             versions.append("%s-%s" %(tool, version.strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
    
-    def pcall(self, args, log=None, cwd=None):
+    def pcall(self, args, log=None, cwd=None, env=None):
         if cwd is None:
             cwd = self.config.toxworkdir
         cwd.chdir()
@@ -258,7 +258,7 @@ class Session:
                 arg = cwd.bestrelpath(arg)
             newargs.append(arg)
            
-        opts = {} 
+        opts = {'env': env} 
         args = [str(x) for x in args]
         logpath = self.report.popen(newargs, log, opts)
         popen = subprocess.Popen(newargs, **opts)
