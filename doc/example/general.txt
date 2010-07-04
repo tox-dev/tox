@@ -51,6 +51,50 @@ You can now call::
 
 which will make the sphinx tests part of your test run. 
 
+Integrating "sphinx" documentation checks in a Hudson job
+----------------------------------------------------------------
+
+If you are using a multi-configuration Hudson job which collects
+JUnit Test results you will run into problems using the previous
+method of running the sphinx-build command because it will not
+generate JUnit results.  To accomodate this issue one solution
+is to have ``py.test`` wrap the sphinx-checks and create a 
+JUnit result file which wraps the result of calling sphinx-build. 
+Here is an example: 
+
+1. create a ``docs`` environment in your ``tox.ini`` file like this::
+
+    [testenv:docs]
+    basepython=python
+    changedir=doc # or whereever you keep your sphinx-docs 
+    deps=sphinx
+        py
+    commands=
+        py.test --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
+
+2. create a ``doc/check_sphinx.py`` file like this::
+
+    import py
+    import subprocess
+    def test_linkcheck(tmpdir):
+        doctrees = tmpdir.join("doctrees")
+        htmldir = tmpdir.join("html")
+        subprocess.check_call(
+            ["sphinx-build", "-W", "-blinkcheck",
+              "-d", str(doctrees), ".", str(htmldir)])
+    def test_build_docs(tmpdir):
+        doctrees = tmpdir.join("doctrees")
+        htmldir = tmpdir.join("html")
+        subprocess.check_call([
+            "sphinx-build", "-W", "-bhtml",
+              "-d", str(doctrees), ".", str(htmldir)])
+
+3. run ``tox -e docs`` and then you may integrate this environment 
+   along with your other environments into Hudson. 
+
+Note that ``py.test`` is only installed into the docs environment
+and does not need to be in use or installed with any other environment. 
+
 Selecting one or more environments to run tests against
 --------------------------------------------------------
 

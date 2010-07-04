@@ -126,8 +126,11 @@ for your ``commands`` parameter in a ``tox.ini``::
         py.test \
             --confcutdir=.. \  # Hudson has nested project checkouts and this option 
                                # lets py.test avoid see conflicting conftest.py files 
-            --basetemp={envtmpdir} \
             --junitxml=junit-{envname}.xml
+
+**Note** that we do not use the per-virtualenv ``--basetemp`` setting here because
+it can easily lead to too long filenames because Hudson creates a deeply nested
+directory structure for the workspaces of the jobs it runs. 
 
 See a real-life example in action with the `py-trunk-multi Hudson job`_
 
@@ -138,7 +141,7 @@ See a real-life example in action with the `py-trunk-multi Hudson job`_
 Known Issues and limitations 
 -----------------------------
 
-* on Windows you may encounter "too long filenames" for temporarily
+* you may encounter "too long filenames" for temporarily
   created files in your py.test run.  Try to not use the "--basetemp" parameter. 
 
 .. include:: ../links.txt
