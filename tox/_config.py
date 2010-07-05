@@ -105,12 +105,16 @@ class parseini:
         else:
             reader = IniReader(self._cfg)
             toxsection = "tox"
-            
+           
         reader.addsubstitions(toxinidir=config.toxinidir, 
                               homedir=os.path.expanduser("~"))
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir", 
                                            "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)
+        if config.opts.skip:
+            config.skip = config.opts.skip
+        else:
+            config.skip = reader.getdefault(toxsection, "skip", "").split(",")
         config.toxdistdir = reader.getpath(toxsection, "toxdistdir",
                                            "{toxworkdir}/dist")
         reader.addsubstitions(toxdistdir=config.toxdistdir)

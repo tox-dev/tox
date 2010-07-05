@@ -370,6 +370,20 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
+class TestParsing:
+    def test_skip(self, newconfig):
+        config = newconfig([], """
+            [tox]
+            skip=sdist
+        """)
+        assert config.skip == ['sdist']
+        config = newconfig(["--skip=test"], """
+            [tox]
+            skip=sdist
+        """)
+        assert config.skip == ['test']
+
+
 class TesCmdInvocation:
     def test_help(self, cmd):
         result = cmd.run("tox", "-h")
