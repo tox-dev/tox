@@ -171,7 +171,7 @@ class Session:
 
     def setupenv(self):
         self.report.section("setupenv")
-        if self.config.sdistfile:
+        if not self.config.opts.sdistonly and self.config.sdistfile:
             self.report.info("using sdistfile %r, skipping 'sdist' activity " %
                 str(self.config.sdistfile))
             sdist_path = self.config.sdistfile
@@ -180,7 +180,10 @@ class Session:
             if sdist_path is None:
                 self.report.error("aborting tox run")
                 raise SystemExit(1)
-           
+            if self.config.sdistfile and self.config.sdistfile != sdist_path:
+                self.report.action("copying fresh sdistfile to %r" % 
+                    str(self.config.sdistfile))
+                sdist_path.copy(self.config.sdistfile)
         if self.config.opts.sdistonly:
             return 
         for venv in self.venvlist:
