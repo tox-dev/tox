@@ -10,21 +10,10 @@ def parseconfig(args=None):
         args = sys.argv[1:]
     parser = prepare_parse()
     opts = parser.parse_args(args)
-    processopts(opts)
     config = Config()
     config.opts = opts
     parseini(config)
     return config 
-
-def processopts(opts):
-    if opts.skip:
-        skip = []
-        for stage in opts.skip.split(","):
-            if stage not in ("sdist", "setupenv", "test"):
-                raise tox.exception.ConfigError(
-                    "unknown stage %r" %(stage))
-            skip.append(stage)
-        opts.skip = skip
 
 def feedback(msg, sysexit=False):
     py.builtin.print_("ERROR: " + msg, file=sys.stderr)
@@ -51,8 +40,10 @@ def prepare_parse():
     parser.add_argument("-e", "--env", action="store", dest="env", 
         metavar="envs",
         help="work against specified comma-separated environments.")
-    parser.add_argument("--skip", action="store", dest="skip", default=(),
-        help="skip specified comma-separated stages sdist|setupenv|test",)
+    parser.add_argument("--notest", action="store_true", dest="notest",
+        help="skip invoking test commands.")
+    parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
+        help="only perform the sdist activity.")
     parser.add_argument("args", nargs="*", 
         help="additional arguments available to command positional substition")
     return parser
@@ -111,16 +102,13 @@ class parseini:
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir", 
                                            "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)
-        if config.opts.skip:
-            config.skip = config.opts.skip
-        else:
-            config.skip = reader.getdefault(toxsection, "skip", "").split(",")
         config.toxdistdir = reader.getpath(toxsection, "toxdistdir",
                                            "{toxworkdir}/dist")
         reader.addsubstitions(toxdistdir=config.toxdistdir)
         config.distshare = reader.getpath(toxsection, "distshare",
                                           "{toxdistdir}")
         reader.addsubstitions(distshare=config.distshare)
+        config.sdistfile = reader.getpath(toxsection, "sdistfile", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
         sections = self._cfg.sections()
@@ -184,6 +172,8 @@ class IniReader:
     def getpath(self, section, name, defaultpath):
         toxinidir = self._subs['toxinidir']
         path = self.getdefault(section, name, defaultpath)
+        if path is None:
+            return path
         return toxinidir.join(path, abs=True)
 
     def getlist(self, section, name, sep="\n"):

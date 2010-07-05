@@ -335,21 +335,6 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["cmd1", "brave", "new", "world"]
 
-    def test_substitution_hudson_context(self, tmpdir, monkeypatch, makeconfig):
-        monkeypatch.setenv("HUDSON_URL", "xyz")
-        monkeypatch.setenv("WORKSPACE", tmpdir)
-        config = makeconfig("""
-            [tox:hudson]
-            distshare = {env:WORKSPACE}/hello
-            [testenv:py24]
-            commands =
-                {distshare}
-        """)
-        conf = config.envconfigs['py24']
-        argv = conf.commands
-        assert argv[0][0] == config.distshare
-        assert config.distshare == tmpdir.join("hello")
-
     def test_rewrite_posargs(self, tmpdir, newconfig):
         inisource = """
             [testenv:py24]
@@ -370,21 +355,38 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
-class TestParsing:
-    def test_skip(self, newconfig):
-        config = newconfig([], """
-            [tox]
-            skip=sdist
-        """)
-        assert config.skip == ['sdist']
-        config = newconfig(["--skip=test"], """
-            [tox]
-            skip=sdist
-        """)
-        assert config.skip == ['test']
+class TestGlobalOptions:
+    def test_notest(self, newconfig):
+        config = newconfig([], "")
+        assert not config.opts.notest
+        config = newconfig(["--notest"], "")
+        assert config.opts.notest
 
+    def test_substitution_hudson_context(self, tmpdir, monkeypatch, makeconfig):
+        monkeypatch.setenv("HUDSON_URL", "xyz")
+        monkeypatch.setenv("WORKSPACE", tmpdir)
+        config = makeconfig("""
+            [tox:hudson]
+            distshare = {env:WORKSPACE}/hello
+            [testenv:py24]
+            commands =
+                {distshare}
+        """)
+        conf = config.envconfigs['py24']
+        argv = conf.commands
+        assert argv[0][0] == config.distshare
+        assert config.distshare == tmpdir.join("hello")
 
-class TesCmdInvocation:
+    def test_sdist_specification(self, tmpdir, makeconfig):
+        config = makeconfig("""
+            [tox]
+            sdistfile = {distshare}/xyz.zip
+        """)
+        assert config.sdistfile == config.distshare.join("xyz.zip")
+        config = makeconfig("")
+        assert not config.sdistfile 
+
+class TestCmdInvocation:
     def test_help(self, cmd):
         result = cmd.run("tox", "-h")
         assert not result.ret

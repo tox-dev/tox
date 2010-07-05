@@ -171,21 +171,20 @@ class Session:
 
     def setupenv(self):
         self.report.section("setupenv")
-        if "sdist" in self.config.skip:
-            self.report.info("skipping 'sdist' activity")
-            sdist_path = None 
+        if self.config.sdistfile:
+            self.report.info("using sdistfile %r, skipping 'sdist' activity " %
+                str(self.config.sdistfile))
+            sdist_path = self.config.sdistfile
         else:
             sdist_path = self.get_fresh_sdist() # do it ahead for nicer reporting
             if sdist_path is None:
                 self.report.error("aborting tox run")
                 raise SystemExit(1)
-        if "setupenv" in self.config.skip:
-            self.report.info("skipping 'setupenv' activity")
-
+           
+        if self.config.opts.sdistonly:
+            return 
         for venv in self.venvlist:
             self.venvstatus[venv.path] = 0
-            if "setupenv" in self.config.skip:
-                continue
             try:
                 status = venv.update()
             except tox.exception.InvocationError:
@@ -201,7 +200,7 @@ class Session:
 
     def subcommand_test(self):
         self.setupenv()
-        if "test" in self.config.skip:
+        if self.config.opts.notest or self.config.opts.sdistonly:
             self.report.info("skipping 'test' activity")
             return 0
         self.report.section("test")
