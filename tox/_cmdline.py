@@ -134,14 +134,6 @@ class Session:
     def setenvstatus(self, venv, msg):
         self.venvstatus[venv.path] = msg 
 
-    def build_and_install(self, venv):
-        sdist_path = self.get_fresh_sdist()
-        #self.report.venv_installproject(venv, sdist_path)
-        try:
-            venv.install_sdist(sdist_path)
-        except tox.exception.InvocationError:
-            self.setenvstatus(venv, "FAIL could not install package")
-
     def _makesdist(self):
         self.report.action("creating sdist package")
         setup = self.config.setupdir.join("setup.py")
@@ -179,12 +171,21 @@ class Session:
 
     def setupenv(self):
         self.report.section("setupenv")
-        x = self.get_fresh_sdist() # do it ahead for nicer reporting
-        if x is None:
-            self.report.error("aborting tox run")
-            raise SystemExit(1)
+        if "sdist" in self.config.opts.skip:
+            self.report.info("skipping 'sdist' activity")
+            sdist_path = None 
+        else:
+            sdist_path = self.get_fresh_sdist() # do it ahead for nicer reporting
+            if sdist_path is None:
+                self.report.error("aborting tox run")
+                raise SystemExit(1)
+        if "setupenv" in self.config.opts.skip:
+            self.report.info("skipping 'setupenv' activity")
+
         for venv in self.venvlist:
             self.venvstatus[venv.path] = 0
+            if "setupenv" in self.config.opts.skip:
+                continue
             try:
                 status = venv.update()
             except tox.exception.InvocationError:
@@ -192,13 +193,16 @@ class Session:
             if status:
                 self.setenvstatus(venv, status)
                 self.report.error(str(status))
-            else:
-                self.build_and_install(venv)
+            elif sdist_path is not None:
+                try:
+                    venv.install_sdist(sdist_path)
+                except tox.exception.InvocationError:
+                    self.setenvstatus(venv, "FAIL could not install package")
 
     def subcommand_test(self):
         self.setupenv()
-        if self.config.opts.notest:
-            self.report.info("skipping test commands because '--notest' was specified")
+        if "test" in self.config.opts.skip:
+            self.report.info("skipping 'test' activity")
             return 0
         self.report.section("test")
         for venv in self.venvlist:

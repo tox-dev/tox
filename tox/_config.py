@@ -10,10 +10,21 @@ def parseconfig(args=None):
         args = sys.argv[1:]
     parser = prepare_parse()
     opts = parser.parse_args(args)
+    processopts(opts)
     config = Config()
     config.opts = opts
     parseini(config)
     return config 
+
+def processopts(opts):
+    if opts.skip:
+        skip = []
+        for stage in opts.skip.split(","):
+            if stage not in ("sdist", "setupenv", "test"):
+                raise tox.exception.ConfigError(
+                    "unknown stage %r" %(stage))
+            skip.append(stage)
+        opts.skip = skip
 
 def feedback(msg, sysexit=False):
     py.builtin.print_("ERROR: " + msg, file=sys.stderr)
@@ -40,8 +51,8 @@ def prepare_parse():
     parser.add_argument("-e", "--env", action="store", dest="env", 
         metavar="envs",
         help="work against specified comma-separated environments.")
-    parser.add_argument("--notest", action="store_true", dest="notest", 
-        help="perform packaging & setup, but no tests.")
+    parser.add_argument("--skip", action="store", dest="skip", default=(),
+        help="skip specified comma-separated stages sdist|setupenv|test",)
     parser.add_argument("args", nargs="*", 
         help="additional arguments available to command positional substition")
     return parser

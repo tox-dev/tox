@@ -266,18 +266,25 @@ def test_notest(initproj, cmd):
         [testenv:py26]
         basepython=python2.6
     """})
-    result = cmd.run("tox", "--notest")
+    result = cmd.run("tox", "--skip=test")
     assert not result.ret
     assert "tox summary" not in result.stdout.str()
-    result = cmd.run("tox", "--notest", "--env=py25")
+    result = cmd.run("tox", "--skip=test", "--env=py25")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*reusing*py25",
     ])
-    result = cmd.run("tox", "--notest", "--env=py25,py26")
+    result = cmd.run("tox", "--skip=test", "--env=py25,py26")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*reusing*py25",
         "*reusing*py26",
     ])
 
+def test_sdistonly(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+    """})
+    result = cmd.run("tox", "--skip=setupenv,test")
+    assert not result.ret
+    assert "setup.py sdist" in result.stdout.str()
+    assert "virtualenv" not in result.stdout.str()
