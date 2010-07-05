@@ -18,7 +18,7 @@ class TestSession:
         sdist = session.get_fresh_sdist()
         assert sdist.check()
         assert sdist.ext == ".zip"
-        assert sdist == config.toxworkdir.join("dist", sdist.basename)
+        assert sdist == config.toxdistdir.join(sdist.basename)
         sdist2 = session.get_fresh_sdist()
         assert sdist2 == sdist 
         sdist.write("hello")
@@ -26,6 +26,25 @@ class TestSession:
         sdist_new = Session(config).get_fresh_sdist()
         assert sdist_new == sdist
         assert sdist_new.stat().size > 10
+
+    def test_make_sdist_distshare(self, tmpdir, initproj):
+        distshare = tmpdir.join("distshare")
+        initproj("example123-0.6", filedefs={
+            'tests': {'test_hello.py': "def test_hello(): pass"},
+            'tox.ini': '''
+            [tox]
+            distshare=%s
+            ''' % distshare
+        })
+        config = parseconfig([])
+        session = Session(config)
+        sdist = session.get_fresh_sdist()
+        assert sdist.check()
+        assert sdist.ext == ".zip"
+        assert sdist == config.toxdistdir.join(sdist.basename)
+        sdist_share = config.distshare.join(sdist.basename)
+        assert sdist_share.check()
+        assert sdist_share.read("rb") == sdist.read("rb"), (sdist_share, sdist)
 
     def test_log_pcall(self, initproj, tmpdir, capfd):
         initproj("logexample123-0.5", filedefs={

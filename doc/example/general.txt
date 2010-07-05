@@ -113,5 +113,30 @@ one environment like this::
 which would run the commands of the ``py25`` and ``py26`` testenvironments 
 respectively. 
 
+Access package artifacts between multiple tox-runs 
+--------------------------------------------------------
+
+If you have multiple projects using tox and you can arrange for them
+to have access to a common directory then ``tox`` provides help to access 
+packaging artifacts between the projects.  This helps to 
+to test a package against an unreleased development version 
+or even an uncommitted version on your own machine.  
+
+Example ``tox.ini`` for project ``one``::
+   
+    [tox]
+    distshare={homedir}/.tox/dist # share all tox artifacts per-user 
+    
+    [testenv]
+    deps=
+        {distshare}/two-1.2.5dev.zip  # install package from "two" project
+
+Your ``two`` project should use the same ``distshare`` setting 
+so that ``tox`` copies its sdist package file into it.  Running
+``tox`` for the ``one`` project will cause installation of the 
+``two`` package.  ``tox`` internally tracks MD5-sums
+of such dependency files and will treat a changed dependency 
+as a reason to rebuild the virtualenv. 
+
 .. include:: ../links.txt
 

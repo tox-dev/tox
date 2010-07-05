@@ -60,10 +60,38 @@ class VirtualEnv(object):
 
     def matchingdependencies(self):
         if self.path_deps.check():
-            deps = [x for x in self.path_deps.readlines(cr=0) if x.strip()]
-            if deps == self.envconfig.deps:
+            configdeps = self.envconfig.deps[:]
+            for depline in self.path_deps.readlines(cr=0):
+                depline = depline.strip()
+                if not depline:
+                    continue
+                parts = depline.split()
+                if len(parts) > 1:
+                    dep, digest = parts
+                    if dep not in configdeps:
+                        return False
+                    path = py.path.local(dep)
+                    if not path.check() or getdigest(path) != digest:
+                        return False
+                else:
+                    dep = depline
+                    if dep not in configdeps:
+                        return False
+                configdeps.remove(dep)
+            if not configdeps: # no deps left
                 return True
         return False
+
+    def _writedeps(self, deps):
+        lines = []
+        for dep in deps:
+            path = py.path.local(dep)
+            if path.check():
+                depline = "%s %s" %(dep, getdigest(path))
+            else:
+                depline = dep
+            lines.append(depline)
+        self.path_deps.write("\n".join(lines))
 
     def getconfigexecutable(self):
         python = self.envconfig.basepython
@@ -118,7 +146,7 @@ class VirtualEnv(object):
     def install_deps(self):
         deps = self.envconfig.deps
         self._install(deps)
-        self.path_deps.write("\n".join(map(str, deps)))
+        self._writedeps(deps)
 
     def easy_install(self, args):
         argv = ["easy_install"] + args
@@ -157,6 +185,16 @@ class VirtualEnv(object):
         if log is None:
             log = self.path.ensure("log", dir=1)
         return self.session.pcall(args, log=log, cwd=cwd, env=env)
+
+def getdigest(path):
+    try:
+        from hashlib import md5
+    except ImportError:
+        from md5 import md5
+    f = path.open("rb")
+    s = f.read()
+    f.close()
+    return md5(s).hexdigest()
 
 if sys.platform != "win32":
     def find_executable(name):

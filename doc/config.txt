@@ -8,16 +8,24 @@ tox configuration
 Below you find the specification, but you might want to skim some 
 :doc:`examples` first and use this page as a reference. 
 
-Global settings
+Tox global settings
 ----------------------
 
 List of optional global options::
 
-    [global]
+    [tox]
     toxworkdir=path  # tox working directory, defaults to {toxinidir}/.tox
     setupdir=path    # defaults to {toxinidir} 
     logdir=path      # defaults to {toxworkdir}/log
+    toxdistdir=path  # defaults to {toxworkdir}/dist
+    distshare=path   # defaults to {toxdistdir}
 
+``tox`` autodetects if it is running in a Hudson_ context 
+(by checking for existence of the ``HUDSON_URL`` environment variable) 
+and will first lookup global tox settings in this section::
+
+    [tox:hudson]
+    ...               # settings override [tox] settings in a hudson context
 
 Test environment settings 
 ------------------------------
@@ -68,7 +76,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 ``deps=MULTI-LINE-LIST``
     dependencies to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
-    passed to easy_install/pip for processing. 
+    passed to easy_install/pip for processing.  It usually can be a file, 
+    and URL or a package name. 
 
 ``downloadcache=path``
     (pip only) use this directory for caching downloads - this defaults to the 
@@ -94,12 +103,20 @@ Globally available substitutions
 
 ``{toxinidir}`` 
     the directory where tox.ini is located 
+
 ``{toxworkdir}`` 
     the directory where virtual environments are created and sub directories
     for packaging reside. 
 
 ``{homedir}``
     the user-home directory path.
+
+``{toxdistdir}`` 
+    the directory where sdist-packages will be created in 
+
+``{distshare}`` 
+    the directory where sdist-packages will be copied to so that
+    they may be accessed by other processes or tox runs. 
     
 substitutions for virtualenv-related sections 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -114,6 +131,17 @@ substitutions for virtualenv-related sections
     directory where executables are located 
 ``{envtmpdir}``
     the environment temporary directory 
+
+environment variable substitutions
++++++++++++++++++++++++++++++++++++++++++++
+
+If you specify a substitution string like this::
+
+    {env:KEY}
+
+then the value will be retrieved as ``os.environ['KEY']`` 
+and raise an Error if the environment variable 
+does not exist. 
 
 .. _`command positional substitution`: 
 

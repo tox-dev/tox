@@ -16,7 +16,7 @@ class TestVenvConfig:
 
     def test_config_parsing_multienv(self, tmpdir, makeconfig):
         config = makeconfig("""
-            [global]
+            [tox]
             toxworkdir = %s
             [testenv:py1]
             basepython=xyz
@@ -52,7 +52,7 @@ class TestConfigPackage:
 
     def test_project_paths(self, tmpdir, makeconfig):
         config = makeconfig("""
-            [global]
+            [tox]
             toxworkdir=%s
         """ % tmpdir)
         assert config.toxworkdir == tmpdir
@@ -121,6 +121,19 @@ class TestIniParser:
         reader.addsubstitions(item1="not", item2="grr")
         x = reader.getlist("section", "key2")
         assert x == ['item1', 'grr']
+
+    def test_getdefault_environment_substitution(self, monkeypatch, makeconfig):
+        monkeypatch.setenv("KEY1", "hello")
+        config = makeconfig("""
+            [section]
+            key1={env:KEY1}
+            key2={env:KEY2}
+        """)
+        reader = IniReader(config._cfg)
+        x = reader.getdefault("section", "key1")
+        assert x == "hello"
+        py.test.raises(tox.exception.ConfigError, 
+            'reader.getdefault("section", "key2")')
 
     def test_argvlist(self, tmpdir, makeconfig):
         config = makeconfig("""
@@ -295,6 +308,7 @@ class TestConfigTestEnv:
                 {envtmpdir}
                 {envpython}
                 {homedir}
+                {distshare}
         """)
         conf = config.envconfigs['py24']
         argv = conf.commands
@@ -305,6 +319,7 @@ class TestConfigTestEnv:
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
         assert argv[6][0] == os.path.expanduser("~")
+        assert argv[7][0] == config.toxdistdir
 
     def test_substitution_positional(self, newconfig):
         inisource = """
@@ -319,6 +334,21 @@ class TestConfigTestEnv:
         conf = newconfig(['brave', 'new'], inisource).envconfigs['py24']
         argv = conf.commands
         assert argv[0] == ["cmd1", "brave", "new", "world"]
+
+    def test_substitution_hudson_context(self, tmpdir, monkeypatch, makeconfig):
+        monkeypatch.setenv("HUDSON_URL", "xyz")
+        monkeypatch.setenv("WORKSPACE", tmpdir)
+        config = makeconfig("""
+            [tox:hudson]
+            distshare = {env:WORKSPACE}/hello
+            [testenv:py24]
+            commands =
+                {distshare}
+        """)
+        conf = config.envconfigs['py24']
+        argv = conf.commands
+        assert argv[0][0] == config.distshare
+        assert config.distshare == tmpdir.join("hello")
 
     def test_rewrite_posargs(self, tmpdir, newconfig):
         inisource = """

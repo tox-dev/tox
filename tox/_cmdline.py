@@ -147,12 +147,17 @@ class Session:
         setup = self.config.setupdir.join("setup.py")
         if not setup.check():
             raise tox.exception.MissingFile(setup)
-        distdir = self.config.toxworkdir.join("dist")
-        self.make_emptydir(distdir)
-        self.pcall([sys.executable, setup, "sdist", "--dist-dir", distdir, 
-                   "--formats=zip"],
+        self.make_emptydir(self.config.toxdistdir)
+        self.pcall([sys.executable, setup, "sdist", "--formats=zip", 
+                    "--dist-dir", self.config.toxdistdir, ],
                    cwd=self.config.setupdir)
-        return distdir.listdir()[0]
+        distfile = self.config.toxdistdir.listdir()[0]
+        if self.config.distshare != self.config.toxdistdir:
+            self.report.action("copying %s to %s" %(distfile.basename, 
+                self.config.distshare))
+            self.config.distshare.ensure(dir=1)
+            distfile.copy(self.config.distshare.join(distfile.basename))
+        return distfile
 
     def get_fresh_sdist(self):
         try:

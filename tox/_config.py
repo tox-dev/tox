@@ -87,13 +87,26 @@ class parseini:
         self._cfg.read(str(config.toxinipath))
         config._cfg = self._cfg
         self.config = config 
-        reader = IniReader(self._cfg)
+        ctxname = getcontextname()
+        if ctxname:
+            reader = IniReader(self._cfg, fallbacksections=['tox'])
+            toxsection = "tox:%s" % ctxname 
+        else:
+            reader = IniReader(self._cfg)
+            toxsection = "tox"
+            
         reader.addsubstitions(toxinidir=config.toxinidir, 
                               homedir=os.path.expanduser("~"))
-        config.toxworkdir = reader.getpath("global", "toxworkdir", 
+        config.toxworkdir = reader.getpath(toxsection, "toxworkdir", 
                                            "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)
-        config.setupdir = reader.getpath("global", "setupdir", "{toxinidir}")
+        config.toxdistdir = reader.getpath(toxsection, "toxdistdir",
+                                           "{toxworkdir}/dist")
+        reader.addsubstitions(toxdistdir=config.toxdistdir)
+        config.distshare = reader.getpath(toxsection, "distshare",
+                                          "{toxdistdir}")
+        reader.addsubstitions(distshare=config.distshare)
+        config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
         sections = self._cfg.sections()
         for section in sections:
@@ -230,13 +243,25 @@ class IniReader:
 
     def _sub(self, match):
         key = match.group(0)[1:-1]
+        if key.startswith("env:"):
+            envkey = key[4:]
+            if envkey not in os.environ:
+                raise tox.exception.ConfigError(
+                    "substitution %r: %r not found in environment" % 
+                    (key, envkey))
+            return os.environ[envkey]
         if key not in self._subs:
             raise tox.exception.ConfigError(
                 "substitution key %r not found" % key)
         return str(self._subs[key])
 
-    def _replace(self, x, rexpattern = re.compile("\{\w+?\}")):
+    def _replace(self, x, rexpattern = re.compile("\{.+?\}")):
         if '{' in x:
             return rexpattern.sub(self._sub, x)
         return x
 
+
+def getcontextname():
+    if 'HUDSON_URL' in os.environ:
+        return 'hudson'
+    return None

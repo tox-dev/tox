@@ -214,6 +214,27 @@ class TestVenvUpdate:
         venv.path_deps.ensure().write("abc\nxyz\n")
         assert not venv.matchingdependencies()
 
+    def test_matchingdependencies_file(self, makeconfig, mocksession):
+        config = makeconfig("""
+            [tox]
+            distshare={toxworkdir}/distshare
+            [testenv]
+            deps=abc
+                 {distshare}/xyz.zip
+        """)
+        xyz = config.distshare.join("xyz.zip")
+        xyz.ensure()
+        envconfig = config.envconfigs['python'] 
+        venv = VirtualEnv(envconfig, session=mocksession)
+        assert not venv.matchingdependencies()
+        venv.path_deps.ensure()
+        venv._writedeps(["abc"])
+        assert not venv.matchingdependencies()
+        venv._writedeps(["abc", xyz])
+        assert venv.matchingdependencies()
+        xyz.write("hello")
+        assert not venv.matchingdependencies()
+
     def test_python_recreation(self, makeconfig, mocksession):
         config = makeconfig("")
         envconfig = config.envconfigs['python']
