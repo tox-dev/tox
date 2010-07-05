@@ -148,9 +148,9 @@ class Session:
         if not setup.check():
             raise tox.exception.MissingFile(setup)
         distdir = self.config.toxworkdir.join("dist")
-        if distdir.check():
-            distdir.remove() 
-        self.pcall([sys.executable, setup, "sdist", "--dist-dir", distdir],
+        self.make_emptydir(distdir)
+        self.pcall([sys.executable, setup, "sdist", "--dist-dir", distdir, 
+                   "--formats=zip"],
                    cwd=self.config.setupdir)
         return distdir.listdir()[0]
 

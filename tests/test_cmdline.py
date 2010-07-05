@@ -17,6 +17,7 @@ class TestSession:
         session = Session(config)
         sdist = session.get_fresh_sdist()
         assert sdist.check()
+        assert sdist.ext == ".zip"
         assert sdist == config.toxworkdir.join("dist", sdist.basename)
         sdist2 = session.get_fresh_sdist()
         assert sdist2 == sdist 
