@@ -88,7 +88,8 @@ class parseini:
         config._cfg = self._cfg
         self.config = config 
         reader = IniReader(self._cfg)
-        reader.addsubstitions(toxinidir=config.toxinidir)
+        reader.addsubstitions(toxinidir=config.toxinidir, 
+                              homedir=os.path.expanduser("~"))
         config.toxworkdir = reader.getpath("global", "toxworkdir", 
                                            "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)

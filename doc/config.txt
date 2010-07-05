@@ -97,6 +97,9 @@ Globally available substitutions
 ``{toxworkdir}`` 
     the directory where virtual environments are created and sub directories
     for packaging reside. 
+
+``{homedir}``
+    the user-home directory path.
     
 substitutions for virtualenv-related sections 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -1,6 +1,6 @@
 
 import tox
-import sys
+import os, sys
 import py
 from tox._config import IniReader
 
@@ -294,6 +294,7 @@ class TestConfigTestEnv:
                 {envbindir}
                 {envtmpdir}
                 {envpython}
+                {homedir}
         """)
         conf = config.envconfigs['py24']
         argv = conf.commands
@@ -303,6 +304,7 @@ class TestConfigTestEnv:
         assert argv[3][0] == conf.envbindir
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
+        assert argv[6][0] == os.path.expanduser("~")
 
     def test_substitution_positional(self, newconfig):
         inisource = """
