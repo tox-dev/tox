@@ -68,9 +68,12 @@ class VirtualEnv(object):
                 depline = depline.strip()
                 if not depline:
                     continue
-                parts = depline.split()
+                parts = depline.rsplit(" ", 1)
                 if len(parts) > 1:
                     dep, digest = parts
+                    print "X"
+                    print configdeps
+                    print depline
                     if dep not in configdeps:
                         return False
                     path = py.path.local(dep)
