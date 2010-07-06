@@ -111,7 +111,15 @@ one environment like this::
     tox -e py25,py26 
 
 which would run the commands of the ``py25`` and ``py26`` testenvironments 
-respectively. 
+respectively.  The special value ``ALL`` selects all environments. 
+
+You can also specify an environment list in your ``tox.ini``:
+
+    [tox]
+    envlist = py25,py26  # default list 
+
+and override it from the command line or from the environment variable
+``TOXENVLIST``.  
 
 Access package artifacts between multiple tox-runs 
 --------------------------------------------------------

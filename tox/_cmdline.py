@@ -26,7 +26,7 @@ class Reporter:
         self.tw = py.io.TerminalWriter()
 
     def section(self, name):
-        self.tw.sep("=", "[tox %s]" % name, bold=True)
+        self.tw.sep("_", "[tox %s]" % name, bold=True)
 
     def action(self, msg):
         self.logline("***" + msg, bold=True)
@@ -95,6 +95,16 @@ class Session:
         self.report.using("tox.ini: %s" %(self.config.toxinipath,))
         self.venvstatus = {}
         self.venvlist = self._makevenvlist()
+
+    def _makevenvlist(self):
+        l = []
+        for name in self.config.envlist:
+            envconfig = self.config.envconfigs.get(name, None)
+            if envconfig is None:
+                self.report.error("unknown environment %r" % name)
+                raise SystemExit(1)
+            l.append(VirtualEnv(envconfig=envconfig, session=self))
+        return l
         
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
@@ -113,24 +123,6 @@ class Session:
             target = destdir.join(relpath)
             target.dirpath().ensure(dir=1)
             src.copy(target)
-
-    def _makevenvlist(self):
-        try:
-            env = self.config.opts.env
-        except AttributeError:
-            env = None
-        if not env:
-            envlist = self.config.envconfigs.keys()
-        else:
-            envlist = env.split(",")
-        l = []
-        for name in envlist:
-            envconfig = self.config.envconfigs.get(name, None)
-            if envconfig is None:
-                self.report.error("unknown environment %r" % name)
-                raise SystemExit(1)
-            l.append(VirtualEnv(envconfig=envconfig, session=self))
-        return l
 
     def setenvstatus(self, venv, msg):
         self.venvstatus[venv.path] = msg 
@@ -200,8 +192,8 @@ class Session:
         if self.config.opts.notest:
             self.report.info("skipping 'test' activity")
             return 0
-        self.report.section("test")
         for venv in self.venvlist:
+            self.report.section("testenv:%s" % venv.envconfig.envname)
             if self.venvstatus[venv.path]:
                 continue
             if venv.test():

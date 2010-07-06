@@ -227,7 +227,7 @@ def test_test_simple(cmd, initproj):
         "*junit-python.xml*",
         "*1 passed*",
     ])
-    result = cmd.run("tox", "--env=python", )
+    result = cmd.run("tox", "-epython", )
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*1 passed*",
@@ -269,12 +269,12 @@ def test_notest(initproj, cmd):
     result = cmd.run("tox", "--notest")
     assert not result.ret
     assert "tox summary" not in result.stdout.str()
-    result = cmd.run("tox", "--notest", "--env=py25")
+    result = cmd.run("tox", "--notest", "-epy25")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*reusing*py25",
     ])
-    result = cmd.run("tox", "--notest", "--env=py25,py26")
+    result = cmd.run("tox", "--notest", "-epy25,py26")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*reusing*py25",

@@ -19,13 +19,24 @@ List of optional global options::
     logdir=path      # defaults to {toxworkdir}/log
     toxdistdir=path  # defaults to {toxworkdir}/dist
     distshare=path   # defaults to {toxdistdir}
+    envlist=ENVLIST  # defaults to the list of all environments
 
 ``tox`` autodetects if it is running in a Hudson_ context 
 (by checking for existence of the ``HUDSON_URL`` environment variable) 
 and will first lookup global tox settings in this section::
 
     [tox:hudson]
-    ...               # settings override [tox] settings in a hudson context
+    ...               # override [tox] settings for the hudson context
+
+envlist setting
++++++++++++++++++++++++++
+
+Determining the environment list that ``tox`` is to operate one
+happens in this order:
+
+* command line option ``-eENVLIST`` 
+* environment variable ``TOXENVLIST``
+* ``tox.ini`` file's ``envlist``
 
 Test environment settings 
 ------------------------------

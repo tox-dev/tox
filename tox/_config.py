@@ -37,9 +37,9 @@ def prepare_parse():
     parser.add_argument("-c", action="store", default="tox.ini", 
         dest="configfile",
         help="use the specified config file.")
-    parser.add_argument("-e", "--env", action="store", dest="env", 
-        metavar="envs",
-        help="work against specified comma-separated environments.")
+    parser.add_argument("-e", action="store", dest="env", 
+        metavar="envlist",
+        help="work against specified environments (ALL selects all).")
     parser.add_argument("--notest", action="store_true", dest="notest",
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
@@ -121,6 +121,7 @@ class parseini:
         if not config.envconfigs:
             config.envconfigs['python'] = \
                 self._makeenvconfig("python", "_xz_9", reader._subs, config)
+        config.envlist = self._getenvlist(reader, toxsection)
 
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)
@@ -157,6 +158,22 @@ class parseini:
                 downloadcache = self.config.toxworkdir.join("_download")
         vc.downloadcache = py.path.local(downloadcache)
         return vc
+
+    def _getenvlist(self, reader, toxsection):
+        env = self.config.opts.env
+        if not env:
+            env = os.environ.get("TOXENVLIST", None)
+            if not env:
+                envlist = reader.getlist(toxsection, "envlist", sep=",")
+                if not envlist:
+                    envlist = self.config.envconfigs.keys()
+                return envlist
+        if env == "ALL":
+            envlist = list(self.config.envconfigs)
+            envlist.sort()
+        else:
+            envlist = env.split(",")
+        return envlist
 
 class IniReader:
     def __init__(self, cfgparser, fallbacksections=None):

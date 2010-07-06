@@ -386,6 +386,32 @@ class TestGlobalOptions:
         config = makeconfig("")
         assert not config.sdistsrc 
 
+    def test_env_selection(self, tmpdir, newconfig, monkeypatch):
+        inisource = """
+            [tox]
+            envlist = py26
+            [testenv:py26]
+            basepython=python2.6
+            [testenv:py31]
+            basepython=python3.1
+            [testenv:py27]
+            basepython=python2.7
+        """
+        #py.test.raises(tox.exception.ConfigError, 
+        #    "newconfig(['-exyz'], inisource)")
+        config = newconfig([], inisource)
+        assert config.envlist == ["py26"]
+        config = newconfig(["-epy31"], inisource)
+        assert config.envlist == ["py31"]
+        monkeypatch.setenv("TOXENVLIST", "py31,py26")
+        config = newconfig([], inisource)
+        assert config.envlist == ["py31", "py26"]
+        monkeypatch.setenv("TOXENVLIST", "ALL")
+        config = newconfig([], inisource)
+        assert config.envlist == ['py26', 'py27', 'py31']
+        config = newconfig(["-eALL"], inisource)
+        assert config.envlist == ['py26', 'py27', 'py31']
+
 class TestCmdInvocation:
     def test_help(self, cmd):
         result = cmd.run("tox", "-h")
@@ -408,6 +434,8 @@ class TestCmdInvocation:
             "*tox.ini*does not exist*",
         ])
 
+    @py.test.mark.xfail("sys.version_info < (2,6)", 
+        reason="virtualenv3 cannot be imported")
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
         result = cmd.run("tox", "-c", ini, "--showconfig")
