@@ -6,6 +6,10 @@ from py.builtin import print_
 import time
 from tox._config import parseconfig
 
+def pytest_configure():
+    if 'TOXENVLIST' in os.environ:
+        del os.environ['TOXENVLIST']
+
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
 
