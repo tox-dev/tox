@@ -9,6 +9,7 @@ import py
 import os
 import sys
 import subprocess
+from tox._verlib import NormalizedVersion
 from tox._venv import VirtualEnv
 from tox._config import parseconfig 
 
@@ -143,25 +144,7 @@ class Session:
         self.pcall([sys.executable, setup, "sdist", "--formats=zip", 
                     "--dist-dir", self.config.toxdistdir, ],
                    cwd=self.config.setupdir)
-        distfile = self.config.toxdistdir.listdir()[0]
-        if self.config.distshare != self.config.toxdistdir:
-            self.report.action("copying %s to %s" %(distfile.basename, 
-                self.config.distshare))
-            self.config.distshare.ensure(dir=1)
-            distfile.copy(self.config.distshare.join(distfile.basename))
-        return distfile
-
-    def get_fresh_sdist(self):
-        try:
-            return self._sdistpath
-        except AttributeError:
-            try:
-                self._sdistpath = x = self._makesdist()
-            except tox.exception.InvocationError:
-                v = sys.exc_info()[1]
-                self.report.error("FAIL could not package project")
-                return None
-            return x
+        return self.config.toxdistdir.listdir()[0]
 
     def make_emptydir(self, path):
         if path.check():
@@ -169,23 +152,9 @@ class Session:
             py.std.shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir()
 
-    def setupenv(self):
+    def setupenv(self, sdist_path):
         self.report.section("setupenv")
-        if not self.config.opts.sdistonly and self.config.sdistfile:
-            self.report.info("using sdistfile %r, skipping 'sdist' activity " %
-                str(self.config.sdistfile))
-            sdist_path = self.config.sdistfile
-        else:
-            sdist_path = self.get_fresh_sdist() # do it ahead for nicer reporting
-            if sdist_path is None:
-                self.report.error("aborting tox run")
-                raise SystemExit(1)
-            if self.config.sdistfile and self.config.sdistfile != sdist_path:
-                self.report.action("copying fresh sdistfile to %r" % 
-                    str(self.config.sdistfile))
-                sdist_path.copy(self.config.sdistfile)
-        if self.config.opts.sdistonly:
-            return 
+
         for venv in self.venvlist:
             self.venvstatus[venv.path] = 0
             try:
@@ -201,9 +170,34 @@ class Session:
                 except tox.exception.InvocationError:
                     self.setenvstatus(venv, "FAIL could not install package")
 
+    def sdist(self):
+        self.report.section("sdist")
+        if not self.config.opts.sdistonly and self.config.sdistsrc:
+            self.report.info("using sdistfile %r, skipping 'sdist' activity " %
+                str(self.config.sdistsrc))
+            sdist_path = self.config.sdistsrc
+            sdist_path = self._resolve_pkg(sdist_path)
+        else:
+            try:
+                sdist_path = self._makesdist()
+            except tox.exception.InvocationError:
+                v = sys.exc_info()[1]
+                self.report.error("FAIL could not package project")
+                raise SystemExit(1)
+            sdistfile = self.config.distshare.join(sdist_path.basename)
+            if sdistfile != sdist_path:
+                self.report.action("copying new sdistfile to %r" % 
+                    str(sdistfile))
+                sdistfile.dirpath().ensure(dir=1)
+                sdist_path.copy(sdistfile)
+        return sdist_path
+
     def subcommand_test(self):
-        self.setupenv()
-        if self.config.opts.notest or self.config.opts.sdistonly:
+        sdist_path = self.sdist()
+        if self.config.opts.sdistonly:
+            return 
+        self.setupenv(sdist_path)
+        if self.config.opts.notest:
             self.report.info("skipping 'test' activity")
             return 0
         self.report.section("test")
@@ -290,3 +284,13 @@ class Session:
                     "invoking %r failed" %(args[0], ))
         return out
 
+    def _resolve_pkg(self, pkgspec):
+        if "**LATEST**" in str(pkgspec):
+            p = py.path.local(pkgspec)
+            bn = p.basename
+            base = bn.replace("**LATEST**", "")
+            candidates = p.dirpath().listdir("%s*" % base)
+            candidates.sort(
+                key=lambda x: NormalizedVersion(x.purebasename[len(base):]))
+            return candidates[-1]
+        return pkgspec

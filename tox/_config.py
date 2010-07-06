@@ -108,7 +108,7 @@ class parseini:
         config.distshare = reader.getpath(toxsection, "distshare",
                                           "{toxdistdir}")
         reader.addsubstitions(distshare=config.distshare)
-        config.sdistfile = reader.getpath(toxsection, "sdistfile", None)
+        config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
         sections = self._cfg.sections()

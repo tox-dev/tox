@@ -380,11 +380,11 @@ class TestGlobalOptions:
     def test_sdist_specification(self, tmpdir, makeconfig):
         config = makeconfig("""
             [tox]
-            sdistfile = {distshare}/xyz.zip
+            sdistsrc = {distshare}/xyz.zip
         """)
-        assert config.sdistfile == config.distshare.join("xyz.zip")
+        assert config.sdistsrc == config.distshare.join("xyz.zip")
         config = makeconfig("")
-        assert not config.sdistfile 
+        assert not config.sdistsrc 
 
 class TestCmdInvocation:
     def test_help(self, cmd):

@@ -15,15 +15,15 @@ class TestSession:
         })
         config = parseconfig([])
         session = Session(config)
-        sdist = session.get_fresh_sdist()
+        sdist = session.sdist()
         assert sdist.check()
         assert sdist.ext == ".zip"
         assert sdist == config.toxdistdir.join(sdist.basename)
-        sdist2 = session.get_fresh_sdist()
+        sdist2 = session.sdist()
         assert sdist2 == sdist 
         sdist.write("hello")
         assert sdist.stat().size < 10
-        sdist_new = Session(config).get_fresh_sdist()
+        sdist_new = Session(config).sdist()
         assert sdist_new == sdist
         assert sdist_new.stat().size > 10
 
@@ -38,7 +38,7 @@ class TestSession:
         })
         config = parseconfig([])
         session = Session(config)
-        sdist = session.get_fresh_sdist()
+        sdist = session.sdist()
         assert sdist.check()
         assert sdist.ext == ".zip"
         assert sdist == config.toxdistdir.join(sdist.basename)
@@ -289,13 +289,27 @@ def test_sdistonly(initproj, cmd):
     assert "setup.py sdist" in result.stdout.str()
     assert "virtualenv" not in result.stdout.str()
 
+def test_separate_sdist_no_sdistfile(cmd, initproj):
+    distshare = cmd.tmpdir.join("distshare")
+    initproj("pkg123-0.7", filedefs={
+        'tox.ini': """
+            [tox]
+            distshare=%s
+        """ % distshare
+    })
+    result = cmd.run("tox", "--sdistonly")
+    assert not result.ret
+    l = distshare.listdir()
+    assert len(l) == 1
+    sdistfile = l[0]
+
 def test_separate_sdist(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
     initproj("pkg123-0.7", filedefs={
         'tox.ini': """
             [tox]
             distshare=%s
-            sdistfile={distshare}/pkg123-0.7.zip
+            sdistsrc={distshare}/pkg123-0.7.zip
         """ % distshare
     })
     result = cmd.run("tox", "--sdistonly")
@@ -310,3 +324,16 @@ def test_separate_sdist(cmd, initproj):
         "*install*%s*" % sdistfile.basename,
     ])
 
+def test_sdist_latest(tmpdir, newconfig):
+    distshare = tmpdir.join("distshare")
+    config = newconfig([], """
+            [tox]
+            distshare=%s
+            sdistsrc={distshare}/pkg123-**LATEST**
+    """ % distshare)
+    distshare.ensure("pkg123-1.3.5.zip")
+    p = distshare.ensure("pkg123-1.4.5.zip")
+    distshare.ensure("pkg123-1.4.5a1.zip")
+    session = Session(config)
+    sdist_path = session.sdist()
+    assert sdist_path == p

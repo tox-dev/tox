@@ -125,7 +125,7 @@ or even an uncommitted version on your own machine.
 Example ``tox.ini`` for project ``one``::
    
     [tox]
-    distshare={homedir}/.tox/dist # share all tox artifacts per-user 
+    distshare={homedir}/.tox/dist # share sdist-packages on a per-user basis
     
     [testenv]
     deps=
@@ -138,5 +138,18 @@ so that ``tox`` copies its sdist package file into it.  Running
 of such dependency files and will treat a changed dependency 
 as a reason to rebuild the virtualenv. 
 
+Often it is desirable to not have to repeat redundant version information 
+in the ``tox.ini`` file, you can use a special marker to have ``tox``
+look for the latest version itself::
+
+    [testenv]
+    deps=
+        {distshare}/two-**LATEST**
+
+With this definition ``tox`` looks at all ``two-*.zip`` packages 
+and compares their versions to determine the latest.  It uses
+verlib_  to compare version strings which must be compliant with :pep:`385`.
+
+.. _verlib: http://bitbucket.org/tarek/distutilsversion/
 .. include:: ../links.txt
 

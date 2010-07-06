@@ -58,9 +58,12 @@ class VirtualEnv(object):
                 return self.matchingdependencies()
         return False
 
+    def _getconfigdeps(self):
+        return [self.session._resolve_pkg(dep) for dep in self.envconfig.deps]
+
     def matchingdependencies(self):
         if self.path_deps.check():
-            configdeps = self.envconfig.deps[:]
+            configdeps = self._getconfigdeps()
             for depline in self.path_deps.readlines(cr=0):
                 depline = depline.strip()
                 if not depline:
@@ -144,7 +147,8 @@ class VirtualEnv(object):
         self._install([sdistpath])
 
     def install_deps(self):
-        deps = self.envconfig.deps
+        deps = self._getconfigdeps()
+        self.session.report.action("installing dependencies %s" %(deps))
         self._install(deps)
         self._writedeps(deps)
 

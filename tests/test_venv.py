@@ -42,7 +42,8 @@ class pcallMock:
         self.env = env
     
 def pytest_funcarg__mocksession(request):
-    class MockSession:
+    from tox._cmdline import Session
+    class MockSession(Session):
         def __init__(self):
             self._clearmocks()
             self.report = ReportExpectMock()
@@ -234,6 +235,24 @@ class TestVenvUpdate:
         assert venv.matchingdependencies()
         xyz.write("hello")
         assert not venv.matchingdependencies()
+
+    def test_matchingdependencies_latest(self, makeconfig, mocksession):
+        config = makeconfig("""
+            [tox]
+            distshare={toxworkdir}/distshare
+            [testenv]
+            deps={distshare}/xyz-**LATEST**
+        """)
+        xyz = config.distshare.ensure("xyz-1.2.0.zip")
+        xyz2 = config.distshare.ensure("xyz-1.2.1.zip")
+        envconfig = config.envconfigs['python'] 
+        venv = VirtualEnv(envconfig, session=mocksession)
+        assert not venv.matchingdependencies()
+        venv.path_deps.ensure()
+        venv._writedeps([xyz])
+        assert not venv.matchingdependencies()
+        venv._writedeps([xyz2])
+        assert venv.matchingdependencies()
 
     def test_python_recreation(self, makeconfig, mocksession):
         config = makeconfig("")
