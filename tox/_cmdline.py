@@ -144,23 +144,20 @@ class Session:
             py.std.shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir()
 
-    def setupenv(self, sdist_path):
-        self.report.section("setupenv")
-
-        for venv in self.venvlist:
-            self.venvstatus[venv.path] = 0
+    def setupenv(self, venv, sdist_path):
+        self.venvstatus[venv.path] = 0
+        try:
+            status = venv.update()
+        except tox.exception.InvocationError:
+            status = sys.exc_info()[1]
+        if status:
+            self.setenvstatus(venv, status)
+            self.report.error(str(status))
+        elif sdist_path is not None:
             try:
-                status = venv.update()
+                venv.install_sdist(sdist_path)
             except tox.exception.InvocationError:
-                status = sys.exc_info()[1]
-            if status:
-                self.setenvstatus(venv, status)
-                self.report.error(str(status))
-            elif sdist_path is not None:
-                try:
-                    venv.install_sdist(sdist_path)
-                except tox.exception.InvocationError:
-                    self.setenvstatus(venv, "FAIL could not install package")
+                self.setenvstatus(venv, "FAIL could not install package")
 
     def sdist(self):
         self.report.section("sdist")
@@ -188,16 +185,16 @@ class Session:
         sdist_path = self.sdist()
         if self.config.opts.sdistonly:
             return 
-        self.setupenv(sdist_path)
-        if self.config.opts.notest:
-            self.report.info("skipping 'test' activity")
-            return 0
         for venv in self.venvlist:
             self.report.section("testenv:%s" % venv.envconfig.envname)
-            if self.venvstatus[venv.path]:
-                continue
-            if venv.test():
-                self.setenvstatus(venv, "commands failed")
+            self.setupenv(venv, sdist_path)
+            if self.config.opts.notest:
+                self.report.info("skipping 'test' activity")
+            else:
+                if self.venvstatus[venv.path]:
+                    continue
+                if venv.test():
+                    self.setenvstatus(venv, "commands failed")
         retcode = self._summary()
         return retcode
 

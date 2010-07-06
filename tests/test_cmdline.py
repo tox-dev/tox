@@ -268,7 +268,11 @@ def test_notest(initproj, cmd):
     """})
     result = cmd.run("tox", "--notest")
     assert not result.ret
-    assert "tox summary" not in result.stdout.str()
+    result.stdout.fnmatch_lines([
+        "*skipping*test*",
+        "*skipping*test*",
+        "*tox summary*",
+    ])
     result = cmd.run("tox", "--notest", "-epy25")
     assert not result.ret
     result.stdout.fnmatch_lines([
