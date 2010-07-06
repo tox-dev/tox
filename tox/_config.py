@@ -102,11 +102,11 @@ class parseini:
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir", 
                                            "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)
-        config.toxdistdir = reader.getpath(toxsection, "toxdistdir",
+        config.distdir = reader.getpath(toxsection, "distdir",
                                            "{toxworkdir}/dist")
-        reader.addsubstitions(toxdistdir=config.toxdistdir)
+        reader.addsubstitions(distdir=config.distdir)
         config.distshare = reader.getpath(toxsection, "distshare",
-                                          "{toxdistdir}")
+                                          "{distdir}")
         reader.addsubstitions(distshare=config.distshare)
         config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
@@ -136,7 +136,8 @@ class parseini:
         reader.addsubstitions(envdir=vc.envdir, envname=vc.envname,
                               envbindir=vc.envbindir, envpython=vc.envpython)
         vc.envtmpdir = reader.getpath(section, "tmpdir", "{envdir}/tmp")
-        reader.addsubstitions(envtmpdir=vc.envtmpdir)
+        vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
+        reader.addsubstitions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
         vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
         args = config.opts.args
         if args:

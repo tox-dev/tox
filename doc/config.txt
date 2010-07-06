@@ -14,12 +14,11 @@ Tox global settings
 List of optional global options::
 
     [tox]
-    toxworkdir=path  # tox working directory, defaults to {toxinidir}/.tox
-    setupdir=path    # defaults to {toxinidir} 
-    logdir=path      # defaults to {toxworkdir}/log
-    toxdistdir=path  # defaults to {toxworkdir}/dist
-    distshare=path   # defaults to {toxdistdir}
-    envlist=ENVLIST  # defaults to the list of all environments
+    toxworkdir=path   # tox working directory, defaults to {toxinidir}/.tox
+    setupdir=path     # defaults to {toxinidir} 
+    distdir=path   # defaults to {toxworkdir}/dist
+    distshare=path    # defaults to {distdir}
+    envlist=ENVLIST   # defaults to the list of all environments
 
 ``tox`` autodetects if it is running in a Hudson_ context 
 (by checking for existence of the ``HUDSON_URL`` environment variable) 
@@ -81,8 +80,13 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 ``envtmpdir=path``
     defines a temporary directory for the virtualenv which will be cleared
-    before invoking the test command.  
+    each time before the group of test commands is invoked. 
     **default**: ``{envdir}/tmp``
+
+``envlogdir=path``
+    defines a directory for logging where tox will put logs of tool 
+    invocation. 
+    **default**: ``{envdir}/log``
 
 ``deps=MULTI-LINE-LIST``
     dependencies to be installed into the environment prior to project
@@ -122,7 +126,7 @@ Globally available substitutions
 ``{homedir}``
     the user-home directory path.
 
-``{toxdistdir}`` 
+``{distdir}`` 
     the directory where sdist-packages will be created in 
 
 ``{distshare}`` 
@@ -142,6 +146,9 @@ substitutions for virtualenv-related sections
     directory where executables are located 
 ``{envtmpdir}``
     the environment temporary directory 
+``{envlogdir}`` 
+    the environment log directory 
+
 
 environment variable substitutions
 +++++++++++++++++++++++++++++++++++++++++++

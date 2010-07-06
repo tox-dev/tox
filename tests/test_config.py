@@ -227,6 +227,7 @@ class TestConfigTestEnv:
         assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
         assert envconfig.distribute == True
+        assert envconfig.envlogdir == envconfig.envdir.join("log")
 
     def test_specific_command_overrides(self, tmpdir, makeconfig):
         config = makeconfig("""
@@ -309,6 +310,7 @@ class TestConfigTestEnv:
                 {envpython}
                 {homedir}
                 {distshare}
+                {envlogdir}
         """)
         conf = config.envconfigs['py24']
         argv = conf.commands
@@ -319,7 +321,8 @@ class TestConfigTestEnv:
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
         assert argv[6][0] == os.path.expanduser("~")
-        assert argv[7][0] == config.toxdistdir
+        assert argv[7][0] == config.distdir
+        assert argv[8][0] == conf.envlogdir
 
     def test_substitution_positional(self, newconfig):
         inisource = """

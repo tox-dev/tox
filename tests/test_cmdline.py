@@ -18,7 +18,7 @@ class TestSession:
         sdist = session.sdist()
         assert sdist.check()
         assert sdist.ext == ".zip"
-        assert sdist == config.toxdistdir.join(sdist.basename)
+        assert sdist == config.distdir.join(sdist.basename)
         sdist2 = session.sdist()
         assert sdist2 == sdist 
         sdist.write("hello")
@@ -41,7 +41,7 @@ class TestSession:
         sdist = session.sdist()
         assert sdist.check()
         assert sdist.ext == ".zip"
-        assert sdist == config.toxdistdir.join(sdist.basename)
+        assert sdist == config.distdir.join(sdist.basename)
         sdist_share = config.distshare.join(sdist.basename)
         assert sdist_share.check()
         assert sdist_share.read("rb") == sdist.read("rb"), (sdist_share, sdist)

@@ -110,7 +110,7 @@ class Session:
         #tw.sep("-", "tox info from %s" % self.options.configfile)
         self.report.using("tox-%s from %s" %(tox.__version__, tox.__file__))
         if self.config.opts.showconfig:
-            self.subcommand_config()
+            self.showconfig()
         else:
             self.subcommand_test()
 
@@ -132,11 +132,11 @@ class Session:
         setup = self.config.setupdir.join("setup.py")
         if not setup.check():
             raise tox.exception.MissingFile(setup)
-        self.make_emptydir(self.config.toxdistdir)
+        self.make_emptydir(self.config.distdir)
         self.pcall([sys.executable, setup, "sdist", "--formats=zip", 
-                    "--dist-dir", self.config.toxdistdir, ],
+                    "--dist-dir", self.config.distdir, ],
                    cwd=self.config.setupdir)
-        return self.config.toxdistdir.listdir()[0]
+        return self.config.distdir.listdir()[0]
 
     def make_emptydir(self, path):
         if path.check():
@@ -213,27 +213,30 @@ class Session:
             self.report.good("congratulation :)")
         return retcode 
 
-    def subcommand_config(self):
+    def showconfig(self):
         self.info_versions()
         self.report.keyvalue("config-file:", self.config.opts.configfile)
-        self.report.keyvalue("setupdir:", self.config.setupdir)
-        self.report.keyvalue("toxworkdir:", self.config.toxworkdir)
-        self.report.keyvalue("toxinidir:", self.config.toxinidir)
+        self.report.keyvalue("toxinipath: ", self.config.toxinipath)
+        self.report.keyvalue("toxinidir:  ", self.config.toxinidir)
+        self.report.keyvalue("toxworkdir: ", self.config.toxworkdir)
+        self.report.keyvalue("setupdir:   ", self.config.setupdir)
+        self.report.keyvalue("distshare:  ", self.config.distshare)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
-            self.report.line("    basepython=%s" % envconfig.basepython)
-            self.report.line("    envpython=%s" % envconfig.envpython)
-            self.report.line("    envtmpdir=%s" % envconfig.envtmpdir)
-            self.report.line("    envbindir=%s" % envconfig.envbindir)
-            self.report.line("    changedir=%s" % envconfig.changedir)
-            self.report.line("    args_are_path=%s" % envconfig.args_are_paths)
-            self.report.line("    commands=")
+            self.report.line("  basepython=%s" % envconfig.basepython)
+            self.report.line("  envpython=%s" % envconfig.envpython)
+            self.report.line("  envtmpdir=%s" % envconfig.envtmpdir)
+            self.report.line("  envbindir=%s" % envconfig.envbindir)
+            self.report.line("  envlogdir=%s" % envconfig.envlogdir)
+            self.report.line("  changedir=%s" % envconfig.changedir)
+            self.report.line("  args_are_path=%s" % envconfig.args_are_paths)
+            self.report.line("  commands=")
             for command in envconfig.commands:
-                self.report.line("      %s" % command)
-            self.report.line("    deps=%s" % envconfig.deps)
-            self.report.line("    envdir=    %s" % envconfig.envdir)
-            self.report.line("    downloadcache=%s" % envconfig.downloadcache)
+                self.report.line("    %s" % command)
+            self.report.line("  deps=%s" % envconfig.deps)
+            self.report.line("  envdir=    %s" % envconfig.envdir)
+            self.report.line("  downloadcache=%s" % envconfig.downloadcache)
 
     def info_versions(self):
         versions = ['tox-%s' % tox.__version__]
