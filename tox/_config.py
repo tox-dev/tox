@@ -150,7 +150,7 @@ class parseini:
                     args.append(arg)
             reader.addsubstitions(args)
         vc.commands = reader.getargvlist(section, "commands")
-        vc.deps = reader.getlist(section, "deps")
+        vc.deps = [x.replace("/", os.sep) for x in reader.getlist(section, "deps")]
         vc.distribute = reader.getbool(section, "distribute", True)
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache is None:
