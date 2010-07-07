@@ -341,3 +341,4 @@ def test_sdist_latest(tmpdir, newconfig):
     session = Session(config)
     sdist_path = session.sdist()
     assert sdist_path == p
+

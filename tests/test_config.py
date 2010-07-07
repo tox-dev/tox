@@ -5,8 +5,8 @@ import py
 from tox._config import IniReader
 
 class TestVenvConfig:
-    def test_config_parsing_minimal(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_config_parsing_minimal(self, tmpdir, newconfig):
+        config = newconfig([], """
             [testenv:py1]
         """)
         assert len(config.envconfigs) == 1
@@ -14,8 +14,8 @@ class TestVenvConfig:
         assert config.envconfigs['py1'].basepython == sys.executable
         assert config.envconfigs['py1'].deps == []
 
-    def test_config_parsing_multienv(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_config_parsing_multienv(self, tmpdir, newconfig):
+        config = newconfig([], """
             [tox]
             toxworkdir = %s
             [testenv:py1]
@@ -37,29 +37,29 @@ class TestVenvConfig:
         assert config.envconfigs['py2'].deps == ['world1', 'world2']
 
 class TestConfigPackage:
-    def test_defaults(self, tmpdir, makeconfig):
-        config = makeconfig("")
+    def test_defaults(self, tmpdir, newconfig):
+        config = newconfig([], "")
         assert config.setupdir == tmpdir
         assert config.toxworkdir == tmpdir.join(".tox")
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths 
 
-    def test_defaults_changed_dir(self, tmpdir, makeconfig):
+    def test_defaults_changed_dir(self, tmpdir, newconfig):
         tmpdir.mkdir("abc").chdir()
-        config = makeconfig("")
+        config = newconfig([], "")
         assert config.setupdir == tmpdir
         assert config.toxworkdir == tmpdir.join(".tox")
 
-    def test_project_paths(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_project_paths(self, tmpdir, newconfig):
+        config = newconfig("""
             [tox]
             toxworkdir=%s
         """ % tmpdir)
         assert config.toxworkdir == tmpdir
 
 class TestIniParser:
-    def test_getdefault_single(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_getdefault_single(self, tmpdir, newconfig):
+        config = newconfig("""
             [section]
             key=value
         """)
@@ -70,8 +70,8 @@ class TestIniParser:
         x = reader.getdefault("section", "hello", "world")
         assert x == "world"
 
-    def test_missing_substitution(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_missing_substitution(self, tmpdir, newconfig):
+        config = newconfig("""
             [mydefault]
             key2={xyz}
         """)
@@ -79,8 +79,8 @@ class TestIniParser:
         py.test.raises(tox.exception.ConfigError, 
             'reader.getdefault("mydefault", "key2")')
 
-    def test_getdefault_fallback_sections(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_getdefault_fallback_sections(self, tmpdir, newconfig):
+        config = newconfig("""
             [mydefault]
             key2=value2
             [section]
@@ -94,8 +94,8 @@ class TestIniParser:
         x = reader.getdefault("section", "key3", "world")
         assert x == "world"
 
-    def test_getdefault_substitution(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_getdefault_substitution(self, tmpdir, newconfig):
+        config = newconfig("""
             [mydefault]
             key2={value2}
             [section]
@@ -110,8 +110,8 @@ class TestIniParser:
         x = reader.getdefault("section", "key3", "{value2}")
         assert x == "newvalue2"
 
-    def test_getlist(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_getlist(self, tmpdir, newconfig):
+        config = newconfig("""
             [section]
             key2=
                 item1
@@ -122,9 +122,9 @@ class TestIniParser:
         x = reader.getlist("section", "key2")
         assert x == ['item1', 'grr']
 
-    def test_getdefault_environment_substitution(self, monkeypatch, makeconfig):
+    def test_getdefault_environment_substitution(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
-        config = makeconfig("""
+        config = newconfig("""
             [section]
             key1={env:KEY1}
             key2={env:KEY2}
@@ -135,8 +135,8 @@ class TestIniParser:
         py.test.raises(tox.exception.ConfigError, 
             'reader.getdefault("section", "key2")')
 
-    def test_argvlist(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_argvlist(self, tmpdir, newconfig):
+        config = newconfig("""
             [section]
             key2=
                 cmd1 {item1} {item2}
@@ -151,8 +151,8 @@ class TestIniParser:
         assert x == [["cmd1", "with space", "grr"],
                      ["cmd2", "grr"]]
 
-    def test_argvlist_multiline(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_argvlist_multiline(self, tmpdir, newconfig):
+        config = newconfig("""
             [section]
             key2=
                 cmd1 {item1} \ # a comment
@@ -167,8 +167,8 @@ class TestIniParser:
         assert x == [["cmd1", "with space", "grr"]]
 
 
-    def test_argvlist_positional_substitution(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_argvlist_positional_substitution(self, tmpdir, newconfig):
+        config = newconfig("""
             [section]
             key2=
                 cmd1 []
@@ -194,8 +194,8 @@ class TestIniParser:
         assert argvlist[0] == ["cmd1"]
         assert argvlist[1] == ["cmd2", "value2", "other"]
 
-    def test_getpath(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_getpath(self, tmpdir, newconfig):
+        config = newconfig("""
             [section]
             path1={HELLO}
         """)
@@ -204,8 +204,8 @@ class TestIniParser:
         x = reader.getpath("section", "path1", tmpdir)
         assert x == tmpdir.join("mypath")
 
-    def test_getbool(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_getbool(self, tmpdir, newconfig):
+        config = newconfig("""
             [section]
             key1=True
             key2=False
@@ -216,8 +216,8 @@ class TestIniParser:
         py.test.raises(KeyError, 'reader.getbool("section", "key3")')
 
 class TestConfigTestEnv:
-    def test_defaults(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_defaults(self, tmpdir, newconfig):
+        config = newconfig("""
             [testenv]
             commands=
                 xyz --abc
@@ -229,8 +229,8 @@ class TestConfigTestEnv:
         assert envconfig.distribute == True
         assert envconfig.envlogdir == envconfig.envdir.join("log")
 
-    def test_specific_command_overrides(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_specific_command_overrides(self, tmpdir, newconfig):
+        config = newconfig("""
             [testenv]
             commands=xyz
             [testenv:py30]
@@ -240,8 +240,8 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['py30']
         assert envconfig.commands == [["abc"]]
 
-    def test_changedir(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_changedir(self, tmpdir, newconfig):
+        config = newconfig("""
             [testenv]
             changedir=xyz
         """)
@@ -250,8 +250,8 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "xyz"
         assert envconfig.changedir == config.toxinidir.join("xyz")
 
-    def test_envbindir(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_envbindir(self, tmpdir, newconfig):
+        config = newconfig("""
             [testenv]
             basepython=python 
         """)
@@ -259,8 +259,8 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.envpython == envconfig.envbindir.join("python")
 
-    def test_envbindir_jython(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_envbindir_jython(self, tmpdir, newconfig):
+        config = newconfig("""
             [testenv]
             basepython=jython 
         """)
@@ -268,8 +268,8 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.envpython == envconfig.envbindir.join("jython")
 
-    def test_changedir_override(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_changedir_override(self, tmpdir, newconfig):
+        config = newconfig("""
             [testenv]
             changedir=xyz
             [testenv:python]
@@ -281,8 +281,8 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "abc"
         assert envconfig.changedir == config.setupdir.join("abc")
 
-    def test_simple(tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_simple(tmpdir, newconfig):
+        config = newconfig("""
             [testenv:py24]
             basepython=python2.4
             [testenv:py25]
@@ -292,14 +292,14 @@ class TestConfigTestEnv:
         assert "py24" in config.envconfigs
         assert "py25" in config.envconfigs
 
-    def test_substitution_error(tmpdir, makeconfig):
-        py.test.raises(tox.exception.ConfigError, makeconfig, """
+    def test_substitution_error(tmpdir, newconfig):
+        py.test.raises(tox.exception.ConfigError, newconfig, """
             [testenv:py24]
             basepython={xyz}
         """)
 
-    def test_substitution_defaults(tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_substitution_defaults(tmpdir, newconfig):
+        config = newconfig("""
             [testenv:py24]
             commands =
                 {toxinidir}
@@ -365,10 +365,10 @@ class TestGlobalOptions:
         config = newconfig(["--notest"], "")
         assert config.opts.notest
 
-    def test_substitution_hudson_context(self, tmpdir, monkeypatch, makeconfig):
+    def test_substitution_hudson_context(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         monkeypatch.setenv("WORKSPACE", tmpdir)
-        config = makeconfig("""
+        config = newconfig("""
             [tox:hudson]
             distshare = {env:WORKSPACE}/hello
             [testenv:py24]
@@ -380,13 +380,13 @@ class TestGlobalOptions:
         assert argv[0][0] == config.distshare
         assert config.distshare == tmpdir.join("hello")
 
-    def test_sdist_specification(self, tmpdir, makeconfig):
-        config = makeconfig("""
+    def test_sdist_specification(self, tmpdir, newconfig):
+        config = newconfig("""
             [tox]
             sdistsrc = {distshare}/xyz.zip
         """)
         assert config.sdistsrc == config.distshare.join("xyz.zip")
-        config = makeconfig("")
+        config = newconfig([], "")
         assert not config.sdistsrc 
 
     def test_env_selection(self, tmpdir, newconfig, monkeypatch):

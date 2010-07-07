@@ -3,6 +3,7 @@ import tox
 import os
 import sys
 from py.builtin import print_
+from fnmatch import fnmatch
 import time
 from tox._config import parseconfig
 
@@ -13,15 +14,12 @@ def pytest_configure():
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
 
-def pytest_funcarg__makeconfig(request):
-    newconfig = request.getfuncargvalue("newconfig")
-    def makeconfig(source):
-        return newconfig([], source)
-    return makeconfig
-
 def pytest_funcarg__newconfig(request):
     tmpdir = request.getfuncargvalue("tmpdir")
-    def newconfig(args, source):
+    def newconfig(args, source=None):
+        if source is None:
+            source = args
+            args = []
         s = py.std.textwrap.dedent(source)
         p = tmpdir.join("tox.ini")
         p.write(s)
@@ -40,6 +38,50 @@ def pytest_funcarg__tmpdir(request):
 
 def pytest_funcarg__cmd(request):
     return Cmd(request)
+
+class ReportExpectMock:
+    def __init__(self):
+        self._calls = []
+        self._index = -1
+
+    def __getattr__(self, name):
+        if name[0] == "_":
+            raise AttributeError(name)
+        return lambda *args: self._calls.append((name,)+ args)
+
+    def expect(self, cat, messagepattern):
+        newindex = self._index + 1
+        while newindex < len(self._calls):
+            lcat, lmsg = self._calls[newindex]
+            if lcat == cat and fnmatch(lmsg, messagepattern):
+                self._index = newindex
+                return
+            newindex += 1
+        raise AssertionError(
+            "looking for %s(%r), no reports found at >=%d in %r" %
+            (cat, messagepattern, self._index+1, self._calls))
+
+class pcallMock:
+    def __init__(self, args, log, cwd, env=None):
+        self.args = args
+        self.log = log
+        self.cwd = cwd
+        self.env = env
+    
+def pytest_funcarg__mocksession(request):
+    from tox._cmdline import Session
+    class MockSession(Session):
+        def __init__(self):
+            self._clearmocks()
+            self.report = ReportExpectMock()
+        def _clearmocks(self):
+            self._pcalls = []
+            self._reports = []
+        def make_emptydir(self, path):
+            pass
+        def pcall(self, args, log, cwd, env=None):
+            self._pcalls.append(pcallMock(args, log, cwd, env))
+    return MockSession()
 
 class Cmd:
     def __init__(self, request):
