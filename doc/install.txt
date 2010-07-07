@@ -10,6 +10,8 @@ Install info in a nutshell
 
 **Installer Requirements**: setuptools_ or Distribute_
 
+**License**: GPLv2 or later 
+
 **hg repository**: http://code.google.com/p/pytox/source/checkout
 
 Installation with pip/easy_install 

@@ -11,7 +11,7 @@ server, invoking your tools of choice.
 Current features 
 -------------------
 
-* ``tox`` helps to **automate tedious Python related test activities**
+* **professional automation of tedious Python related test activities**
 
 * **test your Python package against many interpreter and dependency configs**
 
@@ -21,22 +21,26 @@ Current features
 
     - test-tool agnostic: runs py.test, nose or unittests a uniform manner
 
-* uses pip_ and distribute_ by default 
-
-* **driven by a simple ini-style config file**
-
-* **documented** :doc:`examples` and :doc:`configuration <config>` 
-
-* integrates with continous integration servers like Hudson_ and helps
-  you to avoid boilerplatish and platform-specific build-step hacks. 
-
-* **professionally** :doc:`supported <support>`
-
-* **concise reporting** about tool invocations and configuration errors
+* uses pip_ (for Python2 environments) and distribute_ (for all environments) by default 
 
 * **cross-Python compatible**: Python2.4 up to Python3.1, Jython (and pypy-c, needs patches)
 
 * **cross-platform**: Windows and Unix style environments 
+
+* **integrates with continous integration servers** like Hudson_ and helps
+  you to avoid boilerplatish and platform-specific build-step hacks. 
+
+* **unified automatic artifact management** between ``tox`` runs both 
+  in a local developer shell as well as in a CI/Hudson context. 
+
+* **driven by a simple ini-style config file**
+
+* **documented** :doc:`examples <examples>` and :doc:`configuration <config>` 
+
+* **concise reporting** about tool invocations and configuration errors
+
+
+* **professionally** :doc:`supported <support>`
 
 Notes and known limitations 
 ----------------------------------
@@ -59,12 +63,6 @@ Notes and known limitations
   an installable package and then invokes ``pip`` or ``easy_install`` to 
   install into each test environment.  There is no support for other
   installation methods. 
-
-* ``tox`` integrates with Hudson but has no documented concept/support for 
-  artifact management, i.e. transfering the result of one tox-run/job into 
-  another tox-run/job utilizing CI mechanisms.  The challenge is to design 
-  a way that works well both within a CI context like Hudson and on the 
-  developer console outside of a Hudson context. 
 
 .. _`tox.ini`: :doc:configfile
 

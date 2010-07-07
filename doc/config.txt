@@ -1,5 +1,5 @@
 
-tox configuration
+tox configuration specification
 ================================
 
 .. _ConfigParser: http://docs.python.org/library/configparser.html

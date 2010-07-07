@@ -1,0 +1,81 @@
+
+Using Tox with the Hudson Integration Server
+=================================================
+
+
+Integrating "sphinx" documentation checks in a Hudson job
+----------------------------------------------------------------
+
+If you are using a multi-configuration Hudson job which collects
+JUnit Test results you will run into problems using the previous
+method of running the sphinx-build command because it will not
+generate JUnit results.  To accomodate this issue one solution
+is to have ``py.test`` wrap the sphinx-checks and create a 
+JUnit result file which wraps the result of calling sphinx-build. 
+Here is an example: 
+
+1. create a ``docs`` environment in your ``tox.ini`` file like this::
+
+    [testenv:docs]
+    basepython=python
+    changedir=doc # or whereever you keep your sphinx-docs 
+    deps=sphinx
+        py
+    commands=
+        py.test --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
+
+2. create a ``doc/check_sphinx.py`` file like this::
+
+    import py
+    import subprocess
+    def test_linkcheck(tmpdir):
+        doctrees = tmpdir.join("doctrees")
+        htmldir = tmpdir.join("html")
+        subprocess.check_call(
+            ["sphinx-build", "-W", "-blinkcheck",
+              "-d", str(doctrees), ".", str(htmldir)])
+    def test_build_docs(tmpdir):
+        doctrees = tmpdir.join("doctrees")
+        htmldir = tmpdir.join("html")
+        subprocess.check_call([
+            "sphinx-build", "-W", "-bhtml",
+              "-d", str(doctrees), ".", str(htmldir)])
+
+3. run ``tox -e docs`` and then you may integrate this environment 
+   along with your other environments into Hudson. 
+
+Note that ``py.test`` is only installed into the docs environment
+and does not need to be in use or installed with any other environment. 
+
+Access package artifacts between Hudson jobs
+--------------------------------------------------------
+
+.. _`general artifact exchange mechanism`: general.html#artifacts
+.. _`Hudson Copy Artifact plugin`: http://wiki.hudson-ci.org/display/HUDSON/Copy+Artifact+Plugin
+
+In an extension to the `general artifact exchange mechanism`_ 
+you can configure Hudson jobs to access each other artifacts. 
+As far as ``tox`` is concerned you should configure a special 
+directory for the hudson context like this::
+
+    [tox:hudson]
+    distshare=.tox/distshare 
+
+This means that each workspace will have its own ``distshare``
+directory and we need to configure some artifact copying. 
+The recommend way to do this is to install the `Hudson Copy Artifact plugin`_ 
+and for each job which "receives" artifacts you add a **Copy artifacts from another project**
+build step using roughly this configuration: 
+
+    ``Project-name``: the name of the other (tox-managed) job you want the artifact from
+    ``Artifacts to copy``: ``.tox/dist/*.zip
+    ``Target directory``: .tox/distshare 
+    Flatten Directories: CHECK 
+
+If you add such a build step at the beginning then Hudson will 
+copy the other artifact into our ``distshare`` directory 
+and thus ``tox`` will be able to find it like 
+in the non-Hudson case. 
+
+.. include:: ../links.txt
+

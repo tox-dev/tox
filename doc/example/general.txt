@@ -77,34 +77,38 @@ You can also specify an environment list in your ``tox.ini``:
 and override it from the command line or from the environment variable
 ``TOXENVLIST``.  
 
+.. _artifacts:
+
 Access package artifacts between multiple tox-runs 
 --------------------------------------------------------
 
-If you have multiple projects using tox and you can arrange for them
-to have access to a common directory then ``tox`` provides help to access 
-packaging artifacts between the projects.  You can create make use of 
-a ``distshare`` directory where tox jobs copy in and copy out dependencies. 
-This feature allows to to test a package against an unreleased development version 
+If you have multiple projects using tox you can make use of 
+a ``distshare`` directory where ``tox`` will copy in sdist-packages so
+that another tox run can find the "latest" dependency.  This feature 
+allows to to test a package against an unreleased development version 
 or even an uncommitted version on your own machine.  
 
 Example ``tox.ini`` for project ``one``::
-   
-    [tox]
-    distshare={homedir}/.tox/dist # share sdist-packages on a per-user basis
+  
+    # one/tox.ini 
+    [tox]  
+    distshare={homedir}/.tox/dist # {homedir} is my the homedir of the invoking user
     
-Example ``tox.ini`` for project ``two``: 
+Example ``tox.ini`` for project ``two``::
 
+    # two/tox.ini 
     [tox]
-    distshare={homedir}/.tox/dist # share sdist-packages on a per-user basis
+    distshare={homedir}/.tox/dist # needs same setting as above!
     
     [testenv]
     deps=
         {distshare}/two-*.zip  # install latest package from "two" project
 
-Project ``one`` will copy its sdist-package into the ``distshare`` directory
-while project ``two`` will grab it because the dependencies list 
-the ``two-*.zip`` pattern.  If there is more than one matching package
-then the highest version will be taken.  ``tox`` uses verlib_  to 
+Tox running on project ``one`` will copy the sdist-package into the 
+``distshare`` directory after a ``tox` run on project ``two`` will 
+grab it because the ``deps`` contain an entry with the 
+``two-*.zip`` pattern.  If there is more than one matching package
+the highest version will be taken.  ``tox`` uses verlib_  to 
 compare version strings which must be compliant with :pep:`385`.
 
 .. _verlib: http://bitbucket.org/tarek/distutilsversion/

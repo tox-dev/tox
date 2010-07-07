@@ -27,5 +27,7 @@ the specified command in each of them.  With::
 
 you can run only tests on Python2.6.  
 
+Checkout other :doc:`examples <../examples>`
+
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 
