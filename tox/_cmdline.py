@@ -9,7 +9,7 @@ import py
 import os
 import sys
 import subprocess
-from tox._verlib import NormalizedVersion
+from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
 from tox._config import parseconfig 
 
@@ -74,6 +74,9 @@ class Reporter:
 
     def good(self, msg):
         self.logline(msg, green=True)
+
+    def warning(self, msg):
+        self.logline("WARNING:" + msg)
 
     def error(self, msg):
         self.logline("ERROR: " + msg, red=True)
@@ -277,12 +280,40 @@ class Session:
         return out
 
     def _resolve_pkg(self, pkgspec):
-        if "**LATEST**" in str(pkgspec):
-            p = py.path.local(pkgspec)
-            bn = p.basename
-            base = bn.replace("**LATEST**", "")
-            candidates = p.dirpath().listdir("%s*" % base)
-            candidates.sort(
-                key=lambda x: NormalizedVersion(x.purebasename[len(base):]))
-            return candidates[-1]
+        if not os.path.isabs(str(pkgspec)):
+            return pkgspec
+        p = py.path.local(pkgspec)
+        if p.check():
+            return p
+        if not p.dirpath().check(dir=1):
+            raise tox.exception.MissingDirectory(p.dirpath())
+        self.report.info("determining %s" % p)
+        candidates = p.dirpath().listdir(p.basename)
+        if len(candidates) == 0:
+            raise tox.exception.MissingDependency(pkgspec) 
+        if len(candidates) > 1:
+            items = []
+            for x in candidates:
+                ver = getversion(x.basename)
+                if ver is not None:
+                    items.append((ver, x))
+                else:
+                    self.report.warning("could not determine version of: %s" %
+                        str(x))
+            items.sort()
+            if not items:
+                raise tox.exception.MissingDependency(pkgspec) 
+            return items[-1][1]
         return pkgspec
+
+
+_rex_getversion = py.std.re.compile("[\w_\-\+]+-(.*)(\.zip|\.tar.gz)")
+def getversion(basename):
+    m = _rex_getversion.match(basename)
+    if m is None:
+        return None
+    version = m.group(1)
+    try:
+        return NormalizedVersion(version)
+    except IrrationalVersionError:
+        return None

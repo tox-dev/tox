@@ -197,7 +197,7 @@ class TestVenvUpdate:
             [tox]
             distshare={toxworkdir}/distshare
             [testenv]
-            deps={distshare}/xyz-**LATEST**
+            deps={distshare}/xyz-*
         """)
         xyz = config.distshare.ensure("xyz-1.2.0.zip")
         xyz2 = config.distshare.ensure("xyz-1.2.1.zip")

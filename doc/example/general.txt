@@ -51,50 +51,6 @@ You can now call::
 
 which will make the sphinx tests part of your test run. 
 
-Integrating "sphinx" documentation checks in a Hudson job
-----------------------------------------------------------------
-
-If you are using a multi-configuration Hudson job which collects
-JUnit Test results you will run into problems using the previous
-method of running the sphinx-build command because it will not
-generate JUnit results.  To accomodate this issue one solution
-is to have ``py.test`` wrap the sphinx-checks and create a 
-JUnit result file which wraps the result of calling sphinx-build. 
-Here is an example: 
-
-1. create a ``docs`` environment in your ``tox.ini`` file like this::
-
-    [testenv:docs]
-    basepython=python
-    changedir=doc # or whereever you keep your sphinx-docs 
-    deps=sphinx
-        py
-    commands=
-        py.test --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
-
-2. create a ``doc/check_sphinx.py`` file like this::
-
-    import py
-    import subprocess
-    def test_linkcheck(tmpdir):
-        doctrees = tmpdir.join("doctrees")
-        htmldir = tmpdir.join("html")
-        subprocess.check_call(
-            ["sphinx-build", "-W", "-blinkcheck",
-              "-d", str(doctrees), ".", str(htmldir)])
-    def test_build_docs(tmpdir):
-        doctrees = tmpdir.join("doctrees")
-        htmldir = tmpdir.join("html")
-        subprocess.check_call([
-            "sphinx-build", "-W", "-bhtml",
-              "-d", str(doctrees), ".", str(htmldir)])
-
-3. run ``tox -e docs`` and then you may integrate this environment 
-   along with your other environments into Hudson. 
-
-Note that ``py.test`` is only installed into the docs environment
-and does not need to be in use or installed with any other environment. 
-
 Selecting one or more environments to run tests against
 --------------------------------------------------------
 
@@ -126,8 +82,9 @@ Access package artifacts between multiple tox-runs
 
 If you have multiple projects using tox and you can arrange for them
 to have access to a common directory then ``tox`` provides help to access 
-packaging artifacts between the projects.  This helps to 
-to test a package against an unreleased development version 
+packaging artifacts between the projects.  You can create make use of 
+a ``distshare`` directory where tox jobs copy in and copy out dependencies. 
+This feature allows to to test a package against an unreleased development version 
 or even an uncommitted version on your own machine.  
 
 Example ``tox.ini`` for project ``one``::
@@ -135,28 +92,20 @@ Example ``tox.ini`` for project ``one``::
     [tox]
     distshare={homedir}/.tox/dist # share sdist-packages on a per-user basis
     
+Example ``tox.ini`` for project ``two``: 
+
+    [tox]
+    distshare={homedir}/.tox/dist # share sdist-packages on a per-user basis
+    
     [testenv]
     deps=
-        {distshare}/two-1.2.5dev.zip  # install package from "two" project
+        {distshare}/two-*.zip  # install latest package from "two" project
 
-Your ``two`` project should use the same ``distshare`` setting 
-so that ``tox`` copies its sdist package file into it.  Running
-``tox`` for the ``one`` project will cause installation of the 
-``two`` package.  ``tox`` internally tracks MD5-sums
-of such dependency files and will treat a changed dependency 
-as a reason to rebuild the virtualenv. 
-
-Often it is desirable to not have to repeat redundant version information 
-in the ``tox.ini`` file, you can use a special marker to have ``tox``
-look for the latest version itself::
-
-    [testenv]
-    deps=
-        {distshare}/two-**LATEST**
-
-With this definition ``tox`` looks at all ``two-*.zip`` packages 
-and compares their versions to determine the latest.  It uses
-verlib_  to compare version strings which must be compliant with :pep:`385`.
+Project ``one`` will copy its sdist-package into the ``distshare`` directory
+while project ``two`` will grab it because the dependencies list 
+the ``two-*.zip`` pattern.  If there is more than one matching package
+then the highest version will be taken.  ``tox`` uses verlib_  to 
+compare version strings which must be compliant with :pep:`385`.
 
 .. _verlib: http://bitbucket.org/tarek/distutilsversion/
 .. include:: ../links.txt

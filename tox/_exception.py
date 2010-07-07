@@ -10,4 +10,7 @@ class InvocationError(Error):
     """ an error while invoking a script. """
 class MissingFile(Error):
     """ an error while invoking a script. """
-
+class MissingDirectory(Error):
+    """ a directory did not exist. """
+class MissingDependency(Error):
+    """ a dependency could not be found or determined. """

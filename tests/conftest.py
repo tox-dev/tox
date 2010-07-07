@@ -44,10 +44,17 @@ class ReportExpectMock:
         self._calls = []
         self._index = -1
 
+    def clear(self):
+        self._calls[:] = []
+
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError(name)
-        return lambda *args: self._calls.append((name,)+ args)
+
+        def generic_report(*args):
+            self._calls.append((name,)+args)
+            print ("report %s" %(args,))
+        return generic_report
 
     def expect(self, cat, messagepattern):
         newindex = self._index + 1

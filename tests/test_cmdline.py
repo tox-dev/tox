@@ -6,6 +6,37 @@ pytest_plugins = "pytester"
 from tox._cmdline import Session
 from tox._config import parseconfig
 
+def test__resolve_pkg(tmpdir, mocksession):
+    distshare = tmpdir.join("distshare")
+    spec = distshare.join("pkg123-*")
+    py.test.raises(tox.exception.MissingDirectory, 
+        'mocksession._resolve_pkg(spec)')
+    distshare.ensure(dir=1)
+    py.test.raises(tox.exception.MissingDependency, 
+        'mocksession._resolve_pkg(spec)')
+    distshare.ensure("pkg123-1.3.5.zip")
+    p = distshare.ensure("pkg123-1.4.5.zip")
+
+    mocksession.report.clear()
+    result = mocksession._resolve_pkg(spec)
+    assert result == p
+    mocksession.report.expect("info", "determin*pkg123*")
+    distshare.ensure("pkg123-1.4.7dev.zip")
+    mocksession.report.clear()
+    result = mocksession._resolve_pkg(spec)
+    mocksession.report.expect("warning", "*1.4.7*")
+    assert result == p 
+    distshare.ensure("pkg123-1.4.5a1.tar.gz")
+    result = mocksession._resolve_pkg(spec)
+    assert result == p 
+
+def test__resolve_pkg_doubledash(tmpdir, mocksession):
+    distshare = tmpdir.join("distshare")
+    p = distshare.ensure("pkg-mine-1.3.0.zip")
+    distshare.ensure("pkg-mine-1.3.0a1.zip")
+    res = mocksession._resolve_pkg(distshare.join("pkg-mine*"))
+    assert res == p
+
 class TestSession:
     def test_make_sdist(self, initproj):
         initproj("example123-0.5", filedefs={
@@ -333,7 +364,7 @@ def test_sdist_latest(tmpdir, newconfig):
     config = newconfig([], """
             [tox]
             distshare=%s
-            sdistsrc={distshare}/pkg123-**LATEST**
+            sdistsrc={distshare}/pkg123-*
     """ % distshare)
     distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
@@ -341,4 +372,3 @@ def test_sdist_latest(tmpdir, newconfig):
     session = Session(config)
     sdist_path = session.sdist()
     assert sdist_path == p
-
