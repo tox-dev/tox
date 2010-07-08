@@ -34,7 +34,7 @@ Determining the environment list that ``tox`` is to operate one
 happens in this order:
 
 * command line option ``-eENVLIST`` 
-* environment variable ``TOXENVLIST``
+* environment variable ``TOXENV``
 * ``tox.ini`` file's ``envlist``
 
 Test environment settings 

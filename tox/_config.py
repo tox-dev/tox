@@ -163,7 +163,7 @@ class parseini:
     def _getenvlist(self, reader, toxsection):
         env = self.config.opts.env
         if not env:
-            env = os.environ.get("TOXENVLIST", None)
+            env = os.environ.get("TOXENV", None)
             if not env:
                 envlist = reader.getlist(toxsection, "envlist", sep=",")
                 if not envlist:

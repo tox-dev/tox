@@ -406,10 +406,10 @@ class TestGlobalOptions:
         assert config.envlist == ["py26"]
         config = newconfig(["-epy31"], inisource)
         assert config.envlist == ["py31"]
-        monkeypatch.setenv("TOXENVLIST", "py31,py26")
+        monkeypatch.setenv("TOXENV", "py31,py26")
         config = newconfig([], inisource)
         assert config.envlist == ["py31", "py26"]
-        monkeypatch.setenv("TOXENVLIST", "ALL")
+        monkeypatch.setenv("TOXENV", "ALL")
         config = newconfig([], inisource)
         assert config.envlist == ['py26', 'py27', 'py31']
         config = newconfig(["-eALL"], inisource)

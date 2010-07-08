@@ -8,8 +8,8 @@ import time
 from tox._config import parseconfig
 
 def pytest_configure():
-    if 'TOXENVLIST' in os.environ:
-        del os.environ['TOXENVLIST']
+    if 'TOXENV' in os.environ:
+        del os.environ['TOXENV']
 
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)

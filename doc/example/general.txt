@@ -77,7 +77,7 @@ You can also specify an environment list in your ``tox.ini``:
     envlist = py25,py26  # default list 
 
 and override it from the command line or from the environment variable
-``TOXENVLIST``.  
+``TOXENV``.  
 
 .. _artifacts:
 
