@@ -50,13 +50,11 @@ and does not need to be in use or installed with any other environment.
 Access package artifacts between Hudson jobs
 --------------------------------------------------------
 
-.. _`general artifact exchange mechanism`: general.html#artifacts
 .. _`Hudson Copy Artifact plugin`: http://wiki.hudson-ci.org/display/HUDSON/Copy+Artifact+Plugin
 
-In an extension to the `general artifact exchange mechanism`_ 
-you can configure Hudson jobs to access each other artifacts. 
-As far as ``tox`` is concerned you should configure a special 
-directory for the hudson context like this::
+In an extension to :ref:`artifacts` you can configure Hudson jobs to
+access each others artifacts.  ``tox`` allows to define 
+global variables in a per-hudson context like this:: 
 
     [tox:hudson]
     distshare=.tox/distshare 
@@ -65,17 +63,20 @@ This means that each workspace will have its own ``distshare``
 directory and we need to configure some artifact copying. 
 The recommend way to do this is to install the `Hudson Copy Artifact plugin`_ 
 and for each job which "receives" artifacts you add a **Copy artifacts from another project**
-build step using roughly this configuration: 
+build step using roughly this configuration::
 
-    ``Project-name``: the name of the other (tox-managed) job you want the artifact from
-    ``Artifacts to copy``: ``.tox/dist/*.zip
-    ``Target directory``: .tox/distshare 
-    Flatten Directories: CHECK 
+    Project-name: the name of the other (tox-managed) job you want the artifact from
+    Artifacts to copy: .tox/dist/*.zip   # where the other jobs creates its artifacts
+    Target directory: .tox/distshare     # where we want it to appear for us
+    Flatten Directories: CHECK           # copy files flatly, create no subdir-structure
 
-If you add such a build step at the beginning then Hudson will 
-copy the other artifact into our ``distshare`` directory 
-and thus ``tox`` will be able to find it like 
-in the non-Hudson case. 
+If you add such a build step before your ``tox`` run the latter 
+can install the dependency just like :ref:`artifacts` shows it. 
+In other words, the only difference in ``tox.ini`` between Hudson 
+and non-Hudson artifact sharing is the value for the ``distshare`` 
+directory which can be set separately so that the rest of your
+``tox.ini`` is fully re-useable and can be debugged on a
+developer console. 
 
 .. include:: ../links.txt
 
