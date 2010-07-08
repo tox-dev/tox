@@ -61,21 +61,6 @@ and the test run will use the per-virtualenv temporary directory.
 
 .. _`passing positional arguments`: 
 
-Avoiding __init__.py files in test directories 
----------------------------------------------------
-
-.. _`fully qualified name`: http://codespeak.net/py/dist/test/customize.html#constructing-the-package-name-for-test-modules
-
-``py.test`` collects test modules on the filesystem and then 
-tries to import them under their `fully qualified name`_. This means
-that if your test directory contains an ``__init__.py`` file then your
-``py.test`` invocation may end up importing the package from
-the checkout directory rather than the installed package.  Therefore
-it is better to try to avoid ``__init__.py`` files in test 
-directories and also try to avoid custom ``PYTHONPATH`` settings.  
-After all, it is the job of your ``setup.py`` file and the install 
-tools to care for making the package properly available for importing. 
-
 Using multiple CPUs for test runs
 -----------------------------------
 
@@ -93,55 +78,26 @@ to make ``tox`` use this feature::
             -n 3                    \ # use three sub processes
             []
 
-Using tox, py.test and the Hudson CI 
--------------------------------------------
-
-The Hudson_ continous integration server allows to define "jobs" with 
-"build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
-default Python installation on each Hudson slave, you can easily create 
-a Hudson multi-configuration job that will drive your tox runs from the CI-server side,
-using these steps: 
-
-* create a "multi-configuration" job, give it a name of your choice 
-* configure your repository so that Hudson can pull it 
-* (optional) configure multiple nodes so that tox-runs are performed
-  on multiple hosts 
-* configure ``axes`` with e.g. using ``ENV`` as an axis name and as values
-  the space-separated test environment names you want Hudson/tox to execute
-  sequentially. 
-* add a Python-build step with this content::
-
-    import tox
-    import os
-    tox.cmdline(["-e", os.environ['ENV'])
-
-* check ``Publish JUnit test result report`` and enter
-  ``**/junit-*.xml`` as the pattern so that Hudson collects 
-  test results. 
-
-It makes sense to use something like the following configuration
-for your ``commands`` parameter in a ``tox.ini``::
-
-    commands=
-        py.test \
-            --confcutdir=.. \  # Hudson has nested project checkouts and this option 
-                               # lets py.test avoid see conflicting conftest.py files 
-            --junitxml=junit-{envname}.xml
-
-**Note** that we do not use the per-virtualenv ``--basetemp`` setting here because
-it can easily lead to too long filenames because Hudson creates a deeply nested
-directory structure for the workspaces of the jobs it runs. 
-
-See a real-life example in action with the `py-trunk-multi Hudson job`_
-
-.. _`py-trunk-multi Hudson job`: http://hudson.testrun.org/view/pytest/job/py-trunk-multi/
-
 .. _`listed as a known issue`:
 
 Known Issues and limitations 
 -----------------------------
 
-* you may encounter "too long filenames" for temporarily
-  created files in your py.test run.  Try to not use the "--basetemp" parameter. 
+**Too long filenames**. you may encounter "too long filenames" for temporarily
+created files in your py.test run.  Try to not use the "--basetemp" parameter. 
+
+**installed-versus-checkout version**.  ``py.test`` collects test
+modules on the filesystem and then tries to import them under their
+`fully qualified name`_. This means that if your test directory contains
+an ``__init__.py`` file then your ``py.test`` invocation may end up
+importing the package from the checkout directory rather than the
+installed package.  Therefore it is better to try to avoid
+``__init__.py`` files in test directories and also try to avoid custom
+``PYTHONPATH`` settings.  After all, it is the job of your ``setup.py``
+file and the install tools to care for making the package properly
+available for importing. 
+
+.. _`fully qualified name`: http://codespeak.net/py/dist/test/customize.html#constructing-the-package-name-for-test-modules
+
 
 .. include:: ../links.txt

@@ -80,3 +80,46 @@ developer console.
 
 .. include:: ../links.txt
 
+Using tox, py.test and the Hudson CI 
+-------------------------------------------
+
+The Hudson_ continous integration server allows to define "jobs" with 
+"build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
+default Python installation on each Hudson slave, you can easily create 
+a Hudson multi-configuration job that will drive your tox runs from the CI-server side,
+using these steps: 
+
+* create a "multi-configuration" job, give it a name of your choice 
+* configure your repository so that Hudson can pull it 
+* (optional) configure multiple nodes so that tox-runs are performed
+  on multiple hosts 
+* configure ``axes`` with e.g. using ``ENV`` as an axis name and as values
+  the space-separated test environment names you want Hudson/tox to execute
+  sequentially. 
+* add a Python-build step with this content::
+
+    import tox
+    import os
+    tox.cmdline(["-e", os.environ['ENV'])
+
+* check ``Publish JUnit test result report`` and enter
+  ``**/junit-*.xml`` as the pattern so that Hudson collects 
+  test results. 
+
+It makes sense to use something like the following configuration
+for your ``commands`` parameter in a ``tox.ini``::
+
+    commands=
+        py.test \
+            --confcutdir=.. \  # prevent py.test from seeing multiple 
+                               # conftest.py files in a nested Hudson workspace
+            --junitxml=junit-{envname}.xml
+
+**Note** that we do not use the per-virtualenv ``--basetemp`` setting here because
+it can easily lead to too long filenames because Hudson creates a deeply nested
+directory structure for the workspaces of the jobs it runs. 
+
+See a real-life example in action with the `py-trunk-multi Hudson job`_
+
+.. _`py-trunk-multi Hudson job`: http://hudson.testrun.org/view/pytest/job/py-trunk-multi/
+

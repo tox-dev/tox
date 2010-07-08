@@ -45,19 +45,24 @@ Current features
 Notes and known limitations 
 ----------------------------------
 
+* ``tox`` always operates in virtualenv_ environments, it cannot work with 
+  globally installed Python interpreters because there are no reliable means
+  to install and recreate dependencies.  Or does it still makes sense to 
+  allow using global Python installations? 
+
 * ``tox`` is fresh on the Python testing scene (first release July 2010) and 
-  needs some battle testing and feedback. 
-  
-* ``tox`` is likely to evolve in possibly incompatible increments as it 
-  provides more power to configure and customize the test process. 
+  needs some battle testing and feedback.  It is is likely to evolve in 
+  (possibly incompatible) increments as it provides more power to configure 
+  and customize the test process. 
 
 * ``tox`` uses virtualenv_ and virtualenv3_, the latter being a fork
   which roughly works with Python3 but has less features (no "pip" and
   other problems).  solution: virtualenv_ needs to merge and grow proper 
   native Python3 support, preferably in a "single-source" way. 
 
-* tox does not work on the Windows/Python3/Virtualenv3 combination due
-  to limitations of the virtualenv3 fork project. 
+* tox does not work on the Windows/Python3/Virtualenv3 combination
+  because there is no setuptools_ for Python3 and virtualenv3_ does 
+  not support using distribute_. 
 
 * ``tox`` currently uses a ``setup.py sdist`` invocation to create 
   an installable package and then invokes ``pip`` or ``easy_install`` to 
