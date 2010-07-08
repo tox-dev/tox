@@ -16,7 +16,7 @@ List of optional global options::
     [tox]
     toxworkdir=path   # tox working directory, defaults to {toxinidir}/.tox
     setupdir=path     # defaults to {toxinidir} 
-    distdir=path   # defaults to {toxworkdir}/dist
+    distdir=path      # defaults to {toxworkdir}/dist
     distshare=path    # defaults to {distdir}
     envlist=ENVLIST   # defaults to the list of all environments
 

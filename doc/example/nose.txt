@@ -35,9 +35,9 @@ then run the specified test command.
 More examples? 
 ------------------------------------------
 
-Analogous to :doc:`pytest` it should be very easy to define additional options
-and to integrate nosetest runs with Hudson.  You are welcome to submit some 
-advanced tips and tricks for nose/tox interaction. 
+You can use and combine other features of ``tox`` with your tox runs, 
+e.g. :ref:`sphinx checks`.  If you figure out something related to nose/tox
+interactions you are welcome to submit some advanced tips and tricks. 
 
 Also checkout :doc:`general`. 
     

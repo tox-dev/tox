@@ -25,6 +25,8 @@ the above ``tox`` invocation will trigger the test runners to
 stop after the first failure and to only run a particular test file. 
 
 
+.. _`sphinx checks`: 
+
 Integrating "sphinx" documentation checks
 ----------------------------------------------
 

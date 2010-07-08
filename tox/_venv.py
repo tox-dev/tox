@@ -17,7 +17,15 @@ class VirtualEnv(object):
     def getcommandpath(self, name=None):
         if name is None:
             return self.envconfig.envpython
-        return self.envconfig.envbindir.join(name, abs=True)
+        if os.path.isabs(name):
+            return name
+        p = py.path.local.sysfind(name)
+        if p is None:
+            raise tox.exception.InvocationError("could not find executable %r" 
+                % (name,))
+        if p.relto(self.envconfig.envdir):
+            return p
+        return str(p) # will not be rewritten for reporting
 
     def _ispython3(self):
         return "python3" in str(self.envconfig.basepython)
@@ -175,20 +183,32 @@ class VirtualEnv(object):
     def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)
         cwd = self.envconfig.changedir
-        env = os.environ.copy()
-        env['PATH'] = str(self.envconfig.envbindir) + os.pathsep + env['PATH']
         for argv in self.envconfig.commands:
             try:
-                self._pcall(argv, log=-1, cwd=cwd, env=env)
+                self._pcall(argv, log=-1, cwd=cwd)
             except tox.exception.InvocationError:
                 return True
 
-    def _pcall(self, args, venv=True, log=None, cwd=None, env=None):
-        if venv:
-            args = [self.getcommandpath(args[0])] + args[1:]
-        if log is None:
-            log = self.path.ensure("log", dir=1)
-        return self.session.pcall(args, log=log, cwd=cwd, env=env)
+    def _pcall(self, args, venv=True, log=None, cwd=None):
+        old = self.patchPATH()
+        try:
+            if venv:
+                args = [self.getcommandpath(args[0])] + args[1:]
+            if log is None:
+                log = self.path.ensure("log", dir=1)
+            return self.session.pcall(args, log=log, cwd=cwd)
+        finally:
+            os.environ['PATH'] = old
+
+    def patchPATH(self):
+        oldPATH = os.environ['PATH']
+        paths = oldPATH.split(os.pathsep)
+        bindir = str(self.envconfig.envbindir)
+        if bindir not in paths:
+            paths.insert(0, bindir)
+            os.environ['PATH'] = x = os.pathsep.join(paths)
+            self.session.report.info("added %r to path" % str(bindir))
+        return oldPATH
 
 def getdigest(path):
     try:

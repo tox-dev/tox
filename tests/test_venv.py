@@ -1,6 +1,6 @@
 import py
 import tox
-import sys
+import os, sys
 from tox._venv import VirtualEnv
 
 #def test_global_virtualenv(capfd):
@@ -246,17 +246,23 @@ class TestVenvUpdate:
 
 class TestVenvTest:
 
-    def test_path_setting(self, newconfig, mocksession):
+    def test_patchPATH(self, newconfig, mocksession, monkeypatch):
         config = newconfig([], """
-            [testenv]
-            commands=
-                {envpython} -c pass
+            [testenv:python]
+            commands=abc
         """)
         envconfig = config.envconfigs['python'] 
         venv = VirtualEnv(envconfig, session=mocksession)
-        venv.test()
-        assert len(mocksession._pcalls) >= 1
-        env = mocksession._pcalls[0].env
-        path = env['PATH']
-        assert path.startswith(str(venv.envconfig.envbindir))
+        monkeypatch.setenv("PATH", "xyz")
+        oldpath = venv.patchPATH()
+        assert oldpath == "xyz"
+        res = os.environ['PATH'] 
+        assert res == "%s%sxyz" % (envconfig.envbindir, os.pathsep)
+        assert envconfig.commands
+        monkeypatch.setattr(venv, '_pcall', lambda *args, **kwargs: 0/0)
+        py.test.raises(ZeroDivisionError, "venv._install([1,2,3])")
+        py.test.raises(ZeroDivisionError, "venv.test()")
+        py.test.raises(ZeroDivisionError, "venv.easy_install(['qwe'])")
+        py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
+        py.test.raises(ZeroDivisionError, "venv._pcall([1,2,3])")
         
