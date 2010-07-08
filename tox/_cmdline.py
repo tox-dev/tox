@@ -304,7 +304,8 @@ class Session:
             if not items:
                 raise tox.exception.MissingDependency(pkgspec) 
             return items[-1][1]
-        return pkgspec
+        else:
+            return candidates[0]
 
 
 _rex_getversion = py.std.re.compile("[\w_\-\+]+-(.*)(\.zip|\.tar.gz)")

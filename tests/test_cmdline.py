@@ -33,6 +33,8 @@ def test__resolve_pkg(tmpdir, mocksession):
 def test__resolve_pkg_doubledash(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
     p = distshare.ensure("pkg-mine-1.3.0.zip")
+    res = mocksession._resolve_pkg(distshare.join("pkg-mine*"))
+    assert res == p
     distshare.ensure("pkg-mine-1.3.0a1.zip")
     res = mocksession._resolve_pkg(distshare.join("pkg-mine*"))
     assert res == p
