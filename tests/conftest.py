@@ -10,6 +10,8 @@ from tox._config import parseconfig
 def pytest_configure():
     if 'TOXENV' in os.environ:
         del os.environ['TOXENV']
+    if 'HUDSON_URL' in os.environ:
+        del os.environ['HUDSON_URL']
 
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
