@@ -1,10 +1,10 @@
 0.6
 -----------------
 
-- (try to) fix OSX related bugs
-  tox was using the same file as virtualenv for tracking the Python
-  executable and the environment was not set correctly on some Python
-  versions. 
+- fix OSX related bugs that could cause the caller's environment to get
+  screwed (sorry).  tox was using the same file as virtualenv for tracking 
+  the Python executable dependency and there also was confusion wrt links. 
+  this should be fixed now. 
 
 - fix long description, thanks Michael Foord
 
