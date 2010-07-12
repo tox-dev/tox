@@ -8,8 +8,8 @@ class VirtualEnv(object):
         self.envconfig = envconfig
         self.session = session
         self.path = envconfig.envdir
-        self.path_deps = self.path.join(".deps")
-        self.path_python = self.path.join(".python")
+        self.path_deps = self.path.join(".tox-deps")
+        self.path_python = self.path.join(".tox-python")
 
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
@@ -108,7 +108,10 @@ class VirtualEnv(object):
         python = self.envconfig.basepython
         if not python:
             python = sys.executable
-        return find_executable(str(python))
+        x = find_executable(str(python))
+        if x:
+            x = x.realpath()
+        return x
 
     def getsupportedinterpreter(self):
         if sys.platform == "win32" and self._ispython3():
