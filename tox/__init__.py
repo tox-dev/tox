@@ -1,5 +1,5 @@
 #
-__version__ = "0.5a2"
+__version__ = "0.5"
 
 import apipkg
 

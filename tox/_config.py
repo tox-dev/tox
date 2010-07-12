@@ -30,12 +30,22 @@ class VersionAction(argparse.Action):
                           tox.__file__))
         raise SystemExit(0)
 
+class CountAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if hasattr(namespace, self.dest):
+            setattr(namespace, self.dest, int(getattr(namespace, self.dest))+1)
+        else:
+            setattr(namespace, self.dest, 0)
+
 def prepare_parse():
     parser = argparse.ArgumentParser(description=__doc__,)
         #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version", nargs=0, action=VersionAction, 
         dest="version",
         help="report version information to stdout.")
+    parser.add_argument("-v", nargs=0, action=CountAction, default=0,
+        dest="verbosity",
+        help="increase verbosity of reporting output.")
     parser.add_argument("--showconfig", action="store_true", dest="showconfig", 
         help="show configuration information. ")
     parser.add_argument("-c", action="store", default="tox.ini", 

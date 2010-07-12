@@ -32,10 +32,12 @@ class Reporter:
         self.logline("***" + msg, bold=True)
 
     def info(self, msg):
-        self.logline(msg)
+        if self.config.opts.verbosity > 0:
+            self.logline(msg)
 
     def using(self, msg):
-        self.logline("using %s" %(msg,), bold=True)
+        if self.config.opts.verbosity > 0:
+            self.logline("using %s" %(msg,), bold=True)
 
     def popen(self, args, log, opts):
         cwd = py.path.local()

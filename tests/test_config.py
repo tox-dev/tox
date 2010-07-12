@@ -371,6 +371,14 @@ class TestGlobalOptions:
         config = newconfig(["--notest"], "")
         assert config.opts.notest
 
+    def test_verbosity(self, newconfig):
+        config = newconfig([], "")
+        assert config.opts.verbosity == 0
+        config = newconfig(["-v"], "")
+        assert config.opts.verbosity == 1
+        config = newconfig(["-vv"], "")
+        assert config.opts.verbosity == 2
+
     def test_substitution_hudson_default(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         config = newconfig("""
