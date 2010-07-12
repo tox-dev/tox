@@ -299,19 +299,19 @@ def test_notest(initproj, cmd):
         [testenv:py26]
         basepython=python2.6
     """})
-    result = cmd.run("tox", "--notest")
+    result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*skipping*test*",
         "*skipping*test*",
         "*tox summary*",
     ])
-    result = cmd.run("tox", "--notest", "-epy25")
+    result = cmd.run("tox", "-v", "--notest", "-epy25")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*reusing*py25",
     ])
-    result = cmd.run("tox", "--notest", "-epy25,py26")
+    result = cmd.run("tox", "-v", "--notest", "-epy25,py26")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*reusing*py25",
@@ -354,7 +354,7 @@ def test_separate_sdist(cmd, initproj):
     l = distshare.listdir()
     assert len(l) == 1
     sdistfile = l[0]
-    result = cmd.run("tox", "--notest")
+    result = cmd.run("tox", "-v", "--notest")
     assert not result.ret 
     result.stdout.fnmatch_lines([
         "*skipping*sdist*",
