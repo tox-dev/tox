@@ -215,7 +215,7 @@ class Session:
                 self.report.good("%s: commands succeeded" %(
                                  venv.envconfig.envname, ))
         if not retcode:
-            self.report.good("congratulation :)")
+            self.report.good("congratulations :)")
         return retcode 
 
     def showconfig(self):
