@@ -1,6 +1,11 @@
 tox installation 
 ==================================
 
+.. note::
+
+    tox is alpha software and may have crucial platform-specific 
+    or environment specific bugs. Use with care. 
+
 Install info in a nutshell
 ----------------------------------
 

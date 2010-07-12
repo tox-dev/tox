@@ -1,6 +1,11 @@
 Welcome to the tox automation project 
 ===============================================
 
+.. note::
+
+    tox is alpha software and may have crucial platform-specific 
+    or environment specific bugs. Use with care. 
+
 vision: merge testing and deployment 
 ----------------------------------------
 

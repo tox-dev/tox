@@ -2,6 +2,7 @@ include CHANGELOG
 include README.txt
 include LICENSE 
 include setup.py
+include tox.ini
 graft doc
 graft tests
 prune doc/_build
