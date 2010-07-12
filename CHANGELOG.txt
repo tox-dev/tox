@@ -1,5 +1,9 @@
+0.6
+-----------------
 
-tox 0.5
+- fix long description, thanks Michael Foord
+
+0.5
 -----------------
 
 - initial release 

@@ -1,6 +1,31 @@
 import sys
 from setuptools import setup
 
+long_description="""
+What is Tox? 
+==========================
+
+Tox as is a generic virtualenv management and test command line tool you can 
+use for:
+
+* checking your package installs correctly with different
+  Python versions and interpreters 
+
+* running your tests in each of the 
+  environments, configuring your test tool of choice 
+
+* acting as a frontend to Continous Integration 
+  servers, greatly reducing boilerplate and merging 
+  CI and shell-based testing. 
+
+For more information, docs and many examples please checkout the `home page`_:
+
+http://codespeak.net/tox
+
+.. _`home page`: http://codespeak.net/tox
+"""
+
+
 def main():
     install_requires=['virtualenv3==1.3.4.1']
     if sys.version_info[0] < 3:
@@ -8,8 +33,9 @@ def main():
     setup(
         name='tox',
         description='virtualenv-based automation of test activities',
+        long_description=long_description,
         url='http://codespeak.net/tox',
-        version='0.5',
+        version='0.6a1',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
