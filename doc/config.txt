@@ -106,8 +106,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 ``distribute=True|False``
     Set to ``False`` if you want to use setuptools_ instead of the default
     distribute_ in the virtual environment. 
-    **default:** False meaning setuptools, the virtualenv-default setting, 
-    will be used. 
+    **default:** True. 
 
 Substitutions
 ---------------------
