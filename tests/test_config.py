@@ -44,6 +44,12 @@ class TestConfigPackage:
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths 
 
+    def test_defaults_distshare(self, tmpdir, newconfig):
+        config = newconfig([], "")
+        envconfig = config.envconfigs['python']
+        homedir = py.path.local._gethomedir() 
+        assert config.distshare == homedir.join(".tox", "distshare")
+
     def test_defaults_changed_dir(self, tmpdir, newconfig):
         tmpdir.mkdir("abc").chdir()
         config = newconfig([], "")
@@ -321,7 +327,7 @@ class TestConfigTestEnv:
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
         assert argv[6][0] == os.path.expanduser("~")
-        assert argv[7][0] == config.distdir
+        assert argv[7][0] == config.homedir.join(".tox", "distshare")
         assert argv[8][0] == conf.envlogdir
 
     def test_substitution_positional(self, newconfig):
@@ -364,6 +370,18 @@ class TestGlobalOptions:
         assert not config.opts.notest
         config = newconfig(["--notest"], "")
         assert config.opts.notest
+
+    def test_substitution_hudson_default(self, tmpdir, monkeypatch, newconfig):
+        monkeypatch.setenv("HUDSON_URL", "xyz")
+        config = newconfig("""
+            [testenv:py24]
+            commands =
+                {distshare}
+        """)
+        conf = config.envconfigs['py24']
+        argv = conf.commands
+        expect_path = config.toxworkdir.join("distshare")
+        assert argv[0][0] == expect_path
 
     def test_substitution_hudson_context(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")

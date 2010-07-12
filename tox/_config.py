@@ -90,23 +90,28 @@ class parseini:
         config._cfg = self._cfg
         self.config = config 
         ctxname = getcontextname()
-        if ctxname:
+        if ctxname == "hudson":
             reader = IniReader(self._cfg, fallbacksections=['tox'])
             toxsection = "tox:%s" % ctxname 
-        else:
+            distshare_default = "{toxworkdir}/distshare"
+        elif not ctxname:
             reader = IniReader(self._cfg)
             toxsection = "tox"
+            distshare_default = "{homedir}/.tox/distshare"
+        else:
+            raise ValueError("invalid context")
            
+        config.homedir = py.path.local._gethomedir()
         reader.addsubstitions(toxinidir=config.toxinidir, 
-                              homedir=os.path.expanduser("~"))
+                              homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir", 
                                            "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
                                            "{toxworkdir}/dist")
         reader.addsubstitions(distdir=config.distdir)
-        config.distshare = reader.getpath(toxsection, "distshare",
-                                          "{distdir}")
+        config.distshare = reader.getpath(toxsection, "distshare", 
+                                          distshare_default)
         reader.addsubstitions(distshare=config.distshare)
         config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")

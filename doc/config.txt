@@ -17,7 +17,7 @@ List of optional global options::
     toxworkdir=path   # tox working directory, defaults to {toxinidir}/.tox
     setupdir=path     # defaults to {toxinidir} 
     distdir=path      # defaults to {toxworkdir}/dist
-    distshare=path    # defaults to {distdir}
+    distshare=path    # defaults to {homedir}/.tox/distshare
     envlist=ENVLIST   # defaults to the list of all environments
 
 ``tox`` autodetects if it is running in a Hudson_ context 
@@ -26,6 +26,8 @@ and will first lookup global tox settings in this section::
 
     [tox:hudson]
     ...               # override [tox] settings for the hudson context
+    # note: for hudson distshare defaults to ``{toxworkdir}/distshare``. 
+
 
 envlist setting
 +++++++++++++++++++++++++
@@ -37,8 +39,8 @@ happens in this order:
 * environment variable ``TOXENV``
 * ``tox.ini`` file's ``envlist``
 
-Test environment settings 
-------------------------------
+Virtualenv test environment settings 
+-------------------------------------------
 
 Test environments are defined by a::
 

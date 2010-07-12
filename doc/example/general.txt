@@ -53,6 +53,9 @@ You can now call::
 
 which will make the sphinx tests part of your test run. 
 
+
+.. _`TOXENV`:
+
 Selecting one or more environments to run tests against
 --------------------------------------------------------
 
@@ -71,13 +74,15 @@ one environment like this::
 which would run the commands of the ``py25`` and ``py26`` testenvironments 
 respectively.  The special value ``ALL`` selects all environments. 
 
-You can also specify an environment list in your ``tox.ini``:
+You can also specify an environment list in your ``tox.ini``::
 
     [tox]
-    envlist = py25,py26  # default list 
+    envlist = py25,py26  
 
-and override it from the command line or from the environment variable
-``TOXENV``.  
+or override it from the command line or from the environment variable
+``TOXENV``::
+
+    export TOXENV=py25,py26 # in bash style shells 
 
 .. _artifacts:
 
@@ -90,28 +95,23 @@ that another tox run can find the "latest" dependency.  This feature
 allows to to test a package against an unreleased development version 
 or even an uncommitted version on your own machine.  
 
-Example ``tox.ini`` for project ``one``::
-  
-    # one/tox.ini 
-    [tox]  
-    distshare={homedir}/.tox/dist # {homedir} is my the homedir of the invoking user
-    
-Example ``tox.ini`` for project ``two``::
+By default, ``{homedir}/.tox/distshare`` will be used for 
+copying in and copying out artifacts (i.e. Python packages). 
 
-    # two/tox.ini 
-    [tox]
-    distshare={homedir}/.tox/dist # needs same setting as above!
-    
+For project ``two`` to depend on the ``one`` package you use
+the following entry::
+
+    # example two/tox.ini
     [testenv]
     deps=
-        {distshare}/two-*.zip  # install latest package from "two" project
+        {distshare}/one-*.zip  # install latest package from "one" project
 
-Tox running on project ``one`` will copy the sdist-package into the 
-``distshare`` directory after which a ``tox`` run on project ``two`` will 
-grab it because ``deps`` contain an entry with the 
-``two-*.zip`` pattern.  If there is more than one matching package
-the highest version will be taken.  ``tox`` uses verlib_  to 
-compare version strings which must be compliant with :pep:`386`.
+That's all.  Tox running on project ``one`` will copy the sdist-package
+into the ``distshare`` directory after which a ``tox`` run on project
+``two`` will grab it because ``deps`` contain an entry with the
+``one-*.zip`` pattern.  If there is more than one matching package the
+highest version will be taken.  ``tox`` uses verlib_  to compare version
+strings which must be compliant with :pep:`386`.
 
 .. _verlib: http://bitbucket.org/tarek/distutilsversion/
 .. include:: ../links.txt

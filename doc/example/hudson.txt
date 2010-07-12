@@ -52,35 +52,38 @@ Access package artifacts between Hudson jobs
 
 .. _`Hudson Copy Artifact plugin`: http://wiki.hudson-ci.org/display/HUDSON/Copy+Artifact+Plugin
 
-In an extension to :ref:`artifacts` you can configure Hudson jobs to
-access each others artifacts.  ``tox`` allows to define 
-global variables in a per-hudson context like this:: 
-
-    [tox:hudson]
-    distshare=.tox/distshare 
+In an extension to :ref:`artifacts` you can also configure Hudson jobs to
+access each others artifacts.  ``tox`` uses the ``distshare`` directory
+to access artifacts and in a Hudson context (detected via existence
+of the environment variable ``HUDSON_URL``); it defaults to 
+to ``{toxworkdir}/distshare``.  
 
 This means that each workspace will have its own ``distshare``
-directory and we need to configure some artifact copying. 
+directory and we need to configure Hudson to perform artifact copying. 
 The recommend way to do this is to install the `Hudson Copy Artifact plugin`_ 
-and for each job which "receives" artifacts you add a **Copy artifacts from another project**
-build step using roughly this configuration::
+and for each job which "receives" artifacts you add a **Copy artifacts from another project** build step using roughly this configuration::
 
-    Project-name: the name of the other (tox-managed) job you want the artifact from
-    Artifacts to copy: .tox/dist/*.zip   # where the other jobs creates its artifacts
+    Project-name: name of the other (tox-managed) job you want the artifact from
+    Artifacts to copy: .tox/dist/*.zip   # where tox jobs create artifacts
     Target directory: .tox/distshare     # where we want it to appear for us
-    Flatten Directories: CHECK           # copy files flatly, create no subdir-structure
+    Flatten Directories: CHECK           # create no subdir-structure
 
-If you add such a build step before your ``tox`` run the latter 
-can install the dependency just like :ref:`artifacts` shows it. 
-In other words, the only difference in ``tox.ini`` between Hudson 
-and non-Hudson artifact sharing is the value for the ``distshare`` 
-directory which can be set separately so that the rest of your
-``tox.ini`` is fully re-useable and can be debugged on a
-developer console. 
+You also need to configure the "other" job to archive artifacts; This
+is done by checking ``Archive the artifacts`` and entering::
+
+    Files to archive: .tox/dist/*.zip
+
+So our "other" job will create an sdist-package artifact and 
+the "copy-artifacts" plugin will copy it to our ``distshare`` area.
+Now everything proceeds as :ref:`artifacts` shows it. 
+
+So if you are using defaults you can re-use and debug exactly the 
+same ``tox.ini`` file and make use of automatical sharing of 
+your artifacts between runs or Hudson jobs. 
 
 .. include:: ../links.txt
 
-Using tox, py.test and the Hudson CI 
+Using tox and the Hudson CI 
 -------------------------------------------
 
 The Hudson_ continous integration server allows to define "jobs" with 
@@ -93,31 +96,26 @@ using these steps:
 * configure your repository so that Hudson can pull it 
 * (optional) configure multiple nodes so that tox-runs are performed
   on multiple hosts 
-* configure ``axes`` with e.g. using ``ENV`` as an axis name and as values
-  the space-separated test environment names you want Hudson/tox to execute
-  sequentially. 
+* configure ``axes`` with e.g. using :ref:`TOXENV <TOXENV>` as an axis 
+  name and as values provide space-separated test environment names 
+  you want Hudson/tox to execute.
 * add a Python-build step with this content::
 
     import tox
-    import os
-    tox.cmdline(["-e", os.environ['ENV'])
+    tox.cmdline() # environment is selected by the ``TOXENV`` setting above
 
 * check ``Publish JUnit test result report`` and enter
   ``**/junit-*.xml`` as the pattern so that Hudson collects 
-  test results. 
+  test results in the JUnit XML format. 
 
-It makes sense to use something like the following configuration
-for your ``commands`` parameter in a ``tox.ini``::
+The last point requires that your test command creates JunitXML files,
+for example with ``py.test`` it is done like this: 
 
     commands=
         py.test \
-            --confcutdir=.. \  # prevent py.test from seeing multiple 
-                               # conftest.py files in a nested Hudson workspace
+            --confcutdir=.. \
             --junitxml=junit-{envname}.xml
 
-**Note** that we do not use the per-virtualenv ``--basetemp`` setting here because
-it can easily lead to too long filenames because Hudson creates a deeply nested
-directory structure for the workspaces of the jobs it runs. 
 
 See a real-life example in action with the `py-trunk-multi Hudson job`_
 
