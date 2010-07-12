@@ -8,7 +8,7 @@ If you invoke ``tox`` like this::
 
     tox -- -x tests/test_something.py 
 
-the arguments after the `--` will be substituted 
+the arguments after the ``--`` will be substituted 
 everywhere where you specify ``[...]`` in your
 test commands, for example using ``py.test``::
     
