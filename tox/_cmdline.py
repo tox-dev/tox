@@ -260,8 +260,8 @@ class Session:
                 arg = cwd.bestrelpath(arg)
             newargs.append(arg)
         
-        #if env is None:
-        #    env = os.environ.copy()
+        if env is None:
+            env = os.environ.copy()
            
         opts = {'env': env} 
         args = [str(x) for x in args]
