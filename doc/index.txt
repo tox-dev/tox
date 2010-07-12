@@ -11,7 +11,7 @@ server, invoking your tools of choice.
 Current features 
 -------------------
 
-* **professional automation of tedious Python related test activities**
+* **automation of tedious Python related test activities**
 
 * **test your Python package against many interpreter and dependency configs**
 
@@ -39,7 +39,6 @@ Current features
 * **documented** :doc:`examples <examples>` and :doc:`configuration <config>` 
 
 * **concise reporting** about tool invocations and configuration errors
-
 
 * **professionally** :doc:`supported <support>`
 

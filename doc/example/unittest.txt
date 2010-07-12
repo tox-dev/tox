@@ -9,24 +9,20 @@ Running unittests with 'discover'
 .. _Pygments: http://pypi.python.org/pypi/Pygments
 
 The discover_ project allows to discover and run unittests 
-and we can integrate it in a ``tox`` run.  As an example,
+and we can easily integrate it in a ``tox`` run.  As an example,
 perform a checkout of Pygments_::
 
     hg clone http://dev.pocoo.org/hg/pygments-main
 
 and add the following ``tox.ini`` to it::
 
+    [tox]
+    envlist = py25,py26,py27
+
     [testenv]
     changedir=tests
     commands=discover
     deps=discover
-    [testenv:py27]
-    basepython=python2.7
-    [testenv:py26]
-    basepython=python2.6
-    [testenv:py25]
-    basepython=python2.5
-
 
 If you now invoke ``tox`` you will see the creation of 
 three virtual environments and a unittest-run performed

@@ -5,6 +5,10 @@ import tox
 import argparse
 configparser = py.builtin._tryimport("ConfigParser", "configparser")
 
+defaultenvs = {'jython': 'jython', 'pypy': 'pypy-c'}
+for _name in "py24,py25,py26,py27,py30,py31,py32".split(","):
+    defaultenvs[_name] = "python%s.%s" %(_name[2], _name[3])
+
 def parseconfig(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -127,6 +131,11 @@ class parseini:
             config.envconfigs['python'] = \
                 self._makeenvconfig("python", "_xz_9", reader._subs, config)
         config.envlist = self._getenvlist(reader, toxsection)
+        for name in config.envlist:
+            if name not in config.envconfigs:
+                if name in defaultenvs:
+                    config.envconfigs[name] = \
+                self._makeenvconfig(name, "_xz_9", reader._subs, config)
 
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)
@@ -137,7 +146,11 @@ class parseini:
         if reader.getdefault(section, "python", None):
             raise tox.exception.ConfigError(
                 "'python=' key was renamed to 'basepython='")
-        vc.basepython = reader.getdefault(section, "basepython", sys.executable)
+        if name in defaultenvs:
+            bp = defaultenvs[name]
+        else:
+            bp = sys.executable
+        vc.basepython = reader.getdefault(section, "basepython", bp)
         reader.addsubstitions(envdir=vc.envdir, envname=vc.envname,
                               envbindir=vc.envbindir, envpython=vc.envpython)
         vc.envtmpdir = reader.getpath(section, "tmpdir", "{envdir}/tmp")

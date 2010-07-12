@@ -21,10 +21,6 @@ and the following ``tox.ini`` content::
     commands=
       nosetests \
             []        # substitute with tox' positional arguments 
-    [testenv:py26]
-    basepython=python2.6
-    [testenv:py25]
-    basepython=python2.5
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides. 
 ``tox`` will sdist-package your project create two virtualenv environments 
@@ -36,10 +32,10 @@ More examples?
 ------------------------------------------
 
 You can use and combine other features of ``tox`` with your tox runs, 
-e.g. :ref:`sphinx checks`.  If you figure out something related to nose/tox
-interactions you are welcome to submit some advanced tips and tricks. 
+e.g. :ref:`sphinx checks`.  If you figure out some particular configurations
+for nose/tox interactions please submit them. 
 
-Also checkout :doc:`general`. 
+Also you might want to checkout :doc:`general`. 
     
 .. include:: ../links.txt
 

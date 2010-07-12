@@ -232,6 +232,7 @@ else:
             'python2.6': "c:\python26\python.exe",
             'python2.7': "c:\python27\python.exe",
             'python3.1': "c:\python31\python.exe",
+            'python3.2': "c:\python32\python.exe",
             'jython': "c:\jython2.5.1\jython.bat",
     }
     def find_executable(name):

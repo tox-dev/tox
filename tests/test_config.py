@@ -433,6 +433,44 @@ class TestGlobalOptions:
         config = newconfig(["-eALL"], inisource)
         assert config.envlist == ['py26', 'py27', 'py31']
 
+    def test_default_environments(self, tmpdir, newconfig, monkeypatch):
+        envs = "py24,py25,py26,py27,py30,py31,py32,jython,pypy"
+        inisource = """
+            [tox]
+            envlist = %s
+        """ % envs
+        config = newconfig([], inisource)
+        envlist = envs.split(",")
+        assert config.envlist == envlist
+        for name in config.envlist:
+            env = config.envconfigs[name]
+            if name == "jython":
+                assert env.basepython == "jython"
+            elif name == "pypy":
+                assert env.basepython == "pypy-c"
+            else:
+                assert name.startswith("py")
+                bp = "python%s.%s" %(name[2], name[3])
+                assert env.basepython == bp 
+
+    def test_defaultenv_commandline(self, tmpdir, newconfig, monkeypatch):
+        config = newconfig(["-epy24"], "")
+        env = config.envconfigs['py24']
+        assert env.basepython == "python2.4"
+        assert not env.commands
+
+    def test_defaultenv_partial_override(self, tmpdir, newconfig, monkeypatch):
+        inisource = """
+            [tox]
+            envlist = py24
+            [testenv:py24]
+            commands= xyz
+        """
+        config = newconfig([], inisource)
+        env = config.envconfigs['py24']
+        assert env.basepython == "python2.4"
+        assert env.commands == [['xyz']]
+
 class TestCmdInvocation:
     def test_help(self, cmd):
         result = cmd.run("tox", "-h")
