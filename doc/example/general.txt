@@ -113,6 +113,8 @@ into the ``distshare`` directory after which a ``tox`` run on project
 highest version will be taken.  ``tox`` uses verlib_  to compare version
 strings which must be compliant with :pep:`386`.
 
+If you want to use this with Hudson_, also checkout the :ref:`hudson artifact example`.
+
 .. _verlib: http://bitbucket.org/tarek/distutilsversion/
 
 basepython defaults, overriding 
