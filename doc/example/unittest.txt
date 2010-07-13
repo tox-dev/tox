@@ -1,7 +1,6 @@
 
-unittest and tox 
-=======================
-
+unittest2, discover and tox 
+===============================
 
 Running unittests with 'discover'
 ------------------------------------------
@@ -27,5 +26,60 @@ and add the following ``tox.ini`` to it::
 If you now invoke ``tox`` you will see the creation of 
 three virtual environments and a unittest-run performed
 in each of them. 
+
+Running unittest2 and sphinx tests in one go
+-----------------------------------------------------
+
+.. _`Michael Foord`: http://www.voidspace.org.uk/
+
+`Michael Foord`_ contributed a ``tox.ini`` file that
+allows to run all tests for his `unittest2`_ project,
+including some sphinx-based doctests.  If you checkout
+its repository with: 
+
+    hg clone http://hg.python.org/unittest2
+
+And add the following ``tox.ini`` next to ``setup.py``::
+
+    [tox]                                                                           
+    envlist = py24,py25,py26,py27                                                   
+                                                                                    
+    [testenv]                                                                       
+    deps=unittest2                                                                  
+    commands=unit2 discover []                                                      
+                                                                                    
+    [testenv:py26]                                                                  
+    commands=                                                                       
+        unit2 discover []                                                               
+        sphinx-build -b doctest docs html                                               
+        sphinx-build docs html                                                          
+    deps =                                                                          
+        unittest2                                                                       
+        sphinx                                                                          
+                                                                                    
+    [testenv:py27]                                                                  
+    commands=                                                                       
+        unit2 discover []                                                               
+        sphinx-build -b doctest docs html                                               
+        sphinx-build docs html                                                          
+    deps =                                                                          
+        unittest2                                                                       
+        sphinx         
+
+you can run ``tox`` which will execute the ``unit2 discover`` 
+commands on Python2.4, 2.5, 2.6 and 2.7 respectively.  Against
+Python2.6 and Python2.7 it will additionally run sphinx-mediated
+doctests.  
+
+The ``[]`` parentheses in the commands provide :ref:`positional substitution` which means
+you can e.g. type::
+
+    tox -- -f -s SOMEPATH 
+
+which will ultimately invoke::
+
+    unit2 discover -f -s SOMEPATH 
+
+in each of the environments.  
 
 .. include:: ../links.txt

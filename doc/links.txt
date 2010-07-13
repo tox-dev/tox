@@ -15,4 +15,4 @@
 .. _`hudson`: http://hudson-ci.org/
 .. _sphinx: http://pypi.python.org/pypi/Sphinx 
 .. _discover: http://pypi.python.org/pypi/discover
-
+.. _unittest2: http://pypi.python.org/pypi/unittest2

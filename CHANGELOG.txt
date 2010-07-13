@@ -1,3 +1,9 @@
+0.7
+-----------------
+
+- added unittest2 examples contributed by Michael Foord 
+
+
 0.6
 -----------------
 

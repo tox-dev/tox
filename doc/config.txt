@@ -163,6 +163,7 @@ and raise an Error if the environment variable
 does not exist. 
 
 .. _`command positional substitution`: 
+.. _`positional substitution`: 
 
 substitutions for positional arguments in commands
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
