@@ -2,6 +2,44 @@
 Using Tox with the Hudson Integration Server
 =================================================
 
+Using Hudson multi-configuration jobs 
+-------------------------------------------
+
+The Hudson_ continous integration server allows to define "jobs" with 
+"build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
+default Python installation on each Hudson slave, you can easily create 
+a Hudson multi-configuration job that will drive your tox runs from the CI-server side,
+using these steps: 
+
+* create a "multi-configuration" job, give it a name of your choice 
+* configure your repository so that Hudson can pull it 
+* (optional) configure multiple nodes so that tox-runs are performed
+  on multiple hosts 
+* configure ``axes`` with e.g. using :ref:`TOXENV <TOXENV>` as an axis 
+  name and as values provide space-separated test environment names 
+  you want Hudson/tox to execute.
+* add a Python-build step with this content::
+
+    import tox
+    tox.cmdline() # environment is selected by the ``TOXENV`` setting above
+
+* check ``Publish JUnit test result report`` and enter
+  ``**/junit-*.xml`` as the pattern so that Hudson collects 
+  test results in the JUnit XML format. 
+
+The last point requires that your test command creates JunitXML files,
+for example with ``py.test`` it is done like this: 
+
+    commands=
+        py.test \
+            --confcutdir=.. \
+            --junitxml=junit-{envname}.xml
+
+
+See a real-life example in action with the `py-trunk-multi Hudson job`_
+
+.. _`py-trunk-multi Hudson job`: http://hudson.testrun.org/view/pytest/job/py-trunk-multi/
+
 
 Integrating "sphinx" documentation checks in a Hudson job
 ----------------------------------------------------------------
@@ -47,6 +85,8 @@ Here is an example:
 Note that ``py.test`` is only installed into the docs environment
 and does not need to be in use or installed with any other environment. 
 
+.. _`hudson artifact example`:
+
 Access package artifacts between Hudson jobs
 --------------------------------------------------------
 
@@ -83,41 +123,4 @@ your artifacts between runs or Hudson jobs.
 
 .. include:: ../links.txt
 
-Using tox and the Hudson CI 
--------------------------------------------
-
-The Hudson_ continous integration server allows to define "jobs" with 
-"build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
-default Python installation on each Hudson slave, you can easily create 
-a Hudson multi-configuration job that will drive your tox runs from the CI-server side,
-using these steps: 
-
-* create a "multi-configuration" job, give it a name of your choice 
-* configure your repository so that Hudson can pull it 
-* (optional) configure multiple nodes so that tox-runs are performed
-  on multiple hosts 
-* configure ``axes`` with e.g. using :ref:`TOXENV <TOXENV>` as an axis 
-  name and as values provide space-separated test environment names 
-  you want Hudson/tox to execute.
-* add a Python-build step with this content::
-
-    import tox
-    tox.cmdline() # environment is selected by the ``TOXENV`` setting above
-
-* check ``Publish JUnit test result report`` and enter
-  ``**/junit-*.xml`` as the pattern so that Hudson collects 
-  test results in the JUnit XML format. 
-
-The last point requires that your test command creates JunitXML files,
-for example with ``py.test`` it is done like this: 
-
-    commands=
-        py.test \
-            --confcutdir=.. \
-            --junitxml=junit-{envname}.xml
-
-
-See a real-life example in action with the `py-trunk-multi Hudson job`_
-
-.. _`py-trunk-multi Hudson job`: http://hudson.testrun.org/view/pytest/job/py-trunk-multi/
 
