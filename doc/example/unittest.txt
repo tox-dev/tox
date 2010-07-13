@@ -31,15 +31,16 @@ Running unittest2 and sphinx tests in one go
 -----------------------------------------------------
 
 .. _`Michael Foord`: http://www.voidspace.org.uk/
+.. _tox.ini: http://code.google.com/p/mock/source/browse/trunk/tox.ini
 
-`Michael Foord`_ contributed a ``tox.ini`` file that
-allows to run all tests for his `unittest2`_ project,
+`Michael Foord`_ has contributed a ``tox.ini`` file that
+allows you to run all tests for his mock_ project,
 including some sphinx-based doctests.  If you checkout
 its repository with: 
 
-    hg clone http://hg.python.org/unittest2
+    svn co http://mock.googlecode.com/svn/trunk/ mock
 
-And add the following ``tox.ini`` next to ``setup.py``::
+the checkout has a tox.ini_ that looks like this::
 
     [tox]                                                                           
     envlist = py24,py25,py26,py27                                                   
@@ -66,10 +67,12 @@ And add the following ``tox.ini`` next to ``setup.py``::
         unittest2                                                                       
         sphinx         
 
-you can run ``tox`` which will execute the ``unit2 discover`` 
-commands on Python2.4, 2.5, 2.6 and 2.7 respectively.  Against
+mock uses unittest2_ to run the tests. Invoking ``tox`` starts test
+discovery by executing the ``unit2 discover`` 
+commands on Python 2.4, 2.5, 2.6 and 2.7 respectively.  Against
 Python2.6 and Python2.7 it will additionally run sphinx-mediated
-doctests.  
+doctests. If building the docs fails, due to a reST error, or
+any of the doctests fails, it will be reported by the tox run.
 
 The ``[]`` parentheses in the commands provide :ref:`positional substitution` which means
 you can e.g. type::
@@ -80,6 +83,7 @@ which will ultimately invoke::
 
     unit2 discover -f -s SOMEPATH 
 
-in each of the environments.  
+in each of the environments. This allows you to customize test discovery
+in your ``tox`` runs.
 
 .. include:: ../links.txt
