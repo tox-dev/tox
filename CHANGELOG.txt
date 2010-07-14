@@ -18,6 +18,7 @@
 - only allow 'True' or 'False' for boolean config values 
   (lowercase / uppercase is irrelevant)
 
+- recreate virtualenv on changed configurations 
 
 0.6
 -----------------

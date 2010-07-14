@@ -10,6 +10,7 @@ class VirtualEnv(object):
         self.path = envconfig.envdir
         self.path_deps = self.path.join(".tox-deps")
         self.path_python = self.path.join(".tox-python")
+        self.path_config = self.path.join(".tox-config")
 
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
@@ -62,9 +63,19 @@ class VirtualEnv(object):
         if self.path_python.check():
             s = self.path_python.read()
             executable = self.getconfigexecutable()
-            if s == executable:
-                return self.matchingdependencies()
+            if s == executable and self.path_config.check():
+                s = self.path_config.read()
+                if s == self._getconfigstring():
+                    return self.matchingdependencies()
         return False
+
+    def _writeconfig(self):
+        self.path_config.write(self._getconfigstring())
+
+    def _getconfigstring(self):
+        return "%s %s %s" % (tox.__version__, 
+            self.envconfig.distribute, 
+            self.envconfig.sitepackages, )
 
     def _getconfigdeps(self):
         return [self.session._resolve_pkg(dep) for dep in self.envconfig.deps]
@@ -154,6 +165,7 @@ class VirtualEnv(object):
         finally:
             old.chdir()
         self.path_python.write(str(config_interpreter))
+        self._writeconfig()
 
     def install_sdist(self, sdistpath):
         self._install([sdistpath])

@@ -181,6 +181,7 @@ class TestVenvUpdate:
         assert ex
         venv.path_python.ensure().write(str(ex))
         venv.path_deps.write("")
+        venv._writeconfig()
         assert venv.iscorrectpythonenv()
 
     def test_matchingdependencies(self, newconfig, mocksession):
@@ -262,12 +263,40 @@ class TestVenvUpdate:
         venv = VirtualEnv(envconfig, session=mocksession)
         venv.path_python.ensure().write(venv.getconfigexecutable())
         venv.path_deps.write("\n".join(venv.envconfig.deps))
+        venv._writeconfig()
         venv.update()
         assert not mocksession._pcalls
         mocksession.report.expect("action", "reusing existing matching virtualenv*")
         venv.path_deps.write("xyz\n")
         msg = venv.update() 
         mocksession.report.expect("action", "recreating virtualenv*")
+
+    def test_python_recreate_config(self, newconfig, mocksession):
+        config = newconfig([], """
+           [testenv:hello]
+        """)
+        envconfig = config.envconfigs['hello']
+        venv = VirtualEnv(envconfig, session=mocksession)
+        venv.path_python.ensure().write(venv.getconfigexecutable())
+        venv.path_deps.write("\n".join(venv.envconfig.deps))
+        venv._writeconfig()
+        venv.update()
+        assert not mocksession._pcalls
+        mocksession._clearmocks()
+
+        venv.envconfig.distribute = False
+        venv.update()
+        assert mocksession._pcalls
+        mocksession.report.expect("action", "*recreating*hello*")
+        mocksession._clearmocks()
+        venv.envconfig.sitepackages = True
+        venv.update()
+        assert mocksession._pcalls
+        mocksession.report.expect("action", "*recreating*hello*")
+        mocksession._clearmocks()
+        venv.update()
+        assert not mocksession._pcalls
+
 
 class TestVenvTest:
 

@@ -82,10 +82,9 @@ def pytest_funcarg__mocksession(request):
     class MockSession(Session):
         def __init__(self):
             self._clearmocks()
-            self.report = ReportExpectMock()
         def _clearmocks(self):
             self._pcalls = []
-            self._reports = []
+            self.report = ReportExpectMock()
         def make_emptydir(self, path):
             pass
         def pcall(self, args, log, cwd, env=None):
