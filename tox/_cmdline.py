@@ -16,7 +16,8 @@ from tox._config import parseconfig
 def main(args=None):
     try:
         config = parseconfig(args)
-        Session(config).runcommand()
+        retcode = Session(config).runcommand()
+        raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)
 
@@ -117,7 +118,7 @@ class Session:
         if self.config.opts.showconfig:
             self.showconfig()
         else:
-            self.subcommand_test()
+            return self.subcommand_test()
 
     def _copyfiles(self, srcdir, pathlist, destdir):
         for relpath in pathlist:

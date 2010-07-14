@@ -170,7 +170,7 @@ def test_unknown_interpreter(cmd, initproj):
         '''
     })
     result = cmd.run("tox")
-    assert not result.ret
+    assert result.ret
     result.stdout.fnmatch_lines([
         "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
     ])
@@ -185,7 +185,7 @@ def test_unknown_dep(cmd, initproj):
         '''
     })
     result = cmd.run("tox", )
-    assert not result.ret
+    assert result.ret
     result.stdout.fnmatch_lines([
         "*ERROR*could not install*qweqwe123*",
     ])
@@ -234,7 +234,7 @@ def test_package_install_fails(cmd, initproj):
         'tox.ini': '',
     })
     result = cmd.run("tox", )
-    assert not result.ret
+    assert result.ret
     result.stdout.fnmatch_lines([
         "*FAIL*could not install package*",
     ])
@@ -268,13 +268,25 @@ def test_test_simple(cmd, initproj):
         "*python: commands succeeded"
     ])
     # see that things work with a different CWD 
-    cmd.tmpdir.chdir()
+    old = cmd.tmpdir.chdir()
     result = cmd.run("tox", "-c", "example123/tox.ini")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*1 passed*",
         "*summary*",
         "*python: commands succeeded"
+    ])
+    old.chdir()
+    # see that tests can also fail and retcode is correct
+    testfile = py.path.local("tests").join("test_hello.py")
+    assert testfile.check()
+    testfile.write("def test_fail(): assert 0")
+    result = cmd.run("tox", )
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*1 failed*",
+        "*summary*",
+        "*python: *failed*",
     ])
     
 

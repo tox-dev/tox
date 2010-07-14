@@ -1,6 +1,9 @@
 0.7
 -----------------
 
+- fix issue2: exit with proper non-zero return code if there were 
+  errors or test failures. 
+
 - added unittest2 examples contributed by Michael Foord 
 
 
