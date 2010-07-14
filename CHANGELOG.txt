@@ -15,6 +15,9 @@
 
 - added unittest2 examples contributed by Michael Foord 
 
+- only allow 'True' or 'False' for boolean config values 
+  (lowercase / uppercase is irrelevant)
+
 
 0.6
 -----------------

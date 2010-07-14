@@ -215,11 +215,17 @@ class TestIniParser:
             [section]
             key1=True
             key2=False
+            key1a=true
+            key2a=falsE
+            key5=yes
         """)
         reader = IniReader(config._cfg)
         assert reader.getbool("section", "key1") == True
+        assert reader.getbool("section", "key1a") == True
         assert reader.getbool("section", "key2") == False
+        assert reader.getbool("section", "key2a") == False
         py.test.raises(KeyError, 'reader.getbool("section", "key3")')
+        py.test.raises(tox.exception.ConfigError, 'reader.getbool("section", "key5")')
 
 class TestConfigTestEnv:
     def test_defaults(self, tmpdir, newconfig):

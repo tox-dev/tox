@@ -272,7 +272,13 @@ class IniReader:
             raise KeyError("no config value [%s] %s found" % (
                 section, name))
         if not isinstance(s, bool):
-            s = (s == "True" and True or False)
+            if s.lower() == "true":
+                s = True
+            elif s.lower() == "false":
+                s = False
+            else:
+                raise tox.exception.ConfigError(
+                    "boolean value %r needs to be 'True' or 'False'")
         return s
 
     def getdefault(self, section, name, default=None, replace=True):
