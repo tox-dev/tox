@@ -1,7 +1,7 @@
 """
 Automatically package and test a Python project against configurable 
 Python2 and Python3 based virtual environments. Environments are
-setup by using virtualenv and virtualenv3 respectively.  Configuration 
+setup by using virtualenv and virtualenv5 respectively.  Configuration 
 is generally done through an INI-style "tox.ini" file. 
 """
 import tox
@@ -246,7 +246,7 @@ class Session:
 
     def info_versions(self):
         versions = ['tox-%s' % tox.__version__]
-        for tool in ('virtualenv', 'virtualenv3'):
+        for tool in ('virtualenv', 'virtualenv5'):
             version = py.process.cmdexec("%s --version" % tool)
             versions.append("%s-%s" %(tool, version.strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))

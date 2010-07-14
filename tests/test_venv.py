@@ -134,7 +134,7 @@ def test_install_python3(tmpdir, mocksession, newconfig):
     venv = VirtualEnv(envconfig, session=mocksession)
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 2
+    assert len(l) == 1
     args = l[0].args
     assert 'virtualenv5' in args[0]
     l[:] = []
