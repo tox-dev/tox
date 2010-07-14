@@ -131,9 +131,10 @@ class VirtualEnv(object):
         #    return 
         config_interpreter = self.getsupportedinterpreter()
         args = ['virtualenv' + (self._ispython3() and "5" or "")]
-        args.append('--no-site-packages')
         if not self._ispython3() and self.envconfig.distribute:
             args.append('--distribute')
+        if not self.envconfig.sitepackages:
+            args.append('--no-site-packages')
         if sys.platform == "win32":
             f, path, _ = py.std.imp.find_module("virtualenv")
             f.close()

@@ -2,7 +2,7 @@
 .. _Python: http://www.python.org
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 .. _virtualenv3: http://pypi.python.org/pypi/virtualenv3
-.. _virtualenv3: http://pypi.python.org/pypi/virtualenv5
+.. _virtualenv5: http://pypi.python.org/pypi/virtualenv5
 .. _`py.test`: http://pytest.org 
 .. _nosetests:
 .. _`nose`: http://pypi.python.org/pypi/nose

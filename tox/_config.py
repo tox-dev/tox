@@ -180,6 +180,7 @@ class parseini:
         vc.commands = reader.getargvlist(section, "commands")
         vc.deps = [x.replace("/", os.sep) for x in reader.getlist(section, "deps")]
         vc.distribute = reader.getbool(section, "distribute", True)
+        vc.sitepackages = reader.getbool(section, "sitepackages", False)
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache is None:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", "")

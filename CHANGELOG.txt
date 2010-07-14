@@ -4,6 +4,10 @@
 - use virtualenv5 (my own fork of virtualenv3) for now to create python3 
   environments, fixes a couple of issues and makes tox more seemlessly work
 
+- add ``sitepackages`` option for testenv sections so that environments 
+  can be created with access to globals (default is not to have access, 
+  i.e. create environments with ``--no-site-packages``. 
+
 - addressing issue4: always prepend venv-path to PATH variable when calling subprocesses
 
 - fix issue2: exit with proper non-zero return code if there were 

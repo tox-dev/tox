@@ -81,7 +81,7 @@ def test_create(monkeypatch, mocksession, newconfig):
 def test_create_distribute(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
-        distribute=True
+        distribute=False
     """)
     envconfig = config.envconfigs['py123']
     venv = VirtualEnv(envconfig, session=mocksession)
@@ -91,7 +91,32 @@ def test_create_distribute(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--distribute" not in " ".join(args[:2])
+    assert "--distribute" not in " ".join(args)
+
+def test_create_sitepackages(monkeypatch, mocksession, newconfig):
+    config = newconfig([], """
+        [testenv:site]
+        sitepackages=True
+
+        [testenv:nosite]
+        sitepackages=False
+    """)
+    envconfig = config.envconfigs['site']
+    venv = VirtualEnv(envconfig, session=mocksession)
+    venv.create()
+    l = mocksession._pcalls
+    assert len(l) >= 1
+    args = l[0].args
+    assert "--no-site-packages" not in " ".join(args)
+    mocksession._clearmocks()
+
+    envconfig = config.envconfigs['nosite']
+    venv = VirtualEnv(envconfig, session=mocksession)
+    venv.create()
+    l = mocksession._pcalls
+    assert len(l) >= 1
+    args = l[0].args
+    assert "--no-site-packages" in " ".join(args)
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
 def test_install_downloadcache(mocksession, newconfig):

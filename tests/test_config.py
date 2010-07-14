@@ -233,6 +233,7 @@ class TestConfigTestEnv:
         assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
         assert envconfig.distribute == True
+        assert envconfig.sitepackages == False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
 
     def test_specific_command_overrides(self, tmpdir, newconfig):

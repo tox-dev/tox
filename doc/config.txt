@@ -108,6 +108,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
     distribute_ in the virtual environment. 
     **default:** True. 
 
+``sitepackages=True|False``
+    Set to ``True`` if you want to create virtual environments that also 
+    have access to globally installed packages.  **default:** False, meaning
+    that virtualenvs will be created with ``--no-site-packages`` by default. 
+
 Substitutions
 ---------------------
 
