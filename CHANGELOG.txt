@@ -1,6 +1,8 @@
 0.7
 -----------------
 
+- fix issue1: always prepend venv-path to PATH variable when calling subprocesses
+
 - fix issue2: exit with proper non-zero return code if there were 
   errors or test failures. 
 

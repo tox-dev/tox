@@ -258,6 +258,12 @@ class TestVenvTest:
         assert oldpath == "xyz"
         res = os.environ['PATH'] 
         assert res == "%s%sxyz" % (envconfig.envbindir, os.pathsep)
+        p = "xyz"+os.pathsep+str(envconfig.envbindir)
+        monkeypatch.setenv("PATH", p)
+        venv.patchPATH()
+        res = os.environ['PATH'] 
+        assert res == "%s%s%s" %(envconfig.envbindir, os.pathsep, p)
+
         assert envconfig.commands
         monkeypatch.setattr(venv, '_pcall', lambda *args, **kwargs: 0/0)
         py.test.raises(ZeroDivisionError, "venv._install([1,2,3])")

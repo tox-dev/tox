@@ -205,12 +205,8 @@ class VirtualEnv(object):
 
     def patchPATH(self):
         oldPATH = os.environ['PATH']
-        paths = oldPATH.split(os.pathsep)
         bindir = str(self.envconfig.envbindir)
-        if bindir not in paths:
-            paths.insert(0, bindir)
-            os.environ['PATH'] = x = os.pathsep.join(paths)
-            self.session.report.info("added %r to path" % str(bindir))
+        os.environ['PATH'] = os.pathsep.join([bindir, oldPATH])
         return oldPATH
 
 def getdigest(path):
