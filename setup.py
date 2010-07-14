@@ -27,7 +27,7 @@ http://codespeak.net/tox
 
 
 def main():
-    install_requires=['virtualenv3==1.3.4.1']
+    install_requires=['virtualenv5==1.3.4.1']
     if sys.version_info[0] < 3:
         install_requires+=['virtualenv>=1.4.9']
     setup(

@@ -136,7 +136,7 @@ def test_install_python3(tmpdir, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) == 2
     args = l[0].args
-    assert 'virtualenv3' in args[0]
+    assert 'virtualenv5' in args[0]
     l[:] = []
     venv._install(["hello"])
     assert len(l) == 1
