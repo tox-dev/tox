@@ -42,7 +42,7 @@ def main():
         author_email='holger@merlinux.eu',
         packages=['tox', ],
         entry_points={'console_scripts': 'tox=tox:cmdline'},
-        install_requires=install_requires+['argparse', 'apipkg', 'py', ],
+        install_requires=install_requires+['argparse', 'apipkg', 'py>=1.3.2', ],
         zip_safe=True,
         classifiers=[
             'Development Status :: 3 - Alpha',

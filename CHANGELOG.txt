@@ -3,6 +3,7 @@
 
 - run pip/easy installs from the environment log directory, avoids
   naming clashes between env names and dependencies (thanks ronny) 
+- require a recent version of py lib
 
 0.7
 -----------------
