@@ -178,7 +178,7 @@ class VirtualEnv(object):
 
     def easy_install(self, args):
         argv = ["easy_install"] + args
-        self._pcall(argv)
+        self._pcall(argv, cwd=self.envconfig.envlogdir)
 
     def pip_install(self, args):
         argv = ["pip", "install"] + args
@@ -186,7 +186,7 @@ class VirtualEnv(object):
             self.envconfig.downloadcache.ensure(dir=1)
             argv.append("--download-cache=%s" % 
                 self.envconfig.downloadcache)
-        self._pcall(argv)
+        self._pcall(argv, cwd=self.envconfig.envlogdir)
 
     def _install(self, args):
         if not args:

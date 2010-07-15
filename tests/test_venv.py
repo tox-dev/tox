@@ -136,6 +136,7 @@ def test_install_downloadcache(mocksession, newconfig):
     venv.install_deps()
     assert len(l) == 2
     args = l[1].args
+    assert l[1].cwd == venv.envconfig.envlogdir
     assert "pip" in str(args[0])
     assert args[1] == "install"
     arg = "--download-cache=" + str(envconfig.downloadcache)
