@@ -3,27 +3,27 @@ Basic example and default environments
 =============================================
 
 Put basic information about your project and the test environments you
-want your project to run in into a ``tox.ini`` file that should 
+want your project to run in into a ``tox.ini`` file that should
 reside next to your ``setup.py`` file::
 
-    # content of: tox.ini , put in same dir as setup.py 
+    # content of: tox.ini , put in same dir as setup.py
     [tox]
     envlist = py26,py27
     [testenv]
     commands=py.test  # or 'nosetests' or ...
 
-To sdist-package, install and test your project, you can 
+To sdist-package, install and test your project, you can
 now type at the command prompt::
 
-    tox 
+    tox
 
 This will sdist-package your current project, create two virtualenv_
 Environments, install the sdist-package into the environments and run
 the specified command in each of them.  With::
 
-    tox -e py26 
+    tox -e py26
 
-you can run restrict the test run to the python2.6 environment. 
+you can run restrict the test run to the python2.6 environment.
 
 Available "default" test environments names are::
 
@@ -38,7 +38,7 @@ Available "default" test environments names are::
     pypy
 
 However, you can also create your own test environment names,
-see some of the examples in :doc:`examples <../examples>`. 
+see some of the examples in :doc:`examples <../examples>`.
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 

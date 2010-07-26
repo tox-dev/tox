@@ -1,5 +1,5 @@
 
-unittest2, discover and tox 
+unittest2, discover and tox
 ===============================
 
 Running unittests with 'discover'
@@ -7,7 +7,7 @@ Running unittests with 'discover'
 
 .. _Pygments: http://pypi.python.org/pypi/Pygments
 
-The discover_ project allows to discover and run unittests 
+The discover_ project allows to discover and run unittests
 and we can easily integrate it in a ``tox`` run.  As an example,
 perform a checkout of Pygments_::
 
@@ -23,9 +23,9 @@ and add the following ``tox.ini`` to it::
     commands=discover
     deps=discover
 
-If you now invoke ``tox`` you will see the creation of 
+If you now invoke ``tox`` you will see the creation of
 three virtual environments and a unittest-run performed
-in each of them. 
+in each of them.
 
 Running unittest2 and sphinx tests in one go
 -----------------------------------------------------
@@ -36,39 +36,39 @@ Running unittest2 and sphinx tests in one go
 `Michael Foord`_ has contributed a ``tox.ini`` file that
 allows you to run all tests for his mock_ project,
 including some sphinx-based doctests.  If you checkout
-its repository with: 
+its repository with:
 
     svn co http://mock.googlecode.com/svn/trunk/ mock
 
 the checkout has a tox.ini_ that looks like this::
 
-    [tox]                                                                           
-    envlist = py24,py25,py26,py27                                                   
-                                                                                    
-    [testenv]                                                                       
-    deps=unittest2                                                                  
-    commands=unit2 discover []                                                      
-                                                                                    
-    [testenv:py26]                                                                  
-    commands=                                                                       
-        unit2 discover []                                                               
-        sphinx-build -b doctest docs html                                               
-        sphinx-build docs html                                                          
-    deps =                                                                          
-        unittest2                                                                       
-        sphinx                                                                          
-                                                                                    
-    [testenv:py27]                                                                  
-    commands=                                                                       
-        unit2 discover []                                                               
-        sphinx-build -b doctest docs html                                               
-        sphinx-build docs html                                                          
-    deps =                                                                          
-        unittest2                                                                       
-        sphinx         
+    [tox]
+    envlist = py24,py25,py26,py27
+
+    [testenv]
+    deps=unittest2
+    commands=unit2 discover []
+
+    [testenv:py26]
+    commands=
+        unit2 discover []
+        sphinx-build -b doctest docs html
+        sphinx-build docs html
+    deps =
+        unittest2
+        sphinx
+
+    [testenv:py27]
+    commands=
+        unit2 discover []
+        sphinx-build -b doctest docs html
+        sphinx-build docs html
+    deps =
+        unittest2
+        sphinx
 
 mock uses unittest2_ to run the tests. Invoking ``tox`` starts test
-discovery by executing the ``unit2 discover`` 
+discovery by executing the ``unit2 discover``
 commands on Python 2.4, 2.5, 2.6 and 2.7 respectively.  Against
 Python2.6 and Python2.7 it will additionally run sphinx-mediated
 doctests. If building the docs fails, due to a reST error, or
@@ -77,11 +77,11 @@ any of the doctests fails, it will be reported by the tox run.
 The ``[]`` parentheses in the commands provide :ref:`positional substitution` which means
 you can e.g. type::
 
-    tox -- -f -s SOMEPATH 
+    tox -- -f -s SOMEPATH
 
 which will ultimately invoke::
 
-    unit2 discover -f -s SOMEPATH 
+    unit2 discover -f -s SOMEPATH
 
 in each of the environments. This allows you to customize test discovery
 in your ``tox`` runs.

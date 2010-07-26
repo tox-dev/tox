@@ -1,48 +1,48 @@
-tox installation 
+tox installation
 ==================================
 
 .. note::
 
-    tox is alpha software and may have crucial platform-specific 
-    or environment specific bugs. Use with care. 
+    tox is alpha software and may have crucial platform-specific
+    or environment specific bugs. Use with care.
 
 Install info in a nutshell
 ----------------------------------
 
-**Pythons**: 2.4, 2.5, 2.6, 2.7, 3.0, 3.1.x, Jython-2.5.1, PyPy-trunk 
+**Pythons**: 2.4, 2.5, 2.6, 2.7, 3.0, 3.1.x, Jython-2.5.1, PyPy-trunk
 
-**Operating systems**: Linux, Windows, OSX, Unix 
+**Operating systems**: Linux, Windows, OSX, Unix
 
 **Installer Requirements**: setuptools_ or Distribute_
 
-**License**: GPLv2 or later 
+**License**: GPLv2 or later
 
 **hg repository**: http://code.google.com/p/pytox/source/checkout
 
-Installation with pip/easy_install 
+Installation with pip/easy_install
 --------------------------------------
 
 Use one of the following commands::
 
-   pip install tox  
-   easy_install tox 
+   pip install tox
+   easy_install tox
 
-It is fine to install ``tox`` itself into a virtualenv_ environment. 
+It is fine to install ``tox`` itself into a virtualenv_ environment.
 
-Install from Checkout 
+Install from Checkout
 -------------------------
 
-Consult the Google code page to get a checkout of the mercurial repository: 
+Consult the Google code page to get a checkout of the mercurial repository:
 
     http://code.google.com/p/pytox/source/checkout
 
 To install in your environment perform::
 
-    python setup.py install   
-    
+    python setup.py install
+
 or to activate your checkout in your environment::
 
-    python setup.py develop   
+    python setup.py develop
 
 so that you can do changes and submit patches.
 

@@ -9,10 +9,10 @@ from tox._config import parseconfig
 def test__resolve_pkg(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
     spec = distshare.join("pkg123-*")
-    py.test.raises(tox.exception.MissingDirectory, 
+    py.test.raises(tox.exception.MissingDirectory,
         'mocksession._resolve_pkg(spec)')
     distshare.ensure(dir=1)
-    py.test.raises(tox.exception.MissingDependency, 
+    py.test.raises(tox.exception.MissingDependency,
         'mocksession._resolve_pkg(spec)')
     distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
@@ -25,10 +25,10 @@ def test__resolve_pkg(tmpdir, mocksession):
     mocksession.report.clear()
     result = mocksession._resolve_pkg(spec)
     mocksession.report.expect("warning", "*1.4.7*")
-    assert result == p 
+    assert result == p
     distshare.ensure("pkg123-1.4.5a1.tar.gz")
     result = mocksession._resolve_pkg(spec)
-    assert result == p 
+    assert result == p
 
 def test__resolve_pkg_doubledash(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
@@ -53,7 +53,7 @@ class TestSession:
         assert sdist.ext == ".zip"
         assert sdist == config.distdir.join(sdist.basename)
         sdist2 = session.sdist()
-        assert sdist2 == sdist 
+        assert sdist2 == sdist
         sdist.write("hello")
         assert sdist.stat().size < 10
         sdist_new = Session(config).sdist()
@@ -92,7 +92,7 @@ class TestSession:
         capfd.readouterr()
         session.report.popen(["ls", ], log=None, opts=opts)
         out, err = capfd.readouterr()
-        assert '0.log' in out 
+        assert '0.log' in out
         assert 'stdout' in opts
         assert opts['stdout'].write
         assert opts['stderr'] == py.std.subprocess.STDOUT
@@ -102,7 +102,7 @@ class TestSession:
         opts={}
         session.report.popen(["ls", ], log=None, opts=opts)
         out, err = capfd.readouterr()
-        assert '1.log' in out 
+        assert '1.log' in out
 
         opts={}
         newlogdir = tmpdir.mkdir("newlogdir")
@@ -137,11 +137,11 @@ class TestSession:
         assert not session.venvstatus[env2.path]
         session._summary()
         out, err = capfd.readouterr()
-        exp = "%s: FAIL XYZ" % env1.envconfig.envname 
+        exp = "%s: FAIL XYZ" % env1.envconfig.envname
         assert exp in out
-        exp = "%s: commands succeeded" % env2.envconfig.envname 
+        exp = "%s: commands succeeded" % env2.envconfig.envname
         assert exp in out
-        
+
 
 # not sure we want this option ATM
 def XXX_test_package(cmd, initproj):
@@ -164,9 +164,9 @@ def test_unknown_interpreter(cmd, initproj):
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'tox.ini': '''
             [testenv:python]
-            basepython=xyz_unknown_interpreter 
+            basepython=xyz_unknown_interpreter
             [testenv]
-            changedir=tests 
+            changedir=tests
         '''
     })
     result = cmd.run("tox")
@@ -181,7 +181,7 @@ def test_unknown_dep(cmd, initproj):
         'tox.ini': '''
             [testenv]
             deps=qweqwe123
-            changedir=tests 
+            changedir=tests
         '''
     })
     result = cmd.run("tox", )
@@ -248,9 +248,9 @@ def test_test_simple(cmd, initproj):
         },
         'tox.ini': '''
             [testenv]
-            changedir=tests 
+            changedir=tests
             commands=
-                py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml [] 
+                py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
             deps=py
         '''
     })
@@ -267,7 +267,7 @@ def test_test_simple(cmd, initproj):
         "*summary*",
         "*python: commands succeeded"
     ])
-    # see that things work with a different CWD 
+    # see that things work with a different CWD
     old = cmd.tmpdir.chdir()
     result = cmd.run("tox", "-c", "example123/tox.ini")
     assert not result.ret
@@ -288,7 +288,7 @@ def test_test_simple(cmd, initproj):
         "*summary*",
         "*python: *failed*",
     ])
-    
+
 
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
@@ -367,7 +367,7 @@ def test_separate_sdist(cmd, initproj):
     assert len(l) == 1
     sdistfile = l[0]
     result = cmd.run("tox", "-v", "--notest")
-    assert not result.ret 
+    assert not result.ret
     result.stdout.fnmatch_lines([
         "*skipping*sdist*",
         "*install*%s*" % sdistfile.basename,

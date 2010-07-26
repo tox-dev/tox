@@ -42,12 +42,12 @@ class TestConfigPackage:
         assert config.setupdir == tmpdir
         assert config.toxworkdir == tmpdir.join(".tox")
         envconfig = config.envconfigs['python']
-        assert envconfig.args_are_paths 
+        assert envconfig.args_are_paths
 
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
-        homedir = py.path.local._gethomedir() 
+        homedir = py.path.local._gethomedir()
         assert config.distshare == homedir.join(".tox", "distshare")
 
     def test_defaults_changed_dir(self, tmpdir, newconfig):
@@ -82,7 +82,7 @@ class TestIniParser:
             key2={xyz}
         """)
         reader = IniReader(config._cfg, fallbacksections=['mydefault'])
-        py.test.raises(tox.exception.ConfigError, 
+        py.test.raises(tox.exception.ConfigError,
             'reader.getdefault("mydefault", "key2")')
 
     def test_getdefault_fallback_sections(self, tmpdir, newconfig):
@@ -138,7 +138,7 @@ class TestIniParser:
         reader = IniReader(config._cfg)
         x = reader.getdefault("section", "key1")
         assert x == "hello"
-        py.test.raises(tox.exception.ConfigError, 
+        py.test.raises(tox.exception.ConfigError,
             'reader.getdefault("section", "key2")')
 
     def test_argvlist(self, tmpdir, newconfig):
@@ -150,7 +150,7 @@ class TestIniParser:
         """)
         reader = IniReader(config._cfg)
         reader.addsubstitions(item1="with space", item2="grr")
-        #py.test.raises(tox.exception.ConfigError, 
+        #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
@@ -166,7 +166,7 @@ class TestIniParser:
         """)
         reader = IniReader(config._cfg)
         reader.addsubstitions(item1="with space", item2="grr")
-        #py.test.raises(tox.exception.ConfigError, 
+        #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
@@ -184,7 +184,7 @@ class TestIniParser:
         reader = IniReader(config._cfg)
         posargs = ['hello', 'world']
         reader.addsubstitions(posargs, item2="value2")
-        #py.test.raises(tox.exception.ConfigError, 
+        #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         argvlist = reader.getargvlist("section", "key2")
@@ -193,7 +193,7 @@ class TestIniParser:
 
         reader = IniReader(config._cfg)
         reader.addsubstitions([], item2="value2")
-        #py.test.raises(tox.exception.ConfigError, 
+        #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         argvlist = reader.getargvlist("section", "key2")
@@ -266,7 +266,7 @@ class TestConfigTestEnv:
     def test_envbindir(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]
-            basepython=python 
+            basepython=python
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
@@ -275,7 +275,7 @@ class TestConfigTestEnv:
     def test_envbindir_jython(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]
-            basepython=jython 
+            basepython=jython
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
@@ -329,7 +329,7 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0][0] == config.toxinidir
         assert argv[1][0] == config.toxworkdir
-        assert argv[2][0] == conf.envdir 
+        assert argv[2][0] == conf.envdir
         assert argv[3][0] == conf.envbindir
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
@@ -342,7 +342,7 @@ class TestConfigTestEnv:
             [testenv:py24]
             commands =
                 cmd1 [hello] \
-                     world 
+                     world
         """
         conf = newconfig([], inisource).envconfigs['py24']
         argv = conf.commands
@@ -420,7 +420,7 @@ class TestGlobalOptions:
         """)
         assert config.sdistsrc == config.distshare.join("xyz.zip")
         config = newconfig([], "")
-        assert not config.sdistsrc 
+        assert not config.sdistsrc
 
     def test_env_selection(self, tmpdir, newconfig, monkeypatch):
         inisource = """
@@ -433,7 +433,7 @@ class TestGlobalOptions:
             [testenv:py27]
             basepython=python2.7
         """
-        #py.test.raises(tox.exception.ConfigError, 
+        #py.test.raises(tox.exception.ConfigError,
         #    "newconfig(['-exyz'], inisource)")
         config = newconfig([], inisource)
         assert config.envlist == ["py26"]
@@ -466,7 +466,7 @@ class TestGlobalOptions:
             else:
                 assert name.startswith("py")
                 bp = "python%s.%s" %(name[2], name[3])
-                assert env.basepython == bp 
+                assert env.basepython == bp
 
     def test_defaultenv_commandline(self, tmpdir, newconfig, monkeypatch):
         config = newconfig(["-epy24"], "")
@@ -508,7 +508,7 @@ class TestCmdInvocation:
             "*tox.ini*does not exist*",
         ])
 
-    @py.test.mark.xfail("sys.version_info < (2,6)", 
+    @py.test.mark.xfail("sys.version_info < (2,6)",
         reason="virtualenv3 cannot be imported")
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")

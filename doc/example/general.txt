@@ -1,37 +1,37 @@
-General tips and tricks 
+General tips and tricks
 ================================
 
-Interactively passing positional arguments 
+Interactively passing positional arguments
 -----------------------------------------------
 
 If you invoke ``tox`` like this::
 
-    tox -- -x tests/test_something.py 
+    tox -- -x tests/test_something.py
 
-the arguments after the ``--`` will be substituted 
+the arguments after the ``--`` will be substituted
 everywhere where you specify ``[...]`` in your
 test commands, for example using ``py.test``::
-    
-    # in the testenv or testenv:NAME section of your tox.ini 
+
+    # in the testenv or testenv:NAME section of your tox.ini
     commands =
         py.test []
 
 or using ``nosetests``::
 
-    commands = 
+    commands =
         nosetests []
 
-the above ``tox`` invocation will trigger the test runners to 
-stop after the first failure and to only run a particular test file. 
+the above ``tox`` invocation will trigger the test runners to
+stop after the first failure and to only run a particular test file.
 
 
-.. _`sphinx checks`: 
+.. _`sphinx checks`:
 
 Integrating "sphinx" documentation checks
 ----------------------------------------------
 
-In a ``testenv`` environment you can specify any command and 
-thus you can easily integrate sphinx_ documentation integrity during 
+In a ``testenv`` environment you can specify any command and
+thus you can easily integrate sphinx_ documentation integrity during
 a tox test run.  Here is an example ``tox.ini`` configuration::
 
     [testenv:docs]
@@ -42,16 +42,16 @@ a tox test run.  Here is an example ``tox.ini`` configuration::
         sphinx-build -W -b html -d {envtmpdir}/doctrees .  {envtmpdir}/html
 
 This will create a dedicated ``docs`` virtual environment and install
-the ``sphinx`` dependency which itself will install the ``sphinx-build`` tool 
+the ``sphinx`` dependency which itself will install the ``sphinx-build`` tool
 which you can then use as a test command.  Note that sphinx output is redirected
-to the virtualenv environment temporary directory to prevent sphinx 
-from caching results between runs.  
+to the virtualenv environment temporary directory to prevent sphinx
+from caching results between runs.
 
 You can now call::
 
-    tox 
+    tox
 
-which will make the sphinx tests part of your test run. 
+which will make the sphinx tests part of your test run.
 
 
 .. _`TOXENV`:
@@ -59,44 +59,44 @@ which will make the sphinx tests part of your test run.
 Selecting one or more environments to run tests against
 --------------------------------------------------------
 
-Using the ``-e ENV[,ENV2,...]``  option you explicitely list 
+Using the ``-e ENV[,ENV2,...]``  option you explicitely list
 the environments where you want to run tests against. For
 example, given the previous sphinx example you may call::
 
     tox -e docs
 
 which will make ``tox`` only manage the ``docs`` environment
-and call its test commands.  You may specify more than 
+and call its test commands.  You may specify more than
 one environment like this::
 
-    tox -e py25,py26 
+    tox -e py25,py26
 
-which would run the commands of the ``py25`` and ``py26`` testenvironments 
-respectively.  The special value ``ALL`` selects all environments. 
+which would run the commands of the ``py25`` and ``py26`` testenvironments
+respectively.  The special value ``ALL`` selects all environments.
 
 You can also specify an environment list in your ``tox.ini``::
 
     [tox]
-    envlist = py25,py26  
+    envlist = py25,py26
 
 or override it from the command line or from the environment variable
 ``TOXENV``::
 
-    export TOXENV=py25,py26 # in bash style shells 
+    export TOXENV=py25,py26 # in bash style shells
 
 .. _artifacts:
 
-Access package artifacts between multiple tox-runs 
+Access package artifacts between multiple tox-runs
 --------------------------------------------------------
 
-If you have multiple projects using tox you can make use of 
+If you have multiple projects using tox you can make use of
 a ``distshare`` directory where ``tox`` will copy in sdist-packages so
-that another tox run can find the "latest" dependency.  This feature 
-allows to to test a package against an unreleased development version 
-or even an uncommitted version on your own machine.  
+that another tox run can find the "latest" dependency.  This feature
+allows to to test a package against an unreleased development version
+or even an uncommitted version on your own machine.
 
-By default, ``{homedir}/.tox/distshare`` will be used for 
-copying in and copying out artifacts (i.e. Python packages). 
+By default, ``{homedir}/.tox/distshare`` will be used for
+copying in and copying out artifacts (i.e. Python packages).
 
 For project ``two`` to depend on the ``one`` package you use
 the following entry::
@@ -117,21 +117,21 @@ If you want to use this with Hudson_, also checkout the :ref:`hudson artifact ex
 
 .. _verlib: http://bitbucket.org/tarek/distutilsversion/
 
-basepython defaults, overriding 
+basepython defaults, overriding
 ++++++++++++++++++++++++++++++++++++++++++
 
-By default, for any ``pyXY`` test environment name 
+By default, for any ``pyXY`` test environment name
 the underlying "pythonX.Y" executable will be searched in
-your system ``PATH``. It must exist in order to successfully create 
-virtualenv environments.  On Windows a ``pythonX.Y`` named executable 
-will be searched in typical default locations using the 
-``C:\PythonX.Y\python.exe`` pattern. 
+your system ``PATH``. It must exist in order to successfully create
+virtualenv environments.  On Windows a ``pythonX.Y`` named executable
+will be searched in typical default locations using the
+``C:\PythonX.Y\python.exe`` pattern.
 
-For ``jython`` and ``pypy`` the respective ``jython`` 
-and ``pypy-c`` names will be looked for. 
+For ``jython`` and ``pypy`` the respective ``jython``
+and ``pypy-c`` names will be looked for.
 
-You can override any of the default settings by defining 
-the ``basepython`` variable in a specific test environment 
+You can override any of the default settings by defining
+the ``basepython`` variable in a specific test environment
 section, for example::
 
     [testenv:py27]

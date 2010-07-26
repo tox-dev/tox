@@ -17,7 +17,7 @@ def parseconfig(args=None):
     config = Config()
     config.opts = opts
     parseini(config)
-    return config 
+    return config
 
 def feedback(msg, sysexit=False):
     py.builtin.print_("ERROR: " + msg, file=sys.stderr)
@@ -40,25 +40,25 @@ class CountAction(argparse.Action):
 def prepare_parse():
     parser = argparse.ArgumentParser(description=__doc__,)
         #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--version", nargs=0, action=VersionAction, 
+    parser.add_argument("--version", nargs=0, action=VersionAction,
         dest="version",
         help="report version information to stdout.")
     parser.add_argument("-v", nargs=0, action=CountAction, default=0,
         dest="verbosity",
         help="increase verbosity of reporting output.")
-    parser.add_argument("--showconfig", action="store_true", dest="showconfig", 
+    parser.add_argument("--showconfig", action="store_true", dest="showconfig",
         help="show configuration information. ")
-    parser.add_argument("-c", action="store", default="tox.ini", 
+    parser.add_argument("-c", action="store", default="tox.ini",
         dest="configfile",
         help="use the specified config file.")
-    parser.add_argument("-e", action="store", dest="env", 
+    parser.add_argument("-e", action="store", dest="env",
         metavar="envlist",
         help="work against specified environments (ALL selects all).")
     parser.add_argument("--notest", action="store_true", dest="notest",
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist activity.")
-    parser.add_argument("args", nargs="*", 
+    parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
     return parser
 
@@ -102,11 +102,11 @@ class parseini:
         self._cfg = configparser.RawConfigParser()
         self._cfg.read(str(config.toxinipath))
         config._cfg = self._cfg
-        self.config = config 
+        self.config = config
         ctxname = getcontextname()
         if ctxname == "hudson":
             reader = IniReader(self._cfg, fallbacksections=['tox'])
-            toxsection = "tox:%s" % ctxname 
+            toxsection = "tox:%s" % ctxname
             distshare_default = "{toxworkdir}/distshare"
         elif not ctxname:
             reader = IniReader(self._cfg)
@@ -114,17 +114,17 @@ class parseini:
             distshare_default = "{homedir}/.tox/distshare"
         else:
             raise ValueError("invalid context")
-           
+
         config.homedir = py.path.local._gethomedir()
-        reader.addsubstitions(toxinidir=config.toxinidir, 
+        reader.addsubstitions(toxinidir=config.toxinidir,
                               homedir=config.homedir)
-        config.toxworkdir = reader.getpath(toxsection, "toxworkdir", 
+        config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
                                            "{toxinidir}/.tox")
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
                                            "{toxworkdir}/dist")
         reader.addsubstitions(distdir=config.distdir)
-        config.distshare = reader.getpath(toxsection, "distshare", 
+        config.distshare = reader.getpath(toxsection, "distshare",
                                           distshare_default)
         reader.addsubstitions(distshare=config.distshare)
         config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
@@ -134,7 +134,7 @@ class parseini:
         for section in sections:
             if section.startswith(testenvprefix):
                 name = section[len(testenvprefix):]
-                envconfig = self._makeenvconfig(name, section, reader._subs, 
+                envconfig = self._makeenvconfig(name, section, reader._subs,
                     config)
                 config.envconfigs[name] = envconfig
         if not config.envconfigs:
@@ -245,14 +245,14 @@ class IniReader:
                 continue
             if line.endswith("\\"):
                 current_command += " " + line[:-1]
-                continue 
+                continue
             current_command += line
             commandlist.append(self._processcommand(current_command))
             current_command = ""
         else:
             if current_command:
                 raise tox.exception.ConfigError(
-                    "line-continuation for [%s] %s ends nowhere" % 
+                    "line-continuation for [%s] %s ends nowhere" %
                     (section, name))
         return commandlist
 
@@ -305,7 +305,7 @@ class IniReader:
             envkey = key[4:]
             if envkey not in os.environ:
                 raise tox.exception.ConfigError(
-                    "substitution %r: %r not found in environment" % 
+                    "substitution %r: %r not found in environment" %
                     (key, envkey))
             return os.environ[envkey]
         if key not in self._subs:

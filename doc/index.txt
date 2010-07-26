@@ -1,40 +1,40 @@
-Welcome to the tox automation project 
+Welcome to the tox automation project
 ===============================================
 
 .. note::
 
-    tox is alpha software and may have crucial platform-specific 
-    or environment specific bugs. Use with care. 
+    tox is alpha software and may have crucial platform-specific
+    or environment specific bugs. Use with care.
 
-vision: merge testing and deployment 
+vision: merge testing and deployment
 ----------------------------------------
 
 ``tox`` aims to automate state-of-the-art packaging, testing and
 deployment of Python software right from your console *or* CI
 server, invoking your tools of choice.
 
-What is Tox? 
+What is Tox?
 --------------------
 
 Tox as is a generic virtualenv_ management and test command line tool you can use for:
 
-* checking your package installs correctly with different Python versions and 
-  interpreters 
+* checking your package installs correctly with different Python versions and
+  interpreters
 
-* running your tests in each of the environments, configuring your test tool of choice 
+* running your tests in each of the environments, configuring your test tool of choice
 
 * acting as a frontend to Continous Integration servers, greatly
-  reducing boilerplate and merging CI and shell-based testing. 
+  reducing boilerplate and merging CI and shell-based testing.
 
 Basic example
 -----------------
 
-First, install ``tox`` with ``pip install tox`` or ``easy_install tox``. 
+First, install ``tox`` with ``pip install tox`` or ``easy_install tox``.
 Then put basic information about your project and the test environments you
-want your project to run in into a ``tox.ini`` file residing 
+want your project to run in into a ``tox.ini`` file residing
 right next to your ``setup.py`` file::
 
-    # content of: tox.ini , put in same dir as setup.py 
+    # content of: tox.ini , put in same dir as setup.py
     [tox]
     envlist = py26,py27
     [testenv]
@@ -42,72 +42,72 @@ right next to your ``setup.py`` file::
 
 To sdist-package, install and test your project against Python2.6 and Python2.7, just type::
 
-    tox 
+    tox
 
-and watch things happening (you must have python2.6 and python2.7 installed in your 
+and watch things happening (you must have python2.6 and python2.7 installed in your
 environment otherwise you will see errors).  When you run ``tox`` a second time
 you'll note that it runs much faster because it keeps track of virtualenv details
-and will not recreate or re-install dependencies.  You also might want to 
-checkout :doc:`examples` to get some more ideas. 
+and will not recreate or re-install dependencies.  You also might want to
+checkout :doc:`examples` to get some more ideas.
 
-Current features 
+Current features
 -------------------
 
 * **automation of tedious Python related test activities**
 
 * **test your Python package against many interpreter and dependency configs**
 
-    - automatic customizable (re)creation of virtualenv_ test environments 
+    - automatic customizable (re)creation of virtualenv_ test environments
 
     - installs your ``setup.py`` based project into each virtual environment
 
     - test-tool agnostic: runs py.test, nose or unittests a uniform manner
 
-* uses pip_ (for Python2 environments) and distribute_ (for all environments) by default 
+* uses pip_ (for Python2 environments) and distribute_ (for all environments) by default
 
 * **cross-Python compatible**: Python2.4 up to Python2.7, Jython and experimental
-  Python3 support as well as for pypy-c (which needs patches) 
+  Python3 support as well as for pypy-c (which needs patches)
 
-* **cross-platform**: Windows and Unix style environments 
+* **cross-platform**: Windows and Unix style environments
 
 * **integrates with continous integration servers** like Hudson_ and helps
-  you to avoid boilerplatish and platform-specific build-step hacks. 
+  you to avoid boilerplatish and platform-specific build-step hacks.
 
-* **unified automatic artifact management** between ``tox`` runs both 
-  in a local developer shell as well as in a CI/Hudson context. 
+* **unified automatic artifact management** between ``tox`` runs both
+  in a local developer shell as well as in a CI/Hudson context.
 
 * **driven by a simple ini-style config file**
 
-* **documented** :doc:`examples <examples>` and :doc:`configuration <config>` 
+* **documented** :doc:`examples <examples>` and :doc:`configuration <config>`
 
 * **concise reporting** about tool invocations and configuration errors
 
 * **professionally** :doc:`supported <support>`
 
-Notes and known limitations 
+Notes and known limitations
 ----------------------------------
 
-* ``tox`` always operates in virtualenv_ environments, it cannot work with 
+* ``tox`` always operates in virtualenv_ environments, it cannot work with
   globally installed Python interpreters because there are no reliable means
-  to install and recreate dependencies.  Or does it still makes sense to 
-  allow using global Python installations? 
+  to install and recreate dependencies.  Or does it still makes sense to
+  allow using global Python installations?
 
-* ``tox`` is fresh on the Python testing scene (first release July 2010) and 
-  needs some battle testing and feedback.  It is is likely to evolve in 
-  (possibly incompatible) increments as it provides more power to configure 
-  and customize the test process. 
+* ``tox`` is fresh on the Python testing scene (first release July 2010) and
+  needs some battle testing and feedback.  It is is likely to evolve in
+  (possibly incompatible) increments as it provides more power to configure
+  and customize the test process.
 
 * ``tox`` uses virtualenv_ and virtualenv5_, the latter being a fork
-  of virtualenv3_ which roughly works with Python3 but has less features 
-  (no "pip" and other problems).  This comes with limitations and you 
-  may run into them when trying to create python3 based virtual environments. 
-  IMO the proper solution is: virtualenv_ needs to merge 
-  and grow proper native Python3 support, preferably in a "single-source" way. 
+  of virtualenv3_ which roughly works with Python3 but has less features
+  (no "pip" and other problems).  This comes with limitations and you
+  may run into them when trying to create python3 based virtual environments.
+  IMO the proper solution is: virtualenv_ needs to merge
+  and grow proper native Python3 support, preferably in a "single-source" way.
 
-* ``tox`` currently uses a ``setup.py sdist`` invocation to create 
-  an installable package and then invokes ``pip`` or ``easy_install`` to 
+* ``tox`` currently uses a ``setup.py sdist`` invocation to create
+  an installable package and then invokes ``pip`` or ``easy_install`` to
   install into each test environment.  There is no support for other
-  installation methods. 
+  installation methods.
 
 .. _`tox.ini`: :doc:configfile
 
@@ -116,7 +116,7 @@ Notes and known limitations
 
    install
    examples
-   config 
+   config
    support
    changelog
    links

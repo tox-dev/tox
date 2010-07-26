@@ -1,22 +1,22 @@
-allow user-specific python interpreters 
+allow user-specific python interpreters
 ------------------------------------------------
 
-users should be able to define their set of python executables 
-to be used for creating virtualenvs. 
+users should be able to define their set of python executables
+to be used for creating virtualenvs.
 .toxrc/interpreters:
 pypy-c=~/p/pypy/branch/sys-prefix/pypy-c
 ...
 
-non-cached test dependencies 
+non-cached test dependencies
 ---------------------------------------------------------------
 
-if there is a dependency on a URL whose content changes 
+if there is a dependency on a URL whose content changes
 the download-cache mechanism will prevent it from being reloaded.
-Introduce a 'nocache:' prefix which will inhibit using the cache. 
+Introduce a 'nocache:' prefix which will inhibit using the cache.
 Also make and document a guarantee on the deps order so that
 one can influence the exact configuration (e.g. use a dev-version
-of some package which a later dependency or the original 
-package depends upon - i.e. deps should be installed first). 
+of some package which a later dependency or the original
+package depends upon - i.e. deps should be installed first).
 
 
 test and make "in-pkg" tests work
@@ -26,4 +26,4 @@ it is common to put tests into pkg subdirs, possibly
 even with an __init__.  See if/how this can be made
 to work.  Maybe also re-consider how py.test does its
 importing, maybe add a pytest_addsyspath(testmodule)
-and look how nose does it in detail. 
+and look how nose does it in detail.

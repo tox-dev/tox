@@ -2,21 +2,21 @@
 Using Tox with the Hudson Integration Server
 =================================================
 
-Using Hudson multi-configuration jobs 
+Using Hudson multi-configuration jobs
 -------------------------------------------
 
-The Hudson_ continous integration server allows to define "jobs" with 
+The Hudson_ continous integration server allows to define "jobs" with
 "build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
-default Python installation on each Hudson slave, you can easily create 
+default Python installation on each Hudson slave, you can easily create
 a Hudson multi-configuration job that will drive your tox runs from the CI-server side,
-using these steps: 
+using these steps:
 
-* create a "multi-configuration" job, give it a name of your choice 
-* configure your repository so that Hudson can pull it 
+* create a "multi-configuration" job, give it a name of your choice
+* configure your repository so that Hudson can pull it
 * (optional) configure multiple nodes so that tox-runs are performed
-  on multiple hosts 
-* configure ``axes`` with e.g. using :ref:`TOXENV <TOXENV>` as an axis 
-  name and as values provide space-separated test environment names 
+  on multiple hosts
+* configure ``axes`` with e.g. using :ref:`TOXENV <TOXENV>` as an axis
+  name and as values provide space-separated test environment names
   you want Hudson/tox to execute.
 * add a Python-build step with this content::
 
@@ -24,11 +24,11 @@ using these steps:
     tox.cmdline() # environment is selected by the ``TOXENV`` setting above
 
 * check ``Publish JUnit test result report`` and enter
-  ``**/junit-*.xml`` as the pattern so that Hudson collects 
-  test results in the JUnit XML format. 
+  ``**/junit-*.xml`` as the pattern so that Hudson collects
+  test results in the JUnit XML format.
 
 The last point requires that your test command creates JunitXML files,
-for example with ``py.test`` it is done like this: 
+for example with ``py.test`` it is done like this:
 
     commands=
         py.test \
@@ -48,15 +48,15 @@ If you are using a multi-configuration Hudson job which collects
 JUnit Test results you will run into problems using the previous
 method of running the sphinx-build command because it will not
 generate JUnit results.  To accomodate this issue one solution
-is to have ``py.test`` wrap the sphinx-checks and create a 
-JUnit result file which wraps the result of calling sphinx-build. 
-Here is an example: 
+is to have ``py.test`` wrap the sphinx-checks and create a
+JUnit result file which wraps the result of calling sphinx-build.
+Here is an example:
 
 1. create a ``docs`` environment in your ``tox.ini`` file like this::
 
     [testenv:docs]
     basepython=python
-    changedir=doc # or whereever you keep your sphinx-docs 
+    changedir=doc # or whereever you keep your sphinx-docs
     deps=sphinx
         py
     commands=
@@ -79,11 +79,11 @@ Here is an example:
             "sphinx-build", "-W", "-bhtml",
               "-d", str(doctrees), ".", str(htmldir)])
 
-3. run ``tox -e docs`` and then you may integrate this environment 
-   along with your other environments into Hudson. 
+3. run ``tox -e docs`` and then you may integrate this environment
+   along with your other environments into Hudson.
 
 Note that ``py.test`` is only installed into the docs environment
-and does not need to be in use or installed with any other environment. 
+and does not need to be in use or installed with any other environment.
 
 .. _`hudson artifact example`:
 
@@ -95,12 +95,12 @@ Access package artifacts between Hudson jobs
 In an extension to :ref:`artifacts` you can also configure Hudson jobs to
 access each others artifacts.  ``tox`` uses the ``distshare`` directory
 to access artifacts and in a Hudson context (detected via existence
-of the environment variable ``HUDSON_URL``); it defaults to 
-to ``{toxworkdir}/distshare``.  
+of the environment variable ``HUDSON_URL``); it defaults to
+to ``{toxworkdir}/distshare``.
 
 This means that each workspace will have its own ``distshare``
-directory and we need to configure Hudson to perform artifact copying. 
-The recommend way to do this is to install the `Hudson Copy Artifact plugin`_ 
+directory and we need to configure Hudson to perform artifact copying.
+The recommend way to do this is to install the `Hudson Copy Artifact plugin`_
 and for each job which "receives" artifacts you add a **Copy artifacts from another project** build step using roughly this configuration::
 
     Project-name: name of the other (tox-managed) job you want the artifact from
@@ -113,13 +113,13 @@ is done by checking ``Archive the artifacts`` and entering::
 
     Files to archive: .tox/dist/*.zip
 
-So our "other" job will create an sdist-package artifact and 
+So our "other" job will create an sdist-package artifact and
 the "copy-artifacts" plugin will copy it to our ``distshare`` area.
-Now everything proceeds as :ref:`artifacts` shows it. 
+Now everything proceeds as :ref:`artifacts` shows it.
 
-So if you are using defaults you can re-use and debug exactly the 
-same ``tox.ini`` file and make use of automatical sharing of 
-your artifacts between runs or Hudson jobs. 
+So if you are using defaults you can re-use and debug exactly the
+same ``tox.ini`` file and make use of automatical sharing of
+your artifacts between runs or Hudson jobs.
 
 .. include:: ../links.txt
 

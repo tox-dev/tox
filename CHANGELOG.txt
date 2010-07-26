@@ -2,43 +2,44 @@
 -----------------
 
 - run pip/easy installs from the environment log directory, avoids
-  naming clashes between env names and dependencies (thanks ronny) 
+  naming clashes between env names and dependencies (thanks ronny)
 - require a recent version of py lib
+- change all internal source to strip trailing whitespaces
 
 0.7
 -----------------
 
-- use virtualenv5 (my own fork of virtualenv3) for now to create python3 
-  environments, fixes a couple of issues and makes tox more likely to 
-  work with Python3 (on non-windows environments) 
+- use virtualenv5 (my own fork of virtualenv3) for now to create python3
+  environments, fixes a couple of issues and makes tox more likely to
+  work with Python3 (on non-windows environments)
 
-- add ``sitepackages`` option for testenv sections so that environments 
-  can be created with access to globals (default is not to have access, 
-  i.e. create environments with ``--no-site-packages``. 
+- add ``sitepackages`` option for testenv sections so that environments
+  can be created with access to globals (default is not to have access,
+  i.e. create environments with ``--no-site-packages``.
 
 - addressing issue4: always prepend venv-path to PATH variable when calling subprocesses
 
-- fix issue2: exit with proper non-zero return code if there were 
-  errors or test failures. 
+- fix issue2: exit with proper non-zero return code if there were
+  errors or test failures.
 
-- added unittest2 examples contributed by Michael Foord 
+- added unittest2 examples contributed by Michael Foord
 
-- only allow 'True' or 'False' for boolean config values 
+- only allow 'True' or 'False' for boolean config values
   (lowercase / uppercase is irrelevant)
 
-- recreate virtualenv on changed configurations 
+- recreate virtualenv on changed configurations
 
 0.6
 -----------------
 
 - fix OSX related bugs that could cause the caller's environment to get
-  screwed (sorry).  tox was using the same file as virtualenv for tracking 
-  the Python executable dependency and there also was confusion wrt links. 
-  this should be fixed now. 
+  screwed (sorry).  tox was using the same file as virtualenv for tracking
+  the Python executable dependency and there also was confusion wrt links.
+  this should be fixed now.
 
 - fix long description, thanks Michael Foord
 
 0.5
 -----------------
 
-- initial release 
+- initial release

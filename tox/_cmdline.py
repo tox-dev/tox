@@ -1,8 +1,8 @@
 """
-Automatically package and test a Python project against configurable 
+Automatically package and test a Python project against configurable
 Python2 and Python3 based virtual environments. Environments are
-setup by using virtualenv and virtualenv5 respectively.  Configuration 
-is generally done through an INI-style "tox.ini" file. 
+setup by using virtualenv and virtualenv5 respectively.  Configuration
+is generally done through an INI-style "tox.ini" file.
 """
 import tox
 import py
@@ -11,7 +11,7 @@ import sys
 import subprocess
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
-from tox._config import parseconfig 
+from tox._config import parseconfig
 
 def main(args=None):
     try:
@@ -23,7 +23,7 @@ def main(args=None):
 
 class Reporter:
     def __init__(self, config):
-        self.config = config 
+        self.config = config
         self.tw = py.io.TerminalWriter()
 
     def section(self, name):
@@ -44,7 +44,7 @@ class Reporter:
         cwd = py.path.local()
         logged_command = "%s$ %s" %(cwd, " ".join(args))
         path = None
-        if log != -1: # no passthrough mode 
+        if log != -1: # no passthrough mode
             if log is None:
                 log = self.config.logdir
             l = log.listdir()
@@ -90,7 +90,7 @@ class Reporter:
     #def log(self, msg):
     #    py.builtin.print_(msg, file=sys.stderr)
 
-        
+
 class Session:
     def __init__(self, config):
         self.config = config
@@ -111,7 +111,7 @@ class Session:
                 raise SystemExit(1)
             l.append(VirtualEnv(envconfig=envconfig, session=self))
         return l
-        
+
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
         self.report.using("tox-%s from %s" %(tox.__version__, tox.__file__))
@@ -131,7 +131,7 @@ class Session:
             src.copy(target)
 
     def setenvstatus(self, venv, msg):
-        self.venvstatus[venv.path] = msg 
+        self.venvstatus[venv.path] = msg
 
     def _makesdist(self):
         self.report.action("creating sdist package")
@@ -139,7 +139,7 @@ class Session:
         if not setup.check():
             raise tox.exception.MissingFile(setup)
         self.make_emptydir(self.config.distdir)
-        self.pcall([sys.executable, setup, "sdist", "--formats=zip", 
+        self.pcall([sys.executable, setup, "sdist", "--formats=zip",
                     "--dist-dir", self.config.distdir, ],
                    cwd=self.config.setupdir)
         return self.config.distdir.listdir()[0]
@@ -181,7 +181,7 @@ class Session:
                 raise SystemExit(1)
             sdistfile = self.config.distshare.join(sdist_path.basename)
             if sdistfile != sdist_path:
-                self.report.action("copying new sdistfile to %r" % 
+                self.report.action("copying new sdistfile to %r" %
                     str(sdistfile))
                 sdistfile.dirpath().ensure(dir=1)
                 sdist_path.copy(sdistfile)
@@ -190,7 +190,7 @@ class Session:
     def subcommand_test(self):
         sdist_path = self.sdist()
         if self.config.opts.sdistonly:
-            return 
+            return
         for venv in self.venvlist:
             self.report.section("testenv:%s" % venv.envconfig.envname)
             self.setupenv(venv, sdist_path)
@@ -217,7 +217,7 @@ class Session:
                                  venv.envconfig.envname, ))
         if not retcode:
             self.report.good("congratulations :)")
-        return retcode 
+        return retcode
 
     def showconfig(self):
         self.info_versions()
@@ -250,7 +250,7 @@ class Session:
             version = py.process.cmdexec("%s --version" % tool)
             versions.append("%s-%s" %(tool, version.strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
-   
+
     def pcall(self, args, log=None, cwd=None, env=None):
         if cwd is None:
             cwd = self.config.toxworkdir
@@ -260,11 +260,11 @@ class Session:
             if isinstance(arg, py.path.local):
                 arg = cwd.bestrelpath(arg)
             newargs.append(arg)
-        
+
         if env is None:
             env = os.environ.copy()
-           
-        opts = {'env': env} 
+
+        opts = {'env': env}
         args = [str(x) for x in args]
         logpath = self.report.popen(newargs, log, opts)
         popen = subprocess.Popen(newargs, **opts)
@@ -296,7 +296,7 @@ class Session:
         self.report.info("determining %s" % p)
         candidates = p.dirpath().listdir(p.basename)
         if len(candidates) == 0:
-            raise tox.exception.MissingDependency(pkgspec) 
+            raise tox.exception.MissingDependency(pkgspec)
         if len(candidates) > 1:
             items = []
             for x in candidates:
@@ -308,7 +308,7 @@ class Session:
                         str(x))
             items.sort()
             if not items:
-                raise tox.exception.MissingDependency(pkgspec) 
+                raise tox.exception.MissingDependency(pkgspec)
             return items[-1][1]
         else:
             return candidates[0]

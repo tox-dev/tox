@@ -7,7 +7,7 @@ tox configuration and usage examples
 
    example/basic.txt
    example/pytest.txt
-   example/unittest 
+   example/unittest
    example/nose.txt
    example/general.txt
    example/hudson.txt

@@ -30,7 +30,7 @@ def pytest_funcarg__newconfig(request):
             return parseconfig(args)
         finally:
             old.chdir()
-    return newconfig 
+    return newconfig
 
 def pytest_funcarg__tmpdir(request):
     tmpdir = request.getfuncargvalue("tmpdir")
@@ -76,7 +76,7 @@ class pcallMock:
         self.log = log
         self.cwd = cwd
         self.env = env
-    
+
 def pytest_funcarg__mocksession(request):
     from tox._cmdline import Session
     class MockSession(Session):
@@ -118,7 +118,7 @@ class Cmd:
         f1 = p1.open("wb")
         f2 = p2.open("wb")
         now = time.time()
-        popen = self.popen(argv, stdout=f1, stderr=f2, 
+        popen = self.popen(argv, stdout=f1, stderr=f2,
             close_fds=(sys.platform != "win32"))
         ret = popen.wait()
         f1.close()
@@ -177,7 +177,7 @@ class LineMatcher:
                 nextline = lines1.pop(0)
                 if line == nextline:
                     print_("exact match:", repr(line))
-                    break 
+                    break
                 elif fnmatch(nextline, line):
                     print_("fnmatch:", repr(line))
                     print_("   with:", repr(nextline))
@@ -208,7 +208,7 @@ def pytest_funcarg__initproj(request):
                 from setuptools import setup
                 setup(
                     name='%(name)s',
-                    description='%(name)s project', 
+                    description='%(name)s project',
                     version='%(version)s',
                     license='GPLv2 or later',
                     platforms=['unix', 'win32'],

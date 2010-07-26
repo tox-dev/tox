@@ -22,7 +22,7 @@ class VirtualEnv(object):
             return name
         p = py.path.local.sysfind(name)
         if p is None:
-            raise tox.exception.InvocationError("could not find executable %r" 
+            raise tox.exception.InvocationError("could not find executable %r"
                 % (name,))
         if p.relto(self.envconfig.envdir):
             return p
@@ -32,11 +32,11 @@ class VirtualEnv(object):
         return "python3" in str(self.envconfig.basepython)
 
     def update(self):
-        """ return status string for updating actual venv to match configuration. 
-            if status string is empty, all is ok.  
+        """ return status string for updating actual venv to match configuration.
+            if status string is empty, all is ok.
         """
         report = self.session.report
-        name = self.envconfig.envname 
+        name = self.envconfig.envname
         if not self.iscorrectpythonenv():
             if not self.path_python.check():
                 report.action("creating virtualenv %s" % name)
@@ -73,8 +73,8 @@ class VirtualEnv(object):
         self.path_config.write(self._getconfigstring())
 
     def _getconfigstring(self):
-        return "%s %s %s" % (tox.__version__, 
-            self.envconfig.distribute, 
+        return "%s %s %s" % (tox.__version__,
+            self.envconfig.distribute,
             self.envconfig.sitepackages, )
 
     def _getconfigdeps(self):
@@ -139,7 +139,7 @@ class VirtualEnv(object):
 
     def create(self):
         #if self.getcommandpath("activate").dirpath().check():
-        #    return 
+        #    return
         config_interpreter = self.getsupportedinterpreter()
         args = ['virtualenv' + (self._ispython3() and "5" or "")]
         if not self._ispython3() and self.envconfig.distribute:
@@ -184,7 +184,7 @@ class VirtualEnv(object):
         argv = ["pip", "install"] + args
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
-            argv.append("--download-cache=%s" % 
+            argv.append("--download-cache=%s" %
                 self.envconfig.downloadcache)
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
@@ -248,7 +248,7 @@ else:
             'jython': "c:\jython2.5.1\jython.bat",
     }
     def find_executable(name):
-        p = py.path.local(name) 
+        p = py.path.local(name)
         if p.check(file=1):
             return p
         actual = win32map.get(name, None)

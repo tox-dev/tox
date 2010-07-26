@@ -1,9 +1,9 @@
 
-nose and tox 
+nose and tox
 =================================
 
-It is easy to integrate `nosetests`_ runs with tox.  
-For starters here is a simple ``tox.ini`` config to configure your project 
+It is easy to integrate `nosetests`_ runs with tox.
+For starters here is a simple ``tox.ini`` config to configure your project
 for running with nose:
 
 Basic nosetests example
@@ -12,30 +12,30 @@ Basic nosetests example
 Assuming the following layout::
 
     tox.ini      # see below for content
-    setup.py     # a classic distutils/setuptools setup.py file 
+    setup.py     # a classic distutils/setuptools setup.py file
 
 and the following ``tox.ini`` content::
 
     [testenv]
-    deps=nose 
+    deps=nose
     commands=
       nosetests \
-            []        # substitute with tox' positional arguments 
+            []        # substitute with tox' positional arguments
 
-you can invoke ``tox`` in the directory where your ``tox.ini`` resides. 
-``tox`` will sdist-package your project create two virtualenv environments 
+you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
+``tox`` will sdist-package your project create two virtualenv environments
 with the ``python2.6`` and ``python2.5`` interpreters, respectively, and will
-then run the specified test command. 
+then run the specified test command.
 
 
-More examples? 
+More examples?
 ------------------------------------------
 
-You can use and combine other features of ``tox`` with your tox runs, 
+You can use and combine other features of ``tox`` with your tox runs,
 e.g. :ref:`sphinx checks`.  If you figure out some particular configurations
-for nose/tox interactions please submit them. 
+for nose/tox interactions please submit them.
 
-Also you might want to checkout :doc:`general`. 
-    
+Also you might want to checkout :doc:`general`.
+
 .. include:: ../links.txt
 

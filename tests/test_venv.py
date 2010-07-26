@@ -29,7 +29,7 @@ def test_find_executable():
                 continue
         p = find_executable(name)
         assert p
-        popen = py.std.subprocess.Popen([str(p), '-V'], 
+        popen = py.std.subprocess.Popen([str(p), '-V'],
                 stderr=py.std.subprocess.PIPE)
         stdout, stderr = popen.communicate()
         assert ver in py.builtin._totext(stderr, "ascii")
@@ -44,16 +44,16 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     assert interp == sys.executable
     monkeypatch.setattr(sys, 'platform', "win32")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'python3')
-    py.test.raises(tox.exception.UnsupportedInterpreter, 
+    py.test.raises(tox.exception.UnsupportedInterpreter,
                    venv.getsupportedinterpreter)
     monkeypatch.undo()
     monkeypatch.setattr(sys, 'platform', "win32")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
-    py.test.raises(tox.exception.UnsupportedInterpreter, 
+    py.test.raises(tox.exception.UnsupportedInterpreter,
                    venv.getsupportedinterpreter)
     monkeypatch.undo()
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
-    py.test.raises(tox.exception.InterpreterNotFound, 
+    py.test.raises(tox.exception.InterpreterNotFound,
                    venv.getsupportedinterpreter)
 
 def test_create(monkeypatch, mocksession, newconfig):
@@ -175,10 +175,10 @@ class TestVenvUpdate:
 
     def test_iscorrectpythonenv(self, newconfig, mocksession):
         config = newconfig([], "")
-        envconfig = config.envconfigs['python'] 
+        envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
         assert not venv.iscorrectpythonenv()
-        ex = venv.getconfigexecutable() 
+        ex = venv.getconfigexecutable()
         assert ex
         venv.path_python.ensure().write(str(ex))
         venv.path_deps.write("")
@@ -190,7 +190,7 @@ class TestVenvUpdate:
             [testenv]
             deps=abc
         """)
-        envconfig = config.envconfigs['python'] 
+        envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
         assert not venv.matchingdependencies()
         venv.path_deps.ensure().write("abc\n")
@@ -208,7 +208,7 @@ class TestVenvUpdate:
         """)
         xyz = config.distshare.join("xyz.zip")
         xyz.ensure()
-        envconfig = config.envconfigs['python'] 
+        envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
         assert not venv.matchingdependencies()
         venv.path_deps.ensure()
@@ -228,7 +228,7 @@ class TestVenvUpdate:
         """)
         xyz = config.distshare.ensure("xyz-1.2.0.zip")
         xyz2 = config.distshare.ensure("xyz-1.2.1.zip")
-        envconfig = config.envconfigs['python'] 
+        envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
         assert not venv.matchingdependencies()
         venv.path_deps.ensure()
@@ -269,7 +269,7 @@ class TestVenvUpdate:
         assert not mocksession._pcalls
         mocksession.report.expect("action", "reusing existing matching virtualenv*")
         venv.path_deps.write("xyz\n")
-        msg = venv.update() 
+        msg = venv.update()
         mocksession.report.expect("action", "recreating virtualenv*")
 
     def test_python_recreate_config(self, newconfig, mocksession):
@@ -306,17 +306,17 @@ class TestVenvTest:
             [testenv:python]
             commands=abc
         """)
-        envconfig = config.envconfigs['python'] 
+        envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
         monkeypatch.setenv("PATH", "xyz")
         oldpath = venv.patchPATH()
         assert oldpath == "xyz"
-        res = os.environ['PATH'] 
+        res = os.environ['PATH']
         assert res == "%s%sxyz" % (envconfig.envbindir, os.pathsep)
         p = "xyz"+os.pathsep+str(envconfig.envbindir)
         monkeypatch.setenv("PATH", p)
         venv.patchPATH()
-        res = os.environ['PATH'] 
+        res = os.environ['PATH']
         assert res == "%s%s%s" %(envconfig.envbindir, os.pathsep, p)
 
         assert envconfig.commands
@@ -326,4 +326,4 @@ class TestVenvTest:
         py.test.raises(ZeroDivisionError, "venv.easy_install(['qwe'])")
         py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
         py.test.raises(ZeroDivisionError, "venv._pcall([1,2,3])")
-        
+

@@ -1,6 +1,6 @@
 """
 
-PEP386-version comparison algorithm. 
+PEP386-version comparison algorithm.
 
 (c) Tarek Ziade and others
 extracted unmodified from https://bitbucket.org/tarek/distutilsversion
