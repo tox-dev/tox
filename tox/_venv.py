@@ -206,6 +206,10 @@ class VirtualEnv(object):
                 return True
 
     def _pcall(self, args, venv=True, log=None, cwd=None):
+        try:
+            del os.environ['PYTHONDONTWRITEBYTECODE']
+        except KeyError:
+            pass
         old = self.patchPATH()
         try:
             if venv:

@@ -1,6 +1,8 @@
 0.8
 -----------------
 
+- work around a virtualenv limitation which crashes if
+  PYTHONDONTWRITEBYTECODE is set.
 - run pip/easy installs from the environment log directory, avoids
   naming clashes between env names and dependencies (thanks ronny)
 - require a recent version of py lib

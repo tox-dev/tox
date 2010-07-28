@@ -330,6 +330,15 @@ def test_notest(initproj, cmd):
         "*reusing*py26",
     ])
 
+def test_env_PYTHONDOWNWRITEBYTECODE(initproj, cmd, monkeypatch):
+    initproj("example123", filedefs={'tox.ini': ''})
+    monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
+    result = cmd.run("tox", "-v", "--notest")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*creating*",
+    ])
+
 def test_sdistonly(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
     """})
