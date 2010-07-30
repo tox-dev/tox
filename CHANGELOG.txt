@@ -5,7 +5,11 @@
   PYTHONDONTWRITEBYTECODE is set.
 - run pip/easy installs from the environment log directory, avoids
   naming clashes between env names and dependencies (thanks ronny)
-- require a recent version of py lib
+- require a more recent version of py lib
+- refactor and refine config detection to work from a single file
+  and to detect the case where a python installation overwrote
+  an old one and resulted in a new executable. This invalidates
+  the existing virtualenvironment now.
 - change all internal source to strip trailing whitespaces
 
 0.7

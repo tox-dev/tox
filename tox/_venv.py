@@ -3,14 +3,57 @@ import sys, os
 import py
 import tox
 
+class CreationConfig:
+    def __init__(self, md5, python, version, distribute, sitepackages, deps):
+        self.md5 = md5
+        self.python = python
+        self.version = version
+        self.distribute = distribute
+        self.sitepackages = sitepackages
+        self.deps = deps
+
+    def writeconfig(self, path):
+        lines = ["%s %s" % (self.md5, self.python)]
+        lines.append("%s %d %d" % (self.version, self.distribute,
+                        self.sitepackages))
+        for dep in self.deps:
+            lines.append("%s %s" % dep)
+        path.write("\n".join(lines))
+
+    @classmethod
+    def readconfig(cls, path):
+        try:
+            lines = path.readlines(cr=0)
+            value = lines.pop(0).split(None, 1)
+            md5, python = value
+            version, distribute, sitepackages = lines.pop(0).split(None, 2)
+            distribute = bool(int(distribute))
+            sitepackages = bool(int(sitepackages))
+            deps = []
+            for line in lines:
+                md5, depstring = line.split(None, 1)
+                deps.append((md5, depstring))
+            return CreationConfig(md5, python, version,
+                        distribute, sitepackages, deps)
+        except KeyboardInterrupt:
+            raise
+        except:
+            return None
+
+    def matches(self, other):
+        return (other and self.md5 == other.md5
+           and self.python == other.python
+           and self.version == other.version
+           and self.distribute == other.distribute
+           and self.sitepackages == other.sitepackages
+           and self.deps == other.deps)
+
 class VirtualEnv(object):
     def __init__(self, envconfig=None, session=None):
         self.envconfig = envconfig
         self.session = session
         self.path = envconfig.envdir
-        self.path_deps = self.path.join(".tox-deps")
-        self.path_python = self.path.join(".tox-python")
-        self.path_config = self.path.join(".tox-config")
+        self.path_config = self.path.join(".tox-config1")
 
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
@@ -37,83 +80,44 @@ class VirtualEnv(object):
         """
         report = self.session.report
         name = self.envconfig.envname
-        if not self.iscorrectpythonenv():
-            if not self.path_python.check():
-                report.action("creating virtualenv %s" % name)
-            else:
-                report.action("recreating virtualenv %s "
-                    "(configchange/partial install detected)" % name)
-            try:
-                self.create()
-            except tox.exception.UnsupportedInterpreter:
-                return sys.exc_info()[1]
-            except tox.exception.InterpreterNotFound:
-                return sys.exc_info()[1]
-            try:
-                self.install_deps()
-            except tox.exception.InvocationError:
-                v = sys.exc_info()[1]
-                return "could not install deps %r" %(
-                        ",".join(self.envconfig.deps))
-        else:
+        rconfig = CreationConfig.readconfig(self.path_config)
+        if rconfig and rconfig.matches(self._getliveconfig()):
             report.action("reusing existing matching virtualenv %s" %
                 (self.envconfig.envname,))
+            return
+        if rconfig is None:
+            report.action("creating virtualenv %s" % name)
+        else:
+            report.action("recreating virtualenv %s "
+                "(configchange/incomplete install detected)" % name)
+        try:
+            self.create()
+        except tox.exception.UnsupportedInterpreter:
+            return sys.exc_info()[1]
+        except tox.exception.InterpreterNotFound:
+            return sys.exc_info()[1]
+        try:
+            self.install_deps()
+        except tox.exception.InvocationError:
+            v = sys.exc_info()[1]
+            return "could not install deps %r" %(
+                    ",".join(self.envconfig.deps))
 
-    def iscorrectpythonenv(self):
-        if self.path_python.check():
-            s = self.path_python.read()
-            executable = self.getconfigexecutable()
-            if s == executable and self.path_config.check():
-                s = self.path_config.read()
-                if s == self._getconfigstring():
-                    return self.matchingdependencies()
-        return False
+    def _getliveconfig(self):
+        python = self.getconfigexecutable()
+        md5 = getdigest(python)
+        version = tox.__version__
+        distribute = self.envconfig.distribute
+        sitepackages = self.envconfig.sitepackages
+        deps = []
+        for raw_dep in self._getresolvedeps():
+            md5 = getdigest(raw_dep)
+            deps.append((md5, raw_dep))
+        return CreationConfig(md5, python, version,
+                        distribute, sitepackages, deps)
 
-    def _writeconfig(self):
-        self.path_config.write(self._getconfigstring())
-
-    def _getconfigstring(self):
-        return "%s %s %s" % (tox.__version__,
-            self.envconfig.distribute,
-            self.envconfig.sitepackages, )
-
-    def _getconfigdeps(self):
+    def _getresolvedeps(self):
         return [self.session._resolve_pkg(dep) for dep in self.envconfig.deps]
-
-    def matchingdependencies(self):
-        if self.path_deps.check():
-            configdeps = self._getconfigdeps()
-            for depline in self.path_deps.readlines(cr=0):
-                depline = depline.strip()
-                if not depline:
-                    continue
-                parts = depline.rsplit(" ", 1)
-                if len(parts) > 1:
-                    dep, digest = parts
-                    if dep not in configdeps:
-                        return False
-                    path = py.path.local(dep)
-                    if not path.check() or getdigest(path) != digest:
-                        return False
-                else:
-                    dep = depline
-                    if dep not in configdeps:
-                        return False
-                configdeps.remove(dep)
-            if not configdeps: # no deps left
-                return True
-        return False
-
-    def _writedeps(self, deps):
-        lines = []
-        for dep in deps:
-            path = py.path.local(dep)
-            if path.check():
-                depline = "%s %s" %(dep, getdigest(path))
-            else:
-                depline = dep
-            lines.append(depline)
-        self.path_deps.write("\n".join(lines))
 
     def getconfigexecutable(self):
         python = self.envconfig.basepython
@@ -164,17 +168,15 @@ class VirtualEnv(object):
             #    self.easy_install(["-U", "distribute"])
         finally:
             old.chdir()
-        self.path_python.write(str(config_interpreter))
-        self._writeconfig()
+        self._getliveconfig().writeconfig(self.path_config)
 
     def install_sdist(self, sdistpath):
         self._install([sdistpath])
 
     def install_deps(self):
-        deps = self._getconfigdeps()
+        deps = self._getresolvedeps()
         self.session.report.action("installing dependencies %s" %(deps))
         self._install(deps)
-        self._writedeps(deps)
 
     def easy_install(self, args):
         argv = ["easy_install"] + args
@@ -227,14 +229,10 @@ class VirtualEnv(object):
         return oldPATH
 
 def getdigest(path):
-    try:
-        from hashlib import md5
-    except ImportError:
-        from md5 import md5
-    f = path.open("rb")
-    s = f.read()
-    f.close()
-    return md5(s).hexdigest()
+    path = py.path.local(path)
+    if not path.check():
+        return "0" * 32
+    return path.computehash()
 
 if sys.platform != "win32":
     def find_executable(name):

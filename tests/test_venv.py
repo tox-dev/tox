@@ -1,7 +1,7 @@
 import py
 import tox
 import os, sys
-from tox._venv import VirtualEnv
+from tox._venv import VirtualEnv, CreationConfig
 
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -75,7 +75,7 @@ def test_create(monkeypatch, mocksession, newconfig):
         assert sys.executable == args[i+1]
         #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install")
-    interp = venv.path_python.read()
+    interp = venv._getliveconfig().python
     assert interp == venv.getconfigexecutable()
 
 def test_create_distribute(monkeypatch, mocksession, newconfig):
@@ -143,7 +143,7 @@ def test_install_downloadcache(mocksession, newconfig):
     assert arg in args[2:]
     assert "dep1" in args
     assert "dep2" in args
-    deps = filter(None, venv.path_deps.readlines(cr=0))
+    deps = filter(None, [x[1] for x in venv._getliveconfig().deps])
     assert deps == ['dep1', 'dep2']
 
 def test_install_python3(tmpdir, mocksession, newconfig):
@@ -171,19 +171,19 @@ def test_install_python3(tmpdir, mocksession, newconfig):
     for x in args:
         assert "--download-cache" not in args, args
 
-class TestVenvUpdate:
+class TestCreationConfig:
 
-    def test_iscorrectpythonenv(self, newconfig, mocksession):
+    def test_basic(self, newconfig, mocksession, tmpdir):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        assert not venv.iscorrectpythonenv()
-        ex = venv.getconfigexecutable()
-        assert ex
-        venv.path_python.ensure().write(str(ex))
-        venv.path_deps.write("")
-        venv._writeconfig()
-        assert venv.iscorrectpythonenv()
+        cconfig = venv._getliveconfig()
+        assert cconfig.matches(cconfig)
+        path = tmpdir.join("configdump")
+        cconfig.writeconfig(path)
+        newconfig = CreationConfig.readconfig(path)
+        assert newconfig.matches(cconfig)
+        assert cconfig.matches(newconfig)
 
     def test_matchingdependencies(self, newconfig, mocksession):
         config = newconfig([], """
@@ -192,11 +192,15 @@ class TestVenvUpdate:
         """)
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        assert not venv.matchingdependencies()
-        venv.path_deps.ensure().write("abc\n")
-        assert venv.matchingdependencies()
-        venv.path_deps.ensure().write("abc\nxyz\n")
-        assert not venv.matchingdependencies()
+        cconfig = venv._getliveconfig()
+        config = newconfig([], """
+            [testenv]
+            deps=xyz
+        """)
+        envconfig = config.envconfigs['python']
+        venv = VirtualEnv(envconfig, session=mocksession)
+        otherconfig = venv._getliveconfig()
+        assert not cconfig.matches(otherconfig)
 
     def test_matchingdependencies_file(self, newconfig, mocksession):
         config = newconfig([], """
@@ -210,14 +214,11 @@ class TestVenvUpdate:
         xyz.ensure()
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        assert not venv.matchingdependencies()
-        venv.path_deps.ensure()
-        venv._writedeps(["abc"])
-        assert not venv.matchingdependencies()
-        venv._writedeps(["abc", xyz])
-        assert venv.matchingdependencies()
+        cconfig = venv._getliveconfig()
+        assert cconfig.matches(cconfig)
         xyz.write("hello")
-        assert not venv.matchingdependencies()
+        newconfig = venv._getliveconfig()
+        assert not cconfig.matches(newconfig)
 
     def test_matchingdependencies_latest(self, newconfig, mocksession):
         config = newconfig([], """
@@ -230,75 +231,55 @@ class TestVenvUpdate:
         xyz2 = config.distshare.ensure("xyz-1.2.1.zip")
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        assert not venv.matchingdependencies()
-        venv.path_deps.ensure()
-        venv._writedeps([xyz])
-        assert not venv.matchingdependencies()
-        venv._writedeps([xyz2])
-        assert venv.matchingdependencies()
+        cconfig = venv._getliveconfig()
+        md5, path = cconfig.deps[0]
+        assert path == xyz2
+        assert md5 == path.computehash()
 
     def test_python_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        assert not venv.path_python.check()
+        cconfig = venv._getliveconfig()
         venv.update()
         assert mocksession._pcalls
         args1 = mocksession._pcalls[0].args
         assert 'virtualenv' in " ".join(args1)
-        s = venv.path_python.read()
-        assert s == sys.executable
         mocksession.report.expect("action", "creating virtualenv*")
         # modify config and check that recreation happens
-        venv.path_python.write("hullabulla")
         mocksession._clearmocks()
+        venv.update()
+        mocksession.report.expect("action", "reusing existing*")
+        mocksession._clearmocks()
+        cconfig.python = py.path.local("balla")
+        cconfig.writeconfig(venv.path_config)
         venv.update()
         mocksession.report.expect("action", "recreating virtualenv*")
 
-    def test_python_recreate_deps(self, newconfig, mocksession):
-        config = newconfig([], """
-                [testenv]
-                deps=abc123
-        """)
+    def test_dep_recreation(self, newconfig, mocksession):
+        config = newconfig([], "")
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        venv.path_python.ensure().write(venv.getconfigexecutable())
-        venv.path_deps.write("\n".join(venv.envconfig.deps))
-        venv._writeconfig()
         venv.update()
-        assert not mocksession._pcalls
-        mocksession.report.expect("action", "reusing existing matching virtualenv*")
-        venv.path_deps.write("xyz\n")
-        msg = venv.update()
+        cconfig = venv._getliveconfig()
+        cconfig.deps[:] = [("1"*32, "xyz.zip")]
+        cconfig.writeconfig(venv.path_config)
+        mocksession._clearmocks()
+        venv.update()
         mocksession.report.expect("action", "recreating virtualenv*")
 
-    def test_python_recreate_config(self, newconfig, mocksession):
-        config = newconfig([], """
-           [testenv:hello]
-        """)
-        envconfig = config.envconfigs['hello']
+    def test_distribute_recreation(self, newconfig, mocksession):
+        config = newconfig([], "")
+        envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        venv.path_python.ensure().write(venv.getconfigexecutable())
-        venv.path_deps.write("\n".join(venv.envconfig.deps))
-        venv._writeconfig()
         venv.update()
-        assert not mocksession._pcalls
-        mocksession._clearmocks()
-
-        venv.envconfig.distribute = False
-        venv.update()
-        assert mocksession._pcalls
-        mocksession.report.expect("action", "*recreating*hello*")
-        mocksession._clearmocks()
-        venv.envconfig.sitepackages = True
-        venv.update()
-        assert mocksession._pcalls
-        mocksession.report.expect("action", "*recreating*hello*")
+        cconfig = venv._getliveconfig()
+        cconfig.distribute = False
+        cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
         venv.update()
-        assert not mocksession._pcalls
-
-
+        mocksession.report.expect("action", "recreating virtualenv*")
+        
 class TestVenvTest:
 
     def test_patchPATH(self, newconfig, mocksession, monkeypatch):
