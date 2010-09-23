@@ -188,6 +188,10 @@ class VirtualEnv(object):
             self.envconfig.downloadcache.ensure(dir=1)
             argv.append("--download-cache=%s" %
                 self.envconfig.downloadcache)
+        try:
+            del os.environ['PIP_RESPECT_VIRTUALENV']
+        except KeyError:
+            pass
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
     def _install(self, args):

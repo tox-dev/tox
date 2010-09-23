@@ -307,4 +307,8 @@ class TestVenvTest:
         py.test.raises(ZeroDivisionError, "venv.easy_install(['qwe'])")
         py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
         py.test.raises(ZeroDivisionError, "venv._pcall([1,2,3])")
+        monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
+        py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
+        assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
+        os.environ['PIP_RESPECT_VIRTUALENV'] = "1"
 
