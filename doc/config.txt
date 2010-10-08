@@ -57,11 +57,13 @@ testenvironment default section.
 
 Complete list of settings that you can put into ``testenv*`` sections:
 
-``basepython=NAME-OR-PATH``
+.. confval:: basepython=NAME-OR-PATH
+
     name or path to a Python interpreter which will be used for creating
     the virtual environment. **default**: interpreter used for tox invocation.
 
-``commands=ARGVLIST``
+.. confval:: commands=ARGVLIST
+
     the commands to be called for testing. Each command is defined
     by one or more lines; a command can have multiple lines if a line
     ends with the ``\`` character in which case the subsequent line
@@ -69,46 +71,54 @@ Complete list of settings that you can put into ``testenv*`` sections:
     For eventually performing a call to ``subprocess.Popen(args, ...)``
     ``args`` are determined by splitting the whole command by whitespace.
 
-``changedir=path``
+.. confval:: changedir=path
+
     change to this working directory when executing the test command.
     **default**: ``{toxinidir}``
 
-``args_are_paths=BOOL``
+.. confval:: args_are_paths=BOOL
+
     treat positional arguments passed to ``tox`` as file system paths
     and - if they exist on the filesystem - rewrite them according
     to the ``changedir``.
     **default**: True (due to the exists-on-filesystem check it's usually
     safe to try rewriting).
 
-``envtmpdir=path``
+.. confval:: envtmpdir=path
+
     defines a temporary directory for the virtualenv which will be cleared
     each time before the group of test commands is invoked.
     **default**: ``{envdir}/tmp``
 
-``envlogdir=path``
+.. confval:: envlogdir=path
+
     defines a directory for logging where tox will put logs of tool
     invocation.
     **default**: ``{envdir}/log``
 
-``deps=MULTI-LINE-LIST``
+.. confval:: deps=MULTI-LINE-LIST
+
     dependencies to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
     passed to easy_install/pip for processing.  It usually can be a file,
     and URL or a package name.
 
-``downloadcache=path``
+.. confval:: downloadcache=path
+
     (pip only) use this directory for caching downloads - this defaults to the
     environment variable ``PIP_DOWNLOAD_CACHE`` if it is set.
     **default**: no download cache will be used.
     **note**: if creating multiple environments use of a download cache greatly
     speeds up the testing process.
 
-``distribute=True|False``
+.. confval:: distribute=True|False
+
     Set to ``False`` if you want to use setuptools_ instead of the default
     distribute_ in the virtual environment.
     **default:** True.
 
-``sitepackages=True|False``
+.. confval:: sitepackages=True|False
+
     Set to ``True`` if you want to create virtual environments that also
     have access to globally installed packages.  **default:** False, meaning
     that virtualenvs will be created with ``--no-site-packages`` by default.

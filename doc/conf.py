@@ -255,3 +255,10 @@ epub_copyright = u'2010, holger krekel'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+def setup(app):
+    #from sphinx.ext.autodoc import cut_lines
+    #app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
+    app.add_description_unit('confval', 'confval',
+                             objname='configuration value',
+                             indextemplate='pair: %s; configuration value')
