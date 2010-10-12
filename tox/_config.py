@@ -3,7 +3,7 @@ import py
 import re
 import tox
 import argparse
-configparser = py.builtin._tryimport("ConfigParser", "configparser")
+import iniconfig
 
 defaultenvs = {'jython': 'jython', 'pypy': 'pypy-c'}
 for _name in "py24,py25,py26,py27,py30,py31,py32".split(","):
@@ -99,8 +99,7 @@ class parseini:
         if not config.toxinipath.check():
             feedback("toxini file %r does not exist" %(
                 str(config.toxinipath)), sysexit=True)
-        self._cfg = configparser.RawConfigParser()
-        self._cfg.read(str(config.toxinipath))
+        self._cfg = iniconfig.IniConfig(config.toxinipath)
         config._cfg = self._cfg
         self.config = config
         ctxname = getcontextname()
@@ -130,8 +129,8 @@ class parseini:
         config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
-        sections = self._cfg.sections()
-        for section in sections:
+        for sectionwrapper in self._cfg:
+            section = sectionwrapper.name
             if section.startswith(testenvprefix):
                 name = section[len(testenvprefix):]
                 envconfig = self._makeenvconfig(name, section, reader._subs,
@@ -283,12 +282,12 @@ class IniReader:
 
     def getdefault(self, section, name, default=None, replace=True):
         try:
-            x = self._cfg.get(section, name)
-        except (configparser.NoSectionError, configparser.NoOptionError):
+            x = self._cfg[section][name]
+        except KeyError:
             for fallbacksection in self.fallbacksections:
                 try:
-                    x = self._cfg.get(fallbacksection, name)
-                except (configparser.NoSectionError, configparser.NoOptionError):
+                    x = self._cfg[fallbacksection][name]
+                except KeyError:
                     pass
                 else:
                     break
@@ -296,7 +295,7 @@ class IniReader:
                 x = default
         if replace and x and hasattr(x, 'replace'):
             x = self._replace(x)
-        #print "getedefault", section, name, "returned", repr(x)
+        #print "getdefault", section, name, "returned", repr(x)
         return x
 
     def _sub(self, match):
