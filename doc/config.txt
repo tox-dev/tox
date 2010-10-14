@@ -75,6 +75,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     change to this working directory when executing the test command.
     **default**: ``{toxinidir}``
+.. confval:: commands=ARGVLIST
 
 .. confval:: args_are_paths=BOOL
 
@@ -102,6 +103,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
     package installation.  Each line defines a dependency, which will be
     passed to easy_install/pip for processing.  It usually can be a file,
     and URL or a package name.
+
+.. confval:: indexserver=URL
+
+    The Index server to use.  When nothing is specified the default
+    of the installation tool (easy_install or pip) will be used.
 
 .. confval:: downloadcache=path
 

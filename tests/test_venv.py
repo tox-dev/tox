@@ -146,6 +146,27 @@ def test_install_downloadcache(mocksession, newconfig):
     deps = filter(None, [x[1] for x in venv._getliveconfig().deps])
     assert deps == ['dep1', 'dep2']
 
+def test_install_indexserver(mocksession, newconfig):
+    config = newconfig([], """
+        [testenv:py123]
+        indexserver=XYZ
+        deps= dep1
+    """)
+    envconfig = config.envconfigs['py123']
+    venv = VirtualEnv(envconfig, session=mocksession)
+    venv.create()
+    l = mocksession._pcalls
+    assert len(l) == 1
+
+    venv.install_deps()
+    assert len(l) == 2
+    args = l[1].args
+    assert l[1].cwd == venv.envconfig.envlogdir
+
+    i = args.index('-i')
+    assert i != -1
+    assert args[i+1] == "XYZ"
+ 
 def test_install_python3(tmpdir, mocksession, newconfig):
     if not py.path.local.sysfind('python3.1'):
         py.test.skip("needs python3.1")

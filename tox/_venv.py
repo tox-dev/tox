@@ -179,11 +179,16 @@ class VirtualEnv(object):
         self._install(deps)
 
     def easy_install(self, args):
-        argv = ["easy_install"] + args
+        argv = ["easy_install"]
+        if self.envconfig.indexserver:
+            argv += ["-i", self.envconfig.indexserver]
+        argv += args
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
     def pip_install(self, args):
-        argv = ["pip", "install"] + args
+        argv = ["pip", "install"]
+        if self.envconfig.indexserver:
+            argv += ["-i", self.envconfig.indexserver]
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
             argv.append("--download-cache=%s" %
@@ -192,6 +197,7 @@ class VirtualEnv(object):
             del os.environ['PIP_RESPECT_VIRTUALENV']
         except KeyError:
             pass
+        argv += args
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
     def _install(self, args):

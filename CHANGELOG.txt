@@ -4,6 +4,7 @@
 - fix pip-installation mixups by always unsetting PIP_RESPECT_VIRTUALENV
   (thanks Armin Ronacher)
 - issue1: Add a bootstrap script for tox
+- add ability to specify different PyPI index servers per testenv
 
 0.8
 -----------------

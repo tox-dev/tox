@@ -43,6 +43,7 @@ class TestConfigPackage:
         assert config.toxworkdir == tmpdir.join(".tox")
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths
+        assert not envconfig.indexserver
 
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
@@ -262,6 +263,15 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.changedir.basename == "xyz"
         assert envconfig.changedir == config.toxinidir.join("xyz")
+
+    def test_indexurl(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            indexserver = XYZ
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert envconfig.indexserver == "XYZ"
 
     def test_envbindir(self, tmpdir, newconfig):
         config = newconfig("""

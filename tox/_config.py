@@ -166,6 +166,7 @@ class parseini:
         vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
         reader.addsubstitions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
         vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
+        vc.indexserver = reader.getdefault(section, "indexserver", None)
         args = config.opts.args
         if args:
             if vc.args_are_paths:
