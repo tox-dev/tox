@@ -9,12 +9,11 @@ You are welcome to:
 * join the `Testing In Python (TIP) mailing list`_ for general and tox/test-tool
   interaction questions.
 * file a `report on the issue tracker`_
-* join `tox-dev`_ for core tox development issues,
-  contributions and patch discussions.
 * join `tox-commit`_ to be notified of source changes
 * hang out on the irc.freenode.net #pylib channel
 * `clone the mercurial repository`_ and submit patches
-* follow the `tetamap blog`_ or `holger's twitter presence`_
+* follow the `tetamap blog`_ or `holger's twitter presence`_ or 
+  if all else fails contact holger krekel at gmail.
 
 professional support
 ----------------------------

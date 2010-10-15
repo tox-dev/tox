@@ -161,11 +161,25 @@ def test_install_indexserver(mocksession, newconfig):
     venv.install_deps()
     assert len(l) == 2
     args = l[1].args
-    assert l[1].cwd == venv.envconfig.envlogdir
 
     i = args.index('-i')
     assert i != -1
     assert args[i+1] == "XYZ"
+
+def test_install_upgrade(mocksession, newconfig):
+    config = newconfig(['--upgrade'], """
+        [testenv]
+        deps=xyz
+    """)
+    envconfig = config.envconfigs['python']
+    venv = VirtualEnv(envconfig, session=mocksession)
+    venv.create()
+    l = mocksession._pcalls
+    assert len(l) == 1
+
+    venv.install_deps()
+    assert len(l) == 2
+    assert '-U' in l[1].args
  
 def test_install_python3(tmpdir, mocksession, newconfig):
     if not py.path.local.sysfind('python3.1'):

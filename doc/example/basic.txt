@@ -1,6 +1,9 @@
 
-Basic example and default environments
+Basic usage
 =============================================
+
+a simple tox.ini / default environments
+-----------------------------------------------
 
 Put basic information about your project and the test environments you
 want your project to run in into a ``tox.ini`` file that should
@@ -42,3 +45,28 @@ see some of the examples in :doc:`examples <../examples>`.
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 
+using a different PyPI server
+-----------------------------------------------
+
+.. versionadded: 0.9
+
+To install dependencies and packages from a different
+PyPI servertype::
+
+    tox --indexserver http://pypi.testrun.org
+
+This causes both the internal pip and easy-install steps
+to use the specified server for upgrading.
+
+upgrading packages
+-----------------------------------------------
+
+.. versionadded: 0.9
+
+To upgrade dependencies on tox managed environments::
+
+    tox --upgrade -e py27
+
+would trigger an upgrade of the existing py27 environment
+(or create it afresh if it doesn't exist).  This will usually
+go to the PyPI server and re-install packages if neccessary.

@@ -58,6 +58,10 @@ def prepare_parse():
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist activity.")
+    parser.add_argument("--indexserver", action="store", dest="indexserver",
+        help="use the specified PyPI indexserver for installation actions")
+    parser.add_argument("-U", "--upgrade", action="store_true", dest="upgrade",
+        help="try to upgrade dependencies in installation step")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
     return parser
@@ -166,7 +170,14 @@ class parseini:
         vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
         reader.addsubstitions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
         vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
-        vc.indexserver = reader.getdefault(section, "indexserver", None)
+        if config.opts.upgrade:
+            vc.upgrade = True
+        else:
+            vc.upgrade = reader.getbool(section, "upgrade", False)
+        if config.opts.indexserver:
+            vc.indexserver = config.opts.indexserver
+        else:
+            vc.indexserver = reader.getdefault(section, "indexserver", None)
         args = config.opts.args
         if args:
             if vc.args_are_paths:

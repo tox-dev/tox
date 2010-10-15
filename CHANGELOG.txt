@@ -4,7 +4,9 @@
 - fix pip-installation mixups by always unsetting PIP_RESPECT_VIRTUALENV
   (thanks Armin Ronacher)
 - issue1: Add a bootstrap script for tox
-- add ability to specify different PyPI index servers per testenv
+- new option: --indexserver URL to specify PyPI index server to use for
+  installation, can also be set in tox.ini testenv configurations.
+- new option: -U|--upgrade to cause installation of dependencies in upgrade mode.
 
 0.8
 -----------------

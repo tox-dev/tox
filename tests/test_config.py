@@ -44,6 +44,7 @@ class TestConfigPackage:
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths
         assert not envconfig.indexserver
+        assert not envconfig.upgrade
 
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
@@ -495,6 +496,32 @@ class TestGlobalOptions:
         env = config.envconfigs['py24']
         assert env.basepython == "python2.4"
         assert env.commands == [['xyz']]
+
+class TestParseEnv:
+    def test_parse_indexserver(self, newconfig):
+        inisource = """
+            [testenv:hello]
+            indexserver = XYZ
+        """
+        config = newconfig([], inisource)
+        assert config.envconfigs['hello'].indexserver == "XYZ"
+        config = newconfig(["--indexserver", "ABC"], inisource)
+        assert config.envconfigs['hello'].indexserver == "ABC"
+
+    def test_parse_upgrade(self, newconfig):
+        inisource = ""
+        config = newconfig([], inisource)
+        assert not config.envconfigs['python'].upgrade
+        config = newconfig(['--upgrade'], inisource)
+        assert config.envconfigs['python'].upgrade
+        config = newconfig(['-U'], inisource)
+        assert config.envconfigs['python'].upgrade
+        inisource = """
+            [testenv:hello]
+            upgrade = True
+        """
+        config = newconfig([], inisource)
+        assert config.envconfigs['hello'].upgrade
 
 class TestCmdInvocation:
     def test_help(self, cmd):

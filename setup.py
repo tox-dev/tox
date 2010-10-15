@@ -45,7 +45,7 @@ def main():
         install_requires=install_requires+['argparse', 'apipkg', 'iniconfig', 'pylib>=1.9.9', ],
         zip_safe=True,
         classifiers=[
-            'Development Status :: 3 - Alpha',
+            'Development Status :: 4 - Beta',
             'Intended Audience :: Developers',
             'License :: OSI Approved :: GNU General Public License (GPL)',
              'Operating System :: POSIX',

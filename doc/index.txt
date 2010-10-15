@@ -3,8 +3,8 @@ Welcome to the tox automation project
 
 .. note::
 
-    tox is alpha software and may have crucial platform-specific
-    or environment specific bugs. Use with care.
+    tox is a a young project and still considered beta.
+    Bug reports, feedback, contributions welcome: see :ref:`support`.
 
 vision: merge testing and deployment
 ----------------------------------------

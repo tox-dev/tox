@@ -178,17 +178,20 @@ class VirtualEnv(object):
         self.session.report.action("installing dependencies %s" %(deps))
         self._install(deps)
 
-    def easy_install(self, args):
-        argv = ["easy_install"]
+    def _commoninstallopts(self):
+        l = [] 
         if self.envconfig.indexserver:
-            argv += ["-i", self.envconfig.indexserver]
-        argv += args
+            l += ["-i", self.envconfig.indexserver]
+        if self.envconfig.upgrade:
+            l += ["-U"]
+        return l
+
+    def easy_install(self, args):
+        argv = ["easy_install"] + self._commoninstallopts() + args
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
     def pip_install(self, args):
-        argv = ["pip", "install"]
-        if self.envconfig.indexserver:
-            argv += ["-i", self.envconfig.indexserver]
+        argv = ["pip", "install"] + self._commoninstallopts()
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
             argv.append("--download-cache=%s" %
