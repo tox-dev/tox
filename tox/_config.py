@@ -3,7 +3,6 @@ import py
 import re
 import tox
 import argparse
-import iniconfig
 
 defaultenvs = {'jython': 'jython', 'pypy': 'pypy-c'}
 for _name in "py24,py25,py26,py27,py30,py31,py32".split(","):
@@ -103,7 +102,7 @@ class parseini:
         if not config.toxinipath.check():
             feedback("toxini file %r does not exist" %(
                 str(config.toxinipath)), sysexit=True)
-        self._cfg = iniconfig.IniConfig(config.toxinipath)
+        self._cfg = py.iniconfig.IniConfig(config.toxinipath)
         config._cfg = self._cfg
         self.config = config
         ctxname = getcontextname()

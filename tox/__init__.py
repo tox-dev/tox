@@ -1,9 +1,9 @@
 #
 __version__ = "0.9.dev0"
 
-import apipkg
+from py.apipkg import initpkg
 
-apipkg.initpkg(__name__, dict(
+initpkg(__name__, dict(
     cmdline   = '._cmdline:main',
     exception = dict(
         ConfigError = '._config:ConfigError',
