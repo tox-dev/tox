@@ -178,20 +178,20 @@ class VirtualEnv(object):
         self.session.report.action("installing dependencies %s" %(deps))
         self._install(deps)
 
-    def _commoninstallopts(self):
+    def _commoninstallopts(self, indexserver):
         l = [] 
-        if self.envconfig.indexserver:
-            l += ["-i", self.envconfig.indexserver]
+        if indexserver:
+            l += ["-i", indexserver]
         if self.envconfig.upgrade:
             l += ["-U"]
         return l
 
-    def easy_install(self, args):
-        argv = ["easy_install"] + self._commoninstallopts() + args
+    def easy_install(self, args, indexserver=None):
+        argv = ["easy_install"] + self._commoninstallopts(indexserver) + args
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
-    def pip_install(self, args):
-        argv = ["pip", "install"] + self._commoninstallopts()
+    def pip_install(self, args, indexserver=None):
+        argv = ["pip", "install"] + self._commoninstallopts(indexserver)
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
             argv.append("--download-cache=%s" %
@@ -203,13 +203,25 @@ class VirtualEnv(object):
         argv += args
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
-    def _install(self, args):
-        if not args:
+    def _install(self, deps):
+        if not deps:
             return
-        if self._ispython3():
-            self.easy_install(args)
-        else:
-            self.pip_install(args)
+        d = {}
+        for depline in deps:
+            try:
+                parts = depline.split(None, 1)
+            except AttributeError: # e.g. py.path.local 
+                parts = depline,
+            if len(parts) == 1:
+                d.setdefault('default', []).append(depline)
+            else:
+                d.setdefault(parts[0], []).append(parts[1])
+        for name, args in d.items():
+            indexserver = self.session.config.indexserver[name]
+            if self._ispython3():
+                self.easy_install(args, indexserver)
+            else:
+                self.pip_install(args, indexserver)
 
     def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)

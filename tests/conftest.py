@@ -6,6 +6,7 @@ from py.builtin import print_
 from fnmatch import fnmatch
 import time
 from tox._config import parseconfig
+from tox._venv import VirtualEnv
 
 def pytest_configure():
     if 'TOXENV' in os.environ:
@@ -82,6 +83,7 @@ def pytest_funcarg__mocksession(request):
     class MockSession(Session):
         def __init__(self):
             self._clearmocks()
+            #self.config = request.getfuncargvalue("newconfig")([], "")
         def _clearmocks(self):
             self._pcalls = []
             self.report = ReportExpectMock()
@@ -90,6 +92,32 @@ def pytest_funcarg__mocksession(request):
         def pcall(self, args, log, cwd, env=None):
             self._pcalls.append(pcallMock(args, log, cwd, env))
     return MockSession()
+
+def pytest_funcarg__mocksession(request):
+    from tox._cmdline import Session
+    class MockSession(Session):
+        def __init__(self):
+            self._clearmocks()
+            #self.config = request.getfuncargvalue("newconfig")([], "")
+        def getenv(self, name):
+            return VirtualEnv(self.config.envconfigs[name], session=self)
+        def _clearmocks(self):
+            self._pcalls = []
+            self.report = ReportExpectMock()
+        def make_emptydir(self, path):
+            pass
+        def pcall(self, args, log, cwd, env=None):
+            self._pcalls.append(pcallMock(args, log, cwd, env))
+    return MockSession()
+
+def pytest_funcarg__newmocksession(request):
+    mocksession = request.getfuncargvalue("mocksession")
+    newconfig = request.getfuncargvalue("newconfig")
+    def newmocksession(args, source):
+        config = newconfig(args, source)
+        mocksession.config = config
+        return mocksession
+    return newmocksession
 
 class Cmd:
     def __init__(self, request):

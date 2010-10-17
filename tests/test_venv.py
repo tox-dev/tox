@@ -119,16 +119,15 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     assert "--no-site-packages" in " ".join(args)
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
-def test_install_downloadcache(mocksession, newconfig):
-    config = newconfig([], """
+def test_install_downloadcache(newmocksession):
+    mocksession = newmocksession([], """
         [testenv:py123]
         distribute=True
         deps=
             dep1
             dep2
     """)
-    envconfig = config.envconfigs['py123']
-    venv = VirtualEnv(envconfig, session=mocksession)
+    venv = mocksession.getenv("py123")
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 1
@@ -139,40 +138,47 @@ def test_install_downloadcache(mocksession, newconfig):
     assert l[1].cwd == venv.envconfig.envlogdir
     assert "pip" in str(args[0])
     assert args[1] == "install"
-    arg = "--download-cache=" + str(envconfig.downloadcache)
+    arg = "--download-cache=" + str(venv.envconfig.downloadcache)
     assert arg in args[2:]
     assert "dep1" in args
     assert "dep2" in args
     deps = filter(None, [x[1] for x in venv._getliveconfig().deps])
     assert deps == ['dep1', 'dep2']
 
-def test_install_indexserver(mocksession, newconfig):
-    config = newconfig([], """
+def test_install_indexserver(newmocksession):
+    mocksession = newmocksession([], """
+        [tox]
+        indexserver=
+            abc ABC
+
         [testenv:py123]
-        indexserver=XYZ
-        deps= dep1
+        deps=
+            dep1
+            abc dep2
     """)
-    envconfig = config.envconfigs['py123']
-    venv = VirtualEnv(envconfig, session=mocksession)
+    venv = mocksession.getenv('py123')
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 1
+    l[:] = []
 
     venv.install_deps()
+    # two different index servers, two calls
     assert len(l) == 2
-    args = l[1].args
+    args = " ".join(l[0].args)
+    assert "-i" not in args
+    assert "dep1" in args
 
-    i = args.index('-i')
-    assert i != -1
-    assert args[i+1] == "XYZ"
+    args = " ".join(l[1].args)
+    assert "-i ABC" in args
+    assert "dep2" in args
 
-def test_install_upgrade(mocksession, newconfig):
-    config = newconfig(['--upgrade'], """
+def test_install_upgrade(newmocksession):
+    mocksession = newmocksession(['--upgrade'], """
         [testenv]
         deps=xyz
     """)
-    envconfig = config.envconfigs['python']
-    venv = VirtualEnv(envconfig, session=mocksession)
+    venv = mocksession.getenv('python')
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 1
@@ -181,18 +187,17 @@ def test_install_upgrade(mocksession, newconfig):
     assert len(l) == 2
     assert '-U' in l[1].args
  
-def test_install_python3(tmpdir, mocksession, newconfig):
+def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
         py.test.skip("needs python3.1")
-    config = newconfig([], """
+    mocksession = newmocksession([], """
         [testenv:py123]
         basepython=python3.1
         deps=
             dep1
             dep2
     """)
-    envconfig = config.envconfigs['py123']
-    venv = VirtualEnv(envconfig, session=mocksession)
+    venv = mocksession.getenv('py123')
     venv.create()
     l = mocksession._pcalls
     assert len(l) == 1
@@ -317,13 +322,13 @@ class TestCreationConfig:
         
 class TestVenvTest:
 
-    def test_patchPATH(self, newconfig, mocksession, monkeypatch):
-        config = newconfig([], """
+    def test_patchPATH(self, newmocksession, monkeypatch):
+        mocksession = newmocksession([], """
             [testenv:python]
             commands=abc
         """)
-        envconfig = config.envconfigs['python']
-        venv = VirtualEnv(envconfig, session=mocksession)
+        venv = mocksession.getenv("python")
+        envconfig = venv.envconfig
         monkeypatch.setenv("PATH", "xyz")
         oldpath = venv.patchPATH()
         assert oldpath == "xyz"
@@ -337,7 +342,7 @@ class TestVenvTest:
 
         assert envconfig.commands
         monkeypatch.setattr(venv, '_pcall', lambda *args, **kwargs: 0/0)
-        py.test.raises(ZeroDivisionError, "venv._install([1,2,3])")
+        py.test.raises(ZeroDivisionError, "venv._install(list('123'))")
         py.test.raises(ZeroDivisionError, "venv.test()")
         py.test.raises(ZeroDivisionError, "venv.easy_install(['qwe'])")
         py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")

@@ -25,7 +25,7 @@ class TestVenvConfig:
             basepython=hello
             deps=
                 world1
-                world2
+                xyz world2
         """ % (tmpdir, ))
         assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
@@ -34,7 +34,7 @@ class TestVenvConfig:
         assert config.envconfigs['py1'].deps == ['hello']
         assert config.envconfigs['py2'].basepython == "hello"
         assert config.envconfigs['py2'].envdir == tmpdir.join("py2")
-        assert config.envconfigs['py2'].deps == ['world1', 'world2']
+        assert config.envconfigs['py2'].deps == ['world1', 'xyz world2']
 
 class TestConfigPackage:
     def test_defaults(self, tmpdir, newconfig):
@@ -43,7 +43,6 @@ class TestConfigPackage:
         assert config.toxworkdir == tmpdir.join(".tox")
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths
-        assert not envconfig.indexserver
         assert not envconfig.upgrade
 
     def test_defaults_distshare(self, tmpdir, newconfig):
@@ -264,15 +263,6 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.changedir.basename == "xyz"
         assert envconfig.changedir == config.toxinidir.join("xyz")
-
-    def test_indexurl(self, tmpdir, newconfig):
-        config = newconfig("""
-            [testenv]
-            indexserver = XYZ
-        """)
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert envconfig.indexserver == "XYZ"
 
     def test_envbindir(self, tmpdir, newconfig):
         config = newconfig("""
@@ -497,16 +487,32 @@ class TestGlobalOptions:
         assert env.basepython == "python2.4"
         assert env.commands == [['xyz']]
 
-class TestParseEnv:
+class TestIndexServer:
+    def test_indexserver(self, tmpdir, newconfig):
+        config = newconfig("""
+            [tox]
+            indexserver =
+                name1 XYZ
+                name2 ABC
+        """)
+        assert config.indexserver['default'] == None
+        assert config.indexserver['name1'] == "XYZ"
+        assert config.indexserver['name2'] == "ABC"
+
     def test_parse_indexserver(self, newconfig):
         inisource = """
-            [testenv:hello]
-            indexserver = XYZ
+            [tox]
+            indexserver =
+                default http://pypi.testrun.org
+                name2   XYZ
         """
         config = newconfig([], inisource)
-        assert config.envconfigs['hello'].indexserver == "XYZ"
+        assert config.indexserver['default'] == "http://pypi.testrun.org"
         config = newconfig(["--indexserver", "ABC"], inisource)
-        assert config.envconfigs['hello'].indexserver == "ABC"
+        assert config.indexserver['default'] == "ABC"
+        assert config.indexserver['name2'] == "XYZ"
+
+class TestParseEnv:
 
     def test_parse_upgrade(self, newconfig):
         inisource = ""

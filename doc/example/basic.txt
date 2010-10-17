@@ -51,12 +51,34 @@ using a different PyPI server
 .. versionadded: 0.9
 
 To install dependencies and packages from a different
-PyPI servertype::
+PyPI server type::
 
     tox --indexserver http://pypi.testrun.org
 
 This causes both the internal pip and easy-install steps
 to use the specified server for upgrading.
+
+installing dependencies from multiple PyPI server
+---------------------------------------------------
+
+.. versionadded: 0.9
+
+You can instrument tox to install dependencies from
+different PyPI servers, example::
+
+    [tox]
+    indexserver =
+        DEV http://mypypiserver.org
+
+    [testenv]
+    deps = 
+        docutils       # comes from standard PyPI
+        DEV mypackage  # will come from custom PYPI above
+
+Note that the ``--indexserver`` command line overrides 
+the default index server, not the ``DEV`` one here.
+This will cause both the internal pip and easy-install steps
+to use the specified servers accordingly.
 
 upgrading packages
 -----------------------------------------------

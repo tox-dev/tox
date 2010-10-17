@@ -58,7 +58,8 @@ def prepare_parse():
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist activity.")
     parser.add_argument("--indexserver", action="store", dest="indexserver",
-        help="use the specified PyPI indexserver for installation actions")
+        default=None, metavar="URL",
+        help="indexserver for installing deps (default pypi python.org"),
     parser.add_argument("-U", "--upgrade", action="store_true", dest="upgrade",
         help="try to upgrade dependencies in installation step")
     parser.add_argument("args", nargs="*",
@@ -122,6 +123,17 @@ class parseini:
                               homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
                                            "{toxinidir}/.tox")
+
+        # determine indexserver dictionary
+        config.indexserver = d = {}
+        for line in reader.getlist(toxsection, "indexserver"):
+            name, value = line.strip().split(None, 1)
+            d.setdefault(name, value)
+        if config.opts.indexserver:
+            d['default'] = config.opts.indexserver
+        else:
+            d.setdefault('default', None)
+            
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
                                            "{toxworkdir}/dist")
@@ -173,10 +185,6 @@ class parseini:
             vc.upgrade = True
         else:
             vc.upgrade = reader.getbool(section, "upgrade", False)
-        if config.opts.indexserver:
-            vc.indexserver = config.opts.indexserver
-        else:
-            vc.indexserver = reader.getdefault(section, "indexserver", None)
         args = config.opts.args
         if args:
             if vc.args_are_paths:
