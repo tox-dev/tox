@@ -61,12 +61,16 @@ ToDo
 
 """
 
+__version__ = "0.2"
+
 import sys
 import os
 from os import path
 import logging
 
 from subprocess import Popen, PIPE, check_call, CalledProcessError
+
+USETOXDEV=os.environ.get('USETOXDEV', False)
 
 PY3 = sys.version_info[0] == 3
 
@@ -184,7 +188,10 @@ def cmdline(argv=None):
     pip = get_script_path('toxinstall', 'pip')
 
     # install/upgrade tox itself
-    if any([
+    if USETOXDEV:
+        run('%s install -i http://pypi.testrun.org '
+            '--upgrade --download-cache=pip-cache tox' % (pip,))
+    elif any([
         not has_script('toxinstall', 'tox'),
         get_tox_version('toxinstall') != pypi_get_latest_version('tox')]):
         run('%s install --upgrade --download-cache=pip-cache tox' % (pip,))
