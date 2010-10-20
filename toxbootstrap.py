@@ -80,9 +80,9 @@ else:
 logging.basicConfig(level=logging.INFO)
 
 
-# Last stable: 1.4.9
-VIRTUALENVPY_URL = 'http://bitbucket.org/ianb/virtualenv/raw/6d187b9cf916/virtualenv.py'
-
+# Last stable: 1.5.1
+VIRTUALENVPY_URL = (
+    'http://bitbucket.org/ianb/virtualenv/raw/eb94c9ebe0ba/virtualenv.py')
 
 def run(cmd, shell=True):
     """Run the given command in shell"""
