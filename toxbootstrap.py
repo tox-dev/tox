@@ -189,7 +189,7 @@ def cmdline(argv=None):
 
     # install/upgrade tox itself
     if USETOXDEV:
-        run('%s install -i http://pypi.testrun.org '
+        run('%s install -q -i http://pypi.testrun.org '
             '--upgrade --download-cache=pip-cache tox' % (pip,))
     elif any([
         not has_script('toxinstall', 'tox'),
