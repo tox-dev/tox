@@ -84,7 +84,6 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     change to this working directory when executing the test command.
     **default**: ``{toxinidir}``
-.. confval:: commands=ARGVLIST
 
 .. confval:: args_are_paths=BOOL
 
