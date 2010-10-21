@@ -192,8 +192,12 @@ def cmdline(argv=None):
 
     # install/upgrade tox itself
     if USETOXDEV:
+        if 'PIP_DOWNLOAD_CACHE' in os.environ:
+            cache = ""
+        else:
+            cache = "--download-cache=_download"
         run('%s install -q -i http://pypi.testrun.org '
-            '--upgrade --download-cache=pip-cache tox' % (pip,))
+            '--upgrade %s tox' % (pip, cache))
     elif any([
         not has_script(TENV, 'tox'),
         get_tox_version(TENV) != pypi_get_latest_version('tox')]):
