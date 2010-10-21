@@ -56,13 +56,13 @@ def prepare_parse():
     parser.add_argument("--notest", action="store_true", dest="notest",
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
-        help="only perform the sdist activity.")
+        help="only perform the sdist packaging activity.")
     parser.add_argument("--indexserver", action="store", dest="indexserver",
         default=None, metavar="URL",
         help="indexserver for installing deps (default pypi python.org"),
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
-        help="recreate virtual environments")
+        help="force recreation of virtual environments")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
     return parser

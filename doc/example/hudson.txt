@@ -41,24 +41,27 @@ See a real-life example in action with the `pytest Hudson job`_
 -------------------------------------------------------------
 
 If you manage many Hudson slaves and want to use the latest officially
-released tox (or latest development version) you can skip installing
-``tox`` alltogether and substitute the above **Python build step** 
-with this code::
+released tox (or latest development version) and want to skip manually
+installing ``tox`` then substitute the above **Python build step** code
+with this::
 
-    import urllib, os, sys
+    import urllib, os
     url = "https://pytox.googlecode.com/hg/toxbootstrap.py"
     #os.environ['USETOXDEV']="1"  # use tox dev version
-    s = urllib.urlopen(url).read()
-    co = compile(s, "toxbootstrap.py", 'exec')
-    sys.argv = ['toxbootstrap.py',
-        '--recreate']   # change as needed
-    exec co in {'__name__': '__main__',
-        '__file__': 'toxbootstrap.py'}
+    d = dict(__file__='toxbootstrap.py')
+    exec urllib.urlopen(url).read() in d
+    d['cmdline'](['--recreate'])
 
-The `toxbootstrap.py`_ file downloads all neccessary files to install
-``tox`` in a virtual sub environment.  If you uncomment the line
-containing ``USETOXDEV`` you are going to use the latest
-development-release version of tox instead of the latest released version.
+The downloaded `toxbootstrap.py`_ file downloads all neccessary files to
+install ``tox`` in a virtual sub environment.  Notes:
+
+* uncomment the line containing ``USETOXDEV`` to use the latest
+  development-release version of tox instead of the
+  latest released version.
+
+* adapt the options in the last line as needed (the example code
+  will cause tox to reinstall all virtual environments all the time
+  which is often what one wants in CI server contexts)
 
 .. _`toxbootstrap.py`: https://pytox.googlecode.com/hg/toxbootstrap.py
 

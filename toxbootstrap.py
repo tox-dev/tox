@@ -38,7 +38,7 @@ Getting started
 
 Instead of running "tox", now you can just run "python toxbootstrap.py" which
 will take care of installing tox (if not already installed into
-``.tox/toxinstall``)::
+``.tox/_toxinstall``)::
 
     $ python toxbootstrap.py 
 
@@ -61,7 +61,7 @@ ToDo
 
 """
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 import sys
 import os
@@ -71,6 +71,7 @@ import logging
 from subprocess import Popen, PIPE, check_call, CalledProcessError
 
 USETOXDEV=os.environ.get('USETOXDEV', False)
+TENV='_toxinstall'
 
 PY3 = sys.version_info[0] == 3
 
@@ -171,7 +172,7 @@ def cmdline(argv=None):
     os.chdir('.tox')
 
     # create virtual environment
-    if not path.isdir('toxinstall') or not has_script('toxinstall', 'python'):
+    if not path.isdir(TENV) or not has_script(TENV, 'python'):
         # get virtualenv.py
         if not path.isfile('virtualenv.py'):
             wget(VIRTUALENVPY_URL)
@@ -180,27 +181,28 @@ def cmdline(argv=None):
         # XXX: we use --no-site-packages because: if tox is installed in global
         # site-packages, then pip will not install it locally. ideal fix for
         # this should be to first look for tox in the global scripts/ directory
-        run('%s virtualenv.py --no-site-packages --distribute toxinstall' % sys.executable)
+        run('%s virtualenv.py --no-site-packages --distribute %s' % 
+                (sys.executable, TENV))
 
-    assert has_script('toxinstall', 'python'), 'no python script'
-    assert has_script('toxinstall', 'pip'), 'no pip script'
+    assert has_script(TENV, 'python'), 'no python script'
+    assert has_script(TENV, 'pip'), 'no pip script'
 
-    pip = get_script_path('toxinstall', 'pip')
+    pip = get_script_path(TENV, 'pip')
 
     # install/upgrade tox itself
     if USETOXDEV:
         run('%s install -q -i http://pypi.testrun.org '
             '--upgrade --download-cache=pip-cache tox' % (pip,))
     elif any([
-        not has_script('toxinstall', 'tox'),
-        get_tox_version('toxinstall') != pypi_get_latest_version('tox')]):
+        not has_script(TENV, 'tox'),
+        get_tox_version(TENV) != pypi_get_latest_version('tox')]):
         run('%s install --upgrade --download-cache=pip-cache tox' % (pip,))
 
-    assert has_script('toxinstall', 'tox')
-    tox_script = path.abspath(get_script_path('toxinstall', 'tox'))
+    assert has_script(TENV, 'tox')
+    tox_script = path.abspath(get_script_path(TENV, 'tox'))
     logging.info('tox is already installed at %s', tox_script)
 
-    virtualenv = get_script_path('toxinstall', 'virtualenv')
+    virtualenv = get_script_path(TENV, 'virtualenv')
 
     # XXX: virtualenv 1.5 is broken; replace it
     if crun('%s --version' % (virtualenv,)).strip() == '1.5':
