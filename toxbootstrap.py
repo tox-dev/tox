@@ -172,7 +172,8 @@ def cmdline(argv=None):
     os.chdir('.tox')
 
     # create virtual environment
-    if not path.isdir(TENV) or not has_script(TENV, 'python'):
+    if not path.isdir(TENV) or not has_script(TENV, 'python') or \
+        not has_script(TENV, 'pip'):
         # get virtualenv.py
         if not path.isfile('virtualenv.py'):
             wget(VIRTUALENVPY_URL)
