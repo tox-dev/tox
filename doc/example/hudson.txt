@@ -15,13 +15,14 @@ using these steps:
 * configure your repository so that Hudson can pull it
 * (optional) configure multiple nodes so that tox-runs are performed
   on multiple hosts
-* configure ``axes`` with e.g. using :ref:`TOXENV <TOXENV>` as an axis
+* configure ``axes`` by using :ref:`TOXENV <TOXENV>` as an axis
   name and as values provide space-separated test environment names
   you want Hudson/tox to execute.
-* add a Python-build step with this content::
+
+* add a **Python-build step** with this content::
 
     import tox
-    tox.cmdline() # environment is selected by the ``TOXENV`` setting above
+    tox.cmdline() # environment is selected by ``TOXENV`` env variable
 
 * check ``Publish JUnit test result report`` and enter
   ``**/junit-*.xml`` as the pattern so that Hudson collects
@@ -30,16 +31,33 @@ using these steps:
 The last point requires that your test command creates JunitXML files,
 for example with ``py.test`` it is done like this:
 
-    commands=
-        py.test \
-            --confcutdir=.. \
-            --junitxml=junit-{envname}.xml
+    commands=py.test --junitxml=junit-{envname}.xml
 
+See a real-life example in action with the `pytest Hudson job`_
 
-See a real-life example in action with the `py-trunk-multi Hudson job`_
+.. _`pytest Hudson job`: http://hudson.testrun.org/view/pytest/job/pytest/
 
-.. _`py-trunk-multi Hudson job`: http://hudson.testrun.org/view/pytest/job/py-trunk-multi/
+Using toxbootstrap, the zero-installation feature for slaves
+-------------------------------------------------------------
 
+If you manage many Hudson slaves and want to use the latest tox release
+(or development version of tox) you can substitute the **Python build step**
+above with this code::
+
+    import urllib, os
+    url = "https://pytox.googlecode.com/hg/toxbootstrap.py"
+    #os.environ['USETOXDEV']="1"  # use tox dev version
+    s = urllib.urlopen(url).read()
+    co = compile(s, "toxbootstrap.py", 'exec')
+    exec co in {'__name__': '__main__', 
+        '__file__': 'toxbootstrap.py'}
+
+The `toxbootstrap.py`_ file download all neccessary files to install
+``tox`` in a virtual sub environment.  If you uncomment the line
+containing ``USETOXDEV`` you are going to use the latest
+development-release version of tox instead of the latest released version.
+
+.. _`toxbootstrap.py`: https://pytox.googlecode.com/hg/toxbootstrap.py
 
 Integrating "sphinx" documentation checks in a Hudson job
 ----------------------------------------------------------------
