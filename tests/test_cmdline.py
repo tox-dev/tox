@@ -117,7 +117,7 @@ class TestSession:
         expect = ">%s%s0.log" % (newlogdir.basename, newlogdir.sep)
         assert expect in out
 
-    
+
     def test_summary_status(self, initproj, capfd):
         initproj("logexample123-0.5", filedefs={
             'tests': {'test_hello.py': "def test_hello(): pass"},

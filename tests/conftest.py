@@ -84,21 +84,6 @@ def pytest_funcarg__mocksession(request):
         def __init__(self):
             self._clearmocks()
             #self.config = request.getfuncargvalue("newconfig")([], "")
-        def _clearmocks(self):
-            self._pcalls = []
-            self.report = ReportExpectMock()
-        def make_emptydir(self, path):
-            pass
-        def pcall(self, args, log, cwd, env=None):
-            self._pcalls.append(pcallMock(args, log, cwd, env))
-    return MockSession()
-
-def pytest_funcarg__mocksession(request):
-    from tox._cmdline import Session
-    class MockSession(Session):
-        def __init__(self):
-            self._clearmocks()
-            #self.config = request.getfuncargvalue("newconfig")([], "")
         def getenv(self, name):
             return VirtualEnv(self.config.envconfigs[name], session=self)
         def _clearmocks(self):
