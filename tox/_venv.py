@@ -254,7 +254,7 @@ class VirtualEnv(object):
 
 def getdigest(path):
     path = py.path.local(path)
-    if not path.check():
+    if not path.check(file=1):
         return "0" * 32
     return path.computehash()
 

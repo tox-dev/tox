@@ -1,7 +1,7 @@
 import py
 import tox
 import os, sys
-from tox._venv import VirtualEnv, CreationConfig
+from tox._venv import VirtualEnv, CreationConfig, getdigest
 
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -11,6 +11,8 @@ from tox._venv import VirtualEnv, CreationConfig
 #    assert not out
 #    assert not err
 #
+def test_getdigest(tmpdir):
+    assert getdigest(tmpdir) == "0"*32
 
 def test_find_executable():
     from tox._venv import find_executable
