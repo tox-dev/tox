@@ -60,8 +60,9 @@ def prepare_parse():
     parser.add_argument("--indexserver", action="store", dest="indexserver",
         default=None, metavar="URL",
         help="indexserver for installing deps (default pypi python.org"),
-    parser.add_argument("-U", "--upgrade", action="store_true", dest="upgrade",
-        help="try to upgrade dependencies in installation step")
+    parser.add_argument("-r", "--recreate", action="store_true",
+        dest="recreate",
+        help="recreate virtual environments")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
     return parser
@@ -181,10 +182,10 @@ class parseini:
         vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
         reader.addsubstitions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
         vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
-        if config.opts.upgrade:
-            vc.upgrade = True
+        if config.opts.recreate:
+            vc.recreate = True
         else:
-            vc.upgrade = reader.getbool(section, "upgrade", False)
+            vc.recreate = reader.getbool(section, "recreate", False)
         args = config.opts.args
         if args:
             if vc.args_are_paths:

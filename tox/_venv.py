@@ -81,7 +81,8 @@ class VirtualEnv(object):
         report = self.session.report
         name = self.envconfig.envname
         rconfig = CreationConfig.readconfig(self.path_config)
-        if rconfig and rconfig.matches(self._getliveconfig()):
+        if not self.envconfig.recreate and rconfig and \
+            rconfig.matches(self._getliveconfig()):
             report.action("reusing existing matching virtualenv %s" %
                 (self.envconfig.envname,))
             return
@@ -182,8 +183,6 @@ class VirtualEnv(object):
         l = [] 
         if indexserver:
             l += ["-i", indexserver]
-        if self.envconfig.upgrade:
-            l += ["-U"]
         return l
 
     def easy_install(self, args, indexserver=None):

@@ -113,9 +113,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
     passed to easy_install/pip for processing.  It usually can be a file,
     and URL or a package name.
 
-.. confval:: upgrade=True|False(default)
+.. confval:: recreate=True|False(default)
 
-    Install dependencies in "upgrade" mode by passing upgrade flag to install tools.
+    Always recreate virtual environment if this option is True.
 
 .. confval:: downloadcache=path
 

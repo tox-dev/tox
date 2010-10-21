@@ -173,19 +173,16 @@ def test_install_indexserver(newmocksession):
     assert "-i ABC" in args
     assert "dep2" in args
 
-def test_install_upgrade(newmocksession):
-    mocksession = newmocksession(['--upgrade'], """
+def test_install_recreate(newmocksession):
+    mocksession = newmocksession(['--recreate'], """
         [testenv]
         deps=xyz
     """)
     venv = mocksession.getenv('python')
-    venv.create()
-    l = mocksession._pcalls
-    assert len(l) == 1
-
-    venv.install_deps()
-    assert len(l) == 2
-    assert '-U' in l[1].args
+    venv.update()
+    mocksession.report.expect("action", "*creating virtualenv*")
+    venv.update()
+    mocksession.report.expect("action", "recreating virtualenv*")
  
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):

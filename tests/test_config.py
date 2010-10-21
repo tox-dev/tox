@@ -43,7 +43,7 @@ class TestConfigPackage:
         assert config.toxworkdir == tmpdir.join(".tox")
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths
-        assert not envconfig.upgrade
+        assert not envconfig.recreate
 
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
@@ -514,20 +514,20 @@ class TestIndexServer:
 
 class TestParseEnv:
 
-    def test_parse_upgrade(self, newconfig):
+    def test_parse_recreate(self, newconfig):
         inisource = ""
         config = newconfig([], inisource)
-        assert not config.envconfigs['python'].upgrade
-        config = newconfig(['--upgrade'], inisource)
-        assert config.envconfigs['python'].upgrade
-        config = newconfig(['-U'], inisource)
-        assert config.envconfigs['python'].upgrade
+        assert not config.envconfigs['python'].recreate
+        config = newconfig(['--recreate'], inisource)
+        assert config.envconfigs['python'].recreate
+        config = newconfig(['-r'], inisource)
+        assert config.envconfigs['python'].recreate
         inisource = """
             [testenv:hello]
-            upgrade = True
+            recreate = True
         """
         config = newconfig([], inisource)
-        assert config.envconfigs['hello'].upgrade
+        assert config.envconfigs['hello'].recreate
 
 class TestCmdInvocation:
     def test_help(self, cmd):

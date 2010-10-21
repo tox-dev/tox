@@ -6,7 +6,7 @@
 - issue1: Add a toxbootstrap.py script for tox
 - new option: --indexserver URL to specify PyPI index server to use for
   installation, can also be set in tox.ini testenv configurations.
-- new option: -U|--upgrade to cause installation of dependencies in upgrade mode.
+- new option: -r|--recreate to cause recreation of virtualenv
 - depend on new 'pylib' distribution instead of the whole "py" package
   which also installed py.test etc. (which is contained in py)
 
