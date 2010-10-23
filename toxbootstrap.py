@@ -61,7 +61,7 @@ ToDo
 
 """
 
-__version__ = "0.3"
+__version__ = "0.4"
 
 import sys
 import os
@@ -164,11 +164,13 @@ def pypi_get_latest_version(pkgname):
     versions.sort(key=parse_simple_version, reverse=True)
     return versions[0]
 
+def ensuredir(p):
+    if not path.isdir(p):
+        os.makedirs(p)
 
 def cmdline(argv=None):
     os.chdir(path.abspath(path.dirname(__file__)))
-    if not path.isdir('.tox'):
-        os.mkdir('.tox')
+    ensuredir('.tox')
     os.chdir('.tox')
 
     # create virtual environment
@@ -196,12 +198,13 @@ def cmdline(argv=None):
             cache = ""
         else:
             cache = "--download-cache=_download"
+            ensuredir('_download')
         run('%s install -q -i http://pypi.testrun.org '
             '--upgrade %s tox' % (pip, cache))
     elif any([
         not has_script(TENV, 'tox'),
         get_tox_version(TENV) != pypi_get_latest_version('tox')]):
-        run('%s install --upgrade --download-cache=pip-cache tox' % (pip,))
+        run('%s install --upgrade --download-cache=_download tox' % (pip,))
 
     assert has_script(TENV, 'tox')
     tox_script = path.abspath(get_script_path(TENV, 'tox'))
