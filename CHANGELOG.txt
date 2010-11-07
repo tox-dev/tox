@@ -9,6 +9,8 @@
 - new option: -r|--recreate to cause recreation of virtualenv
 - depend on new 'pylib' distribution instead of the whole "py" package
   which also installed py.test etc. (which is contained in py)
+- always install sdist files with "--upgrade" to be more resilient
+  against version/upgrade refusals from installation tools
 
 0.8
 -----------------

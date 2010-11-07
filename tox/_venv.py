@@ -172,7 +172,7 @@ class VirtualEnv(object):
         self._getliveconfig().writeconfig(self.path_config)
 
     def install_sdist(self, sdistpath):
-        self._install([sdistpath])
+        self._install(['-U', sdistpath])
 
     def install_deps(self):
         deps = self._getresolvedeps()
@@ -180,7 +180,7 @@ class VirtualEnv(object):
         self._install(deps)
 
     def _commoninstallopts(self, indexserver):
-        l = [] 
+        l = []
         if indexserver:
             l += ["-i", indexserver]
         return l
@@ -209,7 +209,7 @@ class VirtualEnv(object):
         for depline in deps:
             try:
                 parts = depline.split(None, 1)
-            except AttributeError: # e.g. py.path.local 
+            except AttributeError: # e.g. py.path.local
                 parts = depline,
             if len(parts) == 1:
                 d.setdefault('default', []).append(depline)

@@ -40,6 +40,8 @@ See a real-life example in action with the `pytest Hudson job`_
 **zero-installation** for slaves
 -------------------------------------------------------------
 
+.. versionadded:: 0.9
+
 If you manage many Hudson slaves and want to use the latest officially
 released tox (or latest development version) and want to skip manually
 installing ``tox`` then substitute the above **Python build step** code

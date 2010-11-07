@@ -214,7 +214,7 @@ def pytest_funcarg__initproj(request):
         if len(parts) == 1:
             parts.append("0.1")
         name, version = parts
-        base = tmpdir.mkdir(name)
+        base = tmpdir.ensure(name, dir=1)
         create_files(base, filedefs)
         if 'setup.py' not in filedefs:
             create_files(base, {'setup.py': '''
@@ -230,7 +230,7 @@ def pytest_funcarg__initproj(request):
             ''' % locals()})
         if name not in filedefs:
             create_files(base, {name:
-                {'__init__.py': '#'}})
+                {'__init__.py': '__version__ = %s' % version}})
         print ("created project in %s" %(base,))
         base.chdir()
     return initproj
