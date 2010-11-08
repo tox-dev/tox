@@ -4,9 +4,8 @@
 - fix pip-installation mixups by always unsetting PIP_RESPECT_VIRTUALENV
   (thanks Armin Ronacher)
 - issue1: Add a toxbootstrap.py script for tox
-- new option: --indexserver URL to specify PyPI index server to use for
-  installation, can also be set in tox.ini testenv configurations.
-- new option: -r|--recreate to cause recreation of virtualenv
+- added support for working with different and multiple indexservers.
+- new option: -r|--recreate to force recreation of virtualenv
 - depend on new 'pylib' distribution instead of the whole "py" package
   which also installed py.test etc. (which is contained in py)
 - always install sdist files with "--upgrade" to be more resilient

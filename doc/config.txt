@@ -19,7 +19,7 @@ List of optional global options::
     distdir=path      # defaults to {toxworkdir}/dist
     distshare=path    # defaults to {homedir}/.tox/distshare
     envlist=ENVLIST   # defaults to the list of all environments
-    
+
 
 ``tox`` autodetects if it is running in a Hudson_ context
 (by checking for existence of the ``HUDSON_URL`` environment variable)
@@ -28,15 +28,7 @@ and will first lookup global tox settings in this section::
     [tox:hudson]
     ...               # override [tox] settings for the hudson context
     # note: for hudson distshare defaults to ``{toxworkdir}/distshare``.
-    
-.. confval:: indexserver=
-                name URL
-                name URL
-                ...
 
-    Definition of "name -> URL" mappings which can be used in
-    dependency specifications to install packages from different
-    indexservers.
 
 envlist setting
 +++++++++++++++++++++++++
@@ -47,6 +39,7 @@ happens in this order:
 * command line option ``-eENVLIST``
 * environment variable ``TOXENV``
 * ``tox.ini`` file's ``envlist``
+
 
 Virtualenv test environment settings
 -------------------------------------------
@@ -109,8 +102,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     dependencies to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
-    passed to easy_install/pip for processing.  It usually can be a file,
-    and URL or a package name.
+    passed to easy_install/pip for processing.  It can be a file,
+    and URL or a package name.  You can additionally specify
+    an :ref:`indexserver` to use for installing this dependency.
+    All derived dependencies (deps required by the dep) will be
+    loaded from the specified indexserver::
+
+        deps = :myindex:pkg
+
 
 .. confval:: recreate=True|False(default)
 
@@ -135,6 +134,22 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Set to ``True`` if you want to create virtual environments that also
     have access to globally installed packages.  **default:** False, meaning
     that virtualenvs will be created with ``--no-site-packages`` by default.
+
+Index Server sections and settings
+-------------------------------------------
+
+Index servers can be specified by using the ``indexserver`` prefix
+in section names::
+
+    [indexserver:NAME]
+    url = XYZ
+
+Currently there is only one config option, ``url``, an URL
+to pass to ``pip_install`` or ``easy_install``.
+
+If you want to modify the default url definition you can use
+a ``[indexserver]`` definition.  This will be used for all
+unqualified dependency and sdist installations.
 
 Substitutions
 ---------------------

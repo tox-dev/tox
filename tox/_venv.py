@@ -2,6 +2,7 @@
 import sys, os
 import py
 import tox
+from tox._config import DepConfig
 
 class CreationConfig:
     def __init__(self, md5, python, version, distribute, sitepackages, deps):
@@ -101,8 +102,7 @@ class VirtualEnv(object):
             self.install_deps()
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
-            return "could not install deps %r" %(
-                    ",".join(self.envconfig.deps))
+            return "could not install deps %s" %(self.envconfig.deps,)
 
     def _getliveconfig(self):
         python = self.getconfigexecutable()
@@ -111,14 +111,22 @@ class VirtualEnv(object):
         distribute = self.envconfig.distribute
         sitepackages = self.envconfig.sitepackages
         deps = []
-        for raw_dep in self._getresolvedeps():
+        for dep in self._getresolvedeps():
+            raw_dep = dep.name
             md5 = getdigest(raw_dep)
             deps.append((md5, raw_dep))
         return CreationConfig(md5, python, version,
                         distribute, sitepackages, deps)
 
     def _getresolvedeps(self):
-        return [self.session._resolve_pkg(dep) for dep in self.envconfig.deps]
+        l = []
+        for dep in self.envconfig.deps:
+            if dep.indexserver.url is None:
+                res = self.session._resolve_pkg(dep.name)
+                if res != dep.name:
+                    dep = dep.__class__(res)
+            l.append(dep)
+        return l
 
     def getconfigexecutable(self):
         python = self.envconfig.basepython
@@ -177,7 +185,8 @@ class VirtualEnv(object):
 
     def install_deps(self):
         deps = self._getresolvedeps()
-        self.session.report.action("installing dependencies %s" %(deps))
+        depinfo = ", ".join(map(str, deps))
+        self.session.report.action("installing dependencies: %s" % depinfo)
         self._install(deps)
 
     def _commoninstallopts(self, indexserver):
@@ -207,21 +216,22 @@ class VirtualEnv(object):
         if not deps:
             return
         d = {}
-        for depline in deps:
-            try:
-                parts = depline.split(None, 1)
-            except AttributeError: # e.g. py.path.local
-                parts = depline,
-            if len(parts) == 1:
-                d.setdefault('default', []).append(depline)
-            else:
-                d.setdefault(parts[0], []).append(parts[1])
-        for name, args in d.items():
-            indexserver = self.session.config.indexserver[name]
+        l = []
+        for dep in deps:
+            if not hasattr(dep, 'indexserver'):
+                iserver = self.envconfig.config.indexserver['default']
+                dep = DepConfig(dep, iserver)
+            url = dep.indexserver.url
+            d.setdefault(url, []).append(dep.name)
+            if url not in l:
+                l.append(url)
+
+        for repo in l:
+            args = d[repo]
             if self._ispython3():
-                self.easy_install(args, indexserver)
+                self.easy_install(args, repo)
             else:
-                self.pip_install(args, indexserver)
+                self.pip_install(args, repo)
 
     def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)

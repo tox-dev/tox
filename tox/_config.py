@@ -57,9 +57,10 @@ def prepare_parse():
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist packaging activity.")
-    parser.add_argument("--indexserver", action="store", dest="indexserver",
-        default=None, metavar="URL",
-        help="indexserver for installing deps (default pypi python.org"),
+    parser.add_argument('-i', action="append",
+        dest="indexurl", metavar="URL",
+        help="set indexserver url (if URL is of form name=url set the "
+        "url for the 'name' indexserver, specifically)")
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
         help="force recreation of virtual environments")
@@ -126,14 +127,30 @@ class parseini:
                                            "{toxinidir}/.tox")
 
         # determine indexserver dictionary
-        config.indexserver = d = {}
-        for line in reader.getlist(toxsection, "indexserver"):
-            name, value = line.strip().split(None, 1)
-            d.setdefault(name, value)
-        if config.opts.indexserver:
-            d['default'] = config.opts.indexserver
-        else:
-            d.setdefault('default', None)
+        config.indexserver = {'default': IndexServerConfig('default')}
+        prefix = "indexserver"
+        for section in reader._cfg:
+            if section.name.startswith(prefix):
+                name = section.name[len(prefix):]
+                if not name:
+                    name = "default"
+                else:
+                    if name[0] != ":":
+                        continue
+                    name = name[1:]
+                repo = section.get("url", None)
+                config.indexserver[name] = IndexServerConfig(name, repo)
+        if config.opts.indexurl:
+            for urldef in config.opts.indexurl:
+                m = re.match(r"(\w+)=(\S+)", urldef)
+                if m is None:
+                    url = urldef
+                    name = "default"
+                else:
+                    name, url = m.groups()
+                    if not url:
+                        url = None
+                config.indexserver[name].url = url
             
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
@@ -164,6 +181,7 @@ class parseini:
 
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)
+        vc.config = config
         reader = IniReader(self._cfg, fallbacksections=["testenv"])
         reader.addsubstitions(**subs)
         vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
@@ -197,7 +215,15 @@ class parseini:
                     args.append(arg)
             reader.addsubstitions(args)
         vc.commands = reader.getargvlist(section, "commands")
-        vc.deps = [x.replace("/", os.sep) for x in reader.getlist(section, "deps")]
+        vc.deps = []
+        for depline in reader.getlist(section, "deps"):
+            m = re.match(r":(\w+):\s*(\S+)", depline)
+            if m:
+                iname, name = m.groups()
+            else:
+                name = depline.strip()
+                iname = "default"
+            vc.deps.append(DepConfig(name, config.indexserver[iname]))
         vc.distribute = reader.getbool(section, "distribute", True)
         vc.sitepackages = reader.getbool(section, "sitepackages", False)
         downloadcache = reader.getdefault(section, "downloadcache")
@@ -223,6 +249,23 @@ class parseini:
         else:
             envlist = env.split(",")
         return envlist
+
+class DepConfig:
+    def __init__(self, name, indexserver=None):
+        self.name = name
+        self.indexserver = indexserver
+
+    def __str__(self):
+        if self.indexserver.name == "default":
+           return self.name
+        return ":%s:%s" %(self.indexserver.name, self.name)
+    __repr__ = __str__
+
+class IndexServerConfig:
+    prefix = "indexserver:"
+    def __init__(self, name, url=None):
+        self.name = name
+        self.url = url
 
 class IniReader:
     def __init__(self, cfgparser, fallbacksections=None):

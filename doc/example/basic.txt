@@ -45,18 +45,18 @@ see some of the examples in :doc:`examples <../examples>`.
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 
-using a different PyPI server
+using a different default PyPI url
 -----------------------------------------------
 
 .. versionadded: 0.9
 
 To install dependencies and packages from a different
-PyPI server type::
+default PyPI server type::
 
-    tox --indexserver http://pypi.testrun.org
+    tox -i http://pypi.testrun.org
 
-This causes both the internal pip and easy-install steps
-to use the specified server for upgrading.
+This causes tox to install dependencies and the sdist install step
+to use the specificied url as the index server.
 
 installing dependencies from multiple PyPI server
 ---------------------------------------------------
@@ -66,19 +66,19 @@ installing dependencies from multiple PyPI server
 You can instrument tox to install dependencies from
 different PyPI servers, example::
 
-    [tox]
-    indexserver =
-        DEV http://mypypiserver.org
+    [indexserver:DEV]
+    url = http://mypypiserver.org
 
     [testenv]
-    deps = 
-        docutils       # comes from standard PyPI
-        DEV mypackage  # will come from custom PYPI above
+    deps =
+        docutils        # comes from standard PyPI
+        :DEV:mypackage  # will be installed from custom "DEV" pypi url
 
-Note that the ``--indexserver`` command line overrides 
-the default index server, not the ``DEV`` one here.
-This will cause both the internal pip and easy-install steps
-to use the specified servers accordingly.
+Using the ``-i`` command line option you can override index urls::
+
+    tox -i DEV=http://pypi.python.org/simple  # changes :DEV: package URLs
+    tox -i http://pypi.python.org/simple      # changes default
+
 
 forcing re-creation of virtual environments
 -----------------------------------------------
