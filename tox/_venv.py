@@ -185,9 +185,10 @@ class VirtualEnv(object):
 
     def install_deps(self):
         deps = self._getresolvedeps()
-        depinfo = ", ".join(map(str, deps))
-        self.session.report.action("installing dependencies: %s" % depinfo)
-        self._install(deps)
+        if deps:
+            depinfo = ", ".join(map(str, deps))
+            self.session.report.action("installing dependencies: %s" % depinfo)
+            self._install(deps)
 
     def _commoninstallopts(self, indexserver):
         l = []

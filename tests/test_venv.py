@@ -149,8 +149,9 @@ def test_install_downloadcache(newmocksession):
 
 def test_install_indexserver(newmocksession):
     mocksession = newmocksession([], """
-        [indexserver:abc]
-        url = ABC
+        [tox]
+        indexserver =
+            abc = ABC
         [testenv:py123]
         deps=
             dep1

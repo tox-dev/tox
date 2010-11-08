@@ -135,21 +135,23 @@ Complete list of settings that you can put into ``testenv*`` sections:
     have access to globally installed packages.  **default:** False, meaning
     that virtualenvs will be created with ``--no-site-packages`` by default.
 
-Index Server sections and settings
--------------------------------------------
+.. confval:: indexserver
 
-Index servers can be specified by using the ``indexserver`` prefix
-in section names::
+   .. versionadded:: 0.9
 
-    [indexserver:NAME]
-    url = XYZ
+   Multi-line ``name = URL`` definitions of python package servers.
+   Depedencies can specify using a specified index server through the
+   ``:indexservername:depname`` pattern.  The ``default`` indexserver
+   definition determines where unscoped dependencies and the sdist install
+   comes from.  Example::
 
-Currently there is only one config option, ``url``, an URL
-to pass to ``pip_install`` or ``easy_install``.
+        [tox]
+        indexserver =
+            default = http://mypypi.org
 
-If you want to modify the default url definition you can use
-a ``[indexserver]`` definition.  This will be used for all
-unqualified dependency and sdist installations.
+   will make tox install all dependencies from this PYPI index server
+   (including when installing the project sdist package).
+
 
 Substitutions
 ---------------------

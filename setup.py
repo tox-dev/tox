@@ -35,7 +35,7 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=long_description,
         url='http://codespeak.net/tox',
-        version='0.9.dev5',
+        version='0.9.dev6',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',

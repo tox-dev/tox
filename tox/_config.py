@@ -129,17 +129,10 @@ class parseini:
         # determine indexserver dictionary
         config.indexserver = {'default': IndexServerConfig('default')}
         prefix = "indexserver"
-        for section in reader._cfg:
-            if section.name.startswith(prefix):
-                name = section.name[len(prefix):]
-                if not name:
-                    name = "default"
-                else:
-                    if name[0] != ":":
-                        continue
-                    name = name[1:]
-                repo = section.get("url", None)
-                config.indexserver[name] = IndexServerConfig(name, repo)
+        for line in reader.getlist(toxsection, "indexserver"):
+            name, url = map(lambda x: x.strip(), line.split("=", 1))
+            config.indexserver[name] = IndexServerConfig(name, url)
+
         if config.opts.indexurl:
             for urldef in config.opts.indexurl:
                 m = re.match(r"(\w+)=(\S+)", urldef)
@@ -262,7 +255,6 @@ class DepConfig:
     __repr__ = __str__
 
 class IndexServerConfig:
-    prefix = "indexserver:"
     def __init__(self, name, url=None):
         self.name = name
         self.url = url

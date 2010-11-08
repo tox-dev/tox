@@ -18,8 +18,8 @@ class TestVenvConfig:
         config = newconfig([], """
             [tox]
             toxworkdir = %s
-            [indexserver:xyz]
-            url = xyz_repo
+            indexserver =
+                xyz = xyz_repo
             [testenv:py1]
             basepython=xyz
             deps=hello
@@ -498,10 +498,10 @@ class TestGlobalOptions:
 class TestIndexServer:
     def test_indexserver(self, tmpdir, newconfig):
         config = newconfig("""
-            [indexserver:name1]
-            url = XYZ
-            [indexserver:name2]
-            url = ABC
+            [tox]
+            indexserver =
+                name1 = XYZ
+                name2 = ABC
         """)
         assert config.indexserver['default'].url == None
         assert config.indexserver['name1'].url == "XYZ"
@@ -509,17 +509,17 @@ class TestIndexServer:
 
     def test_parse_indexserver(self, newconfig):
         inisource = """
-            [indexserver]
-            url = http://pypi.testrun.org
-            [indexserver:name1]
-            url = http://pypi.testrun.org
+            [tox]
+            indexserver =
+                default = http://pypi.testrun.org
+                name1 = whatever
         """
         config = newconfig([], inisource)
-        repo = config.indexserver['default'].url
-        assert repo == "http://pypi.testrun.org"
+        assert config.indexserver['default'].url == "http://pypi.testrun.org"
+        assert config.indexserver['name1'].url == "whatever"
         config = newconfig(['-i','qwe'], inisource)
-        repo = config.indexserver['default'].url
-        assert repo == "qwe"
+        assert config.indexserver['default'].url == "qwe"
+        assert config.indexserver['name1'].url == "whatever"
         config = newconfig(['-i','name1=abc', '-i','qwe2'], inisource)
         assert config.indexserver['default'].url == "qwe2"
         assert config.indexserver['name1'].url == "abc"

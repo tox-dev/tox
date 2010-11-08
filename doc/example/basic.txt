@@ -51,14 +51,19 @@ using a different default PyPI url
 .. versionadded: 0.9
 
 To install dependencies and packages from a different
-default PyPI server type::
+default PyPI server you can type interactively::
 
     tox -i http://pypi.testrun.org
 
 This causes tox to install dependencies and the sdist install step
 to use the specificied url as the index server.
 
-installing dependencies from multiple PyPI server
+You can cause the same effect by this ``tox.ini`` section::
+
+    [indexserver]
+    url = http://pypi.testrun.org
+
+installing dependencies from multiple PyPI servers
 ---------------------------------------------------
 
 .. versionadded: 0.9
@@ -66,19 +71,23 @@ installing dependencies from multiple PyPI server
 You can instrument tox to install dependencies from
 different PyPI servers, example::
 
-    [indexserver:DEV]
-    url = http://mypypiserver.org
+    [tox]
+    indexserver =
+        DEV = http://mypypiserver.org
 
     [testenv]
     deps =
         docutils        # comes from standard PyPI
         :DEV:mypackage  # will be installed from custom "DEV" pypi url
 
-Using the ``-i`` command line option you can override index urls::
+This configuration will install ``docutils`` from the default
+Python PYPI server and will install the ``mypackage`` from
+our ``DEV`` indexserver, and the respective ``http://mypypiserver.org``
+url.  You can override config file settings from the command line
+like this::
 
     tox -i DEV=http://pypi.python.org/simple  # changes :DEV: package URLs
     tox -i http://pypi.python.org/simple      # changes default
-
 
 forcing re-creation of virtual environments
 -----------------------------------------------
