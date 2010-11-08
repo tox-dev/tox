@@ -351,10 +351,10 @@ class TestVenvTest:
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         os.environ['PIP_RESPECT_VIRTUALENV'] = "1"
 
-def test_install_sdist_with_upgrade(newmocksession):
+def test_install_sdist_upgrade_mode(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     venv.install_sdist("whatever")
     l = mocksession._pcalls
     assert len(l) == 1
-    assert '-U' in l[0].args
+    assert '-U' not in l[0].args

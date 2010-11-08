@@ -172,7 +172,8 @@ class VirtualEnv(object):
         self._getliveconfig().writeconfig(self.path_config)
 
     def install_sdist(self, sdistpath):
-        self._install(['-U', sdistpath])
+        #self._install(['-U', sdistpath])
+        self._install([sdistpath])
 
     def install_deps(self):
         deps = self._getresolvedeps()
