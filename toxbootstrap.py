@@ -121,6 +121,15 @@ def has_script(venv, name):
     else:
         return path.exists(path.join(venv, 'bin', name))
 
+def activate_path(venv):
+    """Return the full path to the script virtualenv directory"""
+    if sys.platform == 'win32':
+        p = path.abspath(path.join(venv, 'Scripts', name))
+    else:
+        p = path.abspath(path.join(venv, 'bin'))
+    assert path.exists(p), p
+    os.environ['PATH'] = p + os.pathsep + os.environ['PATH']
+    logging.info("added to PATH: %s", p)
 
 def get_script_path(venv, name):
     """Return the full path to the script in virtualenv directory"""
@@ -191,6 +200,7 @@ def cmdline(argv=None):
 
     assert has_script(TENV, 'python'), 'no python script'
     assert has_script(TENV, 'pip'), 'no pip script'
+    activate_path(TENV)
 
     pip = get_script_path(TENV, 'pip')
 
@@ -208,9 +218,10 @@ def cmdline(argv=None):
         get_tox_version(TENV) != pypi_get_latest_version('tox')]):
         run('%s install --upgrade --download-cache=_download tox' % (pip,))
 
+    toxversion = get_tox_version(TENV)
     assert has_script(TENV, 'tox')
     tox_script = path.abspath(get_script_path(TENV, 'tox'))
-    logging.info('tox is already installed at %s', tox_script)
+    logging.info('tox is installed at %s %s', tox_script, toxversion)
 
     virtualenv = get_script_path(TENV, 'virtualenv')
 
