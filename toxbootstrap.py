@@ -40,7 +40,7 @@ Instead of running "tox", now you can just run "python toxbootstrap.py" which
 will take care of installing tox (if not already installed into
 ``.tox/_toxinstall``)::
 
-    $ python toxbootstrap.py 
+    $ python toxbootstrap.py
 
 If you're using Hudson_, you may also do::
 
@@ -61,7 +61,7 @@ ToDo
 
 """
 
-__version__ = "0.4"
+__version__ = '0.9.dev7'
 
 import sys
 import os
@@ -173,6 +173,7 @@ def cmdline(argv=None):
     ensuredir('.tox')
     os.chdir('.tox')
 
+    os.environ['PATH'] = os.path.abspath(TENV) + os.path.pathsep + os.environ['PATH']
     # create virtual environment
     if not path.isdir(TENV) or not has_script(TENV, 'python') or \
         not has_script(TENV, 'pip'):
@@ -184,7 +185,7 @@ def cmdline(argv=None):
         # XXX: we use --no-site-packages because: if tox is installed in global
         # site-packages, then pip will not install it locally. ideal fix for
         # this should be to first look for tox in the global scripts/ directory
-        run('%s virtualenv.py --no-site-packages --distribute %s' % 
+        run('%s virtualenv.py --no-site-packages --distribute %s' %
                 (sys.executable, TENV))
 
     assert has_script(TENV, 'python'), 'no python script'

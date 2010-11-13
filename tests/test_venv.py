@@ -147,7 +147,7 @@ def test_install_downloadcache(newmocksession):
     deps = filter(None, [x[1] for x in venv._getliveconfig().deps])
     assert deps == ['dep1', 'dep2']
 
-def test_install_indexserver(newmocksession):
+def test_install_deps_indexserver(newmocksession):
     mocksession = newmocksession([], """
         [tox]
         indexserver =
@@ -173,6 +173,21 @@ def test_install_indexserver(newmocksession):
     args = " ".join(l[1].args)
     assert "-i ABC" in args
     assert "dep2" in args
+
+def test_install_sdist_indexserver(newmocksession, tmpdir):
+    mocksession = newmocksession([], """
+        [tox]
+        indexserver =
+            default = ABC
+    """)
+    venv = mocksession.getenv('python')
+    l = mocksession._pcalls
+    p = tmpdir.ensure("distfile.tar.gz")
+    venv.install_sdist(str(p))
+    # two different index servers, two calls
+    assert len(l) == 1
+    args = " ".join(l[0].args)
+    assert "-i ABC" in args
 
 def test_install_recreate(newmocksession):
     mocksession = newmocksession(['--recreate'], """
