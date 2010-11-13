@@ -124,7 +124,7 @@ def has_script(venv, name):
 def activate_path(venv):
     """Return the full path to the script virtualenv directory"""
     if sys.platform == 'win32':
-        p = path.abspath(path.join(venv, 'Scripts', name))
+        p = path.abspath(path.join(venv, 'Scripts'))
     else:
         p = path.abspath(path.join(venv, 'bin'))
     assert path.exists(p), p
