@@ -163,7 +163,7 @@ class Session:
             try:
                 venv.install_sdist(sdist_path)
             except tox.exception.InvocationError:
-                self.setenvstatus(venv, "FAIL could not install package")
+                self.setenvstatus(venv, sys.exc_info()[1])
 
     def sdist(self):
         self.report.section("sdist")
@@ -211,7 +211,8 @@ class Session:
             status = self.venvstatus[venv.path]
             if status:
                 retcode = 1
-                self.report.error("%s: %s" %(venv.envconfig.envname, status))
+                msg = "%s: %s" %(venv.envconfig.envname, str(status))
+                self.report.error(msg)
             else:
                 self.report.good("%s: commands succeeded" %(
                                  venv.envconfig.envname, ))
@@ -276,13 +277,15 @@ class Session:
             raise
         ret = popen.wait()
         if ret:
+            invoked = " ".join(map(str, newargs))
             if logpath:
                 self.report.error("invocation failed, logfile: %s" % logpath)
+                self.report.error(logpath.read())
                 raise tox.exception.InvocationError(
-                    "invoking %r produced errors, see %s" %(args[0], logpath))
+                    "%s (see %s)" %(invoked, logpath))
             else:
                 raise tox.exception.InvocationError(
-                    "invoking %r failed" %(args[0], ))
+                    "%r" %(invoked, ))
         return out
 
     def _resolve_pkg(self, pkgspec):

@@ -237,7 +237,7 @@ def test_package_install_fails(cmd, initproj):
     result = cmd.run("tox", )
     assert result.ret
     result.stdout.fnmatch_lines([
-        "*FAIL*could not install package*",
+        "*InvocationError*",
     ])
 
 def test_test_simple(cmd, initproj):

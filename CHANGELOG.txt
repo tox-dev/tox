@@ -4,12 +4,14 @@
 - fix pip-installation mixups by always unsetting PIP_RESPECT_VIRTUALENV
   (thanks Armin Ronacher)
 - issue1: Add a toxbootstrap.py script for tox
-- added support for working with different and multiple indexservers.
+- added support for working with different and multiple PYPI indexservers.
 - new option: -r|--recreate to force recreation of virtualenv
 - depend on new 'pylib' distribution instead of the whole "py" package
   which also installed py.test etc. (which is contained in py)
 - always install sdist files with "--upgrade" to be more resilient
   against version/upgrade refusals from installation tools
+- show logfile content if there is an error (makes CI output
+  more readable)
 
 0.8
 -----------------
