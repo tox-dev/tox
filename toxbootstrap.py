@@ -61,7 +61,7 @@ ToDo
 
 """
 
-__version__ = '0.9.dev7'
+__version__ = '0.9.dev8'
 
 import sys
 import os
@@ -169,7 +169,8 @@ def ensuredir(p):
         os.makedirs(p)
 
 def cmdline(argv=None):
-    os.chdir(path.abspath(path.dirname(__file__)))
+    currentdir = os.getcwd()
+    #os.chdir(path.abspath(path.dirname(__file__)))
     ensuredir('.tox')
     os.chdir('.tox')
 
@@ -221,7 +222,7 @@ def cmdline(argv=None):
         run('%s install virtualenv!=1.5' % (pip,))
 
     # Now run the locally-installed tox
-    os.chdir('..')
+    os.chdir(currentdir)
     try:
         run([tox_script] + (argv or []), shell=False)
     except CalledProcessError:
