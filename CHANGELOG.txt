@@ -1,4 +1,4 @@
-0.9.dev0
+0.9
 -----------------
 
 - fix pip-installation mixups by always unsetting PIP_RESPECT_VIRTUALENV

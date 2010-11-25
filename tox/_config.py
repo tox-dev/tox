@@ -4,7 +4,7 @@ import re
 import tox
 import argparse
 
-defaultenvs = {'jython': 'jython', 'pypy': 'pypy-c'}
+defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
 for _name in "py24,py25,py26,py27,py30,py31,py32".split(","):
     defaultenvs[_name] = "python%s.%s" %(_name[2], _name[3])
 

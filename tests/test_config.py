@@ -471,7 +471,7 @@ class TestGlobalOptions:
             if name == "jython":
                 assert env.basepython == "jython"
             elif name == "pypy":
-                assert env.basepython == "pypy-c"
+                assert env.basepython == "pypy"
             else:
                 assert name.startswith("py")
                 bp = "python%s.%s" %(name[2], name[3])
