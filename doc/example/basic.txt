@@ -45,10 +45,12 @@ see some of the examples in :doc:`examples <../examples>`.
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 
+.. _multiindex:
+
 using a different default PyPI url
 -----------------------------------------------
 
-.. versionadded: 0.9
+.. versionadded:: 0.9
 
 To install dependencies and packages from a different
 default PyPI server you can type interactively::
@@ -58,15 +60,16 @@ default PyPI server you can type interactively::
 This causes tox to install dependencies and the sdist install step
 to use the specificied url as the index server.
 
-You can cause the same effect by this ``tox.ini`` section::
+You can cause the same effect by this ``tox.ini`` content::
 
-    [indexserver]
-    url = http://pypi.testrun.org
+    [tox]
+    indexserver =
+        default = http://pypi.testrun.org
 
 installing dependencies from multiple PyPI servers
 ---------------------------------------------------
 
-.. versionadded: 0.9
+.. versionadded:: 0.9
 
 You can instrument tox to install dependencies from
 different PyPI servers, example::
@@ -92,7 +95,7 @@ like this::
 forcing re-creation of virtual environments
 -----------------------------------------------
 
-.. versionadded: 0.9
+.. versionadded:: 0.9
 
 To for tox to recreate a (particular) virtual environment::
 
