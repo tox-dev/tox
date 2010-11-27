@@ -221,12 +221,14 @@ def cmdline(argv=None):
     toxversion = get_tox_version(TENV)
     assert has_script(TENV, 'tox')
     tox_script = path.abspath(get_script_path(TENV, 'tox'))
-    logging.info('tox is installed at %s %s', tox_script, toxversion)
+    logging.info('tox is installed at %s version %s', tox_script, toxversion)
 
     virtualenv = get_script_path(TENV, 'virtualenv')
+    venv_version = crun('%s --version' % (virtualenv,)).strip()
+    logging.info('virtualenv at %s version %s', virtualenv, venv_version)
 
     # XXX: virtualenv 1.5 is broken; replace it
-    if crun('%s --version' % (virtualenv,)).strip() == '1.5':
+    if venv_version == '1.5':
         logging.info(
             'Replacing the unstable virtualenv-1.5 with the latest stable')
         run('%s uninstall -y virtualenv' % (pip,))
