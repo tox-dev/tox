@@ -178,6 +178,7 @@ def ensuredir(p):
         os.makedirs(p)
 
 def cmdline(argv=None):
+    logging.info('toxbootstrap version %s', __version__)
     currentdir = os.getcwd()
     #os.chdir(path.abspath(path.dirname(__file__)))
     ensuredir('.tox')
