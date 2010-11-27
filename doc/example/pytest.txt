@@ -20,7 +20,7 @@ and the following ``tox.ini`` content::
     envlist = py26,py31
 
     [testenv]
-    deps=py           # PYPI package providing py.test
+    deps=pytest       # PYPI package providing py.test
     commands=
       py.test \
             []        # substitute with tox' positional arguments
@@ -45,7 +45,7 @@ and the following ``tox.ini`` content::
     envlist = py26,py31
     [testenv]
     changedir=tests
-    deps=py
+    deps=pytest
     commands=
       py.test \
         --basetemp={envtmpdir}  \ # py.test tempdir setting

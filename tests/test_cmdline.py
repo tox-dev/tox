@@ -244,7 +244,7 @@ def test_test_simple(cmd, initproj):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': """
             def test_hello(pytestconfig):
-                pytestconfig.mktemp("hello")
+                pass
             """,
         },
         'tox.ini': '''
