@@ -29,13 +29,13 @@ http://codespeak.net/tox
 def main():
     install_requires=['virtualenv5>=1.3.4.5']
     if sys.version_info[0] < 3:
-        install_requires+=['virtualenv>=1.4.9']
+        install_requires+=['virtualenv>=1.5.1']
     setup(
         name='tox',
         description='virtualenv-based automation of test activities',
         long_description=long_description,
         url='http://codespeak.net/tox',
-        version='0.9',
+        version='0.9.1.dev1',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',

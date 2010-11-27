@@ -1,3 +1,8 @@
+0.9.1
+-----------------
+
+- require virtualenv-1.5.1 as to make pypy-1.4 work
+
 0.9
 -----------------
 
