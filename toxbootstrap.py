@@ -22,9 +22,11 @@
 tox-bootstrap
 =============
 
-A bootstrap to automatically install tox and dependencies on machines that may
-not already have tox installed. This is useful when configuring a number of
-Hudson quickly; only Python needs to be installed.
+A bootstrap script to automatically install tox on machines that do not already
+have it.  This is especially useful when configuring a number of Hudson slaves
+quickly (see `zero installation for slaves
+<http://codespeak.net/tox/example/hudson.html#zero-installation-for-slaves>` in
+tox documentation); only Python needs to be pre-installed.
 
 Getting started
 ---------------
@@ -42,14 +44,9 @@ will take care of installing tox (if not already installed into
 
     $ python toxbootstrap.py
 
-If you're using Hudson_, you may also do::
-
-    import sys
-    sys.path.insert(0, '.') # sometimes necessary :/
-    import toxbootstrap
-    toxbootstrap.cmdline() # also accepts argv list
-
-.. _Hudson: http://hudson-ci.org/
+Note that, when configuring Hudson slaves, you need not add `toxbootstrap.py` to
+your source tree; see the above linked Hudson configuration example in tox
+documentation.
 
 ToDo
 ----
