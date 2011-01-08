@@ -1,8 +1,9 @@
-
 import tox
 import os, sys
+from textwrap import dedent
+
 import py
-from tox._config import IniReader
+from tox._config import IniReader, CommandParser
 
 class TestVenvConfig:
     def test_config_parsing_minimal(self, tmpdir, newconfig):
@@ -187,8 +188,8 @@ class TestIniParser:
             [section]
             key2=
                 cmd1 []
-                cmd2 [{item2} \
-                     other]
+                cmd2 {posargs:{item2} \
+                     other}
         """)
         reader = IniReader(config._cfg)
         posargs = ['hello', 'world']
@@ -208,6 +209,25 @@ class TestIniParser:
         argvlist = reader.getargvlist("section", "key2")
         assert argvlist[0] == ["cmd1"]
         assert argvlist[1] == ["cmd2", "value2", "other"]
+
+    def test_positional_arguments_are_only_replaced_when_standing_alone(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            key=
+                cmd0 []
+                cmd1 -m '[abc]'
+                cmd2 -m '\'something\'' []
+                cmd3 something[]else
+        """)
+        reader = IniReader(config._cfg)
+        posargs = ['hello', 'world']
+        reader.addsubstitions(posargs)
+
+        argvlist = reader.getargvlist('section', 'key')
+        assert argvlist[0] == ['cmd0'] + posargs
+        assert argvlist[1] == ['cmd1', '-m', '[abc]']
+        assert argvlist[2] == ['cmd2', '-m', "something"] + posargs
+        assert argvlist[3] == ['cmd3', 'something[]else']
 
     def test_getpath(self, tmpdir, newconfig):
         config = newconfig("""
@@ -352,20 +372,24 @@ class TestConfigTestEnv:
             commands =
                 cmd1 [hello] \
                      world
+                cmd1 {posargs:hello} \
+                     world
         """
         conf = newconfig([], inisource).envconfigs['py24']
         argv = conf.commands
-        assert argv[0] == ["cmd1", "hello", "world"]
+        assert argv[0] == ["cmd1", "[hello]", "world"]
+        assert argv[1] == ["cmd1", "hello", "world"]
         conf = newconfig(['brave', 'new'], inisource).envconfigs['py24']
         argv = conf.commands
-        assert argv[0] == ["cmd1", "brave", "new", "world"]
+        assert argv[0] == ["cmd1", "[hello]", "world"]
+        assert argv[1] == ["cmd1", "brave", "new", "world"]
 
     def test_rewrite_posargs(self, tmpdir, newconfig):
         inisource = """
             [testenv:py24]
             args_are_paths = True
             changedir = tests
-            commands = cmd1 [hello]
+            commands = cmd1 {posargs:hello}
         """
         conf = newconfig([], inisource).envconfigs['py24']
         argv = conf.commands
@@ -582,3 +606,47 @@ class TestCmdInvocation:
             "*ERROR*tox.ini*does not exist*",
         ])
 
+
+class TestCommandParser:
+
+    def test_command_parser_for_word(self):
+        p = CommandParser('word')
+        assert list(p.words()) == ['word']
+
+    def test_command_parser_for_posargs(self):
+        p = CommandParser('[]')
+        assert list(p.words()) == ['[]']
+
+    def test_command_parser_for_multiple_words(self):
+        p = CommandParser('w1 w2 w3 ')
+        assert list(p.words()) == ['w1', 'w2', 'w3']
+
+    def test_command_parser_for_substitution_with_spaces(self):
+        p = CommandParser('{sub:something with spaces}')
+        assert list(p.words()) == ['{sub:something with spaces}']
+
+    def test_command_parser_with_complex_word_set(self):
+        complex_case = 'word [] [literal] {something} {some:other thing} w{ord} w{or}d w{ord} w{o:rd} w{o:r}d {w:or}d w[]ord {posargs:{a key}}'
+        p = CommandParser(complex_case)
+        parsed = list(p.words())
+        expected = [
+            'word', '[]', '[literal]', '{something}', '{some:other thing}',
+            'w{ord}', 'w{or}d', 'w{ord}', 'w{o:rd}', 'w{o:r}d', '{w:or}d',
+            'w[]ord', '{posargs:{a key}}',
+            ]
+
+        assert parsed == expected
+
+    def test_command_with_runs_of_whitespace(self):
+        cmd = dedent("""cmd1 {item1}
+                     {item2}""")
+        p = CommandParser(cmd)
+        parsed = list(p.words())
+        assert parsed == ['cmd1', '{item1}', '{item2}']
+
+    def test_command_with_split_line_in_subst_arguments(self):
+        cmd = dedent(""" cmd2 {posargs:{item2}
+                         other}""")
+        p = CommandParser(cmd)
+        parsed = list(p.words())
+        assert parsed == ['cmd2', '{posargs:{item2} other}']

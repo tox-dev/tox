@@ -1,8 +1,13 @@
-import os, sys
-import py
-import re
-import tox
 import argparse
+import os
+import sys
+import re
+import shlex
+import string
+
+import py
+
+import tox
 
 defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
 for _name in "py24,py25,py26,py27,py30,py31,py32".split(","):
@@ -144,7 +149,7 @@ class parseini:
                     if not url:
                         url = None
                 config.indexserver[name].url = url
-            
+
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
                                            "{toxworkdir}/dist")
@@ -312,12 +317,25 @@ class IniReader:
 
     def _processcommand(self, command):
         posargs = self._subs.get('_posargs', None)
-        if posargs:
-            posargstring = " ".join(posargs)
-            command = re.sub("\[.*\]", lambda m: posargstring, command)
-        else:
-            command = command.replace("[", "").replace("]", "")
-        argv = [self._replace(x) for x in command.split()]
+
+        expression = r'\{(?:(?P<sub_type>[^:]+):)?(?P<substitution_value>.*)\}'
+
+        words = list(CommandParser(command).words())
+
+        new_command = ''
+        for word in words:
+            if word == '[]':
+                if posargs:
+                    new_command += ' '.join(posargs)
+                continue
+
+            new_word = re.sub(expression, self._replace_match, word)
+            # two passes; we might have substitutions in the result
+            new_word = re.sub(expression, self._replace_match, new_word)
+            new_command += new_word
+            new_command += ' '
+
+        argv = shlex.split(new_command.strip())
         return argv
 
     def getbool(self, section, name, default=None):
@@ -367,11 +385,123 @@ class IniReader:
                 "substitution key %r not found" % key)
         return str(self._subs[key])
 
+    def _replace_posargs(self, match):
+        posargs = self._subs.get('_posargs', None)
+
+        if posargs:
+            return " ".join(posargs)
+
+        if match.group('substitution_value'):
+            return match.group('substitution_value')
+        else:
+            return ''
+
+    def _replace_env(self, match):
+        envkey = match.group('substitution_value')
+        if not envkey:
+            raise tox.exception.ConfigError('env: requires an environment variable name')
+
+        if not envkey in os.environ:
+            raise tox.exception.ConfigError(
+                "substitution env:%r: %r not found in environment" %
+                (envkey, envkey))
+
+        return os.environ[envkey]
+
+    def _replace_substitution(self, match):
+        sub_key = match.group('substitution_value')
+        if sub_key not in self._subs:
+            raise tox.exception.ConfigError(
+                "substitution key %r not found" % sub_key)
+        return '"%s"' % str(self._subs[sub_key]).replace('"', r'\"')
+
+    def _replace_match(self, match):
+        g = match.groupdict()
+        handlers = {
+            'posargs' : self._replace_posargs,
+            'env' : self._replace_env,
+            None : self._replace_substitution,
+            }
+        try:
+            handler = handlers.get(g['sub_type'])
+        except KeyError:
+            raise tox.exception.ConfigError("No support for the %s substitution type" % g['sub_type'])
+        else:
+            return handler(match)
+
     def _replace(self, x, rexpattern = re.compile("\{.+?\}")):
         if '{' in x:
             return rexpattern.sub(self._sub, x)
         return x
 
+    def _parse_command(self, command):
+        pass
+
+class CommandParser(object):
+
+    def __init__(self, command):
+        self.command = command
+
+    @property
+    def cur_char(self):
+        return self.command[self.index]
+
+    def words(self):
+        self.index = 0
+        self.word = ''
+        self.can_yield = False
+        self.depth = 0
+        self.state = None
+        while self.index < len(self.command):
+            if self.cur_char in string.whitespace:
+                self.whitespace()
+
+            elif self.cur_char == '{':
+                self.can_yield = False
+                self.maybe_start_substitution()
+            elif self.cur_char == '}':
+                self.can_yield = False
+                self.maybe_end_substitution()
+            else:
+                self.can_yield = False
+                self.word += self.cur_char
+
+            self.index += 1
+
+            if self.can_yield and self.word.strip():
+                yield self.word
+                self.can_yield = False
+                self.word = ''
+
+        if self.word:
+            yield self.word
+
+    def whitespace(self):
+        if self.state == 'substitution':
+            if self.word and self.word[-1] not in string.whitespace:
+                self.word += ' '
+            return
+
+        self.can_yield = True
+
+    def maybe_start_substitution(self):
+        if self.state == 'substitution':
+            self.depth += 1
+        else:
+            assert self.depth == 0
+            self.state = 'substitution'
+
+        self.word += self.cur_char
+
+    def maybe_end_substitution(self):
+        if self.state == 'substitution':
+            if self.depth > 0:
+                self.depth -= 1
+            else:
+                self.state = None
+                assert self.depth == 0
+
+        self.word += self.cur_char
 
 def getcontextname():
     if 'HUDSON_URL' in os.environ:
