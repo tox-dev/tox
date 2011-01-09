@@ -183,6 +183,18 @@ class TestIniParser:
         assert x == [["cmd1", "with space", "grr"]]
 
 
+    def test_argvlist_quoting_in_command(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            key1=
+                cmd1 'with space' \ # a comment
+                     'after the comment'
+        """)
+        reader = IniReader(config._cfg)
+        x = reader.getargvlist("section", "key1")
+        assert x == [["cmd1", "with space", "after the comment"]]
+
+
     def test_argvlist_positional_substitution(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
@@ -650,3 +662,9 @@ class TestCommandParser:
         p = CommandParser(cmd)
         parsed = list(p.words())
         assert parsed == ['cmd2', '{posargs:{item2} other}']
+
+    def test_command_parsing_for_issue_10(self):
+        cmd = "nosetests -v -a !deferred --with-doctest []"
+        p = CommandParser(cmd)
+        parsed = list(p.words())
+        assert parsed == ['nosetests', '-v', '-a', '!deferred', '--with-doctest', '[]']
