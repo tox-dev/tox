@@ -241,6 +241,20 @@ class TestIniParser:
         assert argvlist[2] == ['cmd2', '-m', "something"] + posargs
         assert argvlist[3] == ['cmd3', 'something[]else']
 
+    def test_substition_with_multiple_words(self, newconfig):
+        inisource = """
+            [section]
+            key = py.test -n5 --junitxml={envlogdir}/junit-{envname}.xml []
+            """
+        config = newconfig(inisource)
+        reader = IniReader(config._cfg)
+        posargs = ['hello', 'world']
+        reader.addsubstitions(posargs, envlogdir='ENV_LOG_DIR', envname='ENV_NAME')
+
+        expected = ['py.test', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world']
+        assert reader.getargvlist('section', 'key')[0] == expected
+
+
     def test_getpath(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
@@ -623,6 +637,7 @@ class TestCommandParser:
 
     def test_command_parser_for_word(self):
         p = CommandParser('word')
+        # import pytest; pytest.set_trace()
         assert list(p.words()) == ['word']
 
     def test_command_parser_for_posargs(self):
@@ -631,7 +646,7 @@ class TestCommandParser:
 
     def test_command_parser_for_multiple_words(self):
         p = CommandParser('w1 w2 w3 ')
-        assert list(p.words()) == ['w1', 'w2', 'w3']
+        assert list(p.words()) == ['w1', ' ', 'w2', ' ', 'w3']
 
     def test_command_parser_for_substitution_with_spaces(self):
         p = CommandParser('{sub:something with spaces}')
@@ -642,9 +657,9 @@ class TestCommandParser:
         p = CommandParser(complex_case)
         parsed = list(p.words())
         expected = [
-            'word', '[]', '[literal]', '{something}', '{some:other thing}',
-            'w{ord}', 'w{or}d', 'w{ord}', 'w{o:rd}', 'w{o:r}d', '{w:or}d',
-            'w[]ord', '{posargs:{a key}}',
+            'word', ' ', '[]', ' ', '[literal]', ' ', '{something}', ' ', '{some:other thing}',
+            ' ', 'w', '{ord}', ' ', 'w', '{or}', 'd', ' ', 'w', '{ord}', ' ', 'w', '{o:rd}', ' ', 'w', '{o:r}', 'd', ' ', '{w:or}', 'd',
+            ' ', 'w[]ord', ' ', '{posargs:{a key}}',
             ]
 
         assert parsed == expected
@@ -654,17 +669,17 @@ class TestCommandParser:
                      {item2}""")
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ['cmd1', '{item1}', '{item2}']
+        assert parsed == ['cmd1', ' ', '{item1}', ' ', '{item2}']
 
     def test_command_with_split_line_in_subst_arguments(self):
         cmd = dedent(""" cmd2 {posargs:{item2}
                          other}""")
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ['cmd2', '{posargs:{item2} other}']
+        assert parsed == ['cmd2', ' ', '{posargs:{item2}\n                        other}']
 
     def test_command_parsing_for_issue_10(self):
         cmd = "nosetests -v -a !deferred --with-doctest []"
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ['nosetests', '-v', '-a', '!deferred', '--with-doctest', '[]']
+        assert parsed == ['nosetests', ' ', '-v', ' ', '-a', ' ', '!deferred', ' ', '--with-doctest', ' ', '[]']

@@ -333,7 +333,6 @@ class IniReader:
             # two passes; we might have substitutions in the result
             new_word = re.sub(expression, self._replace_match, new_word)
             new_command += new_word
-            new_command += ' '
 
         argv = shlex.split(new_command.strip())
         return argv
@@ -439,69 +438,91 @@ class IniReader:
 
 class CommandParser(object):
 
+    class State(object):
+        def __init__(self):
+            self.index = 0
+            self.word = ''
+            self.depth = 0
+            self.yield_word = None
+            self.state = 'before_start'
+
     def __init__(self, command):
         self.command = command
 
-    @property
-    def cur_char(self):
-        return self.command[self.index]
-
     def words(self):
-        self.index = 0
-        self.word = ''
-        self.can_yield = False
-        self.depth = 0
-        self.state = None
-        while self.index < len(self.command):
-            if self.cur_char in string.whitespace:
-                self.whitespace()
+        ps = CommandParser.State()
 
-            elif self.cur_char == '{':
-                self.can_yield = False
-                self.maybe_start_substitution()
-            elif self.cur_char == '}':
-                self.can_yield = False
-                self.maybe_end_substitution()
+        def cur_char():
+            return self.command[ps.index]
+
+        def word_has_ended():
+            return ((cur_char() in string.whitespace and ps.word and ps.word[-1] not in string.whitespace) or
+                    (cur_char() == '{' and not ps.state == 'substitution') or
+                    (ps.state is not 'substitution' and ps.word and ps.word[-1] == '}') or
+                    (cur_char() not in string.whitespace and ps.word and ps.word.strip() == ''))
+            return (ps.state is None and
+                    (ps.word.endswith('}') or
+                     ps.word.strip() == ''))
+
+        def yield_this_word():
+            ps.yield_word = ps.word
+            ps.word = ''
+
+        def accumulate():
+            ps.word += cur_char()
+
+        def push_substitution():
+            if ps.depth == 0:
+                ps.state = 'substitution'
+            ps.depth += 1
+
+        def pop_substitution():
+            ps.depth -= 1
+            if ps.depth == 0:
+                ps.state = None
+
+        while ps.index < len(self.command):
+
+            if cur_char() in string.whitespace:
+                if ps.state == 'substitution':
+                    accumulate()
+
+                else:
+                    if word_has_ended():
+                        yield_this_word()
+
+                    accumulate()
+
+            elif cur_char() == '{':
+                if word_has_ended():
+                    yield_this_word()
+
+                accumulate()
+                push_substitution()
+
+            elif cur_char() == '}':
+                accumulate()
+                pop_substitution()
+
             else:
-                self.can_yield = False
-                self.word += self.cur_char
+                if word_has_ended():
+                    yield_this_word()
 
-            self.index += 1
+                accumulate()
 
-            if self.can_yield and self.word.strip():
-                yield self.word
-                self.can_yield = False
-                self.word = ''
+            ps.index += 1
 
-        if self.word:
-            yield self.word
+            if ps.yield_word:
+                if ps.yield_word.strip():
+                    yield ps.yield_word
+                else:
+                    yield ' '
 
-    def whitespace(self):
-        if self.state == 'substitution':
-            if self.word and self.word[-1] not in string.whitespace:
-                self.word += ' '
-            return
+                ps.yield_word = None
 
-        self.can_yield = True
+        if ps.word.strip():
+            yield ps.word.strip()
 
-    def maybe_start_substitution(self):
-        if self.state == 'substitution':
-            self.depth += 1
-        else:
-            assert self.depth == 0
-            self.state = 'substitution'
-
-        self.word += self.cur_char
-
-    def maybe_end_substitution(self):
-        if self.state == 'substitution':
-            if self.depth > 0:
-                self.depth -= 1
-            else:
-                self.state = None
-                assert self.depth == 0
-
-        self.word += self.cur_char
 
 def getcontextname():
     if 'HUDSON_URL' in os.environ:
