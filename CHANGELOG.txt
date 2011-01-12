@@ -2,6 +2,8 @@
 -----------------
 
 - require virtualenv-1.5.1 as to make pypy-1.4 work
+- change the positional argument specifier to use {posargs:} syntax
+- Fix issues #15 and #10 with changes to the argument parsing method
 
 0.9
 -----------------
