@@ -1,3 +1,4 @@
+.. be in -*- rst -*- mode!
 
 tox configuration specification
 ================================
@@ -213,22 +214,34 @@ does not exist.
 substitutions for positional arguments in commands
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-When you specify positional arguments to a ``tox`` run like this::
+If you specify a substitution string like this::
+
+    {posargs:DEFAULTS}
+
+then the value will be replaced with positional arguments as provided
+to the tox command::
 
     tox arg1 arg2
 
-these arguments will textually replace the ``[.*]`` pattern in
-any ``command`` specification.
+In this instance, the positional argument portion will be replaced with
+``arg1 arg2``. If no positional arguments were specified, the value of
+DEFAULTS will be used instead. If DEFAULTS contains other substitution
+strings, such as ``{env:*}``, they will be interpreted.,
 
 Use a double ``--`` if you also want to pass options to an underlying
 test command, for example::
 
     tox -- --opt1 ARG1
 
-will make the `--opt1 ARG1`` appear in all test commands where ``[]`` was
-specified.  By default (see ``args_are_paths`` setting), ``tox`` rewrites
-each positional argument if it is a relative path and exists on the
-filesystem to become a path relative to the ``changedir`` setting.
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or
+``{posargs}`` was specified.  By default (see ``args_are_paths``
+setting), ``tox`` rewrites each positional argument if it is a relative
+path and exists on the filesystem to become a path relative to the
+``changedir`` setting.
+
+Previous versions of tox supported the ``[.*]`` pattern to denote
+positional arguments with defaults. This format has been deprecated.
+Use ``{posargs:DEFAULTS}`` to specify those.
 
 Other Rules and notes
 =========================
