@@ -1,3 +1,5 @@
+.. be in -*- rst -*- mode!
+
 General tips and tricks
 ================================
 
@@ -9,21 +11,26 @@ If you invoke ``tox`` like this::
     tox -- -x tests/test_something.py
 
 the arguments after the ``--`` will be substituted
-everywhere where you specify ``[...]`` in your
+everywhere where you specify ``{posargs}`` in your
 test commands, for example using ``py.test``::
 
     # in the testenv or testenv:NAME section of your tox.ini
     commands =
-        py.test []
+        py.test {posargs}
 
 or using ``nosetests``::
 
     commands =
-        nosetests []
+        nosetests {posargs}
 
 the above ``tox`` invocation will trigger the test runners to
 stop after the first failure and to only run a particular test file.
 
+You can specify defaults for the positional arguments using this
+syntax::
+
+    commands =
+        nosetests {posargs:--with-coverage}
 
 .. _`sphinx checks`:
 
@@ -138,4 +145,3 @@ section, for example::
     basepython=/my/path/to/python2.7
 
 .. include:: ../links.txt
-
