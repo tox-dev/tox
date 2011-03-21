@@ -199,6 +199,17 @@ def test_install_recreate(newmocksession):
     mocksession.report.expect("action", "*creating virtualenv*")
     venv.update()
     mocksession.report.expect("action", "recreating virtualenv*")
+
+def test_install_error(newmocksession):
+    mocksession = newmocksession(['--recreate'], """
+        [testenv]
+        deps=xyz
+        commands=
+            qwelkqw
+    """)
+    venv = mocksession.getenv('python')
+    venv.test()
+    mocksession.report.expect("error", "*not find*qwelkqw*")
  
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
