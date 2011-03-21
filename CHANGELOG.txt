@@ -2,6 +2,8 @@
 -----------------
 
 - require virtualenv-1.5.1 as to make pypy-1.4 work
+- fix issue14: report errors related to test command
+- fix issue20: document format of URLs for specifying dependencies
 
 0.9
 -----------------

@@ -110,6 +110,15 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
         deps = :myindex:pkg
 
+    If you want to use URLs to install development versions
+    of a Python package you can use the ``+`` forms, for example::
+
+        svn+http://code.djangoproject.com/svn/django/trunk/
+        git+git://github.com/django/django.git
+
+    (You cannot use the ``#`` character because that would 
+    be regarded as a comment in the configuration file.)
+
 
 .. confval:: recreate=True|False(default)
 
