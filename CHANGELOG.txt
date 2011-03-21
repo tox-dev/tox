@@ -4,6 +4,9 @@
 - require virtualenv-1.5.1 as to make pypy-1.4 work
 - fix issue14: report errors related to test command
 - fix issue20: document format of URLs for specifying dependencies
+- fix issue19: substitute Hudson for Jenkins everywhere following the renaming
+  of the project.  NOTE: if you used the special [tox:jenkins]
+  section it will now need to be named [tox:jenkins].
 
 0.9
 -----------------

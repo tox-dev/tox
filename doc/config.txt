@@ -21,13 +21,13 @@ List of optional global options::
     envlist=ENVLIST   # defaults to the list of all environments
 
 
-``tox`` autodetects if it is running in a Hudson_ context
+``tox`` autodetects if it is running in a Jenkins_ context
 (by checking for existence of the ``HUDSON_URL`` environment variable)
 and will first lookup global tox settings in this section::
 
-    [tox:hudson]
-    ...               # override [tox] settings for the hudson context
-    # note: for hudson distshare defaults to ``{toxworkdir}/distshare``.
+    [tox:jenkins]
+    ...               # override [tox] settings for the jenkins context
+    # note: for jenkins distshare defaults to ``{toxworkdir}/distshare``.
 
 
 envlist setting
@@ -104,7 +104,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     package installation.  Each line defines a dependency, which will be
     passed to easy_install/pip for processing.  It can be a file,
     and URL or a package name.  You can additionally specify
-    an :ref:`indexserver` to use for installing this dependency.
+    an :confval:`indexserver` to use for installing this dependency.
     All derived dependencies (deps required by the dep) will be
     loaded from the specified indexserver::
 

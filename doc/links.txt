@@ -13,7 +13,7 @@
 .. _pip: http://pypi.python.org/pypi/pip
 .. _setuptools: http://pypi.python.org/pypi/setuptools
 .. _distribute: http://pypi.python.org/pypi/distribute
-.. _`hudson`: http://hudson-ci.org/
+.. _`jenkins`: http://jenkins-ci.org/
 .. _sphinx: http://pypi.python.org/pypi/Sphinx
 .. _discover: http://pypi.python.org/pypi/discover
 .. _unittest2: http://pypi.python.org/pypi/unittest2

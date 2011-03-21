@@ -395,7 +395,7 @@ class TestGlobalOptions:
         config = newconfig(["-vv"], "")
         assert config.opts.verbosity == 2
 
-    def test_substitution_hudson_default(self, tmpdir, monkeypatch, newconfig):
+    def test_substitution_jenkins_default(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         config = newconfig("""
             [testenv:py24]
@@ -407,11 +407,11 @@ class TestGlobalOptions:
         expect_path = config.toxworkdir.join("distshare")
         assert argv[0][0] == expect_path
 
-    def test_substitution_hudson_context(self, tmpdir, monkeypatch, newconfig):
+    def test_substitution_jenkins_context(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         monkeypatch.setenv("WORKSPACE", tmpdir)
         config = newconfig("""
-            [tox:hudson]
+            [tox:jenkins]
             distshare = {env:WORKSPACE}/hello
             [testenv:py24]
             commands =

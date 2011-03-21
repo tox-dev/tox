@@ -23,9 +23,9 @@ tox-bootstrap
 =============
 
 A bootstrap script to automatically install tox on machines that do not already
-have it.  This is especially useful when configuring a number of Hudson slaves
+have it.  This is especially useful when configuring a number of Jenkins slaves
 quickly (see `zero installation for slaves
-<http://codespeak.net/tox/example/hudson.html#zero-installation-for-slaves>` in
+<http://codespeak.net/tox/example/jenkins.html#zero-installation-for-slaves>` in
 tox documentation); only Python needs to be pre-installed.
 
 Getting started
@@ -44,8 +44,8 @@ will take care of installing tox (if not already installed into
 
     $ python toxbootstrap.py
 
-Note that, when configuring Hudson slaves, you need not add `toxbootstrap.py` to
-your source tree; see the above linked Hudson configuration example in tox
+Note that, when configuring Jenkins slaves, you need not add `toxbootstrap.py` to
+your source tree; see the above linked Jenkins configuration example in tox
 documentation.
 
 ToDo
@@ -58,7 +58,7 @@ ToDo
 
 """
 
-__version__ = '0.9.1.dev2'
+__version__ = '0.9.1.dev3'
 
 import sys
 import os

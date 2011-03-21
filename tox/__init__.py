@@ -1,5 +1,5 @@
 #
-__version__ = '0.9.1.dev2'
+__version__ = '0.9.1.dev3'
 
 from py.apipkg import initpkg
 
