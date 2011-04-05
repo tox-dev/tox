@@ -27,9 +27,7 @@ http://codespeak.net/tox
 
 
 def main():
-    install_requires=['virtualenv5>=1.3.4.5']
-    if sys.version_info[0] < 3:
-        install_requires+=['virtualenv>=1.5.1']
+    install_requires=['virtualenv>=1.6']
     setup(
         name='tox',
         description='virtualenv-based automation of test activities',
