@@ -61,7 +61,7 @@ Current features
 
     - installs your ``setup.py`` based project into each virtual environment
 
-    - test-tool agnostic: runs py.test, nose or unittests a uniform manner
+    - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 

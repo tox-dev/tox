@@ -234,7 +234,7 @@ test command, for example::
 
     tox -- --opt1 ARG1
 
-will make the `--opt1 ARG1`` appear in all test commands where ``[]`` was
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` was
 specified.  By default (see ``args_are_paths`` setting), ``tox`` rewrites
 each positional argument if it is a relative path and exists on the
 filesystem to become a path relative to the ``changedir`` setting.
