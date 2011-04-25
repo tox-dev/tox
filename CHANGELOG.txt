@@ -7,6 +7,7 @@
 - fix issue19: substitute Hudson for Jenkins everywhere following the renaming
   of the project.  NOTE: if you used the special [tox:jenkins]
   section it will now need to be named [tox:jenkins].
+- fix issue 23 / apply some ReST fixes
 
 0.9
 -----------------
