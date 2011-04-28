@@ -61,7 +61,7 @@ Current features
 
     - installs your ``setup.py`` based project into each virtual environment
 
-    - test-tool agnostic: runs py.test, nose or unittests a uniform manner
+    - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 
@@ -72,11 +72,12 @@ Current features
 
 * **cross-platform**: Windows and Unix style environments
 
-* **integrates with continous integration servers** like Hudson_ and helps
-  you to avoid boilerplatish and platform-specific build-step hacks.
+* **integrates with continous integration servers** like Jenkins_
+  (formerly known as Hudson) and helps you to avoid boilerplatish 
+  and platform-specific build-step hacks.
 
 * **unified automatic artifact management** between ``tox`` runs both
-  in a local developer shell as well as in a CI/Hudson context.
+  in a local developer shell as well as in a CI/Jenkins context.
 
 * **driven by a simple ini-style config file**
 

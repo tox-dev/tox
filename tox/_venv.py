@@ -138,9 +138,6 @@ class VirtualEnv(object):
         return x
 
     def getsupportedinterpreter(self):
-        if sys.platform == "win32" and self._ispython3():
-            raise tox.exception.UnsupportedInterpreter(
-                "python3/virtualenv3 is buggy on windows")
         if sys.platform == "win32" and self.envconfig.basepython and \
                 "jython" in self.envconfig.basepython:
             raise tox.exception.UnsupportedInterpreter(
@@ -154,7 +151,7 @@ class VirtualEnv(object):
         #if self.getcommandpath("activate").dirpath().check():
         #    return
         config_interpreter = self.getsupportedinterpreter()
-        args = ['virtualenv' + (self._ispython3() and "5" or "")]
+        args = ['virtualenv']
         if not self._ispython3() and self.envconfig.distribute:
             args.append('--distribute')
         if not self.envconfig.sitepackages:
@@ -229,10 +226,7 @@ class VirtualEnv(object):
 
         for repo in l:
             args = d[repo]
-            if self._ispython3():
-                self.easy_install(args, repo)
-            else:
-                self.pip_install(args, repo)
+            self.pip_install(args, repo)
 
     def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)
@@ -241,6 +235,7 @@ class VirtualEnv(object):
             try:
                 self._pcall(argv, log=-1, cwd=cwd)
             except tox.exception.InvocationError:
+                self.session.report.error(str(sys.exc_info()[1]))
                 return True
 
     def _pcall(self, args, venv=True, log=None, cwd=None):

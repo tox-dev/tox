@@ -114,7 +114,7 @@ class parseini:
         config._cfg = self._cfg
         self.config = config
         ctxname = getcontextname()
-        if ctxname == "hudson":
+        if ctxname == "jenkins":
             reader = IniReader(self._cfg, fallbacksections=['tox'])
             toxsection = "tox:%s" % ctxname
             distshare_default = "{toxworkdir}/distshare"
@@ -526,5 +526,5 @@ class CommandParser(object):
 
 def getcontextname():
     if 'HUDSON_URL' in os.environ:
-        return 'hudson'
+        return 'jenkins'
     return None

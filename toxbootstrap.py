@@ -23,9 +23,9 @@ tox-bootstrap
 =============
 
 A bootstrap script to automatically install tox on machines that do not already
-have it.  This is especially useful when configuring a number of Hudson slaves
+have it.  This is especially useful when configuring a number of Jenkins slaves
 quickly (see `zero installation for slaves
-<http://codespeak.net/tox/example/hudson.html#zero-installation-for-slaves>` in
+<http://codespeak.net/tox/example/jenkins.html#zero-installation-for-slaves>` in
 tox documentation); only Python needs to be pre-installed.
 
 Getting started
@@ -44,8 +44,8 @@ will take care of installing tox (if not already installed into
 
     $ python toxbootstrap.py
 
-Note that, when configuring Hudson slaves, you need not add `toxbootstrap.py` to
-your source tree; see the above linked Hudson configuration example in tox
+Note that, when configuring Jenkins slaves, you need not add `toxbootstrap.py` to
+your source tree; see the above linked Jenkins configuration example in tox
 documentation.
 
 ToDo
@@ -58,7 +58,7 @@ ToDo
 
 """
 
-__version__ = '0.9.1.dev1'
+__version__ = '0.9.1.dev4'
 
 import sys
 import os
@@ -82,9 +82,8 @@ else:
 logging.basicConfig(level=logging.INFO)
 
 
-# Last stable: 1.5.1
-VIRTUALENVPY_URL = (
-    'http://bitbucket.org/ianb/virtualenv/raw/eb94c9ebe0ba/virtualenv.py')
+# Last stable: 1.6 (now on github)
+VIRTUALENVPY_URL = ('https://github.com/pypa/virtualenv/raw/master/virtualenv.py')
 
 def run(cmd, shell=True):
     """Run the given command in shell"""

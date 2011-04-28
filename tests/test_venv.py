@@ -45,11 +45,6 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     interp = venv.getsupportedinterpreter()
     assert interp == sys.executable
     monkeypatch.setattr(sys, 'platform', "win32")
-    monkeypatch.setattr(venv.envconfig, 'basepython', 'python3')
-    py.test.raises(tox.exception.UnsupportedInterpreter,
-                   venv.getsupportedinterpreter)
-    monkeypatch.undo()
-    monkeypatch.setattr(sys, 'platform', "win32")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
     py.test.raises(tox.exception.UnsupportedInterpreter,
                    venv.getsupportedinterpreter)
@@ -199,6 +194,17 @@ def test_install_recreate(newmocksession):
     mocksession.report.expect("action", "*creating virtualenv*")
     venv.update()
     mocksession.report.expect("action", "recreating virtualenv*")
+
+def test_install_error(newmocksession):
+    mocksession = newmocksession(['--recreate'], """
+        [testenv]
+        deps=xyz
+        commands=
+            qwelkqw
+    """)
+    venv = mocksession.getenv('python')
+    venv.test()
+    mocksession.report.expect("error", "*not find*qwelkqw*")
  
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
@@ -215,12 +221,12 @@ def test_install_python3(tmpdir, newmocksession):
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
-    assert 'virtualenv5' in args[0]
+    assert 'virtualenv' in args[0]
     l[:] = []
     venv._install(["hello"])
     assert len(l) == 1
     args = l[0].args
-    assert 'easy_install' in str(args[0])
+    assert 'pip' in str(args[0])
     for x in args:
         assert "--download-cache" not in args, args
 

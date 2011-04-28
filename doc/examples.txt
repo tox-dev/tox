@@ -10,5 +10,5 @@ tox configuration and usage examples
    example/unittest
    example/nose.txt
    example/general.txt
-   example/hudson.txt
+   example/jenkins.txt
 

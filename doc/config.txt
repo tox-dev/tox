@@ -214,6 +214,8 @@ does not exist.
 substitutions for positional arguments in commands
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+.. versionadded:: 1.0
+
 If you specify a substitution string like this::
 
     {posargs:DEFAULTS}
