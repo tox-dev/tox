@@ -9,6 +9,7 @@
   of the project.  NOTE: if you used the special [tox:jenkins]
   section it will now need to be named [tox:jenkins].
 - fix issue 23 / apply some ReST fixes
+- added a CONTRIBUTORS file
 
 0.9
 -----------------
