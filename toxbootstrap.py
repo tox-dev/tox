@@ -83,7 +83,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 # Last stable: 1.6 (now on github)
-VIRTUALENVPY_URL = ('https://github.com/pypa/virtualenv/raw/1.6/virtualenv.py')
+VIRTUALENVPY_URL = ('https://github.com/pypa/virtualenv/raw/master/virtualenv.py')
 
 def run(cmd, shell=True):
     """Run the given command in shell"""
