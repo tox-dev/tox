@@ -1,7 +1,7 @@
 1.0.dev
 -----------------
 
-- require virtualenv-1.5.1 as to make pypy-1.4 work
+- require virtualenv-1.6, obsoleting virtualenv5 and making pypy-1.4 work by default
 - fix issue22: use virtualenv-1.6, obsoleting virtualenv5 (thanks Jannis Leidel)
 - fix issue14: inline report errors related to test command
 - fix issue20: document format of URLs for specifying dependencies

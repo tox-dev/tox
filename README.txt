@@ -19,5 +19,5 @@ For more information, docs and many examples please checkout:
 
 have fun,
 
-holger krekel, July 2010
+holger krekel, April 2011
 
