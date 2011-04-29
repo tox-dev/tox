@@ -13,6 +13,8 @@
 - change the positional argument specifier to use {posargs:} syntax
 - Fix issues #15 and #10 with changes to the argument parsing method
   (many thanks to Chris Rose)
+- remove use inipkg lazy importing logic - 
+  the namespace/imports are anyway very small with tox.
 
 0.9
 -----------------
