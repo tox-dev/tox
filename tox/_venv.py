@@ -231,14 +231,15 @@ class VirtualEnv(object):
     def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)
         cwd = self.envconfig.changedir
+        env = self.envconfig.environment
         for argv in self.envconfig.commands:
             try:
-                self._pcall(argv, log=-1, cwd=cwd)
+                self._pcall(argv, log=-1, cwd=cwd, env=env)
             except tox.exception.InvocationError:
                 self.session.report.error(str(sys.exc_info()[1]))
                 return True
 
-    def _pcall(self, args, venv=True, log=None, cwd=None):
+    def _pcall(self, args, venv=True, log=None, cwd=None, env=None):
         try:
             del os.environ['PYTHONDONTWRITEBYTECODE']
         except KeyError:
@@ -249,7 +250,7 @@ class VirtualEnv(object):
                 args = [self.getcommandpath(args[0])] + args[1:]
             if log is None:
                 log = self.path.ensure("log", dir=1)
-            return self.session.pcall(args, log=log, cwd=cwd)
+            return self.session.pcall(args, log=log, cwd=cwd, env=env)
         finally:
             os.environ['PATH'] = old
 
@@ -289,5 +290,3 @@ else:
             actual = py.path.local(actual)
             if actual.check():
                 return actual
-
-

@@ -371,6 +371,27 @@ class TestVenvTest:
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         os.environ['PIP_RESPECT_VIRTUALENV'] = "1"
 
+def test_session_environment_passed_to_pcall(mocksession, newconfig):
+    config = newconfig([], """
+        [testenv:python]
+        commands=%s -V
+        environment =
+            ENV_VAR = value
+    """ % sys.executable)
+    mocksession._clearmocks()
+
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
+    # import pdb; pdb.set_trace()
+    venv.test()
+
+    l = mocksession._pcalls
+    assert len(l) == 1
+    args = l[0].args
+    env = l[0].env
+    assert env is not None
+    assert 'ENV_VAR' in env
+    assert env['ENV_VAR'] == 'value'
+
 def test_install_sdist_upgrade_mode(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')

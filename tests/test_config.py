@@ -138,6 +138,21 @@ class TestIniParser:
         x = reader.getlist("section", "key2")
         assert x == ['item1', 'grr']
 
+    def test_getdict(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            key2=
+                key1=item1
+                key2={item2}
+        """)
+        reader = IniReader(config._cfg)
+        reader.addsubstitions(item1="not", item2="grr")
+        x = reader.getdict("section", "key2")
+        assert 'key1' in x
+        assert 'key2' in x
+        assert x['key1'] == 'item1'
+        assert x['key2'] == 'grr'
+
     def test_getdefault_environment_substitution(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
         config = newconfig("""
@@ -296,6 +311,7 @@ class TestConfigTestEnv:
         assert envconfig.distribute == True
         assert envconfig.sitepackages == False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
+        assert envconfig.environment is None
 
     def test_specific_command_overrides(self, tmpdir, newconfig):
         config = newconfig("""
@@ -335,6 +351,20 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
         assert envconfig.envpython == envconfig.envbindir.join("jython")
+
+    def test_environment_overrides(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            environment =
+                PYTHONPATH = something
+                ANOTHER_VAL=else
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'PYTHONPATH' in envconfig.environment
+        assert 'ANOTHER_VAL' in envconfig.environment
+        assert envconfig.environment['PYTHONPATH'] == 'something'
+        assert envconfig.environment['ANOTHER_VAL'] == 'else'
 
     def test_changedir_override(self, tmpdir, newconfig):
         config = newconfig("""

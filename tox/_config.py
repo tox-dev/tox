@@ -209,6 +209,10 @@ class parseini:
                         arg = vc.changedir.bestrelpath(origpath)
                     args.append(arg)
             reader.addsubstitions(args)
+        vc.environment = reader.getdict(section, 'environment')
+        if not vc.environment:
+            vc.environment = None
+
         vc.commands = reader.getargvlist(section, "commands")
         vc.deps = []
         for depline in reader.getlist(section, "deps"):
@@ -284,6 +288,18 @@ class IniReader:
         if s is None:
             return []
         return [x.strip() for x in s.split(sep) if x.strip()]
+
+    def getdict(self, section, name, sep="\n"):
+        s = self.getdefault(section, name, None)
+        if s is None:
+            return {}
+
+        value = {}
+        for line in s.split(sep):
+            name, rest = line.split('=', 1)
+            value[name.strip()] = rest.strip()
+
+        return value
 
     def getargvlist(self, section, name):
         s = self.getdefault(section, name, '', replace=False)
