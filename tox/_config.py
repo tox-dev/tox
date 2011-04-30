@@ -78,9 +78,6 @@ class Config:
         self.envconfigs = {}
         self.invocationcwd = py.path.local()
 
-class ConfigError(Exception):
-    """ error in tox configuration. """
-
 class VenvConfig:
     def __init__(self, **kw):
         self.__dict__.update(kw)
