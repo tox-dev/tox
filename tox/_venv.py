@@ -232,9 +232,15 @@ class VirtualEnv(object):
         self.session.make_emptydir(self.envconfig.envtmpdir)
         cwd = self.envconfig.changedir
         env = self.envconfig.environment
+        if env:
+            env_arg = os.environ.copy()
+            env_arg.update(env)
+        else:
+            env_arg = None
+
         for argv in self.envconfig.commands:
             try:
-                self._pcall(argv, log=-1, cwd=cwd, env=env)
+                self._pcall(argv, log=-1, cwd=cwd, env=env_arg)
             except tox.exception.InvocationError:
                 self.session.report.error(str(sys.exc_info()[1]))
                 return True
