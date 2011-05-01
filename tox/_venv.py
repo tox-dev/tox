@@ -169,7 +169,7 @@ class VirtualEnv(object):
         try:
             basepath.chdir()
             args.append(self.path.basename)
-            self._pcall(args, venv=False)
+            self._pcall(args) #, venv=False)
             #if self._ispython3():
             #    self.easy_install(["-U", "distribute"])
         finally:

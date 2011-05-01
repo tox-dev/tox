@@ -58,7 +58,7 @@ ToDo
 
 """
 
-__version__ = '1.0.dev1'
+__version__ = '1.0.dev3'
 
 import sys
 import os
@@ -194,6 +194,12 @@ def cmdline(argv=None):
         # this should be to first look for tox in the global scripts/ directory
         run('%s virtualenv.py --no-site-packages --distribute %s' %
                 (sys.executable, TENV))
+        logging.info("removing virtualenv.py script after bootstrap venv creation")
+        for x in ('', 'o', 'c'):
+            try:
+                os.remove("virtualenv.py%s" % x)
+            except OSError:
+                pass
 
     assert has_script(TENV, 'python'), 'no python script'
     assert has_script(TENV, 'pip'), 'no pip script'
