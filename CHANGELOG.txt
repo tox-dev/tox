@@ -1,20 +1,23 @@
 1.0.dev
 -----------------
 
-- require virtualenv-1.6, obsoleting virtualenv5 and making pypy-1.4 work by default
-- fix issue22: use virtualenv-1.6, obsoleting virtualenv5 (thanks Jannis Leidel)
-- fix issue14: inline report errors related to test command
+- fix issue22: require virtualenv-1.6.1, obsoleting virtualenv5 (thanks Jannis Leidel)
+  and making things work with pypy-1.5 and python3 more seemlessly
+- toxbootstrap.py (used by jenkins build slaves) now follows the latest release of virtualenv
 - fix issue20: document format of URLs for specifying dependencies
 - fix issue19: substitute Hudson for Jenkins everywhere following the renaming
-  of the project.  NOTE: if you used the special [tox:jenkins]
+  of the project.  NOTE: if you used the special [tox:hudson]
   section it will now need to be named [tox:jenkins].
 - fix issue 23 / apply some ReST fixes
-- added a CONTRIBUTORS file
-- change the positional argument specifier to use {posargs:} syntax
-- Fix issues #15 and #10 with changes to the argument parsing method
-  (many thanks to Chris Rose)
-- remove use inipkg lazy importing logic - 
+- change the positional argument specifier to use {posargs:} syntax and
+  fix issues #15 and #10 by refining the argument parsing method (Chris Rose)
+- remove use of inipkg lazy importing logic - 
   the namespace/imports are anyway very small with tox.
+- fix a fspath related assertion to work with debian installs which uses
+  symlinks
+- show path of the underlying virtualenv invocation and bootstrap
+  virtualenv.py into a working subdir 
+- added a CONTRIBUTORS file
 
 0.9
 -----------------

@@ -43,7 +43,8 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     """ % sys.executable)
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     interp = venv.getsupportedinterpreter()
-    assert interp == sys.executable
+    # realpath needed for debian symlinks
+    assert interp == py.path.local(sys.executable).realpath()
     monkeypatch.setattr(sys, 'platform', "win32")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
     py.test.raises(tox.exception.UnsupportedInterpreter,
@@ -69,7 +70,8 @@ def test_create(monkeypatch, mocksession, newconfig):
     if sys.platform != "win32":
         i = args.index("-p")
         assert i != -1, args
-        assert sys.executable == args[i+1]
+        # realpath is needed for stuff like the debian symlinks
+        assert py.path.local(sys.executable).realpath() == args[i+1]
         #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install")
     interp = venv._getliveconfig().python
