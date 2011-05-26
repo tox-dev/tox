@@ -13,7 +13,7 @@ driven from a simple ``tox.ini`` file, including:
 
 Docs and examples are at:
 
-    http://tox.rtfd.com
+    http://tox.readthedocs.com
 
 Installation:
 
