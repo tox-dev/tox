@@ -20,9 +20,9 @@ use for:
 
 For more information, docs and many examples please checkout the `home page`_:
 
-http://codespeak.net/tox
+    http://tox.rtfd.org
 
-.. _`home page`: http://codespeak.net/tox
+.. _`home page`: http://tox.rtfd.org
 """
 
 
@@ -43,7 +43,7 @@ def main():
         install_requires=install_requires+['argparse', 'py>=1.4.0a2', ],
         zip_safe=True,
         classifiers=[
-            'Development Status :: 4 - Beta',
+            'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Developers',
             'License :: OSI Approved :: GNU General Public License (GPL)',
              'Operating System :: POSIX',

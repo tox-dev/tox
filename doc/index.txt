@@ -3,7 +3,6 @@ Welcome to the tox automation project
 
 .. note::
 
-    tox is a a young project and still considered beta.
     Bug reports, feedback, contributions welcome: see :ref:`support`.
 
 vision: merge testing and deployment
