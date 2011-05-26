@@ -17,7 +17,7 @@ Install info in a nutshell
 
 **License**: GPLv2 or later
 
-**hg repository**: http://code.google.com/p/pytox/source/checkout
+**hg repository**: http://bitbucket.org/hpk42/tox
 
 Installation with pip/easy_install
 --------------------------------------
@@ -32,15 +32,15 @@ It is fine to install ``tox`` itself into a virtualenv_ environment.
 Install from Checkout
 -------------------------
 
-Consult the Google code page to get a checkout of the mercurial repository:
+Consult the Bitbucket page to get a checkout of the mercurial repository:
 
-    http://code.google.com/p/pytox/source/checkout
+    http://bitbucket.org/hpk42/tox
 
-To install in your environment perform::
+and then install in your environment with something like::
 
     python setup.py install
 
-or to activate your checkout in your environment::
+or just activate your checkout in your environment like this::
 
     python setup.py develop
 

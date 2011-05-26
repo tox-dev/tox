@@ -19,12 +19,16 @@ Installation:
 
     pip install -U tox
 
+Note that code hosting and issue tracking has moved from Google to Bitbucket:
+
+    http://bitbucket.org/hpk42/tox
+
 The 1.0 release includes contributions and is based on feedback and
 work from Chris Rose, Ronny Pfannschmidt, Jannis Leidel, Jakob Kaplan-Moss,
 Sridhar Ratnakumar, Carl Meyer and others.  Many thanks!
 
 best,
-holger
+Holger Krekel
 
 CHANGES
 ---------------------
