@@ -79,26 +79,6 @@ Complete list of settings that you can put into ``testenv*`` sections:
     change to this working directory when executing the test command.
     **default**: ``{toxinidir}``
 
-.. confval:: args_are_paths=BOOL
-
-    treat positional arguments passed to ``tox`` as file system paths
-    and - if they exist on the filesystem - rewrite them according
-    to the ``changedir``.
-    **default**: True (due to the exists-on-filesystem check it's usually
-    safe to try rewriting).
-
-.. confval:: envtmpdir=path
-
-    defines a temporary directory for the virtualenv which will be cleared
-    each time before the group of test commands is invoked.
-    **default**: ``{envdir}/tmp``
-
-.. confval:: envlogdir=path
-
-    defines a directory for logging where tox will put logs of tool
-    invocation.
-    **default**: ``{envdir}/log``
-
 .. confval:: deps=MULTI-LINE-LIST
 
     dependencies to be installed into the environment prior to project
@@ -111,6 +91,10 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
         deps = :myindex:pkg
 
+.. confval:: setenv=MULTI-LINE-LIST
+
+    each line contains a NAME=VALUE environment variable setting which
+    will be used for all command invocations.
 
 .. confval:: recreate=True|False(default)
 
@@ -135,6 +119,26 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Set to ``True`` if you want to create virtual environments that also
     have access to globally installed packages.  **default:** False, meaning
     that virtualenvs will be created with ``--no-site-packages`` by default.
+
+.. confval:: args_are_paths=BOOL
+
+    treat positional arguments passed to ``tox`` as file system paths
+    and - if they exist on the filesystem - rewrite them according
+    to the ``changedir``.
+    **default**: True (due to the exists-on-filesystem check it's usually
+    safe to try rewriting).
+
+.. confval:: envtmpdir=path
+
+    defines a temporary directory for the virtualenv which will be cleared
+    each time before the group of test commands is invoked.
+    **default**: ``{envdir}/tmp``
+
+.. confval:: envlogdir=path
+
+    defines a directory for logging where tox will put logs of tool
+    invocation.
+    **default**: ``{envdir}/log``
 
 .. confval:: indexserver
 

@@ -311,7 +311,7 @@ class TestConfigTestEnv:
         assert envconfig.distribute == True
         assert envconfig.sitepackages == False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
-        assert envconfig.environment is None
+        assert envconfig.setenv is None
 
     def test_specific_command_overrides(self, tmpdir, newconfig):
         config = newconfig("""
@@ -352,19 +352,19 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.envpython == envconfig.envbindir.join("jython")
 
-    def test_environment_overrides(self, tmpdir, newconfig):
+    def test_setenv_overrides(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]
-            environment =
+            setenv =
                 PYTHONPATH = something
                 ANOTHER_VAL=else
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
-        assert 'PYTHONPATH' in envconfig.environment
-        assert 'ANOTHER_VAL' in envconfig.environment
-        assert envconfig.environment['PYTHONPATH'] == 'something'
-        assert envconfig.environment['ANOTHER_VAL'] == 'else'
+        assert 'PYTHONPATH' in envconfig.setenv
+        assert 'ANOTHER_VAL' in envconfig.setenv
+        assert envconfig.setenv['PYTHONPATH'] == 'something'
+        assert envconfig.setenv['ANOTHER_VAL'] == 'else'
 
     def test_changedir_override(self, tmpdir, newconfig):
         config = newconfig("""

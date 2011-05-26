@@ -373,11 +373,11 @@ class TestVenvTest:
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         os.environ['PIP_RESPECT_VIRTUALENV'] = "1"
 
-def test_session_environment_added_to_pcall(mocksession, newconfig):
+def test_setenv_added_to_pcall(mocksession, newconfig):
     config = newconfig([], """
         [testenv:python]
         commands=%s -V
-        environment =
+        setenv =
             ENV_VAR = value
     """ % sys.executable)
     mocksession._clearmocks()

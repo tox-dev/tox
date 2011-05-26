@@ -231,7 +231,7 @@ class VirtualEnv(object):
     def test(self):
         self.session.make_emptydir(self.envconfig.envtmpdir)
         cwd = self.envconfig.changedir
-        env = self.envconfig.environment
+        env = self.envconfig.setenv
         if env:
             env_arg = os.environ.copy()
             env_arg.update(env)

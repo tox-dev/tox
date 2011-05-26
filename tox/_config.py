@@ -209,9 +209,9 @@ class parseini:
                         arg = vc.changedir.bestrelpath(origpath)
                     args.append(arg)
             reader.addsubstitions(args)
-        vc.environment = reader.getdict(section, 'environment')
-        if not vc.environment:
-            vc.environment = None
+        vc.setenv = reader.getdict(section, 'setenv')
+        if not vc.setenv:
+            vc.setenv = None
 
         vc.commands = reader.getargvlist(section, "commands")
         vc.deps = []
@@ -411,11 +411,12 @@ class IniReader:
     def _replace_env(self, match):
         envkey = match.group('substitution_value')
         if not envkey:
-            raise tox.exception.ConfigError('env: requires an environment variable name')
+            raise tox.exception.ConfigError(
+                'env: requires an environment variable name')
 
         if not envkey in os.environ:
             raise tox.exception.ConfigError(
-                "substitution env:%r: %r not found in environment" %
+                "substitution env:%r: unkown environment variable %r" %
                 (envkey, envkey))
 
         return os.environ[envkey]

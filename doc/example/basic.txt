@@ -97,10 +97,26 @@ forcing re-creation of virtual environments
 
 .. versionadded:: 0.9
 
-To for tox to recreate a (particular) virtual environment::
+To force tox to recreate a (particular) virtual environment::
 
     tox --recreate -e py27
 
 would trigger a complete reinstallation of the existing py27 environment
 (or create it afresh if it doesn't exist).
 
+setting environment variables
+-------------------------------------------
+
+.. versionadded:: 1.0
+
+If you need to set an environment variable like ``PYTHONPATH`` you
+can use the ``setenv`` directive::
+
+    [testenv]
+    setenv =
+        PYTHONPATH = {toxinidir}/subdir
+
+When your test commands execute they will execute with
+a PYTHONPATH setting that will lead Python to also import
+from the ``subdir`` below the directory where your ``tox.ini``
+file resides.
