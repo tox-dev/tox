@@ -115,6 +115,15 @@ class Session:
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
         self.report.using("tox-%s from %s" %(tox.__version__, tox.__file__))
+        if self.config.minversion:
+            minversion = NormalizedVersion(self.config.minversion)
+            toxversion = NormalizedVersion(tox.__version__)
+            #self.report.using("requires at least %s" %(minversion,))
+            if toxversion < minversion:
+                self.report.error(
+                    "tox version is %s, required is at least %s" %(
+                       toxversion, minversion))
+                raise SystemExit(1)
         if self.config.opts.showconfig:
             self.showconfig()
         else:

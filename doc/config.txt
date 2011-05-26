@@ -15,6 +15,7 @@ Tox global settings
 List of optional global options::
 
     [tox]
+    minversion=ver    # minimally required tox version
     toxworkdir=path   # tox working directory, defaults to {toxinidir}/.tox
     setupdir=path     # defaults to {toxinidir}
     distdir=path      # defaults to {toxworkdir}/dist

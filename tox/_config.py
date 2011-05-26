@@ -104,6 +104,7 @@ class parseini:
         config.opts.configfile = py.path.local(config.opts.configfile)
         config.toxinipath = config.opts.configfile
         config.toxinidir = toxinidir = config.toxinipath.dirpath()
+
         if not config.toxinipath.check():
             feedback("toxini file %r does not exist" %(
                 str(config.toxinipath)), sysexit=True)
@@ -127,6 +128,7 @@ class parseini:
                               homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
                                            "{toxinidir}/.tox")
+        config.minversion = reader.getdefault(toxsection, "minversion", None)
 
         # determine indexserver dictionary
         config.indexserver = {'default': IndexServerConfig('default')}

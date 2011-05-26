@@ -160,6 +160,20 @@ def XXX_test_package(cmd, initproj):
         "*created sdist package at*",
     ])
 
+def test_minversion(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [tox]
+            minversion = 6.0
+        '''
+    })
+    result = cmd.run("tox", "-v")
+    result.stdout.fnmatch_lines([
+        "*ERROR*tox version is * required is at least 6.0*"
+    ])
+    assert result.ret
+
 def test_unknown_interpreter(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},

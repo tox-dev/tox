@@ -557,6 +557,14 @@ class TestGlobalOptions:
                 bp = "python%s.%s" %(name[2], name[3])
                 assert env.basepython == bp
 
+    def test_minversion(self, tmpdir, newconfig, monkeypatch):
+        inisource = """
+            [tox]
+            minversion = 3.0
+        """
+        config = newconfig([], inisource)
+        assert config.minversion == "3.0"
+
     def test_defaultenv_commandline(self, tmpdir, newconfig, monkeypatch):
         config = newconfig(["-epy24"], "")
         env = config.envconfigs['py24']
