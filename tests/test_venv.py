@@ -207,7 +207,7 @@ def test_install_error(newmocksession):
     venv = mocksession.getenv('python')
     venv.test()
     mocksession.report.expect("error", "*not find*qwelkqw*")
- 
+
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
         py.test.skip("needs python3.1")
@@ -340,7 +340,7 @@ class TestCreationConfig:
         mocksession._clearmocks()
         venv.update()
         mocksession.report.expect("action", "recreating virtualenv*")
-        
+
 class TestVenvTest:
 
     def test_patchPATH(self, newmocksession, monkeypatch):
@@ -372,6 +372,30 @@ class TestVenvTest:
         py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         os.environ['PIP_RESPECT_VIRTUALENV'] = "1"
+
+def test_session_environment_added_to_pcall(mocksession, newconfig):
+    config = newconfig([], """
+        [testenv:python]
+        commands=%s -V
+        environment =
+            ENV_VAR = value
+    """ % sys.executable)
+    mocksession._clearmocks()
+
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
+    # import pdb; pdb.set_trace()
+    venv.test()
+
+    l = mocksession._pcalls
+    assert len(l) == 1
+    args = l[0].args
+    env = l[0].env
+    assert env is not None
+    assert 'ENV_VAR' in env
+    assert env['ENV_VAR'] == 'value'
+
+    for e in os.environ:
+        assert e in env
 
 def test_install_sdist_upgrade_mode(newmocksession):
     mocksession = newmocksession([], "")

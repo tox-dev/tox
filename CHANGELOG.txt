@@ -1,6 +1,7 @@
 1.0.dev
 -----------------
-
+- fix issue24: merge Chris Rose' new "environment" spec to allow
+  testenvs to specify environment variables
 - fix issue22: require virtualenv-1.6.1, obsoleting virtualenv5 (thanks Jannis Leidel)
   and making things work with pypy-1.5 and python3 more seemlessly
 - toxbootstrap.py (used by jenkins build slaves) now follows the latest release of virtualenv
