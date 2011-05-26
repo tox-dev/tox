@@ -1,5 +1,7 @@
-1.0.dev
+1.0
 -----------------
+- fix issue7: introduce a "minversion" directive such that tox
+  bails out if it does not have the correct version.
 - fix issue24: introduce a way to set environment variables for
   for test commands (thanks Chris Rose)
 - fix issue22: require virtualenv-1.6.1, obsoleting virtualenv5 (thanks Jannis Leidel)
