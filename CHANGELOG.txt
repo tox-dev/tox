@@ -1,5 +1,7 @@
 1.0
 -----------------
+
+- move repository and toxbootstrap links to http://bitbucket.org/hpk42/tox
 - fix issue7: introduce a "minversion" directive such that tox
   bails out if it does not have the correct version.
 - fix issue24: introduce a way to set environment variables for

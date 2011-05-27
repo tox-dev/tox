@@ -376,10 +376,10 @@ class TestVenvTest:
 def test_setenv_added_to_pcall(mocksession, newconfig):
     config = newconfig([], """
         [testenv:python]
-        commands=%s -V
+        commands=python -V
         setenv =
             ENV_VAR = value
-    """ % sys.executable)
+    """)
     mocksession._clearmocks()
 
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)

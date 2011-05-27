@@ -36,7 +36,7 @@ Getting started
     $ cd my_project/
     $ ls
     . .. src/ doc/ setup.py tox.ini
-    $ curl http://pytox.googlecode.com/hg/toxbootstrap.py -O
+    $ curl https://bitbucket.org/hpk42/tox/raw/default/toxbootstrap.py
 
 Instead of running "tox", now you can just run "python toxbootstrap.py" which
 will take care of installing tox (if not already installed into
@@ -58,7 +58,7 @@ ToDo
 
 """
 
-__version__ = '1.0.dev5'
+__version__ = '1.0.dev6'
 
 import sys
 import os
