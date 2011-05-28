@@ -66,7 +66,7 @@ Current features
 
 * uses pip_ (for Python2 environments) and distribute_ (for all environments) by default
 
-* **cross-Python compatible**: Python2.4 up to Python2.7, Jython and experimental
+* **cross-Python compatible**: Python2.4 up to Python2.7, Jython and 
   Python3 support as well as for pypy_
 
 * **cross-platform**: Windows and Unix style environments
