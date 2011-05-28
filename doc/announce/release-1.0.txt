@@ -14,7 +14,7 @@ simple ``tox.ini`` file, including:
 
 Docs and examples are at:
 
-    http://tox.readthedocs.com
+    http://tox.readthedocs.org
 
 Installation:
 
