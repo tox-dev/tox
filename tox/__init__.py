@@ -1,5 +1,5 @@
 #
-__version__ = '1.0.dev6'
+__version__ = '1.0'
 
 class exception:
     class Error(Exception):
