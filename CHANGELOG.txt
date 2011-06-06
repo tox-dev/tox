@@ -1,3 +1,8 @@
+1.1dev
+-----------------
+
+- fix issue3 - fix example on frontpage
+
 1.0
 -----------------
 - fix issue7: introduce a "minversion" directive such that tox
