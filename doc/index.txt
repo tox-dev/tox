@@ -37,6 +37,7 @@ right next to your ``setup.py`` file::
     [tox]
     envlist = py26,py27
     [testenv]
+    deps=pytest       # install pytest in the venvs
     commands=py.test  # or 'nosetests' or ...
 
 To sdist-package, install and test your project against Python2.6 and Python2.7, just type::
