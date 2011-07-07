@@ -226,16 +226,16 @@ def cmdline(argv=None):
     tox_script = path.abspath(get_script_path(TENV, 'tox'))
     logging.info('tox is installed at %s version %s', tox_script, toxversion)
 
-    virtualenv = get_script_path(TENV, 'virtualenv')
-    venv_version = crun('%s --version' % (virtualenv,)).strip()
-    logging.info('virtualenv at %s version %s', virtualenv, venv_version)
+    #virtualenv = get_script_path(TENV, 'virtualenv')
+    #venv_version = crun('%s --version' % (virtualenv,)).strip()
+    #logging.info('virtualenv at %s version %s', virtualenv, venv_version)
 
     # XXX: virtualenv 1.5 is broken; replace it
-    if venv_version == '1.5':
-        logging.info(
-            'Replacing the unstable virtualenv-1.5 with the latest stable')
-        run('%s uninstall -y virtualenv' % (pip,))
-        run('%s install virtualenv!=1.5' % (pip,))
+    #if venv_version == '1.5':
+    #    logging.info(
+    #        'Replacing the unstable virtualenv-1.5 with the latest stable')
+    #    run('%s uninstall -y virtualenv' % (pip,))
+    #    run('%s install virtualenv!=1.5' % (pip,))
 
     # Now run the locally-installed tox
     os.chdir(currentdir)
