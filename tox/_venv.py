@@ -156,12 +156,12 @@ class VirtualEnv(object):
             args.append('--distribute')
         if not self.envconfig.sitepackages:
             args.append('--no-site-packages')
-        if sys.platform == "win32":
-            f, path, _ = py.std.imp.find_module("virtualenv")
-            f.close()
-            args[:1] = [str(config_interpreter), str(path)]
-        else:
-            args.extend(["-p", str(config_interpreter)])
+        #if sys.platform == "win32":
+        #    f, path, _ = py.std.imp.find_module("virtualenv")
+        #    f.close()
+        #    args[:1] = [str(config_interpreter), str(path)]
+        #else:
+        args.extend(["-p", str(config_interpreter)])
         self.session.make_emptydir(self.path)
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
