@@ -66,12 +66,10 @@ def test_create(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "virtualenv" in " ".join(args[:2])
+    assert str(args[1]).endswith("virtualenv.py")
     if sys.platform != "win32":
-        i = args.index("-p")
-        assert i != -1, args
         # realpath is needed for stuff like the debian symlinks
-        assert py.path.local(sys.executable).realpath() == args[i+1]
+        assert py.path.local(sys.executable).realpath() == args[0]
         #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install")
     interp = venv._getliveconfig().python
@@ -90,7 +88,7 @@ def test_create_distribute(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--distribute" not in " ".join(args)
+    assert "--distribute" not in map(str, args)
 
 def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
@@ -106,7 +104,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--no-site-packages" not in " ".join(args)
+    assert "--no-site-packages" not in map(str, args)
     mocksession._clearmocks()
 
     envconfig = config.envconfigs['nosite']
@@ -115,7 +113,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--no-site-packages" in " ".join(args)
+    assert "--no-site-packages" in map(str, args)
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
 def test_install_downloadcache(newmocksession):
@@ -223,7 +221,7 @@ def test_install_python3(tmpdir, newmocksession):
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
-    assert 'virtualenv' in args[0]
+    assert str(args[1]).endswith('virtualenv.py')
     l[:] = []
     venv._install(["hello"])
     assert len(l) == 1
@@ -304,7 +302,7 @@ class TestCreationConfig:
         cconfig = venv._getliveconfig()
         venv.update()
         assert mocksession._pcalls
-        args1 = mocksession._pcalls[0].args
+        args1 = map(str, mocksession._pcalls[0].args)
         assert 'virtualenv' in " ".join(args1)
         mocksession.report.expect("action", "creating virtualenv*")
         # modify config and check that recreation happens

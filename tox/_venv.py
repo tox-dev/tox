@@ -62,6 +62,7 @@ class VirtualEnv(object):
     def getcommandpath(self, name=None):
         if name is None:
             return self.envconfig.envpython
+        name = str(name)
         if os.path.isabs(name):
             return name
         p = py.path.local.sysfind(name)
@@ -151,7 +152,8 @@ class VirtualEnv(object):
         #if self.getcommandpath("activate").dirpath().check():
         #    return
         config_interpreter = self.getsupportedinterpreter()
-        args = ['virtualenv']
+        venvscript = py.path.local(tox.__file__).dirpath("virtualenv.py")
+        args = [config_interpreter, venvscript]
         if not self._ispython3() and self.envconfig.distribute:
             args.append('--distribute')
         if not self.envconfig.sitepackages:
@@ -161,7 +163,6 @@ class VirtualEnv(object):
         #    f.close()
         #    args[:1] = [str(config_interpreter), str(path)]
         #else:
-        args.extend(["-p", str(config_interpreter)])
         self.session.make_emptydir(self.path)
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)

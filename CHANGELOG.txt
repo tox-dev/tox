@@ -6,6 +6,9 @@
   --no-deps" for installing the sdist package to ensure that a package
   gets upgraded even if its version number did not change. (reported on
   TIP mailing list and IRC)
+- inline virtualenv.py (1.6.1) script to avoid a number of issues, 
+  particularly failing to install python3 environents from a python2 
+  virtualenv installation.
 
 1.0
 -----------------
