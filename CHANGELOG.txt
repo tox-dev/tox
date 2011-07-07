@@ -1,6 +1,7 @@
 1.1dev
 -----------------
 
+- fix issue6 - recreate virtualenv if installing dependencies failed
 - fix issue3 - fix example on frontpage
 - fixed/enhanced: except for initial install always call use "-U
   --no-deps" for installing the sdist package to ensure that a package

@@ -74,6 +74,7 @@ def test_create(monkeypatch, mocksession, newconfig):
         assert venv.getcommandpath("easy_install")
     interp = venv._getliveconfig().python
     assert interp == venv.getconfigexecutable()
+    assert venv.path_config.check(exists=False)
 
 def test_create_distribute(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
@@ -301,6 +302,7 @@ class TestCreationConfig:
         venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         venv.update()
+        assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
         assert 'virtualenv' in " ".join(args1)

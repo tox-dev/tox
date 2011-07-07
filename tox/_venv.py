@@ -104,6 +104,7 @@ class VirtualEnv(object):
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
             return "could not install deps %s" %(self.envconfig.deps,)
+        self._getliveconfig().writeconfig(self.path_config)
 
     def _getliveconfig(self):
         python = self.getconfigexecutable()
@@ -175,7 +176,6 @@ class VirtualEnv(object):
             #    self.easy_install(["-U", "distribute"])
         finally:
             old.chdir()
-        self._getliveconfig().writeconfig(self.path_config)
         self.just_created = True
 
     def install_sdist(self, sdistpath):
