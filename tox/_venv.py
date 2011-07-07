@@ -104,7 +104,6 @@ class VirtualEnv(object):
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
             return "could not install deps %s" %(self.envconfig.deps,)
-        self._getliveconfig().writeconfig(self.path_config)
 
     def _getliveconfig(self):
         python = self.getconfigexecutable()
@@ -171,7 +170,7 @@ class VirtualEnv(object):
         try:
             basepath.chdir()
             args.append(self.path.basename)
-            self._pcall(args) #, venv=False)
+            self._pcall(args, venv=False)
             #if self._ispython3():
             #    self.easy_install(["-U", "distribute"])
         finally:
@@ -180,8 +179,11 @@ class VirtualEnv(object):
 
     def install_sdist(self, sdistpath):
         if getattr(self, 'just_created', False):
+            self.session.report.action("installing sdist")
+            self._getliveconfig().writeconfig(self.path_config)
             self._install([sdistpath])
         else:
+            self.session.report.action("upgrade-installing sdist")
             self._install(['-U', '--no-deps', sdistpath])
 
     def install_deps(self):
@@ -256,8 +258,13 @@ class VirtualEnv(object):
             pass
         old = self.patchPATH()
         try:
+            args[0] = self.getcommandpath(args[0])
             if venv:
-                args = [self.getcommandpath(args[0])] + args[1:]
+                if not isinstance(args[0], py.path.local):
+                    self.session.report.warning(
+                        "using '%s' not installed in testenv:\n"
+                        "  %s\nForgot to specify a dependency?" % (args[0],
+                        self.envconfig.envdir))
             if log is None:
                 log = self.path.ensure("log", dir=1)
             return self.session.pcall(args, log=log, cwd=cwd, env=env)

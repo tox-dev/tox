@@ -4,6 +4,8 @@
 - fix issue5 - don't require argparse for python versions that have it
 - fix issue6 - recreate virtualenv if installing dependencies failed
 - fix issue3 - fix example on frontpage
+- fix issue2 - warn if a test command does not come from the test
+  environment
 - fixed/enhanced: except for initial install always call "-U
   --no-deps" for installing the sdist package to ensure that a package
   gets upgraded even if its version number did not change. (reported on

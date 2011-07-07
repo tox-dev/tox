@@ -192,11 +192,12 @@ def test_install_recreate(newmocksession):
     """)
     venv = mocksession.getenv('python')
     venv.update()
+    venv.install_sdist("xz")
     mocksession.report.expect("action", "*creating virtualenv*")
     venv.update()
     mocksession.report.expect("action", "recreating virtualenv*")
 
-def test_install_error(newmocksession):
+def test_install_error(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
         deps=xyz
@@ -206,6 +207,16 @@ def test_install_error(newmocksession):
     venv = mocksession.getenv('python')
     venv.test()
     mocksession.report.expect("error", "*not find*qwelkqw*")
+
+def test_install_command_not_installed(newmocksession, monkeypatch):
+    mocksession = newmocksession(['--recreate'], """
+        [testenv]
+        commands=
+            py.test
+    """)
+    venv = mocksession.getenv('python')
+    venv.test()
+    mocksession.report.expect("warning", "*Forgot to*")
 
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
@@ -302,6 +313,8 @@ class TestCreationConfig:
         venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         venv.update()
+        assert not venv.path_config.check()
+        venv.install_sdist([])
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
@@ -401,6 +414,7 @@ def test_install_sdist_no_upgrade(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
     venv.install_sdist("whatever")
     l = mocksession._pcalls
     assert len(l) == 1
