@@ -175,10 +175,13 @@ class VirtualEnv(object):
         finally:
             old.chdir()
         self._getliveconfig().writeconfig(self.path_config)
+        self.just_created = True
 
     def install_sdist(self, sdistpath):
-        #self._install(['-U', sdistpath])
-        self._install([sdistpath])
+        if getattr(self, 'just_created', False):
+            self._install([sdistpath])
+        else:
+            self._install(['-U', '--no-deps', sdistpath])
 
     def install_deps(self):
         deps = self._getresolvedeps()

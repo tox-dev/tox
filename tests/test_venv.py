@@ -397,10 +397,21 @@ def test_setenv_added_to_pcall(mocksession, newconfig):
     for e in os.environ:
         assert e in env
 
-def test_install_sdist_upgrade_mode(newmocksession):
+def test_install_sdist_no_upgrade(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
+    venv.just_created = True
     venv.install_sdist("whatever")
     l = mocksession._pcalls
     assert len(l) == 1
     assert '-U' not in l[0].args
+
+def test_install_sdist_upgrade(newmocksession):
+    mocksession = newmocksession([], "")
+    venv = mocksession.getenv('python')
+    assert not hasattr(venv, 'just_created')
+    venv.install_sdist("whatever")
+    l = mocksession._pcalls
+    assert len(l) == 1
+    assert '-U' in l[0].args
+    assert '--no-deps' in l[0].args
