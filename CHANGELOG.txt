@@ -1,4 +1,4 @@
-1.1dev
+1.1
 -----------------
 
 - fix issue5 - don't require argparse for python versions that have it
@@ -13,6 +13,7 @@
 - inline virtualenv.py (1.6.1) script to avoid a number of issues, 
   particularly failing to install python3 environents from a python2 
   virtualenv installation.
+- rework and enhance docs for display on readthedocs.org
 
 1.0
 -----------------

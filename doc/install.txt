@@ -1,15 +1,10 @@
 tox installation
 ==================================
 
-.. note::
-
-    tox is alpha software and may have crucial platform-specific
-    or environment specific bugs. Use with care.
-
 Install info in a nutshell
 ----------------------------------
 
-**Pythons**: 2.4, 2.5, 2.6, 2.7, 3.0, 3.1.x, Jython-2.5.1, PyPy-trunk
+**Pythons**: CPython 2.4-3.2, Jython-2.5.1, pypy-1.5
 
 **Operating systems**: Linux, Windows, OSX, Unix
 
