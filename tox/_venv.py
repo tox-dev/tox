@@ -62,6 +62,7 @@ class VirtualEnv(object):
     def getcommandpath(self, name=None):
         if name is None:
             return self.envconfig.envpython
+        name = str(name)
         if os.path.isabs(name):
             return name
         p = py.path.local.sysfind(name)
@@ -151,17 +152,17 @@ class VirtualEnv(object):
         #if self.getcommandpath("activate").dirpath().check():
         #    return
         config_interpreter = self.getsupportedinterpreter()
-        args = ['virtualenv']
+        venvscript = py.path.local(tox.__file__).dirpath("virtualenv.py")
+        args = [config_interpreter, venvscript]
         if not self._ispython3() and self.envconfig.distribute:
             args.append('--distribute')
         if not self.envconfig.sitepackages:
             args.append('--no-site-packages')
-        if sys.platform == "win32":
-            f, path, _ = py.std.imp.find_module("virtualenv")
-            f.close()
-            args[:1] = [str(config_interpreter), str(path)]
-        else:
-            args.extend(["-p", str(config_interpreter)])
+        #if sys.platform == "win32":
+        #    f, path, _ = py.std.imp.find_module("virtualenv")
+        #    f.close()
+        #    args[:1] = [str(config_interpreter), str(path)]
+        #else:
         self.session.make_emptydir(self.path)
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
@@ -169,16 +170,21 @@ class VirtualEnv(object):
         try:
             basepath.chdir()
             args.append(self.path.basename)
-            self._pcall(args) #, venv=False)
+            self._pcall(args, venv=False)
             #if self._ispython3():
             #    self.easy_install(["-U", "distribute"])
         finally:
             old.chdir()
-        self._getliveconfig().writeconfig(self.path_config)
+        self.just_created = True
 
     def install_sdist(self, sdistpath):
-        #self._install(['-U', sdistpath])
-        self._install([sdistpath])
+        if getattr(self, 'just_created', False):
+            self.session.report.action("installing sdist")
+            self._getliveconfig().writeconfig(self.path_config)
+            self._install([sdistpath])
+        else:
+            self.session.report.action("upgrade-installing sdist")
+            self._install(['-U', '--no-deps', sdistpath])
 
     def install_deps(self):
         deps = self._getresolvedeps()
@@ -252,8 +258,13 @@ class VirtualEnv(object):
             pass
         old = self.patchPATH()
         try:
+            args[0] = self.getcommandpath(args[0])
             if venv:
-                args = [self.getcommandpath(args[0])] + args[1:]
+                if not isinstance(args[0], py.path.local):
+                    self.session.report.warning(
+                        "using '%s' not installed in testenv:\n"
+                        "  %s\nForgot to specify a dependency?" % (args[0],
+                        self.envconfig.envdir))
             if log is None:
                 log = self.path.ensure("log", dir=1)
             return self.session.pcall(args, log=log, cwd=cwd, env=env)

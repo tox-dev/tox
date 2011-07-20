@@ -63,6 +63,7 @@ class ReportExpectMock:
         newindex = self._index + 1
         while newindex < len(self._calls):
             lcat, lmsg = self._calls[newindex]
+            lmsg = lmsg.replace("\n", " ")
             if lcat == cat and fnmatch(lmsg, messagepattern):
                 self._index = newindex
                 return

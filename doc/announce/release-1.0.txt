@@ -1,8 +1,9 @@
 tox 1.0: the rapid multi-python test automatizer
 ===========================================================================
 
-I am happy to announce tox 1.0.  tox automates tedious test activities
-driven from a simple ``tox.ini`` file, including:
+I am happy to announce tox 1.0, mostly a stabilization and streamlined
+release.  TOX automates tedious test activities driven from a 
+simple ``tox.ini`` file, including:
 
 * creation and management of different virtualenv environments with
   different Python interpreters
@@ -13,18 +14,22 @@ driven from a simple ``tox.ini`` file, including:
 
 Docs and examples are at:
 
-    http://tox.readthedocs.com
+    http://tox.readthedocs.org
 
 Installation:
 
     pip install -U tox
+
+Note that code hosting and issue tracking has moved from Google to Bitbucket:
+
+    http://bitbucket.org/hpk42/tox
 
 The 1.0 release includes contributions and is based on feedback and
 work from Chris Rose, Ronny Pfannschmidt, Jannis Leidel, Jakob Kaplan-Moss,
 Sridhar Ratnakumar, Carl Meyer and others.  Many thanks!
 
 best,
-holger
+Holger Krekel
 
 CHANGES
 ---------------------

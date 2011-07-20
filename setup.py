@@ -27,20 +27,23 @@ For more information, docs and many examples please checkout the `home page`_:
 
 
 def main():
-    install_requires=['virtualenv>=1.6.1']
+    version = sys.version_info[:2]
+    install_requires = ['py>=1.4.3', ]
+    if version < (2,7) or (3,0) <= version <= (3,1):
+        install_requires += ['argparse']
     setup(
         name='tox',
         description='virtualenv-based automation of test activities',
         long_description=long_description,
         url='http://codespeak.net/tox',
-        version='1.0.dev4',
+        version='1.1',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
         author_email='holger@merlinux.eu',
         packages=['tox', ],
         entry_points={'console_scripts': 'tox=tox:cmdline'},
-        install_requires=install_requires+['argparse', 'py>=1.4.0a2', ],
+        install_requires=install_requires,
         zip_safe=True,
         classifiers=[
             'Development Status :: 5 - Production/Stable',

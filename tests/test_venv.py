@@ -66,16 +66,15 @@ def test_create(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "virtualenv" in " ".join(args[:2])
+    assert str(args[1]).endswith("virtualenv.py")
     if sys.platform != "win32":
-        i = args.index("-p")
-        assert i != -1, args
         # realpath is needed for stuff like the debian symlinks
-        assert py.path.local(sys.executable).realpath() == args[i+1]
+        assert py.path.local(sys.executable).realpath() == args[0]
         #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install")
     interp = venv._getliveconfig().python
     assert interp == venv.getconfigexecutable()
+    assert venv.path_config.check(exists=False)
 
 def test_create_distribute(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
@@ -90,7 +89,7 @@ def test_create_distribute(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--distribute" not in " ".join(args)
+    assert "--distribute" not in map(str, args)
 
 def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
@@ -106,7 +105,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--no-site-packages" not in " ".join(args)
+    assert "--no-site-packages" not in map(str, args)
     mocksession._clearmocks()
 
     envconfig = config.envconfigs['nosite']
@@ -115,7 +114,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--no-site-packages" in " ".join(args)
+    assert "--no-site-packages" in map(str, args)
 
 @py.test.mark.skipif("sys.version_info[0] >= 3")
 def test_install_downloadcache(newmocksession):
@@ -193,11 +192,12 @@ def test_install_recreate(newmocksession):
     """)
     venv = mocksession.getenv('python')
     venv.update()
+    venv.install_sdist("xz")
     mocksession.report.expect("action", "*creating virtualenv*")
     venv.update()
     mocksession.report.expect("action", "recreating virtualenv*")
 
-def test_install_error(newmocksession):
+def test_install_error(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
         deps=xyz
@@ -207,6 +207,16 @@ def test_install_error(newmocksession):
     venv = mocksession.getenv('python')
     venv.test()
     mocksession.report.expect("error", "*not find*qwelkqw*")
+
+def test_install_command_not_installed(newmocksession, monkeypatch):
+    mocksession = newmocksession(['--recreate'], """
+        [testenv]
+        commands=
+            py.test
+    """)
+    venv = mocksession.getenv('python')
+    venv.test()
+    mocksession.report.expect("warning", "*Forgot to*")
 
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
@@ -223,7 +233,7 @@ def test_install_python3(tmpdir, newmocksession):
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
-    assert 'virtualenv' in args[0]
+    assert str(args[1]).endswith('virtualenv.py')
     l[:] = []
     venv._install(["hello"])
     assert len(l) == 1
@@ -303,8 +313,11 @@ class TestCreationConfig:
         venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         venv.update()
+        assert not venv.path_config.check()
+        venv.install_sdist([])
+        assert venv.path_config.check()
         assert mocksession._pcalls
-        args1 = mocksession._pcalls[0].args
+        args1 = map(str, mocksession._pcalls[0].args)
         assert 'virtualenv' in " ".join(args1)
         mocksession.report.expect("action", "creating virtualenv*")
         # modify config and check that recreation happens
@@ -376,10 +389,10 @@ class TestVenvTest:
 def test_setenv_added_to_pcall(mocksession, newconfig):
     config = newconfig([], """
         [testenv:python]
-        commands=%s -V
+        commands=python -V
         setenv =
             ENV_VAR = value
-    """ % sys.executable)
+    """)
     mocksession._clearmocks()
 
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
@@ -397,10 +410,22 @@ def test_setenv_added_to_pcall(mocksession, newconfig):
     for e in os.environ:
         assert e in env
 
-def test_install_sdist_upgrade_mode(newmocksession):
+def test_install_sdist_no_upgrade(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
     venv.install_sdist("whatever")
     l = mocksession._pcalls
     assert len(l) == 1
     assert '-U' not in l[0].args
+
+def test_install_sdist_upgrade(newmocksession):
+    mocksession = newmocksession([], "")
+    venv = mocksession.getenv('python')
+    assert not hasattr(venv, 'just_created')
+    venv.install_sdist("whatever")
+    l = mocksession._pcalls
+    assert len(l) == 1
+    assert '-U' in l[0].args
+    assert '--no-deps' in l[0].args

@@ -79,7 +79,7 @@ class Reporter:
         self.logline(msg, green=True)
 
     def warning(self, msg):
-        self.logline("WARNING:" + msg)
+        self.logline("WARNING:" + msg, red=True)
 
     def error(self, msg):
         self.logline("ERROR: " + msg, red=True)

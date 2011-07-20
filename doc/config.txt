@@ -93,9 +93,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
         deps = :myindexserver:pkg
 
 .. confval:: setenv=MULTI-LINE-LIST
+   
+   .. versionadded:: 0.9
 
-    each line contains a NAME=VALUE environment variable setting which
-    will be used for all command invocations.
+   each line contains a NAME=VALUE environment variable setting which
+   will be used for all command invocations.
 
 .. confval:: recreate=True|False(default)
 
