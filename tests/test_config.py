@@ -460,6 +460,26 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
+    def test_rewrite_simple_posargs(self, tmpdir, newconfig):
+        inisource = """
+            [testenv:py24]
+            args_are_paths = True
+            changedir = tests
+            commands = cmd1 {posargs}
+        """
+        conf = newconfig([], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1"]
+
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "tests/hello"]
+
+        tmpdir.ensure("tests", "hello")
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello"]
+
 class TestGlobalOptions:
     def test_notest(self, newconfig):
         config = newconfig([], "")

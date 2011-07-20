@@ -400,15 +400,19 @@ class IniReader:
         return str(self._subs[key])
 
     def _replace_posargs(self, match):
+        return self._do_replace_posargs(lambda: match.group('substitution_value'))
+
+    def _do_replace_posargs(self, value_func):
         posargs = self._subs.get('_posargs', None)
 
         if posargs:
             return " ".join(posargs)
 
-        if match.group('substitution_value'):
-            return match.group('substitution_value')
-        else:
-            return ''
+        value = value_func()
+        if value:
+            return value
+
+        return ''
 
     def _replace_env(self, match):
         envkey = match.group('substitution_value')
@@ -430,19 +434,34 @@ class IniReader:
                 "substitution key %r not found" % sub_key)
         return '"%s"' % str(self._subs[sub_key]).replace('"', r'\"')
 
+    def _is_bare_posargs(self, groupdict):
+        return groupdict.get('substitution_value', None) == 'posargs' \
+               and not groupdict.get('sub_type')
+
     def _replace_match(self, match):
         g = match.groupdict()
+
+        # special case: posargs. If there is a 'posargs' substitution value
+        # and no type, handle it as empty posargs
+        if self._is_bare_posargs(g):
+            return self._do_replace_posargs(lambda: '')
+
         handlers = {
             'posargs' : self._replace_posargs,
             'env' : self._replace_env,
             None : self._replace_substitution,
             }
         try:
-            handler = handlers.get(g['sub_type'])
+            sub_type = g['sub_type']
         except KeyError:
-            raise tox.exception.ConfigError("No support for the %s substitution type" % g['sub_type'])
-        else:
-            return handler(match)
+            raise tox.exception.ConfigError("Malformed substitution; no substitution type provided")
+
+        try:
+            handler = handlers[sub_type]
+        except KeyError:
+            raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
+
+        return handler(match)
 
     def _replace(self, x, rexpattern = re.compile("\{.+?\}")):
         if '{' in x:
