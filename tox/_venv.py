@@ -260,10 +260,12 @@ class VirtualEnv(object):
         try:
             args[0] = self.getcommandpath(args[0])
             if venv:
-                if not isinstance(args[0], py.path.local):
+                if not py.path.local(args[0]).relto(self.envconfig.envdir):
                     self.session.report.warning(
-                        "using '%s' not installed in testenv:\n"
-                        "  %s\nForgot to specify a dependency?" % (args[0],
+                        "test command found but not installed in testenv\n"
+                        "  cmd: %s\n"
+                        "  env: %s\n"
+                        "Maybe forgot to specify a dependency?" % (args[0],
                         self.envconfig.envdir))
             if log is None:
                 log = self.path.ensure("log", dir=1)

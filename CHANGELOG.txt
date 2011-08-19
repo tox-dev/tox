@@ -1,10 +1,16 @@
+1.2.dev
+-----------------
+
+- fix a problem with parsing {posargs} in tox commands (spotted by goodwill)
+- fix the warning check for commands to be installed in testevironment
+  (thanks Michael Foord for reporting)
+
 1.1
 -----------------
 
 - fix issue5 - don't require argparse for python versions that have it
 - fix issue6 - recreate virtualenv if installing dependencies failed
 - fix issue3 - fix example on frontpage
-- fix a problem with parsing {posargs} in tox commands (spotted by goodwill)
 - fix issue2 - warn if a test command does not come from the test
   environment
 - fixed/enhanced: except for initial install always call "-U

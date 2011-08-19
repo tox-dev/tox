@@ -216,7 +216,7 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     """)
     venv = mocksession.getenv('python')
     venv.test()
-    mocksession.report.expect("warning", "*Forgot to*")
+    mocksession.report.expect("warning", "*test command found but not*")
 
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
