@@ -11,6 +11,7 @@ default Python installation on each Jenkins slave, you can easily create
 a Jenkins multi-configuration job that will drive your tox runs from the CI-server side,
 using these steps:
 
+* install the Python plugin for Jenkins under "manage jenkins"
 * create a "multi-configuration" job, give it a name of your choice
 * configure your repository so that Jenkins can pull it
 * (optional) configure multiple nodes so that tox-runs are performed
@@ -35,7 +36,7 @@ for example with ``py.test`` it is done like this:
 
 See a real-life example in action with the `pytest Jenkins job`_
 
-.. _`pytest Jenkins job`: http://jenkins.testrun.org/view/pytest/job/pytest/
+.. _`pytest Jenkins job`: http://hudson.testrun.org/view/pytest/job/pytest/
 
 **zero-installation** for slaves
 -------------------------------------------------------------
