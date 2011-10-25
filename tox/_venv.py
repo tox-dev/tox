@@ -214,6 +214,7 @@ class VirtualEnv(object):
         except KeyError:
             pass
         argv += args
+        os.environ['PYTHONIOENCODING'] = 'utf_8'
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
     def _install(self, deps):
