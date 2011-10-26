@@ -429,3 +429,18 @@ def test_install_sdist_upgrade(newmocksession):
     assert len(l) == 1
     assert '-U' in l[0].args
     assert '--no-deps' in l[0].args
+
+def test_pip_install(newmocksession):
+    mocksession = newmocksession([], "")
+    venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+    venv.pip_install(args=["whatever"])
+    l = mocksession._pcalls
+    assert len(l) == 1
+    assert 'pip' in l[0].args[0]
+    assert 'install' in l[0].args
+    env = l[0].env
+    assert env is not None
+    assert 'PYTHONIOENCODING' in env
+    assert env['PYTHONIOENCODING'] == 'utf_8'
