@@ -311,9 +311,9 @@ def test_test_piphelp(initproj, cmd):
         [testenv]
         commands=pip -h
         [testenv:py25]
-        basepython=python2.5
+        basepython=python
         [testenv:py26]
-        basepython=python2.6
+        basepython=python
     """})
     result = cmd.run("tox")
     assert not result.ret
@@ -322,9 +322,9 @@ def test_notest(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
         [testenv:py25]
-        basepython=python2.5
+        basepython=python
         [testenv:py26]
-        basepython=python2.6
+        basepython=python
     """})
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
