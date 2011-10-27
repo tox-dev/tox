@@ -1,6 +1,8 @@
 1.2.dev
 -----------------
 
+- fix issue10: work around UnicodeDecodeError when inokving pip (thanks
+  Marc Abramowitz)
 - fix a problem with parsing {posargs} in tox commands (spotted by goodwill)
 - fix the warning check for commands to be installed in testevironment
   (thanks Michael Foord for reporting)
