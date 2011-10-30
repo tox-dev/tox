@@ -152,7 +152,10 @@ class VirtualEnv(object):
         #if self.getcommandpath("activate").dirpath().check():
         #    return
         config_interpreter = self.getsupportedinterpreter()
-        venvscript = py.path.local(tox.__file__).dirpath("virtualenv.py")
+        f, path, _ = py.std.imp.find_module("virtualenv")
+        f.close()
+        venvscript = path.strip("co")
+        #venvscript = py.path.local(tox.__file__).dirpath("virtualenv.py")
         args = [config_interpreter, venvscript]
         if not self._ispython3() and self.envconfig.distribute:
             args.append('--distribute')

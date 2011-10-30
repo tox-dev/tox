@@ -28,7 +28,7 @@ For more information, docs and many examples please checkout the `home page`_:
 
 def main():
     version = sys.version_info[:2]
-    install_requires = ['py>=1.4.3', ]
+    install_requires = ['virtualenv>=1.6.4', 'py>=1.4.3', ]
     if version < (2,7) or (3,0) <= version <= (3,1):
         install_requires += ['argparse']
     setup(
@@ -36,7 +36,7 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=long_description,
         url='http://codespeak.net/tox',
-        version='1.2.dev2',
+        version='1.2.dev3',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
