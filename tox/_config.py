@@ -333,7 +333,7 @@ class IniReader:
     def _processcommand(self, command):
         posargs = self._subs.get('_posargs', None)
 
-        expression = r'\{(?:(?P<sub_type>[^:]+):)?(?P<substitution_value>.*)\}'
+        expression = r'\{(?:(?P<sub_type>[^:]+):?)?(?P<substitution_value>.*)\}'
 
         words = list(CommandParser(command).words())
 

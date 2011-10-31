@@ -36,9 +36,10 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-install: clean html
-	rsync -avz $(BUILDDIR)/html/ code:www-tox/
-
+install: clean html 
+	@rsync -avz $(BUILDDIR)/html/ testrun.org:www-tox/latest
+    #latexpdf
+	#@scp $(BUILDDIR)/latex/*.pdf testrun.org:www-tox/latest
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

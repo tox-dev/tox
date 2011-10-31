@@ -58,7 +58,7 @@ ToDo
 
 """
 
-__version__ = '1.2.dev3'
+__version__ = '1.2.dev4'
 
 import sys
 import os
