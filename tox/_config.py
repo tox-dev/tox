@@ -333,7 +333,7 @@ class IniReader:
     def _processcommand(self, command):
         posargs = self._subs.get('_posargs', None)
 
-        expression = r'\{(?:(?P<sub_type>[^:]+):?)?(?P<substitution_value>.*)\}'
+        pat = r'\{(?:(?P<sub_type>[^:]+):)?(?P<substitution_value>.*)\}'
 
         words = list(CommandParser(command).words())
 
@@ -344,9 +344,9 @@ class IniReader:
                     new_command += ' '.join(posargs)
                 continue
 
-            new_word = re.sub(expression, self._replace_match, word)
+            new_word = re.sub(pat, self._replace_match, word)
             # two passes; we might have substitutions in the result
-            new_word = re.sub(expression, self._replace_match, new_word)
+            new_word = re.sub(pat, self._replace_match, new_word)
             new_command += new_word
 
         argv = shlex.split(new_command.strip())
