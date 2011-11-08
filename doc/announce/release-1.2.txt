@@ -16,13 +16,13 @@ It works well on virtually all Python interpreters that support virtualenv.
 
 Docs and examples are at:
 
-    http://tox.readthedocs.org
+    http://testrun.org/tox
 
 Installation:
 
     pip install -U tox
 
-Note that code hosting and issue tracking has moved from Google to Bitbucket:
+code hosting and issue tracking on bitbucket:
 
     http://bitbucket.org/hpk42/tox
 
