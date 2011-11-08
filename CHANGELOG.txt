@@ -1,4 +1,4 @@
-1.2.dev
+1.2
 -----------------
 
 - remove the virtualenv.py that was distributed with tox and depend

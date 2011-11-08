@@ -99,6 +99,7 @@ Current features
    announce/release-0.5
    announce/release-1.0
    announce/release-1.1
+   announce/release-1.2
 
 
 .. include:: links.txt
