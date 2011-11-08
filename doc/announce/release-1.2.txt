@@ -16,7 +16,7 @@ It works well on virtually all Python interpreters that support virtualenv.
 
 Docs and examples are at:
 
-    http://testrun.org/tox
+    http://testrun.org/tox/latest
 
 Installation:
 
