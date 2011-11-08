@@ -34,7 +34,7 @@ Holger Krekel
 
 - remove the virtualenv.py that was distributed with tox and depend
   on virtualenv-1.6.4 (possible now since the latter fixes a few bugs
-  that the inling tried to work around
+  that the inling tried to work around)
 - fix issue10: work around UnicodeDecodeError when inokving pip (thanks
   Marc Abramowitz)
 - fix a problem with parsing {posargs} in tox commands (spotted by goodwill)
