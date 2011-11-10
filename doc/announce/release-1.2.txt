@@ -1,9 +1,9 @@
-tox 1.2: the rapid multi-python test automatizer
+tox 1.2: the virtualenv-based test run automatizer
 ===========================================================================
 
-I am happy to announce tox 1.2, now using the latest virtualenv code
-and containing some bug fixes.  TOX automates tedious test activities
-driven from a simple ``tox.ini`` file, including:
+I am happy to announce tox 1.2, now using and depending on the latest
+virtualenv code and containing some bug fixes.  TOX automates tedious
+test activities driven from a simple ``tox.ini`` file, including:
 
 * creation and management of different virtualenv environments with
   different Python interpreters
@@ -16,7 +16,7 @@ It works well on virtually all Python interpreters that support virtualenv.
 
 Docs and examples are at:
 
-    http://testrun.org/tox/latest
+    http://tox.testrun.org/
 
 Installation:
 
