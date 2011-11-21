@@ -14,8 +14,7 @@ Tox as is a generic virtualenv_ management and test command line tool you can us
 
 For more information, docs and many examples please checkout:
 
-    http://codespeak.net/tox
-
+    http://tox.testrun.org
 
 have fun,
 

@@ -20,9 +20,9 @@ use for:
 
 For more information, docs and many examples please checkout the `home page`_:
 
-    http://codespeak.net/~hpk/tox
+    http://tox.testrun.org/
 
-.. _`home page`: http://codespeak.net/~hpk/tox
+.. _`home page`: http://tox.testrun.org/
 """
 
 

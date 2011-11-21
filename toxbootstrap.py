@@ -25,8 +25,8 @@ tox-bootstrap
 A bootstrap script to automatically install tox on machines that do not already
 have it.  This is especially useful when configuring a number of Jenkins slaves
 quickly (see `zero installation for slaves
-<http://codespeak.net/tox/example/jenkins.html#zero-installation-for-slaves>` in
-tox documentation); only Python needs to be pre-installed.
+<http://tox.testrun.org/latest/example/jenkins.html#zero-installation-for-slaves>>`
+in tox documentation); only Python needs to be pre-installed.
 
 Getting started
 ---------------
