@@ -12,7 +12,7 @@ from a simple ``tox.ini`` file, including:
 * testing packages against each other without needing to upload to PyPI
 
 ``tox`` runs well on Python2.4 up until Python3.1 and integrates
-well with Continous Integration servers Jenkins. There are many
+well with Continuous Integration servers Jenkins. There are many
 real-life examples and a good chunk of docs.  Read it up on
 
     http://codespeak.net/tox

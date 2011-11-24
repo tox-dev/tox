@@ -14,7 +14,7 @@ use for:
 * running your tests in each of the
   environments, configuring your test tool of choice
 
-* acting as a frontend to Continous Integration
+* acting as a frontend to Continuous Integration
   servers, greatly reducing boilerplate and merging
   CI and shell-based testing.
 

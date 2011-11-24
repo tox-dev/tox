@@ -3,11 +3,11 @@
 
 - remove the virtualenv.py that was distributed with tox and depend
   on >=virtualenv-1.6.4 (possible now since the latter fixes a few bugs
-  that the inling tried to work around)
-- fix issue10: work around UnicodeDecodeError when inokving pip (thanks
+  that the inlining tried to work around)
+- fix issue10: work around UnicodeDecodeError when invoking pip (thanks
   Marc Abramowitz)
 - fix a problem with parsing {posargs} in tox commands (spotted by goodwill)
-- fix the warning check for commands to be installed in testevironment
+- fix the warning check for commands to be installed in testenvironment
   (thanks Michael Foord for reporting)
 
 1.1
@@ -23,7 +23,7 @@
   gets upgraded even if its version number did not change. (reported on
   TIP mailing list and IRC)
 - inline virtualenv.py (1.6.1) script to avoid a number of issues,
-  particularly failing to install python3 environents from a python2
+  particularly failing to install python3 environments from a python2
   virtualenv installation.
 - rework and enhance docs for display on readthedocs.org
 
@@ -36,7 +36,7 @@
 - fix issue24: introduce a way to set environment variables for
   for test commands (thanks Chris Rose)
 - fix issue22: require virtualenv-1.6.1, obsoleting virtualenv5 (thanks Jannis Leidel)
-  and making things work with pypy-1.5 and python3 more seemlessly
+  and making things work with pypy-1.5 and python3 more seamlessly
 - toxbootstrap.py (used by jenkins build slaves) now follows the latest release of virtualenv
 - fix issue20: document format of URLs for specifying dependencies
 - fix issue19: substitute Hudson for Jenkins everywhere following the renaming
@@ -60,7 +60,7 @@
   (thanks Armin Ronacher)
 - issue1: Add a toxbootstrap.py script for tox, thanks to Sridhar
   Ratnakumar
-- added support for working with different and multiple PYPI indexservers.
+- added support for working with different and multiple PyPI indexservers.
 - new option: -r|--recreate to force recreation of virtualenv
 - depend on py>=1.4.0 which does not contain or install the py.test
   anymore which is now a separate distribution "pytest".
