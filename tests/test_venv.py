@@ -116,7 +116,6 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     args = l[0].args
     assert "--no-site-packages" in map(str, args)
 
-@py.test.mark.skipif("sys.version_info[0] >= 3")
 def test_install_downloadcache(newmocksession):
     mocksession = newmocksession([], """
         [testenv:py123]
