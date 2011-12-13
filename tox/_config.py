@@ -257,9 +257,11 @@ class DepConfig:
         self.indexserver = indexserver
 
     def __str__(self):
-        if self.indexserver.name == "default":
-           return self.name
-        return ":%s:%s" %(self.indexserver.name, self.name)
+        if self.indexserver:
+            if self.indexserver.name == "default":
+               return self.name
+            return ":%s:%s" %(self.indexserver.name, self.name)
+        return str(self.name)
     __repr__ = __str__
 
 class IndexServerConfig:

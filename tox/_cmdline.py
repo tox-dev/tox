@@ -299,6 +299,7 @@ class Session:
     def _resolve_pkg(self, pkgspec):
         if not os.path.isabs(str(pkgspec)):
             return pkgspec
+        self.report.section(pkgspec)
         p = py.path.local(pkgspec)
         if p.check():
             return p

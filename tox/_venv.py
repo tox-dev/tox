@@ -227,7 +227,7 @@ class VirtualEnv(object):
         d = {}
         l = []
         for dep in deps:
-            if not hasattr(dep, 'indexserver'):
+            if not hasattr(dep, 'indexserver') or not dep.indexserver:
                 iserver = self.envconfig.config.indexserver['default']
                 dep = DepConfig(dep, iserver)
             url = dep.indexserver.url

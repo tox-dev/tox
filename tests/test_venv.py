@@ -116,6 +116,32 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     args = l[0].args
     assert "--no-site-packages" in map(str, args)
 
+def test_install_deps_wildcard(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv:py123]
+        deps=
+            {distshare}/dep1-*
+    """)
+    venv = mocksession.getenv("py123")
+    venv.create()
+    l = mocksession._pcalls
+    assert len(l) == 1
+    distshare = venv.session.config.distshare
+    distshare.ensure("dep1-1.0.zip")
+    distshare.ensure("dep1-1.1.zip")
+
+    venv.install_deps()
+    assert len(l) == 2
+    args = l[1].args
+    assert l[1].cwd == venv.envconfig.envlogdir
+    assert "pip" in str(args[0])
+    assert args[1] == "install"
+    arg = "--download-cache=" + str(venv.envconfig.downloadcache)
+    assert arg in args[2:]
+    args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
+    assert len(args) == 1
+
+
 def test_install_downloadcache(newmocksession):
     mocksession = newmocksession([], """
         [testenv:py123]
