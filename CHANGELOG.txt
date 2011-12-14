@@ -1,7 +1,9 @@
 1.3
 -----------------
 
-- you can now specify wildcard paths when specifiying dependencies
+- fix: allow to specify wildcard paths when specifiying dependencies
+  such that tox searches for the highest version
+
 
 1.2
 -----------------

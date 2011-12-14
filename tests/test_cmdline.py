@@ -22,10 +22,11 @@ def test__resolve_pkg(tmpdir, mocksession):
     assert result == p
     mocksession.report.expect("info", "determin*pkg123*")
     distshare.ensure("pkg123-1.4.7dev.zip")
-    mocksession.report.clear()
+    mocksession._clearmocks()
     result = mocksession._resolve_pkg(spec)
     mocksession.report.expect("warning", "*1.4.7*")
     assert result == p
+    mocksession._clearmocks()
     distshare.ensure("pkg123-1.4.5a1.tar.gz")
     result = mocksession._resolve_pkg(spec)
     assert result == p

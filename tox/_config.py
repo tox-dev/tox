@@ -221,10 +221,11 @@ class parseini:
             m = re.match(r":(\w+):\s*(\S+)", depline)
             if m:
                 iname, name = m.groups()
+                ixserver = config.indexserver[iname]
             else:
                 name = depline.strip()
-                iname = "default"
-            vc.deps.append(DepConfig(name, config.indexserver[iname]))
+                ixserver = None
+            vc.deps.append(DepConfig(name, ixserver))
         vc.distribute = reader.getbool(section, "distribute", True)
         vc.sitepackages = reader.getbool(section, "sitepackages", False)
         downloadcache = reader.getdefault(section, "downloadcache")

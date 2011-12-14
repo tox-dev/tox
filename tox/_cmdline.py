@@ -101,6 +101,7 @@ class Session:
         self.report.using("tox.ini: %s" %(self.config.toxinipath,))
         self.venvstatus = {}
         self.venvlist = self._makevenvlist()
+        self._spec2pkg = {}
 
     def _makevenvlist(self):
         l = []
@@ -297,9 +298,15 @@ class Session:
         return out
 
     def _resolve_pkg(self, pkgspec):
+        try:
+            return self._spec2pkg[pkgspec]
+        except KeyError:
+            self._spec2pkg[pkgspec] = x = self._resolvepkg(pkgspec)
+            return x
+
+    def _resolvepkg(self, pkgspec):
         if not os.path.isabs(str(pkgspec)):
             return pkgspec
-        self.report.section(pkgspec)
         p = py.path.local(pkgspec)
         if p.check():
             return p

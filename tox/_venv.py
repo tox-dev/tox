@@ -122,7 +122,7 @@ class VirtualEnv(object):
     def _getresolvedeps(self):
         l = []
         for dep in self.envconfig.deps:
-            if dep.indexserver.url is None:
+            if dep.indexserver is None:
                 res = self.session._resolve_pkg(dep.name)
                 if res != dep.name:
                     dep = dep.__class__(res)
@@ -184,10 +184,11 @@ class VirtualEnv(object):
         if getattr(self, 'just_created', False):
             self.session.report.action("installing sdist")
             self._getliveconfig().writeconfig(self.path_config)
-            self._install([sdistpath])
+            extraopts = []
         else:
             self.session.report.action("upgrade-installing sdist")
-            self._install(['-U', '--no-deps', sdistpath])
+            extraopts = ['-U', '--no-deps']
+        self._install([sdistpath], extraopts=extraopts)
 
     def install_deps(self):
         deps = self._getresolvedeps()
@@ -221,22 +222,28 @@ class VirtualEnv(object):
         env['PYTHONIOENCODING'] = 'utf_8'
         self._pcall(argv, cwd=self.envconfig.envlogdir, env=env)
 
-    def _install(self, deps):
+    def _install(self, deps, extraopts=None):
         if not deps:
             return
         d = {}
         l = []
         for dep in deps:
-            if not hasattr(dep, 'indexserver') or not dep.indexserver:
-                iserver = self.envconfig.config.indexserver['default']
-                dep = DepConfig(dep, iserver)
-            url = dep.indexserver.url
+            if isinstance(dep, (str, py.path.local)):
+                dep = DepConfig(str(dep), None)
+            assert isinstance(dep, DepConfig), dep
+            if dep.indexserver is None:
+                ixserver = self.envconfig.config.indexserver['default']
+            else:
+                ixserver = dep.indexserver
+            url = ixserver.url
             d.setdefault(url, []).append(dep.name)
             if url not in l:
                 l.append(url)
+            assert url is None or isinstance(url, str)
 
+        extraopts = extraopts or []
         for repo in l:
-            args = d[repo]
+            args = d[repo] + extraopts
             self.pip_install(args, repo)
 
     def test(self):

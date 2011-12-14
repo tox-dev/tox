@@ -36,7 +36,7 @@ class TestVenvConfig:
         assert config.envconfigs['py1'].basepython == "xyz"
         dep = config.envconfigs['py1'].deps[0]
         assert dep.name == "hello"
-        assert dep.indexserver.name == "default"
+        assert dep.indexserver is None
         assert config.envconfigs['py2'].basepython == "hello"
         assert config.envconfigs['py2'].envdir == tmpdir.join("py2")
         dep1, dep2 = config.envconfigs['py2'].deps

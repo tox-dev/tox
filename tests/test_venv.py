@@ -339,7 +339,7 @@ class TestCreationConfig:
         cconfig = venv._getliveconfig()
         venv.update()
         assert not venv.path_config.check()
-        venv.install_sdist([])
+        venv.install_sdist("sdist.zip")
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)

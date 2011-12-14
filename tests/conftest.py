@@ -89,6 +89,7 @@ def pytest_funcarg__mocksession(request):
             return VirtualEnv(self.config.envconfigs[name], session=self)
         def _clearmocks(self):
             self._pcalls = []
+            self._spec2pkg = {}
             self.report = ReportExpectMock()
         def make_emptydir(self, path):
             pass
