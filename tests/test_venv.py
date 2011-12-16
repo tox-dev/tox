@@ -382,6 +382,7 @@ class TestCreationConfig:
 class TestVenvTest:
 
     def test_patchPATH(self, newmocksession, monkeypatch):
+        monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession([], """
             [testenv:python]
             commands=abc
@@ -407,9 +408,10 @@ class TestVenvTest:
         py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
         py.test.raises(ZeroDivisionError, "venv._pcall([1,2,3])")
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
+        monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
         py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
-        os.environ['PIP_RESPECT_VIRTUALENV'] = "1"
+        assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
 
 def test_setenv_added_to_pcall(mocksession, newconfig):
     config = newconfig([], """

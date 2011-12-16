@@ -213,10 +213,11 @@ class VirtualEnv(object):
             self.envconfig.downloadcache.ensure(dir=1)
             argv.append("--download-cache=%s" %
                 self.envconfig.downloadcache)
-        try:
-            del os.environ['PIP_RESPECT_VIRTUALENV']
-        except KeyError:
-            pass
+        for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV'):
+            try:
+                del os.environ[x]
+            except KeyError:
+                pass
         argv += args
         env = os.environ.copy()
         env['PYTHONIOENCODING'] = 'utf_8'
