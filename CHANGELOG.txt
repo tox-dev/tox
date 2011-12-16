@@ -5,8 +5,7 @@
   such that tox searches for the highest version
 
 - fix issue issue21: clear PIP_REQUIRES_VIRTUALENV which avoids
-  pip installing to the wrong environment
-
+  pip installing to the wrong environment, thanks to bb's streeter
 
 1.2
 -----------------
