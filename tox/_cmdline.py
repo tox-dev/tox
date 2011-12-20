@@ -44,7 +44,8 @@ class Reporter:
         cwd = py.path.local()
         logged_command = "%s$ %s" %(cwd, " ".join(args))
         path = None
-        if log != -1: # no passthrough mode
+        if log != -1 and not self.config.opts.verbosity > 0:
+            # no passthrough mode
             if log is None:
                 log = self.config.logdir
             l = log.listdir()
@@ -62,8 +63,8 @@ class Reporter:
     def keyboard_interrupt(self):
         self.tw.line("KEYBOARDINTERRUPT", red=True)
 
-    def venv_installproject(self, venv, pkg):
-        self.logline("installing to %s: %s" % (venv.envconfig.envname, pkg))
+#    def venv_installproject(self, venv, pkg):
+#        self.logline("installing to %s: %s" % (venv.envconfig.envname, pkg))
 
     def keyvalue(self, name, value):
         if name.endswith(":"):
@@ -92,26 +93,37 @@ class Reporter:
 
 
 class Session:
-    def __init__(self, config):
+    def __init__(self, config, popen=subprocess.Popen):
         self.config = config
+        self.popen = popen
         self.report = Reporter(self.config)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
         #self.report.using("logdir %s" %(self.config.logdir,))
         self.report.using("tox.ini: %s" %(self.config.toxinipath,))
         self.venvstatus = {}
-        self.venvlist = self._makevenvlist()
         self._spec2pkg = {}
+        self._name2venv = {}
+        try:
+            self.venvlist = map(self.getvenv, self.config.envlist)
+        except LookupError:
+            raise SystemExit(1)
 
-    def _makevenvlist(self):
-        l = []
-        for name in self.config.envlist:
-            envconfig = self.config.envconfigs.get(name, None)
-            if envconfig is None:
-                self.report.error("unknown environment %r" % name)
-                raise SystemExit(1)
-            l.append(VirtualEnv(envconfig=envconfig, session=self))
-        return l
+    def _makevenv(self, name):
+        envconfig = self.config.envconfigs.get(name, None)
+        if envconfig is None:
+            self.report.error("unknown environment %r" % name)
+            raise LookupError(name)
+        venv = VirtualEnv(envconfig=envconfig, session=self)
+        self._name2venv[name] = venv
+        return venv
+
+    def getvenv(self, name):
+        """ return a VirtualEnv controler object for the 'name' env.  """
+        try:
+            return self._name2venv[name]
+        except KeyError:
+            return self._makevenv(name)
 
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
@@ -176,7 +188,6 @@ class Session:
                 self.setenvstatus(venv, sys.exc_info()[1])
 
     def sdist(self):
-        self.report.section("sdist")
         if not self.config.opts.sdistonly and self.config.sdistsrc:
             self.report.info("using sdistfile %r, skipping 'sdist' activity " %
                 str(self.config.sdistsrc))
@@ -198,6 +209,7 @@ class Session:
         return sdist_path
 
     def subcommand_test(self):
+        self.report.section("sdist")
         sdist_path = self.sdist()
         if self.config.opts.sdistonly:
             return
@@ -277,13 +289,13 @@ class Session:
         opts = {'env': env}
         args = [str(x) for x in args]
         logpath = self.report.popen(newargs, log, opts)
-        popen = subprocess.Popen(newargs, **opts)
+        popen = self.popen(newargs, **opts)
         try:
             out, err = popen.communicate()
         except KeyboardInterrupt:
             self.report.keyboard_interrupt()
             popen.wait()
-            raise
+            raise KeyboardInterrupt()
         ret = popen.wait()
         if ret:
             invoked = " ".join(map(str, newargs))

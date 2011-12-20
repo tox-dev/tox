@@ -29,9 +29,11 @@ def feedback(msg, sysexit=False):
         raise SystemExit(1)
 
 class VersionAction(argparse.Action):
-    def __call__(self, *args, **kwargs):
-        py.builtin.print_("%s imported from %s" %(tox.__version__,
-                          tox.__file__))
+    def __call__(self, argparser, *args, **kwargs):
+        name = argparser.prog
+        mod = __import__(name)
+        version = mod.__version__
+        py.builtin.print_("%s imported from %s" %(version, mod.__file__))
         raise SystemExit(0)
 
 class CountAction(argparse.Action):

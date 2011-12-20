@@ -1,5 +1,6 @@
 import tox
 import py
+import pytest
 
 pytest_plugins = "pytester"
 
@@ -144,6 +145,24 @@ class TestSession:
         exp = "%s: commands succeeded" % env2.envconfig.envname
         assert exp in out
 
+    def test_getvenv(self, initproj, capfd):
+        initproj("logexample123-0.5", filedefs={
+            'tests': {'test_hello.py': "def test_hello(): pass"},
+            'tox.ini': '''
+            [testenv:hello]
+            [testenv:world]
+            '''
+        })
+        config = parseconfig([])
+        session = Session(config)
+        venv1 = session.getvenv("hello")
+        venv2 = session.getvenv("hello")
+        assert venv1 is venv2
+        venv1 = session.getvenv("world")
+        venv2 = session.getvenv("world")
+        assert venv1 is venv2
+        pytest.raises(LookupError, lambda: session.getvenv("qwe"))
+
 
 # not sure we want this option ATM
 def XXX_test_package(cmd, initproj):
@@ -174,6 +193,28 @@ def test_minversion(cmd, initproj):
         "*ERROR*tox version is * required is at least 6.0*"
     ])
     assert result.ret
+
+def test_unknown_interpreter_and_env(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [testenv:python]
+            basepython=xyz_unknown_interpreter
+            [testenv]
+            changedir=tests
+        '''
+    })
+    result = cmd.run("tox")
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
+    ])
+
+    result = cmd.run("tox", "-exyz")
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*ERROR*unknown*",
+    ])
 
 def test_unknown_interpreter(cmd, initproj):
     initproj("interp123-0.5", filedefs={
