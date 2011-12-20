@@ -219,9 +219,8 @@ class VirtualEnv(object):
             except KeyError:
                 pass
         argv += args
-        env = os.environ.copy()
-        env['PYTHONIOENCODING'] = 'utf_8'
-        self._pcall(argv, cwd=self.envconfig.envlogdir, env=env)
+        env = dict(PYTHONIOENCODING='utf_8')
+        self._pcall(argv, cwd=self.envconfig.envlogdir, extraenv=env)
 
     def _install(self, deps, extraopts=None):
         if not deps:
@@ -247,24 +246,26 @@ class VirtualEnv(object):
             args = d[repo] + extraopts
             self.pip_install(args, repo)
 
-    def test(self):
-        self.session.make_emptydir(self.envconfig.envtmpdir)
-        cwd = self.envconfig.changedir
+    def _getenv(self):
         env = self.envconfig.setenv
         if env:
             env_arg = os.environ.copy()
             env_arg.update(env)
         else:
             env_arg = None
+        return env_arg
 
+    def test(self):
+        self.session.make_emptydir(self.envconfig.envtmpdir)
+        cwd = self.envconfig.changedir
         for argv in self.envconfig.commands:
             try:
-                self._pcall(argv, log=-1, cwd=cwd, env=env_arg)
+                self._pcall(argv, log=-1, cwd=cwd)
             except tox.exception.InvocationError:
                 self.session.report.error(str(sys.exc_info()[1]))
                 return True
 
-    def _pcall(self, args, venv=True, log=None, cwd=None, env=None):
+    def _pcall(self, args, venv=True, log=None, cwd=None, extraenv={}):
         try:
             del os.environ['PYTHONDONTWRITEBYTECODE']
         except KeyError:
@@ -282,6 +283,8 @@ class VirtualEnv(object):
                         self.envconfig.envdir))
             if log is None:
                 log = self.path.ensure("log", dir=1)
+            env = self._getenv() or os.environ.copy()
+            env.update(extraenv)
             return self.session.pcall(args, log=log, cwd=cwd, env=env)
         finally:
             os.environ['PATH'] = old

@@ -424,15 +424,17 @@ def test_setenv_added_to_pcall(mocksession, newconfig):
 
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     # import pdb; pdb.set_trace()
+    venv.install_sdist("xyz")
     venv.test()
 
     l = mocksession._pcalls
-    assert len(l) == 1
-    args = l[0].args
-    env = l[0].env
-    assert env is not None
-    assert 'ENV_VAR' in env
-    assert env['ENV_VAR'] == 'value'
+    assert len(l) == 2
+    for x in l:
+        args = x.args
+        env = x.env
+        assert env is not None
+        assert 'ENV_VAR' in env
+        assert env['ENV_VAR'] == 'value'
 
     for e in os.environ:
         assert e in env

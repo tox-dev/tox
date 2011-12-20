@@ -7,6 +7,9 @@
 - fix issue issue21: clear PIP_REQUIRES_VIRTUALENV which avoids
   pip installing to the wrong environment, thanks to bb's streeter
 
+- make the install step honour a testenv's setenv setting
+  (thanks Ralf Schmitt)
+
 1.2
 -----------------
 
