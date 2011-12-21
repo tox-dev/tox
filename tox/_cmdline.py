@@ -105,7 +105,8 @@ class Session:
         self._spec2pkg = {}
         self._name2venv = {}
         try:
-            self.venvlist = map(self.getvenv, self.config.envlist)
+            self.venvlist = [self.getvenv(x)
+                for x in self.config.envlist]
         except LookupError:
             raise SystemExit(1)
 
