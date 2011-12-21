@@ -97,7 +97,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
    .. versionadded:: 0.9
 
    each line contains a NAME=VALUE environment variable setting which
-   will be used for all command invocations.
+   will be used for all test command invocations as well as for installing
+   the sdist package into a virtual environment.
 
 .. confval:: recreate=True|False(default)
 
