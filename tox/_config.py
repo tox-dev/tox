@@ -13,10 +13,10 @@ defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
 for _name in "py24,py25,py26,py27,py30,py31,py32".split(","):
     defaultenvs[_name] = "python%s.%s" %(_name[2], _name[3])
 
-def parseconfig(args=None):
+def parseconfig(args=None, pkg=None):
     if args is None:
         args = sys.argv[1:]
-    parser = prepare_parse()
+    parser = prepare_parse(pkg)
     opts = parser.parse_args(args)
     config = Config()
     config.opts = opts
@@ -30,7 +30,7 @@ def feedback(msg, sysexit=False):
 
 class VersionAction(argparse.Action):
     def __call__(self, argparser, *args, **kwargs):
-        name = argparser.prog
+        name = argparser.pkgname
         mod = __import__(name)
         version = mod.__version__
         py.builtin.print_("%s imported from %s" %(version, mod.__file__))
@@ -43,9 +43,10 @@ class CountAction(argparse.Action):
         else:
             setattr(namespace, self.dest, 0)
 
-def prepare_parse():
+def prepare_parse(pkgname):
     parser = argparse.ArgumentParser(description=__doc__,)
         #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.pkgname = pkgname
     parser.add_argument("--version", nargs=0, action=VersionAction,
         dest="version",
         help="report version information to stdout.")

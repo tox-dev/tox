@@ -15,7 +15,7 @@ from tox._config import parseconfig
 
 def main(args=None):
     try:
-        config = parseconfig(args)
+        config = parseconfig(args, 'tox')
         retcode = Session(config).runcommand()
         raise SystemExit(retcode)
     except KeyboardInterrupt:
