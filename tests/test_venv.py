@@ -165,7 +165,7 @@ def test_install_downloadcache(newmocksession):
     assert arg in args[2:]
     assert "dep1" in args
     assert "dep2" in args
-    deps = filter(None, [x[1] for x in venv._getliveconfig().deps])
+    deps = list(filter(None, [x[1] for x in venv._getliveconfig().deps]))
     assert deps == ['dep1', 'dep2']
 
 def test_install_deps_indexserver(newmocksession):
