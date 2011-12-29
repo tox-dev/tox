@@ -93,10 +93,12 @@ class Reporter:
 
 
 class Session:
-    def __init__(self, config, popen=subprocess.Popen):
+    def __init__(self, config, popen=subprocess.Popen, report=None):
         self.config = config
         self.popen = popen
-        self.report = Reporter(self.config)
+        if report is None:
+            report = Reporter(self.config)
+        self.report = report
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
         #self.report.using("logdir %s" %(self.config.logdir,))

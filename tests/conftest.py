@@ -56,17 +56,19 @@ class ReportExpectMock:
 
         def generic_report(*args):
             self._calls.append((name,)+args)
-            print ("report %s" %(args,))
+            print ("%s" %(self._calls[-1], ))
         return generic_report
 
-    def expect(self, cat, messagepattern):
+    def expect(self, cat, messagepattern="*"):
         newindex = self._index + 1
         while newindex < len(self._calls):
-            lcat, lmsg = self._calls[newindex]
-            lmsg = lmsg.replace("\n", " ")
-            if lcat == cat and fnmatch(lmsg, messagepattern):
-                self._index = newindex
-                return
+            call = self._calls[newindex]
+            lcat = call[0]
+            for lmsg in call[1:]:
+                lmsg = str(lmsg).replace("\n", " ")
+                if lcat == cat and fnmatch(lmsg, messagepattern):
+                    self._index = newindex
+                    return
             newindex += 1
         raise AssertionError(
             "looking for %s(%r), no reports found at >=%d in %r" %

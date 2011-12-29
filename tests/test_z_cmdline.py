@@ -1,11 +1,37 @@
 import tox
 import py
 import pytest
+from conftest import ReportExpectMock
 
 pytest_plugins = "pytester"
 
 from tox._cmdline import Session
 from tox._config import parseconfig
+
+def test_report_protocol(newconfig):
+    config = newconfig([], """
+            [testenv:py26]
+            deps=xy
+    """)
+    l = []
+    class Report:
+        def __getattr__(self, name):
+            if name[0] != "_":
+                return lambda *args, **kwargs: l.append((args, kwargs))
+    class Popen:
+        def __init__(self, *args, **kwargs):
+            pass
+        def communicate(self):
+            return "", ""
+        def wait(self):
+            pass
+
+    report = ReportExpectMock()
+    session = Session(config, popen=Popen, report=report)
+    report.expect("using")
+    venv = session.getvenv("py26")
+    venv.update()
+    report.expect("action")
 
 def test__resolve_pkg(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
@@ -438,6 +464,7 @@ def test_separate_sdist(cmd, initproj):
         "*skipping*sdist*",
         "*install*%s*" % sdistfile.basename,
     ])
+
 
 def test_sdist_latest(tmpdir, newconfig):
     distshare = tmpdir.join("distshare")
