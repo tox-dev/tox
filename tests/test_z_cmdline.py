@@ -13,11 +13,6 @@ def test_report_protocol(newconfig):
             [testenv:py26]
             deps=xy
     """)
-    l = []
-    class Report:
-        def __getattr__(self, name):
-            if name[0] != "_":
-                return lambda *args, **kwargs: l.append((args, kwargs))
     class Popen:
         def __init__(self, *args, **kwargs):
             pass
@@ -26,12 +21,13 @@ def test_report_protocol(newconfig):
         def wait(self):
             pass
 
-    report = ReportExpectMock()
-    session = Session(config, popen=Popen, report=report)
+    session = Session(config, popen=Popen,
+            Report=ReportExpectMock)
+    report = session.report
     report.expect("using")
     venv = session.getvenv("py26")
     venv.update()
-    report.expect("action")
+    report.expect("logpopen")
 
 def test__resolve_pkg(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
@@ -107,44 +103,20 @@ class TestSession:
         assert sdist_share.check()
         assert sdist_share.read("rb") == sdist.read("rb"), (sdist_share, sdist)
 
-    def test_log_pcall(self, initproj, tmpdir, capfd):
+    def test_log_pcall(self, initproj, tmpdir):
         initproj("logexample123-0.5", filedefs={
             'tests': {'test_hello.py': "def test_hello(): pass"},
             'tox.ini': '''
             '''
         })
         config = parseconfig([])
-        session = Session(config)
+        session = Session(config, Report=ReportExpectMock)
+        assert session.report.session == session
         assert not session.config.logdir.listdir()
-        opts = {}
-        capfd.readouterr()
-        session.report.popen(["ls", ], log=None, opts=opts)
-        out, err = capfd.readouterr()
-        assert '0.log' in out
-        assert 'stdout' in opts
-        assert opts['stdout'].write
-        assert opts['stderr'] == py.std.subprocess.STDOUT
-        x = opts['stdout'].name
-        assert x.startswith(str(session.config.logdir))
-
-        opts={}
-        session.report.popen(["ls", ], log=None, opts=opts)
-        out, err = capfd.readouterr()
-        assert '1.log' in out
-
-        opts={}
-        newlogdir = tmpdir.mkdir("newlogdir")
-        cwd = newlogdir.dirpath()
-        cwd.chdir()
-        session.report.popen(["xyz",], log=newlogdir, opts=opts)
-        l = newlogdir.listdir()
-        assert len(l) == 1
-        assert l[0].basename == "0.log"
-        out, err = capfd.readouterr()
-        relpath = l[0].relto(cwd)
-        expect = ">%s%s0.log" % (newlogdir.basename, newlogdir.sep)
-        assert expect in out
-
+        action = session.newaction(None, "something")
+        action.popen(["ls", ])
+        match = session.report.getnext("logpopen")
+        assert match[1].outpath.relto(session.config.logdir)
 
     def test_summary_status(self, initproj, capfd):
         initproj("logexample123-0.5", filedefs={
@@ -391,35 +363,27 @@ def test_notest(initproj, cmd):
         # content of: tox.ini
         [testenv:py25]
         basepython=python
-        [testenv:py26]
-        basepython=python
     """})
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*skipping*test*",
-        "*skipping*test*",
-        "*tox summary*",
+        "*test summary*",
+        "*py25*skipped tests*",
     ])
     result = cmd.run("tox", "-v", "--notest", "-epy25")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*reusing*py25",
-    ])
-    result = cmd.run("tox", "-v", "--notest", "-epy25,py26")
-    assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*reusing*py25",
-        "*reusing*py26",
+        "*py25*prepareenv*",
+        "  *reusing*",
     ])
 
-def test_env_PYTHONDOWNWRITEBYTECODE(initproj, cmd, monkeypatch):
+def test_env_PYTHONDONTWRITEBYTECODE(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={'tox.ini': ''})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*creating*",
+        "*create*",
     ])
 
 def test_sdistonly(initproj, cmd):
@@ -427,7 +391,9 @@ def test_sdistonly(initproj, cmd):
     """})
     result = cmd.run("tox", "--sdistonly")
     assert not result.ret
-    assert "setup.py sdist" in result.stdout.str()
+    result.stdout.fnmatch_lines([
+        "*using*setup.py*",
+    ])
     assert "virtualenv" not in result.stdout.str()
 
 def test_separate_sdist_no_sdistfile(cmd, initproj):
@@ -461,8 +427,7 @@ def test_separate_sdist(cmd, initproj):
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*skipping*sdist*",
-        "*install*%s*" % sdistfile.basename,
+        "*sdist-inst*%s*" % sdistfile,
     ])
 
 

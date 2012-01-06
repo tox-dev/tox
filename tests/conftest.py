@@ -7,6 +7,7 @@ from fnmatch import fnmatch
 import time
 from tox._config import parseconfig
 from tox._venv import VirtualEnv
+from tox._cmdline import Action
 
 def pytest_configure():
     if 'TOXENV' in os.environ:
@@ -43,9 +44,10 @@ def pytest_funcarg__cmd(request):
     return Cmd(request)
 
 class ReportExpectMock:
-    def __init__(self):
+    def __init__(self, session):
         self._calls = []
         self._index = -1
+        self.session = session
 
     def clear(self):
         self._calls[:] = []
@@ -54,49 +56,79 @@ class ReportExpectMock:
         if name[0] == "_":
             raise AttributeError(name)
 
-        def generic_report(*args):
+        def generic_report(*args, **kwargs):
             self._calls.append((name,)+args)
             print ("%s" %(self._calls[-1], ))
         return generic_report
 
-    def expect(self, cat, messagepattern="*"):
+    def action(self, venv, msg, *args):
+        self._calls.append(("action", venv, msg))
+        print ("%s" %(self._calls[-1], ))
+        return Action(self.session, venv, msg, args)
+
+    def getnext(self, cat):
+        __tracebackhide__ = True
         newindex = self._index + 1
         while newindex < len(self._calls):
             call = self._calls[newindex]
             lcat = call[0]
+            if fnmatch(lcat, cat):
+                self._index = newindex
+                return call
+            newindex += 1
+        raise LookupError(
+            "looking for %r, no reports found at >=%d in %r" %
+            (cat, self._index+1, self._calls))
+
+    def expect(self, cat, messagepattern="*"):
+        __tracebackhide__ = True
+        if not messagepattern.startswith("*"):
+            messagepattern = "*" + messagepattern
+        while self._index < len(self._calls):
+            try:
+                call = self.getnext(cat)
+            except LookupError:
+                break
             for lmsg in call[1:]:
                 lmsg = str(lmsg).replace("\n", " ")
-                if lcat == cat and fnmatch(lmsg, messagepattern):
-                    self._index = newindex
+                if fnmatch(lmsg, messagepattern):
                     return
-            newindex += 1
         raise AssertionError(
             "looking for %s(%r), no reports found at >=%d in %r" %
             (cat, messagepattern, self._index+1, self._calls))
 
 class pcallMock:
-    def __init__(self, args, log, cwd, env=None):
+    def __init__(self, args, cwd, env, stdout, stderr):
         self.args = args
-        self.log = log
         self.cwd = cwd
         self.env = env
+        self.stdout = stdout
+        self.stderr = stderr
+
+    def communicate(self):
+        return "", ""
+    def wait(self):
+        pass
 
 def pytest_funcarg__mocksession(request):
     from tox._cmdline import Session
     class MockSession(Session):
         def __init__(self):
             self._clearmocks()
-            #self.config = request.getfuncargvalue("newconfig")([], "")
+            self.config = request.getfuncargvalue("newconfig")([], "")
+            self._actions = []
         def getenv(self, name):
             return VirtualEnv(self.config.envconfigs[name], session=self)
         def _clearmocks(self):
             self._pcalls = []
             self._spec2pkg = {}
-            self.report = ReportExpectMock()
+            self.report = ReportExpectMock(self)
         def make_emptydir(self, path):
             pass
-        def pcall(self, args, log, cwd, env=None):
-            self._pcalls.append(pcallMock(args, log, cwd, env))
+        def popen(self, args, cwd, stdout=None, stderr=None, env=None):
+            pm = pcallMock(args, cwd, env, stdout, stderr)
+            self._pcalls.append(pm)
+            return pm
     return MockSession()
 
 def pytest_funcarg__newmocksession(request):

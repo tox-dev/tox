@@ -19,6 +19,7 @@ class CreationConfig:
                         self.sitepackages))
         for dep in self.deps:
             lines.append("%s %s" % dep)
+        path.ensure()
         path.write("\n".join(lines))
 
     @classmethod
@@ -76,31 +77,32 @@ class VirtualEnv(object):
     def _ispython3(self):
         return "python3" in str(self.envconfig.basepython)
 
-    def update(self):
+    def update(self, action=None):
         """ return status string for updating actual venv to match configuration.
             if status string is empty, all is ok.
         """
+        if action is None:
+            action = self.session.newaction(self, "update")
         report = self.session.report
         name = self.envconfig.envname
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
             rconfig.matches(self._getliveconfig()):
-            report.action("reusing existing matching virtualenv %s" %
-                (self.envconfig.envname,))
+            action.setactivity("reusing", "existing environment matches")
             return
         if rconfig is None:
-            report.action("creating virtualenv %s" % name)
+            action.setactivity("create", "no existing environment found")
         else:
-            report.action("recreating virtualenv %s "
-                "(configchange/incomplete install detected)" % name)
+            action.setactivity("recreate",
+                "configchange/incomplete install detected")
         try:
-            self.create()
+            self.create(action)
         except tox.exception.UnsupportedInterpreter:
             return sys.exc_info()[1]
         except tox.exception.InterpreterNotFound:
             return sys.exc_info()[1]
         try:
-            self.install_deps()
+            self.install_deps(action)
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
             return "could not install deps %s" %(self.envconfig.deps,)
@@ -148,9 +150,11 @@ class VirtualEnv(object):
             raise tox.exception.InterpreterNotFound(self.envconfig.basepython)
         return config_executable
 
-    def create(self):
+    def create(self, action=None):
         #if self.getcommandpath("activate").dirpath().check():
         #    return
+        if action is None:
+            action = self.session.newaction(self, "create")
         config_interpreter = self.getsupportedinterpreter()
         f, path, _ = py.std.imp.find_module("virtualenv")
         f.close()
@@ -173,7 +177,7 @@ class VirtualEnv(object):
         try:
             basepath.chdir()
             args.append(self.path.basename)
-            self._pcall(args, venv=False)
+            self._pcall(args, venv=False, action=action)
             #if self._ispython3():
             #    self.easy_install(["-U", "distribute"])
         finally:
@@ -182,20 +186,23 @@ class VirtualEnv(object):
 
     def install_sdist(self, sdistpath):
         if getattr(self, 'just_created', False):
-            self.session.report.action("installing sdist")
+            action = self.session.newaction(None, "sdist-inst", sdistpath)
             self._getliveconfig().writeconfig(self.path_config)
             extraopts = []
         else:
-            self.session.report.action("upgrade-installing sdist")
+            action = self.session.newaction(None, "sdist-reinst", sdistpath)
             extraopts = ['-U', '--no-deps']
-        self._install([sdistpath], extraopts=extraopts)
+        self._install([sdistpath], extraopts=extraopts, action=action)
 
-    def install_deps(self):
+    def install_deps(self, action=None):
+        if action is None:
+            action = self.session.newaction(self, "install_deps")
         deps = self._getresolvedeps()
         if deps:
             depinfo = ", ".join(map(str, deps))
-            self.session.report.action("installing dependencies: %s" % depinfo)
-            self._install(deps)
+            action.setactivity("installdeps",
+                "%s" % depinfo)
+            self._install(deps, action=action)
 
     def _commoninstallopts(self, indexserver):
         l = []
@@ -207,7 +214,7 @@ class VirtualEnv(object):
         argv = ["easy_install"] + self._commoninstallopts(indexserver) + args
         self._pcall(argv, cwd=self.envconfig.envlogdir)
 
-    def pip_install(self, args, indexserver=None):
+    def pip_install(self, args, indexserver=None, action=None):
         argv = ["pip", "install"] + self._commoninstallopts(indexserver)
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
@@ -220,9 +227,10 @@ class VirtualEnv(object):
                 pass
         argv += args
         env = dict(PYTHONIOENCODING='utf_8')
-        self._pcall(argv, cwd=self.envconfig.envlogdir, extraenv=env)
+        self._pcall(argv, cwd=self.envconfig.envlogdir, extraenv=env,
+            action=action)
 
-    def _install(self, deps, extraopts=None):
+    def _install(self, deps, extraopts=None, action=None):
         if not deps:
             return
         d = {}
@@ -244,7 +252,7 @@ class VirtualEnv(object):
         extraopts = extraopts or []
         for repo in l:
             args = d[repo] + extraopts
-            self.pip_install(args, repo)
+            self.pip_install(args, repo, action)
 
     def _getenv(self):
         env = self.envconfig.setenv
@@ -255,21 +263,27 @@ class VirtualEnv(object):
             env_arg = None
         return env_arg
 
-    def test(self):
+    def test(self, action=None, redirect=False):
+        if action is None:
+            action = self.session.newaction(self, "test")
         self.session.make_emptydir(self.envconfig.envtmpdir)
         cwd = self.envconfig.changedir
         for argv in self.envconfig.commands:
             try:
-                self._pcall(argv, log=-1, cwd=cwd)
+                self._pcall(argv, cwd=cwd, action=action, redirect=redirect)
             except tox.exception.InvocationError:
                 self.session.report.error(str(sys.exc_info()[1]))
                 return True
 
-    def _pcall(self, args, venv=True, log=None, cwd=None, extraenv={}):
+    def _pcall(self, args, venv=True, cwd=None, extraenv={},
+            action=None, redirect=True):
         try:
             del os.environ['PYTHONDONTWRITEBYTECODE']
         except KeyError:
             pass
+        if cwd:
+            cwd.ensure(dir=1)
+
         old = self.patchPATH()
         try:
             args[0] = self.getcommandpath(args[0])
@@ -281,11 +295,9 @@ class VirtualEnv(object):
                         "  env: %s\n"
                         "Maybe forgot to specify a dependency?" % (args[0],
                         self.envconfig.envdir))
-            if log is None:
-                log = self.path.ensure("log", dir=1)
             env = self._getenv() or os.environ.copy()
             env.update(extraenv)
-            return self.session.pcall(args, log=log, cwd=cwd, env=env)
+            return action.popen(args, cwd=cwd, env=env, redirect=redirect)
         finally:
             os.environ['PATH'] = old
 

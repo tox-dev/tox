@@ -218,9 +218,9 @@ def test_install_recreate(newmocksession):
     venv = mocksession.getenv('python')
     venv.update()
     venv.install_sdist("xz")
-    mocksession.report.expect("action", "*creating virtualenv*")
+    mocksession.report.expect("*", "*no existing*")
     venv.update()
-    mocksession.report.expect("action", "recreating virtualenv*")
+    mocksession.report.expect("*", "*configchange*detected*")
 
 def test_install_error(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
@@ -260,7 +260,8 @@ def test_install_python3(tmpdir, newmocksession):
     args = l[0].args
     assert str(args[1]).endswith('virtualenv.py')
     l[:] = []
-    venv._install(["hello"])
+    action = mocksession.newaction(venv, "hello")
+    venv._install(["hello"], action=action)
     assert len(l) == 1
     args = l[0].args
     assert 'pip' in str(args[0])
@@ -344,16 +345,16 @@ class TestCreationConfig:
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
         assert 'virtualenv' in " ".join(args1)
-        mocksession.report.expect("action", "creating virtualenv*")
+        mocksession.report.expect("*", "*create*")
         # modify config and check that recreation happens
         mocksession._clearmocks()
         venv.update()
-        mocksession.report.expect("action", "reusing existing*")
+        mocksession.report.expect("*", "*reusing*")
         mocksession._clearmocks()
         cconfig.python = py.path.local("balla")
         cconfig.writeconfig(venv.path_config)
         venv.update()
-        mocksession.report.expect("action", "recreating virtualenv*")
+        mocksession.report.expect("*", "configchange*")
 
     def test_dep_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
@@ -365,7 +366,7 @@ class TestCreationConfig:
         cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
         venv.update()
-        mocksession.report.expect("action", "recreating virtualenv*")
+        mocksession.report.expect("*", "*recreate*")
 
     def test_distribute_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
@@ -377,7 +378,7 @@ class TestCreationConfig:
         cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
         venv.update()
-        mocksession.report.expect("action", "recreating virtualenv*")
+        mocksession.report.expect("verbosity0", "*recreate*")
 
 class TestVenvTest:
 
@@ -464,7 +465,8 @@ def test_pip_install(newmocksession):
     venv = mocksession.getenv('python')
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
-    venv.pip_install(args=["whatever"])
+    action = mocksession.newaction(venv, "hello")
+    venv.pip_install(args=["whatever"], action=action)
     l = mocksession._pcalls
     assert len(l) == 1
     assert 'pip' in l[0].args[0]

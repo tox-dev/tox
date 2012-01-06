@@ -12,6 +12,7 @@ import subprocess
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
 from tox._config import parseconfig
+from subprocess import STDOUT
 
 def main(args=None):
     try:
@@ -21,44 +22,120 @@ def main(args=None):
     except KeyboardInterrupt:
         raise SystemExit(2)
 
+class Action(object):
+    def __init__(self, session, venv, msg, args):
+        self.venv = venv
+        self.msg = msg
+        self.activity = msg.split(" ", 1)[0]
+        self.session = session
+        self.report = session.report
+        self.args = args
+        self.id = venv and venv.envconfig.envname or "tox"
+        self._popenlist = []
+
+    def setactivity(self, name, msg):
+        self.activity = name
+        self.report.verbosity0("  %s: %s" %(name, msg), bold=True)
+
+    def _initlogpath(self, actionid):
+        if self.venv:
+            logdir = self.venv.envconfig.envlogdir
+        else:
+            logdir = self.session.config.logdir
+        try:
+            l = logdir.listdir("%s-*" % actionid)
+        except py.error.ENOENT:
+            logdir.ensure(dir=1)
+            l = []
+        num = len(l)
+        path = logdir.join("%s-%s.log" % (actionid, num))
+        f = path.open('w')
+        f.flush()
+        return f
+
+    def popen(self, args, cwd=None, env=None, redirect=True):
+        logged_command = "%s$ %s" %(cwd, " ".join(map(str, args)))
+        f = outpath = None
+        if redirect:
+            f = self._initlogpath(self.id)
+            f.write("actionid=%s\nmsg=%s\ncmd=%s\nenv=%s\n" %(
+                    self.id, self.msg, logged_command, env))
+            f.flush()
+            outpath = py.path.local(f.name)
+        if cwd is None:
+            # XXX cwd = self.session.config.cwd
+            cwd = py.path.local()
+        popen = self._popen(args, cwd, env=env, stdout=f, stderr=STDOUT)
+        popen.outpath = outpath
+        popen.args = args
+        popen.cwd = cwd
+        popen.action = self
+        self._popenlist.append(popen)
+        self.report.logpopen(popen)
+        try:
+            out, err = popen.communicate()
+        except KeyboardInterrupt:
+            self.report.keyboard_interrupt()
+            popen.wait()
+            raise KeyboardInterrupt()
+        ret = popen.wait()
+        if ret:
+            invoked = " ".join(map(str, popen.args))
+            if outpath:
+                self.report.error("invocation failed, logfile: %s" % outpath)
+                self.report.error(outpath.read())
+                raise tox.exception.InvocationError(
+                    "%s (see %s)" %(invoked, outpath))
+            else:
+                raise tox.exception.InvocationError("%r" %(invoked, ))
+        return out
+
+    def _rewriteargs(self, cwd, args):
+        newargs = []
+        for arg in args:
+            if isinstance(arg, py.path.local):
+                arg = cwd.bestrelpath(arg)
+            newargs.append(str(arg))
+        return newargs
+
+    def _popen(self, args, cwd, stdout, stderr, env=None):
+        args = self._rewriteargs(cwd, args)
+        #args = [str(x) for x in args]
+        if env is None:
+            env = os.environ.copy()
+        return self.session.popen(args, stdout=stdout, stderr=stderr,
+            cwd=str(cwd), env=env)
+
 class Reporter:
-    def __init__(self, config):
-        self.config = config
+    actionchar = "-"
+    def __init__(self, session):
         self.tw = py.io.TerminalWriter()
+        self.session = session
 
-    def section(self, name):
-        self.tw.sep("_", "[tox %s]" % name, bold=True)
+    def logpopen(self, popen):
+        """ log information about the action.popen() created process. """
+        cmd = " ".join(map(str, popen.args))
+        if popen.outpath:
+            self.verbosity1("  %s$ %s >%s" %(popen.cwd, cmd,
+                popen.outpath,
+                ))
+        else:
+            self.verbosity1("  %s$ %s " %(popen.cwd, cmd))
 
-    def action(self, msg):
-        self.logline("***" + msg, bold=True)
+    def logaction(self, action):
+        msg = action.msg
+        msg += " " + " ".join(map(str, action.args))
+        self.logline(self.actionchar +
+            " %s %s" % (action.id, msg,), bold=True)
 
     def info(self, msg):
-        if self.config.opts.verbosity > 0:
+        if self.session.config.opts.verbosity >= 2:
             self.logline(msg)
 
     def using(self, msg):
-        if self.config.opts.verbosity > 0:
+        if self.session.config.opts.verbosity >= 1:
             self.logline("using %s" %(msg,), bold=True)
 
-    def popen(self, args, log, opts):
-        cwd = py.path.local()
-        logged_command = "%s$ %s" %(cwd, " ".join(args))
-        path = None
-        if log != -1 and not self.config.opts.verbosity > 0:
-            # no passthrough mode
-            if log is None:
-                log = self.config.logdir
-            l = log.listdir()
-            num = len(l)
-            path = log.join("%s.log" % num)
-            f = path.open('w')
-            rellog = cwd.bestrelpath(path)
-            logged_command += " >%s" % rellog
-            f.write(logged_command+"\n")
-            f.flush()
-            opts.update(dict(stdout=f, stderr=subprocess.STDOUT))
-        self.logline(logged_command)
-        return path
 
     def keyboard_interrupt(self):
         self.tw.line("KEYBOARDINTERRUPT", red=True)
@@ -86,19 +163,27 @@ class Reporter:
         self.logline("ERROR: " + msg, red=True)
 
     def logline(self, msg, **opts):
-        self.tw.line("[TOX] %s" % msg, **opts)
+        self.tw.line("%s" % msg, **opts)
+
+    def verbosity0(self, msg, **opts):
+        if self.session.config.opts.verbosity >= 0:
+            self.tw.line("%s" % msg, **opts)
+
+    def verbosity1(self, msg, **opts):
+        if self.session.config.opts.verbosity >= 1:
+            self.tw.line("%s" % msg, **opts)
 
     #def log(self, msg):
     #    py.builtin.print_(msg, file=sys.stderr)
 
 
 class Session:
-    def __init__(self, config, popen=subprocess.Popen, report=None):
+    passthroughpossible = True
+
+    def __init__(self, config, popen=subprocess.Popen, Report=Reporter):
         self.config = config
         self.popen = popen
-        if report is None:
-            report = Reporter(self.config)
-        self.report = report
+        self.report = Report(self)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
         #self.report.using("logdir %s" %(self.config.logdir,))
@@ -111,6 +196,7 @@ class Session:
                 for x in self.config.envlist]
         except LookupError:
             raise SystemExit(1)
+        self._actions = []
 
     def _makevenv(self, name):
         envconfig = self.config.envconfigs.get(name, None)
@@ -127,6 +213,12 @@ class Session:
             return self._name2venv[name]
         except KeyError:
             return self._makevenv(name)
+
+    def newaction(self, venv, msg, *args):
+        action = Action(self, venv, msg, args)
+        self.report.logaction(action)
+        self._actions.append(action)
+        return action
 
     def runcommand(self):
         #tw.sep("-", "tox info from %s" % self.options.configfile)
@@ -159,36 +251,46 @@ class Session:
         self.venvstatus[venv.path] = msg
 
     def _makesdist(self):
-        self.report.action("creating sdist package")
+        action = self.newaction(None, "prepare sdist package")
         setup = self.config.setupdir.join("setup.py")
+        action.setactivity("sdist-make", "using %s" % setup)
         if not setup.check():
             raise tox.exception.MissingFile(setup)
         self.make_emptydir(self.config.distdir)
-        self.pcall([sys.executable, setup, "sdist", "--formats=zip",
-                    "--dist-dir", self.config.distdir, ],
-                   cwd=self.config.setupdir)
+        action.popen([sys.executable, setup, "sdist", "--formats=zip",
+                      "--dist-dir", self.config.distdir, ],
+                      cwd=self.config.setupdir)
         return self.config.distdir.listdir()[0]
 
     def make_emptydir(self, path):
         if path.check():
-            self.report.info("emptying %s" % path)
+            self.report.info("  removing %s" % path)
             py.std.shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir()
 
     def setupenv(self, venv, sdist_path):
+        action = self.newaction(venv, "prepareenv", venv.envconfig.envdir)
+        if self._prepareenv(action, venv):
+            if sdist_path is not None:
+                self.installsdist(venv, sdist_path)
+
+    def _prepareenv(self, action, venv):
         self.venvstatus[venv.path] = 0
         try:
-            status = venv.update()
+            status = venv.update(action=action)
         except tox.exception.InvocationError:
             status = sys.exc_info()[1]
         if status:
             self.setenvstatus(venv, status)
             self.report.error(str(status))
-        elif sdist_path is not None:
-            try:
-                venv.install_sdist(sdist_path)
-            except tox.exception.InvocationError:
-                self.setenvstatus(venv, sys.exc_info()[1])
+            return False
+        return True
+
+    def installsdist(self, venv, sdist_path):
+        try:
+            venv.install_sdist(sdist_path)
+        except tox.exception.InvocationError:
+            self.setenvstatus(venv, sys.exc_info()[1])
 
     def sdist(self):
         if not self.config.opts.sdistonly and self.config.sdistsrc:
@@ -205,44 +307,47 @@ class Session:
                 raise SystemExit(1)
             sdistfile = self.config.distshare.join(sdist_path.basename)
             if sdistfile != sdist_path:
-                self.report.action("copying new sdistfile to %r" %
+                self.report.info("copying new sdistfile to %r" %
                     str(sdistfile))
                 sdistfile.dirpath().ensure(dir=1)
                 sdist_path.copy(sdistfile)
         return sdist_path
 
     def subcommand_test(self):
-        self.report.section("sdist")
         sdist_path = self.sdist()
         if self.config.opts.sdistonly:
             return
         for venv in self.venvlist:
-            self.report.section("testenv:%s" % venv.envconfig.envname)
             self.setupenv(venv, sdist_path)
-            if self.config.opts.notest:
-                self.report.info("skipping 'test' activity")
-            else:
-                if self.venvstatus[venv.path]:
-                    continue
-                if venv.test():
-                    self.setenvstatus(venv, "commands failed")
+            self.runtestenv(venv, sdist_path)
         retcode = self._summary()
         return retcode
 
+    def runtestenv(self, venv, sdist_path, redirect=False):
+        if not self.config.opts.notest:
+            testaction = self.newaction(venv, "testing")
+            if self.venvstatus[venv.path]:
+                return
+            if venv.test(testaction, redirect=redirect):
+                self.setenvstatus(venv, "commands failed")
+        else:
+            self.setenvstatus(venv, "skipped tests")
+
     def _summary(self):
-        self.report.section("summary")
+        action = self.newaction(None, "test summary")
         retcode = 0
         for venv in self.venvlist:
             status = self.venvstatus[venv.path]
-            if status:
-                retcode = 1
-                msg = "%s: %s" %(venv.envconfig.envname, str(status))
+            if status and status != "skipped tests":
+                msg = "  %s: %s" %(venv.envconfig.envname, str(status))
                 self.report.error(msg)
+                retcode = 1
             else:
-                self.report.good("%s: commands succeeded" %(
-                                 venv.envconfig.envname, ))
+                if not status:
+                    status = "commands succeeded"
+                self.report.good("  %s: %s" %(venv.envconfig.envname, status))
         if not retcode:
-            self.report.good("congratulations :)")
+            self.report.good("  congratulations :)")
         return retcode
 
     def showconfig(self):
@@ -276,41 +381,6 @@ class Session:
         versions.append("virtualenv-%s" % version.strip())
         self.report.keyvalue("tool-versions:", " ".join(versions))
 
-    def pcall(self, args, log=None, cwd=None, env=None):
-        if cwd is None:
-            cwd = self.config.toxworkdir
-        cwd.chdir()
-        newargs = []
-        for arg in args:
-            if isinstance(arg, py.path.local):
-                arg = cwd.bestrelpath(arg)
-            newargs.append(arg)
-
-        if env is None:
-            env = os.environ.copy()
-
-        opts = {'env': env}
-        args = [str(x) for x in args]
-        logpath = self.report.popen(newargs, log, opts)
-        popen = self.popen(newargs, **opts)
-        try:
-            out, err = popen.communicate()
-        except KeyboardInterrupt:
-            self.report.keyboard_interrupt()
-            popen.wait()
-            raise KeyboardInterrupt()
-        ret = popen.wait()
-        if ret:
-            invoked = " ".join(map(str, newargs))
-            if logpath:
-                self.report.error("invocation failed, logfile: %s" % logpath)
-                self.report.error(logpath.read())
-                raise tox.exception.InvocationError(
-                    "%s (see %s)" %(invoked, logpath))
-            else:
-                raise tox.exception.InvocationError(
-                    "%r" %(invoked, ))
-        return out
 
     def _resolve_pkg(self, pkgspec):
         try:
