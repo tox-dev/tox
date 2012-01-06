@@ -5,4 +5,3 @@ include setup.py
 include tox.ini
 graft doc
 graft tests
-prune .hg 
