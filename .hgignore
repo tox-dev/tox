@@ -9,6 +9,8 @@ syntax:glob
 *.rej
 *~
 
+build
+dist
 doc/_build/
 tox.egg-info
 .tox
