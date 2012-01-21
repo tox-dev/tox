@@ -278,6 +278,7 @@ class IniReader:
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
         self._subs = {}
+        self._subststack = []
 
     def addsubstitions(self, _posargs=None, **kw):
         self._subs.update(kw)
@@ -387,7 +388,11 @@ class IniReader:
             else:
                 x = default
         if replace and x and hasattr(x, 'replace'):
-            x = self._replace(x)
+            self._subststack.append((section, name))
+            try:
+                x = self._replace(x)
+            finally:
+                assert self._subststack.pop() == (section, name)
         #print "getdefault", section, name, "returned", repr(x)
         return x
 
@@ -401,6 +406,19 @@ class IniReader:
                     (key, envkey))
             return os.environ[envkey]
         if key not in self._subs:
+            if'$' in key:
+                section, item = key.rsplit('$', 1)
+
+                if section in self._cfg and item in self._cfg[section]:
+                    if (section, item) in self._subststack:
+                        raise ValueError('%s already in %s' %((section, item), self._subststack))
+                    x = str(self._cfg[section][item])
+                    self._subststack.append((section, item))
+                    try:
+                        return self._replace(x)
+                    finally:
+                        self._subststack.pop()
+
             raise tox.exception.ConfigError(
                 "substitution key %r not found" % key)
         return str(self._subs[key])

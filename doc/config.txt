@@ -253,6 +253,35 @@ Previous versions of tox supported the ``[.*]`` pattern to denote
 positional arguments with defaults. This format has been deprecated.
 Use ``{posargs:DEFAULTS}`` to specify those.
 
+
+Substition for values from other sections
++++++++++++++++++++++++++++++++++++++++++
+
+.. versionadded:: 1.4
+
+Values from other sections can be refered to via::
+
+   {sectionkey}
+
+which is great for pulling in defaults like::
+
+    [tools]
+    testing =
+        pytest
+        mock
+        pytest-xdist
+    
+    [testenv:dulwich]
+    deps =
+        dulwich
+        {tools$testing}
+
+    [testenv:mercurial]
+    dep =
+        mercurial
+        {tools$testing}
+
+
 Other Rules and notes
 =========================
 

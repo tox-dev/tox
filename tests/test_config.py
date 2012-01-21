@@ -480,6 +480,93 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
+    def test_take_dependencies_from_other_testenv(self, newconfig):
+        inisource="""
+            [testenv]
+            deps=
+                pytest
+                pytest-cov
+            [testenv:py24]
+            deps=
+                {testenv$deps}
+                fun
+        """
+        conf = newconfig([], inisource).envconfigs['py24']
+        packages = [dep.name for dep in conf.deps]
+        assert packages == ['pytest', 'pytest-cov', 'fun']
+
+    def test_take_dependencies_from_other_section(self, newconfig):
+        inisource="""
+            [testing:pytest]
+            deps=
+                pytest
+                pytest-cov
+            [testing:mock]
+            deps=
+                mock
+            [testenv]
+            deps=
+                {testing:pytest$deps}
+                {testing:mock$deps}
+                fun
+        """
+        conf = newconfig([], inisource)
+        env = conf.envconfigs['python']
+        packages = [dep.name for dep in env.deps]
+        assert packages == ['pytest', 'pytest-cov', 'mock', 'fun']
+
+    def test_multilevel_substitution(self, newconfig):
+        inisource="""
+            [testing:pytest]
+            deps=
+                pytest
+                pytest-cov
+            [testing:mock]
+            deps=
+                mock
+
+            [testing]
+            deps=
+                {testing:pytest$deps}
+                {testing:mock$deps}
+
+            [testenv]
+            deps=
+                {testing$deps}
+                fun
+        """
+        conf = newconfig([], inisource)
+        env = conf.envconfigs['python']
+        packages = [dep.name for dep in env.deps]
+        assert packages == ['pytest', 'pytest-cov', 'mock', 'fun']
+
+    def test_recursive_substitution_cycle_fails(self, newconfig):
+        inisource="""
+            [testing:pytest]
+            deps=
+                {testing:mock$deps}
+            [testing:mock]
+            deps=
+                {testing:pytest$deps}
+ 
+            [testenv]
+            deps=
+                {testing:pytest$deps}
+        """
+        py.test.raises(ValueError, newconfig, [], inisource)
+
+    def test_single_value_from_other_secton(self, newconfig, tmpdir):
+        inisource = """
+            [common]
+            changedir = testing
+            [testenv]
+            changedir = {common$changedir}
+        """
+        conf = newconfig([], inisource).envconfigs['python']
+        assert conf.changedir.basename == 'testing'
+        assert conf.changedir.dirpath() == tmpdir
+
+
 class TestGlobalOptions:
     def test_notest(self, newconfig):
         config = newconfig([], "")
