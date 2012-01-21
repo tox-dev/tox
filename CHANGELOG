@@ -5,6 +5,8 @@
 
 - refactor reporting and virtualenv manipulation 
   to be more accessible from 3rd party tools
+- support value substitution from other sections
+  with {section$key}
 
 1.3
 -----------------
