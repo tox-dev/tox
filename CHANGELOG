@@ -12,7 +12,7 @@
 -----------------
 
 - fix: allow to specify wildcard filesystem paths when 
-  specifiying dependencies such that tox searches for 
+  specifying dependencies such that tox searches for 
   the highest version
 
 - fix issue issue21: clear PIP_REQUIRES_VIRTUALENV which avoids
