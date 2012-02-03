@@ -266,7 +266,7 @@ class Session:
         if path.check():
             self.report.info("  removing %s" % path)
             py.std.shutil.rmtree(str(path), ignore_errors=True)
-            path.mkdir()
+            path.ensure(dir=1)
 
     def setupenv(self, venv, sdist_path):
         action = self.newaction(venv, "prepareenv", venv.envconfig.envdir)
