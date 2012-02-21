@@ -196,7 +196,7 @@ substitutions for virtualenv-related sections
 ``{envpython}``
     path to the virtual Python interpreter
 ``{envdir}``
-    directory of the the virtualenv hierarchy
+    directory of the virtualenv hierarchy
 ``{envbindir}``
     directory where executables are located
 ``{envtmpdir}``
