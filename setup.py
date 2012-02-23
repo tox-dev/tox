@@ -28,7 +28,7 @@ For more information, docs and many examples please checkout the `home page`_:
 
 def main():
     version = sys.version_info[:2]
-    install_requires = ['virtualenv>=1.6.4', 'py>=1.4.3', ]
+    install_requires = ['virtualenv>=1.7', 'py>=1.4.3', ]
     if version < (2,7) or (3,0) <= version <= (3,1):
         install_requires += ['argparse']
     setup(
