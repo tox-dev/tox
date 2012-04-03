@@ -7,6 +7,8 @@
   to be more accessible from 3rd party tools
 - support value substitution from other sections
   with {section$key}
+- fix issue29 - correctly point to pytest explanation
+  for importing modules fully qualified
 
 1.3
 -----------------

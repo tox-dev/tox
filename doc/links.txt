@@ -7,7 +7,7 @@
 .. _nosetests:
 .. _`nose`: http://pypi.python.org/pypi/nose
 .. _`Holger Krekel`: http://twitter.com/hpk42
-.. _`pytest-xdist`: http://codespeak.net/py/dist/test/plugin/xdist.html
+.. _`pytest-xdist`: http://pypi.python.org/pypi/pytest-xdist
 
 .. _`easy_install`: http://peak.telecommunity.com/DevCenter/EasyInstall
 .. _pip: http://pypi.python.org/pypi/pip

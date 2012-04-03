@@ -94,7 +94,7 @@ installed package.  Therefore it is better to try to avoid
 file and the install tools to care for making the package properly
 available for importing.
 
-.. _`fully qualified name`: http://codespeak.net/py/dist/test/customize.html#constructing-the-package-name-for-test-modules
+.. _`fully qualified name`: http://pytest.org/latest/goodpractises.html#package-name
 
 
 .. include:: ../links.txt
