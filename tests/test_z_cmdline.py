@@ -10,7 +10,7 @@ from tox._config import parseconfig
 
 def test_report_protocol(newconfig):
     config = newconfig([], """
-            [testenv:py26]
+            [testenv:mypython]
             deps=xy
     """)
     class Popen:
@@ -25,7 +25,7 @@ def test_report_protocol(newconfig):
             Report=ReportExpectMock)
     report = session.report
     report.expect("using")
-    venv = session.getvenv("py26")
+    venv = session.getvenv("mypython")
     venv.update()
     report.expect("logpopen")
 
