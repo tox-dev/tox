@@ -165,8 +165,6 @@ class VirtualEnv(object):
             args.append('--distribute')
         if self.envconfig.sitepackages:
             args.append('--system-site-packages')
-        else:
-            args.append('--no-site-packages')
         #if sys.platform == "win32":
         #    f, path, _ = py.std.imp.find_module("virtualenv")
         #    f.close()

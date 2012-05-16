@@ -105,7 +105,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--no-site-packages" not in map(str, args)
+    assert "--system-site-packages" in map(str, args)
     mocksession._clearmocks()
 
     envconfig = config.envconfigs['nosite']
@@ -114,7 +114,8 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "--no-site-packages" in map(str, args)
+    assert "--system-site-packages" not in map(str, args)
+    assert "--no-site-packages" not in map(str, args)
 
 def test_install_deps_wildcard(newmocksession):
     mocksession = newmocksession([], """
