@@ -10,6 +10,7 @@
 - fix issue29 - correctly point to pytest explanation
   for importing modules fully qualified
 - fix issue32 - use --system-site-packages and don't pass --no-site-packages
+- add python3.3 to the default env list, so early adopters can test
 
 1.3
 -----------------
