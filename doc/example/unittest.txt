@@ -11,7 +11,7 @@ The discover_ project allows to discover and run unittests
 and we can easily integrate it in a ``tox`` run.  As an example,
 perform a checkout of Pygments_::
 
-    hg clone http://dev.pocoo.org/hg/pygments-main
+    hg clone https://bitbucket.org/birkenfeld/pygments-main
 
 and add the following ``tox.ini`` to it::
 
@@ -31,14 +31,14 @@ Running unittest2 and sphinx tests in one go
 -----------------------------------------------------
 
 .. _`Michael Foord`: http://www.voidspace.org.uk/
-.. _tox.ini: http://code.google.com/p/mock/source/browse/trunk/tox.ini
+.. _tox.ini: http://code.google.com/p/mock/source/browse/tox.ini
 
 `Michael Foord`_ has contributed a ``tox.ini`` file that
 allows you to run all tests for his mock_ project,
 including some sphinx-based doctests.  If you checkout
 its repository with:
 
-    svn co http://mock.googlecode.com/svn/trunk/ mock
+    hg clone https://code.google.com/p/mock/
 
 the checkout has a tox.ini_ that looks like this::
 
