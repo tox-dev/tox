@@ -31,7 +31,7 @@ Running unittest2 and sphinx tests in one go
 -----------------------------------------------------
 
 .. _`Michael Foord`: http://www.voidspace.org.uk/
-.. _tox.ini: http://code.google.com/p/mock/source/browse/trunk/tox.ini
+.. _tox.ini: http://code.google.com/p/mock/source/browse/tox.ini
 
 `Michael Foord`_ has contributed a ``tox.ini`` file that
 allows you to run all tests for his mock_ project,

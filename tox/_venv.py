@@ -57,6 +57,10 @@ class VirtualEnv(object):
         self.path = envconfig.envdir
         self.path_config = self.path.join(".tox-config1")
 
+    @property
+    def name(self):
+        return self.envconfig.envname
+
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
 
@@ -186,11 +190,11 @@ class VirtualEnv(object):
 
     def install_sdist(self, sdistpath):
         if getattr(self, 'just_created', False):
-            action = self.session.newaction(None, "sdist-inst", sdistpath)
+            action = self.session.newaction(self, "sdist-inst", sdistpath)
             self._getliveconfig().writeconfig(self.path_config)
             extraopts = []
         else:
-            action = self.session.newaction(None, "sdist-reinst", sdistpath)
+            action = self.session.newaction(self, "sdist-reinst", sdistpath)
             extraopts = ['-U', '--no-deps']
         self._install([sdistpath], extraopts=extraopts, action=action)
 

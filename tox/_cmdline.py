@@ -32,10 +32,15 @@ class Action(object):
         self.args = args
         self.id = venv and venv.envconfig.envname or "tox"
         self._popenlist = []
+        if self.venv:
+            self.venvname = self.venv.name
+        else:
+            self.venvname = "GLOB"
 
     def setactivity(self, name, msg):
         self.activity = name
-        self.report.verbosity0("  %s: %s" %(name, msg), bold=True)
+        self.report.verbosity0("%s %s: %s" %(self.venvname, name, msg),
+            bold=True)
 
     def _initlogpath(self, actionid):
         if self.venv:
@@ -125,8 +130,7 @@ class Reporter:
     def logaction(self, action):
         msg = action.msg
         msg += " " + " ".join(map(str, action.args))
-        self.logline(self.actionchar +
-            " %s %s" % (action.id, msg,), bold=True)
+        self.logline("%s %s" % (action.venvname, msg,), bold=True)
 
     def info(self, msg):
         if self.session.config.opts.verbosity >= 2:
@@ -325,7 +329,7 @@ class Session:
 
     def runtestenv(self, venv, sdist_path, redirect=False):
         if not self.config.opts.notest:
-            testaction = self.newaction(venv, "testing")
+            testaction = self.newaction(venv, "runtests")
             if self.venvstatus[venv.path]:
                 return
             if venv.test(testaction, redirect=redirect):

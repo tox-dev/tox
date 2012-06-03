@@ -374,7 +374,7 @@ def test_notest(initproj, cmd):
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*py25*prepareenv*",
-        "  *reusing*",
+        "*reusing*",
     ])
 
 def test_env_PYTHONDONTWRITEBYTECODE(initproj, cmd, monkeypatch):
