@@ -98,12 +98,13 @@ class ReportExpectMock:
             (cat, messagepattern, self._index+1, self._calls))
 
 class pcallMock:
-    def __init__(self, args, cwd, env, stdout, stderr):
+    def __init__(self, args, cwd, env, stdout, stderr, shell):
         self.args = args
         self.cwd = cwd
         self.env = env
         self.stdout = stdout
         self.stderr = stderr
+        self.shell = shell
 
     def communicate(self):
         return "", ""
@@ -125,9 +126,9 @@ def pytest_funcarg__mocksession(request):
             self.report = ReportExpectMock(self)
         def make_emptydir(self, path):
             pass
-        def popen(self, args, cwd, shell=True, stdout=None, stderr=None, 
-		env=None):
-            pm = pcallMock(args, cwd, env, stdout, stderr)
+        def popen(self, args, cwd, shell=None,
+            stdout=None, stderr=None, env=None):
+            pm = pcallMock(args, cwd, env, stdout, stderr, shell)
             self._pcalls.append(pm)
             return pm
     return MockSession()

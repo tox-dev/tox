@@ -1,6 +1,7 @@
 import tox
 import py
 import pytest
+import sys
 from conftest import ReportExpectMock
 
 pytest_plugins = "pytester"
@@ -103,20 +104,14 @@ class TestSession:
         assert sdist_share.check()
         assert sdist_share.read("rb") == sdist.read("rb"), (sdist_share, sdist)
 
-    def test_log_pcall(self, initproj, tmpdir):
-        initproj("logexample123-0.5", filedefs={
-            'tests': {'test_hello.py': "def test_hello(): pass"},
-            'tox.ini': '''
-            '''
-        })
-        config = parseconfig([])
-        session = Session(config, Report=ReportExpectMock)
-        assert session.report.session == session
-        assert not session.config.logdir.listdir()
-        action = session.newaction(None, "something")
+    def test_log_pcall(self, mocksession):
+        mocksession.config.logdir.ensure(dir=1)
+        assert not mocksession.config.logdir.listdir()
+        action = mocksession.newaction(None, "something")
         action.popen(["echo", ])
-        match = session.report.getnext("logpopen")
-        assert match[1].outpath.relto(session.config.logdir)
+        match = mocksession.report.getnext("logpopen")
+        assert match[1].outpath.relto(mocksession.config.logdir)
+        assert match[1].shell == (sys.platform == "win32")
 
     def test_summary_status(self, initproj, capfd):
         initproj("logexample123-0.5", filedefs={
