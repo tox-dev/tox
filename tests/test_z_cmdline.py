@@ -114,7 +114,7 @@ class TestSession:
         assert session.report.session == session
         assert not session.config.logdir.listdir()
         action = session.newaction(None, "something")
-        action.popen(["ls", ])
+        action.popen(["echo", ])
         match = session.report.getnext("logpopen")
         assert match[1].outpath.relto(session.config.logdir)
 

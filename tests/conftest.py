@@ -125,7 +125,8 @@ def pytest_funcarg__mocksession(request):
             self.report = ReportExpectMock(self)
         def make_emptydir(self, path):
             pass
-        def popen(self, args, cwd, stdout=None, stderr=None, env=None):
+        def popen(self, args, cwd, shell=True, stdout=None, stderr=None, 
+		env=None):
             pm = pcallMock(args, cwd, env, stdout, stderr)
             self._pcalls.append(pm)
             return pm

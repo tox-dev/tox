@@ -108,8 +108,8 @@ class Action(object):
         #args = [str(x) for x in args]
         if env is None:
             env = os.environ.copy()
-        return self.session.popen(args, stdout=stdout, stderr=stderr,
-            cwd=str(cwd), env=env)
+        return self.session.popen(args, cwd=str(cwd), shell=True,
+	    stdout=stdout, stderr=stderr, env=env)
 
 class Reporter:
     actionchar = "-"
