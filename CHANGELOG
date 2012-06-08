@@ -2,11 +2,10 @@
 -----------------
 
 - tweak and improve reporting
-
 - refactor reporting and virtualenv manipulation 
   to be more accessible from 3rd party tools
 - support value substitution from other sections
-  with {section$key}
+  with the {[section]key} syntax
 - fix issue29 - correctly point to pytest explanation
   for importing modules fully qualified
 - fix issue32 - use --system-site-packages and don't pass --no-site-packages

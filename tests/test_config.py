@@ -488,7 +488,7 @@ class TestConfigTestEnv:
                 pytest-cov
             [testenv:py24]
             deps=
-                {testenv$deps}
+                {[testenv]deps}
                 fun
         """
         conf = newconfig([], inisource).envconfigs['py24']
@@ -506,8 +506,8 @@ class TestConfigTestEnv:
                 mock
             [testenv]
             deps=
-                {testing:pytest$deps}
-                {testing:mock$deps}
+                {[testing:pytest]deps}
+                {[testing:mock]deps}
                 fun
         """
         conf = newconfig([], inisource)
@@ -527,12 +527,12 @@ class TestConfigTestEnv:
 
             [testing]
             deps=
-                {testing:pytest$deps}
-                {testing:mock$deps}
+                {[testing:pytest]deps}
+                {[testing:mock]deps}
 
             [testenv]
             deps=
-                {testing$deps}
+                {[testing]deps}
                 fun
         """
         conf = newconfig([], inisource)
@@ -544,14 +544,14 @@ class TestConfigTestEnv:
         inisource="""
             [testing:pytest]
             deps=
-                {testing:mock$deps}
+                {[testing:mock]deps}
             [testing:mock]
             deps=
-                {testing:pytest$deps}
- 
+                {[testing:pytest]deps}
+
             [testenv]
             deps=
-                {testing:pytest$deps}
+                {[testing:pytest]deps}
         """
         py.test.raises(ValueError, newconfig, [], inisource)
 
@@ -560,7 +560,7 @@ class TestConfigTestEnv:
             [common]
             changedir = testing
             [testenv]
-            changedir = {common$changedir}
+            changedir = {[common]changedir}
         """
         conf = newconfig([], inisource).envconfigs['python']
         assert conf.changedir.basename == 'testing'

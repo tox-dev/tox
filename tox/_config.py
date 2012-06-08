@@ -406,12 +406,13 @@ class IniReader:
                     (key, envkey))
             return os.environ[envkey]
         if key not in self._subs:
-            if'$' in key:
-                section, item = key.rsplit('$', 1)
-
+            if key.startswith("[") and "]" in key:
+                i = key.find("]")
+                section, item = key[1:i], key[i+1:]
                 if section in self._cfg and item in self._cfg[section]:
                     if (section, item) in self._subststack:
-                        raise ValueError('%s already in %s' %((section, item), self._subststack))
+                        raise ValueError('%s already in %s' %(
+                                (section, item), self._subststack))
                     x = str(self._cfg[section][item])
                     self._subststack.append((section, item))
                     try:

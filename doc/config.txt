@@ -261,12 +261,13 @@ Substition with values from other sections
 
 Values from other sections can be refered to via::
 
-   {sectionkey}
+   {[sectionname]valuename}
 
-which is great for pulling in defaults like::
+which you can use to avoid repetition of config values.
+You can put default values in one section and reference them in others to avoid repeting the same values::
 
-    [tools]
-    testing =
+    [base]
+    deps =
         pytest
         mock
         pytest-xdist
@@ -274,12 +275,13 @@ which is great for pulling in defaults like::
     [testenv:dulwich]
     deps =
         dulwich
-        {tools$testing}
+        {[tools]deps}
 
     [testenv:mercurial]
     dep =
         mercurial
-        {tools$testing}
+        {[tools]deps}
+
 
 
 Other Rules and notes
