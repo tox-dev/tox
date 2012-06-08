@@ -19,7 +19,7 @@ def test_find_executable():
     from tox._venv import find_executable
     p = find_executable(sys.executable)
     assert p == py.path.local(sys.executable)
-    for ver in [""] + "2.4 2.5 2.6 2.7 3.1".split():
+    for ver in [""] + "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split():
         name = "python%s" % ver
         if sys.platform == "win32":
             pydir = "python%s" % ver.replace(".", "")
