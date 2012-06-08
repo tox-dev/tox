@@ -298,6 +298,17 @@ class TestIniParser:
         py.test.raises(tox.exception.ConfigError, 'reader.getbool("section", "key5")')
 
 class TestConfigTestEnv:
+    def test_commentchars_issue33(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv] # hello
+            deps = http://abc#123
+            commands=
+                python -c "x ; y"
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.deps[0].name == "http://abc#123"
+        assert envconfig.commands[0] == ["python", "-c", "x ; y"]
+
     def test_defaults(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]
