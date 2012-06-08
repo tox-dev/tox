@@ -82,13 +82,13 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: deps=MULTI-LINE-LIST
 
-    dependencies to be installed into the environment prior to project
+    test-specific dependencies -.to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
-    passed to easy_install/pip for processing.  It can be a file,
-    and URL or a package name.  You can additionally specify
+    passed to easy_install/pip for processing.  A line specify a file,
+    an URL or a package name.  You can additionally specify
     an :confval:`indexserver` to use for installing this dependency.
-    All derived dependencies (deps required by the dep) will be
-    loaded from the specified indexserver::
+    All derived dependencies (deps required by the dep) will then be
+    retrieved from the specified indexserver::
 
         deps = :myindexserver:pkg
 
