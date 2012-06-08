@@ -80,7 +80,7 @@ class ReportExpectMock:
             "looking for %r, no reports found at >=%d in %r" %
             (cat, self._index+1, self._calls))
 
-    def expect(self, cat, messagepattern="*"):
+    def expect(self, cat, messagepattern="*", invert=False):
         __tracebackhide__ = True
         if not messagepattern.startswith("*"):
             messagepattern = "*" + messagepattern
@@ -92,10 +92,17 @@ class ReportExpectMock:
             for lmsg in call[1:]:
                 lmsg = str(lmsg).replace("\n", " ")
                 if fnmatch(lmsg, messagepattern):
+                    if invert:
+                        raise AssertionError("found %s(%r), didn't expect it" %
+                            (cat, messagepattern))
                     return
-        raise AssertionError(
-            "looking for %s(%r), no reports found at >=%d in %r" %
-            (cat, messagepattern, self._index+1, self._calls))
+        if not invert:
+            raise AssertionError(
+             "looking for %s(%r), no reports found at >=%d in %r" %
+                (cat, messagepattern, self._index+1, self._calls))
+
+    def not_expect(self, cat, messagepattern="*"):
+        return self.expect(cat, messagepattern, invert=True)
 
 class pcallMock:
     def __init__(self, args, cwd, env, stdout, stderr, shell):

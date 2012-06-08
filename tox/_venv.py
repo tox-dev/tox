@@ -64,18 +64,29 @@ class VirtualEnv(object):
     def __repr__(self):
         return "<VirtualEnv at %r>" %(self.path)
 
-    def getcommandpath(self, name=None):
+    def getcommandpath(self, name=None, venv=True, cwd=None):
         if name is None:
             return self.envconfig.envpython
         name = str(name)
         if os.path.isabs(name):
             return name
+        if os.path.split(name)[0] == ".":
+            p = cwd.join(name)
+            if p.check():
+                return str(p)
         p = py.path.local.sysfind(name)
         if p is None:
             raise tox.exception.InvocationError("could not find executable %r"
                 % (name,))
         if p.relto(self.envconfig.envdir):
             return p
+        if venv:
+            self.session.report.warning(
+                "test command found but not installed in testenv\n"
+                "  cmd: %s\n"
+                "  env: %s\n"
+                "Maybe forgot to specify a dependency?" % (p,
+                self.envconfig.envdir))
         return str(p) # will not be rewritten for reporting
 
     def _ispython3(self):
@@ -177,15 +188,8 @@ class VirtualEnv(object):
         self.session.make_emptydir(self.path)
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
-        old = py.path.local()
-        try:
-            basepath.chdir()
-            args.append(self.path.basename)
-            self._pcall(args, venv=False, action=action)
-            #if self._ispython3():
-            #    self.easy_install(["-U", "distribute"])
-        finally:
-            old.chdir()
+        args.append(self.path.basename)
+        self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
 
     def install_sdist(self, sdistpath):
@@ -285,20 +289,11 @@ class VirtualEnv(object):
             del os.environ['PYTHONDONTWRITEBYTECODE']
         except KeyError:
             pass
-        if cwd:
-            cwd.ensure(dir=1)
-
+        assert cwd
+        cwd.ensure(dir=1)
         old = self.patchPATH()
         try:
-            args[0] = self.getcommandpath(args[0])
-            if venv:
-                if not py.path.local(args[0]).relto(self.envconfig.envdir):
-                    self.session.report.warning(
-                        "test command found but not installed in testenv\n"
-                        "  cmd: %s\n"
-                        "  env: %s\n"
-                        "Maybe forgot to specify a dependency?" % (args[0],
-                        self.envconfig.envdir))
+            args[0] = self.getcommandpath(args[0], venv, cwd)
             env = self._getenv() or os.environ.copy()
             env.update(extraenv)
             return action.popen(args, cwd=cwd, env=env, redirect=redirect)

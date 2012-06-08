@@ -1,5 +1,6 @@
 import py
 import tox
+import pytest
 import os, sys
 from tox._venv import VirtualEnv, CreationConfig, getdigest
 
@@ -71,7 +72,7 @@ def test_create(monkeypatch, mocksession, newconfig):
         # realpath is needed for stuff like the debian symlinks
         assert py.path.local(sys.executable).realpath() == args[0]
         #assert Envconfig.toxworkdir in args
-        assert venv.getcommandpath("easy_install")
+        assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
     assert interp == venv.getconfigexecutable()
     assert venv.path_config.check(exists=False)
@@ -243,6 +244,18 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     venv = mocksession.getenv('python')
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*")
+
+@pytest.mark.skipif("not sys.platform.startswith('linux')")
+def test_install_command_not_installed(newmocksession):
+    mocksession = newmocksession(['--recreate'], """
+        [testenv]
+        commands=
+            bash
+    """)
+    venv = mocksession.getenv('python')
+    venv.test()
+    mocksession.report.expect("warning", "*test command found but not*")
+
 
 def test_install_python3(tmpdir, newmocksession):
     if not py.path.local.sysfind('python3.1'):
@@ -476,3 +489,19 @@ def test_pip_install(newmocksession):
     assert env is not None
     assert 'PYTHONIOENCODING' in env
     assert env['PYTHONIOENCODING'] == 'utf_8'
+
+def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
+    mocksession = newmocksession([], """
+        [testenv]
+    """)
+    x = tmpdir.ensure("x")
+    venv = mocksession.getenv("python")
+    x2 = venv.getcommandpath("./x", cwd=tmpdir)
+    assert x == x2
+    mocksession.report.not_expect("warning", "*test command found but not*")
+    x3 = venv.getcommandpath("/bin/bash", cwd=tmpdir)
+    assert x3 == "/bin/bash"
+    mocksession.report.not_expect("warning", "*test command found but not*")
+    monkeypatch.setenv("PATH", str(tmpdir))
+    x4 = venv.getcommandpath("x", cwd=tmpdir)
+    mocksession.report.expect("warning", "*test command found but not*")

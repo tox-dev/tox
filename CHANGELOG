@@ -1,6 +1,7 @@
 1.4.dev
 -----------------
 
+- fix issue26 - no warnings on absolute or relative specified paths for commands
 - fix issue33 - commentchars are ignored in key-value settings allowing
   for specifying commands like: python -c "import sys ; print sys"
   which would formerly raise irritating errors because the ";"
