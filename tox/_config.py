@@ -19,7 +19,7 @@ def parseconfig(args=None, pkg=None):
     parser = prepare_parse(pkg)
     opts = parser.parse_args(args)
     config = Config()
-    config.opts = opts
+    config.option = opts
     parseini(config)
     return config
 
@@ -104,8 +104,8 @@ testenvprefix = "testenv:"
 
 class parseini:
     def __init__(self, config):
-        config.opts.configfile = py.path.local(config.opts.configfile)
-        config.toxinipath = config.opts.configfile
+        config.option.configfile = py.path.local(config.option.configfile)
+        config.toxinipath = config.option.configfile
         config.toxinidir = toxinidir = config.toxinipath.dirpath()
 
         if not config.toxinipath.check():
@@ -140,8 +140,8 @@ class parseini:
             name, url = map(lambda x: x.strip(), line.split("=", 1))
             config.indexserver[name] = IndexServerConfig(name, url)
 
-        if config.opts.indexurl:
-            for urldef in config.opts.indexurl:
+        if config.option.indexurl:
+            for urldef in config.option.indexurl:
                 m = re.match(r"(\w+)=(\S+)", urldef)
                 if m is None:
                     url = urldef
@@ -200,15 +200,15 @@ class parseini:
         vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
         reader.addsubstitions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
         vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
-        if config.opts.recreate:
+        if config.option.recreate:
             vc.recreate = True
         else:
             vc.recreate = reader.getbool(section, "recreate", False)
-        args = config.opts.args
+        args = config.option.args
         if args:
             if vc.args_are_paths:
                 args = []
-                for arg in config.opts.args:
+                for arg in config.option.args:
                     origpath = config.invocationcwd.join(arg, abs=True)
                     if origpath.check():
                         arg = vc.changedir.bestrelpath(origpath)
@@ -240,7 +240,7 @@ class parseini:
         return vc
 
     def _getenvlist(self, reader, toxsection):
-        env = self.config.opts.env
+        env = self.config.option.env
         if not env:
             env = os.environ.get("TOXENV", None)
             if not env:

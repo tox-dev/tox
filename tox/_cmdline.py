@@ -163,11 +163,11 @@ class Reporter(object):
         self.tw.sep("_", "summary")
 
     def info(self, msg):
-        if self.session.config.opts.verbosity >= 2:
+        if self.session.config.option.verbosity >= 2:
             self.logline(msg)
 
     def using(self, msg):
-        if self.session.config.opts.verbosity >= 1:
+        if self.session.config.option.verbosity >= 1:
             self.logline("using %s" %(msg,), bold=True)
 
 
@@ -200,15 +200,15 @@ class Reporter(object):
         self.tw.line("%s" % msg, **opts)
 
     def verbosity0(self, msg, **opts):
-        if self.session.config.opts.verbosity >= 0:
+        if self.session.config.option.verbosity >= 0:
             self.tw.line("%s" % msg, **opts)
 
     def verbosity1(self, msg, **opts):
-        if self.session.config.opts.verbosity >= 1:
+        if self.session.config.option.verbosity >= 1:
             self.tw.line("%s" % msg, **opts)
 
     def verbosity2(self, msg, **opts):
-        if self.session.config.opts.verbosity >= 2:
+        if self.session.config.option.verbosity >= 2:
             self.tw.line("%s" % msg, **opts)
 
     #def log(self, msg):
@@ -269,7 +269,7 @@ class Session:
                     "tox version is %s, required is at least %s" %(
                        toxversion, minversion))
                 raise SystemExit(1)
-        if self.config.opts.showconfig:
+        if self.config.option.showconfig:
             self.showconfig()
         else:
             return self.subcommand_test()
@@ -331,7 +331,7 @@ class Session:
                 return False
 
     def sdist(self):
-        if not self.config.opts.sdistonly and self.config.sdistsrc:
+        if not self.config.option.sdistonly and self.config.sdistsrc:
             self.report.info("using sdistfile %r, skipping 'sdist' activity " %
                 str(self.config.sdistsrc))
             sdist_path = self.config.sdistsrc
@@ -355,7 +355,7 @@ class Session:
         sdist_path = self.sdist()
         if not sdist_path:
             return 2
-        if self.config.opts.sdistonly:
+        if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
@@ -365,7 +365,7 @@ class Session:
         return retcode
 
     def runtestenv(self, venv, sdist_path, redirect=False):
-        if not self.config.opts.notest:
+        if not self.config.option.notest:
             if self.venvstatus[venv.path]:
                 return
             if venv.test(redirect=redirect):
@@ -392,7 +392,7 @@ class Session:
 
     def showconfig(self):
         self.info_versions()
-        self.report.keyvalue("config-file:", self.config.opts.configfile)
+        self.report.keyvalue("config-file:", self.config.option.configfile)
         self.report.keyvalue("toxinipath: ", self.config.toxinipath)
         self.report.keyvalue("toxinidir:  ", self.config.toxinidir)
         self.report.keyvalue("toxworkdir: ", self.config.toxworkdir)

@@ -581,17 +581,17 @@ class TestConfigTestEnv:
 class TestGlobalOptions:
     def test_notest(self, newconfig):
         config = newconfig([], "")
-        assert not config.opts.notest
+        assert not config.option.notest
         config = newconfig(["--notest"], "")
-        assert config.opts.notest
+        assert config.option.notest
 
     def test_verbosity(self, newconfig):
         config = newconfig([], "")
-        assert config.opts.verbosity == 0
+        assert config.option.verbosity == 0
         config = newconfig(["-v"], "")
-        assert config.opts.verbosity == 1
+        assert config.option.verbosity == 1
         config = newconfig(["-vv"], "")
-        assert config.opts.verbosity == 2
+        assert config.option.verbosity == 2
 
     def test_substitution_jenkins_default(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
