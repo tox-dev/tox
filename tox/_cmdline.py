@@ -11,11 +11,13 @@ import py
 import os
 import sys
 import subprocess
-import time
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
 from tox._config import parseconfig
 from subprocess import STDOUT
+
+def now():
+    return py.std.time.time()
 
 def main(args=None):
     try:
@@ -133,6 +135,7 @@ class Reporter(object):
     def __init__(self, session):
         self.tw = py.io.TerminalWriter()
         self.session = session
+        #self.cumulated_time = 0.0
 
     def logpopen(self, popen):
         """ log information about the action.popen() created process. """
@@ -147,11 +150,13 @@ class Reporter(object):
     def logaction_start(self, action):
         msg = action.msg + " " + " ".join(map(str, action.args))
         self.verbosity1("%s start: %s" %(action.venvname, msg), bold=True)
-        self._starttime = time.time()
+        assert not hasattr(action, "_starttime")
+        action._starttime = now()
 
     def logaction_finish(self, action):
-        duration = time.time() - self._starttime
-        self.verbosity1("%s finish: %s in %.2f seconds" %(
+        duration = now() - action._starttime
+        #self.cumulated_time += duration
+        self.verbosity1("%s finish: %s after %.2f seconds" %(
             action.venvname, action.msg, duration), bold=True)
 
     def startsummary(self):
