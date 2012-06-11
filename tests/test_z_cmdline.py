@@ -386,7 +386,7 @@ def test_sdistonly(initproj, cmd):
     result = cmd.run("tox", "-v", "--sdistonly")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*packaging sdist*setup.py*",
+        "*sdist-make*setup.py*",
     ])
     assert "virtualenv" not in result.stdout.str()
 
