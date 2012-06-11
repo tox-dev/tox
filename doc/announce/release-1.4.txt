@@ -1,0 +1,41 @@
+tox 1.4: the virtualenv-based test run automatizer
+===========================================================================
+
+I am happy to announce tox 1.4 brings:
+
+- improvements with configuration file syntax, now allowing re-using
+  selected settings across config file sections. see 
+
+- terminal reporting was simplified and streamlined.  Now on
+  verbosity==0 (the default), less information will be shown
+  and you can use one or multiple "-v" options to increase verbosity.
+
+- internal re-organisation so that the separately released "detox" 
+  tool can reuse tox code to implement a fully distributed tox run. 
+
+More documentation:
+
+    http://tox.testrun.org/
+
+Installation:
+
+    pip install -U tox
+
+code hosting and issue tracking on bitbucket:
+
+    http://bitbucket.org/hpk42/tox
+
+What is tox?
+----------------
+
+tox standardizes and automates tedious test activities driven from a
+simple ``tox.ini`` file, including:
+
+* creation and management of different virtualenv environments 
+  with different Python interpreters
+* packaging and installing your package into each of them
+* running your test tool of choice, be it nose, py.test or unittest2 or other tools such as "sphinx" doc checks
+* testing dev packages against each other without needing to upload to PyPI
+
+best,
+Holger Krekel

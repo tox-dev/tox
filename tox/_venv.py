@@ -1,4 +1,4 @@
-
+from __future__ import with_statement
 import sys, os
 import py
 import tox
@@ -103,13 +103,12 @@ class VirtualEnv(object):
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
             rconfig.matches(self._getliveconfig()):
-            action.setactivity("reusing", "existing environment matches")
+            action.info("reusing", self.envconfig.envdir)
             return
         if rconfig is None:
-            action.setactivity("create", "no existing environment found")
+            action.setactivity("create", self.envconfig.envdir)
         else:
-            action.setactivity("recreate",
-                "configchange/incomplete install detected")
+            action.setactivity("recreate", self.envconfig.envdir)
         try:
             self.create(action)
         except tox.exception.UnsupportedInterpreter:
@@ -192,13 +191,14 @@ class VirtualEnv(object):
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
 
-    def install_sdist(self, sdistpath):
+    def install_sdist(self, sdistpath, action):
+        assert action is not None
         if getattr(self, 'just_created', False):
-            action = self.session.newaction(self, "sdist-inst", sdistpath)
+            action.setactivity("sdist-inst", sdistpath)
             self._getliveconfig().writeconfig(self.path_config)
             extraopts = []
         else:
-            action = self.session.newaction(self, "sdist-reinst", sdistpath)
+            action.setactivity("sdist-reinst", sdistpath)
             extraopts = ['-U', '--no-deps']
         self._install([sdistpath], extraopts=extraopts, action=action)
 
@@ -271,17 +271,17 @@ class VirtualEnv(object):
             env_arg = None
         return env_arg
 
-    def test(self, action=None, redirect=False):
-        if action is None:
-            action = self.session.newaction(self, "test")
-        self.session.make_emptydir(self.envconfig.envtmpdir)
-        cwd = self.envconfig.changedir
-        for argv in self.envconfig.commands:
-            try:
-                self._pcall(argv, cwd=cwd, action=action, redirect=redirect)
-            except tox.exception.InvocationError:
-                self.session.report.error(str(sys.exc_info()[1]))
-                return True
+    def test(self, redirect=False):
+        action = self.session.newaction(self, "runtests")
+        with action:
+            self.session.make_emptydir(self.envconfig.envtmpdir)
+            cwd = self.envconfig.changedir
+            for argv in self.envconfig.commands:
+                try:
+                    self._pcall(argv, cwd=cwd, action=action, redirect=redirect)
+                except tox.exception.InvocationError:
+                    self.session.report.error(str(sys.exc_info()[1]))
+                    return True
 
     def _pcall(self, args, venv=True, cwd=None, extraenv={},
             action=None, redirect=True):

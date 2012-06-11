@@ -301,7 +301,7 @@ def test_test_simple(cmd, initproj):
             changedir=tests
             commands=
                 py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
-            deps=py
+            deps=pytest
         '''
     })
     result = cmd.run("tox")
@@ -362,14 +362,13 @@ def test_notest(initproj, cmd):
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*test summary*",
+        "*summary*",
         "*py25*skipped tests*",
     ])
     result = cmd.run("tox", "-v", "--notest", "-epy25")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*py25*prepareenv*",
-        "*reusing*",
+        "*py25*reusing*",
     ])
 
 def test_env_PYTHONDONTWRITEBYTECODE(initproj, cmd, monkeypatch):
@@ -384,10 +383,10 @@ def test_env_PYTHONDONTWRITEBYTECODE(initproj, cmd, monkeypatch):
 def test_sdistonly(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
     """})
-    result = cmd.run("tox", "--sdistonly")
+    result = cmd.run("tox", "-v", "--sdistonly")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*using*setup.py*",
+        "*packaging sdist*setup.py*",
     ])
     assert "virtualenv" not in result.stdout.str()
 

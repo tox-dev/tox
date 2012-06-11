@@ -206,7 +206,7 @@ def test_install_sdist_indexserver(newmocksession, tmpdir):
     venv = mocksession.getenv('python')
     l = mocksession._pcalls
     p = tmpdir.ensure("distfile.tar.gz")
-    venv.install_sdist(str(p))
+    mocksession.installsdist(venv, p)
     # two different index servers, two calls
     assert len(l) == 1
     args = " ".join(l[0].args)
@@ -219,10 +219,10 @@ def test_install_recreate(newmocksession):
     """)
     venv = mocksession.getenv('python')
     venv.update()
-    venv.install_sdist("xz")
-    mocksession.report.expect("*", "*no existing*")
+    mocksession.installsdist(venv, "xz")
+    mocksession.report.expect("verbosity0", "*create*")
     venv.update()
-    mocksession.report.expect("*", "*configchange*detected*")
+    mocksession.report.expect("verbosity0", "*recreate*")
 
 def test_install_error(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
@@ -354,7 +354,7 @@ class TestCreationConfig:
         cconfig = venv._getliveconfig()
         venv.update()
         assert not venv.path_config.check()
-        venv.install_sdist("sdist.zip")
+        mocksession.installsdist(venv, "sdist.zip")
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
@@ -368,7 +368,7 @@ class TestCreationConfig:
         cconfig.python = py.path.local("balla")
         cconfig.writeconfig(venv.path_config)
         venv.update()
-        mocksession.report.expect("*", "configchange*")
+        mocksession.report.expect("verbosity0", "*recreate*")
 
     def test_dep_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
@@ -439,7 +439,7 @@ def test_setenv_added_to_pcall(mocksession, newconfig):
 
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     # import pdb; pdb.set_trace()
-    venv.install_sdist("xyz")
+    mocksession.installsdist(venv, "xyz")
     venv.test()
 
     l = mocksession._pcalls
@@ -459,7 +459,7 @@ def test_install_sdist_no_upgrade(newmocksession):
     venv = mocksession.getenv('python')
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
-    venv.install_sdist("whatever")
+    mocksession.installsdist(venv, "whatever")
     l = mocksession._pcalls
     assert len(l) == 1
     assert '-U' not in l[0].args
@@ -468,7 +468,7 @@ def test_install_sdist_upgrade(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     assert not hasattr(venv, 'just_created')
-    venv.install_sdist("whatever")
+    mocksession.installsdist(venv, "whatever")
     l = mocksession._pcalls
     assert len(l) == 1
     assert '-U' in l[0].args

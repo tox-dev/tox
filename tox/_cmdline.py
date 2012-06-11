@@ -4,11 +4,14 @@ Python2 and Python3 based virtual environments. Environments are
 setup by using virtualenv. Configuration is generally done through an
 INI-style "tox.ini" file.
 """
+from __future__ import with_statement
+
 import tox
 import py
 import os
 import sys
 import subprocess
+import time
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
 from tox._config import parseconfig
@@ -37,9 +40,19 @@ class Action(object):
         else:
             self.venvname = "GLOB"
 
+    def __enter__(self):
+        self.report.logaction_start(self)
+
+    def __exit__(self, *args):
+        self.report.logaction_finish(self)
+
     def setactivity(self, name, msg):
         self.activity = name
         self.report.verbosity0("%s %s: %s" %(self.venvname, name, msg),
+            bold=True)
+
+    def info(self, name, msg):
+        self.report.verbosity1("%s %s: %s" %(self.venvname, name, msg),
             bold=True)
 
     def _initlogpath(self, actionid):
@@ -76,14 +89,17 @@ class Action(object):
         popen.cwd = cwd
         popen.action = self
         self._popenlist.append(popen)
-        self.report.logpopen(popen)
         try:
-            out, err = popen.communicate()
-        except KeyboardInterrupt:
-            self.report.keyboard_interrupt()
-            popen.wait()
-            raise KeyboardInterrupt()
-        ret = popen.wait()
+            self.report.logpopen(popen)
+            try:
+                out, err = popen.communicate()
+            except KeyboardInterrupt:
+                self.report.keyboard_interrupt()
+                popen.wait()
+                raise KeyboardInterrupt()
+            ret = popen.wait()
+        finally:
+            self._popenlist.remove(popen)
         if ret:
             invoked = " ".join(map(str, popen.args))
             if outpath:
@@ -112,7 +128,7 @@ class Action(object):
         return self.session.popen(args, shell=shell, cwd=str(cwd),
 	        stdout=stdout, stderr=stderr, env=env)
 
-class Reporter:
+class Reporter(object):
     actionchar = "-"
     def __init__(self, session):
         self.tw = py.io.TerminalWriter()
@@ -128,10 +144,18 @@ class Reporter:
         else:
             self.verbosity1("  %s$ %s " %(popen.cwd, cmd))
 
-    def logaction(self, action):
-        msg = action.msg
-        msg += " " + " ".join(map(str, action.args))
-        self.logline("%s %s" % (action.venvname, msg,), bold=True)
+    def logaction_start(self, action):
+        msg = action.msg + " " + " ".join(map(str, action.args))
+        self.verbosity1("%s start: %s" %(action.venvname, msg), bold=True)
+        self._starttime = time.time()
+
+    def logaction_finish(self, action):
+        duration = time.time() - self._starttime
+        self.verbosity1("%s finish: %s in %.2f seconds" %(
+            action.venvname, action.msg, duration), bold=True)
+
+    def startsummary(self):
+        self.tw.sep("_", "summary")
 
     def info(self, msg):
         if self.session.config.opts.verbosity >= 2:
@@ -178,6 +202,10 @@ class Reporter:
         if self.session.config.opts.verbosity >= 1:
             self.tw.line("%s" % msg, **opts)
 
+    def verbosity2(self, msg, **opts):
+        if self.session.config.opts.verbosity >= 2:
+            self.tw.line("%s" % msg, **opts)
+
     #def log(self, msg):
     #    py.builtin.print_(msg, file=sys.stderr)
 
@@ -221,7 +249,6 @@ class Session:
 
     def newaction(self, venv, msg, *args):
         action = Action(self, venv, msg, args)
-        self.report.logaction(action)
         self._actions.append(action)
         return action
 
@@ -256,16 +283,17 @@ class Session:
         self.venvstatus[venv.path] = msg
 
     def _makesdist(self):
-        action = self.newaction(None, "prepare sdist package")
         setup = self.config.setupdir.join("setup.py")
-        action.setactivity("sdist-make", "using %s" % setup)
         if not setup.check():
             raise tox.exception.MissingFile(setup)
-        self.make_emptydir(self.config.distdir)
-        action.popen([sys.executable, setup, "sdist", "--formats=zip",
-                      "--dist-dir", self.config.distdir, ],
-                      cwd=self.config.setupdir)
-        return self.config.distdir.listdir()[0]
+        action = self.newaction(None, "packaging")
+        with action:
+            action.setactivity("sdist-make", setup)
+            self.make_emptydir(self.config.distdir)
+            action.popen([sys.executable, setup, "sdist", "--formats=zip",
+                          "--dist-dir", self.config.distdir, ],
+                          cwd=self.config.setupdir)
+            return self.config.distdir.listdir()[0]
 
     def make_emptydir(self, path):
         if path.check():
@@ -273,29 +301,29 @@ class Session:
             py.std.shutil.rmtree(str(path), ignore_errors=True)
             path.ensure(dir=1)
 
-    def setupenv(self, venv, sdist_path):
-        action = self.newaction(venv, "prepareenv", venv.envconfig.envdir)
-        if self._prepareenv(action, venv):
-            if sdist_path is not None:
-                self.installsdist(venv, sdist_path)
-
-    def _prepareenv(self, action, venv):
-        self.venvstatus[venv.path] = 0
-        try:
-            status = venv.update(action=action)
-        except tox.exception.InvocationError:
-            status = sys.exc_info()[1]
-        if status:
-            self.setenvstatus(venv, status)
-            self.report.error(str(status))
-            return False
-        return True
+    def setupenv(self, venv):
+        action = self.newaction(venv, "getenv", venv.envconfig.envdir)
+        with action:
+            self.venvstatus[venv.path] = 0
+            try:
+                status = venv.update(action=action)
+            except tox.exception.InvocationError:
+                status = sys.exc_info()[1]
+            if status:
+                self.setenvstatus(venv, status)
+                self.report.error(str(status))
+                return False
+            return True
 
     def installsdist(self, venv, sdist_path):
-        try:
-            venv.install_sdist(sdist_path)
-        except tox.exception.InvocationError:
-            self.setenvstatus(venv, sys.exc_info()[1])
+        action = self.newaction(venv, "sdist-install", sdist_path)
+        with action:
+            try:
+                venv.install_sdist(sdist_path, action)
+                return True
+            except tox.exception.InvocationError:
+                self.setenvstatus(venv, sys.exc_info()[1])
+                return False
 
     def sdist(self):
         if not self.config.opts.sdistonly and self.config.sdistsrc:
@@ -309,7 +337,7 @@ class Session:
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
                 self.report.error("FAIL could not package project")
-                raise SystemExit(1)
+                return
             sdistfile = self.config.distshare.join(sdist_path.basename)
             if sdistfile != sdist_path:
                 self.report.info("copying new sdistfile to %r" %
@@ -320,26 +348,28 @@ class Session:
 
     def subcommand_test(self):
         sdist_path = self.sdist()
+        if not sdist_path:
+            return 2
         if self.config.opts.sdistonly:
             return
         for venv in self.venvlist:
-            self.setupenv(venv, sdist_path)
-            self.runtestenv(venv, sdist_path)
+            if self.setupenv(venv):
+                self.installsdist(venv, sdist_path)
+                self.runtestenv(venv, sdist_path)
         retcode = self._summary()
         return retcode
 
     def runtestenv(self, venv, sdist_path, redirect=False):
         if not self.config.opts.notest:
-            testaction = self.newaction(venv, "runtests")
             if self.venvstatus[venv.path]:
                 return
-            if venv.test(testaction, redirect=redirect):
+            if venv.test(redirect=redirect):
                 self.setenvstatus(venv, "commands failed")
         else:
             self.setenvstatus(venv, "skipped tests")
 
     def _summary(self):
-        action = self.newaction(None, "test summary")
+        self.report.startsummary()
         retcode = 0
         for venv in self.venvlist:
             status = self.venvstatus[venv.path]
