@@ -277,6 +277,7 @@ class VirtualEnv(object):
             self.session.make_emptydir(self.envconfig.envtmpdir)
             cwd = self.envconfig.changedir
             for argv in self.envconfig.commands:
+                action.setactivity("runtests", "commands")
                 try:
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect)
                 except tox.exception.InvocationError:

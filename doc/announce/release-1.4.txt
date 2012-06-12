@@ -1,12 +1,12 @@
 tox 1.4: the virtualenv-based test run automatizer
-===========================================================================
+=============================================================================
 
-I am happy to announce tox 1.4 brings:
+I am happy to announce tox 1.4 which brings:
 
 - improvements with configuration file syntax, now allowing re-using
-  selected settings across config file sections. see 
+  selected settings across config file sections. see http://bit.ly/Ly3K4f
 
-- terminal reporting was simplified and streamlined.  Now on
+- terminal reporting was simplified and streamlined.  Now with
   verbosity==0 (the default), less information will be shown
   and you can use one or multiple "-v" options to increase verbosity.
 
@@ -39,3 +39,23 @@ simple ``tox.ini`` file, including:
 
 best,
 Holger Krekel
+
+
+1.4
+-----------------
+
+- fix issue26 - no warnings on absolute or relative specified paths for commands
+- fix issue33 - commentchars are ignored in key-value settings allowing
+  for specifying commands like: python -c "import sys ; print sys"
+  which would formerly raise irritating errors because the ";"
+  was considered a comment
+- tweak and improve reporting
+- refactor reporting and virtualenv manipulation 
+  to be more accessible from 3rd party tools
+- support value substitution from other sections
+  with the {[section]key} syntax
+- fix issue29 - correctly point to pytest explanation
+  for importing modules fully qualified
+- fix issue32 - use --system-site-packages and don't pass --no-site-packages
+- add python3.3 to the default env list, so early adopters can test
+

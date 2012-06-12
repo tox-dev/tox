@@ -149,14 +149,14 @@ class Reporter(object):
 
     def logaction_start(self, action):
         msg = action.msg + " " + " ".join(map(str, action.args))
-        self.verbosity1("%s start: %s" %(action.venvname, msg), bold=True)
+        self.verbosity2("%s start: %s" %(action.venvname, msg), bold=True)
         assert not hasattr(action, "_starttime")
         action._starttime = now()
 
     def logaction_finish(self, action):
         duration = now() - action._starttime
         #self.cumulated_time += duration
-        self.verbosity1("%s finish: %s after %.2f seconds" %(
+        self.verbosity2("%s finish: %s after %.2f seconds" %(
             action.venvname, action.msg, duration), bold=True)
 
     def startsummary(self):
