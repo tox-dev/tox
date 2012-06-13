@@ -1,4 +1,9 @@
-1.4.dev
+1.5.dev
+-----------------
+
+- 
+
+1.4
 -----------------
 
 - fix issue26 - no warnings on absolute or relative specified paths for commands
