@@ -254,7 +254,7 @@ positional arguments with defaults. This format has been deprecated.
 Use ``{posargs:DEFAULTS}`` to specify those.
 
 
-Substition with values from other sections
+Substition for values from other sections
 +++++++++++++++++++++++++++++++++++++++++++
 
 .. versionadded:: 1.4
