@@ -339,11 +339,8 @@ class IniReader:
 
     def _processcommand(self, command):
         posargs = self._subs.get('_posargs', None)
-
         pat = r'\{(?:(?P<sub_type>[^:]+):)?(?P<substitution_value>.*)\}'
-
         words = list(CommandParser(command).words())
-
         new_command = ''
         for word in words:
             if word == '[]':
@@ -356,8 +353,7 @@ class IniReader:
             new_word = re.sub(pat, self._replace_match, new_word)
             new_command += new_word
 
-        argv = shlex.split(new_command.strip())
-        return argv
+        return shlex.split(new_command.strip())
 
     def getbool(self, section, name, default=None):
         s = self.getdefault(section, name, default)
@@ -500,11 +496,9 @@ class CommandParser(object):
 
     class State(object):
         def __init__(self):
-            self.index = 0
             self.word = ''
             self.depth = 0
-            self.yield_word = None
-            self.state = 'before_start'
+            self.yield_words = []
 
     def __init__(self, command):
         self.command = command
@@ -512,77 +506,52 @@ class CommandParser(object):
     def words(self):
         ps = CommandParser.State()
 
-        def cur_char():
-            return self.command[ps.index]
-
         def word_has_ended():
-            return ((cur_char() in string.whitespace and ps.word and ps.word[-1] not in string.whitespace) or
-                    (cur_char() == '{' and not ps.state == 'substitution') or
-                    (ps.state is not 'substitution' and ps.word and ps.word[-1] == '}') or
-                    (cur_char() not in string.whitespace and ps.word and ps.word.strip() == ''))
-            return (ps.state is None and
-                    (ps.word.endswith('}') or
-                     ps.word.strip() == ''))
+            return ((cur_char in string.whitespace and ps.word and
+               ps.word[-1] not in string.whitespace) or
+              (cur_char == '{' and ps.depth == 0) or
+              (ps.depth == 0 and ps.word and ps.word[-1] == '}') or
+              (cur_char not in string.whitespace and ps.word and
+               ps.word.strip() == ''))
 
         def yield_this_word():
-            ps.yield_word = ps.word
+            yieldword = ps.word
             ps.word = ''
+            if yieldword:
+                ps.yield_words.append(yieldword)
+
+        def yield_if_word_ended():
+            if word_has_ended():
+                yield_this_word()
 
         def accumulate():
-            ps.word += cur_char()
+            ps.word += cur_char
 
         def push_substitution():
-            if ps.depth == 0:
-                ps.state = 'substitution'
             ps.depth += 1
 
         def pop_substitution():
             ps.depth -= 1
-            if ps.depth == 0:
-                ps.state = None
 
-        while ps.index < len(self.command):
-
-            if cur_char() in string.whitespace:
-                if ps.state == 'substitution':
-                    accumulate()
-
-                else:
-                    if word_has_ended():
-                        yield_this_word()
-
-                    accumulate()
-
-            elif cur_char() == '{':
-                if word_has_ended():
-                    yield_this_word()
-
+        for cur_char in self.command:
+            if cur_char in string.whitespace:
+                if ps.depth == 0:
+                    yield_if_word_ended()
+                accumulate()
+            elif cur_char == '{':
+                yield_if_word_ended()
                 accumulate()
                 push_substitution()
-
-            elif cur_char() == '}':
+            elif cur_char == '}':
                 accumulate()
                 pop_substitution()
-
             else:
-                if word_has_ended():
-                    yield_this_word()
-
+                yield_if_word_ended()
                 accumulate()
 
-            ps.index += 1
-
-            if ps.yield_word:
-                if ps.yield_word.strip():
-                    yield ps.yield_word
-                else:
-                    yield ' '
-
-                ps.yield_word = None
-
         if ps.word.strip():
-            yield ps.word.strip()
-
+            yield_this_word()
+        return ps.yield_words
 
 def getcontextname():
     if 'HUDSON_URL' in os.environ:

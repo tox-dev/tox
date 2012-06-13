@@ -821,11 +821,10 @@ class TestCommandParser:
         assert parsed == expected
 
     def test_command_with_runs_of_whitespace(self):
-        cmd = dedent("""cmd1 {item1}
-                     {item2}""")
+        cmd = "cmd1 {item1}\n  {item2}"
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ['cmd1', ' ', '{item1}', ' ', '{item2}']
+        assert parsed == ['cmd1', ' ', '{item1}', '\n  ', '{item2}']
 
     def test_command_with_split_line_in_subst_arguments(self):
         cmd = dedent(""" cmd2 {posargs:{item2}
