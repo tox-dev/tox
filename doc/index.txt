@@ -1,11 +1,11 @@
 Welcome to the tox automation project
 ===============================================
 
-vision: merge testing and deployment
-----------------------------------------
+vision: merge packaging, testing and release
+---------------------------------------------
 
 ``tox`` aims to automate state-of-the-art packaging, testing and
-deployment of Python software right from your console *or* CI
+releasing of Python software right from your console *or* CI
 server, invoking your tools of choice.
 
 What is Tox?
