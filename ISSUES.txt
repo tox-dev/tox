@@ -1,3 +1,50 @@
+allow config overlays
+-----------------------------------------------------------
+
+tags: 1.5 feature
+
+You can specify wildcards in section titles.
+
+    [testenv]
+    testsrc=testing/**.py 
+    commands=py.test {posargs}
+    
+    [testenv:py3*]
+    use2to3 = True
+
+    [testenv:py32]
+    deps =
+        ...
+
+Configuration values are now looked up in a stricter-matches-first
+manner: If environment "py32" is considered then first the 
+section under py32, then py3*, then testenv. 
+
+
+support 2to3 configurations / test file postprocessing
+-----------------------------------------------------------
+
+tags: 1.5 feature
+
+Tests should be copied and transformed before being executed.
+Setup a test definition::
+
+    [testenv]
+    testsrc=testing/**.py 
+    commands=py.test {posargs}
+    
+    [testenv:py3*]
+    use2to3 = True
+
+would transform all specified test files for all py3 environments 
+such that a subsequent test run::
+
+    $ tox -e py25,py32 testing/test_hello.py
+
+causes a transformation of the test files to prepare test runs on
+Python3 interpreters.  The ``posargs`` specified files will be rewritten
+to point to the transformed test files.
+
 allow user-specific python interpreters
 ------------------------------------------------
 
