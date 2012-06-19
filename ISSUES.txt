@@ -45,6 +45,17 @@ causes a transformation of the test files to prepare test runs on
 Python3 interpreters.  The ``posargs`` specified files will be rewritten
 to point to the transformed test files.
 
+export support for travis
+----------------------------------------
+tag: 1.6 feature
+
+look into ways to support integration of tox with travis.
+
+- run tox from travis
+- let tox read commands from travis config
+- generate .travis.yml from tox.ini
+- generate tox.ini from .travis.yml
+
 allow user-specific python interpreters
 ------------------------------------------------
 
