@@ -21,6 +21,7 @@
 - fix issue32 - use --system-site-packages and don't pass --no-site-packages
 - add python3.3 to the default env list, so early adopters can test
 - drop python2.4 support (you can still have your tests run on
+- fix the links/checkout howtos in the docs
   python-2.4, just tox itself requires 2.5 or higher.
 
 1.3
