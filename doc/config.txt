@@ -275,12 +275,12 @@ You can put default values in one section and reference them in others to avoid 
     [testenv:dulwich]
     deps =
         dulwich
-        {[tools]deps}
+        {[base]deps}
 
     [testenv:mercurial]
     dep =
         mercurial
-        {[tools]deps}
+        {[base]deps}
 
 
 
