@@ -111,7 +111,7 @@ class TestSession:
         action.popen(["echo", ])
         match = mocksession.report.getnext("logpopen")
         assert match[1].outpath.relto(mocksession.config.logdir)
-        assert match[1].shell == (sys.platform == "win32")
+        assert match[1].shell == False
 
     def test_summary_status(self, initproj, capfd):
         initproj("logexample123-0.5", filedefs={

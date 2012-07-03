@@ -1,7 +1,8 @@
-1.5.dev
+1.4.1
 -----------------
 
-- 
+- fix issue41 better quoting on windows - you can now use "<" and ">" in
+  deps specifications, thanks Chris Withers for reporting
 
 1.4
 -----------------

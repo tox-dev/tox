@@ -78,8 +78,8 @@ class Action(object):
         f = outpath = None
         if redirect:
             f = self._initlogpath(self.id)
-            f.write("actionid=%s\nmsg=%s\ncmd=%s\nenv=%s\n" %(
-                    self.id, self.msg, logged_command, env))
+            f.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" %(
+                    self.id, self.msg, args, env))
             f.flush()
             outpath = py.path.local(f.name)
         if cwd is None:
@@ -116,19 +116,17 @@ class Action(object):
     def _rewriteargs(self, cwd, args):
         newargs = []
         for arg in args:
-            if isinstance(arg, py.path.local):
+            if sys.platform != "win32" and isinstance(arg, py.path.local):
                 arg = cwd.bestrelpath(arg)
             newargs.append(str(arg))
         return newargs
 
     def _popen(self, args, cwd, stdout, stderr, env=None):
         args = self._rewriteargs(cwd, args)
-        #args = [str(x) for x in args]
         if env is None:
             env = os.environ.copy()
-        shell = (sys.platform == "win32")
-        return self.session.popen(args, shell=shell, cwd=str(cwd),
-	        stdout=stdout, stderr=stderr, env=env)
+        return self.session.popen(args, shell=False, cwd=str(cwd),
+            stdout=stdout, stderr=stderr, env=env)
 
 class Reporter(object):
     actionchar = "-"
