@@ -121,7 +121,7 @@ The original `tox.ini <http://code.larlet.fr/django-rest-framework/src/eed0f39a7
 have 26 lines and almost no repetition::
 
     [tox]
-    envlist = py[25,26,27]-django[12,13]-[example]
+    envlist = py[25,26,27]-django[12,13][,-example]
 
     [testenv]
     commands = python setup.py test
