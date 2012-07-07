@@ -1,0 +1,196 @@
+
+V1 draft: multi-dimensional configuration with tox
+-------------------------------------------------------
+
+Problems:
+
+- there is no way to define dependency or other variants in tox.ini files, 
+  instead you have explicitely spell out all combinations in 
+  separate testenvs. Examples:
+
+    http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini
+    https://bitbucket.org/tabo/django-treebeard/src/93b579395a9c/tox.ini
+
+- tox always uses pip currently.  So there is no check for your packages
+  that installing with easy_install will work. Moreover, some packages,
+  like greenlet on Win32, require easy_install if you have no suitable
+  C-compiler on the machine.  Tox cannot be used then currently.
+
+Goals: 
+
+- allow to more easily define and run dependency/interpreter variants 
+  with testenvs
+- allow to run variants of installing via easy_install or pip. 
+
+
+Generating and selecting variants
+----------------------------------------------
+
+Suppose you want to test your package against mypkg-1.3 and mypkg-1.4
+framework versions and against python2.6,2.7,pypy-1.9 and 3.2 interpreters. 
+Today you would have to create 2*4 = 8 ``[testenv*]`` sections to instruct
+tox to test against all of them.  With tox-1.X you can use a new mechanism
+which is based on two ideas:
+
+* allow to specify partial testenv values in [testenv-VARIANT] sections
+* introduce "generator" expressions to the "envlist" setting to ease
+  enumerating all variant combinations.
+
+Without much further introduction, here is an example ``tox.ini``::
+
+    envlist = 
+        py[26,27,32,py]-mypkg[13,14]
+    
+    [testenv]
+        deps = nose
+        commands = nosetests
+
+    [testenv-mypkg13]
+        +deps = mypkg<1.4
+
+    [testenv-django14]
+        +deps = mypkg<1.5
+
+If you don't want to run django-mypkg with pypy the envlist would look like
+this::
+
+    envlist = 
+        py[26,27,32]-mypkg[13,14]
+        pypy-mypkg14
+
+
+Generator expressions in the envlist setting
+----------------------------------------------------------
+
+Generator expressions in the ``envlist`` work like this:
+
+* ``[...]`` parts contain a comma-separated list of names. Each name
+  will generate a new environment reference. 
+* repeat the process until there are no more generator expressions
+
+Variant specification with [testenv-VARNAME]
+----------------------------------------------
+
+The ``[testenv-mypkg13]`` and ``[testenv-mypkg14]`` can define
+settings for the respective variant.  Their specification
+can use a new ``+deps`` setting to allow for appending dependencies rather than replacing it.
+
+Showing all expanded sections
+-------------------------------
+
+To help with understanding how the variants will produce section values,
+you can ask tox to show their expansion with a new option:
+
+    $ tox -l
+    [XXX output ommitted for now]
+
+
+Making sure your packages installs with easy_install
+------------------------------------------------------
+
+The new "installer" testenv setting allows to specify the tool for installation:
+
+    [testenv]
+    installer = easy_install
+
+If you want to have your package installed with both easy_install
+and pip, you can use variants again:
+
+    [testenv-easy]
+    installer = easy_install
+
+    [testenv-pip]
+    installer = pip
+
+    [tox]
+    envlist = py[26,27,32]-django[13,14]-[easy,pip]
+
+Note that tox comes with some predefined variants, namely:
+
+    - [easy,pip] use easy_install or pip
+    - [py24,py25,py26,py27,py31,py32,pypy,jy] use the respective pythonNN
+      or PyPy or Jython interpreter 
+
+You can use those in your "envlist" specification without the need to
+define them yourself.
+ 
+Transforming the examples: django-rest
+------------------------------------------------
+
+The original `tox.ini <http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini>`_ file has 159 lines and a lot of repetition, the new one would 
+have 26 lines and almost no repetition::
+
+    [tox]
+    envlist = py[25,26,27]-django[12,13]-[example]
+
+    [testenv]
+    commands = python setup.py test
+
+    deps=
+        coverage==3.4
+        unittest-xml-reporting==1.2
+        Pyyaml==3.10
+
+    [testenv-django12]
+    +deps= django==1.2.4
+
+    [testenv-django12]
+    +deps= django==1.2.4
+
+    [testenv-example]
+    deps = 
+        wsgiref==0.1.2
+        Pygments==1.4
+        httplib2==0.6.0
+        Markdown==2.0.3
+
+    commands = python examples/runtests.py
+
+Apart from the much more concise specification, it is now also easy to add further variants like testing installation with easy_install in addition
+to pip.
+
+Transforming the examples: django-treebeard
+------------------------------------------------
+
+Another `tox.ini <https://bitbucket.org/tabo/django-treebeard/raw/93b579395a9c/tox.ini>`_ has 233 lines and runs tests against multiple Postgres and Mysql engines in the same testenv section.  We can easily split this and reduce to 39 non-repetive lines::
+
+    [tox]
+    envlist =
+      py[24,25,26,27]-django[11,12,13]-[nodb,pg,mysql]
+      docs
+
+    [testenv:docs]
+    changedir = docs
+    deps =
+      Sphinx
+      Django
+    commands =
+      make clean
+      make html
+
+    [testenv]
+    deps=
+      coverage
+      MySQL-python
+      psycopg2
+      pysqlite
+
+    [testenv-nodb]
+    +deps=pysqlite
+    commands =
+      {envpython} runtests.py {posargs}
+
+    [testenv-pg]
+    +deps = psycopg2
+    commands =
+      {envpython} runtests.py --DATABASE_ENGINE=postgresql_psycopg2 --DATABASE_USER=postgres {posargs}
+
+    [testenv-mysql]
+    +deps = MySQL-python
+    commands =
+      {envpython} runtests.py --DATABASE_ENGINE=mysql --DATABASE_USER=root {posargs}
+
+    [testenv-django10]
+    +deps = Django==1.0.4
+
+
