@@ -11,7 +11,7 @@ class TestVenvConfig:
             [testenv:py1]
         """)
         assert len(config.envconfigs) == 1
-        assert config.toxworkdir == tmpdir.join(".tox")
+        assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
         assert config.envconfigs['py1'].basepython == sys.executable
         assert config.envconfigs['py1'].deps == []
 
@@ -48,8 +48,8 @@ class TestVenvConfig:
 class TestConfigPackage:
     def test_defaults(self, tmpdir, newconfig):
         config = newconfig([], "")
-        assert config.setupdir == tmpdir
-        assert config.toxworkdir == tmpdir.join(".tox")
+        assert config.setupdir.realpath() == tmpdir.realpath()
+        assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths
         assert not envconfig.recreate
@@ -63,8 +63,8 @@ class TestConfigPackage:
     def test_defaults_changed_dir(self, tmpdir, newconfig):
         tmpdir.mkdir("abc").chdir()
         config = newconfig([], "")
-        assert config.setupdir == tmpdir
-        assert config.toxworkdir == tmpdir.join(".tox")
+        assert config.setupdir.realpath() == tmpdir.realpath()
+        assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
 
     def test_project_paths(self, tmpdir, newconfig):
         config = newconfig("""
@@ -575,7 +575,7 @@ class TestConfigTestEnv:
         """
         conf = newconfig([], inisource).envconfigs['python']
         assert conf.changedir.basename == 'testing'
-        assert conf.changedir.dirpath() == tmpdir
+        assert conf.changedir.dirpath().realpath() == tmpdir.realpath()
 
 
 class TestGlobalOptions:
