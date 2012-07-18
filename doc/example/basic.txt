@@ -120,3 +120,37 @@ When your test commands execute they will execute with
 a PYTHONPATH setting that will lead Python to also import
 from the ``subdir`` below the directory where your ``tox.ini``
 file resides.
+
+Integration with setuptools/distribute test commands
+----------------------------------------------------
+
+Distribute/Setuptools support test requirements
+and you can extend its test command to trigger
+a test run when ``python setup.py test`` is issued::
+
+    from setuptools.command.test import test as TestCommand
+    import sys
+
+    class Tox(TestCommand):
+        def finalize_options(self):
+            TestCommand.finalize_options(self)
+            self.test_args = []
+            self.test_suite = True
+        def run_tests(self):
+            #import here, cause outside the eggs aren't loaded
+            import tox
+            errno = tox.cmdline(self.test_args)
+            sys.exit(errno)
+
+    setup(
+        #...,
+        tests_require=['tox'],
+        cmdclass = {'test': Tox},
+        )
+
+Now if you run::
+
+    python setup.py test
+
+this will install tox and then run tox.
+

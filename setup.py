@@ -1,5 +1,6 @@
 import sys
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
 long_description="""
 What is Tox?
@@ -25,6 +26,15 @@ For more information, docs and many examples please checkout the `home page`_:
 .. _`home page`: http://tox.testrun.org/
 """
 
+class Tox(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import tox
+        tox.cmdline(self.test_args)
 
 def main():
     version = sys.version_info[:2]
@@ -43,6 +53,10 @@ def main():
         author_email='holger@merlinux.eu',
         packages=['tox', ],
         entry_points={'console_scripts': 'tox=tox:cmdline'},
+        # we use a public tox version to test, see tox.ini's testenv
+        # "deps" definition for the required dependencies
+        tests_require=['tox'],
+        cmdclass={"test": Tox},
         install_requires=install_requires,
         zip_safe=True,
         classifiers=[
