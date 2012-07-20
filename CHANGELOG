@@ -1,6 +1,7 @@
-1.4.DEV
+1.4.2
 -----------------
 
+- fix some tests which fail if /tmp is a symlink to some other place
 - "python setup.py test" now runs tox tests via tox :)
   also added an example on how to do it for your project.
 
