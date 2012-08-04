@@ -251,16 +251,15 @@ class VirtualEnv(object):
                 ixserver = self.envconfig.config.indexserver['default']
             else:
                 ixserver = dep.indexserver
-            url = ixserver.url
-            d.setdefault(url, []).append(dep.name)
-            if url not in l:
-                l.append(url)
-            assert url is None or isinstance(url, str)
+            d.setdefault(ixserver, []).append(dep.name)
+            if ixserver not in l:
+                l.append(ixserver)
+            assert ixserver.url is None or isinstance(ixserver.url, str)
 
         extraopts = extraopts or []
-        for repo in l:
-            args = d[repo] + extraopts
-            self.pip_install(args, repo, action)
+        for ixserver in l:
+            args = d[ixserver] + extraopts
+            self.pip_install(args, ixserver.url, action)
 
     def _getenv(self):
         env = self.envconfig.setenv

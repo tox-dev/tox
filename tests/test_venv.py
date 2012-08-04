@@ -175,10 +175,12 @@ def test_install_deps_indexserver(newmocksession):
         [tox]
         indexserver =
             abc = ABC
+            abc2 = ABC
         [testenv:py123]
         deps=
             dep1
             :abc:dep2
+            :abc2:dep3
     """)
     venv = mocksession.getenv('py123')
     venv.create()
@@ -188,7 +190,7 @@ def test_install_deps_indexserver(newmocksession):
 
     venv.install_deps()
     # two different index servers, two calls
-    assert len(l) == 2
+    assert len(l) == 3
     args = " ".join(l[0].args)
     assert "-i" not in args
     assert "dep1" in args
@@ -196,6 +198,9 @@ def test_install_deps_indexserver(newmocksession):
     args = " ".join(l[1].args)
     assert "-i ABC" in args
     assert "dep2" in args
+    args = " ".join(l[2].args)
+    assert "-i ABC" in args
+    assert "dep3" in args
 
 def test_install_sdist_indexserver(newmocksession, tmpdir):
     mocksession = newmocksession([], """

@@ -1,3 +1,10 @@
+1.4.3.dev
+-----------------
+
+- fix grouping of index servers, it is now done by name instead of 
+  indexserver url, allowing to use it to separate dependencies
+  into groups even if using the same default indexserver.
+
 1.4.2
 -----------------
 
