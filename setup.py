@@ -45,7 +45,7 @@ def main():
         name='tox',
         description='virtualenv-based automation of test activities',
         long_description=long_description,
-        url='http://codespeak.net/tox',
+        url='http://tox.testrun.org/',
         version='1.4.3.dev0',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
