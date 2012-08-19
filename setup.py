@@ -2,7 +2,7 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-long_description="""
+long_description = """
 What is Tox?
 ==========================
 
@@ -26,20 +26,23 @@ For more information, docs and many examples please checkout the `home page`_:
 .. _`home page`: http://tox.testrun.org/
 """
 
+
 class Tox(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []
         self.test_suite = True
+
     def run_tests(self):
         #import here, cause outside the eggs aren't loaded
         import tox
         tox.cmdline(self.test_args)
 
+
 def main():
     version = sys.version_info[:2]
     install_requires = ['virtualenv>=1.7', 'py>=1.4.9', ]
-    if version < (2,7) or (3,0) <= version <= (3,1):
+    if version < (2, 7) or (3, 0) <= version <= (3, 1):
         install_requires += ['argparse']
     setup(
         name='tox',
