@@ -93,7 +93,6 @@ Current features
    install
    examples
    config
-   config-v1
    support
    changelog
    links
