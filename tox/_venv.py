@@ -1,5 +1,5 @@
 from __future__ import with_statement
-import sys, os
+import sys, os, re
 import py
 import tox
 from tox._config import DepConfig
@@ -317,21 +317,23 @@ if sys.platform != "win32":
         return py.path.local.sysfind(name)
 
 else:
+    # Exceptions to the usual windows mapping
     win32map = {
             'python': sys.executable,
-            'python2.4': "c:\python24\python.exe",
-            'python2.5': "c:\python25\python.exe",
-            'python2.6': "c:\python26\python.exe",
-            'python2.7': "c:\python27\python.exe",
-            'python3.1': "c:\python31\python.exe",
-            'python3.2': "c:\python32\python.exe",
             'jython': "c:\jython2.5.1\jython.bat",
     }
     def find_executable(name):
         p = py.path.local(name)
         if p.check(file=1):
             return p
-        actual = win32map.get(name, None)
+        actual = None
+        # Is this a standard PythonX.Y name?
+        m = re.match(r"python(\d)\.(\d)", name)
+        if m:
+            # The standard names are in predictable places.
+            actual = r"c:\python%s%s\python.exe" % m.groups()
+        if not actual:
+            actual = win32map.get(name, None)
         if actual:
             actual = py.path.local(actual)
             if actual.check():
