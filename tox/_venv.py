@@ -338,3 +338,18 @@ else:
             actual = py.path.local(actual)
             if actual.check():
                 return actual
+        # The standard executables can be found as a last resort via the
+        # Python launcher py.exe
+        if m:
+            ver = "-%s.%s" %m.groups()
+            script = "import sys; print(sys.executable)"
+            py_exe = py.path.local.sysfind('py')
+            if py_exe:
+                try:
+                    exe = py_exe.sysexec(ver, '-c', script).strip()
+                except py.process.cmdexec.Error:
+                    exe = None
+                if exe:
+                    exe = py.path.local(exe)
+                    if exe.check():
+                        return exe
