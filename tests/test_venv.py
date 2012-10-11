@@ -15,6 +15,21 @@ from tox._venv import VirtualEnv, CreationConfig, getdigest
 def test_getdigest(tmpdir):
     assert getdigest(tmpdir) == "0"*32
 
+def test_locate_via_py(monkeypatch):
+    from tox._venv import locate_via_py
+    class PseudoPy:
+        def sysexec(self, *args):
+            assert args[0] == '-3.2'
+            assert args[1] == '-c'
+            # Return value needs to actually exist!
+            return sys.executable
+    def ret_pseudopy(name):
+        assert name == 'py'
+        return PseudoPy()
+    # Monkeypatch py.path.local.sysfind to return PseudoPy
+    monkeypatch.setattr(py.path.local, 'sysfind', ret_pseudopy)
+    assert locate_via_py('3', '2') == sys.executable
+
 def test_find_executable():
     from tox._venv import find_executable
     p = find_executable(sys.executable)

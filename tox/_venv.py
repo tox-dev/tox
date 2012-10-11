@@ -322,6 +322,20 @@ else:
             'python': sys.executable,
             'jython': "c:\jython2.5.1\jython.bat",
     }
+    def locate_via_py(v_maj, v_min):
+        ver = "-%s.%s" % (v_maj, v_min)
+        script = "import sys; print(sys.executable)"
+        py_exe = py.path.local.sysfind('py')
+        if py_exe:
+            try:
+                exe = py_exe.sysexec(ver, '-c', script).strip()
+            except py.process.cmdexec.Error:
+                exe = None
+            if exe:
+                exe = py.path.local(exe)
+                if exe.check():
+                    return exe
+
     def find_executable(name):
         p = py.path.local(name)
         if p.check(file=1):
@@ -341,15 +355,4 @@ else:
         # The standard executables can be found as a last resort via the
         # Python launcher py.exe
         if m:
-            ver = "-%s.%s" %m.groups()
-            script = "import sys; print(sys.executable)"
-            py_exe = py.path.local.sysfind('py')
-            if py_exe:
-                try:
-                    exe = py_exe.sysexec(ver, '-c', script).strip()
-                except py.process.cmdexec.Error:
-                    exe = None
-                if exe:
-                    exe = py.path.local(exe)
-                    if exe.check():
-                        return exe
+            locate_via_py(*m.groups())
