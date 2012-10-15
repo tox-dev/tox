@@ -162,7 +162,7 @@ What command should be used to test your project -- examples:
     - python setup.py test
     - nosetests package.module
     - trial package.module'''
-    do_prompt(d, 'commands', 'Command to run to test project', 'python setup.py test')
+    do_prompt(d, 'commands', 'Command to run to test project', '{envpython} setup.py test')
 
     print '''
 What dependencies does your project have?'''
