@@ -21,3 +21,4 @@ class exception:
         """ a dependency could not be found or determined. """
 
 from tox._cmdline import main as cmdline
+from tox._quickstart import main as quickstart
