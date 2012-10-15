@@ -61,6 +61,11 @@ all_envs = ['py24', 'py25', 'py26', 'py27', 'py30', 'py31', 'py32', 'py33', 'pyp
 PROMPT_PREFIX = '> '
 
 QUICKSTART_CONF = '''\
+# Tox (http://tox.testrun.org/) is a tool for running tests
+# in multiple virtualenvs. This configuration file will run the
+# test suite on all supported python versions. To use it, "pip install tox"
+# and then run "tox" from this directory.
+
 [tox]
 envlist = %(envlist)s
 
