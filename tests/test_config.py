@@ -73,6 +73,18 @@ class TestConfigPackage:
         """ % tmpdir)
         assert config.toxworkdir == tmpdir
 
+class TestParseconfig:
+    def test_search_parents(self, tmpdir):
+        from tox._config import parseconfig
+        b = tmpdir.mkdir("a").mkdir("b")
+        toxinipath = tmpdir.ensure("tox.ini")
+        old = b.chdir()
+        try:
+            config = parseconfig([])
+        finally:
+            old.chdir()
+        assert config.toxinipath == toxinipath
+
 class TestIniParser:
     def test_getdefault_single(self, tmpdir, newconfig):
         config = newconfig("""
@@ -763,13 +775,6 @@ class TestCmdInvocation:
         assert tox.__version__ in stdout
         assert "imported from" in stdout
 
-    def test_unkonwn_ini(self, cmd):
-        result = cmd.run("tox")
-        assert result.ret
-        result.stderr.fnmatch_lines([
-            "*tox.ini*does not exist*",
-        ])
-
     @py.test.mark.xfail("sys.version_info < (2,6)",
         reason="virtualenv3 cannot be imported")
     def test_config_specific_ini(self, tmpdir, cmd):
@@ -785,9 +790,8 @@ class TestCmdInvocation:
         result = cmd.run("tox")
         assert result.ret
         result.stderr.fnmatch_lines([
-            "*ERROR*tox.ini*does not exist*",
+            "*ERROR*tox.ini*not*found*",
         ])
-
 
 class TestCommandParser:
 

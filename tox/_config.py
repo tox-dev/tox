@@ -20,7 +20,17 @@ def parseconfig(args=None, pkg=None):
     opts = parser.parse_args(args)
     config = Config()
     config.option = opts
-    parseini(config)
+    basename = config.option.configfile
+    if os.path.isabs(basename):
+        inipath = py.path.local(basename)
+    else:
+        for path in py.path.local().parts(reverse=True):
+            inipath = path.join(basename)
+            if inipath.check():
+                break
+        else:
+            feedback("toxini file %r not found" %(basename), sysexit=True)
+    parseini(config, inipath)
     return config
 
 def feedback(msg, sysexit=False):
@@ -57,7 +67,7 @@ def prepare_parse(pkgname):
         help="show configuration information. ")
     parser.add_argument("-c", action="store", default="tox.ini",
         dest="configfile",
-        help="use the specified config file.")
+        help="use the specified config file name.")
     parser.add_argument("-e", action="store", dest="env",
         metavar="envlist",
         help="work against specified environments (ALL selects all).")
@@ -103,14 +113,10 @@ class VenvConfig:
 testenvprefix = "testenv:"
 
 class parseini:
-    def __init__(self, config):
-        config.option.configfile = py.path.local(config.option.configfile)
-        config.toxinipath = config.option.configfile
+    def __init__(self, config, inipath):
+        config.toxinipath = inipath
         config.toxinidir = toxinidir = config.toxinipath.dirpath()
 
-        if not config.toxinipath.check():
-            feedback("toxini file %r does not exist" %(
-                str(config.toxinipath)), sysexit=True)
         self._cfg = py.iniconfig.IniConfig(config.toxinipath)
         config._cfg = self._cfg
         self.config = config

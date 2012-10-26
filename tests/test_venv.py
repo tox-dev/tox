@@ -15,6 +15,7 @@ from tox._venv import VirtualEnv, CreationConfig, getdigest
 def test_getdigest(tmpdir):
     assert getdigest(tmpdir) == "0"*32
 
+@pytest.mark.skipif("sys.platform != 'win32'")
 def test_locate_via_py(monkeypatch):
     from tox._venv import locate_via_py
     class PseudoPy:

@@ -4,6 +4,8 @@
 - fix grouping of index servers, it is now done by name instead of 
   indexserver url, allowing to use it to separate dependencies
   into groups even if using the same default indexserver.
+- look for "tox.ini" files in parent dirs of current dir (closes #34)
+
 
 1.4.2
 -----------------
