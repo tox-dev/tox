@@ -1,3 +1,11 @@
+pyc files / test distributions
+-----------------------------------------------------------
+
+investigate pyc cleaning, see
+
+http://lists.idyll.org/pipermail/testing-in-python/2012-October/005205.html
+
+
 allow config overlays
 -----------------------------------------------------------
 
