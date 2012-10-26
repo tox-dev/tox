@@ -1,3 +1,68 @@
+introduce package and setup.py less sdist creation
+-----------------------------------------------------------
+
+Example sections for tox itself::
+
+    [pkgdef] 
+    basename = pytest
+    description = virtualenv-based automation of test activities
+    authors = holger krekel <holger@merlinux.eu>
+    url = http://tox.testrun.org
+    entry_points = console_scripts: tox=tox:cmdline
+    requires = py
+    packages = 
+    preuploadenvs = sphinx 
+
+    classifiers=
+        Development Status :: 6 - Mature
+        Intended Audience :: Developers
+        License :: OSI Approved :: MIT License
+        Topic :: Software Development :: Testing
+        Topic :: Software Development :: Libraries
+        Topic :: Utilities
+
+This would generate three different packages:
+
+- the main one containing the app with the specified description, etc.
+  It has a test-requires pointing to the test package,
+  which classifiers
+- the test package only containing the tests and setup.py
+  depending on the main package and all requirements collected from the
+  testenv
+- the doc package containing generated html and txt files
+  (to be installable via a setup.py as well?)
+
+Here is what happens when tox is invoked now:
+
+- version gets auto-incremented (in setup.py and $PACKAGE/__init__.py files)
+- main setup.py generated, files copied, sdist generated
+- test setup.py generated, files copied, sdist generated
+- doc setup.py generated, doc environment run, files copied, sdist generated
+
+- if --upload is specified, all packages are uploaded under 
+  their respective names:
+  tox-VER
+  tests-tox-VER
+  docs-tox-VER
+
+- tox --sync creates a test result file for the tests-tox-VER run
+  and uploads it to testrun.org -- .tox/projectkeys contains a file that
+  was created by visiting testrun.org and registering/logging in.
+
+- download toxslave and execute it:
+
+    toxslave --userkey=... [--project tox]
+
+  which will query testrun.org for outstanding testruns
+  [for the tox project], download packages, execute them 
+  and report back to the server
+
+merge tox and detox?
+----------------------------------------------------------------
+
+maybe it's time to merge it?
+
+http://lists.idyll.org/pipermail/testing-in-python/2012-October/005205.html
 pyc files / test distributions
 -----------------------------------------------------------
 
