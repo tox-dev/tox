@@ -4,6 +4,7 @@ from textwrap import dedent
 
 import py
 from tox._config import IniReader, CommandParser
+from tox._config import parseconfig
 
 class TestVenvConfig:
     def test_config_parsing_minimal(self, tmpdir, newconfig):
@@ -75,7 +76,6 @@ class TestConfigPackage:
 
 class TestParseconfig:
     def test_search_parents(self, tmpdir):
-        from tox._config import parseconfig
         b = tmpdir.mkdir("a").mkdir("b")
         toxinipath = tmpdir.ensure("tox.ini")
         old = b.chdir()
@@ -666,6 +666,11 @@ class TestGlobalOptions:
         assert config.envlist == ['py26', 'py27', 'py31']
         config = newconfig(["-eALL"], inisource)
         assert config.envlist == ['py26', 'py27', 'py31']
+
+    def test_py_venv(self, tmpdir, newconfig, monkeypatch):
+        config = newconfig(["-epy"], "")
+        env = config.envconfigs['py']
+        assert str(env.basepython) == sys.executable
 
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
         envs = "py24,py25,py26,py27,py30,py31,py32,jython,pypy"

@@ -10,8 +10,12 @@ import py
 import tox
 
 defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
-for _name in "py24,py25,py26,py27,py30,py31,py32,py33".split(","):
-    defaultenvs[_name] = "python%s.%s" %(_name[2], _name[3])
+for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
+    if _name == "py":
+        basepython = sys.executable
+    else:
+        basepython = "python" + ".".join(_name[2:4])
+    defaultenvs[_name] = basepython
 
 def parseconfig(args=None, pkg=None):
     if args is None:

@@ -5,7 +5,8 @@
   indexserver url, allowing to use it to separate dependencies
   into groups even if using the same default indexserver.
 - look for "tox.ini" files in parent dirs of current dir (closes #34)
-
+- the "py" environment now by default uses the current interpreter (sys.executable)
+  make tox' own setup.py test execute tests with it (closes #46)
 
 1.4.2
 -----------------

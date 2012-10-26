@@ -30,7 +30,7 @@ For more information, docs and many examples please checkout the `home page`_:
 class Tox(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = []
+        self.test_args = ["-v", "-epy"]
         self.test_suite = True
 
     def run_tests(self):
@@ -49,7 +49,7 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=long_description,
         url='http://tox.testrun.org/',
-        version='1.4.3.dev0',
+        version='1.4.3.dev1',
         license='GPLv2 or later',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
