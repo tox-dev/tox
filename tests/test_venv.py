@@ -3,6 +3,7 @@ import tox
 import pytest
 import os, sys
 from tox._venv import VirtualEnv, CreationConfig, getdigest
+from tox._venv import find_executable
 
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -32,7 +33,6 @@ def test_locate_via_py(monkeypatch):
     assert locate_via_py('3', '2') == sys.executable
 
 def test_find_executable():
-    from tox._venv import find_executable
     p = find_executable(sys.executable)
     assert p == py.path.local(sys.executable)
     for ver in [""] + "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split():
@@ -52,6 +52,14 @@ def test_find_executable():
                 stderr=py.std.subprocess.PIPE)
         stdout, stderr = popen.communicate()
         assert ver in py.builtin._totext(stderr, "ascii")
+
+def test_find_executable_extra(monkeypatch):
+    @staticmethod
+    def sysfind(x):
+        return "hello"
+    monkeypatch.setattr(py.path.local, "sysfind", sysfind)
+    t = find_executable("qweqwe")
+    assert t == "hello"
 
 def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     config = newconfig([], """
