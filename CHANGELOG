@@ -1,12 +1,18 @@
 1.4.3.dev
 -----------------
 
+- fix win32 detection of pypy and other interpreters that are on PATH
+  (thanks Gustavo Picon)
+
 - fix grouping of index servers, it is now done by name instead of 
   indexserver url, allowing to use it to separate dependencies
   into groups even if using the same default indexserver.
+
 - look for "tox.ini" files in parent dirs of current dir (closes #34)
-- the "py" environment now by default uses the current interpreter (sys.executable)
-  make tox' own setup.py test execute tests with it (closes #46)
+
+- the "py" environment now by default uses the current interpreter
+  (sys.executable) make tox' own setup.py test execute tests with it
+  (closes #46)
 
 1.4.2
 -----------------
