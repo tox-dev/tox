@@ -441,7 +441,7 @@ class TestConfigTestEnv:
         assert argv[3][0] == conf.envbindir
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
-        assert argv[6][0] == os.path.expanduser("~")
+        assert argv[6][0] == str(py.path.local._gethomedir())
         assert argv[7][0] == config.homedir.join(".tox", "distshare")
         assert argv[8][0] == conf.envlogdir
 

@@ -14,6 +14,8 @@
   (sys.executable) make tox' own setup.py test execute tests with it
   (closes #46)
 
+- change tests to not rely on os.path.expanduser (closes #60)
+
 1.4.2
 -----------------
 
