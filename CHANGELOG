@@ -14,7 +14,9 @@
   (sys.executable) make tox' own setup.py test execute tests with it
   (closes #46)
 
-- change tests to not rely on os.path.expanduser (closes #60)
+- change tests to not rely on os.path.expanduser (closes #60),
+  also make mock session return args[1:] for more precise checking (closes #61)
+  thanks to Barry Warszaw for both.
 
 1.4.2
 -----------------
