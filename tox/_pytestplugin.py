@@ -1,4 +1,4 @@
-import py
+import pytest, py
 import tox
 import os
 import sys
@@ -33,12 +33,6 @@ def pytest_funcarg__newconfig(request):
         finally:
             old.chdir()
     return newconfig
-
-def pytest_funcarg__tmpdir(request):
-    tmpdir = request.getfuncargvalue("tmpdir")
-    request.addfinalizer(py.path.local().chdir)
-    tmpdir.chdir()
-    return tmpdir
 
 def pytest_funcarg__cmd(request):
     return Cmd(request)
@@ -250,9 +244,9 @@ class LineMatcher:
             else:
                 assert line == nextline
 
-def pytest_funcarg__initproj(request):
+@pytest.fixture
+def initproj(request, tmpdir):
     """ create a factory function for creating example projects. """
-    tmpdir = request.getfuncargvalue("tmpdir")
     def initproj(name, filedefs=None):
         if filedefs is None:
             filedefs = {}
