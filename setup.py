@@ -55,7 +55,7 @@ def main():
         author='holger krekel',
         author_email='holger@merlinux.eu',
         packages=['tox', ],
-        entry_points={'console_scripts': 'tox=tox:cmdline\ntox-quickstart=tox:quickstart'},
+        entry_points={'console_scripts': 'tox=tox:cmdline\ntox-quickstart=tox._quickstart:main'},
         # we use a public tox version to test, see tox.ini's testenv
         # "deps" definition for the required dependencies
         tests_require=['tox'],
