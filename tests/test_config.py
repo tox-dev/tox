@@ -4,6 +4,7 @@ from textwrap import dedent
 
 import py
 from tox._config import IniReader, CommandParser
+from tox._config import parseconfig
 
 class TestVenvConfig:
     def test_config_parsing_minimal(self, tmpdir, newconfig):
@@ -72,6 +73,17 @@ class TestConfigPackage:
             toxworkdir=%s
         """ % tmpdir)
         assert config.toxworkdir == tmpdir
+
+class TestParseconfig:
+    def test_search_parents(self, tmpdir):
+        b = tmpdir.mkdir("a").mkdir("b")
+        toxinipath = tmpdir.ensure("tox.ini")
+        old = b.chdir()
+        try:
+            config = parseconfig([])
+        finally:
+            old.chdir()
+        assert config.toxinipath == toxinipath
 
 class TestIniParser:
     def test_getdefault_single(self, tmpdir, newconfig):
@@ -429,7 +441,7 @@ class TestConfigTestEnv:
         assert argv[3][0] == conf.envbindir
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
-        assert argv[6][0] == os.path.expanduser("~")
+        assert argv[6][0] == str(py.path.local._gethomedir())
         assert argv[7][0] == config.homedir.join(".tox", "distshare")
         assert argv[8][0] == conf.envlogdir
 
@@ -655,6 +667,11 @@ class TestGlobalOptions:
         config = newconfig(["-eALL"], inisource)
         assert config.envlist == ['py26', 'py27', 'py31']
 
+    def test_py_venv(self, tmpdir, newconfig, monkeypatch):
+        config = newconfig(["-epy"], "")
+        env = config.envconfigs['py']
+        assert str(env.basepython) == sys.executable
+
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
         envs = "py24,py25,py26,py27,py30,py31,py32,jython,pypy"
         inisource = """
@@ -763,13 +780,6 @@ class TestCmdInvocation:
         assert tox.__version__ in stdout
         assert "imported from" in stdout
 
-    def test_unkonwn_ini(self, cmd):
-        result = cmd.run("tox")
-        assert result.ret
-        result.stderr.fnmatch_lines([
-            "*tox.ini*does not exist*",
-        ])
-
     @py.test.mark.xfail("sys.version_info < (2,6)",
         reason="virtualenv3 cannot be imported")
     def test_config_specific_ini(self, tmpdir, cmd):
@@ -785,9 +795,8 @@ class TestCmdInvocation:
         result = cmd.run("tox")
         assert result.ret
         result.stderr.fnmatch_lines([
-            "*ERROR*tox.ini*does not exist*",
+            "*ERROR*tox.ini*not*found*",
         ])
-
 
 class TestCommandParser:
 

@@ -106,7 +106,8 @@ class ReportExpectMock:
 
 class pcallMock:
     def __init__(self, args, cwd, env, stdout, stderr, shell):
-        self.args = args
+        self.arg0 = args[0]
+        self.args = args[1:]
         self.cwd = cwd
         self.env = env
         self.stdout = stdout

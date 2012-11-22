@@ -35,7 +35,7 @@ and will first lookup global tox settings in this section::
 envlist setting
 +++++++++++++++++++++++++
 
-Determining the environment list that ``tox`` is to operate one
+Determining the environment list that ``tox`` is to operate on
 happens in this order:
 
 * command line option ``-eENVLIST``

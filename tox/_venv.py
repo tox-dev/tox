@@ -337,8 +337,8 @@ else:
                     return exe
 
     def find_executable(name):
-        p = py.path.local(name)
-        if p.check(file=1):
+        p = py.path.local.sysfind(name)
+        if p:
             return p
         actual = None
         # Is this a standard PythonX.Y name?
