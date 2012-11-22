@@ -155,8 +155,6 @@ accept a default value, if one is given in brackets).'''
         if pyenv not in d:
             do_prompt(d, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y', boolean)
 
-    d['envlist'] = ', '.join([env for env in all_envs if d[env] is True])
-
     print '''
 What command should be used to test your project -- examples:
     - py.test
@@ -168,7 +166,13 @@ What command should be used to test your project -- examples:
     print '''
 What dependencies does your project have?'''
     do_prompt(d, 'deps', 'Comma-separated list of dependencies', ' ')
+
+
+def process_input(d):
+    d['envlist'] = ', '.join([env for env in all_envs if d[env] is True])
     d['deps'] = '\n' + '\n'.join(['    %s' % dep.strip() for dep in d['deps'].split(',')])
+
+    return d
 
 
 def generate(d, overwrite=True, silent=False):
@@ -202,17 +206,21 @@ Execute `tox` to test your project.
 
 def main(argv=sys.argv):
     d = {}
+
     if len(argv) > 3:
         print 'Usage: tox-quickstart [root]'
         sys.exit(1)
     elif len(argv) == 2:
         d['path'] = argv[1]
+
     try:
         ask_user(d)
     except (KeyboardInterrupt, EOFError):
         print
         print '[Interrupted.]'
         return
+
+    d = process_input(d)
     generate(d)
 
 
