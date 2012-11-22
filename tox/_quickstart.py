@@ -114,7 +114,7 @@ def do_prompt(d, key, text, default=None, validator=nonempty):
         x = term_input(prompt)
         if default and not x:
             x = default
-        if not isinstance(x, unicode):
+        if sys.version_info < (3, ) and not isinstance(x, unicode):
             # for Python 2.x, try to get a Unicode string out of it
             if x.decode('ascii', 'replace').encode('ascii', 'replace') != x:
                 if TERM_ENCODING:
@@ -129,7 +129,8 @@ def do_prompt(d, key, text, default=None, validator=nonempty):
                         x = x.decode('latin1')
         try:
             x = validator(x)
-        except ValidationError, err:
+        except ValidationError:
+            err = sys.exc_info()[1]
             print('* ' + str(err))
             continue
         break
@@ -141,13 +142,13 @@ def ask_user(d):
 
     """
 
-    print('Welcome to the Tox %s quickstart utility.') % __version__
-    print '''
+    print('Welcome to the Tox %s quickstart utility.' % __version__)
+    print('''
 This utility will ask you a few questions and then generate a simple tox.ini
 file to help get you started using tox.
 
 Please enter values for the following settings (just press Enter to
-accept a default value, if one is given in brackets).'''
+accept a default value, if one is given in brackets).''')
 
     print
 
@@ -155,16 +156,16 @@ accept a default value, if one is given in brackets).'''
         if pyenv not in d:
             do_prompt(d, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y', boolean)
 
-    print '''
+    print('''
 What command should be used to test your project -- examples:
     - py.test
     - python setup.py test
     - nosetests package.module
-    - trial package.module'''
+    - trial package.module''')
     do_prompt(d, 'commands', 'Command to run to test project', '{envpython} setup.py test')
 
-    print '''
-What dependencies does your project have?'''
+    print('''
+What dependencies does your project have?''')
     do_prompt(d, 'deps', 'Comma-separated list of dependencies', ' ')
 
 
@@ -182,33 +183,33 @@ def generate(d, overwrite=True, silent=False):
 
     def write_file(fpath, mode, content):
         if overwrite or not path.isfile(fpath):
-            print 'Creating file %s.' % fpath
+            print('Creating file %s.' % fpath)
             f = open(fpath, mode, encoding='utf-8')
             try:
                 f.write(content)
             finally:
                 f.close()
         else:
-            print 'File %s already exists, skipping.' % fpath
+            print('File %s already exists, skipping.' % fpath)
 
-    print
+    print()
 
     write_file('tox.ini', 'w', conf_text)
 
     if silent:
         return
-    print
-    print 'Finished: A tox.ini file has been created.'
-    print '''
+    print()
+    print('Finished: A tox.ini file has been created.')
+    print('''
 Execute `tox` to test your project.
-'''
+''')
 
 
 def main(argv=sys.argv):
     d = {}
 
     if len(argv) > 3:
-        print 'Usage: tox-quickstart [root]'
+        print('Usage: tox-quickstart [root]')
         sys.exit(1)
     elif len(argv) == 2:
         d['path'] = argv[1]
@@ -216,8 +217,8 @@ def main(argv=sys.argv):
     try:
         ask_user(d)
     except (KeyboardInterrupt, EOFError):
-        print
-        print '[Interrupted.]'
+        print()
+        print('[Interrupted.]')
         return
 
     d = process_input(d)

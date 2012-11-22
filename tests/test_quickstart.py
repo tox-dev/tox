@@ -12,7 +12,10 @@ class TestToxQuickstartMain(object):
         generator = mock_term_input_return_values()
                 
         def mock_term_input(prompt):
-            return generator.next()
+            try:
+                return next(generator)
+            except NameError:
+                return generator.next()
                 
         monkeypatch.setattr(tox._quickstart, 'term_input', mock_term_input)
         
