@@ -4,20 +4,25 @@ import tox._quickstart
 
 
 class TestToxQuickstartMain(object):
-    def test_quickstart_main(self, monkeypatch, tmpdir):
-        def mock_term_input_return_values():
-            for return_val in ['Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']:
-                yield return_val
-                
-        generator = mock_term_input_return_values()
-                
+    def mock_term_input_return_values(self, return_values):
+        for return_val in return_values:
+            yield return_val
+            
+    def get_mock_term_input(self, return_values):
+        generator = self.mock_term_input_return_values(return_values)
+            
         def mock_term_input(prompt):
             try:
                 return next(generator)
             except NameError:
                 return generator.next()
                 
-        monkeypatch.setattr(tox._quickstart, 'term_input', mock_term_input)
+        return mock_term_input
+                
+    def test_quickstart_main(self, monkeypatch, tmpdir):
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input', 
+            self.get_mock_term_input(['Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']))
         
         tox._quickstart.main(argv=['tox-quickstart'])
         
@@ -36,7 +41,6 @@ deps =
     pytest
 """.lstrip()
         result = open('tox.ini').read()
-        print(result)
         assert(result == expected_tox_ini)
 		
 
