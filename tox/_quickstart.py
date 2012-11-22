@@ -159,6 +159,7 @@ accept a default value, if one is given in brackets).'''
 
     print '''
 What command should be used to test your project -- examples:
+    - py.test
     - python setup.py test
     - nosetests package.module
     - trial package.module'''
