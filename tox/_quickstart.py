@@ -167,6 +167,8 @@ What command should be used to test your project -- examples:
     default_deps = ' '
     if 'py.test' in d['commands']:
         default_deps = 'pytest'
+    if 'nosetests' in d['commands']:
+        default_deps = 'nose'
         
     print('''
 What dependencies does your project have?''')
