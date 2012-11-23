@@ -36,6 +36,9 @@ right next to your ``setup.py`` file::
     deps=pytest       # install pytest in the venvs
     commands=py.test  # or 'nosetests' or ...
 
+You can also try generating a ``tox.ini`` file automatically, by running
+``tox-quickstart`` and then answering a few simple questions.
+
 To sdist-package, install and test your project against Python2.6 and Python2.7, just type::
 
     tox
