@@ -151,10 +151,28 @@ Please enter values for the following settings (just press Enter to
 accept a default value, if one is given in brackets).''')
 
     print
-
-    for pyenv in all_envs:
-        if pyenv not in d:
-            do_prompt(d, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y', boolean)
+    
+    print('''
+What Python versions do you want to test against? Choices:
+    [1] py27
+    [2] py27, py33
+    [3] (All versions) %s
+    [4] Choose each one-by-one''' % ', '.join(all_envs))
+    do_prompt(d, 'canned_pyenvs', 'Enter the number of your choice', 
+        '3', choice('1', '2', '3', '4'))
+        
+    if d['canned_pyenvs'] == '1':
+        d['py27'] = True
+    elif d['canned_pyenvs'] == '2':
+        for pyenv in ('py27', 'py33'):
+            d[pyenv] = True
+    elif d['canned_pyenvs'] == '3':
+        for pyenv in all_envs:
+            d[pyenv] = True
+    elif d['canned_pyenvs'] == '4':
+        for pyenv in all_envs:
+            if pyenv not in d:
+                do_prompt(d, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y', boolean)
 
     print('''
 What command should be used to test your project -- examples:

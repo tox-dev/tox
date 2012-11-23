@@ -17,10 +17,10 @@ class TestToxQuickstartMain(object):
                 
         return mock_term_input
                 
-    def test_quickstart_main_pytest_1(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_pytest(self, monkeypatch, tmpdir):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
-            self.get_mock_term_input(['Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']))
+            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']))
         
         tox._quickstart.main(argv=['tox-quickstart'])
         
@@ -41,10 +41,10 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 		
-    def test_quickstart_main_nose_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_nose_adds_deps(self, monkeypatch, tmpdir):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
-            self.get_mock_term_input(['Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'nosetests', '']))
+            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'nosetests', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
 
@@ -65,10 +65,10 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_trial_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_trial_adds_deps(self, monkeypatch, tmpdir):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
-            self.get_mock_term_input(['Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'trial', '']))
+            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'trial', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
 
@@ -89,10 +89,10 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_pytest_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_pytest_adds_deps(self, monkeypatch, tmpdir):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
-            self.get_mock_term_input(['Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', '']))
+            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
 
@@ -113,10 +113,82 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_defaults(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_py27_and_pytest_adds_deps(self, monkeypatch, tmpdir):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
-            self.get_mock_term_input(['', '', '', '', '', '', '', '', '', '', '', '']))
+            self.get_mock_term_input(['1', 'py.test', '']))
+
+        tox._quickstart.main(argv=['tox-quickstart'])
+
+        expected_tox_ini = """
+# Tox (http://tox.testrun.org/) is a tool for running tests
+# in multiple virtualenvs. This configuration file will run the
+# test suite on all supported python versions. To use it, "pip install tox"
+# and then run "tox" from this directory.
+
+[tox]
+envlist = py27
+
+[testenv]
+commands = py.test
+deps = 
+    pytest
+""".lstrip()
+        result = open('tox.ini').read()
+        assert(result == expected_tox_ini)
+
+    def test_quickstart_main_choose_py27_and_py33_and_pytest_adds_deps(self, monkeypatch, tmpdir):
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input', 
+            self.get_mock_term_input(['2', 'py.test', '']))
+
+        tox._quickstart.main(argv=['tox-quickstart'])
+
+        expected_tox_ini = """
+# Tox (http://tox.testrun.org/) is a tool for running tests
+# in multiple virtualenvs. This configuration file will run the
+# test suite on all supported python versions. To use it, "pip install tox"
+# and then run "tox" from this directory.
+
+[tox]
+envlist = py27, py33
+
+[testenv]
+commands = py.test
+deps = 
+    pytest
+""".lstrip()
+        result = open('tox.ini').read()
+        assert(result == expected_tox_ini)
+
+    def test_quickstart_main_choose_all_pythons_and_pytest_adds_deps(self, monkeypatch, tmpdir):
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input', 
+            self.get_mock_term_input(['3', 'py.test', '']))
+
+        tox._quickstart.main(argv=['tox-quickstart'])
+
+        expected_tox_ini = """
+# Tox (http://tox.testrun.org/) is a tool for running tests
+# in multiple virtualenvs. This configuration file will run the
+# test suite on all supported python versions. To use it, "pip install tox"
+# and then run "tox" from this directory.
+
+[tox]
+envlist = py24, py25, py26, py27, py30, py31, py32, py33, pypy, jython
+
+[testenv]
+commands = py.test
+deps = 
+    pytest
+""".lstrip()
+        result = open('tox.ini').read()
+        assert(result == expected_tox_ini)
+
+    def test_quickstart_main_choose_individual_pythons_and_defaults(self, monkeypatch, tmpdir):
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input', 
+            self.get_mock_term_input(['4', '', '', '', '', '', '', '', '', '', '', '', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
 
