@@ -225,7 +225,7 @@ def generate(d, overwrite=True, silent=False):
     if silent:
         return
     sys.stdout.write('\n')
-    print('Finished: A tox.ini file has been created.')
+    print('Finished: A tox.ini file has been created. For information on this file, see http://tox.testrun.org/latest/config.html')
     print('''
 Execute `tox` to test your project.
 ''')
