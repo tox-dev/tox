@@ -178,7 +178,7 @@ What dependencies does your project have?''')
 
 
 def process_input(d):
-    d['envlist'] = ', '.join([env for env in all_envs if d[env] is True])
+    d['envlist'] = ', '.join([env for env in all_envs if d.get(env) is True])
     d['deps'] = '\n' + '\n'.join(['    %s' % dep.strip() for dep in d['deps'].split(',')])
 
     return d

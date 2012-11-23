@@ -143,7 +143,13 @@ deps =
 class TestToxQuickstart(object):
     def test_pytest(self, tmpdir):
         d = {
-            'envlist': 'py24, py25, py26, py27, py32, py33, pypy',
+            'py24': True,
+            'py25': True,
+            'py26': True,
+            'py27': True,
+            'py32': True,
+            'py33': True,
+            'pypy': True,
             'commands': 'py.test',
             'deps': 'pytest',
         }
@@ -158,8 +164,10 @@ envlist = py24, py25, py26, py27, py32, py33, pypy
 
 [testenv]
 commands = py.test
-deps = pytest
+deps = 
+    pytest
 """.lstrip()
+        d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
         result = open('tox.ini').read()
         # print(result)
@@ -167,7 +175,8 @@ deps = pytest
 
     def test_setup_py_test(self, tmpdir):
         d = {
-            'envlist': 'py26, py27',
+            'py26': True,
+            'py27': True,
             'commands': 'python setup.py test',
             'deps': '',
         }
@@ -183,7 +192,9 @@ envlist = py26, py27
 [testenv]
 commands = python setup.py test
 deps = 
+    
 """.lstrip()
+        d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
         result = open('tox.ini').read()
         # print(result)
@@ -191,7 +202,7 @@ deps =
 
     def test_trial(self, tmpdir):
         d = {
-            'envlist': 'py27',
+            'py27': True,
             'commands': 'trial',
             'deps': 'Twisted',
         }
@@ -206,8 +217,10 @@ envlist = py27
 
 [testenv]
 commands = trial
-deps = Twisted
+deps = 
+    Twisted
 """.lstrip()
+        d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
         result = open('tox.ini').read()
         # print(result)
@@ -215,7 +228,10 @@ deps = Twisted
 
     def test_nosetests(self, tmpdir):
         d = {
-            'envlist': 'py27, py32, py33, pypy',
+            'py27': True,
+            'py32': True,
+            'py33': True,
+            'pypy': True,
             'commands': 'nosetests -v',
             'deps': 'nose',
         }
@@ -230,8 +246,10 @@ envlist = py27, py32, py33, pypy
 
 [testenv]
 commands = nosetests -v
-deps = nose
+deps = 
+    nose
 """.lstrip()
+        d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
         result = open('tox.ini').read()
         # print(result)
