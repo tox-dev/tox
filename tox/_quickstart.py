@@ -150,7 +150,7 @@ file to help get you started using tox.
 Please enter values for the following settings (just press Enter to
 accept a default value, if one is given in brackets).''')
 
-    print
+    sys.stdout.write('\n')
     
     print('''
 What Python versions do you want to test against? Choices:
@@ -218,13 +218,13 @@ def generate(d, overwrite=True, silent=False):
         else:
             print('File %s already exists, skipping.' % fpath)
 
-    print()
+    sys.stdout.write('\n')
 
     write_file('tox.ini', 'w', conf_text)
 
     if silent:
         return
-    print()
+    sys.stdout.write('\n')
     print('Finished: A tox.ini file has been created.')
     print('''
 Execute `tox` to test your project.
