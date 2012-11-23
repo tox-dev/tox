@@ -169,6 +169,8 @@ What command should be used to test your project -- examples:
         default_deps = 'pytest'
     if 'nosetests' in d['commands']:
         default_deps = 'nose'
+    if 'trial' in d['commands']:
+        default_deps = 'twisted'
         
     print('''
 What dependencies does your project have?''')
