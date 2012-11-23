@@ -1,6 +1,9 @@
 1.4.3.dev
 -----------------
 
+- merged tox-quickstart command, contributed by Marc Abramowitz, which
+  generates a default tox.ini after asking a few questions
+
 - fix #48 - win32 detection of pypy and other interpreters that are on PATH
   (thanks Gustavo Picon)
 
