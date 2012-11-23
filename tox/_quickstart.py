@@ -164,9 +164,13 @@ What command should be used to test your project -- examples:
     - trial package.module''')
     do_prompt(d, 'commands', 'Command to run to test project', '{envpython} setup.py test')
 
+    default_deps = ' '
+    if 'py.test' in d['commands']:
+        default_deps = 'pytest'
+        
     print('''
 What dependencies does your project have?''')
-    do_prompt(d, 'deps', 'Comma-separated list of dependencies', ' ')
+    do_prompt(d, 'deps', 'Comma-separated list of dependencies', default_deps)
 
 
 def process_input(d):
