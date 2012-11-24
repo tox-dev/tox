@@ -208,19 +208,23 @@ def generate(d, overwrite=True, silent=False):
     conf_text = QUICKSTART_CONF % d
 
     def write_file(fpath, mode, content):
-        if overwrite or not path.isfile(fpath):
-            print('Creating file %s.' % fpath)
-            f = open(fpath, mode, encoding='utf-8')
-            try:
-                f.write(content)
-            finally:
-                f.close()
-        else:
-            print('File %s already exists, skipping.' % fpath)
+        print('Creating file %s.' % fpath)
+        f = open(fpath, mode, encoding='utf-8')
+        try:
+            f.write(content)
+        finally:
+            f.close()
 
     sys.stdout.write('\n')
+    
+    fpath = 'tox.ini'
 
-    write_file('tox.ini', 'w', conf_text)
+    if path.isfile(fpath) and not overwrite:
+        print('File %s already exists.' % fpath)
+        do_prompt(d, 'fpath', 'Alternative path to write tox.ini contents to', 'tox-generated.ini')
+        fpath = d['fpath']
+        
+    write_file(fpath, 'w', conf_text)
 
     if silent:
         return
@@ -248,7 +252,7 @@ def main(argv=sys.argv):
         return
 
     d = process_input(d)
-    generate(d)
+    generate(d, overwrite=False)
 
 
 if __name__ == '__main__':
