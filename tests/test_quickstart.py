@@ -209,6 +209,36 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
+    def test_quickstart_main_existing_tox_ini(self, monkeypatch, tmpdir):
+        try:
+            f = open('tox.ini', 'w')
+            f.write('foo bar\n')
+        finally:
+            f.close()
+            
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input', 
+            self.get_mock_term_input(['4', '', '', '', '', '', '', '', '', '', '', '', '', '']))
+
+        tox._quickstart.main(argv=['tox-quickstart'])
+
+        expected_tox_ini = """
+# Tox (http://tox.testrun.org/) is a tool for running tests
+# in multiple virtualenvs. This configuration file will run the
+# test suite on all supported python versions. To use it, "pip install tox"
+# and then run "tox" from this directory.
+
+[tox]
+envlist = py24, py25, py26, py27, py30, py31, py32, py33, pypy, jython
+
+[testenv]
+commands = {envpython} setup.py test
+deps = 
+    
+""".lstrip()
+        result = open('tox-generated.ini').read()
+        assert(result == expected_tox_ini)
+
 
 class TestToxQuickstart(object):
     def test_pytest(self, tmpdir):
