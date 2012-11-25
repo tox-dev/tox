@@ -34,9 +34,7 @@ for example with ``py.test`` it is done like this:
 
     commands=py.test --junitxml=junit-{envname}.xml
 
-See a real-life example in action with the `pytest Jenkins job`_
 
-.. _`pytest Jenkins job`: http://hudson.testrun.org/view/pytest/job/pytest/
 
 **zero-installation** for slaves
 -------------------------------------------------------------
