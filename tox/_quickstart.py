@@ -151,16 +151,16 @@ Please enter values for the following settings (just press Enter to
 accept a default value, if one is given in brackets).''')
 
     sys.stdout.write('\n')
-    
+
     print('''
 What Python versions do you want to test against? Choices:
     [1] py27
     [2] py27, py33
     [3] (All versions) %s
     [4] Choose each one-by-one''' % ', '.join(all_envs))
-    do_prompt(d, 'canned_pyenvs', 'Enter the number of your choice', 
+    do_prompt(d, 'canned_pyenvs', 'Enter the number of your choice',
         '3', choice('1', '2', '3', '4'))
-        
+
     if d['canned_pyenvs'] == '1':
         d['py27'] = True
     elif d['canned_pyenvs'] == '2':
@@ -189,7 +189,7 @@ What command should be used to test your project -- examples:
         default_deps = 'nose'
     if 'trial' in d['commands']:
         default_deps = 'twisted'
-        
+
     print('''
 What dependencies does your project have?''')
     do_prompt(d, 'deps', 'Comma-separated list of dependencies', default_deps)
@@ -197,15 +197,22 @@ What dependencies does your project have?''')
 
 def process_input(d):
     d['envlist'] = ', '.join([env for env in all_envs if d.get(env) is True])
-    d['deps'] = '\n' + '\n'.join(['    %s' % dep.strip() for dep in d['deps'].split(',')])
+    d['deps'] = '\n' + '\n'.join(['    %s' % dep.strip()
+                                for dep in d['deps'].split(',')])
 
     return d
 
+def rtrim_right(text):
+    lines = []
+    for line in text.split("\n"):
+        lines.append(line.rstrip())
+    return "\n".join(lines)
 
 def generate(d, overwrite=True, silent=False):
     """Generate project based on values in *d*."""
 
     conf_text = QUICKSTART_CONF % d
+    conf_text = rtrim_right(conf_text)
 
     def write_file(fpath, mode, content):
         print('Creating file %s.' % fpath)
@@ -216,14 +223,14 @@ def generate(d, overwrite=True, silent=False):
             f.close()
 
     sys.stdout.write('\n')
-    
+
     fpath = 'tox.ini'
 
     if path.isfile(fpath) and not overwrite:
         print('File %s already exists.' % fpath)
         do_prompt(d, 'fpath', 'Alternative path to write tox.ini contents to', 'tox-generated.ini')
         fpath = d['fpath']
-        
+
     write_file(fpath, 'w', conf_text)
 
     if silent:

@@ -2,35 +2,34 @@ import pytest
 import tox._quickstart
 
 
-@pytest.fixture()
-def cleandir(tmpdir):
-    tmpdir.chdir()
 
-
-@pytest.mark.usefixtures("cleandir")
 class TestToxQuickstartMain(object):
+    @pytest.fixture(autouse=True)
+    def cleandir(self, tmpdir):
+        tmpdir.chdir()
+
     def mock_term_input_return_values(self, return_values):
         for return_val in return_values:
             yield return_val
-            
+
     def get_mock_term_input(self, return_values):
         generator = self.mock_term_input_return_values(return_values)
-            
+
         def mock_term_input(prompt):
             try:
                 return next(generator)
             except NameError:
                 return generator.next()
-                
+
         return mock_term_input
 
     def test_quickstart_main_choose_individual_pythons_and_pytest(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']))
-        
+
         tox._quickstart.main(argv=['tox-quickstart'])
-        
+
         expected_tox_ini = """
 # Tox (http://tox.testrun.org/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
@@ -42,15 +41,15 @@ envlist = py24, py25, py26, py27, py32, py33, pypy
 
 [testenv]
 commands = py.test
-deps = 
+deps =
     pytest
 """.lstrip()
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
-		
+
     def test_quickstart_main_choose_individual_pythons_and_nose_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'nosetests', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -66,7 +65,7 @@ envlist = py24, py25, py26, py27, py32, py33, pypy
 
 [testenv]
 commands = nosetests
-deps = 
+deps =
     nose
 """.lstrip()
         result = open('tox.ini').read()
@@ -74,7 +73,7 @@ deps =
 
     def test_quickstart_main_choose_individual_pythons_and_trial_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'trial', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -90,7 +89,7 @@ envlist = py24, py25, py26, py27, py32, py33, pypy
 
 [testenv]
 commands = trial
-deps = 
+deps =
     twisted
 """.lstrip()
         result = open('tox.ini').read()
@@ -98,7 +97,7 @@ deps =
 
     def test_quickstart_main_choose_individual_pythons_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -114,7 +113,7 @@ envlist = py24, py25, py26, py27, py32, py33, pypy
 
 [testenv]
 commands = py.test
-deps = 
+deps =
     pytest
 """.lstrip()
         result = open('tox.ini').read()
@@ -122,7 +121,7 @@ deps =
 
     def test_quickstart_main_choose_py27_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['1', 'py.test', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -138,7 +137,7 @@ envlist = py27
 
 [testenv]
 commands = py.test
-deps = 
+deps =
     pytest
 """.lstrip()
         result = open('tox.ini').read()
@@ -146,7 +145,7 @@ deps =
 
     def test_quickstart_main_choose_py27_and_py33_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['2', 'py.test', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -162,7 +161,7 @@ envlist = py27, py33
 
 [testenv]
 commands = py.test
-deps = 
+deps =
     pytest
 """.lstrip()
         result = open('tox.ini').read()
@@ -170,7 +169,7 @@ deps =
 
     def test_quickstart_main_choose_all_pythons_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['3', 'py.test', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -186,7 +185,7 @@ envlist = py24, py25, py26, py27, py30, py31, py32, py33, pypy, jython
 
 [testenv]
 commands = py.test
-deps = 
+deps =
     pytest
 """.lstrip()
         result = open('tox.ini').read()
@@ -194,7 +193,7 @@ deps =
 
     def test_quickstart_main_choose_individual_pythons_and_defaults(self, monkeypatch):
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['4', '', '', '', '', '', '', '', '', '', '', '', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -210,8 +209,8 @@ envlist = py24, py25, py26, py27, py30, py31, py32, py33, pypy, jython
 
 [testenv]
 commands = {envpython} setup.py test
-deps = 
-    
+deps =
+
 """.lstrip()
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
@@ -222,9 +221,9 @@ deps =
             f.write('foo bar\n')
         finally:
             f.close()
-            
+
         monkeypatch.setattr(
-            tox._quickstart, 'term_input', 
+            tox._quickstart, 'term_input',
             self.get_mock_term_input(['4', '', '', '', '', '', '', '', '', '', '', '', '', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -240,8 +239,8 @@ envlist = py24, py25, py26, py27, py30, py31, py32, py33, pypy, jython
 
 [testenv]
 commands = {envpython} setup.py test
-deps = 
-    
+deps =
+
 """.lstrip()
         result = open('tox-generated.ini').read()
         assert(result == expected_tox_ini)
@@ -271,7 +270,7 @@ envlist = py24, py25, py26, py27, py32, py33, pypy
 
 [testenv]
 commands = py.test
-deps = 
+deps =
     pytest
 """.lstrip()
         d = tox._quickstart.process_input(d)
@@ -298,8 +297,8 @@ envlist = py26, py27
 
 [testenv]
 commands = python setup.py test
-deps = 
-    
+deps =
+
 """.lstrip()
         d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
@@ -324,7 +323,7 @@ envlist = py27
 
 [testenv]
 commands = trial
-deps = 
+deps =
     Twisted
 """.lstrip()
         d = tox._quickstart.process_input(d)
@@ -353,7 +352,7 @@ envlist = py27, py32, py33, pypy
 
 [testenv]
 commands = nosetests -v
-deps = 
+deps =
     nose
 """.lstrip()
         d = tox._quickstart.process_input(d)
