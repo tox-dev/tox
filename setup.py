@@ -41,7 +41,7 @@ class Tox(TestCommand):
 
 def main():
     version = sys.version_info[:2]
-    install_requires = ['virtualenv>=1.7', 'py>=1.4.9', ]
+    install_requires = ['virtualenv==1.8.4', 'py>=1.4.9', ]
     if version < (2, 7) or (3, 0) <= version <= (3, 1):
         install_requires += ['argparse']
     setup(
