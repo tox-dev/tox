@@ -1,6 +1,16 @@
+import os
+import tempfile
+import pytest
 import tox._quickstart
 
 
+@pytest.fixture()
+def cleandir():
+    newpath = tempfile.mkdtemp()
+    os.chdir(newpath)
+
+
+@pytest.mark.usefixtures("cleandir")
 class TestToxQuickstartMain(object):
     def mock_term_input_return_values(self, return_values):
         for return_val in return_values:
@@ -16,8 +26,8 @@ class TestToxQuickstartMain(object):
                 return generator.next()
                 
         return mock_term_input
-                
-    def test_quickstart_main_choose_individual_pythons_and_pytest(self, monkeypatch, tmpdir):
+
+    def test_quickstart_main_choose_individual_pythons_and_pytest(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']))
@@ -41,7 +51,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 		
-    def test_quickstart_main_choose_individual_pythons_and_nose_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_nose_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'nosetests', '']))
@@ -65,7 +75,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_choose_individual_pythons_and_trial_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_trial_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'trial', '']))
@@ -89,7 +99,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_choose_individual_pythons_and_pytest_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'py.test', '']))
@@ -113,7 +123,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_choose_py27_and_pytest_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_py27_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['1', 'py.test', '']))
@@ -137,7 +147,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_choose_py27_and_py33_and_pytest_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_py27_and_py33_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['2', 'py.test', '']))
@@ -161,7 +171,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_choose_all_pythons_and_pytest_adds_deps(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_all_pythons_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['3', 'py.test', '']))
@@ -185,7 +195,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_choose_individual_pythons_and_defaults(self, monkeypatch, tmpdir):
+    def test_quickstart_main_choose_individual_pythons_and_defaults(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input', 
             self.get_mock_term_input(['4', '', '', '', '', '', '', '', '', '', '', '', '']))
@@ -209,7 +219,7 @@ deps =
         result = open('tox.ini').read()
         assert(result == expected_tox_ini)
 
-    def test_quickstart_main_existing_tox_ini(self, monkeypatch, tmpdir):
+    def test_quickstart_main_existing_tox_ini(self, monkeypatch):
         try:
             f = open('tox.ini', 'w')
             f.write('foo bar\n')
@@ -241,7 +251,7 @@ deps =
 
 
 class TestToxQuickstart(object):
-    def test_pytest(self, tmpdir):
+    def test_pytest(self):
         d = {
             'py24': True,
             'py25': True,
@@ -273,7 +283,7 @@ deps =
         # print(result)
         assert(result == expected_tox_ini)
 
-    def test_setup_py_test(self, tmpdir):
+    def test_setup_py_test(self):
         d = {
             'py26': True,
             'py27': True,
@@ -300,7 +310,7 @@ deps =
         # print(result)
         assert(result == expected_tox_ini)
 
-    def test_trial(self, tmpdir):
+    def test_trial(self):
         d = {
             'py27': True,
             'commands': 'trial',
@@ -326,7 +336,7 @@ deps =
         # print(result)
         assert(result == expected_tox_ini)
 
-    def test_nosetests(self, tmpdir):
+    def test_nosetests(self):
         d = {
             'py27': True,
             'py32': True,
