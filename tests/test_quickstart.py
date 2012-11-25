@@ -5,9 +5,8 @@ import tox._quickstart
 
 
 @pytest.fixture()
-def cleandir():
-    newpath = tempfile.mkdtemp()
-    os.chdir(newpath)
+def cleandir(tmpdir):
+    tmpdir.chdir()
 
 
 @pytest.mark.usefixtures("cleandir")
