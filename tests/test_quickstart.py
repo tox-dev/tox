@@ -1,5 +1,3 @@
-import os
-import tempfile
 import pytest
 import tox._quickstart
 
