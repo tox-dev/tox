@@ -1,6 +1,9 @@
 1.4.3.dev
 -----------------
 
+- issue #70 remove PYTHONDONTWRITEBYTECODE workaround now that
+  virtualenv behaves properly (thanks g2p)
+
 - merged tox-quickstart command, contributed by Marc Abramowitz, which
   generates a default tox.ini after asking a few questions
 
