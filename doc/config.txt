@@ -199,6 +199,9 @@ substitutions for virtualenv-related sections
     directory of the virtualenv hierarchy
 ``{envbindir}``
     directory where executables are located
+``{envsitepackagesdir}``
+    directory where packages are installed.
+    Note that architecture-specific files may appear in a different directory.
 ``{envtmpdir}``
     the environment temporary directory
 ``{envlogdir}``

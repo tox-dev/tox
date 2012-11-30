@@ -1,6 +1,8 @@
 1.4.3.dev
 -----------------
 
+- substitute {envsitepackagesdir} with the package installation directory (closes #72)
+
 - issue #70 remove PYTHONDONTWRITEBYTECODE workaround now that
   virtualenv behaves properly (thanks g2p)
 

@@ -146,23 +146,10 @@ class VirtualEnv(object):
         return l
 
     def getconfigexecutable(self):
-        python = self.envconfig.basepython
-        if not python:
-            python = sys.executable
-        x = find_executable(str(python))
-        if x:
-            x = x.realpath()
-        return x
+        return self.envconfig.getconfigexecutable()
 
     def getsupportedinterpreter(self):
-        if sys.platform == "win32" and self.envconfig.basepython and \
-                "jython" in self.envconfig.basepython:
-            raise tox.exception.UnsupportedInterpreter(
-                "Jython/Windows does not support installing scripts")
-        config_executable = self.getconfigexecutable()
-        if not config_executable:
-            raise tox.exception.InterpreterNotFound(self.envconfig.basepython)
-        return config_executable
+        return self.envconfig.getsupportedinterpreter()
 
     def create(self, action=None):
         #if self.getcommandpath("activate").dirpath().check():

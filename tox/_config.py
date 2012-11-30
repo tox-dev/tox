@@ -1,9 +1,12 @@
 import argparse
+import distutils.sysconfig
 import os
 import sys
 import re
 import shlex
 import string
+import subprocess
+import textwrap
 
 import py
 
@@ -34,7 +37,12 @@ def parseconfig(args=None, pkg=None):
                 break
         else:
             feedback("toxini file %r not found" %(basename), sysexit=True)
-    parseini(config, inipath)
+    try:
+        parseini(config, inipath)
+    except tox.exception.InterpreterNotFound:
+        exn = sys.exc_info()[1]
+        # Use stdout to match test expectations
+        py.builtin.print_("ERROR: " + str(exn))
     return config
 
 def feedback(msg, sysexit=False):
@@ -114,6 +122,45 @@ class VenvConfig:
             name = "python"
         return self.envbindir.join(name)
 
+    @property
+    def envsitepackagesdir(self):
+        print_envsitepackagesdir = textwrap.dedent("""
+        import sys
+        from distutils.sysconfig import get_python_lib
+        sys.stdout.write(get_python_lib(prefix=sys.argv[1]))
+        """)
+
+        exe = self.getsupportedinterpreter()
+        # can't use check_output until py27
+        proc = subprocess.Popen(
+            [str(exe), '-c', print_envsitepackagesdir, str(self.envdir)],
+            stdout=subprocess.PIPE)
+        odata, edata = proc.communicate()
+        if proc.returncode:
+            raise tox.exception.UnsupportedInterpreter(
+                "Error getting site-packages from %s" % self.basepython)
+        return odata
+
+    def getconfigexecutable(self):
+        from tox._venv import find_executable
+
+        python = self.basepython
+        if not python:
+            python = sys.executable
+        x = find_executable(str(python))
+        if x:
+            x = x.realpath()
+        return x
+
+    def getsupportedinterpreter(self):
+        if sys.platform == "win32" and self.basepython and \
+                "jython" in self.basepython:
+            raise tox.exception.UnsupportedInterpreter(
+                "Jython/Windows does not support installing scripts")
+        config_executable = self.getconfigexecutable()
+        if not config_executable:
+            raise tox.exception.InterpreterNotFound(self.basepython)
+        return config_executable
 testenvprefix = "testenv:"
 
 class parseini:
@@ -205,7 +252,8 @@ class parseini:
             bp = sys.executable
         vc.basepython = reader.getdefault(section, "basepython", bp)
         reader.addsubstitions(envdir=vc.envdir, envname=vc.envname,
-                              envbindir=vc.envbindir, envpython=vc.envpython)
+                              envbindir=vc.envbindir, envpython=vc.envpython,
+                              envsitepackagesdir=vc.envsitepackagesdir)
         vc.envtmpdir = reader.getpath(section, "tmpdir", "{envdir}/tmp")
         vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
         reader.addsubstitions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
