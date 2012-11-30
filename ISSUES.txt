@@ -129,6 +129,8 @@ look into ways to support integration of tox with travis.
 - generate .travis.yml from tox.ini
 - generate tox.ini from .travis.yml
 
+For the last two, take a look at http://pypi.python.org/pypi/panci/
+
 allow user-specific python interpreters
 ------------------------------------------------
 
