@@ -92,15 +92,23 @@ installed package.
 
 There are a few ways to prevent this.
 
-With installed tests (the tests are built and installed by setup.py),
-one option is to give the explicit path ``{envsitepackagesdir}/mypkg``
-to pytest, and another is to change directories and pass ``--pyargs
-mypkg``.  With tests that won't be installed, the simplest way is to
-avoid ``__init__.py`` files in test directories; pytest will still find
-them but they won't be copied to other places and they won't be found by
-Python's import system.
+With installed tests (the tests packages are known to ``setup.py``), a
+safe and explicit option is to give the explicit path
+``{envsitepackagesdir}/mypkg`` to pytest.
+Alternatively, it is possible to use ``changedir`` so that checked-out
+files are outside the import path, then pass ``--pyargs mypkg`` to
+pytest.
+
+Installed tests are particularly convenient when combined with
+`Distribute's 2to3 support` (``use_2to3``).
+
+With tests that won't be installed, the simplest way is to avoid
+``__init__.py`` files in test directories; pytest will still find them
+but they won't be copied to other places or be found by Python's import
+system.
 
 .. _`fully qualified name`: http://pytest.org/latest/goodpractises.html#package-name
 
+.. _`Distribute's 2to3 support`: http://packages.python.org/distribute/python3.html
 
 .. include:: ../links.txt
