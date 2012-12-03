@@ -85,14 +85,20 @@ created files in your py.test run.  Try to not use the "--basetemp" parameter.
 
 **installed-versus-checkout version**.  ``py.test`` collects test
 modules on the filesystem and then tries to import them under their
-`fully qualified name`_. This means that if your test directory contains
-an ``__init__.py`` file then your ``py.test`` invocation may end up
+`fully qualified name`_. This means that if your test files are
+importable from somewhere then your ``py.test`` invocation may end up
 importing the package from the checkout directory rather than the
-installed package.  Therefore it is better to try to avoid
-``__init__.py`` files in test directories and also try to avoid custom
-``PYTHONPATH`` settings.  After all, it is the job of your ``setup.py``
-file and the install tools to care for making the package properly
-available for importing.
+installed package.
+
+There are a few ways to prevent this.
+
+With installed tests (the tests are built and installed by setup.py),
+one option is to give the explicit path ``{envsitepackagesdir}/mypkg``
+to pytest, and another is to change directories and pass ``--pyargs
+mypkg``.  With tests that won't be installed, the simplest way is to
+avoid ``__init__.py`` files in test directories; pytest will still find
+them but they won't be copied to other places and they won't be found by
+Python's import system.
 
 .. _`fully qualified name`: http://pytest.org/latest/goodpractises.html#package-name
 
