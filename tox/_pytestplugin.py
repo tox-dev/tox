@@ -18,8 +18,7 @@ def pytest_configure():
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
 
-def pytest_funcarg__newconfig(request):
-    tmpdir = request.getfuncargvalue("tmpdir")
+def pytest_funcarg__newconfig(request, tmpdir):
     def newconfig(args, source=None):
         if source is None:
             source = args

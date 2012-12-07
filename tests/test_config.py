@@ -23,10 +23,8 @@ class TestVenvConfig:
             indexserver =
                 xyz = xyz_repo
             [testenv:py1]
-            basepython=xyz
             deps=hello
             [testenv:py2]
-            basepython=hello
             deps=
                 world1
                 :xyz:http://hello/world
@@ -34,11 +32,9 @@ class TestVenvConfig:
         assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
         assert config.envconfigs['py1'].envdir == tmpdir.join("py1")
-        assert config.envconfigs['py1'].basepython == "xyz"
         dep = config.envconfigs['py1'].deps[0]
         assert dep.name == "hello"
         assert dep.indexserver is None
-        assert config.envconfigs['py2'].basepython == "hello"
         assert config.envconfigs['py2'].envdir == tmpdir.join("py2")
         dep1, dep2 = config.envconfigs['py2'].deps
         assert dep1.name == "world1"
