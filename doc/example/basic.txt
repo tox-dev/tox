@@ -37,6 +37,7 @@ Available "default" test environments names are::
     py30
     py31
     py32
+    py33
     jython
     pypy
 
