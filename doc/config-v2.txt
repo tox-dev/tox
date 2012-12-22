@@ -1,5 +1,11 @@
 V2: new tox multi-dimensional, platform-specific configuration
 --------------------------------------------------------------------
+
+.. note::
+   
+   This is a draft document sketching a to-be-done implementation.
+   It does not fully specify each change yet but should give a good
+   idea of where things are heading.
  
 **Abstract**: Adding multi-dimensional configuration, platform-specification
 and multiple installers to tox.ini.
@@ -35,16 +41,18 @@ coming up with its configuration language:
 
   - no way to check if installing via easy_install works
   - no installs of packages with compiled c-extensions (win32 standard)
- 
-This document discusses a possible solution for each of these issues.
-It does so by going through examples and by transforming the above
-two 
+
+Goals, resolving those issues
+------------------------------------
+
+This document discusses a possible solution for each of these issues,
+namely these goals:
  
 - allow to more easily define and run dependency/interpreter variants 
-   with testenvs, maintaining per-testenv customizability
-- allow to define settings in a platform-specific way
-- allow to define the platforms against which tests should run
-- allow to run variants of installing via easy_install or pip. 
+  with testenvs, maintaining per-testenv customizability
+- allow platform-specific settings
+- allow to specify platforms against which tests should run
+- allow to run installer-variants (easy_install or pip)
 
  
 Example: Generating and selecting variants
@@ -56,11 +64,9 @@ versions, against python2.6, 2.7 interpreters and on ``linux`` and
 write down 2*2*2 = 8 ``[testenv*]`` sections and then instruct
 tox to on the respective platform with a respective environment name list.
  
-With tox-1.5 there is no need to write down such boilerplate stuff.
-Without further ado, here is how a suitable ``tox.ini`` would look like::
+With tox-1.X there will be no need to write down such boilerplate stuff.
+Without further ado, here is how a ``tox.ini`` would look like::
  
-Without much further introduction, here is an example ``tox.ini``::
-
     # combination syntax gives 2 * 2 * 2 = 8 testenv names
     #
     envlist = [py26,py27]-[mypkg13,mypkg14]-[win,linux]
@@ -197,12 +203,12 @@ Making sure your packages installs with easy_install
 ------------------------------------------------------
  
 The new "installer" testenv setting allows to specify the tool for
-installation::
+installation in a given test environment::
  
     [testenv]
     installer = 
-        easy_install ; "easy" in envname
-        pip          ; "pip" in envname or "easy" not in envname
+        easy: easy_install
+        pip: pip
 
 If you want to have your package installed with both easy_install
 and pip, you can list them in your envlist likes this::
@@ -212,7 +218,7 @@ and pip, you can list them in your envlist likes this::
 
 If no installer is specified, ``pip`` will be used.
 
-Default settings for specific names in environments
+Default settings related to environments names/variants
 ---------------------------------------------------------------
 
 tox comes with predefined settings for certain variants, namely:
@@ -228,7 +234,8 @@ without the need to define them yourself.
 Transforming the examples: django-rest
 ------------------------------------------------
 
-The original `tox.ini <http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini>`_
+The original `django-rest-framework tox.ini
+<http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini>`_
 file has 159 lines and a lot of repetition, the new one would +have 20
 lines and almost no repetition::
  
@@ -253,7 +260,7 @@ lines and almost no repetition::
          Markdown==2.0.3
  
 Note that ``[,example]`` in the envlist denotes an empty env and the
- "example" variant.  The empty variant means that there are no specific
+"example" variant.  The empty variant means that there are no specific
 settings and thus no need to define a variant name. 
 
 Note also that ``+deps`` means that we are appending to dependencies,
