@@ -1,0 +1,308 @@
+V2: new tox multi-dimensional, platform-specific configuration
+--------------------------------------------------------------------
+ 
+**Abstract**: Adding multi-dimensional configuration, platform-specification
+and multiple installers to tox.ini.
+ 
+**Target audience**: Developers using or wanting to use tox for testing
+their python projects.
+ 
+Issues with current tox (1.4) configuration
+------------------------------------------------
+
+Tox is used as a tool for creating and managing virtualenv environments
+and running tests in them. As of tox-1.4 there are some issues frequenetly
+coming up with its configuration language:
+
+- there is no way to instruct tox to parametrize testenv specifications 
+  other than to list all combinations by specifying a ``[testenv:...]``
+  section for each combination. Examples of real life situations 
+  arising from this:
+
+  * http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini
+  
+  * https://bitbucket.org/tabo/django-treebeard/src/93b579395a9c/tox.ini
+
+- there is no way to have platform specific settings other than to
+  define specific testenvs and invoke tox with a platform-specific 
+  testenv list.
+
+- there is no way to specify the platforms against which a project
+  shall successfully run.
+
+- tox always uses pip for installing packages currently.  This has
+  several issues:
+
+  - no way to check if installing via easy_install works
+  - no installs of packages with compiled c-extensions (win32 standard)
+ 
+This document discusses a possible solution for each of these issues.
+It does so by going through examples and by transforming the above
+two 
+ 
+- allow to more easily define and run dependency/interpreter variants 
+   with testenvs, maintaining per-testenv customizability
+- allow to define settings in a platform-specific way
+- allow to define the platforms against which tests should run
+- allow to run variants of installing via easy_install or pip. 
+
+ 
+Example: Generating and selecting variants
+----------------------------------------------
+ 
+Suppose you want to test your package against mypkg-1.3 and mypkg-1.4
+versions, against python2.6, 2.7 interpreters and on ``linux`` and 
+``win32`` platforms.  Today you would have to 
+write down 2*2*2 = 8 ``[testenv*]`` sections and then instruct
+tox to on the respective platform with a respective environment name list.
+ 
+With tox-1.5 there is no need to write down such boilerplate stuff.
+Without further ado, here is how a suitable ``tox.ini`` would look like::
+ 
+Without much further introduction, here is an example ``tox.ini``::
+
+    # combination syntax gives 2 * 2 * 2 = 8 testenv names
+    #
+    envlist = [py26,py27]-[mypkg13,mypkg14]-[win,linux]
+     
+    [testenv]
+    deps = pytest
+           # variant specific dependencies
+           mypkg13: mypkg<1.4
+           mypkg14: mypkg>=1.4,<1.5
+    platform=
+           win: windows
+           linux: linux
+    basepython=
+           py26: python2.6
+           py27: python2.7
+
+    commands = py.test
+
+Let's go through this step by step::
+
+    envlist = [py26,py27]-[mypkg13,mypkg14]-[windows,linux]
+
+This creates a list of ``2*2*2=8`` environment names.  It is
+a short form for writing the environments down explicitely
+like this::
+
+    envlist =  py26-mypkg13-windows, py26-mypkg13-linux,
+               py26-mypkg14-windows, py26-mypkg14-linux,
+               py27-mypkg13-windows, py27-mypkg13-linux,
+               py27-mypkg14-windows, py27-mypkg14-linux,
+
+Let's look at the next config item, the declaration of the generic
+testenv.  All the eight testenvironments will derive from this one.
+Unlike with earlier tox versions, there is no need to write down
+eight different ``[testenv:...]`` sections::
+
+    [testenv]
+    deps = pytest
+           # variant specific dependencies
+           mypkg13: mypkg<1.4
+           mypkg14: mypkg>=1.4,<1.5
+
+This defines an unconditional dependency ``pytest`` which is going to be
+installed in all environments.  It also define two conditional deps:
+
+- if ``mypkg13`` is part of the environment name, the ``mypkg<1.4`` spec 
+  will be used, otherwise the line is empty.
+- if ``mypkg14`` is part of the environment name, the ``mypkg>=1.4,<1.5`` spec 
+  will be used, otherwise the line is empty.
+
+The next configuration item defines the platform, depending on the
+environment name for which the ``[testenv]`` is used::
+
+    platform=
+           win: windows
+           linux: linux
+
+These two conditional settings will lead to either ``windows`` or
+``linux`` as the platform string.  When the test environment is run,
+its platform string needs to be contained match the string returned 
+from ``platform.platform()``. Otherwise the environment will be skipped.
+
+The next configuration item in the ``testenv`` section deals with
+the python interpreter::
+
+    basepython =
+           py26: python2.6
+           py27: python2.7
+
+This defines the two executables, depending on if ``py26`` or ``py27``
+appears in the environment name.
+
+The last config item is simply the invocation of the test runner::
+
+    commands = py.test
+
+Nothing special here :)
+
+However, as tox provides good defaults for platform and basepython
+settings, we can cut them out from our tox.ini::
+
+    envlist = [py26,py27]-[mypkg13,mypkg14]-[win,linux]
+     
+    [testenv]
+    deps = pytest
+           # variant specific dependencies
+           mypkg13: mypkg<1.4
+           mypkg14: mypkg>=1.4,<1.5
+
+Voila, this ``tox.ini`` file defines 8 environments.
+
+ 
+The new "platform" setting
+--------------------------------------
+
+A testenv can define a new ``platform`` setting.  If its value
+is not contained in the string obtained from calling ``platform.platform()``
+the environment will be skipped.
+
+Generator expressions in the envlist setting
+----------------------------------------------------------
+ 
+The new ``envlist`` setting allows to use ``[CSV]`` expressions
+where ``CSV`` is a list of comma-separated values.  The basic
+generating algorithm works like this:
+                                                                                
+- expand: for each CSV-expression in an environment name in the list            
+  produce an additional environment name for each value in the CSV              
+- repeat: as long as there are CSV-expressions, continue the process            
+
+                                                                                
+Variant specification with [variant:VARNAME]
+----------------------------------------------
+
+Apart from using conditional settings, you can also write down
+a ``[variant::VARIANTNAME]`` section, allowing to define settings
+for the respective variant.  Variant settings will be merged from
+left to right so an environment name ``abc-def`` will lookup
+and merge settings from ``abc``, then from ``def``.
+
+.. 
+   Note that a direct ``[variant:xyz-abc]`` testenv definition
+   can override any automatically produced settings.
+ 
+Showing all expanded sections
+-------------------------------
+
+To help with understanding how the variants will produce section values,
+you can ask tox to show their expansion with a new option::
+
+    $ tox -l [XXX output ommitted for now]
+
+Making sure your packages installs with easy_install
+------------------------------------------------------
+ 
+The new "installer" testenv setting allows to specify the tool for
+installation::
+ 
+    [testenv]
+    installer = 
+        easy_install ; "easy" in envname
+        pip          ; "pip" in envname or "easy" not in envname
+
+If you want to have your package installed with both easy_install
+and pip, you can list them in your envlist likes this::
+
+    [tox]
+    envlist = py[26,27,32]-django[13,14]-[easy,pip]
+
+If no installer is specified, ``pip`` will be used.
+
+Default settings for specific names in environments
+---------------------------------------------------------------
+
+tox comes with predefined settings for certain variants, namely:
+
+* ``[easy,pip]`` use easy_install or pip respectively
+* ``[py24,py25,py26,py27,py31,py32,py33,pypy19]`` use the respective
+  pythonNN or PyPy interpreter
+* ``[win32,linux,darwin]`` defines the according ``platform``.
+
+You can use those in your “envlist” specification 
+without the need to define them yourself.
+ 
+Transforming the examples: django-rest
+------------------------------------------------
+
+The original `tox.ini <http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini>`_
+file has 159 lines and a lot of repetition, the new one would +have 20
+lines and almost no repetition::
+ 
+     [tox]
+     envlist = [py25,py26,py27]-[django12,django13]-[,example]
+ 
+     [testenv]
+     commands = python setup.py test
+     deps=
+         coverage==3.4
+         unittest-xml-reporting==1.2
+         Pyyaml==3.10
+         django12: django==1.2.4
+         django13: django==1.3.1
+ 
+     [variant:example]
+     commands = python examples/runtests.py
+     +deps = 
+         wsgiref==0.1.2
+         Pygments==1.4
+         httplib2==0.6.0
+         Markdown==2.0.3
+ 
+Note that ``[,example]`` in the envlist denotes an empty env and the
+ "example" variant.  The empty variant means that there are no specific
+settings and thus no need to define a variant name. 
+
+Note also that ``+deps`` means that we are appending to dependencies,
+not substituting them.
+ 
+Transforming the examples: django-treebeard
+------------------------------------------------
+ 
+Another `tox.ini
+<https://bitbucket.org/tabo/django-treebeard/raw/93b579395a9c/tox.ini>`_
+has 233 lines and runs tests against multiple Postgres and Mysql
+engines.  It also performs backend-specific test commands, passing
+different command line options to the test script.  With the new tox-1.X
+we not only can do the same with 32 non-repetive configuration lines but
+we also produce 36 specific testenvs with specific dependencies and test
+commands::
+ 
+     [tox]
+     envlist =
+        [py24,py25,py26,py27]-[django11,django12,django13]-[nodb,pg,mysql]
+        docs
+
+    [testenv:docs]
+    changedir = docs
+    deps =
+        Sphinx
+        Django
+    commands =
+        make clean
+        make html
+
+     [testenv]
+     deps=
+           coverage
+           pysqlite
+           django11: django==1.1.4
+           django12: django==1.2.7
+           django13: django==1.3.1
+           django14: django==1.4
+           nodb: pysqlite
+           pg: psycopg2
+           mysql: MySQL-python
+ 
+     commands = 
+         nodb: {envpython} runtests.py {posargs}
+         pg: {envpython} runtests.py {posargs} \
+                         --DATABASE_ENGINE=postgresql_psycopg2 \
+                         --DATABASE_USER=postgres {posargs}
+         mysql: {envpython} runtests.py --DATABASE_ENGINE=mysql \
+                                        --DATABASE_USER=root {posargs}
+
+It's noteworthy here that you can also use conditionals in the commands.
