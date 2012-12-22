@@ -5,7 +5,9 @@ V2: new tox multi-dimensional, platform-specific configuration
    
    This is a draft document sketching a to-be-done implementation.
    It does not fully specify each change yet but should give a good
-   idea of where things are heading.
+   idea of where things are heading.  For feedback, mail the 
+   testing-in-python mailing list or open a pull request on 
+   https://bitbucket.org/hpk42/tox/src/84d8cf3c2a95fefd874f22c8b2d257e94365472f/doc/config-v2.txt?at=default
  
 **Abstract**: Adding multi-dimensional configuration, platform-specification
 and multiple installers to tox.ini.
@@ -49,7 +51,7 @@ This document discusses a possible solution for each of these issues,
 namely these goals:
  
 - allow to more easily define and run dependency/interpreter variants 
-  with testenvs, maintaining per-testenv customizability
+  with testenvs
 - allow platform-specific settings
 - allow to specify platforms against which tests should run
 - allow to run installer-variants (easy_install or pip)
@@ -110,7 +112,7 @@ eight different ``[testenv:...]`` sections::
            mypkg14: mypkg>=1.4,<1.5
 
 This defines an unconditional dependency ``pytest`` which is going to be
-installed in all environments.  It also define two conditional deps:
+installed in all environments.  It also defines two conditional dependencies:
 
 - if ``mypkg13`` is part of the environment name, the ``mypkg<1.4`` spec 
   will be used, otherwise the line is empty.
