@@ -19,7 +19,7 @@ Issues with current tox (1.4) configuration
 ------------------------------------------------
 
 Tox is used as a tool for creating and managing virtualenv environments
-and running tests in them. As of tox-1.4 there are some issues frequenetly
+and running tests in them. As of tox-1.4 there are some issues frequently
 coming up with its configuration language:
 
 - there is no way to instruct tox to parametrize testenv specifications 
@@ -64,7 +64,7 @@ Suppose you want to test your package against mypkg-1.3 and mypkg-1.4
 versions, against python2.6, 2.7 interpreters and on ``linux`` and 
 ``win32`` platforms.  Today you would have to 
 write down 2*2*2 = 8 ``[testenv*]`` sections and then instruct
-tox to on the respective platform with a respective environment name list.
+tox to run a specific list of environments on each platform.
  
 With tox-1.X there will be no need to write down such boilerplate stuff.
 Without further ado, here is how a ``tox.ini`` would look like::
@@ -101,7 +101,7 @@ like this::
                py27-mypkg14-windows, py27-mypkg14-linux,
 
 Let's look at the next config item, the declaration of the generic
-testenv.  All the eight testenvironments will derive from this one.
+testenv.  All the eight test environments will derive from this one.
 Unlike with earlier tox versions, there is no need to write down
 eight different ``[testenv:...]`` sections::
 
@@ -128,7 +128,7 @@ environment name for which the ``[testenv]`` is used::
 
 These two conditional settings will lead to either ``windows`` or
 ``linux`` as the platform string.  When the test environment is run,
-its platform string needs to be contained match the string returned 
+its platform string needs to be contained in the string returned 
 from ``platform.platform()``. Otherwise the environment will be skipped.
 
 The next configuration item in the ``testenv`` section deals with
@@ -138,7 +138,7 @@ the python interpreter::
            py26: python2.6
            py27: python2.7
 
-This defines the two executables, depending on if ``py26`` or ``py27``
+This defines a python executable, depending on if ``py26`` or ``py27``
 appears in the environment name.
 
 The last config item is simply the invocation of the test runner::
