@@ -122,7 +122,6 @@ class VenvConfig:
             name = "python"
         return self.envbindir.join(name)
 
-    @property
     def envsitepackagesdir(self):
         print_envsitepackagesdir = textwrap.dedent("""
         import sys
@@ -459,7 +458,8 @@ class IniReader:
                     "substitution %r: %r not found in environment" %
                     (key, envkey))
             return os.environ[envkey]
-        if key not in self._subs:
+        val = self._subs.get(key, None)
+        if val is None:
             if key.startswith("[") and "]" in key:
                 i = key.find("]")
                 section, item = key[1:i], key[i+1:]
@@ -476,7 +476,9 @@ class IniReader:
 
             raise tox.exception.ConfigError(
                 "substitution key %r not found" % key)
-        return str(self._subs[key])
+        if callable(val):
+            val = val()
+        return str(val)
 
     def _replace_posargs(self, match):
         return self._do_replace_posargs(lambda: match.group('substitution_value'))
