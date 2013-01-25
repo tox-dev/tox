@@ -270,6 +270,10 @@ def initproj(request, tmpdir):
         if name not in filedefs:
             create_files(base, {name:
                 {'__init__.py': '__version__ = %s' % version}})
+        manifestlines = []
+        for p in base.visit(lambda x: x.check(file=1)):
+            manifestlines.append("include %s" % p.relto(base))
+        create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
         print ("created project in %s" %(base,))
         base.chdir()
     return initproj
