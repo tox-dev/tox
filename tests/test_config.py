@@ -336,11 +336,11 @@ class TestConfigTestEnv:
         config = newconfig("""
             [testenv]
             commands=xyz
-            [testenv:py30]
+            [testenv:py]
             commands=abc
         """)
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['py30']
+        envconfig = config.envconfigs['py']
         assert envconfig.commands == [["abc"]]
 
     def test_changedir(self, tmpdir, newconfig):
@@ -669,7 +669,7 @@ class TestGlobalOptions:
         assert str(env.basepython) == sys.executable
 
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
-        envs = "py24,py25,py26,py27,py30,py31,py32,jython,pypy"
+        envs = "py24,py25,py26,py27,py31,py32,jython,pypy"
         inisource = """
             [tox]
             envlist = %s
