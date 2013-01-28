@@ -432,13 +432,21 @@ def test_sdist_latest(tmpdir, newconfig):
             distshare=%s
             sdistsrc={distshare}/pkg123-*
     """ % distshare)
-    distshare.ensure("pkg123-1.3.5.zip")
+    p0 = distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
     session = Session(config)
     sdist_path = session.sdist()
     assert sdist_path == p
 
+def test_installpkg(tmpdir, newconfig):
+    p = tmpdir.ensure("pkg123-1.0.zip")
+    config = newconfig(["--installpkg=%s" % p], "")
+    session = Session(config)
+    sdist_path = session.sdist()
+    assert sdist_path == p
+
+@pytest.mark.xfailif("sys.platform == 'win32'")
 def test_envsitepackagesdir(cmd, initproj):
     initproj("pkg512-0.0.5", filedefs={
         'tox.ini': """
@@ -446,3 +454,4 @@ def test_envsitepackagesdir(cmd, initproj):
             grep '__version__.*=.*0\.0\.5' {envsitepackagesdir}/pkg512/__init__.py
     """})
     result = cmd.run("tox")
+

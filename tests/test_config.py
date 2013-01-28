@@ -743,6 +743,11 @@ class TestIndexServer:
         assert config.indexserver['default'].url == "qwe2"
         assert config.indexserver['name1'].url == "abc"
 
+        config = newconfig(["-i", "ALL=xzy"], inisource)
+        assert len(config.indexserver) == 2
+        assert config.indexserver["default"].url == "xzy"
+        assert config.indexserver["name1"].url == "xzy"
+
 
 class TestParseEnv:
 

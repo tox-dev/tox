@@ -329,11 +329,14 @@ class Session:
                 return False
 
     def sdist(self):
-        if not self.config.option.sdistonly and self.config.sdistsrc:
-            self.report.info("using sdistfile %r, skipping 'sdist' activity " %
-                str(self.config.sdistsrc))
-            sdist_path = self.config.sdistsrc
+        if not self.config.option.sdistonly and (self.config.sdistsrc or
+            self.config.option.installpkg):
+            sdist_path = self.config.option.installpkg
+            if not sdist_path:
+                sdist_path = self.config.sdistsrc
             sdist_path = self._resolve_pkg(sdist_path)
+            self.report.info("using package %r, skipping 'sdist' activity " %
+                str(sdist_path))
         else:
             try:
                 sdist_path = self._makesdist()

@@ -87,6 +87,8 @@ def prepare_parse(pkgname):
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist packaging activity.")
+    parser.add_argument("--installpkg", action="store", default=None,
+        help="use specified package for installation into venv")
     parser.add_argument('-i', action="append",
         dest="indexurl", metavar="URL",
         help="set indexserver url (if URL is of form name=url set the "
@@ -196,9 +198,10 @@ class parseini:
             name, url = map(lambda x: x.strip(), line.split("=", 1))
             config.indexserver[name] = IndexServerConfig(name, url)
 
+        override = False
         if config.option.indexurl:
             for urldef in config.option.indexurl:
-                m = re.match(r"(\w+)=(\S+)", urldef)
+                m = re.match(r"\W*(\w+)=(\S+)", urldef)
                 if m is None:
                     url = urldef
                     name = "default"
@@ -206,7 +209,15 @@ class parseini:
                     name, url = m.groups()
                     if not url:
                         url = None
-                config.indexserver[name].url = url
+                if name != "ALL":
+                    config.indexserver[name].url = url
+                else:
+                    override = url
+        # let ALL override all existing entries
+        if override:
+            for name in config.indexserver:
+                config.indexserver[name] = IndexServerConfig(name, override)
+                print name, config.indexserver[name]
 
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
