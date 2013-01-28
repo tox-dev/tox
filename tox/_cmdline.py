@@ -105,7 +105,8 @@ class Action(object):
         if ret:
             invoked = " ".join(map(str, popen.args))
             if outpath:
-                self.report.error("invocation failed, logfile: %s" % outpath)
+                self.report.error("invocation failed, logfile: %s" %
+                                  outpath)
                 self.report.error(outpath.read())
                 raise tox.exception.InvocationError(
                     "%s (see %s)" %(invoked, outpath))
@@ -214,7 +215,6 @@ class Reporter(object):
 
 
 class Session:
-    passthroughpossible = True
 
     def __init__(self, config, popen=subprocess.Popen, Report=Reporter):
         self.config = config
@@ -224,7 +224,6 @@ class Session:
         config.logdir.ensure(dir=1)
         #self.report.using("logdir %s" %(self.config.logdir,))
         self.report.using("tox.ini: %s" %(self.config.toxinipath,))
-        self.venvstatus = {}
         self._spec2pkg = {}
         self._name2venv = {}
         try:
@@ -256,12 +255,11 @@ class Session:
         return action
 
     def runcommand(self):
-        #tw.sep("-", "tox info from %s" % self.options.configfile)
-        self.report.using("tox-%s from %s" %(tox.__version__, tox.__file__))
+        self.report.using("tox-%s from %s" %(tox.__version__,
+                                             tox.__file__))
         if self.config.minversion:
             minversion = NormalizedVersion(self.config.minversion)
             toxversion = NormalizedVersion(tox.__version__)
-            #self.report.using("requires at least %s" %(minversion,))
             if toxversion < minversion:
                 self.report.error(
                     "tox version is %s, required is at least %s" %(
@@ -283,7 +281,7 @@ class Session:
             src.copy(target)
 
     def setenvstatus(self, venv, msg):
-        self.venvstatus[venv.path] = msg
+        venv.status = msg
 
     def _makesdist(self):
         setup = self.config.setupdir.join("setup.py")
@@ -307,7 +305,7 @@ class Session:
     def setupenv(self, venv):
         action = self.newaction(venv, "getenv", venv.envconfig.envdir)
         with action:
-            self.venvstatus[venv.path] = 0
+            venv.status = 0
             try:
                 status = venv.update(action=action)
             except tox.exception.InvocationError:
@@ -367,7 +365,7 @@ class Session:
 
     def runtestenv(self, venv, sdist_path, redirect=False):
         if not self.config.option.notest:
-            if self.venvstatus[venv.path]:
+            if venv.status:
                 return
             if venv.test(redirect=redirect):
                 self.setenvstatus(venv, "commands failed")
@@ -378,7 +376,7 @@ class Session:
         self.report.startsummary()
         retcode = 0
         for venv in self.venvlist:
-            status = self.venvstatus[venv.path]
+            status = venv.status
             if status and status != "skipped tests":
                 msg = "  %s: %s" %(venv.envconfig.envname, str(status))
                 self.report.error(msg)
@@ -386,7 +384,8 @@ class Session:
             else:
                 if not status:
                     status = "commands succeeded"
-                self.report.good("  %s: %s" %(venv.envconfig.envname, status))
+                self.report.good("  %s: %s" %(venv.envconfig.envname,
+                                              status))
         if not retcode:
             self.report.good("  congratulations :)")
         return retcode

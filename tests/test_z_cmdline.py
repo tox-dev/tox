@@ -128,9 +128,9 @@ class TestSession:
         assert len(envs) == 2
         env1, env2 = envs
         session.setenvstatus(env1, "FAIL XYZ")
-        assert session.venvstatus[env1.path]
+        assert env1.status
         session.setenvstatus(env2, 0)
-        assert not session.venvstatus[env2.path]
+        assert not env2.status
         session._summary()
         out, err = capfd.readouterr()
         exp = "%s: FAIL XYZ" % env1.envconfig.envname

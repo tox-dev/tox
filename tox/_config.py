@@ -217,7 +217,6 @@ class parseini:
         if override:
             for name in config.indexserver:
                 config.indexserver[name] = IndexServerConfig(name, override)
-                print name, config.indexserver[name]
 
         reader.addsubstitions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
