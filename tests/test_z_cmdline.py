@@ -64,6 +64,8 @@ def test__resolve_pkg_doubledash(tmpdir, mocksession):
     res = mocksession._resolve_pkg(distshare.join("pkg-mine*"))
     assert res == p
 
+
+
 class TestSession:
     def test_make_sdist(self, initproj):
         initproj("example123-0.5", filedefs={
@@ -127,9 +129,9 @@ class TestSession:
         envs = session.venvlist
         assert len(envs) == 2
         env1, env2 = envs
-        session.setenvstatus(env1, "FAIL XYZ")
+        env1.status = "FAIL XYZ"
         assert env1.status
-        session.setenvstatus(env2, 0)
+        env2.status = 0
         assert not env2.status
         session._summary()
         out, err = capfd.readouterr()
@@ -421,7 +423,7 @@ def test_separate_sdist(cmd, initproj):
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*sdist-inst*%s*" % sdistfile,
+        "*inst*%s*" % sdistfile,
     ])
 
 

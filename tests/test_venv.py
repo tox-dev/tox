@@ -226,7 +226,7 @@ def test_install_deps_indexserver(newmocksession):
     assert "-i ABC" in args
     assert "dep3" in args
 
-def test_install_sdist_indexserver(newmocksession, tmpdir):
+def test_installpkg_indexserver(newmocksession, tmpdir):
     mocksession = newmocksession([], """
         [tox]
         indexserver =
@@ -235,7 +235,7 @@ def test_install_sdist_indexserver(newmocksession, tmpdir):
     venv = mocksession.getenv('python')
     l = mocksession._pcalls
     p = tmpdir.ensure("distfile.tar.gz")
-    mocksession.installsdist(venv, p)
+    mocksession.installpkg(venv, p)
     # two different index servers, two calls
     assert len(l) == 1
     args = " ".join(l[0].args)
@@ -248,7 +248,7 @@ def test_install_recreate(newmocksession):
     """)
     venv = mocksession.getenv('python')
     venv.update()
-    mocksession.installsdist(venv, "xz")
+    mocksession.installpkg(venv, "xz")
     mocksession.report.expect("verbosity0", "*create*")
     venv.update()
     mocksession.report.expect("verbosity0", "*recreate*")
@@ -263,6 +263,7 @@ def test_install_error(newmocksession, monkeypatch):
     venv = mocksession.getenv('python')
     venv.test()
     mocksession.report.expect("error", "*not find*qwelkqw*")
+    assert venv.status == "commands failed"
 
 def test_install_command_not_installed(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
@@ -273,6 +274,7 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     venv = mocksession.getenv('python')
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*")
+    assert venv.status == "commands failed"
 
 @pytest.mark.skipif("not sys.platform.startswith('linux')")
 def test_install_command_not_installed(newmocksession):
@@ -383,7 +385,7 @@ class TestCreationConfig:
         cconfig = venv._getliveconfig()
         venv.update()
         assert not venv.path_config.check()
-        mocksession.installsdist(venv, "sdist.zip")
+        mocksession.installpkg(venv, "sdist.zip")
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
@@ -468,7 +470,7 @@ def test_setenv_added_to_pcall(mocksession, newconfig):
 
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     # import pdb; pdb.set_trace()
-    mocksession.installsdist(venv, "xyz")
+    mocksession.installpkg(venv, "xyz")
     venv.test()
 
     l = mocksession._pcalls
@@ -483,21 +485,21 @@ def test_setenv_added_to_pcall(mocksession, newconfig):
     for e in os.environ:
         assert e in env
 
-def test_install_sdist_no_upgrade(newmocksession):
+def test_installpkg_no_upgrade(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
-    mocksession.installsdist(venv, "whatever")
+    mocksession.installpkg(venv, "whatever")
     l = mocksession._pcalls
     assert len(l) == 1
     assert '-U' not in l[0].args
 
-def test_install_sdist_upgrade(newmocksession):
+def test_installpkg_upgrade(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     assert not hasattr(venv, 'just_created')
-    mocksession.installsdist(venv, "whatever")
+    mocksession.installpkg(venv, "whatever")
     l = mocksession._pcalls
     assert len(l) == 1
     assert '-U' in l[0].args

@@ -714,6 +714,12 @@ class TestGlobalOptions:
         assert env.basepython == "python2.4"
         assert env.commands == [['xyz']]
 
+    def test_reportserver(self, tmpdir, newconfig):
+        assert not newconfig([], "").option.post
+        config = newconfig(["--post=http://xyz.net/"], "")
+        assert config.option.post == "http://xyz.net/"
+
+
 class TestIndexServer:
     def test_indexserver(self, tmpdir, newconfig):
         config = newconfig("""
@@ -747,7 +753,6 @@ class TestIndexServer:
         assert len(config.indexserver) == 2
         assert config.indexserver["default"].url == "xzy"
         assert config.indexserver["name1"].url == "xzy"
-
 
 class TestParseEnv:
 

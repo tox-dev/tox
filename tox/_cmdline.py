@@ -81,7 +81,7 @@ class Action(object):
             f.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" %(
                     self.id, self.msg, args, env))
             f.flush()
-            outpath = py.path.local(f.name)
+            self.popen_outpath = outpath = py.path.local(f.name)
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
@@ -92,7 +92,7 @@ class Action(object):
         popen.action = self
         self._popenlist.append(popen)
         try:
-            self.report.logpopen(popen)
+            self.report.logpopen(popen, env=env)
             try:
                 out, err = popen.communicate()
             except KeyboardInterrupt:
@@ -109,7 +109,7 @@ class Action(object):
                                   outpath)
                 self.report.error(outpath.read())
                 raise tox.exception.InvocationError(
-                    "%s (see %s)" %(invoked, outpath))
+                    "%s (see %s)" %(invoked, outpath), ret)
             else:
                 raise tox.exception.InvocationError("%r" %(invoked, ))
         return out
@@ -129,14 +129,17 @@ class Action(object):
         return self.session.popen(args, shell=False, cwd=str(cwd),
             stdout=stdout, stderr=stderr, env=env)
 
+
+
 class Reporter(object):
     actionchar = "-"
     def __init__(self, session):
         self.tw = py.io.TerminalWriter()
         self.session = session
+        self._reportedlines = []
         #self.cumulated_time = 0.0
 
-    def logpopen(self, popen):
+    def logpopen(self, popen, env):
         """ log information about the action.popen() created process. """
         cmd = " ".join(map(str, popen.args))
         if popen.outpath:
@@ -171,7 +174,7 @@ class Reporter(object):
 
 
     def keyboard_interrupt(self):
-        self.tw.line("KEYBOARDINTERRUPT", red=True)
+        self.error("KEYBOARDINTERRUPT")
 
 #    def venv_installproject(self, venv, pkg):
 #        self.logline("installing to %s: %s" % (venv.envconfig.envname, pkg))
@@ -196,19 +199,20 @@ class Reporter(object):
         self.logline("ERROR: " + msg, red=True)
 
     def logline(self, msg, **opts):
+        self._reportedlines.append(msg)
         self.tw.line("%s" % msg, **opts)
 
     def verbosity0(self, msg, **opts):
         if self.session.config.option.verbosity >= 0:
-            self.tw.line("%s" % msg, **opts)
+            self.logline("%s" % msg, **opts)
 
     def verbosity1(self, msg, **opts):
         if self.session.config.option.verbosity >= 1:
-            self.tw.line("%s" % msg, **opts)
+            self.logline("%s" % msg, **opts)
 
     def verbosity2(self, msg, **opts):
         if self.session.config.option.verbosity >= 2:
-            self.tw.line("%s" % msg, **opts)
+            self.logline("%s" % msg, **opts)
 
     #def log(self, msg):
     #    py.builtin.print_(msg, file=sys.stderr)
@@ -280,9 +284,6 @@ class Session:
             target.dirpath().ensure(dir=1)
             src.copy(target)
 
-    def setenvstatus(self, venv, msg):
-        venv.status = msg
-
     def _makesdist(self):
         setup = self.config.setupdir.join("setup.py")
         if not setup.check():
@@ -311,19 +312,19 @@ class Session:
             except tox.exception.InvocationError:
                 status = sys.exc_info()[1]
             if status:
-                self.setenvstatus(venv, status)
+                venv.status = status
                 self.report.error(str(status))
                 return False
             return True
 
-    def installsdist(self, venv, sdist_path):
-        action = self.newaction(venv, "sdist-install", sdist_path)
+    def installpkg(self, venv, sdist_path):
+        action = self.newaction(venv, "installpkg", sdist_path)
         with action:
             try:
-                venv.install_sdist(sdist_path, action)
+                venv.installpkg(sdist_path, action)
                 return True
             except tox.exception.InvocationError:
-                self.setenvstatus(venv, sys.exc_info()[1])
+                venv.status = sys.exc_info()[1]
                 return False
 
     def sdist(self):
@@ -358,7 +359,7 @@ class Session:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                self.installsdist(venv, sdist_path)
+                self.installpkg(venv, sdist_path)
                 self.runtestenv(venv, sdist_path)
         retcode = self._summary()
         return retcode
@@ -367,10 +368,11 @@ class Session:
         if not self.config.option.notest:
             if venv.status:
                 return
-            if venv.test(redirect=redirect):
-                self.setenvstatus(venv, "commands failed")
+            if not redirect and self.config.option.post:
+                redirect = True
+            venv.test(redirect=redirect)
         else:
-            self.setenvstatus(venv, "skipped tests")
+            venv.status = "skipped tests"
 
     def _summary(self):
         self.report.startsummary()

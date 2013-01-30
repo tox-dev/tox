@@ -178,14 +178,14 @@ class VirtualEnv(object):
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
 
-    def install_sdist(self, sdistpath, action):
+    def installpkg(self, sdistpath, action):
         assert action is not None
         if getattr(self, 'just_created', False):
-            action.setactivity("sdist-inst", sdistpath)
+            action.setactivity("inst", sdistpath)
             self._getliveconfig().writeconfig(self.path_config)
             extraopts = []
         else:
-            action.setactivity("sdist-reinst", sdistpath)
+            action.setactivity("inst-nodeps", sdistpath)
             extraopts = ['-U', '--no-deps']
         self._install([sdistpath], extraopts=extraopts, action=action)
 
@@ -260,6 +260,7 @@ class VirtualEnv(object):
     def test(self, redirect=False):
         action = self.session.newaction(self, "runtests")
         with action:
+            self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
             cwd = self.envconfig.changedir
             for i, argv in enumerate(self.envconfig.commands):
@@ -267,8 +268,13 @@ class VirtualEnv(object):
                 try:
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect)
                 except tox.exception.InvocationError:
-                    self.session.report.error(str(sys.exc_info()[1]))
-                    return True
+                    val = sys.exc_info()[1]
+                    self.session.report.error(str(val))
+                    self.status = "commands failed"
+                except KeyboardInterrupt:
+                    self.status = "keyboardinterrupt"
+                    self.session.report.error(self.status)
+                    raise
 
     def _pcall(self, args, venv=True, cwd=None, extraenv={},
             action=None, redirect=True):
