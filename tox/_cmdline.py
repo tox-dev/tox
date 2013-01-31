@@ -368,8 +368,6 @@ class Session:
         if not self.config.option.notest:
             if venv.status:
                 return
-            if not redirect and self.config.option.post:
-                redirect = True
             venv.test(redirect=redirect)
         else:
             venv.status = "skipped tests"

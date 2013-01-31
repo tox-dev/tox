@@ -96,9 +96,6 @@ def prepare_parse(pkgname):
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
         help="force recreation of virtual environments")
-    parser.add_argument("--post", metavar="URL", action="store",
-        default = "",
-        help="post each environment test run to specified post URL"),
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
     return parser
