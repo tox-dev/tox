@@ -4,24 +4,24 @@
 support and contact channels
 =====================================
 
-You are welcome to:
+Getting in contact:
 
 * join the `Testing In Python (TIP) mailing list`_ for general and tox/test-tool
   interaction questions.
 * file a `report on the issue tracker`_
-* join `tox-commit`_ to be notified of source changes
 * hang out on the irc.freenode.net #pylib channel
 * `clone the mercurial repository`_ and submit patches
-* follow the `tetamap blog`_ or `holger's twitter presence`_ or 
-  if all else fails contact holger krekel at gmail.
+* the `tetamap blog`_, `holger's twitter presence`_ or 
+  for private inquiries holger krekel at gmail.
 
 professional support
 ----------------------------
 
-If you are looking for on-site teaching and consulting report to setup
-and use state-of-the-start testing infrastructure with Python,
+.. note:: Upcoming: `professional testing with pytest and tox <`http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 24th-26th June 2013, Leipzig.
+
+If you are looking for on-site teaching or consulting support,
 contact holger at `merlinux.eu`_, an association of
-experienced and `well-known Python developers`_.
+`experienced well-known Python developers`_.
 
 .. _`well-known Python developers`: http://merlinux.eu/people.txt
 .. _`Maciej Fijalkowski`: http://www.ohloh.net/accounts/fijal

@@ -1,12 +1,14 @@
 Welcome to the tox automation project
 ===============================================
 
-vision: merge packaging, testing and release
+.. note:: Upcoming: `professional testing with pytest and tox <`http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 24th-26th June 2013, Leipzig.
+
+vision: standardize testing in Python
 ---------------------------------------------
 
-``tox`` aims to automate state-of-the-art packaging, testing and
-releasing of Python software right from your console *or* CI
-server, invoking your tools of choice.
+``tox`` aims to automate and standardize testing in Python.  It is part
+of a larger vision of easing the packaging, testing and release process 
+of Python software.
 
 What is Tox?
 --------------------
@@ -64,10 +66,10 @@ Current features
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 
-* uses pip_ (for Python2 environments) and distribute_ (for all environments) by default
+* uses pip_ and distribute_ by default.
 
-* **cross-Python compatible**: Python-2.5 up to Python-3.2, Jython and 
-  Python3 support as well as for pypy_
+* **cross-Python compatible**: Python-2.5 up to Python-3.3, Jython and pypy_
+  support.
 
 * **cross-platform**: Windows and Unix style environments
 
