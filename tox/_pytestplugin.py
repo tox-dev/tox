@@ -26,7 +26,6 @@ def pytest_funcarg__newconfig(request, tmpdir):
         s = py.std.textwrap.dedent(source)
         p = tmpdir.join("tox.ini")
         p.write(s)
-        assert isinstance(args, list)
         old = tmpdir.chdir()
         try:
             return parseconfig(args)

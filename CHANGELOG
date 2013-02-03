@@ -1,12 +1,10 @@
 1.4.3.dev
 -----------------
 
-- add --extradeps option to install extra dependencies in all testenvs
-
-- experimentally introduce --installpkg=PATH option to install a package
-  rather than create/install an sdist package.  This will still require
-  and use tox.ini and tests from the current working dir (and not from the
-  remote package).
+- experimentally introduce --installpkg=PATH option to install a package rather than
+  create/install an sdist package.  This will still require and use
+  tox.ini and tests from the current working dir (and not from the remote
+  package).
 
 - substitute {envsitepackagesdir} with the package installation directory (closes #72)
   (thanks g2p)

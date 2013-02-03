@@ -332,22 +332,6 @@ class TestConfigTestEnv:
         assert envconfig.envlogdir == envconfig.envdir.join("log")
         assert envconfig.setenv is None
 
-    def test_extradeps(self, tmpdir, newconfig):
-        config = newconfig(["--extradeps=dep1,dep2"], """
-            [testenv]
-            deps = abc
-
-            [testenv:hello1]
-            [testenv:hello2]
-            deps = cde
-        """)
-        assert config.envconfigs["hello1"].deps[0].name == "abc"
-        assert config.envconfigs["hello1"].deps[1].name == "dep1"
-        assert config.envconfigs["hello1"].deps[2].name == "dep2"
-        assert config.envconfigs["hello2"].deps[0].name == "cde"
-        assert config.envconfigs["hello2"].deps[1].name == "dep1"
-        assert config.envconfigs["hello2"].deps[2].name == "dep2"
-
     def test_specific_command_overrides(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]

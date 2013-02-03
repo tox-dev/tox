@@ -96,8 +96,6 @@ def prepare_parse(pkgname):
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
         help="force recreation of virtual environments")
-    parser.add_argument("--extradeps", action="store", default="",
-        help="comma-separated list of global extra dependencies")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
     return parser
@@ -289,9 +287,7 @@ class parseini:
 
         vc.commands = reader.getargvlist(section, "commands")
         vc.deps = []
-        deplines = reader.getlist(section, "deps")
-        deplines.extend(filter(None, config.option.extradeps.split(",")))
-        for depline in deplines:
+        for depline in reader.getlist(section, "deps"):
             m = re.match(r":(\w+):\s*(\S+)", depline)
             if m:
                 iname, name = m.groups()
