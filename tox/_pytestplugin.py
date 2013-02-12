@@ -269,7 +269,7 @@ def initproj(request, tmpdir):
             ''' % locals()})
         if name not in filedefs:
             create_files(base, {name:
-                {'__init__.py': '__version__ = %s' % version}})
+                {'__init__.py': '__version__ = %r' % version}})
         manifestlines = []
         for p in base.visit(lambda x: x.check(file=1)):
             manifestlines.append("include %s" % p.relto(base))

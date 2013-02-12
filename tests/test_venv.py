@@ -25,6 +25,7 @@ def test_locate_via_py(monkeypatch):
             assert args[1] == '-c'
             # Return value needs to actually exist!
             return sys.executable
+    @staticmethod
     def ret_pseudopy(name):
         assert name == 'py'
         return PseudoPy()
@@ -162,13 +163,18 @@ def test_install_deps_wildcard(newmocksession):
     assert l[1].cwd == venv.envconfig.envlogdir
     assert "pip" in str(args[0])
     assert args[1] == "install"
-    arg = "--download-cache=" + str(venv.envconfig.downloadcache)
-    assert arg in args[2:]
+    #arg = "--download-cache=" + str(venv.envconfig.downloadcache)
+    #assert arg in args[2:]
     args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
     assert len(args) == 1
 
 
-def test_install_downloadcache(newmocksession):
+@pytest.mark.parametrize("envdc", [True, False])
+def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
+    if envdc:
+        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", tmpdir)
+    else:
+        monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
     mocksession = newmocksession([], """
         [testenv:py123]
         distribute=True
@@ -187,8 +193,10 @@ def test_install_downloadcache(newmocksession):
     assert l[1].cwd == venv.envconfig.envlogdir
     assert "pip" in str(args[0])
     assert args[1] == "install"
-    arg = "--download-cache=" + str(venv.envconfig.downloadcache)
-    assert arg in args[2:]
+    if envdc:
+        assert venv.envconfig.downloadcache == tmpdir
+    else:
+        assert not venv.envconfig.downloadcache
     assert "dep1" in args
     assert "dep2" in args
     deps = list(filter(None, [x[1] for x in venv._getliveconfig().deps]))

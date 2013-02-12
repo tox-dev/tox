@@ -298,12 +298,12 @@ class parseini:
             vc.deps.append(DepConfig(name, ixserver))
         vc.distribute = reader.getbool(section, "distribute", True)
         vc.sitepackages = reader.getbool(section, "sitepackages", False)
-        downloadcache = reader.getdefault(section, "downloadcache")
-        if downloadcache is None:
-            downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", "")
-            if not downloadcache:
-                downloadcache = self.config.toxworkdir.join("_download")
-        vc.downloadcache = py.path.local(downloadcache)
+        vc.downloadcache = None
+        downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", None)
+        if not downloadcache:
+            downloadcache = reader.getdefault(section, "downloadcache")
+        if downloadcache:
+            vc.downloadcache = py.path.local(downloadcache)
         return vc
 
     def _getenvlist(self, reader, toxsection):

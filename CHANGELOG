@@ -1,6 +1,11 @@
 1.4.3.dev
 -----------------
 
+- fix downloadcache determination to work according to docs: Only
+  make pip use a download cache if PIP_DOWNLOAD_CACHE or a 
+  downloadcache=PATH testenv setting is present. (The ENV setting
+  takes precedence)
+
 - experimentally introduce --installpkg=PATH option to install a package rather than
   create/install an sdist package.  This will still require and use
   tox.ini and tests from the current working dir (and not from the remote

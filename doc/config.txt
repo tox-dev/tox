@@ -106,8 +106,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: downloadcache=path
 
-    (pip only) use this directory for caching downloads - this defaults to the
-    environment variable ``PIP_DOWNLOAD_CACHE`` if it is set.
+    (pip only) use this directory for caching downloads.  This value
+    is overriden by the environment variable ``PIP_DOWNLOAD_CACHE``
+    if it exists.
     **default**: no download cache will be used.
     **note**: if creating multiple environments use of a download cache greatly
     speeds up the testing process.
