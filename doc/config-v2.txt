@@ -55,14 +55,14 @@ namely these goals:
   with testenvs
 - allow platform-specific settings
 - allow to specify platforms against which tests should run
-- allow to run installer-variants (easy_install or pip)
+- allow to run installer-variants (easy_install or pip, xxx)
 - try to mimick/re-use bash-style syntax to ease learning curve.
 
  
 Example: Generating and selecting variants
 ----------------------------------------------
  
-Suppose you want to test your package python2.6, python2.7 and on the
+Suppose you want to test your package against python2.6, python2.7 and on the
 windows and linux platforms.  Today you would have to 
 write down 2*2 = 4 ``[testenv:*]`` sections and then instruct
 tox to run a specific list of environments on each platform.
@@ -71,7 +71,7 @@ With tox-1.X you can directlys specify combinations::
  
     # combination syntax gives 2 * 2 = 4 testenv names
     #
-    envlist = {py26,py27}-{win,linux}, {py31,py32}-linux
+    envlist = {py26,py27}-{win,linux}
      
     [testenv]
     deps = pytest
@@ -100,12 +100,6 @@ Our ``[testenv]`` uses a new templating style for the ``platform`` definition::
     platform=
            windows: windows
            linux: linux
-
-With 
-
-ConcretelyThe next configuration item defines the platform, depending on the
-environment name for which the ``[testenv]`` is used::
-
 
 These two conditional settings will lead to either ``windows`` or
 ``linux`` as the platform string.  When the test environment is run,
@@ -143,18 +137,6 @@ Nothing special here :)
     Voila, this multi-dimensional ``tox.ini`` configuration 
     defines 2*2=4 environments.
 
-Adding mypkg13,mypkg14 dependency variants
---------------------------------------------
-
-XXX
-This defines an unconditional dependency ``pytest`` which is going to be
-installed in all environments.  It also defines two conditional dependencies:
-
-- if ``mypkg13`` is part of the environment name, the ``mypkg<1.4`` spec 
-  will be used, otherwise the line is empty.
-- if ``mypkg14`` is part of the environment name, the ``mypkg>=1.4,<1.5`` spec 
-  will be used, otherwise the line is empty.
-
  
 The new "platform" setting
 --------------------------------------
@@ -179,18 +161,7 @@ If they are not part of it, the whole line will be left out.
 Parts of an environment name are obtained by ``-``-splitting it.
                                                                                 
 Variant specification with [variant:VARNAME]
-----------------------------------------------
 
-Apart from using conditional settings, you can also write down
-a ``[variant::VARIANTNAME]`` section, allowing to define settings
-for the respective variant.  Variant settings will be merged from
-left to right so an environment name ``abc-def`` will lookup
-and merge settings from ``abc``, then from ``def``.
-
-.. 
-   Note that a direct ``[variant:xyz-abc]`` testenv definition
-   can override any automatically produced settings.
- 
 Showing all expanded sections
 -------------------------------
 
@@ -253,30 +224,27 @@ lines and almost no repetition::
      envlist = {py25,py26,py27}-{django12,django13}{,-example}
  
      [testenv]
-     commands = python setup.py test
      deps=
          coverage==3.4
          unittest-xml-reporting==1.2
          Pyyaml==3.10
          django12: django==1.2.4
          django13: django==1.3.1
+         # some more deps for running examples
+         example: wsgiref==0.1.2
+         example: Pygments==1.4
+         example: httplib2==0.6.0
+         example: Markdown==2.0.3
+
+     commands = 
+        !example: python setup.py test
+        example: python examples/runtests.py
+
  
-     [envpart:example]
-     commands = python examples/runtests.py
-     +deps = 
-         wsgiref==0.1.2
-         Pygments==1.4
-         httplib2==0.6.0
-         Markdown==2.0.3
- 
-Note that ``{,-example}`` in the envlist denotes an empty env and the
-"example" envpart.  The empty envpart means that there are no specific
+Note that ``{,-example}`` in the envlist denotes two values, an empty
+one and a ``example`` one.  The empty value means that there are no specific
 settings and thus no need to define a variant name. 
 
-Note also that ``+deps`` means that we are appending to dependencies,
-not substituting them.
-
- 
 Transforming the examples: django-treebeard
 ------------------------------------------------
  
@@ -289,10 +257,9 @@ we not only can do the same with 32 non-repetive configuration lines but
 we also produce 36 specific testenvs with specific dependencies and test
 commands::
  
-     [tox]
-     envlist =
-        [py24,py25,py26,py27]-[django11,django12,django13]-[nodb,pg,mysql]
-        docs
+    [tox]
+    envlist =
+     {py24,py25,py26,py27}-{django11,django12,django13}-{nodb,pg,mysql}, docs
 
     [testenv:docs]
     changedir = docs
@@ -322,9 +289,4 @@ commands::
                          --DATABASE_USER=postgres {posargs}
          mysql: {envpython} runtests.py --DATABASE_ENGINE=mysql \
                                         --DATABASE_USER=root {posargs}
-
-It's noteworthy here that you can also use conditionals in the commands.
-
-
-
 
