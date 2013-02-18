@@ -98,6 +98,8 @@ def prepare_parse(pkgname):
         help="force recreation of virtual environments")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
+    parser.add_argument("-l", "--list", action="store_true", dest="list_envs",
+        help="show default envlist")
     return parser
 
 class Config:

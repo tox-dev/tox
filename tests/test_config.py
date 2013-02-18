@@ -780,6 +780,26 @@ class TestCmdInvocation:
         assert tox.__version__ in stdout
         assert "imported from" in stdout
 
+    def test_listenvs(self, cmd, initproj):
+        initproj('listenvs', filedefs={
+            'tox.ini': '''
+            [tox]
+            envlist=py26,py27,py33,pypy,docs
+
+            [testenv:docs]
+            changedir = docs
+            ''',
+        })
+        result = cmd.run("tox", "-l")
+        stdout = result.stdout.str()
+        assert stdout.splitlines() == [
+            ' * py26',
+            ' * py27',
+            ' * py33',
+            ' * pypy',
+            ' * docs',
+        ]
+
     @py.test.mark.xfail("sys.version_info < (2,6)",
         reason="virtualenv3 cannot be imported")
     def test_config_specific_ini(self, tmpdir, cmd):

@@ -271,6 +271,8 @@ class Session:
                 raise SystemExit(1)
         if self.config.option.showconfig:
             self.showconfig()
+        elif self.config.option.list_envs:
+            self.showenvs()
         else:
             return self.subcommand_test()
 
@@ -414,6 +416,10 @@ class Session:
             self.report.line("  deps=%s" % envconfig.deps)
             self.report.line("  envdir=    %s" % envconfig.envdir)
             self.report.line("  downloadcache=%s" % envconfig.downloadcache)
+
+    def showenvs(self):
+        for env in self.config.envlist:
+            self.report.line(" * %s" % env)
 
     def info_versions(self):
         versions = ['tox-%s' % tox.__version__]
