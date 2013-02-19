@@ -9,6 +9,9 @@
   downloadcache=PATH testenv setting is present. (The ENV setting
   takes precedence)
 
+- fix issue84 - pypy on windows creates a bin not a scripts venv directory
+  (thanks Lukasz Balcerzak)
+
 - experimentally introduce --installpkg=PATH option to install a package rather than
   create/install an sdist package.  This will still require and use
   tox.ini and tests from the current working dir (and not from the remote

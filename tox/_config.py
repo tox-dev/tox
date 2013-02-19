@@ -113,7 +113,8 @@ class VenvConfig:
 
     @property
     def envbindir(self):
-        if sys.platform == "win32" and "jython" not in self.basepython:
+        if (sys.platform == "win32" and "jython" not in self.basepython
+                                    and "pypy" not in self.basepython):
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")

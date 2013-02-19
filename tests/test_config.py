@@ -1,4 +1,5 @@
 import tox
+import pytest
 import os, sys
 from textwrap import dedent
 
@@ -362,14 +363,18 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.envpython == envconfig.envbindir.join("python")
 
-    def test_envbindir_jython(self, tmpdir, newconfig):
+    @pytest.mark.parametrize("bp", ["jython", "pypy"])
+    def test_envbindir_jython(self, tmpdir, newconfig, bp):
         config = newconfig("""
             [testenv]
-            basepython=jython
-        """)
+            basepython=%s
+        """ % bp)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
-        assert envconfig.envpython == envconfig.envbindir.join("jython")
+        # on win32 and linux virtualenv uses "bin" for pypy/jython
+        assert envconfig.envbindir.basename == "bin"
+        if bp == "jython":
+            assert envconfig.envpython == envconfig.envbindir.join(bp)
 
     def test_setenv_overrides(self, tmpdir, newconfig):
         config = newconfig("""
