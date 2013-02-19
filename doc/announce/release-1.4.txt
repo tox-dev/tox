@@ -4,7 +4,7 @@ tox 1.4: the virtualenv-based test run automatizer
 I am happy to announce tox 1.4 which brings:
 
 - improvements with configuration file syntax, now allowing re-using
-  selected settings across config file sections. see http://bit.ly/Ly3K4f
+  selected settings across config file sections. see http://testrun.org/tox/latest/config.html#substition-for-values-from-other-sections
 
 - terminal reporting was simplified and streamlined.  Now with
   verbosity==0 (the default), less information will be shown
