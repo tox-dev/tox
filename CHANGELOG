@@ -1,6 +1,9 @@
 1.4.3.dev
 -----------------
 
+- introduce -l|--listenv option to list configured environments
+  (thanks  Lukasz Balcerzak)
+
 - fix downloadcache determination to work according to docs: Only
   make pip use a download cache if PIP_DOWNLOAD_CACHE or a 
   downloadcache=PATH testenv setting is present. (The ENV setting

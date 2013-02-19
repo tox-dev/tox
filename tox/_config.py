@@ -77,6 +77,8 @@ def prepare_parse(pkgname):
         help="increase verbosity of reporting output.")
     parser.add_argument("--showconfig", action="store_true", dest="showconfig",
         help="show configuration information. ")
+    parser.add_argument("-l", "--listenvs", action="store_true",
+        dest="listenvs", help="show list of test environments")
     parser.add_argument("-c", action="store", default="tox.ini",
         dest="configfile",
         help="use the specified config file name.")
@@ -98,8 +100,6 @@ def prepare_parse(pkgname):
         help="force recreation of virtual environments")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
-    parser.add_argument("-l", "--list", action="store_true", dest="list_envs",
-        help="show default envlist")
     return parser
 
 class Config:

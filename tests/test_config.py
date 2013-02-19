@@ -786,19 +786,21 @@ class TestCmdInvocation:
             [tox]
             envlist=py26,py27,py33,pypy,docs
 
+            [testenv:notincluded]
+            changedir = whatever
+
             [testenv:docs]
             changedir = docs
             ''',
         })
         result = cmd.run("tox", "-l")
-        stdout = result.stdout.str()
-        assert stdout.splitlines() == [
-            ' * py26',
-            ' * py27',
-            ' * py33',
-            ' * pypy',
-            ' * docs',
-        ]
+        result.stdout.fnmatch_lines("""
+            *py26*
+            *py27*
+            *py33*
+            *pypy*
+            *docs*
+        """)
 
     @py.test.mark.xfail("sys.version_info < (2,6)",
         reason="virtualenv3 cannot be imported")
