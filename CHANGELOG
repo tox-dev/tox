@@ -1,4 +1,4 @@
-1.4.3.dev
+1.4.3
 -----------------
 
 - introduce -l|--listenv option to list configured environments
