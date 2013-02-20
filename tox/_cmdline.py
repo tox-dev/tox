@@ -120,6 +120,14 @@ class Action(object):
             if sys.platform != "win32" and isinstance(arg, py.path.local):
                 arg = cwd.bestrelpath(arg)
             newargs.append(str(arg))
+
+        #subprocess does not always take kindly to .py scripts
+        #so adding the interpreter here.
+        if sys.platform == "win32":
+            ext = os.path.splitext(str(newargs[0]))[1].lower()
+            if ext == '.py' and self.venv:
+                newargs = [str(self.venv.getcommandpath())] + newargs
+
         return newargs
 
     def _popen(self, args, cwd, stdout, stderr, env=None):

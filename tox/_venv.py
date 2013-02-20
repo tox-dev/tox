@@ -211,6 +211,8 @@ class VirtualEnv(object):
 
     def pip_install(self, args, indexserver=None, action=None):
         argv = ["pip", "install"] + self._commoninstallopts(indexserver)
+        if sys.platform == "win32":
+            argv[0] = "pip-script.py"
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
             argv.append("--download-cache=%s" %
