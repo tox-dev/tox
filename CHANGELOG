@@ -1,6 +1,9 @@
 1.4.3
 -----------------
 
+- use pip-script.py instead of pip.exe on win32 to avoid the lock exe file on execution issue
+  (thanks Philip Thiem)
+
 - introduce -l|--listenv option to list configured environments
   (thanks  Lukasz Balcerzak)
 
