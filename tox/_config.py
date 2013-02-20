@@ -12,6 +12,15 @@ import py
 
 import tox
 
+#needed if supporting 3.1 as they had removed callable
+import collections
+try:
+    callable = callable
+except NameError:
+    def callable(x):
+        return isinstance(x, collections.Callable)
+
+
 defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
 for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
     if _name == "py":
