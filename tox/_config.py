@@ -12,6 +12,7 @@ import py
 
 import tox
 
+
 defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
 for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
     if _name == "py":
@@ -489,7 +490,7 @@ class IniReader:
 
             raise tox.exception.ConfigError(
                 "substitution key %r not found" % key)
-        if callable(val):
+        if py.builtin.callable(val):
             val = val()
         return str(val)
 

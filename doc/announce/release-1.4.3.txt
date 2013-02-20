@@ -11,6 +11,8 @@ tox 1.4.3 fixes some bugs and introduces a new script and two new options:
 - (experimental) "--installpkg=localpath" option which will skip the
   sdist-creation of a package and instead install the given localpath package.
 
+- use pip-script.py instead of pip.exe on win32 to avoid windows locking the .exe
+
 Note that the sister project "detox" should continue to work - it's a 
 separately released project which drives tox test runs on multiple CPUs
 in parallel.
