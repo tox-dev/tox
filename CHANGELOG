@@ -1,8 +1,8 @@
 1.4.3
 -----------------
 
-- use pip-script.py instead of pip.exe on win32 to avoid the lock exe file on execution issue
-  (thanks Philip Thiem)
+- use pip-script.py instead of pip.exe on win32 to avoid the lock exe
+  file on execution issue (thanks Philip Thiem)
 
 - introduce -l|--listenv option to list configured environments
   (thanks  Lukasz Balcerzak)
@@ -15,13 +15,13 @@
 - fix issue84 - pypy on windows creates a bin not a scripts venv directory
   (thanks Lukasz Balcerzak)
 
-- experimentally introduce --installpkg=PATH option to install a package rather than
-  create/install an sdist package.  This will still require and use
-  tox.ini and tests from the current working dir (and not from the remote
-  package).
+- experimentally introduce --installpkg=PATH option to install a package
+  rather than create/install an sdist package.  This will still require
+  and use tox.ini and tests from the current working dir (and not from the
+  remote package).
 
-- substitute {envsitepackagesdir} with the package installation directory (closes #72)
-  (thanks g2p)
+- substitute {envsitepackagesdir} with the package installation
+  directory (closes #72) (thanks g2p)
 
 - issue #70 remove PYTHONDONTWRITEBYTECODE workaround now that
   virtualenv behaves properly (thanks g2p)

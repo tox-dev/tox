@@ -30,7 +30,7 @@ experienced `well-known Python developers`_.
 .. _`holger's twitter presence`: http://twitter.com/hpk42
 .. _`merlinux.eu`: http://merlinux.eu
 .. _`report on the issue tracker`: https://bitbucket.org/hpk42/tox/issues?status=new&status=open
-.. _`tetamap blog`: http://tetamap.wordpress.com
+.. _`tetamap blog`: http://holgerkrekel.net
 .. _`tox-dev`: http://codespeak.net/mailman/listinfo/tox-dev
 .. _`tox-commit`: http://codespeak.net/mailman/listinfo/tox-commit
 .. _`clone the mercurial repository`: https://bitbucket.org/hpk42/tox
