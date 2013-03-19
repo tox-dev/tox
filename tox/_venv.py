@@ -162,8 +162,10 @@ class VirtualEnv(object):
         venvscript = path.rstrip("co")
         #venvscript = py.path.local(tox.__file__).dirpath("virtualenv.py")
         args = [config_interpreter, venvscript]
-        if not self._ispython3() and self.envconfig.distribute:
-            args.append('--distribute')
+        if self.envconfig.distribute:
+            args.append("--distribute")
+        else:
+            args.append("--setuptools")
         if self.envconfig.sitepackages:
             args.append('--system-site-packages')
         #if sys.platform == "win32":

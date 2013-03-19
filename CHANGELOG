@@ -1,3 +1,11 @@
+1.5.0.dev
+-----------------
+
+- depend on virtualenv-1.9.1 
+
+- use either --distribute or --setuptools depending 
+  on "distribute" env config
+
 1.4.3
 -----------------
 

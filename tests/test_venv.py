@@ -116,6 +116,7 @@ def test_create_distribute(monkeypatch, mocksession, newconfig):
     assert len(l) >= 1
     args = l[0].args
     assert "--distribute" not in map(str, args)
+    assert "--setuptools" in map(str, args)
 
 def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
