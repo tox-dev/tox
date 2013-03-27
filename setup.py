@@ -50,7 +50,7 @@ def main():
         long_description=long_description,
         url='http://tox.testrun.org/',
         version='1.5.0.dev1',
-        license='GPLv2 or later',
+        license='http://opensource.org/licenses/MIT',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
         author_email='holger@merlinux.eu',
@@ -65,15 +65,15 @@ def main():
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Developers',
-            'License :: OSI Approved :: GNU General Public License (GPL)',
-             'Operating System :: POSIX',
-             'Operating System :: Microsoft :: Windows',
-             'Operating System :: MacOS :: MacOS X',
-             'Topic :: Software Development :: Testing',
-             'Topic :: Software Development :: Libraries',
-             'Topic :: Utilities',
-             'Programming Language :: Python',
-             'Programming Language :: Python :: 3'],
+            'License :: OSI Approved :: MIT License',
+            'Operating System :: POSIX',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: MacOS :: MacOS X',
+            'Topic :: Software Development :: Testing',
+            'Topic :: Software Development :: Libraries',
+            'Topic :: Utilities',
+            'Programming Language :: Python',
+            'Programming Language :: Python :: 3'],
     )
 
 if __name__ == '__main__':

@@ -262,7 +262,7 @@ def initproj(request, tmpdir):
                     name='%(name)s',
                     description='%(name)s project',
                     version='%(version)s',
-                    license='GPLv2 or later',
+                    license='MIT',
                     platforms=['unix', 'win32'],
                     packages=['%(name)s', ],
                 )

@@ -276,7 +276,7 @@ def test_package_install_fails(cmd, initproj):
                 name='pkg123',
                 description='pkg123 project',
                 version='0.7',
-                license='GPLv2 or later',
+                license='MIT',
                 platforms=['unix', 'win32'],
                 packages=['pkg123',],
                 install_requires=['qweqwe123'],

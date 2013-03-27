@@ -1,6 +1,8 @@
 1.5.0.dev
 -----------------
 
+- re-license tox to MIT license
+
 - depend on virtualenv-1.9.1 
 
 - use either --distribute or --setuptools depending 
