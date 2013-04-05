@@ -1,6 +1,8 @@
 1.5.0.dev
 -----------------
 
+- fix issue92 - fix {envsitepackagesdir} to actually work again
+
 - re-license tox to MIT license
 
 - depend on virtualenv-1.9.1 

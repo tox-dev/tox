@@ -128,6 +128,7 @@ class VenvConfig:
             name = "python"
         return self.envbindir.join(name)
 
+    # no @property to avoid early calling (see callable(subst[key]) checks)
     def envsitepackagesdir(self):
         print_envsitepackagesdir = textwrap.dedent("""
         import sys
@@ -490,7 +491,7 @@ class IniReader:
 
             raise tox.exception.ConfigError(
                 "substitution key %r not found" % key)
-        if py.builtin.callable(val):
+        elif py.builtin.callable(val):
             val = val()
         return str(val)
 
@@ -527,7 +528,10 @@ class IniReader:
         if sub_key not in self._subs:
             raise tox.exception.ConfigError(
                 "substitution key %r not found" % sub_key)
-        return '"%s"' % str(self._subs[sub_key]).replace('"', r'\"')
+        val = self._subs[sub_key]
+        if py.builtin.callable(val):
+            val = val()
+        return '"%s"' % str(val).replace('"', r'\"')
 
     def _is_bare_posargs(self, groupdict):
         return groupdict.get('substitution_value', None) == 'posargs' \
