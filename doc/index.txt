@@ -1,7 +1,7 @@
 Welcome to the tox automation project
 ===============================================
 
-.. note:: Upcoming: `professional testing with pytest and tox <`http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 24th-26th June 2013, Leipzig.
+.. note:: Upcoming: `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 24th-26th June 2013, Leipzig.
 
 vision: standardize testing in Python
 ---------------------------------------------
