@@ -1,6 +1,7 @@
 import tox
 import pytest
 import os, sys
+import subprocess
 from textwrap import dedent
 
 import py
@@ -589,6 +590,35 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource).envconfigs['python']
         assert conf.changedir.basename == 'testing'
         assert conf.changedir.dirpath().realpath() == tmpdir.realpath()
+
+    @pytest.mark.xfailif("sys.platform == 'win32'")
+    def test_substitution_envsitepackagesdir(self, tmpdir, monkeypatch,
+                                             newconfig):
+        """
+         The envsitepackagesdir property is mostly doing system work,
+         so this test doesn't excercise it very well.
+
+         Usage of envsitepackagesdir on win32/jython will explicitly
+         throw an exception,
+        """
+        class MockPopen(object):
+            returncode = 0
+
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def communicate(self, *args, **kwargs):
+                return 'onevalue', 'othervalue'
+
+        monkeypatch.setattr(subprocess, 'Popen', MockPopen)
+        env = 'py%s' % (''.join(sys.version.split('.')[0:2]))
+        config = newconfig("""
+            [testenv:%s]
+            commands = {envsitepackagesdir}
+        """ % (env))
+        conf = config.envconfigs[env]
+        argv = conf.commands
+        assert argv[0][0] == 'onevalue'
 
 
 class TestGlobalOptions:
