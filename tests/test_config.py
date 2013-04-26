@@ -176,6 +176,29 @@ class TestIniParser:
         py.test.raises(tox.exception.ConfigError,
             'reader.getdefault("section", "key2")')
 
+    def test_getdefault_other_section_substitution(self, newconfig):
+        config = newconfig("""
+            [section]
+            key = rue
+            [testenv]
+            key = t{[section]key}
+            """)
+        reader = IniReader(config._cfg)
+        x = reader.getdefault("testenv", "key")
+        assert x == "true"
+
+    def test_command_substitution_from_other_section(self, newconfig):
+        config = newconfig("""
+            [section]
+            key = whatever
+            [testenv]
+            commands =
+                echo {[section]key}
+            """)
+        reader = IniReader(config._cfg)
+        x = reader.getargvlist("testenv", "commands")
+        assert x == [["echo", "whatever"]]
+
     def test_argvlist(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
