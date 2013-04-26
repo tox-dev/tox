@@ -345,6 +345,9 @@ class IndexServerConfig:
         self.name = name
         self.url = url
 
+RE_ITEM_REF = re.compile(r'\{(?:(?P<sub_type>[^[:]+):)?(?P<substitution_value>.*)\}')
+# temporary workaround for sublime text syntax highlight bug: ]))'
+
 class IniReader:
     def __init__(self, cfgparser, fallbacksections=None):
         self._cfg = cfgparser
@@ -411,7 +414,6 @@ class IniReader:
 
     def _processcommand(self, command):
         posargs = self._subs.get('_posargs', None)
-        pat = r'\{(?:(?P<sub_type>[^:]+):)?(?P<substitution_value>.*)\}'
         words = list(CommandParser(command).words())
         new_command = ''
         for word in words:
@@ -420,9 +422,9 @@ class IniReader:
                     new_command += ' '.join(posargs)
                 continue
 
-            new_word = re.sub(pat, self._replace_match, word)
+            new_word = self._replace(word, quote=True)
             # two passes; we might have substitutions in the result
-            new_word = re.sub(pat, self._replace_match, new_word)
+            new_word = self._replace(new_word, quote=True)
             new_command += new_word
 
         return shlex.split(new_command.strip())
@@ -464,38 +466,7 @@ class IniReader:
         #print "getdefault", section, name, "returned", repr(x)
         return x
 
-    def _sub(self, match):
-        key = match.group(0)[1:-1]
-        if key.startswith("env:"):
-            envkey = key[4:]
-            if envkey not in os.environ:
-                raise tox.exception.ConfigError(
-                    "substitution %r: %r not found in environment" %
-                    (key, envkey))
-            return os.environ[envkey]
-        val = self._subs.get(key, None)
-        if val is None:
-            if key.startswith("[") and "]" in key:
-                i = key.find("]")
-                section, item = key[1:i], key[i+1:]
-                if section in self._cfg and item in self._cfg[section]:
-                    if (section, item) in self._subststack:
-                        raise ValueError('%s already in %s' %(
-                                (section, item), self._subststack))
-                    x = str(self._cfg[section][item])
-                    self._subststack.append((section, item))
-                    try:
-                        return self._replace(x)
-                    finally:
-                        self._subststack.pop()
-
-            raise tox.exception.ConfigError(
-                "substitution key %r not found" % key)
-        elif py.builtin.callable(val):
-            val = val()
-        return str(val)
-
-    def _replace_posargs(self, match):
+    def _replace_posargs(self, match, quote):
         return self._do_replace_posargs(lambda: match.group('substitution_value'))
 
     def _do_replace_posargs(self, value_func):
@@ -510,7 +481,7 @@ class IniReader:
 
         return ''
 
-    def _replace_env(self, match):
+    def _replace_env(self, match, quote):
         envkey = match.group('substitution_value')
         if not envkey:
             raise tox.exception.ConfigError(
@@ -523,21 +494,41 @@ class IniReader:
 
         return os.environ[envkey]
 
-    def _replace_substitution(self, match):
+    def _substitute_from_other_section(self, key, quote):
+        if key.startswith("[") and "]" in key:
+            i = key.find("]")
+            section, item = key[1:i], key[i+1:]
+            if section in self._cfg and item in self._cfg[section]:
+                if (section, item) in self._subststack:
+                    raise ValueError('%s already in %s' %(
+                            (section, item), self._subststack))
+                x = str(self._cfg[section][item])
+                self._subststack.append((section, item))
+                try:
+                    return self._replace(x, quote=quote)
+                finally:
+                    self._subststack.pop()
+
+        raise tox.exception.ConfigError(
+            "substitution key %r not found" % key)
+
+    def _replace_substitution(self, match, quote):
         sub_key = match.group('substitution_value')
-        if sub_key not in self._subs:
-            raise tox.exception.ConfigError(
-                "substitution key %r not found" % sub_key)
-        val = self._subs[sub_key]
+        val = self._subs.get(sub_key, None)
+        if val is None:
+            val = self._substitute_from_other_section(sub_key, quote)
         if py.builtin.callable(val):
             val = val()
-        return '"%s"' % str(val).replace('"', r'\"')
+        if quote:
+            return '"%s"' % str(val).replace('"', r'\"')
+        else:
+            return str(val)
 
     def _is_bare_posargs(self, groupdict):
         return groupdict.get('substitution_value', None) == 'posargs' \
                and not groupdict.get('sub_type')
 
-    def _replace_match(self, match):
+    def _replace_match(self, match, quote):
         g = match.groupdict()
 
         # special case: posargs. If there is a 'posargs' substitution value
@@ -560,11 +551,23 @@ class IniReader:
         except KeyError:
             raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
 
-        return handler(match)
+        # quoting is done in handlers, as at least posargs handling is special:
+        #  all of its arguments are inserted as separate parameters
+        return handler(match, quote)
 
-    def _replace(self, x, rexpattern = re.compile("\{.+?\}")):
+    def _replace_match_quote(self, match):
+        return self._replace_match(match, quote=True)
+    def _replace_match_no_quote(self, match):
+        return self._replace_match(match, quote=False)
+
+    def _replace(self, x, rexpattern=RE_ITEM_REF, quote=False):
+        # XXX is rexpattern used by callers? can it be removed?
         if '{' in x:
-            return rexpattern.sub(self._sub, x)
+            if quote:
+                replace_func = self._replace_match_quote
+            else:
+                replace_func = self._replace_match_no_quote
+            return rexpattern.sub(replace_func, x)
         return x
 
     def _parse_command(self, command):
