@@ -1,6 +1,9 @@
 1.5.0.dev
 -----------------
 
+- fix issue97 - allow substitutions to reference from other sections
+  (thanks Krisztian Fekete)
+
 - fix issue92 - fix {envsitepackagesdir} to actually work again
 
 - re-license tox to MIT license
