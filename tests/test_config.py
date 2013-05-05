@@ -806,6 +806,20 @@ class TestIndexServer:
         assert config.indexserver["default"].url == "xzy"
         assert config.indexserver["name1"].url == "xzy"
 
+    def test_multiple_homedir_relative_local_indexservers(self, newconfig):
+        inisource = """
+            [tox]
+            indexserver =
+                default = file://{homedir}/.pip/downloads/simple
+                local1  = file://{homedir}/.pip/downloads/simple
+                local2  = file://{toxinidir}/downloads/simple
+                pypi    = http://pypi.python.org/simple
+        """
+        config = newconfig([], inisource)
+        homedir = str(py.path.local._gethomedir())
+        assert config.indexserver['default'].url == "file://{h}/.pip/downloads/simple".format(h=homedir)
+        assert config.indexserver['local1'].url == config.indexserver['default'].url
+
 class TestParseEnv:
 
     def test_parse_recreate(self, newconfig):
