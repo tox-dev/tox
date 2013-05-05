@@ -345,8 +345,15 @@ class IndexServerConfig:
         self.name = name
         self.url = url
 
-RE_ITEM_REF = re.compile(r'\{(?:(?P<sub_type>[^[:]+):)?(?P<substitution_value>.*)\}')
-# temporary workaround for sublime text syntax highlight bug: ]))'
+RE_ITEM_REF = re.compile(
+    '''
+    [{]
+    (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
+    (?P<substitution_value>[^{}]*)  # substitution key
+    [}]
+    ''',
+    re.VERBOSE)
+
 
 class IniReader:
     def __init__(self, cfgparser, fallbacksections=None):
