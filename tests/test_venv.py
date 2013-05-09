@@ -262,6 +262,16 @@ def test_install_recreate(newmocksession):
     venv.update()
     mocksession.report.expect("verbosity0", "*recreate*")
 
+def test_test_runtests_action_command_is_in_output(newmocksession):
+    mocksession = newmocksession([], '''
+        [testenv]
+        commands = echo foo bar
+    ''')
+    venv = mocksession.getenv('python')
+    venv.update()
+    venv.test()
+    mocksession.report.expect("verbosity0", "*runtests*commands?0? | echo foo bar")
+
 def test_install_error(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
