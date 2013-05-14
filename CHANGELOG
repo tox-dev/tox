@@ -6,6 +6,9 @@
 
 - fix issue92 - fix {envsitepackagesdir} to actually work again
 
+- show (test) command that is being executed, thanks 
+  Lukasz Balcerzak
+
 - re-license tox to MIT license
 
 - depend on virtualenv-1.9.1 
