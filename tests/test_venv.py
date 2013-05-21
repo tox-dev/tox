@@ -295,6 +295,21 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     mocksession.report.expect("warning", "*test command found but not*")
     assert venv.status == "commands failed"
 
+def test_install_command_whitelisted(newmocksession, monkeypatch):
+    mocksession = newmocksession(['--recreate'], """
+        [testenv]
+        whitelist_externals = py.test
+                              xy*
+        commands=
+            py.test
+            xyz
+    """)
+    venv = mocksession.getenv('python')
+    venv.test()
+    mocksession.report.expect("warning", "*test command found but not*",
+                              invert=True)
+    assert venv.status == "commands failed"
+
 @pytest.mark.skipif("not sys.platform.startswith('linux')")
 def test_install_command_not_installed(newmocksession):
     mocksession = newmocksession(['--recreate'], """

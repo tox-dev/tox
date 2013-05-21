@@ -368,6 +368,24 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['py']
         assert envconfig.commands == [["abc"]]
 
+    def test_whitelist_externals(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            whitelist_externals = xyz
+            commands=xyz
+            [testenv:x]
+
+            [testenv:py]
+            whitelist_externals = xyz2
+            commands=abc
+        """)
+        assert len(config.envconfigs) == 2
+        envconfig = config.envconfigs['py']
+        assert envconfig.commands == [["abc"]]
+        assert envconfig.whitelist_externals == ["xyz2"]
+        envconfig = config.envconfigs['x']
+        assert envconfig.whitelist_externals == ["xyz"]
+
     def test_changedir(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]

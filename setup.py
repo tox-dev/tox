@@ -49,7 +49,7 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=long_description,
         url='http://tox.testrun.org/',
-        version='1.5.dev8',
+        version='1.5.dev9',
         license='http://opensource.org/licenses/MIT',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',

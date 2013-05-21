@@ -81,12 +81,16 @@ class VirtualEnv(object):
         if p.relto(self.envconfig.envdir):
             return p
         if venv:
-            self.session.report.warning(
-                "test command found but not installed in testenv\n"
-                "  cmd: %s\n"
-                "  env: %s\n"
-                "Maybe forgot to specify a dependency?" % (p,
-                self.envconfig.envdir))
+            for x in self.envconfig.whitelist_externals:
+                if p.fnmatch(x):
+                    break
+            else:
+                self.session.report.warning(
+                    "test command found but not installed in testenv\n"
+                    "  cmd: %s\n"
+                    "  env: %s\n"
+                    "Maybe forgot to specify a dependency?" % (p,
+                    self.envconfig.envdir))
         return str(p) # will not be rewritten for reporting
 
     def _ispython3(self):

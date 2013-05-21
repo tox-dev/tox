@@ -1,6 +1,10 @@
 1.5.0.dev
 -----------------
 
+- re-fix issue2 - add command_whitelist to be used in ``[testenv*]``
+  sections, allowing to avoid warnings for commands such as ``make``,
+  used from the commands value.
+
 - fix issue97 - allow substitutions to reference from other sections
   (thanks Krisztian Fekete)
 

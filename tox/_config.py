@@ -291,6 +291,8 @@ class parseini:
             vc.setenv = None
 
         vc.commands = reader.getargvlist(section, "commands")
+        vc.whitelist_externals = reader.getlist(section,
+                                                "whitelist_externals")
         vc.deps = []
         for depline in reader.getlist(section, "deps"):
             m = re.match(r":(\w+):\s*(\S+)", depline)
