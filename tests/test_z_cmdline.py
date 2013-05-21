@@ -2,7 +2,7 @@ import tox
 import py
 import pytest
 import sys
-from conftest import ReportExpectMock
+from tox._pytestplugin import ReportExpectMock
 
 pytest_plugins = "pytester"
 

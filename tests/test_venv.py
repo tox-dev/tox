@@ -102,6 +102,20 @@ def test_create(monkeypatch, mocksession, newconfig):
     assert interp == venv.getconfigexecutable()
     assert venv.path_config.check(exists=False)
 
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_commandpath_venv_precendence(tmpdir, monkeypatch,
+                                      mocksession, newconfig):
+    config = newconfig([], """
+        [testenv:py123]
+    """)
+    envconfig = config.envconfigs['py123']
+    venv = VirtualEnv(envconfig, session=mocksession)
+    tmpdir.ensure("easy_install")
+    monkeypatch.setenv("PATH", str(tmpdir), prepend=os.pathsep)
+    envconfig.envbindir.ensure("easy_install")
+    p = venv.getcommandpath("easy_install")
+    assert py.path.local(p).relto(envconfig.envbindir), p
+
 def test_create_distribute(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]

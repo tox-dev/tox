@@ -83,7 +83,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     unix ``make`` for running tests you can list ``whitelist_externals=make``
     or ``whitelist_externals=/usr/bin/make`` if you want more precision.
     If you don't want tox to issue a warning in any case, just use
-   ``whitelist_externals=*`` which will match all commands (not recommended).
+    ``whitelist_externals=*`` which will match all commands (not recommended).
 
 .. confval:: changedir=path
 

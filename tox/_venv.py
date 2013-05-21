@@ -74,12 +74,15 @@ class VirtualEnv(object):
             p = cwd.join(name)
             if p.check():
                 return str(p)
+        p = None
+        if venv:
+            p = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
+        if p is not None:
+            return p
         p = py.path.local.sysfind(name)
         if p is None:
-            raise tox.exception.InvocationError("could not find executable %r"
-                % (name,))
-        if p.relto(self.envconfig.envdir):
-            return p
+            raise tox.exception.InvocationError(
+                    "could not find executable %r" % (name,))
         if venv:
             for x in self.envconfig.whitelist_externals:
                 if p.fnmatch(x):
