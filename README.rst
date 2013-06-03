@@ -12,9 +12,14 @@ Tox as is a generic virtualenv_ management and test command line tool you can us
 * acting as a frontend to Continuous Integration servers, greatly
   reducing boilerplate and merging CI and shell-based testing.
 
-For more information, docs and many examples please checkout:
+For more information and the repository please checkout:
 
-    http://tox.testrun.org
+- homepage: http://tox.testrun.org
+
+- repository: https://bitbucket.org/hpk42/tox
+
+have fun,
+
 
 have fun,
 
