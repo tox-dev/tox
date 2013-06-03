@@ -2,30 +2,7 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-long_description = """
-What is Tox?
-==========================
-
-Tox as is a generic virtualenv management and test command line tool you can
-use for:
-
-* checking your package installs correctly with different
-  Python versions and interpreters
-
-* running your tests in each of the
-  environments, configuring your test tool of choice
-
-* acting as a frontend to Continuous Integration
-  servers, greatly reducing boilerplate and merging
-  CI and shell-based testing.
-
-For more information, docs and many examples please checkout the `home page`_:
-
-    http://tox.testrun.org/
-
-.. _`home page`: http://tox.testrun.org/
-"""
-
+long_description = open("README.txt").read()
 
 class Tox(TestCommand):
     def finalize_options(self):
@@ -54,6 +31,7 @@ def main():
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
         author_email='holger@merlinux.eu',
+        homepage_url="http://tox.testun.org",
         packages=['tox', ],
         entry_points={'console_scripts': 'tox=tox:cmdline\ntox-quickstart=tox._quickstart:main'},
         # we use a public tox version to test, see tox.ini's testenv
