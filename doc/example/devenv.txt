@@ -1,0 +1,64 @@
+
+Development environment
+=======================
+
+Tox can be used to prepare development virtual environment for local projects.
+This feature can be useful in order to preserve environment across team members
+working on same project. It can be also used by deployment tools to prepare
+proper environments.
+
+*devenv* would be created at specific directory, not within ``.tox`` directory
+as other test environments. Other than that, configuration for this environment
+is very similar to other tox envs.
+
+
+Configuration
+-------------
+
+Firstly, you need to prepare configuration for your development environment. In
+order to do that, we must define proper section at ``tox.ini`` file and tell at
+what directory environment should be created. Moreover, we need to specify
+python version that should be picked::
+
+    [devenv]
+    envdir = devenv
+    basepython = python2.7
+
+
+Actually, you can configure a lot more, those are the only required settings.
+In example you can add ``deps`` and ``commands`` settings.
+
+
+.. note:: ``envdir`` should be *relative* path to where ``tox.ini`` is located.
+
+
+Creating development environment
+--------------------------------
+
+Once ``devenv`` section is defined we can instrument tox to create our
+environment::
+
+    tox --devenv
+
+This will create an environment at path specified by ``envdir`` under ``devenv``
+section.
+
+
+
+Full configuration example
+--------------------------
+
+Let's say we want our development environment sit at ``devenv``. We create this
+directory manually and put ``requirements.txt`` file there. We want to work on
+Python 2.7.
+
+Here is example configuration for that::
+
+    [devenv]
+    envdir = devenv
+    changedir = devenv
+    basepython = python2.7
+    commands =
+        pip install -r requirements.txt
+
+
