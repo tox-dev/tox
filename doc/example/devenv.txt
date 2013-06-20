@@ -29,8 +29,6 @@ Actually, you can configure a lot more, those are the only required settings.
 In example you can add ``deps`` and ``commands`` settings.
 
 
-.. note:: ``envdir`` should be *relative* path to where ``tox.ini`` is located.
-
 
 Creating development environment
 --------------------------------
