@@ -44,6 +44,22 @@ class TestVenvConfig:
         assert dep2.indexserver.name == "xyz"
         assert dep2.indexserver.url == "xyz_repo"
 
+    def test_envdir_set_manually(self, tmpdir, newconfig):
+        config = newconfig([], """
+            [testenv:devenv]
+            envdir = devenv
+        """)
+        envconfig = config.envconfigs['devenv']
+        assert envconfig.envdir == tmpdir.join('devenv')
+
+    def test_envdir_set_manually_with_substitutions(self, tmpdir, newconfig):
+        config = newconfig([], """
+            [testenv:devenv]
+            envdir = {toxworkdir}/foobar
+        """)
+        envconfig = config.envconfigs['devenv']
+        assert envconfig.envdir == config.toxworkdir.join('foobar')
+
 class TestConfigPackage:
     def test_defaults(self, tmpdir, newconfig):
         config = newconfig([], "")
