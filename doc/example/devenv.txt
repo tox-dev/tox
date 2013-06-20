@@ -18,11 +18,13 @@ Configuration
 Firstly, you need to prepare configuration for your development environment. In
 order to do that, we must define proper section at ``tox.ini`` file and tell at
 what directory environment should be created. Moreover, we need to specify
-python version that should be picked::
+python version that should be picked and tell tox not to perform any package
+related steps::
 
     [testenv:devenv]
     envdir = devenv
     basepython = python2.7
+    package = False
 
 
 Actually, you can configure a lot more, those are the only required settings.
@@ -53,6 +55,7 @@ Python 2.7.
 Here is example configuration for that::
 
     [testenv:devenv]
+    package = False
     envdir = devenv
     changedir = devenv
     basepython = python2.7
