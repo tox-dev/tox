@@ -36,7 +36,7 @@ Creating development environment
 Once ``devenv`` section is defined we can instrument tox to create our
 environment::
 
-    tox -e devenv --envonly
+    tox -e devenv
 
 This will create an environment at path specified by ``envdir`` under
 ``[testenv:devenv]`` section.
