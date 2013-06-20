@@ -163,6 +163,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
    (including when installing the project sdist package).
 
 
+.. confval:: envdir
+
+   .. versionadded:: 1.5
+
+   User can set specific path for environment. If path would not be absolute it
+   would be treated as relative to ``{toxinidir}``. **default**:
+   ``{toxworkdir}/{envname}``
+
 Substitutions
 ---------------------
 

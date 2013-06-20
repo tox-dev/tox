@@ -20,7 +20,7 @@ order to do that, we must define proper section at ``tox.ini`` file and tell at
 what directory environment should be created. Moreover, we need to specify
 python version that should be picked::
 
-    [devenv]
+    [testenv:devenv]
     envdir = devenv
     basepython = python2.7
 
@@ -38,10 +38,10 @@ Creating development environment
 Once ``devenv`` section is defined we can instrument tox to create our
 environment::
 
-    tox --devenv
+    tox -e devenv --envonly
 
-This will create an environment at path specified by ``envdir`` under ``devenv``
-section.
+This will create an environment at path specified by ``envdir`` under
+``[testenv:devenv]`` section.
 
 
 
@@ -54,7 +54,7 @@ Python 2.7.
 
 Here is example configuration for that::
 
-    [devenv]
+    [testenv:devenv]
     envdir = devenv
     changedir = devenv
     basepython = python2.7
