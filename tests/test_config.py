@@ -60,6 +60,20 @@ class TestVenvConfig:
         envconfig = config.envconfigs['devenv']
         assert envconfig.envdir == config.toxworkdir.join('foobar')
 
+    def test_package_flag(self, tmpdir, newconfig):
+        config = newconfig([], """
+            [testenv:py27]
+        """)
+        envconfig = config.envconfigs['py27']
+        assert envconfig.package == True
+
+        config = newconfig([], """
+            [testenv:py27]
+            package = False
+        """)
+        envconfig = config.envconfigs['py27']
+        assert envconfig.package == False
+
 class TestConfigPackage:
     def test_defaults(self, tmpdir, newconfig):
         config = newconfig([], "")
