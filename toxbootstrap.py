@@ -192,7 +192,7 @@ def cmdline(argv=None):
         # XXX: we use --no-site-packages because: if tox is installed in global
         # site-packages, then pip will not install it locally. ideal fix for
         # this should be to first look for tox in the global scripts/ directory
-        run('%s virtualenv.py --no-site-packages --distribute %s' %
+        run('%s virtualenv.py --no-site-packages --setuptools %s' %
                 (sys.executable, TENV))
         logging.info("removing virtualenv.py script after bootstrap venv creation")
         for x in ('', 'o', 'c'):
@@ -209,11 +209,6 @@ def cmdline(argv=None):
 
     # install/upgrade tox itself
     if USETOXDEV:
-        if 'PIP_DOWNLOAD_CACHE' in os.environ:
-            cache = ""
-        else:
-            cache = "--download-cache=_download"
-            ensuredir('_download')
         run('%s install -q -i http://pypi.testrun.org '
             '--upgrade %s tox' % (pip, cache))
     elif any([
