@@ -835,8 +835,10 @@ class TestIndexServer:
         """
         config = newconfig([], inisource)
         homedir = str(py.path.local._gethomedir())
-        assert config.indexserver['default'].url == "file://{h}/.pip/downloads/simple".format(h=homedir)
-        assert config.indexserver['local1'].url == config.indexserver['default'].url
+        expected = "file://%s/.pip/downloads/simple" % homedir
+        assert config.indexserver['default'].url == expected
+        assert config.indexserver['local1'].url == \
+               config.indexserver['default'].url
 
 class TestParseEnv:
 
