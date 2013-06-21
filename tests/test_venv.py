@@ -467,7 +467,7 @@ class TestCreationConfig:
         venv = VirtualEnv(envconfig, session=mocksession)
         venv.update()
         cconfig = venv._getliveconfig()
-        cconfig.distribute = False
+        cconfig.distribute = True
         cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
         venv.update()

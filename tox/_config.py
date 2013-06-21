@@ -303,7 +303,7 @@ class parseini:
                 name = depline.strip()
                 ixserver = None
             vc.deps.append(DepConfig(name, ixserver))
-        vc.distribute = reader.getbool(section, "distribute", True)
+        vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = reader.getbool(section, "sitepackages", False)
         vc.downloadcache = None
         downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", None)

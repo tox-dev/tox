@@ -352,7 +352,7 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
-        assert envconfig.distribute == True
+        assert envconfig.distribute == False
         assert envconfig.sitepackages == False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
         assert envconfig.setenv is None

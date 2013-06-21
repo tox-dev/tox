@@ -26,7 +26,7 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=open("README.rst").read(),
         url='http://tox.testrun.org/',
-        version='1.5.dev11',
+        version='1.5.dev12',
         license='http://opensource.org/licenses/MIT',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',

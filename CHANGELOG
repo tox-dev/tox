@@ -1,6 +1,9 @@
 1.5.0.dev
 -----------------
 
+- fix issue104: use setuptools by default, instead of distribute,
+  now that setuptools has distribute merged.
+
 - make sure test commands are searched first in the virtualenv 
 
 - rename README.txt to README.rst to make bitbucket happier

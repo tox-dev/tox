@@ -125,9 +125,12 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: distribute=True|False
 
-    Set to ``False`` if you want to use setuptools_ instead of the default
-    distribute_ in the virtual environment.
-    **default:** True.
+    Set to ``True`` if you want to use distribute_ instead of the default
+    setuptools_ in the virtual environment.  Prior to tox-1.5 the
+    default was True and now is False, meaning ``setuptools`` is used 
+    (note that setuptools-0.7 merged with distribute).  In future versions 
+    of tox this option might be ignored and setuptools always chosen.
+    **default:** False.
 
 .. confval:: sitepackages=True|False
 
