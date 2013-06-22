@@ -894,8 +894,6 @@ class TestCmdInvocation:
             *docs*
         """)
 
-    @py.test.mark.xfail("sys.version_info < (2,6)",
-        reason="virtualenv3 cannot be imported")
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
         result = cmd.run("tox", "-c", ini, "--showconfig")
