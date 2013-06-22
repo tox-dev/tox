@@ -6,9 +6,7 @@
 
 - make sure test commands are searched first in the virtualenv 
 
-- rename README.txt to README.rst to make bitbucket happier
-
-- re-fix issue2 - add command_whitelist to be used in ``[testenv*]``
+- re-fix issue2 - add whitelist_externals to be used in ``[testenv*]``
   sections, allowing to avoid warnings for commands such as ``make``,
   used from the commands value.
 
@@ -24,8 +22,8 @@
 
 - depend on virtualenv-1.9.1 
 
-- use either --distribute or --setuptools depending 
-  on "distribute" env config
+- rename README.txt to README.rst to make bitbucket happier
+
 
 1.4.3
 -----------------

@@ -44,6 +44,22 @@ Available "default" test environments names are::
 However, you can also create your own test environment names,
 see some of the examples in :doc:`examples <../examples>`.
 
+whitelisting a non-virtualenv commands
+-----------------------------------------------
+
+.. versionadded:: 1.5
+
+Sometimes you may want to use tools not contained in your
+virtualenv such as ``make``, ``bash`` or others. To avoid
+warnings you can use the ``whitelist_externals`` testenv
+configuration::
+
+    # content of tox.ini
+    [testenv]
+    whitelist_externals = make
+                          /bin/bash
+
+
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 
 .. _multiindex:

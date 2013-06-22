@@ -4,13 +4,13 @@ tox installation
 Install info in a nutshell
 ----------------------------------
 
-**Pythons**: CPython 2.4-3.2, Jython-2.5.1, pypy-1.5
+**Pythons**: CPython 2.4-3.3, Jython-2.5.1, pypy-1.9ff
 
 **Operating systems**: Linux, Windows, OSX, Unix
 
 **Installer Requirements**: setuptools_ or Distribute_
 
-**License**: GPLv2 or later
+**License**: MIT license
 
 **hg repository**: http://bitbucket.org/hpk42/tox
 
