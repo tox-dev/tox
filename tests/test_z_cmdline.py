@@ -382,6 +382,15 @@ def test_env_PYTHONDONTWRITEBYTECODE(initproj, cmd, monkeypatch):
         "*create*",
     ])
 
+def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
+    initproj("example123", filedefs={'tox.ini': ''})
+    monkeypatch.setenv("VIRTUALENV_PYTHON", '/FOO')
+    result = cmd.run("tox", "-v", "--notest")
+    assert not result.ret, result.stdout.lines
+    result.stdout.fnmatch_lines([
+        "*create*",
+    ])
+
 def test_sdistonly(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
     """})
