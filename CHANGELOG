@@ -1,3 +1,8 @@
+1.5.1.dev
+-----------------
+
+- always unset PYTHONDONTWRITEBYTE because newer setuptools doesn't like it
+
 1.5.0
 -----------------
 

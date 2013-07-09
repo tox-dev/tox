@@ -301,10 +301,11 @@ class VirtualEnv(object):
 
     def _pcall(self, args, venv=True, cwd=None, extraenv={},
             action=None, redirect=True):
-        try:
-            del os.environ['VIRTUALENV_PYTHON']
-        except KeyError:
-            pass
+        for name in ("VIRTUALENV_PYTHON", "PYTHONDONTWRITEBYTECODE"):
+            try:
+                del os.environ[name]
+            except KeyError:
+                pass
         assert cwd
         cwd.ensure(dir=1)
         old = self.patchPATH()
