@@ -327,6 +327,12 @@ class Session:
                 return False
             return True
 
+    def finishvenv(self, venv):
+        action = self.newaction(venv, "finishvenv")
+        with action:
+            venv.finish()
+            return True
+
     def installpkg(self, venv, sdist_path):
         action = self.newaction(venv, "installpkg", sdist_path)
         with action:
@@ -375,6 +381,8 @@ class Session:
             if self.setupenv(venv):
                 if not self.config.skipsdist:
                     self.installpkg(venv, sdist_path)
+                else:
+                    self.finishvenv(venv)
                 self.runtestenv(venv)
         retcode = self._summary()
         return retcode

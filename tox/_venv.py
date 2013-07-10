@@ -197,11 +197,14 @@ class VirtualEnv(object):
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
 
+    def finish(self):
+        self._getliveconfig().writeconfig(self.path_config)
+
     def installpkg(self, sdistpath, action):
         assert action is not None
         if getattr(self, 'just_created', False):
             action.setactivity("inst", sdistpath)
-            self._getliveconfig().writeconfig(self.path_config)
+            self.finish()
             extraopts = []
         else:
             action.setactivity("inst-nodeps", sdistpath)
