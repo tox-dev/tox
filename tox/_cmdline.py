@@ -362,19 +362,24 @@ class Session:
         return sdist_path
 
     def subcommand_test(self):
-        sdist_path = self.sdist()
-        if not sdist_path:
-            return 2
+        if self.config.skipsdist:
+            self.report.info("skipping sdist step")
+            sdist_path = None
+        else:
+            sdist_path = self.sdist()
+            if not sdist_path:
+                return 2
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                self.installpkg(venv, sdist_path)
-                self.runtestenv(venv, sdist_path)
+                if not self.config.skipsdist:
+                    self.installpkg(venv, sdist_path)
+                self.runtestenv(venv)
         retcode = self._summary()
         return retcode
 
-    def runtestenv(self, venv, sdist_path, redirect=False):
+    def runtestenv(self, venv, redirect=False):
         if not self.config.option.notest:
             if venv.status:
                 return
@@ -408,6 +413,7 @@ class Session:
         self.report.keyvalue("toxworkdir: ", self.config.toxworkdir)
         self.report.keyvalue("setupdir:   ", self.config.setupdir)
         self.report.keyvalue("distshare:  ", self.config.distshare)
+        self.report.keyvalue("skipsdist:  ", self.config.skipsdist)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)

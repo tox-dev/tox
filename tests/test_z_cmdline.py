@@ -252,6 +252,23 @@ def test_unknown_environment(cmd, initproj):
         "*ERROR*unknown*environment*qpwoei*",
     ])
 
+def test_skip_sdist(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'setup.py': """
+            syntax error
+        """
+        ,
+        'tox.ini': '''
+            [tox]
+            skipsdist=True
+            [testenv]
+            commands=echo done
+        '''
+    })
+    result = cmd.run("tox", )
+    assert result.ret == 0
+
 def test_sdist_fails(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},

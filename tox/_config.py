@@ -194,6 +194,7 @@ class parseini:
                               homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
                                            "{toxinidir}/.tox")
+        config.skipsdist = reader.getbool(toxsection, "skipsdist", False)
         config.minversion = reader.getdefault(toxsection, "minversion", None)
 
         # determine indexserver dictionary

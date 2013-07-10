@@ -21,6 +21,7 @@ List of optional global options::
     distdir=path      # defaults to {toxworkdir}/dist
     distshare=path    # defaults to {homedir}/.tox/distshare
     envlist=ENVLIST   # defaults to the list of all environments
+    skipsdist=BOOL    # defaults to false
 
 
 ``tox`` autodetects if it is running in a Jenkins_ context
