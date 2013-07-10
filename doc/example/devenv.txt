@@ -7,10 +7,6 @@ This feature can be useful in order to preserve environment across team members
 working on same project. It can be also used by deployment tools to prepare
 proper environments.
 
-*devenv* would be created at specific directory, not within ``.tox`` directory
-as other test environments. Other than that, configuration for this environment
-is very similar to other tox envs.
-
 
 Configuration
 -------------
@@ -18,18 +14,18 @@ Configuration
 Firstly, you need to prepare configuration for your development environment. In
 order to do that, we must define proper section at ``tox.ini`` file and tell at
 what directory environment should be created. Moreover, we need to specify
-python version that should be picked and tell tox not to perform any package
-related steps::
+python version that should be picked::
 
     [testenv:devenv]
     envdir = devenv
     basepython = python2.7
-    package = False
+    commands =
+    deps =
 
 
 Actually, you can configure a lot more, those are the only required settings.
-In example you can add ``deps`` and ``commands`` settings.
-
+In example you can add ``deps`` and ``commands`` settings. Here, we tell tox
+not to pick ``commands`` or ``deps`` from base ``testenv`` configuration.
 
 
 Creating development environment
@@ -44,22 +40,18 @@ This will create an environment at path specified by ``envdir`` under
 ``[testenv:devenv]`` section.
 
 
-
 Full configuration example
 --------------------------
 
-Let's say we want our development environment sit at ``devenv``. We create this
-directory manually and put ``requirements.txt`` file there. We want to work on
-Python 2.7.
+Let's say we want our development environment sit at ``devenv`` and pull
+packages from ``requirements.txt`` file which we create at the same directory
+as ``tox.ini`` file. We also want to speciy Python version to be 2.7.
 
 Here is example configuration for that::
 
     [testenv:devenv]
-    package = False
     envdir = devenv
-    changedir = devenv
     basepython = python2.7
     commands =
         pip install -r requirements.txt
-
 
