@@ -333,6 +333,16 @@ class Session:
             venv.finish()
             return True
 
+    def developpkg(self, venv, setupdir):
+        action = self.newaction(venv, "developpkg", setupdir)
+        with action:
+            try:
+                venv.developpkg(setupdir, action)
+                return True
+            except tox.exception.InvocationError:
+                venv.status = sys.exc_info()[1]
+                return False
+
     def installpkg(self, venv, sdist_path):
         action = self.newaction(venv, "installpkg", sdist_path)
         with action:
@@ -379,10 +389,12 @@ class Session:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                if not self.config.skipsdist:
-                    self.installpkg(venv, sdist_path)
-                else:
+                if self.config.skipsdist:
+                    if self.config.usedevelop:
+                        self.developpkg(venv, self.config.setupdir)
                     self.finishvenv(venv)
+                else:
+                    self.installpkg(venv, sdist_path)
                 self.runtestenv(venv)
         retcode = self._summary()
         return retcode
@@ -422,6 +434,7 @@ class Session:
         self.report.keyvalue("setupdir:   ", self.config.setupdir)
         self.report.keyvalue("distshare:  ", self.config.distshare)
         self.report.keyvalue("skipsdist:  ", self.config.skipsdist)
+        self.report.keyvalue("usedevelop: ", self.config.usedevelop)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)

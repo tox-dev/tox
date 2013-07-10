@@ -1,4 +1,5 @@
 from __future__ import with_statement
+import subprocess
 import sys, os, re
 import py
 import tox
@@ -199,6 +200,29 @@ class VirtualEnv(object):
 
     def finish(self):
         self._getliveconfig().writeconfig(self.path_config)
+
+    def _needs_reinstall(self, setupdir, action):
+        setup_py = setupdir.join('setup.py')
+        setup_cfg = setupdir.join('setup.cfg')
+        args = [str(self.getconfigexecutable()), str(setup_py), '--name']
+        output = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+        out = output.communicate()
+        name = out[0].strip().decode('utf-8')
+        egg_info = setupdir.join('.'.join((name, 'egg-info')))
+        for conf_file in (setup_py, setup_cfg):
+            if (conf_file.check()
+                    and conf_file.mtime() > egg_info.mtime()):
+                return True
+        return False
+
+    def developpkg(self, setupdir, action):
+        assert action is not None
+        self.finish()
+        if not self._needs_reinstall(setupdir, action):
+            return
+        extraopts = ['--no-deps']
+        self._install(['-e', setupdir], extraopts=extraopts, action=action)
 
     def installpkg(self, sdistpath, action):
         assert action is not None

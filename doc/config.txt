@@ -22,6 +22,7 @@ List of optional global options::
     distshare=path    # defaults to {homedir}/.tox/distshare
     envlist=ENVLIST   # defaults to the list of all environments
     skipsdist=BOOL    # defaults to false
+    usedevelop=BOOL   # use python setup.py develop, defaults to false
 
 
 ``tox`` autodetects if it is running in a Jenkins_ context
