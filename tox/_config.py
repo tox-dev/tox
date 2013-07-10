@@ -256,7 +256,6 @@ class parseini:
         reader = IniReader(self._cfg, fallbacksections=["testenv"])
         reader.addsubstitions(**subs)
         vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
-        vc.package = reader.getbool(section, "package", True)
         vc.args_are_paths = reader.getbool(section, "args_are_paths", True)
         if reader.getdefault(section, "python", None):
             raise tox.exception.ConfigError(

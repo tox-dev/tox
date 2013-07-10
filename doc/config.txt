@@ -172,15 +172,6 @@ Complete list of settings that you can put into ``testenv*`` sections:
    ``{toxworkdir}/{envname}``
 
 
-.. confval:: package=BOOL
-
-   .. versionadded:: 1.5
-
-   Set to ``False`` if you don't want tox to perform package-related steps
-   (building source distribution and installing it). Might be useful for
-   non-package projects (i.e. all that lacks ``setup.py`` file). **default**:
-   ``True``.
-
 Substitutions
 ---------------------
 

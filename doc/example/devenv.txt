@@ -52,6 +52,7 @@ Here is example configuration for that::
     [testenv:devenv]
     envdir = devenv
     basepython = python2.7
+    deps =
     commands =
         pip install -r requirements.txt
 
