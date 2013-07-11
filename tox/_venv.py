@@ -209,8 +209,8 @@ class VirtualEnv(object):
         name = output.strip().decode('utf-8')
         egg_info = setupdir.join('.'.join((name, 'egg-info')))
         for conf_file in (setup_py, setup_cfg):
-            if (conf_file.check()
-                    and conf_file.mtime() > egg_info.mtime()):
+            if (not egg_info.check() or (conf_file.check()
+                    and conf_file.mtime() > egg_info.mtime())):
                 return True
         return False
 

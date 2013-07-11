@@ -359,6 +359,59 @@ def test_test_simple(cmd, initproj):
     ])
 
 
+def test_test_develop(cmd, initproj):
+    initproj("example123-0.5", filedefs={
+        'tests': {'test_hello.py': """
+            def test_hello(pytestconfig):
+                pass
+            """,
+        },
+        'tox.ini': '''
+            [tox]
+            usedevelop=True
+            [testenv]
+            changedir=tests
+            commands=
+                py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
+            deps=pytest
+        '''
+    })
+    result = cmd.run("tox")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*junit-python.xml*",
+        "*1 passed*",
+    ])
+    result = cmd.run("tox", "-epython", )
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+        "*summary*",
+        "*python: commands succeeded"
+    ])
+    # see that things work with a different CWD
+    old = cmd.tmpdir.chdir()
+    result = cmd.run("tox", "-c", "example123/tox.ini")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+        "*summary*",
+        "*python: commands succeeded"
+    ])
+    old.chdir()
+    # see that tests can also fail and retcode is correct
+    testfile = py.path.local("tests").join("test_hello.py")
+    assert testfile.check()
+    testfile.write("def test_fail(): assert 0")
+    result = cmd.run("tox", )
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*1 failed*",
+        "*summary*",
+        "*python: *failed*",
+    ])
+
+
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
