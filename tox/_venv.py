@@ -1,5 +1,4 @@
 from __future__ import with_statement
-import subprocess
 import sys, os, re
 import py
 import tox
@@ -205,10 +204,9 @@ class VirtualEnv(object):
         setup_py = setupdir.join('setup.py')
         setup_cfg = setupdir.join('setup.cfg')
         args = [str(self.getconfigexecutable()), str(setup_py), '--name']
-        output = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-        out = output.communicate()
-        name = out[0].strip().decode('utf-8')
+        output = action.popen(args, cwd=setupdir, redirect=False,
+                              returnout=True)
+        name = output.strip().decode('utf-8')
         egg_info = setupdir.join('.'.join((name, 'egg-info')))
         for conf_file in (setup_py, setup_cfg):
             if (conf_file.check()

@@ -73,7 +73,7 @@ class Action(object):
         f.flush()
         return f
 
-    def popen(self, args, cwd=None, env=None, redirect=True):
+    def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
         logged_command = "%s$ %s" %(cwd, " ".join(map(str, args)))
         f = outpath = None
         if redirect:
@@ -82,6 +82,8 @@ class Action(object):
                     self.id, self.msg, args, env))
             f.flush()
             self.popen_outpath = outpath = py.path.local(f.name)
+        elif returnout:
+            f = subprocess.PIPE
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
@@ -389,9 +391,9 @@ class Session:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                if self.config.skipsdist:
-                    if self.config.usedevelop:
-                        self.developpkg(venv, self.config.setupdir)
+                if self.config.usedevelop:
+                    self.developpkg(venv, self.config.setupdir)
+                elif self.config.skipsdist:
                     self.finishvenv(venv)
                 else:
                     self.installpkg(venv, sdist_path)
