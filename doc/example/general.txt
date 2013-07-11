@@ -144,4 +144,37 @@ section, for example::
     [testenv:py27]
     basepython=/my/path/to/python2.7
 
+Avoiding expensive sdist
+------------------------
+
+Some projects are large enough that running and sdist, followed by
+an install everytime can be prohibitively costly. To solve this,
+there are two different options you can add to the ``tox`` section. First,
+you can simply ask tox to please not make an sdist::
+
+    [tox]
+    skipsdist=True
+
+If you do this, your local software package will not be installed into
+the virtualenv. You should probably be ok with that, or take steps
+to deal with it in your commands section::
+
+    [testenv]
+    commands =
+        python setup.py develop
+        py.test
+
+Running setup.py develop is a common enough model that it has its own option::
+
+    [tox]
+    usedevelop=True
+
+Which will set ``skipsdist`` to True and then perform the ``setup.py develop``
+step at the place where ``tox`` normally perfoms the installation of the sdist.
+Specifically, it actually runs ``pip install -e .`` behind the scenes, which
+itself calls ``setup.py develop``.
+
+There is an optimization coded in to not bother re-running the command if
+``$projectname.egg-info`` is newer than ``setup.py`` or ``setup.cfg``.
+
 .. include:: ../links.txt
