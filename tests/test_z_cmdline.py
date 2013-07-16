@@ -362,7 +362,16 @@ def test_test_simple(cmd, initproj):
 def test_develop(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
     """})
-    result = cmd.run("tox", "-v", "--develop")
+    result = cmd.run("tox", "-vv", "--develop")
+    assert not result.ret
+    assert "sdist-make" not in result.stdout.str()
+
+def test_usedevelop(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+            [tox]
+            usedevelop=True
+    """})
+    result = cmd.run("tox", "-vv")
     assert not result.ret
     assert "sdist-make" not in result.stdout.str()
 

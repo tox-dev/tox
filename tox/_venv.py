@@ -217,14 +217,15 @@ class VirtualEnv(object):
     def developpkg(self, setupdir, action):
         assert action is not None
         if getattr(self, 'just_created', False):
-            action.setactivity("inst", sdistpath)
+            action.setactivity("develop-inst", setupdir)
             self.finish()
             extraopts = []
         else:
-            action.setactivity("inst-nodeps", sdistpath)
+            if not self._needs_reinstall(setupdir, action):
+                action.setactivity("develop-inst-noop", setupdir)
+                return
+            action.setactivity("develop-inst-nodeps", setupdir)
             extraopts = ['--no-deps']
-        if not self._needs_reinstall(setupdir, action):
-            return
         self._install(['-e', setupdir], extraopts=extraopts, action=action)
 
     def installpkg(self, sdistpath, action):
