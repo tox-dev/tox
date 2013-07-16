@@ -91,7 +91,8 @@ def prepare_parse(pkgname):
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist packaging activity.")
     parser.add_argument("--develop", action="store_true", dest="develop",
-        help="install package in the venv using setup.py develop")
+        help="install package in the venv using setup.py develop using "
+             "'pip -e .'")
     parser.add_argument("--installpkg", action="store", default=None,
         help="use specified package for installation into venv")
     parser.add_argument('-i', action="append",
