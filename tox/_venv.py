@@ -209,7 +209,7 @@ class VirtualEnv(object):
     def _needs_reinstall(self, setupdir, action):
         setup_py = setupdir.join('setup.py')
         setup_cfg = setupdir.join('setup.cfg')
-        args = [str(self.getconfigexecutable()), str(setup_py), '--name']
+        args = [self.envconfig.envpython, str(setup_py), '--name']
         output = action.popen(args, cwd=setupdir, redirect=False,
                               returnout=True)
         name = output.strip().decode('utf-8')
