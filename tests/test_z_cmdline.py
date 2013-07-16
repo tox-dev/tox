@@ -359,7 +359,14 @@ def test_test_simple(cmd, initproj):
     ])
 
 
-def test_test_develop(cmd, initproj):
+def test_develop(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+    """})
+    result = cmd.run("tox", "-v", "--develop")
+    assert not result.ret
+    assert "sdist-make" not in result.stdout.str()
+
+def test_test_usedevelop(cmd, initproj):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': """
             def test_hello(pytestconfig):
@@ -376,12 +383,13 @@ def test_test_develop(cmd, initproj):
             deps=pytest
         '''
     })
-    result = cmd.run("tox")
+    result = cmd.run("tox", "-v")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*junit-python.xml*",
         "*1 passed*",
     ])
+    assert "sdist-make" not in result.stdout.str()
     result = cmd.run("tox", "-epython", )
     assert not result.ret
     result.stdout.fnmatch_lines([

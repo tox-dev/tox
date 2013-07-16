@@ -391,7 +391,7 @@ class Session:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                if self.config.usedevelop:
+                if self.config.usedevelop or self.config.option.develop:
                     self.developpkg(venv, self.config.setupdir)
                 elif self.config.skipsdist:
                     self.finishvenv(venv)

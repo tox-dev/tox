@@ -90,6 +90,8 @@ def prepare_parse(pkgname):
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist packaging activity.")
+    parser.add_argument("--develop", action="store_true", dest="develop",
+        help="install package in the venv using setup.py develop")
     parser.add_argument("--installpkg", action="store", default=None,
         help="use specified package for installation into venv")
     parser.add_argument('-i', action="append",
@@ -195,8 +197,9 @@ class parseini:
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
                                            "{toxinidir}/.tox")
         config.usedevelop = reader.getbool(toxsection, "usedevelop", False)
-        config.skipsdist = reader.getbool(
-            toxsection, "skipsdist", config.usedevelop)
+        config.skipsdist = reader.getbool(toxsection, "skipsdist",
+                                          config.usedevelop
+                                          or config.option.develop)
         config.minversion = reader.getdefault(toxsection, "minversion", None)
 
         # determine indexserver dictionary
