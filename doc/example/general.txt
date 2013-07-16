@@ -169,7 +169,8 @@ Running setup.py develop is a common enough model that it has its own option::
     [tox]
     usedevelop=True
 
-Which will set ``skipsdist`` to True and then perform the ``setup.py develop``
+And a corresponding command line option ``--develop``, which will set
+``skipsdist`` to True and then perform the ``setup.py develop``
 step at the place where ``tox`` normally perfoms the installation of the sdist.
 Specifically, it actually runs ``pip install -e .`` behind the scenes, which
 itself calls ``setup.py develop``.
