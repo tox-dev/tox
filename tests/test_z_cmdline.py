@@ -252,6 +252,23 @@ def test_unknown_environment(cmd, initproj):
         "*ERROR*unknown*environment*qpwoei*",
     ])
 
+def test_skip_sdist(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'setup.py': """
+            syntax error
+        """
+        ,
+        'tox.ini': '''
+            [tox]
+            skipsdist=True
+            [testenv]
+            commands=echo done
+        '''
+    })
+    result = cmd.run("tox", )
+    assert result.ret == 0
+
 def test_sdist_fails(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
@@ -312,6 +329,67 @@ def test_test_simple(cmd, initproj):
         "*junit-python.xml*",
         "*1 passed*",
     ])
+    result = cmd.run("tox", "-epython", )
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+        "*summary*",
+        "*python: commands succeeded"
+    ])
+    # see that things work with a different CWD
+    old = cmd.tmpdir.chdir()
+    result = cmd.run("tox", "-c", "example123/tox.ini")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+        "*summary*",
+        "*python: commands succeeded"
+    ])
+    old.chdir()
+    # see that tests can also fail and retcode is correct
+    testfile = py.path.local("tests").join("test_hello.py")
+    assert testfile.check()
+    testfile.write("def test_fail(): assert 0")
+    result = cmd.run("tox", )
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*1 failed*",
+        "*summary*",
+        "*python: *failed*",
+    ])
+
+
+def test_develop(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+    """})
+    result = cmd.run("tox", "-v", "--develop")
+    assert not result.ret
+    assert "sdist-make" not in result.stdout.str()
+
+def test_test_usedevelop(cmd, initproj):
+    initproj("example123-0.5", filedefs={
+        'tests': {'test_hello.py': """
+            def test_hello(pytestconfig):
+                pass
+            """,
+        },
+        'tox.ini': '''
+            [tox]
+            usedevelop=True
+            [testenv]
+            changedir=tests
+            commands=
+                py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
+            deps=pytest
+        '''
+    })
+    result = cmd.run("tox", "-v")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*junit-python.xml*",
+        "*1 passed*",
+    ])
+    assert "sdist-make" not in result.stdout.str()
     result = cmd.run("tox", "-epython", )
     assert not result.ret
     result.stdout.fnmatch_lines([

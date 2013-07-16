@@ -197,11 +197,36 @@ class VirtualEnv(object):
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
 
+    def finish(self):
+        self._getliveconfig().writeconfig(self.path_config)
+
+    def _needs_reinstall(self, setupdir, action):
+        setup_py = setupdir.join('setup.py')
+        setup_cfg = setupdir.join('setup.cfg')
+        args = [str(self.getconfigexecutable()), str(setup_py), '--name']
+        output = action.popen(args, cwd=setupdir, redirect=False,
+                              returnout=True)
+        name = output.strip().decode('utf-8')
+        egg_info = setupdir.join('.'.join((name, 'egg-info')))
+        for conf_file in (setup_py, setup_cfg):
+            if (not egg_info.check() or (conf_file.check()
+                    and conf_file.mtime() > egg_info.mtime())):
+                return True
+        return False
+
+    def developpkg(self, setupdir, action):
+        assert action is not None
+        self.finish()
+        if not self._needs_reinstall(setupdir, action):
+            return
+        extraopts = ['--no-deps']
+        self._install(['-e', setupdir], extraopts=extraopts, action=action)
+
     def installpkg(self, sdistpath, action):
         assert action is not None
         if getattr(self, 'just_created', False):
             action.setactivity("inst", sdistpath)
-            self._getliveconfig().writeconfig(self.path_config)
+            self.finish()
             extraopts = []
         else:
             action.setactivity("inst-nodeps", sdistpath)

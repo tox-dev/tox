@@ -73,7 +73,7 @@ class Action(object):
         f.flush()
         return f
 
-    def popen(self, args, cwd=None, env=None, redirect=True):
+    def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
         logged_command = "%s$ %s" %(cwd, " ".join(map(str, args)))
         f = outpath = None
         if redirect:
@@ -82,6 +82,8 @@ class Action(object):
                     self.id, self.msg, args, env))
             f.flush()
             self.popen_outpath = outpath = py.path.local(f.name)
+        elif returnout:
+            f = subprocess.PIPE
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
@@ -327,6 +329,22 @@ class Session:
                 return False
             return True
 
+    def finishvenv(self, venv):
+        action = self.newaction(venv, "finishvenv")
+        with action:
+            venv.finish()
+            return True
+
+    def developpkg(self, venv, setupdir):
+        action = self.newaction(venv, "developpkg", setupdir)
+        with action:
+            try:
+                venv.developpkg(setupdir, action)
+                return True
+            except tox.exception.InvocationError:
+                venv.status = sys.exc_info()[1]
+                return False
+
     def installpkg(self, venv, sdist_path):
         action = self.newaction(venv, "installpkg", sdist_path)
         with action:
@@ -362,19 +380,28 @@ class Session:
         return sdist_path
 
     def subcommand_test(self):
-        sdist_path = self.sdist()
-        if not sdist_path:
-            return 2
+        if self.config.skipsdist:
+            self.report.info("skipping sdist step")
+            sdist_path = None
+        else:
+            sdist_path = self.sdist()
+            if not sdist_path:
+                return 2
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                self.installpkg(venv, sdist_path)
-                self.runtestenv(venv, sdist_path)
+                if self.config.usedevelop or self.config.option.develop:
+                    self.developpkg(venv, self.config.setupdir)
+                elif self.config.skipsdist:
+                    self.finishvenv(venv)
+                else:
+                    self.installpkg(venv, sdist_path)
+                self.runtestenv(venv)
         retcode = self._summary()
         return retcode
 
-    def runtestenv(self, venv, sdist_path, redirect=False):
+    def runtestenv(self, venv, redirect=False):
         if not self.config.option.notest:
             if venv.status:
                 return
@@ -408,6 +435,8 @@ class Session:
         self.report.keyvalue("toxworkdir: ", self.config.toxworkdir)
         self.report.keyvalue("setupdir:   ", self.config.setupdir)
         self.report.keyvalue("distshare:  ", self.config.distshare)
+        self.report.keyvalue("skipsdist:  ", self.config.skipsdist)
+        self.report.keyvalue("usedevelop: ", self.config.usedevelop)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
