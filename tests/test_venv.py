@@ -473,6 +473,18 @@ class TestCreationConfig:
         venv.update()
         mocksession.report.expect("verbosity0", "*recreate*")
 
+    def test_develop_recreation(self, newconfig, mocksession):
+        config = newconfig([], "")
+        envconfig = config.envconfigs['python']
+        venv = VirtualEnv(envconfig, session=mocksession)
+        venv.update()
+        cconfig = venv._getliveconfig()
+        cconfig.develop = True
+        cconfig.writeconfig(venv.path_config)
+        mocksession._clearmocks()
+        venv.update()
+        mocksession.report.expect("verbosity0", "*recreate*")
+
 class TestVenvTest:
 
     def test_patchPATH(self, newmocksession, monkeypatch):

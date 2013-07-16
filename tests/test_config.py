@@ -370,6 +370,7 @@ class TestConfigTestEnv:
         assert envconfig.changedir == config.setupdir
         assert envconfig.distribute == False
         assert envconfig.sitepackages == False
+        assert envconfig.develop == False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
         assert envconfig.setenv is None
 
