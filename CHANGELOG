@@ -1,6 +1,10 @@
 1.5.1.dev
 -----------------
 
+- add new config options ``usedevelop`` and ``skipsdist`` as well as a
+  command line option ``--develop`` to install the package-under-test in develop mode.
+  thanks Monty Tailor for the PR.
+
 - always unset PYTHONDONTWRITEBYTE because newer setuptools doesn't like it
 
 1.5.0
