@@ -192,7 +192,7 @@ class VirtualEnv(object):
         if self.envconfig.sitepackages:
             args.append('--system-site-packages')
         # add interpreter explicitly, to prevent using default (virtualenv.ini)
-        args.extend(['--python', config_interpreter])
+        args.extend(['--python', str(config_interpreter)])
         #if sys.platform == "win32":
         #    f, path, _ = py.std.imp.find_module("virtualenv")
         #    f.close()
