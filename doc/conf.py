@@ -261,3 +261,7 @@ def setup(app):
     app.add_description_unit('confval', 'confval',
                              objname='configuration value',
                              indextemplate='pair: %s; configuration value')
+
+
+linkcheck_timeout = 30
+linkcheck_ignore = [r'http://holgerkrekel.net']

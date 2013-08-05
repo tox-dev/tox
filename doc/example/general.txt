@@ -122,7 +122,7 @@ strings which must be compliant with :pep:`386`.
 
 If you want to use this with Jenkins_, also checkout the :ref:`jenkins artifact example`.
 
-.. _verlib: http://bitbucket.org/tarek/distutilsversion/
+.. _verlib: https://bitbucket.org/tarek/distutilsversion/
 
 basepython defaults, overriding
 ++++++++++++++++++++++++++++++++++++++++++

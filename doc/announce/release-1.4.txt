@@ -23,7 +23,7 @@ Installation:
 
 code hosting and issue tracking on bitbucket:
 
-    http://bitbucket.org/hpk42/tox
+    https://bitbucket.org/hpk42/tox
 
 What is tox?
 ----------------
