@@ -14,6 +14,7 @@ import subprocess
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
 from tox._config import parseconfig
+from tox.result import ResultLog
 from subprocess import STDOUT
 
 def now():
@@ -41,6 +42,10 @@ class Action(object):
             self.venvname = self.venv.name
         else:
             self.venvname = "GLOB"
+        cat = {"runtests": "test", "getenv": "setup"}.get(msg)
+        if cat:
+            envlog = session.resultlog.get_envlog(self.venvname)
+            self.commandlog = envlog.get_commandlog(cat)
 
     def __enter__(self):
         self.report.logaction_start(self)
@@ -76,7 +81,8 @@ class Action(object):
     def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
         logged_command = "%s$ %s" %(cwd, " ".join(map(str, args)))
         f = outpath = None
-        if redirect:
+        resultjson = self.session.config.option.resultjson
+        if resultjson or redirect:
             f = self._initlogpath(self.id)
             f.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" %(
                     self.id, self.msg, args, env))
@@ -89,7 +95,7 @@ class Action(object):
             cwd = py.path.local()
         popen = self._popen(args, cwd, env=env, stdout=f, stderr=STDOUT)
         popen.outpath = outpath
-        popen.args = args
+        popen.args = [str(x) for x in args]
         popen.cwd = cwd
         popen.action = self
         self._popenlist.append(popen)
@@ -109,11 +115,18 @@ class Action(object):
             if outpath:
                 self.report.error("invocation failed, logfile: %s" %
                                   outpath)
-                self.report.error(outpath.read())
+                out = outpath.read()
+                self.report.error(out)
+                if hasattr(self, "commandlog"):
+                    self.commandlog.add_command(popen.args, out, ret)
                 raise tox.exception.InvocationError(
                     "%s (see %s)" %(invoked, outpath), ret)
             else:
                 raise tox.exception.InvocationError("%r" %(invoked, ))
+        if not out and outpath:
+            out = outpath.read()
+        if hasattr(self, "commandlog"):
+            self.commandlog.add_command(popen.args, out, ret)
         return out
 
     def _rewriteargs(self, cwd, args):
@@ -233,6 +246,7 @@ class Session:
     def __init__(self, config, popen=subprocess.Popen, Report=Reporter):
         self.config = config
         self.popen = popen
+        self.resultlog = ResultLog()
         self.report = Report(self)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
@@ -319,14 +333,19 @@ class Session:
         action = self.newaction(venv, "getenv", venv.envconfig.envdir)
         with action:
             venv.status = 0
+            envlog = self.resultlog.get_envlog(venv.name)
             try:
                 status = venv.update(action=action)
             except tox.exception.InvocationError:
                 status = sys.exc_info()[1]
             if status:
+                commandlog = envlog.get_commandlog("setup")
+                commandlog.add_command(["setup virtualenv"], str(status), 1)
                 venv.status = status
                 self.report.error(str(status))
                 return False
+            commandpath = venv.getcommandpath("python")
+            envlog.set_python_info(commandpath)
             return True
 
     def finishvenv(self, venv):
@@ -346,6 +365,7 @@ class Session:
                 return False
 
     def installpkg(self, venv, sdist_path):
+        self.resultlog.set_header(installpkg=sdist_path)
         action = self.newaction(venv, "installpkg", sdist_path)
         with action:
             try:
@@ -425,6 +445,12 @@ class Session:
                                               status))
         if not retcode:
             self.report.good("  congratulations :)")
+
+        path = self.config.option.resultjson
+        if path:
+            path = py.path.local(path)
+            path.write(self.resultlog.dumps_json())
+            self.report.line("wrote json report at: %s" % path)
         return retcode
 
     def showconfig(self):

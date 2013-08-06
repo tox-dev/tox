@@ -90,11 +90,13 @@ def prepare_parse(pkgname):
         help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
         help="only perform the sdist packaging activity.")
-    parser.add_argument("--develop", action="store_true", dest="develop",
-        help="install package in the venv using setup.py develop using "
-             "'pip -e .'")
     parser.add_argument("--installpkg", action="store", default=None,
-        help="use specified package for installation into venv")
+        metavar="PATH",
+        help="use specified package for installation into venv, instead of "
+             "creating an sdist.")
+    parser.add_argument("--develop", action="store_true", dest="develop",
+        help="install package in the venv using 'setup.py develop' via "
+             "'pip -e .'")
     parser.add_argument('-i', action="append",
         dest="indexurl", metavar="URL",
         help="set indexserver url (if URL is of form name=url set the "
@@ -102,6 +104,12 @@ def prepare_parse(pkgname):
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
         help="force recreation of virtual environments")
+    parser.add_argument("--result-json", action="store",
+        dest="resultjson", metavar="PATH",
+        help="write a json file with detailed information about "
+             "all commands and results involved.  This will turn off "
+             "pass-through output from running test commands which is "
+             "instead captured into the json result file.")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substition")
     return parser
@@ -193,6 +201,8 @@ class parseini:
             raise ValueError("invalid context")
 
         config.homedir = py.path.local._gethomedir()
+        if config.homedir is None:
+            config.homedir = config.toxinidir  # XXX good idea?
         reader.addsubstitions(toxinidir=config.toxinidir,
                               homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",

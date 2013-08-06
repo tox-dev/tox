@@ -358,6 +358,7 @@ class VirtualEnv(object):
         oldPATH = os.environ['PATH']
         bindir = str(self.envconfig.envbindir)
         os.environ['PATH'] = os.pathsep.join([bindir, oldPATH])
+        self.session.report.verbosity2("setting PATH=%s" % os.environ["PATH"])
         return oldPATH
 
 def getdigest(path):

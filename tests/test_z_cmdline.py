@@ -263,7 +263,7 @@ def test_skip_sdist(cmd, initproj):
             [tox]
             skipsdist=True
             [testenv]
-            commands=echo done
+            commands=python -c "print('done')"
         '''
     })
     result = cmd.run("tox", )
@@ -308,55 +308,64 @@ def test_package_install_fails(cmd, initproj):
         "*InvocationError*",
     ])
 
-def test_test_simple(cmd, initproj):
-    initproj("example123-0.5", filedefs={
-        'tests': {'test_hello.py': """
-            def test_hello(pytestconfig):
-                pass
-            """,
-        },
-        'tox.ini': '''
-            [testenv]
-            changedir=tests
-            commands=
-                py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
-            deps=pytest
-        '''
-    })
-    result = cmd.run("tox")
-    assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*junit-python.xml*",
-        "*1 passed*",
-    ])
-    result = cmd.run("tox", "-epython", )
-    assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*1 passed*",
-        "*summary*",
-        "*python: commands succeeded"
-    ])
-    # see that things work with a different CWD
-    old = cmd.tmpdir.chdir()
-    result = cmd.run("tox", "-c", "example123/tox.ini")
-    assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*1 passed*",
-        "*summary*",
-        "*python: commands succeeded"
-    ])
-    old.chdir()
-    # see that tests can also fail and retcode is correct
-    testfile = py.path.local("tests").join("test_hello.py")
-    assert testfile.check()
-    testfile.write("def test_fail(): assert 0")
-    result = cmd.run("tox", )
-    assert result.ret
-    result.stdout.fnmatch_lines([
-        "*1 failed*",
-        "*summary*",
-        "*python: *failed*",
-    ])
+class TestToxRun:
+    @pytest.fixture
+    def example123(self, initproj):
+        initproj("example123-0.5", filedefs={
+            'tests': {'test_hello.py': """
+                def test_hello(pytestconfig):
+                    pass
+                """,
+            },
+            'tox.ini': '''
+                [testenv]
+                changedir=tests
+                commands= py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml
+                deps=pytest
+            '''
+        })
+
+    def test_toxuone_env(self, cmd, example123):
+        result = cmd.run("tox")
+        assert not result.ret
+        result.stdout.fnmatch_lines([
+            "*junit-python.xml*",
+            "*1 passed*",
+        ])
+        result = cmd.run("tox", "-epython", )
+        assert not result.ret
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+            "*summary*",
+            "*python: commands succeeded"
+        ])
+
+    def test_different_config_cwd(self, cmd, example123, monkeypatch):
+        # see that things work with a different CWD
+        monkeypatch.chdir(cmd.tmpdir)
+        result = cmd.run("tox", "-c", "example123/tox.ini")
+        assert not result.ret
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+            "*summary*",
+            "*python: commands succeeded"
+        ])
+
+    def test_json(self, cmd, example123):
+        # see that tests can also fail and retcode is correct
+        testfile = py.path.local("tests").join("test_hello.py")
+        assert testfile.check()
+        testfile.write("def test_fail(): assert 0")
+        jsonpath = cmd.tmpdir.join("res.json")
+        result = cmd.run("tox", "--result-json", jsonpath)
+        assert result.ret == 1
+        data = py.std.json.load(jsonpath.open("r"))
+        verify_json_report_format(data)
+        result.stdout.fnmatch_lines([
+            "*1 failed*",
+            "*summary*",
+            "*python: *failed*",
+        ])
 
 
 def test_develop(initproj, cmd):
@@ -460,7 +469,7 @@ def test_notest(initproj, cmd):
         "*py25*reusing*",
     ])
 
-def test_env_PYTHONDONTWRITEBYTECODE(initproj, cmd, monkeypatch):
+def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={'tox.ini': ''})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
     result = cmd.run("tox", "-v", "--notest")
@@ -544,16 +553,33 @@ def test_installpkg(tmpdir, newconfig):
     sdist_path = session.sdist()
     assert sdist_path == p
 
-@pytest.mark.xfail("sys.platform == 'win32'", reason="test needs better impl")
+#@pytest.mark.xfail("sys.platform == 'win32'", reason="test needs better impl")
 def test_envsitepackagesdir(cmd, initproj):
     initproj("pkg512-0.0.5", filedefs={
         'tox.ini': """
         [testenv]
         commands=
-            echo X:{envsitepackagesdir}
+            python -c "print('X:{envsitepackagesdir}')"
     """})
     result = cmd.run("tox")
     assert result.ret == 0
     result.stdout.fnmatch_lines("""
         X:*site-packages*
     """)
+
+def verify_json_report_format(data, testenvs=True):
+    assert data["reportversion"] == "1"
+    assert data["toxversion"] == tox.__version__
+    if testenvs:
+        for envname, envdata in data["testenvs"].items():
+            for commandtype in ("setup", "test"):
+                if commandtype not in envdata:
+                    continue
+                for command in envdata[commandtype]:
+                    assert command["output"]
+                    assert command["retcode"]
+            pyinfo = envdata["python"]
+            assert isinstance(pyinfo["version_info"], list)
+            assert pyinfo["version"]
+            assert pyinfo["executable"]
+

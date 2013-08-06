@@ -8,6 +8,7 @@ import time
 from tox._config import parseconfig
 from tox._venv import VirtualEnv
 from tox._cmdline import Action
+from tox.result import ResultLog
 
 def pytest_configure():
     if 'TOXENV' in os.environ:
@@ -118,6 +119,7 @@ def pytest_funcarg__mocksession(request):
         def __init__(self):
             self._clearmocks()
             self.config = request.getfuncargvalue("newconfig")([], "")
+            self.resultlog = ResultLog()
             self._actions = []
         def getenv(self, name):
             return VirtualEnv(self.config.envconfigs[name], session=self)
@@ -164,6 +166,7 @@ class Cmd:
 
     def run(self, *argv):
         argv = [str(x) for x in argv]
+        assert py.path.local.sysfind(str(argv[0])), argv[0]
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
         print("%s$ %s" % (os.getcwd(), " ".join(argv)))

@@ -1,0 +1,44 @@
+
+Writing a json result file
+--------------------------------------------------------
+
+.. versionadded: 1.6
+
+You can instruct tox to write a json-report file via::
+
+    tox --result-json=PATH
+
+This will create a json-formatted result file using this schema::
+
+    {
+      "testenvs": {
+        "py27": {
+          "python": {
+            "executable": "/home/hpk/p/tox/.tox/py27/bin/python", 
+            "version": "2.7.3 (default, Aug  1 2012, 05:14:39) \n[GCC 4.6.3]", 
+            "version_info": [ 2, 7, 3, "final", 0 ]
+          }, 
+          "test": [
+            {
+              "output": "...",
+              "command": [
+                "/home/hpk/p/tox/.tox/py27/bin/py.test", 
+                "--instafail", 
+                "--junitxml=/home/hpk/p/tox/.tox/py27/log/junit-py27.xml", 
+                "tests/test_config.py"
+              ], 
+              "retcode": "0"
+            }
+          ], 
+          "setup": []
+        }
+      }, 
+      "platform": "linux2", 
+      "installpkg": {
+        "basename": "tox-1.6.0.dev1.zip", 
+        "sha256": "b6982dde5789a167c4c35af0d34ef72176d0575955f5331ad04aee9f23af4326", 
+        "md5": "27ead99fd7fa39ee7614cede6bf175a6"
+      }, 
+      "toxversion": "1.6.0.dev1", 
+      "reportversion": "1"
+    }
