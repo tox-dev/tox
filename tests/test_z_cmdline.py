@@ -377,7 +377,7 @@ def test_develop(initproj, cmd):
 
 def test_usedevelop(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
-            [tox]
+            [testenv]
             usedevelop=True
     """})
     result = cmd.run("tox", "-vv")
@@ -392,9 +392,8 @@ def test_test_usedevelop(cmd, initproj):
             """,
         },
         'tox.ini': '''
-            [tox]
-            usedevelop=True
             [testenv]
+            usedevelop=True
             changedir=tests
             commands=
                 py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []

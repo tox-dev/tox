@@ -400,7 +400,12 @@ class Session:
         return sdist_path
 
     def subcommand_test(self):
-        if self.config.skipsdist:
+        skipsdist = self.config.skipsdist
+        # if skipsdist is not explicitly set, skip if develop == True
+        # for all venvs (either via usedevelop or --develop)
+        if skipsdist is None:
+            skipsdist = all(venv.envconfig.develop for venv in self.venvlist)
+        if skipsdist:
             self.report.info("skipping sdist step")
             sdist_path = None
         else:
@@ -411,7 +416,7 @@ class Session:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                if self.config.usedevelop or self.config.option.develop:
+                if venv.envconfig.develop:
                     self.developpkg(venv, self.config.setupdir)
                 elif self.config.skipsdist:
                     self.finishvenv(venv)
@@ -462,7 +467,6 @@ class Session:
         self.report.keyvalue("setupdir:   ", self.config.setupdir)
         self.report.keyvalue("distshare:  ", self.config.distshare)
         self.report.keyvalue("skipsdist:  ", self.config.skipsdist)
-        self.report.keyvalue("usedevelop: ", self.config.usedevelop)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
@@ -479,6 +483,7 @@ class Session:
             self.report.line("  deps=%s" % envconfig.deps)
             self.report.line("  envdir=    %s" % envconfig.envdir)
             self.report.line("  downloadcache=%s" % envconfig.downloadcache)
+            self.report.line("  usedevelop=%s" % envconfig.develop)
 
     def showenvs(self):
         for env in self.config.envlist:

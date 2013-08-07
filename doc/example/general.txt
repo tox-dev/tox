@@ -166,7 +166,7 @@ to deal with it in your commands section::
 
 Running setup.py develop is a common enough model that it has its own option::
 
-    [tox]
+    [testenv]
     usedevelop=True
 
 And a corresponding command line option ``--develop``, which will set
