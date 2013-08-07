@@ -384,6 +384,24 @@ def test_usedevelop(initproj, cmd):
     assert not result.ret
     assert "sdist-make" not in result.stdout.str()
 
+def test_usedevelop_mixed(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+            [testenv:devenv]
+            usedevelop=True
+            [testenv:nondev]
+            usedevelop=False
+    """})
+
+    # running only 'devenv' should not do sdist
+    result = cmd.run("tox", "-vv", "-e", "devenv")
+    assert not result.ret
+    assert "sdist-make" not in result.stdout.str()
+
+    # running all envs should do sdist
+    result = cmd.run("tox", "-vv")
+    assert not result.ret
+    assert "sdist-make" in result.stdout.str()
+
 def test_test_usedevelop(cmd, initproj):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': """

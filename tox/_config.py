@@ -207,12 +207,6 @@ class parseini:
                               homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
                                            "{toxinidir}/.tox")
-        try:
-            config.skipsdist = reader.getbool(toxsection, "skipsdist")
-        except KeyError:
-            # default to None if not set so that we can check the "usedevelop"
-            # settings instead
-            config.skipsdist = None
         config.minversion = reader.getdefault(toxsection, "minversion", None)
 
         # determine indexserver dictionary
@@ -268,6 +262,12 @@ class parseini:
                 if name in defaultenvs:
                     config.envconfigs[name] = \
                 self._makeenvconfig(name, "_xz_9", reader._subs, config)
+
+        all_develop = all(name in config.envconfigs
+                          and config.envconfigs[name].develop
+                          for name in config.envlist)
+
+        config.skipsdist = reader.getbool(toxsection, "skipsdist", all_develop)
 
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)

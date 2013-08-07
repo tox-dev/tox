@@ -400,12 +400,7 @@ class Session:
         return sdist_path
 
     def subcommand_test(self):
-        skipsdist = self.config.skipsdist
-        # if skipsdist is not explicitly set, skip if develop == True
-        # for all venvs (either via usedevelop or --develop)
-        if skipsdist is None:
-            skipsdist = all(venv.envconfig.develop for venv in self.venvlist)
-        if skipsdist:
+        if self.config.skipsdist:
             self.report.info("skipping sdist step")
             sdist_path = None
         else:
