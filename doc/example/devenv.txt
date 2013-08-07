@@ -14,11 +14,13 @@ Configuration
 Firstly, you need to prepare configuration for your development environment. In
 order to do that, we must define proper section at ``tox.ini`` file and tell at
 what directory environment should be created. Moreover, we need to specify
-python version that should be picked::
+python version that should be picked, and that the package should be installed
+with ``setup.py develop``::
 
     [testenv:devenv]
     envdir = devenv
     basepython = python2.7
+    usedevelop = True
     commands =
     deps =
 
