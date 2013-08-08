@@ -1,6 +1,9 @@
 1.6.0.dev
 -----------------
 
+- fix issue109 and fix issue111: multiple "-e" options are now combined
+  (previously the last one would win). Thanks Anthon van der Neut.
+
 - add --result-json option to write out detailed per-venv information
   into a json report file to be used by upstream tools.
 
