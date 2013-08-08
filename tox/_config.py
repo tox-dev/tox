@@ -342,16 +342,17 @@ class parseini:
                 if not envlist:
                     envlist = self.config.envconfigs.keys()
                 return envlist
-        if env == "ALL":
+        envlist = _split_env(env)
+        if "ALL" in envlist:
             envlist = list(self.config.envconfigs)
             envlist.sort()
-        else:
-            envlist = _split_env(env)
         return envlist
 
 def _split_env(env):
     """if handed a list, action="append" was used for -e """
     envlist = []
+    if not isinstance(env, list):
+        env = [env]
     for to_split in env:
         for single_env in to_split.split(","):
             # "remove True or", if not allowing multiple same runs, update tests
