@@ -257,25 +257,28 @@ class VirtualEnv(object):
                 "%s" % depinfo)
             self._install(deps, action=action)
 
-    def _commoninstallopts(self, indexserver):
+    def _installopts(self, indexserver, is_pip):
         l = []
         if indexserver:
             l += ["-i", indexserver]
-        if self.envconfig.downloadcache:
+        if is_pip and self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
             l.append("--download-cache=%s" % self.envconfig.downloadcache)
         return l
 
     def run_install_command(self, args, indexserver=None, action=None):
         argv = self.envconfig.install_command_argv[:]
-        # use pip-script on win32 to avoid the executable locking
-        if argv[0] == "pip" and sys.platform == "win32":
-            argv[0] = "pip-script.py"
+        is_pip = False
+        if argv[0] == "pip":
+            is_pip = True
+            # use pip-script on win32 to avoid the executable locking
+            if sys.platform == "win32":
+                argv[0] = "pip-script.py"
         i = argv.index('{packages}')
         argv[i:i+1] = args
         if '{opts}' in argv:
             i = argv.index('{opts}')
-            argv[i:i+1] = self._commoninstallopts(indexserver)
+            argv[i:i+1] = self._installopts(indexserver, is_pip)
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV'):
             try:
                 del os.environ[x]

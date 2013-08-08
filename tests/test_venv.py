@@ -585,6 +585,21 @@ def test_run_install_command(newmocksession):
     assert 'PYTHONIOENCODING' in env
     assert env['PYTHONIOENCODING'] == 'utf_8'
 
+def test_run_custom_install_command(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        install_command=easy_install {opts} {packages}
+    """)
+    venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+    action = mocksession.newaction(venv, "hello")
+    venv.run_install_command(args=["whatever"], action=action)
+    l = mocksession._pcalls
+    assert len(l) == 1
+    assert 'easy_install' in l[0].args[0]
+    assert l[0].args[1:] == ['whatever']
+
 def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     mocksession = newmocksession([], """
         [testenv]
