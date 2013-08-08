@@ -67,13 +67,6 @@ class CountAction(argparse.Action):
             setattr(namespace, self.dest, 0)
 
 def prepare_parse(pkgname):
-    """setup ArgumentParser
-
-    multi_dash_e:
-        None -> silently ignore all but last -e pyXY option (old behaviour
-        False -> take last -e pyXY option, but warn on sys.stdout
-        True -> concatenate
-    """
     parser = argparse.ArgumentParser(description=__doc__,)
         #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.pkgname = pkgname
