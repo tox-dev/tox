@@ -325,7 +325,10 @@ class VirtualEnv(object):
             self.session.make_emptydir(self.envconfig.envtmpdir)
             cwd = self.envconfig.changedir
             for i, argv in enumerate(self.envconfig.commands):
-                message = "commands[%s] | %s" % (i, ' '.join(argv))
+                # have to make strings as _pcall changes argv[0] to a local()
+                # happens if the same environment is invoked twice
+                message = "commands[%s] | %s" % (i, ' '.join(
+                    [str(x) for x in argv]))
                 action.setactivity("runtests", message)
                 try:
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect)

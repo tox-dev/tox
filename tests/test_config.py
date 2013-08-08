@@ -7,6 +7,7 @@ from textwrap import dedent
 import py
 from tox._config import IniReader, CommandParser
 from tox._config import parseconfig
+from tox._config import prepare_parse, _split_env
 
 class TestVenvConfig:
     def test_config_parsing_minimal(self, tmpdir, newconfig):
@@ -926,6 +927,42 @@ class TestCmdInvocation:
         result.stderr.fnmatch_lines([
             "*ERROR*tox.ini*not*found*",
         ])
+
+
+class TestArgumentParser:
+
+    def test_dash_e_silent1(self):
+        parser = prepare_parse('testpkg', None)
+        args = parser.parse_args('-e py26 -e py33'.split())
+        envlist = _split_env(args.env)
+        assert envlist == ['py33']
+
+    def test_dash_e_silent2(self):
+        parser = prepare_parse('testpkg', None)
+        args = parser.parse_args('-e py26,py33'.split())
+        envlist = _split_env(args.env)
+        assert envlist == ['py26', 'py33']
+
+    def test_dash_e_silent3(self):
+        parser = prepare_parse('testpkg', None)
+        args = parser.parse_args('-e py26,py26'.split())
+        envlist = _split_env(args.env)
+        assert envlist == ['py26', 'py26']
+
+    def test_dash_e_warn(self, capsys):
+        parser = prepare_parse('testpkg', False)
+        args = parser.parse_args('-e py26,py32 -e py33'.split())
+        envlist = _split_env(args.env)
+        out, err = capsys.readouterr()
+        assert 'WARNING: previous optional argument "-e py26' in out
+        assert envlist == ['py33']
+
+    def test_dash_e_combine(self):
+        parser = prepare_parse('testpkg', True)
+        args = parser.parse_args('-e py26,py25,py33 -e py33,py27'.split())
+        envlist = _split_env(args.env)
+        assert envlist == ['py26', 'py25', 'py33', 'py33', 'py27']
+
 
 class TestCommandParser:
 
