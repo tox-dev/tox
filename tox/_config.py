@@ -66,18 +66,7 @@ class CountAction(argparse.Action):
         else:
             setattr(namespace, self.dest, 0)
 
-class CheckSingleStoreAction(argparse.Action):
-    """issue a warning when the store action is called multiple times"""
-    def __call__(self, parser, namespace, values, option_string=None):
-        if getattr(namespace, self.dest, None) is not None:
-            py.builtin.print_(
-                'WARNING: previous optional argument "' + option_string + " " +
-                getattr(namespace, self.dest) + '" overwritten by "' +
-                option_string + " " + values + '"')
-        setattr(namespace, self.dest, values)
-
-
-def prepare_parse(pkgname, multi_dash_e=None):
+def prepare_parse(pkgname):
     """setup ArgumentParser
 
     multi_dash_e:
@@ -101,13 +90,7 @@ def prepare_parse(pkgname, multi_dash_e=None):
     parser.add_argument("-c", action="store", default="tox.ini",
         dest="configfile",
         help="use the specified config file name.")
-    if multi_dash_e is None:
-        dash_e_action = "store"
-    elif multi_dash_e is False:
-        dash_e_action = CheckSingleStoreAction
-    elif multi_dash_e is True:
-        dash_e_action = "append"
-    parser.add_argument("-e", action=dash_e_action, dest="env",
+    parser.add_argument("-e", action="append", dest="env",
         metavar="envlist",
         help="work against specified environments (ALL selects all).")
     parser.add_argument("--notest", action="store_true", dest="notest",
@@ -376,8 +359,6 @@ class parseini:
 def _split_env(env):
     """if handed a list, action="append" was used for -e """
     envlist = []
-    if not isinstance(env, list):
-        env = [env]
     for to_split in env:
         for single_env in to_split.split(","):
             # "remove True or", if not allowing multiple same runs, update tests
