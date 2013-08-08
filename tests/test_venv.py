@@ -512,12 +512,11 @@ class TestVenvTest:
         monkeypatch.setattr(venv, '_pcall', lambda *args, **kwargs: 0/0)
         py.test.raises(ZeroDivisionError, "venv._install(list('123'))")
         py.test.raises(ZeroDivisionError, "venv.test()")
-        py.test.raises(ZeroDivisionError, "venv.easy_install(['qwe'])")
-        py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
+        py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'])")
         py.test.raises(ZeroDivisionError, "venv._pcall([1,2,3])")
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
-        py.test.raises(ZeroDivisionError, "venv.pip_install(['qwe'])")
+        py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'])")
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
 
@@ -570,13 +569,13 @@ def test_installpkg_upgrade(newmocksession, tmpdir):
     assert '-U' in l[0].args
     assert '--no-deps' in l[0].args
 
-def test_pip_install(newmocksession):
+def test_run_install_command(newmocksession):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
     action = mocksession.newaction(venv, "hello")
-    venv.pip_install(args=["whatever"], action=action)
+    venv.run_install_command(args=["whatever"], action=action)
     l = mocksession._pcalls
     assert len(l) == 1
     assert 'pip' in l[0].args[0]

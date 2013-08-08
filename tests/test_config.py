@@ -463,14 +463,20 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "abc"
         assert envconfig.changedir == config.setupdir.join("abc")
 
-    def test_install_deps_command(self, newconfig):
+    def test_install_command(self, newconfig):
         config = newconfig("""
             [testenv]
-            install_deps_command=pip install --pre {deps}
+            install_command=pip install --pre {packages}
         """)
         envconfig = config.envconfigs['python']
-        assert envconfig.install_deps_argv == [
-            'pip', 'install', '--pre', '{deps}']
+        assert envconfig.install_command_argv == [
+            'pip', 'install', '--pre', '{packages}']
+
+    def test_install_command_must_contain_packages(self, newconfig):
+        py.test.raises(tox.exception.ConfigError, newconfig, """
+            [testenv]
+            install_command=pip install
+        """)
 
     def test_simple(tmpdir, newconfig):
         config = newconfig("""

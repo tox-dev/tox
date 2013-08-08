@@ -261,27 +261,26 @@ class VirtualEnv(object):
         l = []
         if indexserver:
             l += ["-i", indexserver]
-        return l
-
-    def easy_install(self, args, indexserver=None):
-        argv = ["easy_install"] + self._commoninstallopts(indexserver) + args
-        self._pcall(argv, cwd=self.envconfig.envlogdir)
-
-    def pip_install(self, args, indexserver=None, action=None):
-        argv = ["pip", "install"] + self._commoninstallopts(indexserver)
-        # use pip-script on win32 to avoid the executable locking
-        if sys.platform == "win32":
-            argv[0] = "pip-script.py"
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
-            argv.append("--download-cache=%s" %
-                self.envconfig.downloadcache)
+            l.append("--download-cache=%s" % self.envconfig.downloadcache)
+        return l
+
+    def run_install_command(self, args, indexserver=None, action=None):
+        argv = self.envconfig.install_command_argv[:]
+        # use pip-script on win32 to avoid the executable locking
+        if argv[0] == "pip" and sys.platform == "win32":
+            argv[0] = "pip-script.py"
+        i = argv.index('{packages}')
+        argv[i:i+1] = args
+        if '{opts}' in argv:
+            i = argv.index('{opts}')
+            argv[i:i+1] = self._commoninstallopts(indexserver)
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV'):
             try:
                 del os.environ[x]
             except KeyError:
                 pass
-        argv += args
         env = dict(PYTHONIOENCODING='utf_8')
         self._pcall(argv, cwd=self.envconfig.envlogdir, extraenv=env,
             action=action)
@@ -307,7 +306,7 @@ class VirtualEnv(object):
         extraopts = extraopts or []
         for ixserver in l:
             args = d[ixserver] + extraopts
-            self.pip_install(args, ixserver.url, action)
+            self.run_install_command(args, ixserver.url, action)
 
     def _getenv(self):
         env = self.envconfig.setenv

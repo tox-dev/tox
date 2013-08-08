@@ -331,8 +331,15 @@ class parseini:
             downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache:
             vc.downloadcache = py.path.local(downloadcache)
-        vc.install_deps_argv = reader.getargv(
-            section, "install_deps_command", "pip @@@", replace=False)
+        vc.install_command_argv = reader.getargv(
+            section,
+            "install_command",
+            "pip install {opts} {packages}",
+            replace=False,
+            )
+        if '{packages}' not in vc.install_command_argv:
+            raise tox.exception.ConfigError(
+                "'install_command' must contain '{packages}' substitution")
         return vc
 
     def _getenvlist(self, reader, toxsection):
