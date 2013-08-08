@@ -469,7 +469,8 @@ class TestConfigTestEnv:
             install_deps_command=pip install --pre {deps}
         """)
         envconfig = config.envconfigs['python']
-        assert envconfig.install_deps_command == "pip install --pre {deps}"
+        assert envconfig.install_deps_argv == [
+            'pip', 'install', '--pre', '{deps}']
 
     def test_simple(tmpdir, newconfig):
         config = newconfig("""

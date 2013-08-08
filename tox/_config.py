@@ -331,7 +331,7 @@ class parseini:
             downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache:
             vc.downloadcache = py.path.local(downloadcache)
-        vc.install_deps_command = reader.getdefault(
+        vc.install_deps_argv = reader.getargv(
             section, "install_deps_command", "pip @@@", replace=False)
         return vc
 
@@ -470,6 +470,12 @@ class IniReader:
             new_command += new_word
 
         return shlex.split(new_command.strip())
+
+    def getargv(self, section, name, default=None, replace=True):
+        command = self.getdefault(
+            section, name, default=default, replace=replace)
+
+        return shlex.split(command.strip())
 
     def getbool(self, section, name, default=None):
         s = self.getdefault(section, name, default)
