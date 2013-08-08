@@ -463,6 +463,14 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "abc"
         assert envconfig.changedir == config.setupdir.join("abc")
 
+    def test_install_deps_command(self, newconfig):
+        config = newconfig("""
+            [testenv]
+            install_deps_command=pip install --pre {deps}
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.install_deps_command == "pip install --pre {deps}"
+
     def test_simple(tmpdir, newconfig):
         config = newconfig("""
             [testenv:py24]

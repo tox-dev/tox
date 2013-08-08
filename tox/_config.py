@@ -331,6 +331,8 @@ class parseini:
             downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache:
             vc.downloadcache = py.path.local(downloadcache)
+        vc.install_deps_command = reader.getdefault(
+            section, "install_deps_command", "pip @@@", replace=False)
         return vc
 
     def _getenvlist(self, reader, toxsection):
