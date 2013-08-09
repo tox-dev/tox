@@ -208,10 +208,6 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
     assert l[1].cwd == venv.envconfig.envlogdir
     assert "pip" in str(args[0])
     assert args[1] == "install"
-    if envdc:
-        assert venv.envconfig.downloadcache == tmpdir
-    else:
-        assert not venv.envconfig.downloadcache
     assert "dep1" in args
     assert "dep2" in args
     deps = list(filter(None, [x[1] for x in venv._getliveconfig().deps]))

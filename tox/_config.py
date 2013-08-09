@@ -326,10 +326,10 @@ class parseini:
         vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = reader.getbool(section, "sitepackages", False)
         vc.downloadcache = None
-        downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", None)
-        if not downloadcache:
-            downloadcache = reader.getdefault(section, "downloadcache")
+        downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache:
+            # env var, if present, takes precedence
+            downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", downloadcache)
             vc.downloadcache = py.path.local(downloadcache)
         vc.install_command_argv = reader.getargv(
             section,

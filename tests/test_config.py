@@ -488,6 +488,30 @@ class TestConfigTestEnv:
             install_command=pip install
         """)
 
+    def test_downloadcache(self, newconfig, monkeypatch):
+        monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
+        config = newconfig("""
+            [testenv]
+            downloadcache=/the/cache
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.downloadcache == '/the/cache'
+
+    def test_downloadcache_env_override(self, newconfig, monkeypatch):
+        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", '/from/env')
+        config = newconfig("""
+            [testenv]
+            downloadcache=/from/config
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.downloadcache == '/from/env'
+
+    def test_downloadcache_only_if_in_config(self, newconfig, tmpdir, monkeypatch):
+        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", tmpdir)
+        config = newconfig('')
+        envconfig = config.envconfigs['python']
+        assert not envconfig.downloadcache
+
     def test_simple(tmpdir, newconfig):
         config = newconfig("""
             [testenv:py24]
