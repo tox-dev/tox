@@ -320,6 +320,16 @@ class TestIniParser:
         assert reader.getargvlist('section', 'key')[0] == expected
 
 
+    def test_getargv(self, newconfig):
+        config = newconfig("""
+            [section]
+            key=some command "with quoting"
+        """)
+        reader = IniReader(config._cfg)
+        expected = ['some', 'command', 'with quoting']
+        assert reader.getargv('section', 'key') == expected
+
+
     def test_getpath(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
