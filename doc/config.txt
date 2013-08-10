@@ -211,8 +211,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionadded:: 1.6
 
-    Install the current package in development mode with "setup.py develop"
-    instead of installing from the ``sdist`` package.
+    Install the current package in development mode with "setup.py
+    develop" instead of installing from the ``sdist`` package. (This
+    uses pip's `-e` option, so should be avoided if you've specified a
+    custom :confval:`install_command` that does not support ``-e``).
+
     **default**: ``False``
 
 
