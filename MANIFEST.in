@@ -5,6 +5,5 @@ include ISSUES.txt
 include LICENSE 
 include setup.py
 include tox.ini
-include toxbootstrap.py
 graft doc
 graft tests
