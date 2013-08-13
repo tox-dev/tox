@@ -39,7 +39,11 @@ for example with ``py.test`` it is done like this:
 **zero-installation** for slaves
 -------------------------------------------------------------
 
-.. versionadded:: 0.9
+.. note::
+
+    This feature is broken currently because "toxbootstrap.py"
+    has been removed.  Please file an issue if you'd like to 
+    see it back.
 
 If you manage many Jenkins slaves and want to use the latest officially
 released tox (or latest development version) and want to skip manually

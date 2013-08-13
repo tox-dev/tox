@@ -1,6 +1,12 @@
 1.6.0.dev
 -----------------
 
+- remove toxbootstrap.py for now because it is broken.
+
+- fix issue35: add new "install_command" testenv-option to configure the
+  installation command with options for dep/pkg install.  Thanks Carl Meyer
+  for the PR and docs.
+
 - fix issue109 and fix issue111: multiple "-e" options are now combined
   (previously the last one would win). Thanks Anthon van der Neut.
 
