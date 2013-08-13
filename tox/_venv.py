@@ -1,6 +1,5 @@
 from __future__ import with_statement
 import sys, os, re
-import textwrap
 import subprocess
 import py
 import tox
@@ -212,7 +211,7 @@ class VirtualEnv(object):
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
         if use_pip13:
-            indexserver = self.envconfig.config.indexserver['default']
+            indexserver = self.envconfig.config.indexserver['default'].url
             action = self.session.newaction(self, "pip_downgrade")
             action.setactivity('pip-downgrade', 'pip<1.4')
             argv = ["easy_install"] + self._commoninstallopts(indexserver) + ['pip<1.4']
@@ -380,10 +379,9 @@ class VirtualEnv(object):
         return oldPATH
 
 def _getinterpreterversion(executable):
-    print_python_version = textwrap.dedent("""
-    from distutils.sysconfig import get_python_version
-    print(get_python_version())
-    """)
+    print_python_version = (
+        'from distutils.sysconfig import get_python_version\n'
+        'print(get_python_version())\n')
     proc = subprocess.Popen([str(executable), '-c', print_python_version],
                             stdout=subprocess.PIPE)
     odata, edata = proc.communicate()
