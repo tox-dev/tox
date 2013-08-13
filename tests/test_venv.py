@@ -4,6 +4,7 @@ import pytest
 import os, sys
 from tox._venv import VirtualEnv, CreationConfig, getdigest
 from tox._venv import find_executable
+from tox._venv import _getinterpreterversion
 
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -79,6 +80,11 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
     py.test.raises(tox.exception.InterpreterNotFound,
                    venv.getsupportedinterpreter)
+
+def test_getinterpreterversion():
+    from distutils.sysconfig import get_python_version
+    version = _getinterpreterversion(sys.executable)
+    assert version == get_python_version()
 
 def test_create(monkeypatch, mocksession, newconfig):
     config = newconfig([], """

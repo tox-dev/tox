@@ -1,5 +1,7 @@
 from __future__ import with_statement
 import sys, os, re
+import textwrap
+import subprocess
 import py
 import tox
 from tox._config import DepConfig
@@ -180,10 +182,15 @@ class VirtualEnv(object):
         if action is None:
             action = self.session.newaction(self, "create")
         config_interpreter = self.getsupportedinterpreter()
-        f, path, _ = py.std.imp.find_module("virtualenv")
-        f.close()
-        venvscript = path.rstrip("co")
-        #venvscript = py.path.local(tox.__file__).dirpath("virtualenv.py")
+        config_interpreter_version = _getinterpreterversion(config_interpreter)
+        use_venv191 = config_interpreter_version < '2.6'
+        use_pip13 = config_interpreter_version < '2.6'
+        if not use_venv191:
+            f, path, _ = py.std.imp.find_module("virtualenv")
+            f.close()
+            venvscript = path.rstrip("co")
+        else:
+            venvscript = py.path.local(tox.__file__).dirpath("virtualenv-1.9.1.py")
         args = [config_interpreter, venvscript]
         if self.envconfig.distribute:
             args.append("--distribute")
@@ -204,6 +211,12 @@ class VirtualEnv(object):
         args.append(self.path.basename)
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
+        if use_pip13:
+            indexserver = self.envconfig.config.indexserver['default']
+            action = self.session.newaction(self, "pip_downgrade")
+            action.setactivity('pip-downgrade', 'pip<1.4')
+            argv = ["easy_install"] + self._commoninstallopts(indexserver) + ['pip<1.4']
+            self._pcall(argv, cwd=self.envconfig.envlogdir, action=action)
 
     def finish(self):
         self._getliveconfig().writeconfig(self.path_config)
@@ -365,6 +378,23 @@ class VirtualEnv(object):
         os.environ['PATH'] = os.pathsep.join([bindir, oldPATH])
         self.session.report.verbosity2("setting PATH=%s" % os.environ["PATH"])
         return oldPATH
+
+def _getinterpreterversion(executable):
+    print_python_version = textwrap.dedent("""
+    from distutils.sysconfig import get_python_version
+    print(get_python_version())
+    """)
+    proc = subprocess.Popen([str(executable), '-c', print_python_version],
+                            stdout=subprocess.PIPE)
+    odata, edata = proc.communicate()
+    if proc.returncode:
+        raise tox.exception.UnsupportedInterpreter(
+            "Error getting python version from %s" % executable)
+    if sys.version_info[0] == 3:
+        string = str
+    else:
+        string = lambda x, encoding: str(x)
+    return string(odata, 'ascii').strip()
 
 def getdigest(path):
     path = py.path.local(path)
