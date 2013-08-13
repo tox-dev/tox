@@ -611,3 +611,16 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     monkeypatch.setenv("PATH", str(tmpdir))
     x4 = venv.getcommandpath("x", cwd=tmpdir)
     mocksession.report.expect("warning", "*test command found but not*")
+
+def test_hack_home_env(tmpdir):
+    from tox._venv import hack_home_env
+    env = hack_home_env(tmpdir, "http://index")
+    assert env["HOME"] == str(tmpdir)
+    assert env["PIP_INDEX_URL"] == "http://index"
+    assert "index_url = http://index" in \
+           tmpdir.join(".pydistutils.cfg").read()
+    tmpdir.remove()
+    env = hack_home_env(tmpdir, None)
+    assert env["HOME"] == str(tmpdir)
+    assert not tmpdir.join(".pydistutils.cfg").check()
+    assert "PIP_INDEX_URL" not in env

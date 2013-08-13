@@ -266,7 +266,8 @@ class VirtualEnv(object):
             l.append("--download-cache=%s" % self.envconfig.downloadcache)
         return l
 
-    def run_install_command(self, args, indexserver=None, action=None):
+    def run_install_command(self, args, indexserver=None, action=None,
+                            extraenv=None):
         argv = self.envconfig.install_command_argv[:]
         # use pip-script on win32 to avoid the executable locking
         if argv[0] == "pip" and sys.platform == "win32":
@@ -282,8 +283,10 @@ class VirtualEnv(object):
             except KeyError:
                 pass
         env = dict(PYTHONIOENCODING='utf_8')
-        self._pcall(argv, cwd=self.envconfig.envlogdir, extraenv=env,
-            action=action)
+        if extraenv is not None:
+            env.update(extraenv)
+        self._pcall(argv, cwd=self.envconfig.envlogdir,
+            extraenv=env, action=action)
 
     def _install(self, deps, extraopts=None, action=None):
         if not deps:
@@ -305,8 +308,12 @@ class VirtualEnv(object):
 
         extraopts = extraopts or []
         for ixserver in l:
+            extraenv = hack_home_env(
+                homedir=self.envconfig.envtmpdir.join("pseudo-home"),
+                index_url = ixserver.url)
             args = d[ixserver] + extraopts
-            self.run_install_command(args, ixserver.url, action)
+            self.run_install_command(args, ixserver.url, action,
+                                     extraenv=extraenv)
 
     def _getenv(self):
         env = self.envconfig.setenv
@@ -415,3 +422,22 @@ else:
         # Python launcher py.exe
         if m:
             locate_via_py(*m.groups())
+
+
+def hack_home_env(homedir, index_url):
+    # XXX HACK (this could also live with tox itself, consider)
+    # if tox uses pip on a package that requires setup_requires
+    # the index url set with pip is usually not recognized
+    # because it is setuptools executing very early.
+    # We therefore run the tox command in an artifical home
+    # directory and set .pydistutils.cfg and pip.conf files
+    # accordingly.
+    if not homedir.check():
+        homedir.ensure(dir=1)
+    d = dict(HOME=str(homedir))
+    if index_url:
+        homedir.join(".pydistutils.cfg").write(
+            "[easy_install]\n"
+            "index_url = %s\n" % index_url)
+        d["PIP_INDEX_URL"] = index_url
+    return d

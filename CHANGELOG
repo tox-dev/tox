@@ -1,6 +1,11 @@
 1.6.0.dev
 -----------------
 
+- during installation of dependencies HOME is set to a pseudo
+  location (envtmpdir/pseudo-home).  If an index url was specified
+  a .pydistutils.cfg file will be written so that index_url
+  is set if a package contains a ``setup_requires``. 
+
 - remove toxbootstrap.py for now because it is broken.
 
 - fix issue35: add new "install_command" testenv-option to configure the
