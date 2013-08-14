@@ -2,11 +2,11 @@ import pytest
 import tox._quickstart
 
 
+@pytest.fixture(autouse=True)
+def cleandir(tmpdir):
+    tmpdir.chdir()
 
 class TestToxQuickstartMain(object):
-    @pytest.fixture(autouse=True)
-    def cleandir(self, tmpdir):
-        tmpdir.chdir()
 
     def mock_term_input_return_values(self, return_values):
         for return_val in return_values:
