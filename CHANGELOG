@@ -1,7 +1,8 @@
 1.6.0.dev
 -----------------
 
-- fix issue1: empty setup files are properly detected
+- fix issue1: empty setup files are properly detected, thanks Anthon van
+  der Neuth
 
 - during installation of dependencies HOME is set to a pseudo
   location (envtmpdir/pseudo-home).  If an index url was specified
