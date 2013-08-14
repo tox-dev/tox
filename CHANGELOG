@@ -1,6 +1,8 @@
 1.6.0.dev
 -----------------
 
+- fix issue1: empty setup files are properly detected
+
 - during installation of dependencies HOME is set to a pseudo
   location (envtmpdir/pseudo-home).  If an index url was specified
   a .pydistutils.cfg file will be written so that index_url
