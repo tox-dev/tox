@@ -506,8 +506,12 @@ class Session:
 
     def info_versions(self):
         versions = ['tox-%s' % tox.__version__]
-        version = py.process.cmdexec("virtualenv --version")
-        versions.append("virtualenv-%s" % version.strip())
+        try:
+            version = py.process.cmdexec("virtualenv --version")
+        except py.process.cmdexec.Error:
+            versions.append("virtualenv-1.9.1 (vendored)")
+        else:
+            versions.append("virtualenv-%s" % version.strip())
         self.report.keyvalue("tool-versions:", " ".join(versions))
 
 

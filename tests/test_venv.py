@@ -6,6 +6,8 @@ from tox._venv import VirtualEnv, CreationConfig, getdigest
 from tox._venv import find_executable
 from tox._venv import _getinterpreterversion
 
+py25calls = int(sys.version_info[:2] == (2,5))
+
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
 #    l = v.list()
@@ -98,7 +100,7 @@ def test_create(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert str(args[1]).endswith("virtualenv.py")
+    assert "virtualenv" in str(args[1])
     if sys.platform != "win32":
         # realpath is needed for stuff like the debian symlinks
         assert py.path.local(sys.executable).realpath() == args[0]
@@ -173,15 +175,15 @@ def test_install_deps_wildcard(newmocksession):
     venv = mocksession.getenv("py123")
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1
+    assert len(l) == 1 + py25calls
     distshare = venv.session.config.distshare
     distshare.ensure("dep1-1.0.zip")
     distshare.ensure("dep1-1.1.zip")
 
     venv.install_deps()
-    assert len(l) == 2
-    args = l[1].args
-    assert l[1].cwd == venv.envconfig.envlogdir
+    assert len(l) == 2 + py25calls
+    args = l[-1].args
+    assert l[-1].cwd == venv.envconfig.envlogdir
     assert "pip" in str(args[0])
     assert args[1] == "install"
     #arg = "--download-cache=" + str(venv.envconfig.downloadcache)
@@ -206,12 +208,12 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
     venv = mocksession.getenv("py123")
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1
+    assert len(l) == 1 + py25calls
 
     venv.install_deps()
-    assert len(l) == 2
-    args = l[1].args
-    assert l[1].cwd == venv.envconfig.envlogdir
+    assert len(l) == 2 + py25calls
+    args = l[-1].args
+    assert l[-1].cwd == venv.envconfig.envlogdir
     assert "pip" in str(args[0])
     assert args[1] == "install"
     assert "dep1" in args
@@ -234,7 +236,7 @@ def test_install_deps_indexserver(newmocksession):
     venv = mocksession.getenv('py123')
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1
+    assert len(l) == 1 + py25calls
     l[:] = []
 
     venv.install_deps()

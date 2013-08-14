@@ -181,7 +181,8 @@ class VirtualEnv(object):
         if action is None:
             action = self.session.newaction(self, "create")
         config_interpreter = self.getsupportedinterpreter()
-        config_interpreter_version = _getinterpreterversion(config_interpreter)
+        config_interpreter_version = _getinterpreterversion(
+            config_interpreter)
         use_venv191 = config_interpreter_version < '2.6'
         use_pip13 = config_interpreter_version < '2.6'
         if not use_venv191:
@@ -189,15 +190,17 @@ class VirtualEnv(object):
             f.close()
             venvscript = path.rstrip("co")
         else:
-            venvscript = py.path.local(tox.__file__).dirpath("virtualenv-1.9.1.py")
-        args = [config_interpreter, venvscript]
+            venvscript = py.path.local(tox.__file__).dirpath(
+                            "vendor", "virtualenv.py")
+        args = [config_interpreter, str(venvscript)]
         if self.envconfig.distribute:
             args.append("--distribute")
         else:
             args.append("--setuptools")
         if self.envconfig.sitepackages:
             args.append('--system-site-packages')
-        # add interpreter explicitly, to prevent using default (virtualenv.ini)
+        # add interpreter explicitly, to prevent using
+        # default (virtualenv.ini)
         args.extend(['--python', str(config_interpreter)])
         #if sys.platform == "win32":
         #    f, path, _ = py.std.imp.find_module("virtualenv")
@@ -214,8 +217,10 @@ class VirtualEnv(object):
             indexserver = self.envconfig.config.indexserver['default'].url
             action = self.session.newaction(self, "pip_downgrade")
             action.setactivity('pip-downgrade', 'pip<1.4')
-            argv = ["easy_install"] + self._commoninstallopts(indexserver) + ['pip<1.4']
-            self._pcall(argv, cwd=self.envconfig.envlogdir, action=action)
+            argv = ["easy_install"] + \
+                   self._installopts(indexserver) + ['pip<1.4']
+            self._pcall(argv, cwd=self.envconfig.envlogdir,
+                        action=action)
 
     def finish(self):
         self._getliveconfig().writeconfig(self.path_config)

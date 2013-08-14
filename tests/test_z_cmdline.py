@@ -3,8 +3,17 @@ import py
 import pytest
 import sys
 from tox._pytestplugin import ReportExpectMock
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 pytest_plugins = "pytester"
+
+if sys.version_info < (2,6):
+    PIP_INSECURE = "setenv = PIP_INSECURE=1"
+else:
+    PIP_INSECURE = ""
 
 from tox._cmdline import Session
 from tox._config import parseconfig
@@ -356,6 +365,8 @@ def test_package_install_fails(cmd, initproj):
         "*InvocationError*",
     ])
 
+
+
 class TestToxRun:
     @pytest.fixture
     def example123(self, initproj):
@@ -368,9 +379,10 @@ class TestToxRun:
             'tox.ini': '''
                 [testenv]
                 changedir=tests
+                %s
                 commands= py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml
                 deps=pytest
-            '''
+            ''' % PIP_INSECURE
         })
 
     def test_toxuone_env(self, cmd, example123):
@@ -407,7 +419,7 @@ class TestToxRun:
         jsonpath = cmd.tmpdir.join("res.json")
         result = cmd.run("tox", "--result-json", jsonpath)
         assert result.ret == 1
-        data = py.std.json.load(jsonpath.open("r"))
+        data = json.load(jsonpath.open("r"))
         verify_json_report_format(data)
         result.stdout.fnmatch_lines([
             "*1 failed*",
@@ -461,10 +473,11 @@ def test_test_usedevelop(cmd, initproj):
             [testenv]
             usedevelop=True
             changedir=tests
+            %s
             commands=
                 py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
             deps=pytest
-        '''
+        ''' % PIP_INSECURE
     })
     result = cmd.run("tox", "-v")
     assert not result.ret

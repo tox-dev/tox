@@ -33,7 +33,7 @@ def main():
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
         author_email='holger@merlinux.eu',
-        packages=['tox', ],
+        packages=['tox', 'tox.vendor'],
         entry_points={'console_scripts': 'tox=tox:cmdline\ntox-quickstart=tox._quickstart:main'},
         # we use a public tox version to test, see tox.ini's testenv
         # "deps" definition for the required dependencies
