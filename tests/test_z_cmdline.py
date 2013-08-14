@@ -269,6 +269,54 @@ def test_skip_sdist(cmd, initproj):
     result = cmd.run("tox", )
     assert result.ret == 0
 
+def test_minimal_setup_py_empty(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'setup.py': """
+        """
+        ,
+        'tox.ini': ''
+
+    })
+    result = cmd.run("tox", )
+    assert result.ret == 1
+    result.stdout.fnmatch_lines([
+        "*ERROR*empty*",
+    ])
+
+def test_minimal_setup_py_comment_only(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'setup.py': """\n# some comment
+
+        """
+        ,
+        'tox.ini': ''
+
+    })
+    result = cmd.run("tox", )
+    assert result.ret == 1
+    result.stdout.fnmatch_lines([
+        "*ERROR*empty*",
+    ])
+
+def test_minimal_setup_py_non_functional(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'setup.py': """
+        import sys
+
+        """
+        ,
+        'tox.ini': ''
+
+    })
+    result = cmd.run("tox", )
+    assert result.ret == 1
+    result.stdout.fnmatch_lines([
+        "*ERROR*check setup.py*",
+    ])
+
 def test_sdist_fails(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},

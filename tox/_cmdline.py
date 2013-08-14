@@ -321,7 +321,27 @@ class Session:
             action.popen([sys.executable, setup, "sdist", "--formats=zip",
                           "--dist-dir", self.config.distdir, ],
                           cwd=self.config.setupdir)
-            return self.config.distdir.listdir()[0]
+            try:
+                return self.config.distdir.listdir()[0]
+            except py.error.ENOENT:
+                # check if empty or comment only
+                data = []
+                with open(str(setup)) as fp:
+                    for line in fp:
+                        if line and line[0] == '#':
+                            continue
+                        data.append(line)
+                if not ''.join(data).strip():
+                    self.report.error(
+                        'setup.py is empty'
+                    )
+                    raise SystemExit(1)
+                self.report.error(
+                    'No dist directory found. Please check setup.py, e.g with:\n'\
+                    '     python setup.py sdist'
+                    )
+                raise SystemExit(1)
+
 
     def make_emptydir(self, path):
         if path.check():
