@@ -145,7 +145,7 @@ class VirtualEnv(object):
             return "could not install deps %s" %(self.envconfig.deps,)
 
     def _getliveconfig(self):
-        python = self.getconfigexecutable()
+        python = self.envconfig._basepython_info.executable
         md5 = getdigest(python)
         version = tox.__version__
         distribute = self.envconfig.distribute
@@ -169,9 +169,6 @@ class VirtualEnv(object):
             l.append(dep)
         return l
 
-    def getconfigexecutable(self):
-        return self.envconfig.getconfigexecutable()
-
     def getsupportedinterpreter(self):
         return self.envconfig.getsupportedinterpreter()
 
@@ -180,11 +177,11 @@ class VirtualEnv(object):
         #    return
         if action is None:
             action = self.session.newaction(self, "create")
+
+        interpreters = self.envconfig.config.interpreters
         config_interpreter = self.getsupportedinterpreter()
-        config_interpreter_version = _getinterpreterversion(
-            config_interpreter)
-        use_venv191 = config_interpreter_version < '2.6'
-        use_pip13 = config_interpreter_version < '2.6'
+        info = interpreters.get_info(executable=config_interpreter)
+        use_venv191 = use_pip13 = info.version_info < (2,6)
         if not use_venv191:
             f, path, _ = py.std.imp.find_module("virtualenv")
             f.close()
@@ -389,72 +386,12 @@ class VirtualEnv(object):
         self.session.report.verbosity2("setting PATH=%s" % os.environ["PATH"])
         return oldPATH
 
-def _getinterpreterversion(executable):
-    print_python_version = (
-        'from distutils.sysconfig import get_python_version\n'
-        'print(get_python_version())\n')
-    proc = subprocess.Popen([str(executable), '-c', print_python_version],
-                            stdout=subprocess.PIPE)
-    odata, edata = proc.communicate()
-    if proc.returncode:
-        raise tox.exception.UnsupportedInterpreter(
-            "Error getting python version from %s" % executable)
-    if sys.version_info[0] == 3:
-        string = str
-    else:
-        string = lambda x, encoding: str(x)
-    return string(odata, 'ascii').strip()
 
 def getdigest(path):
     path = py.path.local(path)
     if not path.check(file=1):
         return "0" * 32
     return path.computehash()
-
-if sys.platform != "win32":
-    def find_executable(name):
-        return py.path.local.sysfind(name)
-
-else:
-    # Exceptions to the usual windows mapping
-    win32map = {
-            'python': sys.executable,
-            'jython': "c:\jython2.5.1\jython.bat",
-    }
-    def locate_via_py(v_maj, v_min):
-        ver = "-%s.%s" % (v_maj, v_min)
-        script = "import sys; print(sys.executable)"
-        py_exe = py.path.local.sysfind('py')
-        if py_exe:
-            try:
-                exe = py_exe.sysexec(ver, '-c', script).strip()
-            except py.process.cmdexec.Error:
-                exe = None
-            if exe:
-                exe = py.path.local(exe)
-                if exe.check():
-                    return exe
-
-    def find_executable(name):
-        p = py.path.local.sysfind(name)
-        if p:
-            return p
-        actual = None
-        # Is this a standard PythonX.Y name?
-        m = re.match(r"python(\d)\.(\d)", name)
-        if m:
-            # The standard names are in predictable places.
-            actual = r"c:\python%s%s\python.exe" % m.groups()
-        if not actual:
-            actual = win32map.get(name, None)
-        if actual:
-            actual = py.path.local(actual)
-            if actual.check():
-                return actual
-        # The standard executables can be found as a last resort via the
-        # Python launcher py.exe
-        if m:
-            locate_via_py(*m.groups())
 
 
 def hack_home_env(homedir, index_url=None):

@@ -8,6 +8,8 @@ import string
 import subprocess
 import textwrap
 
+from tox.interpreters import Interpreters
+
 import py
 
 import tox
@@ -118,6 +120,7 @@ class Config:
     def __init__(self):
         self.envconfigs = {}
         self.invocationcwd = py.path.local()
+        self.interpreters = Interpreters()
 
 class VenvConfig:
     def __init__(self, **kw):
@@ -141,32 +144,10 @@ class VenvConfig:
 
     # no @property to avoid early calling (see callable(subst[key]) checks)
     def envsitepackagesdir(self):
-        print_envsitepackagesdir = textwrap.dedent("""
-        import sys
-        from distutils.sysconfig import get_python_lib
-        sys.stdout.write(get_python_lib(prefix=sys.argv[1]))
-        """)
-
-        exe = self.getsupportedinterpreter()
-        # can't use check_output until py27
-        proc = subprocess.Popen(
-            [str(exe), '-c', print_envsitepackagesdir, str(self.envdir)],
-            stdout=subprocess.PIPE)
-        odata, edata = proc.communicate()
-        if proc.returncode:
-            raise tox.exception.UnsupportedInterpreter(
-                "Error getting site-packages from %s" % self.basepython)
-        return odata
-
-    def getconfigexecutable(self):
-        from tox._venv import find_executable
-
-        python = self.basepython
-        if not python:
-            python = sys.executable
-        x = find_executable(str(python))
-        if x:
-            x = x.realpath()
+        self.getsupportedinterpreter()  # for throwing exceptions
+        x = self.config.interpreters.get_sitepackagesdir(
+                info=self._basepython_info,
+                envdir=self.envdir)
         return x
 
     def getsupportedinterpreter(self):
@@ -174,10 +155,11 @@ class VenvConfig:
                 "jython" in self.basepython:
             raise tox.exception.UnsupportedInterpreter(
                 "Jython/Windows does not support installing scripts")
-        config_executable = self.getconfigexecutable()
-        if not config_executable:
+        info = self.config.interpreters.get_info(self.basepython)
+        if not info.executable:
             raise tox.exception.InterpreterNotFound(self.basepython)
-        return config_executable
+        return info.executable
+
 testenvprefix = "testenv:"
 
 class parseini:
@@ -285,6 +267,7 @@ class parseini:
         else:
             bp = sys.executable
         vc.basepython = reader.getdefault(section, "basepython", bp)
+        vc._basepython_info = config.interpreters.get_info(vc.basepython)
         reader.addsubstitions(envdir=vc.envdir, envname=vc.envname,
                               envbindir=vc.envbindir, envpython=vc.envpython,
                               envsitepackagesdir=vc.envsitepackagesdir)
@@ -336,7 +319,8 @@ class parseini:
         # need to use --insecure for pip commands because python2.5
         # doesn't support SSL
         pip_default_opts = ["{opts}", "{packages}"]
-        if "py25" in vc.envname:  # XXX too rough check for "python2.5"
+        info = vc._basepython_info
+        if info.runnable and info.version_info < (2,6):
             pip_default_opts.insert(0, "--insecure")
         else:
             pip_default_opts.insert(0, "--pre")

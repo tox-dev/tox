@@ -486,6 +486,8 @@ class Session:
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
             self.report.line("  basepython=%s" % envconfig.basepython)
+            self.report.line("  _basepython_info=%s" %
+                             envconfig._basepython_info)
             self.report.line("  envpython=%s" % envconfig.envpython)
             self.report.line("  envtmpdir=%s" % envconfig.envtmpdir)
             self.report.line("  envbindir=%s" % envconfig.envbindir)

@@ -5,9 +5,9 @@ import subprocess
 from textwrap import dedent
 
 import py
-from tox._config import IniReader, CommandParser
-from tox._config import parseconfig
-from tox._config import prepare_parse, _split_env
+from tox._config import *
+from tox._config import _split_env
+
 
 class TestVenvConfig:
     def test_config_parsing_minimal(self, tmpdir, newconfig):
@@ -473,13 +473,29 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "abc"
         assert envconfig.changedir == config.setupdir.join("abc")
 
-    def test_install_command_defaults_py25(self, newconfig):
+    def test_install_command_defaults_py25(self, newconfig, monkeypatch):
+        from tox.interpreters import Interpreters
+        def get_info(self, name):
+            if "x25" in name:
+                class I:
+                    runnable = True
+                    executable = "python2.5"
+                    version_info = (2,5)
+            else:
+                class I:
+                    runnable = False
+                    executable = "python"
+            return I
+        monkeypatch.setattr(Interpreters, "get_info", get_info)
         config = newconfig("""
-            [testenv:py25]
+            [testenv:x25]
+            basepython = x25
             [testenv:py25-x]
+            basepython = x25
             [testenv:py26]
+            basepython = "python"
         """)
-        for name in ("py25", "py25-x"):
+        for name in ("x25", "py25-x"):
             env = config.envconfigs[name]
             assert env.install_command == \
                "pip install --insecure {opts} {packages}".split()
@@ -713,36 +729,6 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource).envconfigs['python']
         assert conf.changedir.basename == 'testing'
         assert conf.changedir.dirpath().realpath() == tmpdir.realpath()
-
-    @pytest.mark.xfailif("sys.platform == 'win32'")
-    def test_substitution_envsitepackagesdir(self, tmpdir, monkeypatch,
-                                             newconfig):
-        """
-         The envsitepackagesdir property is mostly doing system work,
-         so this test doesn't excercise it very well.
-
-         Usage of envsitepackagesdir on win32/jython will explicitly
-         throw an exception,
-        """
-        class MockPopen(object):
-            returncode = 0
-
-            def __init__(self, *args, **kwargs):
-                pass
-
-            def communicate(self, *args, **kwargs):
-                return 'onevalue', 'othervalue'
-
-        monkeypatch.setattr(subprocess, 'Popen', MockPopen)
-        env = 'py%s' % (''.join(sys.version.split('.')[0:2]))
-        config = newconfig("""
-            [testenv:%s]
-            commands = {envsitepackagesdir}
-        """ % (env))
-        conf = config.envconfigs[env]
-        argv = conf.commands
-        assert argv[0][0] == 'onevalue'
-
 
 class TestGlobalOptions:
     def test_notest(self, newconfig):

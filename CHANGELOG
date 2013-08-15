@@ -5,7 +5,6 @@
   installation command with options for dep/pkg install.  Thanks Carl Meyer
   for the PR and docs.
 
-
 - address issueintroduce python2.5 support by vendoring the virtualenv-1.9.1 script
   and forcing pip<1.4. Also the default [py25] environment modifies the
   default installer_command (new config option) to use pip without the "--pre" 
@@ -35,6 +34,9 @@
 - always unset PYTHONDONTWRITEBYTE because newer setuptools doesn't like it
 
 - if a HOMEDIR cannot be determined, use the toxinidir.
+
+- refactor interpreter information detection to live in new
+  tox/interpreters.py file, tests in tests/test_interpreters.py.
 
 1.5.0
 -----------------

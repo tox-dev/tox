@@ -88,8 +88,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
     and any defined dependencies. Must contain the substitution key
     ``{packages}`` which will be replaced by the packages to
     install. May also contain the substitution key ``{opts}``, which
-    will be replaced by the ``-i`` option to specify index server
-    (according to :confval:`indexserver` and the ``:indexserver:dep``
+    will be replaced by the ``-i INDEXURL`` option if an index server
+    is active (see :confval:`indexserver` and the ``:indexserver:dep``
     syntax of :confval:`deps`) and the ``--download-cache`` option (if
     you've specified :confval:`downloadcache`). If your installer does
     not support ``-i`` and ``--download-cache`` command-line options,

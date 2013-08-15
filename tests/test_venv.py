@@ -2,9 +2,7 @@ import py
 import tox
 import pytest
 import os, sys
-from tox._venv import VirtualEnv, CreationConfig, getdigest
-from tox._venv import find_executable
-from tox._venv import _getinterpreterversion
+from tox._venv import *
 
 py25calls = int(sys.version_info[:2] == (2,5))
 
@@ -18,52 +16,6 @@ py25calls = int(sys.version_info[:2] == (2,5))
 #
 def test_getdigest(tmpdir):
     assert getdigest(tmpdir) == "0"*32
-
-@pytest.mark.skipif("sys.platform != 'win32'")
-def test_locate_via_py(monkeypatch):
-    from tox._venv import locate_via_py
-    class PseudoPy:
-        def sysexec(self, *args):
-            assert args[0] == '-3.2'
-            assert args[1] == '-c'
-            # Return value needs to actually exist!
-            return sys.executable
-    @staticmethod
-    def ret_pseudopy(name):
-        assert name == 'py'
-        return PseudoPy()
-    # Monkeypatch py.path.local.sysfind to return PseudoPy
-    monkeypatch.setattr(py.path.local, 'sysfind', ret_pseudopy)
-    assert locate_via_py('3', '2') == sys.executable
-
-def test_find_executable():
-    p = find_executable(sys.executable)
-    assert p == py.path.local(sys.executable)
-    for ver in [""] + "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split():
-        name = "python%s" % ver
-        if sys.platform == "win32":
-            pydir = "python%s" % ver.replace(".", "")
-            x = py.path.local("c:\%s" % pydir)
-            print (x)
-            if not x.check():
-                continue
-        else:
-            if not py.path.local.sysfind(name):
-                continue
-        p = find_executable(name)
-        assert p
-        popen = py.std.subprocess.Popen([str(p), '-V'],
-                stderr=py.std.subprocess.PIPE)
-        stdout, stderr = popen.communicate()
-        assert ver in py.builtin._totext(stderr, "ascii")
-
-def test_find_executable_extra(monkeypatch):
-    @staticmethod
-    def sysfind(x):
-        return "hello"
-    monkeypatch.setattr(py.path.local, "sysfind", sysfind)
-    t = find_executable("qweqwe")
-    assert t == "hello"
 
 def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     config = newconfig([], """
@@ -83,10 +35,6 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     py.test.raises(tox.exception.InterpreterNotFound,
                    venv.getsupportedinterpreter)
 
-def test_getinterpreterversion():
-    from distutils.sysconfig import get_python_version
-    version = _getinterpreterversion(sys.executable)
-    assert version == get_python_version()
 
 def test_create(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
@@ -107,7 +55,7 @@ def test_create(monkeypatch, mocksession, newconfig):
         #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
-    assert interp == venv.getconfigexecutable()
+    assert interp == venv.envconfig._basepython_info.executable
     assert venv.path_config.check(exists=False)
 
 @pytest.mark.skipif("sys.platform == 'win32'")
@@ -243,7 +191,7 @@ def test_install_deps_indexserver(newmocksession):
     # two different index servers, two calls
     assert len(l) == 3
     args = " ".join(l[0].args)
-    assert "-i" not in args
+    assert "-i " not in args
     assert "dep1" in args
 
     args = " ".join(l[1].args)
