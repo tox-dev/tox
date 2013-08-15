@@ -632,3 +632,15 @@ def test_hack_home_env(tmpdir):
     assert env["HOME"] == str(tmpdir)
     assert not tmpdir.join(".pydistutils.cfg").check()
     assert "PIP_INDEX_URL" not in env
+
+def test_hack_home_env_passthrough(tmpdir, monkeypatch):
+    from tox._venv import hack_home_env
+    env = hack_home_env(tmpdir, "http://index")
+    monkeypatch.setattr(os, "environ", env)
+
+    tmpdir = tmpdir.mkdir("tmpdir2")
+    env2 = hack_home_env(tmpdir)
+    assert env2["HOME"] == str(tmpdir)
+    assert env2["PIP_INDEX_URL"] == "http://index"
+    assert "index_url = http://index" in \
+           tmpdir.join(".pydistutils.cfg").read()

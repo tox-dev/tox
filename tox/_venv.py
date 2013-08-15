@@ -457,7 +457,7 @@ else:
             locate_via_py(*m.groups())
 
 
-def hack_home_env(homedir, index_url):
+def hack_home_env(homedir, index_url=None):
     # XXX HACK (this could also live with tox itself, consider)
     # if tox uses pip on a package that requires setup_requires
     # the index url set with pip is usually not recognized
@@ -468,9 +468,12 @@ def hack_home_env(homedir, index_url):
     if not homedir.check():
         homedir.ensure(dir=1)
     d = dict(HOME=str(homedir))
+    if not index_url:
+        index_url = os.environ.get("TOX_INDEX_URL")
     if index_url:
         homedir.join(".pydistutils.cfg").write(
             "[easy_install]\n"
             "index_url = %s\n" % index_url)
         d["PIP_INDEX_URL"] = index_url
+        d["TOX_INDEX_URL"] = index_url
     return d
