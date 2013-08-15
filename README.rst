@@ -2,7 +2,7 @@
 What is Tox?
 --------------------
 
-Tox as is a generic virtualenv_ management and test command line tool you can use for:
+Tox as is a generic virtualenv management and test command line tool you can use for:
 
 * checking your package installs correctly with different Python versions and
   interpreters
