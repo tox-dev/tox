@@ -473,14 +473,28 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "abc"
         assert envconfig.changedir == config.setupdir.join("abc")
 
-    def test_install_command(self, newconfig):
+    def test_install_command_defaults_py25(self, newconfig):
+        config = newconfig("""
+            [testenv:py25]
+            [testenv:py25-x]
+            [testenv:py26]
+        """)
+        for name in ("py25", "py25-x"):
+            env = config.envconfigs[name]
+            assert env.install_command == \
+               "pip install --insecure {opts} {packages}".split()
+        env = config.envconfigs["py26"]
+        assert env.install_command == \
+               "pip install --pre {opts} {packages}".split()
+
+    def test_install_command_setting(self, newconfig):
         config = newconfig("""
             [testenv]
-            install_command=pip install --pre {packages}
+            install_command=some_install {packages}
         """)
         envconfig = config.envconfigs['python']
-        assert envconfig.install_command_argv == [
-            'pip', 'install', '--pre', '{packages}']
+        assert envconfig.install_command == [
+            'some_install', '{packages}']
 
     def test_install_command_must_contain_packages(self, newconfig):
         py.test.raises(tox.exception.ConfigError, newconfig, """
@@ -506,7 +520,8 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.downloadcache == '/from/env'
 
-    def test_downloadcache_only_if_in_config(self, newconfig, tmpdir, monkeypatch):
+    def test_downloadcache_only_if_in_config(self, newconfig, tmpdir,
+                                             monkeypatch):
         monkeypatch.setenv("PIP_DOWNLOAD_CACHE", tmpdir)
         config = newconfig('')
         envconfig = config.envconfigs['python']
@@ -744,7 +759,8 @@ class TestGlobalOptions:
         config = newconfig(["-vv"], "")
         assert config.option.verbosity == 2
 
-    def test_substitution_jenkins_default(self, tmpdir, monkeypatch, newconfig):
+    def test_substitution_jenkins_default(self, tmpdir,
+                                          monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         config = newconfig("""
             [testenv:py24]

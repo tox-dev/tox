@@ -285,7 +285,7 @@ class VirtualEnv(object):
 
     def run_install_command(self, args, indexserver=None, action=None,
                             extraenv=None):
-        argv = self.envconfig.install_command_argv[:]
+        argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
         if argv[0] == "pip" and sys.platform == "win32":
             argv[0] = "pip-script.py"

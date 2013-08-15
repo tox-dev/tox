@@ -492,6 +492,8 @@ class Session:
             self.report.line("  envlogdir=%s" % envconfig.envlogdir)
             self.report.line("  changedir=%s" % envconfig.changedir)
             self.report.line("  args_are_path=%s" % envconfig.args_are_paths)
+            self.report.line("  install_command=%s" %
+                             envconfig.install_command)
             self.report.line("  commands=")
             for command in envconfig.commands:
                 self.report.line("    %s" % command)

@@ -76,8 +76,8 @@ def prepare_parse(pkgname):
     parser.add_argument("-v", nargs=0, action=CountAction, default=0,
         dest="verbosity",
         help="increase verbosity of reporting output.")
-    parser.add_argument("--showconfig", action="store_true", dest="showconfig",
-        help="show configuration information. ")
+    parser.add_argument("--showconfig", action="store_true",
+        help="show configuration information for all environments. ")
     parser.add_argument("-l", "--listenvs", action="store_true",
         dest="listenvs", help="show list of test environments")
     parser.add_argument("-c", action="store", default="tox.ini",
@@ -331,15 +331,24 @@ class parseini:
             # env var, if present, takes precedence
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", downloadcache)
             vc.downloadcache = py.path.local(downloadcache)
-        vc.install_command_argv = reader.getargv(
+
+        # on python 2.5 we can't use "--pre" and we typically
+        # need to use --insecure for pip commands because python2.5
+        # doesn't support SSL
+        pip_default_opts = ["{opts}", "{packages}"]
+        if "py25" in vc.envname:  # XXX too rough check for "python2.5"
+            pip_default_opts.insert(0, "--insecure")
+        else:
+            pip_default_opts.insert(0, "--pre")
+        vc.install_command = reader.getargv(
             section,
             "install_command",
-            "pip install {opts} {packages}",
+            "pip install " + " ".join(pip_default_opts),
             replace=False,
             )
-        if '{packages}' not in vc.install_command_argv:
+        if '{packages}' not in vc.install_command:
             raise tox.exception.ConfigError(
-                "'install_command' must contain '{packages}' substitution")
+             "'install_command' must contain '{packages}' substitution")
         return vc
 
     def _getenvlist(self, reader, toxsection):

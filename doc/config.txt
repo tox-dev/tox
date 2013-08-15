@@ -80,9 +80,12 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionadded:: 1.6
 
-    the command to be used for installing packages into the virtual
-    environment; both the sdist for the package under test and any
-    defined dependencies. Must contain the substitution key
+    **WARNING**: This setting is **EXPERIMENTAL** so use with care 
+    and be ready to adapt your tox.ini's with post-1.6 tox releases.
+
+    the ``install_command`` setting is used for installing packages into
+    the virtual environment; both the package under test
+    and any defined dependencies. Must contain the substitution key
     ``{packages}`` which will be replaced by the packages to
     install. May also contain the substitution key ``{opts}``, which
     will be replaced by the ``-i`` option to specify index server
@@ -94,7 +97,16 @@ Complete list of settings that you can put into ``testenv*`` sections:
     :confval:`downloadcache`, and/or your :confval:`install_command`
     should not include the ``{opts}`` substitution key (in which case
     those options will have no effect).
-    **default**: ``pip install {opts} {packages}``
+    **default**::
+    
+        pip install --pre {opts} {packages}
+
+    **default on environment names containing 'py25'**::
+
+        pip install --insecure {opts} {packages}`` 
+
+    (this will use pip<1.4 (so no "--pre" option) and 
+    python2.5 typically has no SSL support).
 
 .. confval:: whitelist_externals=MULTI-LINE-LIST
 
@@ -137,37 +149,41 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: downloadcache=path
 
+    **DEPRECATED** -- as of August 2013 this option is not very
+    useful because of pypi's CDN and because of caching pypi
+    server solutions like `devpi <http://doc.devpi.net>`_.
+
     use this directory for caching downloads.  This value is overriden
     by the environment variable ``PIP_DOWNLOAD_CACHE`` if it exists. If
     you specify a custom :confval:`install_command` that uses an
     installer other than pip, your installer must support the
     `--download-cache` command-line option.
     **default**: no download cache will be used.
-    **note**: if creating multiple environments use of a download cache greatly
-    speeds up the testing process.
 
 .. confval:: distribute=True|False
 
-    Set to ``True`` if you want to use distribute_ instead of the default
-    setuptools_ in the virtual environment.  Prior to tox-1.5 the
-    default was True and now is False, meaning ``setuptools`` is used 
-    (note that setuptools-0.7 merged with distribute).  In future versions 
-    of tox this option might be ignored and setuptools always chosen.
+    **DEPRECATED** -- as of August 2013 you should use setuptools
+    which has merged most of distribute_ 's changes.  Just use
+    the default, Luke!  In future versions of tox this option might 
+    be ignored and setuptools always chosen.  
+
     **default:** False.
 
 .. confval:: sitepackages=True|False
 
     Set to ``True`` if you want to create virtual environments that also
-    have access to globally installed packages.  **default:** False, meaning
-    that virtualenvs will be created with ``--no-site-packages`` by default.
+    have access to globally installed packages.  
+
+    **default:** False, meaning that virtualenvs will be 
+    created without inheriting the global site packages.
 
 .. confval:: args_are_paths=BOOL
 
     treat positional arguments passed to ``tox`` as file system paths
     and - if they exist on the filesystem - rewrite them according
     to the ``changedir``.
-    **default**: True (due to the exists-on-filesystem check it's usually
-    safe to try rewriting).
+    **default**: True (due to the exists-on-filesystem check it's 
+    usually safe to try rewriting).
 
 .. confval:: envtmpdir=path
 

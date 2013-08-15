@@ -10,11 +10,6 @@ except ImportError:
 
 pytest_plugins = "pytester"
 
-if sys.version_info < (2,6):
-    PIP_INSECURE = "setenv = PIP_INSECURE=1"
-else:
-    PIP_INSECURE = ""
-
 from tox._cmdline import Session
 from tox._config import parseconfig
 
@@ -379,10 +374,10 @@ class TestToxRun:
             'tox.ini': '''
                 [testenv]
                 changedir=tests
-                %s
-                commands= py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml
+                commands= py.test --basetemp={envtmpdir} \
+                                  --junitxml=junit-{envname}.xml
                 deps=pytest
-            ''' % PIP_INSECURE
+            '''
         })
 
     def test_toxuone_env(self, cmd, example123):
@@ -473,11 +468,10 @@ def test_test_usedevelop(cmd, initproj):
             [testenv]
             usedevelop=True
             changedir=tests
-            %s
             commands=
                 py.test --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
             deps=pytest
-        ''' % PIP_INSECURE
+        '''
     })
     result = cmd.run("tox", "-v")
     assert not result.ret
@@ -521,9 +515,9 @@ def test_test_piphelp(initproj, cmd):
         # content of: tox.ini
         [testenv]
         commands=pip -h
-        [testenv:py25]
-        basepython=python
         [testenv:py26]
+        basepython=python
+        [testenv:py27]
         basepython=python
     """})
     result = cmd.run("tox")
@@ -532,19 +526,19 @@ def test_test_piphelp(initproj, cmd):
 def test_notest(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
-        [testenv:py25]
+        [testenv:py26]
         basepython=python
     """})
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*summary*",
-        "*py25*skipped tests*",
+        "*py26*skipped tests*",
     ])
-    result = cmd.run("tox", "-v", "--notest", "-epy25")
+    result = cmd.run("tox", "-v", "--notest", "-epy26")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*py25*reusing*",
+        "*py26*reusing*",
     ])
 
 def test_PYC(initproj, cmd, monkeypatch):

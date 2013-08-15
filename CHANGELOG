@@ -1,6 +1,17 @@
 1.6.0.dev
 -----------------
 
+- fix issue35: add new EXPERIMENTAL "install_command" testenv-option to configure the
+  installation command with options for dep/pkg install.  Thanks Carl Meyer
+  for the PR and docs.
+
+
+- address issueintroduce python2.5 support by vendoring the virtualenv-1.9.1 script
+  and forcing pip<1.4. Also the default [py25] environment modifies the
+  default installer_command (new config option) to use pip without the "--pre" 
+  which was introduced with pip-1.4 and is required if you want to install non-stable releases.
+  (tox defaults to install with "--pre" otherwise).
+
 - fix issue1: empty setup files are properly detected, thanks Anthon van
   der Neuth
 
@@ -10,10 +21,6 @@
   is set if a package contains a ``setup_requires``. 
 
 - remove toxbootstrap.py for now because it is broken.
-
-- fix issue35: add new "install_command" testenv-option to configure the
-  installation command with options for dep/pkg install.  Thanks Carl Meyer
-  for the PR and docs.
 
 - fix issue109 and fix issue111: multiple "-e" options are now combined
   (previously the last one would win). Thanks Anthon van der Neut.
