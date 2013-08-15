@@ -522,19 +522,19 @@ class TestConfigTestEnv:
         monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
         config = newconfig("""
             [testenv]
-            downloadcache=/the/cache
+            downloadcache=thecache
         """)
         envconfig = config.envconfigs['python']
-        assert envconfig.downloadcache == '/the/cache'
+        assert envconfig.downloadcache.basename == 'thecache'
 
     def test_downloadcache_env_override(self, newconfig, monkeypatch):
-        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", '/from/env')
+        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", 'fromenv')
         config = newconfig("""
             [testenv]
-            downloadcache=/from/config
+            downloadcache=somepath
         """)
         envconfig = config.envconfigs['python']
-        assert envconfig.downloadcache == '/from/env'
+        assert envconfig.downloadcache.basename == "fromenv"
 
     def test_downloadcache_only_if_in_config(self, newconfig, tmpdir,
                                              monkeypatch):

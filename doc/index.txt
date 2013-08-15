@@ -66,10 +66,13 @@ Current features
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 
-* uses pip_ and distribute_ by default.
+* uses pip_ and setuptools_ by default.  Experimental
+  support for configuring the installer command 
+  through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: Python-2.5 up to Python-3.3, Jython and pypy_
-  support.
+* **cross-Python compatible**: Python-2.5 up to Python-3.3, 
+  Jython and pypy_ support.  Python-2.5 is supported through
+  a vendored ``virtualenv-1.9.1`` script.
 
 * **cross-platform**: Windows and Unix style environments
 
@@ -77,8 +80,9 @@ Current features
   (formerly known as Hudson) and helps you to avoid boilerplatish 
   and platform-specific build-step hacks.
 
-* **unified automatic artifact management** between ``tox`` runs both
-  in a local developer shell as well as in a CI/Jenkins context.
+* **full interoperability with devpi**: is integrated with and
+  is used for testing in the devpi_ system, a versatile pypi 
+  index server and release managing tool.
 
 * **driven by a simple ini-style config file**
 

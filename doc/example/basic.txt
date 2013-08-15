@@ -114,27 +114,20 @@ further customizing installation
 
 .. versionadded:: 1.6
 
-By default tox uses `pip`_ to install packages (both the sdist of your
-package-under-test and any dependencies you specify in ``tox.ini``) into each
-test virtualenv, with a command-line like ``pip install --pre
-SomePackage==1.0``.
-
-You can fully customize tox's install-command in your ``tox.ini`` with the
-``install_command`` option. For instance, to use ``easy_install`` instead of
-`pip`_::
+By default tox uses `pip`_ to install packages, both the
+package-under-test and any dependencies you specify in ``tox.ini``.
+You can fully customize tox's install-command through the
+testenv-specific :confval:`install_command=ARGV` setting.
+For instance, to use ``easy_install`` instead of `pip`_::
 
     [testenv]
-    install_command = easy_install {packages}
+    install_command = easy_install {opts} {packages}
 
-Or to use pip's ``--find-links`` and ``--no-index`` options to specify an
-alternative source for your dependencies::
+Or to use pip's ``--find-links`` and ``--no-index`` options to specify
+an alternative source for your dependencies::
 
     [testenv]
     install_command = pip install --pre --find-links http://packages.example.com --no-index {opts} {packages}
-
-(Including ``{opts}`` is only necessary if you want your install command to
-also respect tox's options for setting the download cache and package index
-server).
 
 .. _pip: http://pip-installer.org
 

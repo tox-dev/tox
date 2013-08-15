@@ -10,7 +10,6 @@ def interpreters():
 
 @pytest.mark.skipif("sys.platform != 'win32'")
 def test_locate_via_py(monkeypatch):
-    from tox._venv import locate_via_py
     class PseudoPy:
         def sysexec(self, *args):
             assert args[0] == '-3.2'
@@ -75,10 +74,8 @@ class TestInterpreters:
         assert not interpreters.get_executable("12l3k1j23")
 
     def test_get_info__name(self, interpreters):
-        basename = os.path.basename(sys.executable)
-        info = interpreters.get_info(basename)
+        info = interpreters.get_info(executable=sys.executable)
         assert info.version_info == tuple(sys.version_info)
-        assert info.name == basename
         assert info.executable == sys.executable
         assert info.runnable
 

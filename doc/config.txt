@@ -87,26 +87,22 @@ Complete list of settings that you can put into ``testenv*`` sections:
     the virtual environment; both the package under test
     and any defined dependencies. Must contain the substitution key
     ``{packages}`` which will be replaced by the packages to
-    install. May also contain the substitution key ``{opts}``, which
-    will be replaced by the ``-i INDEXURL`` option if an index server
-    is active (see :confval:`indexserver` and the ``:indexserver:dep``
-    syntax of :confval:`deps`) and the ``--download-cache`` option (if
-    you've specified :confval:`downloadcache`). If your installer does
-    not support ``-i`` and ``--download-cache`` command-line options,
-    you should not use :confval:`indexserver` or
-    :confval:`downloadcache`, and/or your :confval:`install_command`
-    should not include the ``{opts}`` substitution key (in which case
-    those options will have no effect).
+    install.  You should also accept "{opts}" if you are using
+    pip or easy_install -- it will contain index server options
+    if you have configured them via :confval:`indexserver`
+    and the deprecated :confval:`downloadcache` option
+    if you have configured it.
+
     **default**::
     
         pip install --pre {opts} {packages}
-
-    **default on environment names containing 'py25'**::
+         
+    **default on environments using python2.5**::
 
         pip install --insecure {opts} {packages}`` 
 
-    (this will use pip<1.4 (so no "--pre" option) and 
-    python2.5 typically has no SSL support).
+    (this will use pip<1.4 (so no ``--pre`` option) and python2.5 
+    typically has no SSL support, therefore ``--insecure``).
 
 .. confval:: whitelist_externals=MULTI-LINE-LIST
 

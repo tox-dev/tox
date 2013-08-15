@@ -1,4 +1,5 @@
 
+.. _devpi: http://doc.devpi.net
 .. _Python: http://www.python.org
 .. _virtualenv: https://pypi.python.org/pypi/virtualenv
 .. _virtualenv3: https://pypi.python.org/pypi/virtualenv3

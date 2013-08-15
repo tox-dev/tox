@@ -1,23 +1,25 @@
-1.6.0.dev
+1.6.0
 -----------------
 
-- fix issue35: add new EXPERIMENTAL "install_command" testenv-option to configure the
-  installation command with options for dep/pkg install.  Thanks Carl Meyer
-  for the PR and docs.
+- fix issue35: add new EXPERIMENTAL "install_command" testenv-option to
+  configure the installation command with options for dep/pkg install.
+  Thanks Carl Meyer for the PR and docs.
 
-- address issueintroduce python2.5 support by vendoring the virtualenv-1.9.1 script
-  and forcing pip<1.4. Also the default [py25] environment modifies the
-  default installer_command (new config option) to use pip without the "--pre" 
-  which was introduced with pip-1.4 and is required if you want to install non-stable releases.
-  (tox defaults to install with "--pre" otherwise).
+- fix issue91: python2.5 support by vendoring the virtualenv-1.9.1 
+  script and forcing pip<1.4. Also the default [py25] environment 
+  modifies the default installer_command (new config option)
+  to use pip without the "--pre" option which was introduced 
+  with pip-1.4 and is now required if you want to install non-stable 
+  releases.  (tox defaults to install with "--pre" everywhere).
+
+- during installation of dependencies HOME is now set to a pseudo
+  location ({envtmpdir}/pseudo-home).  If an index url was specified
+  a .pydistutils.cfg file will be written with an index_url setting
+  so that packages defining ``setup_requires`` dependencies will not
+  silently use your HOME-directory settings or https://pypi.python.org.
 
 - fix issue1: empty setup files are properly detected, thanks Anthon van
   der Neuth
-
-- during installation of dependencies HOME is set to a pseudo
-  location (envtmpdir/pseudo-home).  If an index url was specified
-  a .pydistutils.cfg file will be written so that index_url
-  is set if a package contains a ``setup_requires``. 
 
 - remove toxbootstrap.py for now because it is broken.
 

@@ -1,6 +1,7 @@
 import sys
 import os
 import py
+import re
 import subprocess
 import inspect
 
@@ -59,7 +60,8 @@ def run_and_get_interpreter_info(name, executable):
             [inspect.getsource(pyinfo), "print (pyinfo())"])
     except ExecFailed:
         val = sys.exc_info()[1]
-        return NoInterpreterInfo(name, **val.__dict__)
+        return NoInterpreterInfo(name, executable=val.executable,
+                                 out=val.out, err=val.err)
     else:
         return InterpreterInfo(name, executable, **result)
 
@@ -74,7 +76,7 @@ def exec_on_interpreter(executable, source):
     if popen.returncode:
         raise ExecFailed(executable, source, out, err)
     try:
-        result = eval(out)
+        result = eval(out.strip())
     except Exception:
         raise ExecFailed(executable, source, out,
                          "could not decode %r" % out)
@@ -91,7 +93,7 @@ class InterpreterInfo:
     runnable = True
 
     def __init__(self, name, executable, version_info):
-        assert name and executable and version_info
+        assert executable and version_info
         self.name = name
         self.executable = executable
         self.version_info = version_info
