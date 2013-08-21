@@ -1,3 +1,10 @@
+1.6.1
+-----
+
+- fix issue119: {envsitepackagesdir} is now correctly computed and has
+  a better test to prevent regression.
+
+
 1.6.0
 -----------------
 

@@ -636,7 +636,7 @@ def test_envsitepackagesdir(cmd, initproj):
     result = cmd.run("tox")
     assert result.ret == 0
     result.stdout.fnmatch_lines("""
-        X:*site-packages*
+        X:*.tox*python*site-packages*
     """)
 
 def verify_json_report_format(data, testenvs=True):
