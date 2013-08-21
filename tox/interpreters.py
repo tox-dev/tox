@@ -20,7 +20,6 @@ class Interpreters:
             return self.name2executable[name]
         except KeyError:
             self.name2executable[name] = e = find_executable(name)
-            print ("executable for %s is %s" %(name, e))
             return e
 
     def get_info(self, name=None, executable=None):
@@ -32,7 +31,6 @@ class Interpreters:
             executable = self.get_executable(name)
         if not executable:
             return NoInterpreterInfo(name=name)
-        print ("get info for %s" % executable)
         try:
             return self.executable2info[executable]
         except KeyError:
