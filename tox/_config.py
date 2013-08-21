@@ -99,6 +99,10 @@ def prepare_parse(pkgname):
     parser.add_argument("--develop", action="store_true", dest="develop",
         help="install package in the venv using 'setup.py develop' via "
              "'pip -e .'")
+    parser.add_argument("--set-home", action="store_true", dest="sethome",
+        help="(experimental) force creating a new $HOME for each test "
+             "environment and create .pydistutils.cfg|pip.conf files "
+             "if index servers are specified with tox. ")
     parser.add_argument('-i', action="append",
         dest="indexurl", metavar="URL",
         help="set indexserver url (if URL is of form name=url set the "

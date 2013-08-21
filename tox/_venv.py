@@ -322,9 +322,13 @@ class VirtualEnv(object):
 
         extraopts = extraopts or []
         for ixserver in l:
-            extraenv = hack_home_env(
-                homedir=self.envconfig.envtmpdir.join("pseudo-home"),
-                index_url = ixserver.url)
+            if self.envconfig.config.option.sethome:
+                extraenv = hack_home_env(
+                    homedir=self.envconfig.envtmpdir.join("pseudo-home"),
+                    index_url = ixserver.url)
+            else:
+                extraenv = {}
+
             args = d[ixserver] + extraopts
             self.run_install_command(args, ixserver.url, action,
                                      extraenv=extraenv)

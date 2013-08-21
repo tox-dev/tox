@@ -4,6 +4,10 @@
 - fix issue119: {envsitepackagesdir} is now correctly computed and has
   a better test to prevent regression.
 
+- fix issue116: make 1.6 introduced behaviour of changing to a 
+  per-env HOME directory during install activities dependent 
+  on "--set-home" for now.  Should re-establish the old behaviour
+  when no option is given.
 
 1.6.0
 -----------------

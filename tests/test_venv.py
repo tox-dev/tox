@@ -568,6 +568,24 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     x4 = venv.getcommandpath("x", cwd=tmpdir)
     mocksession.report.expect("warning", "*test command found but not*")
 
+def test_sethome_only_on_option(newmocksession, monkeypatch):
+    mocksession = newmocksession([], "")
+    venv = mocksession.getenv('python')
+    action = mocksession.newaction(venv, "qwe", [])
+    monkeypatch.setattr(tox._venv, "hack_home_env", None)
+    venv._install(["x"], action=action)
+
+def test_sethome_works_on_option(newmocksession, monkeypatch):
+    mocksession = newmocksession(["--set-home", "-i ALL=http://qwe"], "")
+    venv = mocksession.getenv('python')
+    action = mocksession.newaction(venv, "qwe", [])
+    venv._install(["x"], action=action)
+    _, mocked = mocksession.report.getnext("logpopen")
+    p = mocked.env["HOME"]
+    pydist = py.path.local(p).join(".pydistutils.cfg")
+    assert "http://qwe" in pydist.read()
+
+
 def test_hack_home_env(tmpdir):
     from tox._venv import hack_home_env
     env = hack_home_env(tmpdir, "http://index")
