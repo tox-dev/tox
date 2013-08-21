@@ -9,6 +9,9 @@
   on "--set-home" for now.  Should re-establish the old behaviour
   when no option is given.
 
+- fix issue118: correctly have two tests use realpath(). Thanks Barry
+  Warsaw.
+
 1.6.0
 -----------------
 
