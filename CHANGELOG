@@ -15,6 +15,11 @@
 - fix test runs on environments without a home directory
   (in this case we use toxinidir as the homedir)
 
+- fix issue117: python2.5 fix: don't use ``--insecure`` option because 
+  its very existence depends on presence of "ssl".  If you
+  want to support python2.5/pip1.3.1 based test environments you need 
+  to install ssl and/or use PIP_INSECURE=1 through ``setenv``. section.
+
 1.6.0
 -----------------
 

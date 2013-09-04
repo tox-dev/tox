@@ -509,7 +509,7 @@ class TestConfigTestEnv:
         for name in ("x25", "py25-x"):
             env = config.envconfigs[name]
             assert env.install_command == \
-               "pip install --insecure {opts} {packages}".split()
+               "pip install {opts} {packages}".split()
         env = config.envconfigs["py26"]
         assert env.install_command == \
                "pip install --pre {opts} {packages}".split()
