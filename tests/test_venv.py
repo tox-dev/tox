@@ -133,7 +133,7 @@ def test_install_deps_wildcard(newmocksession):
     venv.install_deps()
     assert len(l) == 2 + py25calls
     args = l[-1].args
-    assert l[-1].cwd == venv.envconfig.envlogdir
+    assert l[-1].cwd == venv.envconfig.config.toxinidir
     assert "pip" in str(args[0])
     assert args[1] == "install"
     #arg = "--download-cache=" + str(venv.envconfig.downloadcache)
@@ -163,7 +163,7 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
     venv.install_deps()
     assert len(l) == 2 + py25calls
     args = l[-1].args
-    assert l[-1].cwd == venv.envconfig.envlogdir
+    assert l[-1].cwd == venv.envconfig.config.toxinidir
     assert "pip" in str(args[0])
     assert args[1] == "install"
     assert "dep1" in args

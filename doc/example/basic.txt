@@ -44,7 +44,7 @@ Available "default" test environments names are::
 However, you can also create your own test environment names,
 see some of the examples in :doc:`examples <../examples>`.
 
-whitelisting a non-virtualenv commands
+whitelisting non-virtualenv commands
 -----------------------------------------------
 
 .. versionadded:: 1.5
@@ -63,6 +63,21 @@ configuration::
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 
 .. _multiindex:
+
+depending on requirements.txt
+-----------------------------------------------
+
+.. versionadded:: 1.6.1
+
+(experimental) If you have a ``requirements.txt`` file
+you can add it to your ``deps`` variable like this::
+
+    deps = -rrequirements.txt 
+
+All installation commands are executed using ``{toxinidir}}``
+(the directory where ``tox.ini`` resides) as the current
+working directory.  Therefore, the underlying ``pip`` installation
+will assume ``requirements.txt`` to exist at ``{toxinidir}/requirements.txt``.
 
 using a different default PyPI url
 -----------------------------------------------

@@ -57,7 +57,5 @@ Here is example configuration for that::
     envdir = devenv
     basepython = python2.7
     usedevelop = True
-    deps =
-    commands =
-        pip install -r requirements.txt
+    deps = -rrequirements.txt
 

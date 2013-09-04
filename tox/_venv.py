@@ -216,7 +216,7 @@ class VirtualEnv(object):
             action.setactivity('pip-downgrade', 'pip<1.4')
             argv = ["easy_install"] + \
                    self._installopts(indexserver) + ['pip<1.4']
-            self._pcall(argv, cwd=self.envconfig.envlogdir,
+            self._pcall(argv, cwd=self.envconfig.config.toxinidir,
                         action=action)
 
     def finish(self):
@@ -299,8 +299,8 @@ class VirtualEnv(object):
         env = dict(PYTHONIOENCODING='utf_8')
         if extraenv is not None:
             env.update(extraenv)
-        self._pcall(argv, cwd=self.envconfig.envlogdir,
-            extraenv=env, action=action)
+        self._pcall(argv, cwd=self.envconfig.config.toxinidir,
+                    extraenv=env, action=action)
 
     def _install(self, deps, extraopts=None, action=None):
         if not deps:

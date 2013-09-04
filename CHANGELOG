@@ -20,6 +20,9 @@
   want to support python2.5/pip1.3.1 based test environments you need 
   to install ssl and/or use PIP_INSECURE=1 through ``setenv``. section.
 
+- fix issue102: change to {toxinidir} when installing dependencies.
+  this allows to use relative path like in "-rrequirements.txt".
+
 1.6.0
 -----------------
 
