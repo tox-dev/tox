@@ -120,11 +120,18 @@ def prepare_parse(pkgname):
         help="additional arguments available to command positional substition")
     return parser
 
-class Config:
+class Config(object):
     def __init__(self):
         self.envconfigs = {}
         self.invocationcwd = py.path.local()
         self.interpreters = Interpreters()
+
+    @property
+    def homedir(self):
+        homedir = get_homedir()
+        if homedir is None:
+            homedir = self.toxinidir  # XXX good idea?
+        return homedir
 
 class VenvConfig:
     def __init__(self, **kw):
@@ -166,6 +173,12 @@ class VenvConfig:
 
 testenvprefix = "testenv:"
 
+def get_homedir():
+    try:
+        return py.path.local._gethomedir()
+    except Exception:
+        return None
+
 class parseini:
     def __init__(self, config, inipath):
         config.toxinipath = inipath
@@ -186,9 +199,7 @@ class parseini:
         else:
             raise ValueError("invalid context")
 
-        config.homedir = py.path.local._gethomedir()
-        if config.homedir is None:
-            config.homedir = config.toxinidir  # XXX good idea?
+
         reader.addsubstitions(toxinidir=config.toxinidir,
                               homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",

@@ -73,8 +73,7 @@ class TestConfigPackage:
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
-        homedir = py.path.local._gethomedir()
-        assert config.distshare == homedir.join(".tox", "distshare")
+        assert config.distshare == config.homedir.join(".tox", "distshare")
 
     def test_defaults_changed_dir(self, tmpdir, newconfig):
         tmpdir.mkdir("abc").chdir()
@@ -99,6 +98,18 @@ class TestParseconfig:
         finally:
             old.chdir()
         assert config.toxinipath == toxinipath
+
+def test_get_homedir(monkeypatch):
+    monkeypatch.setattr(py.path.local, "_gethomedir",
+                        classmethod(lambda x: {}[1]))
+    assert not get_homedir()
+    monkeypatch.setattr(py.path.local, "_gethomedir",
+                        classmethod(lambda x: 0/0))
+    assert not get_homedir()
+    monkeypatch.setattr(py.path.local, "_gethomedir",
+                        classmethod(lambda x: "123"))
+    assert get_homedir() == "123"
+
 
 class TestIniParser:
     def test_getdefault_single(self, tmpdir, newconfig):
@@ -582,7 +593,7 @@ class TestConfigTestEnv:
         assert argv[3][0] == conf.envbindir
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
-        assert argv[6][0] == str(py.path.local._gethomedir())
+        assert argv[6][0] == str(config.homedir)
         assert argv[7][0] == config.homedir.join(".tox", "distshare")
         assert argv[8][0] == conf.envlogdir
 
@@ -903,8 +914,7 @@ class TestIndexServer:
                 pypi    = http://pypi.python.org/simple
         """
         config = newconfig([], inisource)
-        homedir = str(py.path.local._gethomedir())
-        expected = "file://%s/.pip/downloads/simple" % homedir
+        expected = "file://%s/.pip/downloads/simple" % config.homedir
         assert config.indexserver['default'].url == expected
         assert config.indexserver['local1'].url == \
                config.indexserver['default'].url

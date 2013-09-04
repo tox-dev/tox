@@ -625,18 +625,19 @@ def test_installpkg(tmpdir, newconfig):
     sdist_path = session.sdist()
     assert sdist_path == p
 
-#@pytest.mark.xfail("sys.platform == 'win32'", reason="test needs better impl")
+@pytest.mark.xfail("sys.platform == 'win32' and sys.version_info < (2,6)",
+                   reason="test needs better impl")
 def test_envsitepackagesdir(cmd, initproj):
     initproj("pkg512-0.0.5", filedefs={
         'tox.ini': """
         [testenv]
         commands=
-            python -c "print('X:{envsitepackagesdir}')"
+            python -c "print(r'X:{envsitepackagesdir}')"
     """})
     result = cmd.run("tox")
     assert result.ret == 0
     result.stdout.fnmatch_lines("""
-        X:*.tox*python*site-packages*
+        X:*tox*site-packages*
     """)
 
 def verify_json_report_format(data, testenvs=True):

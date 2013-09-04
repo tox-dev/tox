@@ -12,6 +12,9 @@
 - fix issue118: correctly have two tests use realpath(). Thanks Barry
   Warsaw.
 
+- fix test runs on environments without a home directory
+  (in this case we use toxinidir as the homedir)
+
 1.6.0
 -----------------
 
