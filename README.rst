@@ -18,8 +18,6 @@ For more information and the repository please checkout:
 
 - repository: https://bitbucket.org/hpk42/tox
 
-have fun,
-
 
 have fun,
 
