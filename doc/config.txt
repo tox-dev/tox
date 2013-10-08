@@ -122,10 +122,10 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: deps=MULTI-LINE-LIST
 
-    test-specific dependencies -.to be installed into the environment prior to project
+    test-specific dependencies - to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
-    passed to the installer command for processing.  A line specify a file,
-    an URL or a package name.  You can additionally specify
+    passed to the installer command for processing.  Each line specifies a file,
+    a URL or a package name.  You can additionally specify
     an :confval:`indexserver` to use for installing this dependency.
     All derived dependencies (deps required by the dep) will then be
     retrieved from the specified indexserver::
