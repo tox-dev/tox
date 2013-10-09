@@ -532,11 +532,13 @@ class TestConfigTestEnv:
     def test_install_command_substitutions(self, newconfig):
         config = newconfig("""
             [testenv]
-            install_command=some_install {toxinidir} {envname} {packages}
+            install_command=some_install --arg={toxinidir}/foo \
+                {envname} {opts} {packages}
         """)
         envconfig = config.envconfigs['python']
         assert envconfig.install_command == [
-            'some_install', config.toxinidir, 'python', '{packages}']
+            'some_install', '--arg=%s/foo' % config.toxinidir, 'python',
+            '{opts}', '{packages}']
 
     def test_downloadcache(self, newconfig, monkeypatch):
         monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
