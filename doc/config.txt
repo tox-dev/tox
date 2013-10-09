@@ -1,7 +1,7 @@
 .. be in -*- rst -*- mode!
 
 tox configuration specification
-================================
+===============================
 
 .. _ConfigParser: http://docs.python.org/library/configparser.html
 
@@ -10,7 +10,7 @@ Below you find the specification, but you might want to skim some
 :doc:`examples` first and use this page as a reference.
 
 Tox global settings
-----------------------
+-------------------
 
 List of optional global options::
 
@@ -34,7 +34,7 @@ and will first lookup global tox settings in this section::
 
 
 envlist setting
-+++++++++++++++++++++++++
++++++++++++++++
 
 Determining the environment list that ``tox`` is to operate on
 happens in this order:
@@ -45,7 +45,7 @@ happens in this order:
 
 
 Virtualenv test environment settings
--------------------------------------------
+------------------------------------
 
 Test environments are defined by a::
 
@@ -236,13 +236,13 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 
 Substitutions
----------------------
+-------------
 
 Any ``key=value`` setting in an ini-file can make use
 of value substitution through the ``{...}`` string-substitution pattern.
 
 Globally available substitutions
-+++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++
 
 ``{toxinidir}``
     the directory where tox.ini is located
@@ -262,7 +262,7 @@ Globally available substitutions
     they may be accessed by other processes or tox runs.
 
 substitutions for virtualenv-related sections
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
 
 ``{envname}``
     the name of the virtual environment
@@ -282,7 +282,7 @@ substitutions for virtualenv-related sections
 
 
 environment variable substitutions
-+++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++
 
 If you specify a substitution string like this::
 
@@ -296,7 +296,7 @@ does not exist.
 .. _`positional substitution`:
 
 substitutions for positional arguments in commands
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. versionadded:: 1.0
 
@@ -330,7 +330,7 @@ positional arguments with defaults. This format has been deprecated.
 Use ``{posargs:DEFAULTS}`` to specify those.
 
 
-Substition for values from other sections
+Substitution for values from other sections
 +++++++++++++++++++++++++++++++++++++++++++
 
 .. versionadded:: 1.4
@@ -361,7 +361,7 @@ You can put default values in one section and reference them in others to avoid 
 
 
 Other Rules and notes
-=========================
+=====================
 
 * ``path`` specifications: if a specified ``path`` is a relative path
   it will be considered as relative to the ``toxinidir``, the directory

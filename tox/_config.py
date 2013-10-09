@@ -117,7 +117,7 @@ def prepare_parse(pkgname):
              "pass-through output from running test commands which is "
              "instead captured into the json result file.")
     parser.add_argument("args", nargs="*",
-        help="additional arguments available to command positional substition")
+        help="additional arguments available to command positional substitution")
     return parser
 
 class Config(object):
@@ -200,8 +200,8 @@ class parseini:
             raise ValueError("invalid context")
 
 
-        reader.addsubstitions(toxinidir=config.toxinidir,
-                              homedir=config.homedir)
+        reader.addsubstitutions(toxinidir=config.toxinidir,
+                                homedir=config.homedir)
         config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
                                            "{toxinidir}/.tox")
         config.minversion = reader.getdefault(toxsection, "minversion", None)
@@ -233,13 +233,13 @@ class parseini:
             for name in config.indexserver:
                 config.indexserver[name] = IndexServerConfig(name, override)
 
-        reader.addsubstitions(toxworkdir=config.toxworkdir)
+        reader.addsubstitutions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath(toxsection, "distdir",
                                            "{toxworkdir}/dist")
-        reader.addsubstitions(distdir=config.distdir)
+        reader.addsubstitutions(distdir=config.distdir)
         config.distshare = reader.getpath(toxsection, "distshare",
                                           distshare_default)
-        reader.addsubstitions(distshare=config.distshare)
+        reader.addsubstitutions(distshare=config.distshare)
         config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
@@ -270,7 +270,7 @@ class parseini:
         vc = VenvConfig(envname=name)
         vc.config = config
         reader = IniReader(self._cfg, fallbacksections=["testenv"])
-        reader.addsubstitions(**subs)
+        reader.addsubstitutions(**subs)
         vc.develop = reader.getbool(section, "usedevelop", config.option.develop)
         vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
         vc.args_are_paths = reader.getbool(section, "args_are_paths", True)
@@ -283,12 +283,12 @@ class parseini:
             bp = sys.executable
         vc.basepython = reader.getdefault(section, "basepython", bp)
         vc._basepython_info = config.interpreters.get_info(vc.basepython)
-        reader.addsubstitions(envdir=vc.envdir, envname=vc.envname,
-                              envbindir=vc.envbindir, envpython=vc.envpython,
-                              envsitepackagesdir=vc.envsitepackagesdir)
+        reader.addsubstitutions(envdir=vc.envdir, envname=vc.envname,
+                                envbindir=vc.envbindir, envpython=vc.envpython,
+                                envsitepackagesdir=vc.envsitepackagesdir)
         vc.envtmpdir = reader.getpath(section, "tmpdir", "{envdir}/tmp")
         vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
-        reader.addsubstitions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
+        reader.addsubstitutions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
         vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
         if config.option.recreate:
             vc.recreate = True
@@ -303,7 +303,7 @@ class parseini:
                     if origpath.check():
                         arg = vc.changedir.bestrelpath(origpath)
                     args.append(arg)
-            reader.addsubstitions(args)
+            reader.addsubstitutions(args)
         vc.setenv = reader.getdict(section, 'setenv')
         if not vc.setenv:
             vc.setenv = None
@@ -410,7 +410,7 @@ class IniReader:
         self._subs = {}
         self._subststack = []
 
-    def addsubstitions(self, _posargs=None, **kw):
+    def addsubstitutions(self, _posargs=None, **kw):
         self._subs.update(kw)
         if _posargs:
             self._subs['_posargs'] = _posargs

@@ -156,7 +156,7 @@ class TestIniParser:
             key={value}
         """)
         reader = IniReader(config._cfg, fallbacksections=['mydefault'])
-        reader.addsubstitions(value="newvalue", value2="newvalue2")
+        reader.addsubstitutions(value="newvalue", value2="newvalue2")
         x = reader.getdefault("section", "key2")
         assert x == "newvalue2"
         x = reader.getdefault("section", "key3")
@@ -172,7 +172,7 @@ class TestIniParser:
                 {item2}
         """)
         reader = IniReader(config._cfg)
-        reader.addsubstitions(item1="not", item2="grr")
+        reader.addsubstitutions(item1="not", item2="grr")
         x = reader.getlist("section", "key2")
         assert x == ['item1', 'grr']
 
@@ -184,7 +184,7 @@ class TestIniParser:
                 key2={item2}
         """)
         reader = IniReader(config._cfg)
-        reader.addsubstitions(item1="not", item2="grr")
+        reader.addsubstitutions(item1="not", item2="grr")
         x = reader.getdict("section", "key2")
         assert 'key1' in x
         assert 'key2' in x
@@ -235,7 +235,7 @@ class TestIniParser:
                 cmd2 {item2}
         """)
         reader = IniReader(config._cfg)
-        reader.addsubstitions(item1="with space", item2="grr")
+        reader.addsubstitutions(item1="with space", item2="grr")
         #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
@@ -251,7 +251,7 @@ class TestIniParser:
                      {item2}
         """)
         reader = IniReader(config._cfg)
-        reader.addsubstitions(item1="with space", item2="grr")
+        reader.addsubstitutions(item1="with space", item2="grr")
         #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
@@ -281,7 +281,7 @@ class TestIniParser:
         """)
         reader = IniReader(config._cfg)
         posargs = ['hello', 'world']
-        reader.addsubstitions(posargs, item2="value2")
+        reader.addsubstitutions(posargs, item2="value2")
         #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
@@ -290,7 +290,7 @@ class TestIniParser:
         assert argvlist[1] == ["cmd2"] + posargs
 
         reader = IniReader(config._cfg)
-        reader.addsubstitions([], item2="value2")
+        reader.addsubstitutions([], item2="value2")
         #py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
@@ -309,7 +309,7 @@ class TestIniParser:
         """)
         reader = IniReader(config._cfg)
         posargs = ['hello', 'world']
-        reader.addsubstitions(posargs)
+        reader.addsubstitutions(posargs)
 
         argvlist = reader.getargvlist('section', 'key')
         assert argvlist[0] == ['cmd0'] + posargs
@@ -317,7 +317,7 @@ class TestIniParser:
         assert argvlist[2] == ['cmd2', '-m', "something"] + posargs
         assert argvlist[3] == ['cmd3', 'something[]else']
 
-    def test_substition_with_multiple_words(self, newconfig):
+    def test_substitution_with_multiple_words(self, newconfig):
         inisource = """
             [section]
             key = py.test -n5 --junitxml={envlogdir}/junit-{envname}.xml []
@@ -325,7 +325,7 @@ class TestIniParser:
         config = newconfig(inisource)
         reader = IniReader(config._cfg)
         posargs = ['hello', 'world']
-        reader.addsubstitions(posargs, envlogdir='ENV_LOG_DIR', envname='ENV_NAME')
+        reader.addsubstitutions(posargs, envlogdir='ENV_LOG_DIR', envname='ENV_NAME')
 
         expected = ['py.test', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world']
         assert reader.getargvlist('section', 'key')[0] == expected
@@ -347,7 +347,7 @@ class TestIniParser:
             path1={HELLO}
         """)
         reader = IniReader(config._cfg)
-        reader.addsubstitions(toxinidir=tmpdir, HELLO="mypath")
+        reader.addsubstitutions(toxinidir=tmpdir, HELLO="mypath")
         x = reader.getpath("section", "path1", tmpdir)
         assert x == tmpdir.join("mypath")
 
