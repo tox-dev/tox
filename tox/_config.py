@@ -621,14 +621,13 @@ class IniReader:
     def _replace_match_no_quote(self, match):
         return self._replace_match(match, quote=False)
 
-    def _replace(self, x, rexpattern=RE_ITEM_REF, quote=False):
-        # XXX is rexpattern used by callers? can it be removed?
+    def _replace(self, x, quote=False):
         if '{' in x:
             if quote:
                 replace_func = self._replace_match_quote
             else:
                 replace_func = self._replace_match_no_quote
-            return rexpattern.sub(replace_func, x)
+            return RE_ITEM_REF.sub(replace_func, x)
         return x
 
     def _parse_command(self, command):
