@@ -341,7 +341,7 @@ class parseini:
             section,
             "install_command",
             "pip install " + " ".join(pip_default_opts),
-            replace=False,
+            replace=True,
             )
         if '{packages}' not in vc.install_command:
             raise tox.exception.ConfigError(
@@ -596,6 +596,13 @@ class IniReader:
         # and no type, handle it as empty posargs
         if self._is_bare_posargs(g):
             return self._do_replace_posargs(lambda: '')
+
+        # special case: opts and packages. Leave {opts} and
+        # {packages} intact, they are replaced manually in
+        # _venv.VirtualEnv.run_install_command.
+        sub_value = g['substitution_value']
+        if sub_value in ('opts', 'packages'):
+            return '{%s}' % sub_value
 
         handlers = {
             'posargs' : self._replace_posargs,

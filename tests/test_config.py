@@ -529,6 +529,15 @@ class TestConfigTestEnv:
             install_command=pip install
         """)
 
+    def test_install_command_substitutions(self, newconfig):
+        config = newconfig("""
+            [testenv]
+            install_command=some_install {toxinidir} {envname} {packages}
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.install_command == [
+            'some_install', config.toxinidir, 'python', '{packages}']
+
     def test_downloadcache(self, newconfig, monkeypatch):
         monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
         config = newconfig("""
