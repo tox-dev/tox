@@ -341,7 +341,6 @@ class parseini:
             section,
             "install_command",
             "pip install " + " ".join(pip_default_opts),
-            replace=True,
             )
         if '{packages}' not in vc.install_command:
             raise tox.exception.ConfigError(
