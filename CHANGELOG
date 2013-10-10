@@ -1,3 +1,9 @@
+1.6.2.dev
+---------
+
+- fix issue128: enable full substitution in install_command,
+  thanks for the PR to Ronald Evers
+
 1.6.1
 -----
 
