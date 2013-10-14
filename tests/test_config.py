@@ -243,6 +243,16 @@ class TestIniParser:
         assert x == [["cmd1", "with space", "grr"],
                      ["cmd2", "grr"]]
 
+    def test_argvlist_windows_escaping(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            comm = py.test {posargs}
+        """)
+        reader = IniReader(config._cfg)
+        reader.addsubstitutions([r"hello\this"])
+        argv = reader.getargv("section", "comm")
+        assert argv == ["py.test", "hello\\this"]
+
     def test_argvlist_multiline(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
@@ -1077,3 +1087,15 @@ class TestCommandParser:
         p = CommandParser(cmd)
         parsed = list(p.words())
         assert parsed == ['nosetests', ' ', '-v', ' ', '-a', ' ', '!deferred', ' ', '--with-doctest', ' ', '[]']
+
+def test_argv_unquote_single_args():
+    argv = ["hello", '"hello2"', "'hello3'"]
+    newargv = unquote_single_args(argv)
+    assert newargv == ["hello", "hello2", "hello3"]
+
+def test_argv_roundrobin():
+    argv = ["hello", "this\\that"]
+    assert string2argv(argv2string(argv)) == argv
+    argv = ["hello world"]
+    assert string2argv(argv2string(argv)) == argv
+

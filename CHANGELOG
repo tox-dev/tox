@@ -4,6 +4,8 @@
 - fix issue128: enable full substitution in install_command,
   thanks for the PR to Ronald Evers
 
+- fix windows parsing/escaping
+
 1.6.1
 -----
 

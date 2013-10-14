@@ -14,6 +14,7 @@ import py
 
 import tox
 
+iswin32 = sys.platform == "win32"
 
 defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
 for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
@@ -487,7 +488,7 @@ class IniReader:
         command = self.getdefault(
             section, name, default=default, replace=replace)
 
-        return shlex.split(command.strip())
+        return string2argv(command.strip())
 
     def getbool(self, section, name, default=None):
         s = self.getdefault(section, name, default)
@@ -533,7 +534,7 @@ class IniReader:
         posargs = self._subs.get('_posargs', None)
 
         if posargs:
-            return " ".join(posargs)
+            return argv2string(posargs)
 
         value = value_func()
         if value:
@@ -704,3 +705,19 @@ def getcontextname():
     if 'HUDSON_URL' in os.environ:
         return 'jenkins'
     return None
+
+
+def unquote_single_args(argv):
+    newargv = []
+    for arg in argv:
+        if len(arg) >=2 and arg[0] == arg[-1]:
+            if arg[0] in ("'", '"'):
+               arg = arg[1:-1]
+        newargv.append(arg)
+    return newargv
+
+def string2argv(cmd):
+    return unquote_single_args(shlex.split(cmd, posix=False))
+
+def argv2string(argv):
+    return subprocess.list2cmdline(argv)
