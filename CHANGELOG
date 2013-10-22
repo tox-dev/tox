@@ -12,6 +12,9 @@
 - rework and simplify "commands" parsing and in particular posargs
   substitutions to avoid various win32/posix related quoting issues.
 
+- make sure that the --installpkg option trumps any usedevelop settings
+  in tox.ini or
+
 1.6.1
 -----
 

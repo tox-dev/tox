@@ -308,7 +308,8 @@ class TestIniParser:
         assert argvlist[0] == ["cmd1"]
         assert argvlist[1] == ["cmd2", "value2", "other"]
 
-    def test_positional_arguments_are_only_replaced_when_standing_alone(self, tmpdir, newconfig):
+    def test_positional_arguments_are_only_replaced_when_standing_alone(self,
+        tmpdir, newconfig):
         config = newconfig("""
             [section]
             key=
@@ -405,6 +406,13 @@ class TestConfigTestEnv:
         assert envconfig.develop == False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
         assert envconfig.setenv is None
+
+    def test_installpkg_tops_develop(self, newconfig):
+        config = newconfig(["--installpkg=abc"], """
+            [testenv]
+            usedevelop = True
+        """)
+        assert not config.envconfigs["python"].develop
 
     def test_specific_command_overrides(self, tmpdir, newconfig):
         config = newconfig("""
