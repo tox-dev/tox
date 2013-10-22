@@ -1088,14 +1088,14 @@ class TestCommandParser:
         parsed = list(p.words())
         assert parsed == ['nosetests', ' ', '-v', ' ', '-a', ' ', '!deferred', ' ', '--with-doctest', ' ', '[]']
 
-def test_argv_unquote_single_args():
-    argv = ["hello", '"hello2"', "'hello3'"]
-    newargv = unquote_single_args(argv)
-    assert newargv == ["hello", "hello2", "hello3"]
 
-def test_argv_roundrobin():
-    argv = ["hello", "this\\that"]
-    assert string2argv(argv2string(argv)) == argv
-    argv = ["hello world"]
-    assert string2argv(argv2string(argv)) == argv
+    @pytest.mark.skipif("sys.platform != 'win32'")
+    def test_commands_with_backslash(self, newconfig):
+        config = newconfig([r"hello\world"], """
+            [testenv:py26]
+            commands = some {posargs}
+        """)
+        envconfig = config.envconfigs["py26"]
+        assert envconfig.commands[0] == ["some", r"hello\world"]
+
 

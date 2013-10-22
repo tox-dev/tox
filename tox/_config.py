@@ -413,7 +413,7 @@ class IniReader:
     def addsubstitutions(self, _posargs=None, **kw):
         self._subs.update(kw)
         if _posargs:
-            self._subs['_posargs'] = _posargs
+            self.posargs = _posargs
 
     def getpath(self, section, name, defaultpath):
         toxinidir = self._subs['toxinidir']
@@ -468,27 +468,38 @@ class IniReader:
         return commandlist
 
     def _processcommand(self, command):
-        posargs = self._subs.get('_posargs', None)
-        words = list(CommandParser(command).words())
-        new_command = ''
-        for word in words:
-            if word == '[]':
+        posargs = getattr(self, "posargs", None)
+
+        # special treat posargs which might contain multiple arguments
+        # in their defaults
+        newcommand = ""
+        for word in CommandParser(command).words():
+            if word.startswith("{posargs:") and word.endswith("}"):
                 if posargs:
-                    new_command += ' '.join(posargs)
+                    word = "{posargs}"
+                else:
+                    word = word[9:-1]
+            newcommand += word
+
+        # now we can properly parse the command
+        argv = []
+        for arg in shlex.split(newcommand):
+            if arg in ('[]', "{posargs}"):
+                if posargs:
+                    argv.extend(posargs)
                 continue
-
-            new_word = self._replace(word, quote=True)
-            # two passes; we might have substitutions in the result
-            new_word = self._replace(new_word, quote=True)
-            new_command += new_word
-
-        return shlex.split(new_command.strip())
+            new_arg = ""
+            for word in CommandParser(arg).words():
+                new_word = self._replace(word)
+                new_word = self._replace(new_word)
+                new_arg += new_word
+            argv.append(new_arg)
+        return argv
 
     def getargv(self, section, name, default=None, replace=True):
         command = self.getdefault(
-            section, name, default=default, replace=replace)
-
-        return string2argv(command.strip())
+            section, name, default=default, replace=False)
+        return self._processcommand(command.strip())
 
     def getbool(self, section, name, default=None):
         s = self.getdefault(section, name, default)
@@ -527,22 +538,7 @@ class IniReader:
         #print "getdefault", section, name, "returned", repr(x)
         return x
 
-    def _replace_posargs(self, match, quote):
-        return self._do_replace_posargs(lambda: match.group('substitution_value'))
-
-    def _do_replace_posargs(self, value_func):
-        posargs = self._subs.get('_posargs', None)
-
-        if posargs:
-            return argv2string(posargs)
-
-        value = value_func()
-        if value:
-            return value
-
-        return ''
-
-    def _replace_env(self, match, quote):
+    def _replace_env(self, match):
         envkey = match.group('substitution_value')
         if not envkey:
             raise tox.exception.ConfigError(
@@ -555,7 +551,7 @@ class IniReader:
 
         return os.environ[envkey]
 
-    def _substitute_from_other_section(self, key, quote):
+    def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
             i = key.find("]")
             section, item = key[1:i], key[i+1:]
@@ -566,36 +562,24 @@ class IniReader:
                 x = str(self._cfg[section][item])
                 self._subststack.append((section, item))
                 try:
-                    return self._replace(x, quote=quote)
+                    return self._replace(x)
                 finally:
                     self._subststack.pop()
 
         raise tox.exception.ConfigError(
             "substitution key %r not found" % key)
 
-    def _replace_substitution(self, match, quote):
+    def _replace_substitution(self, match):
         sub_key = match.group('substitution_value')
         val = self._subs.get(sub_key, None)
         if val is None:
-            val = self._substitute_from_other_section(sub_key, quote)
+            val = self._substitute_from_other_section(sub_key)
         if py.builtin.callable(val):
             val = val()
-        if quote:
-            return '"%s"' % str(val).replace('"', r'\"')
-        else:
-            return str(val)
+        return str(val)
 
-    def _is_bare_posargs(self, groupdict):
-        return groupdict.get('substitution_value', None) == 'posargs' \
-               and not groupdict.get('sub_type')
-
-    def _replace_match(self, match, quote):
+    def _replace_match(self, match):
         g = match.groupdict()
-
-        # special case: posargs. If there is a 'posargs' substitution value
-        # and no type, handle it as empty posargs
-        if self._is_bare_posargs(g):
-            return self._do_replace_posargs(lambda: '')
 
         # special case: opts and packages. Leave {opts} and
         # {packages} intact, they are replaced manually in
@@ -605,7 +589,6 @@ class IniReader:
             return '{%s}' % sub_value
 
         handlers = {
-            'posargs' : self._replace_posargs,
             'env' : self._replace_env,
             None : self._replace_substitution,
             }
@@ -619,22 +602,11 @@ class IniReader:
         except KeyError:
             raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
 
-        # quoting is done in handlers, as at least posargs handling is special:
-        #  all of its arguments are inserted as separate parameters
-        return handler(match, quote)
+        return handler(match)
 
-    def _replace_match_quote(self, match):
-        return self._replace_match(match, quote=True)
-    def _replace_match_no_quote(self, match):
-        return self._replace_match(match, quote=False)
-
-    def _replace(self, x, quote=False):
+    def _replace(self, x):
         if '{' in x:
-            if quote:
-                replace_func = self._replace_match_quote
-            else:
-                replace_func = self._replace_match_no_quote
-            return RE_ITEM_REF.sub(replace_func, x)
+            return RE_ITEM_REF.sub(self._replace_match, x)
         return x
 
     def _parse_command(self, command):
@@ -706,18 +678,3 @@ def getcontextname():
         return 'jenkins'
     return None
 
-
-def unquote_single_args(argv):
-    newargv = []
-    for arg in argv:
-        if len(arg) >=2 and arg[0] == arg[-1]:
-            if arg[0] in ("'", '"'):
-               arg = arg[1:-1]
-        newargv.append(arg)
-    return newargv
-
-def string2argv(cmd):
-    return unquote_single_args(shlex.split(cmd, posix=False))
-
-def argv2string(argv):
-    return subprocess.list2cmdline(argv)
