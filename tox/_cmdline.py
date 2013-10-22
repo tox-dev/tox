@@ -93,7 +93,8 @@ class Action(object):
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
-        popen = self._popen(args, cwd, env=env, stdout=f, stderr=STDOUT)
+        popen = self._popen(args, cwd, env=env,
+                            stdout=f, stderr=STDOUT)
         popen.outpath = outpath
         popen.args = [str(x) for x in args]
         popen.cwd = cwd
@@ -150,6 +151,7 @@ class Action(object):
         if env is None:
             env = os.environ.copy()
         return self.session.popen(args, shell=False, cwd=str(cwd),
+            universal_newlines=True,
             stdout=stdout, stderr=stderr, env=env)
 
 

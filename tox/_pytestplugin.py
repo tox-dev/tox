@@ -130,6 +130,7 @@ def pytest_funcarg__mocksession(request):
         def make_emptydir(self, path):
             pass
         def popen(self, args, cwd, shell=None,
+            universal_newlines=False,
             stdout=None, stderr=None, env=None):
             pm = pcallMock(args, cwd, env, stdout, stderr, shell)
             self._pcalls.append(pm)

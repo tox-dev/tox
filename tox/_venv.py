@@ -228,7 +228,7 @@ class VirtualEnv(object):
         args = [self.envconfig.envpython, str(setup_py), '--name']
         output = action.popen(args, cwd=setupdir, redirect=False,
                               returnout=True)
-        name = output.strip().decode('utf-8')
+        name = output.strip()
         egg_info = setupdir.join('.'.join((name, 'egg-info')))
         for conf_file in (setup_py, setup_cfg):
             if (not egg_info.check() or (conf_file.check()
