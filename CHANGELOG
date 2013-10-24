@@ -1,6 +1,10 @@
 1.6.2.dev
 ---------
 
+- fix issue130: you can now set install_command=easy_install {opts} {packages}
+  and expect it to run without the need to recreate.  Thanks jenisys for
+  precise reporting. 
+
 - fix issue129: tox now uses Popen(..., universal_newlines=True) to force 
   creation of unicode stdout/stderr streams.  fixes a problem on specific
   platform configs when creating virtualenvs with Python3.3. Thanks Jorgen Schäfer

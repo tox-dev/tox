@@ -520,8 +520,10 @@ def test_installpkg_upgrade(newmocksession, tmpdir):
     mocksession.installpkg(venv, pkg)
     l = mocksession._pcalls
     assert len(l) == 1
-    assert '-U' in l[0].args
-    assert '--no-deps' in l[0].args
+    index = l[0].args.index(str(pkg))
+    assert index >= 0
+    assert '-U' in l[0].args[:index]
+    assert '--no-deps' in l[0].args[:index]
 
 def test_run_install_command(newmocksession):
     mocksession = newmocksession([], "")
@@ -529,7 +531,7 @@ def test_run_install_command(newmocksession):
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
     action = mocksession.newaction(venv, "hello")
-    venv.run_install_command(args=["whatever"], action=action)
+    venv.run_install_command(packages=["whatever"], action=action)
     l = mocksession._pcalls
     assert len(l) == 1
     assert 'pip' in l[0].args[0]
@@ -548,7 +550,7 @@ def test_run_custom_install_command(newmocksession):
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
     action = mocksession.newaction(venv, "hello")
-    venv.run_install_command(args=["whatever"], action=action)
+    venv.run_install_command(packages=["whatever"], action=action)
     l = mocksession._pcalls
     assert len(l) == 1
     assert 'easy_install' in l[0].args[0]

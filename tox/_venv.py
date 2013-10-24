@@ -280,17 +280,18 @@ class VirtualEnv(object):
             l.append("--download-cache=%s" % self.envconfig.downloadcache)
         return l
 
-    def run_install_command(self, args, indexserver=None, action=None,
+    def run_install_command(self, packages, options=(),
+                            indexserver=None, action=None,
                             extraenv=None):
         argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
         if argv[0] == "pip" and sys.platform == "win32":
             argv[0] = "pip-script.py"
         i = argv.index('{packages}')
-        argv[i:i+1] = args
+        argv[i:i+1] = packages
         if '{opts}' in argv:
             i = argv.index('{opts}')
-            argv[i:i+1] = self._installopts(indexserver)
+            argv[i:i+1] = list(options)
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV'):
             try:
                 del os.environ[x]
@@ -320,7 +321,6 @@ class VirtualEnv(object):
                 l.append(ixserver)
             assert ixserver.url is None or isinstance(ixserver.url, str)
 
-        extraopts = extraopts or []
         for ixserver in l:
             if self.envconfig.config.option.sethome:
                 extraenv = hack_home_env(
@@ -329,9 +329,12 @@ class VirtualEnv(object):
             else:
                 extraenv = {}
 
-            args = d[ixserver] + extraopts
-            self.run_install_command(args, ixserver.url, action,
-                                     extraenv=extraenv)
+            packages = d[ixserver]
+            options = self._installopts(ixserver.url)
+            if extraopts:
+                options.extend(extraopts)
+            self.run_install_command(packages=packages, options=options,
+                                     action=action, extraenv=extraenv)
 
     def _getenv(self):
         env = self.envconfig.setenv
