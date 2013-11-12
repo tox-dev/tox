@@ -1,6 +1,10 @@
 1.6.2.dev
 ---------
 
+- fix issue132: removing zip_safe setting (so it defaults to false)
+  to allow installation of tox
+  via easy_install/eggs.  Thanks Jenisys.
+
 - fix issue126: depend on virtualenv>=1.10.1 so that we can rely
   (hopefully) on a pip version which supports --pre. (tox by default
   uses to --pre).  Note that tox also vendors an older virtualenv 

@@ -40,7 +40,6 @@ def main():
         tests_require=['tox'],
         cmdclass={"test": Tox},
         install_requires=install_requires,
-        zip_safe=True,
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Developers',
