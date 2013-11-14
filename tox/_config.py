@@ -1,6 +1,7 @@
 import argparse
 import distutils.sysconfig
 import os
+import random
 import sys
 import re
 import shlex
@@ -117,6 +118,12 @@ def prepare_parse(pkgname):
              "all commands and results involved.  This will turn off "
              "pass-through output from running test commands which is "
              "instead captured into the json result file.")
+    # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
+    parser.add_argument("--hashseed", action="store",
+        metavar="SEED", default=None,
+        help="set PYTHONHASHSEED to SEED before running commands.  "
+             "Defaults to a random integer in the range 1 to 4294967295.  "
+             "Passing 'noset' suppresses this behavior.")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substitution")
     return parser
@@ -180,6 +187,9 @@ def get_homedir():
     except Exception:
         return None
 
+def make_hashseed():
+    return str(random.randint(1, 4294967295))
+
 class parseini:
     def __init__(self, config, inipath):
         config.toxinipath = inipath
@@ -200,6 +210,13 @@ class parseini:
         else:
             raise ValueError("invalid context")
 
+        if config.option.hashseed is None:
+            hashseed = make_hashseed()
+        elif config.option.hashseed == 'noset':
+            hashseed = None
+        else:
+            hashseed = config.option.hashseed
+        config.hashseed = hashseed
 
         reader.addsubstitutions(toxinidir=config.toxinidir,
                                 homedir=config.homedir)
@@ -306,7 +323,11 @@ class parseini:
                         arg = vc.changedir.bestrelpath(origpath)
                     args.append(arg)
             reader.addsubstitutions(args)
-        vc.setenv = reader.getdict(section, 'setenv')
+        setenv = {}
+        if config.hashseed is not None:
+            setenv['PYTHONHASHSEED'] = config.hashseed
+        setenv.update(reader.getdict(section, 'setenv'))
+        vc.setenv = setenv
         if not vc.setenv:
             vc.setenv = None
 

@@ -336,14 +336,13 @@ class VirtualEnv(object):
             self.run_install_command(packages=packages, options=options,
                                      action=action, extraenv=extraenv)
 
-    def _getenv(self):
-        env = self.envconfig.setenv
-        if env:
-            env_arg = os.environ.copy()
-            env_arg.update(env)
-        else:
-            env_arg = None
-        return env_arg
+    def _getenv(self, extraenv={}):
+        env = os.environ.copy()
+        setenv = self.envconfig.setenv
+        if setenv:
+            env.update(setenv)
+        env.update(extraenv)
+        return env
 
     def test(self, redirect=False):
         action = self.session.newaction(self, "runtests")
@@ -351,6 +350,9 @@ class VirtualEnv(object):
             self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
             cwd = self.envconfig.changedir
+            env = self._getenv()
+            # Display PYTHONHASHSEED to assist with reproducibility.
+            action.setactivity("runtests", "PYTHONHASHSEED=%r" % env.get('PYTHONHASHSEED'))
             for i, argv in enumerate(self.envconfig.commands):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
@@ -380,8 +382,7 @@ class VirtualEnv(object):
         old = self.patchPATH()
         try:
             args[0] = self.getcommandpath(args[0], venv, cwd)
-            env = self._getenv() or os.environ.copy()
-            env.update(extraenv)
+            env = self._getenv(extraenv)
             return action.popen(args, cwd=cwd, env=env, redirect=redirect)
         finally:
             os.environ['PATH'] = old

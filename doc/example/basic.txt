@@ -175,6 +175,27 @@ a PYTHONPATH setting that will lead Python to also import
 from the ``subdir`` below the directory where your ``tox.ini``
 file resides.
 
+special handling of PYTHONHASHSEED
+-------------------------------------------
+
+.. versionadded:: 1.6.2
+
+By default, Tox sets PYTHONHASHSEED_ for test commands to a random integer
+generated when ``tox`` is invoked.  This mimics Python's hash randomization
+enabled by default starting `in Python 3.3`_.  To aid in reproducing test
+failures, Tox displays the value of ``PYTHONHASHSEED`` in the test output.
+
+You can tell Tox to use an explicit hash seed value via the ``--hashseed``
+command-line option to ``tox``.  You can also override the hash seed value
+per test environment in ``tox.ini`` as follows::
+
+    [testenv:hash]
+    setenv =
+        PYTHONHASHSEED = 100
+
+.. _`in Python 3.3`: http://docs.python.org/3/whatsnew/3.3.html#builtin-functions-and-types
+.. _PYTHONHASHSEED: http://docs.python.org/using/cmdline.html#envvar-PYTHONHASHSEED
+
 Integration with setuptools/distribute test commands
 ----------------------------------------------------
 

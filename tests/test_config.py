@@ -5,6 +5,7 @@ import subprocess
 from textwrap import dedent
 
 import py
+import tox._config
 from tox._config import *
 from tox._config import _split_env
 
@@ -405,7 +406,13 @@ class TestConfigTestEnv:
         assert envconfig.sitepackages == False
         assert envconfig.develop == False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
-        assert envconfig.setenv is None
+        assert list(envconfig.setenv.keys()) == ['PYTHONHASHSEED']
+        hashseed = envconfig.setenv['PYTHONHASHSEED']
+        assert isinstance(hashseed, str)
+        # The following line checks that hashseed parses to an integer.
+        int_hashseed = int(hashseed)
+        # hashseed is random by default, so we can't assert a specific value.
+        assert int_hashseed > 0
 
     def test_installpkg_tops_develop(self, newconfig):
         config = newconfig(["--installpkg=abc"], """
@@ -898,6 +905,120 @@ class TestGlobalOptions:
         env = config.envconfigs['py24']
         assert env.basepython == "python2.4"
         assert env.commands == [['xyz']]
+
+class TestHashseedOption:
+
+    def _get_envconfigs(self, newconfig, args=None, tox_ini=None,
+                        make_hashseed=None):
+        if args is None:
+            args = []
+        if tox_ini is None:
+            tox_ini = """
+                [testenv]
+            """
+        if make_hashseed is None:
+            make_hashseed = lambda: '123456789'
+        original_make_hashseed = tox._config.make_hashseed
+        tox._config.make_hashseed = make_hashseed
+        try:
+            config = newconfig(args, tox_ini)
+        finally:
+            tox._config.make_hashseed = original_make_hashseed
+        return config.envconfigs
+
+    def _get_envconfig(self, newconfig, args=None, tox_ini=None):
+        envconfigs = self._get_envconfigs(newconfig, args=args,
+                                          tox_ini=tox_ini)
+        return envconfigs["python"]
+
+    def _check_hashseed(self, envconfig, expected):
+        assert envconfig.setenv == {'PYTHONHASHSEED': expected}
+
+    def _check_testenv(self, newconfig, expected, args=None, tox_ini=None):
+        envconfig = self._get_envconfig(newconfig, args=args, tox_ini=tox_ini)
+        self._check_hashseed(envconfig, expected)
+
+    def test_default(self, tmpdir, newconfig):
+        self._check_testenv(newconfig, '123456789')
+
+    def test_passing_integer(self, tmpdir, newconfig):
+        args = ['--hashseed', '1']
+        self._check_testenv(newconfig, '1', args=args)
+
+    def test_passing_string(self, tmpdir, newconfig):
+        args = ['--hashseed', 'random']
+        self._check_testenv(newconfig, 'random', args=args)
+
+    def test_passing_empty_string(self, tmpdir, newconfig):
+        args = ['--hashseed', '']
+        self._check_testenv(newconfig, '', args=args)
+
+    def test_passing_no_argument(self, tmpdir, newconfig):
+        """Test that passing no arguments to --hashseed is not allowed."""
+        args = ['--hashseed']
+        try:
+            self._check_testenv(newconfig, '', args=args)
+        except SystemExit:
+            e = sys.exc_info()[1]
+            assert e.code == 2
+            return
+        assert False  # getting here means we failed the test.
+
+    def test_setenv(self, tmpdir, newconfig):
+        """Check that setenv takes precedence."""
+        tox_ini = """
+            [testenv]
+            setenv =
+                PYTHONHASHSEED = 2
+        """
+        self._check_testenv(newconfig, '2', tox_ini=tox_ini)
+        args = ['--hashseed', '1']
+        self._check_testenv(newconfig, '2', args=args, tox_ini=tox_ini)
+
+    def test_noset(self, tmpdir, newconfig):
+        args = ['--hashseed', 'noset']
+        envconfig = self._get_envconfig(newconfig, args=args)
+        assert envconfig.setenv is None
+
+    def test_noset_with_setenv(self, tmpdir, newconfig):
+        tox_ini = """
+            [testenv]
+            setenv =
+                PYTHONHASHSEED = 2
+        """
+        args = ['--hashseed', 'noset']
+        self._check_testenv(newconfig, '2', args=args, tox_ini=tox_ini)
+
+    def test_one_random_hashseed(self, tmpdir, newconfig):
+        """Check that different testenvs use the same random seed."""
+        tox_ini = """
+            [testenv:hash1]
+            [testenv:hash2]
+        """
+        next_seed = [1000]
+        # This function is guaranteed to generate a different value each time.
+        def make_hashseed():
+            next_seed[0] += 1
+            return str(next_seed[0])
+        # Check that make_hashseed() works.
+        assert make_hashseed() == '1001'
+        envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini,
+                                          make_hashseed=make_hashseed)
+        self._check_hashseed(envconfigs["hash1"], '1002')
+        # Check that hash2's value is not '1003', for example.
+        self._check_hashseed(envconfigs["hash2"], '1002')
+
+    def test_setenv_in_one_testenv(self, tmpdir, newconfig):
+        """Check using setenv in one of multiple testenvs."""
+        tox_ini = """
+            [testenv:hash1]
+            setenv =
+                PYTHONHASHSEED = 2
+            [testenv:hash2]
+        """
+        envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini)
+        self._check_hashseed(envconfigs["hash1"], '2')
+        self._check_hashseed(envconfigs["hash2"], '123456789')
 
 class TestIndexServer:
     def test_indexserver(self, tmpdir, newconfig):

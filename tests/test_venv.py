@@ -2,6 +2,7 @@ import py
 import tox
 import pytest
 import os, sys
+import tox._config
 from tox._venv import *
 
 py25calls = int(sys.version_info[:2] == (2,5))
@@ -230,6 +231,20 @@ def test_install_recreate(newmocksession, tmpdir):
     mocksession.report.expect("verbosity0", "*create*")
     venv.update()
     mocksession.report.expect("verbosity0", "*recreate*")
+
+def test_test_hashseed_is_in_output(newmocksession):
+    original_make_hashseed = tox._config.make_hashseed
+    tox._config.make_hashseed = lambda: '123456789'
+    try:
+        mocksession = newmocksession([], '''
+            [testenv]
+        ''')
+    finally:
+        tox._config.make_hashseed = original_make_hashseed
+    venv = mocksession.getenv('python')
+    venv.update()
+    venv.test()
+    mocksession.report.expect("verbosity0", "python runtests: PYTHONHASHSEED='123456789'")
 
 def test_test_runtests_action_command_is_in_output(newmocksession):
     mocksession = newmocksession([], '''
