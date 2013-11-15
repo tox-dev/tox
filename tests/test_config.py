@@ -953,6 +953,9 @@ class TestHashseedOption:
         args = ['--hashseed', '']
         self._check_testenv(newconfig, '', args=args)
 
+    @pytest.mark.xfail(sys.version_info >= (3,2),
+                       reason="at least Debian python 3.2/3.3 have a bug: "
+                              "http://bugs.python.org/issue11884")
     def test_passing_no_argument(self, tmpdir, newconfig):
         """Test that passing no arguments to --hashseed is not allowed."""
         args = ['--hashseed']

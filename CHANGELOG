@@ -1,6 +1,10 @@
 1.6.2.dev
 ---------
 
+- merged PR125: tox now sets "PYTHONHASHSEED" if it is not set 
+  and offers a "--hashseed" option to repeat a test run with a specific seed.
+  Thanks Chris Jerdonek for all the work behind this.
+
 - fix issue132: removing zip_safe setting (so it defaults to false)
   to allow installation of tox
   via easy_install/eggs.  Thanks Jenisys.
