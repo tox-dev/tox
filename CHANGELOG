@@ -1,9 +1,10 @@
 1.6.2.dev
 ---------
 
-- merged PR125: tox now sets "PYTHONHASHSEED" if it is not set 
+- merged PR125: tox now sets "PYTHONHASHSEED" to a random value
   and offers a "--hashseed" option to repeat a test run with a specific seed.
-  Thanks Chris Jerdonek for all the work behind this.
+  You can also use --hashsheed=notset to instruct tox to leave the value
+  alone.  Thanks Chris Jerdonek for all the work behind this.
 
 - fix issue132: removing zip_safe setting (so it defaults to false)
   to allow installation of tox
