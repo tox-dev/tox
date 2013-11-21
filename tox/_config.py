@@ -8,6 +8,7 @@ import shlex
 import string
 import subprocess
 import textwrap
+import pkg_resources
 
 from tox.interpreters import Interpreters
 
@@ -124,6 +125,10 @@ def prepare_parse(pkgname):
         help="set PYTHONHASHSEED to SEED before running commands.  "
              "Defaults to a random integer in the range 1 to 4294967295.  "
              "Passing 'noset' suppresses this behavior.")
+    parser.add_argument("--force-dep-version", action="append",
+        metavar="DEP==VER", default=None,
+        help="Forces a certain version of one of the dependencies "
+             "when configuring the virtual environment.")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substitution")
     return parser
@@ -343,6 +348,7 @@ class parseini:
             else:
                 name = depline.strip()
                 ixserver = None
+            name = self._replace_forced_dep(name, config)
             vc.deps.append(DepConfig(name, ixserver))
         vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = reader.getbool(section, "sitepackages", False)
@@ -384,6 +390,31 @@ class parseini:
             envlist = list(self.config.envconfigs)
             envlist.sort()
         return envlist
+
+    def _replace_forced_dep(self, name, config):
+        """
+        Override the given dependency config name taking --force-dep-version
+        option into account.
+
+        :param name: dep config, for example ["pkg==1.0", "other==2.0"].
+        :param config: Config instance
+        :return: the new dependency that should be used for virtual environments
+        """
+        if not config.option.force_dep_version:
+            return name
+        for forced_dep in config.option.force_dep_version:
+            if self._is_same_dep(forced_dep, name):
+                return forced_dep
+        return name
+
+    @classmethod
+    def _is_same_dep(cls, dep1, dep2):
+        """
+        Returns True if both dependency definitions refer to the same package, even if versions differ.
+        """
+        dep1_name = pkg_resources.Requirement.parse(dep1).project_name
+        dep2_name = pkg_resources.Requirement.parse(dep2).project_name
+        return dep1_name == dep2_name
 
 def _split_env(env):
     """if handed a list, action="append" was used for -e """

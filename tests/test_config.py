@@ -62,6 +62,41 @@ class TestVenvConfig:
         envconfig = config.envconfigs['devenv']
         assert envconfig.envdir == config.toxworkdir.join('foobar')
 
+    def test_force_dep_version(self, initproj):
+        """
+        Make sure we can override dependencies configured in tox.ini when using the command line option
+        --force-dep-version.
+        """
+        initproj("example123-0.5", filedefs={
+            'tox.ini': '''
+            [tox]
+
+            [testenv]
+            deps=
+                dep1==1.0
+                dep2>=2.0
+                dep3
+                dep4==4.0
+            '''
+        })
+        config = parseconfig(
+            ['--force-dep-version=dep1==1.5', '--force-dep-version=dep2==2.1', '--force-dep-version=dep3==3.0'])
+        assert config.option.force_dep_version == ['dep1==1.5', 'dep2==2.1', 'dep3==3.0']
+        assert [str(x) for x in config.envconfigs['python'].deps] == [
+            'dep1==1.5', 'dep2==2.1', 'dep3==3.0', 'dep4==4.0',
+        ]
+
+    def test_is_same_dep(self):
+        """
+        Ensure correct parseini._is_same_dep is working with a few samples.
+        """
+        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3')
+        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>=2.0')
+        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>2.0')
+        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<2.0')
+        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
+        assert not parseini._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
+
 class TestConfigPackage:
     def test_defaults(self, tmpdir, newconfig):
         config = newconfig([], "")
@@ -1142,6 +1177,28 @@ class TestCmdInvocation:
             "*ERROR*tox.ini*not*found*",
         ])
 
+    def test_showconfig_with_force_dep_version(self, cmd, initproj):
+        initproj('force_dep_version', filedefs={
+            'tox.ini': '''
+            [tox]
+
+            [testenv]
+            deps=
+                dep1==2.3
+                dep2
+            ''',
+        })
+        result = cmd.run("tox", "--showconfig")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            r'*deps=*dep1==2.3, dep2*',
+        ])
+        # override dep1 specific version, and force version for dep2
+        result = cmd.run("tox", "--showconfig", "--force-dep-version=dep1", "--force-dep-version=dep2==5.0")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            r'*deps=*dep1, dep2==5.0*',
+        ])
 
 class TestArgumentParser:
 
@@ -1229,5 +1286,3 @@ class TestCommandParser:
         """)
         envconfig = config.envconfigs["py26"]
         assert envconfig.commands[0] == ["some", r"hello\world"]
-
-
