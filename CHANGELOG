@@ -1,6 +1,13 @@
 1.6.2.dev
 ---------
 
+- merged PR81: new option --force-dep which allows to 
+  override tox.ini specified dependencies in setuptools-style.
+  For example "--force-dep 'django<1.6'" will make sure
+  that any environment using "django" as a dependency will 
+  get the latest 1.5 release.  Thanks Bruno Oliveria for 
+  the complete PR.
+  
 - merged PR125: tox now sets "PYTHONHASHSEED" to a random value
   and offers a "--hashseed" option to repeat a test run with a specific seed.
   You can also use --hashsheed=notset to instruct tox to leave the value
@@ -21,8 +28,8 @@
 
 - fix issue129: tox now uses Popen(..., universal_newlines=True) to force 
   creation of unicode stdout/stderr streams.  fixes a problem on specific
-  platform configs when creating virtualenvs with Python3.3. Thanks Jorgen Schäfer
-  or investigation and solution sketch.
+  platform configs when creating virtualenvs with Python3.3. Thanks
+  Jorgen Schäfer or investigation and solution sketch.
 
 - fix issue128: enable full substitution in install_command,
   thanks for the PR to Ronald Evers

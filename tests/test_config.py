@@ -65,7 +65,7 @@ class TestVenvConfig:
     def test_force_dep_version(self, initproj):
         """
         Make sure we can override dependencies configured in tox.ini when using the command line option
-        --force-dep-version.
+        --force-dep.
         """
         initproj("example123-0.5", filedefs={
             'tox.ini': '''
@@ -80,8 +80,10 @@ class TestVenvConfig:
             '''
         })
         config = parseconfig(
-            ['--force-dep-version=dep1==1.5', '--force-dep-version=dep2==2.1', '--force-dep-version=dep3==3.0'])
-        assert config.option.force_dep_version == ['dep1==1.5', 'dep2==2.1', 'dep3==3.0']
+            ['--force-dep=dep1==1.5', '--force-dep=dep2==2.1',
+             '--force-dep=dep3==3.0'])
+        assert config.option.force_dep== [
+            'dep1==1.5', 'dep2==2.1', 'dep3==3.0']
         assert [str(x) for x in config.envconfigs['python'].deps] == [
             'dep1==1.5', 'dep2==2.1', 'dep3==3.0', 'dep4==4.0',
         ]
@@ -1194,7 +1196,8 @@ class TestCmdInvocation:
             r'*deps=*dep1==2.3, dep2*',
         ])
         # override dep1 specific version, and force version for dep2
-        result = cmd.run("tox", "--showconfig", "--force-dep-version=dep1", "--force-dep-version=dep2==5.0")
+        result = cmd.run("tox", "--showconfig", "--force-dep=dep1",
+                         "--force-dep=dep2==5.0")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             r'*deps=*dep1, dep2==5.0*',
