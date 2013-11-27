@@ -56,7 +56,7 @@ except NameError:
     term_input = input
 
 
-all_envs = ['py24', 'py25', 'py26', 'py27', 'py30', 'py31', 'py32', 'py33', 'pypy', 'jython']
+all_envs = ['py25', 'py26', 'py27', 'py30', 'py31', 'py32', 'py33', 'pypy', 'jython']
 
 PROMPT_PREFIX = '> '
 
@@ -191,7 +191,7 @@ What command should be used to test your project -- examples:
         default_deps = 'twisted'
 
     print('''
-What dependencies does your project have?''')
+What extra dependencies do your tests have?''')
     do_prompt(d, 'deps', 'Comma-separated list of dependencies', default_deps)
 
 
