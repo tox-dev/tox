@@ -557,7 +557,7 @@ class Session:
             return candidates[0]
 
 
-_rex_getversion = py.std.re.compile("[\w_\-\+]+-(.*)(\.zip|\.tar.gz)")
+_rex_getversion = py.std.re.compile("[\w_\-\+\.]+-(.*)(\.zip|\.tar.gz)")
 def getversion(basename):
     m = _rex_getversion.match(basename)
     if m is None:
