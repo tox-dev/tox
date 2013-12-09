@@ -451,6 +451,11 @@ class TestConfigTestEnv:
         # hashseed is random by default, so we can't assert a specific value.
         assert int_hashseed > 0
 
+    def test_sitepackages_switch(self, tmpdir, newconfig):
+        config = newconfig(["--sitepackages"], "")
+        envconfig = config.envconfigs['python']
+        assert envconfig.sitepackages == True
+
     def test_installpkg_tops_develop(self, newconfig):
         config = newconfig(["--installpkg=abc"], """
             [testenv]

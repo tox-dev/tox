@@ -47,6 +47,9 @@
 - introduce --no-network to tox's own test suite to skip tests
   requiring networks
 
+- introduce --sitepackages to force sitepackages=True in all
+  environments.   
+
 1.6.1
 -----
 

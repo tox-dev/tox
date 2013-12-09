@@ -129,7 +129,10 @@ def prepare_parse(pkgname):
         metavar="REQ", default=None,
         help="Forces a certain version of one of the dependencies "
              "when configuring the virtual environment. REQ Examples "
-             "'pytest<2.4' or 'django>=1.6'.")
+             "'pytest<2.7' or 'django>=1.6'.")
+    parser.add_argument("--sitepackages", action="store_true",
+        help="override sitepackages setting to True in all envs")
+
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substitution")
     return parser
@@ -355,7 +358,9 @@ class parseini:
             name = self._replace_forced_dep(name, config)
             vc.deps.append(DepConfig(name, ixserver))
         vc.distribute = reader.getbool(section, "distribute", False)
-        vc.sitepackages = reader.getbool(section, "sitepackages", False)
+        vc.sitepackages = self.config.option.sitepackages or \
+                          reader.getbool(section, "sitepackages", False)
+
         vc.downloadcache = None
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache:
