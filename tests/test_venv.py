@@ -5,8 +5,6 @@ import os, sys
 import tox._config
 from tox._venv import *
 
-py25calls = int(sys.version_info[:2] == (2,5))
-
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
 #    l = v.list()
@@ -126,13 +124,13 @@ def test_install_deps_wildcard(newmocksession):
     venv = mocksession.getenv("py123")
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1 + py25calls
+    assert len(l) == 1
     distshare = venv.session.config.distshare
     distshare.ensure("dep1-1.0.zip")
     distshare.ensure("dep1-1.1.zip")
 
     venv.install_deps()
-    assert len(l) == 2 + py25calls
+    assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
     assert "pip" in str(args[0])
@@ -159,10 +157,10 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
     venv = mocksession.getenv("py123")
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1 + py25calls
+    assert len(l) == 1
 
     venv.install_deps()
-    assert len(l) == 2 + py25calls
+    assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
     assert "pip" in str(args[0])
@@ -187,7 +185,7 @@ def test_install_deps_indexserver(newmocksession):
     venv = mocksession.getenv('py123')
     venv.create()
     l = mocksession._pcalls
-    assert len(l) == 1 + py25calls
+    assert len(l) == 1
     l[:] = []
 
     venv.install_deps()
