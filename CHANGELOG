@@ -3,7 +3,8 @@
 
 - drop Python2.5 compatibility because it became too hard due
   to the setuptools-2.0 dropping support.  tox now has no 
-  support for creating python2.5 based environments anymore.
+  support for creating python2.5 based environments anymore
+  and all internal special-handling has been removed.
 
 - merged PR81: new option --force-dep which allows to 
   override tox.ini specified dependencies in setuptools-style.
@@ -23,8 +24,7 @@
 
 - fix issue126: depend on virtualenv>=1.10.1 so that we can rely
   (hopefully) on a pip version which supports --pre. (tox by default
-  uses to --pre).  Note that tox also vendors an older virtualenv 
-  for supporting python2.5 -- although the latter will be dropped at some point.
+  uses to --pre).
 
 - fix issue130: you can now set install_command=easy_install {opts} {packages}
   and expect it to work for repeated tox runs (previously it only worked
@@ -43,6 +43,9 @@
 
 - make sure that the --installpkg option trumps any usedevelop settings
   in tox.ini or
+
+- introduce --no-network to tox's own test suite to skip tests
+  requiring networks
 
 1.6.1
 -----

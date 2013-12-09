@@ -16,6 +16,12 @@ def pytest_configure():
     if 'HUDSON_URL' in os.environ:
         del os.environ['HUDSON_URL']
 
+
+def pytest_addoption(parser):
+    parser.addoption("--no-network", action="store_true",
+        dest="no_network",
+        help="don't run tests requiring network")
+
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
 
@@ -37,6 +43,8 @@ def newconfig(request, tmpdir):
 
 @pytest.fixture
 def cmd(request):
+    if request.config.option.no_network:
+        pytest.skip("--no-network was specified, test cannot run")
     return Cmd(request)
 
 class ReportExpectMock:
@@ -156,6 +164,7 @@ class Cmd:
         self.request = request
         current = py.path.local()
         self.request.addfinalizer(current.chdir)
+
     def chdir(self, target):
         target.chdir()
 
