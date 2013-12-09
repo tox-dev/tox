@@ -868,7 +868,7 @@ class TestGlobalOptions:
         assert str(env.basepython) == sys.executable
 
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
-        envs = "py24,py25,py26,py27,py31,py32,jython,pypy"
+        envs = "py26,py27,py31,py32,py33,jython,pypy"
         inisource = """
             [tox]
             envlist = %s
