@@ -546,36 +546,6 @@ class TestConfigTestEnv:
         assert envconfig.changedir.basename == "abc"
         assert envconfig.changedir == config.setupdir.join("abc")
 
-    def test_install_command_defaults_py25(self, newconfig, monkeypatch):
-        from tox.interpreters import Interpreters
-        def get_info(self, name):
-            if "x25" in name:
-                class I:
-                    runnable = True
-                    executable = "python2.5"
-                    version_info = (2,5)
-            else:
-                class I:
-                    runnable = False
-                    executable = "python"
-            return I
-        monkeypatch.setattr(Interpreters, "get_info", get_info)
-        config = newconfig("""
-            [testenv:x25]
-            basepython = x25
-            [testenv:py25-x]
-            basepython = x25
-            [testenv:py26]
-            basepython = "python"
-        """)
-        for name in ("x25", "py25-x"):
-            env = config.envconfigs[name]
-            assert env.install_command == \
-               "pip install {opts} {packages}".split()
-        env = config.envconfigs["py26"]
-        assert env.install_command == \
-               "pip install --pre {opts} {packages}".split()
-
     def test_install_command_setting(self, newconfig):
         config = newconfig("""
             [testenv]
@@ -629,14 +599,14 @@ class TestConfigTestEnv:
 
     def test_simple(tmpdir, newconfig):
         config = newconfig("""
-            [testenv:py24]
-            basepython=python2.4
-            [testenv:py25]
-            basepython=python2.5
+            [testenv:py26]
+            basepython=python2.6
+            [testenv:py27]
+            basepython=python2.7
         """)
         assert len(config.envconfigs) == 2
-        assert "py24" in config.envconfigs
-        assert "py25" in config.envconfigs
+        assert "py26" in config.envconfigs
+        assert "py27" in config.envconfigs
 
     def test_substitution_error(tmpdir, newconfig):
         py.test.raises(tox.exception.ConfigError, newconfig, """

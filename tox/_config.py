@@ -183,6 +183,9 @@ class VenvConfig:
         info = self.config.interpreters.get_info(self.basepython)
         if not info.executable:
             raise tox.exception.InterpreterNotFound(self.basepython)
+        if info.version_info < (2,6):
+            raise tox.exception.UnsupportedInterpreter(
+                "python2.5 is not supported anymore, sorry")
         return info.executable
 
 testenvprefix = "testenv:"
@@ -360,13 +363,7 @@ class parseini:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", downloadcache)
             vc.downloadcache = py.path.local(downloadcache)
 
-        # on pip-1.3.1/python 2.5 we can't use "--pre".
-        pip_default_opts = ["{opts}", "{packages}"]
-        info = vc._basepython_info
-        if info.runnable and info.version_info < (2,6):
-            pass
-        else:
-            pip_default_opts.insert(0, "--pre")
+        pip_default_opts = ["--pre", "{opts}", "{packages}"]
         vc.install_command = reader.getargv(
             section,
             "install_command",

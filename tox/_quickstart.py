@@ -56,7 +56,7 @@ except NameError:
     term_input = input
 
 
-all_envs = ['py25', 'py26', 'py27', 'py30', 'py31', 'py32', 'py33', 'pypy', 'jython']
+all_envs = ['py26', 'py27', 'py32', 'py33', 'pypy', 'jython']
 
 PROMPT_PREFIX = '> '
 

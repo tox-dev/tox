@@ -181,14 +181,9 @@ class VirtualEnv(object):
         interpreters = self.envconfig.config.interpreters
         config_interpreter = self.getsupportedinterpreter()
         info = interpreters.get_info(executable=config_interpreter)
-        use_venv191 = use_pip13 = info.version_info < (2,6)
-        if not use_venv191:
-            f, path, _ = py.std.imp.find_module("virtualenv")
-            f.close()
-            venvscript = path.rstrip("co")
-        else:
-            venvscript = py.path.local(tox.__file__).dirpath(
-                            "vendor", "virtualenv.py")
+        f, path, _ = py.std.imp.find_module("virtualenv")
+        f.close()
+        venvscript = path.rstrip("co")
         args = [config_interpreter, str(venvscript)]
         if self.envconfig.distribute:
             args.append("--distribute")
@@ -210,14 +205,7 @@ class VirtualEnv(object):
         args.append(self.path.basename)
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
-        if use_pip13:
-            indexserver = self.envconfig.config.indexserver['default'].url
-            action = self.session.newaction(self, "pip_downgrade")
-            action.setactivity('pip-downgrade', 'pip<1.4')
-            argv = ["easy_install"] + \
-                   self._installopts(indexserver) + ['pip<1.4']
-            self._pcall(argv, cwd=self.envconfig.config.toxinidir,
-                        action=action)
+
 
     def finish(self):
         self._getliveconfig().writeconfig(self.path_config)

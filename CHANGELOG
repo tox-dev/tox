@@ -1,6 +1,10 @@
 1.6.2.dev
 ---------
 
+- drop Python2.5 compatibility because it became too hard due
+  to the setuptools-2.0 dropping support.  tox now has no 
+  support for creating python2.5 virtualenv environments anymore.
+
 - merged PR81: new option --force-dep which allows to 
   override tox.ini specified dependencies in setuptools-style.
   For example "--force-dep 'django<1.6'" will make sure

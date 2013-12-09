@@ -19,7 +19,8 @@ def pytest_configure():
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
 
-def pytest_funcarg__newconfig(request, tmpdir):
+@pytest.fixture
+def newconfig(request, tmpdir):
     def newconfig(args, source=None):
         if source is None:
             source = args
@@ -34,7 +35,8 @@ def pytest_funcarg__newconfig(request, tmpdir):
             old.chdir()
     return newconfig
 
-def pytest_funcarg__cmd(request):
+@pytest.fixture
+def cmd(request):
     return Cmd(request)
 
 class ReportExpectMock:
@@ -113,7 +115,8 @@ class pcallMock:
     def wait(self):
         pass
 
-def pytest_funcarg__mocksession(request):
+@pytest.fixture
+def mocksession(request):
     from tox._cmdline import Session
     class MockSession(Session):
         def __init__(self):
@@ -137,7 +140,8 @@ def pytest_funcarg__mocksession(request):
             return pm
     return MockSession()
 
-def pytest_funcarg__newmocksession(request):
+@pytest.fixture
+def newmocksession(request):
     mocksession = request.getfuncargvalue("mocksession")
     newconfig = request.getfuncargvalue("newconfig")
     def newmocksession(args, source):
