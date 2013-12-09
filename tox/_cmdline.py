@@ -417,8 +417,13 @@ class Session:
             if sdistfile != sdist_path:
                 self.report.info("copying new sdistfile to %r" %
                     str(sdistfile))
-                sdistfile.dirpath().ensure(dir=1)
-                sdist_path.copy(sdistfile)
+                try:
+                    sdistfile.dirpath().ensure(dir=1)
+                except py.error.Error:
+                    self.report.warning("could not copy distfile to %s" %
+                                        sdistfile.dirpath())
+                else:
+                    sdist_path.copy(sdistfile)
         return sdist_path
 
     def subcommand_test(self):

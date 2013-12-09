@@ -50,6 +50,8 @@
 - introduce --sitepackages to force sitepackages=True in all
   environments.   
 
+- fix issue105 -- don't depend on an existing HOME directory from tox tests.
+
 1.6.1
 -----
 

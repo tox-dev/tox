@@ -117,6 +117,8 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
 
 def test_install_deps_wildcard(newmocksession):
     mocksession = newmocksession([], """
+        [tox]
+        distshare = {toxworkdir}/distshare
         [testenv:py123]
         deps=
             {distshare}/dep1-*
