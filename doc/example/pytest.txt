@@ -23,7 +23,7 @@ and the following ``tox.ini`` content::
     deps=pytest       # PYPI package providing py.test
     commands=
       py.test \
-            []        # substitute with tox' positional arguments
+            {posargs} # substitute with tox' positional arguments
 
 you can now invoke ``tox`` in the directory where your ``tox.ini`` resides.
 ``tox`` will sdist-package your project, create two virtualenv environments
@@ -49,7 +49,7 @@ and the following ``tox.ini`` content::
     commands=
       py.test \
         --basetemp={envtmpdir}  \ # py.test tempdir setting
-        []                        # substitute with tox' positional arguments
+        {posargs} # substitute with tox' positional arguments
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
 Differently than in the previous example the ``py.test`` command
@@ -73,7 +73,7 @@ to make ``tox`` use this feature::
             --basetemp={envtmpdir}  \
             --confcutdir=..         \
             -n 3                    \ # use three sub processes
-            []
+            {posargs}
 
 .. _`listed as a known issue`:
 
@@ -99,16 +99,13 @@ Alternatively, it is possible to use ``changedir`` so that checked-out
 files are outside the import path, then pass ``--pyargs mypkg`` to
 pytest.
 
-Installed tests are particularly convenient when combined with
-`Distribute's 2to3 support` (``use_2to3``).
-
-With tests that won't be installed, the simplest way is to avoid
-``__init__.py`` files in test directories; pytest will still find them
-but they won't be copied to other places or be found by Python's import
-system.
+With tests that won't be installed, the simplest way to run them
+against your installed package is to avoid ``__init__.py`` files in test
+directories; pytest will still find and import them by adding their
+parent directory to ``sys.path`` but they won't be copied to
+other places or be found by Python's import system outside of pytest.
 
 .. _`fully qualified name`: http://pytest.org/latest/goodpractises.html#package-name
 
-.. _`Distribute's 2to3 support`: http://packages.python.org/distribute/python3.html
 
 .. include:: ../links.txt
