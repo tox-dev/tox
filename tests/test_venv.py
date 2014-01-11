@@ -48,11 +48,8 @@ def test_create(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "virtualenv" in str(args[1])
+    assert str(args[0]).endswith("virtualenv")
     if sys.platform != "win32":
-        # realpath is needed for stuff like the debian symlinks
-        assert py.path.local(sys.executable).realpath() \
-          == py.path.local(args[0]).realpath()
         #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
@@ -321,7 +318,7 @@ def test_install_python3(tmpdir, newmocksession):
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
-    assert str(args[1]).endswith('virtualenv.py')
+    assert str(args[0]).endswith('virtualenv')
     l[:] = []
     action = mocksession.newaction(venv, "hello")
     venv._install(["hello"], action=action)
