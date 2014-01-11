@@ -48,7 +48,7 @@ def test_create(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert str(args[0]).endswith("virtualenv")
+    assert "virtualenv" in str(args[0])
     if sys.platform != "win32":
         #assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
