@@ -24,7 +24,8 @@
 
 - fix issue126: depend on virtualenv>=1.10.1 so that we can rely
   (hopefully) on a pip version which supports --pre. (tox by default
-  uses to --pre).
+  uses to --pre).  also merged in PR84 so that we now call "virtualenv"
+  directly instead of looking up interpreters.  Thanks Ionel Maries Cristian.
 
 - fix issue130: you can now set install_command=easy_install {opts} {packages}
   and expect it to work for repeated tox runs (previously it only worked
