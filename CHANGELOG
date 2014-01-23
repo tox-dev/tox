@@ -1,5 +1,10 @@
-1.6.2.dev
+1.7.0.dev
 ---------
+
+- don't lookup "pip-script" anymore but rather just "pip" on windows 
+  as this is a pip implementation detail and changed with pip-1.5.  
+  It might mean that tox-1.7 is not able to install a different pip 
+  version into a virtualenv anymore.
 
 - drop Python2.5 compatibility because it became too hard due
   to the setuptools-2.0 dropping support.  tox now has no 
@@ -22,10 +27,11 @@
   to allow installation of tox
   via easy_install/eggs.  Thanks Jenisys.
 
-- fix issue126: depend on virtualenv>=1.10.1 so that we can rely
+- fix issue126: depend on virtualenv>=1.11.1 so that we can rely
   (hopefully) on a pip version which supports --pre. (tox by default
   uses to --pre).  also merged in PR84 so that we now call "virtualenv"
   directly instead of looking up interpreters.  Thanks Ionel Maries Cristian.
+  This also fixes issue140.
 
 - fix issue130: you can now set install_command=easy_install {opts} {packages}
   and expect it to work for repeated tox runs (previously it only worked

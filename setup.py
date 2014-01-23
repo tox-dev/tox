@@ -18,7 +18,7 @@ class Tox(TestCommand):
 
 def main():
     version = sys.version_info[:2]
-    install_requires = ['virtualenv>=1.10.1', 'py>=1.4.17', ]
+    install_requires = ['virtualenv>=1.11.1', 'py>=1.4.17', ]
     if version < (2, 7) or (3, 0) <= version <= (3, 1):
         install_requires += ['argparse']
     if version < (2,6):
@@ -28,7 +28,7 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=open("README.rst").read(),
         url='http://tox.testrun.org/',
-        version='1.7.0.dev1',
+        version='1.7.0.dev2',
         license='http://opensource.org/licenses/MIT',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',

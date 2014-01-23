@@ -268,8 +268,6 @@ class VirtualEnv(object):
                             extraenv=None):
         argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
-        if argv[0] == "pip" and sys.platform == "win32":
-            argv[0] = "pip-script.py"
         i = argv.index('{packages}')
         argv[i:i+1] = packages
         if '{opts}' in argv:
