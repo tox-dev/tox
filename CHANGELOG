@@ -1,4 +1,4 @@
-1.7.0.dev
+1.7.0
 ---------
 
 - don't lookup "pip-script" anymore but rather just "pip" on windows 
@@ -27,7 +27,7 @@
   to allow installation of tox
   via easy_install/eggs.  Thanks Jenisys.
 
-- fix issue126: depend on virtualenv>=1.11.1 so that we can rely
+- fix issue126: depend on virtualenv>=1.11.2 so that we can rely
   (hopefully) on a pip version which supports --pre. (tox by default
   uses to --pre).  also merged in PR84 so that we now call "virtualenv"
   directly instead of looking up interpreters.  Thanks Ionel Maries Cristian.
