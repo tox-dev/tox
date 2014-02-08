@@ -278,7 +278,7 @@ class TestIniParser:
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
-        assert x == [["cmd1", "with space", "grr"],
+        assert x == [["cmd1", "with", "space", "grr"],
                      ["cmd2", "grr"]]
 
     def test_argvlist_windows_escaping(self, tmpdir, newconfig):
@@ -304,7 +304,7 @@ class TestIniParser:
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
-        assert x == [["cmd1", "with space", "grr"]]
+        assert x == [["cmd1", "with", "space", "grr"]]
 
 
     def test_argvlist_quoting_in_command(self, tmpdir, newconfig):

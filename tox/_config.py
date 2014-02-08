@@ -527,30 +527,35 @@ class IniReader:
     def _processcommand(self, command):
         posargs = getattr(self, "posargs", None)
 
-        # special treat posargs which might contain multiple arguments
-        # in their defaults
+        # Iterate through each word of the command substituting as
+        # appropriate to construct the new command string. This
+        # string is then broken up into exec argv components using
+        # shlex.
         newcommand = ""
         for word in CommandParser(command).words():
-            if word.startswith("{posargs:") and word.endswith("}"):
+            if word == "{posargs}" or word == "[]":
                 if posargs:
-                    word = "{posargs}"
+                    newcommand += " ".join(posargs)
+                continue
+            elif word.startswith("{posargs:") and word.endswith("}"):
+                if posargs:
+                    newcommand += " ".join(posargs)
+                    continue
                 else:
                     word = word[9:-1]
-            newcommand += word
-
-        # now we can properly parse the command
-        argv = []
-        for arg in shlex.split(newcommand):
-            if arg in ('[]', "{posargs}"):
-                if posargs:
-                    argv.extend(posargs)
-                continue
             new_arg = ""
-            for word in CommandParser(arg).words():
-                new_word = self._replace(word)
-                new_word = self._replace(new_word)
-                new_arg += new_word
-            argv.append(new_arg)
+            new_word = self._replace(word)
+            new_word = self._replace(new_word)
+            new_arg += new_word
+            newcommand += new_arg
+
+        # Construct shlex object that will not escape any values,
+        # use all values as is in argv.
+        shlexer = shlex.shlex(newcommand, posix=True)
+        shlexer.whitespace_split = True
+        shlexer.escape = ''
+        shlexer.commenters = ''
+        argv = list(shlexer)
         return argv
 
     def getargv(self, section, name, default=None, replace=True):
