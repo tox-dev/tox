@@ -292,6 +292,18 @@ then the value will be retrieved as ``os.environ['KEY']``
 and raise an Error if the environment variable
 does not exist.
 
+
+optional environment variable substitutions
+++++++++++++++++++++++++++++++++++
+
+If you specify a substitution string like this::
+
+    {optionalenv:KEY}
+
+then the value will be retrieved as ``os.environ['KEY']``
+and replace with '' if the environment variable does not
+exist
+
 .. _`command positional substitution`:
 .. _`positional substitution`:
 
