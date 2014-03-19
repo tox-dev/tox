@@ -293,16 +293,24 @@ and raise an Error if the environment variable
 does not exist.
 
 
-optional environment variable substitutions
-++++++++++++++++++++++++++++++++++
+environment variable substitutions with default values
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 If you specify a substitution string like this::
 
-    {optionalenv:KEY}
+    {defenv:DEFAULTVALUE:KEY}
 
 then the value will be retrieved as ``os.environ['KEY']``
-and replace with '' if the environment variable does not
-exist
+and replace with DEFAULTVALUE if the environment variable does not
+exist.
+
+If you specify a substitution string like this::
+
+    {defenv::KEY}
+
+then the value will be retrieved as ``os.environ['KEY']``
+and replace with and empty string if the environment variable does not
+exist.
 
 .. _`command positional substitution`:
 .. _`positional substitution`:
