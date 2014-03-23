@@ -47,7 +47,7 @@ Full configuration example
 
 Let's say we want our development environment sit at ``devenv`` and pull
 packages from ``requirements.txt`` file which we create at the same directory
-as ``tox.ini`` file. We also want to speciy Python version to be 2.7, and use
+as ``tox.ini`` file. We also want to specify Python version to be 2.7, and use
 ``setup.py develop`` to work in development mode instead of building and
 installing an ``sdist`` package.
 
