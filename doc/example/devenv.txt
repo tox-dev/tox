@@ -1,61 +1,78 @@
-
+=======================
 Development environment
 =======================
 
-Tox can be used to prepare development virtual environment for local projects.
-This feature can be useful in order to preserve environment across team members
-working on same project. It can be also used by deployment tools to prepare
-proper environments.
+Tox can be used for just preparing different virtual environments required by a
+project.
+
+This feature can be used by deployment tools when preparing deployed project
+environments. It can also be used for setting up normalized project development
+environments and thus help reduce the risk of different team members using
+mismatched development environments.
+
+Here are some examples illustrating how to set up a project's development
+environment using tox. For illustration purposes, let us call the development
+environment ``devenv``.
 
 
-Configuration
--------------
+Example 1: Basic scenario
+=========================
 
-Firstly, you need to prepare configuration for your development environment. In
-order to do that, we must define proper section at ``tox.ini`` file and tell at
-what directory environment should be created. Moreover, we need to specify
-python version that should be picked, and that the package should be installed
-with ``setup.py develop``::
+Step 1 - Configure the development environment
+----------------------------------------------
+
+First, we prepare the tox configuration for our development environment by
+defining a ``[testenv:devenv]`` section in the project's ``tox.ini``
+configuration file::
 
     [testenv:devenv]
     envdir = devenv
     basepython = python2.7
     usedevelop = True
+
+In it we state:
+
+- what directory to locate the environment in,
+- what Python executable to use in the environment,
+- that our project should be installed into the environment using ``setup.py
+  develop``, as opposed to building and installing its source distribution using
+  ``setup.py install``.
+
+Actually, we can configure a lot more, and these are only the required settings.
+For example, we can add the following to our configuration, telling tox not to
+reuse ``commands`` or ``deps`` settings from the base ``[testenv]``
+configuration::
+
     commands =
     deps =
 
 
-Actually, you can configure a lot more, those are the only required settings.
-In example you can add ``deps`` and ``commands`` settings. Here, we tell tox
-not to pick ``commands`` or ``deps`` from base ``testenv`` configuration.
+Step 2 - Create the development environment
+-------------------------------------------
 
-
-Creating development environment
---------------------------------
-
-Once ``devenv`` section is defined we can instrument tox to create our
-environment::
+Once the ``[testenv:devenv]`` configuration section has been defined, we create
+the actual development environment by running the following::
 
     tox -e devenv
 
-This will create an environment at path specified by ``envdir`` under
-``[testenv:devenv]`` section.
+This creates the environment at the path specified by the environment's
+``envdir`` configuration value.
 
 
-Full configuration example
---------------------------
+Example 2: A more complex scenario
+==================================
 
-Let's say we want our development environment sit at ``devenv`` and pull
-packages from ``requirements.txt`` file which we create at the same directory
-as ``tox.ini`` file. We also want to specify Python version to be 2.7, and use
-``setup.py develop`` to work in development mode instead of building and
-installing an ``sdist`` package.
+Let us say we want our project development environment to:
 
-Here is example configuration for that::
+- be located in the ``devenv`` directory,
+- use Python executable ``python2.7``,
+- pull packages from ``requirements.txt``, located in the same directory as
+  ``tox.ini``.
+
+Here is an example configuration for the described scenario::
 
     [testenv:devenv]
     envdir = devenv
     basepython = python2.7
     usedevelop = True
     deps = -rrequirements.txt
-
