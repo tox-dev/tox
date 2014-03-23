@@ -202,7 +202,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
    .. versionadded:: 0.9
 
    Multi-line ``name = URL`` definitions of python package servers.
-   Depedencies can specify using a specified index server through the
+   Dependencies can specify using a specified index server through the
    ``:indexservername:depname`` pattern.  The ``default`` indexserver
    definition determines where unscoped dependencies and the sdist install
    installs from.  Example::
