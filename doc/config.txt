@@ -97,14 +97,6 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
         pip install --pre {opts} {packages}
 
-    **default on environments using python2.5**::
-
-        pip install {opts} {packages}``
-
-    this will use pip<1.4 which has no ``--pre`` option.  Note also
-    that for python2.5 support you may need to install ssl and/or
-    use ``setenv = PIP_INSECURE=1`` in a py25 based testenv.
-
 .. confval:: whitelist_externals=MULTI-LINE-LIST
 
     each line specifies a command name (in glob-style pattern format)
