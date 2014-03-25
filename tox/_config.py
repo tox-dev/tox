@@ -123,7 +123,8 @@ def prepare_parse(pkgname):
     parser.add_argument("--hashseed", action="store",
         metavar="SEED", default=None,
         help="set PYTHONHASHSEED to SEED before running commands.  "
-             "Defaults to a random integer in the range 1 to 4294967295.  "
+             "Defaults to a random integer in the range [1, 4294967295] "
+             "([1, 1024] on Windows). "
              "Passing 'noset' suppresses this behavior.")
     parser.add_argument("--force-dep", action="append",
         metavar="REQ", default=None,
@@ -200,7 +201,10 @@ def get_homedir():
         return None
 
 def make_hashseed():
-    return str(random.randint(1, 4294967295))
+    max_seed = 4294967295
+    if sys.platform == 'win32':
+        max_seed = 1024
+    return str(random.randint(1, max_seed))
 
 class parseini:
     def __init__(self, config, inipath):
