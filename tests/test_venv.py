@@ -321,7 +321,7 @@ def test_install_python3(tmpdir, newmocksession):
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
-    assert str(args[1]).endswith('virtualenv.py')
+    assert str(args[1]).endswith('virtualenv')
     l[:] = []
     action = mocksession.newaction(venv, "hello")
     venv._install(["hello"], action=action)
