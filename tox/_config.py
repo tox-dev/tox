@@ -357,7 +357,6 @@ class parseini:
                 ixserver = None
             name = self._replace_forced_dep(name, config)
             vc.deps.append(DepConfig(name, ixserver))
-        vc.virtualenvbin = reader.getdefault(section, "virtualenvbin", "virtualenv")
         vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = self.config.option.sitepackages or \
                           reader.getbool(section, "sitepackages", False)
@@ -735,3 +734,4 @@ def getcontextname():
     if 'HUDSON_URL' in os.environ:
         return 'jenkins'
     return None
+

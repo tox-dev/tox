@@ -178,8 +178,13 @@ class VirtualEnv(object):
         if action is None:
             action = self.session.newaction(self, "create")
 
+        interpreters = self.envconfig.config.interpreters
         config_interpreter = self.getsupportedinterpreter()
-        args = [self.envconfig.virtualenvbin]
+        info = interpreters.get_info(executable=config_interpreter)
+        f, path, _ = py.std.imp.find_module("virtualenv")
+        f.close()
+        venvscript = path.rstrip("co")
+        args = [config_interpreter, str(venvscript)]
         if self.envconfig.distribute:
             args.append("--distribute")
         else:
