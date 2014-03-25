@@ -3,6 +3,10 @@ XXX
 
 - fix issue162: don't list python 2.5 as compatibiliy/supported
 
+- fix issue158 and fix issue155: windows/virtualenv properly works now:
+  call virtualenv through "python -m virtualenv" with the same 
+  interpreter which invoked tox.  Thanks Chris Withers, Ionel Maries Cristian.
+
 1.7.0
 ---------
 
