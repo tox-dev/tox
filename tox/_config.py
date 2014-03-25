@@ -202,7 +202,7 @@ def get_homedir():
 
 def make_hashseed():
     max_seed = 4294967295
-    if sys.platform == 'win32':
+    if sys.platform == 'win32' and sys.version_info < (3, 4):
         max_seed = 1024
     return str(random.randint(1, max_seed))
 
