@@ -179,7 +179,7 @@ class VirtualEnv(object):
             action = self.session.newaction(self, "create")
 
         config_interpreter = self.getsupportedinterpreter()
-        args = ['virtualenv']
+        args = [self.envconfig.virtualenvbin]
         if self.envconfig.distribute:
             args.append("--distribute")
         else:
