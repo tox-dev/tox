@@ -595,10 +595,19 @@ class IniReader:
         #print "getdefault", section, name, "returned", repr(x)
         return x
 
-    def _do_replace_env(self, envkey, default=None):
-        if not envkey:
+    def _replace_env(self, match):
+        match_value = match.group('substitution_value')
+        if not match_value:
             raise tox.exception.ConfigError(
                 'env: requires an environment variable name')
+
+        default = None
+        envkey_split = match_value.split(':', 1)
+
+        if len(envkey_split) is 2:
+            envkey, default = envkey_split
+        else:
+            envkey = match_value
 
         if not envkey in os.environ and default is None:
             raise tox.exception.ConfigError(
@@ -606,21 +615,6 @@ class IniReader:
                 (envkey, envkey))
 
         return os.environ.get(envkey, default)
-
-    def _replace_env(self, match):
-        envkey = match.group('substitution_value')
-        return self._do_replace_env(envkey)
-
-    def _replace_env_with_default(self, match):
-        envkey = match.group('substitution_value')
-        try:
-            default, envkey = envkey.split(':', 1)
-        except ValueError:
-            raise tox.exception.ConfigError(
-                "substitution 'defenv:%r': malformed, expected "
-                "'defenv:DEFAULTVALUE:KEY'" % match)
-
-        return self._do_replace_env(envkey, default=default)
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
@@ -661,7 +655,6 @@ class IniReader:
 
         handlers = {
             'env' : self._replace_env,
-            'defenv' : self._replace_env_with_default,
             None : self._replace_substitution,
             }
         try:

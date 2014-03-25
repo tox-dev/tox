@@ -246,9 +246,9 @@ class TestIniParser:
         monkeypatch.setenv("KEY1", "hello")
         config = newconfig("""
             [section]
-            key1={defenv:DEFAULT_VALUE:KEY1}
-            key2={defenv:DEFAULT_VALUE:KEY2}
-            key3={defenv::KEY3}
+            key1={env:KEY1:DEFAULT_VALUE}
+            key2={env:KEY2:DEFAULT_VALUE}
+            key3={env:KEY3:}
         """)
         reader = IniReader(config._cfg)
         x = reader.getdefault("section", "key1")

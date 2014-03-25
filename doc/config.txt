@@ -298,7 +298,7 @@ environment variable substitutions with default values
 
 If you specify a substitution string like this::
 
-    {defenv:DEFAULTVALUE:KEY}
+    {env:KEY:DEFAULTVALUE}
 
 then the value will be retrieved as ``os.environ['KEY']``
 and replace with DEFAULTVALUE if the environment variable does not
@@ -306,7 +306,7 @@ exist.
 
 If you specify a substitution string like this::
 
-    {defenv::KEY}
+    {env:KEY:}
 
 then the value will be retrieved as ``os.environ['KEY']``
 and replace with and empty string if the environment variable does not
