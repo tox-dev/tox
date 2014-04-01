@@ -28,9 +28,9 @@ List of optional global options::
 (by checking for existence of the ``JENKINS_URL`` environment variable)
 and will first lookup global tox settings in this section::
 
-    [tox:hudson]
-    ...               # override [tox] settings for the hudson context
-    # note: for hudson distshare defaults to ``{toxworkdir}/distshare``.
+    [tox:jenkins]
+    ...               # override [tox] settings for the jenkins context
+    # note: for jenkins distshare defaults to ``{toxworkdir}/distshare``.
 
 
 envlist setting
