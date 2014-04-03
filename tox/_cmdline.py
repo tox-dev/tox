@@ -93,8 +93,13 @@ class Action(object):
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
-        popen = self._popen(args, cwd, env=env,
-                            stdout=f, stderr=STDOUT)
+        try:
+            popen = self._popen(args, cwd, env=env,
+                                stdout=f, stderr=STDOUT)
+        except OSError:
+            self.report.error("invocation failed, args: %s, cwd: %s" %
+                              (args, cwd))
+            raise
         popen.outpath = outpath
         popen.args = [str(x) for x in args]
         popen.cwd = cwd
