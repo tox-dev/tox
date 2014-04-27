@@ -105,7 +105,7 @@ directories; pytest will still find and import them by adding their
 parent directory to ``sys.path`` but they won't be copied to
 other places or be found by Python's import system outside of pytest.
 
-.. _`fully qualified name`: http://pytest.org/latest/goodpractises.html#package-name
+.. _`fully qualified name`: http://pytest.org/latest/goodpractises.html#test-package-name
 
 
 .. include:: ../links.txt
