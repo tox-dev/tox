@@ -28,7 +28,7 @@ class TestToxQuickstartMain(object):
         monkeypatch.setattr(
             tox._quickstart, 'term_input',
             self.get_mock_term_input(
-                ['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']))
+                ['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'py.test', 'pytest']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
 
@@ -39,7 +39,7 @@ class TestToxQuickstartMain(object):
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy
+envlist = py26, py27, py32, py33, py34, pypy
 
 [testenv]
 commands = py.test
@@ -52,7 +52,7 @@ deps =
     def test_quickstart_main_choose_individual_pythons_and_nose_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input',
-            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'N',
+            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N',
                                      'nosetests', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -64,7 +64,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy
+envlist = py26, py27, py32, py33, py34, pypy
 
 [testenv]
 commands = nosetests
@@ -77,7 +77,7 @@ deps =
     def test_quickstart_main_choose_individual_pythons_and_trial_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input',
-            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'N',
+            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N',
                                       'trial', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
@@ -89,7 +89,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy
+envlist = py26, py27, py32, py33, py34, pypy
 
 [testenv]
 commands = trial
@@ -102,7 +102,7 @@ deps =
     def test_quickstart_main_choose_individual_pythons_and_pytest_adds_deps(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input',
-            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'N',
+            self.get_mock_term_input(['4', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N',
                                       'py.test', '']))
         tox._quickstart.main(argv=['tox-quickstart'])
 
@@ -113,7 +113,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy
+envlist = py26, py27, py32, py33, py34, pypy
 
 [testenv]
 commands = py.test
@@ -185,7 +185,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy, jython
+envlist = py26, py27, py32, py33, py34, pypy, jython
 
 [testenv]
 commands = py.test
@@ -198,7 +198,7 @@ deps =
     def test_quickstart_main_choose_individual_pythons_and_defaults(self, monkeypatch):
         monkeypatch.setattr(
             tox._quickstart, 'term_input',
-            self.get_mock_term_input(['4', '', '', '', '', '', '', '', '', '', '']))
+            self.get_mock_term_input(['4', '', '', '', '', '', '', '', '', '', '', '']))
 
         tox._quickstart.main(argv=['tox-quickstart'])
 
@@ -209,7 +209,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy, jython
+envlist = py26, py27, py32, py33, py34, pypy, jython
 
 [testenv]
 commands = {envpython} setup.py test
@@ -239,7 +239,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy, jython
+envlist = py26, py27, py32, py33, py34, pypy, jython
 
 [testenv]
 commands = {envpython} setup.py test
@@ -257,6 +257,7 @@ class TestToxQuickstart(object):
             'py27': True,
             'py32': True,
             'py33': True,
+            'py34': True,
             'pypy': True,
             'commands': 'py.test',
             'deps': 'pytest',
@@ -268,7 +269,7 @@ class TestToxQuickstart(object):
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, pypy
+envlist = py26, py27, py32, py33, py34, pypy
 
 [testenv]
 commands = py.test
@@ -339,6 +340,7 @@ deps =
             'py27': True,
             'py32': True,
             'py33': True,
+            'py34': True,
             'pypy': True,
             'commands': 'nosetests -v',
             'deps': 'nose',
@@ -350,7 +352,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py27, py32, py33, pypy
+envlist = py27, py32, py33, py34, pypy
 
 [testenv]
 commands = nosetests -v
