@@ -32,7 +32,9 @@ using these steps:
 The last point requires that your test command creates JunitXML files,
 for example with ``py.test`` it is done like this:
 
-    commands=py.test --junitxml=junit-{envname}.xml
+.. code-block:: ini
+
+    commands = py.test --junitxml=junit-{envname}.xml
 
 
 
