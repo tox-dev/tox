@@ -1,8 +1,6 @@
 import sys
-import os
 import py
 import re
-import subprocess
 import inspect
 
 class Interpreters:

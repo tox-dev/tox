@@ -3,7 +3,7 @@ import tox
 import pytest
 import os, sys
 import tox._config
-from tox._venv import *
+from tox._venv import *  # noqa
 
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -277,7 +277,7 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     venv = mocksession.getenv('python')
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*")
-    assert venv.status == "commands failed"
+    assert venv.status == 0
 
 def test_install_command_whitelisted(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
@@ -295,7 +295,7 @@ def test_install_command_whitelisted(newmocksession, monkeypatch):
     assert venv.status == "commands failed"
 
 @pytest.mark.skipif("not sys.platform.startswith('linux')")
-def test_install_command_not_installed(newmocksession):
+def test_install_command_not_installed_bash(newmocksession):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
         commands=
@@ -387,7 +387,7 @@ class TestCreationConfig:
             [testenv]
             deps={distshare}/xyz-*
         """)
-        xyz = config.distshare.ensure("xyz-1.2.0.zip")
+        config.distshare.ensure("xyz-1.2.0.zip")
         xyz2 = config.distshare.ensure("xyz-1.2.1.zip")
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
@@ -507,7 +507,6 @@ def test_setenv_added_to_pcall(tmpdir, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) == 2
     for x in l:
-        args = x.args
         env = x.env
         assert env is not None
         assert 'ENV_VAR' in env
@@ -585,6 +584,7 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     mocksession.report.not_expect("warning", "*test command found but not*")
     monkeypatch.setenv("PATH", str(tmpdir))
     x4 = venv.getcommandpath("x", cwd=tmpdir)
+    assert x4.endswith('/x')
     mocksession.report.expect("warning", "*test command found but not*")
 
 def test_sethome_only_on_option(newmocksession, monkeypatch):

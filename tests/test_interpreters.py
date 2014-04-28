@@ -2,7 +2,7 @@ import sys
 import os
 
 import pytest
-from tox.interpreters import *
+from tox.interpreters import *  # noqa
 
 @pytest.fixture
 def interpreters():

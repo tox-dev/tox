@@ -1,12 +1,11 @@
-import tox
-import pytest
-import os, sys
-import subprocess
+import sys
 from textwrap import dedent
 
 import py
+import pytest
+import tox
 import tox._config
-from tox._config import *
+from tox._config import *  # noqa
 from tox._config import _split_env
 
 
@@ -110,7 +109,6 @@ class TestConfigPackage:
 
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
-        envconfig = config.envconfigs['python']
         assert config.distshare == config.homedir.join(".tox", "distshare")
 
     def test_defaults_changed_dir(self, tmpdir, newconfig):
@@ -168,6 +166,7 @@ class TestIniParser:
             key2={xyz}
         """)
         reader = IniReader(config._cfg, fallbacksections=['mydefault'])
+        assert reader is not None
         py.test.raises(tox.exception.ConfigError,
             'reader.getdefault("mydefault", "key2")')
 

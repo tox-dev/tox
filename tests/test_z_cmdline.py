@@ -1,7 +1,6 @@
 import tox
 import py
 import pytest
-import sys
 from tox._pytestplugin import ReportExpectMock
 try:
     import json
@@ -129,7 +128,6 @@ class TestSession:
         })
         config = parseconfig([])
         session = Session(config)
-        envlist = ['hello', 'world']
         envs = session.venvlist
         assert len(envs) == 2
         env1, env2 = envs
@@ -582,6 +580,7 @@ def test_separate_sdist_no_sdistfile(cmd, initproj):
     l = distshare.listdir()
     assert len(l) == 1
     sdistfile = l[0]
+    assert 'pkg123-0.7.zip' in str(sdistfile)
 
 def test_separate_sdist(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
@@ -611,7 +610,6 @@ def test_sdist_latest(tmpdir, newconfig):
             distshare=%s
             sdistsrc={distshare}/pkg123-*
     """ % distshare)
-    p0 = distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
     session = Session(config)
