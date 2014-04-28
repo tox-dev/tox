@@ -1,6 +1,5 @@
 from __future__ import with_statement
-import sys, os, re
-import subprocess
+import sys, os
 import py
 import tox
 from tox._config import DepConfig
@@ -121,8 +120,6 @@ class VirtualEnv(object):
         """
         if action is None:
             action = self.session.newaction(self, "update")
-        report = self.session.report
-        name = self.envconfig.envname
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
             rconfig.matches(self._getliveconfig()):
@@ -142,7 +139,8 @@ class VirtualEnv(object):
             self.install_deps(action)
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
-            return "could not install deps %s" %(self.envconfig.deps,)
+            return "could not install deps %s; v = %r" % (
+                self.envconfig.deps, v)
 
     def _getliveconfig(self):
         python = self.envconfig._basepython_info.executable

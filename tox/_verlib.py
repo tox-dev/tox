@@ -8,7 +8,6 @@ licensed under the PSF license (i guess)
 
 """
 
-import sys
 import re
 
 class IrrationalVersionError(Exception):

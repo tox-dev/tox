@@ -79,7 +79,6 @@ class Action(object):
         return f
 
     def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
-        logged_command = "%s$ %s" %(cwd, " ".join(map(str, args)))
         f = outpath = None
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
@@ -411,7 +410,8 @@ class Session:
                 sdist_path = self._makesdist()
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
-                self.report.error("FAIL could not package project")
+                self.report.error("FAIL could not package project - v = %r" %
+                    v)
                 return
             sdistfile = self.config.distshare.join(sdist_path.basename)
             if sdistfile != sdist_path:
