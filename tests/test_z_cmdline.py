@@ -193,6 +193,19 @@ def test_minversion(cmd, initproj):
     ])
     assert result.ret
 
+def test_run_custom_install_command_error(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tox.ini': '''
+            [testenv]
+            install_command=./tox.ini {opts} {packages}
+        '''
+    })
+    result = cmd.run("tox")
+    result.stdout.fnmatch_lines([
+        "ERROR: invocation failed, args: ['*/tox.ini*",
+    ])
+    assert result.ret
+
 def test_unknown_interpreter_and_env(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
