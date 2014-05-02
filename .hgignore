@@ -14,3 +14,4 @@ dist
 doc/_build/
 tox.egg-info
 .tox
+.cache
