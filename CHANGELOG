@@ -2,7 +2,8 @@ development
 -----------
 
 - fix issue59: add option "--skip-missing-interpreters" which won't fail the
-  build if Python interpreters listed in tox.ini are missing.
+  build if Python interpreters listed in tox.ini are missing.  Thanks 
+  Alexandre Conrad for the PR.
 
 1.7.1
 ---------
