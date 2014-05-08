@@ -129,6 +129,8 @@ def prepare_parse(pkgname):
              "'pytest<2.7' or 'django>=1.6'.")
     parser.add_argument("--sitepackages", action="store_true",
         help="override sitepackages setting to True in all envs")
+    parser.add_argument("--skip-missing-interpreters", action="store_true",
+        help="don't fail tests for missing interpreters")
 
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substitution")

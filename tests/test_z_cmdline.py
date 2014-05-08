@@ -229,6 +229,22 @@ def test_unknown_interpreter(cmd, initproj):
         "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
     ])
 
+def test_skip_unknown_interpreter(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [testenv:python]
+            basepython=xyz_unknown_interpreter
+            [testenv]
+            changedir=tests
+        '''
+    })
+    result = cmd.run("tox", "--skip-missing-interpreters")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*SKIPPED*InterpreterNotFound*xyz_unknown_interpreter*",
+    ])
+
 def test_unknown_dep(cmd, initproj):
     initproj("dep123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
