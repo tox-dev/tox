@@ -565,7 +565,7 @@ def test_sdistonly(initproj, cmd):
     result.stdout.fnmatch_lines([
         "*sdist-make*setup.py*",
     ])
-    assert "virtualenv" not in result.stdout.str()
+    assert "-mvirtualenv" not in result.stdout.str()
 
 def test_separate_sdist_no_sdistfile(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
