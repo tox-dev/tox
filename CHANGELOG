@@ -3,14 +3,16 @@ development
 
 - fix issue59: add option "--skip-missing-interpreters" which won't fail the
   build if Python interpreters listed in tox.ini are missing.  Thanks 
-  Alexandre Conrad for the PR.
+  Alexandre Conrad for PR104.
 
 - fix issue164: better traceback info in case of failing test commands.
-  Thanks Marc Abramowitz for the PR.
+  Thanks Marc Abramowitz for PR92.
 
 - support optional env variable substitution, thanks Morgan Fainberg
-  for the complete PR.
+  for PR86.
 
+- limit python hashseed to 1024 on Windows to prevent possible
+  memory errors.  Thanks March Schlaich for the PR90.
 
 1.7.1
 ---------
