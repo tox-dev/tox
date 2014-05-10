@@ -8,6 +8,9 @@ development
 - fix issue164: better traceback info in case of failing test commands.
   Thanks Marc Abramowitz for the PR.
 
+- support optional env variable substitution, thanks Morgan Fainberg
+  for the complete PR.
+
 
 1.7.1
 ---------
