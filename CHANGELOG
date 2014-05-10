@@ -5,6 +5,10 @@ development
   build if Python interpreters listed in tox.ini are missing.  Thanks 
   Alexandre Conrad for the PR.
 
+- fix issue164: better traceback info in case of failing test commands.
+  Thanks Marc Abramowitz for the PR.
+
+
 1.7.1
 ---------
 
