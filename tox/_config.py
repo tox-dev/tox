@@ -595,17 +595,25 @@ class IniReader:
         return x
 
     def _replace_env(self, match):
-        envkey = match.group('substitution_value')
-        if not envkey:
+        match_value = match.group('substitution_value')
+        if not match_value:
             raise tox.exception.ConfigError(
                 'env: requires an environment variable name')
 
-        if not envkey in os.environ:
+        default = None
+        envkey_split = match_value.split(':', 1)
+
+        if len(envkey_split) is 2:
+            envkey, default = envkey_split
+        else:
+            envkey = match_value
+
+        if not envkey in os.environ and default is None:
             raise tox.exception.ConfigError(
                 "substitution env:%r: unkown environment variable %r" %
                 (envkey, envkey))
 
-        return os.environ[envkey]
+        return os.environ.get(envkey, default)
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:

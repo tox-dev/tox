@@ -241,6 +241,22 @@ class TestIniParser:
         py.test.raises(tox.exception.ConfigError,
             'reader.getdefault("section", "key2")')
 
+    def test_getdefault_environment_substitution_with_default(self, monkeypatch, newconfig):
+        monkeypatch.setenv("KEY1", "hello")
+        config = newconfig("""
+            [section]
+            key1={env:KEY1:DEFAULT_VALUE}
+            key2={env:KEY2:DEFAULT_VALUE}
+            key3={env:KEY3:}
+        """)
+        reader = IniReader(config._cfg)
+        x = reader.getdefault("section", "key1")
+        assert x == "hello"
+        x = reader.getdefault("section", "key2")
+        assert x == "DEFAULT_VALUE"
+        x = reader.getdefault("section", "key3")
+        assert x == ""
+
     def test_getdefault_other_section_substitution(self, newconfig):
         config = newconfig("""
             [section]
