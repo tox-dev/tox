@@ -68,8 +68,8 @@ Current features
   support for configuring the installer command 
   through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: Python-2.6 up to Python-3.3, 
-  Jython and pypy_ support.
+* **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher,
+  Jython and pypy_.
 
 * **cross-platform**: Windows and Unix style environments
 
