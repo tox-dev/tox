@@ -1,6 +1,12 @@
 development
 -----------
 
+- fix issue150: parse {posargs} more like we used to do it pre 1.7.0.
+  The 1.7.0 behaviour broke a lot of OpenStack projects.
+  See PR85 and the issue discussions for (far) more details, hopefully
+  resulting in a more refined behaviour in the 1.8 series.
+  And thanks to Clark Boylan for the PR.
+
 - fix issue59: add option "--skip-missing-interpreters" which won't fail the
   build if Python interpreters listed in tox.ini are missing.  Thanks 
   Alexandre Conrad for PR104.
