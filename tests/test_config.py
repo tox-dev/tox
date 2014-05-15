@@ -293,7 +293,7 @@ class TestIniParser:
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
-        assert x == [["cmd1", "with space", "grr"],
+        assert x == [["cmd1", "with", "space", "grr"],
                      ["cmd2", "grr"]]
 
     def test_argvlist_windows_escaping(self, tmpdir, newconfig):
@@ -319,7 +319,7 @@ class TestIniParser:
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
-        assert x == [["cmd1", "with space", "grr"]]
+        assert x == [["cmd1", "with", "space", "grr"]]
 
 
     def test_argvlist_quoting_in_command(self, tmpdir, newconfig):
@@ -360,6 +360,34 @@ class TestIniParser:
         argvlist = reader.getargvlist("section", "key2")
         assert argvlist[0] == ["cmd1"]
         assert argvlist[1] == ["cmd2", "value2", "other"]
+
+    def test_argvlist_quoted_posargs(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            key2=
+                cmd1 --foo-args='{posargs}'
+                cmd2 -f '{posargs}'
+                cmd3 -f {posargs}
+        """)
+        reader = IniReader(config._cfg)
+        reader.addsubstitutions(["foo", "bar"])
+        assert reader.getargvlist('section', 'key1') == []
+        x = reader.getargvlist("section", "key2")
+        assert x == [["cmd1", "--foo-args=foo bar"],
+                     ["cmd2", "-f", "foo bar"],
+                     ["cmd3", "-f", "foo", "bar"]]
+
+    def test_argvlist_posargs_with_quotes(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            key2=
+                cmd1 -f {posargs}
+        """)
+        reader = IniReader(config._cfg)
+        reader.addsubstitutions(["foo", "'bar", "baz'"])
+        assert reader.getargvlist('section', 'key1') == []
+        x = reader.getargvlist("section", "key2")
+        assert x == [["cmd1", "-f", "foo", "bar baz"]]
 
     def test_positional_arguments_are_only_replaced_when_standing_alone(self,
         tmpdir, newconfig):
