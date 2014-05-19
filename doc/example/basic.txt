@@ -1,4 +1,3 @@
-
 Basic usage
 =============================================
 
@@ -207,6 +206,10 @@ a test run when ``python setup.py test`` is issued::
     import sys
 
     class Tox(TestCommand):
+        user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
+        def initialize_options(self):
+            TestCommand.initialize_options(self)
+            self.tox_args = None
         def finalize_options(self):
             TestCommand.finalize_options(self)
             self.test_args = []
@@ -214,7 +217,8 @@ a test run when ``python setup.py test`` is issued::
         def run_tests(self):
             #import here, cause outside the eggs aren't loaded
             import tox
-            errno = tox.cmdline(self.test_args)
+            import shlex
+            errno = tox.cmdline(args=shlex.split(self.tox_args))
             sys.exit(errno)
 
     setup(
@@ -227,5 +231,9 @@ Now if you run::
 
     python setup.py test
 
-this will install tox and then run tox.
+this will install tox and then run tox. You can pass arguments to ``tox``
+using the ``--tox-args`` or ``-a`` command-line options. For example::
 
+    python setup.py test -a "-epy27"
+
+is equivalent to running ``tox -epy27``.
