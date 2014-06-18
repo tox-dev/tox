@@ -22,6 +22,7 @@ List of optional global options::
     distshare=path    # defaults to {homedir}/.tox/distshare
     envlist=ENVLIST   # defaults to the list of all environments
     skipsdist=BOOL    # defaults to false
+    skip_missing_interpreters=BOOL # defaults to false
 
 
 ``tox`` autodetects if it is running in a Jenkins_ context
@@ -32,6 +33,12 @@ and will first lookup global tox settings in this section::
     ...               # override [tox] settings for the jenkins context
     # note: for jenkins distshare defaults to ``{toxworkdir}/distshare``.
 
+Setting ``skip_missing_interpreters`` to ``True`` is equivalent of passing the
+``--skip-missing-interpreters`` command line option, and will force ``tox`` to
+return success even if some of the specified environments were missing. This is
+useful for some CI systems or running on a developer box, where you might only
+have a subset of all your supported interpreters installed but don't want to
+mark the build as failed because of it.
 
 envlist setting
 +++++++++++++++
