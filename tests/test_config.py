@@ -943,13 +943,21 @@ class TestGlobalOptions:
         config = newconfig([], inisource)
         assert config.minversion == "3.0"
 
-    def test_skip_missing_interpreters(self, tmpdir, newconfig, monkeypatch):
+    def test_skip_missing_interpreters_true(self, tmpdir, newconfig, monkeypatch):
         inisource = """
             [tox]
             skip_missing_interpreters = True
         """
         config = newconfig([], inisource)
         assert config.option.skip_missing_interpreters
+
+    def test_skip_missing_interpreters_false(self, tmpdir, newconfig, monkeypatch):
+        inisource = """
+            [tox]
+            skip_missing_interpreters = False
+        """
+        config = newconfig([], inisource)
+        assert not config.option.skip_missing_interpreters
 
     def test_defaultenv_commandline(self, tmpdir, newconfig, monkeypatch):
         config = newconfig(["-epy24"], "")

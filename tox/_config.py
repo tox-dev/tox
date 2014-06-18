@@ -241,7 +241,7 @@ class parseini:
 
         if not config.option.skip_missing_interpreters:
             config.option.skip_missing_interpreters = \
-                reader.getdefault(toxsection, "skip_missing_interpreters", None)
+                reader.getbool(toxsection, "skip_missing_interpreters", False)
 
         # determine indexserver dictionary
         config.indexserver = {'default': IndexServerConfig('default')}
