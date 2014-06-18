@@ -45,15 +45,14 @@ and will first lookup global tox settings in this section::
     always overrides this setting if passed on the invokation.
     **Default:** ``False``
 
-envlist setting
-+++++++++++++++
+.. confval:: envlist=CSV
 
-Determining the environment list that ``tox`` is to operate on
-happens in this order:
+    Determining the environment list that ``tox`` is to operate on
+    happens in this order (if any is found, no further lookups are made):
 
-* command line option ``-eENVLIST``
-* environment variable ``TOXENV``
-* ``tox.ini`` file's ``envlist``
+    * command line option ``-eENVLIST``
+    * environment variable ``TOXENV``
+    * ``tox.ini`` file's ``envlist``
 
 
 Virtualenv test environment settings
