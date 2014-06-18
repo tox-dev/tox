@@ -7,7 +7,8 @@ development
   resulting in a more refined behaviour in the 1.8 series.
   And thanks to Clark Boylan for the PR.
 
-- fix issue59: add option "--skip-missing-interpreters" which won't fail the
+- fix issue59: add a config variable ``skip-missing-interpreters`` as well as
+  command line option ``--skip-missing-interpreters`` which won't fail the
   build if Python interpreters listed in tox.ini are missing.  Thanks 
   Alexandre Conrad for PR104.
 

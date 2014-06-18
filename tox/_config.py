@@ -239,6 +239,10 @@ class parseini:
                                            "{toxinidir}/.tox")
         config.minversion = reader.getdefault(toxsection, "minversion", None)
 
+        if not config.option.skip_missing_interpreters:
+            config.option.skip_missing_interpreters = \
+                reader.getbool(toxsection, "skip_missing_interpreters", False)
+
         # determine indexserver dictionary
         config.indexserver = {'default': IndexServerConfig('default')}
         prefix = "indexserver"
