@@ -303,10 +303,18 @@ class parseini:
 
         config.skipsdist = reader.getbool(toxsection, "skipsdist", all_develop)
 
-    def _makeenvconfig(self, name, section, subs, config):
+        # interpolate missing configs
+        for name in config.envlist:
+            if name not in config.envconfigs:
+                config.envconfigs[name] = \
+                    self._makeenvconfig(name, "testenv", reader._subs, config,
+                        factors=name.split('-'))
+
+    def _makeenvconfig(self, name, section, subs, config, factors=()):
         vc = VenvConfig(envname=name)
         vc.config = config
-        reader = IniReader(self._cfg, fallbacksections=["testenv"])
+        reader = IniReader(self._cfg, fallbacksections=["testenv"],
+            factors=factors)
         reader.addsubstitutions(**subs)
         vc.develop = not config.option.installpkg and \
                reader.getbool(section, "usedevelop", config.option.develop)
@@ -391,15 +399,32 @@ class parseini:
         if not env:
             env = os.environ.get("TOXENV", None)
             if not env:
-                envlist = reader.getlist(toxsection, "envlist", sep=",")
+                envstr = reader.getdefault(toxsection, "envlist", default="",
+                    replace=False)
+                envlist = self._expand_envstr(envstr)
                 if not envlist:
                     envlist = self.config.envconfigs.keys()
                 return envlist
+        # TODO: move envsplit magic to _split_env()
         envlist = _split_env(env)
         if "ALL" in envlist:
             envlist = list(self.config.envconfigs)
             envlist.sort()
         return envlist
+
+    def _expand_envstr(self, envstr):
+        from itertools import groupby, product, chain
+
+        # split by commas not in groups
+        tokens = re.split(r'(\{[^}]+\})|,', envstr)
+        envlist = [''.join(g).strip() for k, g in groupby(tokens, key=bool) if k]
+
+        def expand(env):
+            tokens = re.split(r'\{([^}]+)\}', env)
+            parts = [token.split(',') for token in tokens]
+            return [''.join(variant) for variant in product(*parts)]
+
+        return list(chain(*map(expand, envlist)))
 
     def _replace_forced_dep(self, name, config):
         """
@@ -468,9 +493,10 @@ RE_ITEM_REF = re.compile(
 
 
 class IniReader:
-    def __init__(self, cfgparser, fallbacksections=None):
+    def __init__(self, cfgparser, fallbacksections=None, factors=()):
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
+        self.factors = factors
         self._subs = {}
         self._subststack = []
 
@@ -586,18 +612,19 @@ class IniReader:
         return s
 
     def getdefault(self, section, name, default=None, replace=True):
-        try:
-            x = self._cfg[section][name]
-        except KeyError:
-            for fallbacksection in self.fallbacksections:
-                try:
-                    x = self._cfg[fallbacksection][name]
-                except KeyError:
-                    pass
-                else:
-                    break
-            else:
-                x = default
+        x = None
+        for s in [section] + self.fallbacksections:
+            try:
+                x = self._cfg[s][name]
+                break
+            except KeyError:
+                continue
+
+        if x is None:
+            x = default
+        else:
+            x = self._apply_factors(x)
+
         if replace and x and hasattr(x, 'replace'):
             self._subststack.append((section, name))
             try:
@@ -606,6 +633,19 @@ class IniReader:
                 assert self._subststack.pop() == (section, name)
         #print "getdefault", section, name, "returned", repr(x)
         return x
+
+    def _apply_factors(self, s):
+        def factor_line(line):
+            m = re.search(r'^(!)?(\w+)?\:\s*(.+)', line)
+            if not m:
+                return line
+
+            negate, factor, line = m.groups()
+            if bool(negate) ^ (factor in self.factors):
+                return line
+
+        lines = s.strip().splitlines()
+        return '\n'.join(filter(None, map(factor_line, lines)))
 
     def _replace_env(self, match):
         match_value = match.group('substitution_value')
