@@ -15,7 +15,7 @@ import tox
 
 iswin32 = sys.platform == "win32"
 
-defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
+defaultenvs = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3'}
 for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
     if _name == "py":
         basepython = sys.executable

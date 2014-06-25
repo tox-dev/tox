@@ -554,7 +554,7 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.envpython == envconfig.envbindir.join("python")
 
-    @pytest.mark.parametrize("bp", ["jython", "pypy"])
+    @pytest.mark.parametrize("bp", ["jython", "pypy", "pypy3"])
     def test_envbindir_jython(self, tmpdir, newconfig, bp):
         config = newconfig("""
             [testenv]
@@ -916,7 +916,7 @@ class TestGlobalOptions:
         assert str(env.basepython) == sys.executable
 
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
-        envs = "py26,py27,py31,py32,py33,jython,pypy"
+        envs = "py26,py27,py31,py32,py33,py34,jython,pypy,pypy3"
         inisource = """
             [tox]
             envlist = %s
@@ -928,8 +928,8 @@ class TestGlobalOptions:
             env = config.envconfigs[name]
             if name == "jython":
                 assert env.basepython == "jython"
-            elif name == "pypy":
-                assert env.basepython == "pypy"
+            elif name.startswith("pypy"):
+                assert env.basepython == name
             else:
                 assert name.startswith("py")
                 bp = "python%s.%s" %(name[2], name[3])
