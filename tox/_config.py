@@ -636,7 +636,7 @@ class IniReader:
 
     def _apply_factors(self, s):
         def factor_line(line):
-            m = re.search(r'^(!)?(\w+)?\:\s*(.+)', line)
+            m = re.search(r'^(!)?(\w+)\:\s+(.+)', line)
             if not m:
                 return line
 
