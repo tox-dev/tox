@@ -291,7 +291,7 @@ class parseini:
         for name in all_envs:
             section = testenvprefix + name
             factors = set(name.split('-'))
-            if section in self._cfg or factors & known_factors:
+            if section in self._cfg or factors <= known_factors:
                 config.envconfigs[name] = \
                     self._makeenvconfig(name, section, reader._subs, config)
 
@@ -305,7 +305,7 @@ class parseini:
         factors = set()
         if section in self._cfg:
             for _, value in self._cfg[section].items():
-                factors.update(re.findall(r'^(!)?(\w+)\:\s+(.+)', value))
+                factors.update(re.findall(r'^!?(\w+)\:\s+', value, re.M))
         return factors
 
     def _makeenvconfig(self, name, section, subs, config):
