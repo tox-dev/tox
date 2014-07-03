@@ -832,6 +832,24 @@ class TestConfigTestEnv:
         assert conf.changedir.basename == 'testing'
         assert conf.changedir.dirpath().realpath() == tmpdir.realpath()
 
+    def test_factors(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = a,b
+
+            [testenv]
+            deps=
+                dep-all
+                a: dep-a
+                b: dep-b
+                !a: dep-not-a
+        """
+        conf = newconfig([], inisource)
+        configs = conf.envconfigs
+        assert [dep.name for dep in configs['a'].deps] == ["dep-all", "dep-a"]
+        assert [dep.name for dep in configs['b'].deps] == \
+            ["dep-all", "dep-b", "dep-not-a"]
+
 class TestGlobalOptions:
     def test_notest(self, newconfig):
         config = newconfig([], "")
@@ -934,6 +952,23 @@ class TestGlobalOptions:
                 assert name.startswith("py")
                 bp = "python%s.%s" %(name[2], name[3])
                 assert env.basepython == bp
+
+    def test_envlist_expansion(self, newconfig):
+        inisource = """
+            [tox]
+            envlist = py{26,27},docs
+        """
+        config = newconfig([], inisource)
+        assert config.envlist == ["py26", "py27", "docs"]
+
+    def test_envlist_cross_product(self, newconfig):
+        inisource = """
+            [tox]
+            envlist = py{26,27}-dep{1,2}
+        """
+        config = newconfig([], inisource)
+        assert config.envlist == \
+            ["py26-dep1", "py26-dep2", "py27-dep1", "py27-dep2"]
 
     def test_minversion(self, tmpdir, newconfig, monkeypatch):
         inisource = """
