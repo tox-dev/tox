@@ -1,4 +1,4 @@
-development
+1.7.2
 -----------
 
 - fix issue150: parse {posargs} more like we used to do it pre 1.7.0.

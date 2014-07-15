@@ -584,7 +584,7 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     mocksession.report.not_expect("warning", "*test command found but not*")
     monkeypatch.setenv("PATH", str(tmpdir))
     x4 = venv.getcommandpath("x", cwd=tmpdir)
-    assert x4.endswith('/x')
+    assert x4.endswith(os.sep + 'x')
     mocksession.report.expect("warning", "*test command found but not*")
 
 def test_sethome_only_on_option(newmocksession, monkeypatch):
