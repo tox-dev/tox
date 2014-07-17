@@ -382,6 +382,115 @@ You can put default values in one section and reference them in others to avoid 
         {[base]deps}
 
 
+Generating environments and selecting factors
+---------------------------------------------
+
+.. versionadded:: 1.8
+
+Suppose you want to test your package against python2.6, python2.7 and against
+several versions of a dependency, say Django 1.5 and Django 1.6. You can
+accomplish that by writing down 2*2 = 4 ``[testenv:*]`` sections and then
+listing all of them in ``envlist``.
+
+However, a better approach would be generating ``envlist`` and then selecting
+dependencies this way::
+
+    [tox]
+    envlist = {py26,py27}-django{15,16}
+
+    [testenv]
+    basepython =
+        py26: python2.6
+        py27: python2.7
+    deps =
+        pytest
+        django15: Django>=1.5,<1.6
+        django16: Django>=1.6,<1.7
+        !py27: unittest2
+    commands = py.test
+
+Let's go through this step by step.
+
+
+Generating environments
++++++++++++++++++++++++
+
+::
+
+    envlist = {py26,py27}-django{15,16}
+
+This is bash-style syntax and will create ``2*2=4`` environment names
+like this::
+
+    py26-django15
+    py26-django16
+    py27-django15
+    py27-django16
+
+You can still list explicit environments along with generated ones::
+
+    envlist = {py26,py27}-django{15,16}, docs, flake
+
+
+Factors
++++++++
+
+A parts of environment names delimited by hyphens are called factors and could
+be used to alter values of ``[testenv]`` settings::
+
+    basepython =
+        py26: python2.6
+        py27: python2.7
+
+This conditional setting will lead to either ``python2.6`` or
+``python2.7`` used as base python, e.g. ``python2.6`` is selected if current
+environment contains ``py26`` factor.
+
+In list settings such as ``deps`` or ``commands`` you can freely intermix
+optional lines with unconditional ones::
+
+    deps =
+        pytest
+        django15: Django>=1.5,<1.6
+        django16: Django>=1.6,<1.7
+        !py27: unittest2
+
+A last line here uses negation of a factor, this means ``unittest2`` will be
+in ``deps`` for all pythons except python2.7. The whole effect of this setting
+definition could be described with a table:
+
+===============  ==================================
+environment                        deps
+===============  ==================================
+py26-django15    pytest, Django>=1.5,<1.6, unitest2
+py26-django16    pytest, Django>=1.6,<1.7, unitest2
+py27-django15    pytest, Django>=1.5,<1.6
+py27-django16    pytest, Django>=1.6,<1.7
+===============  ==================================
+
+And this table can significantly grow as you have more dependencies and other
+factors such as platform, python version and/or database.
+
+.. note::
+
+    Tox provides good defaults for basepython setting, so the above ini-file can be
+    further reduced by omitting it.
+
+
+Showing all expanded sections
++++++++++++++++++++++++++++++
+
+To help with understanding how the variants will produce section values,
+you can ask tox to show their expansion with a new option::
+
+    $ tox -l
+    py26-django15
+    py26-django16
+    py27-django15
+    py27-django16
+    docs
+    flake
+
 
 Other Rules and notes
 =====================
