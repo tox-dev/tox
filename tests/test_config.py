@@ -850,6 +850,20 @@ class TestConfigTestEnv:
         assert [dep.name for dep in configs['b'].deps] == \
             ["dep-all", "dep-b", "dep-not-a"]
 
+    def test_default_factors(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = py{26,27,33,34}-dep
+
+            [testenv]
+            deps=
+                dep: dep
+        """
+        conf = newconfig([], inisource)
+        configs = conf.envconfigs
+        for name, config in configs.items():
+            assert config.basepython == 'python%s.%s' % (name[2], name[3])
+
 class TestGlobalOptions:
     def test_notest(self, newconfig):
         config = newconfig([], "")

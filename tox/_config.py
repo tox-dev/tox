@@ -16,13 +16,9 @@ import tox
 
 iswin32 = sys.platform == "win32"
 
-defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
-for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
-    if _name == "py":
-        basepython = sys.executable
-    else:
-        basepython = "python" + ".".join(_name[2:4])
-    defaultenvs[_name] = basepython
+default_factors = {'jython': 'jython', 'pypy': 'pypy', 'py': sys.executable}
+for version in '24,25,26,27,30,31,32,33,34'.split(','):
+    default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
 def parseconfig(args=None, pkg=None):
     if args is None:
@@ -286,7 +282,7 @@ class parseini:
 
         # configure testenvs
         known_factors = self._list_section_factors("testenv")
-        known_factors.update(defaultenvs)
+        known_factors.update(default_factors)
         known_factors.add("python")
         for name in all_envs:
             section = testenvprefix + name
@@ -311,8 +307,9 @@ class parseini:
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)
         vc.config = config
+        factors = set(name.split('-'))
         reader = IniReader(self._cfg, fallbacksections=["testenv"],
-            factors=name.split('-'))
+            factors=factors)
         reader.addsubstitutions(**subs)
         vc.develop = not config.option.installpkg and \
                reader.getbool(section, "usedevelop", config.option.develop)
@@ -321,10 +318,8 @@ class parseini:
         if reader.getdefault(section, "python", None):
             raise tox.exception.ConfigError(
                 "'python=' key was renamed to 'basepython='")
-        if name in defaultenvs:
-            bp = defaultenvs[name]
-        else:
-            bp = sys.executable
+        bp = next((default_factors[f] for f in factors if f in default_factors),
+            sys.executable)
         vc.basepython = reader.getdefault(section, "basepython", bp)
         vc._basepython_info = config.interpreters.get_info(vc.basepython)
         reader.addsubstitutions(envdir=vc.envdir, envname=vc.envname,
