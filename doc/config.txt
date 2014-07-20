@@ -382,7 +382,7 @@ You can put default values in one section and reference them in others to avoid 
         {[base]deps}
 
 
-Generating environments and selecting factors
+Generating environments, conditional settings
 ---------------------------------------------
 
 .. versionadded:: 1.8
@@ -392,8 +392,7 @@ several versions of a dependency, say Django 1.5 and Django 1.6. You can
 accomplish that by writing down 2*2 = 4 ``[testenv:*]`` sections and then
 listing all of them in ``envlist``.
 
-However, a better approach would be generating ``envlist`` and then selecting
-dependencies this way::
+However, a better approach looks like this::
 
     [tox]
     envlist = {py26,py27}-django{15,16}
@@ -409,10 +408,16 @@ dependencies this way::
         !py27: unittest2
     commands = py.test
 
+This uses two new facilities of tox-1.8:
+
+- generative envlist declarations where each envname
+  consists of environment parts or "factors"
+
+- "factor" specific settings
+
 Let's go through this step by step.
 
-
-Generating environments
+Generative envlist
 +++++++++++++++++++++++
 
 ::
@@ -427,16 +432,29 @@ like this::
     py27-django15
     py27-django16
 
-You can still list explicit environments along with generated ones::
+You can still list environments explicitely along with generated ones::
 
     envlist = {py26,py27}-django{15,16}, docs, flake
 
+.. note::
 
-Factors
-+++++++
+    To help with understanding how the variants will produce section values,
+    you can ask tox to show their expansion with a new option::
 
-A parts of environment names delimited by hyphens are called factors and could
-be used to alter values of ``[testenv]`` settings::
+    $ tox -l
+    py26-django15
+    py26-django16
+    py27-django15
+    py27-django16
+    docs
+    flake
+
+
+Factors and factor-conditional settings
+++++++++++++++++++++++++++++++++++++++++
+
+Parts of an environment name delimited by hyphens are called factors and can
+be used to set values conditionally::
 
     basepython =
         py26: python2.6
@@ -455,7 +473,7 @@ optional lines with unconditional ones::
         django16: Django>=1.6,<1.7
         !py27: unittest2
 
-A last line here uses negation of a factor, this means ``unittest2`` will be
+The last line here uses negation of a factor, this means ``unittest2`` will be
 in ``deps`` for all pythons except python2.7. The whole effect of this setting
 definition could be described with a table:
 
@@ -473,23 +491,9 @@ factors such as platform, python version and/or database.
 
 .. note::
 
-    Tox provides good defaults for basepython setting, so the above ini-file can be
-    further reduced by omitting it.
-
-
-Showing all expanded sections
-+++++++++++++++++++++++++++++
-
-To help with understanding how the variants will produce section values,
-you can ask tox to show their expansion with a new option::
-
-    $ tox -l
-    py26-django15
-    py26-django16
-    py27-django15
-    py27-django16
-    docs
-    flake
+    Tox provides good defaults for basepython setting, so the above
+    ini-file can be further reduced by omitting the ``basepython``
+    setting.
 
 
 Other Rules and notes
