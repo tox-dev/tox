@@ -6,6 +6,7 @@ import re
 import shlex
 import string
 import pkg_resources
+import itertools
 
 from tox.interpreters import Interpreters
 
@@ -15,13 +16,10 @@ import tox
 
 iswin32 = sys.platform == "win32"
 
-defaultenvs = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3'}
-for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
-    if _name == "py":
-        basepython = sys.executable
-    else:
-        basepython = "python" + ".".join(_name[2:4])
-    defaultenvs[_name] = basepython
+default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
+                   'py': sys.executable}
+for version in '24,25,26,27,30,31,32,33,34'.split(','):
+    default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
 def parseconfig(args=None, pkg=None):
     if args is None:
@@ -280,22 +278,19 @@ class parseini:
         config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
-        for sectionwrapper in self._cfg:
-            section = sectionwrapper.name
-            if section.startswith(testenvprefix):
-                name = section[len(testenvprefix):]
-                envconfig = self._makeenvconfig(name, section, reader._subs,
-                    config)
-                config.envconfigs[name] = envconfig
-        if not config.envconfigs:
-            config.envconfigs['python'] = \
-                self._makeenvconfig("python", "_xz_9", reader._subs, config)
-        config.envlist = self._getenvlist(reader, toxsection)
-        for name in config.envlist:
-            if name not in config.envconfigs:
-                if name in defaultenvs:
-                    config.envconfigs[name] = \
-                self._makeenvconfig(name, "_xz_9", reader._subs, config)
+
+        config.envlist, all_envs = self._getenvdata(reader, toxsection)
+
+        # configure testenvs
+        known_factors = self._list_section_factors("testenv")
+        known_factors.update(default_factors)
+        known_factors.add("python")
+        for name in all_envs:
+            section = testenvprefix + name
+            factors = set(name.split('-'))
+            if section in self._cfg or factors <= known_factors:
+                config.envconfigs[name] = \
+                    self._makeenvconfig(name, section, reader._subs, config)
 
         all_develop = all(name in config.envconfigs
                           and config.envconfigs[name].develop
@@ -303,10 +298,19 @@ class parseini:
 
         config.skipsdist = reader.getbool(toxsection, "skipsdist", all_develop)
 
+    def _list_section_factors(self, section):
+        factors = set()
+        if section in self._cfg:
+            for _, value in self._cfg[section].items():
+                factors.update(re.findall(r'^!?(\w+)\:\s+', value, re.M))
+        return factors
+
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)
         vc.config = config
-        reader = IniReader(self._cfg, fallbacksections=["testenv"])
+        factors = set(name.split('-'))
+        reader = IniReader(self._cfg, fallbacksections=["testenv"],
+            factors=factors)
         reader.addsubstitutions(**subs)
         vc.develop = not config.option.installpkg and \
                reader.getbool(section, "usedevelop", config.option.develop)
@@ -315,10 +319,8 @@ class parseini:
         if reader.getdefault(section, "python", None):
             raise tox.exception.ConfigError(
                 "'python=' key was renamed to 'basepython='")
-        if name in defaultenvs:
-            bp = defaultenvs[name]
-        else:
-            bp = sys.executable
+        bp = next((default_factors[f] for f in factors if f in default_factors),
+            sys.executable)
         vc.basepython = reader.getdefault(section, "basepython", bp)
         vc._basepython_info = config.interpreters.get_info(vc.basepython)
         reader.addsubstitutions(envdir=vc.envdir, envname=vc.envname,
@@ -386,20 +388,25 @@ class parseini:
              "'install_command' must contain '{packages}' substitution")
         return vc
 
-    def _getenvlist(self, reader, toxsection):
-        env = self.config.option.env
-        if not env:
-            env = os.environ.get("TOXENV", None)
-            if not env:
-                envlist = reader.getlist(toxsection, "envlist", sep=",")
-                if not envlist:
-                    envlist = self.config.envconfigs.keys()
-                return envlist
-        envlist = _split_env(env)
-        if "ALL" in envlist:
-            envlist = list(self.config.envconfigs)
-            envlist.sort()
-        return envlist
+    def _getenvdata(self, reader, toxsection):
+        envstr = self.config.option.env                                \
+            or os.environ.get("TOXENV")                                \
+            or reader.getdefault(toxsection, "envlist", replace=False) \
+            or []
+        envlist = _split_env(envstr)
+
+        # collect section envs
+        all_envs = set(envlist) - set(["ALL"])
+        for section in self._cfg:
+            if section.name.startswith(testenvprefix):
+                all_envs.add(section.name[len(testenvprefix):])
+        if not all_envs:
+            all_envs.add("python")
+
+        if not envlist or "ALL" in envlist:
+            envlist = sorted(all_envs)
+
+        return envlist, all_envs
 
     def _replace_forced_dep(self, name, config):
         """
@@ -429,15 +436,25 @@ class parseini:
 
 def _split_env(env):
     """if handed a list, action="append" was used for -e """
-    envlist = []
     if not isinstance(env, list):
         env = [env]
-    for to_split in env:
-        for single_env in to_split.split(","):
-            # "remove True or", if not allowing multiple same runs, update tests
-            if True or single_env not in envlist:
-                envlist.append(single_env)
-    return envlist
+    return mapcat(_expand_envstr, env)
+
+def _expand_envstr(envstr):
+    # split by commas not in groups
+    tokens = re.split(r'(\{[^}]+\})|,', envstr)
+    envlist = [''.join(g).strip()
+               for k, g in itertools.groupby(tokens, key=bool) if k]
+
+    def expand(env):
+        tokens = re.split(r'\{([^}]+)\}', env)
+        parts = [token.split(',') for token in tokens]
+        return [''.join(variant) for variant in itertools.product(*parts)]
+
+    return mapcat(expand, envlist)
+
+def mapcat(f, seq):
+    return list(itertools.chain.from_iterable(map(f, seq)))
 
 class DepConfig:
     def __init__(self, name, indexserver=None):
@@ -468,9 +485,10 @@ RE_ITEM_REF = re.compile(
 
 
 class IniReader:
-    def __init__(self, cfgparser, fallbacksections=None):
+    def __init__(self, cfgparser, fallbacksections=None, factors=()):
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
+        self.factors = factors
         self._subs = {}
         self._subststack = []
 
@@ -586,18 +604,19 @@ class IniReader:
         return s
 
     def getdefault(self, section, name, default=None, replace=True):
-        try:
-            x = self._cfg[section][name]
-        except KeyError:
-            for fallbacksection in self.fallbacksections:
-                try:
-                    x = self._cfg[fallbacksection][name]
-                except KeyError:
-                    pass
-                else:
-                    break
-            else:
-                x = default
+        x = None
+        for s in [section] + self.fallbacksections:
+            try:
+                x = self._cfg[s][name]
+                break
+            except KeyError:
+                continue
+
+        if x is None:
+            x = default
+        else:
+            x = self._apply_factors(x)
+
         if replace and x and hasattr(x, 'replace'):
             self._subststack.append((section, name))
             try:
@@ -606,6 +625,19 @@ class IniReader:
                 assert self._subststack.pop() == (section, name)
         #print "getdefault", section, name, "returned", repr(x)
         return x
+
+    def _apply_factors(self, s):
+        def factor_line(line):
+            m = re.search(r'^(!)?(\w+)\:\s+(.+)', line)
+            if not m:
+                return line
+
+            negate, factor, line = m.groups()
+            if bool(negate) ^ (factor in self.factors):
+                return line
+
+        lines = s.strip().splitlines()
+        return '\n'.join(filter(None, map(factor_line, lines)))
 
     def _replace_env(self, match):
         match_value = match.group('substitution_value')

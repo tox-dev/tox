@@ -1,3 +1,10 @@
+1.8.0.dev1
+-----------
+
+- new multi-dimensional configuration support.  Many thanks to
+  Alexander Schepanovski for the complete PR with docs.
+
+
 1.7.2
 -----------
 
