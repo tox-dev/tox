@@ -320,6 +320,7 @@ class VirtualEnv(object):
         setenv = self.envconfig.setenv
         if setenv:
             env.update(setenv)
+        env['VIRTUAL_ENV'] = str(self.path)
         env.update(extraenv)
         return env
 
