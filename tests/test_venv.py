@@ -552,8 +552,6 @@ def test_run_install_command(newmocksession):
     assert 'install' in l[0].args
     env = l[0].env
     assert env is not None
-    assert 'PYTHONIOENCODING' in env
-    assert env['PYTHONIOENCODING'] == 'utf_8'
 
 def test_run_custom_install_command(newmocksession):
     mocksession = newmocksession([], """
