@@ -302,7 +302,8 @@ class parseini:
         factors = set()
         if section in self._cfg:
             for _, value in self._cfg[section].items():
-                factors.update(re.findall(r'^(\w+)\:\s+', value, re.M))
+                exprs = re.findall(r'^([\w{},-]+)\:\s+', value, re.M)
+                factors.update(*mapcat(_split_factor_expr, exprs))
         return factors
 
     def _makeenvconfig(self, name, section, subs, config):
@@ -434,11 +435,16 @@ class parseini:
         dep2_name = pkg_resources.Requirement.parse(dep2).project_name
         return dep1_name == dep2_name
 
+
 def _split_env(env):
     """if handed a list, action="append" was used for -e """
     if not isinstance(env, list):
         env = [env]
     return mapcat(_expand_envstr, env)
+
+def _split_factor_expr(expr):
+    partial_envs = _expand_envstr(expr)
+    return [set(e.split('-')) for e in partial_envs]
 
 def _expand_envstr(envstr):
     # split by commas not in groups
@@ -628,12 +634,12 @@ class IniReader:
 
     def _apply_factors(self, s):
         def factor_line(line):
-            m = re.search(r'^(\w+)\:\s+(.+)', line)
+            m = re.search(r'^([\w{},-]+)\:\s+(.+)', line)
             if not m:
                 return line
 
-            factor, line = m.groups()
-            if factor in self.factors:
+            expr, line = m.groups()
+            if any(fs <= self.factors for fs in _split_factor_expr(expr)):
                 return line
 
         lines = s.strip().splitlines()

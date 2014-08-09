@@ -850,6 +850,24 @@ class TestConfigTestEnv:
             ["dep-all", "dep-a", "dep-x"]
         assert [dep.name for dep in configs['b'].deps] == ["dep-all", "dep-b"]
 
+    def test_factor_ops(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = {a,b}-{x,y}
+
+            [testenv]
+            deps=
+                a,b: dep-a-or-b
+                a-x: dep-a-and-x
+                {a,b}-y: dep-ab-and-y
+        """
+        configs = newconfig([], inisource).envconfigs
+        get_deps = lambda env: [dep.name for dep in configs[env].deps]
+        assert get_deps("a-x") == ["dep-a-or-b", "dep-a-and-x"]
+        assert get_deps("a-y") == ["dep-a-or-b", "dep-ab-and-y"]
+        assert get_deps("b-x") == ["dep-a-or-b"]
+        assert get_deps("b-y") == ["dep-a-or-b", "dep-ab-and-y"]
+
     def test_default_factors(self, newconfig):
         inisource="""
             [tox]
