@@ -835,20 +835,20 @@ class TestConfigTestEnv:
     def test_factors(self, newconfig):
         inisource="""
             [tox]
-            envlist = a,b
+            envlist = a-x,b
 
             [testenv]
             deps=
                 dep-all
                 a: dep-a
                 b: dep-b
-                !a: dep-not-a
+                x: dep-x
         """
         conf = newconfig([], inisource)
         configs = conf.envconfigs
-        assert [dep.name for dep in configs['a'].deps] == ["dep-all", "dep-a"]
-        assert [dep.name for dep in configs['b'].deps] == \
-            ["dep-all", "dep-b", "dep-not-a"]
+        assert [dep.name for dep in configs['a-x'].deps] == \
+            ["dep-all", "dep-a", "dep-x"]
+        assert [dep.name for dep in configs['b'].deps] == ["dep-all", "dep-b"]
 
     def test_default_factors(self, newconfig):
         inisource="""

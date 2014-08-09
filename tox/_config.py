@@ -302,7 +302,7 @@ class parseini:
         factors = set()
         if section in self._cfg:
             for _, value in self._cfg[section].items():
-                factors.update(re.findall(r'^!?(\w+)\:\s+', value, re.M))
+                factors.update(re.findall(r'^(\w+)\:\s+', value, re.M))
         return factors
 
     def _makeenvconfig(self, name, section, subs, config):
@@ -628,12 +628,12 @@ class IniReader:
 
     def _apply_factors(self, s):
         def factor_line(line):
-            m = re.search(r'^(!)?(\w+)\:\s+(.+)', line)
+            m = re.search(r'^(\w+)\:\s+(.+)', line)
             if not m:
                 return line
 
-            negate, factor, line = m.groups()
-            if bool(negate) ^ (factor in self.factors):
+            factor, line = m.groups()
+            if factor in self.factors:
                 return line
 
         lines = s.strip().splitlines()
