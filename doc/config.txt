@@ -405,7 +405,7 @@ However, a better approach looks like this::
         pytest
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        !py27: unittest2
+        py26: unittest2
     commands = py.test
 
 This uses two new facilities of tox-1.8:
@@ -416,6 +416,7 @@ This uses two new facilities of tox-1.8:
 - "factor" specific settings
 
 Let's go through this step by step.
+
 
 Generative envlist
 +++++++++++++++++++++++
@@ -432,7 +433,7 @@ like this::
     py27-django15
     py27-django16
 
-You can still list environments explicitely along with generated ones::
+You can still list environments explicitly along with generated ones::
 
     envlist = {py26,py27}-django{15,16}, docs, flake
 
@@ -441,13 +442,13 @@ You can still list environments explicitely along with generated ones::
     To help with understanding how the variants will produce section values,
     you can ask tox to show their expansion with a new option::
 
-    $ tox -l
-    py26-django15
-    py26-django16
-    py27-django15
-    py27-django16
-    docs
-    flake
+        $ tox -l
+        py26-django15
+        py26-django16
+        py27-django15
+        py27-django16
+        docs
+        flake
 
 
 Factors and factor-conditional settings
@@ -471,29 +472,48 @@ optional lines with unconditional ones::
         pytest
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        !py27: unittest2
+        py26: unittest2
 
-The last line here uses negation of a factor, this means ``unittest2`` will be
-in ``deps`` for all pythons except python2.7. The whole effect of this setting
-definition could be described with a table:
+Reading it line by line:
 
-===============  ==================================
-environment                        deps
-===============  ==================================
-py26-django15    pytest, Django>=1.5,<1.6, unitest2
-py26-django16    pytest, Django>=1.6,<1.7, unitest2
-py27-django15    pytest, Django>=1.5,<1.6
-py27-django16    pytest, Django>=1.6,<1.7
-===============  ==================================
-
-And this table can significantly grow as you have more dependencies and other
-factors such as platform, python version and/or database.
+- ``pytest`` will be included unconditionally,
+- ``Django>=1.5,<1.6`` will be included for environments containing ``django15`` factor,
+- ``Django>=1.6,<1.7`` similarly depends on ``django16`` factor,
+- ``unittest`` will be loaded for Python 2.6 environments.
 
 .. note::
 
     Tox provides good defaults for basepython setting, so the above
     ini-file can be further reduced by omitting the ``basepython``
     setting.
+
+
+Complex factor conditions
++++++++++++++++++++++++++
+
+Sometimes you need to specify same line for several factors or create a special case for
+a combination of factors. Here is how you do it::
+
+    [tox]
+    envlist = py{25,26,27}-django{14,15,16}-{sqlite,mysql}
+
+    [testenv]
+    deps =
+        py25-django14: simplejson ; use it only for this specific combination
+        py25,py26: unittest2      ; use it for both py25 and py26
+        py{25,26}-django14: mock  ; patching whatever in older python/django combo
+
+Take a look at first ``deps`` line. It shows how you can special case something
+for a combination of factors, you just join combining factors with a hyphen.
+This particular line states that ``simplejson`` will be loaded for python 2.5, django 1.4
+environments, e.g. ``py25-django14-sqlite`` and ``py25-django14-mysql``.
+
+The second line shows how you use same line for several factors - by listing them
+delimited by commas. It's possible to list not only simple factors, but also their
+combinations like ``py25-django14,py26-django14``.
+
+Finally, factor expressions are expanded the same way as envlist, so a last example
+could be rewritten as ``py{25,26}-django14``.
 
 
 Other Rules and notes
