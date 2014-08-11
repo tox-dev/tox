@@ -491,29 +491,42 @@ Reading it line by line:
 Complex factor conditions
 +++++++++++++++++++++++++
 
-Sometimes you need to specify same line for several factors or create a special case for
-a combination of factors. Here is how you do it::
+Sometimes you need to specify same line for several factors or create a special
+case for a combination of factors. Here is how you do it::
 
     [tox]
-    envlist = py{25,26,27}-django{14,15,16}-{sqlite,mysql}
+    envlist = py{26,27,33}-django{15,16}-{sqlite,mysql}
 
     [testenv]
     deps =
-        py25-django14: simplejson ; use it only for this specific combination
-        py25,py26: unittest2      ; use it for both py25 and py26
-        py{25,26}-django14: mock  ; patching whatever in older python/django combo
+        py33-mysql: PyMySQL     ; use if both py33 and mysql are in an env name
+        py26,py27: urllib3      ; use if any of py26 or py27 are in an env name
+        py{26,27}-sqlite: mock  ; mocking sqlite in python 2.x
 
 Take a look at first ``deps`` line. It shows how you can special case something
 for a combination of factors, you just join combining factors with a hyphen.
-This particular line states that ``simplejson`` will be loaded for python 2.5, django 1.4
-environments, e.g. ``py25-django14-sqlite`` and ``py25-django14-mysql``.
+This particular line states that ``PyMySQL`` will be loaded for python 3.3,
+mysql environments, e.g. ``py33-django15-mysql`` and ``py33-django16-mysql``.
 
-The second line shows how you use same line for several factors - by listing them
-delimited by commas. It's possible to list not only simple factors, but also their
-combinations like ``py25-django14,py26-django14``.
+The second line shows how you use same line for several factors - by listing
+them delimited by commas. It's possible to list not only simple factors, but
+also their combinations like ``py26-sqlite,py27-sqlite``.
 
-Finally, factor expressions are expanded the same way as envlist, so a last example
-could be rewritten as ``py{25,26}-django14``.
+Finally, factor expressions are expanded the same way as envlist, so last
+example could be rewritten as ``py{26,27}-sqlite``.
+
+.. note::
+
+    Factors don't do substring matching against env name, instead every
+    hyphenated expression is split by ``-`` and if ALL the factors in an
+    expression are also factors of an env then that condition is considered
+    hold.
+
+    For example, environment ``py26-mysql``:
+
+    - could be matched with expressions ``py26``, ``py26-mysql``,
+      ``mysql-py26``,
+    - but not with ``py2`` or ``py26-sql``.
 
 
 Other Rules and notes
