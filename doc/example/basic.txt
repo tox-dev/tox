@@ -41,6 +41,7 @@ Available "default" test environments names are::
     py34
     jython
     pypy
+    pypy3
 
 However, you can also create your own test environment names,
 see some of the examples in :doc:`examples <../examples>`.
