@@ -272,7 +272,8 @@ class VirtualEnv(object):
         if '{opts}' in argv:
             i = argv.index('{opts}')
             argv[i:i+1] = list(options)
-        for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV'):
+        for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
+                  '__PYVENV_LAUNCHER__'):
             try:
                 del os.environ[x]
             except KeyError:
