@@ -4,6 +4,9 @@
 - new multi-dimensional configuration support.  Many thanks to
   Alexander Schepanovski for the complete PR with docs.
 
+- fix issue148: remove "__PYVENV_LAUNCHER__" from os.environ when starting
+  subprocesses. Thanks Seven Myint.
+
 
 1.7.2
 -----------
