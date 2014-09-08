@@ -184,6 +184,9 @@ class VenvConfig:
         info = self.config.interpreters.get_info(self.basepython)
         if not info.executable:
             raise tox.exception.InterpreterNotFound(self.basepython)
+        if not info.version_info:
+            raise tox.exception.InvocationError(
+                'Failed to get version_info for %s: %s' % (info.name, info.err))
         if info.version_info < (2,6):
             raise tox.exception.UnsupportedInterpreter(
                 "python2.5 is not supported anymore, sorry")
