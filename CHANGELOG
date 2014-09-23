@@ -8,6 +8,8 @@
 - fix issue148: remove "__PYVENV_LAUNCHER__" from os.environ when starting
   subprocesses. Thanks Steven Myint.
 
+- fix issue152: set VIRTUAL_ENV when running test commands,
+  thanks Florian Ludwig.
 
 
 1.7.2

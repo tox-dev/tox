@@ -513,6 +513,7 @@ def test_setenv_added_to_pcall(tmpdir, mocksession, newconfig):
         assert env is not None
         assert 'ENV_VAR' in env
         assert env['ENV_VAR'] == 'value'
+        assert env['VIRTUAL_ENV'] == str(venv.path)
 
     for e in os.environ:
         assert e in env
