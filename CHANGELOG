@@ -11,6 +11,9 @@
 - fix issue152: set VIRTUAL_ENV when running test commands,
   thanks Florian Ludwig.
 
+- better report if we can't get version_info from an interpreter
+  executable. Thanks Floris Bruynooghe.
+
 
 1.7.2
 -----------

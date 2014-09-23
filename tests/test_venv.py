@@ -4,6 +4,7 @@ import pytest
 import os, sys
 import tox._config
 from tox._venv import *  # noqa
+from tox.interpreters import NoInterpreterInfo
 
 #def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -34,6 +35,12 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
     py.test.raises(tox.exception.InterpreterNotFound,
                    venv.getsupportedinterpreter)
+    monkeypatch.undo()
+    # check that we properly report when no version_info is present
+    info = NoInterpreterInfo(name=venv.name)
+    info.executable = "something"
+    monkeypatch.setattr(config.interpreters, "get_info", lambda *args: info)
+    pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
 
 
 def test_create(monkeypatch, mocksession, newconfig):
