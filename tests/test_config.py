@@ -882,6 +882,21 @@ class TestConfigTestEnv:
         for name, config in configs.items():
             assert config.basepython == 'python%s.%s' % (name[2], name[3])
 
+    @pytest.mark.issue188
+    def test_factors_in_boolean(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = py{27,33}
+
+            [testenv]
+            recreate =
+                py27: True
+        """
+        configs = newconfig([], inisource).envconfigs
+        assert configs["py27"].recreate
+        assert not configs["py33"].recreate
+
+
 class TestGlobalOptions:
     def test_notest(self, newconfig):
         config = newconfig([], "")

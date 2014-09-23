@@ -596,9 +596,12 @@ class IniReader:
 
     def getbool(self, section, name, default=None):
         s = self.getdefault(section, name, default)
+        if not s:
+            s = default
         if s is None:
             raise KeyError("no config value [%s] %s found" % (
                 section, name))
+
         if not isinstance(s, bool):
             if s.lower() == "true":
                 s = True

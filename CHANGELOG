@@ -3,9 +3,11 @@
 
 - new multi-dimensional configuration support.  Many thanks to
   Alexander Schepanovski for the complete PR with docs.
+  And to Mike Bayer for filing an issue wrt to setting booleans.
 
 - fix issue148: remove "__PYVENV_LAUNCHER__" from os.environ when starting
   subprocesses. Thanks Steven Myint.
+
 
 
 1.7.2
