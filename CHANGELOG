@@ -1,9 +1,9 @@
-1.8.0.dev1
+1.8.0
 -----------
 
 - new multi-dimensional configuration support.  Many thanks to
   Alexander Schepanovski for the complete PR with docs.
-  And to Mike Bayer for filing an issue wrt to setting booleans.
+  And to Mike Bayer and others for testing and feedback.
 
 - fix issue148: remove "__PYVENV_LAUNCHER__" from os.environ when starting
   subprocesses. Thanks Steven Myint.
