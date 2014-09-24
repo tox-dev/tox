@@ -3,7 +3,7 @@ tox 1.8: Generative/combinatorial environments specs
 
 I am happy to announce tox 1.8 which implements parametrized environments.
 
-See https://tox.testrun.org/config.html#generating-environments-conditional-settings
+See https://tox.testrun.org/latest/config.html#generating-environments-conditional-settings
 for examples and the new backward compatible syntax in your tox.ini file.
 
 Many thanks to Alexander Schepanovski for implementing and refining
