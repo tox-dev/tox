@@ -896,6 +896,20 @@ class TestConfigTestEnv:
         assert configs["py27"].recreate
         assert not configs["py33"].recreate
 
+    @pytest.mark.issue190
+    def test_factors_in_setenv(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = py27,py26
+
+            [testenv]
+            setenv =
+                py27: X = 1
+        """
+        configs = newconfig([], inisource).envconfigs
+        assert configs["py27"].setenv["X"] == "1"
+        assert "X" not in configs["py26"].setenv
+
 
 class TestGlobalOptions:
     def test_notest(self, newconfig):

@@ -526,6 +526,8 @@ class IniReader:
 
         value = {}
         for line in s.split(sep):
+            if not line.strip():
+                continue
             name, rest = line.split('=', 1)
             value[name.strip()] = rest.strip()
 
