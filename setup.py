@@ -19,10 +19,8 @@ class Tox(TestCommand):
 def main():
     version = sys.version_info[:2]
     install_requires = ['virtualenv>=1.11.2', 'py>=1.4.17', ]
-    if version < (2, 7) or (3, 0) <= version <= (3, 1):
+    if version < (2, 7):
         install_requires += ['argparse']
-    if version < (2,6):
-        install_requires += ["simplejson"]
     setup(
         name='tox',
         description='virtualenv-based automation of test activities',
