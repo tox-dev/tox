@@ -305,7 +305,7 @@ class parseini:
         factors = set()
         if section in self._cfg:
             for _, value in self._cfg[section].items():
-                exprs = re.findall(r'^([\w{},-]+)\:\s+', value, re.M)
+                exprs = re.findall(r'^([\w{}\.,-]+)\:\s+', value, re.M)
                 factors.update(*mapcat(_split_factor_expr, exprs))
         return factors
 
