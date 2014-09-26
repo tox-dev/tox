@@ -95,9 +95,9 @@ class Action(object):
         try:
             popen = self._popen(args, cwd, env=env,
                                 stdout=f, stderr=STDOUT)
-        except OSError:
-            self.report.error("invocation failed, args: %s, cwd: %s" %
-                              (args, cwd))
+        except OSError as e:
+            self.report.error("invocation failed (errno %d), args: %s, cwd: %s" %
+                              (e.errno, args, cwd))
             raise
         popen.outpath = outpath
         popen.args = [str(x) for x in args]
@@ -118,8 +118,8 @@ class Action(object):
         if ret:
             invoked = " ".join(map(str, popen.args))
             if outpath:
-                self.report.error("invocation failed, logfile: %s" %
-                                  outpath)
+                self.report.error("invocation failed (exit code %d), logfile: %s" %
+                                  (ret, outpath))
                 out = outpath.read()
                 self.report.error(out)
                 if hasattr(self, "commandlog"):
