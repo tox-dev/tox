@@ -909,6 +909,14 @@ class TestConfigTestEnv:
         configs = newconfig([], inisource).envconfigs
         assert configs["py27"].setenv["X"] == "1"
         assert "X" not in configs["py26"].setenv
+    
+    def test_period_in_factor(self, newconfig):
+        inisource="""
+        [tox]
+        envlist = py27-{django1.6,django1.7}
+        """
+        configs = newconfig([], inisource).envconfigs
+        assert list(configs) == ["py27-django1.6", "py27-django-1.7"]
 
 
 class TestGlobalOptions:
