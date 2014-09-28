@@ -200,7 +200,7 @@ def test_run_custom_install_command_error(cmd, initproj):
     })
     result = cmd.run("tox")
     result.stdout.fnmatch_lines([
-        "ERROR: invocation failed (errno 13), args: ['*/tox.ini*",
+        "ERROR: invocation failed (errno *), args: ['*/tox.ini*",
     ])
     assert result.ret
 
