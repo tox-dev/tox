@@ -1,3 +1,12 @@
+1.9.0.dev
+-----------
+
+- fix issue193: Remove ``--pre`` from the default ``install_command``; by
+  default tox will now only install final releases from PyPI for unpinned
+  dependencies. Use ``pip_pre = true`` in a testenv or the ``--pre``
+  command-line option to restore the previous behavior.
+
+
 1.8.1.dev
 -----------
 

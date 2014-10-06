@@ -106,7 +106,22 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**::
 
-        pip install --pre {opts} {packages}
+        pip install {opts} {packages}
+
+.. confval:: pip_pre=True|False(default)
+
+    .. versionadded:: 1.9
+
+    If ``True``, adds ``--pre`` to the ``opts`` passed to
+    :confval:`install_command`. If :confval:`install_command` uses pip, this
+    will cause it to install the latest available pre-release of any
+    dependencies without a specified version. If ``False`` (the default), pip
+    will only install final releases of unpinned dependencies.
+
+    Passing the ``--pre`` command-line option to tox will force this to
+    ``True`` for all testenvs.
+
+    Don't set this option if your :confval:`install_command` does not use pip.
 
 .. confval:: whitelist_externals=MULTI-LINE-LIST
 

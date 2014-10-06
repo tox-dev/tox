@@ -105,6 +105,8 @@ def prepare_parse(pkgname):
         dest="indexurl", metavar="URL",
         help="set indexserver url (if URL is of form name=url set the "
         "url for the 'name' indexserver, specifically)")
+    parser.add_argument("--pre", action="store_true", dest="pre",
+        help="pass --pre option to install_command")
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
         help="force recreation of virtual environments")
@@ -381,15 +383,17 @@ class parseini:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", downloadcache)
             vc.downloadcache = py.path.local(downloadcache)
 
-        pip_default_opts = ["--pre", "{opts}", "{packages}"]
         vc.install_command = reader.getargv(
             section,
             "install_command",
-            "pip install " + " ".join(pip_default_opts),
+            "pip install {opts} {packages}",
             )
         if '{packages}' not in vc.install_command:
             raise tox.exception.ConfigError(
              "'install_command' must contain '{packages}' substitution")
+        vc.pip_pre = config.option.pre or reader.getbool(
+            section, "pip_pre", False)
+
         return vc
 
     def _getenvdata(self, reader, toxsection):
