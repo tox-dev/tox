@@ -106,7 +106,8 @@ def prepare_parse(pkgname):
         help="set indexserver url (if URL is of form name=url set the "
         "url for the 'name' indexserver, specifically)")
     parser.add_argument("--pre", action="store_true", dest="pre",
-        help="pass --pre option to install_command")
+        help="install pre-releases and development versions of dependencies. "
+             "This will pass the --pre option to install_command (pip by default).")
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
         help="force recreation of virtual environments")
