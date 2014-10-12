@@ -305,7 +305,7 @@ class parseini:
         factors = set()
         if section in self._cfg:
             for _, value in self._cfg[section].items():
-                exprs = re.findall(r'^([\w{},-]+)\:\s+', value, re.M)
+                exprs = re.findall(r'^([\w{}\.,-]+)\:\s+', value, re.M)
                 factors.update(*mapcat(_split_factor_expr, exprs))
         return factors
 
@@ -642,7 +642,7 @@ class IniReader:
 
     def _apply_factors(self, s):
         def factor_line(line):
-            m = re.search(r'^([\w{},-]+)\:\s+(.+)', line)
+            m = re.search(r'^([\w{}\.,-]+)\:\s+(.+)', line)
             if not m:
                 return line
 

@@ -910,6 +910,21 @@ class TestConfigTestEnv:
         assert configs["py27"].setenv["X"] == "1"
         assert "X" not in configs["py26"].setenv
 
+    def test_period_in_factor(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = py27-{django1.6,django1.7}
+
+            [testenv]
+            deps =
+                django1.6: Django==1.6
+                django1.7: Django==1.7
+        """
+        configs = newconfig([], inisource).envconfigs
+        assert sorted(configs) == ["py27-django1.6", "py27-django1.7"]
+        assert [d.name for d in configs["py27-django1.6"].deps] \
+            == ["Django==1.6"]
+
 
 class TestGlobalOptions:
     def test_notest(self, newconfig):
