@@ -706,6 +706,23 @@ class TestConfigTestEnv:
         assert argv[0] == ["cmd1", "[hello]", "world"]
         assert argv[1] == ["cmd1", "brave", "new", "world"]
 
+    def test_posargs_backslashed_or_quoted(self, tmpdir, newconfig):
+        inisource = """
+            [testenv:py24]
+            commands =
+                echo "\{posargs\}" = {posargs}
+                echo "posargs = " "{posargs}"
+        """
+        conf = newconfig([], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ['echo', '\\{posargs\\}', '=']
+        assert argv[1] == ['echo', 'posargs =']
+
+        conf = newconfig(['dog', 'cat'], inisource).envconfigs['py24']
+        argv = conf.commands
+        assert argv[0] == ['echo', '\\{posargs\\}', '=', 'dog', 'cat']
+        assert argv[1] == ['echo', 'posargs =', 'dog', 'cat']
+
     def test_rewrite_posargs(self, tmpdir, newconfig):
         inisource = """
             [testenv:py24]
