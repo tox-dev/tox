@@ -211,6 +211,25 @@ def test_install_deps_indexserver(newmocksession):
     assert "-i ABC" in args
     assert "dep3" in args
 
+def test_install_deps_pre(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        pip_pre=true
+        deps=
+            dep1
+    """)
+    venv = mocksession.getenv('python')
+    venv.create()
+    l = mocksession._pcalls
+    assert len(l) == 1
+    l[:] = []
+
+    venv.install_deps()
+    assert len(l) == 1
+    args = " ".join(l[0].args)
+    assert "--pre " in args
+    assert "dep1" in args
+
 def test_installpkg_indexserver(newmocksession, tmpdir):
     mocksession = newmocksession([], """
         [tox]

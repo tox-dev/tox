@@ -106,6 +106,7 @@ class TestConfigPackage:
         envconfig = config.envconfigs['python']
         assert envconfig.args_are_paths
         assert not envconfig.recreate
+        assert not envconfig.pip_pre
 
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
@@ -619,6 +620,24 @@ class TestConfigTestEnv:
         assert envconfig.install_command == [
             'some_install', '--arg=%s/foo' % config.toxinidir, 'python',
             '{opts}', '{packages}']
+
+    def test_pip_pre(self, newconfig):
+        config = newconfig("""
+            [testenv]
+            pip_pre=true
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.pip_pre
+
+    def test_pip_pre_cmdline_override(self, newconfig):
+        config = newconfig(
+            ['--pre'],
+            """
+            [testenv]
+            pip_pre=false
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.pip_pre
 
     def test_downloadcache(self, newconfig, monkeypatch):
         monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
