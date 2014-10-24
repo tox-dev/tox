@@ -3,6 +3,14 @@
 
 - fix issue190: allow setenv to be empty.
 
+- allow escaping curly braces with "\".  Thanks Marc Abramowitz for the PR.
+
+- allow "." names in environment names such that "py27-django1.7" is a
+  valid environment name.  Thanks Alex Gaynor and Alex Schepanovski.
+
+- report subprocess exit code when execution fails.  Thanks Marius
+  Gedminas.
+
 
 1.8.0
 -----------

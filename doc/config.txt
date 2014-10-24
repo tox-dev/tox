@@ -244,6 +244,10 @@ Substitutions
 Any ``key=value`` setting in an ini-file can make use
 of value substitution through the ``{...}`` string-substitution pattern.
 
+You can escape curly braces with the ``\`` character if you need them, for example::
+
+    commands = echo "\{posargs\}" = {posargs}
+
 Globally available substitutions
 ++++++++++++++++++++++++++++++++
 
