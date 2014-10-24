@@ -716,12 +716,12 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource).envconfigs['py24']
         argv = conf.commands
         assert argv[0] == ['echo', '\\{posargs\\}', '=']
-        assert argv[1] == ['echo', 'posargs =']
+        assert argv[1] == ['echo', 'posargs = ', ""]
 
         conf = newconfig(['dog', 'cat'], inisource).envconfigs['py24']
         argv = conf.commands
         assert argv[0] == ['echo', '\\{posargs\\}', '=', 'dog', 'cat']
-        assert argv[1] == ['echo', 'posargs =', 'dog', 'cat']
+        assert argv[1] == ['echo', 'posargs = ', 'dog cat']
 
     def test_rewrite_posargs(self, tmpdir, newconfig):
         inisource = """
