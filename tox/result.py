@@ -1,9 +1,7 @@
 import sys
 import py
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from tox import __version__ as toxver
+import json
 
 class ResultLog:
 
@@ -11,12 +9,11 @@ class ResultLog:
         if dict is None:
             dict = {}
         self.dict = dict
-
-    def set_header(self, installpkg):
-        from tox import __version__ as toxver
         self.dict.update({"reportversion": "1", "toxversion": toxver})
         self.dict["platform"] = sys.platform
         self.dict["host"] = py.std.socket.getfqdn()
+
+    def set_header(self, installpkg):
         self.dict["installpkg"] = dict(
                 md5=installpkg.computehash("md5"),
                 sha256=installpkg.computehash("sha256"),

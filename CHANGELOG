@@ -1,3 +1,8 @@
+1.8.2.dev
+-----------
+
+- fix issue199: fill resultlog structure ahead of virtualenv creation 
+
 1.8.1
 -----------
 
@@ -10,7 +15,6 @@
 
 - report subprocess exit code when execution fails.  Thanks Marius
   Gedminas.
-
 
 1.8.0
 -----------
