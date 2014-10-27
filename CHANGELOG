@@ -6,12 +6,21 @@
   dependencies. Use ``pip_pre = true`` in a testenv or the ``--pre``
   command-line option to restore the previous behavior.
 
+- fix issue199: fill resultlog structure ahead of virtualenv creation 
 
-1.8.1.dev
+
+1.8.1
 -----------
 
 - fix issue190: allow setenv to be empty.
 
+- allow escaping curly braces with "\".  Thanks Marc Abramowitz for the PR.
+
+- allow "." names in environment names such that "py27-django1.7" is a
+  valid environment name.  Thanks Alex Gaynor and Alex Schepanovski.
+
+- report subprocess exit code when execution fails.  Thanks Marius
+  Gedminas.
 
 1.8.0
 -----------
