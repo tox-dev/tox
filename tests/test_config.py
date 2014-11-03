@@ -1384,6 +1384,59 @@ class TestCmdInvocation:
             r'*deps=*dep1, dep2==5.0*',
         ])
 
+    def test_force_dep_with_requirements_txt_file(self, cmd, initproj):
+        """
+        Make sure we can override dependencies configured in external reqs.txt
+        when using the command line option --force-dep.
+        """
+        initproj("example123-0.5", filedefs={
+            'tox.ini': '''
+            [tox]
+
+            [testenv]
+            deps=
+                dep1==1.0
+                -r{toxinidir}/reqs.txt
+            ''',
+            'reqs.txt': '''
+            -e git://hello/world/git
+            dep2>=2.0
+            -i http://index.local/
+            dep3
+            dep4==4.0
+            -r reqs2.txt
+            ''',
+            'reqs2.txt': '''
+            dep5>=2.2
+            '''
+        })
+        config = parseconfig(
+            ['--force-dep=dep1==1.5', '--force-dep=dep2==2.1',
+             '--force-dep=dep3==3.0'])
+        assert config.option.force_dep == [
+            'dep1==1.5', 'dep2==2.1', 'dep3==3.0']
+
+        deps = config.envconfigs['python'].deps
+        assert len(deps) == 2
+        assert deps[0].name == 'dep1==1.5'
+        include_file = deps[1].name
+        assert include_file.startswith('-r')
+        with open(include_file[2:]) as reqs:
+            lines = [x.strip() for x in reqs.readlines()]
+            assert len(lines) == 6
+            second_file = lines.pop(len(lines) - 1)
+            assert second_file.startswith('-r')
+            assert lines == [
+                '-e git://hello/world/git',
+                'dep2==2.1',
+                '-i http://index.local/',
+                'dep3==3.0',
+                'dep4==4.0',
+            ]
+        with open(second_file[2:]) as reqs2:
+            lines = [x.strip() for x in reqs2.readlines()]
+            assert lines == ['dep5>=2.2']
+
 class TestArgumentParser:
 
     def test_dash_e_single_1(self):

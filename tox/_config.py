@@ -1,4 +1,5 @@
 import argparse
+import tempfile
 import os
 import random
 import sys
@@ -363,6 +364,7 @@ class parseini:
         vc.whitelist_externals = reader.getlist(section,
                                                 "whitelist_externals")
         vc.deps = []
+        reqs_files = []
         for depline in reader.getlist(section, "deps"):
             m = re.match(r":(\w+):\s*(\S+)", depline)
             if m:
@@ -371,8 +373,41 @@ class parseini:
             else:
                 name = depline.strip()
                 ixserver = None
-            name = self._replace_forced_dep(name, config)
-            vc.deps.append(DepConfig(name, ixserver))
+
+            if name[:2] == '-r':  # not a dependency, but a file full of dependencies
+                fd, temp_path = tempfile.mkstemp()
+                reqs_files.append((name[2:].strip(), fd, temp_path))
+                vc.deps.append(DepConfig('-r%s' % temp_path))
+            elif name[0] == '-':  # an option to be sent to pip
+                vc.deps.append(DepConfig(name, ixserver))
+            else:
+                name = self._replace_forced_dep(name, config)
+                vc.deps.append(DepConfig(name, ixserver))
+
+        for reqs_file, fd, temp_path in reqs_files:
+            lines = []
+            with open(reqs_file, 'r') as reqs:
+                for req in reqs.readlines():
+                    req = req.strip()
+                    if not req:
+                        continue
+
+                    if req.startswith('-'):
+                        if req.startswith('-r'):
+                            new_fd, new_temp_path = tempfile.mkstemp()
+                            reqs_files.append((req[2:].strip(), new_fd, new_temp_path))
+                            lines.append('-r' + new_temp_path)
+                        else:
+                            lines.append(req)
+                        continue
+
+                    name = self._replace_forced_dep(req, config)
+                    lines.append(name)
+
+            with open(temp_path, mode='w') as temp_reqs:
+                temp_reqs.writelines(os.linesep.join(lines))
+                os.close(fd)
+
         vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = self.config.option.sitepackages or \
                           reader.getbool(section, "sitepackages", False)
