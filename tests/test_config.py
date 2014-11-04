@@ -1400,7 +1400,10 @@ class TestCmdInvocation:
             ''',
             'reqs.txt': '''
             -e git://hello/world/git
-            dep2>=2.0
+            # comment
+            dep2>=2.0   # comment
+
+
             -i http://index.local/
             dep3
             dep4==4.0

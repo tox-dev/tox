@@ -400,6 +400,8 @@ class parseini:
                         else:
                             lines.append(req)
                         continue
+                    elif req.startswith('#'):
+                        continue
 
                     name = self._replace_forced_dep(req, config)
                     lines.append(name)
