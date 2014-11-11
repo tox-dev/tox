@@ -76,7 +76,7 @@ you can add it to your ``deps`` variable like this::
 
     deps = -rrequirements.txt 
 
-All installation commands are executed using ``{toxinidir}}``
+All installation commands are executed using ``{toxinidir}``
 (the directory where ``tox.ini`` resides) as the current
 working directory.  Therefore, the underlying ``pip`` installation
 will assume ``requirements.txt`` to exist at ``{toxinidir}/requirements.txt``.
