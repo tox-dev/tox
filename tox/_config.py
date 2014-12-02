@@ -802,7 +802,7 @@ class CommandParser(object):
         return ps.yield_words
 
 def getcontextname():
-    if 'HUDSON_URL' in os.environ:
+    if any(env in os.environ for env in ['JENKINS_URL', 'HUDSON_URL']):
         return 'jenkins'
     return None
 
