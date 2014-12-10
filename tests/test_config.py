@@ -148,6 +148,20 @@ def test_get_homedir(monkeypatch):
     assert get_homedir() == "123"
 
 
+class TestGetcontextname:
+    def test_blank(self, monkeypatch):
+        monkeypatch.setattr(os, "environ", {})
+        assert getcontextname() is None
+
+    def test_jenkins(self, monkeypatch):
+        monkeypatch.setattr(os, "environ", {"JENKINS_URL": "xyz"})
+        assert getcontextname() == "jenkins"
+
+    def test_hudson_legacy(self, monkeypatch):
+        monkeypatch.setattr(os, "environ", {"HUDSON_URL": "xyz"})
+        assert getcontextname() == "jenkins"
+
+
 class TestIniParser:
     def test_getdefault_single(self, tmpdir, newconfig):
         config = newconfig("""
