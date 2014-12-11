@@ -8,6 +8,8 @@
 
 - fix issue199: fill resultlog structure ahead of virtualenv creation 
 
+- refine determination if we run from Jenkins, thanks Borge Lanes.
+
 
 1.8.1
 -----------
