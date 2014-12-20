@@ -191,9 +191,13 @@ You can tell Tox to use an explicit hash seed value via the ``--hashseed``
 command-line option to ``tox``.  You can also override the hash seed value
 per test environment in ``tox.ini`` as follows::
 
-    [testenv:hash]
+    [testenv]
     setenv =
         PYTHONHASHSEED = 100
+
+If you wish to disable this feature, you can pass the command line option
+``--hashseed=noset`` when ``tox`` is invoked. You can also disable it from the
+``tox.ini`` by setting ``PYTHONHASHSEED = 0`` as described above.
 
 .. _`in Python 3.3`: http://docs.python.org/3/whatsnew/3.3.html#builtin-functions-and-types
 .. _PYTHONHASHSEED: http://docs.python.org/using/cmdline.html#envvar-PYTHONHASHSEED
