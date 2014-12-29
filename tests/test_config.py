@@ -960,6 +960,19 @@ class TestConfigTestEnv:
         assert configs["py27"].setenv["X"] == "1"
         assert "X" not in configs["py26"].setenv
 
+    @pytest.mark.issue198
+    def test_factors_groups_touch(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = {a,b}{-x,}
+
+            [testenv]
+            deps=
+                a,b,x,y: dep
+        """
+        configs = newconfig([], inisource).envconfigs
+        assert set(configs.keys()) == set(['a', 'a-x', 'b', 'b-x'])
+
     def test_period_in_factor(self, newconfig):
         inisource="""
             [tox]

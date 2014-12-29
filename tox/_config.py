@@ -456,7 +456,7 @@ def _split_factor_expr(expr):
 
 def _expand_envstr(envstr):
     # split by commas not in groups
-    tokens = re.split(r'(\{[^}]+\})|,', envstr)
+    tokens = re.split(r'((?:\{[^}]+\})+)|,', envstr)
     envlist = [''.join(g).strip()
                for k, g in itertools.groupby(tokens, key=bool) if k]
 
