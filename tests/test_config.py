@@ -960,6 +960,18 @@ class TestConfigTestEnv:
         assert configs["py27"].setenv["X"] == "1"
         assert "X" not in configs["py26"].setenv
 
+    @pytest.mark.issue191
+    def test_factor_use_not_checked(self, newconfig):
+        inisource="""
+            [tox]
+            envlist = py27-{a,b}
+
+            [testenv]
+            deps = b: test
+        """
+        configs = newconfig([], inisource).envconfigs
+        assert set(configs.keys()) == set(['py27-a', 'py27-b'])
+
     def test_period_in_factor(self, newconfig):
         inisource="""
             [tox]
