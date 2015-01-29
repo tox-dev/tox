@@ -11,6 +11,7 @@ import py
 import os
 import sys
 import subprocess
+import time
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
 from tox._config import parseconfig
@@ -80,20 +81,24 @@ class Action(object):
 
     def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
         logged_command = "%s$ %s" %(cwd, " ".join(map(str, args)))
-        f = outpath = None
+        stdout = outpath = None
         resultjson = self.session.config.option.resultjson
+        resulttee = self.session.config.option.resulttee
         if resultjson or redirect:
             f = self._initlogpath(self.id)
             f.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" %(
                     self.id, self.msg, args, env))
             f.flush()
             self.popen_outpath = outpath = py.path.local(f.name)
+            stdout = f
         elif returnout:
-            f = subprocess.PIPE
+            stdout = subprocess.PIPE
+        if resultjson and resulttee:
+            stdout = subprocess.PIPE
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
-        popen = self._popen(args, cwd, env=env, stdout=f, stderr=STDOUT)
+        popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=STDOUT)
         popen.outpath = outpath
         popen.args = [str(x) for x in args]
         popen.cwd = cwd
@@ -102,7 +107,23 @@ class Action(object):
         try:
             self.report.logpopen(popen, env=env)
             try:
-                out, err = popen.communicate()
+                if resultjson and resulttee:
+                    assert popen.stderr is None  # prevent deadlock
+                    out = None
+                    last_time = time.time()
+                    while 1:
+                        data = popen.stdout.read(1)
+                        if data:
+                            sys.stdout.write(data)
+                            if '\n' in data or (time.time() - last_time) > 5:
+                                sys.stdout.flush()
+                                last_time = time.time()
+                            f.write(data)
+                        elif popen.poll() is not None:
+                            popen.stdout.close()
+                            break
+                else:
+                    out, err = popen.communicate()
             except KeyboardInterrupt:
                 self.report.keyboard_interrupt()
                 popen.wait()

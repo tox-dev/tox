@@ -116,6 +116,9 @@ def prepare_parse(pkgname):
              "all commands and results involved.  This will turn off "
              "pass-through output from running test commands which is "
              "instead captured into the json result file.")
+    parser.add_argument("--result-tee", action="store_true",
+        dest="resulttee",
+        help="echo output of --result-json to stdout while it is captured.")
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substitution")
     return parser
