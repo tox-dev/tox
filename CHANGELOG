@@ -1,8 +1,138 @@
-1.6.2.dev
+1.9.0.dev
+-----------
+
+- fix issue193: Remove ``--pre`` from the default ``install_command``; by
+  default tox will now only install final releases from PyPI for unpinned
+  dependencies. Use ``pip_pre = true`` in a testenv or the ``--pre``
+  command-line option to restore the previous behavior.
+
+- fix issue199: fill resultlog structure ahead of virtualenv creation 
+
+- refine determination if we run from Jenkins, thanks Borge Lanes.
+
+
+1.8.1
+-----------
+
+- fix issue190: allow setenv to be empty.
+
+- allow escaping curly braces with "\".  Thanks Marc Abramowitz for the PR.
+
+- allow "." names in environment names such that "py27-django1.7" is a
+  valid environment name.  Thanks Alex Gaynor and Alex Schepanovski.
+
+- report subprocess exit code when execution fails.  Thanks Marius
+  Gedminas.
+
+1.8.0
+-----------
+
+- new multi-dimensional configuration support.  Many thanks to
+  Alexander Schepanovski for the complete PR with docs.
+  And to Mike Bayer and others for testing and feedback.
+
+- fix issue148: remove "__PYVENV_LAUNCHER__" from os.environ when starting
+  subprocesses. Thanks Steven Myint.
+
+- fix issue152: set VIRTUAL_ENV when running test commands,
+  thanks Florian Ludwig.
+
+- better report if we can't get version_info from an interpreter
+  executable. Thanks Floris Bruynooghe.
+
+
+1.7.2
+-----------
+
+- fix issue150: parse {posargs} more like we used to do it pre 1.7.0.
+  The 1.7.0 behaviour broke a lot of OpenStack projects.
+  See PR85 and the issue discussions for (far) more details, hopefully
+  resulting in a more refined behaviour in the 1.8 series.
+  And thanks to Clark Boylan for the PR.
+
+- fix issue59: add a config variable ``skip-missing-interpreters`` as well as
+  command line option ``--skip-missing-interpreters`` which won't fail the
+  build if Python interpreters listed in tox.ini are missing.  Thanks 
+  Alexandre Conrad for PR104.
+
+- fix issue164: better traceback info in case of failing test commands.
+  Thanks Marc Abramowitz for PR92.
+
+- support optional env variable substitution, thanks Morgan Fainberg
+  for PR86.
+
+- limit python hashseed to 1024 on Windows to prevent possible
+  memory errors.  Thanks March Schlaich for the PR90.
+
+1.7.1
 ---------
+
+- fix issue162: don't list python 2.5 as compatibiliy/supported
+
+- fix issue158 and fix issue155: windows/virtualenv properly works now:
+  call virtualenv through "python -m virtualenv" with the same 
+  interpreter which invoked tox.  Thanks Chris Withers, Ionel Maries Cristian.
+
+1.7.0
+---------
+
+- don't lookup "pip-script" anymore but rather just "pip" on windows 
+  as this is a pip implementation detail and changed with pip-1.5.  
+  It might mean that tox-1.7 is not able to install a different pip 
+  version into a virtualenv anymore.
+
+- drop Python2.5 compatibility because it became too hard due
+  to the setuptools-2.0 dropping support.  tox now has no 
+  support for creating python2.5 based environments anymore
+  and all internal special-handling has been removed.
+
+- merged PR81: new option --force-dep which allows to 
+  override tox.ini specified dependencies in setuptools-style.
+  For example "--force-dep 'django<1.6'" will make sure
+  that any environment using "django" as a dependency will 
+  get the latest 1.5 release.  Thanks Bruno Oliveria for 
+  the complete PR.
+  
+- merged PR125: tox now sets "PYTHONHASHSEED" to a random value
+  and offers a "--hashseed" option to repeat a test run with a specific seed.
+  You can also use --hashsheed=noset to instruct tox to leave the value
+  alone.  Thanks Chris Jerdonek for all the work behind this.
+
+- fix issue132: removing zip_safe setting (so it defaults to false)
+  to allow installation of tox
+  via easy_install/eggs.  Thanks Jenisys.
+
+- fix issue126: depend on virtualenv>=1.11.2 so that we can rely
+  (hopefully) on a pip version which supports --pre. (tox by default
+  uses to --pre).  also merged in PR84 so that we now call "virtualenv"
+  directly instead of looking up interpreters.  Thanks Ionel Maries Cristian.
+  This also fixes issue140.
+
+- fix issue130: you can now set install_command=easy_install {opts} {packages}
+  and expect it to work for repeated tox runs (previously it only worked
+  when always recreating).  Thanks jenisys for precise reporting. 
+
+- fix issue129: tox now uses Popen(..., universal_newlines=True) to force 
+  creation of unicode stdout/stderr streams.  fixes a problem on specific
+  platform configs when creating virtualenvs with Python3.3. Thanks
+  Jorgen Schäfer or investigation and solution sketch.
 
 - fix issue128: enable full substitution in install_command,
   thanks for the PR to Ronald Evers
+
+- rework and simplify "commands" parsing and in particular posargs
+  substitutions to avoid various win32/posix related quoting issues.
+
+- make sure that the --installpkg option trumps any usedevelop settings
+  in tox.ini or
+
+- introduce --no-network to tox's own test suite to skip tests
+  requiring networks
+
+- introduce --sitepackages to force sitepackages=True in all
+  environments.   
+
+- fix issue105 -- don't depend on an existing HOME directory from tox tests.
 
 1.6.1
 -----

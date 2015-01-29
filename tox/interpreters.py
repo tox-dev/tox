@@ -1,8 +1,6 @@
 import sys
-import os
 import py
 import re
-import subprocess
 import inspect
 
 class Interpreters:
@@ -12,7 +10,7 @@ class Interpreters:
 
     def get_executable(self, name):
         """ return path object to the executable for the given
-        name (e.g. python2.5, python2.7, python etc.)
+        name (e.g. python2.6, python2.7, python etc.)
         if name is already an existing path, return name.
         If an interpreter cannot be found, return None.
         """
@@ -161,7 +159,7 @@ else:
         # The standard executables can be found as a last resort via the
         # Python launcher py.exe
         if m:
-            locate_via_py(*m.groups())
+            return locate_via_py(*m.groups())
 
 def pyinfo():
     import sys

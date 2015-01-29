@@ -1,12 +1,12 @@
 import argparse
-import distutils.sysconfig
 import os
+import random
 import sys
 import re
 import shlex
 import string
-import subprocess
-import textwrap
+import pkg_resources
+import itertools
 
 from tox.interpreters import Interpreters
 
@@ -14,14 +14,12 @@ import py
 
 import tox
 
+iswin32 = sys.platform == "win32"
 
-defaultenvs = {'jython': 'jython', 'pypy': 'pypy'}
-for _name in "py,py24,py25,py26,py27,py30,py31,py32,py33,py34".split(","):
-    if _name == "py":
-        basepython = sys.executable
-    else:
-        basepython = "python" + ".".join(_name[2:4])
-    defaultenvs[_name] = basepython
+default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
+                   'py': sys.executable}
+for version in '24,25,26,27,30,31,32,33,34'.split(','):
+    default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
 def parseconfig(args=None, pkg=None):
     if args is None:
@@ -107,6 +105,9 @@ def prepare_parse(pkgname):
         dest="indexurl", metavar="URL",
         help="set indexserver url (if URL is of form name=url set the "
         "url for the 'name' indexserver, specifically)")
+    parser.add_argument("--pre", action="store_true", dest="pre",
+        help="install pre-releases and development versions of dependencies. "
+             "This will pass the --pre option to install_command (pip by default).")
     parser.add_argument("-r", "--recreate", action="store_true",
         dest="recreate",
         help="force recreation of virtual environments")
@@ -119,6 +120,23 @@ def prepare_parse(pkgname):
     parser.add_argument("--result-tee", action="store_true",
         dest="resulttee",
         help="echo output of --result-json to stdout while it is captured.")
+    # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
+    parser.add_argument("--hashseed", action="store",
+        metavar="SEED", default=None,
+        help="set PYTHONHASHSEED to SEED before running commands.  "
+             "Defaults to a random integer in the range [1, 4294967295] "
+             "([1, 1024] on Windows). "
+             "Passing 'noset' suppresses this behavior.")
+    parser.add_argument("--force-dep", action="append",
+        metavar="REQ", default=None,
+        help="Forces a certain version of one of the dependencies "
+             "when configuring the virtual environment. REQ Examples "
+             "'pytest<2.7' or 'django>=1.6'.")
+    parser.add_argument("--sitepackages", action="store_true",
+        help="override sitepackages setting to True in all envs")
+    parser.add_argument("--skip-missing-interpreters", action="store_true",
+        help="don't fail tests for missing interpreters")
+
     parser.add_argument("args", nargs="*",
         help="additional arguments available to command positional substitution")
     return parser
@@ -172,6 +190,12 @@ class VenvConfig:
         info = self.config.interpreters.get_info(self.basepython)
         if not info.executable:
             raise tox.exception.InterpreterNotFound(self.basepython)
+        if not info.version_info:
+            raise tox.exception.InvocationError(
+                'Failed to get version_info for %s: %s' % (info.name, info.err))
+        if info.version_info < (2,6):
+            raise tox.exception.UnsupportedInterpreter(
+                "python2.5 is not supported anymore, sorry")
         return info.executable
 
 testenvprefix = "testenv:"
@@ -182,10 +206,16 @@ def get_homedir():
     except Exception:
         return None
 
+def make_hashseed():
+    max_seed = 4294967295
+    if sys.platform == 'win32':
+        max_seed = 1024
+    return str(random.randint(1, max_seed))
+
 class parseini:
     def __init__(self, config, inipath):
         config.toxinipath = inipath
-        config.toxinidir = toxinidir = config.toxinipath.dirpath()
+        config.toxinidir = config.toxinipath.dirpath()
 
         self._cfg = py.iniconfig.IniConfig(config.toxinipath)
         config._cfg = self._cfg
@@ -202,6 +232,13 @@ class parseini:
         else:
             raise ValueError("invalid context")
 
+        if config.option.hashseed is None:
+            hashseed = make_hashseed()
+        elif config.option.hashseed == 'noset':
+            hashseed = None
+        else:
+            hashseed = config.option.hashseed
+        config.hashseed = hashseed
 
         reader.addsubstitutions(toxinidir=config.toxinidir,
                                 homedir=config.homedir)
@@ -209,10 +246,14 @@ class parseini:
                                            "{toxinidir}/.tox")
         config.minversion = reader.getdefault(toxsection, "minversion", None)
 
+        if not config.option.skip_missing_interpreters:
+            config.option.skip_missing_interpreters = \
+                reader.getbool(toxsection, "skip_missing_interpreters", False)
+
         # determine indexserver dictionary
         config.indexserver = {'default': IndexServerConfig('default')}
         prefix = "indexserver"
-        for line in reader.getlist(toxsection, "indexserver"):
+        for line in reader.getlist(toxsection, prefix):
             name, url = map(lambda x: x.strip(), line.split("=", 1))
             config.indexserver[name] = IndexServerConfig(name, url)
 
@@ -246,22 +287,19 @@ class parseini:
         config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
         config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
-        for sectionwrapper in self._cfg:
-            section = sectionwrapper.name
-            if section.startswith(testenvprefix):
-                name = section[len(testenvprefix):]
-                envconfig = self._makeenvconfig(name, section, reader._subs,
-                    config)
-                config.envconfigs[name] = envconfig
-        if not config.envconfigs:
-            config.envconfigs['python'] = \
-                self._makeenvconfig("python", "_xz_9", reader._subs, config)
-        config.envlist = self._getenvlist(reader, toxsection)
-        for name in config.envlist:
-            if name not in config.envconfigs:
-                if name in defaultenvs:
-                    config.envconfigs[name] = \
-                self._makeenvconfig(name, "_xz_9", reader._subs, config)
+
+        config.envlist, all_envs = self._getenvdata(reader, toxsection)
+
+        # configure testenvs
+        known_factors = self._list_section_factors("testenv")
+        known_factors.update(default_factors)
+        known_factors.add("python")
+        for name in all_envs:
+            section = testenvprefix + name
+            factors = set(name.split('-'))
+            if section in self._cfg or factors <= known_factors:
+                config.envconfigs[name] = \
+                    self._makeenvconfig(name, section, reader._subs, config)
 
         all_develop = all(name in config.envconfigs
                           and config.envconfigs[name].develop
@@ -269,21 +307,30 @@ class parseini:
 
         config.skipsdist = reader.getbool(toxsection, "skipsdist", all_develop)
 
+    def _list_section_factors(self, section):
+        factors = set()
+        if section in self._cfg:
+            for _, value in self._cfg[section].items():
+                exprs = re.findall(r'^([\w{}\.,-]+)\:\s+', value, re.M)
+                factors.update(*mapcat(_split_factor_expr, exprs))
+        return factors
+
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(envname=name)
         vc.config = config
-        reader = IniReader(self._cfg, fallbacksections=["testenv"])
+        factors = set(name.split('-'))
+        reader = IniReader(self._cfg, fallbacksections=["testenv"],
+            factors=factors)
         reader.addsubstitutions(**subs)
-        vc.develop = reader.getbool(section, "usedevelop", config.option.develop)
+        vc.develop = not config.option.installpkg and \
+               reader.getbool(section, "usedevelop", config.option.develop)
         vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
         vc.args_are_paths = reader.getbool(section, "args_are_paths", True)
         if reader.getdefault(section, "python", None):
             raise tox.exception.ConfigError(
                 "'python=' key was renamed to 'basepython='")
-        if name in defaultenvs:
-            bp = defaultenvs[name]
-        else:
-            bp = sys.executable
+        bp = next((default_factors[f] for f in factors if f in default_factors),
+            sys.executable)
         vc.basepython = reader.getdefault(section, "basepython", bp)
         vc._basepython_info = config.interpreters.get_info(vc.basepython)
         reader.addsubstitutions(envdir=vc.envdir, envname=vc.envname,
@@ -307,7 +354,11 @@ class parseini:
                         arg = vc.changedir.bestrelpath(origpath)
                     args.append(arg)
             reader.addsubstitutions(args)
-        vc.setenv = reader.getdict(section, 'setenv')
+        setenv = {}
+        if config.hashseed is not None:
+            setenv['PYTHONHASHSEED'] = config.hashseed
+        setenv.update(reader.getdict(section, 'setenv'))
+        vc.setenv = setenv
         if not vc.setenv:
             vc.setenv = None
 
@@ -323,9 +374,12 @@ class parseini:
             else:
                 name = depline.strip()
                 ixserver = None
+            name = self._replace_forced_dep(name, config)
             vc.deps.append(DepConfig(name, ixserver))
         vc.distribute = reader.getbool(section, "distribute", False)
-        vc.sitepackages = reader.getbool(section, "sitepackages", False)
+        vc.sitepackages = self.config.option.sitepackages or \
+                          reader.getbool(section, "sitepackages", False)
+
         vc.downloadcache = None
         downloadcache = reader.getdefault(section, "downloadcache")
         if downloadcache:
@@ -333,49 +387,91 @@ class parseini:
             downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", downloadcache)
             vc.downloadcache = py.path.local(downloadcache)
 
-        # on pip-1.3.1/python 2.5 we can't use "--pre".
-        pip_default_opts = ["{opts}", "{packages}"]
-        info = vc._basepython_info
-        if info.runnable and info.version_info < (2,6):
-            pass
-        else:
-            pip_default_opts.insert(0, "--pre")
         vc.install_command = reader.getargv(
             section,
             "install_command",
-            "pip install " + " ".join(pip_default_opts),
+            "pip install {opts} {packages}",
             )
         if '{packages}' not in vc.install_command:
             raise tox.exception.ConfigError(
              "'install_command' must contain '{packages}' substitution")
+        vc.pip_pre = config.option.pre or reader.getbool(
+            section, "pip_pre", False)
+
         return vc
 
-    def _getenvlist(self, reader, toxsection):
-        env = self.config.option.env
-        if not env:
-            env = os.environ.get("TOXENV", None)
-            if not env:
-                envlist = reader.getlist(toxsection, "envlist", sep=",")
-                if not envlist:
-                    envlist = self.config.envconfigs.keys()
-                return envlist
-        envlist = _split_env(env)
-        if "ALL" in envlist:
-            envlist = list(self.config.envconfigs)
-            envlist.sort()
-        return envlist
+    def _getenvdata(self, reader, toxsection):
+        envstr = self.config.option.env                                \
+            or os.environ.get("TOXENV")                                \
+            or reader.getdefault(toxsection, "envlist", replace=False) \
+            or []
+        envlist = _split_env(envstr)
+
+        # collect section envs
+        all_envs = set(envlist) - set(["ALL"])
+        for section in self._cfg:
+            if section.name.startswith(testenvprefix):
+                all_envs.add(section.name[len(testenvprefix):])
+        if not all_envs:
+            all_envs.add("python")
+
+        if not envlist or "ALL" in envlist:
+            envlist = sorted(all_envs)
+
+        return envlist, all_envs
+
+    def _replace_forced_dep(self, name, config):
+        """
+        Override the given dependency config name taking --force-dep-version
+        option into account.
+
+        :param name: dep config, for example ["pkg==1.0", "other==2.0"].
+        :param config: Config instance
+        :return: the new dependency that should be used for virtual environments
+        """
+        if not config.option.force_dep:
+            return name
+        for forced_dep in config.option.force_dep:
+            if self._is_same_dep(forced_dep, name):
+                return forced_dep
+        return name
+
+    @classmethod
+    def _is_same_dep(cls, dep1, dep2):
+        """
+        Returns True if both dependency definitions refer to the
+        same package, even if versions differ.
+        """
+        dep1_name = pkg_resources.Requirement.parse(dep1).project_name
+        dep2_name = pkg_resources.Requirement.parse(dep2).project_name
+        return dep1_name == dep2_name
+
 
 def _split_env(env):
     """if handed a list, action="append" was used for -e """
-    envlist = []
     if not isinstance(env, list):
         env = [env]
-    for to_split in env:
-        for single_env in to_split.split(","):
-            # "remove True or", if not allowing multiple same runs, update tests
-            if True or single_env not in envlist:
-                envlist.append(single_env)
-    return envlist
+    return mapcat(_expand_envstr, env)
+
+def _split_factor_expr(expr):
+    partial_envs = _expand_envstr(expr)
+    return [set(e.split('-')) for e in partial_envs]
+
+def _expand_envstr(envstr):
+    # split by commas not in groups
+    tokens = re.split(r'(\{[^}]+\})|,', envstr)
+    envlist = [''.join(g).strip()
+               for k, g in itertools.groupby(tokens, key=bool) if k]
+
+    def expand(env):
+        tokens = re.split(r'\{([^}]+)\}', env)
+        parts = [token.split(',') for token in tokens]
+        return [''.join(variant) for variant in itertools.product(*parts)]
+
+    return mapcat(expand, envlist)
+
+def mapcat(f, seq):
+    return list(itertools.chain.from_iterable(map(f, seq)))
 
 class DepConfig:
     def __init__(self, name, indexserver=None):
@@ -396,8 +492,8 @@ class IndexServerConfig:
         self.url = url
 
 RE_ITEM_REF = re.compile(
-    '''
-    [{]
+    r'''
+    (?<!\\)[{]
     (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
     (?P<substitution_value>[^{}]*)  # substitution key
     [}]
@@ -406,16 +502,17 @@ RE_ITEM_REF = re.compile(
 
 
 class IniReader:
-    def __init__(self, cfgparser, fallbacksections=None):
+    def __init__(self, cfgparser, fallbacksections=None, factors=()):
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
+        self.factors = factors
         self._subs = {}
         self._subststack = []
 
     def addsubstitutions(self, _posargs=None, **kw):
         self._subs.update(kw)
         if _posargs:
-            self._subs['_posargs'] = _posargs
+            self.posargs = _posargs
 
     def getpath(self, section, name, defaultpath):
         toxinidir = self._subs['toxinidir']
@@ -437,6 +534,8 @@ class IniReader:
 
         value = {}
         for line in s.split(sep):
+            if not line.strip():
+                continue
             name, rest = line.split('=', 1)
             value[name.strip()] = rest.strip()
 
@@ -470,33 +569,52 @@ class IniReader:
         return commandlist
 
     def _processcommand(self, command):
-        posargs = self._subs.get('_posargs', None)
-        words = list(CommandParser(command).words())
-        new_command = ''
-        for word in words:
-            if word == '[]':
+        posargs = getattr(self, "posargs", None)
+
+        # Iterate through each word of the command substituting as
+        # appropriate to construct the new command string. This
+        # string is then broken up into exec argv components using
+        # shlex.
+        newcommand = ""
+        for word in CommandParser(command).words():
+            if word == "{posargs}" or word == "[]":
                 if posargs:
-                    new_command += ' '.join(posargs)
+                    newcommand += " ".join(posargs)
                 continue
+            elif word.startswith("{posargs:") and word.endswith("}"):
+                if posargs:
+                    newcommand += " ".join(posargs)
+                    continue
+                else:
+                    word = word[9:-1]
+            new_arg = ""
+            new_word = self._replace(word)
+            new_word = self._replace(new_word)
+            new_arg += new_word
+            newcommand += new_arg
 
-            new_word = self._replace(word, quote=True)
-            # two passes; we might have substitutions in the result
-            new_word = self._replace(new_word, quote=True)
-            new_command += new_word
-
-        return shlex.split(new_command.strip())
+        # Construct shlex object that will not escape any values,
+        # use all values as is in argv.
+        shlexer = shlex.shlex(newcommand, posix=True)
+        shlexer.whitespace_split = True
+        shlexer.escape = ''
+        shlexer.commenters = ''
+        argv = list(shlexer)
+        return argv
 
     def getargv(self, section, name, default=None, replace=True):
         command = self.getdefault(
-            section, name, default=default, replace=replace)
-
-        return shlex.split(command.strip())
+            section, name, default=default, replace=False)
+        return self._processcommand(command.strip())
 
     def getbool(self, section, name, default=None):
         s = self.getdefault(section, name, default)
+        if not s:
+            s = default
         if s is None:
             raise KeyError("no config value [%s] %s found" % (
                 section, name))
+
         if not isinstance(s, bool):
             if s.lower() == "true":
                 s = True
@@ -508,18 +626,19 @@ class IniReader:
         return s
 
     def getdefault(self, section, name, default=None, replace=True):
-        try:
-            x = self._cfg[section][name]
-        except KeyError:
-            for fallbacksection in self.fallbacksections:
-                try:
-                    x = self._cfg[fallbacksection][name]
-                except KeyError:
-                    pass
-                else:
-                    break
-            else:
-                x = default
+        x = None
+        for s in [section] + self.fallbacksections:
+            try:
+                x = self._cfg[s][name]
+                break
+            except KeyError:
+                continue
+
+        if x is None:
+            x = default
+        else:
+            x = self._apply_factors(x)
+
         if replace and x and hasattr(x, 'replace'):
             self._subststack.append((section, name))
             try:
@@ -529,35 +648,41 @@ class IniReader:
         #print "getdefault", section, name, "returned", repr(x)
         return x
 
-    def _replace_posargs(self, match, quote):
-        return self._do_replace_posargs(lambda: match.group('substitution_value'))
+    def _apply_factors(self, s):
+        def factor_line(line):
+            m = re.search(r'^([\w{}\.,-]+)\:\s+(.+)', line)
+            if not m:
+                return line
 
-    def _do_replace_posargs(self, value_func):
-        posargs = self._subs.get('_posargs', None)
+            expr, line = m.groups()
+            if any(fs <= self.factors for fs in _split_factor_expr(expr)):
+                return line
 
-        if posargs:
-            return " ".join(posargs)
+        lines = s.strip().splitlines()
+        return '\n'.join(filter(None, map(factor_line, lines)))
 
-        value = value_func()
-        if value:
-            return value
-
-        return ''
-
-    def _replace_env(self, match, quote):
-        envkey = match.group('substitution_value')
-        if not envkey:
+    def _replace_env(self, match):
+        match_value = match.group('substitution_value')
+        if not match_value:
             raise tox.exception.ConfigError(
                 'env: requires an environment variable name')
 
-        if not envkey in os.environ:
+        default = None
+        envkey_split = match_value.split(':', 1)
+
+        if len(envkey_split) is 2:
+            envkey, default = envkey_split
+        else:
+            envkey = match_value
+
+        if not envkey in os.environ and default is None:
             raise tox.exception.ConfigError(
                 "substitution env:%r: unkown environment variable %r" %
                 (envkey, envkey))
 
-        return os.environ[envkey]
+        return os.environ.get(envkey, default)
 
-    def _substitute_from_other_section(self, key, quote):
+    def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
             i = key.find("]")
             section, item = key[1:i], key[i+1:]
@@ -568,36 +693,24 @@ class IniReader:
                 x = str(self._cfg[section][item])
                 self._subststack.append((section, item))
                 try:
-                    return self._replace(x, quote=quote)
+                    return self._replace(x)
                 finally:
                     self._subststack.pop()
 
         raise tox.exception.ConfigError(
             "substitution key %r not found" % key)
 
-    def _replace_substitution(self, match, quote):
+    def _replace_substitution(self, match):
         sub_key = match.group('substitution_value')
         val = self._subs.get(sub_key, None)
         if val is None:
-            val = self._substitute_from_other_section(sub_key, quote)
+            val = self._substitute_from_other_section(sub_key)
         if py.builtin.callable(val):
             val = val()
-        if quote:
-            return '"%s"' % str(val).replace('"', r'\"')
-        else:
-            return str(val)
+        return str(val)
 
-    def _is_bare_posargs(self, groupdict):
-        return groupdict.get('substitution_value', None) == 'posargs' \
-               and not groupdict.get('sub_type')
-
-    def _replace_match(self, match, quote):
+    def _replace_match(self, match):
         g = match.groupdict()
-
-        # special case: posargs. If there is a 'posargs' substitution value
-        # and no type, handle it as empty posargs
-        if self._is_bare_posargs(g):
-            return self._do_replace_posargs(lambda: '')
 
         # special case: opts and packages. Leave {opts} and
         # {packages} intact, they are replaced manually in
@@ -607,7 +720,6 @@ class IniReader:
             return '{%s}' % sub_value
 
         handlers = {
-            'posargs' : self._replace_posargs,
             'env' : self._replace_env,
             None : self._replace_substitution,
             }
@@ -621,22 +733,11 @@ class IniReader:
         except KeyError:
             raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
 
-        # quoting is done in handlers, as at least posargs handling is special:
-        #  all of its arguments are inserted as separate parameters
-        return handler(match, quote)
+        return handler(match)
 
-    def _replace_match_quote(self, match):
-        return self._replace_match(match, quote=True)
-    def _replace_match_no_quote(self, match):
-        return self._replace_match(match, quote=False)
-
-    def _replace(self, x, quote=False):
+    def _replace(self, x):
         if '{' in x:
-            if quote:
-                replace_func = self._replace_match_quote
-            else:
-                replace_func = self._replace_match_no_quote
-            return RE_ITEM_REF.sub(replace_func, x)
+            return RE_ITEM_REF.sub(self._replace_match, x)
         return x
 
     def _parse_command(self, command):
@@ -659,7 +760,7 @@ class CommandParser(object):
         def word_has_ended():
             return ((cur_char in string.whitespace and ps.word and
                ps.word[-1] not in string.whitespace) or
-              (cur_char == '{' and ps.depth == 0) or
+              (cur_char == '{' and ps.depth == 0 and not ps.word.endswith('\\')) or
               (ps.depth == 0 and ps.word and ps.word[-1] == '}') or
               (cur_char not in string.whitespace and ps.word and
                ps.word.strip() == ''))
@@ -704,6 +805,7 @@ class CommandParser(object):
         return ps.yield_words
 
 def getcontextname():
-    if 'HUDSON_URL' in os.environ:
+    if any(env in os.environ for env in ['JENKINS_URL', 'HUDSON_URL']):
         return 'jenkins'
     return None
+

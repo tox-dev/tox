@@ -32,7 +32,9 @@ using these steps:
 The last point requires that your test command creates JunitXML files,
 for example with ``py.test`` it is done like this:
 
-    commands=py.test --junitxml=junit-{envname}.xml
+.. code-block:: ini
+
+    commands = py.test --junitxml=junit-{envname}.xml
 
 
 
@@ -57,7 +59,7 @@ with this::
     exec urllib.urlopen(url).read() in d
     d['cmdline'](['--recreate'])
 
-The downloaded `toxbootstrap.py`_ file downloads all neccessary files to
+The downloaded `toxbootstrap.py` file downloads all neccessary files to
 install ``tox`` in a virtual sub environment.  Notes:
 
 * uncomment the line containing ``USETOXDEV`` to use the latest
@@ -68,7 +70,6 @@ install ``tox`` in a virtual sub environment.  Notes:
   will cause tox to reinstall all virtual environments all the time
   which is often what one wants in CI server contexts)
 
-.. _`toxbootstrap.py`: https://bitbucket.org/hpk42/tox/raw/default/toxbootstrap.py
 
 Integrating "sphinx" documentation checks in a Jenkins job
 ----------------------------------------------------------------

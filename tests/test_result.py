@@ -10,6 +10,18 @@ def pkg(tmpdir):
     p.write("whatever")
     return p
 
+def test_pre_set_header(pkg):
+    replog = ResultLog()
+    d = replog.dict
+    assert replog.dict == d
+    assert replog.dict["reportversion"] == "1"
+    assert replog.dict["toxversion"] == tox.__version__
+    assert replog.dict["platform"] == sys.platform
+    assert replog.dict["host"] == py.std.socket.getfqdn()
+    data = replog.dumps_json()
+    replog2 = ResultLog.loads_json(data)
+    assert replog2.dict == replog.dict
+
 def test_set_header(pkg):
     replog = ResultLog()
     d = replog.dict

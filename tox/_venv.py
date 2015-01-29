@@ -1,6 +1,6 @@
 from __future__ import with_statement
-import sys, os, re
-import subprocess
+import sys, os
+import codecs
 import py
 import tox
 from tox._config import DepConfig
@@ -121,8 +121,6 @@ class VirtualEnv(object):
         """
         if action is None:
             action = self.session.newaction(self, "update")
-        report = self.session.report
-        name = self.envconfig.envname
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
             rconfig.matches(self._getliveconfig()):
@@ -142,7 +140,8 @@ class VirtualEnv(object):
             self.install_deps(action)
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
-            return "could not install deps %s" %(self.envconfig.deps,)
+            return "could not install deps %s; v = %r" % (
+                self.envconfig.deps, v)
 
     def _getliveconfig(self):
         python = self.envconfig._basepython_info.executable
@@ -178,18 +177,8 @@ class VirtualEnv(object):
         if action is None:
             action = self.session.newaction(self, "create")
 
-        interpreters = self.envconfig.config.interpreters
         config_interpreter = self.getsupportedinterpreter()
-        info = interpreters.get_info(executable=config_interpreter)
-        use_venv191 = use_pip13 = info.version_info < (2,6)
-        if not use_venv191:
-            f, path, _ = py.std.imp.find_module("virtualenv")
-            f.close()
-            venvscript = path.rstrip("co")
-        else:
-            venvscript = py.path.local(tox.__file__).dirpath(
-                            "vendor", "virtualenv.py")
-        args = [config_interpreter, str(venvscript)]
+        args = [sys.executable, '-mvirtualenv']
         if self.envconfig.distribute:
             args.append("--distribute")
         else:
@@ -210,14 +199,7 @@ class VirtualEnv(object):
         args.append(self.path.basename)
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
-        if use_pip13:
-            indexserver = self.envconfig.config.indexserver['default'].url
-            action = self.session.newaction(self, "pip_downgrade")
-            action.setactivity('pip-downgrade', 'pip<1.4')
-            argv = ["easy_install"] + \
-                   self._installopts(indexserver) + ['pip<1.4']
-            self._pcall(argv, cwd=self.envconfig.config.toxinidir,
-                        action=action)
+
 
     def finish(self):
         self._getliveconfig().writeconfig(self.path_config)
@@ -228,7 +210,7 @@ class VirtualEnv(object):
         args = [self.envconfig.envpython, str(setup_py), '--name']
         output = action.popen(args, cwd=setupdir, redirect=False,
                               returnout=True)
-        name = output.strip().decode('utf-8')
+        name = output.strip()
         egg_info = setupdir.join('.'.join((name, 'egg-info')))
         for conf_file in (setup_py, setup_cfg):
             if (not egg_info.check() or (conf_file.check()
@@ -278,29 +260,33 @@ class VirtualEnv(object):
         if self.envconfig.downloadcache:
             self.envconfig.downloadcache.ensure(dir=1)
             l.append("--download-cache=%s" % self.envconfig.downloadcache)
+        if self.envconfig.pip_pre:
+            l.append("--pre")
         return l
 
-    def run_install_command(self, args, indexserver=None, action=None,
+    def run_install_command(self, packages, options=(),
+                            indexserver=None, action=None,
                             extraenv=None):
         argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
-        if argv[0] == "pip" and sys.platform == "win32":
-            argv[0] = "pip-script.py"
         i = argv.index('{packages}')
-        argv[i:i+1] = args
+        argv[i:i+1] = packages
         if '{opts}' in argv:
             i = argv.index('{opts}')
-            argv[i:i+1] = self._installopts(indexserver)
-        for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV'):
+            argv[i:i+1] = list(options)
+        for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
+                  '__PYVENV_LAUNCHER__'):
             try:
                 del os.environ[x]
             except KeyError:
                 pass
-        env = dict(PYTHONIOENCODING='utf_8')
-        if extraenv is not None:
-            env.update(extraenv)
+        old_stdout = sys.stdout
+        sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+        if extraenv is None:
+            extraenv = {}
         self._pcall(argv, cwd=self.envconfig.config.toxinidir,
-                    extraenv=env, action=action)
+                    extraenv=extraenv, action=action)
+        sys.stdout = old_stdout
 
     def _install(self, deps, extraopts=None, action=None):
         if not deps:
@@ -320,7 +306,6 @@ class VirtualEnv(object):
                 l.append(ixserver)
             assert ixserver.url is None or isinstance(ixserver.url, str)
 
-        extraopts = extraopts or []
         for ixserver in l:
             if self.envconfig.config.option.sethome:
                 extraenv = hack_home_env(
@@ -329,18 +314,21 @@ class VirtualEnv(object):
             else:
                 extraenv = {}
 
-            args = d[ixserver] + extraopts
-            self.run_install_command(args, ixserver.url, action,
-                                     extraenv=extraenv)
+            packages = d[ixserver]
+            options = self._installopts(ixserver.url)
+            if extraopts:
+                options.extend(extraopts)
+            self.run_install_command(packages=packages, options=options,
+                                     action=action, extraenv=extraenv)
 
-    def _getenv(self):
-        env = self.envconfig.setenv
-        if env:
-            env_arg = os.environ.copy()
-            env_arg.update(env)
-        else:
-            env_arg = None
-        return env_arg
+    def _getenv(self, extraenv={}):
+        env = os.environ.copy()
+        setenv = self.envconfig.setenv
+        if setenv:
+            env.update(setenv)
+        env['VIRTUAL_ENV'] = str(self.path)
+        env.update(extraenv)
+        return env
 
     def test(self, redirect=False):
         action = self.session.newaction(self, "runtests")
@@ -348,6 +336,9 @@ class VirtualEnv(object):
             self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
             cwd = self.envconfig.changedir
+            env = self._getenv()
+            # Display PYTHONHASHSEED to assist with reproducibility.
+            action.setactivity("runtests", "PYTHONHASHSEED=%r" % env.get('PYTHONHASHSEED'))
             for i, argv in enumerate(self.envconfig.commands):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
@@ -377,8 +368,7 @@ class VirtualEnv(object):
         old = self.patchPATH()
         try:
             args[0] = self.getcommandpath(args[0], venv, cwd)
-            env = self._getenv() or os.environ.copy()
-            env.update(extraenv)
+            env = self._getenv(extraenv)
             return action.popen(args, cwd=cwd, env=env, redirect=redirect)
         finally:
             os.environ['PATH'] = old

@@ -1,7 +1,6 @@
 import tox
 import py
 import pytest
-import sys
 from tox._pytestplugin import ReportExpectMock
 try:
     import json
@@ -129,7 +128,6 @@ class TestSession:
         })
         config = parseconfig([])
         session = Session(config)
-        envlist = ['hello', 'world']
         envs = session.venvlist
         assert len(envs) == 2
         env1, env2 = envs
@@ -193,6 +191,19 @@ def test_minversion(cmd, initproj):
     ])
     assert result.ret
 
+def test_run_custom_install_command_error(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tox.ini': '''
+            [testenv]
+            install_command=./tox.ini {opts} {packages}
+        '''
+    })
+    result = cmd.run("tox")
+    result.stdout.fnmatch_lines([
+        "ERROR: invocation failed (errno *), args: ['*/tox.ini*",
+    ])
+    assert result.ret
+
 def test_unknown_interpreter_and_env(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
@@ -229,6 +240,22 @@ def test_unknown_interpreter(cmd, initproj):
     assert result.ret
     result.stdout.fnmatch_lines([
         "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
+    ])
+
+def test_skip_unknown_interpreter(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [testenv:python]
+            basepython=xyz_unknown_interpreter
+            [testenv]
+            changedir=tests
+        '''
+    })
+    result = cmd.run("tox", "--skip-missing-interpreters")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*SKIPPED*InterpreterNotFound*xyz_unknown_interpreter*",
     ])
 
 def test_unknown_dep(cmd, initproj):
@@ -567,7 +594,7 @@ def test_sdistonly(initproj, cmd):
     result.stdout.fnmatch_lines([
         "*sdist-make*setup.py*",
     ])
-    assert "virtualenv" not in result.stdout.str()
+    assert "-mvirtualenv" not in result.stdout.str()
 
 def test_separate_sdist_no_sdistfile(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
@@ -582,6 +609,7 @@ def test_separate_sdist_no_sdistfile(cmd, initproj):
     l = distshare.listdir()
     assert len(l) == 1
     sdistfile = l[0]
+    assert 'pkg123-0.7.zip' in str(sdistfile)
 
 def test_separate_sdist(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
@@ -611,7 +639,6 @@ def test_sdist_latest(tmpdir, newconfig):
             distshare=%s
             sdistsrc={distshare}/pkg123-*
     """ % distshare)
-    p0 = distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
     session = Session(config)

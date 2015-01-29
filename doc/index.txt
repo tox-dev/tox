@@ -1,8 +1,6 @@
 Welcome to the tox automation project
 ===============================================
 
-..  note:: second training: `professional testing with Python <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 25-27th November 2013, Leipzig.
-
 vision: standardize testing in Python
 ---------------------------------------------
 
@@ -70,9 +68,8 @@ Current features
   support for configuring the installer command 
   through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: Python-2.5 up to Python-3.3, 
-  Jython and pypy_ support.  Python-2.5 is supported through
-  a vendored ``virtualenv-1.9.1`` script.
+* **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher,
+  Jython and pypy_.
 
 * **cross-platform**: Windows and Unix style environments
 

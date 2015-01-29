@@ -98,7 +98,13 @@ class Action(object):
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
-        popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=STDOUT)
+        try:
+            popen = self._popen(args, cwd, env=env,
+                                stdout=stdout, stderr=STDOUT)
+        except OSError as e:
+            self.report.error("invocation failed (errno %d), args: %s, cwd: %s" %
+                              (e.errno, args, cwd))
+            raise
         popen.outpath = outpath
         popen.args = [str(x) for x in args]
         popen.cwd = cwd
@@ -134,8 +140,8 @@ class Action(object):
         if ret:
             invoked = " ".join(map(str, popen.args))
             if outpath:
-                self.report.error("invocation failed, logfile: %s" %
-                                  outpath)
+                self.report.error("invocation failed (exit code %d), logfile: %s" %
+                                  (ret, outpath))
                 out = outpath.read()
                 self.report.error(out)
                 if hasattr(self, "commandlog"):
@@ -171,6 +177,7 @@ class Action(object):
         if env is None:
             env = os.environ.copy()
         return self.session.popen(args, shell=False, cwd=str(cwd),
+            universal_newlines=True,
             stdout=stdout, stderr=stderr, env=env)
 
 
@@ -241,6 +248,9 @@ class Reporter(object):
 
     def error(self, msg):
         self.logline("ERROR: " + msg, red=True)
+
+    def skip(self, msg):
+        self.logline("SKIPPED:" + msg, yellow=True)
 
     def logline(self, msg, **opts):
         self._reportedlines.append(msg)
@@ -430,14 +440,20 @@ class Session:
                 sdist_path = self._makesdist()
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
-                self.report.error("FAIL could not package project")
+                self.report.error("FAIL could not package project - v = %r" %
+                    v)
                 return
             sdistfile = self.config.distshare.join(sdist_path.basename)
             if sdistfile != sdist_path:
                 self.report.info("copying new sdistfile to %r" %
                     str(sdistfile))
-                sdistfile.dirpath().ensure(dir=1)
-                sdist_path.copy(sdistfile)
+                try:
+                    sdistfile.dirpath().ensure(dir=1)
+                except py.error.Error:
+                    self.report.warning("could not copy distfile to %s" %
+                                        sdistfile.dirpath())
+                else:
+                    sdist_path.copy(sdistfile)
         return sdist_path
 
     def subcommand_test(self):
@@ -475,7 +491,14 @@ class Session:
         retcode = 0
         for venv in self.venvlist:
             status = venv.status
-            if status and status != "skipped tests":
+            if isinstance(status, tox.exception.InterpreterNotFound):
+                msg = "  %s: %s" %(venv.envconfig.envname, str(status))
+                if self.config.option.skip_missing_interpreters:
+                    self.report.skip(msg)
+                else:
+                    retcode = 1
+                    self.report.error(msg)
+            elif status and status != "skipped tests":
                 msg = "  %s: %s" %(venv.envconfig.envname, str(status))
                 self.report.error(msg)
                 retcode = 1
@@ -576,7 +599,7 @@ class Session:
             return candidates[0]
 
 
-_rex_getversion = py.std.re.compile("[\w_\-\+]+-(.*)(\.zip|\.tar.gz)")
+_rex_getversion = py.std.re.compile("[\w_\-\+\.]+-(.*)(\.zip|\.tar.gz)")
 def getversion(basename):
     m = _rex_getversion.match(basename)
     if m is None:

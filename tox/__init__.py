@@ -1,5 +1,5 @@
 #
-__version__ = '1.6.2.dev1'
+__version__ = '1.8.2.dev1'
 
 class exception:
     class Error(Exception):
@@ -20,4 +20,4 @@ class exception:
     class MissingDependency(Error):
         """ a dependency could not be found or determined. """
 
-from tox._cmdline import main as cmdline
+from tox._cmdline import main as cmdline  # noqa

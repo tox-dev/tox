@@ -16,10 +16,17 @@ def pytest_configure():
     if 'HUDSON_URL' in os.environ:
         del os.environ['HUDSON_URL']
 
+
+def pytest_addoption(parser):
+    parser.addoption("--no-network", action="store_true",
+        dest="no_network",
+        help="don't run tests requiring network")
+
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
 
-def pytest_funcarg__newconfig(request, tmpdir):
+@pytest.fixture
+def newconfig(request, tmpdir):
     def newconfig(args, source=None):
         if source is None:
             source = args
@@ -34,7 +41,10 @@ def pytest_funcarg__newconfig(request, tmpdir):
             old.chdir()
     return newconfig
 
-def pytest_funcarg__cmd(request):
+@pytest.fixture
+def cmd(request):
+    if request.config.option.no_network:
+        pytest.skip("--no-network was specified, test cannot run")
     return Cmd(request)
 
 class ReportExpectMock:
@@ -113,7 +123,8 @@ class pcallMock:
     def wait(self):
         pass
 
-def pytest_funcarg__mocksession(request):
+@pytest.fixture
+def mocksession(request):
     from tox._cmdline import Session
     class MockSession(Session):
         def __init__(self):
@@ -130,13 +141,15 @@ def pytest_funcarg__mocksession(request):
         def make_emptydir(self, path):
             pass
         def popen(self, args, cwd, shell=None,
+            universal_newlines=False,
             stdout=None, stderr=None, env=None):
             pm = pcallMock(args, cwd, env, stdout, stderr, shell)
             self._pcalls.append(pm)
             return pm
     return MockSession()
 
-def pytest_funcarg__newmocksession(request):
+@pytest.fixture
+def newmocksession(request):
     mocksession = request.getfuncargvalue("mocksession")
     newconfig = request.getfuncargvalue("newconfig")
     def newmocksession(args, source):
@@ -151,6 +164,7 @@ class Cmd:
         self.request = request
         current = py.path.local()
         self.request.addfinalizer(current.chdir)
+
     def chdir(self, target):
         target.chdir()
 
