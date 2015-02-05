@@ -80,20 +80,19 @@ class Action(object):
         return f
 
     def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
-        logged_command = "%s$ %s" %(cwd, " ".join(map(str, args)))
         stdout = outpath = None
         resultjson = self.session.config.option.resultjson
-        resulttee = self.session.config.option.resulttee
         if resultjson or redirect:
             f = self._initlogpath(self.id)
             f.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" %(
                     self.id, self.msg, args, env))
             f.flush()
             self.popen_outpath = outpath = py.path.local(f.name)
-            stdout = f
+            if resultjson:
+                stdout = subprocess.PIPE
+            else:
+                stdout = f
         elif returnout:
-            stdout = subprocess.PIPE
-        if resultjson and resulttee:
             stdout = subprocess.PIPE
         if cwd is None:
             # XXX cwd = self.session.config.cwd
@@ -113,15 +112,20 @@ class Action(object):
         try:
             self.report.logpopen(popen, env=env)
             try:
-                if resultjson and resulttee:
+                if resultjson and not redirect:
                     assert popen.stderr is None  # prevent deadlock
                     out = None
                     last_time = time.time()
                     while 1:
+                        # we have to read one byte at a time, otherwise there
+                        # might be no output for a long time with slow tests
                         data = popen.stdout.read(1)
                         if data:
                             sys.stdout.write(data)
                             if '\n' in data or (time.time() - last_time) > 5:
+                                # we flush on newlines or after 5 seconds to
+                                # provide quick enough feedback to the user
+                                # when printing a dot per test
                                 sys.stdout.flush()
                                 last_time = time.time()
                             f.write(data)

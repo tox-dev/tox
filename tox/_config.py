@@ -117,9 +117,6 @@ def prepare_parse(pkgname):
              "all commands and results involved.  This will turn off "
              "pass-through output from running test commands which is "
              "instead captured into the json result file.")
-    parser.add_argument("--result-tee", action="store_true",
-        dest="resulttee",
-        help="echo output of --result-json to stdout while it is captured.")
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument("--hashseed", action="store",
         metavar="SEED", default=None,
