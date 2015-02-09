@@ -11,6 +11,7 @@ import py
 import os
 import sys
 import subprocess
+import time
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox._venv import VirtualEnv
 from tox._config import parseconfig
@@ -79,7 +80,7 @@ class Action(object):
         return f
 
     def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
-        f = outpath = None
+        stdout = outpath = None
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
             f = self._initlogpath(self.id)
@@ -87,14 +88,18 @@ class Action(object):
                     self.id, self.msg, args, env))
             f.flush()
             self.popen_outpath = outpath = py.path.local(f.name)
+            if resultjson:
+                stdout = subprocess.PIPE
+            else:
+                stdout = f
         elif returnout:
-            f = subprocess.PIPE
+            stdout = subprocess.PIPE
         if cwd is None:
             # XXX cwd = self.session.config.cwd
             cwd = py.path.local()
         try:
             popen = self._popen(args, cwd, env=env,
-                                stdout=f, stderr=STDOUT)
+                                stdout=stdout, stderr=STDOUT)
         except OSError as e:
             self.report.error("invocation failed (errno %d), args: %s, cwd: %s" %
                               (e.errno, args, cwd))
@@ -107,7 +112,28 @@ class Action(object):
         try:
             self.report.logpopen(popen, env=env)
             try:
-                out, err = popen.communicate()
+                if resultjson and not redirect:
+                    assert popen.stderr is None  # prevent deadlock
+                    out = None
+                    last_time = time.time()
+                    while 1:
+                        # we have to read one byte at a time, otherwise there
+                        # might be no output for a long time with slow tests
+                        data = popen.stdout.read(1)
+                        if data:
+                            sys.stdout.write(data)
+                            if '\n' in data or (time.time() - last_time) > 5:
+                                # we flush on newlines or after 5 seconds to
+                                # provide quick enough feedback to the user
+                                # when printing a dot per test
+                                sys.stdout.flush()
+                                last_time = time.time()
+                            f.write(data)
+                        elif popen.poll() is not None:
+                            popen.stdout.close()
+                            break
+                else:
+                    out, err = popen.communicate()
             except KeyboardInterrupt:
                 self.report.keyboard_interrupt()
                 popen.wait()

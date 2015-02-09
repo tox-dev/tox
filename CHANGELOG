@@ -10,6 +10,7 @@
 
 - refine determination if we run from Jenkins, thanks Borge Lanes.
 
+- echo output to stdout when ``--report-json`` is used
 
 1.8.1
 -----------
