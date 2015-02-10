@@ -79,7 +79,7 @@ class Action(object):
         f.flush()
         return f
 
-    def popen(self, args, cwd=None, env=None, redirect=True, returnout=False):
+    def popen(self, args, cwd=None, env=None, redirect=True, returnout=False, ignore_ret=False):
         stdout = outpath = None
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
@@ -141,7 +141,7 @@ class Action(object):
             ret = popen.wait()
         finally:
             self._popenlist.remove(popen)
-        if ret:
+        if ret and not ignore_ret:
             invoked = " ".join(map(str, popen.args))
             if outpath:
                 self.report.error("invocation failed (exit code %d), logfile: %s" %

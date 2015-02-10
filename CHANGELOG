@@ -12,6 +12,9 @@
 
 - echo output to stdout when ``--report-json`` is used
 
+- fix issue124: ignore command exit codes; when a command has a "-" prefix,
+  tox will ignore the exit code of that command
+
 1.8.1
 -----------
 
