@@ -244,3 +244,19 @@ using the ``--tox-args`` or ``-a`` command-line options. For example::
     python setup.py test -a "-epy27"
 
 is equivalent to running ``tox -epy27``.
+
+Ignoring a command exit code
+----------------------------
+
+In some cases, you may want to ignore a command exit code. For example::
+
+    [testenv:py27]
+    commands = coverage erase
+           {envbindir}/python setup.py develop
+           coverage run -p setup.py test
+           coverage combine
+           - coverage html
+           {envbindir}/flake8 loads
+
+By using the ``-`` prefix, similar to a ``make`` recipe line, you can ignore
+the exit code for that command.
