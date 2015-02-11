@@ -395,6 +395,8 @@ class parseini:
         vc.pip_pre = config.option.pre or reader.getbool(
             section, "pip_pre", False)
 
+        vc.skip_install = reader.getbool(section, "skip_install", False)
+
         return vc
 
     def _getenvdata(self, reader, toxsection):

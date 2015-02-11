@@ -474,7 +474,7 @@ class Session:
             if self.setupenv(venv):
                 if venv.envconfig.develop:
                     self.developpkg(venv, self.config.setupdir)
-                elif self.config.skipsdist:
+                elif self.config.skipsdist or venv.envconfig.skip_install:
                     self.finishvenv(venv)
                 else:
                     self.installpkg(venv, sdist_path)
