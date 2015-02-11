@@ -254,6 +254,16 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**: ``False``
 
+.. confval:: skip_install=BOOL
+
+    .. versionadded:: 1.9
+
+    Do not install the current package. This can be used when you need the
+    virtualenv management but do not want to install the current package
+    into that environment.
+    
+    **default**: ``False``
+
 
 Substitutions
 -------------
