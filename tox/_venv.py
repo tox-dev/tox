@@ -345,8 +345,19 @@ class VirtualEnv(object):
                 message = "commands[%s] | %s" % (i, ' '.join(
                     [str(x) for x in argv]))
                 action.setactivity("runtests", message)
+                # check to see if we need to ignore the return code
+                # if so, we need to alter the command line arguments
+                if argv[0].startswith("-"):
+                    ignore_ret = True
+                    if argv[0] == "-":
+                        del argv[0]
+                    else:
+                        argv[0] = argv[0].lstrip("-")
+                else:
+                    ignore_ret = False
+
                 try:
-                    self._pcall(argv, cwd=cwd, action=action, redirect=redirect)
+                    self._pcall(argv, cwd=cwd, action=action, redirect=redirect, ignore_ret=ignore_ret)
                 except tox.exception.InvocationError:
                     val = sys.exc_info()[1]
                     self.session.report.error(str(val))
@@ -357,7 +368,7 @@ class VirtualEnv(object):
                     raise
 
     def _pcall(self, args, venv=True, cwd=None, extraenv={},
-            action=None, redirect=True):
+            action=None, redirect=True, ignore_ret=False):
         for name in ("VIRTUALENV_PYTHON", "PYTHONDONTWRITEBYTECODE"):
             try:
                 del os.environ[name]
@@ -369,7 +380,7 @@ class VirtualEnv(object):
         try:
             args[0] = self.getcommandpath(args[0], venv, cwd)
             env = self._getenv(extraenv)
-            return action.popen(args, cwd=cwd, env=env, redirect=redirect)
+            return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
         finally:
             os.environ['PATH'] = old
 
