@@ -20,6 +20,8 @@
 
 - fix issue198: fix broken envlist settings, e.g. {py26,py27}{-lint,}
 
+- fix issue191: lessen factor-use checks
+
 
 1.8.1
 -----------
