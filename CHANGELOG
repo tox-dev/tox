@@ -18,6 +18,9 @@
 - fix issue124: ignore command exit codes; when a command has a "-" prefix,
   tox will ignore the exit code of that command
 
+- fix issue198: fix broken envlist settings, e.g. {py26,py27}{-lint,}
+
+
 1.8.1
 -----------
 
