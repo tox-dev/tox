@@ -74,7 +74,7 @@ depending on requirements.txt
 (experimental) If you have a ``requirements.txt`` file
 you can add it to your ``deps`` variable like this::
 
-    deps = -rrequirements.txt 
+    deps = -rrequirements.txt
 
 All installation commands are executed using ``{toxinidir}``
 (the directory where ``tox.ini`` resides) as the current
@@ -260,3 +260,20 @@ In some cases, you may want to ignore a command exit code. For example::
 
 By using the ``-`` prefix, similar to a ``make`` recipe line, you can ignore
 the exit code for that command.
+
+Compressing dependency matrix
+-----------------------------
+
+If you have a large matrix of dependencies, python versions and/or environments you can
+use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to express that in a concise form::
+
+    [tox]
+    envlist = py{26,27,33}-django{15,16}-{sqlite,mysql}
+
+    [testenv]
+    deps =
+        django15: Django>=1.5,<1.6
+        django16: Django>=1.6,<1.7
+        py33-mysql: PyMySQL     ; use if both py33 and mysql are in an env name
+        py26,py27: urllib3      ; use if any of py26 or py27 are in an env name
+        py{26,27}-sqlite: mock  ; mocking sqlite in python 2.x

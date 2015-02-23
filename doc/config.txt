@@ -261,7 +261,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Do not install the current package. This can be used when you need the
     virtualenv management but do not want to install the current package
     into that environment.
-    
+
     **default**: ``False``
 
 
@@ -449,6 +449,8 @@ This uses two new facilities of tox-1.8:
 Let's go through this step by step.
 
 
+.. _generative-envlist:
+
 Generative envlist
 +++++++++++++++++++++++
 
@@ -481,6 +483,8 @@ You can still list environments explicitly along with generated ones::
         docs
         flake
 
+
+.. _factors:
 
 Factors and factor-conditional settings
 ++++++++++++++++++++++++++++++++++++++++
