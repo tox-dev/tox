@@ -1,4 +1,4 @@
-1.9.0.dev
+1.9.0
 -----------
 
 - fix issue193: Remove ``--pre`` from the default ``install_command``; by
