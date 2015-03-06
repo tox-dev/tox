@@ -1,5 +1,4 @@
 import argparse
-import tempfile
 import os
 import random
 import sys
@@ -10,7 +9,8 @@ import pkg_resources
 import itertools
 
 from tox.interpreters import Interpreters
-
+from pip.req.req_file import parse_requirements
+from pip.download import PipSession
 import py
 
 import tox
@@ -364,7 +364,8 @@ class parseini:
         vc.whitelist_externals = reader.getlist(section,
                                                 "whitelist_externals")
         vc.deps = []
-        reqs_files = []
+        requirement_files = []
+
         for depline in reader.getlist(section, "deps"):
             m = re.match(r":(\w+):\s*(\S+)", depline)
             if m:
@@ -374,41 +375,27 @@ class parseini:
                 name = depline.strip()
                 ixserver = None
 
-            if name[:2] == '-r':  # not a dependency, but a file full of dependencies
-                fd, temp_path = tempfile.mkstemp()
-                reqs_files.append((name[2:].strip(), fd, temp_path))
-                vc.deps.append(DepConfig('-r%s' % temp_path))
-            elif name[0] == '-':  # an option to be sent to pip
-                vc.deps.append(DepConfig(name, ixserver))
+
+            # We want to parse requirements.txt files last so that
+            # we can process them with forced dependencies
+            if name[:2] == '-r':
+                fname = name[2:].strip()
+                requirement_files.append(fname)
             else:
                 name = self._replace_forced_dep(name, config)
                 vc.deps.append(DepConfig(name, ixserver))
 
-        for reqs_file, fd, temp_path in reqs_files:
-            lines = []
-            with open(reqs_file, 'r') as reqs:
-                for req in reqs.readlines():
-                    req = req.strip()
-                    if not req:
-                        continue
+            pip_session = PipSession()
 
-                    if req.startswith('-'):
-                        if req.startswith('-r'):
-                            new_fd, new_temp_path = tempfile.mkstemp()
-                            reqs_files.append((req[2:].strip(), new_fd, new_temp_path))
-                            lines.append('-r' + new_temp_path)
-                        else:
-                            lines.append(req)
-                        continue
-                    elif req.startswith('#'):
-                        continue
+        for requirement_file in requirement_files:
+            req_deps = parse_requirements(
+                requirement_file,
+                session=pip_session
+            )
 
-                    name = self._replace_forced_dep(req, config)
-                    lines.append(name)
-
-            with open(temp_path, mode='w') as temp_reqs:
-                temp_reqs.writelines(os.linesep.join(lines))
-                os.close(fd)
+            for r in req_deps:
+                name = self._replace_forced_dep(r.name, config)
+                vc.deps.append(DepConfig(name, ixserver))
 
         vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = self.config.option.sitepackages or \

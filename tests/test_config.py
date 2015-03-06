@@ -1399,7 +1399,7 @@ class TestCmdInvocation:
                 -r{toxinidir}/reqs.txt
             ''',
             'reqs.txt': '''
-            -e git://hello/world/git
+            -e git://hello/world/git#egg=Hello
             # comment
             dep2>=2.0   # comment
 
@@ -1420,25 +1420,13 @@ class TestCmdInvocation:
             'dep1==1.5', 'dep2==2.1', 'dep3==3.0']
 
         deps = config.envconfigs['python'].deps
-        assert len(deps) == 2
-        assert deps[0].name == 'dep1==1.5'
-        include_file = deps[1].name
-        assert include_file.startswith('-r')
-        with open(include_file[2:]) as reqs:
-            lines = [x.strip() for x in reqs.readlines()]
-            assert len(lines) == 6
-            second_file = lines.pop(len(lines) - 1)
-            assert second_file.startswith('-r')
-            assert lines == [
-                '-e git://hello/world/git',
-                'dep2==2.1',
-                '-i http://index.local/',
-                'dep3==3.0',
-                'dep4==4.0',
-            ]
-        with open(second_file[2:]) as reqs2:
-            lines = [x.strip() for x in reqs2.readlines()]
-            assert lines == ['dep5>=2.2']
+        assert len(deps) == 6
+        expected = ['dep1==1.5', 'Hello', 'dep2==2.1',
+                    'dep3==3.0', 'dep4', 'dep5']
+
+        for index, dep in enumerate(deps):
+            assert dep.name == expected[index]
+
 
 class TestArgumentParser:
 
