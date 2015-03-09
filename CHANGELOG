@@ -1,3 +1,10 @@
+DEV
+-----------
+
+- allow --force-deps to override dependencies in "-r" requirements
+  files.  Thanks Sontek for the PR.
+
+
 1.9.0
 -----------
 
