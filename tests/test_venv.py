@@ -55,7 +55,7 @@ def test_create(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "virtualenv" in str(args[1])
+    assert "virtualenv" == str(args[2])
     if sys.platform != "win32":
         # realpath is needed for stuff like the debian symlinks
         assert py.path.local(sys.executable).realpath() \
@@ -347,7 +347,7 @@ def test_install_python3(tmpdir, newmocksession):
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
-    assert str(args[1]).endswith('virtualenv')
+    assert str(args[2]) == 'virtualenv'
     l[:] = []
     action = mocksession.newaction(venv, "hello")
     venv._install(["hello"], action=action)
