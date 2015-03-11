@@ -178,7 +178,7 @@ class VirtualEnv(object):
             action = self.session.newaction(self, "create")
 
         config_interpreter = self.getsupportedinterpreter()
-        args = [sys.executable, '-mvirtualenv']
+        args = [sys.executable, '-m', 'virtualenv']
         if self.envconfig.distribute:
             args.append("--distribute")
         else:

@@ -4,6 +4,9 @@ DEV
 - allow --force-deps to override dependencies in "-r" requirements
   files.  Thanks Sontek for the PR.
 
+- fix issue227: use "-m virtualenv" instead of "-m virtualenv" to make
+  it work with pyrun.
+
 
 1.9.0
 -----------
