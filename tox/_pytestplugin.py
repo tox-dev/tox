@@ -2,7 +2,7 @@ import pytest, py
 import tox
 import os
 import sys
-from py.builtin import print_
+from py.builtin import _isbytes, _istext, print_
 from fnmatch import fnmatch
 import time
 from tox._config import parseconfig
@@ -263,13 +263,16 @@ class LineMatcher:
 @pytest.fixture
 def initproj(request, tmpdir):
     """ create a factory function for creating example projects. """
-    def initproj(name, filedefs=None):
+    def initproj(nameversion, filedefs=None):
         if filedefs is None:
             filedefs = {}
-        parts = name.split("-")
-        if len(parts) == 1:
-            parts.append("0.1")
-        name, version = parts
+        if _istext(nameversion) or _isbytes(nameversion):
+            parts = nameversion.split("-")
+            if len(parts) == 1:
+                parts.append("0.1")
+            name, version = parts
+        else:
+            name, version = nameversion
         base = tmpdir.ensure(name, dir=1)
         create_files(base, filedefs)
         if 'setup.py' not in filedefs:

@@ -598,7 +598,7 @@ def test_sdistonly(initproj, cmd):
 
 def test_separate_sdist_no_sdistfile(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
-    initproj("pkg123-0.7", filedefs={
+    initproj(("pkg123-foo", "0.7"), filedefs={
         'tox.ini': """
             [tox]
             distshare=%s
@@ -609,7 +609,7 @@ def test_separate_sdist_no_sdistfile(cmd, initproj):
     l = distshare.listdir()
     assert len(l) == 1
     sdistfile = l[0]
-    assert 'pkg123-0.7.zip' in str(sdistfile)
+    assert 'pkg123-foo-0.7.zip' in str(sdistfile)
 
 def test_separate_sdist(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
