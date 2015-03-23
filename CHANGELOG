@@ -1,5 +1,10 @@
-DEV
+1.9.2
 -----------
+
+- backout ability that --force-deps substitutes name/versions in
+  requirement files due to various issues.
+  This fixes issue228, fixes issue230, fixes issue231
+  which popped up with 1.9.1.
 
 1.9.1
 -----------

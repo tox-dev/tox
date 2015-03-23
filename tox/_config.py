@@ -9,8 +9,7 @@ import pkg_resources
 import itertools
 
 from tox.interpreters import Interpreters
-from pip.req.req_file import parse_requirements
-from pip.download import PipSession
+
 import py
 
 import tox
@@ -372,8 +371,6 @@ class parseini:
         vc.whitelist_externals = reader.getlist(section,
                                                 "whitelist_externals")
         vc.deps = []
-        requirement_files = []
-
         for depline in reader.getlist(section, "deps"):
             m = re.match(r":(\w+):\s*(\S+)", depline)
             if m:
@@ -382,29 +379,8 @@ class parseini:
             else:
                 name = depline.strip()
                 ixserver = None
-
-
-            # We want to parse requirements.txt files last so that
-            # we can process them with forced dependencies
-            if name[:2] == '-r':
-                fname = name[2:].strip()
-                requirement_files.append(fname)
-            else:
-                name = self._replace_forced_dep(name, config)
-                vc.deps.append(DepConfig(name, ixserver))
-
-            pip_session = PipSession()
-
-        for requirement_file in requirement_files:
-            req_deps = parse_requirements(
-                requirement_file,
-                session=pip_session
-            )
-
-            for r in req_deps:
-                name = self._replace_forced_dep(r.name, config)
-                vc.deps.append(DepConfig(name, ixserver))
-
+            name = self._replace_forced_dep(name, config)
+            vc.deps.append(DepConfig(name, ixserver))
         vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = self.config.option.sitepackages or \
                           reader.getbool(section, "sitepackages", False)
