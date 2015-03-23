@@ -1,13 +1,14 @@
-DEV
+1.9.1
 -----------
 
 - use a file instead of a pipe for command output in "--result-json".
+  Fixes some termination issues with python2.6.
 
 - allow --force-deps to override dependencies in "-r" requirements
   files.  Thanks Sontek for the PR.
 
 - fix issue227: use "-m virtualenv" instead of "-mvirtualenv" to make
-  it work with pyrun.
+  it work with pyrun.  Thanks Marc-Andre Lemburg.
 
 
 1.9.0
