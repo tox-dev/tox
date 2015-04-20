@@ -242,6 +242,24 @@ def test_unknown_interpreter(cmd, initproj):
         "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
     ])
 
+def test_skip_platform_mismatch(cmd, initproj):
+    initproj("interp123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [testenv]
+            changedir=tests
+            platform=x123
+        '''
+    })
+    result = cmd.run("tox")
+    assert not result.ret
+    assert "platform mismatch" not in result.stdout.str()
+    result = cmd.run("tox", "-v")
+    assert not result.ret
+    result.stdout.fnmatch_lines([
+        "*python*platform mismatch*"
+    ])
+
 def test_skip_unknown_interpreter(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},

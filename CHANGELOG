@@ -1,7 +1,11 @@
-dev
+2.0.dev1
 -----------
 
-- 
+- introduce a way to specify on which platform a testenvironment is to
+  execute: the new per-environment "platform" setting allows to specify 
+  a regular expression which is matched against sys.platform.
+  If platform is set and doesn't match the test environment the
+  test environment is ignored, no setup or tests are attempted.
 
 
 1.9.2

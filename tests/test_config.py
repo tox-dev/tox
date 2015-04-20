@@ -7,6 +7,7 @@ import tox
 import tox._config
 from tox._config import *  # noqa
 from tox._config import _split_env
+from tox._venv import VirtualEnv
 
 
 class TestVenvConfig:
@@ -18,6 +19,7 @@ class TestVenvConfig:
         assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
         assert config.envconfigs['py1'].basepython == sys.executable
         assert config.envconfigs['py1'].deps == []
+        assert not config.envconfigs['py1'].platform
 
     def test_config_parsing_multienv(self, tmpdir, newconfig):
         config = newconfig([], """
@@ -97,6 +99,50 @@ class TestVenvConfig:
         assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<2.0')
         assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
         assert not parseini._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
+
+
+class TestConfigPlatform:
+    def test_config_parse_platform(self, newconfig):
+        config = newconfig([], """
+            [testenv:py1]
+            platform = linux2
+        """)
+        assert len(config.envconfigs) == 1
+        assert config.envconfigs['py1'].platform == "linux2"
+
+    def test_config_parse_platform_rex(self, newconfig, mocksession, monkeypatch):
+        config = newconfig([], """
+            [testenv:py1]
+            platform = a123|b123
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['py1']
+        venv = VirtualEnv(envconfig, session=mocksession)
+        assert not venv.matching_platform()
+        monkeypatch.setattr(sys, "platform", "a123")
+        assert venv.matching_platform()
+        monkeypatch.setattr(sys, "platform", "b123")
+        assert venv.matching_platform()
+        monkeypatch.undo()
+        assert not venv.matching_platform()
+
+
+    @pytest.mark.parametrize("plat", ["win", "lin", ])
+    def test_config_parse_platform_with_factors(self, newconfig, plat, monkeypatch):
+        monkeypatch.setattr(sys, "platform", "win32")
+        config = newconfig([], """
+            [tox]
+            envlist = py27-{win,lin,osx}
+            [testenv]
+            platform =
+                win: win32
+                lin: linux2
+        """)
+        assert len(config.envconfigs) == 3
+        platform = config.envconfigs['py27-' + plat].platform
+        expected = {"win": "win32", "lin": "linux2"}.get(plat)
+        assert platform == expected
+
 
 class TestConfigPackage:
     def test_defaults(self, tmpdir, newconfig):

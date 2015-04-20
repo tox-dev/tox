@@ -155,6 +155,12 @@ Complete list of settings that you can put into ``testenv*`` sections:
     (Experimentally introduced in 1.6.1) all installer commands are executed
     using the ``{toxinidir}`` as the current working directory.
 
+.. confval:: platform=REGEX
+
+    A testenv can define a new ``platform`` setting as a regular expression.
+    If a non-empty expression is defined and does not match against the
+    ``sys.platform`` string the test environment will be skipped.
+
 .. confval:: setenv=MULTI-LINE-LIST
 
    .. versionadded:: 0.9

@@ -90,11 +90,12 @@ class ExecFailed(Exception):
 class InterpreterInfo:
     runnable = True
 
-    def __init__(self, name, executable, version_info):
+    def __init__(self, name, executable, version_info, sysplatform):
         assert executable and version_info
         self.name = name
         self.executable = executable
         self.version_info = version_info
+        self.sysplatform = sysplatform
 
     def __str__(self):
         return "<executable at %s, version_info %s>" % (
@@ -163,7 +164,8 @@ else:
 
 def pyinfo():
     import sys
-    return dict(version_info=tuple(sys.version_info))
+    return dict(version_info=tuple(sys.version_info),
+                sysplatform=sys.platform)
 
 def sitepackagesdir(envdir):
     from distutils.sysconfig import get_python_lib

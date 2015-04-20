@@ -151,9 +151,11 @@ class Config(object):
             homedir = self.toxinidir  # XXX good idea?
         return homedir
 
+
 class VenvConfig:
-    def __init__(self, **kw):
-        self.__dict__.update(kw)
+    def __init__(self, envname, config):
+        self.envname = envname
+        self.config = config
 
     @property
     def envbindir(self):
@@ -194,6 +196,8 @@ class VenvConfig:
             raise tox.exception.UnsupportedInterpreter(
                 "python2.5 is not supported anymore, sorry")
         return info.executable
+
+
 
 testenvprefix = "testenv:"
 
@@ -321,8 +325,7 @@ class parseini:
         return factors
 
     def _makeenvconfig(self, name, section, subs, config):
-        vc = VenvConfig(envname=name)
-        vc.config = config
+        vc = VenvConfig(config=config, envname=name)
         factors = set(name.split('-'))
         reader = IniReader(self._cfg, fallbacksections=["testenv"],
             factors=factors)
@@ -381,6 +384,13 @@ class parseini:
                 ixserver = None
             name = self._replace_forced_dep(name, config)
             vc.deps.append(DepConfig(name, ixserver))
+
+        platform = ""
+        for platform in reader.getlist(section, "platform"):
+            if platform.strip():
+                break
+        vc.platform = platform
+
         vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = self.config.option.sitepackages or \
                           reader.getbool(section, "sitepackages", False)

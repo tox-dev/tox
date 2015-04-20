@@ -1,5 +1,6 @@
 from __future__ import with_statement
 import sys, os
+import re
 import codecs
 import py
 import tox
@@ -170,6 +171,9 @@ class VirtualEnv(object):
 
     def getsupportedinterpreter(self):
         return self.envconfig.getsupportedinterpreter()
+
+    def matching_platform(self):
+        return re.match(self.envconfig.platform, sys.platform)
 
     def create(self, action=None):
         #if self.getcommandpath("activate").dirpath().check():

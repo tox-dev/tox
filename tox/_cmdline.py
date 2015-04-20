@@ -474,6 +474,9 @@ class Session:
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
+            if not venv.matching_platform():
+                venv.status = "platform mismatch"
+                continue  # we simply omit non-matching platforms
             if self.setupenv(venv):
                 if venv.envconfig.develop:
                     self.developpkg(venv, self.config.setupdir)
@@ -505,6 +508,9 @@ class Session:
                 else:
                     retcode = 1
                     self.report.error(msg)
+            elif status == "platform mismatch":
+                msg = "  %s: %s" %(venv.envconfig.envname, str(status))
+                self.report.verbosity1(msg)
             elif status and status != "skipped tests":
                 msg = "  %s: %s" %(venv.envconfig.envname, str(status))
                 self.report.error(msg)

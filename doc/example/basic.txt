@@ -46,6 +46,19 @@ Available "default" test environments names are::
 However, you can also create your own test environment names,
 see some of the examples in :doc:`examples <../examples>`.
 
+specifying a platform
+-----------------------------------------------
+
+.. versionadded:: 2.0
+
+If you want to specify which platform(s) your test environment
+runs on you can set a platform regular expression like this::
+
+    platform = linux2|darwin
+
+If the expression does not match against ``sys.platform``
+the test environment will be skipped.
+
 whitelisting non-virtualenv commands
 -----------------------------------------------
 
