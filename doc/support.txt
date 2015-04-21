@@ -21,9 +21,8 @@ professional support
 
 If you are looking for on-site teaching or consulting support,
 contact holger at `merlinux.eu`_, an association of
-experienced `well-known Python developers`_.
+experienced well-known Python developers.
 
-.. _`well-known Python developers`: http://merlinux.eu/people.txt
 .. _`Maciej Fijalkowski`: http://www.ohloh.net/accounts/fijal
 .. _`Benjamin Peterson`: http://www.ohloh.net/accounts/gutworth
 .. _`Testing In Python (TIP) mailing list`: http://lists.idyll.org/listinfo/testing-in-python
