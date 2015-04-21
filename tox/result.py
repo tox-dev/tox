@@ -3,6 +3,7 @@ import py
 from tox import __version__ as toxver
 import json
 
+
 class ResultLog:
 
     def __init__(self, dict=None):
@@ -14,10 +15,13 @@ class ResultLog:
         self.dict["host"] = py.std.socket.getfqdn()
 
     def set_header(self, installpkg):
+        """
+        :param py.path.local installpkg: Path ot the package.
+        """
         self.dict["installpkg"] = dict(
-                md5=installpkg.computehash("md5"),
-                sha256=installpkg.computehash("sha256"),
-                basename=installpkg.basename,
+            md5=installpkg.computehash("md5"),
+            sha256=installpkg.computehash("sha256"),
+            basename=installpkg.basename,
         )
 
     def get_envlog(self, name):
@@ -31,6 +35,7 @@ class ResultLog:
     @classmethod
     def loads_json(cls, data):
         return cls(json.loads(data))
+
 
 class EnvLog:
     def __init__(self, reportlog, name, dict):

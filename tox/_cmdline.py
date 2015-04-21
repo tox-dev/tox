@@ -423,7 +423,14 @@ class Session:
                 return False
 
     def installpkg(self, venv, sdist_path):
-        self.resultlog.set_header(installpkg=sdist_path)
+        """Install source package in the specified virtual environment.
+
+        :param :class:`tox._config.VenvConfig`: Destination environment
+        :param str sdist_path: Path to the source distribution.
+        :return: True if package installed otherwise False.
+        :rtype: bool
+        """
+        self.resultlog.set_header(installpkg=py.path.local(sdist_path))
         action = self.newaction(venv, "installpkg", sdist_path)
         with action:
             try:
@@ -434,6 +441,10 @@ class Session:
                 return False
 
     def sdist(self):
+        """
+        :return: Path to the source distribution
+        :rtype: py.path.local
+        """
         if not self.config.option.sdistonly and (self.config.sdistsrc or
             self.config.option.installpkg):
             sdist_path = self.config.option.installpkg
