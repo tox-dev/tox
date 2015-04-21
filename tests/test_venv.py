@@ -80,22 +80,6 @@ def test_commandpath_venv_precendence(tmpdir, monkeypatch,
     p = venv.getcommandpath("easy_install")
     assert py.path.local(p).relto(envconfig.envbindir), p
 
-def test_create_distribute(monkeypatch, mocksession, newconfig):
-    config = newconfig([], """
-        [testenv:py123]
-        distribute=False
-    """)
-    envconfig = config.envconfigs['py123']
-    venv = VirtualEnv(envconfig, session=mocksession)
-    assert venv.path == envconfig.envdir
-    assert not venv.path.check()
-    venv.create()
-    l = mocksession._pcalls
-    assert len(l) >= 1
-    args = l[0].args
-    assert "--distribute" not in map(str, args)
-    assert "--setuptools" in map(str, args)
-
 def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:site]
@@ -158,7 +142,6 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
         monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
     mocksession = newmocksession([], """
         [testenv:py123]
-        distribute=True
         deps=
             dep1
             dep2
@@ -458,18 +441,6 @@ class TestCreationConfig:
         venv.update()
         mocksession.report.expect("*", "*recreate*")
 
-    def test_distribute_recreation(self, newconfig, mocksession):
-        config = newconfig([], "")
-        envconfig = config.envconfigs['python']
-        venv = VirtualEnv(envconfig, session=mocksession)
-        venv.update()
-        cconfig = venv._getliveconfig()
-        cconfig.distribute = True
-        cconfig.writeconfig(venv.path_config)
-        mocksession._clearmocks()
-        venv.update()
-        mocksession.report.expect("verbosity0", "*recreate*")
-
     def test_develop_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
@@ -523,7 +494,7 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
     config = newconfig([], """
         [testenv:python]
         commands=python -V
-        passenv = X123
+        passenv = x123
         setenv =
             ENV_VAR = value
     """)
@@ -544,8 +515,9 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         assert env['VIRTUAL_ENV'] == str(venv.path)
         assert env['X123'] == "123"
 
-    assert set(env) == set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED",
-                            "X123", "PATH"])
+    assert set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"])\
+           .issubset(env)
+
     #for e in os.environ:
     #    assert e in env
 

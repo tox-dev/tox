@@ -13,7 +13,6 @@
 .. _`easy_install`: http://peak.telecommunity.com/DevCenter/EasyInstall
 .. _pip: https://pypi.python.org/pypi/pip
 .. _setuptools: https://pypi.python.org/pypi/setuptools
-.. _distribute: https://pypi.python.org/pypi/distribute
 .. _`jenkins`: http://jenkins-ci.org/
 .. _sphinx: https://pypi.python.org/pypi/Sphinx
 .. _discover: https://pypi.python.org/pypi/discover

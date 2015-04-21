@@ -17,6 +17,7 @@
   If platform is set and doesn't match the platform spec in the test 
   environment the test environment is ignored, no setup or tests are attempted.
 
+- remove the long-deprecated "distribute" option as it has no effect these days.
 
 1.9.2
 -----------

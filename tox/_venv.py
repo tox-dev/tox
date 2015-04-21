@@ -7,20 +7,18 @@ import tox
 from tox._config import DepConfig
 
 class CreationConfig:
-    def __init__(self, md5, python, version, distribute, sitepackages,
+    def __init__(self, md5, python, version, sitepackages,
                  develop, deps):
         self.md5 = md5
         self.python = python
         self.version = version
-        self.distribute = distribute
         self.sitepackages = sitepackages
         self.develop = develop
         self.deps = deps
 
     def writeconfig(self, path):
         lines = ["%s %s" % (self.md5, self.python)]
-        lines.append("%s %d %d %d" % (self.version, self.distribute,
-                        self.sitepackages, self.develop))
+        lines.append("%s %d %d" % (self.version, self.sitepackages, self.develop))
         for dep in self.deps:
             lines.append("%s %s" % dep)
         path.ensure()
@@ -32,27 +30,21 @@ class CreationConfig:
             lines = path.readlines(cr=0)
             value = lines.pop(0).split(None, 1)
             md5, python = value
-            version, distribute, sitepackages, develop = lines.pop(0).split(
-                None, 3)
-            distribute = bool(int(distribute))
+            version, sitepackages, develop = lines.pop(0).split(None, 3)
             sitepackages = bool(int(sitepackages))
             develop = bool(int(develop))
             deps = []
             for line in lines:
                 md5, depstring = line.split(None, 1)
                 deps.append((md5, depstring))
-            return CreationConfig(md5, python, version,
-                        distribute, sitepackages, develop, deps)
-        except KeyboardInterrupt:
-            raise
-        except:
+            return CreationConfig(md5, python, version, sitepackages, develop, deps)
+        except Exception:
             return None
 
     def matches(self, other):
         return (other and self.md5 == other.md5
            and self.python == other.python
            and self.version == other.version
-           and self.distribute == other.distribute
            and self.sitepackages == other.sitepackages
            and self.develop == other.develop
            and self.deps == other.deps)
@@ -148,7 +140,6 @@ class VirtualEnv(object):
         python = self.envconfig._basepython_info.executable
         md5 = getdigest(python)
         version = tox.__version__
-        distribute = self.envconfig.distribute
         sitepackages = self.envconfig.sitepackages
         develop = self.envconfig.develop
         deps = []
@@ -157,7 +148,7 @@ class VirtualEnv(object):
             md5 = getdigest(raw_dep)
             deps.append((md5, raw_dep))
         return CreationConfig(md5, python, version,
-                        distribute, sitepackages, develop, deps)
+                              sitepackages, develop, deps)
 
     def _getresolvedeps(self):
         l = []
@@ -183,10 +174,6 @@ class VirtualEnv(object):
 
         config_interpreter = self.getsupportedinterpreter()
         args = [sys.executable, '-m', 'virtualenv']
-        if self.envconfig.distribute:
-            args.append("--distribute")
-        else:
-            args.append("--setuptools")
         if self.envconfig.sitepackages:
             args.append('--system-site-packages')
         # add interpreter explicitly, to prevent using

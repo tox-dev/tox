@@ -375,7 +375,7 @@ class parseini:
             vc.passenv.add("PATHEXT")     # needed for discovering executables
         for spec in reader.getlist(section, "passenv", sep=" "):
             for name in os.environ:
-                if fnmatchcase(name, spec):
+                if fnmatchcase(name.lower(), spec.lower()):
                     vc.passenv.add(name)
 
         vc.setenv = setenv
@@ -403,7 +403,6 @@ class parseini:
                 break
         vc.platform = platform
 
-        vc.distribute = reader.getbool(section, "distribute", False)
         vc.sitepackages = self.config.option.sitepackages or \
                           reader.getbool(section, "sitepackages", False)
 
