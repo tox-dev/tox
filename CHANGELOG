@@ -19,6 +19,8 @@
 
 - remove the long-deprecated "distribute" option as it has no effect these days.
 
+- fix issue233: avoid hanging with tox-setuptools integration example. Thanks simonb.
+
 1.9.2
 -----------
 

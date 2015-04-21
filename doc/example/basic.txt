@@ -254,7 +254,10 @@ a test run when ``python setup.py test`` is issued::
             #import here, cause outside the eggs aren't loaded
             import tox
             import shlex
-            errno = tox.cmdline(args=shlex.split(self.tox_args))
+            args = self.tox_args
+            if args:
+                args = shlex.split(self.tox_args)
+            errno = tox.cmdline(args=args)
             sys.exit(errno)
 
     setup(
