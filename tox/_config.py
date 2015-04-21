@@ -1,6 +1,7 @@
 import argparse
 import os
 import random
+from fnmatch import fnmatchcase
 import sys
 import re
 import shlex
@@ -366,6 +367,17 @@ class parseini:
         if config.hashseed is not None:
             setenv['PYTHONHASHSEED'] = config.hashseed
         setenv.update(reader.getdict(section, 'setenv'))
+
+        # read passenv
+        vc.passenv = set(["PATH"])
+        if sys.platform == "win32":
+            vc.passenv.add("SYSTEMROOT")  # needed for python's crypto module
+            vc.passenv.add("PATHEXT")     # needed for discovering executables
+        for spec in reader.getlist(section, "passenv", sep=" "):
+            for name in os.environ:
+                if fnmatchcase(name, spec):
+                    vc.passenv.add(name)
+
         vc.setenv = setenv
         if not vc.setenv:
             vc.setenv = None

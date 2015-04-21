@@ -517,11 +517,13 @@ class TestVenvTest:
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
         assert '__PYVENV_LAUNCHER__' not in os.environ
 
-def test_setenv_added_to_pcall(tmpdir, mocksession, newconfig):
+def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     pkg = tmpdir.ensure("package.tar.gz")
+    monkeypatch.setenv("X123", "123")
     config = newconfig([], """
         [testenv:python]
         commands=python -V
+        passenv = X123
         setenv =
             ENV_VAR = value
     """)
@@ -540,9 +542,12 @@ def test_setenv_added_to_pcall(tmpdir, mocksession, newconfig):
         assert 'ENV_VAR' in env
         assert env['ENV_VAR'] == 'value'
         assert env['VIRTUAL_ENV'] == str(venv.path)
+        assert env['X123'] == "123"
 
-    for e in os.environ:
-        assert e in env
+    assert set(env) == set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED",
+                            "X123", "PATH"])
+    #for e in os.environ:
+    #    assert e in env
 
 def test_installpkg_no_upgrade(tmpdir, newmocksession):
     pkg = tmpdir.ensure("package.tar.gz")

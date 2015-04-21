@@ -1,11 +1,21 @@
-2.0.dev1
+2.0.0.dev1
 -----------
 
-- introduce a way to specify on which platform a testenvironment is to
-  execute: the new per-environment "platform" setting allows to specify 
+- (new) introduce environment variable isolation:
+  tox now only passes the PATH variable from the tox
+  invocation environment to the test environment and on Windows 
+  also ``SYSTEMROOT`` and ``PATHEXT``.  If you need to pass through further
+  environment variables you can use the new ``passenv`` setting,
+  a space-separated list of environment variable names.  Each name
+  can make use of fnmatch-style glob patterns.  All environment
+  variables which exist in the tox-invocation environment will be copied
+  to the test environment.
+
+- (new) introduce a way to specify on which platform a testenvironment is to
+  execute: the new per-venv "platform" setting allows to specify 
   a regular expression which is matched against sys.platform.
-  If platform is set and doesn't match the test environment the
-  test environment is ignored, no setup or tests are attempted.
+  If platform is set and doesn't match the platform spec in the test 
+  environment the test environment is ignored, no setup or tests are attempted.
 
 
 1.9.2

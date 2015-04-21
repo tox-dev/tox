@@ -326,7 +326,10 @@ class VirtualEnv(object):
                                      action=action, extraenv=extraenv)
 
     def _getenv(self, extraenv={}):
-        env = os.environ.copy()
+        env = {}
+        for envname in self.envconfig.passenv:
+            if envname in os.environ:
+                env[envname] = os.environ[envname]
         setenv = self.envconfig.setenv
         if setenv:
             env.update(setenv)

@@ -642,6 +642,43 @@ class TestConfigTestEnv:
         assert envconfig.setenv['PYTHONPATH'] == 'something'
         assert envconfig.setenv['ANOTHER_VAL'] == 'else'
 
+    @pytest.mark.parametrize("plat", ["win32", "linux2"])
+    def test_passenv(self, tmpdir, newconfig, monkeypatch, plat):
+        monkeypatch.setattr(sys, "platform", plat)
+        monkeypatch.setenv("A123A", "a")
+        monkeypatch.setenv("A123B", "b")
+        monkeypatch.setenv("BX23", "0")
+        config = newconfig("""
+            [testenv]
+            passenv = A123* B?23
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        if plat == "win32":
+            assert "PATHEXT" in envconfig.passenv
+            assert "SYSTEMROOT" in envconfig.passenv
+        assert "PATH" in envconfig.passenv
+        assert "A123A" in envconfig.passenv
+        assert "A123B" in envconfig.passenv
+
+    def test_passenv_with_factor(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("A123A", "a")
+        monkeypatch.setenv("A123B", "b")
+        monkeypatch.setenv("BX23", "0")
+        config = newconfig("""
+            [tox]
+            envlist = {x1,x2}
+            [testenv]
+            passenv =
+                x1: A123A
+                x2: A123B
+        """)
+        assert len(config.envconfigs) == 2
+        assert "A123A" in config.envconfigs["x1"].passenv
+        assert "A123B" not in config.envconfigs["x1"].passenv
+        assert "A123B" in config.envconfigs["x2"].passenv
+        assert "A123A" not in config.envconfigs["x2"].passenv
+
     def test_changedir_override(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]

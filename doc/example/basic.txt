@@ -173,6 +173,22 @@ To force tox to recreate a (particular) virtual environment::
 would trigger a complete reinstallation of the existing py27 environment
 (or create it afresh if it doesn't exist).
 
+passing down environment variables
+-------------------------------------------
+
+.. versionadded:: 2.0
+
+By default tox will only pass the ``PATH`` environment variable (and on
+windows ``SYSTEMROOT`` and ``PATHEXT``) from the tox invocation to the
+test environments.  If you want to pass down additional environment
+variables you can use the ``passenv`` option::
+
+    [testenv]
+    passenv = LANG
+
+When your test commands execute they will execute with
+the same LANG setting as the one with which tox was invoked.
+
 setting environment variables
 -------------------------------------------
 

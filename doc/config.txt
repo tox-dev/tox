@@ -169,6 +169,20 @@ Complete list of settings that you can put into ``testenv*`` sections:
    will be used for all test command invocations as well as for installing
    the sdist package into a virtual environment.
 
+.. confval:: passenv=SPACE-SEPARATED-GLOBNAMES
+
+   .. versionadded:: 2.0
+
+   A list of wildcard environment variable names which
+   shall be copied from the tox invocation environment to the test
+   environment.  If a specified environment variable doesn't exist in the tox
+   invocation environment it is ignored.  You can use ``*`` and ``?`` to
+   match multiple environment variables with one name.
+
+   Note that the ``PATH`` variable is unconditionally passed down and on
+   Windows ``SYSTEMROOT`` and ``PATHEXT`` will be passed down as well.
+   You can override these variables with the ``setenv`` option.
+
 .. confval:: recreate=True|False(default)
 
     Always recreate virtual environment if this option is True.
