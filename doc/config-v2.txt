@@ -27,7 +27,7 @@ coming up with its configuration language:
   section for each combination. Examples of real life situations 
   arising from this:
 
-  * http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini
+  * https://github.com/tomchristie/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini
   
   * https://bitbucket.org/tabo/django-treebeard/src/93b579395a9c/tox.ini
 
@@ -216,7 +216,7 @@ Transforming the examples: django-rest
 ------------------------------------------------
 
 The original `django-rest-framework tox.ini
-<http://code.larlet.fr/django-rest-framework/src/eed0f39a7e45/tox.ini>`_
+<https://github.com/tomchristie/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini>`_
 file has 159 lines and a lot of repetition, the new one would +have 20
 lines and almost no repetition::
  
