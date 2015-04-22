@@ -208,6 +208,52 @@ class TestGetcontextname:
         assert getcontextname() == "jenkins"
 
 
+class TestIniParserAgainstCommandsKey:
+    """Test parsing commands with substitutions"""
+
+    def test_command_substitution_from_other_section(self, newconfig):
+        config = newconfig("""
+            [section]
+            key = whatever
+            [testenv]
+            commands =
+                echo {[section]key}
+            """)
+        reader = IniReader(config._cfg)
+        x = reader.getargvlist("testenv", "commands")
+        assert x == [["echo", "whatever"]]
+
+    def test_command_substitution_from_other_section_multiline(self, newconfig):
+        """Ensure referenced multiline commands form from other section injected as multiple commands."""
+        config = newconfig("""
+            [section]
+            commands =
+                      cmd1 param11 param12
+                      # comment is omitted
+                      cmd2 param21 \
+                           param22
+            [base]
+            commands = cmd 1 \
+                           2 3 4
+                       cmd 2
+            [testenv]
+            commands =
+                {[section]commands}
+                {[section]commands}
+                # comment is omitted
+                echo {[base]commands}
+            """)
+        reader = IniReader(config._cfg)
+        x = reader.getargvlist("testenv", "commands")
+        assert x == [
+            "cmd1 param11 param12".split(),
+            "cmd2 param21 param22".split(),
+            "cmd1 param11 param12".split(),
+            "cmd2 param21 param22".split(),
+            ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"],
+        ]
+
+
 class TestIniParser:
     def test_getdefault_single(self, tmpdir, newconfig):
         config = newconfig("""
@@ -318,6 +364,14 @@ class TestIniParser:
         x = reader.getdefault("section", "key3")
         assert x == ""
 
+    def test_value_matches_section_substituion(self):
+        assert is_section_substitution("{[setup]commands}")
+
+    def test_value_doesn_match_section_substitution(self):
+        assert is_section_substitution("{[ ]commands}") is None
+        assert is_section_substitution("{[setup]}") is None
+        assert is_section_substitution("{[setup] commands}") is None
+
     def test_getdefault_other_section_substitution(self, newconfig):
         config = newconfig("""
             [section]
@@ -328,18 +382,6 @@ class TestIniParser:
         reader = IniReader(config._cfg)
         x = reader.getdefault("testenv", "key")
         assert x == "true"
-
-    def test_command_substitution_from_other_section(self, newconfig):
-        config = newconfig("""
-            [section]
-            key = whatever
-            [testenv]
-            commands =
-                echo {[section]key}
-            """)
-        reader = IniReader(config._cfg)
-        x = reader.getargvlist("testenv", "commands")
-        assert x == [["echo", "whatever"]]
 
     def test_argvlist(self, tmpdir, newconfig):
         config = newconfig("""
@@ -382,7 +424,6 @@ class TestIniParser:
         x = reader.getargvlist("section", "key2")
         assert x == [["cmd1", "with", "space", "grr"]]
 
-
     def test_argvlist_quoting_in_command(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
@@ -393,7 +434,6 @@ class TestIniParser:
         reader = IniReader(config._cfg)
         x = reader.getargvlist("section", "key1")
         assert x == [["cmd1", "with space", "after the comment"]]
-
 
     def test_argvlist_positional_substitution(self, tmpdir, newconfig):
         config = newconfig("""
@@ -483,7 +523,6 @@ class TestIniParser:
         expected = ['py.test', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world']
         assert reader.getargvlist('section', 'key')[0] == expected
 
-
     def test_getargv(self, newconfig):
         config = newconfig("""
             [section]
@@ -492,7 +531,6 @@ class TestIniParser:
         reader = IniReader(config._cfg)
         expected = ['some', 'command', 'with quoting']
         assert reader.getargv('section', 'key') == expected
-
 
     def test_getpath(self, tmpdir, newconfig):
         config = newconfig("""
@@ -514,12 +552,13 @@ class TestIniParser:
             key5=yes
         """)
         reader = IniReader(config._cfg)
-        assert reader.getbool("section", "key1") == True
-        assert reader.getbool("section", "key1a") == True
-        assert reader.getbool("section", "key2") == False
-        assert reader.getbool("section", "key2a") == False
+        assert reader.getbool("section", "key1") is True
+        assert reader.getbool("section", "key1a") is True
+        assert reader.getbool("section", "key2") is False
+        assert reader.getbool("section", "key2a") is False
         py.test.raises(KeyError, 'reader.getbool("section", "key3")')
         py.test.raises(tox.exception.ConfigError, 'reader.getbool("section", "key5")')
+
 
 class TestConfigTestEnv:
     def test_commentchars_issue33(self, tmpdir, newconfig):
@@ -1559,7 +1598,7 @@ class TestCommandParser:
             'word', ' ', '[]', ' ', '[literal]', ' ', '{something}', ' ', '{some:other thing}',
             ' ', 'w', '{ord}', ' ', 'w', '{or}', 'd', ' ', 'w', '{ord}', ' ', 'w', '{o:rd}', ' ', 'w', '{o:r}', 'd', ' ', '{w:or}', 'd',
             ' ', 'w[]ord', ' ', '{posargs:{a key}}',
-            ]
+        ]
 
         assert parsed == expected
 
@@ -1581,7 +1620,6 @@ class TestCommandParser:
         p = CommandParser(cmd)
         parsed = list(p.words())
         assert parsed == ['nosetests', ' ', '-v', ' ', '-a', ' ', '!deferred', ' ', '--with-doctest', ' ', '[]']
-
 
     @pytest.mark.skipif("sys.platform != 'win32'")
     def test_commands_with_backslash(self, newconfig):

@@ -22,7 +22,14 @@ default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
 for version in '24,25,26,27,30,31,32,33,34,35'.split(','):
     default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
+
 def parseconfig(args=None, pkg=None):
+    """
+    :param list[str] args: Optional list of arguments.
+    :type pkg: str
+    :rtype: :class:`Config`
+    :raise SystemExit: toxinit file is not found
+    """
     if args is None:
         args = sys.argv[1:]
     parser = prepare_parse(pkg)
@@ -509,15 +516,22 @@ class DepConfig:
     def __str__(self):
         if self.indexserver:
             if self.indexserver.name == "default":
-               return self.name
-            return ":%s:%s" %(self.indexserver.name, self.name)
+                return self.name
+            return ":%s:%s" % (self.indexserver.name, self.name)
         return str(self.name)
     __repr__ = __str__
+
 
 class IndexServerConfig:
     def __init__(self, name, url=None):
         self.name = name
         self.url = url
+
+
+#: Check value matches substitution form
+#: of referencing value from other section. E.g. {[base]commands}
+is_section_substitution = re.compile("{\[[^{}\s]+\]\S+?}").match
+
 
 RE_ITEM_REF = re.compile(
     r'''
@@ -570,13 +584,31 @@ class IniReader:
         return value
 
     def getargvlist(self, section, name):
-        s = self.getdefault(section, name, '', replace=False)
-        #if s is None:
-        #    raise tox.exception.ConfigError(
-        #        "no command list %r defined in section [%s]" %(name, section))
-        commandlist = []
+        """Get arguments for every parsed command.
+
+        :param str section: Section name in the configuration.
+        :param str name: Key name in a section.
+        :rtype: list[list[str]]
+        :raise :class:`tox.exception.ConfigError`:
+            line-continuation ends nowhere while resolving for specified section
+        """
+        content = self.getdefault(section, name, '', replace=False)
+        return self._parse_commands(section, name, content)
+
+    def _parse_commands(self, section, name, content):
+        """Parse commands from key content in specified section.
+
+        :param str section: Section name in the configuration.
+        :param str name: Key name in a section.
+        :param str content: Content stored by key.
+
+        :rtype: list[list[str]]
+        :raise :class:`tox.exception.ConfigError`:
+            line-continuation ends nowhere while resolving for specified section
+        """
+        commands = []
         current_command = ""
-        for line in s.split("\n"):
+        for line in content.splitlines():
             line = line.rstrip()
             i = line.find("#")
             if i != -1:
@@ -587,14 +619,19 @@ class IniReader:
                 current_command += " " + line[:-1]
                 continue
             current_command += line
-            commandlist.append(self._processcommand(current_command))
+
+            if is_section_substitution(current_command):
+                replaced = self._replace(current_command)
+                commands.extend(self._parse_commands(section, name, replaced))
+            else:
+                commands.append(self._processcommand(current_command))
             current_command = ""
         else:
             if current_command:
                 raise tox.exception.ConfigError(
-                    "line-continuation for [%s] %s ends nowhere" %
+                    "line-continuation ends nowhere while resolving for [%s] %s" %
                     (section, name))
-        return commandlist
+        return commands
 
     def _processcommand(self, command):
         posargs = getattr(self, "posargs", None)
