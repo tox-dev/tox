@@ -27,6 +27,7 @@
 - fix issue235: fix AttributeError with --installpkg.  Thanks
   Volodymyr Vitvitski.
 
+- tox has now somewhat pep8 clean code, thanks to Volodymyr Vitvitski.
 
 
 1.9.2
