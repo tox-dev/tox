@@ -21,6 +21,14 @@
 
 - fix issue233: avoid hanging with tox-setuptools integration example. Thanks simonb.
 
+- fix issue120: allow substitution for the commands section.  Thanks
+  Volodymyr Vitvitski.
+
+- fix issue235: fix AttributeError with --installpkg.  Thanks
+  Volodymyr Vitvitski.
+
+
+
 1.9.2
 -----------
 
