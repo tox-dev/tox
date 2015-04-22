@@ -17,8 +17,10 @@ from tox._config import parseconfig
 from tox.result import ResultLog
 from subprocess import STDOUT
 
+
 def now():
     return py.std.time.time()
+
 
 def main(args=None):
     try:
@@ -27,6 +29,7 @@ def main(args=None):
         raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)
+
 
 class Action(object):
     def __init__(self, session, venv, msg, args):
@@ -55,12 +58,10 @@ class Action(object):
 
     def setactivity(self, name, msg):
         self.activity = name
-        self.report.verbosity0("%s %s: %s" %(self.venvname, name, msg),
-            bold=True)
+        self.report.verbosity0("%s %s: %s" % (self.venvname, name, msg), bold=True)
 
     def info(self, name, msg):
-        self.report.verbosity1("%s %s: %s" %(self.venvname, name, msg),
-            bold=True)
+        self.report.verbosity1("%s %s: %s" % (self.venvname, name, msg), bold=True)
 
     def _initlogpath(self, actionid):
         if self.venv:
@@ -83,8 +84,8 @@ class Action(object):
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
             fout = self._initlogpath(self.id)
-            fout.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" %(
-                    self.id, self.msg, args, env))
+            fout.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" % (
+                self.id, self.msg, args, env))
             fout.flush()
             self.popen_outpath = outpath = py.path.local(fout.name)
             fin = outpath.open()
@@ -154,9 +155,9 @@ class Action(object):
                 if hasattr(self, "commandlog"):
                     self.commandlog.add_command(popen.args, out, ret)
                 raise tox.exception.InvocationError(
-                    "%s (see %s)" %(invoked, outpath), ret)
+                    "%s (see %s)" % (invoked, outpath), ret)
             else:
-                raise tox.exception.InvocationError("%r" %(invoked, ))
+                raise tox.exception.InvocationError("%r" % (invoked, ))
         if not out and outpath:
             out = outpath.read()
         if hasattr(self, "commandlog"):
@@ -170,8 +171,8 @@ class Action(object):
                 arg = cwd.bestrelpath(arg)
             newargs.append(str(arg))
 
-        #subprocess does not always take kindly to .py scripts
-        #so adding the interpreter here.
+        # subprocess does not always take kindly to .py scripts
+        # so adding the interpreter here.
         if sys.platform == "win32":
             ext = os.path.splitext(str(newargs[0]))[1].lower()
             if ext == '.py' and self.venv:
@@ -184,39 +185,37 @@ class Action(object):
         if env is None:
             env = os.environ.copy()
         return self.session.popen(args, shell=False, cwd=str(cwd),
-            universal_newlines=True,
-            stdout=stdout, stderr=stderr, env=env)
-
+                                  universal_newlines=True,
+                                  stdout=stdout, stderr=stderr, env=env)
 
 
 class Reporter(object):
     actionchar = "-"
+
     def __init__(self, session):
         self.tw = py.io.TerminalWriter()
         self.session = session
         self._reportedlines = []
-        #self.cumulated_time = 0.0
+        # self.cumulated_time = 0.0
 
     def logpopen(self, popen, env):
         """ log information about the action.popen() created process. """
         cmd = " ".join(map(str, popen.args))
         if popen.outpath:
-            self.verbosity1("  %s$ %s >%s" %(popen.cwd, cmd,
-                popen.outpath,
-                ))
+            self.verbosity1("  %s$ %s >%s" % (popen.cwd, cmd, popen.outpath,))
         else:
-            self.verbosity1("  %s$ %s " %(popen.cwd, cmd))
+            self.verbosity1("  %s$ %s " % (popen.cwd, cmd))
 
     def logaction_start(self, action):
         msg = action.msg + " " + " ".join(map(str, action.args))
-        self.verbosity2("%s start: %s" %(action.venvname, msg), bold=True)
+        self.verbosity2("%s start: %s" % (action.venvname, msg), bold=True)
         assert not hasattr(action, "_starttime")
         action._starttime = now()
 
     def logaction_finish(self, action):
         duration = now() - action._starttime
-        #self.cumulated_time += duration
-        self.verbosity2("%s finish: %s after %.2f seconds" %(
+        # self.cumulated_time += duration
+        self.verbosity2("%s finish: %s after %.2f seconds" % (
             action.venvname, action.msg, duration), bold=True)
 
     def startsummary(self):
@@ -228,8 +227,7 @@ class Reporter(object):
 
     def using(self, msg):
         if self.session.config.option.verbosity >= 1:
-            self.logline("using %s" %(msg,), bold=True)
-
+            self.logline("using %s" % (msg,), bold=True)
 
     def keyboard_interrupt(self):
         self.error("KEYBOARDINTERRUPT")
@@ -275,7 +273,7 @@ class Reporter(object):
         if self.session.config.option.verbosity >= 2:
             self.logline("%s" % msg, **opts)
 
-    #def log(self, msg):
+    # def log(self, msg):
     #    py.builtin.print_(msg, file=sys.stderr)
 
 
@@ -288,13 +286,15 @@ class Session:
         self.report = Report(self)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
-        #self.report.using("logdir %s" %(self.config.logdir,))
-        self.report.using("tox.ini: %s" %(self.config.toxinipath,))
+        # self.report.using("logdir %s" %(self.config.logdir,))
+        self.report.using("tox.ini: %s" % (self.config.toxinipath,))
         self._spec2pkg = {}
         self._name2venv = {}
         try:
-            self.venvlist = [self.getvenv(x)
-                for x in self.config.envlist]
+            self.venvlist = [
+                self.getvenv(x)
+                for x in self.config.envlist
+            ]
         except LookupError:
             raise SystemExit(1)
         self._actions = []
@@ -321,15 +321,14 @@ class Session:
         return action
 
     def runcommand(self):
-        self.report.using("tox-%s from %s" %(tox.__version__,
-                                             tox.__file__))
+        self.report.using("tox-%s from %s" % (tox.__version__, tox.__file__))
         if self.config.minversion:
             minversion = NormalizedVersion(self.config.minversion)
             toxversion = NormalizedVersion(tox.__version__)
             if toxversion < minversion:
                 self.report.error(
-                    "tox version is %s, required is at least %s" %(
-                       toxversion, minversion))
+                    "tox version is %s, required is at least %s" % (
+                        toxversion, minversion))
                 raise SystemExit(1)
         if self.config.option.showconfig:
             self.showconfig()
@@ -342,7 +341,7 @@ class Session:
         for relpath in pathlist:
             src = srcdir.join(relpath)
             if not src.check():
-                self.report.error("missing source file: %s" %(src,))
+                self.report.error("missing source file: %s" % (src,))
                 raise SystemExit(1)
             target = destdir.join(relpath)
             target.dirpath().ensure(dir=1)
@@ -358,7 +357,7 @@ class Session:
             self.make_emptydir(self.config.distdir)
             action.popen([sys.executable, setup, "sdist", "--formats=zip",
                           "--dist-dir", self.config.distdir, ],
-                          cwd=self.config.setupdir)
+                         cwd=self.config.setupdir)
             try:
                 return self.config.distdir.listdir()[0]
             except py.error.ENOENT:
@@ -375,11 +374,10 @@ class Session:
                     )
                     raise SystemExit(1)
                 self.report.error(
-                    'No dist directory found. Please check setup.py, e.g with:\n'\
+                    'No dist directory found. Please check setup.py, e.g with:\n'
                     '     python setup.py sdist'
-                    )
+                )
                 raise SystemExit(1)
-
 
     def make_emptydir(self, path):
         if path.check():
@@ -446,25 +444,25 @@ class Session:
         :rtype: py.path.local
         """
         if not self.config.option.sdistonly and (self.config.sdistsrc or
-            self.config.option.installpkg):
+                                                 self.config.option.installpkg):
             sdist_path = self.config.option.installpkg
             if not sdist_path:
                 sdist_path = self.config.sdistsrc
             sdist_path = self._resolve_pkg(sdist_path)
             self.report.info("using package %r, skipping 'sdist' activity " %
-                str(sdist_path))
+                             str(sdist_path))
         else:
             try:
                 sdist_path = self._makesdist()
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
                 self.report.error("FAIL could not package project - v = %r" %
-                    v)
+                                  v)
                 return
             sdistfile = self.config.distshare.join(sdist_path.basename)
             if sdistfile != sdist_path:
                 self.report.info("copying new sdistfile to %r" %
-                    str(sdistfile))
+                                 str(sdistfile))
                 try:
                     sdistfile.dirpath().ensure(dir=1)
                 except py.error.Error:
@@ -513,24 +511,23 @@ class Session:
         for venv in self.venvlist:
             status = venv.status
             if isinstance(status, tox.exception.InterpreterNotFound):
-                msg = "  %s: %s" %(venv.envconfig.envname, str(status))
+                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
                 if self.config.option.skip_missing_interpreters:
                     self.report.skip(msg)
                 else:
                     retcode = 1
                     self.report.error(msg)
             elif status == "platform mismatch":
-                msg = "  %s: %s" %(venv.envconfig.envname, str(status))
+                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
                 self.report.verbosity1(msg)
             elif status and status != "skipped tests":
-                msg = "  %s: %s" %(venv.envconfig.envname, str(status))
+                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
                 self.report.error(msg)
                 retcode = 1
             else:
                 if not status:
                     status = "commands succeeded"
-                self.report.good("  %s: %s" %(venv.envconfig.envname,
-                                              status))
+                self.report.good("  %s: %s" % (venv.envconfig.envname, status))
         if not retcode:
             self.report.good("  congratulations :)")
 
@@ -586,7 +583,6 @@ class Session:
             versions.append("virtualenv-%s" % version.strip())
         self.report.keyvalue("tool-versions:", " ".join(versions))
 
-
     def _resolve_pkg(self, pkgspec):
         try:
             return self._spec2pkg[pkgspec]
@@ -614,7 +610,7 @@ class Session:
                     items.append((ver, x))
                 else:
                     self.report.warning("could not determine version of: %s" %
-                        str(x))
+                                        str(x))
             items.sort()
             if not items:
                 raise tox.exception.MissingDependency(pkgspec)
@@ -624,6 +620,8 @@ class Session:
 
 
 _rex_getversion = py.std.re.compile("[\w_\-\+\.]+-(.*)(\.zip|\.tar.gz)")
+
+
 def getversion(basename):
     m = _rex_getversion.match(basename)
     if m is None:

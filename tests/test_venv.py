@@ -1,12 +1,13 @@
 import py
 import tox
 import pytest
-import os, sys
+import os
+import sys
 import tox._config
 from tox._venv import *  # noqa
 from tox.interpreters import NoInterpreterInfo
 
-#def test_global_virtualenv(capfd):
+# def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
 #    l = v.list()
 #    assert l
@@ -14,8 +15,11 @@ from tox.interpreters import NoInterpreterInfo
 #    assert not out
 #    assert not err
 #
+
+
 def test_getdigest(tmpdir):
-    assert getdigest(tmpdir) == "0"*32
+    assert getdigest(tmpdir) == "0" * 32
+
 
 def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     config = newconfig([], """
@@ -25,8 +29,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     interp = venv.getsupportedinterpreter()
     # realpath needed for debian symlinks
-    assert py.path.local(interp).realpath() \
-      == py.path.local(sys.executable).realpath()
+    assert py.path.local(interp).realpath() == py.path.local(sys.executable).realpath()
     monkeypatch.setattr(sys, 'platform', "win32")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
     py.test.raises(tox.exception.UnsupportedInterpreter,
@@ -58,13 +61,13 @@ def test_create(monkeypatch, mocksession, newconfig):
     assert "virtualenv" == str(args[2])
     if sys.platform != "win32":
         # realpath is needed for stuff like the debian symlinks
-        assert py.path.local(sys.executable).realpath() \
-          == py.path.local(args[0]).realpath()
-        #assert Envconfig.toxworkdir in args
+        assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
+        # assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
     assert interp == venv.envconfig._basepython_info.executable
     assert venv.path_config.check(exists=False)
+
 
 @pytest.mark.skipif("sys.platform == 'win32'")
 def test_commandpath_venv_precendence(tmpdir, monkeypatch,
@@ -79,6 +82,7 @@ def test_commandpath_venv_precendence(tmpdir, monkeypatch,
     envconfig.envbindir.ensure("easy_install")
     p = venv.getcommandpath("easy_install")
     assert py.path.local(p).relto(envconfig.envbindir), p
+
 
 def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
@@ -106,6 +110,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     assert "--system-site-packages" not in map(str, args)
     assert "--no-site-packages" not in map(str, args)
 
+
 def test_install_deps_wildcard(newmocksession):
     mocksession = newmocksession([], """
         [tox]
@@ -128,8 +133,8 @@ def test_install_deps_wildcard(newmocksession):
     assert l[-1].cwd == venv.envconfig.config.toxinidir
     assert "pip" in str(args[0])
     assert args[1] == "install"
-    #arg = "--download-cache=" + str(venv.envconfig.downloadcache)
-    #assert arg in args[2:]
+    # arg = "--download-cache=" + str(venv.envconfig.downloadcache)
+    # assert arg in args[2:]
     args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
     assert len(args) == 1
 
@@ -161,6 +166,7 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
     assert "dep2" in args
     deps = list(filter(None, [x[1] for x in venv._getliveconfig().deps]))
     assert deps == ['dep1', 'dep2']
+
 
 def test_install_deps_indexserver(newmocksession):
     mocksession = newmocksession([], """
@@ -194,6 +200,7 @@ def test_install_deps_indexserver(newmocksession):
     assert "-i ABC" in args
     assert "dep3" in args
 
+
 def test_install_deps_pre(newmocksession):
     mocksession = newmocksession([], """
         [testenv]
@@ -213,6 +220,7 @@ def test_install_deps_pre(newmocksession):
     assert "--pre " in args
     assert "dep1" in args
 
+
 def test_installpkg_indexserver(newmocksession, tmpdir):
     mocksession = newmocksession([], """
         [tox]
@@ -228,6 +236,7 @@ def test_installpkg_indexserver(newmocksession, tmpdir):
     args = " ".join(l[0].args)
     assert "-i ABC" in args
 
+
 def test_install_recreate(newmocksession, tmpdir):
     pkg = tmpdir.ensure("package.tar.gz")
     mocksession = newmocksession(['--recreate'], """
@@ -240,6 +249,7 @@ def test_install_recreate(newmocksession, tmpdir):
     mocksession.report.expect("verbosity0", "*create*")
     venv.update()
     mocksession.report.expect("verbosity0", "*recreate*")
+
 
 def test_test_hashseed_is_in_output(newmocksession):
     original_make_hashseed = tox._config.make_hashseed
@@ -255,6 +265,7 @@ def test_test_hashseed_is_in_output(newmocksession):
     venv.test()
     mocksession.report.expect("verbosity0", "python runtests: PYTHONHASHSEED='123456789'")
 
+
 def test_test_runtests_action_command_is_in_output(newmocksession):
     mocksession = newmocksession([], '''
         [testenv]
@@ -264,6 +275,7 @@ def test_test_runtests_action_command_is_in_output(newmocksession):
     venv.update()
     venv.test()
     mocksession.report.expect("verbosity0", "*runtests*commands?0? | echo foo bar")
+
 
 def test_install_error(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
@@ -277,6 +289,7 @@ def test_install_error(newmocksession, monkeypatch):
     mocksession.report.expect("error", "*not find*qwelkqw*")
     assert venv.status == "commands failed"
 
+
 def test_install_command_not_installed(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
@@ -287,6 +300,7 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*")
     assert venv.status == 0
+
 
 def test_install_command_whitelisted(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
@@ -302,6 +316,7 @@ def test_install_command_whitelisted(newmocksession, monkeypatch):
     mocksession.report.expect("warning", "*test command found but not*",
                               invert=True)
     assert venv.status == "commands failed"
+
 
 @pytest.mark.skipif("not sys.platform.startswith('linux')")
 def test_install_command_not_installed_bash(newmocksession):
@@ -339,6 +354,7 @@ def test_install_python3(tmpdir, newmocksession):
     assert 'pip' in str(args[0])
     for x in args:
         assert "--download-cache" not in args, args
+
 
 class TestCreationConfig:
 
@@ -435,7 +451,7 @@ class TestCreationConfig:
         venv = VirtualEnv(envconfig, session=mocksession)
         venv.update()
         cconfig = venv._getliveconfig()
-        cconfig.deps[:] = [("1"*32, "xyz.zip")]
+        cconfig.deps[:] = [("1" * 32, "xyz.zip")]
         cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
         venv.update()
@@ -453,6 +469,7 @@ class TestCreationConfig:
         venv.update()
         mocksession.report.expect("verbosity0", "*recreate*")
 
+
 class TestVenvTest:
 
     def test_patchPATH(self, newmocksession, monkeypatch):
@@ -468,14 +485,14 @@ class TestVenvTest:
         assert oldpath == "xyz"
         res = os.environ['PATH']
         assert res == "%s%sxyz" % (envconfig.envbindir, os.pathsep)
-        p = "xyz"+os.pathsep+str(envconfig.envbindir)
+        p = "xyz" + os.pathsep + str(envconfig.envbindir)
         monkeypatch.setenv("PATH", p)
         venv.patchPATH()
         res = os.environ['PATH']
-        assert res == "%s%s%s" %(envconfig.envbindir, os.pathsep, p)
+        assert res == "%s%s%s" % (envconfig.envbindir, os.pathsep, p)
 
         assert envconfig.commands
-        monkeypatch.setattr(venv, '_pcall', lambda *args, **kwargs: 0/0)
+        monkeypatch.setattr(venv, '_pcall', lambda *args, **kwargs: 0 / 0)
         py.test.raises(ZeroDivisionError, "venv._install(list('123'))")
         py.test.raises(ZeroDivisionError, "venv.test()")
         py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'])")
@@ -487,6 +504,7 @@ class TestVenvTest:
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
         assert '__PYVENV_LAUNCHER__' not in os.environ
+
 
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     pkg = tmpdir.ensure("package.tar.gz")
@@ -516,10 +534,11 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         assert env['X123'] == "123"
 
     assert set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"])\
-           .issubset(env)
+        .issubset(env)
 
-    #for e in os.environ:
+    # for e in os.environ:
     #    assert e in env
+
 
 def test_installpkg_no_upgrade(tmpdir, newmocksession):
     pkg = tmpdir.ensure("package.tar.gz")
@@ -531,6 +550,7 @@ def test_installpkg_no_upgrade(tmpdir, newmocksession):
     l = mocksession._pcalls
     assert len(l) == 1
     assert '-U' not in l[0].args
+
 
 def test_installpkg_upgrade(newmocksession, tmpdir):
     pkg = tmpdir.ensure("package.tar.gz")
@@ -544,6 +564,7 @@ def test_installpkg_upgrade(newmocksession, tmpdir):
     assert index >= 0
     assert '-U' in l[0].args[:index]
     assert '--no-deps' in l[0].args[:index]
+
 
 def test_run_install_command(newmocksession):
     mocksession = newmocksession([], "")
@@ -559,6 +580,7 @@ def test_run_install_command(newmocksession):
     env = l[0].env
     assert env is not None
 
+
 def test_run_custom_install_command(newmocksession):
     mocksession = newmocksession([], """
         [testenv]
@@ -573,6 +595,7 @@ def test_run_custom_install_command(newmocksession):
     assert len(l) == 1
     assert 'easy_install' in l[0].args[0]
     assert l[0].args[1:] == ['whatever']
+
 
 def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     mocksession = newmocksession([], """
@@ -591,12 +614,14 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     assert x4.endswith(os.sep + 'x')
     mocksession.report.expect("warning", "*test command found but not*")
 
+
 def test_sethome_only_on_option(newmocksession, monkeypatch):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "qwe", [])
     monkeypatch.setattr(tox._venv, "hack_home_env", None)
     venv._install(["x"], action=action)
+
 
 def test_sethome_works_on_option(newmocksession, monkeypatch):
     mocksession = newmocksession(["--set-home", "-i ALL=http://qwe"], "")
@@ -621,6 +646,7 @@ def test_hack_home_env(tmpdir):
     assert env["HOME"] == str(tmpdir)
     assert not tmpdir.join(".pydistutils.cfg").check()
     assert "PIP_INDEX_URL" not in env
+
 
 def test_hack_home_env_passthrough(tmpdir, monkeypatch):
     from tox._venv import hack_home_env

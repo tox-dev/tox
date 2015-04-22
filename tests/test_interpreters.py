@@ -4,9 +4,11 @@ import os
 import pytest
 from tox.interpreters import *  # noqa
 
+
 @pytest.fixture
 def interpreters():
     return Interpreters()
+
 
 @pytest.mark.skipif("sys.platform != 'win32'")
 def test_locate_via_py(monkeypatch):
@@ -16,6 +18,7 @@ def test_locate_via_py(monkeypatch):
             assert args[1] == '-c'
             # Return value needs to actually exist!
             return sys.executable
+
     @staticmethod
     def ret_pseudopy(name):
         assert name == 'py'
@@ -23,6 +26,7 @@ def test_locate_via_py(monkeypatch):
     # Monkeypatch py.path.local.sysfind to return PseudoPy
     monkeypatch.setattr(py.path.local, 'sysfind', ret_pseudopy)
     assert locate_via_py('3', '2') == sys.executable
+
 
 def test_find_executable():
     p = find_executable(sys.executable)
@@ -41,9 +45,10 @@ def test_find_executable():
         p = find_executable(name)
         assert p
         popen = py.std.subprocess.Popen([str(p), '-V'],
-                stderr=py.std.subprocess.PIPE)
+                                        stderr=py.std.subprocess.PIPE)
         stdout, stderr = popen.communicate()
         assert ver in py.builtin._totext(stderr, "ascii")
+
 
 def test_find_executable_extra(monkeypatch):
     @staticmethod
@@ -53,12 +58,14 @@ def test_find_executable_extra(monkeypatch):
     t = find_executable("qweqwe")
     assert t == "hello"
 
+
 def test_run_and_get_interpreter_info():
     name = os.path.basename(sys.executable)
     info = run_and_get_interpreter_info(name, sys.executable)
     assert info.version_info == tuple(sys.version_info)
     assert info.name == name
     assert info.executable == sys.executable
+
 
 class TestInterpreters:
 

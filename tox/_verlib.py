@@ -10,9 +10,11 @@ licensed under the PSF license (i guess)
 
 import re
 
+
 class IrrationalVersionError(Exception):
     """This is an irrational version."""
     pass
+
 
 class HugeMajorVersionNumError(IrrationalVersionError):
     """An irrational version because the major version number is huge
@@ -51,6 +53,7 @@ VERSION_RE = re.compile(r'''
     )?
     (?P<postdev>(\.post(?P<post>\d+))?(\.dev(?P<dev>\d+))?)?
     $''', re.VERBOSE)
+
 
 class NormalizedVersion(object):
     """A rational version.
@@ -136,7 +139,8 @@ class NormalizedVersion(object):
             parts.append(FINAL_MARKER)
         self.parts = tuple(parts)
         if error_on_huge_major_num and self.parts[0][0] > 1980:
-            raise HugeMajorVersionNumError("huge major version number, %r, "
+            raise HugeMajorVersionNumError(
+                "huge major version number, %r, "
                 "which might cause future problems: %r" % (self.parts[0][0], s))
 
     def _parse_numdots(self, s, full_ver_str, drop_trailing_zeros=True,
@@ -154,7 +158,8 @@ class NormalizedVersion(object):
         nums = []
         for n in s.split("."):
             if len(n) > 1 and n[0] == '0':
-                raise IrrationalVersionError("cannot have leading zero in "
+                raise IrrationalVersionError(
+                    "cannot have leading zero in "
                     "version number segment: '%s' in %r" % (n, full_ver_str))
             nums.append(int(n))
         if drop_trailing_zeros:
@@ -193,7 +198,7 @@ class NormalizedVersion(object):
 
     def _cannot_compare(self, other):
         raise TypeError("cannot compare %s and %s"
-                % (type(self).__name__, type(other).__name__))
+                        % (type(self).__name__, type(other).__name__))
 
     def __eq__(self, other):
         if not isinstance(other, NormalizedVersion):
@@ -216,6 +221,7 @@ class NormalizedVersion(object):
 
     def __ge__(self, other):
         return self.__eq__(other) or self.__gt__(other)
+
 
 def suggest_normalized_version(s):
     """Suggest a normalized version close to the given version string.
@@ -272,7 +278,7 @@ def suggest_normalized_version(s):
         rs = rs[1:]
 
     # Clean leading '0's on numbers.
-    #TODO: unintended side-effect on, e.g., "2003.05.09"
+    # TODO: unintended side-effect on, e.g., "2003.05.09"
     # PyPI stats: 77 (~2%) better
     rs = re.sub(r"\b0+(\d+)(?!\d)", r"\1", rs)
 
@@ -318,7 +324,6 @@ def suggest_normalized_version(s):
     # PyPI stats: ~21 (0.62%) better
     rs = re.sub(r"\.?(pre|preview|-c)(\d+)$", r"c\g<2>", rs)
 
-
     # Tcl/Tk uses "px" for their post release markers
     rs = re.sub(r"p(\d+)$", r".post\1", rs)
 
@@ -328,4 +333,3 @@ def suggest_normalized_version(s):
     except IrrationalVersionError:
         pass
     return None
-

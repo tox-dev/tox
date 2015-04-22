@@ -1,4 +1,5 @@
-import pytest, py
+import py
+import pytest
 import tox
 import os
 import sys
@@ -10,6 +11,7 @@ from tox._venv import VirtualEnv
 from tox._cmdline import Action
 from tox.result import ResultLog
 
+
 def pytest_configure():
     if 'TOXENV' in os.environ:
         del os.environ['TOXENV']
@@ -19,11 +21,13 @@ def pytest_configure():
 
 def pytest_addoption(parser):
     parser.addoption("--no-network", action="store_true",
-        dest="no_network",
-        help="don't run tests requiring network")
+                     dest="no_network",
+                     help="don't run tests requiring network")
+
 
 def pytest_report_header():
     return "tox comes from: %r" % (tox.__file__)
+
 
 @pytest.fixture
 def newconfig(request, tmpdir):
@@ -41,11 +45,13 @@ def newconfig(request, tmpdir):
             old.chdir()
     return newconfig
 
+
 @pytest.fixture
 def cmd(request):
     if request.config.option.no_network:
         pytest.skip("--no-network was specified, test cannot run")
     return Cmd(request)
+
 
 class ReportExpectMock:
     def __init__(self, session):
@@ -61,13 +67,13 @@ class ReportExpectMock:
             raise AttributeError(name)
 
         def generic_report(*args, **kwargs):
-            self._calls.append((name,)+args)
-            print ("%s" %(self._calls[-1], ))
+            self._calls.append((name,) + args)
+            print ("%s" % (self._calls[-1], ))
         return generic_report
 
     def action(self, venv, msg, *args):
         self._calls.append(("action", venv, msg))
-        print ("%s" %(self._calls[-1], ))
+        print ("%s" % (self._calls[-1], ))
         return Action(self.session, venv, msg, args)
 
     def getnext(self, cat):
@@ -82,7 +88,7 @@ class ReportExpectMock:
             newindex += 1
         raise LookupError(
             "looking for %r, no reports found at >=%d in %r" %
-            (cat, self._index+1, self._calls))
+            (cat, self._index + 1, self._calls))
 
     def expect(self, cat, messagepattern="*", invert=False):
         __tracebackhide__ = True
@@ -98,15 +104,16 @@ class ReportExpectMock:
                 if fnmatch(lmsg, messagepattern):
                     if invert:
                         raise AssertionError("found %s(%r), didn't expect it" %
-                            (cat, messagepattern))
+                                             (cat, messagepattern))
                     return
         if not invert:
             raise AssertionError(
-             "looking for %s(%r), no reports found at >=%d in %r" %
-                (cat, messagepattern, self._index+1, self._calls))
+                "looking for %s(%r), no reports found at >=%d in %r" %
+                (cat, messagepattern, self._index + 1, self._calls))
 
     def not_expect(self, cat, messagepattern="*"):
         return self.expect(cat, messagepattern, invert=True)
+
 
 class pcallMock:
     def __init__(self, args, cwd, env, stdout, stderr, shell):
@@ -120,43 +127,53 @@ class pcallMock:
 
     def communicate(self):
         return "", ""
+
     def wait(self):
         pass
+
 
 @pytest.fixture
 def mocksession(request):
     from tox._cmdline import Session
+
     class MockSession(Session):
         def __init__(self):
             self._clearmocks()
             self.config = request.getfuncargvalue("newconfig")([], "")
             self.resultlog = ResultLog()
             self._actions = []
+
         def getenv(self, name):
             return VirtualEnv(self.config.envconfigs[name], session=self)
+
         def _clearmocks(self):
             self._pcalls = []
             self._spec2pkg = {}
             self.report = ReportExpectMock(self)
+
         def make_emptydir(self, path):
             pass
+
         def popen(self, args, cwd, shell=None,
-            universal_newlines=False,
-            stdout=None, stderr=None, env=None):
+                  universal_newlines=False,
+                  stdout=None, stderr=None, env=None):
             pm = pcallMock(args, cwd, env, stdout, stderr, shell)
             self._pcalls.append(pm)
             return pm
     return MockSession()
 
+
 @pytest.fixture
 def newmocksession(request):
     mocksession = request.getfuncargvalue("mocksession")
     newconfig = request.getfuncargvalue("newconfig")
+
     def newmocksession(args, source):
         config = newconfig(args, source)
         mocksession.config = config
         return mocksession
     return newmocksession
+
 
 class Cmd:
     def __init__(self, request):
@@ -175,7 +192,7 @@ class Cmd:
         env['PYTHONPATH'] = ":".join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
-        #print "env", env
+        # print "env", env
         return py.std.subprocess.Popen(argv, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *argv):
@@ -188,7 +205,7 @@ class Cmd:
         f2 = p2.open("wb")
         now = time.time()
         popen = self.popen(argv, stdout=f1, stderr=f2,
-            close_fds=(sys.platform != "win32"))
+                           close_fds=(sys.platform != "win32"))
         ret = popen.wait()
         f1.close()
         f2.close()
@@ -196,6 +213,7 @@ class Cmd:
         out = getdecoded(out).splitlines()
         err = p2.read("rb")
         err = getdecoded(err).splitlines()
+
         def dump_lines(lines, fp):
             try:
                 for line in lines:
@@ -204,14 +222,16 @@ class Cmd:
                 print("couldn't print to %s because of encoding" % (fp,))
         dump_lines(out, sys.stdout)
         dump_lines(err, sys.stderr)
-        return RunResult(ret, out, err, time.time()-now)
+        return RunResult(ret, out, err, time.time() - now)
+
 
 def getdecoded(out):
         try:
             return out.decode("utf-8")
         except UnicodeDecodeError:
             return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-                    py.io.saferepr(out),)
+                py.io.saferepr(out),)
+
 
 class RunResult:
     def __init__(self, ret, outlines, errlines, duration):
@@ -222,8 +242,9 @@ class RunResult:
         self.stderr = LineMatcher(errlines)
         self.duration = duration
 
+
 class LineMatcher:
-    def __init__(self,  lines):
+    def __init__(self, lines):
         self.lines = lines
 
     def str(self):
@@ -260,6 +281,7 @@ class LineMatcher:
             else:
                 assert line == nextline
 
+
 @pytest.fixture
 def initproj(request, tmpdir):
     """ create a factory function for creating example projects. """
@@ -288,15 +310,17 @@ def initproj(request, tmpdir):
                 )
             ''' % locals()})
         if name not in filedefs:
-            create_files(base, {name:
-                {'__init__.py': '__version__ = %r' % version}})
+            create_files(base, {
+                name: {'__init__.py': '__version__ = %r' % version}
+            })
         manifestlines = []
         for p in base.visit(lambda x: x.check(file=1)):
             manifestlines.append("include %s" % p.relto(base))
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
-        print ("created project in %s" %(base,))
+        print ("created project in %s" % (base,))
         base.chdir()
     return initproj
+
 
 def create_files(base, filedefs):
     for key, value in filedefs.items():

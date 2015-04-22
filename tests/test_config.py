@@ -65,8 +65,8 @@ class TestVenvConfig:
 
     def test_force_dep_version(self, initproj):
         """
-        Make sure we can override dependencies configured in tox.ini when using the command line option
-        --force-dep.
+        Make sure we can override dependencies configured in tox.ini when using the command line
+        option --force-dep.
         """
         initproj("example123-0.5", filedefs={
             'tox.ini': '''
@@ -83,7 +83,7 @@ class TestVenvConfig:
         config = parseconfig(
             ['--force-dep=dep1==1.5', '--force-dep=dep2==2.1',
              '--force-dep=dep3==3.0'])
-        assert config.option.force_dep== [
+        assert config.option.force_dep == [
             'dep1==1.5', 'dep2==2.1', 'dep3==3.0']
         assert [str(x) for x in config.envconfigs['python'].deps] == [
             'dep1==1.5', 'dep2==2.1', 'dep3==3.0', 'dep4==4.0',
@@ -125,7 +125,6 @@ class TestConfigPlatform:
         assert venv.matching_platform()
         monkeypatch.undo()
         assert not venv.matching_platform()
-
 
     @pytest.mark.parametrize("plat", ["win", "lin", ])
     def test_config_parse_platform_with_factors(self, newconfig, plat, monkeypatch):
@@ -171,6 +170,7 @@ class TestConfigPackage:
         """ % tmpdir)
         assert config.toxworkdir == tmpdir
 
+
 class TestParseconfig:
     def test_search_parents(self, tmpdir):
         b = tmpdir.mkdir("a").mkdir("b")
@@ -182,12 +182,13 @@ class TestParseconfig:
             old.chdir()
         assert config.toxinipath == toxinipath
 
+
 def test_get_homedir(monkeypatch):
     monkeypatch.setattr(py.path.local, "_gethomedir",
                         classmethod(lambda x: {}[1]))
     assert not get_homedir()
     monkeypatch.setattr(py.path.local, "_gethomedir",
-                        classmethod(lambda x: 0/0))
+                        classmethod(lambda x: 0 / 0))
     assert not get_homedir()
     monkeypatch.setattr(py.path.local, "_gethomedir",
                         classmethod(lambda x: "123"))
@@ -224,7 +225,8 @@ class TestIniParserAgainstCommandsKey:
         assert x == [["echo", "whatever"]]
 
     def test_command_substitution_from_other_section_multiline(self, newconfig):
-        """Ensure referenced multiline commands form from other section injected as multiple commands."""
+        """Ensure referenced multiline commands form from other section injected
+        as multiple commands."""
         config = newconfig("""
             [section]
             commands =
@@ -275,7 +277,7 @@ class TestIniParser:
         reader = IniReader(config._cfg, fallbacksections=['mydefault'])
         assert reader is not None
         py.test.raises(tox.exception.ConfigError,
-            'reader.getdefault("mydefault", "key2")')
+                       'reader.getdefault("mydefault", "key2")')
 
     def test_getdefault_fallback_sections(self, tmpdir, newconfig):
         config = newconfig("""
@@ -346,7 +348,7 @@ class TestIniParser:
         x = reader.getdefault("section", "key1")
         assert x == "hello"
         py.test.raises(tox.exception.ConfigError,
-            'reader.getdefault("section", "key2")')
+                       'reader.getdefault("section", "key2")')
 
     def test_getdefault_environment_substitution_with_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
@@ -392,7 +394,7 @@ class TestIniParser:
         """)
         reader = IniReader(config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        #py.test.raises(tox.exception.ConfigError,
+        # py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
@@ -418,7 +420,7 @@ class TestIniParser:
         """)
         reader = IniReader(config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        #py.test.raises(tox.exception.ConfigError,
+        # py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         x = reader.getargvlist("section", "key2")
@@ -446,7 +448,7 @@ class TestIniParser:
         reader = IniReader(config._cfg)
         posargs = ['hello', 'world']
         reader.addsubstitutions(posargs, item2="value2")
-        #py.test.raises(tox.exception.ConfigError,
+        # py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         argvlist = reader.getargvlist("section", "key2")
@@ -455,7 +457,7 @@ class TestIniParser:
 
         reader = IniReader(config._cfg)
         reader.addsubstitutions([], item2="value2")
-        #py.test.raises(tox.exception.ConfigError,
+        # py.test.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('section', 'key1')")
         assert reader.getargvlist('section', 'key1') == []
         argvlist = reader.getargvlist("section", "key2")
@@ -490,8 +492,7 @@ class TestIniParser:
         x = reader.getargvlist("section", "key2")
         assert x == [["cmd1", "-f", "foo", "bar baz"]]
 
-    def test_positional_arguments_are_only_replaced_when_standing_alone(self,
-        tmpdir, newconfig):
+    def test_positional_arguments_are_only_replaced_when_standing_alone(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
             key=
@@ -520,7 +521,9 @@ class TestIniParser:
         posargs = ['hello', 'world']
         reader.addsubstitutions(posargs, envlogdir='ENV_LOG_DIR', envname='ENV_NAME')
 
-        expected = ['py.test', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world']
+        expected = [
+            'py.test', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world'
+        ]
         assert reader.getargvlist('section', 'key')[0] == expected
 
     def test_getargv(self, newconfig):
@@ -582,8 +585,8 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
-        assert envconfig.sitepackages == False
-        assert envconfig.develop == False
+        assert envconfig.sitepackages is False
+        assert envconfig.develop is False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
         assert list(envconfig.setenv.keys()) == ['PYTHONHASHSEED']
         hashseed = envconfig.setenv['PYTHONHASHSEED']
@@ -596,7 +599,7 @@ class TestConfigTestEnv:
     def test_sitepackages_switch(self, tmpdir, newconfig):
         config = newconfig(["--sitepackages"], "")
         envconfig = config.envconfigs['python']
-        assert envconfig.sitepackages == True
+        assert envconfig.sitepackages is True
 
     def test_installpkg_tops_develop(self, newconfig):
         config = newconfig(["--installpkg=abc"], """
@@ -918,7 +921,7 @@ class TestConfigTestEnv:
         assert argv[0] == ["cmd1", "hello"]
 
     def test_take_dependencies_from_other_testenv(self, newconfig):
-        inisource="""
+        inisource = """
             [testenv]
             deps=
                 pytest
@@ -933,7 +936,7 @@ class TestConfigTestEnv:
         assert packages == ['pytest', 'pytest-cov', 'fun']
 
     def test_take_dependencies_from_other_section(self, newconfig):
-        inisource="""
+        inisource = """
             [testing:pytest]
             deps=
                 pytest
@@ -953,7 +956,7 @@ class TestConfigTestEnv:
         assert packages == ['pytest', 'pytest-cov', 'mock', 'fun']
 
     def test_multilevel_substitution(self, newconfig):
-        inisource="""
+        inisource = """
             [testing:pytest]
             deps=
                 pytest
@@ -978,7 +981,7 @@ class TestConfigTestEnv:
         assert packages == ['pytest', 'pytest-cov', 'mock', 'fun']
 
     def test_recursive_substitution_cycle_fails(self, newconfig):
-        inisource="""
+        inisource = """
             [testing:pytest]
             deps=
                 {[testing:mock]deps}
@@ -1004,7 +1007,7 @@ class TestConfigTestEnv:
         assert conf.changedir.dirpath().realpath() == tmpdir.realpath()
 
     def test_factors(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = a-x,b
 
@@ -1022,7 +1025,7 @@ class TestConfigTestEnv:
         assert [dep.name for dep in configs['b'].deps] == ["dep-all", "dep-b"]
 
     def test_factor_ops(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = {a,b}-{x,y}
 
@@ -1040,7 +1043,7 @@ class TestConfigTestEnv:
         assert get_deps("b-y") == ["dep-a-or-b", "dep-ab-and-y"]
 
     def test_default_factors(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = py{26,27,33,34}-dep
 
@@ -1055,7 +1058,7 @@ class TestConfigTestEnv:
 
     @pytest.mark.issue188
     def test_factors_in_boolean(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = py{27,33}
 
@@ -1069,7 +1072,7 @@ class TestConfigTestEnv:
 
     @pytest.mark.issue190
     def test_factors_in_setenv(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = py27,py26
 
@@ -1083,7 +1086,7 @@ class TestConfigTestEnv:
 
     @pytest.mark.issue191
     def test_factor_use_not_checked(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = py27-{a,b}
 
@@ -1095,7 +1098,7 @@ class TestConfigTestEnv:
 
     @pytest.mark.issue198
     def test_factors_groups_touch(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = {a,b}{-x,}
 
@@ -1107,7 +1110,7 @@ class TestConfigTestEnv:
         assert set(configs.keys()) == set(['a', 'a-x', 'b', 'b-x'])
 
     def test_period_in_factor(self, newconfig):
-        inisource="""
+        inisource = """
             [tox]
             envlist = py27-{django1.6,django1.7}
 
@@ -1185,7 +1188,7 @@ class TestGlobalOptions:
             [testenv:py27]
             basepython=python2.7
         """
-        #py.test.raises(tox.exception.ConfigError,
+        # py.test.raises(tox.exception.ConfigError,
         #    "newconfig(['-exyz'], inisource)")
         config = newconfig([], inisource)
         assert config.envlist == ["py26"]
@@ -1222,7 +1225,7 @@ class TestGlobalOptions:
                 assert env.basepython == name
             else:
                 assert name.startswith("py")
-                bp = "python%s.%s" %(name[2], name[3])
+                bp = "python%s.%s" % (name[2], name[3])
                 assert env.basepython == bp
 
     def test_envlist_expansion(self, newconfig):
@@ -1284,6 +1287,7 @@ class TestGlobalOptions:
         assert env.basepython == "python2.4"
         assert env.commands == [['xyz']]
 
+
 class TestHashseedOption:
 
     def _get_envconfigs(self, newconfig, args=None, tox_ini=None,
@@ -1331,7 +1335,7 @@ class TestHashseedOption:
         args = ['--hashseed', '']
         self._check_testenv(newconfig, '', args=args)
 
-    @pytest.mark.xfail(sys.version_info >= (3,2),
+    @pytest.mark.xfail(sys.version_info >= (3, 2),
                        reason="at least Debian python 3.2/3.3 have a bug: "
                               "http://bugs.python.org/issue11884")
     def test_passing_no_argument(self, tmpdir, newconfig):
@@ -1378,6 +1382,7 @@ class TestHashseedOption:
         """
         next_seed = [1000]
         # This function is guaranteed to generate a different value each time.
+
         def make_hashseed():
             next_seed[0] += 1
             return str(next_seed[0])
@@ -1401,6 +1406,7 @@ class TestHashseedOption:
         self._check_hashseed(envconfigs["hash1"], '2')
         self._check_hashseed(envconfigs["hash2"], '123456789')
 
+
 class TestIndexServer:
     def test_indexserver(self, tmpdir, newconfig):
         config = newconfig("""
@@ -1409,7 +1415,7 @@ class TestIndexServer:
                 name1 = XYZ
                 name2 = ABC
         """)
-        assert config.indexserver['default'].url == None
+        assert config.indexserver['default'].url is None
         assert config.indexserver['name1'].url == "XYZ"
         assert config.indexserver['name2'].url == "ABC"
 
@@ -1423,10 +1429,10 @@ class TestIndexServer:
         config = newconfig([], inisource)
         assert config.indexserver['default'].url == "http://pypi.testrun.org"
         assert config.indexserver['name1'].url == "whatever"
-        config = newconfig(['-i','qwe'], inisource)
+        config = newconfig(['-i', 'qwe'], inisource)
         assert config.indexserver['default'].url == "qwe"
         assert config.indexserver['name1'].url == "whatever"
-        config = newconfig(['-i','name1=abc', '-i','qwe2'], inisource)
+        config = newconfig(['-i', 'name1=abc', '-i', 'qwe2'], inisource)
         assert config.indexserver['default'].url == "qwe2"
         assert config.indexserver['name1'].url == "abc"
 
@@ -1447,8 +1453,8 @@ class TestIndexServer:
         config = newconfig([], inisource)
         expected = "file://%s/.pip/downloads/simple" % config.homedir
         assert config.indexserver['default'].url == expected
-        assert config.indexserver['local1'].url == \
-               config.indexserver['default'].url
+        assert config.indexserver['local1'].url == config.indexserver['default'].url
+
 
 class TestParseEnv:
 
@@ -1466,6 +1472,7 @@ class TestParseEnv:
         """
         config = newconfig([], inisource)
         assert config.envconfigs['hello'].recreate
+
 
 class TestCmdInvocation:
     def test_help(self, cmd):
@@ -1544,6 +1551,7 @@ class TestCmdInvocation:
             r'*deps=*dep1, dep2==5.0*',
         ])
 
+
 class TestArgumentParser:
 
     def test_dash_e_single_1(self):
@@ -1591,12 +1599,15 @@ class TestCommandParser:
         assert list(p.words()) == ['{sub:something with spaces}']
 
     def test_command_parser_with_complex_word_set(self):
-        complex_case = 'word [] [literal] {something} {some:other thing} w{ord} w{or}d w{ord} w{o:rd} w{o:r}d {w:or}d w[]ord {posargs:{a key}}'
+        complex_case = (
+            'word [] [literal] {something} {some:other thing} w{ord} w{or}d w{ord} '
+            'w{o:rd} w{o:r}d {w:or}d w[]ord {posargs:{a key}}')
         p = CommandParser(complex_case)
         parsed = list(p.words())
         expected = [
             'word', ' ', '[]', ' ', '[literal]', ' ', '{something}', ' ', '{some:other thing}',
-            ' ', 'w', '{ord}', ' ', 'w', '{or}', 'd', ' ', 'w', '{ord}', ' ', 'w', '{o:rd}', ' ', 'w', '{o:r}', 'd', ' ', '{w:or}', 'd',
+            ' ', 'w', '{ord}', ' ', 'w', '{or}', 'd', ' ', 'w', '{ord}', ' ', 'w', '{o:rd}', ' ',
+            'w', '{o:r}', 'd', ' ', '{w:or}', 'd',
             ' ', 'w[]ord', ' ', '{posargs:{a key}}',
         ]
 
@@ -1619,7 +1630,10 @@ class TestCommandParser:
         cmd = "nosetests -v -a !deferred --with-doctest []"
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ['nosetests', ' ', '-v', ' ', '-a', ' ', '!deferred', ' ', '--with-doctest', ' ', '[]']
+        assert parsed == [
+            'nosetests', ' ', '-v', ' ', '-a', ' ', '!deferred', ' ',
+            '--with-doctest', ' ', '[]'
+        ]
 
     @pytest.mark.skipif("sys.platform != 'win32'")
     def test_commands_with_backslash(self, newconfig):

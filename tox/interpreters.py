@@ -3,6 +3,7 @@ import py
 import re
 import inspect
 
+
 class Interpreters:
     def __init__(self):
         self.name2executable = {}
@@ -42,26 +43,28 @@ class Interpreters:
         envdir = str(envdir)
         try:
             res = exec_on_interpreter(info.executable,
-                [inspect.getsource(sitepackagesdir),
-                 "print (sitepackagesdir(%r))" % envdir])
+                                      [inspect.getsource(sitepackagesdir),
+                                       "print (sitepackagesdir(%r))" % envdir])
         except ExecFailed:
             val = sys.exc_info()[1]
-            print ("execution failed: %s -- %s" %(val.out, val.err))
+            print ("execution failed: %s -- %s" % (val.out, val.err))
             return ""
         else:
             return res["dir"]
+
 
 def run_and_get_interpreter_info(name, executable):
     assert executable
     try:
         result = exec_on_interpreter(executable,
-            [inspect.getsource(pyinfo), "print (pyinfo())"])
+                                     [inspect.getsource(pyinfo), "print (pyinfo())"])
     except ExecFailed:
         val = sys.exc_info()[1]
         return NoInterpreterInfo(name, executable=val.executable,
                                  out=val.out, err=val.err)
     else:
         return InterpreterInfo(name, executable, **result)
+
 
 def exec_on_interpreter(executable, source):
     if isinstance(source, list):
@@ -80,12 +83,14 @@ def exec_on_interpreter(executable, source):
                          "could not decode %r" % out)
     return result
 
+
 class ExecFailed(Exception):
     def __init__(self, executable, source, out, err):
         self.executable = executable
         self.source = source
         self.out = out
         self.err = err
+
 
 class InterpreterInfo:
     runnable = True
@@ -99,10 +104,12 @@ class InterpreterInfo:
 
     def __str__(self):
         return "<executable at %s, version_info %s>" % (
-                self.executable, self.version_info)
+            self.executable, self.version_info)
+
 
 class NoInterpreterInfo:
     runnable = False
+
     def __init__(self, name, executable=None,
                  out=None, err="not found"):
         self.name = name
@@ -124,9 +131,10 @@ if sys.platform != "win32":
 else:
     # Exceptions to the usual windows mapping
     win32map = {
-            'python': sys.executable,
-            'jython': "c:\jython2.5.1\jython.bat",
+        'python': sys.executable,
+        'jython': "c:\jython2.5.1\jython.bat",
     }
+
     def locate_via_py(v_maj, v_min):
         ver = "-%s.%s" % (v_maj, v_min)
         script = "import sys; print(sys.executable)"
@@ -162,10 +170,12 @@ else:
         if m:
             return locate_via_py(*m.groups())
 
+
 def pyinfo():
     import sys
     return dict(version_info=tuple(sys.version_info),
                 sysplatform=sys.platform)
+
 
 def sitepackagesdir(envdir):
     from distutils.sysconfig import get_python_lib

@@ -46,22 +46,23 @@ class EnvLog:
     def set_python_info(self, pythonexecutable):
         pythonexecutable = py.path.local(pythonexecutable)
         out = pythonexecutable.sysexec("-c",
-            "import sys; "
-            "print (sys.executable);"
-            "print (list(sys.version_info)); "
-            "print (sys.version)")
+                                       "import sys; "
+                                       "print (sys.executable);"
+                                       "print (list(sys.version_info)); "
+                                       "print (sys.version)")
         lines = out.splitlines()
         executable = lines.pop(0)
         version_info = eval(lines.pop(0))
         version = "\n".join(lines)
         self.dict["python"] = dict(
             executable=executable,
-            version_info = version_info,
-            version = version)
+            version_info=version_info,
+            version=version)
 
     def get_commandlog(self, name):
         l = self.dict.setdefault(name, [])
         return CommandLog(self, l)
+
 
 class CommandLog:
     def __init__(self, envlog, list):

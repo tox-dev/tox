@@ -12,35 +12,40 @@ pytest_plugins = "pytester"
 from tox._cmdline import Session
 from tox._config import parseconfig
 
+
 def test_report_protocol(newconfig):
     config = newconfig([], """
             [testenv:mypython]
             deps=xy
     """)
+
     class Popen:
         def __init__(self, *args, **kwargs):
             pass
+
         def communicate(self):
             return "", ""
+
         def wait(self):
             pass
 
     session = Session(config, popen=Popen,
-            Report=ReportExpectMock)
+                      Report=ReportExpectMock)
     report = session.report
     report.expect("using")
     venv = session.getvenv("mypython")
     venv.update()
     report.expect("logpopen")
 
+
 def test__resolve_pkg(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
     spec = distshare.join("pkg123-*")
     py.test.raises(tox.exception.MissingDirectory,
-        'mocksession._resolve_pkg(spec)')
+                   'mocksession._resolve_pkg(spec)')
     distshare.ensure(dir=1)
     py.test.raises(tox.exception.MissingDependency,
-        'mocksession._resolve_pkg(spec)')
+                   'mocksession._resolve_pkg(spec)')
     distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
 
@@ -58,6 +63,7 @@ def test__resolve_pkg(tmpdir, mocksession):
     result = mocksession._resolve_pkg(spec)
     assert result == p
 
+
 def test__resolve_pkg_doubledash(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
     p = distshare.ensure("pkg-mine-1.3.0.zip")
@@ -66,7 +72,6 @@ def test__resolve_pkg_doubledash(tmpdir, mocksession):
     distshare.ensure("pkg-mine-1.3.0a1.zip")
     res = mocksession._resolve_pkg(distshare.join("pkg-mine*"))
     assert res == p
-
 
 
 class TestSession:
@@ -116,7 +121,7 @@ class TestSession:
         action.popen(["echo", ])
         match = mocksession.report.getnext("logpopen")
         assert match[1].outpath.relto(mocksession.config.logdir)
-        assert match[1].shell == False
+        assert match[1].shell is False
 
     def test_summary_status(self, initproj, capfd):
         initproj("logexample123-0.5", filedefs={
@@ -177,6 +182,7 @@ def XXX_test_package(cmd, initproj):
         "*created sdist package at*",
     ])
 
+
 def test_minversion(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
@@ -191,6 +197,7 @@ def test_minversion(cmd, initproj):
     ])
     assert result.ret
 
+
 def test_run_custom_install_command_error(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tox.ini': '''
@@ -203,6 +210,7 @@ def test_run_custom_install_command_error(cmd, initproj):
         "ERROR: invocation failed (errno *), args: ['*/tox.ini*",
     ])
     assert result.ret
+
 
 def test_unknown_interpreter_and_env(cmd, initproj):
     initproj("interp123-0.5", filedefs={
@@ -226,6 +234,7 @@ def test_unknown_interpreter_and_env(cmd, initproj):
         "*ERROR*unknown*",
     ])
 
+
 def test_unknown_interpreter(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
@@ -241,6 +250,7 @@ def test_unknown_interpreter(cmd, initproj):
     result.stdout.fnmatch_lines([
         "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
     ])
+
 
 def test_skip_platform_mismatch(cmd, initproj):
     initproj("interp123-0.5", filedefs={
@@ -260,6 +270,7 @@ def test_skip_platform_mismatch(cmd, initproj):
         "*python*platform mismatch*"
     ])
 
+
 def test_skip_unknown_interpreter(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
@@ -276,6 +287,7 @@ def test_skip_unknown_interpreter(cmd, initproj):
         "*SKIPPED*InterpreterNotFound*xyz_unknown_interpreter*",
     ])
 
+
 def test_unknown_dep(cmd, initproj):
     initproj("dep123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
@@ -291,6 +303,7 @@ def test_unknown_dep(cmd, initproj):
         "*ERROR*could not install*qweqwe123*",
     ])
 
+
 def test_unknown_environment(cmd, initproj):
     initproj("env123-0.7", filedefs={
         'tox.ini': ''
@@ -301,13 +314,13 @@ def test_unknown_environment(cmd, initproj):
         "*ERROR*unknown*environment*qpwoei*",
     ])
 
+
 def test_skip_sdist(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'setup.py': """
             syntax error
-        """
-        ,
+        """,
         'tox.ini': '''
             [tox]
             skipsdist=True
@@ -318,12 +331,12 @@ def test_skip_sdist(cmd, initproj):
     result = cmd.run("tox", )
     assert result.ret == 0
 
+
 def test_minimal_setup_py_empty(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'setup.py': """
-        """
-        ,
+        """,
         'tox.ini': ''
 
     })
@@ -332,14 +345,14 @@ def test_minimal_setup_py_empty(cmd, initproj):
     result.stdout.fnmatch_lines([
         "*ERROR*empty*",
     ])
+
 
 def test_minimal_setup_py_comment_only(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'setup.py': """\n# some comment
 
-        """
-        ,
+        """,
         'tox.ini': ''
 
     })
@@ -348,6 +361,7 @@ def test_minimal_setup_py_comment_only(cmd, initproj):
     result.stdout.fnmatch_lines([
         "*ERROR*empty*",
     ])
+
 
 def test_minimal_setup_py_non_functional(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
@@ -355,8 +369,7 @@ def test_minimal_setup_py_non_functional(cmd, initproj):
         'setup.py': """
         import sys
 
-        """
-        ,
+        """,
         'tox.ini': ''
 
     })
@@ -366,13 +379,13 @@ def test_minimal_setup_py_non_functional(cmd, initproj):
         "*ERROR*check setup.py*",
     ])
 
+
 def test_sdist_fails(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
         'setup.py': """
             syntax error
-        """
-        ,
+        """,
         'tox.ini': '',
     })
     result = cmd.run("tox", )
@@ -380,6 +393,7 @@ def test_sdist_fails(cmd, initproj):
     result.stdout.fnmatch_lines([
         "*FAIL*could not package project*",
     ])
+
 
 def test_package_install_fails(cmd, initproj):
     initproj("pkg123-0.7", filedefs={
@@ -395,8 +409,7 @@ def test_package_install_fails(cmd, initproj):
                 packages=['pkg123',],
                 install_requires=['qweqwe123'],
                 )
-            """
-        ,
+            """,
         'tox.ini': '',
     })
     result = cmd.run("tox", )
@@ -406,14 +419,14 @@ def test_package_install_fails(cmd, initproj):
     ])
 
 
-
 class TestToxRun:
     @pytest.fixture
     def example123(self, initproj):
         initproj("example123-0.5", filedefs={
-            'tests': {'test_hello.py': """
-                def test_hello(pytestconfig):
-                    pass
+            'tests': {
+                'test_hello.py': """
+                    def test_hello(pytestconfig):
+                        pass
                 """,
             },
             'tox.ini': '''
@@ -475,6 +488,7 @@ def test_develop(initproj, cmd):
     assert not result.ret
     assert "sdist-make" not in result.stdout.str()
 
+
 def test_usedevelop(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
@@ -483,6 +497,7 @@ def test_usedevelop(initproj, cmd):
     result = cmd.run("tox", "-vv")
     assert not result.ret
     assert "sdist-make" not in result.stdout.str()
+
 
 def test_usedevelop_mixed(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
@@ -502,11 +517,13 @@ def test_usedevelop_mixed(initproj, cmd):
     assert not result.ret
     assert "sdist-make" in result.stdout.str()
 
+
 def test_test_usedevelop(cmd, initproj):
     initproj("example123-0.5", filedefs={
-        'tests': {'test_hello.py': """
-            def test_hello(pytestconfig):
-                pass
+        'tests': {
+            'test_hello.py': """
+                def test_hello(pytestconfig):
+                    pass
             """,
         },
         'tox.ini': '''
@@ -568,6 +585,7 @@ def test_test_piphelp(initproj, cmd):
     result = cmd.run("tox")
     assert not result.ret
 
+
 def test_notest(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
@@ -586,6 +604,7 @@ def test_notest(initproj, cmd):
         "*py26*reusing*",
     ])
 
+
 def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={'tox.ini': ''})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
@@ -594,6 +613,7 @@ def test_PYC(initproj, cmd, monkeypatch):
     result.stdout.fnmatch_lines([
         "*create*",
     ])
+
 
 def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={'tox.ini': ''})
@@ -604,6 +624,7 @@ def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
         "*create*",
     ])
 
+
 def test_sdistonly(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
     """})
@@ -613,6 +634,7 @@ def test_sdistonly(initproj, cmd):
         "*sdist-make*setup.py*",
     ])
     assert "-mvirtualenv" not in result.stdout.str()
+
 
 def test_separate_sdist_no_sdistfile(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
@@ -628,6 +650,7 @@ def test_separate_sdist_no_sdistfile(cmd, initproj):
     assert len(l) == 1
     sdistfile = l[0]
     assert 'pkg123-foo-0.7.zip' in str(sdistfile)
+
 
 def test_separate_sdist(cmd, initproj):
     distshare = cmd.tmpdir.join("distshare")
@@ -663,12 +686,14 @@ def test_sdist_latest(tmpdir, newconfig):
     sdist_path = session.sdist()
     assert sdist_path == p
 
+
 def test_installpkg(tmpdir, newconfig):
     p = tmpdir.ensure("pkg123-1.0.zip")
     config = newconfig(["--installpkg=%s" % p], "")
     session = Session(config)
     sdist_path = session.sdist()
     assert sdist_path == p
+
 
 @pytest.mark.xfail("sys.platform == 'win32' and sys.version_info < (2,6)",
                    reason="test needs better impl")
@@ -685,6 +710,7 @@ def test_envsitepackagesdir(cmd, initproj):
         X:*tox*site-packages*
     """)
 
+
 def verify_json_report_format(data, testenvs=True):
     assert data["reportversion"] == "1"
     assert data["toxversion"] == tox.__version__
@@ -700,4 +726,3 @@ def verify_json_report_format(data, testenvs=True):
             assert isinstance(pyinfo["version_info"], list)
             assert pyinfo["version"]
             assert pyinfo["executable"]
-

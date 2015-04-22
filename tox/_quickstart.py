@@ -78,10 +78,12 @@ deps = %(deps)s
 class ValidationError(Exception):
     """Raised for validation errors."""
 
+
 def nonempty(x):
     if not x:
         raise ValidationError("Please enter some text.")
     return x
+
 
 def choice(*l):
     def val(x):
@@ -90,16 +92,19 @@ def choice(*l):
         return x
     return val
 
+
 def boolean(x):
     if x.upper() not in ('Y', 'YES', 'N', 'NO'):
         raise ValidationError("Please enter either 'y' or 'n'.")
     return x.upper() in ('Y', 'YES')
+
 
 def suffix(x):
     if not (x[0:1] == '.' and len(x) > 1):
         raise ValidationError("Please enter a file suffix, "
                               "e.g. '.rst' or '.txt'.")
     return x
+
 
 def ok(x):
     return x
@@ -159,7 +164,7 @@ What Python versions do you want to test against? Choices:
     [3] (All versions) %s
     [4] Choose each one-by-one''' % ', '.join(all_envs))
     do_prompt(d, 'canned_pyenvs', 'Enter the number of your choice',
-        '3', choice('1', '2', '3', '4'))
+              '3', choice('1', '2', '3', '4'))
 
     if d['canned_pyenvs'] == '1':
         d['py27'] = True
@@ -197,16 +202,19 @@ What extra dependencies do your tests have?''')
 
 def process_input(d):
     d['envlist'] = ', '.join([env for env in all_envs if d.get(env) is True])
-    d['deps'] = '\n' + '\n'.join(['    %s' % dep.strip()
-                                for dep in d['deps'].split(',')])
+    d['deps'] = '\n' + '\n'.join([
+        '    %s' % dep.strip()
+        for dep in d['deps'].split(',')])
 
     return d
+
 
 def rtrim_right(text):
     lines = []
     for line in text.split("\n"):
         lines.append(line.rstrip())
     return "\n".join(lines)
+
 
 def generate(d, overwrite=True, silent=False):
     """Generate project based on values in *d*."""
@@ -236,7 +244,8 @@ def generate(d, overwrite=True, silent=False):
     if silent:
         return
     sys.stdout.write('\n')
-    print('Finished: A tox.ini file has been created. For information on this file, see http://tox.testrun.org/latest/config.html')
+    print('Finished: A tox.ini file has been created. For information on this file, '
+          'see http://tox.testrun.org/latest/config.html')
     print('''
 Execute `tox` to test your project.
 ''')

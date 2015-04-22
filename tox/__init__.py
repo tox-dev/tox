@@ -1,10 +1,12 @@
 #
 __version__ = '2.0.0.dev1'
 
+
 class exception:
     class Error(Exception):
         def __str__(self):
-            return "%s: %s" %(self.__class__.__name__, self.args[0])
+            return "%s: %s" % (self.__class__.__name__, self.args[0])
+
     class ConfigError(Error):
         """ error in tox configuration. """
     class UnsupportedInterpreter(Error):

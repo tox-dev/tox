@@ -45,7 +45,7 @@ def parseconfig(args=None, pkg=None):
             if inipath.check():
                 break
         else:
-            feedback("toxini file %r not found" %(basename), sysexit=True)
+            feedback("toxini file %r not found" % (basename), sysexit=True)
     try:
         parseini(config, inipath)
     except tox.exception.InterpreterNotFound:
@@ -54,97 +54,103 @@ def parseconfig(args=None, pkg=None):
         py.builtin.print_("ERROR: " + str(exn))
     return config
 
+
 def feedback(msg, sysexit=False):
     py.builtin.print_("ERROR: " + msg, file=sys.stderr)
     if sysexit:
         raise SystemExit(1)
+
 
 class VersionAction(argparse.Action):
     def __call__(self, argparser, *args, **kwargs):
         name = argparser.pkgname
         mod = __import__(name)
         version = mod.__version__
-        py.builtin.print_("%s imported from %s" %(version, mod.__file__))
+        py.builtin.print_("%s imported from %s" % (version, mod.__file__))
         raise SystemExit(0)
+
 
 class CountAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         if hasattr(namespace, self.dest):
-            setattr(namespace, self.dest, int(getattr(namespace, self.dest))+1)
+            setattr(namespace, self.dest, int(getattr(namespace, self.dest)) + 1)
         else:
             setattr(namespace, self.dest, 0)
 
+
 def prepare_parse(pkgname):
     parser = argparse.ArgumentParser(description=__doc__,)
-        #formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    # formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.pkgname = pkgname
     parser.add_argument("--version", nargs=0, action=VersionAction,
-        dest="version",
-        help="report version information to stdout.")
+                        dest="version",
+                        help="report version information to stdout.")
     parser.add_argument("-v", nargs=0, action=CountAction, default=0,
-        dest="verbosity",
-        help="increase verbosity of reporting output.")
+                        dest="verbosity",
+                        help="increase verbosity of reporting output.")
     parser.add_argument("--showconfig", action="store_true",
-        help="show configuration information for all environments. ")
+                        help="show configuration information for all environments. ")
     parser.add_argument("-l", "--listenvs", action="store_true",
-        dest="listenvs", help="show list of test environments")
+                        dest="listenvs", help="show list of test environments")
     parser.add_argument("-c", action="store", default="tox.ini",
-        dest="configfile",
-        help="use the specified config file name.")
+                        dest="configfile",
+                        help="use the specified config file name.")
     parser.add_argument("-e", action="append", dest="env",
-        metavar="envlist",
-        help="work against specified environments (ALL selects all).")
+                        metavar="envlist",
+                        help="work against specified environments (ALL selects all).")
     parser.add_argument("--notest", action="store_true", dest="notest",
-        help="skip invoking test commands.")
+                        help="skip invoking test commands.")
     parser.add_argument("--sdistonly", action="store_true", dest="sdistonly",
-        help="only perform the sdist packaging activity.")
+                        help="only perform the sdist packaging activity.")
     parser.add_argument("--installpkg", action="store", default=None,
-        metavar="PATH",
-        help="use specified package for installation into venv, instead of "
-             "creating an sdist.")
+                        metavar="PATH",
+                        help="use specified package for installation into venv, instead of "
+                             "creating an sdist.")
     parser.add_argument("--develop", action="store_true", dest="develop",
-        help="install package in the venv using 'setup.py develop' via "
-             "'pip -e .'")
+                        help="install package in the venv using 'setup.py develop' via "
+                             "'pip -e .'")
     parser.add_argument("--set-home", action="store_true", dest="sethome",
-        help="(experimental) force creating a new $HOME for each test "
-             "environment and create .pydistutils.cfg|pip.conf files "
-             "if index servers are specified with tox. ")
+                        help="(experimental) force creating a new $HOME for each test "
+                             "environment and create .pydistutils.cfg|pip.conf files "
+                             "if index servers are specified with tox. ")
     parser.add_argument('-i', action="append",
-        dest="indexurl", metavar="URL",
-        help="set indexserver url (if URL is of form name=url set the "
-        "url for the 'name' indexserver, specifically)")
+                        dest="indexurl", metavar="URL",
+                        help="set indexserver url (if URL is of form name=url set the "
+                             "url for the 'name' indexserver, specifically)")
     parser.add_argument("--pre", action="store_true", dest="pre",
-        help="install pre-releases and development versions of dependencies. "
-             "This will pass the --pre option to install_command (pip by default).")
+                        help="install pre-releases and development versions of dependencies. "
+                             "This will pass the --pre option to install_command "
+                             "(pip by default).")
     parser.add_argument("-r", "--recreate", action="store_true",
-        dest="recreate",
-        help="force recreation of virtual environments")
+                        dest="recreate",
+                        help="force recreation of virtual environments")
     parser.add_argument("--result-json", action="store",
-        dest="resultjson", metavar="PATH",
-        help="write a json file with detailed information about "
-             "all commands and results involved.  This will turn off "
-             "pass-through output from running test commands which is "
-             "instead captured into the json result file.")
+                        dest="resultjson", metavar="PATH",
+                        help="write a json file with detailed information about "
+                             "all commands and results involved.  This will turn off "
+                             "pass-through output from running test commands which is "
+                             "instead captured into the json result file.")
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument("--hashseed", action="store",
-        metavar="SEED", default=None,
-        help="set PYTHONHASHSEED to SEED before running commands.  "
-             "Defaults to a random integer in the range [1, 4294967295] "
-             "([1, 1024] on Windows). "
-             "Passing 'noset' suppresses this behavior.")
+                        metavar="SEED", default=None,
+                        help="set PYTHONHASHSEED to SEED before running commands.  "
+                             "Defaults to a random integer in the range [1, 4294967295] "
+                             "([1, 1024] on Windows). "
+                             "Passing 'noset' suppresses this behavior.")
     parser.add_argument("--force-dep", action="append",
-        metavar="REQ", default=None,
-        help="Forces a certain version of one of the dependencies "
-             "when configuring the virtual environment. REQ Examples "
-             "'pytest<2.7' or 'django>=1.6'.")
+                        metavar="REQ", default=None,
+                        help="Forces a certain version of one of the dependencies "
+                             "when configuring the virtual environment. REQ Examples "
+                             "'pytest<2.7' or 'django>=1.6'.")
     parser.add_argument("--sitepackages", action="store_true",
-        help="override sitepackages setting to True in all envs")
+                        help="override sitepackages setting to True in all envs")
     parser.add_argument("--skip-missing-interpreters", action="store_true",
-        help="don't fail tests for missing interpreters")
+                        help="don't fail tests for missing interpreters")
 
     parser.add_argument("args", nargs="*",
-        help="additional arguments available to command positional substitution")
+                        help="additional arguments available to command positional substitution")
     return parser
+
 
 class Config(object):
     def __init__(self):
@@ -167,8 +173,9 @@ class VenvConfig:
 
     @property
     def envbindir(self):
-        if (sys.platform == "win32" and "jython" not in self.basepython
-                                    and "pypy" not in self.basepython):
+        if (sys.platform == "win32"
+                and "jython" not in self.basepython
+                and "pypy" not in self.basepython):
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")
@@ -185,8 +192,8 @@ class VenvConfig:
     def envsitepackagesdir(self):
         self.getsupportedinterpreter()  # for throwing exceptions
         x = self.config.interpreters.get_sitepackagesdir(
-                info=self._basepython_info,
-                envdir=self.envdir)
+            info=self._basepython_info,
+            envdir=self.envdir)
         return x
 
     def getsupportedinterpreter(self):
@@ -200,14 +207,14 @@ class VenvConfig:
         if not info.version_info:
             raise tox.exception.InvocationError(
                 'Failed to get version_info for %s: %s' % (info.name, info.err))
-        if info.version_info < (2,6):
+        if info.version_info < (2, 6):
             raise tox.exception.UnsupportedInterpreter(
                 "python2.5 is not supported anymore, sorry")
         return info.executable
 
 
-
 testenvprefix = "testenv:"
+
 
 def get_homedir():
     try:
@@ -215,11 +222,13 @@ def get_homedir():
     except Exception:
         return None
 
+
 def make_hashseed():
     max_seed = 4294967295
     if sys.platform == 'win32':
         max_seed = 1024
     return str(random.randint(1, max_seed))
+
 
 class parseini:
     def __init__(self, config, inipath):
@@ -287,8 +296,7 @@ class parseini:
                 config.indexserver[name] = IndexServerConfig(name, override)
 
         reader.addsubstitutions(toxworkdir=config.toxworkdir)
-        config.distdir = reader.getpath(toxsection, "distdir",
-                                           "{toxworkdir}/dist")
+        config.distdir = reader.getpath(toxsection, "distdir", "{toxworkdir}/dist")
         reader.addsubstitutions(distdir=config.distdir)
         config.distshare = reader.getpath(toxsection, "distshare",
                                           distshare_default)
@@ -335,18 +343,18 @@ class parseini:
     def _makeenvconfig(self, name, section, subs, config):
         vc = VenvConfig(config=config, envname=name)
         factors = set(name.split('-'))
-        reader = IniReader(self._cfg, fallbacksections=["testenv"],
-            factors=factors)
+        reader = IniReader(self._cfg, fallbacksections=["testenv"], factors=factors)
         reader.addsubstitutions(**subs)
-        vc.develop = not config.option.installpkg and \
-               reader.getbool(section, "usedevelop", config.option.develop)
+        vc.develop = (
+            not config.option.installpkg
+            and reader.getbool(section, "usedevelop", config.option.develop))
         vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
         vc.args_are_paths = reader.getbool(section, "args_are_paths", True)
         if reader.getdefault(section, "python", None):
             raise tox.exception.ConfigError(
                 "'python=' key was renamed to 'basepython='")
         bp = next((default_factors[f] for f in factors if f in default_factors),
-            sys.executable)
+                  sys.executable)
         vc.basepython = reader.getdefault(section, "basepython", bp)
         vc._basepython_info = config.interpreters.get_info(vc.basepython)
         reader.addsubstitutions(envdir=vc.envdir, envname=vc.envname,
@@ -410,8 +418,9 @@ class parseini:
                 break
         vc.platform = platform
 
-        vc.sitepackages = self.config.option.sitepackages or \
-                          reader.getbool(section, "sitepackages", False)
+        vc.sitepackages = (
+            self.config.option.sitepackages
+            or reader.getbool(section, "sitepackages", False))
 
         vc.downloadcache = None
         downloadcache = reader.getdefault(section, "downloadcache")
@@ -424,10 +433,10 @@ class parseini:
             section,
             "install_command",
             "pip install {opts} {packages}",
-            )
+        )
         if '{packages}' not in vc.install_command:
             raise tox.exception.ConfigError(
-             "'install_command' must contain '{packages}' substitution")
+                "'install_command' must contain '{packages}' substitution")
         vc.pip_pre = config.option.pre or reader.getbool(
             section, "pip_pre", False)
 
@@ -488,9 +497,11 @@ def _split_env(env):
         env = [env]
     return mapcat(_expand_envstr, env)
 
+
 def _split_factor_expr(expr):
     partial_envs = _expand_envstr(expr)
     return [set(e.split('-')) for e in partial_envs]
+
 
 def _expand_envstr(envstr):
     # split by commas not in groups
@@ -505,8 +516,10 @@ def _expand_envstr(envstr):
 
     return mapcat(expand, envlist)
 
+
 def mapcat(f, seq):
     return list(itertools.chain.from_iterable(map(f, seq)))
+
 
 class DepConfig:
     def __init__(self, name, indexserver=None):
@@ -710,7 +723,7 @@ class IniReader:
                 x = self._replace(x)
             finally:
                 assert self._subststack.pop() == (section, name)
-        #print "getdefault", section, name, "returned", repr(x)
+        # print "getdefault", section, name, "returned", repr(x)
         return x
 
     def _apply_factors(self, s):
@@ -740,7 +753,7 @@ class IniReader:
         else:
             envkey = match_value
 
-        if not envkey in os.environ and default is None:
+        if envkey not in os.environ and default is None:
             raise tox.exception.ConfigError(
                 "substitution env:%r: unkown environment variable %r" %
                 (envkey, envkey))
@@ -750,11 +763,11 @@ class IniReader:
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
             i = key.find("]")
-            section, item = key[1:i], key[i+1:]
+            section, item = key[1:i], key[i + 1:]
             if section in self._cfg and item in self._cfg[section]:
                 if (section, item) in self._subststack:
-                    raise ValueError('%s already in %s' %(
-                            (section, item), self._subststack))
+                    raise ValueError('%s already in %s' % (
+                        (section, item), self._subststack))
                 x = str(self._cfg[section][item])
                 self._subststack.append((section, item))
                 try:
@@ -785,13 +798,14 @@ class IniReader:
             return '{%s}' % sub_value
 
         handlers = {
-            'env' : self._replace_env,
-            None : self._replace_substitution,
-            }
+            'env': self._replace_env,
+            None: self._replace_substitution,
+        }
         try:
             sub_type = g['sub_type']
         except KeyError:
-            raise tox.exception.ConfigError("Malformed substitution; no substitution type provided")
+            raise tox.exception.ConfigError(
+                "Malformed substitution; no substitution type provided")
 
         try:
             handler = handlers[sub_type]
@@ -807,6 +821,7 @@ class IniReader:
 
     def _parse_command(self, command):
         pass
+
 
 class CommandParser(object):
 
@@ -824,11 +839,11 @@ class CommandParser(object):
 
         def word_has_ended():
             return ((cur_char in string.whitespace and ps.word and
-               ps.word[-1] not in string.whitespace) or
-              (cur_char == '{' and ps.depth == 0 and not ps.word.endswith('\\')) or
-              (ps.depth == 0 and ps.word and ps.word[-1] == '}') or
-              (cur_char not in string.whitespace and ps.word and
-               ps.word.strip() == ''))
+                     ps.word[-1] not in string.whitespace) or
+                    (cur_char == '{' and ps.depth == 0 and not ps.word.endswith('\\')) or
+                    (ps.depth == 0 and ps.word and ps.word[-1] == '}') or
+                    (cur_char not in string.whitespace and ps.word and
+                     ps.word.strip() == ''))
 
         def yield_this_word():
             yieldword = ps.word
@@ -869,8 +884,8 @@ class CommandParser(object):
             yield_this_word()
         return ps.yield_words
 
+
 def getcontextname():
     if any(env in os.environ for env in ['JENKINS_URL', 'HUDSON_URL']):
         return 'jenkins'
     return None
-

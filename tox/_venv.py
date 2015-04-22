@@ -1,10 +1,12 @@
 from __future__ import with_statement
-import sys, os
+import os
+import sys
 import re
 import codecs
 import py
 import tox
 from tox._config import DepConfig
+
 
 class CreationConfig:
     def __init__(self, md5, python, version, sitepackages,
@@ -43,11 +45,12 @@ class CreationConfig:
 
     def matches(self, other):
         return (other and self.md5 == other.md5
-           and self.python == other.python
-           and self.version == other.version
-           and self.sitepackages == other.sitepackages
-           and self.develop == other.develop
-           and self.deps == other.deps)
+                and self.python == other.python
+                and self.version == other.version
+                and self.sitepackages == other.sitepackages
+                and self.develop == other.develop
+                and self.deps == other.deps)
+
 
 class VirtualEnv(object):
     def __init__(self, envconfig=None, session=None):
@@ -61,7 +64,7 @@ class VirtualEnv(object):
         return self.envconfig.envname
 
     def __repr__(self):
-        return "<VirtualEnv at %r>" %(self.path)
+        return "<VirtualEnv at %r>" % (self.path)
 
     def getcommandpath(self, name=None, venv=True, cwd=None):
         if name is None:
@@ -81,7 +84,7 @@ class VirtualEnv(object):
         p = py.path.local.sysfind(name)
         if p is None:
             raise tox.exception.InvocationError(
-                    "could not find executable %r" % (name,))
+                "could not find executable %r" % (name,))
         # p is not found in virtualenv script/bin dir
         if venv:
             if not self.is_allowed_external(p):
@@ -89,15 +92,16 @@ class VirtualEnv(object):
                     "test command found but not installed in testenv\n"
                     "  cmd: %s\n"
                     "  env: %s\n"
-                    "Maybe forgot to specify a dependency?" % (p,
-                    self.envconfig.envdir))
-        return str(p) # will not be rewritten for reporting
+                    "Maybe forgot to specify a dependency?" % (p, self.envconfig.envdir))
+        return str(p)  # will not be rewritten for reporting
 
     def is_allowed_external(self, p):
         tryadd = [""]
         if sys.platform == "win32":
-            tryadd += [os.path.normcase(x)
-                        for x in os.environ['PATHEXT'].split(os.pathsep)]
+            tryadd += [
+                os.path.normcase(x)
+                for x in os.environ['PATHEXT'].split(os.pathsep)
+            ]
             p = py.path.local(os.path.normcase(str(p)))
         for x in self.envconfig.whitelist_externals:
             for add in tryadd:
@@ -116,7 +120,7 @@ class VirtualEnv(object):
             action = self.session.newaction(self, "update")
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
-            rconfig.matches(self._getliveconfig()):
+           rconfig.matches(self._getliveconfig()):
             action.info("reusing", self.envconfig.envdir)
             return
         if rconfig is None:
@@ -167,7 +171,7 @@ class VirtualEnv(object):
         return re.match(self.envconfig.platform, sys.platform)
 
     def create(self, action=None):
-        #if self.getcommandpath("activate").dirpath().check():
+        # if self.getcommandpath("activate").dirpath().check():
         #    return
         if action is None:
             action = self.session.newaction(self, "create")
@@ -179,18 +183,17 @@ class VirtualEnv(object):
         # add interpreter explicitly, to prevent using
         # default (virtualenv.ini)
         args.extend(['--python', str(config_interpreter)])
-        #if sys.platform == "win32":
+        # if sys.platform == "win32":
         #    f, path, _ = py.std.imp.find_module("virtualenv")
         #    f.close()
         #    args[:1] = [str(config_interpreter), str(path)]
-        #else:
+        # else:
         self.session.make_emptydir(self.path)
         basepath = self.path.dirpath()
         basepath.ensure(dir=1)
         args.append(self.path.basename)
         self._pcall(args, venv=False, action=action, cwd=basepath)
         self.just_created = True
-
 
     def finish(self):
         self._getliveconfig().writeconfig(self.path_config)
@@ -204,8 +207,8 @@ class VirtualEnv(object):
         name = output.strip()
         egg_info = setupdir.join('.'.join((name, 'egg-info')))
         for conf_file in (setup_py, setup_cfg):
-            if (not egg_info.check() or (conf_file.check()
-                    and conf_file.mtime() > egg_info.mtime())):
+            if (not egg_info.check()
+                    or (conf_file.check() and conf_file.mtime() > egg_info.mtime())):
                 return True
         return False
 
@@ -240,8 +243,7 @@ class VirtualEnv(object):
         deps = self._getresolvedeps()
         if deps:
             depinfo = ", ".join(map(str, deps))
-            action.setactivity("installdeps",
-                "%s" % depinfo)
+            action.setactivity("installdeps", "%s" % depinfo)
             self._install(deps, action=action)
 
     def _installopts(self, indexserver):
@@ -261,10 +263,10 @@ class VirtualEnv(object):
         argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
         i = argv.index('{packages}')
-        argv[i:i+1] = packages
+        argv[i:i + 1] = packages
         if '{opts}' in argv:
             i = argv.index('{opts}')
-            argv[i:i+1] = list(options)
+            argv[i:i + 1] = list(options)
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
                   '__PYVENV_LAUNCHER__'):
             try:
@@ -301,7 +303,7 @@ class VirtualEnv(object):
             if self.envconfig.config.option.sethome:
                 extraenv = hack_home_env(
                     homedir=self.envconfig.envtmpdir.join("pseudo-home"),
-                    index_url = ixserver.url)
+                    index_url=ixserver.url)
             else:
                 extraenv = {}
 
@@ -351,7 +353,8 @@ class VirtualEnv(object):
                     ignore_ret = False
 
                 try:
-                    self._pcall(argv, cwd=cwd, action=action, redirect=redirect, ignore_ret=ignore_ret)
+                    self._pcall(argv, cwd=cwd, action=action, redirect=redirect,
+                                ignore_ret=ignore_ret)
                 except tox.exception.InvocationError:
                     val = sys.exc_info()[1]
                     self.session.report.error(str(val))
@@ -362,7 +365,7 @@ class VirtualEnv(object):
                     raise
 
     def _pcall(self, args, venv=True, cwd=None, extraenv={},
-            action=None, redirect=True, ignore_ret=False):
+               action=None, redirect=True, ignore_ret=False):
         for name in ("VIRTUALENV_PYTHON", "PYTHONDONTWRITEBYTECODE"):
             try:
                 del os.environ[name]
