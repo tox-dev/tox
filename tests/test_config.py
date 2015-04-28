@@ -863,6 +863,15 @@ class TestConfigTestEnv:
         assert argv[0] == ["cmd1", "[hello]", "world"]
         assert argv[1] == ["cmd1", "brave", "new", "world"]
 
+    def test_substitution_noargs_issue240(self, newconfig):
+        inisource = """
+            [testenv]
+            commands = echo {posargs:foo}
+        """
+        conf = newconfig([""], inisource).envconfigs['python']
+        argv = conf.commands
+        assert argv[0] == ["echo"]
+
     def test_posargs_backslashed_or_quoted(self, tmpdir, newconfig):
         inisource = """
             [testenv:py24]

@@ -29,6 +29,9 @@
 
 - tox has now somewhat pep8 clean code, thanks to Volodymyr Vitvitski.
 
+- fix issue240: allow to specify empty argument list without it being
+  rewritten to ".".  Thanks Daniel Hahler.
+
 
 1.9.2
 -----------

@@ -373,9 +373,10 @@ class parseini:
             if vc.args_are_paths:
                 args = []
                 for arg in config.option.args:
-                    origpath = config.invocationcwd.join(arg, abs=True)
-                    if origpath.check():
-                        arg = vc.changedir.bestrelpath(origpath)
+                    if arg:
+                        origpath = config.invocationcwd.join(arg, abs=True)
+                        if origpath.check():
+                            arg = vc.changedir.bestrelpath(origpath)
                     args.append(arg)
             reader.addsubstitutions(args)
         setenv = {}
