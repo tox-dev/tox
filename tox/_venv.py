@@ -92,7 +92,9 @@ class VirtualEnv(object):
                     "test command found but not installed in testenv\n"
                     "  cmd: %s\n"
                     "  env: %s\n"
-                    "Maybe forgot to specify a dependency?" % (p, self.envconfig.envdir))
+                    "Maybe you forgot to specify a dependency? "
+                    "See also the whitelist_externals envconfig setting." % (
+                        p, self.envconfig.envdir))
         return str(p)  # will not be rewritten for reporting
 
     def is_allowed_external(self, p):
