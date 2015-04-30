@@ -148,7 +148,7 @@ the "copy-artifacts" plugin will copy it to our ``distshare`` area.
 Now everything proceeds as :ref:`artifacts` shows it.
 
 So if you are using defaults you can re-use and debug exactly the
-same ``tox.ini`` file and make use of automatical sharing of
+same ``tox.ini`` file and make use of automatic sharing of
 your artifacts between runs or Jenkins jobs.
 
 .. include:: ../links.txt
