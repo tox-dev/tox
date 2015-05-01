@@ -361,6 +361,14 @@ class VirtualEnv(object):
                     val = sys.exc_info()[1]
                     self.session.report.error(str(val))
                     self.status = "commands failed"
+                    if not self.envconfig.ignore_errors:
+                        self.session.report.error(
+                            'Stopping processing of commands for env %s '
+                            'because `%s` failed with exit code %s'
+                            % (self.name,
+                               ' '.join([str(x) for x in argv]),
+                               val.args[1]))
+                        break  # Don't process remaining commands
                 except KeyboardInterrupt:
                     self.status = "keyboardinterrupt"
                     self.session.report.error(self.status)

@@ -442,6 +442,7 @@ class parseini:
             section, "pip_pre", False)
 
         vc.skip_install = reader.getbool(section, "skip_install", False)
+        vc.ignore_errors = reader.getbool(section, "ignore_errors", False)
 
         return vc
 
