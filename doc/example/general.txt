@@ -147,8 +147,8 @@ section, for example::
 Avoiding expensive sdist
 ------------------------
 
-Some projects are large enough that running and sdist, followed by
-an install everytime can be prohibitively costly. To solve this,
+Some projects are large enough that running an sdist, followed by
+an install every time can be prohibitively costly. To solve this,
 there are two different options you can add to the ``tox`` section. First,
 you can simply ask tox to please not make an sdist::
 
@@ -156,7 +156,7 @@ you can simply ask tox to please not make an sdist::
     skipsdist=True
 
 If you do this, your local software package will not be installed into
-the virtualenv. You should probably be ok with that, or take steps
+the virtualenv. You should probably be okay with that, or take steps
 to deal with it in your commands section::
 
     [testenv]
@@ -164,7 +164,8 @@ to deal with it in your commands section::
         python setup.py develop
         py.test
 
-Running setup.py develop is a common enough model that it has its own option::
+Running ``setup.py develop`` is a common enough model that it has its own
+option::
 
     [testenv]
     usedevelop=True
