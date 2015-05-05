@@ -587,6 +587,7 @@ class TestConfigTestEnv:
         assert envconfig.changedir == config.setupdir
         assert envconfig.sitepackages is False
         assert envconfig.develop is False
+        assert envconfig.ignore_errors is False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
         assert list(envconfig.setenv.keys()) == ['PYTHONHASHSEED']
         hashseed = envconfig.setenv['PYTHONHASHSEED']
@@ -646,6 +647,15 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.changedir.basename == "xyz"
         assert envconfig.changedir == config.toxinidir.join("xyz")
+
+    def test_ignore_errors(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            ignore_errors=True
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert envconfig.ignore_errors is True
 
     def test_envbindir(self, tmpdir, newconfig):
         config = newconfig("""
