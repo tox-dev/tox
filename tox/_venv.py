@@ -143,7 +143,7 @@ class VirtualEnv(object):
                 self.envconfig.deps, v)
 
     def _getliveconfig(self):
-        python = self.envconfig._basepython_info.executable
+        python = self.envconfig.python_info.executable
         md5 = getdigest(python)
         version = tox.__version__
         sitepackages = self.envconfig.sitepackages

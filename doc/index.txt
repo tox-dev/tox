@@ -5,7 +5,7 @@ vision: standardize testing in Python
 ---------------------------------------------
 
 ``tox`` aims to automate and standardize testing in Python.  It is part
-of a larger vision of easing the packaging, testing and release process 
+of a larger vision of easing the packaging, testing and release process
 of Python software.
 
 What is Tox?
@@ -20,6 +20,7 @@ Tox is a generic virtualenv_ management and test command line tool you can use f
 
 * acting as a frontend to Continuous Integration servers, greatly
   reducing boilerplate and merging CI and shell-based testing.
+
 
 Basic example
 -----------------
@@ -62,10 +63,10 @@ Current features
 
     - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
 
-* supports :ref:`using different / multiple PyPI index servers  <multiindex>`
+* :doc:`(new in 2.0) plugin system <plugins>` to modify tox execution with simple hooks.
 
 * uses pip_ and setuptools_ by default.  Experimental
-  support for configuring the installer command 
+  support for configuring the installer command
   through :confval:`install_command=ARGV`.
 
 * **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher,
@@ -74,11 +75,11 @@ Current features
 * **cross-platform**: Windows and Unix style environments
 
 * **integrates with continuous integration servers** like Jenkins_
-  (formerly known as Hudson) and helps you to avoid boilerplatish 
+  (formerly known as Hudson) and helps you to avoid boilerplatish
   and platform-specific build-step hacks.
 
 * **full interoperability with devpi**: is integrated with and
-  is used for testing in the devpi_ system, a versatile pypi 
+  is used for testing in the devpi_ system, a versatile pypi
   index server and release managing tool.
 
 * **driven by a simple ini-style config file**
@@ -88,6 +89,9 @@ Current features
 * **concise reporting** about tool invocations and configuration errors
 
 * **professionally** :doc:`supported <support>`
+
+* supports :ref:`using different / multiple PyPI index servers  <multiindex>`
+
 
 .. _pypy: http://pypy.org
 
