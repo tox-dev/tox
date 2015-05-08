@@ -1,8 +1,6 @@
 #
 __version__ = '2.0.0.dev1'
 
-from .hookspecs import hookspec, hookimpl  # noqa
-
 
 class exception:
     class Error(Exception):

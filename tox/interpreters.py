@@ -2,14 +2,12 @@ import sys
 import py
 import re
 import inspect
-from tox import hookimpl
 
 
 class Interpreters:
-    def __init__(self, hook):
+    def __init__(self):
         self.name2executable = {}
         self.executable2info = {}
-        self.hook = hook
 
     def get_executable(self, name):
         """ return path object to the executable for the given
@@ -20,9 +18,8 @@ class Interpreters:
         try:
             return self.name2executable[name]
         except KeyError:
-            exe = self.hook.tox_get_python_executable(name=name)
-            self.name2executable[name] = exe
-            return exe
+            self.name2executable[name] = e = find_executable(name)
+            return e
 
     def get_info(self, name=None, executable=None):
         if name is None and executable is None:
@@ -128,33 +125,10 @@ class NoInterpreterInfo:
             return "<executable not found for: %s>" % self.name
 
 if sys.platform != "win32":
-    @hookimpl
-    def tox_get_python_executable(name):
+    def find_executable(name):
         return py.path.local.sysfind(name)
 
 else:
-    @hookimpl
-    def tox_get_python_executable(name):
-        p = py.path.local.sysfind(name)
-        if p:
-            return p
-        actual = None
-        # Is this a standard PythonX.Y name?
-        m = re.match(r"python(\d)\.(\d)", name)
-        if m:
-            # The standard names are in predictable places.
-            actual = r"c:\python%s%s\python.exe" % m.groups()
-        if not actual:
-            actual = win32map.get(name, None)
-        if actual:
-            actual = py.path.local(actual)
-            if actual.check():
-                return actual
-        # The standard executables can be found as a last resort via the
-        # Python launcher py.exe
-        if m:
-            return locate_via_py(*m.groups())
-
     # Exceptions to the usual windows mapping
     win32map = {
         'python': sys.executable,
@@ -174,6 +148,27 @@ else:
                 exe = py.path.local(exe)
                 if exe.check():
                     return exe
+
+    def find_executable(name):
+        p = py.path.local.sysfind(name)
+        if p:
+            return p
+        actual = None
+        # Is this a standard PythonX.Y name?
+        m = re.match(r"python(\d)\.(\d)", name)
+        if m:
+            # The standard names are in predictable places.
+            actual = r"c:\python%s%s\python.exe" % m.groups()
+        if not actual:
+            actual = win32map.get(name, None)
+        if actual:
+            actual = py.path.local(actual)
+            if actual.check():
+                return actual
+        # The standard executables can be found as a last resort via the
+        # Python launcher py.exe
+        if m:
+            return locate_via_py(*m.groups())
 
 
 def pyinfo():
