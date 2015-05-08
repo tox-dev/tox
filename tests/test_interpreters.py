@@ -3,11 +3,13 @@ import os
 
 import pytest
 from tox.interpreters import *  # noqa
+from tox._config import get_plugin_manager
 
 
 @pytest.fixture
 def interpreters():
-    return Interpreters()
+    pm = get_plugin_manager()
+    return Interpreters(hook=pm.hook)
 
 
 @pytest.mark.skipif("sys.platform != 'win32'")
@@ -28,8 +30,8 @@ def test_locate_via_py(monkeypatch):
     assert locate_via_py('3', '2') == sys.executable
 
 
-def test_find_executable():
-    p = find_executable(sys.executable)
+def test_tox_get_python_executable():
+    p = tox_get_python_executable(sys.executable)
     assert p == py.path.local(sys.executable)
     for ver in [""] + "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split():
         name = "python%s" % ver
@@ -42,7 +44,7 @@ def test_find_executable():
         else:
             if not py.path.local.sysfind(name):
                 continue
-        p = find_executable(name)
+        p = tox_get_python_executable(name)
         assert p
         popen = py.std.subprocess.Popen([str(p), '-V'],
                                         stderr=py.std.subprocess.PIPE)
@@ -55,7 +57,7 @@ def test_find_executable_extra(monkeypatch):
     def sysfind(x):
         return "hello"
     monkeypatch.setattr(py.path.local, "sysfind", sysfind)
-    t = find_executable("qweqwe")
+    t = tox_get_python_executable("qweqwe")
     assert t == "hello"
 
 

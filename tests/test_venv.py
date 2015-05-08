@@ -65,7 +65,7 @@ def test_create(monkeypatch, mocksession, newconfig):
         # assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
-    assert interp == venv.envconfig._basepython_info.executable
+    assert interp == venv.envconfig.python_info.executable
     assert venv.path_config.check(exists=False)
 
 

@@ -8,8 +8,10 @@ import shlex
 import string
 import pkg_resources
 import itertools
+import pluggy
 
-from tox.interpreters import Interpreters
+import tox.interpreters
+from tox import hookspecs
 
 import py
 
@@ -22,20 +24,43 @@ default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
 for version in '24,25,26,27,30,31,32,33,34,35'.split(','):
     default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
+hookimpl = pluggy.HookimplMarker("tox")
 
-def parseconfig(args=None, pkg=None):
+
+def get_plugin_manager():
+    # initialize plugin manager
+    pm = pluggy.PluginManager("tox")
+    pm.add_hookspecs(hookspecs)
+    pm.register(tox._config)
+    pm.register(tox.interpreters)
+    pm.load_setuptools_entrypoints("tox")
+    pm.check_pending()
+    return pm
+
+
+def parseconfig(args=None):
     """
     :param list[str] args: Optional list of arguments.
     :type pkg: str
     :rtype: :class:`Config`
     :raise SystemExit: toxinit file is not found
     """
+
+    pm = get_plugin_manager()
+
     if args is None:
         args = sys.argv[1:]
-    parser = prepare_parse(pkg)
-    opts = parser.parse_args(args)
-    config = Config()
-    config.option = opts
+
+    # prepare command line options
+    parser = argparse.ArgumentParser(description=__doc__)
+    pm.hook.tox_addoption(parser=parser)
+
+    # parse command line options
+    option = parser.parse_args(args)
+    interpreters = tox.interpreters.Interpreters(hook=pm.hook)
+    config = Config(pluginmanager=pm, option=option, interpreters=interpreters)
+
+    # parse ini file
     basename = config.option.configfile
     if os.path.isabs(basename):
         inipath = py.path.local(basename)
@@ -52,6 +77,10 @@ def parseconfig(args=None, pkg=None):
         exn = sys.exc_info()[1]
         # Use stdout to match test expectations
         py.builtin.print_("ERROR: " + str(exn))
+
+    # post process config object
+    pm.hook.tox_configure(config=config)
+
     return config
 
 
@@ -63,10 +92,8 @@ def feedback(msg, sysexit=False):
 
 class VersionAction(argparse.Action):
     def __call__(self, argparser, *args, **kwargs):
-        name = argparser.pkgname
-        mod = __import__(name)
-        version = mod.__version__
-        py.builtin.print_("%s imported from %s" % (version, mod.__file__))
+        version = tox.__version__
+        py.builtin.print_("%s imported from %s" % (version, tox.__file__))
         raise SystemExit(0)
 
 
@@ -78,10 +105,9 @@ class CountAction(argparse.Action):
             setattr(namespace, self.dest, 0)
 
 
-def prepare_parse(pkgname):
-    parser = argparse.ArgumentParser(description=__doc__,)
+@hookimpl
+def tox_addoption(parser):
     # formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.pkgname = pkgname
     parser.add_argument("--version", nargs=0, action=VersionAction,
                         dest="version",
                         help="report version information to stdout.")
@@ -153,10 +179,12 @@ def prepare_parse(pkgname):
 
 
 class Config(object):
-    def __init__(self):
+    def __init__(self, pluginmanager, option, interpreters):
         self.envconfigs = {}
         self.invocationcwd = py.path.local()
-        self.interpreters = Interpreters()
+        self.interpreters = interpreters
+        self.pluginmanager = pluginmanager
+        self.option = option
 
     @property
     def homedir(self):
@@ -192,9 +220,13 @@ class VenvConfig:
     def envsitepackagesdir(self):
         self.getsupportedinterpreter()  # for throwing exceptions
         x = self.config.interpreters.get_sitepackagesdir(
-            info=self._basepython_info,
+            info=self.python_info,
             envdir=self.envdir)
         return x
+
+    @property
+    def python_info(self):
+        return self.config.interpreters.get_info(self.basepython)
 
     def getsupportedinterpreter(self):
         if sys.platform == "win32" and self.basepython and \
@@ -356,7 +388,7 @@ class parseini:
         bp = next((default_factors[f] for f in factors if f in default_factors),
                   sys.executable)
         vc.basepython = reader.getdefault(section, "basepython", bp)
-        vc._basepython_info = config.interpreters.get_info(vc.basepython)
+
         reader.addsubstitutions(envdir=vc.envdir, envname=vc.envname,
                                 envbindir=vc.envbindir, envpython=vc.envpython,
                                 envsitepackagesdir=vc.envsitepackagesdir)

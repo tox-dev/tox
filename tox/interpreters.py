@@ -2,12 +2,14 @@ import sys
 import py
 import re
 import inspect
+from tox import hookimpl
 
 
 class Interpreters:
-    def __init__(self):
+    def __init__(self, hook):
         self.name2executable = {}
         self.executable2info = {}
+        self.hook = hook
 
     def get_executable(self, name):
         """ return path object to the executable for the given
@@ -18,8 +20,9 @@ class Interpreters:
         try:
             return self.name2executable[name]
         except KeyError:
-            self.name2executable[name] = e = find_executable(name)
-            return e
+            exe = self.hook.tox_get_python_executable(name=name)
+            self.name2executable[name] = exe
+            return exe
 
     def get_info(self, name=None, executable=None):
         if name is None and executable is None:
@@ -125,31 +128,13 @@ class NoInterpreterInfo:
             return "<executable not found for: %s>" % self.name
 
 if sys.platform != "win32":
-    def find_executable(name):
+    @hookimpl
+    def tox_get_python_executable(name):
         return py.path.local.sysfind(name)
 
 else:
-    # Exceptions to the usual windows mapping
-    win32map = {
-        'python': sys.executable,
-        'jython': "c:\jython2.5.1\jython.bat",
-    }
-
-    def locate_via_py(v_maj, v_min):
-        ver = "-%s.%s" % (v_maj, v_min)
-        script = "import sys; print(sys.executable)"
-        py_exe = py.path.local.sysfind('py')
-        if py_exe:
-            try:
-                exe = py_exe.sysexec(ver, '-c', script).strip()
-            except py.process.cmdexec.Error:
-                exe = None
-            if exe:
-                exe = py.path.local(exe)
-                if exe.check():
-                    return exe
-
-    def find_executable(name):
+    @hookimpl
+    def tox_get_python_executable(name):
         p = py.path.local.sysfind(name)
         if p:
             return p
@@ -169,6 +154,26 @@ else:
         # Python launcher py.exe
         if m:
             return locate_via_py(*m.groups())
+
+    # Exceptions to the usual windows mapping
+    win32map = {
+        'python': sys.executable,
+        'jython': "c:\jython2.5.1\jython.bat",
+    }
+
+    def locate_via_py(v_maj, v_min):
+        ver = "-%s.%s" % (v_maj, v_min)
+        script = "import sys; print(sys.executable)"
+        py_exe = py.path.local.sysfind('py')
+        if py_exe:
+            try:
+                exe = py_exe.sysexec(ver, '-c', script).strip()
+            except py.process.cmdexec.Error:
+                exe = None
+            if exe:
+                exe = py.path.local(exe)
+                if exe.check():
+                    return exe
 
 
 def pyinfo():

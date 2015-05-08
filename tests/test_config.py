@@ -6,7 +6,6 @@ import pytest
 import tox
 import tox._config
 from tox._config import *  # noqa
-from tox._config import _split_env
 from tox._venv import VirtualEnv
 
 
@@ -1561,31 +1560,16 @@ class TestCmdInvocation:
         ])
 
 
-class TestArgumentParser:
-
-    def test_dash_e_single_1(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26']
-
-    def test_dash_e_single_2(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26,py33'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26', 'py33']
-
-    def test_dash_e_same(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26,py26'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26', 'py26']
-
-    def test_dash_e_combine(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26,py25,py33 -e py33,py27'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26', 'py25', 'py33', 'py33', 'py27']
+@pytest.mark.parametrize("cmdline,envlist", [
+    ("-e py26", ['py26']),
+    ("-e py26,py33", ['py26', 'py33']),
+    ("-e py26,py26", ['py26', 'py26']),
+    ("-e py26,py33 -e py33,py27", ['py26', 'py33', 'py33', 'py27'])
+])
+def test_env_spec(cmdline, envlist):
+    args = cmdline.split()
+    config = parseconfig(args)
+    assert config.envlist == envlist
 
 
 class TestCommandParser:
