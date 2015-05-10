@@ -35,6 +35,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     py.test.raises(tox.exception.UnsupportedInterpreter,
                    venv.getsupportedinterpreter)
     monkeypatch.undo()
+    monkeypatch.setattr(venv.envconfig, "envname", "py1")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
     py.test.raises(tox.exception.InterpreterNotFound,
                    venv.getsupportedinterpreter)
@@ -42,7 +43,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     # check that we properly report when no version_info is present
     info = NoInterpreterInfo(name=venv.name)
     info.executable = "something"
-    monkeypatch.setattr(config.interpreters, "get_info", lambda *args: info)
+    monkeypatch.setattr(config.interpreters, "get_info", lambda *args, **kw: info)
     pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
 
 

@@ -11,26 +11,22 @@ class Interpreters:
         self.executable2info = {}
         self.hook = hook
 
-    def get_executable(self, name):
+    def get_executable(self, envconfig):
         """ return path object to the executable for the given
         name (e.g. python2.6, python2.7, python etc.)
         if name is already an existing path, return name.
         If an interpreter cannot be found, return None.
         """
         try:
-            return self.name2executable[name]
+            return self.name2executable[envconfig.envname]
         except KeyError:
-            exe = self.hook.tox_get_python_executable(name=name)
-            self.name2executable[name] = exe
+            exe = self.hook.tox_get_python_executable(envconfig=envconfig)
+            self.name2executable[envconfig.envname] = exe
             return exe
 
-    def get_info(self, name=None, executable=None):
-        if name is None and executable is None:
-            raise ValueError("need to specify name or executable")
-        if name:
-            if executable is not None:
-                raise ValueError("cannot specify both name, executable")
-            executable = self.get_executable(name)
+    def get_info(self, envconfig):
+        executable = self.get_executable(envconfig)
+        name = envconfig.basepython
         if not executable:
             return NoInterpreterInfo(name=name)
         try:
@@ -129,12 +125,13 @@ class NoInterpreterInfo:
 
 if sys.platform != "win32":
     @hookimpl
-    def tox_get_python_executable(name):
-        return py.path.local.sysfind(name)
+    def tox_get_python_executable(envconfig):
+        return py.path.local.sysfind(envconfig.basepython)
 
 else:
     @hookimpl
-    def tox_get_python_executable(name):
+    def tox_get_python_executable(envconfig):
+        name = envconfig.basepython
         p = py.path.local.sysfind(name)
         if p:
             return p

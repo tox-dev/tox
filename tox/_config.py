@@ -226,14 +226,14 @@ class VenvConfig:
 
     @property
     def python_info(self):
-        return self.config.interpreters.get_info(self.basepython)
+        return self.config.interpreters.get_info(envconfig=self)
 
     def getsupportedinterpreter(self):
         if sys.platform == "win32" and self.basepython and \
                 "jython" in self.basepython:
             raise tox.exception.UnsupportedInterpreter(
                 "Jython/Windows does not support installing scripts")
-        info = self.config.interpreters.get_info(self.basepython)
+        info = self.config.interpreters.get_info(envconfig=self)
         if not info.executable:
             raise tox.exception.InterpreterNotFound(self.basepython)
         if not info.version_info:

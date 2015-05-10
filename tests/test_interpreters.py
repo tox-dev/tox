@@ -31,7 +31,10 @@ def test_locate_via_py(monkeypatch):
 
 
 def test_tox_get_python_executable():
-    p = tox_get_python_executable(sys.executable)
+    class envconfig:
+        basepython = sys.executable
+        envname = "pyxx"
+    p = tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
     for ver in [""] + "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split():
         name = "python%s" % ver
@@ -44,7 +47,8 @@ def test_tox_get_python_executable():
         else:
             if not py.path.local.sysfind(name):
                 continue
-        p = tox_get_python_executable(name)
+        envconfig.basepython = name
+        p = tox_get_python_executable(envconfig)
         assert p
         popen = py.std.subprocess.Popen([str(p), '-V'],
                                         stderr=py.std.subprocess.PIPE)
@@ -57,7 +61,12 @@ def test_find_executable_extra(monkeypatch):
     def sysfind(x):
         return "hello"
     monkeypatch.setattr(py.path.local, "sysfind", sysfind)
-    t = tox_get_python_executable("qweqwe")
+
+    class envconfig:
+        basepython = "1lk23j"
+        envname = "pyxx"
+
+    t = tox_get_python_executable(envconfig)
     assert t == "hello"
 
 
@@ -71,31 +80,33 @@ def test_run_and_get_interpreter_info():
 
 class TestInterpreters:
 
-    def test_get_info_self_exceptions(self, interpreters):
-        pytest.raises(ValueError, lambda:
-                      interpreters.get_info())
-        pytest.raises(ValueError, lambda:
-                      interpreters.get_info(name="12", executable="123"))
-
     def test_get_executable(self, interpreters):
-        x = interpreters.get_executable(sys.executable)
-        assert x == sys.executable
-        assert not interpreters.get_executable("12l3k1j23")
+        class envconfig:
+            basepython = sys.executable
+            envname = "pyxx"
 
-    def test_get_info__name(self, interpreters):
-        info = interpreters.get_info(executable=sys.executable)
+        x = interpreters.get_executable(envconfig)
+        assert x == sys.executable
+        info = interpreters.get_info(envconfig)
         assert info.version_info == tuple(sys.version_info)
         assert info.executable == sys.executable
         assert info.runnable
 
-    def test_get_info__name_not_exists(self, interpreters):
-        info = interpreters.get_info("qlwkejqwe")
+    def test_get_executable_no_exist(self, interpreters):
+        class envconfig:
+            basepython = "1lkj23"
+            envname = "pyxx"
+        assert not interpreters.get_executable(envconfig)
+        info = interpreters.get_info(envconfig)
         assert not info.version_info
-        assert info.name == "qlwkejqwe"
+        assert info.name == "1lkj23"
         assert not info.executable
         assert not info.runnable
 
     def test_get_sitepackagesdir_error(self, interpreters):
-        info = interpreters.get_info(sys.executable)
+        class envconfig:
+            basepython = sys.executable
+            envname = "123"
+        info = interpreters.get_info(envconfig)
         s = interpreters.get_sitepackagesdir(info, "")
         assert s

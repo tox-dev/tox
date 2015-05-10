@@ -22,7 +22,11 @@ def tox_configure(config):
 
 
 @hookspec(firstresult=True)
-def tox_get_python_executable(name):
+def tox_get_python_executable(envconfig):
     """ return a python executable for the given python base name.
     The first plugin/hook which returns an executable path will determine it.
+
+    ``envconfig`` is the testenv configuration which contains
+    per-testenv configuration, notably the ``.envname`` and ``.basepython``
+    setting.
     """
