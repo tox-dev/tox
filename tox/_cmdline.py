@@ -24,11 +24,33 @@ def now():
 
 def main(args=None):
     try:
-        config = parseconfig(args, 'tox')
+        config = parseconfig(args)
+        if config.option.help:
+            show_help(config)
+            raise SystemExit(0)
+        elif config.option.helpini:
+            show_help_ini(config)
+            raise SystemExit(0)
         retcode = Session(config).runcommand()
         raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)
+
+
+def show_help(config):
+    tw = py.io.TerminalWriter()
+    tw.write(config._parser.format_help())
+    tw.line()
+
+
+def show_help_ini(config):
+    tw = py.io.TerminalWriter()
+    tw.sep("-", "per-testenv attributes")
+    for env_attr in config._testenv_attr:
+        tw.line("%-15s %-8s default: %s" %
+                (env_attr.name, "<" + env_attr.type + ">", env_attr.default), bold=True)
+        tw.line(env_attr.help)
+        tw.line()
 
 
 class Action(object):
@@ -487,7 +509,7 @@ class Session:
                 venv.status = "platform mismatch"
                 continue  # we simply omit non-matching platforms
             if self.setupenv(venv):
-                if venv.envconfig.develop:
+                if venv.envconfig.usedevelop:
                     self.developpkg(venv, self.config.setupdir)
                 elif self.config.skipsdist or venv.envconfig.skip_install:
                     self.finishvenv(venv)
@@ -551,8 +573,7 @@ class Session:
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
             self.report.line("  basepython=%s" % envconfig.basepython)
-            self.report.line("  _basepython_info=%s" %
-                             envconfig._basepython_info)
+            self.report.line("  pythoninfo=%s" % (envconfig.python_info,))
             self.report.line("  envpython=%s" % envconfig.envpython)
             self.report.line("  envtmpdir=%s" % envconfig.envtmpdir)
             self.report.line("  envbindir=%s" % envconfig.envbindir)
@@ -567,7 +588,7 @@ class Session:
             self.report.line("  deps=%s" % envconfig.deps)
             self.report.line("  envdir=    %s" % envconfig.envdir)
             self.report.line("  downloadcache=%s" % envconfig.downloadcache)
-            self.report.line("  usedevelop=%s" % envconfig.develop)
+            self.report.line("  usedevelop=%s" % envconfig.usedevelop)
 
     def showenvs(self):
         for env in self.config.envlist:

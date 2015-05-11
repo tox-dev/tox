@@ -6,7 +6,6 @@ import pytest
 import tox
 import tox._config
 from tox._config import *  # noqa
-from tox._config import _split_env
 from tox._venv import VirtualEnv
 
 
@@ -19,7 +18,7 @@ class TestVenvConfig:
         assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
         assert config.envconfigs['py1'].basepython == sys.executable
         assert config.envconfigs['py1'].deps == []
-        assert not config.envconfigs['py1'].platform
+        assert config.envconfigs['py1'].platform == ".*"
 
     def test_config_parsing_multienv(self, tmpdir, newconfig):
         config = newconfig([], """
@@ -93,12 +92,12 @@ class TestVenvConfig:
         """
         Ensure correct parseini._is_same_dep is working with a few samples.
         """
-        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3')
-        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>=2.0')
-        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>2.0')
-        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<2.0')
-        assert parseini._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
-        assert not parseini._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
+        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3')
+        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>=2.0')
+        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>2.0')
+        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<2.0')
+        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
+        assert not DepOption._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
 
 
 class TestConfigPlatform:
@@ -220,8 +219,8 @@ class TestIniParserAgainstCommandsKey:
             commands =
                 echo {[section]key}
             """)
-        reader = IniReader(config._cfg)
-        x = reader.getargvlist("testenv", "commands")
+        reader = SectionReader("testenv", config._cfg)
+        x = reader.getargvlist("commands")
         assert x == [["echo", "whatever"]]
 
     def test_command_substitution_from_other_section_multiline(self, newconfig):
@@ -245,8 +244,8 @@ class TestIniParserAgainstCommandsKey:
                 # comment is omitted
                 echo {[base]commands}
             """)
-        reader = IniReader(config._cfg)
-        x = reader.getargvlist("testenv", "commands")
+        reader = SectionReader("testenv", config._cfg)
+        x = reader.getargvlist("commands")
         assert x == [
             "cmd1 param11 param12".split(),
             "cmd2 param21 param22".split(),
@@ -257,16 +256,16 @@ class TestIniParserAgainstCommandsKey:
 
 
 class TestIniParser:
-    def test_getdefault_single(self, tmpdir, newconfig):
+    def test_getstring_single(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
             key=value
         """)
-        reader = IniReader(config._cfg)
-        x = reader.getdefault("section", "key")
+        reader = SectionReader("section", config._cfg)
+        x = reader.getstring("key")
         assert x == "value"
-        assert not reader.getdefault("section", "hello")
-        x = reader.getdefault("section", "hello", "world")
+        assert not reader.getstring("hello")
+        x = reader.getstring("hello", "world")
         assert x == "world"
 
     def test_missing_substitution(self, tmpdir, newconfig):
@@ -274,40 +273,40 @@ class TestIniParser:
             [mydefault]
             key2={xyz}
         """)
-        reader = IniReader(config._cfg, fallbacksections=['mydefault'])
+        reader = SectionReader("mydefault", config._cfg, fallbacksections=['mydefault'])
         assert reader is not None
-        py.test.raises(tox.exception.ConfigError,
-                       'reader.getdefault("mydefault", "key2")')
+        with py.test.raises(tox.exception.ConfigError):
+            reader.getstring("key2")
 
-    def test_getdefault_fallback_sections(self, tmpdir, newconfig):
+    def test_getstring_fallback_sections(self, tmpdir, newconfig):
         config = newconfig("""
             [mydefault]
             key2=value2
             [section]
             key=value
         """)
-        reader = IniReader(config._cfg, fallbacksections=['mydefault'])
-        x = reader.getdefault("section", "key2")
+        reader = SectionReader("section", config._cfg, fallbacksections=['mydefault'])
+        x = reader.getstring("key2")
         assert x == "value2"
-        x = reader.getdefault("section", "key3")
+        x = reader.getstring("key3")
         assert not x
-        x = reader.getdefault("section", "key3", "world")
+        x = reader.getstring("key3", "world")
         assert x == "world"
 
-    def test_getdefault_substitution(self, tmpdir, newconfig):
+    def test_getstring_substitution(self, tmpdir, newconfig):
         config = newconfig("""
             [mydefault]
             key2={value2}
             [section]
             key={value}
         """)
-        reader = IniReader(config._cfg, fallbacksections=['mydefault'])
+        reader = SectionReader("section", config._cfg, fallbacksections=['mydefault'])
         reader.addsubstitutions(value="newvalue", value2="newvalue2")
-        x = reader.getdefault("section", "key2")
+        x = reader.getstring("key2")
         assert x == "newvalue2"
-        x = reader.getdefault("section", "key3")
+        x = reader.getstring("key3")
         assert not x
-        x = reader.getdefault("section", "key3", "{value2}")
+        x = reader.getstring("key3", "{value2}")
         assert x == "newvalue2"
 
     def test_getlist(self, tmpdir, newconfig):
@@ -317,9 +316,9 @@ class TestIniParser:
                 item1
                 {item2}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="not", item2="grr")
-        x = reader.getlist("section", "key2")
+        x = reader.getlist("key2")
         assert x == ['item1', 'grr']
 
     def test_getdict(self, tmpdir, newconfig):
@@ -329,28 +328,31 @@ class TestIniParser:
                 key1=item1
                 key2={item2}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="not", item2="grr")
-        x = reader.getdict("section", "key2")
+        x = reader.getdict("key2")
         assert 'key1' in x
         assert 'key2' in x
         assert x['key1'] == 'item1'
         assert x['key2'] == 'grr'
 
-    def test_getdefault_environment_substitution(self, monkeypatch, newconfig):
+        x = reader.getdict("key3", {1: 2})
+        assert x == {1: 2}
+
+    def test_getstring_environment_substitution(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
         config = newconfig("""
             [section]
             key1={env:KEY1}
             key2={env:KEY2}
         """)
-        reader = IniReader(config._cfg)
-        x = reader.getdefault("section", "key1")
+        reader = SectionReader("section", config._cfg)
+        x = reader.getstring("key1")
         assert x == "hello"
-        py.test.raises(tox.exception.ConfigError,
-                       'reader.getdefault("section", "key2")')
+        with py.test.raises(tox.exception.ConfigError):
+            reader.getstring("key2")
 
-    def test_getdefault_environment_substitution_with_default(self, monkeypatch, newconfig):
+    def test_getstring_environment_substitution_with_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
         config = newconfig("""
             [section]
@@ -358,12 +360,12 @@ class TestIniParser:
             key2={env:KEY2:DEFAULT_VALUE}
             key3={env:KEY3:}
         """)
-        reader = IniReader(config._cfg)
-        x = reader.getdefault("section", "key1")
+        reader = SectionReader("section", config._cfg)
+        x = reader.getstring("key1")
         assert x == "hello"
-        x = reader.getdefault("section", "key2")
+        x = reader.getstring("key2")
         assert x == "DEFAULT_VALUE"
-        x = reader.getdefault("section", "key3")
+        x = reader.getstring("key3")
         assert x == ""
 
     def test_value_matches_section_substituion(self):
@@ -374,15 +376,15 @@ class TestIniParser:
         assert is_section_substitution("{[setup]}") is None
         assert is_section_substitution("{[setup] commands}") is None
 
-    def test_getdefault_other_section_substitution(self, newconfig):
+    def test_getstring_other_section_substitution(self, newconfig):
         config = newconfig("""
             [section]
             key = rue
             [testenv]
             key = t{[section]key}
             """)
-        reader = IniReader(config._cfg)
-        x = reader.getdefault("testenv", "key")
+        reader = SectionReader("testenv", config._cfg)
+        x = reader.getstring("key")
         assert x == "true"
 
     def test_argvlist(self, tmpdir, newconfig):
@@ -392,12 +394,12 @@ class TestIniParser:
                 cmd1 {item1} {item2}
                 cmd2 {item2}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
         # py.test.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('section', 'key1')")
-        assert reader.getargvlist('section', 'key1') == []
-        x = reader.getargvlist("section", "key2")
+        #    "reader.getargvlist('key1')")
+        assert reader.getargvlist('key1') == []
+        x = reader.getargvlist("key2")
         assert x == [["cmd1", "with", "space", "grr"],
                      ["cmd2", "grr"]]
 
@@ -406,9 +408,9 @@ class TestIniParser:
             [section]
             comm = py.test {posargs}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([r"hello\this"])
-        argv = reader.getargv("section", "comm")
+        argv = reader.getargv("comm")
         assert argv == ["py.test", "hello\\this"]
 
     def test_argvlist_multiline(self, tmpdir, newconfig):
@@ -418,12 +420,12 @@ class TestIniParser:
                 cmd1 {item1} \ # a comment
                      {item2}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
         # py.test.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('section', 'key1')")
-        assert reader.getargvlist('section', 'key1') == []
-        x = reader.getargvlist("section", "key2")
+        #    "reader.getargvlist('key1')")
+        assert reader.getargvlist('key1') == []
+        x = reader.getargvlist("key2")
         assert x == [["cmd1", "with", "space", "grr"]]
 
     def test_argvlist_quoting_in_command(self, tmpdir, newconfig):
@@ -433,8 +435,8 @@ class TestIniParser:
                 cmd1 'with space' \ # a comment
                      'after the comment'
         """)
-        reader = IniReader(config._cfg)
-        x = reader.getargvlist("section", "key1")
+        reader = SectionReader("section", config._cfg)
+        x = reader.getargvlist("key1")
         assert x == [["cmd1", "with space", "after the comment"]]
 
     def test_argvlist_positional_substitution(self, tmpdir, newconfig):
@@ -445,22 +447,22 @@ class TestIniParser:
                 cmd2 {posargs:{item2} \
                      other}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         posargs = ['hello', 'world']
         reader.addsubstitutions(posargs, item2="value2")
         # py.test.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('section', 'key1')")
-        assert reader.getargvlist('section', 'key1') == []
-        argvlist = reader.getargvlist("section", "key2")
+        #    "reader.getargvlist('key1')")
+        assert reader.getargvlist('key1') == []
+        argvlist = reader.getargvlist("key2")
         assert argvlist[0] == ["cmd1"] + posargs
         assert argvlist[1] == ["cmd2"] + posargs
 
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([], item2="value2")
         # py.test.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('section', 'key1')")
-        assert reader.getargvlist('section', 'key1') == []
-        argvlist = reader.getargvlist("section", "key2")
+        #    "reader.getargvlist('key1')")
+        assert reader.getargvlist('key1') == []
+        argvlist = reader.getargvlist("key2")
         assert argvlist[0] == ["cmd1"]
         assert argvlist[1] == ["cmd2", "value2", "other"]
 
@@ -472,10 +474,10 @@ class TestIniParser:
                 cmd2 -f '{posargs}'
                 cmd3 -f {posargs}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(["foo", "bar"])
-        assert reader.getargvlist('section', 'key1') == []
-        x = reader.getargvlist("section", "key2")
+        assert reader.getargvlist('key1') == []
+        x = reader.getargvlist("key2")
         assert x == [["cmd1", "--foo-args=foo bar"],
                      ["cmd2", "-f", "foo bar"],
                      ["cmd3", "-f", "foo", "bar"]]
@@ -486,10 +488,10 @@ class TestIniParser:
             key2=
                 cmd1 -f {posargs}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(["foo", "'bar", "baz'"])
-        assert reader.getargvlist('section', 'key1') == []
-        x = reader.getargvlist("section", "key2")
+        assert reader.getargvlist('key1') == []
+        x = reader.getargvlist("key2")
         assert x == [["cmd1", "-f", "foo", "bar baz"]]
 
     def test_positional_arguments_are_only_replaced_when_standing_alone(self, tmpdir, newconfig):
@@ -501,11 +503,11 @@ class TestIniParser:
                 cmd2 -m '\'something\'' []
                 cmd3 something[]else
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         posargs = ['hello', 'world']
         reader.addsubstitutions(posargs)
 
-        argvlist = reader.getargvlist('section', 'key')
+        argvlist = reader.getargvlist('key')
         assert argvlist[0] == ['cmd0'] + posargs
         assert argvlist[1] == ['cmd1', '-m', '[abc]']
         assert argvlist[2] == ['cmd2', '-m', "something"] + posargs
@@ -517,32 +519,32 @@ class TestIniParser:
             key = py.test -n5 --junitxml={envlogdir}/junit-{envname}.xml []
             """
         config = newconfig(inisource)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         posargs = ['hello', 'world']
         reader.addsubstitutions(posargs, envlogdir='ENV_LOG_DIR', envname='ENV_NAME')
 
         expected = [
             'py.test', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world'
         ]
-        assert reader.getargvlist('section', 'key')[0] == expected
+        assert reader.getargvlist('key')[0] == expected
 
     def test_getargv(self, newconfig):
         config = newconfig("""
             [section]
             key=some command "with quoting"
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         expected = ['some', 'command', 'with quoting']
-        assert reader.getargv('section', 'key') == expected
+        assert reader.getargv('key') == expected
 
     def test_getpath(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
             path1={HELLO}
         """)
-        reader = IniReader(config._cfg)
+        reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(toxinidir=tmpdir, HELLO="mypath")
-        x = reader.getpath("section", "path1", tmpdir)
+        x = reader.getpath("path1", tmpdir)
         assert x == tmpdir.join("mypath")
 
     def test_getbool(self, tmpdir, newconfig):
@@ -554,13 +556,13 @@ class TestIniParser:
             key2a=falsE
             key5=yes
         """)
-        reader = IniReader(config._cfg)
-        assert reader.getbool("section", "key1") is True
-        assert reader.getbool("section", "key1a") is True
-        assert reader.getbool("section", "key2") is False
-        assert reader.getbool("section", "key2a") is False
-        py.test.raises(KeyError, 'reader.getbool("section", "key3")')
-        py.test.raises(tox.exception.ConfigError, 'reader.getbool("section", "key5")')
+        reader = SectionReader("section", config._cfg)
+        assert reader.getbool("key1") is True
+        assert reader.getbool("key1a") is True
+        assert reader.getbool("key2") is False
+        assert reader.getbool("key2a") is False
+        py.test.raises(KeyError, 'reader.getbool("key3")')
+        py.test.raises(tox.exception.ConfigError, 'reader.getbool("key5")')
 
 
 class TestConfigTestEnv:
@@ -586,7 +588,7 @@ class TestConfigTestEnv:
         assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
         assert envconfig.sitepackages is False
-        assert envconfig.develop is False
+        assert envconfig.usedevelop is False
         assert envconfig.ignore_errors is False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
         assert list(envconfig.setenv.keys()) == ['PYTHONHASHSEED']
@@ -607,7 +609,7 @@ class TestConfigTestEnv:
             [testenv]
             usedevelop = True
         """)
-        assert not config.envconfigs["python"].develop
+        assert not config.envconfigs["python"].usedevelop
 
     def test_specific_command_overrides(self, tmpdir, newconfig):
         config = newconfig("""
@@ -1382,7 +1384,7 @@ class TestHashseedOption:
     def test_noset(self, tmpdir, newconfig):
         args = ['--hashseed', 'noset']
         envconfig = self._get_envconfig(newconfig, args=args)
-        assert envconfig.setenv is None
+        assert envconfig.setenv == {}
 
     def test_noset_with_setenv(self, tmpdir, newconfig):
         tox_ini = """
@@ -1571,31 +1573,16 @@ class TestCmdInvocation:
         ])
 
 
-class TestArgumentParser:
-
-    def test_dash_e_single_1(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26']
-
-    def test_dash_e_single_2(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26,py33'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26', 'py33']
-
-    def test_dash_e_same(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26,py26'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26', 'py26']
-
-    def test_dash_e_combine(self):
-        parser = prepare_parse('testpkg')
-        args = parser.parse_args('-e py26,py25,py33 -e py33,py27'.split())
-        envlist = _split_env(args.env)
-        assert envlist == ['py26', 'py25', 'py33', 'py33', 'py27']
+@pytest.mark.parametrize("cmdline,envlist", [
+    ("-e py26", ['py26']),
+    ("-e py26,py33", ['py26', 'py33']),
+    ("-e py26,py26", ['py26', 'py26']),
+    ("-e py26,py33 -e py33,py27", ['py26', 'py33', 'py33', 'py27'])
+])
+def test_env_spec(cmdline, envlist):
+    args = cmdline.split()
+    config = parseconfig(args)
+    assert config.envlist == envlist
 
 
 class TestCommandParser:

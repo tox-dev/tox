@@ -35,6 +35,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     py.test.raises(tox.exception.UnsupportedInterpreter,
                    venv.getsupportedinterpreter)
     monkeypatch.undo()
+    monkeypatch.setattr(venv.envconfig, "envname", "py1")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
     py.test.raises(tox.exception.InterpreterNotFound,
                    venv.getsupportedinterpreter)
@@ -42,7 +43,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     # check that we properly report when no version_info is present
     info = NoInterpreterInfo(name=venv.name)
     info.executable = "something"
-    monkeypatch.setattr(config.interpreters, "get_info", lambda *args: info)
+    monkeypatch.setattr(config.interpreters, "get_info", lambda *args, **kw: info)
     pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
 
 
@@ -65,7 +66,7 @@ def test_create(monkeypatch, mocksession, newconfig):
         # assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
-    assert interp == venv.envconfig._basepython_info.executable
+    assert interp == venv.envconfig.python_info.executable
     assert venv.path_config.check(exists=False)
 
 
@@ -463,7 +464,7 @@ class TestCreationConfig:
         venv = VirtualEnv(envconfig, session=mocksession)
         venv.update()
         cconfig = venv._getliveconfig()
-        cconfig.develop = True
+        cconfig.usedevelop = True
         cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
         venv.update()
