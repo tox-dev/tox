@@ -179,7 +179,7 @@ class Action(object):
                 raise tox.exception.InvocationError(
                     "%s (see %s)" % (invoked, outpath), ret)
             else:
-                raise tox.exception.InvocationError("%r" % (invoked, ))
+                raise tox.exception.InvocationError("%r" % (invoked, ), ret)
         if not out and outpath:
             out = outpath.read()
         if hasattr(self, "commandlog"):

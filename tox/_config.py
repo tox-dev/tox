@@ -335,6 +335,11 @@ def tox_addoption(parser):
              "you need the virtualenv management but do not want to install "
              "the current package")
 
+    parser.add_testenv_attribute(
+        name="ignore_errors", type="bool", default=False,
+        help="if set to True all commands will be executed irrespective of their "
+             "result error status.")
+
     def recreate(config, reader, section_val):
         if config.option.recreate:
             return True
@@ -644,15 +649,6 @@ class parseini:
             if env_attr.name == "install_command":
                 reader.addsubstitutions(envbindir=vc.envbindir, envpython=vc.envpython,
                                         envsitepackagesdir=vc.envsitepackagesdir)
-
-        # XXX introduce some testenv verification like this:
-        # try:
-        #     sec = self._cfg[section]
-        # except KeyError:
-        #     sec = self._cfg["testenv"]
-        # for name in sec:
-        #     if name not in names:
-        #         print ("unknown testenv attribute: %r" % (name,))
         return vc
 
     def _getenvdata(self, reader):
