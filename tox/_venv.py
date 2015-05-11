@@ -357,17 +357,10 @@ class VirtualEnv(object):
                 try:
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect,
                                 ignore_ret=ignore_ret)
-                except tox.exception.InvocationError:
-                    val = sys.exc_info()[1]
-                    self.session.report.error(str(val))
+                except tox.exception.InvocationError as err:
+                    self.session.report.error(str(err))
                     self.status = "commands failed"
                     if not self.envconfig.ignore_errors:
-                        self.session.report.error(
-                            'Stopping processing of commands for env %s '
-                            'because `%s` failed with exit code %s'
-                            % (self.name,
-                               ' '.join([str(x) for x in argv]),
-                               val.args[1]))
                         break  # Don't process remaining commands
                 except KeyboardInterrupt:
                     self.status = "keyboardinterrupt"
