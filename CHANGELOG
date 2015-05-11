@@ -36,6 +36,10 @@
   based on pytest's externalized "pluggy" system.
   See tox/hookspecs.py for the current hooks.
 
+- introduce parser.add_testenv_attribute() to register an ini-variable
+  for testenv sections.  Can be used from plugins through the 
+  tox_add_option hook.
+
 1.9.2
 -----------
 

@@ -38,6 +38,122 @@ def get_plugin_manager():
     return pm
 
 
+class MyParser:
+    def __init__(self):
+        self.argparser = argparse.ArgumentParser(
+            description="tox options", add_help=False)
+        self._testenv_attr = []
+
+    def add_argument(self, *args, **kwargs):
+        return self.argparser.add_argument(*args, **kwargs)
+
+    def add_testenv_attribute(self, name, type, help, default=None, postprocess=None):
+        self._testenv_attr.append(VenvAttribute(name, type, default, help, postprocess))
+
+    def add_testenv_attribute_obj(self, obj):
+        assert hasattr(obj, "name")
+        assert hasattr(obj, "type")
+        assert hasattr(obj, "help")
+        assert hasattr(obj, "postprocess")
+        self._testenv_attr.append(obj)
+
+    def parse_args(self, args):
+        return self.argparser.parse_args(args)
+
+    def format_help(self):
+        return self.argparser.format_help()
+
+
+class VenvAttribute:
+    def __init__(self, name, type, default, help, postprocess):
+        self.name = name
+        self.type = type
+        self.default = default
+        self.help = help
+        self.postprocess = postprocess
+
+
+class DepOption:
+    name = "deps"
+    type = "line-list"
+    help = "each line specifies a dependency in pip/setuptools format."
+    default = ()
+
+    def postprocess(self, config, reader, section_val):
+        deps = []
+        for depline in section_val:
+            m = re.match(r":(\w+):\s*(\S+)", depline)
+            if m:
+                iname, name = m.groups()
+                ixserver = config.indexserver[iname]
+            else:
+                name = depline.strip()
+                ixserver = None
+            name = self._replace_forced_dep(name, config)
+            deps.append(DepConfig(name, ixserver))
+        return deps
+
+    def _replace_forced_dep(self, name, config):
+        """
+        Override the given dependency config name taking --force-dep-version
+        option into account.
+
+        :param name: dep config, for example ["pkg==1.0", "other==2.0"].
+        :param config: Config instance
+        :return: the new dependency that should be used for virtual environments
+        """
+        if not config.option.force_dep:
+            return name
+        for forced_dep in config.option.force_dep:
+            if self._is_same_dep(forced_dep, name):
+                return forced_dep
+        return name
+
+    @classmethod
+    def _is_same_dep(cls, dep1, dep2):
+        """
+        Returns True if both dependency definitions refer to the
+        same package, even if versions differ.
+        """
+        dep1_name = pkg_resources.Requirement.parse(dep1).project_name
+        dep2_name = pkg_resources.Requirement.parse(dep2).project_name
+        return dep1_name == dep2_name
+
+
+class PosargsOption:
+    name = "args_are_paths"
+    type = "bool"
+    default = True
+    help = "treat positional args in commands as paths"
+
+    def postprocess(self, config, reader, section_val):
+        args = config.option.args
+        if args:
+            if section_val:
+                args = []
+                for arg in config.option.args:
+                    if arg:
+                        origpath = config.invocationcwd.join(arg, abs=True)
+                        if origpath.check():
+                            arg = reader.getpath("changedir", ".").bestrelpath(origpath)
+                    args.append(arg)
+            reader.addsubstitutions(args)
+        return section_val
+
+
+class InstallcmdOption:
+    name = "install_command"
+    type = "argv"
+    default = "pip install {opts} {packages}"
+    help = "install command for dependencies and package under test."
+
+    def postprocess(self, config, reader, section_val):
+        if '{packages}' not in section_val:
+            raise tox.exception.ConfigError(
+                "'install_command' must contain '{packages}' substitution")
+        return section_val
+
+
 def parseconfig(args=None):
     """
     :param list[str] args: Optional list of arguments.
@@ -52,13 +168,15 @@ def parseconfig(args=None):
         args = sys.argv[1:]
 
     # prepare command line options
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = MyParser()
     pm.hook.tox_addoption(parser=parser)
 
     # parse command line options
     option = parser.parse_args(args)
     interpreters = tox.interpreters.Interpreters(hook=pm.hook)
     config = Config(pluginmanager=pm, option=option, interpreters=interpreters)
+    config._parser = parser
+    config._testenv_attr = parser._testenv_attr
 
     # parse ini file
     basename = config.option.configfile
@@ -111,6 +229,10 @@ def tox_addoption(parser):
     parser.add_argument("--version", nargs=0, action=VersionAction,
                         dest="version",
                         help="report version information to stdout.")
+    parser.add_argument("-h", "--help", action="store_true", dest="help",
+                        help="show help about options")
+    parser.add_argument("--help-ini", "--hi", action="store_true", dest="helpini",
+                        help="show help about ini-names")
     parser.add_argument("-v", nargs=0, action=CountAction, default=0,
                         dest="verbosity",
                         help="increase verbosity of reporting output.")
@@ -156,6 +278,7 @@ def tox_addoption(parser):
                              "all commands and results involved.  This will turn off "
                              "pass-through output from running test commands which is "
                              "instead captured into the json result file.")
+
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument("--hashseed", action="store",
                         metavar="SEED", default=None,
@@ -175,7 +298,130 @@ def tox_addoption(parser):
 
     parser.add_argument("args", nargs="*",
                         help="additional arguments available to command positional substitution")
-    return parser
+
+    # add various core venv interpreter attributes
+
+    parser.add_testenv_attribute(
+        name="envdir", type="path", default="{toxworkdir}/{envname}",
+        help="venv directory")
+
+    parser.add_testenv_attribute(
+        name="envtmpdir", type="path", default="{envdir}/tmp",
+        help="venv temporary directory")
+
+    parser.add_testenv_attribute(
+        name="envlogdir", type="path", default="{envdir}/log",
+        help="venv log directory")
+
+    def downloadcache(config, reader, section_val):
+        if section_val:
+            # env var, if present, takes precedence
+            downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", section_val)
+            return py.path.local(downloadcache)
+
+    parser.add_testenv_attribute(
+        name="downloadcache", type="string", default=None, postprocess=downloadcache,
+        help="(deprecated) set PIP_DOWNLOAD_CACHE.")
+
+    parser.add_testenv_attribute(
+        name="changedir", type="path", default="{toxinidir}",
+        help="directory to change to when running commands")
+
+    parser.add_testenv_attribute_obj(PosargsOption())
+
+    parser.add_testenv_attribute(
+        name="skip_install", type="bool", default=False,
+        help="Do not install the current package. This can be used when "
+             "you need the virtualenv management but do not want to install "
+             "the current package")
+
+    def recreate(config, reader, section_val):
+        if config.option.recreate:
+            return True
+        return section_val
+
+    parser.add_testenv_attribute(
+        name="recreate", type="bool", default=False, postprocess=recreate,
+        help="always recreate this test environment.")
+
+    def setenv(config, reader, section_val):
+        setenv = section_val
+        if "PYTHONHASHSEED" not in setenv and config.hashseed is not None:
+            setenv['PYTHONHASHSEED'] = config.hashseed
+        return setenv
+
+    parser.add_testenv_attribute(
+        name="setenv", type="dict", postprocess=setenv,
+        help="list of X=Y lines with environment variable settings")
+
+    def passenv(config, reader, section_val):
+        passenv = set(["PATH"])
+        if sys.platform == "win32":
+            passenv.add("SYSTEMROOT")  # needed for python's crypto module
+            passenv.add("PATHEXT")     # needed for discovering executables
+        for spec in section_val:
+            for name in os.environ:
+                if fnmatchcase(name.upper(), spec.upper()):
+                    passenv.add(name)
+        return passenv
+
+    parser.add_testenv_attribute(
+        name="passenv", type="space-separated-list", postprocess=passenv,
+        help="environment variables names which shall be passed "
+             "from tox invocation to test environment when executing commands.")
+
+    parser.add_testenv_attribute(
+        name="whitelist_externals", type="line-list",
+        help="each lines specifies a path or basename for which tox will not warn "
+             "about it coming from outside the test environment.")
+
+    parser.add_testenv_attribute(
+        name="platform", type="string", default=".*",
+        help="regular expression which must match against ``sys.platform``. "
+             "otherwise testenv will be skipped.")
+
+    def sitepackages(config, reader, section_val):
+        return config.option.sitepackages or section_val
+
+    parser.add_testenv_attribute(
+        name="sitepackages", type="bool", default=False, postprocess=sitepackages,
+        help="Set to ``True`` if you want to create virtual environments that also "
+             "have access to globally installed packages.")
+
+    def pip_pre(config, reader, section_val):
+        return config.option.pre or section_val
+
+    parser.add_testenv_attribute(
+        name="pip_pre", type="bool", default=False, postprocess=pip_pre,
+        help="If ``True``, adds ``--pre`` to the ``opts`` passed to "
+             "the install command. ")
+
+    def develop(config, reader, section_val):
+        return not config.option.installpkg and (section_val or config.option.develop)
+
+    parser.add_testenv_attribute(
+        name="usedevelop", type="bool", postprocess=develop, default=False,
+        help="install package in develop/editable mode")
+
+    def basepython_default(config, reader, section_val):
+        if section_val is None:
+            for f in reader.factors:
+                if f in default_factors:
+                    return default_factors[f]
+            return sys.executable
+        return str(section_val)
+
+    parser.add_testenv_attribute(
+        name="basepython", type="string", default=None, postprocess=basepython_default,
+        help="executable name or path of interpreter used to create a "
+             "virtual test environment.")
+
+    parser.add_testenv_attribute_obj(InstallcmdOption())
+    parser.add_testenv_attribute_obj(DepOption())
+
+    parser.add_testenv_attribute(
+        name="commands", type="argvlist", default="",
+        help="each line specifies a test command and can use substitution.")
 
 
 class Config(object):
@@ -272,12 +518,10 @@ class parseini:
         self.config = config
         ctxname = getcontextname()
         if ctxname == "jenkins":
-            reader = IniReader(self._cfg, fallbacksections=['tox'])
-            toxsection = "tox:%s" % ctxname
+            reader = SectionReader("tox:jenkins", self._cfg, fallbacksections=['tox'])
             distshare_default = "{toxworkdir}/distshare"
         elif not ctxname:
-            reader = IniReader(self._cfg)
-            toxsection = "tox"
+            reader = SectionReader("tox", self._cfg)
             distshare_default = "{homedir}/.tox/distshare"
         else:
             raise ValueError("invalid context")
@@ -292,18 +536,17 @@ class parseini:
 
         reader.addsubstitutions(toxinidir=config.toxinidir,
                                 homedir=config.homedir)
-        config.toxworkdir = reader.getpath(toxsection, "toxworkdir",
-                                           "{toxinidir}/.tox")
-        config.minversion = reader.getdefault(toxsection, "minversion", None)
+        config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        config.minversion = reader.getstring("minversion", None)
 
         if not config.option.skip_missing_interpreters:
             config.option.skip_missing_interpreters = \
-                reader.getbool(toxsection, "skip_missing_interpreters", False)
+                reader.getbool("skip_missing_interpreters", False)
 
         # determine indexserver dictionary
         config.indexserver = {'default': IndexServerConfig('default')}
         prefix = "indexserver"
-        for line in reader.getlist(toxsection, prefix):
+        for line in reader.getlist(prefix):
             name, url = map(lambda x: x.strip(), line.split("=", 1))
             config.indexserver[name] = IndexServerConfig(name, url)
 
@@ -328,16 +571,15 @@ class parseini:
                 config.indexserver[name] = IndexServerConfig(name, override)
 
         reader.addsubstitutions(toxworkdir=config.toxworkdir)
-        config.distdir = reader.getpath(toxsection, "distdir", "{toxworkdir}/dist")
+        config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
         reader.addsubstitutions(distdir=config.distdir)
-        config.distshare = reader.getpath(toxsection, "distshare",
-                                          distshare_default)
+        config.distshare = reader.getpath("distshare", distshare_default)
         reader.addsubstitutions(distshare=config.distshare)
-        config.sdistsrc = reader.getpath(toxsection, "sdistsrc", None)
-        config.setupdir = reader.getpath(toxsection, "setupdir", "{toxinidir}")
+        config.sdistsrc = reader.getpath("sdistsrc", None)
+        config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
 
-        config.envlist, all_envs = self._getenvdata(reader, toxsection)
+        config.envlist, all_envs = self._getenvdata(reader)
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
@@ -345,7 +587,7 @@ class parseini:
         known_factors.add("python")
 
         # factors stated in config envlist
-        stated_envlist = reader.getdefault(toxsection, "envlist", replace=False)
+        stated_envlist = reader.getstring("envlist", replace=False)
         if stated_envlist:
             for env in _split_env(stated_envlist):
                 known_factors.update(env.split('-'))
@@ -356,13 +598,13 @@ class parseini:
             factors = set(name.split('-'))
             if section in self._cfg or factors <= known_factors:
                 config.envconfigs[name] = \
-                    self._makeenvconfig(name, section, reader._subs, config)
+                    self.make_envconfig(name, section, reader._subs, config)
 
         all_develop = all(name in config.envconfigs
-                          and config.envconfigs[name].develop
+                          and config.envconfigs[name].usedevelop
                           for name in config.envlist)
 
-        config.skipsdist = reader.getbool(toxsection, "skipsdist", all_develop)
+        config.skipsdist = reader.getbool("skipsdist", all_develop)
 
     def _list_section_factors(self, section):
         factors = set()
@@ -372,115 +614,51 @@ class parseini:
                 factors.update(*mapcat(_split_factor_expr, exprs))
         return factors
 
-    def _makeenvconfig(self, name, section, subs, config):
+    def make_envconfig(self, name, section, subs, config):
         vc = VenvConfig(config=config, envname=name)
         factors = set(name.split('-'))
-        reader = IniReader(self._cfg, fallbacksections=["testenv"], factors=factors)
+        reader = SectionReader(section, self._cfg, fallbacksections=["testenv"],
+                               factors=factors)
         reader.addsubstitutions(**subs)
-        vc.develop = (
-            not config.option.installpkg
-            and reader.getbool(section, "usedevelop", config.option.develop))
-        vc.envdir = reader.getpath(section, "envdir", "{toxworkdir}/%s" % name)
-        vc.args_are_paths = reader.getbool(section, "args_are_paths", True)
-        if reader.getdefault(section, "python", None):
-            raise tox.exception.ConfigError(
-                "'python=' key was renamed to 'basepython='")
-        bp = next((default_factors[f] for f in factors if f in default_factors),
-                  sys.executable)
-        vc.basepython = reader.getdefault(section, "basepython", bp)
+        reader.addsubstitutions(envname=name)
 
-        reader.addsubstitutions(envdir=vc.envdir, envname=vc.envname,
-                                envbindir=vc.envbindir, envpython=vc.envpython,
-                                envsitepackagesdir=vc.envsitepackagesdir)
-        vc.envtmpdir = reader.getpath(section, "tmpdir", "{envdir}/tmp")
-        vc.envlogdir = reader.getpath(section, "envlogdir", "{envdir}/log")
-        reader.addsubstitutions(envlogdir=vc.envlogdir, envtmpdir=vc.envtmpdir)
-        vc.changedir = reader.getpath(section, "changedir", "{toxinidir}")
-        if config.option.recreate:
-            vc.recreate = True
-        else:
-            vc.recreate = reader.getbool(section, "recreate", False)
-        args = config.option.args
-        if args:
-            if vc.args_are_paths:
-                args = []
-                for arg in config.option.args:
-                    if arg:
-                        origpath = config.invocationcwd.join(arg, abs=True)
-                        if origpath.check():
-                            arg = vc.changedir.bestrelpath(origpath)
-                    args.append(arg)
-            reader.addsubstitutions(args)
-        setenv = {}
-        if config.hashseed is not None:
-            setenv['PYTHONHASHSEED'] = config.hashseed
-        setenv.update(reader.getdict(section, 'setenv'))
-
-        # read passenv
-        vc.passenv = set(["PATH"])
-        if sys.platform == "win32":
-            vc.passenv.add("SYSTEMROOT")  # needed for python's crypto module
-            vc.passenv.add("PATHEXT")     # needed for discovering executables
-        for spec in reader.getlist(section, "passenv", sep=" "):
-            for name in os.environ:
-                if fnmatchcase(name.lower(), spec.lower()):
-                    vc.passenv.add(name)
-
-        vc.setenv = setenv
-        if not vc.setenv:
-            vc.setenv = None
-
-        vc.commands = reader.getargvlist(section, "commands")
-        vc.whitelist_externals = reader.getlist(section,
-                                                "whitelist_externals")
-        vc.deps = []
-        for depline in reader.getlist(section, "deps"):
-            m = re.match(r":(\w+):\s*(\S+)", depline)
-            if m:
-                iname, name = m.groups()
-                ixserver = config.indexserver[iname]
+        for env_attr in config._testenv_attr:
+            atype = env_attr.type
+            if atype in ("bool", "path", "string", "dict", "argv", "argvlist"):
+                meth = getattr(reader, "get" + atype)
+                res = meth(env_attr.name, env_attr.default)
+            elif atype == "space-separated-list":
+                res = reader.getlist(env_attr.name, sep=" ")
+            elif atype == "line-list":
+                res = reader.getlist(env_attr.name, sep="\n")
             else:
-                name = depline.strip()
-                ixserver = None
-            name = self._replace_forced_dep(name, config)
-            vc.deps.append(DepConfig(name, ixserver))
+                raise ValueError("unknown type %r" % (atype,))
 
-        platform = ""
-        for platform in reader.getlist(section, "platform"):
-            if platform.strip():
-                break
-        vc.platform = platform
+            if env_attr.postprocess:
+                res = env_attr.postprocess(config, reader, res)
+            setattr(vc, env_attr.name, res)
 
-        vc.sitepackages = (
-            self.config.option.sitepackages
-            or reader.getbool(section, "sitepackages", False))
+            if atype == "path":
+                reader.addsubstitutions(**{env_attr.name: res})
 
-        vc.downloadcache = None
-        downloadcache = reader.getdefault(section, "downloadcache")
-        if downloadcache:
-            # env var, if present, takes precedence
-            downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", downloadcache)
-            vc.downloadcache = py.path.local(downloadcache)
+            if env_attr.name == "install_command":
+                reader.addsubstitutions(envbindir=vc.envbindir, envpython=vc.envpython,
+                                        envsitepackagesdir=vc.envsitepackagesdir)
 
-        vc.install_command = reader.getargv(
-            section,
-            "install_command",
-            "pip install {opts} {packages}",
-        )
-        if '{packages}' not in vc.install_command:
-            raise tox.exception.ConfigError(
-                "'install_command' must contain '{packages}' substitution")
-        vc.pip_pre = config.option.pre or reader.getbool(
-            section, "pip_pre", False)
-
-        vc.skip_install = reader.getbool(section, "skip_install", False)
-
+        # XXX introduce some testenv verification like this:
+        # try:
+        #     sec = self._cfg[section]
+        # except KeyError:
+        #     sec = self._cfg["testenv"]
+        # for name in sec:
+        #     if name not in names:
+        #         print ("unknown testenv attribute: %r" % (name,))
         return vc
 
-    def _getenvdata(self, reader, toxsection):
+    def _getenvdata(self, reader):
         envstr = self.config.option.env                                \
             or os.environ.get("TOXENV")                                \
-            or reader.getdefault(toxsection, "envlist", replace=False) \
+            or reader.getstring("envlist", replace=False) \
             or []
         envlist = _split_env(envstr)
 
@@ -496,32 +674,6 @@ class parseini:
             envlist = sorted(all_envs)
 
         return envlist, all_envs
-
-    def _replace_forced_dep(self, name, config):
-        """
-        Override the given dependency config name taking --force-dep-version
-        option into account.
-
-        :param name: dep config, for example ["pkg==1.0", "other==2.0"].
-        :param config: Config instance
-        :return: the new dependency that should be used for virtual environments
-        """
-        if not config.option.force_dep:
-            return name
-        for forced_dep in config.option.force_dep:
-            if self._is_same_dep(forced_dep, name):
-                return forced_dep
-        return name
-
-    @classmethod
-    def _is_same_dep(cls, dep1, dep2):
-        """
-        Returns True if both dependency definitions refer to the
-        same package, even if versions differ.
-        """
-        dep1_name = pkg_resources.Requirement.parse(dep1).project_name
-        dep2_name = pkg_resources.Requirement.parse(dep2).project_name
-        return dep1_name == dep2_name
 
 
 def _split_env(env):
@@ -589,8 +741,9 @@ RE_ITEM_REF = re.compile(
     re.VERBOSE)
 
 
-class IniReader:
-    def __init__(self, cfgparser, fallbacksections=None, factors=()):
+class SectionReader:
+    def __init__(self, section_name, cfgparser, fallbacksections=None, factors=()):
+        self.section_name = section_name
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
         self.factors = factors
@@ -602,129 +755,39 @@ class IniReader:
         if _posargs:
             self.posargs = _posargs
 
-    def getpath(self, section, name, defaultpath):
+    def getpath(self, name, defaultpath):
         toxinidir = self._subs['toxinidir']
-        path = self.getdefault(section, name, defaultpath)
+        path = self.getstring(name, defaultpath)
         if path is None:
             return path
         return toxinidir.join(path, abs=True)
 
-    def getlist(self, section, name, sep="\n"):
-        s = self.getdefault(section, name, None)
+    def getlist(self, name, sep="\n"):
+        s = self.getstring(name, None)
         if s is None:
             return []
         return [x.strip() for x in s.split(sep) if x.strip()]
 
-    def getdict(self, section, name, sep="\n"):
-        s = self.getdefault(section, name, None)
+    def getdict(self, name, default=None, sep="\n"):
+        s = self.getstring(name, None)
         if s is None:
-            return {}
+            return default or {}
 
         value = {}
         for line in s.split(sep):
-            if not line.strip():
-                continue
-            name, rest = line.split('=', 1)
-            value[name.strip()] = rest.strip()
+            if line.strip():
+                name, rest = line.split('=', 1)
+                value[name.strip()] = rest.strip()
 
         return value
 
-    def getargvlist(self, section, name):
-        """Get arguments for every parsed command.
-
-        :param str section: Section name in the configuration.
-        :param str name: Key name in a section.
-        :rtype: list[list[str]]
-        :raise :class:`tox.exception.ConfigError`:
-            line-continuation ends nowhere while resolving for specified section
-        """
-        content = self.getdefault(section, name, '', replace=False)
-        return self._parse_commands(section, name, content)
-
-    def _parse_commands(self, section, name, content):
-        """Parse commands from key content in specified section.
-
-        :param str section: Section name in the configuration.
-        :param str name: Key name in a section.
-        :param str content: Content stored by key.
-
-        :rtype: list[list[str]]
-        :raise :class:`tox.exception.ConfigError`:
-            line-continuation ends nowhere while resolving for specified section
-        """
-        commands = []
-        current_command = ""
-        for line in content.splitlines():
-            line = line.rstrip()
-            i = line.find("#")
-            if i != -1:
-                line = line[:i].rstrip()
-            if not line:
-                continue
-            if line.endswith("\\"):
-                current_command += " " + line[:-1]
-                continue
-            current_command += line
-
-            if is_section_substitution(current_command):
-                replaced = self._replace(current_command)
-                commands.extend(self._parse_commands(section, name, replaced))
-            else:
-                commands.append(self._processcommand(current_command))
-            current_command = ""
-        else:
-            if current_command:
-                raise tox.exception.ConfigError(
-                    "line-continuation ends nowhere while resolving for [%s] %s" %
-                    (section, name))
-        return commands
-
-    def _processcommand(self, command):
-        posargs = getattr(self, "posargs", None)
-
-        # Iterate through each word of the command substituting as
-        # appropriate to construct the new command string. This
-        # string is then broken up into exec argv components using
-        # shlex.
-        newcommand = ""
-        for word in CommandParser(command).words():
-            if word == "{posargs}" or word == "[]":
-                if posargs:
-                    newcommand += " ".join(posargs)
-                continue
-            elif word.startswith("{posargs:") and word.endswith("}"):
-                if posargs:
-                    newcommand += " ".join(posargs)
-                    continue
-                else:
-                    word = word[9:-1]
-            new_arg = ""
-            new_word = self._replace(word)
-            new_word = self._replace(new_word)
-            new_arg += new_word
-            newcommand += new_arg
-
-        # Construct shlex object that will not escape any values,
-        # use all values as is in argv.
-        shlexer = shlex.shlex(newcommand, posix=True)
-        shlexer.whitespace_split = True
-        shlexer.escape = ''
-        shlexer.commenters = ''
-        argv = list(shlexer)
-        return argv
-
-    def getargv(self, section, name, default=None, replace=True):
-        command = self.getdefault(
-            section, name, default=default, replace=False)
-        return self._processcommand(command.strip())
-
-    def getbool(self, section, name, default=None):
-        s = self.getdefault(section, name, default)
+    def getbool(self, name, default=None):
+        s = self.getstring(name, default)
         if not s:
             s = default
         if s is None:
             raise KeyError("no config value [%s] %s found" % (
-                section, name))
+                           self.section_name, name))
 
         if not isinstance(s, bool):
             if s.lower() == "true":
@@ -736,9 +799,16 @@ class IniReader:
                     "boolean value %r needs to be 'True' or 'False'")
         return s
 
-    def getdefault(self, section, name, default=None, replace=True):
+    def getargvlist(self, name, default=""):
+        s = self.getstring(name, default, replace=False)
+        return _ArgvlistReader.getargvlist(self, s)
+
+    def getargv(self, name, default=""):
+        return self.getargvlist(name, default)[0]
+
+    def getstring(self, name, default=None, replace=True):
         x = None
-        for s in [section] + self.fallbacksections:
+        for s in [self.section_name] + self.fallbacksections:
             try:
                 x = self._cfg[s][name]
                 break
@@ -751,12 +821,12 @@ class IniReader:
             x = self._apply_factors(x)
 
         if replace and x and hasattr(x, 'replace'):
-            self._subststack.append((section, name))
+            self._subststack.append((self.section_name, name))
             try:
                 x = self._replace(x)
             finally:
-                assert self._subststack.pop() == (section, name)
-        # print "getdefault", section, name, "returned", repr(x)
+                assert self._subststack.pop() == (self.section_name, name)
+        # print "getstring", self.section_name, name, "returned", repr(x)
         return x
 
     def _apply_factors(self, s):
@@ -852,8 +922,80 @@ class IniReader:
             return RE_ITEM_REF.sub(self._replace_match, x)
         return x
 
-    def _parse_command(self, command):
-        pass
+
+class _ArgvlistReader:
+    @classmethod
+    def getargvlist(cls, reader, section_val):
+        """Parse ``commands`` argvlist multiline string.
+
+        :param str name: Key name in a section.
+        :param str section_val: Content stored by key.
+
+        :rtype: list[list[str]]
+        :raise :class:`tox.exception.ConfigError`:
+            line-continuation ends nowhere while resolving for specified section
+        """
+        commands = []
+        current_command = ""
+        for line in section_val.splitlines():
+            line = line.rstrip()
+            i = line.find("#")
+            if i != -1:
+                line = line[:i].rstrip()
+            if not line:
+                continue
+            if line.endswith("\\"):
+                current_command += " " + line[:-1]
+                continue
+            current_command += line
+
+            if is_section_substitution(current_command):
+                replaced = reader._replace(current_command)
+                commands.extend(cls.getargvlist(reader, replaced))
+            else:
+                commands.append(cls.processcommand(reader, current_command))
+            current_command = ""
+        else:
+            if current_command:
+                raise tox.exception.ConfigError(
+                    "line-continuation ends nowhere while resolving for [%s] %s" %
+                    (reader.section_name, "commands"))
+        return commands
+
+    @classmethod
+    def processcommand(cls, reader, command):
+        posargs = getattr(reader, "posargs", None)
+
+        # Iterate through each word of the command substituting as
+        # appropriate to construct the new command string. This
+        # string is then broken up into exec argv components using
+        # shlex.
+        newcommand = ""
+        for word in CommandParser(command).words():
+            if word == "{posargs}" or word == "[]":
+                if posargs:
+                    newcommand += " ".join(posargs)
+                continue
+            elif word.startswith("{posargs:") and word.endswith("}"):
+                if posargs:
+                    newcommand += " ".join(posargs)
+                    continue
+                else:
+                    word = word[9:-1]
+            new_arg = ""
+            new_word = reader._replace(word)
+            new_word = reader._replace(new_word)
+            new_arg += new_word
+            newcommand += new_arg
+
+        # Construct shlex object that will not escape any values,
+        # use all values as is in argv.
+        shlexer = shlex.shlex(newcommand, posix=True)
+        shlexer.whitespace_split = True
+        shlexer.escape = ''
+        shlexer.commenters = ''
+        argv = list(shlexer)
+        return argv
 
 
 class CommandParser(object):
