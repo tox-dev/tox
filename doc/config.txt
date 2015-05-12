@@ -199,8 +199,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
    invocation environment it is ignored.  You can use ``*`` and ``?`` to
    match multiple environment variables with one name.
 
-   Note that the ``PATH`` variable is unconditionally passed down and on
-   Windows ``SYSTEMROOT`` and ``PATHEXT`` will be passed down as well.
+   Note that the ``PATH`` and ``PIP_INDEX_URL`` variables are unconditionally
+   passed down and on Windows ``SYSTEMROOT``, ``PATHEXT``, ``TEMP`` and ``TMP``
+   will be passed down as well whereas on unix ``TMPDIR`` will be passed down.
    You can override these variables with the ``setenv`` option.
 
 .. confval:: recreate=True|False(default)

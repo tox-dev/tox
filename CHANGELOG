@@ -2,10 +2,10 @@
 -----------
 
 - (new) introduce environment variable isolation:
-  tox now only passes the PATH variable from the tox
+  tox now only passes the PATH and PIP_INDEX_URL variable from the tox
   invocation environment to the test environment and on Windows 
   also ``SYSTEMROOT``, ``PATHEXT``, ``TEMP`` and ``TMP`` whereas
-  on linux additionally ``TMPDIR`` is passed.  If you need to pass 
+  on unix additionally ``TMPDIR`` is passed.  If you need to pass 
   through further environment variables you can use the new ``passenv`` setting,
   a space-separated list of environment variable names.  Each name
   can make use of fnmatch-style glob patterns.  All environment
