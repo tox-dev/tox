@@ -44,7 +44,7 @@ def main(args=None):
 
 def show_help(config):
     tw = py.io.TerminalWriter()
-    tw.write(config._parser.format_help())
+    tw.write(config._parser._format_help())
     tw.line()
 
 

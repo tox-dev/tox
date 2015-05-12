@@ -38,29 +38,48 @@ def get_plugin_manager():
     return pm
 
 
-class MyParser:
+class Parser:
+    """ command line and ini-parser control object. """
+
     def __init__(self):
         self.argparser = argparse.ArgumentParser(
             description="tox options", add_help=False)
         self._testenv_attr = []
 
     def add_argument(self, *args, **kwargs):
+        """ add argument to command line parser.  This takes the
+        same arguments that ``argparse.ArgumentParser.add_argument``.
+        """
         return self.argparser.add_argument(*args, **kwargs)
 
     def add_testenv_attribute(self, name, type, help, default=None, postprocess=None):
+        """ add an ini-file variable for "testenv" section.
+
+        Types are specified as strings like "bool", "line-list", "string", "argv", "path",
+        "argvlist".  The ``postprocess`` function will be called for each testenv
+        like ``postprocess(config=config, reader=reader, section_val=section_val)``
+        where ``section_val`` is the value as read from the ini (or the default value).
+        Any postprocess function must return a value which will then become the
+        eventual value in the testenv section.
+        """
         self._testenv_attr.append(VenvAttribute(name, type, default, help, postprocess))
 
     def add_testenv_attribute_obj(self, obj):
+        """ add an ini-file variable as an object.
+
+        This works as ``add_testenv_attribute`` but expects "name", "type", "help",
+        and "postprocess" attributes on the object.
+        """
         assert hasattr(obj, "name")
         assert hasattr(obj, "type")
         assert hasattr(obj, "help")
         assert hasattr(obj, "postprocess")
         self._testenv_attr.append(obj)
 
-    def parse_args(self, args):
+    def _parse_args(self, args):
         return self.argparser.parse_args(args)
 
-    def format_help(self):
+    def _format_help(self):
         return self.argparser.format_help()
 
 
@@ -168,11 +187,11 @@ def parseconfig(args=None):
         args = sys.argv[1:]
 
     # prepare command line options
-    parser = MyParser()
+    parser = Parser()
     pm.hook.tox_addoption(parser=parser)
 
     # parse command line options
-    option = parser.parse_args(args)
+    option = parser._parse_args(args)
     interpreters = tox.interpreters.Interpreters(hook=pm.hook)
     config = Config(pluginmanager=pm, option=option, interpreters=interpreters)
     config._parser = parser
@@ -440,10 +459,12 @@ def tox_addoption(parser):
 
 class Config(object):
     def __init__(self, pluginmanager, option, interpreters):
+        #: dictionary containing envname to envconfig mappings
         self.envconfigs = {}
         self.invocationcwd = py.path.local()
         self.interpreters = interpreters
         self.pluginmanager = pluginmanager
+        #: option namespace containing all parsed command line options
         self.option = option
 
     @property

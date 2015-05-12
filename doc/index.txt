@@ -65,8 +65,7 @@ Current features
 
 * :doc:`(new in 2.0) plugin system <plugins>` to modify tox execution with simple hooks.
 
-* uses pip_ and setuptools_ by default.  Experimental
-  support for configuring the installer command
+* uses pip_ and setuptools_ by default.  Support for configuring the installer command
   through :confval:`install_command=ARGV`.
 
 * **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher,
