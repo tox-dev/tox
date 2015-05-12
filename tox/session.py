@@ -594,25 +594,9 @@ class Session:
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
-            self.report.line("  basepython=%s" % envconfig.basepython)
-            self.report.line("  pythoninfo=%s" % (envconfig.python_info,))
-            self.report.line("  envpython=%s" % envconfig.envpython)
-            self.report.line("  envtmpdir=%s" % envconfig.envtmpdir)
-            self.report.line("  envbindir=%s" % envconfig.envbindir)
-            self.report.line("  envlogdir=%s" % envconfig.envlogdir)
-            self.report.line("  changedir=%s" % envconfig.changedir)
-            self.report.line("  args_are_path=%s" % envconfig.args_are_paths)
-            self.report.line("  install_command=%s" %
-                             envconfig.install_command)
-            self.report.line("  commands=")
-            for command in envconfig.commands:
-                self.report.line("    %s" % command)
-            self.report.line("  deps=%s" % envconfig.deps)
-            self.report.line("  envdir=    %s" % envconfig.envdir)
-            self.report.line("  downloadcache=%s" % envconfig.downloadcache)
-            self.report.line("  usedevelop=%s" % envconfig.usedevelop)
-            self.report.line("  setenv=%s" % envconfig.setenv)
-            self.report.line("  passenv=%s" % envconfig.passenv)
+            for attr in self.config._parser._testenv_attr:
+                self.report.line("  %-15s = %s"
+                                 % (attr.name, getattr(envconfig, attr.name)))
 
     def showenvs(self):
         for env in self.config.envlist:

@@ -1566,14 +1566,14 @@ class TestCmdInvocation:
         result = cmd.run("tox", "--showconfig")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            r'*deps=*dep1==2.3, dep2*',
+            r'*deps*dep1==2.3, dep2*',
         ])
         # override dep1 specific version, and force version for dep2
         result = cmd.run("tox", "--showconfig", "--force-dep=dep1",
                          "--force-dep=dep2==5.0")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            r'*deps=*dep1, dep2==5.0*',
+            r'*deps*dep1, dep2==5.0*',
         ])
 
 
