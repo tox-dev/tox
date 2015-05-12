@@ -9,8 +9,8 @@ except ImportError:
 
 pytest_plugins = "pytester"
 
-from tox._cmdline import Session
-from tox._config import parseconfig
+from tox.session import Session
+from tox.config import parseconfig
 
 
 def test_report_protocol(newconfig):

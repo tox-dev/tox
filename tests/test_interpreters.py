@@ -3,7 +3,7 @@ import os
 
 import pytest
 from tox.interpreters import *  # noqa
-from tox._config import get_plugin_manager
+from tox.config import get_plugin_manager
 
 
 @pytest.fixture

@@ -6,10 +6,10 @@ import sys
 from py.builtin import _isbytes, _istext, print_
 from fnmatch import fnmatch
 import time
-from tox._config import parseconfig
-from tox._venv import VirtualEnv
-from tox._cmdline import Action
-from tox.result import ResultLog
+from .config import parseconfig
+from .venv import VirtualEnv
+from .session import Action
+from .result import ResultLog
 
 
 def pytest_configure():
@@ -134,7 +134,7 @@ class pcallMock:
 
 @pytest.fixture
 def mocksession(request):
-    from tox._cmdline import Session
+    from tox.session import Session
 
     class MockSession(Session):
         def __init__(self):

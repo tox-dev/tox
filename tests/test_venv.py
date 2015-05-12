@@ -3,8 +3,8 @@ import tox
 import pytest
 import os
 import sys
-import tox._config
-from tox._venv import *  # noqa
+import tox.config
+from tox.venv import *  # noqa
 from tox.interpreters import NoInterpreterInfo
 
 # def test_global_virtualenv(capfd):
@@ -253,14 +253,14 @@ def test_install_recreate(newmocksession, tmpdir):
 
 
 def test_test_hashseed_is_in_output(newmocksession):
-    original_make_hashseed = tox._config.make_hashseed
-    tox._config.make_hashseed = lambda: '123456789'
+    original_make_hashseed = tox.config.make_hashseed
+    tox.config.make_hashseed = lambda: '123456789'
     try:
         mocksession = newmocksession([], '''
             [testenv]
         ''')
     finally:
-        tox._config.make_hashseed = original_make_hashseed
+        tox.config.make_hashseed = original_make_hashseed
     venv = mocksession.getenv('python')
     venv.update()
     venv.test()
@@ -620,7 +620,7 @@ def test_sethome_only_on_option(newmocksession, monkeypatch):
     mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "qwe", [])
-    monkeypatch.setattr(tox._venv, "hack_home_env", None)
+    monkeypatch.setattr(tox.venv, "hack_home_env", None)
     venv._install(["x"], action=action)
 
 
@@ -636,7 +636,7 @@ def test_sethome_works_on_option(newmocksession, monkeypatch):
 
 
 def test_hack_home_env(tmpdir):
-    from tox._venv import hack_home_env
+    from tox.venv import hack_home_env
     env = hack_home_env(tmpdir, "http://index")
     assert env["HOME"] == str(tmpdir)
     assert env["PIP_INDEX_URL"] == "http://index"
@@ -650,7 +650,7 @@ def test_hack_home_env(tmpdir):
 
 
 def test_hack_home_env_passthrough(tmpdir, monkeypatch):
-    from tox._venv import hack_home_env
+    from tox.venv import hack_home_env
     env = hack_home_env(tmpdir, "http://index")
     monkeypatch.setattr(os, "environ", env)
 

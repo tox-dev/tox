@@ -1,3 +1,4 @@
-from tox._cmdline import main
+from tox.session import main
 
-main()
+if __name__ == "__main__":
+    main()

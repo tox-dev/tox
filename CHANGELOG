@@ -48,6 +48,10 @@
   for testenv sections.  Can be used from plugins through the 
   tox_add_option hook.
 
+- rename internal files -- tox offers no external API except for the
+  experimental plugin hooks, use tox internals at your own risk.
+
+
 
 1.9.2
 -----------

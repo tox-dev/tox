@@ -12,8 +12,8 @@ import os
 import sys
 import subprocess
 from tox._verlib import NormalizedVersion, IrrationalVersionError
-from tox._venv import VirtualEnv
-from tox._config import parseconfig
+from tox.venv import VirtualEnv
+from tox.config import parseconfig
 from tox.result import ResultLog
 from subprocess import STDOUT
 
@@ -22,15 +22,20 @@ def now():
     return py.std.time.time()
 
 
+def prepare(args):
+    config = parseconfig(args)
+    if config.option.help:
+        show_help(config)
+        raise SystemExit(0)
+    elif config.option.helpini:
+        show_help_ini(config)
+        raise SystemExit(0)
+    return config
+
+
 def main(args=None):
     try:
-        config = parseconfig(args)
-        if config.option.help:
-            show_help(config)
-            raise SystemExit(0)
-        elif config.option.helpini:
-            show_help_ini(config)
-            raise SystemExit(0)
+        config = prepare(args)
         retcode = Session(config).runcommand()
         raise SystemExit(retcode)
     except KeyboardInterrupt:
@@ -447,7 +452,7 @@ class Session:
     def installpkg(self, venv, path):
         """Install package in the specified virtual environment.
 
-        :param :class:`tox._config.VenvConfig`: Destination environment
+        :param :class:`tox.config.VenvConfig`: Destination environment
         :param str path: Path to the distribution package.
         :return: True if package installed otherwise False.
         :rtype: bool

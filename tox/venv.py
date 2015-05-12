@@ -5,7 +5,7 @@ import re
 import codecs
 import py
 import tox
-from tox._config import DepConfig
+from .config import DepConfig
 
 
 class CreationConfig:

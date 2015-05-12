@@ -31,7 +31,7 @@ def get_plugin_manager():
     # initialize plugin manager
     pm = pluggy.PluginManager("tox")
     pm.add_hookspecs(hookspecs)
-    pm.register(tox._config)
+    pm.register(tox.config)
     pm.register(tox.interpreters)
     pm.load_setuptools_entrypoints("tox")
     pm.check_pending()

@@ -4,9 +4,9 @@ from textwrap import dedent
 import py
 import pytest
 import tox
-import tox._config
-from tox._config import *  # noqa
-from tox._venv import VirtualEnv
+import tox.config
+from tox.config import *  # noqa
+from tox.venv import VirtualEnv
 
 
 class TestVenvConfig:
@@ -1321,12 +1321,12 @@ class TestHashseedOption:
             """
         if make_hashseed is None:
             make_hashseed = lambda: '123456789'
-        original_make_hashseed = tox._config.make_hashseed
-        tox._config.make_hashseed = make_hashseed
+        original_make_hashseed = tox.config.make_hashseed
+        tox.config.make_hashseed = make_hashseed
         try:
             config = newconfig(args, tox_ini)
         finally:
-            tox._config.make_hashseed = original_make_hashseed
+            tox.config.make_hashseed = original_make_hashseed
         return config.envconfigs
 
     def _get_envconfig(self, newconfig, args=None, tox_ini=None):
