@@ -83,15 +83,15 @@ class TestSession:
         })
         config = parseconfig([])
         session = Session(config)
-        sdist = session.sdist()
+        sdist = session.get_installpkg_path()
         assert sdist.check()
         assert sdist.ext == ".zip"
         assert sdist == config.distdir.join(sdist.basename)
-        sdist2 = session.sdist()
+        sdist2 = session.get_installpkg_path()
         assert sdist2 == sdist
         sdist.write("hello")
         assert sdist.stat().size < 10
-        sdist_new = Session(config).sdist()
+        sdist_new = Session(config).get_installpkg_path()
         assert sdist_new == sdist
         assert sdist_new.stat().size > 10
 
@@ -106,7 +106,7 @@ class TestSession:
         })
         config = parseconfig([])
         session = Session(config)
-        sdist = session.sdist()
+        sdist = session.get_installpkg_path()
         assert sdist.check()
         assert sdist.ext == ".zip"
         assert sdist == config.distdir.join(sdist.basename)
@@ -683,7 +683,7 @@ def test_sdist_latest(tmpdir, newconfig):
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
     session = Session(config)
-    sdist_path = session.sdist()
+    sdist_path = session.get_installpkg_path()
     assert sdist_path == p
 
 
@@ -691,7 +691,7 @@ def test_installpkg(tmpdir, newconfig):
     p = tmpdir.ensure("pkg123-1.0.zip")
     config = newconfig(["--installpkg=%s" % p], "")
     session = Session(config)
-    sdist_path = session.sdist()
+    sdist_path = session.get_installpkg_path()
     assert sdist_path == p
 
 
@@ -722,7 +722,9 @@ def verify_json_report_format(data, testenvs=True):
                 for command in envdata[commandtype]:
                     assert command["output"]
                     assert command["retcode"]
-            pyinfo = envdata["python"]
-            assert isinstance(pyinfo["version_info"], list)
-            assert pyinfo["version"]
-            assert pyinfo["executable"]
+            if envname != "GLOB":
+                assert isinstance(envdata["installed_packages"], list)
+                pyinfo = envdata["python"]
+                assert isinstance(pyinfo["version_info"], list)
+                assert pyinfo["version"]
+                assert pyinfo["executable"]

@@ -21,7 +21,7 @@ iswin32 = sys.platform == "win32"
 
 default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
                    'py': sys.executable}
-for version in '24,25,26,27,30,31,32,33,34,35'.split(','):
+for version in '26,27,32,33,34,35,36'.split(','):
     default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
 hookimpl = pluggy.HookimplMarker("tox")
@@ -361,9 +361,18 @@ def tox_addoption(parser):
 
     def passenv(config, reader, section_val):
         passenv = set(["PATH"])
+
+        # we ensure that tmp directory settings are passed on
+        # we could also set it to the per-venv "envtmpdir"
+        # but this leads to very long paths when run with jenkins
+        # so we just pass it on by default for now.
         if sys.platform == "win32":
             passenv.add("SYSTEMROOT")  # needed for python's crypto module
             passenv.add("PATHEXT")     # needed for discovering executables
+            passenv.add("TEMPDIR")
+            passenv.add("TMP")
+        else:
+            passenv.add("TMPDIR")
         for spec in section_val:
             for name in os.environ:
                 if fnmatchcase(name.upper(), spec.upper()):
@@ -626,6 +635,7 @@ class parseini:
                                factors=factors)
         reader.addsubstitutions(**subs)
         reader.addsubstitutions(envname=name)
+        reader.vc = vc
 
         for env_attr in config._testenv_attr:
             atype = env_attr.type

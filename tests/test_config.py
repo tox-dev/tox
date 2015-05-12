@@ -827,13 +827,13 @@ class TestConfigTestEnv:
 
     def test_substitution_error(tmpdir, newconfig):
         py.test.raises(tox.exception.ConfigError, newconfig, """
-            [testenv:py24]
+            [testenv:py27]
             basepython={xyz}
         """)
 
     def test_substitution_defaults(tmpdir, newconfig):
         config = newconfig("""
-            [testenv:py24]
+            [testenv:py27]
             commands =
                 {toxinidir}
                 {toxworkdir}
@@ -845,7 +845,7 @@ class TestConfigTestEnv:
                 {distshare}
                 {envlogdir}
         """)
-        conf = config.envconfigs['py24']
+        conf = config.envconfigs['py27']
         argv = conf.commands
         assert argv[0][0] == config.toxinidir
         assert argv[1][0] == config.toxworkdir
@@ -859,18 +859,18 @@ class TestConfigTestEnv:
 
     def test_substitution_positional(self, newconfig):
         inisource = """
-            [testenv:py24]
+            [testenv:py27]
             commands =
                 cmd1 [hello] \
                      world
                 cmd1 {posargs:hello} \
                      world
         """
-        conf = newconfig([], inisource).envconfigs['py24']
+        conf = newconfig([], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1", "[hello]", "world"]
         assert argv[1] == ["cmd1", "hello", "world"]
-        conf = newconfig(['brave', 'new'], inisource).envconfigs['py24']
+        conf = newconfig(['brave', 'new'], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1", "[hello]", "world"]
         assert argv[1] == ["cmd1", "brave", "new", "world"]
@@ -886,58 +886,58 @@ class TestConfigTestEnv:
 
     def test_posargs_backslashed_or_quoted(self, tmpdir, newconfig):
         inisource = """
-            [testenv:py24]
+            [testenv:py27]
             commands =
                 echo "\{posargs\}" = {posargs}
                 echo "posargs = " "{posargs}"
         """
-        conf = newconfig([], inisource).envconfigs['py24']
+        conf = newconfig([], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ['echo', '\\{posargs\\}', '=']
         assert argv[1] == ['echo', 'posargs = ', ""]
 
-        conf = newconfig(['dog', 'cat'], inisource).envconfigs['py24']
+        conf = newconfig(['dog', 'cat'], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ['echo', '\\{posargs\\}', '=', 'dog', 'cat']
         assert argv[1] == ['echo', 'posargs = ', 'dog cat']
 
     def test_rewrite_posargs(self, tmpdir, newconfig):
         inisource = """
-            [testenv:py24]
+            [testenv:py27]
             args_are_paths = True
             changedir = tests
             commands = cmd1 {posargs:hello}
         """
-        conf = newconfig([], inisource).envconfigs['py24']
+        conf = newconfig([], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1", "tests/hello"]
 
         tmpdir.ensure("tests", "hello")
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
     def test_rewrite_simple_posargs(self, tmpdir, newconfig):
         inisource = """
-            [testenv:py24]
+            [testenv:py27]
             args_are_paths = True
             changedir = tests
             commands = cmd1 {posargs}
         """
-        conf = newconfig([], inisource).envconfigs['py24']
+        conf = newconfig([], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1"]
 
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1", "tests/hello"]
 
         tmpdir.ensure("tests", "hello")
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py24']
+        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
@@ -947,12 +947,12 @@ class TestConfigTestEnv:
             deps=
                 pytest
                 pytest-cov
-            [testenv:py24]
+            [testenv:py27]
             deps=
                 {[testenv]deps}
                 fun
         """
-        conf = newconfig([], inisource).envconfigs['py24']
+        conf = newconfig([], inisource).envconfigs['py27']
         packages = [dep.name for dep in conf.deps]
         assert packages == ['pytest', 'pytest-cov', 'fun']
 
@@ -1165,11 +1165,11 @@ class TestGlobalOptions:
                                           monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         config = newconfig("""
-            [testenv:py24]
+            [testenv:py27]
             commands =
                 {distshare}
         """)
-        conf = config.envconfigs['py24']
+        conf = config.envconfigs['py27']
         argv = conf.commands
         expect_path = config.toxworkdir.join("distshare")
         assert argv[0][0] == expect_path
@@ -1180,11 +1180,11 @@ class TestGlobalOptions:
         config = newconfig("""
             [tox:jenkins]
             distshare = {env:WORKSPACE}/hello
-            [testenv:py24]
+            [testenv:py27]
             commands =
                 {distshare}
         """)
-        conf = config.envconfigs['py24']
+        conf = config.envconfigs['py27']
         argv = conf.commands
         assert argv[0][0] == config.distshare
         assert config.distshare == tmpdir.join("hello")
@@ -1230,7 +1230,7 @@ class TestGlobalOptions:
         assert str(env.basepython) == sys.executable
 
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
-        envs = "py26,py27,py31,py32,py33,py34,jython,pypy,pypy3"
+        envs = "py26,py27,py32,py33,py34,py35,py36,jython,pypy,pypy3"
         inisource = """
             [tox]
             envlist = %s
@@ -1291,21 +1291,21 @@ class TestGlobalOptions:
         assert not config.option.skip_missing_interpreters
 
     def test_defaultenv_commandline(self, tmpdir, newconfig, monkeypatch):
-        config = newconfig(["-epy24"], "")
-        env = config.envconfigs['py24']
-        assert env.basepython == "python2.4"
+        config = newconfig(["-epy27"], "")
+        env = config.envconfigs['py27']
+        assert env.basepython == "python2.7"
         assert not env.commands
 
     def test_defaultenv_partial_override(self, tmpdir, newconfig, monkeypatch):
         inisource = """
             [tox]
-            envlist = py24
-            [testenv:py24]
+            envlist = py27
+            [testenv:py27]
             commands= xyz
         """
         config = newconfig([], inisource)
-        env = config.envconfigs['py24']
-        assert env.basepython == "python2.4"
+        env = config.envconfigs['py27']
+        assert env.basepython == "python2.7"
         assert env.commands == [['xyz']]
 
 

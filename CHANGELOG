@@ -1,4 +1,4 @@
-2.0.0.dev1
+2.0.0
 -----------
 
 - (new) introduce environment variable isolation:
@@ -23,6 +23,8 @@
    2.0).  If ``False`` (the default), then a non-zero exit code from one command
    will abort execution of commands for that environment.
 
+- show and store in json the version dependency information for each venv
+
 - remove the long-deprecated "distribute" option as it has no effect these days.
 
 - fix issue233: avoid hanging with tox-setuptools integration example. Thanks simonb.
@@ -45,6 +47,7 @@
 - introduce parser.add_testenv_attribute() to register an ini-variable
   for testenv sections.  Can be used from plugins through the 
   tox_add_option hook.
+
 
 1.9.2
 -----------

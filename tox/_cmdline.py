@@ -67,10 +67,12 @@ class Action(object):
             self.venvname = self.venv.name
         else:
             self.venvname = "GLOB"
-        cat = {"runtests": "test", "getenv": "setup"}.get(msg)
-        if cat:
-            envlog = session.resultlog.get_envlog(self.venvname)
-            self.commandlog = envlog.get_commandlog(cat)
+        if msg == "runtests":
+            cat = "test"
+        else:
+            cat = "setup"
+        envlog = session.resultlog.get_envlog(self.venvname)
+        self.commandlog = envlog.get_commandlog(cat)
 
     def __enter__(self):
         self.report.logaction_start(self)
@@ -106,7 +108,7 @@ class Action(object):
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
             fout = self._initlogpath(self.id)
-            fout.write("actionid=%s\nmsg=%s\ncmdargs=%r\nenv=%s\n" % (
+            fout.write("actionid: %s\nmsg: %s\ncmdargs: %r\nenv: %s\n\n" % (
                 self.id, self.msg, args, env))
             fout.flush()
             self.popen_outpath = outpath = py.path.local(fout.name)
@@ -442,47 +444,47 @@ class Session:
                 venv.status = sys.exc_info()[1]
                 return False
 
-    def installpkg(self, venv, sdist_path):
-        """Install source package in the specified virtual environment.
+    def installpkg(self, venv, path):
+        """Install package in the specified virtual environment.
 
         :param :class:`tox._config.VenvConfig`: Destination environment
-        :param str sdist_path: Path to the source distribution.
+        :param str path: Path to the distribution package.
         :return: True if package installed otherwise False.
         :rtype: bool
         """
-        self.resultlog.set_header(installpkg=py.path.local(sdist_path))
-        action = self.newaction(venv, "installpkg", sdist_path)
+        self.resultlog.set_header(installpkg=py.path.local(path))
+        action = self.newaction(venv, "installpkg", path)
         with action:
             try:
-                venv.installpkg(sdist_path, action)
+                venv.installpkg(path, action)
                 return True
             except tox.exception.InvocationError:
                 venv.status = sys.exc_info()[1]
                 return False
 
-    def sdist(self):
+    def get_installpkg_path(self):
         """
-        :return: Path to the source distribution
+        :return: Path to the distribution
         :rtype: py.path.local
         """
         if not self.config.option.sdistonly and (self.config.sdistsrc or
                                                  self.config.option.installpkg):
-            sdist_path = self.config.option.installpkg
-            if not sdist_path:
-                sdist_path = self.config.sdistsrc
-            sdist_path = self._resolve_pkg(sdist_path)
+            path = self.config.option.installpkg
+            if not path:
+                path = self.config.sdistsrc
+            path = self._resolve_pkg(path)
             self.report.info("using package %r, skipping 'sdist' activity " %
-                             str(sdist_path))
+                             str(path))
         else:
             try:
-                sdist_path = self._makesdist()
+                path = self._makesdist()
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
                 self.report.error("FAIL could not package project - v = %r" %
                                   v)
                 return
-            sdistfile = self.config.distshare.join(sdist_path.basename)
-            if sdistfile != sdist_path:
+            sdistfile = self.config.distshare.join(path.basename)
+            if sdistfile != path:
                 self.report.info("copying new sdistfile to %r" %
                                  str(sdistfile))
                 try:
@@ -491,16 +493,16 @@ class Session:
                     self.report.warning("could not copy distfile to %s" %
                                         sdistfile.dirpath())
                 else:
-                    sdist_path.copy(sdistfile)
-        return sdist_path
+                    path.copy(sdistfile)
+        return path
 
     def subcommand_test(self):
         if self.config.skipsdist:
             self.report.info("skipping sdist step")
-            sdist_path = None
+            path = None
         else:
-            sdist_path = self.sdist()
-            if not sdist_path:
+            path = self.get_installpkg_path()
+            if not path:
                 return 2
         if self.config.option.sdistonly:
             return
@@ -514,7 +516,22 @@ class Session:
                 elif self.config.skipsdist or venv.envconfig.skip_install:
                     self.finishvenv(venv)
                 else:
-                    self.installpkg(venv, sdist_path)
+                    self.installpkg(venv, path)
+
+                # write out version dependency information
+                action = self.newaction(venv, "envreport")
+                with action:
+                    pip = venv.getcommandpath("pip")
+                    # we can't really call internal helpers here easily :/
+                    # output = venv._pcall([str(pip), "freeze"],
+                    #                      cwd=self.config.toxinidir,
+                    #                      action=action)
+                    output = py.process.cmdexec("%s freeze" % (pip))
+                    packages = output.strip().split("\n")
+                    action.setactivity("installed", ",".join(packages))
+                    envlog = self.resultlog.get_envlog(venv.name)
+                    envlog.set_installed(packages)
+
                 self.runtestenv(venv)
         retcode = self._summary()
         return retcode
@@ -589,6 +606,8 @@ class Session:
             self.report.line("  envdir=    %s" % envconfig.envdir)
             self.report.line("  downloadcache=%s" % envconfig.downloadcache)
             self.report.line("  usedevelop=%s" % envconfig.usedevelop)
+            self.report.line("  setenv=%s" % envconfig.setenv)
+            self.report.line("  passenv=%s" % envconfig.passenv)
 
     def showenvs(self):
         for env in self.config.envlist:

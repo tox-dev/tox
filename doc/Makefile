@@ -37,7 +37,8 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 install: clean html 
-	@rsync -avz $(BUILDDIR)/html/ testrun.org:/www/testrun.org/tox/dev
+	@rsync -avz $(BUILDDIR)/html/ testrun.org:/www/testrun.org/tox/latest
+	#dev
     #latexpdf
 	#@scp $(BUILDDIR)/latex/*.pdf testrun.org:www-tox/latest
 
