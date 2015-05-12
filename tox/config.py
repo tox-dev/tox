@@ -56,19 +56,24 @@ class Parser:
         """ add an ini-file variable for "testenv" section.
 
         Types are specified as strings like "bool", "line-list", "string", "argv", "path",
-        "argvlist".  The ``postprocess`` function will be called for each testenv
-        like ``postprocess(config=config, reader=reader, section_val=section_val)``
-        where ``section_val`` is the value as read from the ini (or the default value).
-        Any postprocess function must return a value which will then become the
-        eventual value in the testenv section.
+        "argvlist".
+
+        The ``postprocess`` function will be called for each testenv
+        like ``postprocess(testenv_config=testenv_config, value=value)``
+        where ``value`` is the value as read from the ini (or the default value)
+        and ``testenv_config`` is a :py:class:`tox.config.TestenvConfig` instance
+        which will receive all ini-variables as object attributes.
+
+        Any postprocess function must return a value which will then be set
+        as the final value in the testenv section.
         """
         self._testenv_attr.append(VenvAttribute(name, type, default, help, postprocess))
 
     def add_testenv_attribute_obj(self, obj):
         """ add an ini-file variable as an object.
 
-        This works as ``add_testenv_attribute`` but expects "name", "type", "help",
-        and "postprocess" attributes on the object.
+        This works as the ``add_testenv_attribute`` function but expects
+        "name", "type", "help", and "postprocess" attributes on the object.
         """
         assert hasattr(obj, "name")
         assert hasattr(obj, "type")
@@ -98,9 +103,10 @@ class DepOption:
     help = "each line specifies a dependency in pip/setuptools format."
     default = ()
 
-    def postprocess(self, config, reader, section_val):
+    def postprocess(self, testenv_config, value):
         deps = []
-        for depline in section_val:
+        config = testenv_config.config
+        for depline in value:
             m = re.match(r":(\w+):\s*(\S+)", depline)
             if m:
                 iname, name = m.groups()
@@ -145,19 +151,20 @@ class PosargsOption:
     default = True
     help = "treat positional args in commands as paths"
 
-    def postprocess(self, config, reader, section_val):
+    def postprocess(self, testenv_config, value):
+        config = testenv_config.config
         args = config.option.args
         if args:
-            if section_val:
+            if value:
                 args = []
                 for arg in config.option.args:
                     if arg:
                         origpath = config.invocationcwd.join(arg, abs=True)
                         if origpath.check():
-                            arg = reader.getpath("changedir", ".").bestrelpath(origpath)
+                            arg = testenv_config.changedir.bestrelpath(origpath)
                     args.append(arg)
-            reader.addsubstitutions(args)
-        return section_val
+            testenv_config._reader.addsubstitutions(args)
+        return value
 
 
 class InstallcmdOption:
@@ -166,11 +173,11 @@ class InstallcmdOption:
     default = "pip install {opts} {packages}"
     help = "install command for dependencies and package under test."
 
-    def postprocess(self, config, reader, section_val):
-        if '{packages}' not in section_val:
+    def postprocess(self, testenv_config, value):
+        if '{packages}' not in value:
             raise tox.exception.ConfigError(
                 "'install_command' must contain '{packages}' substitution")
-        return section_val
+        return value
 
 
 def parseconfig(args=None):
@@ -332,10 +339,10 @@ def tox_addoption(parser):
         name="envlogdir", type="path", default="{envdir}/log",
         help="venv log directory")
 
-    def downloadcache(config, reader, section_val):
-        if section_val:
+    def downloadcache(testenv_config, value):
+        if value:
             # env var, if present, takes precedence
-            downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", section_val)
+            downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", value)
             return py.path.local(downloadcache)
 
     parser.add_testenv_attribute(
@@ -359,17 +366,18 @@ def tox_addoption(parser):
         help="if set to True all commands will be executed irrespective of their "
              "result error status.")
 
-    def recreate(config, reader, section_val):
-        if config.option.recreate:
+    def recreate(testenv_config, value):
+        if testenv_config.config.option.recreate:
             return True
-        return section_val
+        return value
 
     parser.add_testenv_attribute(
         name="recreate", type="bool", default=False, postprocess=recreate,
         help="always recreate this test environment.")
 
-    def setenv(config, reader, section_val):
-        setenv = section_val
+    def setenv(testenv_config, value):
+        setenv = value
+        config = testenv_config.config
         if "PYTHONHASHSEED" not in setenv and config.hashseed is not None:
             setenv['PYTHONHASHSEED'] = config.hashseed
         return setenv
@@ -378,7 +386,7 @@ def tox_addoption(parser):
         name="setenv", type="dict", postprocess=setenv,
         help="list of X=Y lines with environment variable settings")
 
-    def passenv(config, reader, section_val):
+    def passenv(testenv_config, value):
         passenv = set(["PATH"])
 
         # we ensure that tmp directory settings are passed on
@@ -392,7 +400,7 @@ def tox_addoption(parser):
             passenv.add("TMP")
         else:
             passenv.add("TMPDIR")
-        for spec in section_val:
+        for spec in value:
             for name in os.environ:
                 if fnmatchcase(name.upper(), spec.upper()):
                     passenv.add(name)
@@ -413,36 +421,37 @@ def tox_addoption(parser):
         help="regular expression which must match against ``sys.platform``. "
              "otherwise testenv will be skipped.")
 
-    def sitepackages(config, reader, section_val):
-        return config.option.sitepackages or section_val
+    def sitepackages(testenv_config, value):
+        return testenv_config.config.option.sitepackages or value
 
     parser.add_testenv_attribute(
         name="sitepackages", type="bool", default=False, postprocess=sitepackages,
         help="Set to ``True`` if you want to create virtual environments that also "
              "have access to globally installed packages.")
 
-    def pip_pre(config, reader, section_val):
-        return config.option.pre or section_val
+    def pip_pre(testenv_config, value):
+        return testenv_config.config.option.pre or value
 
     parser.add_testenv_attribute(
         name="pip_pre", type="bool", default=False, postprocess=pip_pre,
         help="If ``True``, adds ``--pre`` to the ``opts`` passed to "
              "the install command. ")
 
-    def develop(config, reader, section_val):
-        return not config.option.installpkg and (section_val or config.option.develop)
+    def develop(testenv_config, value):
+        option = testenv_config.config.option
+        return not option.installpkg and (value or option.develop)
 
     parser.add_testenv_attribute(
         name="usedevelop", type="bool", postprocess=develop, default=False,
         help="install package in develop/editable mode")
 
-    def basepython_default(config, reader, section_val):
-        if section_val is None:
-            for f in reader.factors:
+    def basepython_default(testenv_config, value):
+        if value is None:
+            for f in testenv_config.factors:
                 if f in default_factors:
                     return default_factors[f]
             return sys.executable
-        return str(section_val)
+        return str(value)
 
     parser.add_testenv_attribute(
         name="basepython", type="string", default=None, postprocess=basepython_default,
@@ -458,6 +467,7 @@ def tox_addoption(parser):
 
 
 class Config(object):
+    """ Global Tox config object. """
     def __init__(self, pluginmanager, option, interpreters):
         #: dictionary containing envname to envconfig mappings
         self.envconfigs = {}
@@ -475,13 +485,23 @@ class Config(object):
         return homedir
 
 
-class VenvConfig:
-    def __init__(self, envname, config):
+class TestenvConfig:
+    """ Testenv Configuration object.
+    In addition to some core attributes/properties this config object holds all
+    per-testenv ini attributes as attributes, see "tox --help-ini" for an overview.
+    """
+    def __init__(self, envname, config, factors, reader):
+        #: test environment name
         self.envname = envname
+        #: global tox config object
         self.config = config
+        #: set of factors
+        self.factors = factors
+        self._reader = reader
 
     @property
     def envbindir(self):
+        """ path to directory where scripts/binaries reside. """
         if (sys.platform == "win32"
                 and "jython" not in self.basepython
                 and "pypy" not in self.basepython):
@@ -491,6 +511,7 @@ class VenvConfig:
 
     @property
     def envpython(self):
+        """ path to python/jython executable. """
         if "jython" in str(self.basepython):
             name = "jython"
         else:
@@ -499,6 +520,9 @@ class VenvConfig:
 
     # no @property to avoid early calling (see callable(subst[key]) checks)
     def envsitepackagesdir(self):
+        """ return sitepackagesdir of the virtualenv environment.
+        (only available during execution, not parsing)
+        """
         self.getsupportedinterpreter()  # for throwing exceptions
         x = self.config.interpreters.get_sitepackagesdir(
             info=self.python_info,
@@ -507,6 +531,7 @@ class VenvConfig:
 
     @property
     def python_info(self):
+        """ return sitepackagesdir of the virtualenv environment. """
         return self.config.interpreters.get_info(envconfig=self)
 
     def getsupportedinterpreter(self):
@@ -650,13 +675,12 @@ class parseini:
         return factors
 
     def make_envconfig(self, name, section, subs, config):
-        vc = VenvConfig(config=config, envname=name)
         factors = set(name.split('-'))
         reader = SectionReader(section, self._cfg, fallbacksections=["testenv"],
                                factors=factors)
+        vc = TestenvConfig(config=config, envname=name, factors=factors, reader=reader)
         reader.addsubstitutions(**subs)
         reader.addsubstitutions(envname=name)
-        reader.vc = vc
 
         for env_attr in config._testenv_attr:
             atype = env_attr.type
@@ -671,7 +695,7 @@ class parseini:
                 raise ValueError("unknown type %r" % (atype,))
 
             if env_attr.postprocess:
-                res = env_attr.postprocess(config, reader, res)
+                res = env_attr.postprocess(testenv_config=vc, value=res)
             setattr(vc, env_attr.name, res)
 
             if atype == "path":
@@ -785,9 +809,8 @@ class SectionReader:
     def getpath(self, name, defaultpath):
         toxinidir = self._subs['toxinidir']
         path = self.getstring(name, defaultpath)
-        if path is None:
-            return path
-        return toxinidir.join(path, abs=True)
+        if path is not None:
+            return toxinidir.join(path, abs=True)
 
     def getlist(self, name, sep="\n"):
         s = self.getstring(name, None)
@@ -952,11 +975,11 @@ class SectionReader:
 
 class _ArgvlistReader:
     @classmethod
-    def getargvlist(cls, reader, section_val):
+    def getargvlist(cls, reader, value):
         """Parse ``commands`` argvlist multiline string.
 
         :param str name: Key name in a section.
-        :param str section_val: Content stored by key.
+        :param str value: Content stored by key.
 
         :rtype: list[list[str]]
         :raise :class:`tox.exception.ConfigError`:
@@ -964,7 +987,7 @@ class _ArgvlistReader:
         """
         commands = []
         current_command = ""
-        for line in section_val.splitlines():
+        for line in value.splitlines():
             line = line.rstrip()
             i = line.find("#")
             if i != -1:

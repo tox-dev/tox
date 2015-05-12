@@ -8,7 +8,7 @@ Install info in a nutshell
 
 **Operating systems**: Linux, Windows, OSX, Unix
 
-**Installer Requirements**: setuptools_ or Distribute_
+**Installer Requirements**: setuptools_
 
 **License**: MIT license
 

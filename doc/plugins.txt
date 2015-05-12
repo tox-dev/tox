@@ -66,13 +66,16 @@ entry point you'll get your code executed as part of a tox run.
 
 
 
-tox hook specifications
-----------------------------
+tox hook specifications and related API
+---------------------------------------
 
 .. automodule:: tox.hookspecs
 
-.. autoclass:: tox.config.Parser
+.. autoclass:: tox.config.Parser()
     :members:
 
-.. autoclass:: tox.config.Config
+.. autoclass:: tox.config.Config()
+    :members:
+
+.. autoclass:: tox.config.TestenvConfig()
     :members:
