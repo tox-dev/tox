@@ -17,7 +17,7 @@
   If platform is set and doesn't match the platform spec in the test 
   environment the test environment is ignored, no setup or tests are attempted.
 
-.. (new) add per-venv "ignore_errors" setting, which defaults to False.
+- (new) add per-venv "ignore_errors" setting, which defaults to False.
    If ``True``, a non-zero exit code from one command will be ignored and
    further commands will be executed (which was the default behavior in tox <
    2.0).  If ``False`` (the default), then a non-zero exit code from one command
@@ -50,6 +50,8 @@
 
 - rename internal files -- tox offers no external API except for the
   experimental plugin hooks, use tox internals at your own risk.
+
+- DEPRECATE distshare in documentation
 
 
 

@@ -19,7 +19,7 @@ List of optional global options::
     toxworkdir=path   # tox working directory, defaults to {toxinidir}/.tox
     setupdir=path     # defaults to {toxinidir}
     distdir=path      # defaults to {toxworkdir}/dist
-    distshare=path    # defaults to {homedir}/.tox/distshare
+    distshare=path    # (DEPRECATED) defaults to {homedir}/.tox/distshare
     envlist=ENVLIST   # defaults to the list of all environments
     skipsdist=BOOL    # defaults to false
 
@@ -30,7 +30,7 @@ and will first lookup global tox settings in this section::
 
     [tox:jenkins]
     ...               # override [tox] settings for the jenkins context
-    # note: for jenkins distshare defaults to ``{toxworkdir}/distshare``.
+    # note: for jenkins distshare defaults to ``{toxworkdir}/distshare`` (DEPRECATED)
 
 .. confval:: skip_missing_interpreters=BOOL
 
@@ -323,7 +323,7 @@ Globally available substitutions
     the directory where sdist-packages will be created in
 
 ``{distshare}``
-    the directory where sdist-packages will be copied to so that
+    (DEPRECATED) the directory where sdist-packages will be copied to so that
     they may be accessed by other processes or tox runs.
 
 substitutions for virtualenv-related sections
