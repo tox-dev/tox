@@ -557,8 +557,8 @@ Reading it line by line:
 Complex factor conditions
 +++++++++++++++++++++++++
 
-Sometimes you need to specify same line for several factors or create a special
-case for a combination of factors. Here is how you do it::
+Sometimes you need to specify the same line for several factors or create a
+special case for a combination of factors. Here is how you do it::
 
     [tox]
     envlist = py{26,27,33}-django{15,16}-{sqlite,mysql}
