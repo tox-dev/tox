@@ -710,6 +710,10 @@ class TestConfigTestEnv:
         if plat == "win32":
             assert "PATHEXT" in envconfig.passenv
             assert "SYSTEMROOT" in envconfig.passenv
+            assert "TEMP" in envconfig.passenv
+            assert "TMP" in envconfig.passenv
+        else:
+            assert "TMPDIR" in envconfig.passenv
         assert "PATH" in envconfig.passenv
         assert "A123A" in envconfig.passenv
         assert "A123B" in envconfig.passenv

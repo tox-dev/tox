@@ -52,3 +52,60 @@ best,
 Holger Krekel, merlinux GmbH
 
 
+2.0.0
+-----------
+
+- (new) introduce environment variable isolation:
+  tox now only passes the PATH variable from the tox
+  invocation environment to the test environment and on Windows
+  also ``SYSTEMROOT`` and ``PATHEXT``.  If you need to pass through further
+  environment variables you can use the new ``passenv`` setting,
+  a space-separated list of environment variable names.  Each name
+  can make use of fnmatch-style glob patterns.  All environment
+  variables which exist in the tox-invocation environment will be copied
+  to the test environment.
+
+- (new) introduce a way to specify on which platform a testenvironment is to
+  execute: the new per-venv "platform" setting allows to specify
+  a regular expression which is matched against sys.platform.
+  If platform is set and doesn't match the platform spec in the test
+  environment the test environment is ignored, no setup or tests are attempted.
+
+- (new) add per-venv "ignore_errors" setting, which defaults to False.
+   If ``True``, a non-zero exit code from one command will be ignored and
+   further commands will be executed (which was the default behavior in tox <
+   2.0).  If ``False`` (the default), then a non-zero exit code from one command
+   will abort execution of commands for that environment.
+
+- show and store in json the version dependency information for each venv
+
+- remove the long-deprecated "distribute" option as it has no effect these days.
+
+- fix issue233: avoid hanging with tox-setuptools integration example. Thanks simonb.
+
+- fix issue120: allow substitution for the commands section.  Thanks
+  Volodymyr Vitvitski.
+
+- fix issue235: fix AttributeError with --installpkg.  Thanks
+  Volodymyr Vitvitski.
+
+- tox has now somewhat pep8 clean code, thanks to Volodymyr Vitvitski.
+
+- fix issue240: allow to specify empty argument list without it being
+  rewritten to ".".  Thanks Daniel Hahler.
+
+- introduce experimental (not much documented yet) plugin system
+  based on pytest's externalized "pluggy" system.
+  See tox/hookspecs.py for the current hooks.
+
+- introduce parser.add_testenv_attribute() to register an ini-variable
+  for testenv sections.  Can be used from plugins through the
+  tox_add_option hook.
+
+- rename internal files -- tox offers no external API except for the
+  experimental plugin hooks, use tox internals at your own risk.
+
+- DEPRECATE distshare in documentation
+
+
+

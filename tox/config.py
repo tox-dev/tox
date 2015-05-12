@@ -369,7 +369,7 @@ def tox_addoption(parser):
         if sys.platform == "win32":
             passenv.add("SYSTEMROOT")  # needed for python's crypto module
             passenv.add("PATHEXT")     # needed for discovering executables
-            passenv.add("TEMPDIR")
+            passenv.add("TEMP")
             passenv.add("TMP")
         else:
             passenv.add("TMPDIR")
