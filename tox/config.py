@@ -387,7 +387,7 @@ def tox_addoption(parser):
         help="list of X=Y lines with environment variable settings")
 
     def passenv(testenv_config, value):
-        passenv = set(["PATH", "PIP_INDEX_URL"])
+        passenv = set(["PATH", "PIP_INDEX_URL", "LANG"])
 
         # we ensure that tmp directory settings are passed on
         # we could also set it to the per-venv "envtmpdir"

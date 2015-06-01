@@ -716,6 +716,7 @@ class TestConfigTestEnv:
             assert "TMPDIR" in envconfig.passenv
         assert "PATH" in envconfig.passenv
         assert "PIP_INDEX_URL" in envconfig.passenv
+        assert "LANG" in envconfig.passenv
         assert "A123A" in envconfig.passenv
         assert "A123B" in envconfig.passenv
 
