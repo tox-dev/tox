@@ -1,8 +1,12 @@
-unreleased
+2.0.2
 ----------
 
-- tox now passes the LANG variable from the tox invocation environment to the
-  test environment.
+- fix issue247: tox now passes the LANG variable from the tox invocation 
+  environment to the test environment by default.
+
+- add SYSTEMDRIVE into default passenv on windows to allow pip6 to work.
+  Thanks Michael Krause.
+
 
 2.0.1
 -----------

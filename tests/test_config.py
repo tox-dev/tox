@@ -709,6 +709,7 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         if plat == "win32":
             assert "PATHEXT" in envconfig.passenv
+            assert "SYSTEMDRIVE" in envconfig.passenv
             assert "SYSTEMROOT" in envconfig.passenv
             assert "TEMP" in envconfig.passenv
             assert "TMP" in envconfig.passenv

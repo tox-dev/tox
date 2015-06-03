@@ -394,6 +394,7 @@ def tox_addoption(parser):
         # but this leads to very long paths when run with jenkins
         # so we just pass it on by default for now.
         if sys.platform == "win32":
+            passenv.add("SYSTEMDRIVE") # needed for pip6
             passenv.add("SYSTEMROOT")  # needed for python's crypto module
             passenv.add("PATHEXT")     # needed for discovering executables
             passenv.add("TEMP")
