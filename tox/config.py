@@ -909,7 +909,7 @@ class SectionReader:
 
         if envkey not in os.environ and default is None:
             raise tox.exception.ConfigError(
-                "substitution env:%r: unkown environment variable %r" %
+                "substitution env:%r: unknown environment variable %r" %
                 (envkey, envkey))
 
         return os.environ.get(envkey, default)
