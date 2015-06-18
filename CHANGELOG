@@ -4,6 +4,11 @@
 - fix issue258, fix issue248, fix issue253: for non-test commands 
   (installation, venv creation) we pass in the full invocation environment.
 
+- remove experimental --set-home option which was hardly used and
+  hackily implemented (if people want home-directory isolation we should
+  figure out a better way to do it, possibly through a plugin)
+
+
 2.0.2
 ----------
 

@@ -283,10 +283,6 @@ def tox_addoption(parser):
     parser.add_argument("--develop", action="store_true", dest="develop",
                         help="install package in the venv using 'setup.py develop' via "
                              "'pip -e .'")
-    parser.add_argument("--set-home", action="store_true", dest="sethome",
-                        help="(experimental) force creating a new $HOME for each test "
-                             "environment and create .pydistutils.cfg|pip.conf files "
-                             "if index servers are specified with tox. ")
     parser.add_argument('-i', action="append",
                         dest="indexurl", metavar="URL",
                         help="set indexserver url (if URL is of form name=url set the "
@@ -410,10 +406,10 @@ def tox_addoption(parser):
     parser.add_testenv_attribute(
         name="passenv", type="space-separated-list", postprocess=passenv,
         help="environment variables needed during executing test commands "
-             "(taken from invocation environment).  Not that tox always "
-             "passes in some basic environment variables which are needed for "
-             "basic functioning of the Python interpreter. See --showconfig "
-             "for the resulting passenv setting.")
+             "(taken from invocation environment). Note that tox always "
+             "passes through some basic environment variables which are "
+             "needed for basic functioning of the Python system. "
+             "See --showconfig for the eventual passenv setting.")
 
     parser.add_testenv_attribute(
         name="whitelist_externals", type="line-list",
