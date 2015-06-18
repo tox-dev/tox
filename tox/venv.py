@@ -259,9 +259,7 @@ class VirtualEnv(object):
             l.append("--pre")
         return l
 
-    def run_install_command(self, packages, options=(),
-                            indexserver=None, action=None,
-                            extraenv=None):
+    def run_install_command(self, packages, options=(), action=None):
         argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
         i = argv.index('{packages}')
@@ -269,18 +267,14 @@ class VirtualEnv(object):
         if '{opts}' in argv:
             i = argv.index('{opts}')
             argv[i:i + 1] = list(options)
+
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
                   '__PYVENV_LAUNCHER__'):
-            try:
-                del os.environ[x]
-            except KeyError:
-                pass
+            os.environ.pop(x, None)
+
         old_stdout = sys.stdout
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-        if extraenv is None:
-            extraenv = {}
-        self._pcall(argv, cwd=self.envconfig.config.toxinidir,
-                    extraenv=extraenv, action=action)
+        self._pcall(argv, cwd=self.envconfig.config.toxinidir, action=action)
         sys.stdout = old_stdout
 
     def _install(self, deps, extraopts=None, action=None):
@@ -302,31 +296,29 @@ class VirtualEnv(object):
             assert ixserver.url is None or isinstance(ixserver.url, str)
 
         for ixserver in l:
-            if self.envconfig.config.option.sethome:
-                extraenv = hack_home_env(
-                    homedir=self.envconfig.envtmpdir.join("pseudo-home"),
-                    index_url=ixserver.url)
-            else:
-                extraenv = {}
-
             packages = d[ixserver]
             options = self._installopts(ixserver.url)
             if extraopts:
                 options.extend(extraopts)
             self.run_install_command(packages=packages, options=options,
-                                     action=action, extraenv=extraenv)
+                                     action=action)
 
-    def _getenv(self, extraenv={}):
-        env = {}
-        for envname in self.envconfig.passenv:
-            if envname in os.environ:
-                env[envname] = os.environ[envname]
+    def _getenv(self, testcommand=False):
+        if testcommand:
+            # for executing tests we construct a clean environment
+            env = {}
+            for envname in self.envconfig.passenv:
+                if envname in os.environ:
+                    env[envname] = os.environ[envname]
+        else:
+            # for executing non-test commands we use the full
+            # invocation environment
+            env = os.environ.copy()
 
+        # in any case we honor per-testenv setenv configuration
         env.update(self.envconfig.setenv)
 
         env['VIRTUAL_ENV'] = str(self.path)
-
-        env.update(extraenv)
         return env
 
     def test(self, redirect=False):
@@ -335,7 +327,7 @@ class VirtualEnv(object):
             self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
             cwd = self.envconfig.changedir
-            env = self._getenv()
+            env = self._getenv(testcommand=True)
             # Display PYTHONHASHSEED to assist with reproducibility.
             action.setactivity("runtests", "PYTHONHASHSEED=%r" % env.get('PYTHONHASHSEED'))
             for i, argv in enumerate(self.envconfig.commands):
@@ -357,7 +349,7 @@ class VirtualEnv(object):
 
                 try:
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect,
-                                ignore_ret=ignore_ret)
+                                ignore_ret=ignore_ret, testcommand=True)
                 except tox.exception.InvocationError as err:
                     self.session.report.error(str(err))
                     self.status = "commands failed"
@@ -368,20 +360,18 @@ class VirtualEnv(object):
                     self.session.report.error(self.status)
                     raise
 
-    def _pcall(self, args, venv=True, cwd=None, extraenv={},
+    def _pcall(self, args, cwd, venv=True, testcommand=False,
                action=None, redirect=True, ignore_ret=False):
         for name in ("VIRTUALENV_PYTHON", "PYTHONDONTWRITEBYTECODE"):
-            try:
-                del os.environ[name]
-            except KeyError:
-                pass
-        assert cwd
+            os.environ.pop(name, None)
+
         cwd.ensure(dir=1)
         old = self.patchPATH()
         try:
             args[0] = self.getcommandpath(args[0], venv, cwd)
-            env = self._getenv(extraenv)
-            return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
+            env = self._getenv(testcommand=testcommand)
+            return action.popen(args, cwd=cwd, env=env,
+                                redirect=redirect, ignore_ret=ignore_ret)
         finally:
             os.environ['PATH'] = old
 
@@ -398,25 +388,3 @@ def getdigest(path):
     if not path.check(file=1):
         return "0" * 32
     return path.computehash()
-
-
-def hack_home_env(homedir, index_url=None):
-    # XXX HACK (this could also live with tox itself, consider)
-    # if tox uses pip on a package that requires setup_requires
-    # the index url set with pip is usually not recognized
-    # because it is setuptools executing very early.
-    # We therefore run the tox command in an artifical home
-    # directory and set .pydistutils.cfg and pip.conf files
-    # accordingly.
-    if not homedir.check():
-        homedir.ensure(dir=1)
-    d = dict(HOME=str(homedir))
-    if not index_url:
-        index_url = os.environ.get("TOX_INDEX_URL")
-    if index_url:
-        homedir.join(".pydistutils.cfg").write(
-            "[easy_install]\n"
-            "index_url = %s\n" % index_url)
-        d["PIP_INDEX_URL"] = index_url
-        d["TOX_INDEX_URL"] = index_url
-    return d

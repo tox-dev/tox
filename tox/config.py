@@ -283,10 +283,6 @@ def tox_addoption(parser):
     parser.add_argument("--develop", action="store_true", dest="develop",
                         help="install package in the venv using 'setup.py develop' via "
                              "'pip -e .'")
-    parser.add_argument("--set-home", action="store_true", dest="sethome",
-                        help="(experimental) force creating a new $HOME for each test "
-                             "environment and create .pydistutils.cfg|pip.conf files "
-                             "if index servers are specified with tox. ")
     parser.add_argument('-i', action="append",
                         dest="indexurl", metavar="URL",
                         help="set indexserver url (if URL is of form name=url set the "
@@ -299,11 +295,9 @@ def tox_addoption(parser):
                         dest="recreate",
                         help="force recreation of virtual environments")
     parser.add_argument("--result-json", action="store",
-                        dest="resultjson", metavar="PATH",
-                        help="write a json file with detailed information about "
-                             "all commands and results involved.  This will turn off "
-                             "pass-through output from running test commands which is "
-                             "instead captured into the json result file.")
+        dest="resultjson", metavar="PATH",
+        help="write a json file with detailed information about "
+             "all commands and results involved.")
 
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument("--hashseed", action="store",
@@ -414,8 +408,11 @@ def tox_addoption(parser):
 
     parser.add_testenv_attribute(
         name="passenv", type="space-separated-list", postprocess=passenv,
-        help="environment variables names which shall be passed "
-             "from tox invocation to test environment when executing commands.")
+        help="environment variables needed during executing test commands "
+             "(taken from invocation environment). Note that tox always "
+             "passes through some basic environment variables which are "
+             "needed for basic functioning of the Python system. "
+             "See --showconfig for the eventual passenv setting.")
 
     parser.add_testenv_attribute(
         name="whitelist_externals", type="line-list",

@@ -510,6 +510,7 @@ class TestVenvTest:
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     pkg = tmpdir.ensure("package.tar.gz")
     monkeypatch.setenv("X123", "123")
+    monkeypatch.setenv("YY", "456")
     config = newconfig([], """
         [testenv:python]
         commands=python -V
@@ -533,9 +534,12 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         assert env['ENV_VAR'] == 'value'
         assert env['VIRTUAL_ENV'] == str(venv.path)
         assert env['X123'] == "123"
+    # all env variables are passed for installation
+    assert l[0].env["YY"] == "456"
+    assert "YY" not in l[1].env
 
     assert set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"])\
-        .issubset(env)
+        .issubset(l[1].env)
 
     # for e in os.environ:
     #    assert e in env
@@ -614,49 +618,3 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     x4 = venv.getcommandpath("x", cwd=tmpdir)
     assert x4.endswith(os.sep + 'x')
     mocksession.report.expect("warning", "*test command found but not*")
-
-
-def test_sethome_only_on_option(newmocksession, monkeypatch):
-    mocksession = newmocksession([], "")
-    venv = mocksession.getenv('python')
-    action = mocksession.newaction(venv, "qwe", [])
-    monkeypatch.setattr(tox.venv, "hack_home_env", None)
-    venv._install(["x"], action=action)
-
-
-def test_sethome_works_on_option(newmocksession, monkeypatch):
-    mocksession = newmocksession(["--set-home", "-i ALL=http://qwe"], "")
-    venv = mocksession.getenv('python')
-    action = mocksession.newaction(venv, "qwe", [])
-    venv._install(["x"], action=action)
-    _, mocked = mocksession.report.getnext("logpopen")
-    p = mocked.env["HOME"]
-    pydist = py.path.local(p).join(".pydistutils.cfg")
-    assert "http://qwe" in pydist.read()
-
-
-def test_hack_home_env(tmpdir):
-    from tox.venv import hack_home_env
-    env = hack_home_env(tmpdir, "http://index")
-    assert env["HOME"] == str(tmpdir)
-    assert env["PIP_INDEX_URL"] == "http://index"
-    assert "index_url = http://index" in \
-           tmpdir.join(".pydistutils.cfg").read()
-    tmpdir.remove()
-    env = hack_home_env(tmpdir, None)
-    assert env["HOME"] == str(tmpdir)
-    assert not tmpdir.join(".pydistutils.cfg").check()
-    assert "PIP_INDEX_URL" not in env
-
-
-def test_hack_home_env_passthrough(tmpdir, monkeypatch):
-    from tox.venv import hack_home_env
-    env = hack_home_env(tmpdir, "http://index")
-    monkeypatch.setattr(os, "environ", env)
-
-    tmpdir = tmpdir.mkdir("tmpdir2")
-    env2 = hack_home_env(tmpdir)
-    assert env2["HOME"] == str(tmpdir)
-    assert env2["PIP_INDEX_URL"] == "http://index"
-    assert "index_url = http://index" in \
-           tmpdir.join(".pydistutils.cfg").read()
