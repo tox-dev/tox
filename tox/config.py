@@ -409,8 +409,11 @@ def tox_addoption(parser):
 
     parser.add_testenv_attribute(
         name="passenv", type="space-separated-list", postprocess=passenv,
-        help="environment variables names which shall be passed "
-             "from tox invocation to test environment when executing commands.")
+        help="environment variables needed during executing test commands "
+             "(taken from invocation environment).  Not that tox always "
+             "passes in some basic environment variables which are needed for "
+             "basic functioning of the Python interpreter. See --showconfig "
+             "for the resulting passenv setting.")
 
     parser.add_testenv_attribute(
         name="whitelist_externals", type="line-list",

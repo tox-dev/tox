@@ -510,6 +510,7 @@ class TestVenvTest:
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     pkg = tmpdir.ensure("package.tar.gz")
     monkeypatch.setenv("X123", "123")
+    monkeypatch.setenv("YY", "456")
     config = newconfig([], """
         [testenv:python]
         commands=python -V
@@ -533,9 +534,12 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         assert env['ENV_VAR'] == 'value'
         assert env['VIRTUAL_ENV'] == str(venv.path)
         assert env['X123'] == "123"
+    # all env variables are passed for installation
+    assert l[0].env["YY"] == "456"
+    assert "YY" not in l[1].env
 
     assert set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"])\
-        .issubset(env)
+        .issubset(l[1].env)
 
     # for e in os.environ:
     #    assert e in env

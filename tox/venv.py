@@ -317,16 +317,22 @@ class VirtualEnv(object):
                                      action=action, extraenv=extraenv)
 
     def _getenv(self, extraenv={}):
-        env = {}
-        for envname in self.envconfig.passenv:
-            if envname in os.environ:
-                env[envname] = os.environ[envname]
+        if extraenv is None:
+            # for executing tests
+            env = {}
+            for envname in self.envconfig.passenv:
+                if envname in os.environ:
+                    env[envname] = os.environ[envname]
+        else:
+            # for executing install commands
+            env = os.environ.copy()
 
         env.update(self.envconfig.setenv)
 
         env['VIRTUAL_ENV'] = str(self.path)
+        if extraenv is not None:
+            env.update(extraenv)
 
-        env.update(extraenv)
         return env
 
     def test(self, redirect=False):
@@ -357,7 +363,7 @@ class VirtualEnv(object):
 
                 try:
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect,
-                                ignore_ret=ignore_ret)
+                                ignore_ret=ignore_ret, extraenv=None)
                 except tox.exception.InvocationError as err:
                     self.session.report.error(str(err))
                     self.status = "commands failed"

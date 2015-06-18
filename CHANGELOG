@@ -1,3 +1,9 @@
+2.1.0
+----------
+
+- fix issue258, fix issue248, fix issue253: for non-test commands 
+  (installation, venv creation) we pass in the full invocation environment.
+
 2.0.2
 ----------
 
