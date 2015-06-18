@@ -295,11 +295,9 @@ def tox_addoption(parser):
                         dest="recreate",
                         help="force recreation of virtual environments")
     parser.add_argument("--result-json", action="store",
-                        dest="resultjson", metavar="PATH",
-                        help="write a json file with detailed information about "
-                             "all commands and results involved.  This will turn off "
-                             "pass-through output from running test commands which is "
-                             "instead captured into the json result file.")
+        dest="resultjson", metavar="PATH",
+        help="write a json file with detailed information about "
+             "all commands and results involved.")
 
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument("--hashseed", action="store",

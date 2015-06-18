@@ -618,4 +618,3 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     x4 = venv.getcommandpath("x", cwd=tmpdir)
     assert x4.endswith(os.sep + 'x')
     mocksession.report.expect("warning", "*test command found but not*")
-

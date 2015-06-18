@@ -267,12 +267,11 @@ class VirtualEnv(object):
         if '{opts}' in argv:
             i = argv.index('{opts}')
             argv[i:i + 1] = list(options)
+
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
                   '__PYVENV_LAUNCHER__'):
-            try:
-                del os.environ[x]
-            except KeyError:
-                pass
+            os.environ.pop(x, None)
+
         old_stdout = sys.stdout
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
         self._pcall(argv, cwd=self.envconfig.config.toxinidir, action=action)
@@ -304,8 +303,8 @@ class VirtualEnv(object):
             self.run_install_command(packages=packages, options=options,
                                      action=action)
 
-    def _getenv(self, extraenv={}):
-        if extraenv is None:
+    def _getenv(self, testcommand=False):
+        if testcommand:
             # for executing tests we construct a clean environment
             env = {}
             for envname in self.envconfig.passenv:
@@ -320,9 +319,6 @@ class VirtualEnv(object):
         env.update(self.envconfig.setenv)
 
         env['VIRTUAL_ENV'] = str(self.path)
-        if extraenv is not None:
-            env.update(extraenv)
-
         return env
 
     def test(self, redirect=False):
@@ -331,7 +327,7 @@ class VirtualEnv(object):
             self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
             cwd = self.envconfig.changedir
-            env = self._getenv()
+            env = self._getenv(testcommand=True)
             # Display PYTHONHASHSEED to assist with reproducibility.
             action.setactivity("runtests", "PYTHONHASHSEED=%r" % env.get('PYTHONHASHSEED'))
             for i, argv in enumerate(self.envconfig.commands):
@@ -353,7 +349,7 @@ class VirtualEnv(object):
 
                 try:
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect,
-                                ignore_ret=ignore_ret, extraenv=None)
+                                ignore_ret=ignore_ret, testcommand=True)
                 except tox.exception.InvocationError as err:
                     self.session.report.error(str(err))
                     self.status = "commands failed"
@@ -364,20 +360,18 @@ class VirtualEnv(object):
                     self.session.report.error(self.status)
                     raise
 
-    def _pcall(self, args, venv=True, cwd=None, extraenv={},
+    def _pcall(self, args, cwd, venv=True, testcommand=False,
                action=None, redirect=True, ignore_ret=False):
         for name in ("VIRTUALENV_PYTHON", "PYTHONDONTWRITEBYTECODE"):
-            try:
-                del os.environ[name]
-            except KeyError:
-                pass
-        assert cwd
+            os.environ.pop(name, None)
+
         cwd.ensure(dir=1)
         old = self.patchPATH()
         try:
             args[0] = self.getcommandpath(args[0], venv, cwd)
-            env = self._getenv(extraenv)
-            return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
+            env = self._getenv(testcommand=testcommand)
+            return action.popen(args, cwd=cwd, env=env,
+                                redirect=redirect, ignore_ret=ignore_ret)
         finally:
             os.environ['PATH'] = old
 
@@ -394,4 +388,3 @@ def getdigest(path):
     if not path.check(file=1):
         return "0" * 32
     return path.computehash()
-
