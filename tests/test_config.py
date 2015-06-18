@@ -733,6 +733,7 @@ class TestConfigTestEnv:
         config = newconfig("""
             [testenv]
             passenv =
+                      # comment
                       A123*  B?23
         """)
         assert len(config.envconfigs) == 1
@@ -754,20 +755,39 @@ class TestConfigTestEnv:
     def test_passenv_with_factor(self, tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("A123A", "a")
         monkeypatch.setenv("A123B", "b")
+        monkeypatch.setenv("A123C", "c")
+        monkeypatch.setenv("A123D", "d")
         monkeypatch.setenv("BX23", "0")
+        monkeypatch.setenv("CCA43", "3")
+        monkeypatch.setenv("CB21", "4")
         config = newconfig("""
             [tox]
             envlist = {x1,x2}
             [testenv]
             passenv =
-                x1: A123A
-                x2: A123B
+                x1: A123A CC*
+                x1: CB21
+                # passed to both environments
+                A123C
+                x2: A123B A123D
         """)
         assert len(config.envconfigs) == 2
+
         assert "A123A" in config.envconfigs["x1"].passenv
+        assert "A123C" in config.envconfigs["x1"].passenv
+        assert "CCA43" in config.envconfigs["x1"].passenv
+        assert "CB21" in config.envconfigs["x1"].passenv
         assert "A123B" not in config.envconfigs["x1"].passenv
+        assert "A123D" not in config.envconfigs["x1"].passenv
+        assert "BX23" not in config.envconfigs["x1"].passenv
+
         assert "A123B" in config.envconfigs["x2"].passenv
+        assert "A123D" in config.envconfigs["x2"].passenv
         assert "A123A" not in config.envconfigs["x2"].passenv
+        assert "A123C" in config.envconfigs["x2"].passenv
+        assert "CCA43" not in config.envconfigs["x2"].passenv
+        assert "CB21" not in config.envconfigs["x2"].passenv
+        assert "BX23" not in config.envconfigs["x2"].passenv
 
     def test_changedir_override(self, tmpdir, newconfig):
         config = newconfig("""
