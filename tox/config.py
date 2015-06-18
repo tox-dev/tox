@@ -387,6 +387,11 @@ def tox_addoption(parser):
         help="list of X=Y lines with environment variable settings")
 
     def passenv(testenv_config, value):
+        if len(value) == 1 and "\n" in value[0]:
+            # If we have a list of 1 element that contains new lines,
+            # passenv has been specified as a multi line list.
+            value = value[0].split("\n")
+
         passenv = set(["PATH", "PIP_INDEX_URL", "LANG"])
 
         # we ensure that tmp directory settings are passed on

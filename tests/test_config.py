@@ -696,14 +696,44 @@ class TestConfigTestEnv:
         assert envconfig.setenv['ANOTHER_VAL'] == 'else'
 
     @pytest.mark.parametrize("plat", ["win32", "linux2"])
-    def test_passenv(self, tmpdir, newconfig, monkeypatch, plat):
+    def test_passenv_as_multiline_list(self, tmpdir, newconfig, monkeypatch, plat):
         monkeypatch.setattr(sys, "platform", plat)
         monkeypatch.setenv("A123A", "a")
         monkeypatch.setenv("A123B", "b")
         monkeypatch.setenv("BX23", "0")
         config = newconfig("""
             [testenv]
-            passenv = A123* B?23
+            passenv =
+                      A123*
+                      # isolated comment
+                      B?23
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        if plat == "win32":
+            assert "PATHEXT" in envconfig.passenv
+            assert "SYSTEMDRIVE" in envconfig.passenv
+            assert "SYSTEMROOT" in envconfig.passenv
+            assert "TEMP" in envconfig.passenv
+            assert "TMP" in envconfig.passenv
+        else:
+            assert "TMPDIR" in envconfig.passenv
+        assert "PATH" in envconfig.passenv
+        assert "PIP_INDEX_URL" in envconfig.passenv
+        assert "LANG" in envconfig.passenv
+        assert "A123A" in envconfig.passenv
+        assert "A123B" in envconfig.passenv
+
+    @pytest.mark.parametrize("plat", ["win32", "linux2"])
+    def test_passenv_as_space_separated_list(self, tmpdir, newconfig, monkeypatch, plat):
+        monkeypatch.setattr(sys, "platform", plat)
+        monkeypatch.setenv("A123A", "a")
+        monkeypatch.setenv("A123B", "b")
+        monkeypatch.setenv("BX23", "0")
+        config = newconfig("""
+            [testenv]
+            passenv =
+                      A123*  B?23
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
