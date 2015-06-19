@@ -14,6 +14,10 @@
 - allow envlist to be a multi-line list, to intersperse comments
   and have long envlist settings split more naturally.  Thanks Andre Caron.
 
+- introduce a TOX_TESTENV_PASSENV setting which is honored
+  when constructing the set of environment variables for test environments.
+  Thanks Marc Abramowitz for pushing in this direction.
+
 
 2.0.2
 ----------

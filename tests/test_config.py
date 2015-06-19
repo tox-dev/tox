@@ -789,6 +789,18 @@ class TestConfigTestEnv:
         assert "CB21" not in config.envconfigs["x2"].passenv
         assert "BX23" not in config.envconfigs["x2"].passenv
 
+    def test_passenv_from_global_env(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("A1", "a1")
+        monkeypatch.setenv("A2", "a2")
+        monkeypatch.setenv("TOX_TESTENV_PASSENV", "A1")
+        config = newconfig("""
+            [testenv]
+            passenv = A2
+        """)
+        env = config.envconfigs["python"]
+        assert "A1" in env.passenv
+        assert "A2" in env.passenv
+
     def test_changedir_override(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]

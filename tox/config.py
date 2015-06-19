@@ -295,9 +295,9 @@ def tox_addoption(parser):
                         dest="recreate",
                         help="force recreation of virtual environments")
     parser.add_argument("--result-json", action="store",
-        dest="resultjson", metavar="PATH",
-        help="write a json file with detailed information about "
-             "all commands and results involved.")
+                        dest="resultjson", metavar="PATH",
+                        help="write a json file with detailed information "
+                        "about all commands and results involved.")
 
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument("--hashseed", action="store",
@@ -387,6 +387,11 @@ def tox_addoption(parser):
                 [x.split(' ') for x in value]))
 
         passenv = set(["PATH", "PIP_INDEX_URL", "LANG"])
+
+        # read in global passenv settings
+        p = os.environ.get("TOX_TESTENV_PASSENV", None)
+        if p is not None:
+            passenv.update(x for x in p.split() if x)
 
         # we ensure that tmp directory settings are passed on
         # we could also set it to the per-venv "envtmpdir"
