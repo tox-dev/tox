@@ -381,6 +381,11 @@ def tox_addoption(parser):
         help="list of X=Y lines with environment variable settings")
 
     def passenv(testenv_config, value):
+        # Flatten the list to deal with space-separated values.
+        value = list(
+            itertools.chain.from_iterable(
+                [x.split(' ') for x in value]))
+
         passenv = set(["PATH", "PIP_INDEX_URL", "LANG"])
 
         # we ensure that tmp directory settings are passed on
@@ -402,7 +407,7 @@ def tox_addoption(parser):
         return passenv
 
     parser.add_testenv_attribute(
-        name="passenv", type="space-separated-list", postprocess=passenv,
+        name="passenv", type="line-list", postprocess=passenv,
         help="environment variables needed during executing test commands "
              "(taken from invocation environment). Note that tox always "
              "passes through some basic environment variables which are "
