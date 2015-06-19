@@ -8,6 +8,9 @@
   hackily implemented (if people want home-directory isolation we should
   figure out a better way to do it, possibly through a plugin)
 
+- fix issue259: passenv is now a line-list which allows to intersperse
+  comments.  Thanks stefano-m.
+
 
 2.0.2
 ----------
