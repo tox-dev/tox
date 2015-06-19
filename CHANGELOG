@@ -11,6 +11,9 @@
 - fix issue259: passenv is now a line-list which allows to intersperse
   comments.  Thanks stefano-m.
 
+- allow envlist to be a multi-line list, to intersperse comments
+  and have long envlist settings split more naturally.  Thanks Andre Caron.
+
 
 2.0.2
 ----------
