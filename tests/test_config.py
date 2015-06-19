@@ -1323,6 +1323,17 @@ class TestGlobalOptions:
         assert config.envlist == \
             ["py26-dep1", "py26-dep2", "py27-dep1", "py27-dep2"]
 
+    def test_envlist_multiline(self, newconfig):
+        inisource = """
+            [tox]
+            envlist =
+              py27
+              py34
+        """
+        config = newconfig([], inisource)
+        assert config.envlist == \
+            ["py27", "py34"]
+
     def test_minversion(self, tmpdir, newconfig, monkeypatch):
         inisource = """
             [tox]
