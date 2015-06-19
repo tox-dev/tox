@@ -1,5 +1,5 @@
 #
-__version__ = '2.1.0.dev2'
+__version__ = '2.1.0'
 
 from .hookspecs import hookspec, hookimpl  # noqa
 
