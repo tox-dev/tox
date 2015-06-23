@@ -1,3 +1,10 @@
+2.1.1
+----------
+
+- fix platform skipping for detox
+
+- report skipped platforms as skips in the summary
+
 2.1.0
 ----------
 

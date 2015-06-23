@@ -421,6 +421,9 @@ class Session:
             path.ensure(dir=1)
 
     def setupenv(self, venv):
+        if not venv.matching_platform():
+            venv.status = "platform mismatch"
+            return  # we simply omit non-matching platforms
         action = self.newaction(venv, "getenv", venv.envconfig.envdir)
         with action:
             venv.status = 0
@@ -518,9 +521,6 @@ class Session:
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
-            if not venv.matching_platform():
-                venv.status = "platform mismatch"
-                continue  # we simply omit non-matching platforms
             if self.setupenv(venv):
                 if venv.envconfig.usedevelop:
                     self.developpkg(venv, self.config.setupdir)
@@ -569,7 +569,7 @@ class Session:
                     self.report.error(msg)
             elif status == "platform mismatch":
                 msg = "  %s: %s" % (venv.envconfig.envname, str(status))
-                self.report.verbosity1(msg)
+                self.report.skip(msg)
             elif status and status != "skipped tests":
                 msg = "  %s: %s" % (venv.envconfig.envname, str(status))
                 self.report.error(msg)

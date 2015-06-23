@@ -263,12 +263,9 @@ def test_skip_platform_mismatch(cmd, initproj):
     })
     result = cmd.run("tox")
     assert not result.ret
-    assert "platform mismatch" not in result.stdout.str()
-    result = cmd.run("tox", "-v")
-    assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*python*platform mismatch*"
-    ])
+    result.stdout.fnmatch_lines("""
+        SKIPPED*platform mismatch*
+    """)
 
 
 def test_skip_unknown_interpreter(cmd, initproj):

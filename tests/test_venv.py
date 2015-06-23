@@ -473,31 +473,24 @@ class TestCreationConfig:
 
 class TestVenvTest:
 
-    def test_patchPATH(self, newmocksession, monkeypatch):
+    def test_envbinddir_path(self, newmocksession, monkeypatch):
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession([], """
             [testenv:python]
             commands=abc
         """)
         venv = mocksession.getenv("python")
-        envconfig = venv.envconfig
         monkeypatch.setenv("PATH", "xyz")
-        oldpath = venv.patchPATH()
-        assert oldpath == "xyz"
-        res = os.environ['PATH']
-        assert res == "%s%sxyz" % (envconfig.envbindir, os.pathsep)
-        p = "xyz" + os.pathsep + str(envconfig.envbindir)
-        monkeypatch.setenv("PATH", p)
-        venv.patchPATH()
-        res = os.environ['PATH']
-        assert res == "%s%s%s" % (envconfig.envbindir, os.pathsep, p)
+        l = []
+        monkeypatch.setattr("py.path.local.sysfind", classmethod(
+                            lambda *args, **kwargs: l.append(kwargs) or 0 / 0))
 
-        assert envconfig.commands
-        monkeypatch.setattr(venv, '_pcall', lambda *args, **kwargs: 0 / 0)
         py.test.raises(ZeroDivisionError, "venv._install(list('123'))")
+        assert l.pop()["paths"] == [venv.envconfig.envbindir]
         py.test.raises(ZeroDivisionError, "venv.test()")
+        assert l.pop()["paths"] == [venv.envconfig.envbindir]
         py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'])")
-        py.test.raises(ZeroDivisionError, "venv._pcall([1,2,3])")
+        assert l.pop()["paths"] == [venv.envconfig.envbindir]
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
         monkeypatch.setenv("__PYVENV_LAUNCHER__", "1")

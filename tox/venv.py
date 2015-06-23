@@ -366,21 +366,13 @@ class VirtualEnv(object):
             os.environ.pop(name, None)
 
         cwd.ensure(dir=1)
-        old = self.patchPATH()
-        try:
-            args[0] = self.getcommandpath(args[0], venv, cwd)
-            env = self._getenv(testcommand=testcommand)
-            return action.popen(args, cwd=cwd, env=env,
-                                redirect=redirect, ignore_ret=ignore_ret)
-        finally:
-            os.environ['PATH'] = old
-
-    def patchPATH(self):
-        oldPATH = os.environ['PATH']
+        args[0] = self.getcommandpath(args[0], venv, cwd)
+        env = self._getenv(testcommand=testcommand)
         bindir = str(self.envconfig.envbindir)
-        os.environ['PATH'] = os.pathsep.join([bindir, oldPATH])
-        self.session.report.verbosity2("setting PATH=%s" % os.environ["PATH"])
-        return oldPATH
+        env['PATH'] = p = os.pathsep.join([bindir, os.environ["PATH"]])
+        self.session.report.verbosity2("setting PATH=%s" % p)
+        return action.popen(args, cwd=cwd, env=env,
+                            redirect=redirect, ignore_ret=ignore_ret)
 
 
 def getdigest(path):
