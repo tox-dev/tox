@@ -926,11 +926,11 @@ class TestConfigTestEnv:
         assert argv[7][0] == config.homedir.join(".tox", "distshare")
         assert argv[8][0] == conf.envlogdir
 
-    def test_substitution_notfound_issue246(tmpdir, newconfig):  
+    def test_substitution_notfound_issue246(tmpdir, newconfig):
         config = newconfig("""
             [testenv:py27]
-            setenv =  
-                FOO={envbindir}  
+            setenv =
+                FOO={envbindir}
                 BAR={envsitepackagesdir}
         """)
         conf = config.envconfigs['py27']
