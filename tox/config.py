@@ -386,7 +386,7 @@ def tox_addoption(parser):
             itertools.chain.from_iterable(
                 [x.split(' ') for x in value]))
 
-        passenv = set(["PATH", "PIP_INDEX_URL", "LANG"])
+        passenv = set(["PATH", "PIP_INDEX_URL", "LANG", "LD_LIBRARY_PATH"])
 
         # read in global passenv settings
         p = os.environ.get("TOX_TESTENV_PASSENV", None)
