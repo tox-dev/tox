@@ -611,3 +611,16 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     x4 = venv.getcommandpath("x", cwd=tmpdir)
     assert x4.endswith(os.sep + 'x')
     mocksession.report.expect("warning", "*test command found but not*")
+
+
+def test_non_voting_failing_cmd(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        commands=testenv_fail
+        voting=False
+    """)
+
+    venv = mocksession.getenv('python')
+    venv.test()
+    assert venv.status == "non-voting fail"
+    mocksession.report.expect("warning", "*command failed, but testenv*")
