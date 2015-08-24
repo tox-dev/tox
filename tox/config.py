@@ -928,7 +928,7 @@ class SectionReader:
             return env_list.get(envkey, default)
 
     def _build_envs_list(self):
-        full_envs = self._cfg[self.section_name].get('setenv')
+        full_envs = self._cfg[self.section_name].get('setenv', False)
         if full_envs:
             return {k.split('=')[0]: k.split('=')[1] for k in full_envs.split('\n')}
         else:
