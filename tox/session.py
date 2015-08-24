@@ -570,6 +570,9 @@ class Session:
             elif status == "platform mismatch":
                 msg = "  %s: %s" % (venv.envconfig.envname, str(status))
                 self.report.skip(msg)
+            elif status and status == "non-voting fail":
+                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
+                self.report.good(msg)
             elif status and status != "skipped tests":
                 msg = "  %s: %s" % (venv.envconfig.envname, str(status))
                 self.report.error(msg)
