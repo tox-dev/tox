@@ -351,13 +351,12 @@ class VirtualEnv(object):
                     self._pcall(argv, cwd=cwd, action=action, redirect=redirect,
                                 ignore_ret=ignore_ret, testcommand=True)
                 except tox.exception.InvocationError as err:
-                    if not self.envconfig.voting:
+                    if self.envconfig.ignore_outcome:
                         self.session.report.warning(
-                            "command failed, but testenv is marked "
-                            "non-voting.\n"
+                            "command failed but result from testenv is ignored\n"
                             "  cmd: %s" % (str(err),))
-                        self.status = "non-voting fail"
-                        continue # keep processing commands
+                        self.status = "ignored failed command"
+                        continue  # keep processing commands
 
                     self.session.report.error(str(err))
                     self.status = "commands failed"

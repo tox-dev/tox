@@ -474,9 +474,9 @@ def tox_addoption(parser):
         help="each line specifies a test command and can use substitution.")
 
     parser.add_testenv_attribute(
-        "voting", type="bool", default=True,
-        help="if set to False a failing result of this testenv will not make "
-             "tox fail")
+        "ignore_outcome", type="bool", default=False,
+        help="if set to True a failing result of this testenv will not make "
+             "tox fail, only a warning will be produced")
 
 
 class Config(object):

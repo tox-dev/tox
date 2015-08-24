@@ -7,6 +7,7 @@ import tox.config
 from tox.venv import *  # noqa
 from tox.interpreters import NoInterpreterInfo
 
+
 # def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
 #    l = v.list()
@@ -613,14 +614,15 @@ def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     mocksession.report.expect("warning", "*test command found but not*")
 
 
-def test_non_voting_failing_cmd(newmocksession):
+def test_ignore_outcome_failing_cmd(newmocksession):
     mocksession = newmocksession([], """
         [testenv]
         commands=testenv_fail
-        voting=False
+        ignore_outcome=True
     """)
 
     venv = mocksession.getenv('python')
     venv.test()
-    assert venv.status == "non-voting fail"
-    mocksession.report.expect("warning", "*command failed, but testenv*")
+    assert venv.status == "ignored failed command"
+    mocksession.report.expect("warning", "*command failed but result from "
+                                         "testenv is ignored*")

@@ -598,7 +598,7 @@ class TestConfigTestEnv:
         int_hashseed = int(hashseed)
         # hashseed is random by default, so we can't assert a specific value.
         assert int_hashseed > 0
-        assert envconfig.voting is True
+        assert envconfig.ignore_outcome is False
 
     def test_sitepackages_switch(self, tmpdir, newconfig):
         config = newconfig(["--sitepackages"], "")
@@ -1216,13 +1216,13 @@ class TestConfigTestEnv:
         assert [d.name for d in configs["py27-django1.6"].deps] \
             == ["Django==1.6"]
 
-    def test_voting(self, newconfig):
+    def test_ignore_outcome(self, newconfig):
         inisource = """
             [testenv]
-            voting=False
+            ignore_outcome=True
         """
         config = newconfig([], inisource).envconfigs
-        assert config["python"].voting is False
+        assert config["python"].ignore_outcome is True
 
 
 class TestGlobalOptions:
