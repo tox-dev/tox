@@ -1,3 +1,10 @@
+2.1.2 (dev)
+-----------
+
+- fix issue265 and add LD_LIBRARY_PATH to passenv on linux by default
+  because otherwise the python interpreter might not start up in
+  certain configurations (redhat software collections).  Thanks David Riddle.
+
 2.1.1
 ----------
 
