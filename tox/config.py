@@ -320,6 +320,18 @@ def tox_addoption(parser):
                         help="additional arguments available to command positional substitution")
 
     # add various core venv interpreter attributes
+    def basepython_default(testenv_config, value):
+        if value is None:
+            for f in testenv_config.factors:
+                if f in default_factors:
+                    return default_factors[f]
+            return sys.executable
+        return str(value)
+
+    parser.add_testenv_attribute(
+        name="basepython", type="string", default=None, postprocess=basepython_default,
+        help="executable name or path of interpreter used to create a "
+             "virtual test environment.")
 
     parser.add_testenv_attribute(
         name="envdir", type="path", default="{toxworkdir}/{envname}",
@@ -452,19 +464,6 @@ def tox_addoption(parser):
     parser.add_testenv_attribute(
         name="usedevelop", type="bool", postprocess=develop, default=False,
         help="install package in develop/editable mode")
-
-    def basepython_default(testenv_config, value):
-        if value is None:
-            for f in testenv_config.factors:
-                if f in default_factors:
-                    return default_factors[f]
-            return sys.executable
-        return str(value)
-
-    parser.add_testenv_attribute(
-        name="basepython", type="string", default=None, postprocess=basepython_default,
-        help="executable name or path of interpreter used to create a "
-             "virtual test environment.")
 
     parser.add_testenv_attribute_obj(InstallcmdOption())
     parser.add_testenv_attribute_obj(DepOption())
@@ -709,7 +708,7 @@ class parseini:
             if atype == "path":
                 reader.addsubstitutions(**{env_attr.name: res})
 
-            if env_attr.name == "install_command":
+            if env_attr.name == "envdir":
                 reader.addsubstitutions(envbindir=vc.envbindir, envpython=vc.envpython,
                                         envsitepackagesdir=vc.envsitepackagesdir)
         return vc
