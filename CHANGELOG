@@ -5,6 +5,10 @@
   because otherwise the python interpreter might not start up in
   certain configurations (redhat software collections).  Thanks David Riddle.
 
+- fix issue246: fix regression in config parsing by reordering 
+  such that {envbindir} can be used again in tox.ini. Thanks Olli Walsh.
+
+
 2.1.1
 ----------
 
