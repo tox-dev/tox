@@ -254,6 +254,28 @@ class TestIniParserAgainstCommandsKey:
             ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"],
         ]
 
+    def test_command_env_substitution(self, newconfig):
+        """Ensure referenced {env:key:default} values are substituted correctly."""
+        config = newconfig("""
+           [testenv:py27]
+           setenv =
+             TEST=testvalue
+           commands =
+             ls {env:TEST}
+        """)
+        reader = SectionReader("testenv:py27", config._cfg)
+        x = reader.getargvlist("commands")
+        assert x == [
+            "ls testvalue".split()
+        ]
+        assert x != [
+            "ls {env:TEST}".split()
+        ]
+        y = reader.getargvlist("setenv")
+        assert y == [
+            "TEST=testvalue".split()
+        ]
+
 
 class TestIniParser:
     def test_getstring_single(self, tmpdir, newconfig):

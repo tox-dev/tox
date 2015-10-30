@@ -902,6 +902,7 @@ class SectionReader:
         return '\n'.join(filter(None, map(factor_line, lines)))
 
     def _replace_env(self, match):
+        env_list = self.getdict('setenv')
         match_value = match.group('substitution_value')
         if not match_value:
             raise tox.exception.ConfigError(
@@ -916,11 +917,14 @@ class SectionReader:
             envkey = match_value
 
         if envkey not in os.environ and default is None:
-            raise tox.exception.ConfigError(
-                "substitution env:%r: unknown environment variable %r" %
-                (envkey, envkey))
-
-        return os.environ.get(envkey, default)
+            if envkey not in env_list and default is None:
+                raise tox.exception.ConfigError(
+                    "substitution env:%r: unknown environment variable %r" %
+                    (envkey, envkey))
+        if envkey in os.environ:
+            return os.environ.get(envkey, default)
+        else:
+            return env_list.get(envkey, default)
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
