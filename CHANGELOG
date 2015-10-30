@@ -8,6 +8,9 @@
 - fix issue246: fix regression in config parsing by reordering 
   such that {envbindir} can be used again in tox.ini. Thanks Olli Walsh.
 
+- fix issue99: the {env:...} substitution now properly uses environment
+  settings from the ``setenv`` section. Thanks Itxaka Serrano.
+
 
 2.1.1
 ----------
