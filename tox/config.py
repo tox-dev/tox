@@ -903,7 +903,7 @@ class SectionReader:
         return '\n'.join(filter(None, map(factor_line, lines)))
 
     def _replace_env(self, match):
-        env_list = self._build_envs_list()
+        env_list = self.getdict('setenv')
         match_value = match.group('substitution_value')
         if not match_value:
             raise tox.exception.ConfigError(
@@ -926,14 +926,6 @@ class SectionReader:
             return os.environ.get(envkey, default)
         else:
             return env_list.get(envkey, default)
-
-    def _build_envs_list(self):
-        full_envs = self.getargvlist('setenv')
-        return_data = {}
-        for item in full_envs:
-            splitted = " ".join(item).split("=")
-            return_data[splitted[0]] = splitted[1]
-        return return_data
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
