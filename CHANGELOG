@@ -11,6 +11,9 @@
 - fix issue99: the {env:...} substitution now properly uses environment
   settings from the ``setenv`` section. Thanks Itxaka Serrano.
 
+- fix issue281: make --force-deps work when urls are present in
+  dependency configs.  Thanks Glyph Lefkowitz for reporting.
+
 
 2.1.1
 ----------

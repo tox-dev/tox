@@ -141,7 +141,11 @@ class DepOption:
         same package, even if versions differ.
         """
         dep1_name = pkg_resources.Requirement.parse(dep1).project_name
-        dep2_name = pkg_resources.Requirement.parse(dep2).project_name
+        try:
+            dep2_name = pkg_resources.Requirement.parse(dep2).project_name
+        except pkg_resources.RequirementParseError:
+            # we couldn't parse a version, probably a URL
+            return False
         return dep1_name == dep2_name
 
 

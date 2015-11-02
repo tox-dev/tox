@@ -88,6 +88,26 @@ class TestVenvConfig:
             'dep1==1.5', 'dep2==2.1', 'dep3==3.0', 'dep4==4.0',
         ]
 
+    def test_force_dep_with_url(self, initproj):
+        initproj("example123-0.5", filedefs={
+            'tox.ini': '''
+            [tox]
+
+            [testenv]
+            deps=
+                dep1==1.0
+                https://pypi.python.org/xyz/pkg1.tar.gz
+            '''
+        })
+        config = parseconfig(
+            ['--force-dep=dep1==1.5'])
+        assert config.option.force_dep == [
+            'dep1==1.5'
+        ]
+        assert [str(x) for x in config.envconfigs['python'].deps] == [
+            'dep1==1.5', 'https://pypi.python.org/xyz/pkg1.tar.gz'
+        ]
+
     def test_is_same_dep(self):
         """
         Ensure correct parseini._is_same_dep is working with a few samples.
