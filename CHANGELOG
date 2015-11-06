@@ -14,6 +14,11 @@
 - fix issue281: make --force-deps work when urls are present in
   dependency configs.  Thanks Glyph Lefkowitz for reporting.
 
+- fix issue174: add new ``ignore_outcome`` testenv attribute which
+  can be set to True in which case it will produce a warning instead
+  of an error on a failed testenv command outcome.  
+  Thanks Rebecka Gulliksson for the PR.
+
 
 2.1.1
 ----------
