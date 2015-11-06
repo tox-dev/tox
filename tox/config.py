@@ -476,6 +476,11 @@ def tox_addoption(parser):
         name="commands", type="argvlist", default="",
         help="each line specifies a test command and can use substitution.")
 
+    parser.add_testenv_attribute(
+        "ignore_outcome", type="bool", default=False,
+        help="if set to True a failing result of this testenv will not make "
+             "tox fail, only a warning will be produced")
+
 
 class Config(object):
     """ Global Tox config object. """
