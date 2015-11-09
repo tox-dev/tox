@@ -19,6 +19,9 @@
   of an error on a failed testenv command outcome.  
   Thanks Rebecka Gulliksson for the PR.
 
+- fix issue280: properly skip missing interpreter if
+  {envsitepackagesdir} is present in commands. Thanks BB:ceridwenv
+
 
 2.1.1
 ----------

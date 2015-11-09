@@ -692,8 +692,7 @@ def test_installpkg(tmpdir, newconfig):
     assert sdist_path == p
 
 
-@pytest.mark.xfail("sys.platform == 'win32' and sys.version_info < (2,6)",
-                   reason="test needs better impl")
+@pytest.mark.xfail("sys.platform == 'win32'", reason="test needs better impl")
 def test_envsitepackagesdir(cmd, initproj):
     initproj("pkg512-0.0.5", filedefs={
         'tox.ini': """
@@ -705,6 +704,22 @@ def test_envsitepackagesdir(cmd, initproj):
     assert result.ret == 0
     result.stdout.fnmatch_lines("""
         X:*tox*site-packages*
+    """)
+
+
+@pytest.mark.xfail("sys.platform == 'win32'", reason="test needs better impl")
+def test_envsitepackagesdir_skip_missing_issue280(cmd, initproj):
+    initproj("pkg513-0.0.5", filedefs={
+        'tox.ini': """
+        [testenv]
+        basepython=/usr/bin/qwelkjqwle
+        commands=
+            {envsitepackagesdir}
+    """})
+    result = cmd.run("tox", "--skip-missing-interpreters")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines("""
+        SKIPPED:*qwelkj*
     """)
 
 

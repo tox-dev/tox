@@ -539,7 +539,6 @@ class TestenvConfig:
         """ return sitepackagesdir of the virtualenv environment.
         (only available during execution, not parsing)
         """
-        self.getsupportedinterpreter()  # for throwing exceptions
         x = self.config.interpreters.get_sitepackagesdir(
             info=self.python_info,
             envdir=self.envdir)
