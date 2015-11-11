@@ -738,6 +738,32 @@ class TestConfigTestEnv:
         assert envconfig.setenv['PYTHONPATH'] == 'something'
         assert envconfig.setenv['ANOTHER_VAL'] == 'else'
 
+    def test_setenv_with_envdir_and_basepython(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv =
+                VAL = {envdir}
+            basepython = {env:VAL}
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'VAL' in envconfig.setenv
+        assert envconfig.setenv['VAL'] == envconfig.envdir
+        assert envconfig.basepython == envconfig.envdir
+
+    def test_setenv_ordering_1(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv=
+                VAL={envdir}
+            commands=echo {env:VAL}
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'VAL' in envconfig.setenv
+        assert envconfig.setenv['VAL'] == envconfig.envdir
+        assert str(envconfig.envdir) in envconfig.commands[0]
+
     @pytest.mark.parametrize("plat", ["win32", "linux2"])
     def test_passenv_as_multiline_list(self, tmpdir, newconfig, monkeypatch, plat):
         monkeypatch.setattr(sys, "platform", plat)

@@ -1,3 +1,9 @@
+2.2.1
+-----
+
+- fix bug where {envdir} substitution could not be used in setenv
+  if that env value is then used in {basepython}. Thanks Florian Bruhin.
+
 2.2.0
 -----
 

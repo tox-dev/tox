@@ -324,6 +324,10 @@ def tox_addoption(parser):
                         help="additional arguments available to command positional substitution")
 
     # add various core venv interpreter attributes
+    parser.add_testenv_attribute(
+        name="envdir", type="path", default="{toxworkdir}/{envname}",
+        help="venv directory")
+
     def basepython_default(testenv_config, value):
         if value is None:
             for f in testenv_config.factors:
@@ -336,10 +340,6 @@ def tox_addoption(parser):
         name="basepython", type="string", default=None, postprocess=basepython_default,
         help="executable name or path of interpreter used to create a "
              "virtual test environment.")
-
-    parser.add_testenv_attribute(
-        name="envdir", type="path", default="{toxworkdir}/{envname}",
-        help="venv directory")
 
     parser.add_testenv_attribute(
         name="envtmpdir", type="path", default="{envdir}/tmp",
@@ -716,7 +716,7 @@ class parseini:
             if atype == "path":
                 reader.addsubstitutions(**{env_attr.name: res})
 
-            if env_attr.name == "envdir":
+            if env_attr.name == "basepython":
                 reader.addsubstitutions(envbindir=vc.envbindir, envpython=vc.envpython,
                                         envsitepackagesdir=vc.envsitepackagesdir)
         return vc
