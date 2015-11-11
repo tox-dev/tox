@@ -1,5 +1,5 @@
-2.1.2 (dev)
------------
+2.2.0
+-----
 
 - fix issue265 and add LD_LIBRARY_PATH to passenv on linux by default
   because otherwise the python interpreter might not start up in
