@@ -302,6 +302,15 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**: ``False``
 
+.. confval:: ignore_outcome=BOOL
+
+    .. versionadded:: 2.2
+
+    If set to True a failing result of this testenv will not make tox fail,
+    only a warning will be produced.
+
+    **default**: ``False``
+
 
 Substitutions
 -------------
