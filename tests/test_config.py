@@ -1598,6 +1598,47 @@ class TestHashseedOption:
         self._check_hashseed(envconfigs["hash2"], '123456789')
 
 
+class TestSetenv:
+    @pytest.mark.xfail(reason="fix pending")
+    def test_setenv_uses_os_environ(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("X", "1")
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                X = {env:X}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "1"
+
+    @pytest.mark.xfail(reason="fix pending")
+    def test_setenv_default_os_environ(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.delenv("X", raising=False)
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                X = {env:X:2}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "2"
+
+    @pytest.mark.xfail(reason="fix pending")
+    def test_setenv_uses_other_setenv(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                Y = 5
+                X = {env:Y}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "5"
+
+    @pytest.mark.xfail(reason="fix pending")
+    def test_setenv_recursive_direct(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                X = {env:X:3}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "3"
+
+
 class TestIndexServer:
     def test_indexserver(self, tmpdir, newconfig):
         config = newconfig("""
