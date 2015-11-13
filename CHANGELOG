@@ -1,3 +1,8 @@
+2.2.2.dev
+---------
+
+- fix issue285 (WIP) setenv processing with self-references
+
 2.2.1
 -----
 
