@@ -799,16 +799,6 @@ class IndexServerConfig:
 is_section_substitution = re.compile("{\[[^{}\s]+\]\S+?}").match
 
 
-RE_ITEM_REF = re.compile(
-    r'''
-    (?<!\\)[{]
-    (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
-    (?P<substitution_value>[^{}]*)  # substitution key
-    [}]
-    ''',
-    re.VERBOSE)
-
-
 class SectionReader:
     def __init__(self, section_name, cfgparser, fallbacksections=None, factors=()):
         self.section_name = section_name
@@ -888,11 +878,7 @@ class SectionReader:
             x = self._apply_factors(x)
 
         if replace and x and hasattr(x, 'replace'):
-            self._subststack.append((self.section_name, name))
-            try:
-                x = self._replace(x)
-            finally:
-                assert self._subststack.pop() == (self.section_name, name)
+            x = self._replace(x, name=name)
         # print "getstring", self.section_name, name, "returned", repr(x)
         return x
 
@@ -909,8 +895,61 @@ class SectionReader:
         lines = s.strip().splitlines()
         return '\n'.join(filter(None, map(factor_line, lines)))
 
+    def _replace(self, value, name=None, section_name=None):
+        if '{' not in value:
+            return value
+
+        section_name = section_name if section_name else self.section_name
+        self._subststack.append((section_name, name))
+        try:
+            return Replacer(self).do_replace(value)
+        finally:
+            assert self._subststack.pop() == (section_name, name)
+
+
+class Replacer:
+    RE_ITEM_REF = re.compile(
+        r'''
+        (?<!\\)[{]
+        (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
+        (?P<substitution_value>[^{}]*)  # substitution key
+        [}]
+        ''',
+        re.VERBOSE)
+
+
+    def __init__(self, reader, opt_replace_env=True):
+        self.reader = reader
+        self.opt_replace_env = opt_replace_env
+
+    def do_replace(self, x):
+        return self.RE_ITEM_REF.sub(self._replace_match, x)
+
+    def _replace_match(self, match):
+        g = match.groupdict()
+
+        # special case: opts and packages. Leave {opts} and
+        # {packages} intact, they are replaced manually in
+        # _venv.VirtualEnv.run_install_command.
+        sub_value = g['substitution_value']
+        if sub_value in ('opts', 'packages'):
+            return '{%s}' % sub_value
+
+        try:
+            sub_type = g['sub_type']
+        except KeyError:
+            raise tox.exception.ConfigError(
+                "Malformed substitution; no substitution type provided")
+
+        if sub_type == "env":
+            assert self.opt_replace_env
+            return self._replace_env(match)
+        if sub_type != None:
+            raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
+        return self._replace_substitution(match)
+
     def _replace_env(self, match):
-        env_list = self.getdict('setenv')
+        env_list = self.reader.getdict('setenv')
         match_value = match.group('substitution_value')
         if not match_value:
             raise tox.exception.ConfigError(
@@ -938,60 +977,26 @@ class SectionReader:
         if key.startswith("[") and "]" in key:
             i = key.find("]")
             section, item = key[1:i], key[i + 1:]
-            if section in self._cfg and item in self._cfg[section]:
-                if (section, item) in self._subststack:
+            cfg = self.reader._cfg
+            if section in cfg and item in cfg[section]:
+                if (section, item) in self.reader._subststack:
                     raise ValueError('%s already in %s' % (
-                        (section, item), self._subststack))
-                x = str(self._cfg[section][item])
-                self._subststack.append((section, item))
-                try:
-                    return self._replace(x)
-                finally:
-                    self._subststack.pop()
+                        (section, item), self.reader._subststack))
+                x = str(cfg[section][item])
+                return self.reader._replace(x, name=item, section_name=section)
 
         raise tox.exception.ConfigError(
             "substitution key %r not found" % key)
 
     def _replace_substitution(self, match):
         sub_key = match.group('substitution_value')
-        val = self._subs.get(sub_key, None)
+        val = self.reader._subs.get(sub_key, None)
         if val is None:
             val = self._substitute_from_other_section(sub_key)
         if py.builtin.callable(val):
             val = val()
         return str(val)
 
-    def _replace_match(self, match):
-        g = match.groupdict()
-
-        # special case: opts and packages. Leave {opts} and
-        # {packages} intact, they are replaced manually in
-        # _venv.VirtualEnv.run_install_command.
-        sub_value = g['substitution_value']
-        if sub_value in ('opts', 'packages'):
-            return '{%s}' % sub_value
-
-        handlers = {
-            'env': self._replace_env,
-            None: self._replace_substitution,
-        }
-        try:
-            sub_type = g['sub_type']
-        except KeyError:
-            raise tox.exception.ConfigError(
-                "Malformed substitution; no substitution type provided")
-
-        try:
-            handler = handlers[sub_type]
-        except KeyError:
-            raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
-
-        return handler(match)
-
-    def _replace(self, x):
-        if '{' in x:
-            return RE_ITEM_REF.sub(self._replace_match, x)
-        return x
 
 
 class _ArgvlistReader:
