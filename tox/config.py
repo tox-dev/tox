@@ -323,10 +323,38 @@ def tox_addoption(parser):
     parser.add_argument("args", nargs="*",
                         help="additional arguments available to command positional substitution")
 
-    # add various core venv interpreter attributes
     parser.add_testenv_attribute(
         name="envdir", type="path", default="{toxworkdir}/{envname}",
         help="venv directory")
+
+    # add various core venv interpreter attributes
+    def setenv(testenv_config, value):
+        setenv = value
+        reader = testenv_config._reader
+
+        # we need to resolve environment variable substitution
+
+        replacing = []  # for detecting direct recursion
+        def setenv_reader(name):
+            if name in setenv and name not in replacing:
+                return setenv[name]
+            return os.environ.get(name)
+        reader.set_envreader(setenv_reader)
+
+        for name, value in setenv.items():
+            replacing.append(name)
+            setenv[name] = reader._replace(value)
+            replacing.pop()
+
+        config = testenv_config.config
+        if "PYTHONHASHSEED" not in setenv and config.hashseed is not None:
+            setenv['PYTHONHASHSEED'] = config.hashseed
+        return setenv
+
+    parser.add_testenv_attribute(
+        name="setenv", type="dict_lazy", postprocess=setenv,
+        help="list of X=Y lines with environment variable settings")
+
 
     def basepython_default(testenv_config, value):
         if value is None:
@@ -384,17 +412,6 @@ def tox_addoption(parser):
     parser.add_testenv_attribute(
         name="recreate", type="bool", default=False, postprocess=recreate,
         help="always recreate this test environment.")
-
-    def setenv(testenv_config, value):
-        setenv = value
-        config = testenv_config.config
-        if "PYTHONHASHSEED" not in setenv and config.hashseed is not None:
-            setenv['PYTHONHASHSEED'] = config.hashseed
-        return setenv
-
-    parser.add_testenv_attribute(
-        name="setenv", type="dict", postprocess=setenv,
-        help="list of X=Y lines with environment variable settings")
 
     def passenv(testenv_config, value):
         # Flatten the list to deal with space-separated values.
@@ -518,21 +535,15 @@ class TestenvConfig:
     @property
     def envbindir(self):
         """ path to directory where scripts/binaries reside. """
-        if (sys.platform == "win32"
-                and "jython" not in self.basepython
-                and "pypy" not in self.basepython):
+        if sys.platform == "win32":
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")
 
     @property
     def envpython(self):
-        """ path to python/jython executable. """
-        if "jython" in str(self.basepython):
-            name = "jython"
-        else:
-            name = "python"
-        return self.envbindir.join(name)
+        """ path to python executable. """
+        return self.envbindir.join(self.basepython)
 
     # no @property to avoid early calling (see callable(subst[key]) checks)
     def envsitepackagesdir(self):
@@ -699,7 +710,7 @@ class parseini:
 
         for env_attr in config._testenv_attr:
             atype = env_attr.type
-            if atype in ("bool", "path", "string", "dict", "argv", "argvlist"):
+            if atype in ("bool", "path", "string", "dict", "dict_lazy", "argv", "argvlist"):
                 meth = getattr(reader, "get" + atype)
                 res = meth(env_attr.name, env_attr.default)
             elif atype == "space-separated-list":
@@ -807,6 +818,13 @@ class SectionReader:
         self.factors = factors
         self._subs = {}
         self._subststack = []
+        self._envreader = os.environ.get
+
+    def set_envreader(self, envreader):
+        self._envreader = envreader
+
+    def get_environ_value(self, name):
+        return self._envreader(name)
 
     def addsubstitutions(self, _posargs=None, **kw):
         self._subs.update(kw)
@@ -826,17 +844,24 @@ class SectionReader:
         return [x.strip() for x in s.split(sep) if x.strip()]
 
     def getdict(self, name, default=None, sep="\n"):
-        s = self.getstring(name, None)
-        if s is None:
+        value = self.getstring(name, None)
+        return self._getdict(value, default=default, sep=sep)
+
+    def getdict_lazy(self, name, default=None, sep="\n"):
+        value = self.getstring(name, None, replace="noenv")
+        return self._getdict(value, default=default, sep=sep)
+
+    def _getdict(self, value, default, sep):
+        if value is None:
             return default or {}
 
-        value = {}
-        for line in s.split(sep):
+        d = {}
+        for line in value.split(sep):
             if line.strip():
                 name, rest = line.split('=', 1)
-                value[name.strip()] = rest.strip()
+                d[name.strip()] = rest.strip()
 
-        return value
+        return d
 
     def getbool(self, name, default=None):
         s = self.getstring(name, default)
@@ -878,7 +903,7 @@ class SectionReader:
             x = self._apply_factors(x)
 
         if replace and x and hasattr(x, 'replace'):
-            x = self._replace(x, name=name)
+            x = self._replace(x, name=name, opt_replace_env=(replace!="noenv"))
         # print "getstring", self.section_name, name, "returned", repr(x)
         return x
 
@@ -895,14 +920,14 @@ class SectionReader:
         lines = s.strip().splitlines()
         return '\n'.join(filter(None, map(factor_line, lines)))
 
-    def _replace(self, value, name=None, section_name=None):
+    def _replace(self, value, name=None, section_name=None, opt_replace_env=True):
         if '{' not in value:
             return value
 
         section_name = section_name if section_name else self.section_name
         self._subststack.append((section_name, name))
         try:
-            return Replacer(self).do_replace(value)
+            return Replacer(self, opt_replace_env=opt_replace_env).do_replace(value)
         finally:
             assert self._subststack.pop() == (section_name, name)
 
@@ -918,7 +943,7 @@ class Replacer:
         re.VERBOSE)
 
 
-    def __init__(self, reader, opt_replace_env=True):
+    def __init__(self, reader, opt_replace_env):
         self.reader = reader
         self.opt_replace_env = opt_replace_env
 
@@ -942,14 +967,14 @@ class Replacer:
                 "Malformed substitution; no substitution type provided")
 
         if sub_type == "env":
-            assert self.opt_replace_env
-            return self._replace_env(match)
+            if self.opt_replace_env:
+                return self._replace_env(match)
+            return "{env:%s}" %(g["substitution_value"])
         if sub_type != None:
             raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
         return self._replace_substitution(match)
 
     def _replace_env(self, match):
-        env_list = self.reader.getdict('setenv')
         match_value = match.group('substitution_value')
         if not match_value:
             raise tox.exception.ConfigError(
@@ -963,15 +988,14 @@ class Replacer:
         else:
             envkey = match_value
 
-        if envkey not in os.environ and default is None:
-            if envkey not in env_list and default is None:
+        envvalue = self.reader.get_environ_value(envkey)
+        if envvalue is None:
+            if default is None:
                 raise tox.exception.ConfigError(
                     "substitution env:%r: unknown environment variable %r" %
                     (envkey, envkey))
-        if envkey in os.environ:
-            return os.environ.get(envkey, default)
-        else:
-            return env_list.get(envkey, default)
+            return default
+        return envvalue
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
@@ -983,7 +1007,8 @@ class Replacer:
                     raise ValueError('%s already in %s' % (
                         (section, item), self.reader._subststack))
                 x = str(cfg[section][item])
-                return self.reader._replace(x, name=item, section_name=section)
+                return self.reader._replace(x, name=item, section_name=section,
+                                            opt_replace_env=self.opt_replace_env)
 
         raise tox.exception.ConfigError(
             "substitution key %r not found" % key)

@@ -283,18 +283,9 @@ class TestIniParserAgainstCommandsKey:
            commands =
              ls {env:TEST}
         """)
-        reader = SectionReader("testenv:py27", config._cfg)
-        x = reader.getargvlist("commands")
-        assert x == [
-            "ls testvalue".split()
-        ]
-        assert x != [
-            "ls {env:TEST}".split()
-        ]
-        y = reader.getargvlist("setenv")
-        assert y == [
-            "TEST=testvalue".split()
-        ]
+        envconfig = config.envconfigs["py27"]
+        assert envconfig.commands == [["ls", "testvalue"]]
+        assert envconfig.setenv["TEST"] == "testvalue"
 
 
 class TestIniParser:
@@ -1599,7 +1590,19 @@ class TestHashseedOption:
 
 
 class TestSetenv:
-    @pytest.mark.xfail(reason="fix pending")
+    def test_getdict_lazy(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv:X]
+            key0 =
+                key1 = {env:X}
+                key2 = {env:X:1}
+        """)
+        envconfig = config.envconfigs["X"]
+        val = envconfig._reader.getdict_lazy("key0")
+        assert val == {"key1": "{env:X}",
+                       "key2": "{env:X:1}"}
+
+
     def test_setenv_uses_os_environ(self, tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("X", "1")
         config = newconfig("""
@@ -1609,7 +1612,6 @@ class TestSetenv:
         """)
         assert config.envconfigs["env1"].setenv["X"] == "1"
 
-    @pytest.mark.xfail(reason="fix pending")
     def test_setenv_default_os_environ(self, tmpdir, newconfig, monkeypatch):
         monkeypatch.delenv("X", raising=False)
         config = newconfig("""
@@ -1619,7 +1621,6 @@ class TestSetenv:
         """)
         assert config.envconfigs["env1"].setenv["X"] == "2"
 
-    @pytest.mark.xfail(reason="fix pending")
     def test_setenv_uses_other_setenv(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv:env1]
@@ -1629,7 +1630,6 @@ class TestSetenv:
         """)
         assert config.envconfigs["env1"].setenv["X"] == "5"
 
-    @pytest.mark.xfail(reason="fix pending")
     def test_setenv_recursive_direct(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv:env1]
