@@ -5,6 +5,8 @@
   sections that used a comment after a "\" line continuation.
   Thanks David Stanek for the PR.
 
+- fix issue289: fix build_sphinx target, thanks Barry Warsaw.
+
 
 2.2.1
 -----
