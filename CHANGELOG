@@ -1,3 +1,11 @@
+2.3.0 (unreleased)
+-----
+
+- allow "#" in commands.  This is slightly incompatible with commands
+  sections that used a comment after a "\" line continuation.
+  Thanks David Stanek for the PR.
+
+
 2.2.1
 -----
 
