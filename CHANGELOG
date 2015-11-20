@@ -1,7 +1,14 @@
-2.2.2.dev
----------
+2.3.0 (unreleased)
+-----
 
 - fix issue285 (WIP) setenv processing with self-references
+
+- allow "#" in commands.  This is slightly incompatible with commands
+  sections that used a comment after a "\" line continuation.
+  Thanks David Stanek for the PR.
+
+- fix issue289: fix build_sphinx target, thanks Barry Warsaw.
+
 
 2.2.1
 -----

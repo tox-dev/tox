@@ -450,7 +450,7 @@ class TestIniParser:
         config = newconfig("""
             [section]
             key2=
-                cmd1 {item1} \ # a comment
+                cmd1 {item1} \
                      {item2}
         """)
         reader = SectionReader("section", config._cfg)
@@ -465,12 +465,32 @@ class TestIniParser:
         config = newconfig("""
             [section]
             key1=
-                cmd1 'with space' \ # a comment
-                     'after the comment'
+                cmd1 'part one' \
+                     'part two'
         """)
         reader = SectionReader("section", config._cfg)
         x = reader.getargvlist("key1")
-        assert x == [["cmd1", "with space", "after the comment"]]
+        assert x == [["cmd1", "part one", "part two"]]
+
+    def test_argvlist_comment_after_command(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            key1=
+                cmd1 --flag  # run the flag on the command
+        """)
+        reader = SectionReader("section", config._cfg)
+        x = reader.getargvlist("key1")
+        assert x == [["cmd1", "--flag"]]
+
+    def test_argvlist_command_contains_hash(self, tmpdir, newconfig):
+        config = newconfig("""
+            [section]
+            key1=
+                cmd1 --re  "use the # symbol for an arg"
+        """)
+        reader = SectionReader("section", config._cfg)
+        x = reader.getargvlist("key1")
+        assert x == [["cmd1", "--re", "use the # symbol for an arg"]]
 
     def test_argvlist_positional_substitution(self, tmpdir, newconfig):
         config = newconfig("""
