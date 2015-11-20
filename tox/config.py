@@ -1010,9 +1010,6 @@ class _ArgvlistReader:
         current_command = ""
         for line in value.splitlines():
             line = line.rstrip()
-            i = line.find("#")
-            if i != -1:
-                line = line[:i].rstrip()
             if not line:
                 continue
             if line.endswith("\\"):
@@ -1064,7 +1061,6 @@ class _ArgvlistReader:
         shlexer = shlex.shlex(newcommand, posix=True)
         shlexer.whitespace_split = True
         shlexer.escape = ''
-        shlexer.commenters = ''
         argv = list(shlexer)
         return argv
 
