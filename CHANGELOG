@@ -7,6 +7,9 @@
 
 - fix issue289: fix build_sphinx target, thanks Barry Warsaw.
 
+- fix issue252: allow environment names with special characters.
+  Thanks Julien Castets for initial PR and patience.
+
 
 2.2.1
 -----
