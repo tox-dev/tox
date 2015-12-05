@@ -51,7 +51,7 @@ def show_help(config):
             "(overridable by '-e')")
     tw.line("TOX_TESTENV_PASSENV: space-separated list of extra "
             "environment variables to be passed into test command "
-            "environemnts")
+            "environments")
 
 
 def show_help_ini(config):
