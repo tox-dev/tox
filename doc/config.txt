@@ -441,7 +441,7 @@ Values from other sections can be refered to via::
    {[sectionname]valuename}
 
 which you can use to avoid repetition of config values.
-You can put default values in one section and reference them in others to avoid repeting the same values::
+You can put default values in one section and reference them in others to avoid repeating the same values::
 
     [base]
     deps =
@@ -455,7 +455,7 @@ You can put default values in one section and reference them in others to avoid 
         {[base]deps}
 
     [testenv:mercurial]
-    dep =
+    deps =
         mercurial
         {[base]deps}
 
