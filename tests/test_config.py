@@ -283,18 +283,9 @@ class TestIniParserAgainstCommandsKey:
            commands =
              ls {env:TEST}
         """)
-        reader = SectionReader("testenv:py27", config._cfg)
-        x = reader.getargvlist("commands")
-        assert x == [
-            "ls testvalue".split()
-        ]
-        assert x != [
-            "ls {env:TEST}".split()
-        ]
-        y = reader.getargvlist("setenv")
-        assert y == [
-            "TEST=testvalue".split()
-        ]
+        envconfig = config.envconfigs["py27"]
+        assert envconfig.commands == [["ls", "testvalue"]]
+        assert envconfig.setenv["TEST"] == "testvalue"
 
 
 class TestIniParser:
@@ -653,7 +644,7 @@ class TestConfigTestEnv:
         assert envconfig.usedevelop is False
         assert envconfig.ignore_errors is False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
-        assert list(envconfig.setenv.keys()) == ['PYTHONHASHSEED']
+        assert list(envconfig.setenv.definitions.keys()) == ['PYTHONHASHSEED']
         hashseed = envconfig.setenv['PYTHONHASHSEED']
         assert isinstance(hashseed, str)
         # The following line checks that hashseed parses to an integer.
@@ -743,46 +734,6 @@ class TestConfigTestEnv:
         assert envconfig.envbindir.basename == "bin"
         if bp == "jython":
             assert envconfig.envpython == envconfig.envbindir.join(bp)
-
-    def test_setenv_overrides(self, tmpdir, newconfig):
-        config = newconfig("""
-            [testenv]
-            setenv =
-                PYTHONPATH = something
-                ANOTHER_VAL=else
-        """)
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'PYTHONPATH' in envconfig.setenv
-        assert 'ANOTHER_VAL' in envconfig.setenv
-        assert envconfig.setenv['PYTHONPATH'] == 'something'
-        assert envconfig.setenv['ANOTHER_VAL'] == 'else'
-
-    def test_setenv_with_envdir_and_basepython(self, tmpdir, newconfig):
-        config = newconfig("""
-            [testenv]
-            setenv =
-                VAL = {envdir}
-            basepython = {env:VAL}
-        """)
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'VAL' in envconfig.setenv
-        assert envconfig.setenv['VAL'] == envconfig.envdir
-        assert envconfig.basepython == envconfig.envdir
-
-    def test_setenv_ordering_1(self, tmpdir, newconfig):
-        config = newconfig("""
-            [testenv]
-            setenv=
-                VAL={envdir}
-            commands=echo {env:VAL}
-        """)
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'VAL' in envconfig.setenv
-        assert envconfig.setenv['VAL'] == envconfig.envdir
-        assert str(envconfig.envdir) in envconfig.commands[0]
 
     @pytest.mark.parametrize("plat", ["win32", "linux2"])
     def test_passenv_as_multiline_list(self, tmpdir, newconfig, monkeypatch, plat):
@@ -1525,7 +1476,7 @@ class TestHashseedOption:
         return envconfigs["python"]
 
     def _check_hashseed(self, envconfig, expected):
-        assert envconfig.setenv == {'PYTHONHASHSEED': expected}
+        assert envconfig.setenv['PYTHONHASHSEED'] == expected
 
     def _check_testenv(self, newconfig, expected, args=None, tox_ini=None):
         envconfig = self._get_envconfig(newconfig, args=args, tox_ini=tox_ini)
@@ -1574,7 +1525,7 @@ class TestHashseedOption:
     def test_noset(self, tmpdir, newconfig):
         args = ['--hashseed', 'noset']
         envconfig = self._get_envconfig(newconfig, args=args)
-        assert envconfig.setenv == {}
+        assert not envconfig.setenv.definitions
 
     def test_noset_with_setenv(self, tmpdir, newconfig):
         tox_ini = """
@@ -1616,6 +1567,125 @@ class TestHashseedOption:
         envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini)
         self._check_hashseed(envconfigs["hash1"], '2')
         self._check_hashseed(envconfigs["hash2"], '123456789')
+
+
+class TestSetenv:
+    def test_getdict_lazy(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("X", "2")
+        config = newconfig("""
+            [testenv:X]
+            key0 =
+                key1 = {env:X}
+                key2 = {env:Y:1}
+        """)
+        envconfig = config.envconfigs["X"]
+        val = envconfig._reader.getdict_setenv("key0")
+        assert val["key1"] == "2"
+        assert val["key2"] == "1"
+
+    def test_getdict_lazy_update(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("X", "2")
+        config = newconfig("""
+            [testenv:X]
+            key0 =
+                key1 = {env:X}
+                key2 = {env:Y:1}
+        """)
+        envconfig = config.envconfigs["X"]
+        val = envconfig._reader.getdict_setenv("key0")
+        d = {}
+        d.update(val)
+        assert d == {"key1": "2", "key2": "1"}
+
+    def test_setenv_uses_os_environ(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("X", "1")
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                X = {env:X}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "1"
+
+    def test_setenv_default_os_environ(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.delenv("X", raising=False)
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                X = {env:X:2}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "2"
+
+    def test_setenv_uses_other_setenv(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                Y = 5
+                X = {env:Y}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "5"
+
+    def test_setenv_recursive_direct(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv:env1]
+            setenv =
+                X = {env:X:3}
+        """)
+        assert config.envconfigs["env1"].setenv["X"] == "3"
+
+    def test_setenv_overrides(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv =
+                PYTHONPATH = something
+                ANOTHER_VAL=else
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'PYTHONPATH' in envconfig.setenv
+        assert 'ANOTHER_VAL' in envconfig.setenv
+        assert envconfig.setenv['PYTHONPATH'] == 'something'
+        assert envconfig.setenv['ANOTHER_VAL'] == 'else'
+
+    def test_setenv_with_envdir_and_basepython(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv =
+                VAL = {envdir}
+            basepython = {env:VAL}
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'VAL' in envconfig.setenv
+        assert envconfig.setenv['VAL'] == envconfig.envdir
+        assert envconfig.basepython == envconfig.envdir
+
+    def test_setenv_ordering_1(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv=
+                VAL={envdir}
+            commands=echo {env:VAL}
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'VAL' in envconfig.setenv
+        assert envconfig.setenv['VAL'] == envconfig.envdir
+        assert str(envconfig.envdir) in envconfig.commands[0]
+
+    @pytest.mark.xfail(reason="we don't implement cross-section substitution for setenv")
+    def test_setenv_cross_section_subst(self, monkeypatch, newconfig):
+        """test that we can do cross-section substitution with setenv"""
+        monkeypatch.delenv('TEST', raising=False)
+        config = newconfig("""
+            [section]
+            x =
+              NOT_TEST={env:TEST:defaultvalue}
+
+            [testenv]
+            setenv = {[section]x}
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
 
 
 class TestIndexServer:
