@@ -534,8 +534,8 @@ class Session:
                 with action:
                     pip = venv.getcommandpath("pip")
                     output = venv._pcall([str(pip), "freeze"],
-                                          cwd=self.config.toxinidir,
-                                          action=action)
+                                         cwd=self.config.toxinidir,
+                                         action=action)
                     # the output contains a mime-header, skip it
                     output = output.split("\n\n")[-1]
                     packages = output.strip().split("\n")
