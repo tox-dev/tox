@@ -735,46 +735,6 @@ class TestConfigTestEnv:
         if bp == "jython":
             assert envconfig.envpython == envconfig.envbindir.join(bp)
 
-    def test_setenv_overrides(self, tmpdir, newconfig):
-        config = newconfig("""
-            [testenv]
-            setenv =
-                PYTHONPATH = something
-                ANOTHER_VAL=else
-        """)
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'PYTHONPATH' in envconfig.setenv
-        assert 'ANOTHER_VAL' in envconfig.setenv
-        assert envconfig.setenv['PYTHONPATH'] == 'something'
-        assert envconfig.setenv['ANOTHER_VAL'] == 'else'
-
-    def test_setenv_with_envdir_and_basepython(self, tmpdir, newconfig):
-        config = newconfig("""
-            [testenv]
-            setenv =
-                VAL = {envdir}
-            basepython = {env:VAL}
-        """)
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'VAL' in envconfig.setenv
-        assert envconfig.setenv['VAL'] == envconfig.envdir
-        assert envconfig.basepython == envconfig.envdir
-
-    def test_setenv_ordering_1(self, tmpdir, newconfig):
-        config = newconfig("""
-            [testenv]
-            setenv=
-                VAL={envdir}
-            commands=echo {env:VAL}
-        """)
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'VAL' in envconfig.setenv
-        assert envconfig.setenv['VAL'] == envconfig.envdir
-        assert str(envconfig.envdir) in envconfig.commands[0]
-
     @pytest.mark.parametrize("plat", ["win32", "linux2"])
     def test_passenv_as_multiline_list(self, tmpdir, newconfig, monkeypatch, plat):
         monkeypatch.setattr(sys, "platform", plat)
@@ -1671,6 +1631,61 @@ class TestSetenv:
                 X = {env:X:3}
         """)
         assert config.envconfigs["env1"].setenv["X"] == "3"
+
+    def test_setenv_overrides(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv =
+                PYTHONPATH = something
+                ANOTHER_VAL=else
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'PYTHONPATH' in envconfig.setenv
+        assert 'ANOTHER_VAL' in envconfig.setenv
+        assert envconfig.setenv['PYTHONPATH'] == 'something'
+        assert envconfig.setenv['ANOTHER_VAL'] == 'else'
+
+    def test_setenv_with_envdir_and_basepython(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv =
+                VAL = {envdir}
+            basepython = {env:VAL}
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'VAL' in envconfig.setenv
+        assert envconfig.setenv['VAL'] == envconfig.envdir
+        assert envconfig.basepython == envconfig.envdir
+
+    def test_setenv_ordering_1(self, tmpdir, newconfig):
+        config = newconfig("""
+            [testenv]
+            setenv=
+                VAL={envdir}
+            commands=echo {env:VAL}
+        """)
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs['python']
+        assert 'VAL' in envconfig.setenv
+        assert envconfig.setenv['VAL'] == envconfig.envdir
+        assert str(envconfig.envdir) in envconfig.commands[0]
+
+    @pytest.mark.xfail(reason="we don't implement cross-section substitution for setenv")
+    def test_setenv_cross_section_subst(self, monkeypatch, newconfig):
+        """test that we can do cross-section substitution with setenv"""
+        monkeypatch.delenv('TEST', raising=False)
+        config = newconfig("""
+            [section]
+            x =
+              NOT_TEST={env:TEST:defaultvalue}
+
+            [testenv]
+            setenv = {[section]x}
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
 
 
 class TestIndexServer:

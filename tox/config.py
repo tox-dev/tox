@@ -271,7 +271,7 @@ class SetenvDict:
         except KeyError:
             try:
                 if name in self._lookupstack:
-                    raise KeyError("recursion")
+                    raise KeyError(name)
                 val = self.definitions[name]
             except KeyError:
                 return os.environ.get(name, default)
@@ -1028,7 +1028,8 @@ class Replacer:
         if envvalue is None:
             if default is None:
                 raise tox.exception.ConfigError(
-                    "substitution env:%r: unknown environment variable %r" %
+                    "substitution env:%r: unknown environment variable %r "
+                    " or recursive definition." %
                     (envkey, envkey))
             return default
         return envvalue

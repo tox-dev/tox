@@ -1,10 +1,11 @@
 2.3.0 (unreleased)
 -----
 
-- fix issue285 make setenv processing fully lazy to fix regressions
+- fix issue285: make setenv processing fully lazy to fix regressions
   of tox-2.2.X and so that we can now have testenv attributes like 
   "basepython" depend on environment variables that are set in 
-  a setenv section.
+  a setenv section. Thanks Nelfin for some tests and initial
+  work on a PR.
 
 - allow "#" in commands.  This is slightly incompatible with commands
   sections that used a comment after a "\" line continuation.
