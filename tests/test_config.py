@@ -644,7 +644,7 @@ class TestConfigTestEnv:
         assert envconfig.usedevelop is False
         assert envconfig.ignore_errors is False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
-        assert list(envconfig.setenv.keys()) == ['PYTHONHASHSEED']
+        assert list(envconfig.setenv.definitions.keys()) == ['PYTHONHASHSEED']
         hashseed = envconfig.setenv['PYTHONHASHSEED']
         assert isinstance(hashseed, str)
         # The following line checks that hashseed parses to an integer.
@@ -1516,7 +1516,7 @@ class TestHashseedOption:
         return envconfigs["python"]
 
     def _check_hashseed(self, envconfig, expected):
-        assert envconfig.setenv == {'PYTHONHASHSEED': expected}
+        assert envconfig.setenv['PYTHONHASHSEED'] == expected
 
     def _check_testenv(self, newconfig, expected, args=None, tox_ini=None):
         envconfig = self._get_envconfig(newconfig, args=args, tox_ini=tox_ini)
@@ -1565,7 +1565,7 @@ class TestHashseedOption:
     def test_noset(self, tmpdir, newconfig):
         args = ['--hashseed', 'noset']
         envconfig = self._get_envconfig(newconfig, args=args)
-        assert envconfig.setenv == {}
+        assert not envconfig.setenv.definitions
 
     def test_noset_with_setenv(self, tmpdir, newconfig):
         tox_ini = """
@@ -1610,18 +1610,32 @@ class TestHashseedOption:
 
 
 class TestSetenv:
-    def test_getdict_lazy(self, tmpdir, newconfig):
+    def test_getdict_lazy(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("X", "2")
         config = newconfig("""
             [testenv:X]
             key0 =
                 key1 = {env:X}
-                key2 = {env:X:1}
+                key2 = {env:Y:1}
         """)
         envconfig = config.envconfigs["X"]
-        val = envconfig._reader.getdict_lazy("key0")
-        assert val == {"key1": "{env:X}",
-                       "key2": "{env:X:1}"}
+        val = envconfig._reader.getdict_setenv("key0")
+        assert val["key1"] == "2"
+        assert val["key2"] == "1"
 
+    def test_getdict_lazy_update(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("X", "2")
+        config = newconfig("""
+            [testenv:X]
+            key0 =
+                key1 = {env:X}
+                key2 = {env:Y:1}
+        """)
+        envconfig = config.envconfigs["X"]
+        val = envconfig._reader.getdict_setenv("key0")
+        d = {}
+        d.update(val)
+        assert d == {"key1": "2", "key2": "1"}
 
     def test_setenv_uses_os_environ(self, tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("X", "1")
