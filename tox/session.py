@@ -533,11 +533,11 @@ class Session:
                 action = self.newaction(venv, "envreport")
                 with action:
                     pip = venv.getcommandpath("pip")
-                    # we can't really call internal helpers here easily :/
-                    # output = venv._pcall([str(pip), "freeze"],
-                    #                      cwd=self.config.toxinidir,
-                    #                      action=action)
-                    output = py.process.cmdexec("%s freeze" % (pip))
+                    output = venv._pcall([str(pip), "freeze"],
+                                          cwd=self.config.toxinidir,
+                                          action=action)
+                    # the output contains a mime-header, skip it
+                    output = output.split("\n\n")[-1]
                     packages = output.strip().split("\n")
                     action.setactivity("installed", ",".join(packages))
                     envlog = self.resultlog.get_envlog(venv.name)

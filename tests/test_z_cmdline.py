@@ -301,6 +301,23 @@ def test_unknown_dep(cmd, initproj):
     ])
 
 
+def test_venv_special_chars_issue252(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [tox]
+            envlist = special&&1
+            [testenv:special&&1]
+            changedir=tests
+        '''
+    })
+    result = cmd.run("tox", )
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*installed*pkg123*"
+    ])
+
+
 def test_unknown_environment(cmd, initproj):
     initproj("env123-0.7", filedefs={
         'tox.ini': ''
