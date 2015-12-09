@@ -56,7 +56,8 @@ def test_create(monkeypatch, mocksession, newconfig):
     venv = VirtualEnv(envconfig, session=mocksession)
     assert venv.path == envconfig.envdir
     assert not venv.path.check()
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
@@ -96,7 +97,8 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     """)
     envconfig = config.envconfigs['site']
     venv = VirtualEnv(envconfig, session=mocksession)
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
@@ -105,7 +107,8 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
 
     envconfig = config.envconfigs['nosite']
     venv = VirtualEnv(envconfig, session=mocksession)
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
@@ -122,14 +125,15 @@ def test_install_deps_wildcard(newmocksession):
             {distshare}/dep1-*
     """)
     venv = mocksession.getenv("py123")
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) == 1
     distshare = venv.session.config.distshare
     distshare.ensure("dep1-1.0.zip")
     distshare.ensure("dep1-1.1.zip")
 
-    venv.install_deps()
+    venv.install_deps(action)
     assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
@@ -154,11 +158,12 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
             dep2
     """)
     venv = mocksession.getenv("py123")
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) == 1
 
-    venv.install_deps()
+    venv.install_deps(action)
     assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
@@ -183,12 +188,13 @@ def test_install_deps_indexserver(newmocksession):
             :abc2:dep3
     """)
     venv = mocksession.getenv('py123')
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) == 1
     l[:] = []
 
-    venv.install_deps()
+    venv.install_deps(action)
     # two different index servers, two calls
     assert len(l) == 3
     args = " ".join(l[0].args)
@@ -211,12 +217,13 @@ def test_install_deps_pre(newmocksession):
             dep1
     """)
     venv = mocksession.getenv('python')
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) == 1
     l[:] = []
 
-    venv.install_deps()
+    venv.install_deps(action)
     assert len(l) == 1
     args = " ".join(l[0].args)
     assert "--pre " in args
@@ -246,10 +253,12 @@ def test_install_recreate(newmocksession, tmpdir):
         deps=xyz
     """)
     venv = mocksession.getenv('python')
-    venv.update()
+
+    action = mocksession.newaction(venv, "update")
+    venv.update(action)
     mocksession.installpkg(venv, pkg)
     mocksession.report.expect("verbosity0", "*create*")
-    venv.update()
+    venv.update(action)
     mocksession.report.expect("verbosity0", "*recreate*")
 
 
@@ -263,7 +272,8 @@ def test_test_hashseed_is_in_output(newmocksession):
     finally:
         tox.config.make_hashseed = original_make_hashseed
     venv = mocksession.getenv('python')
-    venv.update()
+    action = mocksession.newaction(venv, "update")
+    venv.update(action)
     venv.test()
     mocksession.report.expect("verbosity0", "python runtests: PYTHONHASHSEED='123456789'")
 
@@ -274,7 +284,8 @@ def test_test_runtests_action_command_is_in_output(newmocksession):
         commands = echo foo bar
     ''')
     venv = mocksession.getenv('python')
-    venv.update()
+    action = mocksession.newaction(venv, "update")
+    venv.update(action)
     venv.test()
     mocksession.report.expect("verbosity0", "*runtests*commands?0? | echo foo bar")
 
@@ -343,7 +354,8 @@ def test_install_python3(tmpdir, newmocksession):
             dep2
     """)
     venv = mocksession.getenv('py123')
-    venv.create()
+    action = mocksession.newaction(venv, "getenv")
+    venv.create(action)
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
@@ -429,7 +441,8 @@ class TestCreationConfig:
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
-        venv.update()
+        action = mocksession.newaction(venv, "update")
+        venv.update(action)
         assert not venv.path_config.check()
         mocksession.installpkg(venv, pkg)
         assert venv.path_config.check()
@@ -439,36 +452,42 @@ class TestCreationConfig:
         mocksession.report.expect("*", "*create*")
         # modify config and check that recreation happens
         mocksession._clearmocks()
-        venv.update()
+        action = mocksession.newaction(venv, "update")
+        venv.update(action)
         mocksession.report.expect("*", "*reusing*")
         mocksession._clearmocks()
+        action = mocksession.newaction(venv, "update")
         cconfig.python = py.path.local("balla")
         cconfig.writeconfig(venv.path_config)
-        venv.update()
+        venv.update(action)
         mocksession.report.expect("verbosity0", "*recreate*")
 
     def test_dep_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        venv.update()
+        action = mocksession.newaction(venv, "update")
+        venv.update(action)
         cconfig = venv._getliveconfig()
         cconfig.deps[:] = [("1" * 32, "xyz.zip")]
         cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
-        venv.update()
+        action = mocksession.newaction(venv, "update")
+        venv.update(action)
         mocksession.report.expect("*", "*recreate*")
 
     def test_develop_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
         venv = VirtualEnv(envconfig, session=mocksession)
-        venv.update()
+        action = mocksession.newaction(venv, "update")
+        venv.update(action)
         cconfig = venv._getliveconfig()
         cconfig.usedevelop = True
         cconfig.writeconfig(venv.path_config)
         mocksession._clearmocks()
-        venv.update()
+        action = mocksession.newaction(venv, "update")
+        venv.update(action)
         mocksession.report.expect("verbosity0", "*recreate*")
 
 
@@ -481,21 +500,25 @@ class TestVenvTest:
             commands=abc
         """)
         venv = mocksession.getenv("python")
+        action = mocksession.newaction(venv, "getenv")
         monkeypatch.setenv("PATH", "xyz")
         l = []
         monkeypatch.setattr("py.path.local.sysfind", classmethod(
                             lambda *args, **kwargs: l.append(kwargs) or 0 / 0))
 
-        py.test.raises(ZeroDivisionError, "venv._install(list('123'))")
+        with pytest.raises(ZeroDivisionError):
+            venv._install(list('123'), action=action)
         assert l.pop()["paths"] == [venv.envconfig.envbindir]
-        py.test.raises(ZeroDivisionError, "venv.test()")
+        with pytest.raises(ZeroDivisionError):
+            venv.test(action)
         assert l.pop()["paths"] == [venv.envconfig.envbindir]
-        py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'])")
+        with pytest.raises(ZeroDivisionError):
+            venv.run_install_command(['qwe'], action=action)
         assert l.pop()["paths"] == [venv.envconfig.envbindir]
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
         monkeypatch.setenv("__PYVENV_LAUNCHER__", "1")
-        py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'])")
+        py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'], action=action)")
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
         assert '__PYVENV_LAUNCHER__' not in os.environ

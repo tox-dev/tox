@@ -16,6 +16,8 @@
 - fix issue252: allow environment names with special characters.
   Thanks Julien Castets for initial PR and patience.
 
+- internal: push some optional object creation into tests because
+  tox core doesn't need it.
 
 2.2.1
 -----

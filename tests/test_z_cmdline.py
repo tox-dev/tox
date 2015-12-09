@@ -34,7 +34,8 @@ def test_report_protocol(newconfig):
     report = session.report
     report.expect("using")
     venv = session.getvenv("mypython")
-    venv.update()
+    action = session.newaction(venv, "update")
+    venv.update(action)
     report.expect("logpopen")
 
 

@@ -114,12 +114,10 @@ class VirtualEnv(object):
     def _ispython3(self):
         return "python3" in str(self.envconfig.basepython)
 
-    def update(self, action=None):
+    def update(self, action):
         """ return status string for updating actual venv to match configuration.
             if status string is empty, all is ok.
         """
-        if action is None:
-            action = self.session.newaction(self, "update")
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
            rconfig.matches(self._getliveconfig()):
@@ -172,12 +170,9 @@ class VirtualEnv(object):
     def matching_platform(self):
         return re.match(self.envconfig.platform, sys.platform)
 
-    def create(self, action=None):
+    def create(self, action):
         # if self.getcommandpath("activate").dirpath().check():
         #    return
-        if action is None:
-            action = self.session.newaction(self, "create")
-
         config_interpreter = self.getsupportedinterpreter()
         args = [sys.executable, '-m', 'virtualenv']
         if self.envconfig.sitepackages:
@@ -239,9 +234,7 @@ class VirtualEnv(object):
             extraopts = ['-U', '--no-deps']
         self._install([sdistpath], extraopts=extraopts, action=action)
 
-    def install_deps(self, action=None):
-        if action is None:
-            action = self.session.newaction(self, "install_deps")
+    def install_deps(self, action):
         deps = self._getresolvedeps()
         if deps:
             depinfo = ", ".join(map(str, deps))
@@ -259,7 +252,7 @@ class VirtualEnv(object):
             l.append("--pre")
         return l
 
-    def run_install_command(self, packages, options=(), action=None):
+    def run_install_command(self, packages, action, options=()):
         argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
         i = argv.index('{packages}')
