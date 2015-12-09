@@ -30,3 +30,14 @@ def tox_get_python_executable(envconfig):
     per-testenv configuration, notably the ``.envname`` and ``.basepython``
     setting.
     """
+
+
+@hookspec
+def tox_testenv_create(venv, action):
+    """ [experimental] perform creation action for this venv.
+    """
+
+
+@hookspec
+def tox_testenv_install_deps(venv, action):
+    """ [experimental] perform install dependencies action for this venv.  """

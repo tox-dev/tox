@@ -5,7 +5,7 @@ import re
 import codecs
 import py
 import tox
-from .config import DepConfig
+from .config import DepConfig, hookimpl
 
 
 class CreationConfig:
@@ -58,6 +58,10 @@ class VirtualEnv(object):
         self.session = session
 
     @property
+    def hook(self):
+        return self.envconfig.config.pluginmanager.hook
+
+    @property
     def path(self):
         """ Path to environment base dir. """
         return self.envconfig.envdir
@@ -76,7 +80,8 @@ class VirtualEnv(object):
 
     def getcommandpath(self, name, venv=True, cwd=None):
         """ return absolute path (str or localpath) for specified
-        command name.  If venv is True we will check if the
+        command name.  If it's a localpath we will rewrite it as
+        as a relative path.  If venv is True we will check if the
         command is coming from the venv or is whitelisted to come
         from external. """
         name = str(name)
@@ -138,13 +143,14 @@ class VirtualEnv(object):
         else:
             action.setactivity("recreate", self.envconfig.envdir)
         try:
-            self.create(action)
+            self.hook.tox_testenv_create(action=action, venv=self)
+            self.just_created = True
         except tox.exception.UnsupportedInterpreter:
             return sys.exc_info()[1]
         except tox.exception.InterpreterNotFound:
             return sys.exc_info()[1]
         try:
-            self.install_deps(action)
+            self.hook.tox_testenv_install_deps(action=action, venv=self)
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
             return "could not install deps %s; v = %r" % (
@@ -179,28 +185,6 @@ class VirtualEnv(object):
 
     def matching_platform(self):
         return re.match(self.envconfig.platform, sys.platform)
-
-    def create(self, action):
-        # if self.getcommandpath("activate").dirpath().check():
-        #    return
-        config_interpreter = self.getsupportedinterpreter()
-        args = [sys.executable, '-m', 'virtualenv']
-        if self.envconfig.sitepackages:
-            args.append('--system-site-packages')
-        # add interpreter explicitly, to prevent using
-        # default (virtualenv.ini)
-        args.extend(['--python', str(config_interpreter)])
-        # if sys.platform == "win32":
-        #    f, path, _ = py.std.imp.find_module("virtualenv")
-        #    f.close()
-        #    args[:1] = [str(config_interpreter), str(path)]
-        # else:
-        self.session.make_emptydir(self.path)
-        basepath = self.path.dirpath()
-        basepath.ensure(dir=1)
-        args.append(self.path.basename)
-        self._pcall(args, venv=False, action=action, cwd=basepath)
-        self.just_created = True
 
     def finish(self):
         self._getliveconfig().writeconfig(self.path_config)
@@ -243,13 +227,6 @@ class VirtualEnv(object):
             action.setactivity("inst-nodeps", sdistpath)
             extraopts = ['-U', '--no-deps']
         self._install([sdistpath], extraopts=extraopts, action=action)
-
-    def install_deps(self, action):
-        deps = self._getresolvedeps()
-        if deps:
-            depinfo = ", ".join(map(str, deps))
-            action.setactivity("installdeps", "%s" % depinfo)
-            self._install(deps, action=action)
 
     def _installopts(self, indexserver):
         l = []
@@ -390,3 +367,35 @@ def getdigest(path):
     if not path.check(file=1):
         return "0" * 32
     return path.computehash()
+
+
+@hookimpl
+def tox_testenv_create(venv, action):
+    # if self.getcommandpath("activate").dirpath().check():
+    #    return
+    config_interpreter = venv.getsupportedinterpreter()
+    args = [sys.executable, '-m', 'virtualenv']
+    if venv.envconfig.sitepackages:
+        args.append('--system-site-packages')
+    # add interpreter explicitly, to prevent using
+    # default (virtualenv.ini)
+    args.extend(['--python', str(config_interpreter)])
+    # if sys.platform == "win32":
+    #    f, path, _ = py.std.imp.find_module("virtualenv")
+    #    f.close()
+    #    args[:1] = [str(config_interpreter), str(path)]
+    # else:
+    venv.session.make_emptydir(venv.path)
+    basepath = venv.path.dirpath()
+    basepath.ensure(dir=1)
+    args.append(venv.path.basename)
+    venv._pcall(args, venv=False, action=action, cwd=basepath)
+
+
+@hookimpl
+def tox_testenv_install_deps(venv, action):
+    deps = venv._getresolvedeps()
+    if deps:
+        depinfo = ", ".join(map(str, deps))
+        action.setactivity("installdeps", "%s" % depinfo)
+        venv._install(deps, action=action)

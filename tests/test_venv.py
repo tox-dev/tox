@@ -57,7 +57,7 @@ def test_create(monkeypatch, mocksession, newconfig):
     assert venv.path == envconfig.envdir
     assert not venv.path.check()
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
@@ -98,7 +98,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     envconfig = config.envconfigs['site']
     venv = VirtualEnv(envconfig, session=mocksession)
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
@@ -108,7 +108,7 @@ def test_create_sitepackages(monkeypatch, mocksession, newconfig):
     envconfig = config.envconfigs['nosite']
     venv = VirtualEnv(envconfig, session=mocksession)
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
@@ -126,14 +126,14 @@ def test_install_deps_wildcard(newmocksession):
     """)
     venv = mocksession.getenv("py123")
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) == 1
     distshare = venv.session.config.distshare
     distshare.ensure("dep1-1.0.zip")
     distshare.ensure("dep1-1.1.zip")
 
-    venv.install_deps(action)
+    tox_testenv_install_deps(action=action, venv=venv)
     assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
@@ -159,11 +159,11 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
     """)
     venv = mocksession.getenv("py123")
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) == 1
 
-    venv.install_deps(action)
+    tox_testenv_install_deps(action=action, venv=venv)
     assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
@@ -189,12 +189,12 @@ def test_install_deps_indexserver(newmocksession):
     """)
     venv = mocksession.getenv('py123')
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) == 1
     l[:] = []
 
-    venv.install_deps(action)
+    tox_testenv_install_deps(action=action, venv=venv)
     # two different index servers, two calls
     assert len(l) == 3
     args = " ".join(l[0].args)
@@ -218,12 +218,12 @@ def test_install_deps_pre(newmocksession):
     """)
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) == 1
     l[:] = []
 
-    venv.install_deps(action)
+    tox_testenv_install_deps(action=action, venv=venv)
     assert len(l) == 1
     args = " ".join(l[0].args)
     assert "--pre " in args
@@ -355,7 +355,7 @@ def test_install_python3(tmpdir, newmocksession):
     """)
     venv = mocksession.getenv('py123')
     action = mocksession.newaction(venv, "getenv")
-    venv.create(action)
+    tox_testenv_create(action=action, venv=venv)
     l = mocksession._pcalls
     assert len(l) == 1
     args = l[0].args
@@ -649,3 +649,26 @@ def test_ignore_outcome_failing_cmd(newmocksession):
     assert venv.status == "ignored failed command"
     mocksession.report.expect("warning", "*command failed but result from "
                                          "testenv is ignored*")
+
+
+def test_tox_testenv_create(newmocksession):
+    l = []
+
+    class Plugin:
+        @hookimpl
+        def tox_testenv_create(self, action, venv):
+            l.append(1)
+
+        @hookimpl
+        def tox_testenv_install_deps(self, action, venv):
+            l.append(2)
+
+    mocksession = newmocksession([], """
+        [testenv]
+        commands=testenv_fail
+        ignore_outcome=True
+    """, plugins=[Plugin()])
+
+    venv = mocksession.getenv('python')
+    venv.update(action=mocksession.newaction(venv, "getenv"))
+    assert l == [1, 2]

@@ -16,6 +16,13 @@
 - fix issue252: allow environment names with special characters.
   Thanks Julien Castets for initial PR and patience.
 
+- introduce experimental tox_testenv_create(venv, action) and 
+  tox_testenv_install_deps(venv, action) hooks to allow
+  plugins to do additional work on creation or installing
+  deps.  These hooks are experimental mainly because of
+  the involved "venv" object whose current public API is not 
+  fully guranteed.
+
 - internal: push some optional object creation into tests because
   tox core doesn't need it.
 

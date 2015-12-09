@@ -31,7 +31,7 @@ def pytest_report_header():
 
 @pytest.fixture
 def newconfig(request, tmpdir):
-    def newconfig(args, source=None):
+    def newconfig(args, source=None, plugins=()):
         if source is None:
             source = args
             args = []
@@ -40,7 +40,7 @@ def newconfig(request, tmpdir):
         p.write(s)
         old = tmpdir.chdir()
         try:
-            return parseconfig(args)
+            return parseconfig(args, plugins=plugins)
         finally:
             old.chdir()
     return newconfig
@@ -168,9 +168,8 @@ def newmocksession(request):
     mocksession = request.getfuncargvalue("mocksession")
     newconfig = request.getfuncargvalue("newconfig")
 
-    def newmocksession(args, source):
-        config = newconfig(args, source)
-        mocksession.config = config
+    def newmocksession(args, source, plugins=()):
+        mocksession.config = newconfig(args, source, plugins=plugins)
         return mocksession
     return newmocksession
 

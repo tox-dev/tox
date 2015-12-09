@@ -80,3 +80,9 @@ tox hook specifications and related API
 
 .. autoclass:: tox.config.TestenvConfig()
     :members:
+
+.. autoclass:: tox.venv.VirtualEnv()
+    :members:
+
+.. autoclass:: tox.session.Session()
+    :members:

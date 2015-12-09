@@ -29,13 +29,17 @@ hookimpl = pluggy.HookimplMarker("tox")
 _dummy = object()
 
 
-def get_plugin_manager():
+def get_plugin_manager(plugins=()):
     # initialize plugin manager
+    import tox.venv
     pm = pluggy.PluginManager("tox")
     pm.add_hookspecs(hookspecs)
     pm.register(tox.config)
     pm.register(tox.interpreters)
+    pm.register(tox.venv)
     pm.load_setuptools_entrypoints("tox")
+    for plugin in plugins:
+        pm.register(plugin)
     pm.check_pending()
     return pm
 
@@ -186,7 +190,7 @@ class InstallcmdOption:
         return value
 
 
-def parseconfig(args=None):
+def parseconfig(args=None, plugins=()):
     """
     :param list[str] args: Optional list of arguments.
     :type pkg: str
@@ -194,7 +198,7 @@ def parseconfig(args=None):
     :raise SystemExit: toxinit file is not found
     """
 
-    pm = get_plugin_manager()
+    pm = get_plugin_manager(plugins)
 
     if args is None:
         args = sys.argv[1:]
