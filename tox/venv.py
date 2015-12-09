@@ -56,19 +56,29 @@ class VirtualEnv(object):
     def __init__(self, envconfig=None, session=None):
         self.envconfig = envconfig
         self.session = session
-        self.path = envconfig.envdir
-        self.path_config = self.path.join(".tox-config1")
+
+    @property
+    def path(self):
+        """ Path to environment base dir. """
+        return self.envconfig.envdir
+
+    @property
+    def path_config(self):
+        return self.path.join(".tox-config1")
 
     @property
     def name(self):
+        """ test environment name. """
         return self.envconfig.envname
 
     def __repr__(self):
         return "<VirtualEnv at %r>" % (self.path)
 
-    def getcommandpath(self, name=None, venv=True, cwd=None):
-        if name is None:
-            return self.envconfig.envpython
+    def getcommandpath(self, name, venv=True, cwd=None):
+        """ return absolute path (str or localpath) for specified
+        command name.  If venv is True we will check if the
+        command is coming from the venv or is whitelisted to come
+        from external. """
         name = str(name)
         if os.path.isabs(name):
             return name
