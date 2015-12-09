@@ -1,6 +1,10 @@
 2.3.0 (unreleased)
 -----
 
+- DEPRECATE use of "indexservers" in tox.ini.  It complicates
+  the internal code and it is recommended to rather use the
+  devpi system for managing indexes for pip.
+
 - fix issue285: make setenv processing fully lazy to fix regressions
   of tox-2.2.X and so that we can now have testenv attributes like 
   "basepython" depend on environment variables that are set in 
@@ -20,8 +24,8 @@
   tox_testenv_install_deps(venv, action) hooks to allow
   plugins to do additional work on creation or installing
   deps.  These hooks are experimental mainly because of
-  the involved "venv" object whose current public API is not 
-  fully guranteed.
+  the involved "venv" and session objects whose current public 
+  API is not fully guranteed.
 
 - internal: push some optional object creation into tests because
   tox core doesn't need it.

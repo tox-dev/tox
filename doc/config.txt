@@ -93,9 +93,6 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionadded:: 1.6
 
-    **WARNING**: This setting is **EXPERIMENTAL** so use with care
-    and be ready to adapt your tox.ini's with post-1.6 tox releases.
-
     the ``install_command`` setting is used for installing packages into
     the virtual environment; both the package under test
     and any defined dependencies. Must contain the substitution key
@@ -166,7 +163,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
     package installation.  Each line defines a dependency, which will be
     passed to the installer command for processing.  Each line specifies a file,
     a URL or a package name.  You can additionally specify
-    an :confval:`indexserver` to use for installing this dependency.
+    an :confval:`indexserver` to use for installing this dependency
+    but this functionality is deprecated since tox-2.3.
     All derived dependencies (deps required by the dep) will then be
     retrieved from the specified indexserver::
 
@@ -259,8 +257,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
    .. versionadded:: 0.9
 
-   Multi-line ``name = URL`` definitions of python package servers.
-   Dependencies can specify using a specified index server through the
+   (DEPRECATED, will be removed in a future version) Multi-line ``name =
+   URL`` definitions of python package servers.  Dependencies can
+   specify using a specified index server through the
    ``:indexservername:depname`` pattern.  The ``default`` indexserver
    definition determines where unscoped dependencies and the sdist install
    installs from.  Example::
