@@ -1672,8 +1672,7 @@ class TestSetenv:
         assert envconfig.setenv['VAL'] == envconfig.envdir
         assert str(envconfig.envdir) in envconfig.commands[0]
 
-    @pytest.mark.xfail(reason="we don't implement cross-section substitution for setenv")
-    def test_setenv_cross_section_subst(self, monkeypatch, newconfig):
+    def test_setenv_cross_section_subst_issue294(self, monkeypatch, newconfig):
         """test that we can do cross-section substitution with setenv"""
         monkeypatch.delenv('TEST', raising=False)
         config = newconfig("""
@@ -1686,6 +1685,36 @@ class TestSetenv:
         """)
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
+
+    def test_setenv_cross_section_subst_twice(self, monkeypatch, newconfig):
+        """test that we can do cross-section substitution with setenv"""
+        monkeypatch.delenv('TEST', raising=False)
+        config = newconfig("""
+            [section]
+            x = NOT_TEST={env:TEST:defaultvalue}
+            [section1]
+            y = {[section]x}
+
+            [testenv]
+            setenv = {[section1]y}
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
+
+    def test_setenv_cross_section_mixed(self, monkeypatch, newconfig):
+        """test that we can do cross-section substitution with setenv"""
+        monkeypatch.delenv('TEST', raising=False)
+        config = newconfig("""
+            [section]
+            x = NOT_TEST={env:TEST:defaultvalue}
+
+            [testenv]
+            setenv = {[section]x}
+                     y = 7
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
+        assert envconfig.setenv["y"] == "7"
 
 
 class TestIndexServer:

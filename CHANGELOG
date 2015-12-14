@@ -1,4 +1,9 @@
-2.3.0 (unreleased)
+2.3.1
+-----
+
+- fix issue294: re-allow cross-section substitution for setenv.
+
+2.3.0
 -----
 
 - DEPRECATE use of "indexservers" in tox.ini.  It complicates

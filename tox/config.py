@@ -889,7 +889,7 @@ class SectionReader:
         return self._getdict(value, default=default, sep=sep)
 
     def getdict_setenv(self, name, default=None, sep="\n"):
-        value = self.getstring(name, None, replace=False)
+        value = self.getstring(name, None, replace=True, crossonly=True)
         definitions = self._getdict(value, default=default, sep=sep)
         self._setenv = SetenvDict(definitions, reader=self)
         return self._setenv
@@ -931,7 +931,7 @@ class SectionReader:
     def getargv(self, name, default=""):
         return self.getargvlist(name, default)[0]
 
-    def getstring(self, name, default=None, replace=True):
+    def getstring(self, name, default=None, replace=True, crossonly=False):
         x = None
         for s in [self.section_name] + self.fallbacksections:
             try:
@@ -946,7 +946,7 @@ class SectionReader:
             x = self._apply_factors(x)
 
         if replace and x and hasattr(x, 'replace'):
-            x = self._replace(x, name=name)
+            x = self._replace(x, name=name, crossonly=crossonly)
         # print "getstring", self.section_name, name, "returned", repr(x)
         return x
 
@@ -963,14 +963,14 @@ class SectionReader:
         lines = s.strip().splitlines()
         return '\n'.join(filter(None, map(factor_line, lines)))
 
-    def _replace(self, value, name=None, section_name=None):
+    def _replace(self, value, name=None, section_name=None, crossonly=False):
         if '{' not in value:
             return value
 
         section_name = section_name if section_name else self.section_name
         self._subststack.append((section_name, name))
         try:
-            return Replacer(self).do_replace(value)
+            return Replacer(self, crossonly=crossonly).do_replace(value)
         finally:
             assert self._subststack.pop() == (section_name, name)
 
@@ -982,22 +982,28 @@ class Replacer:
         (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
         (?P<substitution_value>[^{}]*)  # substitution key
         [}]
-        ''',
-        re.VERBOSE)
+        ''', re.VERBOSE)
 
-    def __init__(self, reader):
+    def __init__(self, reader, crossonly=False):
         self.reader = reader
+        self.crossonly = crossonly
 
     def do_replace(self, x):
         return self.RE_ITEM_REF.sub(self._replace_match, x)
 
     def _replace_match(self, match):
         g = match.groupdict()
+        sub_value = g['substitution_value']
+        if self.crossonly:
+            if sub_value.startswith("["):
+                return self._substitute_from_other_section(sub_value)
+            # in crossonly we return all other hits verbatim
+            start, end = match.span()
+            return match.string[start:end]
 
         # special case: opts and packages. Leave {opts} and
         # {packages} intact, they are replaced manually in
         # _venv.VirtualEnv.run_install_command.
-        sub_value = g['substitution_value']
         if sub_value in ('opts', 'packages'):
             return '{%s}' % sub_value
 
@@ -1048,7 +1054,8 @@ class Replacer:
                     raise ValueError('%s already in %s' % (
                         (section, item), self.reader._subststack))
                 x = str(cfg[section][item])
-                return self.reader._replace(x, name=item, section_name=section)
+                return self.reader._replace(x, name=item, section_name=section,
+                                            crossonly=self.crossonly)
 
         raise tox.exception.ConfigError(
             "substitution key %r not found" % key)
