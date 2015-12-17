@@ -366,6 +366,9 @@ def tox_addoption(parser):
                         help="override sitepackages setting to True in all envs")
     parser.add_argument("--skip-missing-interpreters", action="store_true",
                         help="don't fail tests for missing interpreters")
+    parser.add_argument("--workdir", action="store",
+                        dest="workdir", metavar="PATH", default=None,
+                        help="tox working directory")
 
     parser.add_argument("args", nargs="*",
                         help="additional arguments available to command positional substitution")
@@ -664,7 +667,10 @@ class parseini:
 
         reader.addsubstitutions(toxinidir=config.toxinidir,
                                 homedir=config.homedir)
-        config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        if config.option.workdir is None:
+            config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        else:
+            config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
         config.minversion = reader.getstring("minversion", None)
 
         if not config.option.skip_missing_interpreters:
