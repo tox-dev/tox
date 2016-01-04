@@ -68,12 +68,12 @@ class ReportExpectMock:
 
         def generic_report(*args, **kwargs):
             self._calls.append((name,) + args)
-            print ("%s" % (self._calls[-1], ))
+            print("%s" % (self._calls[-1], ))
         return generic_report
 
     def action(self, venv, msg, *args):
         self._calls.append(("action", venv, msg))
-        print ("%s" % (self._calls[-1], ))
+        print("%s" % (self._calls[-1], ))
         return Action(self.session, venv, msg, args)
 
     def getnext(self, cat):
@@ -316,7 +316,7 @@ def initproj(request, tmpdir):
         for p in base.visit(lambda x: x.check(file=1)):
             manifestlines.append("include %s" % p.relto(base))
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
-        print ("created project in %s" % (base,))
+        print("created project in %s" % (base,))
         base.chdir()
     return initproj
 
