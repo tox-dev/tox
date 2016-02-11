@@ -1094,7 +1094,7 @@ class _ArgvlistReader:
             current_command += line
 
             if is_section_substitution(current_command):
-                replaced = reader._replace(current_command)
+                replaced = reader._replace(current_command, crossonly=True)
                 commands.extend(cls.getargvlist(reader, replaced))
             else:
                 commands.append(cls.processcommand(reader, current_command))
