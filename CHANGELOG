@@ -3,6 +3,9 @@
 
 - fix issue314: fix command invocation with .py scripts on windows.
 
+- fix issue279: allow cross-section substitution when the value contains
+  posargs. Thanks Sachi King for the PR.
+
 
 2.3.1
 -----
