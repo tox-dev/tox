@@ -286,7 +286,7 @@ class TestIniParserAgainstCommandsKey:
         reader = SectionReader("testenv", config._cfg)
         reader.addsubstitutions([r"argpos"])
         x = reader.getargvlist("commands")
-        assert x == [['thing', 'argpos' 'arg2']]
+        assert x == [['thing', 'argpos', 'arg2']]
 
     def test_command_env_substitution(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""
