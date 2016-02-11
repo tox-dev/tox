@@ -211,7 +211,7 @@ class Action(object):
         if sys.platform == "win32":
             ext = os.path.splitext(str(newargs[0]))[1].lower()
             if ext == '.py' and self.venv:
-                newargs = [str(self.envconfig.envpython)] + newargs
+                newargs = [str(self.venv.envconfig.envpython)] + newargs
 
         return newargs
 
