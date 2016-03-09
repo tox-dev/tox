@@ -63,7 +63,7 @@
 - fix issue99: the {env:...} substitution now properly uses environment
   settings from the ``setenv`` section. Thanks Itxaka Serrano.
 
-- fix issue281: make --force-deps work when urls are present in
+- fix issue281: make --force-dep work when urls are present in
   dependency configs.  Thanks Glyph Lefkowitz for reporting.
 
 - fix issue174: add new ``ignore_outcome`` testenv attribute which
@@ -182,7 +182,7 @@
 1.9.2
 -----------
 
-- backout ability that --force-deps substitutes name/versions in
+- backout ability that --force-dep substitutes name/versions in
   requirement files due to various issues.
   This fixes issue228, fixes issue230, fixes issue231
   which popped up with 1.9.1.
@@ -193,7 +193,7 @@
 - use a file instead of a pipe for command output in "--result-json".
   Fixes some termination issues with python2.6.
 
-- allow --force-deps to override dependencies in "-r" requirements
+- allow --force-dep to override dependencies in "-r" requirements
   files.  Thanks Sontek for the PR.
 
 - fix issue227: use "-m virtualenv" instead of "-mvirtualenv" to make
