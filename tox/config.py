@@ -224,7 +224,10 @@ def parseconfig(args=None, plugins=()):
             if inipath.check():
                 break
         else:
-            feedback("toxini file %r not found" % (basename), sysexit=True)
+            inipath = py.path.local().join('setup.cfg')
+            if not inipath.check():
+                feedback("toxini file %r not found" % (basename), sysexit=True)
+
     try:
         parseini(config, inipath)
     except tox.exception.InterpreterNotFound:
@@ -644,12 +647,18 @@ class parseini:
         self._cfg = py.iniconfig.IniConfig(config.toxinipath)
         config._cfg = self._cfg
         self.config = config
+
+        if inipath.basename == 'setup.cfg':
+            prefix = 'tox'
+        else:
+            prefix = None
         ctxname = getcontextname()
         if ctxname == "jenkins":
-            reader = SectionReader("tox:jenkins", self._cfg, fallbacksections=['tox'])
+            reader = SectionReader("tox:jenkins", self._cfg, prefix=prefix,
+                                   fallbacksections=['tox'])
             distshare_default = "{toxworkdir}/distshare"
         elif not ctxname:
-            reader = SectionReader("tox", self._cfg)
+            reader = SectionReader("tox", self._cfg, prefix=prefix)
             distshare_default = "{homedir}/.tox/distshare"
         else:
             raise ValueError("invalid context")
@@ -853,8 +862,12 @@ is_section_substitution = re.compile("{\[[^{}\s]+\]\S+?}").match
 
 
 class SectionReader:
-    def __init__(self, section_name, cfgparser, fallbacksections=None, factors=()):
-        self.section_name = section_name
+    def __init__(self, section_name, cfgparser, fallbacksections=None,
+                 factors=(), prefix=None):
+        if prefix is None:
+            self.section_name = section_name
+        else:
+            self.section_name = "%s:%s" % (prefix, section_name)
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
         self.factors = factors
