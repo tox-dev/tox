@@ -15,6 +15,7 @@ from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox.venv import VirtualEnv
 from tox.config import parseconfig
 from tox.result import ResultLog
+from tox.hookspecs import hookimpl
 from subprocess import STDOUT
 
 
@@ -336,6 +337,10 @@ class Session:
             raise SystemExit(1)
         self._actions = []
 
+    @property
+    def hook(self):
+        return self.config.pluginmanager.hook
+
     def _makevenv(self, name):
         envconfig = self.config.envconfigs.get(name, None)
         if envconfig is None:
@@ -553,7 +558,9 @@ class Session:
         if not self.config.option.notest:
             if venv.status:
                 return
+            self.hook.tox_report_status(venvname=venv.envconfig.envname, status='started')
             venv.test(redirect=redirect)
+            self.hook.tox_report_status(venvname=venv.envconfig.envname, status=venv.status)
         else:
             venv.status = "skipped tests"
 
