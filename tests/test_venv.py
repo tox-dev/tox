@@ -672,3 +672,27 @@ def test_tox_testenv_create(newmocksession):
     venv = mocksession.getenv('python')
     venv.update(action=mocksession.newaction(venv, "getenv"))
     assert l == [1, 2]
+
+
+def test_tox_testenv_pre_post(newmocksession):
+    l = []
+
+    class Plugin:
+        @hookimpl
+        def tox_runtest_pre(self, venv):
+            l.append('started')
+
+        @hookimpl
+        def tox_runtest_post(self, venv):
+            l.append('finished')
+
+    mocksession = newmocksession([], """
+        [testenv]
+        commands=testenv_fail
+    """, plugins=[Plugin()])
+
+    venv = mocksession.getenv('python')
+    venv.status = None
+    assert l == []
+    mocksession.runtestenv(venv)
+    assert l == ['started', 'finished']
