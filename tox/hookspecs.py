@@ -44,5 +44,10 @@ def tox_testenv_install_deps(venv, action):
 
 
 @hookspec
-def tox_report_status(venvname, status):
-    """ [experimental] called with each venvname, and the status for that venv. """
+def tox_runtest_pre(venv):
+    """ [experimental] perform arbitrary action before running tests. """
+
+
+@hookspec
+def tox_runtest_post(venv):
+    """ [experimental] perform arbitrary action after running tests. """

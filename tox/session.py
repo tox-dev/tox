@@ -558,9 +558,9 @@ class Session:
         if not self.config.option.notest:
             if venv.status:
                 return
-            self.hook.tox_report_status(venvname=venv.envconfig.envname, status='started')
+            self.hook.tox_runtest_pre(venv=venv)
             venv.test(redirect=redirect)
-            self.hook.tox_report_status(venvname=venv.envconfig.envname, status=venv.status)
+            self.hook.tox_runtest_post(venv=venv)
         else:
             venv.status = "skipped tests"
 

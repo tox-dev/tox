@@ -37,6 +37,7 @@ def get_plugin_manager(plugins=()):
     pm.register(tox.config)
     pm.register(tox.interpreters)
     pm.register(tox.venv)
+    pm.register(tox.session)
     pm.load_setuptools_entrypoints("tox")
     for plugin in plugins:
         pm.register(plugin)
