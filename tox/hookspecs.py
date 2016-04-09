@@ -45,9 +45,15 @@ def tox_testenv_install_deps(venv, action):
 
 @hookspec
 def tox_runtest_pre(venv):
-    """ [experimental] perform arbitrary action before running tests. """
+    """ [experimental] perform arbitrary action before running tests for this venv.
+
+    This could be used to indicate that tests for a given venv have started, for intstance.
+    """
 
 
 @hookspec
 def tox_runtest_post(venv):
-    """ [experimental] perform arbitrary action after running tests. """
+    """ [experimental] perform arbitrary action after running tests for this venv.
+
+    This could be used to have per-venv test reporting of pass/fail status.
+    """
