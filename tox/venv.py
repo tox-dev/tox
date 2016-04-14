@@ -79,11 +79,11 @@ class VirtualEnv(object):
         return "<VirtualEnv at %r>" % (self.path)
 
     def getcommandpath(self, name, venv=True, cwd=None):
-        """ return absolute path (str or localpath) for specified
-        command name.  If it's a localpath we will rewrite it as
-        as a relative path.  If venv is True we will check if the
-        command is coming from the venv or is whitelisted to come
-        from external. """
+        """ Return absolute path (str or localpath) for specified command name.
+         - If it's a local path we will rewrite it as as a relative path.
+         - If venv is True we will check if the command is coming from the venv
+           or is whitelisted to come from external.
+        """
         name = str(name)
         if os.path.isabs(name):
             return name
