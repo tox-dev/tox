@@ -93,7 +93,7 @@ class VirtualEnv(object):
                 return str(path)
 
         if venv:
-            path = self._venv_lookup(name)
+            path = self._venv_lookup_and_check_external_whitelist(name)
         else:
             path = self._normal_lookup(name)
 
@@ -103,22 +103,29 @@ class VirtualEnv(object):
 
         return str(path)  # will not be rewritten for reporting
 
-    def _venv_lookup(self, name):
-        path = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
+    def _venv_lookup_and_check_external_whitelist(self, name):
+        path = self._venv_lookup(name)
         if path is None:
             path = self._normal_lookup(name)
-            if not self.is_allowed_external(path):
-                self.session.report.warning(
+            if path is not None:
+                self._check_external_allowed_and_warn(path)
+        return path
+
+    def _venv_lookup(self, name):
+        return py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
+
+    def _normal_lookup(self, name):
+        return py.path.local.sysfind(name)
+
+    def _check_external_allowed_and_warn(self, path):
+        if not self.is_allowed_external(path):
+            self.session.report.warning(
                     "test command found but not installed in testenv\n"
                     "  cmd: %s\n"
                     "  env: %s\n"
                     "Maybe you forgot to specify a dependency? "
                     "See also the whitelist_externals envconfig setting." % (
                         path, self.envconfig.envdir))
-        return path
-
-    def _normal_lookup(self, name):
-        return py.path.local.sysfind(name)
 
     def is_allowed_external(self, p):
         tryadd = [""]
