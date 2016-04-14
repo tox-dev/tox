@@ -88,29 +88,29 @@ class VirtualEnv(object):
         if os.path.isabs(name):
             return name
         if os.path.split(name)[0] == ".":
-            p = cwd.join(name)
-            if p.check():
-                return str(p)
-        p = None
+            path = cwd.join(name)
+            if path.check():
+                return str(path)
+        path = None
         if venv:
-            p = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
-        if p is not None:
-            return p
-        p = py.path.local.sysfind(name)
-        if p is None:
+            path = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
+        if path is not None:
+            return path
+        path = py.path.local.sysfind(name)
+        if path is None:
             raise tox.exception.InvocationError(
                 "could not find executable %r" % (name,))
-        # p is not found in virtualenv script/bin dir
+        # path is not found in virtualenv script/bin dir
         if venv:
-            if not self.is_allowed_external(p):
+            if not self.is_allowed_external(path):
                 self.session.report.warning(
                     "test command found but not installed in testenv\n"
                     "  cmd: %s\n"
                     "  env: %s\n"
                     "Maybe you forgot to specify a dependency? "
                     "See also the whitelist_externals envconfig setting." % (
-                        p, self.envconfig.envdir))
-        return str(p)  # will not be rewritten for reporting
+                        path, self.envconfig.envdir))
+        return str(path)  # will not be rewritten for reporting
 
     def is_allowed_external(self, p):
         tryadd = [""]
