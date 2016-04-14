@@ -91,17 +91,22 @@ class VirtualEnv(object):
             path = cwd.join(name)
             if path.check():
                 return str(path)
-        path = None
+
         if venv:
-            path = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
-        if path is not None:
-            return path
-        path = py.path.local.sysfind(name)
+            path = self._venv_lookup(name)
+        else:
+            path = py.path.local.sysfind(name)
+
         if path is None:
             raise tox.exception.InvocationError(
                 "could not find executable %r" % (name,))
-        # path is not found in virtualenv script/bin dir
-        if venv:
+
+        return str(path)  # will not be rewritten for reporting
+
+    def _venv_lookup(self, name):
+        path = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
+        if path is None:
+            path = py.path.local.sysfind(name)
             if not self.is_allowed_external(path):
                 self.session.report.warning(
                     "test command found but not installed in testenv\n"
@@ -110,7 +115,7 @@ class VirtualEnv(object):
                     "Maybe you forgot to specify a dependency? "
                     "See also the whitelist_externals envconfig setting." % (
                         path, self.envconfig.envdir))
-        return str(path)  # will not be rewritten for reporting
+        return path
 
     def is_allowed_external(self, p):
         tryadd = [""]
