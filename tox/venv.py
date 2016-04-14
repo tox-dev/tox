@@ -95,7 +95,7 @@ class VirtualEnv(object):
         if venv:
             path = self._venv_lookup(name)
         else:
-            path = py.path.local.sysfind(name)
+            path = self._normal_lookup(name)
 
         if path is None:
             raise tox.exception.InvocationError(
@@ -106,7 +106,7 @@ class VirtualEnv(object):
     def _venv_lookup(self, name):
         path = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
         if path is None:
-            path = py.path.local.sysfind(name)
+            path = self._normal_lookup(name)
             if not self.is_allowed_external(path):
                 self.session.report.warning(
                     "test command found but not installed in testenv\n"
@@ -116,6 +116,9 @@ class VirtualEnv(object):
                     "See also the whitelist_externals envconfig setting." % (
                         path, self.envconfig.envdir))
         return path
+
+    def _normal_lookup(self, name):
+        return py.path.local.sysfind(name)
 
     def is_allowed_external(self, p):
         tryadd = [""]
