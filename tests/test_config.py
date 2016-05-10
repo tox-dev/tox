@@ -288,6 +288,20 @@ class TestIniParserAgainstCommandsKey:
         x = reader.getargvlist("commands")
         assert x == [['thing', 'argpos', 'arg2']]
 
+    def test_command_section_and_posargs_substitution(self, newconfig):
+        """Ensure subsitition from other section with posargs succeeds"""
+        config = newconfig("""
+            [section]
+            key = thing arg1
+            [testenv]
+            commands =
+                {[section]key} {posargs} endarg
+            """)
+        reader = SectionReader("testenv", config._cfg)
+        reader.addsubstitutions([r"argpos"])
+        x = reader.getargvlist("commands")
+        assert x == [['thing', 'arg1', 'argpos', 'endarg']]
+
     def test_command_env_substitution(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""
         config = newconfig("""
