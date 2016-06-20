@@ -537,7 +537,6 @@ class Session:
                 # write out version dependency information
                 action = self.newaction(venv, "envreport")
                 with action:
-                    python = venv.getcommandpath("python")
                     args = venv.envconfig.list_dependencies_command
                     output = venv._pcall(args,
                                          cwd=self.config.toxinidir,

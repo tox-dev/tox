@@ -520,10 +520,10 @@ def tox_addoption(parser):
     parser.add_testenv_attribute_obj(InstallcmdOption())
 
     parser.add_testenv_attribute(
-        name = "list_dependencies_command",
-        type = "argv",
-        default = "python -m pip freeze",
-        help = "list dependencies for a virtual environment")
+        name="list_dependencies_command",
+        type="argv",
+        default="python -m pip freeze",
+        help="list dependencies for a virtual environment")
 
     parser.add_testenv_attribute_obj(DepOption())
 
