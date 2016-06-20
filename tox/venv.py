@@ -120,12 +120,12 @@ class VirtualEnv(object):
     def _check_external_allowed_and_warn(self, path):
         if not self.is_allowed_external(path):
             self.session.report.warning(
-                    "test command found but not installed in testenv\n"
-                    "  cmd: %s\n"
-                    "  env: %s\n"
-                    "Maybe you forgot to specify a dependency? "
-                    "See also the whitelist_externals envconfig setting." % (
-                        path, self.envconfig.envdir))
+                "test command found but not installed in testenv\n"
+                "  cmd: %s\n"
+                "  env: %s\n"
+                "Maybe you forgot to specify a dependency? "
+                "See also the whitelist_externals envconfig setting." % (
+                    path, self.envconfig.envdir))
 
     def is_allowed_external(self, p):
         tryadd = [""]

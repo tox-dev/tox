@@ -1088,7 +1088,7 @@ class TestConfigTestEnv:
             [params]
             foo = bah
             foo2 = [params]foo
-            
+
             [testenv:py27]
             commands =
                 echo {{[params]foo2}}
