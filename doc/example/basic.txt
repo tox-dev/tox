@@ -260,8 +260,7 @@ a test run when ``python setup.py test`` is issued::
             args = self.tox_args
             if args:
                 args = shlex.split(self.tox_args)
-            errno = tox.cmdline(args=args)
-            sys.exit(errno)
+            tox.cmdline(args=args)
 
     setup(
         #...,
