@@ -19,6 +19,8 @@
   something like "pip install {opts} {packages}".  Thanks Ted Shaw,
   Holger Krekel.
 
+- New feature: When a search for a config file fails, tox tries loading
+  setup.cfg with a section prefix of "tox".
 
 2.3.2
 -----
