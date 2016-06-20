@@ -23,5 +23,11 @@ class exception:
         """ a directory did not exist. """
     class MissingDependency(Error):
         """ a dependency could not be found or determined. """
+    class MinVersionError(Error):
+        """ the installed tox version is lower than requested minversion. """
+
+        def __init__(self, message):
+            self.message = message
+            super(exception.MinVersionError, self).__init__(message)
 
 from tox.session import main as cmdline  # noqa

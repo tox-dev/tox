@@ -12,6 +12,7 @@ import pluggy
 
 import tox.interpreters
 from tox import hookspecs
+from tox._verlib import NormalizedVersion
 
 import py
 
@@ -664,8 +665,18 @@ class parseini:
 
         reader.addsubstitutions(toxinidir=config.toxinidir,
                                 homedir=config.homedir)
-        config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        # As older versions of tox may have bugs or incompatabilities that
+        # prevent parsing of tox.ini this must be the first thing checked.
         config.minversion = reader.getstring("minversion", None)
+        # Parse our compatability immediately
+        if config.minversion:
+            minversion = NormalizedVersion(self.config.minversion)
+            toxversion = NormalizedVersion(tox.__version__)
+            if toxversion < minversion:
+                raise tox.exception.MinVersionError(
+                    "tox version is %s, required is at least %s" % (
+                        toxversion, minversion))
+        config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
 
         if not config.option.skip_missing_interpreters:
             config.option.skip_missing_interpreters = \
