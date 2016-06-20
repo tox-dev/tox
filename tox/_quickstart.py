@@ -119,7 +119,7 @@ def do_prompt(d, key, text, default=None, validator=nonempty):
         x = term_input(prompt)
         if default and not x:
             x = default
-        if sys.version_info < (3, ) and not isinstance(x, unicode):
+        if sys.version_info < (3, ) and not isinstance(x, unicode):  # noqa
             # for Python 2.x, try to get a Unicode string out of it
             if x.decode('ascii', 'replace').encode('ascii', 'replace') != x:
                 if TERM_ENCODING:

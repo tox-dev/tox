@@ -47,9 +47,9 @@ class EnvLog:
         pythonexecutable = py.path.local(pythonexecutable)
         out = pythonexecutable.sysexec("-c",
                                        "import sys; "
-                                       "print (sys.executable);"
-                                       "print (list(sys.version_info)); "
-                                       "print (sys.version)")
+                                       "print(sys.executable);"
+                                       "print(list(sys.version_info)); "
+                                       "print(sys.version)")
         lines = out.splitlines()
         executable = lines.pop(0)
         version_info = eval(lines.pop(0))
