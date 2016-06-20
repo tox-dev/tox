@@ -537,8 +537,9 @@ class Session:
                 # write out version dependency information
                 action = self.newaction(venv, "envreport")
                 with action:
-                    pip = venv.getcommandpath("pip")
-                    output = venv._pcall([str(pip), "freeze"],
+                    python = venv.getcommandpath("python")
+                    args = venv.envconfig.list_dependencies_command
+                    output = venv._pcall(args,
                                          cwd=self.config.toxinidir,
                                          action=action)
                     # the output contains a mime-header, skip it

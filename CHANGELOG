@@ -1,3 +1,18 @@
+2.4.0
+-----
+
+- introduce per-venv list_dependencies_command which defaults
+  to "python -m pip freeze" to obtain the list of installed packages.
+  If you need to run python2.6 you need to configure it to
+  something like "pip freeze".  Thanks Ted Shaw, Holger Krekel.
+
+- fix issue66, issue121: change install_command to use "python -m pip"
+  by default instead of "pip ..." directly which avoids long shebang 
+  issues.  If you need to run python2.6 you need to configure it to
+  something like "pip install {opts} {packages}".  Thanks Ted Shaw,
+  Holger Krekel.
+
+
 2.3.2
 -----
 

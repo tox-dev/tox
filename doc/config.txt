@@ -105,7 +105,20 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**::
 
-        pip install {opts} {packages}
+        python -m pip install {opts} {packages}
+
+
+.. confval:: list_dependencies_command
+
+    .. versionadded:: 2.4
+
+    the ``list_dependencies_command`` setting is used for listing
+    the packages installed into the virtual environment.
+
+    **default**::
+
+        python -m pip freeze
+
 
 .. confval:: ignore_errors=True|False(default)
 
