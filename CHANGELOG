@@ -1,6 +1,10 @@
 2.4.0
 -----
 
+- fix issue212: allow escaping curly brace chars "\{" and "\}" if you need the 
+  chars "{" and "}" to appear in your commands or other ini values. 
+  Thanks John Vandenberg.
+
 - add --workdir option to override where tox stores its ".tox" directory
   and all of the virtualenv environment.  Thanks Danring.
 
