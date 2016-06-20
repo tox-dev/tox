@@ -646,6 +646,55 @@ class TestIniParser:
         py.test.raises(tox.exception.ConfigError, 'reader.getbool("key5")')
 
 
+class TestIniParserPrefix:
+    def test_basic_section_access(self, tmpdir, newconfig):
+        config = newconfig("""
+            [p:section]
+            key=value
+        """)
+        reader = SectionReader("section", config._cfg, prefix="p")
+        x = reader.getstring("key")
+        assert x == "value"
+        assert not reader.getstring("hello")
+        x = reader.getstring("hello", "world")
+        assert x == "world"
+
+    def test_fallback_sections(self, tmpdir, newconfig):
+        config = newconfig("""
+            [p:mydefault]
+            key2=value2
+            [p:section]
+            key=value
+        """)
+        reader = SectionReader("section", config._cfg, prefix="p",
+                               fallbacksections=['p:mydefault'])
+        x = reader.getstring("key2")
+        assert x == "value2"
+        x = reader.getstring("key3")
+        assert not x
+        x = reader.getstring("key3", "world")
+        assert x == "world"
+
+    def test_value_matches_prefixed_section_substituion(self):
+        assert is_section_substitution("{[p:setup]commands}")
+
+    def test_value_doesn_match_prefixed_section_substitution(self):
+        assert is_section_substitution("{[p: ]commands}") is None
+        assert is_section_substitution("{[p:setup]}") is None
+        assert is_section_substitution("{[p:setup] commands}") is None
+
+    def test_other_section_substitution(self, newconfig):
+        config = newconfig("""
+            [p:section]
+            key = rue
+            [p:testenv]
+            key = t{[p:section]key}
+            """)
+        reader = SectionReader("testenv", config._cfg, prefix="p")
+        x = reader.getstring("key")
+        assert x == "true"
+
+
 class TestConfigTestEnv:
     def test_commentchars_issue33(self, tmpdir, newconfig):
         config = newconfig("""
