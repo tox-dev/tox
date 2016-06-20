@@ -1,6 +1,9 @@
 2.4.0
 -----
 
+- add --workdir option to override where tox stores its ".tox" directory
+  and all of the virtualenv environment.  Thanks Danring.
+
 - introduce per-venv list_dependencies_command which defaults
   to "python -m pip freeze" to obtain the list of installed packages.
   If you need to run python2.6 you need to configure it to

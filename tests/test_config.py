@@ -1865,6 +1865,23 @@ class TestCmdInvocation:
             "*ERROR*tox.ini*not*found*",
         ])
 
+    def test_override_workdir(self, tmpdir, cmd, initproj):
+        baddir = "badworkdir-123"
+        gooddir = "overridden-234"
+        initproj("overrideworkdir-0.5", filedefs={
+            'tox.ini': '''
+            [tox]
+            toxworkdir=%s
+            ''' % baddir,
+        })
+        result = cmd.run("tox", "--workdir", gooddir, "--showconfig")
+        assert not result.ret
+        stdout = result.stdout.str()
+        assert gooddir in stdout
+        assert baddir not in stdout
+        assert py.path.local(gooddir).check()
+        assert not py.path.local(baddir).check()
+
     def test_showconfig_with_force_dep_version(self, cmd, initproj):
         initproj('force_dep_version', filedefs={
             'tox.ini': '''

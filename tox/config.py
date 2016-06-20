@@ -367,6 +367,9 @@ def tox_addoption(parser):
                         help="override sitepackages setting to True in all envs")
     parser.add_argument("--skip-missing-interpreters", action="store_true",
                         help="don't fail tests for missing interpreters")
+    parser.add_argument("--workdir", action="store",
+                        dest="workdir", metavar="PATH", default=None,
+                        help="tox working directory")
 
     parser.add_argument("args", nargs="*",
                         help="additional arguments available to command positional substitution")
@@ -675,7 +678,6 @@ class parseini:
         # As older versions of tox may have bugs or incompatabilities that
         # prevent parsing of tox.ini this must be the first thing checked.
         config.minversion = reader.getstring("minversion", None)
-        # Parse our compatability immediately
         if config.minversion:
             minversion = NormalizedVersion(self.config.minversion)
             toxversion = NormalizedVersion(tox.__version__)
@@ -683,7 +685,10 @@ class parseini:
                 raise tox.exception.MinVersionError(
                     "tox version is %s, required is at least %s" % (
                         toxversion, minversion))
-        config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        if config.option.workdir is None:
+            config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        else:
+            config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
 
         if not config.option.skip_missing_interpreters:
             config.option.skip_missing_interpreters = \
