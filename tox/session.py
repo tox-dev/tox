@@ -262,6 +262,7 @@ class Reporter(object):
         # self.cumulated_time += duration
         self.verbosity2("%s finish: %s after %.2f seconds" % (
             action.venvname, action.msg, duration), bold=True)
+        delattr(action, '_starttime')
 
     def startsummary(self):
         self.tw.sep("_", "summary")
