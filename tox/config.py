@@ -1165,6 +1165,7 @@ class _ArgvlistReader:
             new_arg = ""
             new_word = reader._replace(word)
             new_word = reader._replace(new_word)
+            new_word = new_word.replace('\\{', '{').replace('\\}', '}')
             new_arg += new_word
             newcommand += new_arg
 
