@@ -79,38 +79,53 @@ class VirtualEnv(object):
         return "<VirtualEnv at %r>" % (self.path)
 
     def getcommandpath(self, name, venv=True, cwd=None):
-        """ return absolute path (str or localpath) for specified
-        command name.  If it's a localpath we will rewrite it as
-        as a relative path.  If venv is True we will check if the
-        command is coming from the venv or is whitelisted to come
-        from external. """
+        """ Return absolute path (str or localpath) for specified command name.
+         - If it's a local path we will rewrite it as as a relative path.
+         - If venv is True we will check if the command is coming from the venv
+           or is whitelisted to come from external.
+        """
         name = str(name)
         if os.path.isabs(name):
             return name
         if os.path.split(name)[0] == ".":
-            p = cwd.join(name)
-            if p.check():
-                return str(p)
-        p = None
+            path = cwd.join(name)
+            if path.check():
+                return str(path)
+
         if venv:
-            p = py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
-        if p is not None:
-            return p
-        p = py.path.local.sysfind(name)
-        if p is None:
+            path = self._venv_lookup_and_check_external_whitelist(name)
+        else:
+            path = self._normal_lookup(name)
+
+        if path is None:
             raise tox.exception.InvocationError(
                 "could not find executable %r" % (name,))
-        # p is not found in virtualenv script/bin dir
-        if venv:
-            if not self.is_allowed_external(p):
-                self.session.report.warning(
+
+        return str(path)  # will not be rewritten for reporting
+
+    def _venv_lookup_and_check_external_whitelist(self, name):
+        path = self._venv_lookup(name)
+        if path is None:
+            path = self._normal_lookup(name)
+            if path is not None:
+                self._check_external_allowed_and_warn(path)
+        return path
+
+    def _venv_lookup(self, name):
+        return py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
+
+    def _normal_lookup(self, name):
+        return py.path.local.sysfind(name)
+
+    def _check_external_allowed_and_warn(self, path):
+        if not self.is_allowed_external(path):
+            self.session.report.warning(
                     "test command found but not installed in testenv\n"
                     "  cmd: %s\n"
                     "  env: %s\n"
                     "Maybe you forgot to specify a dependency? "
                     "See also the whitelist_externals envconfig setting." % (
-                        p, self.envconfig.envdir))
-        return str(p)  # will not be rewritten for reporting
+                        path, self.envconfig.envdir))
 
     def is_allowed_external(self, p):
         tryadd = [""]
