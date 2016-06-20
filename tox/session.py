@@ -347,6 +347,10 @@ class Session:
             raise SystemExit(1)
         self._actions = []
 
+    @property
+    def hook(self):
+        return self.config.pluginmanager.hook
+
     def _makevenv(self, name):
         envconfig = self.config.envconfigs.get(name, None)
         if envconfig is None:
@@ -556,7 +560,9 @@ class Session:
         if not self.config.option.notest:
             if venv.status:
                 return
+            self.hook.tox_runtest_pre(venv=venv)
             venv.test(redirect=redirect)
+            self.hook.tox_runtest_post(venv=venv)
         else:
             venv.status = "skipped tests"
 
