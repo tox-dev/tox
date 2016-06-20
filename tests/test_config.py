@@ -1083,6 +1083,20 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["echo"]
 
+    def test_substitution_double(self, newconfig):
+        inisource = """
+            [params]
+            foo = bah
+            foo2 = [params]foo
+            
+            [testenv:py27]
+            commands =
+                echo {{[params]foo2}}
+        """
+        conf = newconfig([], inisource).envconfigs['py27']
+        argv = conf.commands
+        assert argv[0] == ['echo', 'bah']
+
     def test_posargs_backslashed_or_quoted(self, tmpdir, newconfig):
         inisource = """
             [testenv:py27]
