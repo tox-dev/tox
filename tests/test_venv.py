@@ -5,6 +5,7 @@ import os
 import sys
 import tox.config
 from tox.venv import *  # noqa
+from tox.hookspecs import hookimpl
 from tox.interpreters import NoInterpreterInfo
 
 
@@ -137,8 +138,8 @@ def test_install_deps_wildcard(newmocksession):
     assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
-    assert "pip" in str(args[0])
-    assert args[1] == "install"
+    assert "pip" in str(args[2])
+    assert args[3] == "install"
     # arg = "--download-cache=" + str(venv.envconfig.downloadcache)
     # assert arg in args[2:]
     args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
@@ -167,8 +168,8 @@ def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
     assert len(l) == 2
     args = l[-1].args
     assert l[-1].cwd == venv.envconfig.config.toxinidir
-    assert "pip" in str(args[0])
-    assert args[1] == "install"
+    assert "pip" in str(args)
+    assert args[3] == "install"
     assert "dep1" in args
     assert "dep2" in args
     deps = list(filter(None, [x[1] for x in venv._getliveconfig().deps]))
@@ -365,7 +366,7 @@ def test_install_python3(tmpdir, newmocksession):
     venv._install(["hello"], action=action)
     assert len(l) == 1
     args = l[0].args
-    assert 'pip' in str(args[0])
+    assert "pip" in [str(x) for x in args]
     for x in args:
         assert "--download-cache" not in args, args
 
@@ -597,7 +598,7 @@ def test_run_install_command(newmocksession):
     venv.run_install_command(packages=["whatever"], action=action)
     l = mocksession._pcalls
     assert len(l) == 1
-    assert 'pip' in l[0].args[0]
+    assert 'pip' in l[0].args[2]
     assert 'install' in l[0].args
     env = l[0].env
     assert env is not None

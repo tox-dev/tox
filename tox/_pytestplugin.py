@@ -68,12 +68,12 @@ class ReportExpectMock:
 
         def generic_report(*args, **kwargs):
             self._calls.append((name,) + args)
-            print ("%s" % (self._calls[-1], ))
+            print("%s" % (self._calls[-1], ))
         return generic_report
 
     def action(self, venv, msg, *args):
         self._calls.append(("action", venv, msg))
-        print ("%s" % (self._calls[-1], ))
+        print("%s" % (self._calls[-1], ))
         return Action(self.session, venv, msg, args)
 
     def getnext(self, cat):
@@ -195,6 +195,9 @@ class Cmd:
         return py.std.subprocess.Popen(argv, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *argv):
+        if argv[0] == "tox" and sys.version_info[:2] < (2, 7):
+            pytest.skip("can not run tests involving calling tox on python2.6. "
+                        "(and python2.6 is about to be deprecated anyway)")
         argv = [str(x) for x in argv]
         assert py.path.local.sysfind(str(argv[0])), argv[0]
         p1 = self.tmpdir.join("stdout")
@@ -316,7 +319,7 @@ def initproj(request, tmpdir):
         for p in base.visit(lambda x: x.check(file=1)):
             manifestlines.append("include %s" % p.relto(base))
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
-        print ("created project in %s" % (base,))
+        print("created project in %s" % (base,))
         base.chdir()
     return initproj
 

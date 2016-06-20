@@ -1,3 +1,21 @@
+2.4.0
+-----
+
+- add --workdir option to override where tox stores its ".tox" directory
+  and all of the virtualenv environment.  Thanks Danring.
+
+- introduce per-venv list_dependencies_command which defaults
+  to "python -m pip freeze" to obtain the list of installed packages.
+  If you need to run python2.6 you need to configure it to
+  something like "pip freeze".  Thanks Ted Shaw, Holger Krekel.
+
+- fix issue66, issue121: change install_command to use "python -m pip"
+  by default instead of "pip ..." directly which avoids long shebang 
+  issues.  If you need to run python2.6 you need to configure it to
+  something like "pip install {opts} {packages}".  Thanks Ted Shaw,
+  Holger Krekel.
+
+
 2.3.2
 -----
 
@@ -6,6 +24,8 @@
 - fix issue279: allow cross-section substitution when the value contains
   posargs. Thanks Sachi King for the PR.
 
+- fix issue317: evaluate minversion before tox config is parsed completely.
+  Thanks Sachi King for the PR.
 
 2.3.1
 -----
@@ -20,8 +40,8 @@
   devpi system for managing indexes for pip.
 
 - fix issue285: make setenv processing fully lazy to fix regressions
-  of tox-2.2.X and so that we can now have testenv attributes like 
-  "basepython" depend on environment variables that are set in 
+  of tox-2.2.X and so that we can now have testenv attributes like
+  "basepython" depend on environment variables that are set in
   a setenv section. Thanks Nelfin for some tests and initial
   work on a PR.
 
@@ -34,11 +54,11 @@
 - fix issue252: allow environment names with special characters.
   Thanks Julien Castets for initial PR and patience.
 
-- introduce experimental tox_testenv_create(venv, action) and 
+- introduce experimental tox_testenv_create(venv, action) and
   tox_testenv_install_deps(venv, action) hooks to allow
   plugins to do additional work on creation or installing
   deps.  These hooks are experimental mainly because of
-  the involved "venv" and session objects whose current public 
+  the involved "venv" and session objects whose current public
   API is not fully guranteed.
 
 - internal: push some optional object creation into tests because
@@ -57,18 +77,18 @@
   because otherwise the python interpreter might not start up in
   certain configurations (redhat software collections).  Thanks David Riddle.
 
-- fix issue246: fix regression in config parsing by reordering 
+- fix issue246: fix regression in config parsing by reordering
   such that {envbindir} can be used again in tox.ini. Thanks Olli Walsh.
 
 - fix issue99: the {env:...} substitution now properly uses environment
   settings from the ``setenv`` section. Thanks Itxaka Serrano.
 
-- fix issue281: make --force-deps work when urls are present in
+- fix issue281: make --force-dep work when urls are present in
   dependency configs.  Thanks Glyph Lefkowitz for reporting.
 
 - fix issue174: add new ``ignore_outcome`` testenv attribute which
   can be set to True in which case it will produce a warning instead
-  of an error on a failed testenv command outcome.  
+  of an error on a failed testenv command outcome.
   Thanks Rebecka Gulliksson for the PR.
 
 - fix issue280: properly skip missing interpreter if
@@ -85,7 +105,7 @@
 2.1.0
 ----------
 
-- fix issue258, fix issue248, fix issue253: for non-test commands 
+- fix issue258, fix issue248, fix issue253: for non-test commands
   (installation, venv creation) we pass in the full invocation environment.
 
 - remove experimental --set-home option which was hardly used and
@@ -106,7 +126,7 @@
 2.0.2
 ----------
 
-- fix issue247: tox now passes the LANG variable from the tox invocation 
+- fix issue247: tox now passes the LANG variable from the tox invocation
   environment to the test environment by default.
 
 - add SYSTEMDRIVE into default passenv on windows to allow pip6 to work.
@@ -123,9 +143,9 @@
 
 - (new) introduce environment variable isolation:
   tox now only passes the PATH and PIP_INDEX_URL variable from the tox
-  invocation environment to the test environment and on Windows 
+  invocation environment to the test environment and on Windows
   also ``SYSTEMROOT``, ``PATHEXT``, ``TEMP`` and ``TMP`` whereas
-  on unix additionally ``TMPDIR`` is passed.  If you need to pass 
+  on unix additionally ``TMPDIR`` is passed.  If you need to pass
   through further environment variables you can use the new ``passenv`` setting,
   a space-separated list of environment variable names.  Each name
   can make use of fnmatch-style glob patterns.  All environment
@@ -136,9 +156,9 @@
   their defaults.
 
 - (new) introduce a way to specify on which platform a testenvironment is to
-  execute: the new per-venv "platform" setting allows to specify 
+  execute: the new per-venv "platform" setting allows to specify
   a regular expression which is matched against sys.platform.
-  If platform is set and doesn't match the platform spec in the test 
+  If platform is set and doesn't match the platform spec in the test
   environment the test environment is ignored, no setup or tests are attempted.
 
 - (new) add per-venv "ignore_errors" setting, which defaults to False.
@@ -169,7 +189,7 @@
   See tox/hookspecs.py for the current hooks.
 
 - introduce parser.add_testenv_attribute() to register an ini-variable
-  for testenv sections.  Can be used from plugins through the 
+  for testenv sections.  Can be used from plugins through the
   tox_add_option hook.
 
 - rename internal files -- tox offers no external API except for the
@@ -182,7 +202,7 @@
 1.9.2
 -----------
 
-- backout ability that --force-deps substitutes name/versions in
+- backout ability that --force-dep substitutes name/versions in
   requirement files due to various issues.
   This fixes issue228, fixes issue230, fixes issue231
   which popped up with 1.9.1.
@@ -193,7 +213,7 @@
 - use a file instead of a pipe for command output in "--result-json".
   Fixes some termination issues with python2.6.
 
-- allow --force-deps to override dependencies in "-r" requirements
+- allow --force-dep to override dependencies in "-r" requirements
   files.  Thanks Sontek for the PR.
 
 - fix issue227: use "-m virtualenv" instead of "-mvirtualenv" to make
@@ -208,7 +228,7 @@
   dependencies. Use ``pip_pre = true`` in a testenv or the ``--pre``
   command-line option to restore the previous behavior.
 
-- fix issue199: fill resultlog structure ahead of virtualenv creation 
+- fix issue199: fill resultlog structure ahead of virtualenv creation
 
 - refine determination if we run from Jenkins, thanks Borge Lanes.
 
@@ -266,7 +286,7 @@
 
 - fix issue59: add a config variable ``skip-missing-interpreters`` as well as
   command line option ``--skip-missing-interpreters`` which won't fail the
-  build if Python interpreters listed in tox.ini are missing.  Thanks 
+  build if Python interpreters listed in tox.ini are missing.  Thanks
   Alexandre Conrad for PR104.
 
 - fix issue164: better traceback info in case of failing test commands.
@@ -284,29 +304,29 @@
 - fix issue162: don't list python 2.5 as compatibiliy/supported
 
 - fix issue158 and fix issue155: windows/virtualenv properly works now:
-  call virtualenv through "python -m virtualenv" with the same 
+  call virtualenv through "python -m virtualenv" with the same
   interpreter which invoked tox.  Thanks Chris Withers, Ionel Maries Cristian.
 
 1.7.0
 ---------
 
-- don't lookup "pip-script" anymore but rather just "pip" on windows 
-  as this is a pip implementation detail and changed with pip-1.5.  
-  It might mean that tox-1.7 is not able to install a different pip 
+- don't lookup "pip-script" anymore but rather just "pip" on windows
+  as this is a pip implementation detail and changed with pip-1.5.
+  It might mean that tox-1.7 is not able to install a different pip
   version into a virtualenv anymore.
 
 - drop Python2.5 compatibility because it became too hard due
-  to the setuptools-2.0 dropping support.  tox now has no 
+  to the setuptools-2.0 dropping support.  tox now has no
   support for creating python2.5 based environments anymore
   and all internal special-handling has been removed.
 
-- merged PR81: new option --force-dep which allows to 
+- merged PR81: new option --force-dep which allows to
   override tox.ini specified dependencies in setuptools-style.
   For example "--force-dep 'django<1.6'" will make sure
-  that any environment using "django" as a dependency will 
-  get the latest 1.5 release.  Thanks Bruno Oliveria for 
+  that any environment using "django" as a dependency will
+  get the latest 1.5 release.  Thanks Bruno Oliveria for
   the complete PR.
-  
+
 - merged PR125: tox now sets "PYTHONHASHSEED" to a random value
   and offers a "--hashseed" option to repeat a test run with a specific seed.
   You can also use --hashsheed=noset to instruct tox to leave the value
@@ -324,9 +344,9 @@
 
 - fix issue130: you can now set install_command=easy_install {opts} {packages}
   and expect it to work for repeated tox runs (previously it only worked
-  when always recreating).  Thanks jenisys for precise reporting. 
+  when always recreating).  Thanks jenisys for precise reporting.
 
-- fix issue129: tox now uses Popen(..., universal_newlines=True) to force 
+- fix issue129: tox now uses Popen(..., universal_newlines=True) to force
   creation of unicode stdout/stderr streams.  fixes a problem on specific
   platform configs when creating virtualenvs with Python3.3. Thanks
   Jorgen Schäfer or investigation and solution sketch.
@@ -344,7 +364,7 @@
   requiring networks
 
 - introduce --sitepackages to force sitepackages=True in all
-  environments.   
+  environments.
 
 - fix issue105 -- don't depend on an existing HOME directory from tox tests.
 
@@ -354,8 +374,8 @@
 - fix issue119: {envsitepackagesdir} is now correctly computed and has
   a better test to prevent regression.
 
-- fix issue116: make 1.6 introduced behaviour of changing to a 
-  per-env HOME directory during install activities dependent 
+- fix issue116: make 1.6 introduced behaviour of changing to a
+  per-env HOME directory during install activities dependent
   on "--set-home" for now.  Should re-establish the old behaviour
   when no option is given.
 
@@ -365,9 +385,9 @@
 - fix test runs on environments without a home directory
   (in this case we use toxinidir as the homedir)
 
-- fix issue117: python2.5 fix: don't use ``--insecure`` option because 
+- fix issue117: python2.5 fix: don't use ``--insecure`` option because
   its very existence depends on presence of "ssl".  If you
-  want to support python2.5/pip1.3.1 based test environments you need 
+  want to support python2.5/pip1.3.1 based test environments you need
   to install ssl and/or use PIP_INSECURE=1 through ``setenv``. section.
 
 - fix issue102: change to {toxinidir} when installing dependencies.
@@ -380,11 +400,11 @@
   configure the installation command with options for dep/pkg install.
   Thanks Carl Meyer for the PR and docs.
 
-- fix issue91: python2.5 support by vendoring the virtualenv-1.9.1 
-  script and forcing pip<1.4. Also the default [py25] environment 
+- fix issue91: python2.5 support by vendoring the virtualenv-1.9.1
+  script and forcing pip<1.4. Also the default [py25] environment
   modifies the default installer_command (new config option)
-  to use pip without the "--pre" option which was introduced 
-  with pip-1.4 and is now required if you want to install non-stable 
+  to use pip without the "--pre" option which was introduced
+  with pip-1.4 and is now required if you want to install non-stable
   releases.  (tox defaults to install with "--pre" everywhere).
 
 - during installation of dependencies HOME is now set to a pseudo
@@ -421,7 +441,7 @@
 - fix issue104: use setuptools by default, instead of distribute,
   now that setuptools has distribute merged.
 
-- make sure test commands are searched first in the virtualenv 
+- make sure test commands are searched first in the virtualenv
 
 - re-fix issue2 - add whitelist_externals to be used in ``[testenv*]``
   sections, allowing to avoid warnings for commands such as ``make``,
@@ -432,12 +452,12 @@
 
 - fix issue92 - fix {envsitepackagesdir} to actually work again
 
-- show (test) command that is being executed, thanks 
+- show (test) command that is being executed, thanks
   Lukasz Balcerzak
 
 - re-license tox to MIT license
 
-- depend on virtualenv-1.9.1 
+- depend on virtualenv-1.9.1
 
 - rename README.txt to README.rst to make bitbucket happier
 
@@ -452,7 +472,7 @@
   (thanks  Lukasz Balcerzak)
 
 - fix downloadcache determination to work according to docs: Only
-  make pip use a download cache if PIP_DOWNLOAD_CACHE or a 
+  make pip use a download cache if PIP_DOWNLOAD_CACHE or a
   downloadcache=PATH testenv setting is present. (The ENV setting
   takes precedence)
 
@@ -476,7 +496,7 @@
 - fix #48 - win32 detection of pypy and other interpreters that are on PATH
   (thanks Gustavo Picon)
 
-- fix grouping of index servers, it is now done by name instead of 
+- fix grouping of index servers, it is now done by name instead of
   indexserver url, allowing to use it to separate dependencies
   into groups even if using the same default indexserver.
 
@@ -512,7 +532,7 @@
   which would formerly raise irritating errors because the ";"
   was considered a comment
 - tweak and improve reporting
-- refactor reporting and virtualenv manipulation 
+- refactor reporting and virtualenv manipulation
   to be more accessible from 3rd party tools
 - support value substitution from other sections
   with the {[section]key} syntax
@@ -527,8 +547,8 @@
 1.3
 -----------------
 
-- fix: allow to specify wildcard filesystem paths when 
-  specifying dependencies such that tox searches for 
+- fix: allow to specify wildcard filesystem paths when
+  specifying dependencies such that tox searches for
   the highest version
 
 - fix issue issue21: clear PIP_REQUIRES_VIRTUALENV which avoids

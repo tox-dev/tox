@@ -288,6 +288,20 @@ class TestIniParserAgainstCommandsKey:
         x = reader.getargvlist("commands")
         assert x == [['thing', 'argpos', 'arg2']]
 
+    def test_command_section_and_posargs_substitution(self, newconfig):
+        """Ensure subsitition from other section with posargs succeeds"""
+        config = newconfig("""
+            [section]
+            key = thing arg1
+            [testenv]
+            commands =
+                {[section]key} {posargs} endarg
+            """)
+        reader = SectionReader("testenv", config._cfg)
+        reader.addsubstitutions([r"argpos"])
+        x = reader.getargvlist("commands")
+        assert x == [['thing', 'arg1', 'argpos', 'endarg']]
+
     def test_command_env_substitution(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""
         config = newconfig("""
@@ -630,6 +644,55 @@ class TestIniParser:
         assert reader.getbool("key2a") is False
         py.test.raises(KeyError, 'reader.getbool("key3")')
         py.test.raises(tox.exception.ConfigError, 'reader.getbool("key5")')
+
+
+class TestIniParserPrefix:
+    def test_basic_section_access(self, tmpdir, newconfig):
+        config = newconfig("""
+            [p:section]
+            key=value
+        """)
+        reader = SectionReader("section", config._cfg, prefix="p")
+        x = reader.getstring("key")
+        assert x == "value"
+        assert not reader.getstring("hello")
+        x = reader.getstring("hello", "world")
+        assert x == "world"
+
+    def test_fallback_sections(self, tmpdir, newconfig):
+        config = newconfig("""
+            [p:mydefault]
+            key2=value2
+            [p:section]
+            key=value
+        """)
+        reader = SectionReader("section", config._cfg, prefix="p",
+                               fallbacksections=['p:mydefault'])
+        x = reader.getstring("key2")
+        assert x == "value2"
+        x = reader.getstring("key3")
+        assert not x
+        x = reader.getstring("key3", "world")
+        assert x == "world"
+
+    def test_value_matches_prefixed_section_substituion(self):
+        assert is_section_substitution("{[p:setup]commands}")
+
+    def test_value_doesn_match_prefixed_section_substitution(self):
+        assert is_section_substitution("{[p: ]commands}") is None
+        assert is_section_substitution("{[p:setup]}") is None
+        assert is_section_substitution("{[p:setup] commands}") is None
+
+    def test_other_section_substitution(self, newconfig):
+        config = newconfig("""
+            [p:section]
+            key = rue
+            [p:testenv]
+            key = t{[p:section]key}
+            """)
+        reader = SectionReader("testenv", config._cfg, prefix="p")
+        x = reader.getstring("key")
+        assert x == "true"
 
 
 class TestConfigTestEnv:
@@ -1424,10 +1487,10 @@ class TestGlobalOptions:
     def test_minversion(self, tmpdir, newconfig, monkeypatch):
         inisource = """
             [tox]
-            minversion = 3.0
+            minversion = 10.0
         """
-        config = newconfig([], inisource)
-        assert config.minversion == "3.0"
+        with py.test.raises(tox.exception.MinVersionError):
+            newconfig([], inisource)
 
     def test_skip_missing_interpreters_true(self, tmpdir, newconfig, monkeypatch):
         inisource = """
@@ -1850,6 +1913,23 @@ class TestCmdInvocation:
         result.stderr.fnmatch_lines([
             "*ERROR*tox.ini*not*found*",
         ])
+
+    def test_override_workdir(self, tmpdir, cmd, initproj):
+        baddir = "badworkdir-123"
+        gooddir = "overridden-234"
+        initproj("overrideworkdir-0.5", filedefs={
+            'tox.ini': '''
+            [tox]
+            toxworkdir=%s
+            ''' % baddir,
+        })
+        result = cmd.run("tox", "--workdir", gooddir, "--showconfig")
+        assert not result.ret
+        stdout = result.stdout.str()
+        assert gooddir in stdout
+        assert baddir not in stdout
+        assert py.path.local(gooddir).check()
+        assert not py.path.local(baddir).check()
 
     def test_showconfig_with_force_dep_version(self, cmd, initproj):
         initproj('force_dep_version', filedefs={

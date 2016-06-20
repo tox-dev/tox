@@ -15,7 +15,6 @@ from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox.venv import VirtualEnv
 from tox.config import parseconfig
 from tox.result import ResultLog
-from tox.hookspecs import hookimpl
 from subprocess import STDOUT
 
 
@@ -41,6 +40,10 @@ def main(args=None):
         raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)
+    except tox.exception.MinVersionError as e:
+        r = Reporter(None)
+        r.error(e.message)
+        raise SystemExit(1)
 
 
 def show_help(config):
@@ -234,6 +237,12 @@ class Reporter(object):
         self._reportedlines = []
         # self.cumulated_time = 0.0
 
+    def _get_verbosity(self):
+        if self.session:
+            return self.session.config.option.verbosity
+        else:
+            return 2
+
     def logpopen(self, popen, env):
         """ log information about the action.popen() created process. """
         cmd = " ".join(map(str, popen.args))
@@ -253,16 +262,17 @@ class Reporter(object):
         # self.cumulated_time += duration
         self.verbosity2("%s finish: %s after %.2f seconds" % (
             action.venvname, action.msg, duration), bold=True)
+        delattr(action, '_starttime')
 
     def startsummary(self):
         self.tw.sep("_", "summary")
 
     def info(self, msg):
-        if self.session.config.option.verbosity >= 2:
+        if self._get_verbosity() >= 2:
             self.logline(msg)
 
     def using(self, msg):
-        if self.session.config.option.verbosity >= 1:
+        if self._get_verbosity() >= 1:
             self.logline("using %s" % (msg,), bold=True)
 
     def keyboard_interrupt(self):
@@ -298,15 +308,15 @@ class Reporter(object):
         self.tw.line("%s" % msg, **opts)
 
     def verbosity0(self, msg, **opts):
-        if self.session.config.option.verbosity >= 0:
+        if self._get_verbosity() >= 0:
             self.logline("%s" % msg, **opts)
 
     def verbosity1(self, msg, **opts):
-        if self.session.config.option.verbosity >= 1:
+        if self._get_verbosity() >= 1:
             self.logline("%s" % msg, **opts)
 
     def verbosity2(self, msg, **opts):
-        if self.session.config.option.verbosity >= 2:
+        if self._get_verbosity() >= 2:
             self.logline("%s" % msg, **opts)
 
     # def log(self, msg):
@@ -364,14 +374,6 @@ class Session:
 
     def runcommand(self):
         self.report.using("tox-%s from %s" % (tox.__version__, tox.__file__))
-        if self.config.minversion:
-            minversion = NormalizedVersion(self.config.minversion)
-            toxversion = NormalizedVersion(tox.__version__)
-            if toxversion < minversion:
-                self.report.error(
-                    "tox version is %s, required is at least %s" % (
-                        toxversion, minversion))
-                raise SystemExit(1)
         if self.config.option.showconfig:
             self.showconfig()
         elif self.config.option.listenvs:
@@ -539,8 +541,8 @@ class Session:
                 # write out version dependency information
                 action = self.newaction(venv, "envreport")
                 with action:
-                    pip = venv.getcommandpath("pip")
-                    output = venv._pcall([str(pip), "freeze"],
+                    args = venv.envconfig.list_dependencies_command
+                    output = venv._pcall(args,
                                          cwd=self.config.toxinidir,
                                          action=action)
                     # the output contains a mime-header, skip it

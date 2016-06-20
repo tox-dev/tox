@@ -12,6 +12,7 @@ import pluggy
 
 import tox.interpreters
 from tox import hookspecs
+from tox._verlib import NormalizedVersion
 
 import py
 
@@ -181,7 +182,7 @@ class PosargsOption:
 class InstallcmdOption:
     name = "install_command"
     type = "argv"
-    default = "pip install {opts} {packages}"
+    default = "python -m pip install {opts} {packages}"
     help = "install command for dependencies and package under test."
 
     def postprocess(self, testenv_config, value):
@@ -225,7 +226,10 @@ def parseconfig(args=None, plugins=()):
             if inipath.check():
                 break
         else:
-            feedback("toxini file %r not found" % (basename), sysexit=True)
+            inipath = py.path.local().join('setup.cfg')
+            if not inipath.check():
+                feedback("toxini file %r not found" % (basename), sysexit=True)
+
     try:
         parseini(config, inipath)
     except tox.exception.InterpreterNotFound:
@@ -367,6 +371,9 @@ def tox_addoption(parser):
                         help="override sitepackages setting to True in all envs")
     parser.add_argument("--skip-missing-interpreters", action="store_true",
                         help="don't fail tests for missing interpreters")
+    parser.add_argument("--workdir", action="store",
+                        dest="workdir", metavar="PATH", default=None,
+                        help="tox working directory")
 
     parser.add_argument("args", nargs="*",
                         help="additional arguments available to command positional substitution")
@@ -518,6 +525,13 @@ def tox_addoption(parser):
         help="install package in develop/editable mode")
 
     parser.add_testenv_attribute_obj(InstallcmdOption())
+
+    parser.add_testenv_attribute(
+        name="list_dependencies_command",
+        type="argv",
+        default="python -m pip freeze",
+        help="list dependencies for a virtual environment")
+
     parser.add_testenv_attribute_obj(DepOption())
 
     parser.add_testenv_attribute(
@@ -645,12 +659,18 @@ class parseini:
         self._cfg = py.iniconfig.IniConfig(config.toxinipath)
         config._cfg = self._cfg
         self.config = config
+
+        if inipath.basename == 'setup.cfg':
+            prefix = 'tox'
+        else:
+            prefix = None
         ctxname = getcontextname()
         if ctxname == "jenkins":
-            reader = SectionReader("tox:jenkins", self._cfg, fallbacksections=['tox'])
+            reader = SectionReader("tox:jenkins", self._cfg, prefix=prefix,
+                                   fallbacksections=['tox'])
             distshare_default = "{toxworkdir}/distshare"
         elif not ctxname:
-            reader = SectionReader("tox", self._cfg)
+            reader = SectionReader("tox", self._cfg, prefix=prefix)
             distshare_default = "{homedir}/.tox/distshare"
         else:
             raise ValueError("invalid context")
@@ -665,8 +685,20 @@ class parseini:
 
         reader.addsubstitutions(toxinidir=config.toxinidir,
                                 homedir=config.homedir)
-        config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        # As older versions of tox may have bugs or incompatabilities that
+        # prevent parsing of tox.ini this must be the first thing checked.
         config.minversion = reader.getstring("minversion", None)
+        if config.minversion:
+            minversion = NormalizedVersion(self.config.minversion)
+            toxversion = NormalizedVersion(tox.__version__)
+            if toxversion < minversion:
+                raise tox.exception.MinVersionError(
+                    "tox version is %s, required is at least %s" % (
+                        toxversion, minversion))
+        if config.option.workdir is None:
+            config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+        else:
+            config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
 
         if not config.option.skip_missing_interpreters:
             config.option.skip_missing_interpreters = \
@@ -854,8 +886,12 @@ is_section_substitution = re.compile("{\[[^{}\s]+\]\S+?}").match
 
 
 class SectionReader:
-    def __init__(self, section_name, cfgparser, fallbacksections=None, factors=()):
-        self.section_name = section_name
+    def __init__(self, section_name, cfgparser, fallbacksections=None,
+                 factors=(), prefix=None):
+        if prefix is None:
+            self.section_name = section_name
+        else:
+            self.section_name = "%s:%s" % (prefix, section_name)
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
         self.factors = factors

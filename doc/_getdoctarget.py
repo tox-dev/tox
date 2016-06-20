@@ -13,4 +13,4 @@ def get_minor_version_string():
     return ".".join(get_version_string().split(".")[:2])
 
 if __name__ == "__main__":
-    print (get_minor_version_string())
+    print(get_minor_version_string())
