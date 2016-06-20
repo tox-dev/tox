@@ -1490,7 +1490,7 @@ class TestGlobalOptions:
             minversion = 10.0
         """
         with py.test.raises(tox.exception.MinVersionError):
-            config = newconfig([], inisource)
+            newconfig([], inisource)
 
     def test_skip_missing_interpreters_true(self, tmpdir, newconfig, monkeypatch):
         inisource = """

@@ -195,7 +195,7 @@ class Cmd:
         return py.std.subprocess.Popen(argv, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *argv):
-        if argv[0] == "tox" and sys.version_info[:2] < (2,7):
+        if argv[0] == "tox" and sys.version_info[:2] < (2, 7):
             pytest.skip("can not run tests involving calling tox on python2.6. "
                         "(and python2.6 is about to be deprecated anyway)")
         argv = [str(x) for x in argv]
