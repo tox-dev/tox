@@ -26,6 +26,9 @@
   ``tox_runtest_post`` which run before and after the tests of a venv,
   respectively. Thanks to Matthew Schinckel and itxaka serrano.
 
+- fix issue317: evaluate minversion before tox config is parsed completely.
+  Thanks Sachi King for the PR.
+
 2.3.2
 -----
 
@@ -33,9 +36,6 @@
 
 - fix issue279: allow cross-section substitution when the value contains
   posargs. Thanks Sachi King for the PR.
-
-- fix issue317: evaluate minversion before tox config is parsed completely.
-  Thanks Sachi King for the PR.
 
 2.3.1
 -----
