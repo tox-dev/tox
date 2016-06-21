@@ -47,7 +47,7 @@ def tox_testenv_install_deps(venv, action):
 def tox_runtest_pre(venv):
     """ [experimental] perform arbitrary action before running tests for this venv.
 
-    This could be used to indicate that tests for a given venv have started, for intstance.
+    This could be used to indicate that tests for a given venv have started, for instance.
     """
 
 
