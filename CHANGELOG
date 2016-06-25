@@ -5,21 +5,23 @@
   chars "{" and "}" to appear in your commands or other ini values.
   Thanks John Vandenberg.
 
-- add --workdir option to override where tox stores its ".tox" directory
+- addresses issue66: add --workdir option to override where tox stores its ".tox" directory
   and all of the virtualenv environment.  Thanks Danring.
 
 - introduce per-venv list_dependencies_command which defaults
-  to "python -m pip freeze" to obtain the list of installed packages.
-  If you need to run python2.6 you need to configure it to
-  something like "pip freeze".  Thanks Ted Shaw, Holger Krekel.
+  to "pip freeze" to obtain the list of installed packages.
+  Thanks Ted Shaw, Holger Krekel.
 
-- fix issue66, issue121: change install_command to use "python -m pip"
-  by default instead of "pip ..." directly which avoids long shebang
-  issues.  If you need to run python2.6 you need to configure it to
-  something like "pip install {opts} {packages}".  Thanks Ted Shaw,
-  Holger Krekel.
+- close issue66: add documentation to jenkins page on how to avoid 
+  "too long shebang" lines when calling pip from tox.  Note that we 
+  can not use "python -m pip install X" by default because the latter 
+  adds the CWD and pip will think X is installed if it is there.  
+  "pip install X" does not do that.
 
-- New feature: When a search for a config file fails, tox tries loading
+- new list_dependencies_command to influence how tox determines
+  which dependencies are installed in a testenv.
+
+- (experimental) New feature: When a search for a config file fails, tox tries loading
   setup.cfg with a section prefix of "tox".
 
 - fix issue275: Introduce hooks ``tox_runtest_pre``` and

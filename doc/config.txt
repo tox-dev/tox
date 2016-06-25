@@ -105,7 +105,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**::
 
-        python -m pip install {opts} {packages}
+        pip install {opts} {packages}
 
 
 .. confval:: list_dependencies_command
@@ -117,7 +117,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**::
 
-        python -m pip freeze
+        pip freeze
 
 
 .. confval:: ignore_errors=True|False(default)

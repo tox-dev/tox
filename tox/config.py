@@ -182,7 +182,7 @@ class PosargsOption:
 class InstallcmdOption:
     name = "install_command"
     type = "argv"
-    default = "python -m pip install {opts} {packages}"
+    default = "pip install {opts} {packages}"
     help = "install command for dependencies and package under test."
 
     def postprocess(self, testenv_config, value):
@@ -529,7 +529,7 @@ def tox_addoption(parser):
     parser.add_testenv_attribute(
         name="list_dependencies_command",
         type="argv",
-        default="python -m pip freeze",
+        default="pip freeze",
         help="list dependencies for a virtual environment")
 
     parser.add_testenv_attribute_obj(DepOption())
