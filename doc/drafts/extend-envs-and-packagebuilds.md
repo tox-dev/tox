@@ -1,5 +1,7 @@
 # Extension of environment handling and building packages
 
+Issue reference: #338
+
 *Notes from a discussion at the pytest sprint 2016*
 
 Goal: drive building of packages and the environments needed to test them, exercising the tests and report the results for more than just virtualenvs and python virtualenvs
@@ -64,3 +66,19 @@ one to one relationship from environment to directory
 * Floris: metadata driven. Package has metadata to the env with what env it is compatible
 * Holger: configuration driven. explicitly configuring which packages should be used (default sdist to be used, overridable by concrete env)
 * Ronny: "package definitions" (this package, this setup command) + matching definitions (matching packages (with wildcards) for environments)
+
+### Feature - builddef 
+
+This feature shall allow to specify how to build an artifact in a specific build definition (builddef).
+
+Currently tox uses the current python interpreter to build the artifact (python package) and thus
+does not allow to freely choose the interpreter to build with.
+This means that as of now build environment and test environment are different by design.
+
+Support for different build definitions is implemented by individual tox plugins.
+This would result in a collection of plugins supporting different build definitions (e.g. conda, pyenv, docker, rpm)
+
+Default behavior:
+
+To keep backwards-compatibility, a python package is built with the python interpreter tox is executed with,
+using sdist. This does not require any builddef specification in tox.ini.
