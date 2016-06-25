@@ -44,7 +44,7 @@ for example with ``py.test`` it is done like this:
 .. note::
 
     This feature is broken currently because "toxbootstrap.py"
-    has been removed.  Please file an issue if you'd like to 
+    has been removed.  Please file an issue if you'd like to
     see it back.
 
 If you manage many Jenkins slaves and want to use the latest officially
@@ -150,6 +150,24 @@ Now everything proceeds as :ref:`artifacts` shows it.
 So if you are using defaults you can re-use and debug exactly the
 same ``tox.ini`` file and make use of automatic sharing of
 your artifacts between runs or Jenkins jobs.
+
+
+Avoiding the "path too long" error with long shebang lines
+---------------------------------------------------------------
+
+If you are using Jenkins builds you might run into the issue
+that tox can not call ``pip`` because the so called "shebang"
+line is too long.  There is a limit of 127 chars on some systems.
+Probably the best way to fix the problem is to use the
+new ``--workdir`` option which tells tox to use a specific
+directory for its virtualenvironments.  Set it to some unique
+enough short path.  If somebody is interested to do a PR
+you could add a new option to tox which uses a random
+directory for storing its workdir results and removes
+it after the tox run finishes.  This could be used
+from CI environments where you probably anyway want
+to recreate everything on new runs.
+
 
 .. include:: ../links.txt
 
