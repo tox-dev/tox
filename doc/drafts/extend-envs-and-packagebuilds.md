@@ -67,18 +67,89 @@ one to one relationship from environment to directory
 * Holger: configuration driven. explicitly configuring which packages should be used (default sdist to be used, overridable by concrete env)
 * Ronny: "package definitions" (this package, this setup command) + matching definitions (matching packages (with wildcards) for environments)
 
-### Feature - builddef 
 
-This feature shall allow to specify how to build an artifact in a specific build definition (builddef).
+## Proposal
 
-Currently tox uses the current python interpreter to build the artifact (python package) and thus
-does not allow to freely choose the interpreter to build with.
-This means that as of now build environment and test environment are different by design.
+This feature shall allow to specify how plugins can specify new types of package formats and environments to run test
+commands in. 
 
-Support for different build definitions is implemented by individual tox plugins.
-This would result in a collection of plugins supporting different build definitions (e.g. conda, pyenv, docker, rpm)
+Such plugins would take care of setting up the environment, create packages and run test commands using hooks provided
+by tox. The actual knowledge how to create a certain package format is implement in the plugin.
 
-Default behavior:
+Plugin decides which is the required python interpreter to use in order to create the relevant package format.
 
-To keep backwards-compatibility, a python package is built with the python interpreter tox is executed with,
-using sdist. This does not require any builddef specification in tox.ini.
+
+```ini
+[tox]
+plugins=conda # virtualenv plugin is builtin; intention here is to bail out early in case the specified plugins
+              # are not installed 
+envlist=py27,py35
+
+[testenv]
+package_formats=            # new option to specify wanted package formats for test environment using tox factors feature
+                            # defaults to "sdist" if not set
+    py35: sdist wheel conda # names here are provided by plugins (reserved keywords)
+    py27: sdist conda
+commands = py.test
+```
+
+Lising tox environments (`tox --list`) would display the following output:
+
+```
+(sdist) py27
+(conda) py27
+(sdist) py35
+(wheel) py35
+(conda) py35
+```
+
+To remain backward-compatible, the package format will not be displayed if only a single package format is specified.
+ 
+
+
+How to skip building a package for a specific factor?
+
+Illustrate how to exclude a certain package format for a factor:
+
+```ini
+[tox]
+plugins=conda
+envlist={py27,py35}, py27-xdist
+
+[testenv]
+package_formats=sdist wheel conda
+commands = py.test
+exclude_package_formats=        # new option which filters out packages
+    py27-xdist: wheel
+```
+
+Output of `tox --list`:
+
+```
+(sdist) py27
+(conda) py27
+(sdist) py35
+(wheel) py35
+(conda) py35
+(sdist) py27-xdist
+(conda) py27-xdist
+```
+
+
+### Implemenation Details
+
+```
+tox_package_formats() -> ['conda']   # ['sdist', 'wheel']
+tox_testenv_create(env_meta, package_type) -> # creates an environment for given package, using
+                                                  # information from env_meta (like .envdir)
+                                                  # returns: an "env" object which is forwaded to the next hooks
+tox_testenv_install(env_meta, package_type, env) -> # installs deps and package into environment
+tox_testenv_runtest(env_meta, package_type, env) -> # activates enviroment and runs test commands
+
+tox_testenv_updated(env_meta, package_type) ->  # returns True if hte environment is already up to date
+                                                # otherwise, tox will remove the environment completely and
+                                                # create a new one
+```
+                                            
+                                                  
+
