@@ -356,6 +356,10 @@ class Session:
         if envconfig is None:
             self.report.error("unknown environment %r" % name)
             raise LookupError(name)
+        elif envconfig.envdir == self.config.toxinidir:
+            self.report.error(
+                "venv in %s would delete project" % envconfig.envdir)
+            raise tox.exception.ConfigError('envdir must not equal toxinidir')
         venv = VirtualEnv(envconfig=envconfig, session=self)
         self._name2venv[name] = venv
         return venv
