@@ -1154,20 +1154,32 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
-    def test_take_dependencies_from_other_testenv(self, newconfig):
+    @pytest.mark.parametrize('envlist, deps', [
+        (['py27'], ('pytest', 'pytest-cov')),
+        (['py27', 'py34'], ('pytest', 'py{27,34}: pytest-cov')),
+    ])
+    def test_take_dependencies_from_other_testenv(
+        self,
+        newconfig,
+        envlist,
+        deps
+    ):
         inisource = """
+            [tox]
+            envlist = {envlist}
             [testenv]
-            deps=
-                pytest
-                pytest-cov
+            deps={deps}
             [testenv:py27]
             deps=
-                {[testenv]deps}
+                {{[testenv]deps}}
                 fun
-        """
+        """.format(
+            envlist=','.join(envlist),
+            deps='\n' + '\n'.join([' ' * 17 + d for d in deps])
+        )
         conf = newconfig([], inisource).envconfigs['py27']
         packages = [dep.name for dep in conf.deps]
-        assert packages == ['pytest', 'pytest-cov', 'fun']
+        assert packages == list(deps) + ['fun']
 
     def test_take_dependencies_from_other_section(self, newconfig):
         inisource = """
