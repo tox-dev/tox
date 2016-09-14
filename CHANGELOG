@@ -1,6 +1,9 @@
 2.4.0
 -----
 
+- fix issue302: allow cross-testenv substitution where we substitute
+  with ``{x,y}`` generative syntax.  Thanks Andrew Pashkin.
+
 - fix issue212: allow escaping curly brace chars "\{" and "\}" if you need the
   chars "{" and "}" to appear in your commands or other ini values.
   Thanks John Vandenberg.
