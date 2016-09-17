@@ -16,10 +16,9 @@ For more information and the repository please checkout:
 
 - homepage: http://tox.testrun.org
 
-- repository: https://bitbucket.org/hpk42/tox
+- repository: https://github.com/tox-dev/tox
 
 
 have fun,
 
 holger krekel, 2015
-
