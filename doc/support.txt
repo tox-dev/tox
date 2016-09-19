@@ -28,9 +28,9 @@ experienced well-known Python developers.
 .. _`Testing In Python (TIP) mailing list`: http://lists.idyll.org/listinfo/testing-in-python
 .. _`holger's twitter presence`: http://twitter.com/hpk42
 .. _`merlinux.eu`: http://merlinux.eu
-.. _`report on the issue tracker`: https://bitbucket.org/hpk42/tox/issues?status=new&status=open
+.. _`report on the issue tracker`: https://github.com/tox-dev/tox/issues
 .. _`tetamap blog`: http://holgerkrekel.net
 .. _`tox-dev`: http://codespeak.net/mailman/listinfo/tox-dev
 .. _`tox-commit`: http://codespeak.net/mailman/listinfo/tox-commit
-.. _`clone the mercurial repository`: https://bitbucket.org/hpk42/tox
+.. _`clone the mercurial repository`: https://github.com/tox-dev/tox
 
