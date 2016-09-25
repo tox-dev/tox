@@ -545,8 +545,8 @@ def tox_addoption(parser):
 
     parser.add_testenv_attribute(
         "extras", type="line-list",
-        help="commad separated list of extras to install with the source "
-             "distribution or develop install")
+        help="list of extras to install with the source distribution or "
+             "develop install")
 
 
 class Config(object):
