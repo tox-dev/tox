@@ -543,6 +543,11 @@ def tox_addoption(parser):
         help="if set to True a failing result of this testenv will not make "
              "tox fail, only a warning will be produced")
 
+    parser.add_testenv_attribute(
+        "extras", type="line-list",
+        help="commad separated list of extras to install with the source "
+             "distribution or develop install")
+
 
 class Config(object):
     """ Global Tox config object. """

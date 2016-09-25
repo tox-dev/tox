@@ -230,6 +230,10 @@ class VirtualEnv(object):
                 return
             action.setactivity("develop-inst-nodeps", setupdir)
             extraopts = ['--no-deps']
+
+        if action.venv.envconfig.extras:
+            setupdir += '[%s]' % ','.join(action.venv.envconfig.extras)
+
         self._install(['-e', setupdir], extraopts=extraopts, action=action)
 
     def installpkg(self, sdistpath, action):
@@ -241,6 +245,10 @@ class VirtualEnv(object):
         else:
             action.setactivity("inst-nodeps", sdistpath)
             extraopts = ['-U', '--no-deps']
+
+        if action.venv.envconfig.extras:
+            sdistpath += '[%s]' % ','.join(action.venv.envconfig.extras)
+
         self._install([sdistpath], extraopts=extraopts, action=action)
 
     def _installopts(self, indexserver):
