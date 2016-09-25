@@ -263,6 +263,40 @@ def test_install_recreate(newmocksession, tmpdir):
     mocksession.report.expect("verbosity0", "*recreate*")
 
 
+def test_install_sdist_extras(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        extras = testing
+            development
+    """)
+    venv = mocksession.getenv('python')
+    action = mocksession.newaction(venv, "getenv")
+    tox_testenv_create(action=action, venv=venv)
+    l = mocksession._pcalls
+    assert len(l) == 1
+    l[:] = []
+
+    venv.installpkg('distfile.tar.gz', action=action)
+    assert 'distfile.tar.gz[testing,development]' in l[-1].args
+
+
+def test_develop_extras(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        extras = testing
+            development
+    """)
+    venv = mocksession.getenv('python')
+    action = mocksession.newaction(venv, "getenv")
+    tox_testenv_create(action=action, venv=venv)
+    l = mocksession._pcalls
+    assert len(l) == 1
+    l[:] = []
+
+    venv.developpkg(py.path.local('/some/directory'), action=action)
+    assert '/some/directory[testing,development]' in l[-1].args
+
+
 def test_test_hashseed_is_in_output(newmocksession):
     original_make_hashseed = tox.config.make_hashseed
     tox.config.make_hashseed = lambda: '123456789'
