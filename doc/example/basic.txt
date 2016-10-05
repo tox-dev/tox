@@ -241,7 +241,7 @@ Integration with setuptools/distribute test commands
 
   Integrating tox into ``setup.py`` is strongly discouraged as 
   it breaks standard packaging approaches as used by many downstream distributions
-  which expect ``setup.py test`` to to test the current interpreter
+  which expect ``setup.py test`` to test the current interpreter
   rather than setting up many virtualenvs.
   
   
