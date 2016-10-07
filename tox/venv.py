@@ -364,7 +364,7 @@ class VirtualEnv(object):
 
     def _pcall(self, args, cwd, venv=True, testcommand=False,
                action=None, redirect=True, ignore_ret=False):
-        for name in ("VIRTUALENV_PYTHON", "PYTHONDONTWRITEBYTECODE"):
+        for name in ("VIRTUALENV_PYTHON",):
             os.environ.pop(name, None)
 
         cwd.ensure(dir=1)
