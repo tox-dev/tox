@@ -234,17 +234,17 @@ If you wish to disable this feature, you can pass the command line option
 .. _`in Python 3.3`: http://docs.python.org/3/whatsnew/3.3.html#builtin-functions-and-types
 .. _PYTHONHASHSEED: http://docs.python.org/using/cmdline.html#envvar-PYTHONHASHSEED
 
-Integration with setuptools/distribute test commands
+Integration with "setup.py test" command
 ----------------------------------------------------
 
 .. warning::
 
-  Integrating tox into ``setup.py`` is strongly discouraged as 
+  Integrating tox with ``setup.py test`` is discouraged as
   it breaks standard packaging approaches as used by many downstream distributions
   which expect ``setup.py test`` to test the current interpreter
   rather than setting up many virtualenvs.
-  
-  
+
+
 
 Ignoring a command exit code
 ----------------------------
