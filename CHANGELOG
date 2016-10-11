@@ -1,6 +1,12 @@
 2.4.0
 -----
 
+- fix issue375, fix issue330: warn against tox-setup.py integration as
+  "setup.py test" should really just test with the current interpreter. Thanks Ronny Pfannschmidt.
+
+- fix issue302: allow cross-testenv substitution where we substitute
+  with ``{x,y}`` generative syntax.  Thanks Andrew Pashkin.
+
 - fix issue212: allow escaping curly brace chars "\{" and "\}" if you need the
   chars "{" and "}" to appear in your commands or other ini values.
   Thanks John Vandenberg.
@@ -30,6 +36,9 @@
 
 - fix issue317: evaluate minversion before tox config is parsed completely.
   Thanks Sachi King for the PR.
+
+- added the "extras" environment option to specify the extras to use when doing the
+  sdist or develop install. Contributed by Alex Grönholm.
 
 2.3.2
 -----

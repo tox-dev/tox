@@ -6,9 +6,9 @@ V2: new tox multi-dimensional, platform-specific configuration
    This is a draft document sketching a to-be-done implementation.
    It does not fully specify each change yet but should give a good
    idea of where things are heading.  For feedback, mail the 
-   testing-in-python mailing list or open a pull request on 
-   https://bitbucket.org/hpk42/tox/src/84d8cf3c2a95fefd874f22c8b2d257e94365472f/doc/config-v2.txt?at=default
- 
+   testing-in-python mailing list or open a pull request on
+   https://github.com/tox-dev/tox/blob/master/doc/config-v2.txt
+
 **Abstract**: Adding multi-dimensional configuration, platform-specification
 and multiple installers to tox.ini.
  
