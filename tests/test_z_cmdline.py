@@ -198,6 +198,7 @@ def test_minversion(cmd, initproj):
     ])
     assert result.ret
 
+
 def test_envdir_equals_toxini_errors_out(cmd, initproj):
     initproj("interp123-0.7", filedefs={
         'tox.ini': '''

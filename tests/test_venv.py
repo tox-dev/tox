@@ -280,7 +280,7 @@ def test_install_sdist_extras(newmocksession):
     assert 'distfile.tar.gz[testing,development]' in l[-1].args
 
 
-def test_develop_extras(newmocksession):
+def test_develop_extras(newmocksession, tmpdir):
     mocksession = newmocksession([], """
         [testenv]
         extras = testing
@@ -293,8 +293,9 @@ def test_develop_extras(newmocksession):
     assert len(l) == 1
     l[:] = []
 
-    venv.developpkg(py.path.local('/some/directory'), action=action)
-    assert '/some/directory[testing,development]' in l[-1].args
+    venv.developpkg(tmpdir, action=action)
+    expected = "%s[testing,development]" % tmpdir.strpath
+    assert expected in l[-1].args
 
 
 def test_test_hashseed_is_in_output(newmocksession):
