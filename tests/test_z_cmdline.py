@@ -198,6 +198,20 @@ def test_minversion(cmd, initproj):
     ])
     assert result.ret
 
+def test_envdir_equals_toxini_errors_out(cmd, initproj):
+    initproj("interp123-0.7", filedefs={
+        'tox.ini': '''
+            [testenv]
+            envdir={toxinidir}
+        '''
+    })
+    result = cmd.run("tox")
+    result.stdout.fnmatch_lines([
+        "ERROR*venv*delete*",
+        "*ConfigError*envdir must not equal toxinidir*",
+    ])
+    assert result.ret
+
 
 def test_run_custom_install_command_error(cmd, initproj):
     initproj("interp123-0.5", filedefs={
