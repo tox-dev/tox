@@ -272,7 +272,7 @@ class VirtualEnv(object):
             argv[i:i + 1] = list(options)
 
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
-                  '__PYVENV_LAUNCHER__'):
+                  '__PYVENV_LAUNCHER__', 'PYTHONPATH'):
             os.environ.pop(x, None)
 
         old_stdout = sys.stdout
