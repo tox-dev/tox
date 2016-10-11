@@ -37,6 +37,9 @@
 - fix issue317: evaluate minversion before tox config is parsed completely.
   Thanks Sachi King for the PR.
 
+- added the "extras" environment option to specify the extras to use when doing the
+  sdist or develop install. Contributed by Alex Grönholm.
+
 2.3.2
 -----
 

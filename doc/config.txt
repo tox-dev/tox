@@ -323,6 +323,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**: ``False``
 
+.. confval:: extras=MULTI-LINE-LIST
+
+    .. versionadded:: 2.4
+
+    A list of "extras" to be installed with the sdist or develop install.
+    For example, ``extras = testing`` is equivalent to ``[testing]`` in a
+    ``pip install`` command.
+
 
 Substitutions
 -------------
