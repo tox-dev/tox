@@ -237,47 +237,14 @@ If you wish to disable this feature, you can pass the command line option
 Integration with setuptools/distribute test commands
 ----------------------------------------------------
 
-Distribute/Setuptools support test requirements
-and you can extend its test command to trigger
-a test run when ``python setup.py test`` is issued::
+.. warning::
 
-    from setuptools.command.test import test as TestCommand
-    import sys
-
-    class Tox(TestCommand):
-        user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
-        def initialize_options(self):
-            TestCommand.initialize_options(self)
-            self.tox_args = None
-        def finalize_options(self):
-            TestCommand.finalize_options(self)
-            self.test_args = []
-            self.test_suite = True
-        def run_tests(self):
-            #import here, cause outside the eggs aren't loaded
-            import tox
-            import shlex
-            args = self.tox_args
-            if args:
-                args = shlex.split(self.tox_args)
-            tox.cmdline(args=args)
-
-    setup(
-        #...,
-        tests_require=['tox'],
-        cmdclass = {'test': Tox},
-        )
-
-Now if you run::
-
-    python setup.py test
-
-this will install tox and then run tox. You can pass arguments to ``tox``
-using the ``--tox-args`` or ``-a`` command-line options. For example::
-
-    python setup.py test -a "-epy27"
-
-is equivalent to running ``tox -epy27``.
+  Integrating tox into ``setup.py`` is strongly discouraged as 
+  it breaks standard packaging approaches as used by many downstream distributions
+  which expect ``setup.py test`` to test the current interpreter
+  rather than setting up many virtualenvs.
+  
+  
 
 Ignoring a command exit code
 ----------------------------
