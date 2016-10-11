@@ -380,7 +380,8 @@ def tox_addoption(parser):
 
     parser.add_testenv_attribute(
         name="envdir", type="path", default="{toxworkdir}/{envname}",
-        help="venv directory")
+        help="set venv directory -- be very careful when changing this as tox "
+             "will remove this directory when recreating an environment")
 
     # add various core venv interpreter attributes
     def setenv(testenv_config, value):

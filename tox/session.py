@@ -345,6 +345,9 @@ class Session:
             ]
         except LookupError:
             raise SystemExit(1)
+        except tox.exception.ConfigError as e:
+            self.report.error(str(e))
+            raise SystemExit(1)
         self._actions = []
 
     @property
@@ -358,7 +361,7 @@ class Session:
             raise LookupError(name)
         elif envconfig.envdir == self.config.toxinidir:
             self.report.error(
-                "venv in %s would delete project" % envconfig.envdir)
+                "venv %r in %s would delete project" % (name, envconfig.envdir))
             raise tox.exception.ConfigError('envdir must not equal toxinidir')
         venv = VirtualEnv(envconfig=envconfig, session=self)
         self._name2venv[name] = venv
