@@ -1,6 +1,11 @@
 2.4.0
 -----
 
+- remove PYTHONPATH from environment during the install phase because a
+  tox-run should not have hidden dependencies and the test commands will also
+  not see a PYTHONPATH.  If this causes unforeseen problems it may be 
+  reverted in a bugfix release.  Thanks Jason R. Coombs.
+
 - fix issue352: prevent a configuration where envdir==toxinidir and
   refine docs to warn people about changing "envdir". Thanks Oliver Bestwalter and holger krekel.
 
