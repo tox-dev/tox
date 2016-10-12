@@ -18,7 +18,3 @@ For more information and the repository please checkout:
 
 - repository: https://github.com/tox-dev/tox
 
-
-have fun,
-
-holger krekel, 2015
