@@ -118,6 +118,7 @@ Current features
    announce/release-1.8
    announce/release-1.9
    announce/release-2.0
+   announce/release-2.4.0
 
 
 .. include:: links.txt
