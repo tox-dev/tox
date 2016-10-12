@@ -1,3 +1,9 @@
+2.4.1
+-----
+
+- fix issue380: properly perform substitution again. Thanks Ian
+  Cordasco.
+
 2.4.0
 -----
 
