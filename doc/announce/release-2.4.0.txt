@@ -1,5 +1,8 @@
+tox-2.4.0 brings some fixes and new features, see the changelog below.  Docs are now at:
 
-tox-2.4.0 brings some fixes and new features, see the changelog below.  And thanks to Ronny Pfannschmidt the tox repository is now on github:
+    https://tox.readthedocs.org
+
+And thanks to Ronny Pfannschmidt the tox repository is now on github:
 
     https://github.com/tox-dev/tox
 
@@ -7,34 +10,6 @@ Also many thanks to Oliver Bestwalter, Alex Grönholm, Stefan Obermann, Danielle
 
 have testing fun,
 holger krekel
-
-
-    30	holger krekel
-    11	Oliver Bestwalter
-     7	Ronny Pfannschmidt
-     6	Alex Grönholm
-     5	joshpere
-     4	Matthew Schinckel
-     4	Sachi King
-     4	Steffen Allner
-     3	Andrzej Ostrowski
-     3	Danielle Jenkins
-     2	Dan Ring
-     2	James Elford
-     2	John Vandenberg
-     2	Piet Delport
-     2	sober@nur-sober-mc-01.local
-     1	Andrei Pashkin
-     1	Dougal Matthews
-     1	Florian Bruhin
-     1	Jannis Leidel
-     1	Jason R. Coombs
-     1	Joshua_Pereyda
-     1	Nyiro Gergo
-     1	Peter Bittner
-     1	Stephan Obermann
-     1	Walter Scheper
-
 
 
 2.4.0
