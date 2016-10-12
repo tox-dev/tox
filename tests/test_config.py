@@ -1177,13 +1177,14 @@ class TestConfigTestEnv:
             deps=
                 {{[testenv]deps}}
                 fun
+                frob{{env:ENV_VAR:>1.0,<2.0}}
         """.format(
             envlist=','.join(envlist),
             deps='\n' + '\n'.join([' ' * 17 + d for d in deps])
         )
         conf = newconfig([], inisource).envconfigs['py27']
         packages = [dep.name for dep in conf.deps]
-        assert packages == list(deps) + ['fun']
+        assert packages == list(deps) + ['fun', 'frob>1.0,<2.0']
 
     def test_take_dependencies_from_other_section(self, newconfig):
         inisource = """

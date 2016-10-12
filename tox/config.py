@@ -1023,7 +1023,8 @@ class Replacer:
         r'''
         (?<!\\)[{]
         (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
-        (?P<substitution_value>[^,{}]*)  # substitution key
+        (?P<substitution_value>(?:\[[^,{}]*\])?[^:,{}]*)  # substitution key
+        (?::(?P<default_value>[^{}]*))?   # default value
         [}]
         ''', re.VERBOSE)
 
@@ -1064,18 +1065,12 @@ class Replacer:
         return self._replace_substitution(match)
 
     def _replace_env(self, match):
-        match_value = match.group('substitution_value')
-        if not match_value:
+        envkey = match.group('substitution_value')
+        if not envkey:
             raise tox.exception.ConfigError(
                 'env: requires an environment variable name')
 
-        default = None
-        envkey_split = match_value.split(':', 1)
-
-        if len(envkey_split) is 2:
-            envkey, default = envkey_split
-        else:
-            envkey = match_value
+        default = match.group('default_value')
 
         envvalue = self.reader.get_environ_value(envkey)
         if envvalue is None:
