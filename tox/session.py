@@ -385,6 +385,8 @@ class Session:
             self.showconfig()
         elif self.config.option.listenvs:
             self.showenvs()
+        elif self.config.option.showenvdir:
+            self.showenvdirs()
         else:
             return self.subcommand_test()
 
@@ -624,6 +626,20 @@ class Session:
             for attr in self.config._parser._testenv_attr:
                 self.report.line("  %-15s = %s"
                                  % (attr.name, getattr(envconfig, attr.name)))
+
+    def showenvdirs(self):
+        should_use_evalable_output = len(self.config.envconfigs.keys()) == 1
+        if should_use_evalable_output:
+            env = list(self.config.envconfigs.values())[0]
+            envname = env.name
+            envdir = env.envdir
+            self.report.line("# [testenv:%s]" % envname)
+            self.report.line("# To activate this virtualenv, run: eval `tox -e {} --show-envdir`".format(envname))
+            self.report.line("source {envdir}/bin/activate".format(envdir=envdir))
+        else:
+            for envconfig in self.config.envconfigs.values():
+                self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
+                self.report.line("  envdir = {}".format(envconfig.envdir))
 
     def showenvs(self):
         for env in self.config.envlist:
