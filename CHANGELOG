@@ -1,3 +1,10 @@
+unreleased
+----------
+
+- add support for py36 and py37 and add py36-dev and py37(nightly) to
+  travis builds. Thanks John Vandenberg.
+
+
 2.4.1
 -----
 
