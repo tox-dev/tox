@@ -405,7 +405,9 @@ def tox_testenv_create(venv, action):
     venv.session.make_emptydir(venv.path)
     basepath = venv.path.dirpath()
     basepath.ensure(dir=1)
-    if venv.envconfig.envcreate_command != EnvcreatecmdOption.default.split():
+    # FIXME there should be a better way to get if we're not using the default
+    default = EnvcreatecmdOption.default.replace('{envdir}', str(venv.path)).split()
+    if venv.envconfig.envcreate_command != default:
         args = venv.envconfig.envcreate_command
         i = args.index('{basepython}')
         args[i] = str(config_interpreter)
