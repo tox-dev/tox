@@ -9,6 +9,7 @@ import string
 import pkg_resources
 import itertools
 import pluggy
+from subprocess import list2cmdline
 
 import tox.interpreters
 from tox import hookspecs
@@ -1146,7 +1147,8 @@ class _ArgvlistReader:
 
     @classmethod
     def processcommand(cls, reader, command):
-        posargs = getattr(reader, "posargs", None)
+        posargs = getattr(reader, "posargs", "")
+        posargs_string = list2cmdline([x for x in posargs if x])
 
         # Iterate through each word of the command substituting as
         # appropriate to construct the new command string. This
@@ -1155,12 +1157,11 @@ class _ArgvlistReader:
         newcommand = ""
         for word in CommandParser(command).words():
             if word == "{posargs}" or word == "[]":
-                if posargs:
-                    newcommand += " ".join(posargs)
+                newcommand += posargs_string
                 continue
             elif word.startswith("{posargs:") and word.endswith("}"):
                 if posargs:
-                    newcommand += " ".join(posargs)
+                    newcommand += posargs_string
                     continue
                 else:
                     word = word[9:-1]
@@ -1176,8 +1177,7 @@ class _ArgvlistReader:
         shlexer = shlex.shlex(newcommand, posix=True)
         shlexer.whitespace_split = True
         shlexer.escape = ''
-        argv = list(shlexer)
-        return argv
+        return list(shlexer)
 
 
 class CommandParser(object):
