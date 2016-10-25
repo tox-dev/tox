@@ -5,7 +5,7 @@ import re
 import codecs
 import py
 import tox
-from .config import DepConfig, hookimpl
+from .config import DepConfig, hookimpl, EnvcreatecmdOption
 
 
 class CreationConfig:
@@ -164,6 +164,11 @@ class VirtualEnv(object):
             return sys.exc_info()[1]
         except tox.exception.InterpreterNotFound:
             return sys.exc_info()[1]
+        try:
+            self.hook.tox_testenv_prepare(action=action, venv=self)
+        except tox.exception.InvocationError:
+            v = sys.exc_info()[1]
+            return "could not prepare venv: %s" % v
         try:
             self.hook.tox_testenv_install_deps(action=action, venv=self)
         except tox.exception.InvocationError:
@@ -397,22 +402,46 @@ def tox_testenv_create(venv, action):
     # if self.getcommandpath("activate").dirpath().check():
     #    return
     config_interpreter = venv.getsupportedinterpreter()
-    args = [sys.executable, '-m', 'virtualenv']
-    if venv.envconfig.sitepackages:
-        args.append('--system-site-packages')
-    # add interpreter explicitly, to prevent using
-    # default (virtualenv.ini)
-    args.extend(['--python', str(config_interpreter)])
+    venv.session.make_emptydir(venv.path)
+    basepath = venv.path.dirpath()
+    basepath.ensure(dir=1)
+    if venv.envconfig.envcreate_command != EnvcreatecmdOption.default.split():
+        args = venv.envconfig.envcreate_command
+        i = args.index('{basepython}')
+        args[i] = str(config_interpreter)
+        # i = args.index('{envdir}')
+        # args[i] = venv.path.basename
+        # FIXME do this in config.py
+        # currently checking it here since I don't know how to use {envdir}
+        # correctly
+        if venv.path not in args:
+            raise tox.exception.ConfigError(
+                "'envcreate_command' must contain '{envdir}' substitution")
+    else:
+        args = [sys.executable, '-m', 'virtualenv']
+        if venv.envconfig.sitepackages:
+            args.append('--system-site-packages')
+        # add interpreter explicitly, to prevent using
+        # default (virtualenv.ini)
+        args.extend(['--python', str(config_interpreter)])
+        args.append(venv.path.basename)
+
     # if sys.platform == "win32":
     #    f, path, _ = py.std.imp.find_module("virtualenv")
     #    f.close()
     #    args[:1] = [str(config_interpreter), str(path)]
     # else:
-    venv.session.make_emptydir(venv.path)
-    basepath = venv.path.dirpath()
-    basepath.ensure(dir=1)
-    args.append(venv.path.basename)
     venv._pcall(args, venv=False, action=action, cwd=basepath)
+
+
+@hookimpl
+def tox_testenv_prepare(venv, action):
+    # FIXME this is probably not the right way to do things
+    commands = venv.envconfig.prepare_commands
+    basepath = venv.path.dirpath()
+    for command in commands:
+        action.setactivity("prepareenv", "%s" % ' '.join(command))
+        venv._pcall(command, venv=True, action=action, cwd=basepath)
 
 
 @hookimpl

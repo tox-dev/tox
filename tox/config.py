@@ -192,6 +192,23 @@ class InstallcmdOption:
         return value
 
 
+class EnvcreatecmdOption:
+    name = "envcreate_command"
+    type = "argv"
+    default = "virtualenv -p {basepython} {envdir}"
+    help = "Creation command for creating the virtualenv to test in."
+
+    def postprocess(self, testenv_config, value):
+        if '{basepython}' not in value:
+            raise tox.exception.ConfigError(
+                "'envcreate_command' must contain '{basepython}' substitution")
+# FIXME unsure how to check this properly
+#        if '{envdir}' not in value:
+#            raise tox.exception.ConfigError(
+#                "'envcreate_command' must contain '{envdir}' substitution")
+        return value
+
+
 def parseconfig(args=None, plugins=()):
     """
     :param list[str] args: Optional list of arguments.
@@ -526,6 +543,13 @@ def tox_addoption(parser):
         help="install package in develop/editable mode")
 
     parser.add_testenv_attribute_obj(InstallcmdOption())
+    parser.add_testenv_attribute_obj(EnvcreatecmdOption())
+
+    parser.add_testenv_attribute(
+        name="prepare_commands",
+        type="argvlist",
+        default="",
+        help="Commands to prepare the virtualenv before testing.")
 
     parser.add_testenv_attribute(
         name="list_dependencies_command",
@@ -600,6 +624,9 @@ class TestenvConfig:
     def envpython(self):
         """ path to python executable. """
         return self.get_envpython()
+
+    def get_envdir(self):
+        return self.envdir
 
     def get_envpython(self):
         """ path to python/jython executable. """
@@ -811,6 +838,7 @@ class parseini:
             if atype == "path":
                 reader.addsubstitutions(**{env_attr.name: res})
 
+        reader.addsubstitutions(envdir=vc.get_envdir)
         return vc
 
     def _getenvdata(self, reader):
@@ -1048,7 +1076,9 @@ class Replacer:
         # special case: opts and packages. Leave {opts} and
         # {packages} intact, they are replaced manually in
         # _venv.VirtualEnv.run_install_command.
-        if sub_value in ('opts', 'packages'):
+        # {basepython} will be replaced manually when
+        # creating the virtualenv.
+        if sub_value in ('opts', 'packages', 'basepython'):
             return '{%s}' % sub_value
 
         try:
