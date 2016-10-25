@@ -1,0 +1,19 @@
+environment:
+  matrix:
+    - TOXENV: py26
+    - TOXENV: py27
+    - TOXENV: py33
+    - TOXENV: py34
+    - TOXENV: py35
+    - TOXENV: flakes
+
+matrix:
+  fast_finish: true
+
+install:
+  - C:\Python35\python -m pip install tox
+
+build: false  # Not a C# project
+
+test_script:
+  - C:\Python35\scripts\tox
