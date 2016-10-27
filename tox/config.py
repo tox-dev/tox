@@ -474,6 +474,7 @@ def tox_addoption(parser):
             passenv.add("SYSTEMDRIVE")  # needed for pip6
             passenv.add("SYSTEMROOT")   # needed for python's crypto module
             passenv.add("PATHEXT")      # needed for discovering executables
+            passenv.add("COMSPEC")      # needed for distutils cygwincompiler
             passenv.add("TEMP")
             passenv.add("TMP")
         else:
