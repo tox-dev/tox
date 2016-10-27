@@ -1480,7 +1480,7 @@ class TestGlobalOptions:
         assert str(env.basepython) == sys.executable
 
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
-        envs = "py26,py27,py32,py33,py34,py35,py36,py37,jython,pypy,pypy3"
+        envs = "py26,py27,py32,py33,py34,py35,py36,py37,jython,pypy,pypy3,py2,py3"
         inisource = """
             [tox]
             envlist = %s
@@ -1494,6 +1494,8 @@ class TestGlobalOptions:
                 assert env.basepython == "jython"
             elif name.startswith("pypy"):
                 assert env.basepython == name
+            elif name in ("py2", "py3"):
+                assert env.basepython == 'python' + name[-1]
             else:
                 assert name.startswith("py")
                 bp = "python%s.%s" % (name[2], name[3])
