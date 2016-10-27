@@ -8,7 +8,6 @@ deps=pytest>=2.3.5
     pytest-timeout
 
 # USE CASE 1: plain conda, with deps on tox.ini
-```
 create_env_command = conda create --prefix {envdir} python={python_version}
 install_command = conda install --prefix {envdir} {opts} {packages}
 list_dependencies_command = conda list --prefix {envdir}
@@ -16,7 +15,6 @@ list_dependencies_command = conda list --prefix {envdir}
 # deprecated: see tox_create_popen hook
 linux:env_activate_command=source activate {envdir}
 win:env_activate_command=activate.bat {envdir}
-```
 
 # USE CASE 2: plain conda, using requirements.txt
 install_command = conda install --prefix {envdir} {opts} --file requirements.txt
