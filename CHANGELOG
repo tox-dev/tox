@@ -15,7 +15,9 @@ unreleased
   travis builds. Thanks John Vandenberg.
 
 - fix #348: add py2 and py3 as default environments pointing to
-  "python2" and "python3" basepython executables. Thanks Tobias McNulty.
+  "python2" and "python3" basepython executables.  Also fix #347 by 
+  updating the list of default envs in the tox basic example.
+  Thanks Tobias McNulty.
 
 
 2.4.1
