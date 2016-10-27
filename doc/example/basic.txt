@@ -31,15 +31,15 @@ you can run restrict the test run to the python2.6 environment.
 Available "default" test environments names are::
 
     py
-    py24
-    py25
+    py2
     py26
     py27
-    py30
-    py31
-    py32
+    py3
     py33
     py34
+    py35
+    py36
+    py37
     jython
     pypy
     pypy3
