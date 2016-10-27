@@ -8,6 +8,9 @@ unreleased
   tox -- "'some string'"  # can has to be written simply as 
   tox -- "some string"
 
+- fix #359: add COMSPEC to default passenv on windows.  Thanks
+  @anthrotype.
+
 - add support for py36 and py37 and add py36-dev and py37(nightly) to
   travis builds. Thanks John Vandenberg.
 
