@@ -48,7 +48,7 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=open("README.rst").read(),
         url='https://tox.readthedocs.org/',
-        version='2.4.2.dev1',
+        version='2.5.0.dev1',
         license='http://opensource.org/licenses/MIT',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
