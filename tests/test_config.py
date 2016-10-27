@@ -598,6 +598,17 @@ class TestIniParser:
         assert argvlist[2] == ['cmd2', '-m', "something"] + posargs
         assert argvlist[3] == ['cmd3', 'something[]else']
 
+    def test_posargs_are_added_escaped_issue310(self, newconfig):
+        config = newconfig("""
+            [section]
+            key= cmd0 {posargs}
+        """)
+        reader = SectionReader("section", config._cfg)
+        posargs = ['hello world', '--x==y z', '--format=%(code)s: %(text)s']
+        reader.addsubstitutions(posargs)
+        argvlist = reader.getargvlist('key')
+        assert argvlist[0] == ['cmd0'] + posargs
+
     def test_substitution_with_multiple_words(self, newconfig):
         inisource = """
             [section]

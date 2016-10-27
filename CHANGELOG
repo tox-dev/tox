@@ -1,8 +1,16 @@
 unreleased
 ----------
 
+- fix issue310: the {posargs} substitution now properly preserves the tox command line
+  positional arguments. Positional arguments with spaces are now properly handled.
+  NOTE: if your tox invocation previously used extra quoting for positional arguments to
+  work around issue310, you need to remove the quoting. Example:
+  tox -- "'some string'"  # can has to be written simply as 
+  tox -- "some string"
+
 - add support for py36 and py37 and add py36-dev and py37(nightly) to
   travis builds. Thanks John Vandenberg.
+
 
 
 2.4.1
