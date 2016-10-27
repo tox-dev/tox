@@ -70,9 +70,9 @@ def main():
             'Operating System :: MacOS :: MacOS X',
             'Topic :: Software Development :: Testing',
             'Topic :: Software Development :: Libraries',
-            'Topic :: Utilities',
-            'Programming Language :: Python',
-            'Programming Language :: Python :: 3'],
+            'Topic :: Utilities'] + [
+            ('Programming Language :: Python :: %s' % x) for x in
+                  '2 2.6 2.7 3 3.3 3.4 3.5'.split()]
     )
 
 if __name__ == '__main__':
