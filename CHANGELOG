@@ -19,6 +19,9 @@ unreleased
   updating the list of default envs in the tox basic example.
   Thanks Tobias McNulty.
 
+- add new config value env_path_vars, which allows to normalize separators
+  used in environment variables changed via setenv config
+
 
 2.4.1
 -----

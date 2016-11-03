@@ -266,11 +266,12 @@ class CountAction(argparse.Action):
 
 
 class SetenvDict:
-    def __init__(self, dict, reader):
+    def __init__(self, dict, reader, path_vars=None):
         self.reader = reader
         self.definitions = dict
         self.resolved = {}
         self._lookupstack = []
+        self.path_vars = path_vars or []
 
     def __contains__(self, name):
         return name in self.definitions
@@ -283,6 +284,8 @@ class SetenvDict:
                 if name in self._lookupstack:
                     raise KeyError(name)
                 val = self.definitions[name]
+                if name in self.path_vars:
+                    val = self._normalize_path_variable(val)
             except KeyError:
                 return os.environ.get(name, default)
             self._lookupstack.append(name)
@@ -304,6 +307,13 @@ class SetenvDict:
     def __setitem__(self, name, value):
         self.definitions[name] = value
         self.resolved[name] = value
+
+    @staticmethod
+    def _normalize_path_variable(val):
+        known_separators = [':', ';']
+        for s in known_separators:
+            val = val.replace(s, os.pathsep)
+        return val
 
 
 @hookimpl
@@ -936,7 +946,8 @@ class SectionReader:
     def getdict_setenv(self, name, default=None, sep="\n"):
         value = self.getstring(name, None, replace=True, crossonly=True)
         definitions = self._getdict(value, default=default, sep=sep)
-        self._setenv = SetenvDict(definitions, reader=self)
+        env_path_vars = self.getlist("env_path_vars", ",")
+        self._setenv = SetenvDict(definitions, reader=self, path_vars=env_path_vars)
         return self._setenv
 
     def _getdict(self, value, default, sep):

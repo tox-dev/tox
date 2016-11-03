@@ -1887,6 +1887,71 @@ class TestIndexServer:
         assert config.indexserver['default'].url == expected
         assert config.indexserver['local1'].url == config.indexserver['default'].url
 
+    def test_setenv_normalize_path_separator_do_nothing_when_not_asked(self, newconfig):
+        """test that paths are not modified implictly"""
+        config = newconfig("""
+        [testenv]
+        setenv =
+            PATH = dira:dirb:dirc
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["PATH"] == "dira:dirb:dirc"
+
+    def test_setenv_normalize_path_separator_single_path(self, monkeypatch, newconfig):
+        """test that path in setenv are normalized when env_path_vars contains given var name"""
+        monkeypatch.setattr('os.pathsep', ';')
+        config = newconfig("""
+        [testenv]
+        setenv =
+            PATH = dira:dirb:dirc
+        env_path_vars = PATH
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["PATH"] == "dira;dirb;dirc"
+
+    def test_setenv_normalize_path_separator_multiple_paths(self, monkeypatch, newconfig):
+        """test that paths in setenv are normalized when env_path_vars contains given var names"""
+        monkeypatch.setattr('os.pathsep', ';')
+        config = newconfig("""
+        [testenv]
+        setenv =
+            PATH = dira:dirb:dirc
+            PYTHONPATH = dird:dire
+        env_path_vars = PATH,PYTHONPATH
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["PATH"] == "dira;dirb;dirc"
+        assert envconfig.setenv["PYTHONPATH"] == "dird;dire"
+
+    def test_setenv_normalize_path_separator_multiple_envs(self, monkeypatch, newconfig):
+        """test that paths in setenv are normalized according to local env configuration"""
+        monkeypatch.setattr('os.pathsep', ';')
+        config = newconfig("""
+        [testenv]
+        setenv =
+            PATH = dira:dirb:dirc
+
+        [testenv:testenv1]
+        env_path_vars = PATH,PYTHONPATH
+
+        [testenv:testenv2]
+        """)
+        envconfig1 = config.envconfigs["testenv1"]
+        envconfig2 = config.envconfigs["testenv2"]
+        assert envconfig1.setenv["PATH"] == "dira;dirb;dirc"
+        assert envconfig2.setenv["PATH"] == "dira:dirb:dirc"
+
+    def test_setenv_normalize_only_paths_from_ini_file(self, monkeypatch, newconfig):
+        """test that env paths are not normalized if they are not overridden in ini file"""
+        monkeypatch.setattr('os.pathsep', ';')
+        monkeypatch.setenv('PYTHONPATH', 'dira:dirb')
+        config = newconfig("""
+        [testenv]
+        env_path_vars = PYTHONPATH
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["PYTHONPATH"] == "dira:dirb"
+
 
 class TestParseEnv:
 
