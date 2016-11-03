@@ -229,7 +229,11 @@ def parseconfig(args=None, plugins=()):
         else:
             inipath = py.path.local().join('setup.cfg')
             if not inipath.check():
-                feedback("toxini file %r not found" % (basename), sysexit=True)
+                helpoptions = option.help or option.helpini
+                feedback("toxini file %r not found" % (basename),
+                         sysexit=not helpoptions)
+                if helpoptions:
+                    return config
 
     try:
         parseini(config, inipath)

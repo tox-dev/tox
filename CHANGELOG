@@ -19,6 +19,8 @@ unreleased
   updating the list of default envs in the tox basic example.
   Thanks Tobias McNulty.
 
+- make "-h" and "--help-ini" options work even if there is no tox.ini
+
 
 2.4.1
 -----
