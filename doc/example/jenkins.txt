@@ -23,6 +23,8 @@ using these steps:
 * add a **Python-build step** with this content (see also next example)::
 
     import tox
+
+    os.chdir(os.getenv('WORKSPACE'))
     tox.cmdline() # environment is selected by ``TOXENV`` env variable
 
 * check ``Publish JUnit test result report`` and enter
