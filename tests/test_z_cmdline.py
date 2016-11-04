@@ -199,6 +199,34 @@ def test_minversion(cmd, initproj):
     assert result.ret
 
 
+def test_notoxini_help_still_works(initproj, cmd):
+    initproj("example123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+    })
+    result = cmd.run("tox", "-h")
+    result.stderr.fnmatch_lines([
+        "*ERROR*tox.ini*"
+    ])
+    result.stdout.fnmatch_lines([
+        "*--help*"
+    ])
+    assert not result.ret
+
+
+def test_notoxini_help_ini_still_works(initproj, cmd):
+    initproj("example123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+    })
+    result = cmd.run("tox", "--help-ini")
+    result.stderr.fnmatch_lines([
+        "*ERROR*tox.ini*"
+    ])
+    result.stdout.fnmatch_lines([
+        "*setenv*"
+    ])
+    assert not result.ret
+
+
 def test_envdir_equals_toxini_errors_out(cmd, initproj):
     initproj("interp123-0.7", filedefs={
         'tox.ini': '''
