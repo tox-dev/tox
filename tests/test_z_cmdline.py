@@ -784,6 +784,22 @@ def test_envsitepackagesdir_skip_missing_issue280(cmd, initproj):
     """)
 
 
+@pytest.mark.parametrize('verbosity', ['', '-v', '-vv'])
+def test_verbosity(cmd, initproj, verbosity):
+    initproj("pkgX-0.0.5", filedefs={
+        'tox.ini': """
+        [testenv]
+    """})
+    result = cmd.run("tox", verbosity)
+    assert result.ret == 0
+
+    needle = "Successfully installed pkgX-0.0.5"
+    if verbosity == '-vv':
+        assert any(needle in line for line in result.outlines)
+    else:
+        assert all(needle not in line for line in result.outlines)
+
+
 def verify_json_report_format(data, testenvs=True):
     assert data["reportversion"] == "1"
     assert data["toxversion"] == tox.__version__
