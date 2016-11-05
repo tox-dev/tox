@@ -1051,6 +1051,10 @@ class Replacer:
             start, end = match.span()
             return match.string[start:end]
 
+        # special case: all empty values means ":" which is os.pathsep
+        if not any(g.values()):
+            return os.pathsep
+
         # special case: opts and packages. Leave {opts} and
         # {packages} intact, they are replaced manually in
         # _venv.VirtualEnv.run_install_command.

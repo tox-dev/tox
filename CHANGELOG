@@ -21,6 +21,7 @@ unreleased
 
 - make "-h" and "--help-ini" options work even if there is no tox.ini
 
+- add {:} substitution, which is replaced with os-specific path separator
 
 2.4.1
 -----
