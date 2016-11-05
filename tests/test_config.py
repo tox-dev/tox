@@ -1887,25 +1887,18 @@ class TestIndexServer:
         assert config.indexserver['default'].url == expected
         assert config.indexserver['local1'].url == config.indexserver['default'].url
 
-    def test_replace_pathsep_unix(self, monkeypatch, newconfig):
-        monkeypatch.setattr('os.pathsep', ':')
-        config = newconfig("""
-        [testenv]
-        setenv =
-            PATH = dira{:}dirb{:}dirc
-        """)
-        envconfig = config.envconfigs["python"]
-        assert envconfig.setenv["PATH"] == "dira:dirb:dirc"
 
-    def test_replace_pathsep_win(self, monkeypatch, newconfig):
-        monkeypatch.setattr('os.pathsep', ';')
+class TestConfigConstSubstitutions:
+    @pytest.mark.parametrize('pathsep', [':', ';'])
+    def test_replace_pathsep_unix(self, monkeypatch, newconfig, pathsep):
+        monkeypatch.setattr('os.pathsep', pathsep)
         config = newconfig("""
         [testenv]
         setenv =
             PATH = dira{:}dirb{:}dirc
         """)
         envconfig = config.envconfigs["python"]
-        assert envconfig.setenv["PATH"] == "dira;dirb;dirc"
+        assert envconfig.setenv["PATH"] == pathsep.join(["dira", "dirb", "dirc"])
 
     def test_pathsep_regex(self):
         """Sanity check for regex behavior for empty colon."""
