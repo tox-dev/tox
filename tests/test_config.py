@@ -992,31 +992,6 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.pip_pre
 
-    def test_downloadcache(self, newconfig, monkeypatch):
-        monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
-        config = newconfig("""
-            [testenv]
-            downloadcache=thecache
-        """)
-        envconfig = config.envconfigs['python']
-        assert envconfig.downloadcache.basename == 'thecache'
-
-    def test_downloadcache_env_override(self, newconfig, monkeypatch):
-        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", 'fromenv')
-        config = newconfig("""
-            [testenv]
-            downloadcache=somepath
-        """)
-        envconfig = config.envconfigs['python']
-        assert envconfig.downloadcache.basename == "fromenv"
-
-    def test_downloadcache_only_if_in_config(self, newconfig, tmpdir,
-                                             monkeypatch):
-        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", tmpdir)
-        config = newconfig('')
-        envconfig = config.envconfigs['python']
-        assert not envconfig.downloadcache
-
     def test_simple(tmpdir, newconfig):
         config = newconfig("""
             [testenv:py26]
