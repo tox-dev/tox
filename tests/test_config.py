@@ -1888,6 +1888,28 @@ class TestIndexServer:
         assert config.indexserver['local1'].url == config.indexserver['default'].url
 
 
+class TestConfigConstSubstitutions:
+    @pytest.mark.parametrize('pathsep', [':', ';'])
+    def test_replace_pathsep_unix(self, monkeypatch, newconfig, pathsep):
+        monkeypatch.setattr('os.pathsep', pathsep)
+        config = newconfig("""
+        [testenv]
+        setenv =
+            PATH = dira{:}dirb{:}dirc
+        """)
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["PATH"] == pathsep.join(["dira", "dirb", "dirc"])
+
+    def test_pathsep_regex(self):
+        """Sanity check for regex behavior for empty colon."""
+        regex = tox.config.Replacer.RE_ITEM_REF
+        match = next(regex.finditer("{:}"))
+        mdict = match.groupdict()
+        assert mdict['sub_type'] is None
+        assert mdict['substitution_value'] == ""
+        assert mdict['default_value'] == ""
+
+
 class TestParseEnv:
 
     def test_parse_recreate(self, newconfig):
