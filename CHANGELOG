@@ -7,6 +7,7 @@ unreleased
   work around issue310, you need to remove the quoting. Example:
   tox -- "'some string'"  # can has to be written simply as 
   tox -- "some string"
+  thanks holger krekel.
 
 - fix #359: add COMSPEC to default passenv on windows.  Thanks
   @anthrotype.
@@ -19,9 +20,14 @@ unreleased
   updating the list of default envs in the tox basic example.
   Thanks Tobias McNulty.
 
-- make "-h" and "--help-ini" options work even if there is no tox.ini
+- make "-h" and "--help-ini" options work even if there is no tox.ini,
+  thanks holger krekel.
 
-- add {:} substitution, which is replaced with os-specific path separator
+- add {:} substitution, which is replaced with os-specific path
+  separator, thanks Lukasz Rogalski.
+
+- fix #305: ``downloadcache`` test env config is now ignored as pip-8
+  does caching by default. Thanks holger krekel.
 
 2.4.1
 -----
