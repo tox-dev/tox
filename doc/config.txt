@@ -99,9 +99,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
     ``{packages}`` which will be replaced by the packages to
     install.  You should also accept ``{opts}`` if you are using
     pip or easy_install -- it will contain index server options
-    if you have configured them via :confval:`indexserver`
-    and the deprecated :confval:`downloadcache` option
-    if you have configured it.
+    such as ``--pre`` (configured as ``pip_pre``) and potentially
+    index-options from the deprecated :confval:`indexserver`
+    option.
 
     **default**::
 
@@ -227,16 +227,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: downloadcache=path
 
-    **DEPRECATED** -- as of August 2013 this option is not very
-    useful because of pypi's CDN and because of caching pypi
-    server solutions like `devpi <http://doc.devpi.net>`_.
-
-    use this directory for caching downloads.  This value is overriden
-    by the environment variable ``PIP_DOWNLOAD_CACHE`` if it exists. If
-    you specify a custom :confval:`install_command` that uses an
-    installer other than pip, your installer must support the
-    `--download-cache` command-line option.
-    **default**: no download cache will be used.
+    **IGNORED** -- Since pip-8 has caching by default this option is now ignored.  Please remove it from your configs as a future tox version might bark on it.
 
 .. confval:: sitepackages=True|False
 

@@ -255,9 +255,6 @@ class VirtualEnv(object):
         l = []
         if indexserver:
             l += ["-i", indexserver]
-        if self.envconfig.downloadcache:
-            self.envconfig.downloadcache.ensure(dir=1)
-            l.append("--download-cache=%s" % self.envconfig.downloadcache)
         if self.envconfig.pip_pre:
             l.append("--pre")
         return l

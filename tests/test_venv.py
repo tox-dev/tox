@@ -140,40 +140,8 @@ def test_install_deps_wildcard(newmocksession):
     assert l[-1].cwd == venv.envconfig.config.toxinidir
     assert "pip" in str(args[0])
     assert args[1] == "install"
-    # arg = "--download-cache=" + str(venv.envconfig.downloadcache)
-    # assert arg in args[2:]
     args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
     assert len(args) == 1
-
-
-@pytest.mark.parametrize("envdc", [True, False])
-def test_install_downloadcache(newmocksession, monkeypatch, tmpdir, envdc):
-    if envdc:
-        monkeypatch.setenv("PIP_DOWNLOAD_CACHE", tmpdir)
-    else:
-        monkeypatch.delenv("PIP_DOWNLOAD_CACHE", raising=False)
-    mocksession = newmocksession([], """
-        [testenv:py123]
-        deps=
-            dep1
-            dep2
-    """)
-    venv = mocksession.getenv("py123")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
-    l = mocksession._pcalls
-    assert len(l) == 1
-
-    tox_testenv_install_deps(action=action, venv=venv)
-    assert len(l) == 2
-    args = l[-1].args
-    assert l[-1].cwd == venv.envconfig.config.toxinidir
-    assert "pip" in str(args)
-    assert args[1] == "install"
-    assert "dep1" in args
-    assert "dep2" in args
-    deps = list(filter(None, [x[1] for x in venv._getliveconfig().deps]))
-    assert deps == ['dep1', 'dep2']
 
 
 def test_install_deps_indexserver(newmocksession):

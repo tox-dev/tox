@@ -421,15 +421,9 @@ def tox_addoption(parser):
         name="envlogdir", type="path", default="{envdir}/log",
         help="venv log directory")
 
-    def downloadcache(testenv_config, value):
-        if value:
-            # env var, if present, takes precedence
-            downloadcache = os.environ.get("PIP_DOWNLOAD_CACHE", value)
-            return py.path.local(downloadcache)
-
     parser.add_testenv_attribute(
-        name="downloadcache", type="string", default=None, postprocess=downloadcache,
-        help="(deprecated) set PIP_DOWNLOAD_CACHE.")
+        name="downloadcache", type="string", default=None,
+        help="(ignored) has no effect anymore, pip-8 uses local caching by default")
 
     parser.add_testenv_attribute(
         name="changedir", type="path", default="{toxinidir}",
