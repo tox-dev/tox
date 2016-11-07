@@ -32,6 +32,10 @@ unreleased
 - output from install command in verbose (-vv) mode is now printed to console instead of
   being redirected to file, thanks Lukasz Rogalski
 
+- fix #399.  Make sure {envtmpdir} is created if it doesn't exist at the
+  start of a testenvironment run. Thanks Manuel Jacob.
+
+
 2.4.1
 -----
 
