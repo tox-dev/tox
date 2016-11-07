@@ -274,7 +274,8 @@ class VirtualEnv(object):
 
         old_stdout = sys.stdout
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-        self._pcall(argv, cwd=self.envconfig.config.toxinidir, action=action)
+        self._pcall(argv, cwd=self.envconfig.config.toxinidir, action=action,
+                    redirect=self.session.report.verbosity < 2)
         sys.stdout = old_stdout
 
     def _install(self, deps, extraopts=None, action=None):

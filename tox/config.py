@@ -322,7 +322,8 @@ def tox_addoption(parser):
                         help="show help about ini-names")
     parser.add_argument("-v", nargs=0, action=CountAction, default=0,
                         dest="verbosity",
-                        help="increase verbosity of reporting output.")
+                        help="increase verbosity of reporting output. -vv mode turns off "
+                        "output redirection for package installation")
     parser.add_argument("--showconfig", action="store_true",
                         help="show configuration information for all environments. ")
     parser.add_argument("-l", "--listenvs", action="store_true",

@@ -65,6 +65,9 @@ class ReportExpectMock:
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError(name)
+        elif name == 'verbosity':
+            # FIXME: special case for property on Reporter class, may it be generalized?
+            return 0
 
         def generic_report(*args, **kwargs):
             self._calls.append((name,) + args)

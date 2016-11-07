@@ -29,6 +29,9 @@ unreleased
 - fix #305: ``downloadcache`` test env config is now ignored as pip-8
   does caching by default. Thanks holger krekel.
 
+- output from install command in verbose (-vv) mode is now printed to console instead of
+  being redirected to file, thanks Lukasz Rogalski
+
 2.4.1
 -----
 

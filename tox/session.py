@@ -237,7 +237,8 @@ class Reporter(object):
         self._reportedlines = []
         # self.cumulated_time = 0.0
 
-    def _get_verbosity(self):
+    @property
+    def verbosity(self):
         if self.session:
             return self.session.config.option.verbosity
         else:
@@ -268,11 +269,11 @@ class Reporter(object):
         self.tw.sep("_", "summary")
 
     def info(self, msg):
-        if self._get_verbosity() >= 2:
+        if self.verbosity >= 2:
             self.logline(msg)
 
     def using(self, msg):
-        if self._get_verbosity() >= 1:
+        if self.verbosity >= 1:
             self.logline("using %s" % (msg,), bold=True)
 
     def keyboard_interrupt(self):
@@ -308,15 +309,15 @@ class Reporter(object):
         self.tw.line("%s" % msg, **opts)
 
     def verbosity0(self, msg, **opts):
-        if self._get_verbosity() >= 0:
+        if self.verbosity >= 0:
             self.logline("%s" % msg, **opts)
 
     def verbosity1(self, msg, **opts):
-        if self._get_verbosity() >= 1:
+        if self.verbosity >= 1:
             self.logline("%s" % msg, **opts)
 
     def verbosity2(self, msg, **opts):
-        if self._get_verbosity() >= 2:
+        if self.verbosity >= 2:
             self.logline("%s" % msg, **opts)
 
     # def log(self, msg):
