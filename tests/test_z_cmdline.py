@@ -817,3 +817,30 @@ def verify_json_report_format(data, testenvs=True):
                 assert isinstance(pyinfo["version_info"], list)
                 assert pyinfo["version"]
                 assert pyinfo["executable"]
+
+
+def test_envtmpdir(initproj, cmd):
+    initproj("foo", filedefs={
+        # This file first checks that envtmpdir is existent and empty. Then it
+        # creates an empty file in that directory.  The tox command is run
+        # twice below, so this is to test whether the directory is cleared
+        # before the second run.
+        'check_empty_envtmpdir.py': '''if True:
+            import os
+            from sys import argv
+            envtmpdir = argv[1]
+            assert os.path.exists(envtmpdir)
+            assert os.listdir(envtmpdir) == []
+            open(os.path.join(envtmpdir, 'test'), 'w').close()
+        ''',
+        'tox.ini': '''
+            [testenv]
+            commands=python check_empty_envtmpdir.py {envtmpdir}
+        '''
+    })
+
+    result = cmd.run("tox")
+    assert not result.ret
+
+    result = cmd.run("tox")
+    assert not result.ret

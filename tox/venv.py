@@ -327,6 +327,7 @@ class VirtualEnv(object):
         with action:
             self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
+            self.envconfig.envtmpdir.ensure(dir=1)
             cwd = self.envconfig.changedir
             env = self._getenv(testcommand=True)
             # Display PYTHONHASHSEED to assist with reproducibility.
