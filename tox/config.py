@@ -261,14 +261,6 @@ class VersionAction(argparse.Action):
         raise SystemExit(0)
 
 
-class CountAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        if hasattr(namespace, self.dest):
-            setattr(namespace, self.dest, int(getattr(namespace, self.dest)) + 1)
-        else:
-            setattr(namespace, self.dest, 0)
-
-
 class SetenvDict:
     def __init__(self, dict, reader):
         self.reader = reader
@@ -320,8 +312,7 @@ def tox_addoption(parser):
                         help="show help about options")
     parser.add_argument("--help-ini", "--hi", action="store_true", dest="helpini",
                         help="show help about ini-names")
-    parser.add_argument("-v", nargs=0, action=CountAction, default=0,
-                        dest="verbosity",
+    parser.add_argument("-v", action='count', dest="verbosity", default=0,
                         help="increase verbosity of reporting output. -vv mode turns off "
                         "output redirection for package installation")
     parser.add_argument("--showconfig", action="store_true",
