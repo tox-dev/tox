@@ -36,7 +36,7 @@ def has_environment_marker_support():
 
 def main():
     version = sys.version_info[:2]
-    install_requires = ['virtualenv>=1.11.2', 'py>=1.4.17', 'pluggy>=0.3.0,<0.5.0']
+    install_requires = ['virtualenv>=1.11.2', 'py>=1.4.17', 'pluggy>=0.3.0,<1.0']
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6"'] = ['argparse']
