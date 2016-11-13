@@ -812,6 +812,7 @@ def test_verbosity(cmd, initproj, verbosity):
     initproj("pkgX-0.0.5", filedefs={
         'tox.ini': """
         [testenv]
+        commands={envpython} --version
     """})
     result = cmd.run("tox", verbosity)
     assert result.ret == 0
