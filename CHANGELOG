@@ -37,6 +37,9 @@
 - fix #399.  Make sure {envtmpdir} is created if it doesn't exist at the
   start of a testenvironment run. Thanks Manuel Jacob.
 
+- fix #316: Lack of commands key in ini file is now treated as an error.
+  Reported virtualenv status is 'nothing to do' instead of 'commands
+  succeeded', with relevant error message displayed. Thanks Lukasz Rogalski.
 
 2.4.1
 -----

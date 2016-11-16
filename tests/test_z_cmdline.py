@@ -351,6 +351,8 @@ def test_venv_special_chars_issue252(cmd, initproj):
         'tox.ini': '''
             [tox]
             envlist = special&&1
+            [testenv]
+            commands={envpython} --version
             [testenv:special&&1]
             changedir=tests
         '''
@@ -468,7 +470,10 @@ def test_package_install_fails(cmd, initproj):
                 install_requires=['qweqwe123'],
                 )
             """,
-        'tox.ini': '',
+        'tox.ini': """
+        [testenv]
+        commands={envpython} --version
+        """,
     })
     result = cmd.run("tox", )
     assert result.ret
@@ -541,6 +546,8 @@ class TestToxRun:
 
 def test_develop(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
+        [testenv]
+        commands={envpython} --version
     """})
     result = cmd.run("tox", "-vv", "--develop")
     assert not result.ret
@@ -550,6 +557,7 @@ def test_develop(initproj, cmd):
 def test_usedevelop(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
+            commands={envpython} --version
             usedevelop=True
     """})
     result = cmd.run("tox", "-vv")
@@ -559,6 +567,8 @@ def test_usedevelop(initproj, cmd):
 
 def test_usedevelop_mixed(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
+            [testenv]
+            commands={envpython} --version
             [testenv:devenv]
             usedevelop=True
             [testenv:nondev]
@@ -648,6 +658,7 @@ def test_notest(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
         [testenv:py26]
+        commands={envpython} --version
         basepython=python
     """})
     result = cmd.run("tox", "-v", "--notest")
@@ -664,7 +675,10 @@ def test_notest(initproj, cmd):
 
 
 def test_PYC(initproj, cmd, monkeypatch):
-    initproj("example123", filedefs={'tox.ini': ''})
+    initproj("example123", filedefs={'tox.ini': """
+        [testenv]
+        commands={envpython} --version
+    """})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
@@ -674,7 +688,10 @@ def test_PYC(initproj, cmd, monkeypatch):
 
 
 def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
-    initproj("example123", filedefs={'tox.ini': ''})
+    initproj("example123", filedefs={'tox.ini': """
+        [testenv]
+        commands={envpython} --version
+    """})
     monkeypatch.setenv("VIRTUALENV_PYTHON", '/FOO')
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret, result.stdout.lines
@@ -700,6 +717,8 @@ def test_separate_sdist_no_sdistfile(cmd, initproj):
         'tox.ini': """
             [tox]
             distshare=%s
+            [testenv]
+            commands={envpython} --version
         """ % distshare
     })
     result = cmd.run("tox", "--sdistonly")
@@ -717,6 +736,8 @@ def test_separate_sdist(cmd, initproj):
             [tox]
             distshare=%s
             sdistsrc={distshare}/pkg123-0.7.zip
+            [testenv]
+            commands={envpython} --version
         """ % distshare
     })
     result = cmd.run("tox", "--sdistonly")
@@ -737,6 +758,8 @@ def test_sdist_latest(tmpdir, newconfig):
             [tox]
             distshare=%s
             sdistsrc={distshare}/pkg123-*
+            [testenv]
+            commands={envpython} --version
     """ % distshare)
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
@@ -789,6 +812,7 @@ def test_verbosity(cmd, initproj, verbosity):
     initproj("pkgX-0.0.5", filedefs={
         'tox.ini': """
         [testenv]
+        commands={envpython} --version
     """})
     result = cmd.run("tox", verbosity)
     assert result.ret == 0
