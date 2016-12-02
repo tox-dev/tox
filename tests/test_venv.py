@@ -265,6 +265,7 @@ def test_develop_extras(newmocksession, tmpdir):
     expected = "%s[testing,development]" % tmpdir.strpath
     assert expected in l[-1].args
 
+
 def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, monkeypatch):
     tmpdir.ensure("setup.py")
     monkeypatch.setenv("TEMP_PASS_VAR", "123")
