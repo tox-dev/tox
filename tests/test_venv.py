@@ -292,6 +292,7 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
     assert 'TEMP_NOPASS_VAR' in env
     assert env["TEMP_NOPASS_VAR"] == "456"
 
+
 def test_test_hashseed_is_in_output(newmocksession):
     original_make_hashseed = tox.config.make_hashseed
     tox.config.make_hashseed = lambda: '123456789'
