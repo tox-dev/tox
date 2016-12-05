@@ -105,7 +105,7 @@ using a different default PyPI url
 To install dependencies and packages from a different
 default PyPI server you can type interactively::
 
-    tox -i http://pypi.testrun.org
+    tox -i http://pypi.my-alternative-index.org
 
 This causes tox to install dependencies and the sdist install step
 to use the specificied url as the index server.
@@ -114,7 +114,7 @@ You can cause the same effect by this ``tox.ini`` content::
 
     [tox]
     indexserver =
-        default = http://pypi.testrun.org
+        default = http://pypi.my-alternative-index.org
 
 installing dependencies from multiple PyPI servers
 ---------------------------------------------------
