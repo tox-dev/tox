@@ -1830,11 +1830,11 @@ class TestIndexServer:
         inisource = """
             [tox]
             indexserver =
-                default = http://pypi.testrun.org
+                default = http://pypi.somewhere.org
                 name1 = whatever
         """
         config = newconfig([], inisource)
-        assert config.indexserver['default'].url == "http://pypi.testrun.org"
+        assert config.indexserver['default'].url == "http://pypi.somewhere.org"
         assert config.indexserver['name1'].url == "whatever"
         config = newconfig(['-i', 'qwe'], inisource)
         assert config.indexserver['default'].url == "qwe"

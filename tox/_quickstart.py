@@ -61,7 +61,7 @@ all_envs = ['py26', 'py27', 'py32', 'py33', 'py34', 'py35', 'pypy', 'jython']
 PROMPT_PREFIX = '> '
 
 QUICKSTART_CONF = '''\
-# Tox (http://tox.testrun.org/) is a tool for running tests
+# Tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -245,7 +245,7 @@ def generate(d, overwrite=True, silent=False):
         return
     sys.stdout.write('\n')
     print('Finished: A tox.ini file has been created. For information on this file, '
-          'see http://tox.testrun.org/latest/config.html')
+          'see https://tox.readthedocs.io/en/latest/config.html')
     print('''
 Execute `tox` to test your project.
 ''')

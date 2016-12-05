@@ -38,14 +38,6 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-
-install: clean html 
-	@rsync -avz $(BUILDDIR)/html/ testrun.org:/www/testrun.org/tox/latest
-	@rsync -avz $(BUILDDIR)/html/ testrun.org:/www/testrun.org/tox/$(SITETARGET)
-	#dev
-    #latexpdf
-	#@scp $(BUILDDIR)/latex/*.pdf testrun.org:www-tox/latest
-
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
