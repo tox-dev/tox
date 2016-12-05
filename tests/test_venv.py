@@ -285,15 +285,15 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
     l = mocksession._pcalls
     assert len(l) == 1
     env = l[0].env
-    
+
     # should have access to setenv vars
     assert 'CUSTOM_VAR' in env
     assert env['CUSTOM_VAR'] == '789'
-    
-    # should have access to passenv vars 
+
+    # should have access to passenv vars
     assert 'TEMP_PASS_VAR' in env
     assert env['TEMP_PASS_VAR'] == "123"
-    
+
     # should also have access to full invocation environment,
     # for backward compatibility, and to match behavior of venv.run_install_command()
     assert 'TEMP_NOPASS_VAR' in env
