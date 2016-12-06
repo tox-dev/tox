@@ -208,8 +208,9 @@ class VirtualEnv(object):
         setup_py = setupdir.join('setup.py')
         setup_cfg = setupdir.join('setup.cfg')
         args = [self.envconfig.envpython, str(setup_py), '--name']
+        env = self._getenv()
         output = action.popen(args, cwd=setupdir, redirect=False,
-                              returnout=True)
+                              returnout=True, env=env)
         name = output.strip()
         egg_info = setupdir.join('.'.join((name, 'egg-info')))
         for conf_file in (setup_py, setup_cfg):

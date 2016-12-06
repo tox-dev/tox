@@ -266,6 +266,40 @@ def test_develop_extras(newmocksession, tmpdir):
     assert expected in l[-1].args
 
 
+def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, monkeypatch):
+    tmpdir.ensure("setup.py")
+    monkeypatch.setenv("TEMP_PASS_VAR", "123")
+    monkeypatch.setenv("TEMP_NOPASS_VAR", "456")
+    config = newconfig([], """
+        [testenv:python]
+        passenv = temp_pass_var
+        setenv =
+            CUSTOM_VAR = 789
+    """)
+
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
+    action = mocksession.newaction(venv, "hello")
+
+    venv._needs_reinstall(tmpdir, action)
+
+    l = mocksession._pcalls
+    assert len(l) == 1
+    env = l[0].env
+
+    # should have access to setenv vars
+    assert 'CUSTOM_VAR' in env
+    assert env['CUSTOM_VAR'] == '789'
+
+    # should have access to passenv vars
+    assert 'TEMP_PASS_VAR' in env
+    assert env['TEMP_PASS_VAR'] == "123"
+
+    # should also have access to full invocation environment,
+    # for backward compatibility, and to match behavior of venv.run_install_command()
+    assert 'TEMP_NOPASS_VAR' in env
+    assert env["TEMP_NOPASS_VAR"] == "456"
+
+
 def test_test_hashseed_is_in_output(newmocksession):
     original_make_hashseed = tox.config.make_hashseed
     tox.config.make_hashseed = lambda: '123456789'
