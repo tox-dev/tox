@@ -348,6 +348,8 @@ class VirtualEnv(object):
         env.update(self.envconfig.setenv)
 
         env['VIRTUAL_ENV'] = str(self.path)
+        if self.session.sdist_path:
+            env['TOX_SDIST'] = str(self.session.sdist_path)
         return env
 
     def test(self, redirect=False):

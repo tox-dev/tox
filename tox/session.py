@@ -330,6 +330,7 @@ class Session:
 
     def __init__(self, config, popen=subprocess.Popen, Report=Reporter):
         self.config = config
+        self.sdist_path = None
         self.popen = popen
         self.resultlog = ResultLog()
         self.report = Report(self)
@@ -532,10 +533,9 @@ class Session:
     def subcommand_test(self):
         if self.config.skipsdist:
             self.report.info("skipping sdist step")
-            path = None
         else:
-            path = self.get_installpkg_path()
-            if not path:
+            self.sdist_path = self.get_installpkg_path()
+            if not self.sdist_path:
                 return 2
         if self.config.option.sdistonly:
             return
@@ -546,7 +546,7 @@ class Session:
                 elif self.config.skipsdist or venv.envconfig.skip_install:
                     self.finishvenv(venv)
                 else:
-                    self.installpkg(venv, path)
+                    self.installpkg(venv, self.sdist_path)
 
                 # write out version dependency information
                 action = self.newaction(venv, "envreport")
