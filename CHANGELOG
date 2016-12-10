@@ -1,3 +1,12 @@
+2.5.1
+----------
+
+- pass setenv variables to setup.py during a usedevelop install.
+  Thanks for the PR to Eli Collins.
+
+- replace all references to testrun.org with readthedocs ones.
+  Thanks Oliver Bestwalter.
+
 2.5.0
 ----------
 
