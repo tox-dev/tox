@@ -935,6 +935,17 @@ class TestConfigTestEnv:
         assert "A1" in env.passenv
         assert "A2" in env.passenv
 
+    def test_passenv_glob_from_global_env(self, tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("A1", "a1")
+        monkeypatch.setenv("A2", "a2")
+        monkeypatch.setenv("TOX_TESTENV_PASSENV", "A*")
+        config = newconfig("""
+            [testenv]
+        """)
+        env = config.envconfigs["python"]
+        assert "A1" in env.passenv
+        assert "A2" in env.passenv
+
     def test_changedir_override(self, tmpdir, newconfig):
         config = newconfig("""
             [testenv]
