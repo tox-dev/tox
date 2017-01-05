@@ -456,7 +456,8 @@ def tox_addoption(parser):
         # read in global passenv settings
         p = os.environ.get("TOX_TESTENV_PASSENV", None)
         if p is not None:
-            passenv.update(x for x in p.split() if x)
+            env_values = [x for x in p.split() if x]
+            value.extend(env_values)
 
         # we ensure that tmp directory settings are passed on
         # we could also set it to the per-venv "envtmpdir"
