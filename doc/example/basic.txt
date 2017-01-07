@@ -282,3 +282,13 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
         py33-mysql: PyMySQL     ; use if both py33 and mysql are in an env name
         py26,py27: urllib3      ; use if any of py26 or py27 are in an env name
         py{26,27}-sqlite: mock  ; mocking sqlite in python 2.x
+
+Prevent symbolic links in virtualenv
+------------------------------------
+By default virtualenv will use symlinks to point to the system's python files, modules, etc.
+If you want the files to be copied instead, possibly because your filesystem is not capable
+of handling symbolic links, you can instruct virtualenv to use the "--always-copy" argument
+meant exactly for that purpose, by setting the ``alwayscopy`` directive in your environment:
+
+    [testenv]
+    alwayscopy = True

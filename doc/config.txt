@@ -237,6 +237,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
     **default:** False, meaning that virtualenvs will be
     created without inheriting the global site packages.
 
+.. confval:: alwayscopy=True|False
+
+    Set to ``True`` if you want virtualenv to always copy files rather
+    than symlinking.
+
+    **default:** False, meaning that virtualenvs will
+    make use of symbolic links.
+
 .. confval:: args_are_paths=BOOL
 
     treat positional arguments passed to ``tox`` as file system paths

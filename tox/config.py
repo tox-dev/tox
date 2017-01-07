@@ -366,6 +366,8 @@ def tox_addoption(parser):
                              "'pytest<2.7' or 'django>=1.6'.")
     parser.add_argument("--sitepackages", action="store_true",
                         help="override sitepackages setting to True in all envs")
+    parser.add_argument("--alwayscopy", action="store_true",
+                        help="override alwayscopy setting to True in all envs")
     parser.add_argument("--skip-missing-interpreters", action="store_true",
                         help="don't fail tests for missing interpreters")
     parser.add_argument("--workdir", action="store",
@@ -496,10 +498,18 @@ def tox_addoption(parser):
     def sitepackages(testenv_config, value):
         return testenv_config.config.option.sitepackages or value
 
+    def alwayscopy(testenv_config, value):
+        return testenv_config.config.option.alwayscopy or value
+
     parser.add_testenv_attribute(
         name="sitepackages", type="bool", default=False, postprocess=sitepackages,
         help="Set to ``True`` if you want to create virtual environments that also "
              "have access to globally installed packages.")
+
+    parser.add_testenv_attribute(
+        name="alwayscopy", type="bool", default=False, postprocess=alwayscopy,
+        help="Set to ``True`` if you want virtualenv to always copy files rather "
+             "than symlinking.")
 
     def pip_pre(testenv_config, value):
         return testenv_config.config.option.pre or value

@@ -640,6 +640,27 @@ def test_test_usedevelop(cmd, initproj):
     ])
 
 
+def test_alwayscopy(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+            [testenv]
+            commands={envpython} --version
+            alwayscopy=True
+    """})
+    result = cmd.run("tox", "-vv")
+    assert not result.ret
+    assert "virtualenv --always-copy" in result.stdout.str()
+
+
+def test_alwayscopy_default(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+            [testenv]
+            commands={envpython} --version
+    """})
+    result = cmd.run("tox", "-vv")
+    assert not result.ret
+    assert "virtualenv --always-copy" not in result.stdout.str()
+
+
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
