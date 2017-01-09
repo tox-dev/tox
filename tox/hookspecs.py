@@ -39,6 +39,12 @@ def tox_testenv_create(venv, action):
 
 
 @hookspec
+def tox_testenv_prepare(venv, action):
+    """ [experimental] Prepare this venv for testing and installation of deps
+    """
+
+
+@hookspec
 def tox_testenv_install_deps(venv, action):
     """ [experimental] perform install dependencies action for this venv.  """
 
