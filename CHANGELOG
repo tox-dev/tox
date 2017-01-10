@@ -10,6 +10,11 @@
 - replace all references to testrun.org with readthedocs ones.
   Thanks Oliver Bestwalter.
 
+- fix #323 by avoiding virtualenv14 is not used on py32
+  (although we don't officially support py32).
+  Thanks Jason R. Coombs.
+
+
 2.5.0
 ----------
 
