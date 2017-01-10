@@ -1,12 +1,8 @@
-2.6.0.dev
-----------
+2.6.0
+-----
 
 - add "alwayscopy" config option to instruct virtualenv to always copy
   files instead of symlinking. Thanks @igordcard, Igor Duarte Cardoso.
-
-
-2.5.1
-----------
 
 - pass setenv variables to setup.py during a usedevelop install.
   Thanks for the PR to Eli Collins.
