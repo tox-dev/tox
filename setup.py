@@ -36,13 +36,20 @@ def has_environment_marker_support():
 
 def main():
     version = sys.version_info[:2]
-    install_requires = ['virtualenv>=1.11.2', 'py>=1.4.17', 'pluggy>=0.3.0,<1.0']
+    virtualenv_open = ['virtualenv>=1.11.2']
+    virtualenv_capped = ['virtualenv>=1.11.2,<14']
+    install_requires = ['py>=1.4.17', 'pluggy>=0.3.0,<1.0']
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6"'] = ['argparse']
+        extras_require[':python_version=="3.2"'] = virtualenv_capped
+        extras_require[':python_version!="3.2"'] = virtualenv_open
     else:
         if version < (2, 7):
             install_requires += ['argparse']
+        install_requires += (
+            virtualenv_capped if (3, 2) < version < (3, 3) else virtualenv_open
+        )
     setuptools.setup(
         name='tox',
         description='virtualenv-based automation of test activities',
