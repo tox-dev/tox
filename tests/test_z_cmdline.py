@@ -708,6 +708,17 @@ def test_PYC(initproj, cmd, monkeypatch):
     ])
 
 
+def test_PYTHONWARNINGS(initproj, cmd, monkeypatch):
+    initproj("example123", filedefs={'tox.ini': """
+        [testenv]
+        setenv=
+            PYTHONWARNINGS=error
+        commands={envpython} --version
+    """})
+    result = cmd.run("tox", "-v")
+    assert not result.ret
+
+
 def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={'tox.ini': """
         [testenv]
