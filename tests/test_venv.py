@@ -62,7 +62,7 @@ def test_create(monkeypatch, mocksession, newconfig):
     l = mocksession._pcalls
     assert len(l) >= 1
     args = l[0].args
-    assert "virtualenv" == str(args[2])
+    assert venv._module() == str(args[2])
     if sys.platform != "win32":
         # realpath is needed for stuff like the debian symlinks
         assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
@@ -486,7 +486,7 @@ class TestCreationConfig:
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
-        assert 'virtualenv' in " ".join(args1)
+        assert venv._module() in " ".join(args1)
         mocksession.report.expect("*", "*create*")
         # modify config and check that recreation happens
         mocksession._clearmocks()

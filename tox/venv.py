@@ -148,6 +148,9 @@ class VirtualEnv(object):
     def _ispython3(self):
         return "python3" in str(self.envconfig.basepython)
 
+    def _module(self):
+        return "venv" if self._ispython3() else "virtualenv"
+
     def update(self, action):
         """ return status string for updating actual venv to match configuration.
             if status string is empty, all is ok.
@@ -402,14 +405,24 @@ def tox_testenv_create(venv, action):
     # if self.getcommandpath("activate").dirpath().check():
     #    return
     config_interpreter = venv.getsupportedinterpreter()
-    args = [sys.executable, '-m', 'virtualenv']
+    is_python3 = venv._ispython3()
+
+    if is_python3:
+        args = [config_interpreter, '-m', venv._module()]
+    else:
+        # add interpreter explicitly, to prevent using
+        # default (virtualenv.ini)
+        args = [
+            sys.executable,
+            '-m', venv._module(),
+            '--python', str(config_interpreter),
+        ]
+
     if venv.envconfig.sitepackages:
         args.append('--system-site-packages')
     if venv.envconfig.alwayscopy:
-        args.append('--always-copy')
-    # add interpreter explicitly, to prevent using
-    # default (virtualenv.ini)
-    args.extend(['--python', str(config_interpreter)])
+        args.append('--copies' if is_python3 else '--always-copy')
+
     # if sys.platform == "win32":
     #    f, path, _ = py.std.imp.find_module("virtualenv")
     #    f.close()
