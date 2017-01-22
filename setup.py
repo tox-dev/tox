@@ -48,7 +48,7 @@ def main():
         if version < (2, 7):
             install_requires += ['argparse']
         install_requires += (
-            virtualenv_capped if (3, 2) < version < (3, 3) else virtualenv_open
+            virtualenv_capped if version == (3, 2) else virtualenv_open
         )
     setuptools.setup(
         name='tox',
