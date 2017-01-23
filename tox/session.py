@@ -605,7 +605,7 @@ class Session:
                     status = "commands succeeded"
                 self.report.good("  %s: %s" % (venv.envconfig.envname, status))
         if not retcode:
-            self.report.good("  Congratulation %s " % u'\u263a'")
+            self.report.good("  Congratulation %s " % u'\u263a')
 
         path = self.config.option.resultjson
         if path:
