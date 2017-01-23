@@ -14,9 +14,11 @@
   (although we don't officially support py32).
   Thanks Jason R. Coombs.
 
+- Add Python 3.6 to envlist and CI.
+  Thanks Andrii Soldatenko.
 
 2.5.0
-----------
+-----
 
 - slightly backward incompatible: fix issue310: the {posargs} substitution 
   now properly preserves the tox command line positional arguments. Positional 
