@@ -288,7 +288,7 @@ Prevent symbolic links in virtualenv
 By default virtualenv will use symlinks to point to the system's python files, modules, etc.
 If you want the files to be copied instead, possibly because your filesystem is not capable
 of handling symbolic links, you can instruct virtualenv to use the "--always-copy" argument
-meant exactly for that purpose, by setting the ``alwayscopy`` directive in your environment:
+meant exactly for that purpose, by setting the ``alwayscopy`` directive in your environment::
 
     [testenv]
     alwayscopy = True
