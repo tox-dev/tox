@@ -95,7 +95,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     the ``install_command`` setting is used for installing packages into
     the virtual environment; both the package under test
-    and any defined dependencies. Must contain the substitution key
+    and its dependencies (defined with :confval:`deps`).
+    Must contain the substitution key
     ``{packages}`` which will be replaced by the packages to
     install.  You should also accept ``{opts}`` if you are using
     pip or easy_install -- it will contain index server options
@@ -174,8 +175,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     test-specific dependencies - to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
-    passed to the installer command for processing.  Each line specifies a file,
-    a URL or a package name.  You can additionally specify
+    passed to the installer command for processing (see :confval:`indexserver`).
+    Each line specifies a file, a URL or a package name.  You can additionally specify
     an :confval:`indexserver` to use for installing this dependency
     but this functionality is deprecated since tox-2.3.
     All derived dependencies (deps required by the dep) will then be
