@@ -38,6 +38,7 @@ class TestToxQuickstartMain(object):
                     'Y',         # py33
                     'Y',         # py34
                     'Y',         # py35
+                    'Y',         # py36
                     'Y',         # pypy
                     'N',         # jython
                     'py.test',   # command to run tests
@@ -55,7 +56,7 @@ class TestToxQuickstartMain(object):
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, py34, py35, pypy
+envlist = py26, py27, py32, py33, py34, py35, py36, pypy
 
 [testenv]
 commands = py.test
@@ -79,6 +80,7 @@ deps =
                     'Y',          # py33
                     'Y',          # py34
                     'Y',          # py35
+                    'Y',          # py36
                     'Y',          # pypy
                     'N',          # jython
                     'nosetests',  # command to run tests
@@ -96,7 +98,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, py34, py35, pypy
+envlist = py26, py27, py32, py33, py34, py35, py36, pypy
 
 [testenv]
 commands = nosetests
@@ -120,6 +122,7 @@ deps =
                     'Y',          # py33
                     'Y',          # py34
                     'Y',          # py35
+                    'Y',          # py36
                     'Y',          # pypy
                     'N',          # jython
                     'trial',      # command to run tests
@@ -137,7 +140,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, py34, py35, pypy
+envlist = py26, py27, py32, py33, py34, py35, py36, pypy
 
 [testenv]
 commands = trial
@@ -161,6 +164,7 @@ deps =
                     'Y',          # py33
                     'Y',          # py34
                     'Y',          # py35
+                    'Y',          # py36
                     'Y',          # pypy
                     'N',          # jython
                     'py.test',    # command to run tests
@@ -177,7 +181,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, py34, py35, pypy
+envlist = py26, py27, py32, py33, py34, py35, py36, pypy
 
 [testenv]
 commands = py.test
@@ -276,7 +280,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, py34, py35, pypy, jython
+envlist = py26, py27, py32, py33, py34, py35, py36, pypy, jython
 
 [testenv]
 commands = py.test
@@ -300,6 +304,7 @@ deps =
                     '',   # py33
                     '',   # py34
                     '',   # py35
+                    '',   # py36
                     '',   # pypy
                     '',   # jython
                     '',   # command to run tests
@@ -317,7 +322,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, py34, py35, pypy, jython
+envlist = py26, py27, py32, py33, py34, py35, py36, pypy, jython
 
 [testenv]
 commands = {envpython} setup.py test
@@ -345,6 +350,7 @@ deps =
                     '',   # py33
                     '',   # py34
                     '',   # py35
+                    '',   # py36
                     '',   # pypy
                     '',   # jython
                     '',   # command to run tests
@@ -363,7 +369,7 @@ deps =
 # and then run "tox" from this directory.
 
 [tox]
-envlist = py26, py27, py32, py33, py34, py35, pypy, jython
+envlist = py26, py27, py32, py33, py34, py35, py36, pypy, jython
 
 [testenv]
 commands = {envpython} setup.py test
