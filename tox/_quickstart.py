@@ -160,7 +160,7 @@ accept a default value, if one is given in brackets).''')
     print('''
 What Python versions do you want to test against? Choices:
     [1] py27
-    [2] py27, py33
+    [2] py27, py36
     [3] (All versions) %s
     [4] Choose each one-by-one''' % ', '.join(all_envs))
     do_prompt(d, 'canned_pyenvs', 'Enter the number of your choice',
@@ -169,7 +169,7 @@ What Python versions do you want to test against? Choices:
     if d['canned_pyenvs'] == '1':
         d['py27'] = True
     elif d['canned_pyenvs'] == '2':
-        for pyenv in ('py27', 'py33'):
+        for pyenv in ('py27', 'py36'):
             d[pyenv] = True
     elif d['canned_pyenvs'] == '3':
         for pyenv in all_envs:
