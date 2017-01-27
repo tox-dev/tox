@@ -181,14 +181,14 @@ What Python versions do you want to test against? Choices:
 
     print('''
 What command should be used to test your project -- examples:
-    - py.test
+    - pytest
     - python setup.py test
     - nosetests package.module
     - trial package.module''')
     do_prompt(d, 'commands', 'Command to run to test project', '{envpython} setup.py test')
 
     default_deps = ' '
-    if 'py.test' in d['commands']:
+    if any(c in d['commands'] for c in ['pytest', 'py.test']):
         default_deps = 'pytest'
     if 'nosetests' in d['commands']:
         default_deps = 'nose'
