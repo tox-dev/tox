@@ -2,20 +2,23 @@
 -----
 
 - add "alwayscopy" config option to instruct virtualenv to always copy
-  files instead of symlinking. Thanks @igordcard, Igor Duarte Cardoso.
+  files instead of symlinking. Thanks Igor Duarte Cardoso (@igordcard).
 
 - pass setenv variables to setup.py during a usedevelop install.
-  Thanks for the PR to Eli Collins.
+  Thanks Eli Collins (@eli-collins).
 
 - replace all references to testrun.org with readthedocs ones.
-  Thanks Oliver Bestwalter.
+  Thanks Oliver Bestwalter (@obestwalter).
 
 - fix #323 by avoiding virtualenv14 is not used on py32
   (although we don't officially support py32).
-  Thanks Jason R. Coombs.
+  Thanks Jason R. Coombs (@jaraco).
 
-- Add Python 3.6 to envlist and CI.
-  Thanks Andrii Soldatenko.
+- add Python 3.6 to envlist and CI.
+  Thanks Andrii Soldatenko (@andriisoldatenko).
+
+- fix glob resolution from TOX_TESTENV_PASSENV env variable
+  Thanks Allan Feldman (@a-feld).
 
 2.5.0
 -----
