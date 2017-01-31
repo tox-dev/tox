@@ -1058,6 +1058,34 @@ class TestConfigTestEnv:
         assert 'FOO' in env
         assert 'BAR' in env
 
+    def test_substitution_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
+        monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
+        monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")
+        config = newconfig("""
+            [testenv:py27]
+            passenv =
+                IGNORE_STATIC_DEFAULT
+                USE_STATIC_DEFAULT
+                IGNORE_DYNAMIC_DEFAULT
+                USE_DYNAMIC_DEFAULT
+            setenv =
+                OTHER_VAR=other
+                IGNORE_STATIC_DEFAULT={env:IGNORE_STATIC_DEFAULT:default}
+                USE_STATIC_DEFAULT={env:USE_STATIC_DEFAULT:default}
+                IGNORE_DYNAMIC_DEFAULT={env:IGNORE_DYNAMIC_DEFAULT:{env:OTHER_VAR}+default}
+                USE_DYNAMIC_DEFAULT={env:USE_DYNAMIC_DEFAULT:{env:OTHER_VAR}+default}
+                IGNORE_OTHER_DEFAULT={env:OTHER_VAR:{env:OTHER_VAR}+default}
+                USE_OTHER_DEFAULT={env:NON_EXISTENT_VAR:{env:OTHER_VAR}+default}
+        """)
+        conf = config.envconfigs['py27']
+        env = conf.setenv
+        assert env['IGNORE_STATIC_DEFAULT'] == "env"
+        assert env['USE_STATIC_DEFAULT'] == "default"
+        assert env['IGNORE_OTHER_DEFAULT'] == "other"
+        assert env['USE_OTHER_DEFAULT'] == "other+default"
+        assert env['IGNORE_DYNAMIC_DEFAULT'] == "env"
+        assert env['USE_DYNAMIC_DEFAULT'] == "other+default"
+
     def test_substitution_positional(self, newconfig):
         inisource = """
             [testenv:py27]
