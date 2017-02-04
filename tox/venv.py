@@ -450,3 +450,5 @@ def tox_testenv_install_deps(venv, action):
         depinfo = ", ".join(map(str, deps))
         action.setactivity("installdeps", "%s" % depinfo)
         venv._install(deps, action=action)
+    # Return non-None to indicate the plugin has completed
+    return True
