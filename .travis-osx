@@ -3,4 +3,4 @@ brew update
 brew install python3
 rm /usr/local/bin/python
 ln -s python3 /usr/local/bin/python
-ln -s pip3 /usr/local/bin/pip
+ln -fs pip3 /usr/local/bin/pip
