@@ -16,6 +16,11 @@ matrix:
   - python: 3.7-dev
   - python: nightly
   - python: pypy
+  include:
+  - os: osx
+    language: generic
 cache: python
+before_install:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
 install: pip install tox
 script: tox -e py
