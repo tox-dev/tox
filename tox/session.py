@@ -565,11 +565,7 @@ class Session:
         return retcode
 
     def runtestenv(self, venv, redirect=False):
-        if not venv.envconfig.commands:
-            self.report.error(("Commands not specified. Please update "
-                               "relevant section of {0}").format(self.config.toxinipath))
-            venv.status = "nothing to do"
-        elif not self.config.option.notest:
+        if not self.config.option.notest:
             if venv.status:
                 return
             self.hook.tox_runtest_pre(venv=venv)
