@@ -1,6 +1,9 @@
 2.x
 -----
 
+- #454: Revert #407, empty commands is not treated as an error.
+  Thanks Anthony Sottile (@asottile).
+
 - #446: (infrastructure) Travis CI tests for tox now also run on OS X now.
   Thanks Jason R. Coombs (@jaraco).
 
