@@ -1,3 +1,9 @@
+2.x
+-----
+
+- (infrastructure) Travis CI tests for tox now also run on OS X now.
+  Thanks Jason R. Coombs (@jaraco).
+
 2.6.0
 -----
 
