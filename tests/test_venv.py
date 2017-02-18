@@ -561,6 +561,31 @@ class TestVenvTest:
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
         assert '__PYVENV_LAUNCHER__' not in os.environ
 
+    def test_pythonpath_usage(self, newmocksession, monkeypatch):
+        monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
+        mocksession = newmocksession([], """
+            [testenv:python]
+            commands=abc
+        """)
+        venv = mocksession.getenv("python")
+        action = mocksession.newaction(venv, "getenv")
+        venv.run_install_command(['qwe'], action=action)
+        assert 'PYTHONPATH' not in os.environ
+        mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
+
+        # passenv = PYTHONPATH allows PYTHONPATH to stay in environment
+        monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
+        mocksession = newmocksession([], """
+            [testenv:python]
+            commands=abc
+            passenv = PYTHONPATH
+        """)
+        venv = mocksession.getenv("python")
+        action = mocksession.newaction(venv, "getenv")
+        venv.run_install_command(['qwe'], action=action)
+        assert 'PYTHONPATH' in os.environ
+        mocksession.report.not_expect("warning", "*Discarding $PYTHONPATH from environment*")
+
 
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     pkg = tmpdir.ensure("package.tar.gz")
