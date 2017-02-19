@@ -573,6 +573,10 @@ class TestVenvTest:
         assert 'PYTHONPATH' not in os.environ
         mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
 
+        l = mocksession._pcalls
+        assert len(l) == 1
+        assert 'PYTHONPATH' not in l[0].env
+
         # passenv = PYTHONPATH allows PYTHONPATH to stay in environment
         monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
         mocksession = newmocksession([], """
@@ -585,6 +589,10 @@ class TestVenvTest:
         venv.run_install_command(['qwe'], action=action)
         assert 'PYTHONPATH' in os.environ
         mocksession.report.not_expect("warning", "*Discarding $PYTHONPATH from environment*")
+
+        l = mocksession._pcalls
+        assert len(l) == 2
+        assert l[1].env['PYTHONPATH'] == '/my/awesome/library'
 
 
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
