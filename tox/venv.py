@@ -283,7 +283,7 @@ class VirtualEnv(object):
             if 'PYTHONPATH' in os.environ:
                 self.session.report.warning(
                     "Discarding $PYTHONPATH from environment, to override "
-                    "specify PYTHONPATH in 'passenv' in your environment."
+                    "specify PYTHONPATH in 'passenv' in your configuration."
                 )
                 os.environ.pop('PYTHONPATH')
 
