@@ -561,6 +561,39 @@ class TestVenvTest:
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
         assert '__PYVENV_LAUNCHER__' not in os.environ
 
+    def test_pythonpath_usage(self, newmocksession, monkeypatch):
+        monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
+        mocksession = newmocksession([], """
+            [testenv:python]
+            commands=abc
+        """)
+        venv = mocksession.getenv("python")
+        action = mocksession.newaction(venv, "getenv")
+        venv.run_install_command(['qwe'], action=action)
+        assert 'PYTHONPATH' not in os.environ
+        mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
+
+        l = mocksession._pcalls
+        assert len(l) == 1
+        assert 'PYTHONPATH' not in l[0].env
+
+        # passenv = PYTHONPATH allows PYTHONPATH to stay in environment
+        monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
+        mocksession = newmocksession([], """
+            [testenv:python]
+            commands=abc
+            passenv = PYTHONPATH
+        """)
+        venv = mocksession.getenv("python")
+        action = mocksession.newaction(venv, "getenv")
+        venv.run_install_command(['qwe'], action=action)
+        assert 'PYTHONPATH' in os.environ
+        mocksession.report.not_expect("warning", "*Discarding $PYTHONPATH from environment*")
+
+        l = mocksession._pcalls
+        assert len(l) == 2
+        assert l[1].env['PYTHONPATH'] == '/my/awesome/library'
+
 
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     pkg = tmpdir.ensure("package.tar.gz")
@@ -572,11 +605,11 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         passenv = x123
         setenv =
             ENV_VAR = value
+            PYTHONPATH = value
     """)
     mocksession._clearmocks()
 
     venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
-    # import pdb; pdb.set_trace()
     mocksession.installpkg(venv, pkg)
     venv.test()
 
@@ -589,12 +622,17 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         assert env['ENV_VAR'] == 'value'
         assert env['VIRTUAL_ENV'] == str(venv.path)
         assert env['X123'] == "123"
+        assert 'PYTHONPATH' in env
+        assert env['PYTHONPATH'] == 'value'
     # all env variables are passed for installation
     assert l[0].env["YY"] == "456"
     assert "YY" not in l[1].env
 
     assert set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"])\
         .issubset(l[1].env)
+
+    # setenv does not trigger PYTHONPATH warnings
+    mocksession.report.not_expect("warning", "*Discarding $PYTHONPATH from environment*")
 
     # for e in os.environ:
     #    assert e in env

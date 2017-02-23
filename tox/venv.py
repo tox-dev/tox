@@ -275,8 +275,17 @@ class VirtualEnv(object):
             argv[i:i + 1] = list(options)
 
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
-                  '__PYVENV_LAUNCHER__', 'PYTHONPATH'):
+                  '__PYVENV_LAUNCHER__'):
             os.environ.pop(x, None)
+
+        if 'PYTHONPATH' not in self.envconfig.passenv:
+            # If PYTHONPATH not explicitly asked for, remove it.
+            if 'PYTHONPATH' in os.environ:
+                self.session.report.warning(
+                    "Discarding $PYTHONPATH from environment, to override "
+                    "specify PYTHONPATH in 'passenv' in your configuration."
+                )
+                os.environ.pop('PYTHONPATH')
 
         old_stdout = sys.stdout
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
