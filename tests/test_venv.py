@@ -682,7 +682,6 @@ def test_run_install_command(newmocksession):
 def test_run_custom_install_command(newmocksession):
     mocksession = newmocksession([], """
         [testenv]
-        commands={envpython} --version
         install_command=easy_install {opts} {packages}
     """)
     venv = mocksession.getenv('python')
@@ -699,7 +698,6 @@ def test_run_custom_install_command(newmocksession):
 def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
     mocksession = newmocksession([], """
         [testenv]
-        commands={envpython} --version
     """)
     x = tmpdir.ensure("x")
     venv = mocksession.getenv("python")
@@ -774,14 +772,3 @@ def test_tox_testenv_pre_post(newmocksession):
     assert l == []
     mocksession.runtestenv(venv)
     assert l == ['started', 'finished']
-
-
-def test_error_when_commands_missing(newmocksession):
-    mocksession = newmocksession([], """
-        [testenv]
-    """)
-
-    venv = mocksession.getenv('python')
-    venv.status = None
-    mocksession.runtestenv(venv)
-    assert venv.status == 'nothing to do'
