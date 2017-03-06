@@ -32,7 +32,7 @@ def tox_get_python_executable(envconfig):
     """
 
 
-@hookspec
+@hookspec(firstresult=True)
 def tox_testenv_create(venv, action):
     """ [experimental] perform creation action for this venv.
     """

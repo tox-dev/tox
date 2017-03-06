@@ -441,6 +441,8 @@ def tox_testenv_create(venv, action):
     basepath.ensure(dir=1)
     args.append(venv.path.basename)
     venv._pcall(args, venv=False, action=action, cwd=basepath)
+    # Return non-None to indicate the plugin has completed
+    return True
 
 
 @hookimpl
