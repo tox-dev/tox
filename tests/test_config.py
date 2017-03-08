@@ -205,6 +205,21 @@ class TestParseconfig:
             old.chdir()
         assert config.toxinipath == toxinipath
 
+    def test_explicit_config_path(self, tmpdir):
+        """
+        Test explicitly setting config path, both with and without the filename
+        """
+        path = tmpdir.mkdir('tox_tmp_directory')
+        config_file_path = path.ensure('tox.ini')
+
+        config = parseconfig(['-c', str(config_file_path)])
+        assert config.toxinipath == config_file_path
+
+        # Passing directory of the config file should also be possible
+        # ('tox.ini' filename is assumed)
+        config = parseconfig(['-c', str(path)])
+        assert config.toxinipath == config_file_path
+
 
 def test_get_homedir(monkeypatch):
     monkeypatch.setattr(py.path.local, "_gethomedir",

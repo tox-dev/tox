@@ -219,8 +219,11 @@ def parseconfig(args=None, plugins=()):
 
     # parse ini file
     basename = config.option.configfile
-    if os.path.isabs(basename):
+    if os.path.isfile(basename):
         inipath = py.path.local(basename)
+    elif os.path.isdir(basename):
+        # Assume 'tox.ini' filename if directory was passed
+        inipath = py.path.local(os.path.join(basename, 'tox.ini'))
     else:
         for path in py.path.local().parts(reverse=True):
             inipath = path.join(basename)
