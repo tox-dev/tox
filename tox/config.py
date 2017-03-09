@@ -324,7 +324,7 @@ def tox_addoption(parser):
                         dest="listenvs", help="show list of test environments")
     parser.add_argument("-c", action="store", default="tox.ini",
                         dest="configfile",
-                        help="use the specified config file name.")
+                        help="config file name or directory with 'tox.ini' file.")
     parser.add_argument("-e", action="append", dest="env",
                         metavar="envlist",
                         help="work against specified environments (ALL selects all).")
