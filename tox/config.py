@@ -219,8 +219,11 @@ def parseconfig(args=None, plugins=()):
 
     # parse ini file
     basename = config.option.configfile
-    if os.path.isabs(basename):
+    if os.path.isfile(basename):
         inipath = py.path.local(basename)
+    elif os.path.isdir(basename):
+        # Assume 'tox.ini' filename if directory was passed
+        inipath = py.path.local(os.path.join(basename, 'tox.ini'))
     else:
         for path in py.path.local().parts(reverse=True):
             inipath = path.join(basename)
@@ -321,7 +324,7 @@ def tox_addoption(parser):
                         dest="listenvs", help="show list of test environments")
     parser.add_argument("-c", action="store", default="tox.ini",
                         dest="configfile",
-                        help="use the specified config file name.")
+                        help="config file name or directory with 'tox.ini' file.")
     parser.add_argument("-e", action="append", dest="env",
                         metavar="envlist",
                         help="work against specified environments (ALL selects all).")
