@@ -219,7 +219,10 @@ class VirtualEnv(object):
         name = output.strip()
         args = [self.envconfig.envpython, '-c', 'import sys; print(sys.path)']
         out = action.popen(args, redirect=False, returnout=True, env=env)
-        sys_path = eval(out.strip())
+        try:
+            sys_path = eval(out.strip())
+        except SyntaxError:
+            sys_path = []
         egg_info_fname = '.'.join((name, 'egg-info'))
         for d in reversed(sys_path):
             egg_info = py.path.local(d).join(egg_info_fname)

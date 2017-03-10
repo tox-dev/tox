@@ -283,7 +283,7 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
     venv._needs_reinstall(tmpdir, action)
 
     l = mocksession._pcalls
-    assert len(l) == 1
+    assert len(l) == 2
     env = l[0].env
 
     # should have access to setenv vars
