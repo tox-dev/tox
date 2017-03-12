@@ -1,8 +1,8 @@
-#
-__version__ = '2.6.1.dev1'
+from pkg_resources import get_distribution
 
 from .hookspecs import hookspec, hookimpl  # noqa
 
+__version__ = get_distribution('tox').version
 
 class exception:
     class Error(Exception):

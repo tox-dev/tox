@@ -55,13 +55,14 @@ def main():
         description='virtualenv-based automation of test activities',
         long_description=open("README.rst").read(),
         url='https://tox.readthedocs.org/',
-        version='2.6.1.dev1',
+        use_scm_version=True,
         license='http://opensource.org/licenses/MIT',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
         author_email='holger@merlinux.eu',
         packages=['tox'],
         entry_points={'console_scripts': 'tox=tox:cmdline\ntox-quickstart=tox._quickstart:main'},
+        setup_requires=['setuptools_scm'],
         # we use a public tox version to test, see tox.ini's testenv
         # "deps" definition for the required dependencies
         tests_require=['tox'],
