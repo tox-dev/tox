@@ -2,7 +2,8 @@ from pkg_resources import get_distribution
 
 from .hookspecs import hookspec, hookimpl  # noqa
 
-__version__ = get_distribution('tox').version
+_version = get_distribution('tox').version
+__version__ = _version.split("+", 1)[0]
 
 class exception:
     class Error(Exception):
