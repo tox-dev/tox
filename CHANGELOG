@@ -1,6 +1,8 @@
 2.x
 -----
 
+- #474: Start using setuptools_scm for tag based versioning.
+
 - #454: Revert #407, empty commands is not treated as an error.
   Thanks Anthony Sottile (@asottile).
 
