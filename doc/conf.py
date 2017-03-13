@@ -15,7 +15,8 @@ import sys, os
 
 from pkg_resources import get_distribution
 
-release = get_distribution('tox').version
+_full_version = get_distribution('tox').version
+release = _full_version.split('+', 1)[0]
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
 
