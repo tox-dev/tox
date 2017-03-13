@@ -5,6 +5,7 @@ from .hookspecs import hookspec, hookimpl  # noqa
 _version = get_distribution('tox').version
 __version__ = _version.split("+", 1)[0]
 
+
 class exception:
     class Error(Exception):
         def __str__(self):
