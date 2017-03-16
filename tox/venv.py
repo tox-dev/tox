@@ -1,4 +1,5 @@
 from __future__ import with_statement
+import ast
 import os
 import sys
 import re
@@ -220,7 +221,7 @@ class VirtualEnv(object):
         args = [self.envconfig.envpython, '-c', 'import sys; print(sys.path)']
         out = action.popen(args, redirect=False, returnout=True, env=env)
         try:
-            sys_path = eval(out.strip())
+            sys_path = ast.literal_eval(out.strip())
         except SyntaxError:
             sys_path = []
         egg_info_fname = '.'.join((name, 'egg-info'))
