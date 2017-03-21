@@ -627,8 +627,10 @@ class Session:
                                  % (attr.name, getattr(envconfig, attr.name)))
 
     def showenvs(self):
+        max_length = max(len(env) for env in self.config.envlist)
         for env in self.config.envlist:
-            self.report.line("%s" % env)
+            self.report.line("{0} {1}".format(env.ljust(max_length),
+                                              self.config.envconfigs[env].description).strip())
 
     def info_versions(self):
         versions = ['tox-%s' % tox.__version__]

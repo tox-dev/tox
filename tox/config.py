@@ -410,6 +410,15 @@ def tox_addoption(parser):
         help="executable name or path of interpreter used to create a "
              "virtual test environment.")
 
+    def merge_description(testenv_config, value):
+        """the reader by default joins generated description with new line,
+         replace new line with space"""
+        return value.replace('\n', ' ')
+
+    parser.add_testenv_attribute(
+        name="description", type="string", default='', postprocess=merge_description,
+        help="short description of this environment")
+
     parser.add_testenv_attribute(
         name="envtmpdir", type="path", default="{envdir}/tmp",
         help="venv temporary directory")
