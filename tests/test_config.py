@@ -1980,6 +1980,11 @@ class TestCmdInvocation:
             'tox.ini': '''
             [tox]
             envlist=py26,py27,py33,pypy,docs
+            description= py27: run py.test on Python 2.7
+                         py33: run py.test on Python 3.6
+                         pypy: publish to pypy
+                         docs: document stuff
+                         notincluded: random extra
 
             [testenv:notincluded]
             changedir = whatever
@@ -1990,15 +1995,69 @@ class TestCmdInvocation:
         })
         result = cmd.run("tox", "-l")
         result.stdout.fnmatch_lines("""
-            *py26*
-            *py27*
-            *py33*
-            *pypy*
-            *docs*
+            py26
+            py27
+            py33
+            pypy
+            docs
         """)
 
-    def test_listenvs_description(self, cmd, initproj):
-        initproj('listenvs', filedefs={
+    def test_listenvs_verbose_description(self, cmd, initproj):
+        initproj('listenvs_verbose_description', filedefs={
+            'tox.ini': '''
+            [tox]
+            envlist=py26,py27,py33,pypy,docs
+            [testenv]
+            description= py26: run py.test on Python 2.6
+                         py27: run py.test on Python 2.7
+                         py33: run py.test on Python 3.3
+                         pypy: publish to pypy
+                         docs: document stuff
+                         notincluded: random extra
+
+            [testenv:notincluded]
+            changedir = whatever
+
+            [testenv:docs]
+            changedir = docs
+            description = let me overwrite that
+            ''',
+        })
+        result = cmd.run("tox", "-lv")
+        result.stdout.fnmatch_lines("""
+            default environments:
+            py26 -> run py.test on Python 2.6
+            py27 -> run py.test on Python 2.7
+            py33 -> run py.test on Python 3.3
+            pypy -> publish to pypy
+            docs -> let me overwrite that
+        """)
+
+    def test_listenvs_all(self, cmd, initproj):
+        initproj('listenvs_all', filedefs={
+            'tox.ini': '''
+            [tox]
+            envlist=py26,py27,py33,pypy,docs
+
+            [testenv:notincluded]
+            changedir = whatever
+
+            [testenv:docs]
+            changedir = docs
+            ''',
+        })
+        result = cmd.run("tox", "-a")
+        result.stdout.fnmatch_lines("""
+            py26
+            py27
+            py33
+            pypy
+            docs
+            notincluded
+        """)
+
+    def test_listenvs_all_verbose_description(self, cmd, initproj):
+        initproj('listenvs_all_verbose_description', filedefs={
             'tox.ini': '''
             [tox]
             envlist={py27,py36}-{windows,linux}
@@ -2014,12 +2073,16 @@ class TestCmdInvocation:
             changedir = docs
             ''',
         })
-        result = cmd.run("tox", "-l")
+        result = cmd.run("tox", "-av")
         result.stdout.fnmatch_lines("""
-            py27-windows run py.test on Python 2.7 on Windows platform
-            py27-linux   run py.test on Python 2.7 on Linux platform
-            py36-windows run py.test on Python 3.6 on Windows platform
-            py36-linux   run py.test on Python 3.6 on Linux platform
+            default environments:
+            py27-windows -> run py.test on Python 2.7 on Windows platform
+            py27-linux   -> run py.test on Python 2.7 on Linux platform
+            py36-windows -> run py.test on Python 3.6 on Windows platform
+            py36-linux   -> run py.test on Python 3.6 on Linux platform
+
+            additional environments:
+            docs         -> generate documentation
         """)
 
     def test_config_specific_ini(self, tmpdir, cmd):
