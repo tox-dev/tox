@@ -1,3 +1,4 @@
+.vagrant
 *.pyc
 *.pyo
 *.swp
