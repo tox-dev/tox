@@ -1997,6 +1997,31 @@ class TestCmdInvocation:
             *docs*
         """)
 
+    def test_listenvs_description(self, cmd, initproj):
+        initproj('listenvs', filedefs={
+            'tox.ini': '''
+            [tox]
+            envlist={py27,py36}-{windows,linux}
+            [testenv]
+            description= py27: run py.test on Python 2.7
+                         py36: run py.test on Python 3.6
+                         windows: on Windows platform
+                         linux: on Linux platform
+                         docs: generate documentation
+            commands=py.test {posargs}
+
+            [testenv:docs]
+            changedir = docs
+            ''',
+        })
+        result = cmd.run("tox", "-l")
+        result.stdout.fnmatch_lines("""
+            py27-windows run py.test on Python 2.7 on Windows platform
+            py27-linux   run py.test on Python 2.7 on Linux platform
+            py36-windows run py.test on Python 3.6 on Windows platform
+            py36-linux   run py.test on Python 3.6 on Linux platform
+        """)
+
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
         result = cmd.run("tox", "-c", ini, "--showconfig")
