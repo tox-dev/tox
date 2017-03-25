@@ -576,8 +576,9 @@ def test_usedevelop_mixed(initproj, cmd):
     assert "sdist-make" in result.stdout.str()
 
 
-def test_test_usedevelop(cmd, initproj):
-    initproj("example123-0.5", filedefs={
+@pytest.mark.parametrize("src_root", [".", "src"])
+def test_test_usedevelop(cmd, initproj, src_root):
+    initproj("example123-0.5", src_root=src_root, filedefs={
         'tests': {
             'test_hello.py': """
                 def test_hello(pytestconfig):
@@ -602,6 +603,7 @@ def test_test_usedevelop(cmd, initproj):
     assert "sdist-make" not in result.stdout.str()
     result = cmd.run("tox", "-epython", )
     assert not result.ret
+    assert "develop-inst-noop" in result.stdout.str()
     result.stdout.fnmatch_lines([
         "*1 passed*",
         "*summary*",
@@ -611,6 +613,7 @@ def test_test_usedevelop(cmd, initproj):
     old = cmd.tmpdir.chdir()
     result = cmd.run("tox", "-c", "example123/tox.ini")
     assert not result.ret
+    assert "develop-inst-noop" in result.stdout.str()
     result.stdout.fnmatch_lines([
         "*1 passed*",
         "*summary*",
@@ -623,11 +626,18 @@ def test_test_usedevelop(cmd, initproj):
     testfile.write("def test_fail(): assert 0")
     result = cmd.run("tox", )
     assert result.ret
+    assert "develop-inst-noop" in result.stdout.str()
     result.stdout.fnmatch_lines([
         "*1 failed*",
         "*summary*",
         "*python: *failed*",
     ])
+    # test develop is called if setup.py changes
+    setup_py = py.path.local("setup.py")
+    setup_py.write(setup_py.read() + ' ')
+    result = cmd.run("tox", )
+    assert result.ret
+    assert "develop-inst-nodeps" in result.stdout.str()
 
 
 def test_alwayscopy(initproj, cmd):

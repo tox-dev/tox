@@ -1,4 +1,5 @@
 from __future__ import with_statement
+import ast
 import os
 import sys
 import re
@@ -217,10 +218,21 @@ class VirtualEnv(object):
         output = action.popen(args, cwd=setupdir, redirect=False,
                               returnout=True, env=env)
         name = output.strip()
-        egg_info = setupdir.join('.'.join((name, 'egg-info')))
+        args = [self.envconfig.envpython, '-c', 'import sys; print(sys.path)']
+        out = action.popen(args, redirect=False, returnout=True, env=env)
+        try:
+            sys_path = ast.literal_eval(out.strip())
+        except SyntaxError:
+            sys_path = []
+        egg_info_fname = '.'.join((name, 'egg-info'))
+        for d in reversed(sys_path):
+            egg_info = py.path.local(d).join(egg_info_fname)
+            if egg_info.check():
+                break
+        else:
+            return True
         for conf_file in (setup_py, setup_cfg):
-            if (not egg_info.check()
-                    or (conf_file.check() and conf_file.mtime() > egg_info.mtime())):
+            if conf_file.check() and conf_file.mtime() > egg_info.mtime():
                 return True
         return False
 
