@@ -1,8 +1,12 @@
 2.x
 -----
 
+- #464: display a short documentation with the -l/ show envlist (a
+  concatenation of the environments description).
+  Thanks Gábor Bernát (@gaborbernat).
+
 - #464: Fix incorrect egg-info location for modified package_dir in setup.py
-  Thanks Selim Belhaouane (@selimb)
+  Thanks Selim Belhaouane (@selimb).
 
 - #431: Add 'LANGUAGE' to default passed environment variables
   Thanks Paweł Adamczak (@pawalad).
