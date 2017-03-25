@@ -290,7 +290,7 @@ class LineMatcher:
 @pytest.fixture
 def initproj(request, tmpdir):
     """ create a factory function for creating example projects. """
-    def initproj(nameversion, filedefs=None):
+    def initproj(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}
         if _istext(nameversion) or _isbytes(nameversion):
@@ -304,18 +304,20 @@ def initproj(request, tmpdir):
         create_files(base, filedefs)
         if 'setup.py' not in filedefs:
             create_files(base, {'setup.py': '''
-                from setuptools import setup
+                from setuptools import setup, find_packages
                 setup(
                     name='%(name)s',
                     description='%(name)s project',
                     version='%(version)s',
                     license='MIT',
                     platforms=['unix', 'win32'],
-                    packages=['%(name)s', ],
+                    packages=find_packages('%(src_root)s'),
+                    package_dir={'':'%(src_root)s'},
                 )
             ''' % locals()})
         if name not in filedefs:
-            create_files(base, {
+            src_dir = base.ensure(src_root, dir=1)
+            create_files(src_dir, {
                 name: {'__init__.py': '__version__ = %r' % version}
             })
         manifestlines = []
