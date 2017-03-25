@@ -1,7 +1,11 @@
 2.x
 -----
 
+- #431: Add 'LANGUAGE' to default passed environment variables
+  Thanks Paweł Adamczak (@pawalad).
+
 - #455: Add a Vagrantfile with a customized Arch Linux box for local testing
+  Thanks Oliver Bestwalter (@obestwalter).
 
 - #454: Revert #407, empty commands is not treated as an error.
   Thanks Anthony Sottile (@asottile).
@@ -34,14 +38,14 @@
 2.5.0
 -----
 
-- slightly backward incompatible: fix issue310: the {posargs} substitution 
-  now properly preserves the tox command line positional arguments. Positional 
+- slightly backward incompatible: fix issue310: the {posargs} substitution
+  now properly preserves the tox command line positional arguments. Positional
   arguments with spaces are now properly handled.
   NOTE: if your tox invocation previously used extra quoting for positional arguments to
   work around issue310, you need to remove the quoting. Example:
-  tox -- "'some string'"  # has to now be written simply as 
+  tox -- "'some string'"  # has to now be written simply as
   tox -- "some string"
-  thanks holger krekel.  You can set ``minversion = 2.5.0`` in the ``[tox]`` 
+  thanks holger krekel.  You can set ``minversion = 2.5.0`` in the ``[tox]``
   section of ``tox.ini`` to make sure people using your tox.ini use the correct version.
 
 - fix #359: add COMSPEC to default passenv on windows.  Thanks
@@ -51,7 +55,7 @@
   travis builds of tox. Thanks John Vandenberg.
 
 - fix #348: add py2 and py3 as default environments pointing to
-  "python2" and "python3" basepython executables.  Also fix #347 by 
+  "python2" and "python3" basepython executables.  Also fix #347 by
   updating the list of default envs in the tox basic example.
   Thanks Tobias McNulty.
 
@@ -85,7 +89,7 @@
 
 - remove PYTHONPATH from environment during the install phase because a
   tox-run should not have hidden dependencies and the test commands will also
-  not see a PYTHONPATH.  If this causes unforeseen problems it may be 
+  not see a PYTHONPATH.  If this causes unforeseen problems it may be
   reverted in a bugfix release.  Thanks Jason R. Coombs.
 
 - fix issue352: prevent a configuration where envdir==toxinidir and
@@ -108,10 +112,10 @@
   to "pip freeze" to obtain the list of installed packages.
   Thanks Ted Shaw, Holger Krekel.
 
-- close issue66: add documentation to jenkins page on how to avoid 
-  "too long shebang" lines when calling pip from tox.  Note that we 
-  can not use "python -m pip install X" by default because the latter 
-  adds the CWD and pip will think X is installed if it is there.  
+- close issue66: add documentation to jenkins page on how to avoid
+  "too long shebang" lines when calling pip from tox.  Note that we
+  can not use "python -m pip install X" by default because the latter
+  adds the CWD and pip will think X is installed if it is there.
   "pip install X" does not do that.
 
 - new list_dependencies_command to influence how tox determines
