@@ -1,3 +1,6 @@
+import io
+import os
+import re
 import sys
 import setuptools
 from setuptools.command.test import test as TestCommand
@@ -34,6 +37,21 @@ def has_environment_marker_support():
         sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
         return False
 
+
+def get_long_description():
+    limit = 5
+    here = os.path.abspath(".")
+    with io.open(os.path.join(here, 'CHANGELOG'), encoding='utf-8') as c:
+        raw_log = c.read()
+    header_matches = list(re.finditer('^-+$', raw_log, re.MULTILINE))
+    lines = raw_log[:header_matches[limit].start()].splitlines()[:-1]
+    title = ("Changelog (last %s releases - `full changelog <https://github."
+             "com/tox-dev/tox/blob/master/CHANGELOG>`_)" % limit)
+    out = [title, '=' * len(title), "\n", "\n".join(lines)]
+    with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as r:
+        return "%s\n\n%s" % (r.read(), "\n".join(out))
+
+
 def main():
     version = sys.version_info[:2]
     virtualenv_open = ['virtualenv>=1.11.2']
@@ -53,9 +71,9 @@ def main():
     setuptools.setup(
         name='tox',
         description='virtualenv-based automation of test activities',
-        long_description=open("README.rst").read(),
+        long_description=get_long_description(),
         url='https://tox.readthedocs.org/',
-        version='2.7.0.dev1',
+        version='2.7.0',
         license='http://opensource.org/licenses/MIT',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel',
