@@ -212,10 +212,10 @@ Complete list of settings that you can put into ``testenv*`` sections:
    You can use ``*`` and ``?`` to match multiple environment variables with
    one name.
 
-   Note that the ``PATH``, ``LANG`` and ``PIP_INDEX_URL`` variables are
-   unconditionally passed down and on Windows ``SYSTEMROOT``, ``PATHEXT``,
-   ``TEMP`` and ``TMP`` will be passed down as well whereas on unix
-   ``TMPDIR`` will be passed down.  You can override these variables
+   Note that the ``PATH``, ``LANG``, ``LANGUAGE`` and ``PIP_INDEX_URL``
+   variables are unconditionally passed down and on Windows ``SYSTEMROOT``,
+   ``PATHEXT``, ``TEMP`` and ``TMP`` will be passed down as well whereas on
+   unix ``TMPDIR`` will be passed down.  You can override these variables
    with the ``setenv`` option.
 
    If defined the ``TOX_TESTENV_PASSENV`` environment variable (in the tox
