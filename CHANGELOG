@@ -5,13 +5,13 @@
   concatenation of the environments description).
   Thanks Gábor Bernát (@gaborbernat).
 
-- #464: Fix incorrect egg-info location for modified package_dir in setup.py
+- #464: Fix incorrect egg-info location for modified package_dir in setup.py.
   Thanks Selim Belhaouane (@selimb).
 
-- #431: Add 'LANGUAGE' to default passed environment variables
+- #431: Add 'LANGUAGE' to default passed environment variables.
   Thanks Paweł Adamczak (@pawalad).
 
-- #455: Add a Vagrantfile with a customized Arch Linux box for local testing
+- #455: Add a Vagrantfile with a customized Arch Linux box for local testing.
   Thanks Oliver Bestwalter (@obestwalter).
 
 - #454: Revert #407, empty commands is not treated as an error.
