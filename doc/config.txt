@@ -374,7 +374,7 @@ Globally available substitutions
     they may be accessed by other processes or tox runs.
 
 ``{:}``
-    OS-specific path separator (``:`` os *nix family, ``;`` on Windows). May be used in `setenv`,
+    OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in `setenv`,
     when target variable is path variable (e.g. PATH or PYTHONPATH).
 
 substitutions for virtualenv-related sections
