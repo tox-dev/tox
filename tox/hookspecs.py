@@ -32,15 +32,52 @@ def tox_get_python_executable(envconfig):
     """
 
 
-@hookspec
+@hookspec(firstresult=True)
 def tox_testenv_create(venv, action):
     """ [experimental] perform creation action for this venv.
+
+    Some example usage:
+
+    - To *add* behavior but still use tox's implementation to set up a
+      virtualenv, implement this hook but do not return a value (or explicitly
+      return ``None``).
+    - To *override* tox's virtualenv creation, implement this hook and return
+      a non-``None`` value.
+
+    .. note:: This api is experimental due to the unstable api of
+        :class:`tox.venv.VirtualEnv`.
+
+    .. note:: This hook uses ``firstresult=True`` (see pluggy_) -- hooks
+        implementing this will be run until one returns non-``None``.
+
+    .. _pluggy: http://pluggy.readthedocs.io/en/latest/#first-result-only
     """
 
 
-@hookspec
+@hookspec(firstresult=True)
 def tox_testenv_install_deps(venv, action):
-    """ [experimental] perform install dependencies action for this venv.  """
+    """ [experimental] perform install dependencies action for this venv.
+
+    Some example usage:
+
+    - To *add* behavior but still use tox's implementation to install
+      dependencies, implement this hook but do not return a value (or
+      explicitly return ``None``).  One use-case may be to install (or ensure)
+      non-python dependencies such as debian packages.
+    - To *override* tox's installation of dependencies, implement this hook
+      and return a non-``None`` value.  One use-case may be to install via
+      a different installation tool such as `pip-accel`_ or `pip-faster`_.
+
+    .. note:: This api is experimental due to the unstable api of
+        :class:`tox.venv.VirtualEnv`.
+
+    .. note:: This hook uses ``firstresult=True`` (see pluggy_) -- hooks
+        implementing this will be run until one returns non-``None``.
+
+    .. _pip-accel: https://github.com/paylogic/pip-accel
+    .. _pip-faster: https://github.com/Yelp/venv-update
+    .. _pluggy: http://pluggy.readthedocs.io/en/latest/#first-result-only
+    """
 
 
 @hookspec

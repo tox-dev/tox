@@ -442,6 +442,8 @@ def tox_testenv_create(venv, action):
     basepath.ensure(dir=1)
     args.append(venv.path.basename)
     venv._pcall(args, venv=False, action=action, cwd=basepath)
+    # Return non-None to indicate the plugin has completed
+    return True
 
 
 @hookimpl
@@ -451,3 +453,5 @@ def tox_testenv_install_deps(venv, action):
         depinfo = ", ".join(map(str, deps))
         action.setactivity("installdeps", "%s" % depinfo)
         venv._install(deps, action=action)
+    # Return non-None to indicate the plugin has completed
+    return True
