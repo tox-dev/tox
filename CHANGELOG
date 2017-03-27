@@ -1,6 +1,12 @@
 2.7.0
 -----
 
+- #p450: Stop after the first installdeps and first testenv create hooks
+  succeed. This changes the default behaviour of `tox_testenv_create`
+  and `tox_testenv_install_deps` to not execute other registered hooks when
+  the first hook returns a result that is not `None`.
+  Thanks Anthony Sottile (@asottile).
+
 - #464: display a short documentation with the -l/ show envlist (a
   concatenation of the environments description).
   Thanks Gábor Bernát (@gaborbernat).
