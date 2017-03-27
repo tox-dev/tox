@@ -38,18 +38,28 @@ def has_environment_marker_support():
         return False
 
 
+def get_linked_changelog(here, n=5):
+    """changelog containing last n releases with links to issues"""
+    repo_url = 'https://github.com/tox-dev/tox'
+    changelog_url = '%s/blob/master/CHANGELOG' % repo_url
+    issues_url = '%s/issues' % (repo_url)
+    with io.open(os.path.join(here, 'CHANGELOG'), encoding='utf-8') as f:
+        changelog = f.read()
+    header_matches = list(re.finditer('^-+$', changelog, re.MULTILINE))
+    lines = changelog[:header_matches[n].start()].splitlines()[:-1]
+    title = "Changelog (last %s releases - `full changelog <%s>`_)" % (
+        n, changelog_url)
+    changelog = '\n'.join([title, '=' * len(title), "\n", "\n".join(lines)])
+    replacement = r'`#\1 <%s/\1>`_' % issues_url
+    for pattern in [r'#(\d+)', r'issue(\d+)']:
+        changelog = re.sub(pattern, replacement, changelog)
+    return changelog
+
+
 def get_long_description():
-    limit = 5
-    here = os.path.abspath(".")
-    with io.open(os.path.join(here, 'CHANGELOG'), encoding='utf-8') as c:
-        raw_log = c.read()
-    header_matches = list(re.finditer('^-+$', raw_log, re.MULTILINE))
-    lines = raw_log[:header_matches[limit].start()].splitlines()[:-1]
-    title = ("Changelog (last %s releases - `full changelog <https://github."
-             "com/tox-dev/tox/blob/master/CHANGELOG>`_)" % limit)
-    out = [title, '=' * len(title), "\n", "\n".join(lines)]
-    with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as r:
-        return "%s\n\n%s" % (r.read(), "\n".join(out))
+    here = os.path.abspath('.')
+    with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+        return "%s\n\n%s" % (f.read(), get_linked_changelog(here))
 
 
 def main():
