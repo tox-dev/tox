@@ -42,7 +42,6 @@ def get_linked_changelog(here, n=5):
     """changelog containing last n releases with links to issues"""
     repo_url = 'https://github.com/tox-dev/tox'
     changelog_url = '%s/blob/master/CHANGELOG' % repo_url
-    issues_url = '%s/issues' % (repo_url)
     with io.open(os.path.join(here, 'CHANGELOG'), encoding='utf-8') as f:
         changelog = f.read()
     header_matches = list(re.finditer('^-+$', changelog, re.MULTILINE))
@@ -50,9 +49,11 @@ def get_linked_changelog(here, n=5):
     title = "Changelog (last %s releases - `full changelog <%s>`_)" % (
         n, changelog_url)
     changelog = '\n'.join([title, '=' * len(title), "\n", "\n".join(lines)])
-    replacement = r'`#\1 <%s/\1>`_' % issues_url
+    issue_replacement = r'`#\1 <%s/issues/\1>`_' % repo_url
     for pattern in [r'#(\d+)', r'issue(\d+)']:
-        changelog = re.sub(pattern, replacement, changelog)
+        changelog = re.sub(pattern, issue_replacement, changelog)
+    pull_replacement = r'`#p\1 <%s/pull/\1>`_' % repo_url
+    changelog = re.sub(r'#p(\d+)', pull_replacement, changelog)
     return changelog
 
 
