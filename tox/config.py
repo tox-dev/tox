@@ -320,6 +320,8 @@ def tox_addoption(parser):
                         "output redirection for package installation")
     parser.add_argument("--showconfig", action="store_true",
                         help="show configuration information for all environments. ")
+    parser.add_argument("--show-envdir", action="store_true", dest="showenvdir",
+                        help="show virtualenv directory for specified environments")
     parser.add_argument("-l", "--listenvs", action="store_true",
                         dest="listenvs", help="show list of test environments")
     parser.add_argument("-c", action="store", default="tox.ini",
