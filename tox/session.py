@@ -385,7 +385,9 @@ class Session:
         if self.config.option.showconfig:
             self.showconfig()
         elif self.config.option.listenvs:
-            self.showenvs()
+            self.showenvs(all_envs=False, description=self.config.option.verbosity > 0)
+        elif self.config.option.listenvs_all:
+            self.showenvs(all_envs=True, description=self.config.option.verbosity > 0)
         else:
             return self.subcommand_test()
 
@@ -626,11 +628,29 @@ class Session:
                 self.report.line("  %-15s = %s"
                                  % (attr.name, getattr(envconfig, attr.name)))
 
-    def showenvs(self):
-        max_length = max(len(env) for env in self.config.envlist)
-        for env in self.config.envlist:
-            self.report.line("{0} {1}".format(env.ljust(max_length),
-                                              self.config.envconfigs[env].description).strip())
+    def showenvs(self, all_envs=False, description=False):
+        env_conf = self.config.envconfigs  # this contains all environments
+        default = self.config.envlist  # this only the defaults
+        extra = sorted([e for e in env_conf if e not in default]) if all_envs else []
+        if description:
+            self.report.line('default environments:')
+            max_length = max(len(env) for env in (default + extra))
+
+        def report_env(e):
+            if description:
+                msg = '{0} -> {1}'.format(e.ljust(max_length),
+                                          env_conf[e].description).strip()
+            else:
+                msg = e
+            self.report.line(msg)
+        for e in default:
+            report_env(e)
+        if all_envs:
+            if description:
+                self.report.line('')
+                self.report.line('additional environments:')
+            for e in extra:
+                report_env(e)
 
     def info_versions(self):
         versions = ['tox-%s' % tox.__version__]

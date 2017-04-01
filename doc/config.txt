@@ -341,7 +341,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     a short description of the environment, this will be used to explain
     the environment to the user upon listing environments for the command
-    line. **default**: empty string
+    line with any level of verbosity higher than zero. **default**: empty string
 
 Substitutions
 -------------
