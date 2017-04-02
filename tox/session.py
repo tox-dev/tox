@@ -638,8 +638,8 @@ class Session:
 
         def report_env(e):
             if description:
-                msg = '{0} -> {1}'.format(e.ljust(max_length),
-                                          env_conf[e].description).strip()
+                text = env_conf[e].description or '[no description]'
+                msg = '{0} -> {1}'.format(e.ljust(max_length), text).strip()
             else:
                 msg = e
             self.report.line(msg)
