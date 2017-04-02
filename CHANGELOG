@@ -8,13 +8,17 @@
   Thanks Anthony Sottile (@asottile).
 
 - #271 and #464: Improve environment information for users.
+
   New command line parameter: `-a` show **all** defined environments -
   not just the ones defined in (or generated from) envlist.
+
   New verbosity settings for `-l` and `-a`: show user defined descriptions
   of the environments. This also works for generated environments from factors
   by concatenating factor descriptions into a complete description.
+
   Note that for backwards compatibility with scripts using the output of `-l`
   it's output remains unchanged.
+
   Thanks Gábor Bernát (@gaborbernat).
 
 - #464: Fix incorrect egg-info location for modified package_dir in setup.py.
