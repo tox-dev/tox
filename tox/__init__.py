@@ -1,7 +1,9 @@
-#
-__version__ = '2.7.0'
+from pkg_resources import get_distribution
 
 from .hookspecs import hookspec, hookimpl  # noqa
+
+_full_version = get_distribution('tox').version
+__version__ = _full_version.split('+', 1)[0]
 
 
 class exception:

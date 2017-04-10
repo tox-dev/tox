@@ -13,12 +13,14 @@
 
 import sys, os
 
-# The short X.Y version.
-sys.path.insert(0, os.path.dirname(__file__))
-import _getdoctarget
+from pkg_resources import get_distribution
 
-version = _getdoctarget.get_minor_version_string()
-release = _getdoctarget.get_version_string()
+_full_version = get_distribution('tox').version
+release = _full_version.split('+', 1)[0]
+# The short X.Y version.
+version = '.'.join(release.split('.')[:2])
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
