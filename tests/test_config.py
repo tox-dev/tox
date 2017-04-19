@@ -2085,6 +2085,21 @@ class TestCmdInvocation:
             docs         -> generate documentation
         """)
 
+    def test_listenvs_all_verbose_description_no_additional_environments(self, cmd, initproj):
+        initproj('listenvs_all_verbose_description', filedefs={
+            'tox.ini': '''
+            [tox]
+            envlist=py27,py36
+            ''',
+        })
+        result = cmd.run("tox", "-av")
+        result.stdout.fnmatch_lines("""
+            default environments:
+            py27 -> [no description]
+            py36 -> [no description]
+        """)
+        assert 'additional environments' not in result.stdout.str()
+
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
         result = cmd.run("tox", "-c", ini, "--showconfig")
