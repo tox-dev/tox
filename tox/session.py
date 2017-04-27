@@ -109,7 +109,7 @@ class Action(object):
             logdir = self.session.config.logdir
         try:
             l = logdir.listdir("%s-*" % actionid)
-        except py.error.ENOENT:
+        except (py.error.ENOENT, py.error.ENOTDIR):
             logdir.ensure(dir=1)
             l = []
         num = len(l)
