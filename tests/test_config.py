@@ -864,6 +864,7 @@ class TestConfigTestEnv:
             assert "COMSPEC" in envconfig.passenv
             assert "TEMP" in envconfig.passenv
             assert "TMP" in envconfig.passenv
+            assert "USERPROFILE" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
         assert "PATH" in envconfig.passenv

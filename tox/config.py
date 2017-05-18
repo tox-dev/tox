@@ -489,6 +489,7 @@ def tox_addoption(parser):
             passenv.add("COMSPEC")      # needed for distutils cygwincompiler
             passenv.add("TEMP")
             passenv.add("TMP")
+            passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`.
         else:
             passenv.add("TMPDIR")
         for spec in value:
