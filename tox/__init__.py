@@ -2,8 +2,12 @@ from pkg_resources import get_distribution
 
 from .hookspecs import hookspec, hookimpl  # noqa
 
-_full_version = get_distribution('tox').version
-__version__ = _full_version.split('+', 1)[0]
+try:
+    _full_version = get_distribution(__name__).version
+    __version__ = _full_version.split('+', 1)[0]
+except DistributionNotFound:
+    __version__ = '0.0.0.dev0'
+
 
 
 class exception:
