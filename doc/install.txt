@@ -27,7 +27,7 @@ It is fine to install ``tox`` itself into a virtualenv_ environment.
 Install from Checkout
 -------------------------
 
-Consult the Bitbucket page to get a checkout of the git repository:
+Consult the GitHub page to get a checkout of the git repository:
 
     https://github.com/tox-dev/tox
 
