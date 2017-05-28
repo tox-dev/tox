@@ -679,12 +679,38 @@ def make_hashseed():
     return str(random.randint(1, max_seed))
 
 
+def strip_comments(config):
+    if re.search('((\s#(.*))|(\n#(.*))|(^#.*)|( ;(.*))|(\n;(.*))|(^;.*))', config):
+        i = 0
+        strings = []
+        quotes = re.search('([\'"].*[\'"])', config)
+        while quotes:
+            strings.append(quotes.group(1))
+            config = re.sub('([\'"].*[\'"])', '{' + str(i) + '}', config, 1)
+            i += 1
+            quotes = re.search('([\'"].*[\'"])', config)
+
+        config = re.sub('((\s#(.*))|(\n#(.*))|(^#.*))', '', config)
+        config = re.sub('((\s;(.*))|(\n;(.*))|(^;.*))', '', config)
+
+        if strings:
+            config = config.format(*strings)
+
+    return config
+
+
 class parseini:
     def __init__(self, config, inipath):
         config.toxinipath = inipath
         config.toxinidir = config.toxinipath.dirpath()
 
-        self._cfg = py.iniconfig.IniConfig(config.toxinipath)
+        ini_data = []
+        with open(config.toxinipath.strpath) as f:
+            ini_data = f.read()
+
+        ini_data = strip_comments(ini_data)
+
+        self._cfg = py.iniconfig.IniConfig(path=config.toxinipath, data=ini_data)
         config._cfg = self._cfg
         self.config = config
 

@@ -9,11 +9,76 @@ import tox.config
 from tox.config import (
     SectionReader, is_section_substitution, CommandParser,
     parseconfig, DepOption, get_homedir, getcontextname,
+    strip_comments,
 )
 from tox.venv import VirtualEnv
 
 
 class TestVenvConfig:
+    @pytest.mark.parametrize("config_string", [
+        ("""
+            [tox] # comment
+            # comment
+            toxworkdir = {0}
+            indexserver =
+                xyz = xyz_repo
+            [testenv:py1]
+            deps=hello
+            [testenv:py2]
+            deps=
+                world1 # comment
+                :xyz:http://hello/world#page
+        """),
+        ("""
+            [tox] ; comment
+            ; comment
+            toxworkdir = {0}
+            indexserver =
+                xyz = xyz_repo
+            [testenv:py1]
+            deps=hello
+            [testenv:py2]
+            deps=
+                world1 ; comment
+                :xyz:http://hello/world#page
+        """)
+    ])
+    def test_with_comments(self, tmpdir, newconfig, config_string):
+        config = newconfig([], config_string.format(tmpdir))
+        assert config.toxworkdir == tmpdir
+        assert len(config.envconfigs) == 2
+        assert config.envconfigs['py1'].envdir == tmpdir.join("py1")
+        dep = config.envconfigs['py1'].deps[0]
+        assert dep.name == "hello"
+        assert dep.indexserver is None
+        assert config.envconfigs['py2'].envdir == tmpdir.join("py2")
+        dep1, dep2 = config.envconfigs['py2'].deps
+        assert dep1.name == "world1"
+        assert dep2.name == "http://hello/world#page"
+        assert dep2.indexserver.name == "xyz"
+        assert dep2.indexserver.url == "xyz_repo"
+
+    def test_stripping_comments(self):
+        config = """
+            #comment
+            [block] # comment
+            # comment
+            ; comment
+             #comment
+            #comment#with#hashtags
+            url = address#importantpart "something # something ; importantthing"
+            name = value #comment
+            name = value # comment etc
+            name = value ;comment
+            name = value ; comment etc
+            quotes after ";this"
+        """
+        config = strip_comments(config)
+        assert ('comment' in config) is False
+        assert ('importantpart' in config) is True
+        assert ('importantthing' in config) is True
+        assert ('this' in config) is True
+
     def test_config_parsing_minimal(self, tmpdir, newconfig):
         config = newconfig([], """
             [testenv:py1]
