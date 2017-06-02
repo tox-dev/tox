@@ -63,7 +63,7 @@ commands = py.test
 deps =
     pytest
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_choose_individual_pythons_and_nose_adds_deps(
@@ -105,7 +105,7 @@ commands = nosetests
 deps =
     nose
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_choose_individual_pythons_and_trial_adds_deps(
@@ -147,7 +147,7 @@ commands = trial
 deps =
     twisted
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_choose_individual_pythons_and_pytest_adds_deps(
@@ -188,7 +188,7 @@ commands = py.test
 deps =
     pytest
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_choose_py27_and_pytest_adds_deps(
@@ -221,7 +221,7 @@ commands = py.test
 deps =
     pytest
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_choose_py27_and_py33_and_pytest_adds_deps(
@@ -254,7 +254,7 @@ commands = py.test
 deps =
     pytest
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_choose_all_pythons_and_pytest_adds_deps(
@@ -287,7 +287,7 @@ commands = py.test
 deps =
     pytest
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_choose_individual_pythons_and_defaults(
@@ -329,7 +329,7 @@ commands = {envpython} setup.py test
 deps =
 
 """.lstrip()
-        result = open('tox.ini').read()
+        result = read_tox()
         assert(result == expected_tox_ini)
 
     def test_quickstart_main_existing_tox_ini(self, monkeypatch):
@@ -376,7 +376,7 @@ commands = {envpython} setup.py test
 deps =
 
 """.lstrip()
-        result = open('tox-generated.ini').read()
+        result = read_tox('tox-generated.ini')
         assert(result == expected_tox_ini)
 
 
@@ -408,7 +408,7 @@ deps =
 """.lstrip()
         d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
-        result = open('tox.ini').read()
+        result = read_tox()
         # print(result)
         assert(result == expected_tox_ini)
 
@@ -435,7 +435,7 @@ deps =
 """.lstrip()
         d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
-        result = open('tox.ini').read()
+        result = read_tox()
         # print(result)
         assert(result == expected_tox_ini)
 
@@ -461,7 +461,7 @@ deps =
 """.lstrip()
         d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
-        result = open('tox.ini').read()
+        result = read_tox()
         # print(result)
         assert(result == expected_tox_ini)
 
@@ -492,6 +492,11 @@ deps =
 """.lstrip()
         d = tox._quickstart.process_input(d)
         tox._quickstart.generate(d)
-        result = open('tox.ini').read()
+        result = read_tox()
         # print(result)
         assert(result == expected_tox_ini)
+
+
+def read_tox(fname='tox.ini'):
+    with open(fname) as f:
+        return f.read()
