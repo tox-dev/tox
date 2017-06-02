@@ -362,6 +362,36 @@ def test_venv_special_chars_issue252(cmd, initproj):
     ])
 
 
+def test_sdist_envvar(cmd, initproj):
+    initproj("example123-0.5", filedefs={
+        'tox.ini': '''
+            [testenv]
+            commands=python -c "import os;print(os.environ['TOX_SDIST'])"
+        '''
+    })
+    result = cmd.run("tox")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*example123-0.5.zip",
+    ])
+
+
+def test_no_sdist_envvar(cmd, initproj):
+    initproj("example123-0.5", filedefs={
+        'tox.ini': '''
+            [tox]
+            skipsdist=true
+            [testenv]
+            commands=python -c "import os; os.environ['TOX_SDIST']"
+        '''
+    })
+    result = cmd.run("tox")
+    assert result.ret
+    result.stderr.fnmatch_lines([
+        "*KeyError: 'TOX_SDIST'",
+    ])
+
+
 def test_unknown_environment(cmd, initproj):
     initproj("env123-0.7", filedefs={
         'tox.ini': ''

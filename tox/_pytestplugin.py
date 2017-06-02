@@ -143,6 +143,7 @@ def mocksession(request):
         def __init__(self):
             self._clearmocks()
             self.config = request.getfuncargvalue("newconfig")([], "")
+            self.sdist_path = None
             self.resultlog = ResultLog()
             self._actions = []
 
