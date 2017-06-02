@@ -640,25 +640,39 @@ def test_test_usedevelop(cmd, initproj, src_root):
     assert "develop-inst-nodeps" in result.stdout.str()
 
 
-def test_alwayscopy(initproj, cmd):
+def test_alwayscopy(initproj, cmd, mocksession):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
             commands={envpython} --version
             alwayscopy=True
     """})
+    venv = mocksession.getenv('python')
     result = cmd.run("tox", "-vv")
     assert not result.ret
-    assert "virtualenv --always-copy" in result.stdout.str()
+
+    out = result.stdout.str()
+    assert venv._module() in out
+    if venv._ispython3():
+        assert "--copies" in out
+    else:
+        assert "--always-copy" in out
 
 
-def test_alwayscopy_default(initproj, cmd):
+def test_alwayscopy_default(initproj, cmd, mocksession):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
             commands={envpython} --version
     """})
+    venv = mocksession.getenv('python')
     result = cmd.run("tox", "-vv")
     assert not result.ret
-    assert "virtualenv --always-copy" not in result.stdout.str()
+
+    out = result.stdout.str()
+    assert venv._module() in out
+    if venv._ispython3():
+        assert "--copies" not in out
+    else:
+        assert "--always-copy" not in out
 
 
 def test_test_piphelp(initproj, cmd):
@@ -702,6 +716,17 @@ def test_PYC(initproj, cmd, monkeypatch):
     result.stdout.fnmatch_lines([
         "*create*",
     ])
+
+
+def test_PYTHONWARNINGS(initproj, cmd, monkeypatch):
+    initproj("example123", filedefs={'tox.ini': """
+        [testenv]
+        setenv=
+            PYTHONWARNINGS=error
+        commands={envpython} --version
+    """})
+    result = cmd.run("tox", "-v")
+    assert not result.ret
 
 
 def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
