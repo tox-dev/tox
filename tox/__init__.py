@@ -1,4 +1,4 @@
-from pkg_resources import get_distribution
+from pkg_resources import get_distribution, DistributionNotFound
 
 from .hookspecs import hookspec, hookimpl  # noqa
 
@@ -7,7 +7,6 @@ try:
     __version__ = _full_version.split('+', 1)[0]
 except DistributionNotFound:
     __version__ = '0.0.0.dev0'
-
 
 
 class exception:
