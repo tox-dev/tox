@@ -645,7 +645,7 @@ class Session:
             self.report.line(msg)
         for e in default:
             report_env(e)
-        if all_envs:
+        if all_envs and extra:
             if description:
                 self.report.line('')
                 self.report.line('additional environments:')
