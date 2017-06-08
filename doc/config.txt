@@ -519,7 +519,7 @@ However, a better approach looks like this::
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
         py26: unittest2
-    commands = py.test
+    commands = pytest
 
 This uses two new facilities of tox-1.8:
 

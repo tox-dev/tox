@@ -34,13 +34,11 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     assert py.path.local(interp).realpath() == py.path.local(sys.executable).realpath()
     monkeypatch.setattr(sys, 'platform', "win32")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
-    py.test.raises(tox.exception.UnsupportedInterpreter,
-                   venv.getsupportedinterpreter)
+    pytest.raises(tox.exception.UnsupportedInterpreter, venv.getsupportedinterpreter)
     monkeypatch.undo()
     monkeypatch.setattr(venv.envconfig, "envname", "py1")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
-    py.test.raises(tox.exception.InterpreterNotFound,
-                   venv.getsupportedinterpreter)
+    pytest.raises(tox.exception.InterpreterNotFound, venv.getsupportedinterpreter)
     monkeypatch.undo()
     # check that we properly report when no version_info is present
     info = NoInterpreterInfo(name=venv.name)
@@ -345,7 +343,7 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
         commands=
-            py.test
+            pytest
     """)
     venv = mocksession.getenv('python')
     venv.test()
@@ -356,10 +354,10 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
 def test_install_command_whitelisted(newmocksession, monkeypatch):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
-        whitelist_externals = py.test
+        whitelist_externals = pytest
                               xy*
         commands=
-            py.test
+            pytest
             xyz
     """)
     venv = mocksession.getenv('python')
@@ -556,7 +554,7 @@ class TestVenvTest:
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
         monkeypatch.setenv("__PYVENV_LAUNCHER__", "1")
-        py.test.raises(ZeroDivisionError, "venv.run_install_command(['qwe'], action=action)")
+        pytest.raises(ZeroDivisionError, "venv.run_install_command(['qwe'], action=action)")
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
         assert '__PYVENV_LAUNCHER__' not in os.environ

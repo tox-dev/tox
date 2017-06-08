@@ -3,6 +3,7 @@ Not released yet
 
 - #474: Start using setuptools_scm for tag based versioning.
 - #506: With `-a`: do not show additional environments header if there are none
+- #484: Renamed `py.test` to `pytest` through the project
 
 2.7.0
 -----
