@@ -99,7 +99,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Must contain the substitution key
     ``{packages}`` which will be replaced by the packages to
     install.  You should also accept ``{opts}`` if you are using
-    pip or easy_install -- it will contain index server options
+    pip -- it will contain index server options
     such as ``--pre`` (configured as ``pip_pre``) and potentially
     index-options from the deprecated :confval:`indexserver`
     option.

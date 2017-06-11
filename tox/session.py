@@ -109,7 +109,7 @@ class Action(object):
             logdir = self.session.config.logdir
         try:
             l = logdir.listdir("%s-*" % actionid)
-        except py.error.ENOENT:
+        except (py.error.ENOENT, py.error.ENOTDIR):
             logdir.ensure(dir=1)
             l = []
         num = len(l)
@@ -645,7 +645,7 @@ class Session:
             self.report.line(msg)
         for e in default:
             report_env(e)
-        if all_envs:
+        if all_envs and extra:
             if description:
                 self.report.line('')
                 self.report.line('additional environments:')
