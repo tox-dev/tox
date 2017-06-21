@@ -102,8 +102,10 @@ that another tox run can find the "latest" dependency.  This feature
 allows to test a package against an unreleased development version
 or even an uncommitted version on your own machine.
 
-By default, ``{homedir}/.tox/distshare`` will be used for
-copying in and copying out artifacts (i.e. Python packages).
+By default, the distshare directory is located in
+``$XDG_CACHE_HOME/tox/distshare``, where ``$XDG_CACHE_HOME`` defaults to
+``{homedir}`` if not set. This directory will be used for copying in and
+copying out artifacts (i.e. Python packages).
 
 For project ``two`` to depend on the ``one`` package you use
 the following entry::

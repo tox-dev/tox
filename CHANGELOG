@@ -1,6 +1,7 @@
 Not released yet
 ----
 
+- #346: Use $XDG_CACHE_HOME by default for distshare
 - #474: Start using setuptools_scm for tag based versioning.
 - #506: With `-a`: do not show additional environments header if there are none
 

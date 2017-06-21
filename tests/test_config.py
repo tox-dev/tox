@@ -178,7 +178,13 @@ class TestConfigPackage:
 
     def test_defaults_distshare(self, tmpdir, newconfig):
         config = newconfig([], "")
-        assert config.distshare == config.homedir.join(".tox", "distshare")
+        assert config.distshare == config.homedir.join(".cache", "tox", "distshare")
+
+    def test_defaults_distshare_xdg_set(self, tmpdir, newconfig):
+        xdg_cache = str(tmpdir.join("tox-xdg-cache-test"))
+        os.environ["XDG_CACHE_HOME"] = xdg_cache
+        config = newconfig([], "")
+        assert config.distshare == os.path.join(xdg_cache, "tox", "distshare")
 
     def test_defaults_changed_dir(self, tmpdir, newconfig):
         tmpdir.mkdir("abc").chdir()
@@ -1060,7 +1066,7 @@ class TestConfigTestEnv:
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
         assert argv[6][0] == str(config.homedir)
-        assert argv[7][0] == config.homedir.join(".tox", "distshare")
+        assert argv[7][0] == config.distshare
         assert argv[8][0] == conf.envlogdir
 
     def test_substitution_notfound_issue246(tmpdir, newconfig):
