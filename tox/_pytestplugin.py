@@ -142,7 +142,7 @@ def mocksession(request):
     class MockSession(Session):
         def __init__(self):
             self._clearmocks()
-            self.config = request.getfuncargvalue("newconfig")([], "")
+            self.config = request.getfixturevalue("newconfig")([], "")
             self.resultlog = ResultLog()
             self._actions = []
 
@@ -168,8 +168,8 @@ def mocksession(request):
 
 @pytest.fixture
 def newmocksession(request):
-    mocksession = request.getfuncargvalue("mocksession")
-    newconfig = request.getfuncargvalue("newconfig")
+    mocksession = request.getfixturevalue("mocksession")
+    newconfig = request.getfixturevalue("newconfig")
 
     def newmocksession(args, source, plugins=()):
         mocksession.config = newconfig(args, source, plugins=plugins)
@@ -179,7 +179,7 @@ def newmocksession(request):
 
 class Cmd:
     def __init__(self, request):
-        self.tmpdir = request.getfuncargvalue("tmpdir")
+        self.tmpdir = request.getfixturevalue("tmpdir")
         self.request = request
         current = py.path.local()
         self.request.addfinalizer(current.chdir)
@@ -189,7 +189,7 @@ class Cmd:
 
     def popen(self, argv, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
-            py.test.skip("no subprocess module")
+            pytest.skip("no subprocess module")
         env = os.environ.copy()
         env['PYTHONPATH'] = ":".join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))

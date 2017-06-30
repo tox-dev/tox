@@ -1,7 +1,12 @@
 Not released yet
-----
+----------------
 
 - #474: Start using setuptools_scm for tag based versioning.
+- #484: Renamed `py.test` to `pytest` throughout the project
+- #506: With `-a`: do not show additional environments header if there are none
+- #517: Forward NUMBER_OF_PROCESSORS by default on Windows to fix
+        `multiprocessor.cpu_count()`.
+- #518: Forward `USERPROFILE` by default on Windows.
 - #515: Don't require environment variables in test environments
 	where they are not used.
 

@@ -99,7 +99,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Must contain the substitution key
     ``{packages}`` which will be replaced by the packages to
     install.  You should also accept ``{opts}`` if you are using
-    pip or easy_install -- it will contain index server options
+    pip -- it will contain index server options
     such as ``--pre`` (configured as ``pip_pre``) and potentially
     index-options from the deprecated :confval:`indexserver`
     option.
@@ -188,6 +188,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
     using the ``{toxinidir}`` as the current working directory.
 
 .. confval:: platform=REGEX
+
+    .. versionadded:: 2.0
 
     A testenv can define a new ``platform`` setting as a regular expression.
     If a non-empty expression is defined and does not match against the
@@ -519,7 +521,7 @@ However, a better approach looks like this::
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
         py26: unittest2
-    commands = py.test
+    commands = pytest
 
 This uses two new facilities of tox-1.8:
 

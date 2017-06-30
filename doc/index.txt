@@ -25,7 +25,7 @@ Tox is a generic virtualenv_ management and test command line tool you can use f
 Basic example
 -----------------
 
-First, install ``tox`` with ``pip install tox`` or ``easy_install tox``.
+First, install ``tox`` with ``pip install tox``.
 Then put basic information about your project and the test environments you
 want your project to run in into a ``tox.ini`` file residing
 right next to your ``setup.py`` file::
@@ -35,7 +35,7 @@ right next to your ``setup.py`` file::
     envlist = py26,py27
     [testenv]
     deps=pytest       # install pytest in the venvs
-    commands=py.test  # or 'nosetests' or ...
+    commands=pytest  # or 'nosetests' or ...
 
 You can also try generating a ``tox.ini`` file automatically, by running
 ``tox-quickstart`` and then answering a few simple questions.
@@ -61,7 +61,7 @@ Current features
 
     - installs your ``setup.py`` based project into each virtual environment
 
-    - test-tool agnostic: runs py.test, nose or unittests in a uniform manner
+    - test-tool agnostic: runs pytest, nose or unittests in a uniform manner
 
 * :doc:`(new in 2.0) plugin system <plugins>` to modify tox execution with simple hooks.
 

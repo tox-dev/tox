@@ -14,20 +14,19 @@ Install info in a nutshell
 
 **git repository**: https://github.com/tox-dev/tox
 
-Installation with pip/easy_install
+Installation with pip
 --------------------------------------
 
-Use one of the following commands::
+Use the following command::
 
    pip install tox
-   easy_install tox
 
 It is fine to install ``tox`` itself into a virtualenv_ environment.
 
 Install from Checkout
 -------------------------
 
-Consult the Bitbucket page to get a checkout of the git repository:
+Consult the GitHub page to get a checkout of the git repository:
 
     https://github.com/tox-dev/tox
 

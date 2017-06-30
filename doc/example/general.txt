@@ -12,11 +12,11 @@ If you invoke ``tox`` like this::
 
 the arguments after the ``--`` will be substituted
 everywhere where you specify ``{posargs}`` in your
-test commands, for example using ``py.test``::
+test commands, for example using ``pytest``::
 
     # in the testenv or testenv:NAME section of your tox.ini
     commands =
-        py.test {posargs}
+        pytest {posargs}
 
 or using ``nosetests``::
 
@@ -162,7 +162,7 @@ to deal with it in your commands section::
     [testenv]
     commands =
         python setup.py develop
-        py.test
+        pytest
 
 Running ``setup.py develop`` is a common enough model that it has its own
 option::
