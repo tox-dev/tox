@@ -12,4 +12,5 @@ tox configuration and usage examples
    example/general.txt
    example/jenkins.txt
    example/devenv.txt
+   example/platform.txt
 
