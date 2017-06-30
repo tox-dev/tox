@@ -189,6 +189,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: platform=REGEX
 
+    .. versionadded:: 2.0
+
     A testenv can define a new ``platform`` setting as a regular expression.
     If a non-empty expression is defined and does not match against the
     ``sys.platform`` string the test environment will be skipped.
