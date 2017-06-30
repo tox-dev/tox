@@ -492,6 +492,7 @@ def tox_addoption(parser):
             # for `multiprocessing.cpu_count()` on Windows
             # (prior to Python 3.4).
             passenv.add("NUMBER_OF_PROCESSORS")
+            passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`.
         else:
             passenv.add("TMPDIR")
         for spec in value:

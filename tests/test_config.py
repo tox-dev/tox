@@ -865,6 +865,7 @@ class TestConfigTestEnv:
             assert "TEMP" in envconfig.passenv
             assert "TMP" in envconfig.passenv
             assert "NUMBER_OF_PROCESSORS" in envconfig.passenv
+            assert "USERPROFILE" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
         assert "PATH" in envconfig.passenv
