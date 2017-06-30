@@ -3,6 +3,7 @@ Not released yet
 
 - #474: Start using setuptools_scm for tag based versioning.
 - #506: With `-a`: do not show additional environments header if there are none
+- #518: Forward `USERPROFILE` by default on Windows.
 
 2.7.0
 -----
