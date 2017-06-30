@@ -189,7 +189,7 @@ class Cmd:
 
     def popen(self, argv, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
-            py.test.skip("no subprocess module")
+            pytest.skip("no subprocess module")
         env = os.environ.copy()
         env['PYTHONPATH'] = ":".join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))

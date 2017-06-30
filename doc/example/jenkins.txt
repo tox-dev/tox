@@ -32,11 +32,11 @@ using these steps:
   test results in the JUnit XML format.
 
 The last point requires that your test command creates JunitXML files,
-for example with ``py.test`` it is done like this:
+for example with ``pytest`` it is done like this:
 
 .. code-block:: ini
 
-    commands = py.test --junitxml=junit-{envname}.xml
+    commands = pytest --junitxml=junit-{envname}.xml
 
 
 
@@ -80,7 +80,7 @@ If you are using a multi-configuration Jenkins job which collects
 JUnit Test results you will run into problems using the previous
 method of running the sphinx-build command because it will not
 generate JUnit results.  To accomodate this issue one solution
-is to have ``py.test`` wrap the sphinx-checks and create a
+is to have ``pytest`` wrap the sphinx-checks and create a
 JUnit result file which wraps the result of calling sphinx-build.
 Here is an example:
 
@@ -92,7 +92,7 @@ Here is an example:
     deps=sphinx
         py
     commands=
-        py.test --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
+        pytest --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
 
 2. create a ``doc/check_sphinx.py`` file like this::
 
@@ -114,7 +114,7 @@ Here is an example:
 3. run ``tox -e docs`` and then you may integrate this environment
    along with your other environments into Jenkins.
 
-Note that ``py.test`` is only installed into the docs environment
+Note that ``pytest`` is only installed into the docs environment
 and does not need to be in use or installed with any other environment.
 
 .. _`jenkins artifact example`:

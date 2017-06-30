@@ -355,7 +355,7 @@ class TestIniParser:
         """)
         reader = SectionReader("mydefault", config._cfg, fallbacksections=['mydefault'])
         assert reader is not None
-        with py.test.raises(tox.exception.ConfigError):
+        with pytest.raises(tox.exception.ConfigError):
             reader.getstring("key2")
 
     def test_getstring_fallback_sections(self, tmpdir, newconfig):
@@ -429,7 +429,7 @@ class TestIniParser:
         reader = SectionReader("section", config._cfg)
         x = reader.getstring("key1")
         assert x == "hello"
-        with py.test.raises(tox.exception.ConfigError):
+        with pytest.raises(tox.exception.ConfigError):
             reader.getstring("key2")
 
     def test_getstring_environment_substitution_with_default(self, monkeypatch, newconfig):
@@ -476,7 +476,7 @@ class TestIniParser:
         """)
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        # py.test.raises(tox.exception.ConfigError,
+        # pytest.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         x = reader.getargvlist("key2")
@@ -486,12 +486,12 @@ class TestIniParser:
     def test_argvlist_windows_escaping(self, tmpdir, newconfig):
         config = newconfig("""
             [section]
-            comm = py.test {posargs}
+            comm = pytest {posargs}
         """)
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([r"hello\this"])
         argv = reader.getargv("comm")
-        assert argv == ["py.test", "hello\\this"]
+        assert argv == ["pytest", "hello\\this"]
 
     def test_argvlist_multiline(self, tmpdir, newconfig):
         config = newconfig("""
@@ -502,7 +502,7 @@ class TestIniParser:
         """)
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        # py.test.raises(tox.exception.ConfigError,
+        # pytest.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         x = reader.getargvlist("key2")
@@ -550,7 +550,7 @@ class TestIniParser:
         reader = SectionReader("section", config._cfg)
         posargs = ['hello', 'world']
         reader.addsubstitutions(posargs, item2="value2")
-        # py.test.raises(tox.exception.ConfigError,
+        # pytest.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         argvlist = reader.getargvlist("key2")
@@ -559,7 +559,7 @@ class TestIniParser:
 
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([], item2="value2")
-        # py.test.raises(tox.exception.ConfigError,
+        # pytest.raises(tox.exception.ConfigError,
         #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         argvlist = reader.getargvlist("key2")
@@ -627,7 +627,7 @@ class TestIniParser:
     def test_substitution_with_multiple_words(self, newconfig):
         inisource = """
             [section]
-            key = py.test -n5 --junitxml={envlogdir}/junit-{envname}.xml []
+            key = pytest -n5 --junitxml={envlogdir}/junit-{envname}.xml []
             """
         config = newconfig(inisource)
         reader = SectionReader("section", config._cfg)
@@ -635,7 +635,7 @@ class TestIniParser:
         reader.addsubstitutions(posargs, envlogdir='ENV_LOG_DIR', envname='ENV_NAME')
 
         expected = [
-            'py.test', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world'
+            'pytest', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world'
         ]
         assert reader.getargvlist('key')[0] == expected
 
@@ -672,8 +672,8 @@ class TestIniParser:
         assert reader.getbool("key1a") is True
         assert reader.getbool("key2") is False
         assert reader.getbool("key2a") is False
-        py.test.raises(KeyError, 'reader.getbool("key3")')
-        py.test.raises(tox.exception.ConfigError, 'reader.getbool("key5")')
+        pytest.raises(KeyError, 'reader.getbool("key3")')
+        pytest.raises(tox.exception.ConfigError, 'reader.getbool("key5")')
 
 
 class TestIniParserPrefix:
@@ -988,7 +988,7 @@ class TestConfigTestEnv:
             'some_install', '{packages}']
 
     def test_install_command_must_contain_packages(self, newconfig):
-        py.test.raises(tox.exception.ConfigError, newconfig, """
+        pytest.raises(tox.exception.ConfigError, newconfig, """
             [testenv]
             install_command=pip install
         """)
@@ -1034,7 +1034,7 @@ class TestConfigTestEnv:
         assert "py27" in config.envconfigs
 
     def test_substitution_error(tmpdir, newconfig):
-        py.test.raises(tox.exception.ConfigError, newconfig, """
+        pytest.raises(tox.exception.ConfigError, newconfig, """
             [testenv:py27]
             basepython={xyz}
         """)
@@ -1290,7 +1290,7 @@ class TestConfigTestEnv:
             deps=
                 {[testing:pytest]deps}
         """
-        py.test.raises(ValueError, newconfig, [], inisource)
+        pytest.raises(ValueError, newconfig, [], inisource)
 
     def test_single_value_from_other_secton(self, newconfig, tmpdir):
         inisource = """
@@ -1493,7 +1493,7 @@ class TestGlobalOptions:
             [testenv:py27]
             basepython=python2.7
         """
-        # py.test.raises(tox.exception.ConfigError,
+        # pytest.raises(tox.exception.ConfigError,
         #    "newconfig(['-exyz'], inisource)")
         config = newconfig([], inisource)
         assert config.envlist == ["py26"]
@@ -1568,7 +1568,7 @@ class TestGlobalOptions:
             [tox]
             minversion = 10.0
         """
-        with py.test.raises(tox.exception.MinVersionError):
+        with pytest.raises(tox.exception.MinVersionError):
             newconfig([], inisource)
 
     def test_skip_missing_interpreters_true(self, tmpdir, newconfig, monkeypatch):
@@ -1982,8 +1982,8 @@ class TestCmdInvocation:
             'tox.ini': '''
             [tox]
             envlist=py26,py27,py33,pypy,docs
-            description= py27: run py.test on Python 2.7
-                         py33: run py.test on Python 3.6
+            description= py27: run pytest on Python 2.7
+                         py33: run pytest on Python 3.6
                          pypy: publish to pypy
                          docs: document stuff
                          notincluded: random extra
@@ -2010,9 +2010,9 @@ class TestCmdInvocation:
             [tox]
             envlist=py26,py27,py33,pypy,docs
             [testenv]
-            description= py26: run py.test on Python 2.6
-                         py27: run py.test on Python 2.7
-                         py33: run py.test on Python 3.3
+            description= py26: run pytest on Python 2.6
+                         py27: run pytest on Python 2.7
+                         py33: run pytest on Python 3.3
                          pypy: publish to pypy
                          docs: document stuff
                          notincluded: random extra
@@ -2028,9 +2028,9 @@ class TestCmdInvocation:
         result = cmd.run("tox", "-lv")
         result.stdout.fnmatch_lines("""
             default environments:
-            py26 -> run py.test on Python 2.6
-            py27 -> run py.test on Python 2.7
-            py33 -> run py.test on Python 3.3
+            py26 -> run pytest on Python 2.6
+            py27 -> run pytest on Python 2.7
+            py33 -> run pytest on Python 3.3
             pypy -> publish to pypy
             docs -> let me overwrite that
         """)
@@ -2064,12 +2064,12 @@ class TestCmdInvocation:
             [tox]
             envlist={py27,py36}-{windows,linux}
             [testenv]
-            description= py27: run py.test on Python 2.7
-                         py36: run py.test on Python 3.6
+            description= py27: run pytest on Python 2.7
+                         py36: run pytest on Python 3.6
                          windows: on Windows platform
                          linux: on Linux platform
                          docs: generate documentation
-            commands=py.test {posargs}
+            commands=pytest {posargs}
 
             [testenv:docs]
             changedir = docs
@@ -2078,10 +2078,10 @@ class TestCmdInvocation:
         result = cmd.run("tox", "-av")
         result.stdout.fnmatch_lines("""
             default environments:
-            py27-windows -> run py.test on Python 2.7 on Windows platform
-            py27-linux   -> run py.test on Python 2.7 on Linux platform
-            py36-windows -> run py.test on Python 3.6 on Windows platform
-            py36-linux   -> run py.test on Python 3.6 on Linux platform
+            py27-windows -> run pytest on Python 2.7 on Windows platform
+            py27-linux   -> run pytest on Python 2.7 on Linux platform
+            py36-windows -> run pytest on Python 3.6 on Windows platform
+            py36-linux   -> run pytest on Python 3.6 on Linux platform
 
             additional environments:
             docs         -> generate documentation
