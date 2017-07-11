@@ -834,7 +834,7 @@ class parseini:
                 res = env_attr.postprocess(testenv_config=vc, value=res)
             setattr(vc, env_attr.name, res)
 
-            if atype == "path":
+            if atype in ("path", "string"):
                 reader.addsubstitutions(**{env_attr.name: res})
 
         return vc
