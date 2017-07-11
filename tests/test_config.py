@@ -334,6 +334,16 @@ class TestIniParserAgainstCommandsKey:
         assert envconfig.commands == [["ls", "testvalue"]]
         assert envconfig.setenv["TEST"] == "testvalue"
 
+    def test_command_env_substitution_global(self, newconfig):
+        """Ensure referenced {env:key:default} values are substituted correctly."""
+        config = newconfig("""
+            [testenv]
+            setenv = FOO = bar
+            commands = echo {env:FOO}
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.commands == [["echo", "bar"]]
+
 
 class TestIniParser:
     def test_getstring_single(self, tmpdir, newconfig):
