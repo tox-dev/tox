@@ -455,3 +455,10 @@ def tox_testenv_install_deps(venv, action):
         venv._install(deps, action=action)
     # Return non-None to indicate the plugin has completed
     return True
+
+
+@hookimpl
+def tox_runtest(venv, redirect):
+    venv.test(redirect=redirect)
+    # Return non-None to indicate the plugin has completed
+    return True

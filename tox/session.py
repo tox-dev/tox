@@ -571,7 +571,7 @@ class Session:
             if venv.status:
                 return
             self.hook.tox_runtest_pre(venv=venv)
-            venv.test(redirect=redirect)
+            self.hook.tox_runtest(venv=venv, redirect=redirect)
             self.hook.tox_runtest_post(venv=venv)
         else:
             venv.status = "skipped tests"
