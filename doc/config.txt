@@ -220,7 +220,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
    * passed through on all platforms: ``PATH``, ``LANG``, ``LANGUAGE``,
      ``LD_LIBRARY_PATH``, ``PIP_INDEX_URL``
    * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
-      ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``
+      ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``
    * Others (e.g. UNIX, macOS): ``TMPDIR``
 
    You can override these variables with the ``setenv`` option.
