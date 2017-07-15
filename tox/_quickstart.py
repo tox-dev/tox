@@ -40,6 +40,7 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+import argparse
 import sys
 from os import path
 from codecs import open
@@ -224,19 +225,24 @@ def generate(d, overwrite=True, silent=False):
 
     def write_file(fpath, mode, content):
         print('Creating file %s.' % fpath)
-        f = open(fpath, mode, encoding='utf-8')
         try:
-            f.write(content)
-        finally:
-            f.close()
+            with open(fpath, mode, encoding='utf-8') as f:
+                f.write(content)
+        except IOError:
+            print('Error writing file.')
+            raise
 
     sys.stdout.write('\n')
 
-    fpath = 'tox.ini'
+    fpath = path.join(d.get('path', ''), 'tox.ini')
 
     if path.isfile(fpath) and not overwrite:
         print('File %s already exists.' % fpath)
-        do_prompt(d, 'fpath', 'Alternative path to write tox.ini contents to', 'tox-generated.ini')
+        do_prompt(
+            d,
+            'fpath',
+            'Alternative path to write tox.ini contents to',
+            path.join(d.get('path', ''), 'tox-generated.ini'))
         fpath = d['fpath']
 
     write_file(fpath, 'w', conf_text)
@@ -251,14 +257,25 @@ Execute `tox` to test your project.
 ''')
 
 
-def main(argv=sys.argv):
-    d = {}
+def parse_args(argv):
+    parser = argparse.ArgumentParser(
+        description='Command-line script to quickly setup tox.ini for a Python project.'
+    )
+    parser.add_argument(
+        'root', type=str, nargs='?', default='.',
+        help='Custom root directory to write tox.ini to. Defaults to current directory.'
+    )
+    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
-    if len(argv) > 3:
-        print('Usage: tox-quickstart [root]')
-        sys.exit(1)
-    elif len(argv) == 2:
-        d['path'] = argv[1]
+    args = argv[1:]
+    return parser.parse_args(args)
+
+
+def main(argv=sys.argv):
+    args = parse_args(argv)
+
+    d = {}
+    d['path'] = args.root
 
     try:
         ask_user(d)
@@ -268,8 +285,13 @@ def main(argv=sys.argv):
         return
 
     d = process_input(d)
-    generate(d, overwrite=False)
+    try:
+        generate(d, overwrite=False)
+    except Exception:
+        return 2
+
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
