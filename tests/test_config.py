@@ -2170,6 +2170,20 @@ class TestCmdInvocation:
             r'*deps*dep1, dep2==5.0*',
         ])
 
+    @pytest.mark.xfail(reason='Upstream bug. See #203')
+    def test_colon_symbol_in_directory_name(self, cmd, initproj):
+        initproj('colon:_symbol_in_dir_name', filedefs={
+            'tox.ini': '''
+            [tox]
+            envlist = py27
+
+            [testenv]
+            commands = pip --version
+            ''',
+        })
+        result = cmd.run("tox")
+        assert result.ret == 0
+
 
 @pytest.mark.parametrize("cmdline,envlist", [
     ("-e py26", ['py26']),
