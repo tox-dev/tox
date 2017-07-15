@@ -256,7 +256,7 @@ def main(argv=sys.argv):
 
     if len(argv) > 3:
         print('Usage: tox-quickstart [root]')
-        sys.exit(1)
+        return 1
     elif len(argv) == 2:
         d['path'] = argv[1]
 
@@ -270,6 +270,8 @@ def main(argv=sys.argv):
     d = process_input(d)
     generate(d, overwrite=False)
 
+    return 0
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
