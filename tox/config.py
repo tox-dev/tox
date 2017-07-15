@@ -704,7 +704,8 @@ class parseini:
             distshare_default = "{toxworkdir}/distshare"
         elif not ctxname:
             reader = SectionReader("tox", self._cfg, prefix=prefix)
-            distshare_default = "{homedir}/.tox/distshare"
+            xdg_cache_home = os.getenv("XDG_CACHE_HOME", "{homedir}/.cache")
+            distshare_default = os.path.join(xdg_cache_home, "tox", "distshare")
         else:
             raise ValueError("invalid context")
 
