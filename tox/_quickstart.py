@@ -224,19 +224,24 @@ def generate(d, overwrite=True, silent=False):
 
     def write_file(fpath, mode, content):
         print('Creating file %s.' % fpath)
-        f = open(fpath, mode, encoding='utf-8')
         try:
-            f.write(content)
-        finally:
-            f.close()
+            with open(fpath, mode, encoding='utf-8') as f:
+                f.write(content)
+        except IOError:
+            print('Error writing file.')
+            raise
 
     sys.stdout.write('\n')
 
-    fpath = 'tox.ini'
+    fpath = path.join(d.get('path', ''), 'tox.ini')
 
     if path.isfile(fpath) and not overwrite:
         print('File %s already exists.' % fpath)
-        do_prompt(d, 'fpath', 'Alternative path to write tox.ini contents to', 'tox-generated.ini')
+        do_prompt(
+            d,
+            'fpath',
+            'Alternative path to write tox.ini contents to',
+            path.join(d.get('path', ''), 'tox-generated.ini'))
         fpath = d['fpath']
 
     write_file(fpath, 'w', conf_text)
@@ -268,7 +273,10 @@ def main(argv=sys.argv):
         return
 
     d = process_input(d)
-    generate(d, overwrite=False)
+    try:
+        generate(d, overwrite=False)
+    except Exception:
+        return 2
 
     return 0
 
