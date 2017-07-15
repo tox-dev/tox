@@ -40,6 +40,7 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+import argparse
 import sys
 from os import path
 from codecs import open
@@ -256,14 +257,25 @@ Execute `tox` to test your project.
 ''')
 
 
-def main(argv=sys.argv):
-    d = {}
+def parse_args(argv):
+    parser = argparse.ArgumentParser(
+        description='Command-line script to quickly setup tox.ini for a Python project.'
+    )
+    parser.add_argument(
+        'root', type=str, nargs='?', default='.',
+        help='Custom root directory to write tox.ini to. Defaults to current directory.'
+    )
+    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
-    if len(argv) > 3:
-        print('Usage: tox-quickstart [root]')
-        return 1
-    elif len(argv) == 2:
-        d['path'] = argv[1]
+    args = argv[1:]
+    return parser.parse_args(args)
+
+
+def main(argv=sys.argv):
+    args = parse_args(argv)
+
+    d = {}
+    d['path'] = args.root
 
     try:
         ask_user(d)
