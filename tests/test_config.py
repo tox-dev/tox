@@ -876,6 +876,7 @@ class TestConfigTestEnv:
             assert "TMP" in envconfig.passenv
             assert "NUMBER_OF_PROCESSORS" in envconfig.passenv
             assert "USERPROFILE" in envconfig.passenv
+            assert "MSYSTEM" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
         assert "PATH" in envconfig.passenv
