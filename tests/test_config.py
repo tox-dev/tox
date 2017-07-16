@@ -1088,8 +1088,7 @@ class TestConfigTestEnv:
         assert 'FOO' in env
         assert 'BAR' in env
 
-    @pytest.mark.xfail(raises=AssertionError, reason="issue #301")
-    def test_substitution_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
+    def test_substitution_nested_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
         monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")
         config = newconfig("""

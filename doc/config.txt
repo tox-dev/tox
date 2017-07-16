@@ -435,6 +435,14 @@ then the value will be retrieved as ``os.environ['KEY']``
 and replace with and empty string if the environment variable does not
 exist.
 
+Substitutions can also be nested. In that case they are expanded starting
+from the innermost expression::
+
+    {env:KEY:{env:DEFAULT_OF_KEY}}
+
+the above example is roughly equivalent to
+``os.environ.get('KEY', os.environ['DEFAULT_OF_KEY'])``
+
 .. _`command positional substitution`:
 .. _`positional substitution`:
 
