@@ -492,7 +492,8 @@ def tox_addoption(parser):
             # for `multiprocessing.cpu_count()` on Windows
             # (prior to Python 3.4).
             passenv.add("NUMBER_OF_PROCESSORS")
-            passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`.
+            passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
+            passenv.add("MSYSTEM")      # fixes #429
         else:
             passenv.add("TMPDIR")
         for spec in value:
@@ -834,7 +835,7 @@ class parseini:
                 res = env_attr.postprocess(testenv_config=vc, value=res)
             setattr(vc, env_attr.name, res)
 
-            if atype == "path":
+            if atype in ("path", "string"):
                 reader.addsubstitutions(**{env_attr.name: res})
 
         return vc
