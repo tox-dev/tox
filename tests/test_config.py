@@ -334,6 +334,16 @@ class TestIniParserAgainstCommandsKey:
         assert envconfig.commands == [["ls", "testvalue"]]
         assert envconfig.setenv["TEST"] == "testvalue"
 
+    def test_command_env_substitution_global(self, newconfig):
+        """Ensure referenced {env:key:default} values are substituted correctly."""
+        config = newconfig("""
+            [testenv]
+            setenv = FOO = bar
+            commands = echo {env:FOO}
+        """)
+        envconfig = config.envconfigs['python']
+        assert envconfig.commands == [["echo", "bar"]]
+
 
 class TestIniParser:
     def test_getstring_single(self, tmpdir, newconfig):
@@ -866,6 +876,7 @@ class TestConfigTestEnv:
             assert "TMP" in envconfig.passenv
             assert "NUMBER_OF_PROCESSORS" in envconfig.passenv
             assert "USERPROFILE" in envconfig.passenv
+            assert "MSYSTEM" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
         assert "PATH" in envconfig.passenv
@@ -1098,7 +1109,7 @@ class TestConfigTestEnv:
         ]
 
     @pytest.mark.xfail(raises=AssertionError, reason="issue #301")
-    def test_substitution_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
+    def test_substitution_nested_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
         monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")
         config = newconfig("""
@@ -2178,6 +2189,20 @@ class TestCmdInvocation:
         result.stdout.fnmatch_lines([
             r'*deps*dep1, dep2==5.0*',
         ])
+
+    @pytest.mark.xfail(reason='Upstream bug. See #203')
+    def test_colon_symbol_in_directory_name(self, cmd, initproj):
+        initproj('colon:_symbol_in_dir_name', filedefs={
+            'tox.ini': '''
+            [tox]
+            envlist = py27
+
+            [testenv]
+            commands = pip --version
+            ''',
+        })
+        result = cmd.run("tox")
+        assert result.ret == 0
 
 
 @pytest.mark.parametrize("cmdline,envlist", [

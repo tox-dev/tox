@@ -88,6 +88,15 @@ def tox_runtest_pre(venv):
     """
 
 
+@hookspec(firstresult=True)
+def tox_runtest(venv, redirect):
+    """ [experimental] run the tests for this venv.
+
+    .. note:: This hook uses ``firstresult=True`` (see pluggy_) -- hooks
+        implementing this will be run until one returns non-``None``.
+    """
+
+
 @hookspec
 def tox_runtest_post(venv):
     """ [experimental] perform arbitrary action after running tests for this venv.

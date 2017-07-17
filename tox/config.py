@@ -492,7 +492,8 @@ def tox_addoption(parser):
             # for `multiprocessing.cpu_count()` on Windows
             # (prior to Python 3.4).
             passenv.add("NUMBER_OF_PROCESSORS")
-            passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`.
+            passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
+            passenv.add("MSYSTEM")      # fixes #429
         else:
             passenv.add("TMPDIR")
         for spec in value:
@@ -835,7 +836,7 @@ class parseini:
                 res = env_attr.postprocess(testenv_config=vc, value=res)
             setattr(vc, env_attr.name, res)
 
-            if atype == "path":
+            if atype in ("path", "string"):
                 reader.addsubstitutions(**{env_attr.name: res})
 
         return vc
@@ -1059,8 +1060,20 @@ class Replacer:
         self.reader = reader
         self.crossonly = crossonly
 
-    def do_replace(self, x):
-        return self.RE_ITEM_REF.sub(self._replace_match, x)
+    def do_replace(self, value):
+        '''
+        Recursively expand substitutions starting from the innermost expression
+        '''
+        def substitute_once(x):
+            return self.RE_ITEM_REF.sub(self._replace_match, x)
+
+        expanded = substitute_once(value)
+
+        while expanded != value:  # substitution found
+            value = expanded
+            expanded = substitute_once(value)
+
+        return expanded
 
     def _replace_match(self, match):
         g = match.groupdict()

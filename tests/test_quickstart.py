@@ -379,6 +379,106 @@ deps =
         result = read_tox('tox-generated.ini')
         assert(result == expected_tox_ini)
 
+    def test_quickstart_main_tox_ini_location_can_be_overridden(
+            self,
+            tmpdir,
+            monkeypatch):
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input',
+            self.get_mock_term_input(
+                [
+                    '1',          # py27 and py33
+                    'py.test',    # command to run tests
+                    '',            # test dependencies
+                ]
+            )
+        )
+
+        root_dir = tmpdir.mkdir('alt-root')
+        tox_ini_path = root_dir.join('tox.ini')
+
+        tox._quickstart.main(argv=['tox-quickstart', root_dir.basename])
+
+        assert tox_ini_path.isfile()
+
+        expected_tox_ini = """
+# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# in multiple virtualenvs. This configuration file will run the
+# test suite on all supported python versions. To use it, "pip install tox"
+# and then run "tox" from this directory.
+
+[tox]
+envlist = py27
+
+[testenv]
+commands = py.test
+deps =
+    pytest
+""".lstrip()
+        result = read_tox(fname=tox_ini_path.strpath)
+        assert(result == expected_tox_ini)
+
+    def test_quickstart_main_custom_tox_ini_location_with_existing_tox_ini(
+            self,
+            tmpdir,
+            monkeypatch):
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input',
+            self.get_mock_term_input(
+                [
+                    '1',          # py27 and py33
+                    'py.test',    # command to run tests
+                    '',            # test dependencies
+                    '',           # tox.ini already exists; overwrite?
+                ]
+            )
+        )
+
+        root_dir = tmpdir.mkdir('alt-root')
+        tox_ini_path = root_dir.join('tox.ini')
+        tox_ini_path.write('foo\nbar\n')
+
+        tox._quickstart.main(argv=['tox-quickstart', root_dir.basename])
+        tox_ini_path = root_dir.join('tox-generated.ini')
+
+        assert tox_ini_path.isfile()
+
+        expected_tox_ini = """
+# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# in multiple virtualenvs. This configuration file will run the
+# test suite on all supported python versions. To use it, "pip install tox"
+# and then run "tox" from this directory.
+
+[tox]
+envlist = py27
+
+[testenv]
+commands = py.test
+deps =
+    pytest
+""".lstrip()
+        result = read_tox(fname=tox_ini_path.strpath)
+        assert(result == expected_tox_ini)
+
+    def test_quickstart_main_custom_nonexistent_tox_ini_location(
+            self,
+            tmpdir,
+            monkeypatch):
+        monkeypatch.setattr(
+            tox._quickstart, 'term_input',
+            self.get_mock_term_input(
+                [
+                    '1',          # py27 and py33
+                    'py.test',    # command to run tests
+                    '',           # test dependencies
+                ]
+            )
+        )
+
+        root_dir = tmpdir.join('nonexistent-root')
+
+        assert tox._quickstart.main(argv=['tox-quickstart', root_dir.basename]) == 2
+
 
 class TestToxQuickstart(object):
     def test_pytest(self):
