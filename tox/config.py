@@ -344,7 +344,7 @@ def tox_addoption(parser):
     parser.add_argument("--develop", action="store_true", dest="develop",
                         help="install package in the venv using 'setup.py develop' via "
                              "'pip -e .'")
-    parser.add_argument('-i', action="append",
+    parser.add_argument('-i', '--index-url', action="append",
                         dest="indexurl", metavar="URL",
                         help="set indexserver url (if URL is of form name=url set the "
                              "url for the 'name' indexserver, specifically)")
