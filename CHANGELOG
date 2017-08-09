@@ -7,6 +7,7 @@ Not released yet
 - #517: Forward NUMBER_OF_PROCESSORS by default on Windows to fix
         `multiprocessor.cpu_count()`.
 - #518: Forward `USERPROFILE` by default on Windows.
+- #571: skip_install should override usedevelop
 
 2.7.0
 -----
