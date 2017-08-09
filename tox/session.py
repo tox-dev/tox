@@ -16,6 +16,10 @@ from tox.venv import VirtualEnv
 from tox.config import parseconfig
 from tox.result import ResultLog
 from subprocess import STDOUT
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
 
 
 def now():
@@ -552,12 +556,15 @@ class Session:
             return
         for venv in self.venvlist:
             if self.setupenv(venv):
-                if venv.envconfig.usedevelop:
-                    self.developpkg(venv, self.config.setupdir)
-                elif self.config.skipsdist or venv.envconfig.skip_install:
+                if venv.envconfig.skip_install:
                     self.finishvenv(venv)
                 else:
-                    self.installpkg(venv, path)
+                    if venv.envconfig.usedevelop:
+                        self.developpkg(venv, self.config.setupdir)
+                    elif self.config.skipsdist:
+                        self.finishvenv(venv)
+                    else:
+                        self.installpkg(venv, path)
 
                 # write out version dependency information
                 action = self.newaction(venv, "envreport")
