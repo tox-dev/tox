@@ -1088,6 +1088,27 @@ class TestConfigTestEnv:
         assert 'FOO' in env
         assert 'BAR' in env
 
+    def test_substitution_notfound_issue515(tmpdir, newconfig):
+        config = newconfig("""
+            [tox]
+            envlist = standard-greeting
+
+            [testenv:standard-greeting]
+            commands =
+                python -c 'print("Hello, world!")'
+
+            [testenv:custom-greeting]
+            passenv =
+                NAME
+            commands =
+                python -c 'print("Hello, {env:NAME}!")'
+        """)
+        conf = config.envconfigs['standard-greeting']
+        assert conf.commands == [
+            ['python', '-c', 'print("Hello, world!")'],
+        ]
+
+    @pytest.mark.xfail(raises=AssertionError, reason="issue #301")
     def test_substitution_nested_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
         monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")

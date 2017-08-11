@@ -792,7 +792,8 @@ class parseini:
             factors = set(name.split('-'))
             if section in self._cfg or factors <= known_factors:
                 config.envconfigs[name] = \
-                    self.make_envconfig(name, section, reader._subs, config)
+                    self.make_envconfig(name, section, reader._subs, config,
+                                        replace=name in config.envlist)
 
         all_develop = all(name in config.envconfigs
                           and config.envconfigs[name].usedevelop
@@ -808,7 +809,7 @@ class parseini:
                 factors.update(*mapcat(_split_factor_expr, exprs))
         return factors
 
-    def make_envconfig(self, name, section, subs, config):
+    def make_envconfig(self, name, section, subs, config, replace=True):
         factors = set(name.split('-'))
         reader = SectionReader(section, self._cfg, fallbacksections=["testenv"],
                                factors=factors)
@@ -823,7 +824,7 @@ class parseini:
             atype = env_attr.type
             if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
                 meth = getattr(reader, "get" + atype)
-                res = meth(env_attr.name, env_attr.default)
+                res = meth(env_attr.name, env_attr.default, replace=replace)
             elif atype == "space-separated-list":
                 res = reader.getlist(env_attr.name, sep=" ")
             elif atype == "line-list":
@@ -942,9 +943,9 @@ class SectionReader:
         if _posargs:
             self.posargs = _posargs
 
-    def getpath(self, name, defaultpath):
+    def getpath(self, name, defaultpath, replace=True):
         toxinidir = self._subs['toxinidir']
-        path = self.getstring(name, defaultpath)
+        path = self.getstring(name, defaultpath, replace=replace)
         if path is not None:
             return toxinidir.join(path, abs=True)
 
@@ -954,12 +955,12 @@ class SectionReader:
             return []
         return [x.strip() for x in s.split(sep) if x.strip()]
 
-    def getdict(self, name, default=None, sep="\n"):
+    def getdict(self, name, default=None, sep="\n", replace=True):
         value = self.getstring(name, None)
         return self._getdict(value, default=default, sep=sep)
 
-    def getdict_setenv(self, name, default=None, sep="\n"):
-        value = self.getstring(name, None, replace=True, crossonly=True)
+    def getdict_setenv(self, name, default=None, sep="\n", replace=True):
+        value = self.getstring(name, None, replace=replace, crossonly=True)
         definitions = self._getdict(value, default=default, sep=sep)
         self._setenv = SetenvDict(definitions, reader=self)
         return self._setenv
@@ -976,8 +977,8 @@ class SectionReader:
 
         return d
 
-    def getbool(self, name, default=None):
-        s = self.getstring(name, default)
+    def getbool(self, name, default=None, replace=True):
+        s = self.getstring(name, default, replace=replace)
         if not s:
             s = default
         if s is None:
@@ -994,12 +995,12 @@ class SectionReader:
                     "boolean value %r needs to be 'True' or 'False'")
         return s
 
-    def getargvlist(self, name, default=""):
+    def getargvlist(self, name, default="", replace=True):
         s = self.getstring(name, default, replace=False)
-        return _ArgvlistReader.getargvlist(self, s)
+        return _ArgvlistReader.getargvlist(self, s, replace=replace)
 
-    def getargv(self, name, default=""):
-        return self.getargvlist(name, default)[0]
+    def getargv(self, name, default="", replace=True):
+        return self.getargvlist(name, default, replace=replace)[0]
 
     def getstring(self, name, default=None, replace=True, crossonly=False):
         x = None
@@ -1153,7 +1154,7 @@ class Replacer:
 
 class _ArgvlistReader:
     @classmethod
-    def getargvlist(cls, reader, value):
+    def getargvlist(cls, reader, value, replace=True):
         """Parse ``commands`` argvlist multiline string.
 
         :param str name: Key name in a section.
@@ -1178,7 +1179,7 @@ class _ArgvlistReader:
                 replaced = reader._replace(current_command, crossonly=True)
                 commands.extend(cls.getargvlist(reader, replaced))
             else:
-                commands.append(cls.processcommand(reader, current_command))
+                commands.append(cls.processcommand(reader, current_command, replace))
             current_command = ""
         else:
             if current_command:
@@ -1188,7 +1189,7 @@ class _ArgvlistReader:
         return commands
 
     @classmethod
-    def processcommand(cls, reader, command):
+    def processcommand(cls, reader, command, replace=True):
         posargs = getattr(reader, "posargs", "")
         posargs_string = list2cmdline([x for x in posargs if x])
 
@@ -1196,23 +1197,26 @@ class _ArgvlistReader:
         # appropriate to construct the new command string. This
         # string is then broken up into exec argv components using
         # shlex.
-        newcommand = ""
-        for word in CommandParser(command).words():
-            if word == "{posargs}" or word == "[]":
-                newcommand += posargs_string
-                continue
-            elif word.startswith("{posargs:") and word.endswith("}"):
-                if posargs:
+        if replace:
+            newcommand = ""
+            for word in CommandParser(command).words():
+                if word == "{posargs}" or word == "[]":
                     newcommand += posargs_string
                     continue
-                else:
-                    word = word[9:-1]
-            new_arg = ""
-            new_word = reader._replace(word)
-            new_word = reader._replace(new_word)
-            new_word = new_word.replace('\\{', '{').replace('\\}', '}')
-            new_arg += new_word
-            newcommand += new_arg
+                elif word.startswith("{posargs:") and word.endswith("}"):
+                    if posargs:
+                        newcommand += posargs_string
+                        continue
+                    else:
+                        word = word[9:-1]
+                new_arg = ""
+                new_word = reader._replace(word)
+                new_word = reader._replace(new_word)
+                new_word = new_word.replace('\\{', '{').replace('\\}', '}')
+                new_arg += new_word
+                newcommand += new_arg
+        else:
+            newcommand = command
 
         # Construct shlex object that will not escape any values,
         # use all values as is in argv.
