@@ -12,7 +12,7 @@ matrix:
   fast_finish: true
 
 install:
-  - C:\Python36\python -m pip install tox
+  - C:\Python36\python -m pip install --pre -U tox
 
 build: false  # Not a C# project
 
