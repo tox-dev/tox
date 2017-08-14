@@ -856,6 +856,12 @@ class parseini:
             for env in _split_env(stated_envlist):
                 known_factors.update(env.split('-'))
 
+        # sdist creation environment
+        config.sdist_envconfig = self.make_envconfig(
+            "sdist", "toxenv:sdist", reader._subs, config, replace=True,
+            fallbacksections=[]
+        )
+
         # configure testenvs
         for name in all_envs:
             section = testenvprefix + name
@@ -867,6 +873,7 @@ class parseini:
                           config.envconfigs[name].usedevelop for name in config.envlist)
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
+        config.venvsdist = reader.getbool("venvsdist", False)
 
     def _list_section_factors(self, section):
         factors = set()
@@ -876,10 +883,14 @@ class parseini:
                 factors.update(*mapcat(_split_factor_expr_all, exprs))
         return factors
 
-    def make_envconfig(self, name, section, subs, config, replace=True):
+    def make_envconfig(self, name, section, subs, config, replace=True,
+                       fallbacksections=None):
+        if fallbacksections is None:
+            fallbacksections = ["testenv"]
+
         factors = set(name.split('-'))
-        reader = SectionReader(section, self._cfg, fallbacksections=["testenv"],
-                               factors=factors)
+        reader = SectionReader(section, self._cfg, factors=factors,
+                               fallbacksections=fallbacksections)
         tc = TestenvConfig(name, config, factors, reader)
         reader.addsubstitutions(
             envname=name, envbindir=tc.get_envbindir, envsitepackagesdir=tc.get_envsitepackagesdir,

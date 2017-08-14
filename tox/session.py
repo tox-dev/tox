@@ -351,8 +351,9 @@ class Session:
     def hook(self):
         return self.config.pluginmanager.hook
 
-    def _makevenv(self, name):
-        envconfig = self.config.envconfigs.get(name, None)
+    def _makevenv(self, name, envconfig=None):
+        if envconfig is None:
+            envconfig = self.config.envconfigs.get(name, None)
         if envconfig is None:
             self.report.error("unknown environment %r" % name)
             raise LookupError(name)
@@ -397,6 +398,20 @@ class Session:
             target.dirpath().ensure(dir=1)
             src.copy(target)
 
+    def _makesdistvenv(self, setup_cmd, cwd):
+        envconfig = self.config.sdist_envconfig
+        try:
+            envconfig.changedir = cwd
+            envconfig.commands.append([str(envconfig.envpython)] + setup_cmd)
+            envconfig.list_dependencies_command = ["pip", "freeze", "--all"]
+
+            return self._makevenv("sdist", envconfig)
+        except LookupError:
+            raise SystemExit(1)
+        except tox.exception.ConfigError as e:
+            self.report.error(str(e))
+            raise SystemExit(1)
+
     def _makesdist(self):
         setup = self.config.setupdir.join("setup.py")
         if not setup.check():
@@ -411,15 +426,36 @@ class Session:
                 "#avoiding-expensive-sdist" % setup
             )
             raise SystemExit(1)
+        setup_cmd = [setup, "sdist", "--formats=zip",
+                     "--dist-dir", self.config.distdir]
+
+        if self.config.venvsdist:
+            venv_sdist = self._makesdistvenv(setup_cmd, cwd=self.config.setupdir)
+            if not self.setupenv(venv_sdist, log_context=None):
+                raise SystemExit(1)
+            # write out version dependency information
+            self.envreport(venv_sdist, log_context=None)
+
         action = self.newaction(None, "packaging")
         with action:
             action.setactivity("sdist-make", setup)
             self.make_emptydir(self.config.distdir)
-            action.popen([sys.executable, setup, "sdist", "--formats=zip",
-                          "--dist-dir", self.config.distdir, ],
-                         cwd=self.config.setupdir)
+
+            if self.config.venvsdist:
+                if not venv_sdist.test(redirect=True, log_context=None, log_stage="sdist-make"):
+                    raise SystemExit(1)
+            else:
+                action.popen([sys.executable, setup, "sdist", "--formats=zip",
+                             "--dist-dir", self.config.distdir],
+                             cwd=self.config.setupdir)
+
             try:
-                return self.config.distdir.listdir()[0]
+                filelist = self.config.distdir.listdir()[0]
+
+                if self.config.venvsdist:
+                    self.finishvenv(venv_sdist, log_context=None)
+
+                return filelist
             except py.error.ENOENT:
                 # check if empty or comment only
                 data = []
@@ -445,7 +481,10 @@ class Session:
             shutil.rmtree(str(path), ignore_errors=True)
             path.ensure(dir=1)
 
-    def setupenv(self, venv):
+    def setupenv(self, venv, log_context=0):
+        if log_context == 0:
+            log_context = venv
+
         if venv.envconfig.missing_subs:
             venv.status = (
                 "unresolvable substitution(s): %s. "
@@ -455,7 +494,7 @@ class Session:
         if not venv.matching_platform():
             venv.status = "platform mismatch"
             return  # we simply omit non-matching platforms
-        action = self.newaction(venv, "getenv", venv.envconfig.envdir)
+        action = self.newaction(log_context, "getenv", venv.envconfig.envdir)
         with action:
             venv.status = 0
             envlog = self.resultlog.get_envlog(venv.name)
@@ -482,8 +521,11 @@ class Session:
             envlog.set_python_info(commandpath)
             return True
 
-    def finishvenv(self, venv):
-        action = self.newaction(venv, "finishvenv")
+    def finishvenv(self, venv, log_context=0):
+        if log_context == 0:
+            log_context = venv
+
+        action = self.newaction(log_context, "finishvenv")
         with action:
             venv.finish()
             return True
@@ -497,6 +539,24 @@ class Session:
             except tox.exception.InvocationError:
                 venv.status = sys.exc_info()[1]
                 return False
+
+    def envreport(self, venv, log_context=0):
+        if log_context == 0:
+            log_context = venv
+
+        # write out version dependency information
+        action = self.newaction(log_context, "envreport")
+        with action:
+            args = venv.envconfig.list_dependencies_command
+            output = venv._pcall(args,
+                                 cwd=self.config.toxinidir,
+                                 action=action)
+            # the output contains a environmental header, skip it
+            output = output.split("\n\n")[-1]
+            packages = output.strip().split("\n")
+            action.setactivity("installed", ",".join(packages))
+            envlog = self.resultlog.get_envlog(venv.name)
+            envlog.set_installed(packages)
 
     def installpkg(self, venv, path):
         """Install package in the specified virtual environment.
@@ -573,18 +633,7 @@ class Session:
                         self.installpkg(venv, path)
 
                 # write out version dependency information
-                action = self.newaction(venv, "envreport")
-                with action:
-                    args = venv.envconfig.list_dependencies_command
-                    output = venv._pcall(args,
-                                         cwd=self.config.toxinidir,
-                                         action=action)
-                    # the output contains a mime-header, skip it
-                    output = output.split("\n\n")[-1]
-                    packages = output.strip().split("\n")
-                    action.setactivity("installed", ",".join(packages))
-                    envlog = self.resultlog.get_envlog(venv.name)
-                    envlog.set_installed(packages)
+                self.envreport(venv)
 
                 self.runtestenv(venv)
         retcode = self._summary()

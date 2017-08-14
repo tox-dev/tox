@@ -359,8 +359,12 @@ class VirtualEnv(object):
         env['VIRTUAL_ENV'] = str(self.path)
         return env
 
-    def test(self, redirect=False):
-        action = self.session.newaction(self, "runtests")
+    def test(self, redirect=False, log_context=0, log_stage="runtests"):
+        if log_context == 0:
+            log_context = self
+
+        success = True
+        action = self.session.newaction(log_context, log_stage)
         with action:
             self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
@@ -368,13 +372,13 @@ class VirtualEnv(object):
             cwd = self.envconfig.changedir
             env = self._getenv(testcommand=True)
             # Display PYTHONHASHSEED to assist with reproducibility.
-            action.setactivity("runtests", "PYTHONHASHSEED=%r" % env.get('PYTHONHASHSEED'))
+            action.setactivity(log_stage, "PYTHONHASHSEED=%r" % env.get('PYTHONHASHSEED'))
             for i, argv in enumerate(self.envconfig.commands):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
                 message = "commands[%s] | %s" % (i, ' '.join(
                     [str(x) for x in argv]))
-                action.setactivity("runtests", message)
+                action.setactivity(log_stage, message)
                 # check to see if we need to ignore the return code
                 # if so, we need to alter the command line arguments
                 if argv[0].startswith("-"):
@@ -397,6 +401,7 @@ class VirtualEnv(object):
                         self.status = "ignored failed command"
                         continue  # keep processing commands
 
+                    success = False
                     self.session.report.error(str(err))
                     self.status = "commands failed"
                     if not self.envconfig.ignore_errors:
@@ -405,6 +410,8 @@ class VirtualEnv(object):
                     self.status = "keyboardinterrupt"
                     self.session.report.error(self.status)
                     raise
+
+        return success
 
     def _pcall(self, args, cwd, venv=True, testcommand=False,
                action=None, redirect=True, ignore_ret=False):
