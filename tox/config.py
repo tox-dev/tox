@@ -673,6 +673,14 @@ class TestenvConfig:
         check later when the testenv is actually run and crash only then.
         """
 
+    def __str__(self):
+        return "<{0}: config={2!r}, envname={3!r}, factors={4!r} at 0x{1:x}>".format(
+            self.__class__.__name__, id(self),
+            self.config,
+            self.envname,
+            self.factors
+        )
+
     def get_envbindir(self):
         """ path to directory where scripts/binaries reside. """
         if sys.platform == "win32" and "jython" not in self.basepython and \

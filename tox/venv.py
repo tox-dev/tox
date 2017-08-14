@@ -22,6 +22,14 @@ class CreationConfig:
         self.alwayscopy = alwayscopy
         self.deps = deps
 
+    def __str__(self):
+        return ("<{0}: alwayscopy={2!r}, deps={3!r}, md5={4!r}, python={5!r}, "
+                "sitepackages={6!r}, version={7!r}, usedevelop={8!r}"
+                " at 0x{1:x}>").format(
+            self.__class__.__name__, id(self),
+            self.alwayscopy, self.deps, self.md5, self.python,
+            self.sitepackages, self.version, self.usedevelop)
+
     def writeconfig(self, path):
         lines = ["%s %s" % (self.md5, self.python)]
         lines.append("%s %d %d %d" % (self.version, self.sitepackages,
