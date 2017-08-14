@@ -430,6 +430,8 @@ def tox_testenv_create(venv, action):
         args.append('--system-site-packages')
     if venv.envconfig.alwayscopy:
         args.append('--always-copy')
+    if not venv.envconfig.install_setuptools:
+        args.extend(['--no-setuptools', '--no-wheel'])
     # add interpreter explicitly, to prevent using
     # default (virtualenv.ini)
     args.extend(['--python', str(config_interpreter)])

@@ -595,9 +595,25 @@ def tox_addoption(parser):
     parser.add_testenv_attribute_obj(InstallcmdOption())
 
     parser.add_testenv_attribute(
+        name="install_setuptools", type="bool", default=True,
+        help="If true the ``setuptools`` and ``wheel`` packages will "
+             "automatically be installed into the virtual environment.")
+
+    def list_dependencies_command(testenv_config, value):
+        using_setuptools = testenv_config.install_setuptools
+
+        # Display setuptools and wheel when listing dependencies of an
+        # environment where they are not present by default
+        if value == ["pip", "freeze"] and not using_setuptools:
+            value.append("--all")
+
+        return value
+
+    parser.add_testenv_attribute(
         name="list_dependencies_command",
         type="argv",
         default="pip freeze",
+        postprocess=list_dependencies_command,
         help="list dependencies for a virtual environment")
 
     parser.add_testenv_attribute_obj(DepOption())
