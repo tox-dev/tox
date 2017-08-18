@@ -449,19 +449,17 @@ class Session:
             envlog = self.resultlog.get_envlog(venv.name)
             try:
                 status = venv.update(action=action)
-            except FileNotFoundError as e:
+            except IOError as e:
+                if e.args[0] != 2:  # file not found
+                    raise
                 status = (
-                    "Error creating virtualenv. "
-                    "Note that spaces in path are not supported by virtualenv. "
-                    "Error details: %r" % e
-                )
+                    "Error creating virtualenv. Note that spaces in paths are "
+                    "not supported by virtualenv. Error details: %r" % e)
             except tox.exception.InvocationError as e:
                 status = (
-                    "Error creating virtualenv. "
-                    "Note that some special characters (such as ':' and unicode symbols) "
-                    "in path are not supported by virtualenv. "
-                    "Error details: %r" % e
-                )
+                    "Error creating virtualenv. Note that some special "
+                    "characters (e.g. ':' and unicode symbols) in paths are "
+                    "not supported by virtualenv. Error details: %r" % e)
             if status:
                 commandlog = envlog.get_commandlog("setup")
                 commandlog.add_command(["setup virtualenv"], str(status), 1)
