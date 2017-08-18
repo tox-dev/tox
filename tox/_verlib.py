@@ -25,6 +25,7 @@ class HugeMajorVersionNumError(IrrationalVersionError):
     """
     pass
 
+
 # A marker used in the second and third parts of the `parts` tuple, for
 # versions that don't have those segments, to sort properly. An example
 # of versions in sort order ('highest' last):

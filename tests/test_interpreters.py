@@ -1,9 +1,12 @@
 import sys
 import os
 
+import py
 import pytest
-from tox.interpreters import *  # noqa
+
 from tox.config import get_plugin_manager
+from tox.interpreters import Interpreters, locate_via_py, tox_get_python_executable,\
+    run_and_get_interpreter_info
 
 
 @pytest.fixture

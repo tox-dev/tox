@@ -1,6 +1,6 @@
 from pkg_resources import get_distribution, DistributionNotFound
 
-from .hookspecs import hookspec, hookimpl  # noqa
+from .hookspecs import hookspec, hookimpl
 
 try:
     _full_version = get_distribution(__name__).version
@@ -43,3 +43,5 @@ class exception:
 
 
 from tox.session import main as cmdline  # noqa
+
+__all__ = ('hookspec', 'hookimpl', 'cmdline', 'exception', '__version__')

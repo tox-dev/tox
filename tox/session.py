@@ -46,7 +46,7 @@ def main(args=None):
         raise SystemExit(2)
     except tox.exception.MinVersionError as e:
         r = Reporter(None)
-        r.error(e.message)
+        r.error(e.args)
         raise SystemExit(1)
 
 
