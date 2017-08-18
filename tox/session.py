@@ -450,7 +450,7 @@ class Session:
             try:
                 status = venv.update(action=action)
             except IOError as e:
-                if e.args[0] != 2:  # file not found
+                if e.args[0] != 2:
                     raise
                 status = (
                     "Error creating virtualenv. Note that spaces in paths are "
