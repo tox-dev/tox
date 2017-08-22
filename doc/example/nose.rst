@@ -37,5 +37,5 @@ for nose/tox interactions please submit them.
 
 Also you might want to checkout :doc:`general`.
 
-.. include:: ../links.txt
+.. include:: ../links.rst
 

@@ -123,4 +123,4 @@ Current features
    announce/changelog-only
 
 
-.. include:: links.txt
+.. include:: links.rst

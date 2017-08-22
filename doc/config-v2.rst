@@ -7,7 +7,7 @@ V2: new tox multi-dimensional, platform-specific configuration
    It does not fully specify each change yet but should give a good
    idea of where things are heading.  For feedback, mail the
    testing-in-python mailing list or open a pull request on
-   https://github.com/tox-dev/tox/blob/master/doc/config-v2.txt
+   https://github.com/tox-dev/tox/blob/master/doc/config-v2.rst
 
 **Abstract**: Adding multi-dimensional configuration, platform-specification
 and multiple installers to tox.ini.
@@ -209,7 +209,7 @@ Use more bash-style syntax
 tox leverages bash-style syntax if you specify mintoxversion = 1.4:
 
 - $VARNAME or ${...} syntax instead of the older {} substitution.
-- XXX go through config.txt and see how it would need to be changed
+- XXX go through config.rst and see how it would need to be changed
 
 
 Transforming the examples: django-rest

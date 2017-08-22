@@ -110,4 +110,4 @@ other places or be found by Python's import system outside of pytest.
 .. _`fully qualified name`: http://doc.pytest.org/en/latest/goodpractices.html#test-package-name
 
 
-.. include:: ../links.txt
+.. include:: ../links.rst
