@@ -82,32 +82,38 @@ configuration::
 
 .. _multiindex:
 
-depending on requirements.txt
+depending on requirements.txt or defining constraints
 -----------------------------------------------
 
 .. versionadded:: 1.6.1
 
-(experimental) If you have a ``requirements.txt`` file
-you can add it to your ``deps`` variable like this::
+(experimental) If you have a ``requirements.txt`` file or a ``constraints.txt`` file you can add it to your ``deps`` variable like this:
+
+.. code-block:: ini
 
     deps = -rrequirements.txt
 
-All installation commands are executed using ``{toxinidir}``
-(the directory where ``tox.ini`` resides) as the current
-working directory.  Therefore, the underlying ``pip`` installation
-will assume ``requirements.txt`` to exist at ``{toxinidir}/requirements.txt``.
+or
 
-defining constrains
------------------------------------------------
+.. code-block:: ini
 
-.. versionadded:: 1.6.1
+    deps = -cconstraints.txt
 
-(experimental) If you have a ``constrains.txt`` file you can add it to your ``deps``varaiable like this::
+or
 
-    deps = constrains.txt
+.. code-block:: ini
+
+    deps = -rrequirements.txt -cconstraints.txt
 
 All installation commands are executed using ``{toxinidir}`` (the directory where ``tox.ini`` resides) as the current working directory.
-Therefore, the underlying ``pip`` installation will assume ``contrains.txt`` to exist at ``{toxinidir}/contrains.txt``.
+Therefore, the underlying ``pip`` installation will assume ``requirements.txt`` or ``constraints.txt`` to exist at ``{toxinidir}/requirements.txt`` or ``{toxinidir}/contrains.txt``.
+
+This is actually a side effect that all elements of the dependency list is directly passed to ``pip``.
+
+For more details on ``requirements.txt`` files or ``constraints.txt`` files please see:
+
+* https://pip.pypa.io/en/stable/user_guide/#requirements-files
+* https://pip.pypa.io/en/stable/user_guide/#constraints-files
 
 using a different default PyPI url
 -----------------------------------------------
