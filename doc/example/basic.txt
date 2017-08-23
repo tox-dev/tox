@@ -97,6 +97,18 @@ All installation commands are executed using ``{toxinidir}``
 working directory.  Therefore, the underlying ``pip`` installation
 will assume ``requirements.txt`` to exist at ``{toxinidir}/requirements.txt``.
 
+defining constrains
+-----------------------------------------------
+
+.. versionadded:: 1.6.1
+
+(experimental) If you have a ``constrains.txt`` file you can add it to your ``deps``varaiable like this::
+
+    deps = constrains.txt
+
+All installation commands are executed using ``{toxinidir}`` (the directory where ``tox.ini`` resides) as the current working directory.
+Therefore, the underlying ``pip`` installation will assume ``contrains.txt`` to exist at ``{toxinidir}/contrains.txt``.
+
 using a different default PyPI url
 -----------------------------------------------
 
