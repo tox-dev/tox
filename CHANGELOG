@@ -9,6 +9,7 @@ Not released yet
 - #518: Forward `USERPROFILE` by default on Windows.
 - #515: Don't require environment variables in test environments
 	where they are not used.
+- : Add documentation for constrains.txt
 
 2.7.0
 -----
