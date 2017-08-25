@@ -1,5 +1,5 @@
-Not released yet
-----------------
+2.8.0rc1
+--------
 
 - #474: Start using setuptools_scm for tag based versioning.
 - #484: Renamed `py.test` to `pytest` throughout the project
@@ -9,7 +9,9 @@ Not released yet
 - #518: Forward `USERPROFILE` by default on Windows.
 - #515: Don't require environment variables in test environments
 	where they are not used.
-- : Add documentation for constraints.txt
+- #326: Fix OSError 'Not a directory' when creating env on Jython 2.7.0.
+        Thanks Nick Douma (@LordGaav).
+- #585: Add documentation for constraints.txt
 
 2.7.0
 -----
