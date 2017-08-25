@@ -11,6 +11,7 @@
 	where they are not used.
 - #326: Fix OSError 'Not a directory' when creating env on Jython 2.7.0.
         Thanks Nick Douma (@LordGaav).
+- #585: Add documentation for constraints.txt
 
 2.7.0
 -----
