@@ -2187,8 +2187,8 @@ class TestCmdInvocation:
         ])
 
     @pytest.mark.xfail(
-        "pypy not in sys.prefix",
-         reason='Upstream bug. See #203')
+        "'pypy' not in sys.prefix",
+        reason='Upstream bug. See #203')
     def test_colon_symbol_in_directory_name(self, cmd, initproj):
         initproj('colon:_symbol_in_dir_name', filedefs={
             'tox.ini': '''
