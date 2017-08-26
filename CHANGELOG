@@ -1,16 +1,50 @@
-2.8.0rc1
---------
+2.8rc2 (2017-08-26)
+-------------------
 
-- #474: Start using setuptools_scm for tag based versioning.
-- #484: Renamed `py.test` to `pytest` throughout the project
-- #506: With `-a`: do not show additional environments header if there are none
-- #517: Forward NUMBER_OF_PROCESSORS by default on Windows to fix
-        `multiprocessor.cpu_count()`.
-- #518: Forward `USERPROFILE` by default on Windows.
-- #515: Don't require environment variables in test environments
-	where they are not used.
+- #276: Remove easy_install from docs (TL;DR: use pip).
+        Thanks Martin Andrysík (@sifuraz).
+- #301: Expand nested substitutions in tox.ini
+        Thanks @vlaci.
+        Thanks to Eli Collins (@eli-collins) for creating a reproducer.
+- #315: add --help and --version to helptox-quickstart
+        Thanks @vlaci.
 - #326: Fix OSError 'Not a directory' when creating env on Jython 2.7.0.
         Thanks Nick Douma (@LordGaav).
+- #429: Forward MSYSTEM by default on Windows
+        Thanks Marius Gedminas (@mgedmin) for reporting this.
+- #449: add multi platform example to the docs.
+        Thanks Aleks Bunin (@sashkab) and @rndr.
+- #474: Start using setuptools_scm for tag based versioning.
+- #484: Renamed `py.test` to `pytest` throughout the project
+        Thanks Slam (@3lnc).
+- #504: With `-a`: do not show additional environments header if there are none
+        Thanks @rndr.
+- #515: Don't require environment variables in test environments where they
+        are not used.
+        Thanks André Caron (@AndreLouisCaron).
+- #517: Forward NUMBER_OF_PROCESSORS by default on Windows to fix
+        `multiprocessor.cpu_count()`.
+        Thanks André Caron (@AndreLouisCaron).
+- #518: Forward `USERPROFILE` by default on Windows.
+        Thanks André Caron (@AndreLouisCaron).
+- #p528: Fix some of the warnings displayed by pytest 3.1.0.
+         Thanks Bruno Oliveira (@nicoddemus).
+- #p547: Add regression test for #137
+         Thanks Martin Andrysík (@sifuraz).
+- #p553: Add an XFAIL test to reproduce upstream bug #203
+         Thanks Bartolomé Sánchez Salado (@bartsanchez).
+- #p556: Report more meaningful errors on why virtualenv creation failed
+         Thanks @vlaci.
+         Also thanks to Igor Sadchenko (@igor-sadchenko) for pointing out a
+         problem with that PR before it hit the masses :)
+- #575: Add announcement doc to end all announcement docs
+        (using only CHANGELOG and Github issues since 2.5 already)
+- #p580: Do not ignore Sphinx warnings anymore
+         Thanks Gábor Bernát (@gaborbernat).
+- #585: Expand documentation to explain pass through of flags from deps to pip
+        (e.g. -rrequirements.txt, -cconstraints.txt)
+        Thanks Alexander Loechel (@loechel).
+- #588: Run pytest wit xfail_strict and adapt affected tests.
 
 2.7.0
 -----
