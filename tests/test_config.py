@@ -1683,9 +1683,6 @@ class TestHashseedOption:
         args = ['--hashseed', '']
         self._check_testenv(newconfig, '', args=args)
 
-    @pytest.mark.xfail("(3, 2) <= sys.version_info < (3, 4)",
-                       reason="at least Debian python 3.2/3.3 have a bug: "
-                              "http://bugs.python.org/issue11884")
     def test_passing_no_argument(self, tmpdir, newconfig):
         """Test that passing no arguments to --hashseed is not allowed."""
         args = ['--hashseed']
@@ -2189,7 +2186,9 @@ class TestCmdInvocation:
             r'*deps*dep1, dep2==5.0*',
         ])
 
-    @pytest.mark.xfail(reason='Upstream bug. See #203')
+    @pytest.mark.xfail(
+        "pypy not in sys.prefix",
+         reason='Upstream bug. See #203')
     def test_colon_symbol_in_directory_name(self, cmd, initproj):
         initproj('colon:_symbol_in_dir_name', filedefs={
             'tox.ini': '''
