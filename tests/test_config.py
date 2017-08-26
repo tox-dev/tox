@@ -1108,8 +1108,7 @@ class TestConfigTestEnv:
             ['python', '-c', 'print("Hello, world!")'],
         ]
 
-    @pytest.mark.xfail(raises=AssertionError, reason="issue #301")
-    def test_substitution_nested_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
+    def test_substitution_nested_env_defaults(tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
         monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")
         config = newconfig("""
@@ -1684,7 +1683,7 @@ class TestHashseedOption:
         args = ['--hashseed', '']
         self._check_testenv(newconfig, '', args=args)
 
-    @pytest.mark.xfail(sys.version_info >= (3, 2),
+    @pytest.mark.xfail("sys.version_info >= (3, 2) and sys.version < (3, 4)",
                        reason="at least Debian python 3.2/3.3 have a bug: "
                               "http://bugs.python.org/issue11884")
     def test_passing_no_argument(self, tmpdir, newconfig):
