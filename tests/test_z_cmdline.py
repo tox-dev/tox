@@ -782,7 +782,6 @@ def test_installpkg(tmpdir, newconfig):
     assert sdist_path == p
 
 
-@pytest.mark.xfail("sys.platform == 'win32'", reason="test needs better impl")
 def test_envsitepackagesdir(cmd, initproj):
     initproj("pkg512-0.0.5", filedefs={
         'tox.ini': """
@@ -797,7 +796,6 @@ def test_envsitepackagesdir(cmd, initproj):
     """)
 
 
-@pytest.mark.xfail("sys.platform == 'win32'", reason="test needs better impl")
 def test_envsitepackagesdir_skip_missing_issue280(cmd, initproj):
     initproj("pkg513-0.0.5", filedefs={
         'tox.ini': """
