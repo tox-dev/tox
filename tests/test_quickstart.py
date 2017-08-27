@@ -50,7 +50,7 @@ class TestToxQuickstartMain(object):
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -92,7 +92,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -134,7 +134,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -175,7 +175,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -208,7 +208,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -241,7 +241,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -274,7 +274,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -316,7 +316,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -363,7 +363,7 @@ deps =
         tox._quickstart.main(argv=['tox-quickstart'])
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -402,7 +402,7 @@ deps =
         assert tox_ini_path.isfile()
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -444,7 +444,7 @@ deps =
         assert tox_ini_path.isfile()
 
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -493,7 +493,7 @@ class TestToxQuickstart(object):
             'deps': 'pytest',
         }
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -520,7 +520,7 @@ deps =
             'deps': '',
         }
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -546,7 +546,7 @@ deps =
             'deps': 'Twisted',
         }
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -577,7 +577,7 @@ deps =
             'deps': 'nose',
         }
         expected_tox_ini = """
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.

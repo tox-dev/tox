@@ -18,7 +18,7 @@ their python projects.
 Issues with current tox (1.4) configuration
 ------------------------------------------------
 
-Tox is used as a tool for creating and managing virtualenv environments
+tox is used as a tool for creating and managing virtualenv environments
 and running tests in them. As of tox-1.4 there are some issues frequently
 coming up with its configuration language:
 
@@ -124,7 +124,7 @@ Nothing special here :)
 
 .. note::
 
-    Tox provides good defaults for platform and basepython
+    tox provides good defaults for platform and basepython
     settings, so the above ini-file can be further reduced::
 
         [tox]
