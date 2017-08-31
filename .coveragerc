@@ -1,0 +1,9 @@
+[run]
+branch = true
+source = tox
+omit =
+    tox/__main__.py
+
+[report]
+exclude_lines =
+    if __name__ == ["']__main__["']:
