@@ -344,6 +344,17 @@ class TestIniParserAgainstCommandsKey:
         envconfig = config.envconfigs['python']
         assert envconfig.commands == [["echo", "bar"]]
 
+    def test_reproduce_issue595(self, newconfig):
+        with pytest.raises(ValueError):
+            newconfig("""
+                [tox]
+                envlist = spam
+                [testenv]
+                setenv = DONTCARE = 0
+                [testenv:eggs]
+                setenv = {[testenv]setenv}
+            """)
+
 
 class TestIniParser:
     def test_getstring_single(self, tmpdir, newconfig):
