@@ -352,6 +352,7 @@ class TestIniParserAgainstCommandsKey:
             setenv = DONTCARE = 0
             [testenv:eggs]
             setenv = {[testenv]setenv}
+            sitepackages = {[testenv]sitepackages}
         """)
         assert config.envlist == ['spam']
 

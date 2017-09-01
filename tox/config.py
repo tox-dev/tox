@@ -980,7 +980,7 @@ class SectionReader:
 
     def getbool(self, name, default=None, replace=True):
         s = self.getstring(name, default, replace=replace)
-        if not s:
+        if not s or not replace:
             s = default
         if s is None:
             raise KeyError("no config value [%s] %s found" % (
