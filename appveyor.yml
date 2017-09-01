@@ -11,10 +11,10 @@ environment:
 matrix:
   fast_finish: true
 
-install:
-  - C:\Python36\python -m pip install --pre -U tox
+install: C:\Python36\python -m pip install --pre -U tox
 
 build: false  # Not a C# project
 
-test_script:
-  - C:\Python36\scripts\tox
+test_script: C:\Python36\scripts\tox
+
+after_test: C:\Python36\scripts\tox -e coverage-combine
