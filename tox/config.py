@@ -791,9 +791,8 @@ class parseini:
             section = testenvprefix + name
             factors = set(name.split('-'))
             if section in self._cfg or factors <= known_factors:
-                config.envconfigs[name] = \
-                    self.make_envconfig(name, section, reader._subs, config,
-                                        replace=name in config.envlist)
+                config.envconfigs[name] = self.make_envconfig(
+                    name, section, reader._subs, config, replace=True)
 
         all_develop = all(name in config.envconfigs
                           and config.envconfigs[name].usedevelop
@@ -1041,10 +1040,16 @@ class SectionReader:
 
         section_name = section_name if section_name else self.section_name
         self._subststack.append((section_name, name))
-        try:
-            return Replacer(self, crossonly=crossonly).do_replace(value)
-        finally:
-            assert self._subststack.pop() == (section_name, name)
+        replaced = Replacer(self, crossonly=crossonly).do_replace(value)
+        assert self._subststack.pop() == (section_name, name)
+        if replaced == 'TOX_MISSING_ENV_SUBSTITUTION':
+            if ':' not in section_name:
+                raise tox.exception.ConfigError(
+                    "substitution env:%r: unknown or recursive definition in "
+                    "section %r." % (value, section_name))
+            envname = section_name.split(':')[-1]
+            tox.missing_env_substitution_map[envname].append(value)
+        return replaced
 
 
 class Replacer:
@@ -1112,20 +1117,16 @@ class Replacer:
     def _replace_env(self, match):
         envkey = match.group('substitution_value')
         if not envkey:
-            raise tox.exception.ConfigError(
-                'env: requires an environment variable name')
-
+            raise tox.exception.ConfigError('env: requires an environment variable name')
         default = match.group('default_value')
-
         envvalue = self.reader.get_environ_value(envkey)
-        if envvalue is None:
-            if default is None:
-                raise tox.exception.ConfigError(
-                    "substitution env:%r: unknown environment variable %r "
-                    " or recursive definition." %
-                    (envkey, envkey))
+        if envvalue is not None:
+            return envvalue
+        if default is not None:
             return default
-        return envvalue
+        # Don't crash yet, because this is only a problem if the tox environment
+        # is part of the current run
+        return 'TOX_MISSING_ENV_SUBSTITUTION'
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
