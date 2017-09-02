@@ -344,17 +344,20 @@ class TestIniParserAgainstCommandsKey:
         envconfig = config.envconfigs['python']
         assert envconfig.commands == [["echo", "bar"]]
 
-    def test_reproduce_issue595(self, newconfig):
+    def test_regression_issue595(self, newconfig):
         config = newconfig("""
             [tox]
-            envlist = spam
+            envlist = foo
             [testenv]
-            setenv = DONTCARE = 0
-            [testenv:eggs]
+            setenv = VAR = x
+            [testenv:bar]
             setenv = {[testenv]setenv}
-            sitepackages = {[testenv]sitepackages}
+            [testenv:baz]
+            setenv = 
         """)
-        assert config.envlist == ['spam']
+        assert config.envconfigs['foo'].setenv['VAR'] == 'x'
+        assert config.envconfigs['bar'].setenv['VAR'] == 'x'
+        assert 'VAR' not in config.envconfigs['baz'].setenv
 
 
 class TestIniParser:
