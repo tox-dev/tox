@@ -957,16 +957,17 @@ class SectionReader:
 
     def getdict(self, name, default=None, sep="\n", replace=True):
         value = self.getstring(name, None, replace=replace)
-        return self._getdict(value, default=default, sep=sep)
+        return self._getdict(value, default=default, sep=sep, replace=replace)
 
     def getdict_setenv(self, name, default=None, sep="\n", replace=True):
         value = self.getstring(name, None, replace=replace, crossonly=True)
-        definitions = self._getdict(value, default=default, sep=sep)
+        definitions = self._getdict(value, default=default, sep=sep,
+                                    replace=replace)
         self._setenv = SetenvDict(definitions, reader=self)
         return self._setenv
 
-    def _getdict(self, value, default, sep):
-        if value is None:
+    def _getdict(self, value, default, sep, replace=True):
+        if value is None or not replace:
             return default or {}
 
         d = {}
@@ -979,7 +980,7 @@ class SectionReader:
 
     def getbool(self, name, default=None, replace=True):
         s = self.getstring(name, default, replace=replace)
-        if not s:
+        if not s or not replace:
             s = default
         if s is None:
             raise KeyError("no config value [%s] %s found" % (
