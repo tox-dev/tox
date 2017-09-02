@@ -353,7 +353,7 @@ class TestIniParserAgainstCommandsKey:
             [testenv:bar]
             setenv = {[testenv]setenv}
             [testenv:baz]
-            setenv = 
+            setenv =
         """)
         assert config.envconfigs['foo'].setenv['VAR'] == 'x'
         assert config.envconfigs['bar'].setenv['VAR'] == 'x'
