@@ -444,18 +444,38 @@ class TestIniParser:
         x = reader.getdict("key3", {1: 2})
         assert x == {1: 2}
 
-    def test_getstring_environment_substitution(self, monkeypatch, newconfig):
-        monkeypatch.setenv("KEY1", "hello")
+    def test_normal_env_sub_works(self, monkeypatch, newconfig):
+        monkeypatch.setenv("VAR", "hello")
         config = newconfig("""
             [section]
-            key1={env:KEY1}
-            key2={env:KEY2}
+            key={env:VAR}
         """)
-        reader = SectionReader("section", config._cfg)
-        x = reader.getstring("key1")
-        assert x == "hello"
+        assert SectionReader("section", config._cfg).getstring("key") == "hello"
+
+    def test_missing_env_sub_crashes_early_in_non_testenv(self, newconfig):
+        config = newconfig("""
+            [section]
+            key={env:VAR}
+        """)
         with pytest.raises(tox.exception.ConfigError):
-            reader.getstring("key2")
+            SectionReader("section", config._cfg).getstring("key")
+
+    def test_missing_env_sub_does_not_crash_in_testenv(self, newconfig):
+        class fakematch:
+            @staticmethod
+            def group(key):
+                if key == 'substitution_value':
+                    return 'VAR'
+                return None
+
+        config = newconfig("""
+            [testenv:foo]
+            key={env:VAR}
+        """)
+        reader = SectionReader("testenv:foo", config._cfg)
+        replacer = tox.config.Replacer(reader)
+        res = replacer._replace_env(fakematch)
+        assert res == 'TOX_MISSING_ENV_SUBSTITUTION'
 
     def test_getstring_environment_substitution_with_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
