@@ -1,7 +1,7 @@
 Not released yet
 ----------------
 
-- #p598: fix problems with implementation of #515.
+- #p599: fix problems with implementation of #515.
          Substitutions from other sections were not made anymore if they were not in `envlist`.
          Thanks to Clark Boylan (@cboylan) for helping to get this fixed (#p597).
 
