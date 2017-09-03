@@ -1158,7 +1158,7 @@ class _ArgvlistReader:
     def getargvlist(cls, reader, value, replace=True):
         """Parse ``commands`` argvlist multiline string.
 
-        :param str name: Key name in a section.
+        :param SectionReader reader: reader to be used.
         :param str value: Content stored by key.
 
         :rtype: list[list[str]]
