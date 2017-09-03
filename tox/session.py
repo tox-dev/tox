@@ -551,10 +551,11 @@ class Session:
         for venv in self.venvlist:
             if self.setupenv(venv):
                 if venv.envconfig.missing_subs:
-                    raise tox.exception.ConfigError(
-                        "%s contains unresolvable substitution(s): %s. "
+                    venv.status = (
+                        "unresolvable substitution(s): %s. "
                         "Environment variables are missing or defined recursively." %
-                        (venv.name, venv.envconfig.missing_subs))
+                        (','.join(["'%s'" % m for m in venv.envconfig.missing_subs])))
+                    continue
                 if venv.envconfig.usedevelop:
                     self.developpkg(venv, self.config.setupdir)
                 elif self.config.skipsdist or venv.envconfig.skip_install:
