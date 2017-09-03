@@ -612,8 +612,8 @@ class TestenvConfig:
         self.missing_subs = []
         """Holds substitutions that could not be resolved.
 
-        Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a 
-        problem if the env is not part of the current testrun. So we need to remember this and 
+        Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a
+        problem if the env is not part of the current testrun. So we need to remember this and
         check later when the testenv is actually run and crash only then.
         """
 
@@ -824,27 +824,24 @@ class parseini:
             envpython=tc.get_envpython, **subs)
         for env_attr in config._testenv_attr:
             atype = env_attr.type
-            if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
-                meth = getattr(reader, "get" + atype)
-                try:
+            try:
+                if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
+                    meth = getattr(reader, "get" + atype)
                     res = meth(env_attr.name, env_attr.default, replace=replace)
-                except tox.exception.MissingSubstitution as e:
-                    tc.missing_subs.append(e.name)
-                    res = e.FLAG
-            elif atype == "space-separated-list":
-                res = reader.getlist(env_attr.name, sep=" ")
-            elif atype == "line-list":
-                res = reader.getlist(env_attr.name, sep="\n")
-            else:
-                raise ValueError("unknown type %r" % (atype,))
-
-            if env_attr.postprocess:
-                res = env_attr.postprocess(testenv_config=tc, value=res)
+                elif atype == "space-separated-list":
+                    res = reader.getlist(env_attr.name, sep=" ")
+                elif atype == "line-list":
+                    res = reader.getlist(env_attr.name, sep="\n")
+                else:
+                    raise ValueError("unknown type %r" % (atype,))
+                if env_attr.postprocess:
+                    res = env_attr.postprocess(testenv_config=tc, value=res)
+            except tox.exception.MissingSubstitution as e:
+                tc.missing_subs.append(e.name)
+                res = e.FLAG
             setattr(tc, env_attr.name, res)
-
             if atype in ("path", "string"):
                 reader.addsubstitutions(**{env_attr.name: res})
-
         return tc
 
     def _getenvdata(self, reader):
