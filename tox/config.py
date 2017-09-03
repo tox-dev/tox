@@ -609,6 +609,13 @@ class TestenvConfig:
         #: set of factors
         self.factors = factors
         self._reader = reader
+        self.missing_subs = []
+        """Holds substitutions that could not be resolved.
+
+        Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a 
+        problem if the env is not part of the current testrun. So we need to remember this and 
+        check later when the testenv is actually run and crash only then.
+        """
 
     def get_envbindir(self):
         """ path to directory where scripts/binaries reside. """
@@ -791,8 +798,7 @@ class parseini:
             section = testenvprefix + name
             factors = set(name.split('-'))
             if section in self._cfg or factors <= known_factors:
-                config.envconfigs[name] = self.make_envconfig(
-                    name, section, reader._subs, config, replace=True)
+                config.envconfigs[name] = self.make_envconfig(name, section, reader._subs, config)
 
         all_develop = all(name in config.envconfigs
                           and config.envconfigs[name].usedevelop
@@ -812,18 +818,19 @@ class parseini:
         factors = set(name.split('-'))
         reader = SectionReader(section, self._cfg, fallbacksections=["testenv"],
                                factors=factors)
-        vc = TestenvConfig(config=config, envname=name, factors=factors, reader=reader)
-        reader.addsubstitutions(**subs)
-        reader.addsubstitutions(envname=name)
-        reader.addsubstitutions(envbindir=vc.get_envbindir,
-                                envsitepackagesdir=vc.get_envsitepackagesdir,
-                                envpython=vc.get_envpython)
-
+        tc = TestenvConfig(name, config, factors, reader)
+        reader.addsubstitutions(
+            envname=name, envbindir=tc.get_envbindir, envsitepackagesdir=tc.get_envsitepackagesdir,
+            envpython=tc.get_envpython, **subs)
         for env_attr in config._testenv_attr:
             atype = env_attr.type
             if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
                 meth = getattr(reader, "get" + atype)
-                res = meth(env_attr.name, env_attr.default, replace=replace)
+                try:
+                    res = meth(env_attr.name, env_attr.default, replace=replace)
+                except tox.exception.MissingSubstitution as e:
+                    tc.missing_subs.append(e.name)
+                    res = e.FLAG
             elif atype == "space-separated-list":
                 res = reader.getlist(env_attr.name, sep=" ")
             elif atype == "line-list":
@@ -832,13 +839,13 @@ class parseini:
                 raise ValueError("unknown type %r" % (atype,))
 
             if env_attr.postprocess:
-                res = env_attr.postprocess(testenv_config=vc, value=res)
-            setattr(vc, env_attr.name, res)
+                res = env_attr.postprocess(testenv_config=tc, value=res)
+            setattr(tc, env_attr.name, res)
 
             if atype in ("path", "string"):
                 reader.addsubstitutions(**{env_attr.name: res})
 
-        return vc
+        return tc
 
     def _getenvdata(self, reader):
         envstr = self.config.option.env                                \
@@ -960,8 +967,7 @@ class SectionReader:
 
     def getdict_setenv(self, name, default=None, sep="\n", replace=True):
         value = self.getstring(name, None, replace=replace, crossonly=True)
-        definitions = self._getdict(value, default=default, sep=sep,
-                                    replace=replace)
+        definitions = self._getdict(value, default=default, sep=sep, replace=replace)
         self._setenv = SetenvDict(definitions, reader=self)
         return self._setenv
 
@@ -1040,15 +1046,15 @@ class SectionReader:
 
         section_name = section_name if section_name else self.section_name
         self._subststack.append((section_name, name))
-        replaced = Replacer(self, crossonly=crossonly).do_replace(value)
-        assert self._subststack.pop() == (section_name, name)
-        if replaced == 'TOX_MISSING_ENV_SUBSTITUTION':
-            if ':' not in section_name:
+        try:
+            replaced = Replacer(self, crossonly=crossonly).do_replace(value)
+            assert self._subststack.pop() == (section_name, name)
+        except tox.exception.MissingSubstitution:
+            if not section_name.startswith(testenvprefix):
                 raise tox.exception.ConfigError(
                     "substitution env:%r: unknown or recursive definition in "
                     "section %r." % (value, section_name))
-            envname = section_name.split(':')[-1]
-            tox.missing_env_substitution_map[envname].append(value)
+            raise
         return replaced
 
 
@@ -1124,9 +1130,7 @@ class Replacer:
             return envvalue
         if default is not None:
             return default
-        # Don't crash yet, because this is only a problem if the tox environment
-        # is part of the current run
-        return 'TOX_MISSING_ENV_SUBSTITUTION'
+        raise tox.exception.MissingSubstitution(envkey)
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:

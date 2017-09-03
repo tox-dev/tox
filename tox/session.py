@@ -364,6 +364,10 @@ class Session:
             self.report.error(
                 "venv %r in %s would delete project" % (name, envconfig.envdir))
             raise tox.exception.ConfigError('envdir must not equal toxinidir')
+        if envconfig.missing_subs:
+            raise tox.exception.ConfigError(
+                "venv %r envconfig contains unresolved substitution(s): %s",
+                envconfig.missing_subs)
         venv = VirtualEnv(envconfig=envconfig, session=self)
         self._name2venv[name] = venv
         return venv

@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from pkg_resources import get_distribution, DistributionNotFound
 
 from .hookspecs import hookspec, hookimpl  # noqa
@@ -16,12 +14,18 @@ class exception:
         def __str__(self):
             return "%s: %s" % (self.__class__.__name__, self.args[0])
 
+    class MissingSubstitution(Exception):
+        FLAG = 'TOX_MISSING_SUBSTITUTION'
+        """placeholder for debugging configurations"""
+        def __init__(self, name):
+            self.name = name
+
     class ConfigError(Error):
         """ error in tox configuration. """
     class UnsupportedInterpreter(Error):
-        "signals an unsupported Interpreter"
+        """signals an unsupported Interpreter"""
     class InterpreterNotFound(Error):
-        "signals that an interpreter could not be found"
+        """signals that an interpreter could not be found"""
     class InvocationError(Error):
         """ an error while invoking a script. """
     class MissingFile(Error):
@@ -37,13 +41,5 @@ class exception:
             self.message = message
             super(exception.MinVersionError, self).__init__(message)
 
-
-missing_env_substitution_map = defaultdict(list)  # FIXME - UGLY HACK
-"""Map section name to env variables that would be needed in that section but are not provided.
-
-Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a problem
-if the env is not part of the current testrun. So we need to remember this and check later
-when the testenv is actually run and crash only then.
-"""
 
 from tox.session import main as cmdline  # noqa
