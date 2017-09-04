@@ -1,5 +1,5 @@
-Not released yet
-----------------
+2.8.1 (2017-09-04)
+------------------
 
 - #p599: fix problems with implementation of #515.
          Substitutions from other sections were not made anymore if they were not in `envlist`.
