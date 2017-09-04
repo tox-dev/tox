@@ -1,5 +1,5 @@
 
-Using Tox with the Jenkins Integration Server
+Using tox with the Jenkins Integration Server
 =================================================
 
 Using Jenkins multi-configuration jobs

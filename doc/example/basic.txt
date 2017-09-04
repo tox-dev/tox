@@ -227,12 +227,12 @@ special handling of PYTHONHASHSEED
 
 .. versionadded:: 1.6.2
 
-By default, Tox sets PYTHONHASHSEED_ for test commands to a random integer
+By default, tox sets PYTHONHASHSEED_ for test commands to a random integer
 generated when ``tox`` is invoked.  This mimics Python's hash randomization
 enabled by default starting `in Python 3.3`_.  To aid in reproducing test
-failures, Tox displays the value of ``PYTHONHASHSEED`` in the test output.
+failures, tox displays the value of ``PYTHONHASHSEED`` in the test output.
 
-You can tell Tox to use an explicit hash seed value via the ``--hashseed``
+You can tell tox to use an explicit hash seed value via the ``--hashseed``
 command-line option to ``tox``.  You can also override the hash seed value
 per test environment in ``tox.ini`` as follows::
 

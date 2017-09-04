@@ -8,10 +8,10 @@ vision: standardize testing in Python
 of a larger vision of easing the packaging, testing and release process
 of Python software.
 
-What is Tox?
+What is tox?
 --------------------
 
-Tox is a generic virtualenv_ management and test command line tool you can use for:
+tox is a generic virtualenv_ management and test command line tool you can use for:
 
 * checking your package installs correctly with different Python versions and
   interpreters

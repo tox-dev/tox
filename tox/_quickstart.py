@@ -62,7 +62,7 @@ all_envs = ['py26', 'py27', 'py32', 'py33', 'py34', 'py35', 'py36', 'pypy', 'jyt
 PROMPT_PREFIX = '> '
 
 QUICKSTART_CONF = '''\
-# Tox (https://tox.readthedocs.io/) is a tool for running tests
+# tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
 # and then run "tox" from this directory.
@@ -148,7 +148,7 @@ def ask_user(d):
 
     """
 
-    print('Welcome to the Tox %s quickstart utility.' % __version__)
+    print('Welcome to the tox %s quickstart utility.' % __version__)
     print('''
 This utility will ask you a few questions and then generate a simple tox.ini
 file to help get you started using tox.
