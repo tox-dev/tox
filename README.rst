@@ -1,7 +1,5 @@
-
-What is Tox?
---------------------
-
+tox automation project
+----------------------
 
 .. image:: https://img.shields.io/pypi/v/tox.svg
    :target: https://pypi.org/project/tox/
@@ -12,8 +10,14 @@ What is Tox?
 .. image:: https://img.shields.io/appveyor/ci/RonnyPfannschmidt/tox/master.svg
     :target: https://ci.appveyor.com/project/RonnyPfannschmidt/tox
 
+**vision: standardize testing in Python**
 
-Tox is a generic virtualenv management and test command line tool you can use for:
+tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
+
+What is tox?
+------------
+
+tox is a generic virtualenv management and test command line tool you can use for:
 
 * checking your package installs correctly with different Python versions and
   interpreters
@@ -23,7 +27,7 @@ Tox is a generic virtualenv management and test command line tool you can use fo
 * acting as a frontend to Continuous Integration servers, greatly
   reducing boilerplate and merging CI and shell-based testing.
 
-For more information and the repository please checkout:
+For more information and the repository please see:
 
 - home and docs: https://tox.readthedocs.org
 

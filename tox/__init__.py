@@ -14,12 +14,18 @@ class exception:
         def __str__(self):
             return "%s: %s" % (self.__class__.__name__, self.args[0])
 
+    class MissingSubstitution(Exception):
+        FLAG = 'TOX_MISSING_SUBSTITUTION'
+        """placeholder for debugging configurations"""
+        def __init__(self, name):
+            self.name = name
+
     class ConfigError(Error):
         """ error in tox configuration. """
     class UnsupportedInterpreter(Error):
-        "signals an unsupported Interpreter"
+        """signals an unsupported Interpreter"""
     class InterpreterNotFound(Error):
-        "signals that an interpreter could not be found"
+        """signals that an interpreter could not be found"""
     class InvocationError(Error):
         """ an error while invoking a script. """
     class MissingFile(Error):
@@ -34,5 +40,6 @@ class exception:
         def __init__(self, message):
             self.message = message
             super(exception.MinVersionError, self).__init__(message)
+
 
 from tox.session import main as cmdline  # noqa

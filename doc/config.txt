@@ -9,7 +9,7 @@ tox configuration specification
 Below you find the specification, but you might want to skim some
 :doc:`examples` first and use this page as a reference.
 
-Tox global settings
+tox global settings
 -------------------
 
 List of optional global options::
@@ -135,8 +135,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
       similarity in function.
 
       Note that in tox 2.0, the default behavior of tox with respect to
-      treating errors from commands changed. Tox < 2.0 would ignore errors by
-      default. Tox >= 2.0 will abort on an error by default, which is safer and more
+      treating errors from commands changed. tox < 2.0 would ignore errors by
+      default. tox >= 2.0 will abort on an error by default, which is safer and more
       typical of CI and command execution tools, as it doesn't make sense to
       run tests if installing some prerequisite failed and it doesn't make sense to
       try to deploy if tests failed.
@@ -615,7 +615,7 @@ Reading it line by line:
 
 .. note::
 
-    Tox provides good defaults for basepython setting, so the above
+    tox provides good defaults for basepython setting, so the above
     ini-file can be further reduced by omitting the ``basepython``
     setting.
 

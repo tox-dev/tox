@@ -609,6 +609,13 @@ class TestenvConfig:
         #: set of factors
         self.factors = factors
         self._reader = reader
+        self.missing_subs = []
+        """Holds substitutions that could not be resolved.
+
+        Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a
+        problem if the env is not part of the current testrun. So we need to remember this and
+        check later when the testenv is actually run and crash only then.
+        """
 
     def get_envbindir(self):
         """ path to directory where scripts/binaries reside. """
@@ -791,8 +798,7 @@ class parseini:
             section = testenvprefix + name
             factors = set(name.split('-'))
             if section in self._cfg or factors <= known_factors:
-                config.envconfigs[name] = \
-                    self.make_envconfig(name, section, reader._subs, config)
+                config.envconfigs[name] = self.make_envconfig(name, section, reader._subs, config)
 
         all_develop = all(name in config.envconfigs
                           and config.envconfigs[name].usedevelop
@@ -808,37 +814,35 @@ class parseini:
                 factors.update(*mapcat(_split_factor_expr, exprs))
         return factors
 
-    def make_envconfig(self, name, section, subs, config):
+    def make_envconfig(self, name, section, subs, config, replace=True):
         factors = set(name.split('-'))
         reader = SectionReader(section, self._cfg, fallbacksections=["testenv"],
                                factors=factors)
-        vc = TestenvConfig(config=config, envname=name, factors=factors, reader=reader)
-        reader.addsubstitutions(**subs)
-        reader.addsubstitutions(envname=name)
-        reader.addsubstitutions(envbindir=vc.get_envbindir,
-                                envsitepackagesdir=vc.get_envsitepackagesdir,
-                                envpython=vc.get_envpython)
-
+        tc = TestenvConfig(name, config, factors, reader)
+        reader.addsubstitutions(
+            envname=name, envbindir=tc.get_envbindir, envsitepackagesdir=tc.get_envsitepackagesdir,
+            envpython=tc.get_envpython, **subs)
         for env_attr in config._testenv_attr:
             atype = env_attr.type
-            if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
-                meth = getattr(reader, "get" + atype)
-                res = meth(env_attr.name, env_attr.default)
-            elif atype == "space-separated-list":
-                res = reader.getlist(env_attr.name, sep=" ")
-            elif atype == "line-list":
-                res = reader.getlist(env_attr.name, sep="\n")
-            else:
-                raise ValueError("unknown type %r" % (atype,))
-
-            if env_attr.postprocess:
-                res = env_attr.postprocess(testenv_config=vc, value=res)
-            setattr(vc, env_attr.name, res)
-
+            try:
+                if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
+                    meth = getattr(reader, "get" + atype)
+                    res = meth(env_attr.name, env_attr.default, replace=replace)
+                elif atype == "space-separated-list":
+                    res = reader.getlist(env_attr.name, sep=" ")
+                elif atype == "line-list":
+                    res = reader.getlist(env_attr.name, sep="\n")
+                else:
+                    raise ValueError("unknown type %r" % (atype,))
+                if env_attr.postprocess:
+                    res = env_attr.postprocess(testenv_config=tc, value=res)
+            except tox.exception.MissingSubstitution as e:
+                tc.missing_subs.append(e.name)
+                res = e.FLAG
+            setattr(tc, env_attr.name, res)
             if atype in ("path", "string"):
                 reader.addsubstitutions(**{env_attr.name: res})
-
-        return vc
+        return tc
 
     def _getenvdata(self, reader):
         envstr = self.config.option.env                                \
@@ -942,9 +946,9 @@ class SectionReader:
         if _posargs:
             self.posargs = _posargs
 
-    def getpath(self, name, defaultpath):
+    def getpath(self, name, defaultpath, replace=True):
         toxinidir = self._subs['toxinidir']
-        path = self.getstring(name, defaultpath)
+        path = self.getstring(name, defaultpath, replace=replace)
         if path is not None:
             return toxinidir.join(path, abs=True)
 
@@ -954,18 +958,18 @@ class SectionReader:
             return []
         return [x.strip() for x in s.split(sep) if x.strip()]
 
-    def getdict(self, name, default=None, sep="\n"):
-        value = self.getstring(name, None)
-        return self._getdict(value, default=default, sep=sep)
+    def getdict(self, name, default=None, sep="\n", replace=True):
+        value = self.getstring(name, None, replace=replace)
+        return self._getdict(value, default=default, sep=sep, replace=replace)
 
-    def getdict_setenv(self, name, default=None, sep="\n"):
-        value = self.getstring(name, None, replace=True, crossonly=True)
-        definitions = self._getdict(value, default=default, sep=sep)
+    def getdict_setenv(self, name, default=None, sep="\n", replace=True):
+        value = self.getstring(name, None, replace=replace, crossonly=True)
+        definitions = self._getdict(value, default=default, sep=sep, replace=replace)
         self._setenv = SetenvDict(definitions, reader=self)
         return self._setenv
 
-    def _getdict(self, value, default, sep):
-        if value is None:
+    def _getdict(self, value, default, sep, replace=True):
+        if value is None or not replace:
             return default or {}
 
         d = {}
@@ -976,9 +980,9 @@ class SectionReader:
 
         return d
 
-    def getbool(self, name, default=None):
-        s = self.getstring(name, default)
-        if not s:
+    def getbool(self, name, default=None, replace=True):
+        s = self.getstring(name, default, replace=replace)
+        if not s or not replace:
             s = default
         if s is None:
             raise KeyError("no config value [%s] %s found" % (
@@ -994,12 +998,12 @@ class SectionReader:
                     "boolean value %r needs to be 'True' or 'False'")
         return s
 
-    def getargvlist(self, name, default=""):
+    def getargvlist(self, name, default="", replace=True):
         s = self.getstring(name, default, replace=False)
-        return _ArgvlistReader.getargvlist(self, s)
+        return _ArgvlistReader.getargvlist(self, s, replace=replace)
 
-    def getargv(self, name, default=""):
-        return self.getargvlist(name, default)[0]
+    def getargv(self, name, default="", replace=True):
+        return self.getargvlist(name, default, replace=replace)[0]
 
     def getstring(self, name, default=None, replace=True, crossonly=False):
         x = None
@@ -1040,9 +1044,15 @@ class SectionReader:
         section_name = section_name if section_name else self.section_name
         self._subststack.append((section_name, name))
         try:
-            return Replacer(self, crossonly=crossonly).do_replace(value)
-        finally:
+            replaced = Replacer(self, crossonly=crossonly).do_replace(value)
             assert self._subststack.pop() == (section_name, name)
+        except tox.exception.MissingSubstitution:
+            if not section_name.startswith(testenvprefix):
+                raise tox.exception.ConfigError(
+                    "substitution env:%r: unknown or recursive definition in "
+                    "section %r." % (value, section_name))
+            raise
+        return replaced
 
 
 class Replacer:
@@ -1110,20 +1120,14 @@ class Replacer:
     def _replace_env(self, match):
         envkey = match.group('substitution_value')
         if not envkey:
-            raise tox.exception.ConfigError(
-                'env: requires an environment variable name')
-
+            raise tox.exception.ConfigError('env: requires an environment variable name')
         default = match.group('default_value')
-
         envvalue = self.reader.get_environ_value(envkey)
-        if envvalue is None:
-            if default is None:
-                raise tox.exception.ConfigError(
-                    "substitution env:%r: unknown environment variable %r "
-                    " or recursive definition." %
-                    (envkey, envkey))
+        if envvalue is not None:
+            return envvalue
+        if default is not None:
             return default
-        return envvalue
+        raise tox.exception.MissingSubstitution(envkey)
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
@@ -1153,10 +1157,10 @@ class Replacer:
 
 class _ArgvlistReader:
     @classmethod
-    def getargvlist(cls, reader, value):
+    def getargvlist(cls, reader, value, replace=True):
         """Parse ``commands`` argvlist multiline string.
 
-        :param str name: Key name in a section.
+        :param SectionReader reader: reader to be used.
         :param str value: Content stored by key.
 
         :rtype: list[list[str]]
@@ -1178,7 +1182,7 @@ class _ArgvlistReader:
                 replaced = reader._replace(current_command, crossonly=True)
                 commands.extend(cls.getargvlist(reader, replaced))
             else:
-                commands.append(cls.processcommand(reader, current_command))
+                commands.append(cls.processcommand(reader, current_command, replace))
             current_command = ""
         else:
             if current_command:
@@ -1188,7 +1192,7 @@ class _ArgvlistReader:
         return commands
 
     @classmethod
-    def processcommand(cls, reader, command):
+    def processcommand(cls, reader, command, replace=True):
         posargs = getattr(reader, "posargs", "")
         posargs_string = list2cmdline([x for x in posargs if x])
 
@@ -1196,23 +1200,26 @@ class _ArgvlistReader:
         # appropriate to construct the new command string. This
         # string is then broken up into exec argv components using
         # shlex.
-        newcommand = ""
-        for word in CommandParser(command).words():
-            if word == "{posargs}" or word == "[]":
-                newcommand += posargs_string
-                continue
-            elif word.startswith("{posargs:") and word.endswith("}"):
-                if posargs:
+        if replace:
+            newcommand = ""
+            for word in CommandParser(command).words():
+                if word == "{posargs}" or word == "[]":
                     newcommand += posargs_string
                     continue
-                else:
-                    word = word[9:-1]
-            new_arg = ""
-            new_word = reader._replace(word)
-            new_word = reader._replace(new_word)
-            new_word = new_word.replace('\\{', '{').replace('\\}', '}')
-            new_arg += new_word
-            newcommand += new_arg
+                elif word.startswith("{posargs:") and word.endswith("}"):
+                    if posargs:
+                        newcommand += posargs_string
+                        continue
+                    else:
+                        word = word[9:-1]
+                new_arg = ""
+                new_word = reader._replace(word)
+                new_word = reader._replace(new_word)
+                new_word = new_word.replace('\\{', '{').replace('\\}', '}')
+                new_arg += new_word
+                newcommand += new_arg
+        else:
+            newcommand = command
 
         # Construct shlex object that will not escape any values,
         # use all values as is in argv.

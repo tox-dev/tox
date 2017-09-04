@@ -2,7 +2,7 @@
 Development environment
 =======================
 
-Tox can be used for just preparing different virtual environments required by a
+tox can be used for just preparing different virtual environments required by a
 project.
 
 This feature can be used by deployment tools when preparing deployed project

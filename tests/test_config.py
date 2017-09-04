@@ -344,6 +344,21 @@ class TestIniParserAgainstCommandsKey:
         envconfig = config.envconfigs['python']
         assert envconfig.commands == [["echo", "bar"]]
 
+    def test_regression_issue595(self, newconfig):
+        config = newconfig("""
+            [tox]
+            envlist = foo
+            [testenv]
+            setenv = VAR = x
+            [testenv:bar]
+            setenv = {[testenv]setenv}
+            [testenv:baz]
+            setenv =
+        """)
+        assert config.envconfigs['foo'].setenv['VAR'] == 'x'
+        assert config.envconfigs['bar'].setenv['VAR'] == 'x'
+        assert 'VAR' not in config.envconfigs['baz'].setenv
+
 
 class TestIniParser:
     def test_getstring_single(self, tmpdir, newconfig):
@@ -429,18 +444,20 @@ class TestIniParser:
         x = reader.getdict("key3", {1: 2})
         assert x == {1: 2}
 
-    def test_getstring_environment_substitution(self, monkeypatch, newconfig):
-        monkeypatch.setenv("KEY1", "hello")
-        config = newconfig("""
-            [section]
-            key1={env:KEY1}
-            key2={env:KEY2}
-        """)
-        reader = SectionReader("section", config._cfg)
-        x = reader.getstring("key1")
-        assert x == "hello"
+    def test_normal_env_sub_works(self, monkeypatch, newconfig):
+        monkeypatch.setenv("VAR", "hello")
+        config = newconfig("[section]\nkey={env:VAR}")
+        assert SectionReader("section", config._cfg).getstring("key") == "hello"
+
+    def test_missing_env_sub_raises_config_error_in_non_testenv(self, newconfig):
+        config = newconfig("[section]\nkey={env:VAR}")
         with pytest.raises(tox.exception.ConfigError):
-            reader.getstring("key2")
+            SectionReader("section", config._cfg).getstring("key")
+
+    def test_missing_env_sub_populates_missing_subs(self, newconfig):
+        config = newconfig("[testenv:foo]\ncommands={env:VAR}")
+        print(SectionReader("section", config._cfg).getstring("commands"))
+        assert config.envconfigs['foo'].missing_subs == ['VAR']
 
     def test_getstring_environment_substitution_with_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
@@ -1088,7 +1105,27 @@ class TestConfigTestEnv:
         assert 'FOO' in env
         assert 'BAR' in env
 
-    def test_substitution_nested_env_defaults_issue301(tmpdir, newconfig, monkeypatch):
+    def test_substitution_notfound_issue515(tmpdir, newconfig):
+        config = newconfig("""
+            [tox]
+            envlist = standard-greeting
+
+            [testenv:standard-greeting]
+            commands =
+                python -c 'print("Hello, world!")'
+
+            [testenv:custom-greeting]
+            passenv =
+                NAME
+            commands =
+                python -c 'print("Hello, {env:NAME}!")'
+        """)
+        conf = config.envconfigs['standard-greeting']
+        assert conf.commands == [
+            ['python', '-c', 'print("Hello, world!")'],
+        ]
+
+    def test_substitution_nested_env_defaults(tmpdir, newconfig, monkeypatch):
         monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
         monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")
         config = newconfig("""
@@ -1663,9 +1700,6 @@ class TestHashseedOption:
         args = ['--hashseed', '']
         self._check_testenv(newconfig, '', args=args)
 
-    @pytest.mark.xfail(sys.version_info >= (3, 2),
-                       reason="at least Debian python 3.2/3.3 have a bug: "
-                              "http://bugs.python.org/issue11884")
     def test_passing_no_argument(self, tmpdir, newconfig):
         """Test that passing no arguments to --hashseed is not allowed."""
         args = ['--hashseed']
@@ -2169,7 +2203,9 @@ class TestCmdInvocation:
             r'*deps*dep1, dep2==5.0*',
         ])
 
-    @pytest.mark.xfail(reason='Upstream bug. See #203')
+    @pytest.mark.xfail(
+        "'pypy' not in sys.executable",
+        reason='Upstream bug. See #203')
     def test_colon_symbol_in_directory_name(self, cmd, initproj):
         initproj('colon:_symbol_in_dir_name', filedefs={
             'tox.ini': '''
