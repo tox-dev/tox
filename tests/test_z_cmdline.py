@@ -871,3 +871,10 @@ def test_envtmpdir(initproj, cmd):
 
     result = cmd.run("tox")
     assert not result.ret
+
+
+def test_missing_env_fails(initproj, cmd):
+    initproj("foo", filedefs={'tox.ini': "[testenv:foo]\ncommands={env:VAR}"})
+    result = cmd.run("tox")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(["*foo: unresolvable substitution(s): 'VAR'*"])

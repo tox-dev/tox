@@ -440,6 +440,12 @@ class Session:
             path.ensure(dir=1)
 
     def setupenv(self, venv):
+        if venv.envconfig.missing_subs:
+            venv.status = (
+                "unresolvable substitution(s): %s. "
+                "Environment variables are missing or defined recursively." %
+                (','.join(["'%s'" % m for m in venv.envconfig.missing_subs])))
+            return
         if not venv.matching_platform():
             venv.status = "platform mismatch"
             return  # we simply omit non-matching platforms

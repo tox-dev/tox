@@ -444,18 +444,20 @@ class TestIniParser:
         x = reader.getdict("key3", {1: 2})
         assert x == {1: 2}
 
-    def test_getstring_environment_substitution(self, monkeypatch, newconfig):
-        monkeypatch.setenv("KEY1", "hello")
-        config = newconfig("""
-            [section]
-            key1={env:KEY1}
-            key2={env:KEY2}
-        """)
-        reader = SectionReader("section", config._cfg)
-        x = reader.getstring("key1")
-        assert x == "hello"
+    def test_normal_env_sub_works(self, monkeypatch, newconfig):
+        monkeypatch.setenv("VAR", "hello")
+        config = newconfig("[section]\nkey={env:VAR}")
+        assert SectionReader("section", config._cfg).getstring("key") == "hello"
+
+    def test_missing_env_sub_raises_config_error_in_non_testenv(self, newconfig):
+        config = newconfig("[section]\nkey={env:VAR}")
         with pytest.raises(tox.exception.ConfigError):
-            reader.getstring("key2")
+            SectionReader("section", config._cfg).getstring("key")
+
+    def test_missing_env_sub_populates_missing_subs(self, newconfig):
+        config = newconfig("[testenv:foo]\ncommands={env:VAR}")
+        print(SectionReader("section", config._cfg).getstring("commands"))
+        assert config.envconfigs['foo'].missing_subs == ['VAR']
 
     def test_getstring_environment_substitution_with_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
