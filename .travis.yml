@@ -1,3 +1,4 @@
+sudo: false
 language: python
 cache: python
 python:
@@ -24,5 +25,5 @@ matrix:
 before_install: if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
 install: pip install --pre -U tox
 script: tox -e py
-after_success: tox -e coverage-report
+after_success: tox -e coverage
 
