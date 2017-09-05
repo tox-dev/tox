@@ -593,6 +593,8 @@ class TestVenvTest:
         assert l[1].env['PYTHONPATH'] == '/my/awesome/library'
 
 
+# FIXME this test fails when run in isolation - find what this depends on
+# AssertionError: found warning('*Discarding $PYTHONPATH [...]
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     pkg = tmpdir.ensure("package.tar.gz")
     monkeypatch.setenv("X123", "123")
