@@ -1,12 +1,12 @@
 environment:
   matrix:
+    - TOXENV: flakes
     - TOXENV: py26
     - TOXENV: py27
     - TOXENV: py33
     - TOXENV: py34
     - TOXENV: py35
     - TOXENV: py36
-    - TOXENV: flakes
 
 matrix:
   fast_finish: true
@@ -14,4 +14,4 @@ matrix:
 build: false  # Not a C# project
 install: C:\Python36\python -m pip install --pre -U tox
 test_script: C:\Python36\scripts\tox
-after_test: C:\Python36\scripts\tox -e coverage-combine
+after_test: C:\Python36\scripts\tox -e coverage
