@@ -35,3 +35,7 @@ For more information and the repository please see:
 
 - repository: https://github.com/tox-dev/tox
 
+Code coverage of latest master build
+------------------------------------
+
+[![Code coverage of tests](https://codecov.io/gh/tox-dev/tox/branch/master/graphs/icicle.svg)](https://codecov.io/gh/tox-dev/tox/branch/master/graphs/icicle.svg)
