@@ -15,4 +15,4 @@ build: false  # Not a C# project
 install: C:\Python36\python -m pip install --pre -U tox
 test_script: C:\Python36\scripts\tox
 after_test:
-  - if exist .coverage.* (C:\Python36\scripts\tox -e coverage -e coverage) else (echo "no coverage")
+  - if exist .coverage.* (C:\Python36\scripts\tox -e coverage) else (echo "no coverage")
