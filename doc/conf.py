@@ -8,7 +8,10 @@ release = _full_version.split('+', 1)[0]
 version = '.'.join(release.split('.')[:2])
 
 sys.path.insert(0, os.path.dirname(__file__))
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.extlinks',
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.viewcode']
 templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
@@ -47,3 +50,7 @@ def setup(app):
 tls_cacerts = os.getenv('SSL_CERT_FILE')  # we don't care here about the validity of certificates
 linkcheck_timeout = 30
 linkcheck_ignore = [r'http://holgerkrekel.net']
+
+extlinks = {'issue': ('https://github.com/tox-dev/tox/issues/%s', '#'),
+            'pull': ('https://github.com/tox-dev/tox/pull/%s', 'p'),
+            'user': ('https://github.com/%s', '@')}
