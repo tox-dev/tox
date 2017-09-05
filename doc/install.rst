@@ -17,7 +17,9 @@ Install info in a nutshell
 Installation with pip
 --------------------------------------
 
-Use the following command::
+Use the following command:
+
+.. code-block:: shell
 
    pip install tox
 
@@ -30,11 +32,15 @@ Consult the GitHub page to get a checkout of the git repository:
 
     https://github.com/tox-dev/tox
 
-and then install in your environment with something like::
+and then install in your environment with something like:
+
+.. code-block:: shell
 
     python setup.py install
 
-or just activate your checkout in your environment like this::
+or just activate your checkout in your environment like this:
+
+.. code-block:: shell
 
     python setup.py develop
 

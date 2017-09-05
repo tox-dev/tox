@@ -1,4 +1,3 @@
-
 Using tox with the Jenkins Integration Server
 =================================================
 
@@ -20,12 +19,14 @@ using these steps:
   name and as values provide space-separated test environment names
   you want Jenkins/tox to execute.
 
-* add a **Python-build step** with this content (see also next example)::
+* add a **Python-build step** with this content (see also next example):
 
-    import tox
+    .. code-block:: python
 
-    os.chdir(os.getenv('WORKSPACE'))
-    tox.cmdline() # environment is selected by ``TOXENV`` env variable
+        import tox
+
+        os.chdir(os.getenv('WORKSPACE'))
+        tox.cmdline() # environment is selected by ``TOXENV`` env variable
 
 * check ``Publish JUnit test result report`` and enter
   ``**/junit-*.xml`` as the pattern so that Jenkins collects
@@ -52,7 +53,9 @@ for example with ``pytest`` it is done like this:
 If you manage many Jenkins slaves and want to use the latest officially
 released tox (or latest development version) and want to skip manually
 installing ``tox`` then substitute the above **Python build step** code
-with this::
+with this:
+
+.. code-block:: python
 
     import urllib, os
     url = "https://bitbucket.org/hpk42/tox/raw/default/toxbootstrap.py"
@@ -84,26 +87,31 @@ is to have ``pytest`` wrap the sphinx-checks and create a
 JUnit result file which wraps the result of calling sphinx-build.
 Here is an example:
 
-1. create a ``docs`` environment in your ``tox.ini`` file like this::
+1. create a ``docs`` environment in your ``tox.ini`` file like this:
 
-    [testenv:docs]
-    basepython=python
-    changedir=doc # or whereever you keep your sphinx-docs
-    deps=sphinx
-        py
-    commands=
-        pytest --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
+  .. code-block:: ini
 
-2. create a ``doc/check_sphinx.py`` file like this::
+      [testenv:docs]
+      basepython = python
+      changedir = doc # or whereever you keep your sphinx-docs
+      deps = sphinx
+             py
+      commands = pytest --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
+
+2. create a ``doc/check_sphinx.py`` file like this:
+
+  .. code-block:: python
 
     import py
     import subprocess
+
     def test_linkcheck(tmpdir):
         doctrees = tmpdir.join("doctrees")
         htmldir = tmpdir.join("html")
         subprocess.check_call(
             ["sphinx-build", "-W", "-blinkcheck",
               "-d", str(doctrees), ".", str(htmldir)])
+
     def test_build_docs(tmpdir):
         doctrees = tmpdir.join("doctrees")
         htmldir = tmpdir.join("html")
@@ -122,7 +130,7 @@ and does not need to be in use or installed with any other environment.
 Access package artifacts between Jenkins jobs
 --------------------------------------------------------
 
-.. _`Jenkins Copy Artifact plugin`: http://wiki.jenkins-ci.org/display/HUDSON/Copy+Artifact+Plugin
+.. _`Jenkins Copy Artifact plugin`: https://wiki.jenkins.io/display/JENKINS/Copy+Artifact+Plugin
 
 In an extension to :ref:`artifacts` you can also configure Jenkins jobs to
 access each others artifacts.  ``tox`` uses the ``distshare`` directory
@@ -133,7 +141,11 @@ to ``{toxworkdir}/distshare``.
 This means that each workspace will have its own ``distshare``
 directory and we need to configure Jenkins to perform artifact copying.
 The recommend way to do this is to install the `Jenkins Copy Artifact plugin`_
-and for each job which "receives" artifacts you add a **Copy artifacts from another project** build step using roughly this configuration::
+and for each job which "receives" artifacts you add a **Copy artifacts from another project** build step
+using roughly this configuration:
+
+
+  .. code-block:: shell
 
     Project-name: name of the other (tox-managed) job you want the artifact from
     Artifacts to copy: .tox/dist/*.zip   # where tox jobs create artifacts
@@ -141,7 +153,9 @@ and for each job which "receives" artifacts you add a **Copy artifacts from anot
     Flatten Directories: CHECK           # create no subdir-structure
 
 You also need to configure the "other" job to archive artifacts; This
-is done by checking ``Archive the artifacts`` and entering::
+is done by checking ``Archive the artifacts`` and entering:
+
+  .. code-block:: shell
 
     Files to archive: .tox/dist/*.zip
 

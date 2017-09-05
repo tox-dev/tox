@@ -6,7 +6,9 @@ a simple tox.ini / default environments
 
 Put basic information about your project and the test environments you
 want your project to run in into a ``tox.ini`` file that should
-reside next to your ``setup.py`` file::
+reside next to your ``setup.py`` file:
+
+.. code-block:: ini
 
     # content of: tox.ini , put in same dir as setup.py
     [tox]
@@ -16,19 +18,25 @@ reside next to your ``setup.py`` file::
     commands=pytest  # or 'nosetests' or ...
 
 To sdist-package, install and test your project, you can
-now type at the command prompt::
+now type at the command prompt:
+
+.. code-block:: shell
 
     tox
 
 This will sdist-package your current project, create two virtualenv_
 Environments, install the sdist-package into the environments and run
-the specified command in each of them.  With::
+the specified command in each of them.  With:
+
+.. code-block:: shell
 
     tox -e py26
 
 you can run restrict the test run to the python2.6 environment.
 
-Available "default" test environments names are::
+Available "default" test environments names are:
+
+.. code-block:: shell
 
     py
     py2
@@ -55,7 +63,9 @@ specifying a platform
 .. versionadded:: 2.0
 
 If you want to specify which platform(s) your test environment
-runs on you can set a platform regular expression like this::
+runs on you can set a platform regular expression like this:
+
+.. code-block:: ini
 
     platform = linux2|darwin
 
@@ -70,7 +80,9 @@ whitelisting non-virtualenv commands
 Sometimes you may want to use tools not contained in your
 virtualenv such as ``make``, ``bash`` or others. To avoid
 warnings you can use the ``whitelist_externals`` testenv
-configuration::
+configuration:
+
+.. code-block:: ini
 
     # content of tox.ini
     [testenv]
@@ -78,12 +90,12 @@ configuration::
                           /bin/bash
 
 
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _virtualenv: https://pypi.python.org/pypi/virtualenv
 
 .. _multiindex:
 
 depending on requirements.txt or defining constraints
------------------------------------------------
+-----------------------------------------------------
 
 .. versionadded:: 1.6.1
 
@@ -121,14 +133,18 @@ using a different default PyPI url
 .. versionadded:: 0.9
 
 To install dependencies and packages from a different
-default PyPI server you can type interactively::
+default PyPI server you can type interactively:
+
+.. code-block:: shell
 
     tox -i http://pypi.my-alternative-index.org
 
 This causes tox to install dependencies and the sdist install step
 to use the specificied url as the index server.
 
-You can cause the same effect by this ``tox.ini`` content::
+You can cause the same effect by this ``tox.ini`` content:
+
+.. code-block:: ini
 
     [tox]
     indexserver =
@@ -140,7 +156,9 @@ installing dependencies from multiple PyPI servers
 .. versionadded:: 0.9
 
 You can instrument tox to install dependencies from
-different PyPI servers, example::
+different PyPI servers, example:
+
+.. code-block:: ini
 
     [tox]
     indexserver =
@@ -155,7 +173,9 @@ This configuration will install ``docutils`` from the default
 Python PYPI server and will install the ``mypackage`` from
 our ``DEV`` indexserver, and the respective ``http://mypypiserver.org``
 url.  You can override config file settings from the command line
-like this::
+like this:
+
+.. code-block:: shell
 
     tox -i DEV=http://pypi.python.org/simple  # changes :DEV: package URLs
     tox -i http://pypi.python.org/simple      # changes default
@@ -170,19 +190,23 @@ package-under-test and any dependencies you specify in ``tox.ini``.
 You can fully customize tox's install-command through the
 testenv-specific :confval:`install_command=ARGV` setting.
 For instance, to use pip's ``--find-links`` and ``--no-index`` options to specify
-an alternative source for your dependencies::
+an alternative source for your dependencies:
+
+.. code-block:: ini
 
     [testenv]
     install_command = pip install --pre --find-links http://packages.example.com --no-index {opts} {packages}
 
-.. _pip: http://pip-installer.org
+.. _pip: https://pip.pypa.io/en/stable/
 
 forcing re-creation of virtual environments
 -----------------------------------------------
 
 .. versionadded:: 0.9
 
-To force tox to recreate a (particular) virtual environment::
+To force tox to recreate a (particular) virtual environment:
+
+.. code-block:: shell
 
     tox --recreate -e py27
 
@@ -197,7 +221,9 @@ passing down environment variables
 By default tox will only pass the ``PATH`` environment variable (and on
 windows ``SYSTEMROOT`` and ``PATHEXT``) from the tox invocation to the
 test environments.  If you want to pass down additional environment
-variables you can use the ``passenv`` option::
+variables you can use the ``passenv`` option:
+
+.. code-block:: ini
 
     [testenv]
     passenv = LANG
@@ -211,11 +237,12 @@ setting environment variables
 .. versionadded:: 1.0
 
 If you need to set an environment variable like ``PYTHONPATH`` you
-can use the ``setenv`` directive::
+can use the ``setenv`` directive:
+
+.. code-block:: ini
 
     [testenv]
-    setenv =
-        PYTHONPATH = {toxinidir}/subdir
+    setenv = PYTHONPATH = {toxinidir}/subdir
 
 When your test commands execute they will execute with
 a PYTHONPATH setting that will lead Python to also import
@@ -234,18 +261,19 @@ failures, tox displays the value of ``PYTHONHASHSEED`` in the test output.
 
 You can tell tox to use an explicit hash seed value via the ``--hashseed``
 command-line option to ``tox``.  You can also override the hash seed value
-per test environment in ``tox.ini`` as follows::
+per test environment in ``tox.ini`` as follows:
+
+.. code-block:: ini
 
     [testenv]
-    setenv =
-        PYTHONHASHSEED = 100
+    setenv = PYTHONHASHSEED = 100
 
 If you wish to disable this feature, you can pass the command line option
 ``--hashseed=noset`` when ``tox`` is invoked. You can also disable it from the
 ``tox.ini`` by setting ``PYTHONHASHSEED = 0`` as described above.
 
-.. _`in Python 3.3`: http://docs.python.org/3/whatsnew/3.3.html#builtin-functions-and-types
-.. _PYTHONHASHSEED: http://docs.python.org/using/cmdline.html#envvar-PYTHONHASHSEED
+.. _`in Python 3.3`: https://docs.python.org/3/whatsnew/3.3.html#builtin-functions-and-types
+.. _PYTHONHASHSEED: https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHASHSEED
 
 Integration with "setup.py test" command
 ----------------------------------------------------
@@ -257,7 +285,8 @@ Integration with "setup.py test" command
   which expect ``setup.py test`` to run tests with the invocation interpreter
   rather than setting up many virtualenvs and installing packages.  If you need to
   define ``setup.py test`` you can better see about integrating your eventual
-  test runner with it, here is an `example of setup.py test integration with pytest <http://docs.pytest.org/en/latest/goodpractices.html#integrating-with-setuptools-python-setup-py-test-pytest-runner>`_.
+  test runner with it, here is an `example of setup.py test integration with pytest
+  <https://docs.pytest.org/en/latest/goodpractices.html#integrating-with-setuptools-python-setup-py-test-pytest-runner>`_.
   As the python eco-system rather moves away from using ``setup.py`` as a tool entry
   point it's maybe best to not go for any ``setup.py test`` integration.
 
@@ -266,7 +295,9 @@ Integration with "setup.py test" command
 Ignoring a command exit code
 ----------------------------
 
-In some cases, you may want to ignore a command exit code. For example::
+In some cases, you may want to ignore a command exit code. For example:
+
+.. code-block:: ini
 
     [testenv:py27]
     commands = coverage erase
@@ -283,7 +314,9 @@ Compressing dependency matrix
 -----------------------------
 
 If you have a large matrix of dependencies, python versions and/or environments you can
-use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to express that in a concise form::
+use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to express that in a concise form:
+
+.. code-block:: ini
 
     [tox]
     envlist = py{26,27,33}-django{15,16}-{sqlite,mysql}
@@ -301,7 +334,9 @@ Prevent symbolic links in virtualenv
 By default virtualenv will use symlinks to point to the system's python files, modules, etc.
 If you want the files to be copied instead, possibly because your filesystem is not capable
 of handling symbolic links, you can instruct virtualenv to use the "--always-copy" argument
-meant exactly for that purpose, by setting the ``alwayscopy`` directive in your environment::
+meant exactly for that purpose, by setting the ``alwayscopy`` directive in your environment:
+
+.. code-block:: ini
 
     [testenv]
     alwayscopy = True

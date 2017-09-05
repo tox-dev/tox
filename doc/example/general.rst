@@ -6,31 +6,36 @@ General tips and tricks
 Interactively passing positional arguments
 -----------------------------------------------
 
-If you invoke ``tox`` like this::
+If you invoke ``tox`` like this:
+
+.. code-block:: shell
 
     tox -- -x tests/test_something.py
 
 the arguments after the ``--`` will be substituted
 everywhere where you specify ``{posargs}`` in your
-test commands, for example using ``pytest``::
+test commands, for example using ``pytest``:
+
+.. code-block:: ini
 
     # in the testenv or testenv:NAME section of your tox.ini
-    commands =
-        pytest {posargs}
+    commands = pytest {posargs}
 
-or using ``nosetests``::
+or using ``nosetests``:
 
-    commands =
-        nosetests {posargs}
+.. code-block:: ini
+
+    commands = nosetests {posargs}
 
 the above ``tox`` invocation will trigger the test runners to
 stop after the first failure and to only run a particular test file.
 
 You can specify defaults for the positional arguments using this
-syntax::
+syntax:
 
-    commands =
-        nosetests {posargs:--with-coverage}
+.. code-block:: ini
+
+    commands = nosetests {posargs:--with-coverage}
 
 .. _`sphinx checks`:
 
@@ -39,14 +44,15 @@ Integrating "sphinx" documentation checks
 
 In a ``testenv`` environment you can specify any command and
 thus you can easily integrate sphinx_ documentation integrity during
-a tox test run.  Here is an example ``tox.ini`` configuration::
+a tox test run.  Here is an example ``tox.ini`` configuration:
+
+.. code-block:: ini
 
     [testenv:docs]
-    basepython=python
-    changedir=doc
-    deps=sphinx
-    commands=
-        sphinx-build -W -b html -d {envtmpdir}/doctrees .  {envtmpdir}/html
+    basepython = python
+    changedir = doc
+    deps = sphinx
+    commands = sphinx-build -W -b html -d {envtmpdir}/doctrees .  {envtmpdir}/html
 
 This will create a dedicated ``docs`` virtual environment and install
 the ``sphinx`` dependency which itself will install the ``sphinx-build`` tool
@@ -54,7 +60,9 @@ which you can then use as a test command.  Note that sphinx output is redirected
 to the virtualenv environment temporary directory to prevent sphinx
 from caching results between runs.
 
-You can now call::
+You can now call:
+
+.. code-block:: shell
 
     tox
 
@@ -68,26 +76,34 @@ Selecting one or more environments to run tests against
 
 Using the ``-e ENV[,ENV2,...]``  option you explicitely list
 the environments where you want to run tests against. For
-example, given the previous sphinx example you may call::
+example, given the previous sphinx example you may call:
+
+.. code-block:: shell
 
     tox -e docs
 
 which will make ``tox`` only manage the ``docs`` environment
 and call its test commands.  You may specify more than
-one environment like this::
+one environment like this:
+
+.. code-block:: shell
 
     tox -e py25,py26
 
 which would run the commands of the ``py25`` and ``py26`` testenvironments
 respectively.  The special value ``ALL`` selects all environments.
 
-You can also specify an environment list in your ``tox.ini``::
+You can also specify an environment list in your ``tox.ini``:
+
+.. code-block:: ini
 
     [tox]
     envlist = py25,py26
 
 or override it from the command line or from the environment variable
-``TOXENV``::
+``TOXENV``:
+
+.. code-block:: shell
 
     export TOXENV=py25,py26 # in bash style shells
 
@@ -106,12 +122,13 @@ By default, ``{homedir}/.tox/distshare`` will be used for
 copying in and copying out artifacts (i.e. Python packages).
 
 For project ``two`` to depend on the ``one`` package you use
-the following entry::
+the following entry:
+
+.. code-block:: ini
 
     # example two/tox.ini
     [testenv]
-    deps=
-        {distshare}/one-*.zip  # install latest package from "one" project
+    deps = {distshare}/one-*.zip  # install latest package from "one" project
 
 That's all.  tox running on project ``one`` will copy the sdist-package
 into the ``distshare`` directory after which a ``tox`` run on project
@@ -139,7 +156,9 @@ and ``pypy-c`` names will be looked for.
 
 You can override any of the default settings by defining
 the ``basepython`` variable in a specific test environment
-section, for example::
+section, for example:
+
+.. code-block:: ini
 
     [testenv:py27]
     basepython=/my/path/to/python2.7
@@ -150,22 +169,27 @@ Avoiding expensive sdist
 Some projects are large enough that running an sdist, followed by
 an install every time can be prohibitively costly. To solve this,
 there are two different options you can add to the ``tox`` section. First,
-you can simply ask tox to please not make an sdist::
+you can simply ask tox to please not make an sdist:
+
+.. code-block:: ini
 
     [tox]
     skipsdist=True
 
 If you do this, your local software package will not be installed into
 the virtualenv. You should probably be okay with that, or take steps
-to deal with it in your commands section::
+to deal with it in your commands section:
+
+.. code-block:: ini
 
     [testenv]
-    commands =
-        python setup.py develop
-        pytest
+    commands = python setup.py develop
+               pytest
 
 Running ``setup.py develop`` is a common enough model that it has its own
-option::
+option:
+
+.. code-block:: ini
 
     [testenv]
     usedevelop=True

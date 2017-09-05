@@ -495,7 +495,7 @@ class Session:
     def installpkg(self, venv, path):
         """Install package in the specified virtual environment.
 
-        :param :class:`tox.config.VenvConfig`: Destination environment
+        :param VenvConfig venv: Destination environment
         :param str path: Path to the distribution package.
         :return: True if package installed otherwise False.
         :rtype: bool

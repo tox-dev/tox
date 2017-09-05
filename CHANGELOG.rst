@@ -603,7 +603,7 @@
   location ({envtmpdir}/pseudo-home).  If an index url was specified
   a .pydistutils.cfg file will be written with an index_url setting
   so that packages defining ``setup_requires`` dependencies will not
-  silently use your HOME-directory settings or https://pypi.python.org.
+  silently use your HOME-directory settings or https://pypi.python.org/pypi.
 
 - fix issue1: empty setup files are properly detected, thanks Anthon van
   der Neuth
@@ -782,7 +782,7 @@
 1.0
 ---
 
-- move repository and toxbootstrap links to http://bitbucket.org/hpk42/tox
+- move repository and toxbootstrap links to https://bitbucket.org/hpk42/tox
 - fix issue7: introduce a "minversion" directive such that tox
   bails out if it does not have the correct version.
 - fix issue24: introduce a way to set environment variables for
