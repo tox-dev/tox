@@ -38,4 +38,5 @@ For more information and the repository please see:
 Code coverage of latest master build
 ------------------------------------
 
-[![Code coverage of tests](https://codecov.io/gh/tox-dev/tox/branch/master/graphs/icicle.svg)](https://codecov.io/gh/tox-dev/tox/branch/master/graphs/icicle.svg)
+.. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graphs/sunburst.svg
+  :target: https://codecov.io/gh/tox-dev/tox/branch/master
