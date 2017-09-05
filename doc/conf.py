@@ -1,40 +1,43 @@
+from datetime import datetime
 import os
 import sys
 
 from pkg_resources import get_distribution
-
-_full_version = get_distribution('tox').version
-release = _full_version.split('+', 1)[0]
-version = '.'.join(release.split('.')[:2])
 
 sys.path.insert(0, os.path.dirname(__file__))
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.extlinks',
               'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode']
-templates_path = ['_templates']
-source_suffix = '.rst'
-master_doc = 'index'
+
 project = u'tox'
-copyright = u'2015, holger krekel and others'
+_full_version = get_distribution(project).version
+release = _full_version.split('+', 1)[0]
+version = '.'.join(release.split('.')[:2])
+
+author = 'holger krekel and others'
+year = datetime.today().year
+copyright = u'2010-{}, {}'.format(year, author)
+
+master_doc = 'index'
+source_suffix = '.rst'
+
 exclude_patterns = ['_build']
+
+templates_path = ['_templates']
 pygments_style = 'sphinx'
 html_theme = 'sphinxdoc'
 html_static_path = ['_static']
 html_show_sourcelink = False
-htmlhelp_basename = 'toxdoc'
-latex_documents = [
-    ('index', 'tox.tex', u'tox Documentation',
-     u'holger krekel', 'manual'),
-]
-man_pages = [
-    ('index', 'tox', u'tox Documentation',
-     [u'holger krekel'], 1)
-]
-epub_title = u'tox'
-epub_author = u'holger krekel'
-epub_publisher = u'holger krekel'
-epub_copyright = u'2010, holger krekel'
+htmlhelp_basename = '{}doc'.format(project)
+latex_documents = [('index', 'tox.tex', u'{} Documentation'.format(project),
+                    author, 'manual')]
+man_pages = [('index', project, u'{} Documentation'.format(project),
+              [author], 1)]
+epub_title = project
+epub_author = author
+epub_publisher = author
+epub_copyright = copyright
 
 intersphinx_mapping = {'https://docs.python.org/': None}
 
