@@ -1,6 +1,3 @@
-tox automation project
-----------------------
-
 .. image:: https://img.shields.io/pypi/v/tox.svg
    :target: https://pypi.org/project/tox/
 .. image:: https://img.shields.io/pypi/pyversions/tox.svg
@@ -9,6 +6,11 @@ tox automation project
     :target: https://travis-ci.org/tox-dev/tox
 .. image:: https://img.shields.io/appveyor/ci/RonnyPfannschmidt/tox/master.svg
     :target: https://ci.appveyor.com/project/RonnyPfannschmidt/tox
+.. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/tox-dev/tox
+
+tox automation project
+----------------------
 
 **vision: standardize testing in Python**
 
