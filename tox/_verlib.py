@@ -1,11 +1,11 @@
 """
-
 PEP386-version comparison algorithm.
 
 (c) Tarek Ziade and others
 extracted unmodified from https://bitbucket.org/tarek/distutilsversion
 licensed under the PSF license (i guess)
 
+UPDATE 2017-09-06: removed suggest_normalized_version function as it is not needed by the project
 """
 
 import re
