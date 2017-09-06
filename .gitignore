@@ -16,6 +16,9 @@ tox.egg-info
 .tox
 .cache
 
+coverage.xml
+htmlcov
+
 .idea
 .eggs/
 py27/
