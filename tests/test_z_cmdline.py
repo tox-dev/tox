@@ -2,6 +2,7 @@ import tox
 import py
 import pytest
 from tox._pytestplugin import ReportExpectMock
+import platform
 try:
     import json
 except ImportError:
@@ -638,6 +639,17 @@ def test_test_usedevelop(cmd, initproj, src_root):
     assert "develop-inst-nodeps" in result.stdout.str()
 
 
+def _alwayscopy_not_supported():
+    # This is due to virtualenv bugs with alwayscopy in some platforms
+    # see: https://github.com/pypa/virtualenv/issues/565
+    if hasattr(platform, 'linux_distribution'):
+        _dist = platform.linux_distribution(full_distribution_name=False)
+        if _dist[0] == 'centos' and _dist[1][0] == '7':
+            return True
+    return False
+
+
+@pytest.mark.skipif(_alwayscopy_not_supported(), reason="Platform doesnt support alwayscopy")
 def test_alwayscopy(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
