@@ -13,7 +13,7 @@ In order to run the unit tests locally all Python versions enlisted in ``tox.ini
 
 .. note:: For a nice Windows terminal take a look at `cmder`_.
 
-.. _cmder: http://www.cmder.net
+.. _cmder: http://cmder.net/
 
 One solution for this is to install the latest conda, and then install all Python versions via conda envs. This will
 create separate folders for each Python version.

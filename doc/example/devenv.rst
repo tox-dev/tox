@@ -23,7 +23,9 @@ Step 1 - Configure the development environment
 
 First, we prepare the tox configuration for our development environment by
 defining a ``[testenv:devenv]`` section in the project's ``tox.ini``
-configuration file::
+configuration file:
+
+.. code-block:: ini
 
     [testenv:devenv]
     envdir = devenv
@@ -41,7 +43,9 @@ In it we state:
 Actually, we can configure a lot more, and these are only the required settings.
 For example, we can add the following to our configuration, telling tox not to
 reuse ``commands`` or ``deps`` settings from the base ``[testenv]``
-configuration::
+configuration:
+
+.. code-block:: ini
 
     commands =
     deps =
@@ -51,7 +55,9 @@ Step 2 - Create the development environment
 -------------------------------------------
 
 Once the ``[testenv:devenv]`` configuration section has been defined, we create
-the actual development environment by running the following::
+the actual development environment by running the following:
+
+.. code-block:: shell
 
     tox -e devenv
 
@@ -69,7 +75,9 @@ Let us say we want our project development environment to:
 - pull packages from ``requirements.txt``, located in the same directory as
   ``tox.ini``.
 
-Here is an example configuration for the described scenario::
+Here is an example configuration for the described scenario:
+
+.. code-block:: ini
 
     [testenv:devenv]
     envdir = devenv

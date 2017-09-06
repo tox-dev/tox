@@ -1,68 +1,70 @@
 2.8.1 (2017-09-04)
 ------------------
 
-- #p599: fix problems with implementation of #515.
-         Substitutions from other sections were not made anymore if they were not in `envlist`.
-         Thanks to Clark Boylan (@cboylan) for helping to get this fixed (#p597).
+- :pull:`599`: fix problems with implementation of :issue:`515`.
+  Substitutions from other sections were not made anymore if they were not in `envlist`.
+  Thanks to Clark Boylan (:user:`cboylan`) for helping to get this fixed (:pull:`597`).
 
 2.8.0 (2017-09-01)
 -------------------
 
-- #276: Remove easy_install from docs (TL;DR: use pip).
-        Thanks Martin Andrysík (@sifuraz).
-- #301: Expand nested substitutions in tox.ini
-        Thanks @vlaci.
-        Thanks to Eli Collins (@eli-collins) for creating a reproducer.
-- #315: add --help and --version to helptox-quickstart
-        Thanks @vlaci.
-- #326: Fix OSError 'Not a directory' when creating env on Jython 2.7.0.
-        Thanks Nick Douma (@LordGaav).
-- #429: Forward MSYSTEM by default on Windows
-        Thanks Marius Gedminas (@mgedmin) for reporting this.
-- #449: add multi platform example to the docs.
-        Thanks Aleks Bunin (@sashkab) and @rndr.
-- #474: Start using setuptools_scm for tag based versioning.
-- #484: Renamed `py.test` to `pytest` throughout the project
-        Thanks Slam (@3lnc).
-- #504: With `-a`: do not show additional environments header if there are none
-        Thanks @rndr.
-- #515: Don't require environment variables in test environments where they
-        are not used.
-        Thanks André Caron (@AndreLouisCaron).
-- #517: Forward NUMBER_OF_PROCESSORS by default on Windows to fix
-        `multiprocessor.cpu_count()`.
-        Thanks André Caron (@AndreLouisCaron).
-- #518: Forward `USERPROFILE` by default on Windows.
-        Thanks André Caron (@AndreLouisCaron).
-- #p528: Fix some of the warnings displayed by pytest 3.1.0.
-         Thanks Bruno Oliveira (@nicoddemus).
-- #p547: Add regression test for #137
-         Thanks Martin Andrysík (@sifuraz).
-- #p553: Add an XFAIL test to reproduce upstream bug #203
-         Thanks Bartolomé Sánchez Salado (@bartsanchez).
-- #p556: Report more meaningful errors on why virtualenv creation failed
-         Thanks @vlaci.
-         Also thanks to Igor Sadchenko (@igor-sadchenko) for pointing out a
-         problem with that PR before it hit the masses :)
-- #575: Add announcement doc to end all announcement docs
-        (using only CHANGELOG and Github issues since 2.5 already)
-- #p580: Do not ignore Sphinx warnings anymore
-         Thanks Gábor Bernát (@gaborbernat).
-- #585: Expand documentation to explain pass through of flags from deps to pip
-        (e.g. -rrequirements.txt, -cconstraints.txt)
-        Thanks Alexander Loechel (@loechel).
-- #588: Run pytest wit xfail_strict and adapt affected tests.
+- :issue:`276`: Remove easy_install from docs (TL;DR: use pip). Thanks Martin Andrysík (:user:`sifuraz`).
+
+- :issue:`301`: Expand nested substitutions in ``tox.ini``. Thanks :user:`vlaci`. Thanks to Eli Collins
+  (:user:`eli-collins`) for creating a reproducer.
+
+- :issue:`315`: add ``--help`` and ``--version`` to helptox-quickstart. Thanks :user:`vlaci`.
+
+- :issue:`326`: Fix ``OSError`` 'Not a directory' when creating env on Jython 2.7.0. Thanks Nick Douma (:user:`LordGaav`).
+
+- :issue:`429`: Forward ``MSYSTEM`` by default on Windows. Thanks Marius Gedminas (:user:`mgedmin`) for reporting this.
+
+- :issue:`449`: add multi platform example to the docs. Thanks Aleks Bunin (:user:`sashkab`) and :user:`rndr`.
+
+- :issue:`474`: Start using setuptools_scm for tag based versioning.
+
+- :issue:`484`: Renamed `py.test` to `pytest` throughout the project. Thanks Slam (:user:`3lnc`).
+
+- :issue:`504`: With `-a`: do not show additional environments header if there are none. Thanks :user:`rndr`.
+
+- :issue:`515`: Don't require environment variables in test environments where they are not used.
+  Thanks André Caron (:user:`AndreLouisCaron`).
+- :issue:`517`: Forward ``NUMBER_OF_PROCESSORS`` by default on Windows to fix ``multiprocessor.cpu_count()``.
+  Thanks André Caron (:user:`AndreLouisCaron`).
+
+- :issue:`518`: Forward `USERPROFILE` by default on Windows. Thanks André Caron (:user:`AndreLouisCaron`).
+
+- :pull:`528`: Fix some of the warnings displayed by pytest 3.1.0. Thanks Bruno Oliveira (:user:`nicoddemus`).
+
+- :pull:`547`: Add regression test for :issue:`137`. Thanks Martin Andrysík (:user:`sifuraz`).
+
+- :pull:`553`: Add an XFAIL test to reproduce upstream bug :issue:`203`. Thanks
+  Bartolomé Sánchez Salado (:user:`bartsanchez`).
+
+- :pull:`556`: Report more meaningful errors on why virtualenv creation failed. Thanks :user:`vlaci`.
+  Also thanks to Igor Sadchenko (:user:`igor-sadchenko`) for pointing out a problem with that PR
+  before it hit the masses ☺
+
+- :pull:`575`: Add announcement doc to end all announcement docs
+  (using only ``CHANGELOG`` and Github issues since 2.5 already).
+
+- :pull:`580`: Do not ignore Sphinx warnings anymore. Thanks Bernát Gábor (:user:`gaborbernat`).
+
+- :pull:`585`: Expand documentation to explain pass through of flags from deps to pip
+  (e.g. ``-rrequirements.txt``, ``-cconstraints.txt``). Thanks Alexander Loechel (:user:`loechel`).
+
+- :pull:`588`: Run pytest wit xfail_strict and adapt affected tests.
 
 2.7.0 (2017-04-02)
 ------------------
 
-- #p450: Stop after the first installdeps and first testenv create hooks
+- :pull:`450`: Stop after the first installdeps and first testenv create hooks
   succeed. This changes the default behaviour of `tox_testenv_create`
   and `tox_testenv_install_deps` to not execute other registered hooks when
   the first hook returns a result that is not `None`.
-  Thanks Anthony Sottile (@asottile).
+  Thanks Anthony Sottile (:user:`asottile`).
 
-- #271 and #464: Improve environment information for users.
+- :issue:`271` and :issue:`464`: Improve environment information for users.
 
   New command line parameter: `-a` show **all** defined environments -
   not just the ones defined in (or generated from) envlist.
@@ -74,66 +76,66 @@
   Note that for backwards compatibility with scripts using the output of `-l`
   it's output remains unchanged.
 
-  Thanks Gábor Bernát (@gaborbernat).
+  Thanks Bernát Gábor (:user:`gaborbernat`).
 
-- #464: Fix incorrect egg-info location for modified package_dir in setup.py.
-  Thanks Selim Belhaouane (@selimb).
+- :issue:`464`: Fix incorrect egg-info location for modified package_dir in setup.py.
+  Thanks Selim Belhaouane (:user:`selimb`).
 
-- #431: Add 'LANGUAGE' to default passed environment variables.
-  Thanks Paweł Adamczak (@pawalad).
+- :issue:`431`: Add 'LANGUAGE' to default passed environment variables.
+  Thanks Paweł Adamczak (:user:`pawelad`).
 
-- #455: Add a Vagrantfile with a customized Arch Linux box for local testing.
-  Thanks Oliver Bestwalter (@obestwalter).
+- :issue:`455`: Add a Vagrantfile with a customized Arch Linux box for local testing.
+  Thanks Oliver Bestwalter (:user:`obestwalter`).
 
-- #454: Revert #407, empty commands is not treated as an error.
-  Thanks Anthony Sottile (@asottile).
+- :issue:`454`: Revert :pull:`407`, empty commands is not treated as an error.
+  Thanks Anthony Sottile (:user:`asottile`).
 
-- #446: (infrastructure) Travis CI tests for tox now also run on OS X now.
-  Thanks Jason R. Coombs (@jaraco).
+- :issue:`446`: (infrastructure) Travis CI tests for tox now also run on OS X now.
+  Thanks Jason R. Coombs (:user:`jaraco`).
 
 2.6.0 (2017-02-04)
 ------------------
 
 - add "alwayscopy" config option to instruct virtualenv to always copy
-  files instead of symlinking. Thanks Igor Duarte Cardoso (@igordcard).
+  files instead of symlinking. Thanks Igor Duarte Cardoso (:user:`igordcard`).
 
 - pass setenv variables to setup.py during a usedevelop install.
-  Thanks Eli Collins (@eli-collins).
+  Thanks Eli Collins (:user:`eli-collins`).
 
 - replace all references to testrun.org with readthedocs ones.
-  Thanks Oliver Bestwalter (@obestwalter).
+  Thanks Oliver Bestwalter (:user:`obestwalter`).
 
-- fix #323 by avoiding virtualenv14 is not used on py32
+- fix :issue:`323` by avoiding virtualenv14 is not used on py32
   (although we don't officially support py32).
-  Thanks Jason R. Coombs (@jaraco).
+  Thanks Jason R. Coombs (:user:`jaraco`).
 
 - add Python 3.6 to envlist and CI.
-  Thanks Andrii Soldatenko (@andriisoldatenko).
+  Thanks Andrii Soldatenko (:user:`andriisoldatenko`).
 
 - fix glob resolution from TOX_TESTENV_PASSENV env variable
-  Thanks Allan Feldman (@a-feld).
+  Thanks Allan Feldman (:user:`a-feld`).
 
 2.5.0 (2016-11-16)
 ------------------
 
-- slightly backward incompatible: fix issue310: the {posargs} substitution
+- slightly backward incompatible: fix :issue:`310`: the {posargs} substitution
   now properly preserves the tox command line positional arguments. Positional
   arguments with spaces are now properly handled.
   NOTE: if your tox invocation previously used extra quoting for positional arguments to
-  work around issue310, you need to remove the quoting. Example:
+  work around :issue:`310`, you need to remove the quoting. Example:
   tox -- "'some string'"  # has to now be written simply as
   tox -- "some string"
   thanks holger krekel.  You can set ``minversion = 2.5.0`` in the ``[tox]``
   section of ``tox.ini`` to make sure people using your tox.ini use the correct version.
 
-- fix #359: add COMSPEC to default passenv on windows.  Thanks
-  @anthrotype.
+- fix :issue:`359`: add COMSPEC to default passenv on windows.  Thanks
+  :user:`anthrotype`.
 
 - add support for py36 and py37 and add py36-dev and py37(nightly) to
   travis builds of tox. Thanks John Vandenberg.
 
-- fix #348: add py2 and py3 as default environments pointing to
-  "python2" and "python3" basepython executables.  Also fix #347 by
+- fix :issue:`348`: add py2 and py3 as default environments pointing to
+  "python2" and "python3" basepython executables.  Also fix :issue:`347` by
   updating the list of default envs in the tox basic example.
   Thanks Tobias McNulty.
 
@@ -143,23 +145,23 @@
 - add {:} substitution, which is replaced with os-specific path
   separator, thanks Lukasz Rogalski.
 
-- fix #305: ``downloadcache`` test env config is now ignored as pip-8
+- fix :issue:`305`: ``downloadcache`` test env config is now ignored as pip-8
   does caching by default. Thanks holger krekel.
 
 - output from install command in verbose (-vv) mode is now printed to console instead of
   being redirected to file, thanks Lukasz Rogalski
 
-- fix #399.  Make sure {envtmpdir} is created if it doesn't exist at the
+- fix :issue:`399`.  Make sure {envtmpdir} is created if it doesn't exist at the
   start of a testenvironment run. Thanks Manuel Jacob.
 
-- fix #316: Lack of commands key in ini file is now treated as an error.
+- fix :issue:`316`: Lack of commands key in ini file is now treated as an error.
   Reported virtualenv status is 'nothing to do' instead of 'commands
   succeeded', with relevant error message displayed. Thanks Lukasz Rogalski.
 
 2.4.1 (2016-10-12)
 ------------------
 
-- fix issue380: properly perform substitution again. Thanks Ian
+- fix :issue:`380`: properly perform substitution again. Thanks Ian
   Cordasco.
 
 2.4.0 (2016-10-12)
@@ -170,27 +172,27 @@
   not see a PYTHONPATH.  If this causes unforeseen problems it may be
   reverted in a bugfix release.  Thanks Jason R. Coombs.
 
-- fix issue352: prevent a configuration where envdir==toxinidir and
+- fix :issue:`352`: prevent a configuration where envdir==toxinidir and
   refine docs to warn people about changing "envdir". Thanks Oliver Bestwalter and holger krekel.
 
-- fix issue375, fix issue330: warn against tox-setup.py integration as
+- fix :issue:`375`, fix :issue:`330`: warn against tox-setup.py integration as
   "setup.py test" should really just test with the current interpreter. Thanks Ronny Pfannschmidt.
 
-- fix issue302: allow cross-testenv substitution where we substitute
+- fix :issue:`302`: allow cross-testenv substitution where we substitute
   with ``{x,y}`` generative syntax.  Thanks Andrew Pashkin.
 
-- fix issue212: allow escaping curly brace chars "\{" and "\}" if you need the
+- fix :issue:`212`: allow escaping curly brace chars "\{" and "\}" if you need the
   chars "{" and "}" to appear in your commands or other ini values.
   Thanks John Vandenberg.
 
-- addresses issue66: add --workdir option to override where tox stores its ".tox" directory
+- addresses :issue:`66`: add --workdir option to override where tox stores its ".tox" directory
   and all of the virtualenv environment.  Thanks Danring.
 
 - introduce per-venv list_dependencies_command which defaults
   to "pip freeze" to obtain the list of installed packages.
   Thanks Ted Shaw, Holger Krekel.
 
-- close issue66: add documentation to jenkins page on how to avoid
+- close :issue:`66`: add documentation to jenkins page on how to avoid
   "too long shebang" lines when calling pip from tox.  Note that we
   can not use "python -m pip install X" by default because the latter
   adds the CWD and pip will think X is installed if it is there.
@@ -202,11 +204,11 @@
 - (experimental) New feature: When a search for a config file fails, tox tries loading
   setup.cfg with a section prefix of "tox".
 
-- fix issue275: Introduce hooks ``tox_runtest_pre``` and
+- fix :issue:`275`: Introduce hooks ``tox_runtest_pre``` and
   ``tox_runtest_post`` which run before and after the tests of a venv,
   respectively. Thanks to Matthew Schinckel and itxaka serrano.
 
-- fix issue317: evaluate minversion before tox config is parsed completely.
+- fix :issue:`317`: evaluate minversion before tox config is parsed completely.
   Thanks Sachi King for the PR.
 
 - added the "extras" environment option to specify the extras to use when doing the
@@ -218,15 +220,15 @@
 2.3.2 (2016-02-11)
 ------------------
 
-- fix issue314: fix command invocation with .py scripts on windows.
+- fix :issue:`314`: fix command invocation with .py scripts on windows.
 
-- fix issue279: allow cross-section substitution when the value contains
+- fix :issue:`279`: allow cross-section substitution when the value contains
   posargs. Thanks Sachi King for the PR.
 
 2.3.1 (2015-12-14)
 ------------------
 
-- fix issue294: re-allow cross-section substitution for setenv.
+- fix :issue:`294`: re-allow cross-section substitution for setenv.
 
 2.3.0 (2015-12-09)
 ------------------
@@ -235,7 +237,7 @@
   the internal code and it is recommended to rather use the
   devpi system for managing indexes for pip.
 
-- fix issue285: make setenv processing fully lazy to fix regressions
+- fix :issue:`285`: make setenv processing fully lazy to fix regressions
   of tox-2.2.X and so that we can now have testenv attributes like
   "basepython" depend on environment variables that are set in
   a setenv section. Thanks Nelfin for some tests and initial
@@ -245,9 +247,9 @@
   sections that used a comment after a "\" line continuation.
   Thanks David Stanek for the PR.
 
-- fix issue289: fix build_sphinx target, thanks Barry Warsaw.
+- fix :issue:`289`: fix build_sphinx target, thanks Barry Warsaw.
 
-- fix issue252: allow environment names with special characters.
+- fix :issue:`252`: allow environment names with special characters.
   Thanks Julien Castets for initial PR and patience.
 
 - introduce experimental tox_testenv_create(venv, action) and
@@ -269,25 +271,25 @@
 2.2.0 (2015-11-11)
 ------------------
 
-- fix issue265 and add LD_LIBRARY_PATH to passenv on linux by default
+- fix :issue:`265` and add LD_LIBRARY_PATH to passenv on linux by default
   because otherwise the python interpreter might not start up in
   certain configurations (redhat software collections).  Thanks David Riddle.
 
-- fix issue246: fix regression in config parsing by reordering
+- fix :issue:`246`: fix regression in config parsing by reordering
   such that {envbindir} can be used again in tox.ini. Thanks Olli Walsh.
 
-- fix issue99: the {env:...} substitution now properly uses environment
+- fix :issue:`99`: the {env:...} substitution now properly uses environment
   settings from the ``setenv`` section. Thanks Itxaka Serrano.
 
-- fix issue281: make --force-dep work when urls are present in
+- fix :issue:`281`: make --force-dep work when urls are present in
   dependency configs.  Thanks Glyph Lefkowitz for reporting.
 
-- fix issue174: add new ``ignore_outcome`` testenv attribute which
+- fix :issue:`174`: add new ``ignore_outcome`` testenv attribute which
   can be set to True in which case it will produce a warning instead
   of an error on a failed testenv command outcome.
   Thanks Rebecka Gulliksson for the PR.
 
-- fix issue280: properly skip missing interpreter if
+- fix :issue:`280`: properly skip missing interpreter if
   {envsitepackagesdir} is present in commands. Thanks BB:ceridwenv
 
 
@@ -301,14 +303,14 @@
 2.1.0 (2015-06-19)
 ------------------
 
-- fix issue258, fix issue248, fix issue253: for non-test commands
+- fix :issue:`258`, fix :issue:`248`, fix :issue:`253`: for non-test commands
   (installation, venv creation) we pass in the full invocation environment.
 
 - remove experimental --set-home option which was hardly used and
   hackily implemented (if people want home-directory isolation we should
   figure out a better way to do it, possibly through a plugin)
 
-- fix issue259: passenv is now a line-list which allows to intersperse
+- fix :issue:`259`: passenv is now a line-list which allows to intersperse
   comments.  Thanks stefano-m.
 
 - allow envlist to be a multi-line list, to intersperse comments
@@ -321,7 +323,7 @@
 2.0.2 (2015-06-03)
 ------------------
 
-- fix issue247: tox now passes the LANG variable from the tox invocation
+- fix :issue:`247`: tox now passes the LANG variable from the tox invocation
   environment to the test environment by default.
 
 - add SYSTEMDRIVE into default passenv on windows to allow pip6 to work.
@@ -365,17 +367,17 @@
 
 - remove the long-deprecated "distribute" option as it has no effect these days.
 
-- fix issue233: avoid hanging with tox-setuptools integration example. Thanks simonb.
+- fix :issue:`233`: avoid hanging with tox-setuptools integration example. Thanks simonb.
 
-- fix issue120: allow substitution for the commands section.  Thanks
+- fix :issue:`120`: allow substitution for the commands section.  Thanks
   Volodymyr Vitvitski.
 
-- fix issue235: fix AttributeError with --installpkg.  Thanks
+- fix :issue:`235`: fix AttributeError with --installpkg.  Thanks
   Volodymyr Vitvitski.
 
 - tox has now somewhat pep8 clean code, thanks to Volodymyr Vitvitski.
 
-- fix issue240: allow to specify empty argument list without it being
+- fix :issue:`240`: allow to specify empty argument list without it being
   rewritten to ".".  Thanks Daniel Hahler.
 
 - introduce experimental (not much documented yet) plugin system
@@ -396,7 +398,7 @@
 
 - backout ability that --force-dep substitutes name/versions in
   requirement files due to various issues.
-  This fixes issue228, fixes issue230, fixes issue231
+  This fixes :issue:`228`, fixes :issue:`230`, fixes :issue:`231`
   which popped up with 1.9.1.
 
 1.9.1 (2015-03-23)
@@ -408,39 +410,39 @@
 - allow --force-dep to override dependencies in "-r" requirements
   files.  Thanks Sontek for the PR.
 
-- fix issue227: use "-m virtualenv" instead of "-mvirtualenv" to make
+- fix :issue:`227`: use "-m virtualenv" instead of "-mvirtualenv" to make
   it work with pyrun.  Thanks Marc-Andre Lemburg.
 
 
 1.9.0 (2015-02-24)
 ------------------
 
-- fix issue193: Remove ``--pre`` from the default ``install_command``; by
+- fix :issue:`193`: Remove ``--pre`` from the default ``install_command``; by
   default tox will now only install final releases from PyPI for unpinned
   dependencies. Use ``pip_pre = true`` in a testenv or the ``--pre``
   command-line option to restore the previous behavior.
 
-- fix issue199: fill resultlog structure ahead of virtualenv creation
+- fix :issue:`199`: fill resultlog structure ahead of virtualenv creation
 
 - refine determination if we run from Jenkins, thanks Borge Lanes.
 
 - echo output to stdout when ``--report-json`` is used
 
-- fix issue11: add a ``skip_install`` per-testenv setting which
+- fix :issue:`11`: add a ``skip_install`` per-testenv setting which
   prevents the installation of a package. Thanks Julian Krause.
 
-- fix issue124: ignore command exit codes; when a command has a "-" prefix,
+- fix :issue:`124`: ignore command exit codes; when a command has a "-" prefix,
   tox will ignore the exit code of that command
 
-- fix issue198: fix broken envlist settings, e.g. {py26,py27}{-lint,}
+- fix :issue:`198`: fix broken envlist settings, e.g. {py26,py27}{-lint,}
 
-- fix issue191: lessen factor-use checks
+- fix :issue:`191`: lessen factor-use checks
 
 
 1.8.1 (2014-10-24)
 ------------------
 
-- fix issue190: allow setenv to be empty.
+- fix :issue:`190`: allow setenv to be empty.
 
 - allow escaping curly braces with "\".  Thanks Marc Abramowitz for the PR.
 
@@ -457,10 +459,10 @@
   Alexander Schepanovski for the complete PR with docs.
   And to Mike Bayer and others for testing and feedback.
 
-- fix issue148: remove "__PYVENV_LAUNCHER__" from os.environ when starting
+- fix :issue:`148`: remove "__PYVENV_LAUNCHER__" from os.environ when starting
   subprocesses. Thanks Steven Myint.
 
-- fix issue152: set VIRTUAL_ENV when running test commands,
+- fix :issue:`152`: set VIRTUAL_ENV when running test commands,
   thanks Florian Ludwig.
 
 - better report if we can't get version_info from an interpreter
@@ -470,18 +472,18 @@
 1.7.2 (2014-07-15)
 ------------------
 
-- fix issue150: parse {posargs} more like we used to do it pre 1.7.0.
+- fix :issue:`150`: parse {posargs} more like we used to do it pre 1.7.0.
   The 1.7.0 behaviour broke a lot of OpenStack projects.
   See PR85 and the issue discussions for (far) more details, hopefully
   resulting in a more refined behaviour in the 1.8 series.
   And thanks to Clark Boylan for the PR.
 
-- fix issue59: add a config variable ``skip-missing-interpreters`` as well as
+- fix :issue:`59`: add a config variable ``skip-missing-interpreters`` as well as
   command line option ``--skip-missing-interpreters`` which won't fail the
   build if Python interpreters listed in tox.ini are missing.  Thanks
   Alexandre Conrad for PR104.
 
-- fix issue164: better traceback info in case of failing test commands.
+- fix :issue:`164`: better traceback info in case of failing test commands.
   Thanks Marc Abramowitz for PR92.
 
 - support optional env variable substitution, thanks Morgan Fainberg
@@ -493,9 +495,9 @@
 1.7.1 (2014-03-28)
 ------------------
 
-- fix issue162: don't list python 2.5 as compatibiliy/supported
+- fix :issue:`162`: don't list python 2.5 as compatibiliy/supported
 
-- fix issue158 and fix issue155: windows/virtualenv properly works now:
+- fix :issue:`158` and fix :issue:`155`: windows/virtualenv properly works now:
   call virtualenv through "python -m virtualenv" with the same
   interpreter which invoked tox.  Thanks Chris Withers, Ionel Maries Cristian.
 
@@ -524,26 +526,26 @@
   You can also use --hashsheed=noset to instruct tox to leave the value
   alone.  Thanks Chris Jerdonek for all the work behind this.
 
-- fix issue132: removing zip_safe setting (so it defaults to false)
+- fix :issue:`132`: removing zip_safe setting (so it defaults to false)
   to allow installation of tox
   via easy_install/eggs.  Thanks Jenisys.
 
-- fix issue126: depend on virtualenv>=1.11.2 so that we can rely
+- fix :issue:`126`: depend on virtualenv>=1.11.2 so that we can rely
   (hopefully) on a pip version which supports --pre. (tox by default
   uses to --pre).  also merged in PR84 so that we now call "virtualenv"
   directly instead of looking up interpreters.  Thanks Ionel Maries Cristian.
-  This also fixes issue140.
+  This also fixes :issue:`140`.
 
-- fix issue130: you can now set install_command=easy_install {opts} {packages}
+- fix :issue:`130`: you can now set install_command=easy_install {opts} {packages}
   and expect it to work for repeated tox runs (previously it only worked
   when always recreating).  Thanks jenisys for precise reporting.
 
-- fix issue129: tox now uses Popen(..., universal_newlines=True) to force
+- fix :issue:`129`: tox now uses Popen(..., universal_newlines=True) to force
   creation of unicode stdout/stderr streams.  fixes a problem on specific
   platform configs when creating virtualenvs with Python3.3. Thanks
   Jorgen Schäfer or investigation and solution sketch.
 
-- fix issue128: enable full substitution in install_command,
+- fix :issue:`128`: enable full substitution in install_command,
   thanks for the PR to Ronald Evers
 
 - rework and simplify "commands" parsing and in particular posargs
@@ -558,41 +560,41 @@
 - introduce --sitepackages to force sitepackages=True in all
   environments.
 
-- fix issue105 -- don't depend on an existing HOME directory from tox tests.
+- fix :issue:`105` -- don't depend on an existing HOME directory from tox tests.
 
 1.6.1 (2013-09-04)
 ------------------
 
-- fix issue119: {envsitepackagesdir} is now correctly computed and has
+- fix :issue:`119`: {envsitepackagesdir} is now correctly computed and has
   a better test to prevent regression.
 
-- fix issue116: make 1.6 introduced behaviour of changing to a
+- fix :issue:`116`: make 1.6 introduced behaviour of changing to a
   per-env HOME directory during install activities dependent
   on "--set-home" for now.  Should re-establish the old behaviour
   when no option is given.
 
-- fix issue118: correctly have two tests use realpath(). Thanks Barry
+- fix :issue:`118`: correctly have two tests use realpath(). Thanks Barry
   Warsaw.
 
 - fix test runs on environments without a home directory
   (in this case we use toxinidir as the homedir)
 
-- fix issue117: python2.5 fix: don't use ``--insecure`` option because
+- fix :issue:`117`: python2.5 fix: don't use ``--insecure`` option because
   its very existence depends on presence of "ssl".  If you
   want to support python2.5/pip1.3.1 based test environments you need
   to install ssl and/or use PIP_INSECURE=1 through ``setenv``. section.
 
-- fix issue102: change to {toxinidir} when installing dependencies.
+- fix :issue:`102`: change to {toxinidir} when installing dependencies.
   this allows to use relative path like in "-rrequirements.txt".
 
 1.6.0 (2013-08-15)
 ------------------
 
-- fix issue35: add new EXPERIMENTAL "install_command" testenv-option to
+- fix :issue:`35`: add new EXPERIMENTAL "install_command" testenv-option to
   configure the installation command with options for dep/pkg install.
   Thanks Carl Meyer for the PR and docs.
 
-- fix issue91: python2.5 support by vendoring the virtualenv-1.9.1
+- fix :issue:`91`: python2.5 support by vendoring the virtualenv-1.9.1
   script and forcing pip<1.4. Also the default [py25] environment
   modifies the default installer_command (new config option)
   to use pip without the "--pre" option which was introduced
@@ -603,14 +605,14 @@
   location ({envtmpdir}/pseudo-home).  If an index url was specified
   a .pydistutils.cfg file will be written with an index_url setting
   so that packages defining ``setup_requires`` dependencies will not
-  silently use your HOME-directory settings or https://pypi.python.org.
+  silently use your HOME-directory settings or https://pypi.python.org/pypi.
 
-- fix issue1: empty setup files are properly detected, thanks Anthon van
+- fix :issue:`1`: empty setup files are properly detected, thanks Anthon van
   der Neuth
 
 - remove toxbootstrap.py for now because it is broken.
 
-- fix issue109 and fix issue111: multiple "-e" options are now combined
+- fix :issue:`109` and fix :issue:`111`: multiple "-e" options are now combined
   (previously the last one would win). Thanks Anthon van der Neut.
 
 - add --result-json option to write out detailed per-venv information
@@ -630,19 +632,19 @@
 1.5.0 (2013-06-22)
 ------------------
 
-- fix issue104: use setuptools by default, instead of distribute,
+- fix :issue:`104`: use setuptools by default, instead of distribute,
   now that setuptools has distribute merged.
 
 - make sure test commands are searched first in the virtualenv
 
-- re-fix issue2 - add whitelist_externals to be used in ``[testenv*]``
+- re-fix :issue:`2` - add whitelist_externals to be used in ``[testenv*]``
   sections, allowing to avoid warnings for commands such as ``make``,
   used from the commands value.
 
-- fix issue97 - allow substitutions to reference from other sections
+- fix :issue:`97` - allow substitutions to reference from other sections
   (thanks Krisztian Fekete)
 
-- fix issue92 - fix {envsitepackagesdir} to actually work again
+- fix :issue:`92` - fix {envsitepackagesdir} to actually work again
 
 - show (test) command that is being executed, thanks
   Lukasz Balcerzak
@@ -668,7 +670,7 @@
   downloadcache=PATH testenv setting is present. (The ENV setting
   takes precedence)
 
-- fix issue84 - pypy on windows creates a bin not a scripts venv directory
+- fix :issue:`84` - pypy on windows creates a bin not a scripts venv directory
   (thanks Lukasz Balcerzak)
 
 - experimentally introduce --installpkg=PATH option to install a package
@@ -677,29 +679,29 @@
   remote package).
 
 - substitute {envsitepackagesdir} with the package installation
-  directory (closes #72) (thanks g2p)
+  directory (closes :issue:`72`) (thanks g2p)
 
-- issue #70 remove PYTHONDONTWRITEBYTECODE workaround now that
+- issue :issue:`70` remove PYTHONDONTWRITEBYTECODE workaround now that
   virtualenv behaves properly (thanks g2p)
 
 - merged tox-quickstart command, contributed by Marc Abramowitz, which
   generates a default tox.ini after asking a few questions
 
-- fix #48 - win32 detection of pypy and other interpreters that are on PATH
+- fix :issue:`48` - win32 detection of pypy and other interpreters that are on PATH
   (thanks Gustavo Picon)
 
 - fix grouping of index servers, it is now done by name instead of
   indexserver url, allowing to use it to separate dependencies
   into groups even if using the same default indexserver.
 
-- look for "tox.ini" files in parent dirs of current dir (closes #34)
+- look for "tox.ini" files in parent dirs of current dir (closes :issue:`34`)
 
 - the "py" environment now by default uses the current interpreter
   (sys.executable) make tox' own setup.py test execute tests with it
-  (closes #46)
+  (closes :issue:`46`)
 
-- change tests to not rely on os.path.expanduser (closes #60),
-  also make mock session return args[1:] for more precise checking (closes #61)
+- change tests to not rely on os.path.expanduser (closes :issue:`60`),
+  also make mock session return args[1:] for more precise checking (closes :issue:`61`)
   thanks to Barry Warsaw for both.
 
 1.4.2 (2012-07-20)
@@ -712,14 +714,14 @@
 1.4.1 (2012-07-03)
 ------------------
 
-- fix issue41 better quoting on windows - you can now use "<" and ">" in
+- fix :issue:`41` better quoting on windows - you can now use "<" and ">" in
   deps specifications, thanks Chris Withers for reporting
 
 1.4 (2012-06-13)
 ----------------
 
-- fix issue26 - no warnings on absolute or relative specified paths for commands
-- fix issue33 - commentchars are ignored in key-value settings allowing
+- fix :issue:`26` - no warnings on absolute or relative specified paths for commands
+- fix :issue:`33` - commentchars are ignored in key-value settings allowing
   for specifying commands like: python -c "import sys ; print sys"
   which would formerly raise irritating errors because the ";"
   was considered a comment
@@ -728,9 +730,9 @@
   to be more accessible from 3rd party tools
 - support value substitution from other sections
   with the {[section]key} syntax
-- fix issue29 - correctly point to pytest explanation
+- fix :issue:`29` - correctly point to pytest explanation
   for importing modules fully qualified
-- fix issue32 - use --system-site-packages and don't pass --no-site-packages
+- fix :issue:`32` - use --system-site-packages and don't pass --no-site-packages
 - add python3.3 to the default env list, so early adopters can test
 - drop python2.4 support (you can still have your tests run on
 - fix the links/checkout howtos in the docs
@@ -743,7 +745,7 @@
   specifying dependencies such that tox searches for
   the highest version
 
-- fix issue issue21: clear PIP_REQUIRES_VIRTUALENV which avoids
+- fix issue :issue:`21`: clear PIP_REQUIRES_VIRTUALENV which avoids
   pip installing to the wrong environment, thanks to bb's streeter
 
 - make the install step honour a testenv's setenv setting
@@ -756,7 +758,7 @@
 - remove the virtualenv.py that was distributed with tox and depend
   on >=virtualenv-1.6.4 (possible now since the latter fixes a few bugs
   that the inlining tried to work around)
-- fix issue10: work around UnicodeDecodeError when invoking pip (thanks
+- fix :issue:`10`: work around UnicodeDecodeError when invoking pip (thanks
   Marc Abramowitz)
 - fix a problem with parsing {posargs} in tox commands (spotted by goodwill)
 - fix the warning check for commands to be installed in testenvironment
@@ -765,10 +767,10 @@
 1.1 (2011-07-08)
 ----------------
 
-- fix issue5 - don't require argparse for python versions that have it
-- fix issue6 - recreate virtualenv if installing dependencies failed
-- fix issue3 - fix example on frontpage
-- fix issue2 - warn if a test command does not come from the test
+- fix :issue:`5` - don't require argparse for python versions that have it
+- fix :issue:`6` - recreate virtualenv if installing dependencies failed
+- fix :issue:`3` - fix example on frontpage
+- fix :issue:`2` - warn if a test command does not come from the test
   environment
 - fixed/enhanced: except for initial install always call "-U
   --no-deps" for installing the sdist package to ensure that a package
@@ -782,21 +784,21 @@
 1.0
 ---
 
-- move repository and toxbootstrap links to http://bitbucket.org/hpk42/tox
-- fix issue7: introduce a "minversion" directive such that tox
+- move repository and toxbootstrap links to https://bitbucket.org/hpk42/tox
+- fix :issue:`7`: introduce a "minversion" directive such that tox
   bails out if it does not have the correct version.
-- fix issue24: introduce a way to set environment variables for
+- fix :issue:`24`: introduce a way to set environment variables for
   for test commands (thanks Chris Rose)
-- fix issue22: require virtualenv-1.6.1, obsoleting virtualenv5 (thanks Jannis Leidel)
+- fix :issue:`22`: require virtualenv-1.6.1, obsoleting virtualenv5 (thanks Jannis Leidel)
   and making things work with pypy-1.5 and python3 more seamlessly
 - toxbootstrap.py (used by jenkins build slaves) now follows the latest release of virtualenv
-- fix issue20: document format of URLs for specifying dependencies
-- fix issue19: substitute Hudson for Jenkins everywhere following the renaming
+- fix :issue:`20`: document format of URLs for specifying dependencies
+- fix :issue:`19`: substitute Hudson for Jenkins everywhere following the renaming
   of the project.  NOTE: if you used the special [tox:hudson]
   section it will now need to be named [tox:jenkins].
 - fix issue 23 / apply some ReST fixes
 - change the positional argument specifier to use {posargs:} syntax and
-  fix issues #15 and #10 by refining the argument parsing method (Chris Rose)
+  fix issues :issue:`15` and :issue:`10` by refining the argument parsing method (Chris Rose)
 - remove use of inipkg lazy importing logic -
   the namespace/imports are anyway very small with tox.
 - fix a fspath related assertion to work with debian installs which uses
@@ -810,7 +812,7 @@
 
 - fix pip-installation mixups by always unsetting PIP_RESPECT_VIRTUALENV
   (thanks Armin Ronacher)
-- issue1: Add a toxbootstrap.py script for tox, thanks to Sridhar
+- :issue:`1`: Add a toxbootstrap.py script for tox, thanks to Sridhar
   Ratnakumar
 - added support for working with different and multiple PyPI indexservers.
 - new option: -r|--recreate to force recreation of virtualenv
@@ -844,9 +846,9 @@
   can be created with access to globals (default is not to have access,
   i.e. create environments with ``--no-site-packages``.
 
-- addressing issue4: always prepend venv-path to PATH variable when calling subprocesses
+- addressing :issue:`4`: always prepend venv-path to PATH variable when calling subprocesses
 
-- fix issue2: exit with proper non-zero return code if there were
+- fix :issue:`2`: exit with proper non-zero return code if there were
   errors or test failures.
 
 - added unittest2 examples contributed by Michael Foord

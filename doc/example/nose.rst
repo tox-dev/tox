@@ -1,4 +1,3 @@
-
 nose and tox
 =================================
 
@@ -9,18 +8,20 @@ for running with nose:
 Basic nosetests example
 --------------------------
 
-Assuming the following layout::
+Assuming the following layout:
+
+.. code-block:: shell
 
     tox.ini      # see below for content
     setup.py     # a classic distutils/setuptools setup.py file
 
-and the following ``tox.ini`` content::
+and the following ``tox.ini`` content:
+
+.. code-block:: ini
 
     [testenv]
     deps=nose
-    commands=
-      nosetests \
-            []        # substitute with tox' positional arguments
+    commands= nosetests [] # substitute with tox' positional arguments
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
 ``tox`` will sdist-package your project create two virtualenv environments
@@ -37,5 +38,5 @@ for nose/tox interactions please submit them.
 
 Also you might want to checkout :doc:`general`.
 
-.. include:: ../links.txt
+.. include:: ../links.rst
 

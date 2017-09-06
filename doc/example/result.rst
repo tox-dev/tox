@@ -1,14 +1,18 @@
-
 Writing a json result file
 --------------------------------------------------------
 
 .. versionadded: 1.6
 
-You can instruct tox to write a json-report file via::
+You can instruct tox to write a json-report file via:
+
+.. code-block:: shell
+
 
     tox --result-json=PATH
 
-This will create a json-formatted result file using this schema::
+This will create a json-formatted result file using this schema:
+
+.. code-block:: json
 
     {
       "testenvs": {

@@ -109,18 +109,7 @@ Current features
    plugins
    developers
    example/result
-   announce/release-0.5
-   announce/release-1.0
-   announce/release-1.1
-   announce/release-1.2
-   announce/release-1.3
-   announce/release-1.4
-   announce/release-1.4.3
-   announce/release-1.8
-   announce/release-1.9
-   announce/release-2.0
-   announce/release-2.4.0
    announce/changelog-only
 
 
-.. include:: links.txt
+.. include:: links.rst

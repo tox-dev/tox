@@ -1,4 +1,3 @@
-
 pytest and tox
 =================================
 
@@ -6,26 +5,28 @@ It is easy to integrate `pytest`_ runs with tox.  If you encounter
 issues, please check if they are `listed as a known issue`_ and/or use
 the :doc:`support channels <../support>`.
 
-.. _`pytest`: https://www.pytest.org
+.. _`pytest`: https://docs.pytest.org/en/latest/
 
 Basic example
 --------------------------
 
-Assuming the following layout::
+Assuming the following layout:
+
+.. code-block:: shell
 
     tox.ini      # see below for content
     setup.py     # a classic distutils/setuptools setup.py file
 
-and the following ``tox.ini`` content::
+and the following ``tox.ini`` content:
+
+.. code-block:: ini
 
     [tox]
     envlist = py26,py31
 
     [testenv]
-    deps=pytest       # PYPI package providing pytest
-    commands=
-      pytest \
-            {posargs} # substitute with tox' positional arguments
+    deps = pytest               # PYPI package providing pytest
+    commands = pytest {posargs} # substitute with tox' positional arguments
 
 you can now invoke ``tox`` in the directory where your ``tox.ini`` resides.
 ``tox`` will sdist-package your project, create two virtualenv environments
@@ -35,23 +36,25 @@ then run the specified test command in each of them.
 Extended example: change dir before test and use per-virtualenv tempdir
 --------------------------------------------------------------------------
 
-Assuming the following layout::
+Assuming the following layout:
+
+.. code-block:: shell
 
     tox.ini      # see below for content
     setup.py     # a classic distutils/setuptools setup.py file
     tests        # the directory containing tests
 
-and the following ``tox.ini`` content::
+and the following ``tox.ini`` content:
+
+.. code-block:: ini
 
     [tox]
     envlist = py26,py31
     [testenv]
     changedir=tests
     deps=pytest
-    commands=
-      pytest \
-        --basetemp={envtmpdir}  \ # pytest tempdir setting
-        {posargs} # substitute with tox' positional arguments
+    commands= pytest  --basetemp={envtmpdir}  \ # pytest tempdir setting
+                      {posargs}                 # substitute with tox' positional arguments
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
 Differently than in the previous example the ``pytest`` command
@@ -65,17 +68,17 @@ Using multiple CPUs for test runs
 
 ``pytest`` supports distributing tests to multiple processes and hosts
 through the `pytest-xdist`_ plugin.  Here is an example configuration
-to make ``tox`` use this feature::
+to make ``tox`` use this feature:
+
+.. code-block:: ini
 
     [testenv]
     deps=pytest-xdist
     changedir=tests
-    commands=
-        pytest \
-            --basetemp={envtmpdir}  \
-            --confcutdir=..         \
-            -n 3                    \ # use three sub processes
-            {posargs}
+    commands= pytest --basetemp={envtmpdir}  \
+                     --confcutdir=..         \
+                     -n 3                    \ # use three sub processes
+                     {posargs}
 
 .. _`listed as a known issue`:
 
@@ -107,7 +110,6 @@ directories; pytest will still find and import them by adding their
 parent directory to ``sys.path`` but they won't be copied to
 other places or be found by Python's import system outside of pytest.
 
-.. _`fully qualified name`: http://doc.pytest.org/en/latest/goodpractices.html#test-package-name
+.. _`fully qualified name`: https://docs.pytest.org/en/latest/goodpractices.html#test-package-name
 
-
-.. include:: ../links.txt
+.. include:: ../links.rst

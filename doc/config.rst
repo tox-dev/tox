@@ -3,7 +3,7 @@
 tox configuration specification
 ===============================
 
-.. _ConfigParser: http://docs.python.org/library/configparser.html
+.. _ConfigParser: https://docs.python.org/3/library/configparser.html
 
 ``tox.ini`` files uses the standard ConfigParser_ "ini-style" format.
 Below you find the specification, but you might want to skim some
@@ -668,4 +668,4 @@ Other Rules and notes
   it will be considered as relative to the ``toxinidir``, the directory
   where the configuration file resides.
 
-.. include:: links.txt
+.. include:: links.rst

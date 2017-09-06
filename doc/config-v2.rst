@@ -6,8 +6,8 @@ V2: new tox multi-dimensional, platform-specific configuration
    This is a draft document sketching a to-be-done implementation.
    It does not fully specify each change yet but should give a good
    idea of where things are heading.  For feedback, mail the
-   testing-in-python mailing list or open a pull request on
-   https://github.com/tox-dev/tox/blob/master/doc/config-v2.txt
+   testing-in-python mailing list or open a pull request at
+   https://github.com/tox-dev/tox.
 
 **Abstract**: Adding multi-dimensional configuration, platform-specification
 and multiple installers to tox.ini.
@@ -27,7 +27,7 @@ coming up with its configuration language:
   section for each combination. Examples of real life situations
   arising from this:
 
-  * https://github.com/tomchristie/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini
+  * https://github.com/encode/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini
 
   * https://bitbucket.org/tabo/django-treebeard/src/93b579395a9c/tox.ini
 
@@ -209,14 +209,14 @@ Use more bash-style syntax
 tox leverages bash-style syntax if you specify mintoxversion = 1.4:
 
 - $VARNAME or ${...} syntax instead of the older {} substitution.
-- XXX go through config.txt and see how it would need to be changed
+- XXX go through config.rst and see how it would need to be changed
 
 
 Transforming the examples: django-rest
 ------------------------------------------------
 
 The original `django-rest-framework tox.ini
-<https://github.com/tomchristie/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini>`_
+<https://github.com/encode/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini>`_
 file has 159 lines and a lot of repetition, the new one would +have 20
 lines and almost no repetition::
 

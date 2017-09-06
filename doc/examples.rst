@@ -5,12 +5,12 @@ tox configuration and usage examples
 .. toctree::
    :maxdepth: 2
 
-   example/basic.txt
-   example/pytest.txt
+   example/basic.rst
+   example/pytest.rst
    example/unittest
-   example/nose.txt
-   example/general.txt
-   example/jenkins.txt
-   example/devenv.txt
-   example/platform.txt
+   example/nose.rst
+   example/general.rst
+   example/jenkins.rst
+   example/devenv.rst
+   example/platform.rst
 

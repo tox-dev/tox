@@ -15,7 +15,9 @@ writing a setuptools entrypoints plugin
 
 If you have a ``tox_MYPLUGIN.py`` module you could use the following
 rough ``setup.py`` to make it into a package which you can upload to the
-Python packaging index::
+Python packaging index:
+
+.. code-block:: python
 
     # content of setup.py
     from setuptools import setup
@@ -34,11 +36,15 @@ Python packaging index::
 If installed, the ``entry_points`` part will make tox see and integrate
 your plugin during startup.
 
-You can install the plugin for development ("in-place") via::
+You can install the plugin for development ("in-place") via:
+
+.. code-block:: shell
 
     pip install -e .
 
-and later publish it via something like::
+and later publish it via something like:
+
+.. code-block:: shell
 
     python setup.py sdist register upload
 
@@ -47,7 +53,9 @@ Writing hook implementations
 ----------------------------
 
 A plugin module defines one or more hook implementation functions
-by decorating them with tox's ``hookimpl`` marker::
+by decorating them with tox's ``hookimpl`` marker:
+
+.. code-block:: python
 
     from tox import hookimpl
 

@@ -19,3 +19,5 @@ tox.egg-info
 .idea
 .eggs/
 py27/
+
+.coverage.*
