@@ -264,12 +264,15 @@ class VersionAction(argparse.Action):
         raise SystemExit(0)
 
 
-class SetenvDict:
-    def __init__(self, dict, reader):
+class SetenvDict(object):
+    def __init__(self, definitions, reader):
+        self.definitions = definitions
         self.reader = reader
-        self.definitions = dict
         self.resolved = {}
         self._lookupstack = []
+
+    def __repr__(self):
+        return "%s: %s" % (self.__class__.__name__, self.definitions)
 
     def __contains__(self, name):
         return name in self.definitions
