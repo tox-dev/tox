@@ -1,3 +1,9 @@
+Not released yet
+----------------
+
+- #571: skip_install should override usedevelop
+        Thanks Fernando P. (@ferdonline).
+
 2.8.1 (2017-09-04)
 ------------------
 
