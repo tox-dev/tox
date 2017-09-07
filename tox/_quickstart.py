@@ -47,7 +47,7 @@ from codecs import open
 
 TERM_ENCODING = getattr(sys.stdin, 'encoding', None)
 
-from tox import __version__
+from tox import __version__  # noqa #E402 module level import not at top of file
 
 # function to get input from terminal -- overridden by the test suite
 try:

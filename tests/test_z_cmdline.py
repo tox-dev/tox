@@ -10,8 +10,8 @@ except ImportError:
 
 pytest_plugins = "pytester"
 
-from tox.session import Session
-from tox.config import parseconfig
+from tox.session import Session  # noqa #E402 module level import not at top of file
+from tox.config import parseconfig  # noqa #E402 module level import not at top of file
 
 
 def test_report_protocol(newconfig):

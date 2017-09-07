@@ -6,7 +6,6 @@ import setuptools
 from setuptools.command.test import test as TestCommand
 
 
-
 class Tox(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -14,9 +13,10 @@ class Tox(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here, cause outside the eggs aren't loaded
         import tox
         tox.cmdline(self.test_args)
+
 
 def has_environment_marker_support():
     """
@@ -32,7 +32,8 @@ def has_environment_marker_support():
     """
     import pkg_resources
     try:
-        return pkg_resources.parse_version(setuptools.__version__) >= pkg_resources.parse_version('0.7.2')
+        v = pkg_resources.parse_version(setuptools.__version__)
+        return v >= pkg_resources.parse_version('0.7.2')
     except Exception as exc:
         sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
         return False
@@ -109,8 +110,9 @@ def main():
             'Topic :: Software Development :: Libraries',
             'Topic :: Utilities'] + [
             ('Programming Language :: Python :: %s' % x) for x in
-                  '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
+            '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
     )
+
 
 if __name__ == '__main__':
     main()

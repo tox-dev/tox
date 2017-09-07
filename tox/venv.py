@@ -48,13 +48,13 @@ class CreationConfig:
             return None
 
     def matches(self, other):
-        return (other and self.md5 == other.md5
-                and self.python == other.python
-                and self.version == other.version
-                and self.sitepackages == other.sitepackages
-                and self.usedevelop == other.usedevelop
-                and self.alwayscopy == other.alwayscopy
-                and self.deps == other.deps)
+        return (other and self.md5 == other.md5 and
+                self.python == other.python and
+                self.version == other.version and
+                self.sitepackages == other.sitepackages and
+                self.usedevelop == other.usedevelop and
+                self.alwayscopy == other.alwayscopy and
+                self.deps == other.deps)
 
 
 class VirtualEnv(object):

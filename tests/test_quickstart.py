@@ -20,7 +20,7 @@ class TestToxQuickstartMain(object):
             try:
                 return next(generator)
             except NameError:
-                return generator.next()
+                return generator.next()  # noqa
 
         return mock_term_input
 

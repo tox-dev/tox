@@ -4,10 +4,10 @@ import pytest
 import os
 import sys
 import tox.config
-from tox.venv import *  # noqa
 from tox.hookspecs import hookimpl
 from tox.interpreters import NoInterpreterInfo
-
+from tox.venv import VirtualEnv, tox_testenv_create, tox_testenv_install_deps, CreationConfig,\
+    getdigest
 
 # def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
@@ -402,7 +402,7 @@ def test_install_python3(tmpdir, newmocksession):
     assert len(l) == 1
     args = l[0].args
     assert "pip" in args[0]
-    for x in args:
+    for _ in args:
         assert "--download-cache" not in args, args
 
 

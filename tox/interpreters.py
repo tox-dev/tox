@@ -123,6 +123,7 @@ class NoInterpreterInfo:
         else:
             return "<executable not found for: %s>" % self.name
 
+
 if sys.platform != "win32":
     @hookimpl
     def tox_get_python_executable(envconfig):

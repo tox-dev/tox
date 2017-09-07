@@ -622,9 +622,8 @@ class TestenvConfig:
 
     def get_envbindir(self):
         """ path to directory where scripts/binaries reside. """
-        if (sys.platform == "win32"
-                and "jython" not in self.basepython
-                and "pypy" not in self.basepython):
+        if sys.platform == "win32" and "jython" not in self.basepython and \
+           "pypy" not in self.basepython:
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")
@@ -803,9 +802,8 @@ class parseini:
             if section in self._cfg or factors <= known_factors:
                 config.envconfigs[name] = self.make_envconfig(name, section, reader._subs, config)
 
-        all_develop = all(name in config.envconfigs
-                          and config.envconfigs[name].usedevelop
-                          for name in config.envlist)
+        all_develop = all(name in config.envconfigs and
+                          config.envconfigs[name].usedevelop for name in config.envlist)
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
 

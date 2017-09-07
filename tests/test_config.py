@@ -1380,7 +1380,10 @@ class TestConfigTestEnv:
                 {a,b}-y: dep-ab-and-y
         """
         configs = newconfig([], inisource).envconfigs
-        get_deps = lambda env: [dep.name for dep in configs[env].deps]
+
+        def get_deps(env):
+            return [dep.name for dep in configs[env].deps]
+
         assert get_deps("a-x") == ["dep-a-or-b", "dep-a-and-x"]
         assert get_deps("a-y") == ["dep-a-or-b", "dep-ab-and-y"]
         assert get_deps("b-x") == ["dep-a-or-b"]
@@ -1664,7 +1667,10 @@ class TestHashseedOption:
                 [testenv]
             """
         if make_hashseed is None:
-            make_hashseed = lambda: '123456789'
+
+            def make_hashseed():
+                return '123456789'
+
         original_make_hashseed = tox.config.make_hashseed
         tox.config.make_hashseed = make_hashseed
         try:
