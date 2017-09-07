@@ -41,8 +41,8 @@ def has_environment_marker_support():
 def get_linked_changelog(here, n=5):
     """changelog containing last n releases with links to issues"""
     repo_url = 'https://github.com/tox-dev/tox'
-    changelog_url = '%s/blob/master/CHANGELOG.rst' % repo_url
-    with io.open(os.path.join(here, 'CHANGELOG.rst'), encoding='utf-8') as f:
+    changelog_url = '%s/blob/master/CHANGELOG' % repo_url
+    with io.open(os.path.join(here, 'CHANGELOG'), encoding='utf-8') as f:
         changelog = f.read()
     header_matches = list(re.finditer('^-+$', changelog, re.MULTILINE))
     lines = changelog[:header_matches[n].start()].splitlines()[:-1]
