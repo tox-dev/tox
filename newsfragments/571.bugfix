@@ -1,0 +1,2 @@
+``skip_install`` overrides ``usedevelop`` (``usedevelop`` is an option to choose the installation type if the package
+is installed and `skip_install` determines if it should be installed at all) - by :user:`ferdonline`

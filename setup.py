@@ -2,6 +2,7 @@ import io
 import os
 import re
 import sys
+
 import setuptools
 from setuptools.command.test import test as TestCommand
 
@@ -45,7 +46,7 @@ def get_linked_changelog(here, n=5):
     changelog_url = '%s/blob/master/CHANGELOG.rst' % repo_url
     with io.open(os.path.join(here, 'CHANGELOG.rst'), encoding='utf-8') as f:
         changelog = f.read()
-    header_matches = list(re.finditer('^-+$', changelog, re.MULTILINE))
+    header_matches = list(re.finditer('^=+$', changelog, re.MULTILINE))
     lines = changelog[:header_matches[n].start()].splitlines()[:-1]
     title = "Changelog (last %s releases - `full changelog <%s>`_)" % (
         n, changelog_url)
@@ -100,17 +101,17 @@ def main():
         install_requires=install_requires,
         extras_require=extras_require,
         classifiers=[
-            'Development Status :: 5 - Production/Stable',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: MIT License',
-            'Operating System :: POSIX',
-            'Operating System :: Microsoft :: Windows',
-            'Operating System :: MacOS :: MacOS X',
-            'Topic :: Software Development :: Testing',
-            'Topic :: Software Development :: Libraries',
-            'Topic :: Utilities'] + [
-            ('Programming Language :: Python :: %s' % x) for x in
-            '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
+                        'Development Status :: 5 - Production/Stable',
+                        'Intended Audience :: Developers',
+                        'License :: OSI Approved :: MIT License',
+                        'Operating System :: POSIX',
+                        'Operating System :: Microsoft :: Windows',
+                        'Operating System :: MacOS :: MacOS X',
+                        'Topic :: Software Development :: Testing',
+                        'Topic :: Software Development :: Libraries',
+                        'Topic :: Utilities'] + [
+                        ('Programming Language :: Python :: %s' % x) for x in
+                        '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
     )
 
 
