@@ -253,11 +253,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: alwayscopy=True|False
 
-    Set to ``True`` if you want virtualenv to always copy files rather
-    than symlinking.
+    Set to ``True`` if you want virtualenv to always copy files rather than symlinking.
 
-    **default:** False, meaning that virtualenvs will
-    make use of symbolic links.
+    This is useful for situations where hardlinks don't work (e.g. running in VMS with Windows guests).
+
+    **default:** False, meaning that virtualenvs will make use of symbolic links.
 
 .. confval:: args_are_paths=BOOL
 
