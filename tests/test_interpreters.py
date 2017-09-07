@@ -5,7 +5,7 @@ import py
 import pytest
 
 from tox.config import get_plugin_manager
-from tox.interpreters import Interpreters, locate_via_py, tox_get_python_executable,\
+from tox.interpreters import Interpreters, tox_get_python_executable, \
     run_and_get_interpreter_info
 
 
@@ -30,6 +30,7 @@ def test_locate_via_py(monkeypatch):
         return PseudoPy()
     # Monkeypatch py.path.local.sysfind to return PseudoPy
     monkeypatch.setattr(py.path.local, 'sysfind', ret_pseudopy)
+    from tox.interpreters import locate_via_py
     assert locate_via_py('3', '2') == sys.executable
 
 
