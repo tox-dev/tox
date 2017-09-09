@@ -4,7 +4,7 @@
     fix problems like typo corrections or such.
     To add a new change log entry, please see
     https://pip.pypa.io/en/latest/development/#adding-a-news-entry
-    we named the news folder changelog
+    we named the news folder newsfragment
 
 .. towncrier release notes start
 
