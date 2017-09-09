@@ -1,7 +1,7 @@
 import io
 import os
-import re
 import sys
+
 import setuptools
 from setuptools.command.test import test as TestCommand
 
@@ -39,29 +39,11 @@ def has_environment_marker_support():
         return False
 
 
-def get_linked_changelog(here, n=5):
-    """changelog containing last n releases with links to issues"""
-    repo_url = 'https://github.com/tox-dev/tox'
-    changelog_url = '%s/blob/master/CHANGELOG.rst' % repo_url
-    with io.open(os.path.join(here, 'CHANGELOG.rst'), encoding='utf-8') as f:
-        changelog = f.read()
-    header_matches = list(re.finditer('^-+$', changelog, re.MULTILINE))
-    lines = changelog[:header_matches[n].start()].splitlines()[:-1]
-    title = "Changelog (last %s releases - `full changelog <%s>`_)" % (
-        n, changelog_url)
-    changelog = '\n'.join([title, '=' * len(title), "\n", "\n".join(lines)])
-    issue_replacement = r'`#\1 <%s/issues/\1>`_' % repo_url
-    for pattern in [r'#(\d+)', r'issue(\d+)']:
-        changelog = re.sub(pattern, issue_replacement, changelog)
-    pull_replacement = r'`#p\1 <%s/pull/\1>`_' % repo_url
-    changelog = re.sub(r'#p(\d+)', pull_replacement, changelog)
-    return changelog
-
-
 def get_long_description():
     here = os.path.abspath('.')
     with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
-        return "%s\n\n%s" % (f.read(), get_linked_changelog(here))
+        with io.open(os.path.join(here, 'CHANGELOG.rst'), encoding='utf-8') as g:
+            return "%s\n\n%s" % (f.read(), g.read())
 
 
 def main():
@@ -100,17 +82,17 @@ def main():
         install_requires=install_requires,
         extras_require=extras_require,
         classifiers=[
-            'Development Status :: 5 - Production/Stable',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: MIT License',
-            'Operating System :: POSIX',
-            'Operating System :: Microsoft :: Windows',
-            'Operating System :: MacOS :: MacOS X',
-            'Topic :: Software Development :: Testing',
-            'Topic :: Software Development :: Libraries',
-            'Topic :: Utilities'] + [
-            ('Programming Language :: Python :: %s' % x) for x in
-            '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
+                        'Development Status :: 5 - Production/Stable',
+                        'Intended Audience :: Developers',
+                        'License :: OSI Approved :: MIT License',
+                        'Operating System :: POSIX',
+                        'Operating System :: Microsoft :: Windows',
+                        'Operating System :: MacOS :: MacOS X',
+                        'Topic :: Software Development :: Testing',
+                        'Topic :: Software Development :: Libraries',
+                        'Topic :: Utilities'] + [
+                        ('Programming Language :: Python :: %s' % x) for x in
+                        '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
     )
 
 

@@ -10,14 +10,14 @@
   :target: https://codecov.io/gh/tox-dev/tox
 
 tox automation project
-----------------------
+======================
 
 **vision: standardize testing in Python**
 
 tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
 
 What is tox?
-------------
+============
 
 tox is a generic virtualenv management and test command line tool you can use for:
 
@@ -36,7 +36,7 @@ For more information and the repository please see:
 - repository: https://github.com/tox-dev/tox
 
 Code coverage of latest master build
-------------------------------------
+====================================
 
 .. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graphs/sunburst.svg
   :target: https://codecov.io/gh/tox-dev/tox/branch/master

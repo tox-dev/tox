@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import date
 import os
+import subprocess
 import sys
 
 from pkg_resources import get_distribution
@@ -16,7 +17,7 @@ release = _full_version.split('+', 1)[0]
 version = '.'.join(release.split('.')[:2])
 
 author = 'holger krekel and others'
-year = datetime.today().year
+year = date.today().year
 copyright = u'2010-{}, {}'.format(year, author)
 
 master_doc = 'index'
@@ -57,3 +58,20 @@ linkcheck_ignore = [r'http://holgerkrekel.net']
 extlinks = {'issue': ('https://github.com/tox-dev/tox/issues/%s', '#'),
             'pull': ('https://github.com/tox-dev/tox/pull/%s', 'p'),
             'user': ('https://github.com/%s', '@')}
+
+
+def generate_newsfragments():
+    """
+    generate and include into the changelog news fragments so they are also subject to the CI,
+    whenever a new release is done there should be no news fragment and as such this will have
+    no effect
+    """
+    from os import path as p
+    with open('../.tox/docs/fragments.rst', 'w') as file_handle:
+        project_base = p.abspath(p.join(p.dirname(__file__), p.pardir))
+        cmd = ['towncrier', '--draft', '--dir', project_base]
+        out = subprocess.check_output(cmd).decode('utf-8').strip()
+        file_handle.write(out)
+
+
+generate_newsfragments()
