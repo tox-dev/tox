@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import argparse
 import os
 import random
@@ -243,7 +245,7 @@ def parseconfig(args=None, plugins=()):
     except tox.exception.InterpreterNotFound:
         exn = sys.exc_info()[1]
         # Use stdout to match test expectations
-        py.builtin.print_("ERROR: " + str(exn))
+        print("ERROR: " + str(exn))
 
     # post process config object
     pm.hook.tox_configure(config=config)
@@ -252,7 +254,7 @@ def parseconfig(args=None, plugins=()):
 
 
 def feedback(msg, sysexit=False):
-    py.builtin.print_("ERROR: " + msg, file=sys.stderr)
+    print("ERROR: " + msg, file=sys.stderr)
     if sysexit:
         raise SystemExit(1)
 
@@ -260,7 +262,7 @@ def feedback(msg, sysexit=False):
 class VersionAction(argparse.Action):
     def __call__(self, argparser, *args, **kwargs):
         version = tox.__version__
-        py.builtin.print_("%s imported from %s" % (version, tox.__file__))
+        print("%s imported from %s" % (version, tox.__file__))
         raise SystemExit(0)
 
 
@@ -1151,7 +1153,7 @@ class Replacer:
         val = self.reader._subs.get(sub_key, None)
         if val is None:
             val = self._substitute_from_other_section(sub_key)
-        if py.builtin.callable(val):
+        if callable(val):
             val = val()
         return str(val)
 
