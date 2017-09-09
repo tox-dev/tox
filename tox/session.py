@@ -4,6 +4,7 @@ Python2 and Python3 based virtual environments. Environments are
 setup by using virtualenv. Configuration is generally done through an
 INI-style "tox.ini" file.
 """
+from __future__ import print_function
 from __future__ import with_statement
 
 import tox
@@ -325,7 +326,7 @@ class Reporter(object):
             self.logline("%s" % msg, **opts)
 
     # def log(self, msg):
-    #    py.builtin.print_(msg, file=sys.stderr)
+    #    print(msg, file=sys.stderr)
 
 
 class Session:

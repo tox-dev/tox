@@ -57,7 +57,7 @@ def test_tox_get_python_executable():
         popen = py.std.subprocess.Popen([str(p), '-V'],
                                         stderr=py.std.subprocess.PIPE)
         stdout, stderr = popen.communicate()
-        assert ver in py.builtin._totext(stderr, "ascii")
+        assert ver in stderr.decode('ascii')
 
 
 def test_find_executable_extra(monkeypatch):

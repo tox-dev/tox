@@ -1,10 +1,12 @@
+from __future__ import print_function
+
 import py
 import pytest
 import tox
 import os
 import sys
-from py.builtin import _isbytes, _istext, print_
 from fnmatch import fnmatch
+import six
 import time
 from .config import parseconfig
 from .venv import VirtualEnv
@@ -222,7 +224,7 @@ class Cmd:
         def dump_lines(lines, fp):
             try:
                 for line in lines:
-                    py.builtin.print_(line, file=fp)
+                    print(line, file=fp)
             except UnicodeEncodeError:
                 print("couldn't print to %s because of encoding" % (fp,))
         dump_lines(out, sys.stdout)
@@ -271,17 +273,17 @@ class LineMatcher:
             while lines1:
                 nextline = lines1.pop(0)
                 if line == nextline:
-                    print_("exact match:", repr(line))
+                    print("exact match:", repr(line))
                     break
                 elif fnmatch(nextline, line):
-                    print_("fnmatch:", repr(line))
-                    print_("   with:", repr(nextline))
+                    print("fnmatch:", repr(line))
+                    print("   with:", repr(nextline))
                     break
                 else:
                     if not nomatchprinted:
-                        print_("nomatch:", repr(line))
+                        print("nomatch:", repr(line))
                         nomatchprinted = True
-                    print_("    and:", repr(nextline))
+                    print("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
                 assert line == nextline
@@ -293,7 +295,10 @@ def initproj(request, tmpdir):
     def initproj(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}
-        if _istext(nameversion) or _isbytes(nameversion):
+        if (
+                isinstance(nameversion, six.text_type) or
+                isinstance(nameversion, bytes)
+        ):
             parts = nameversion.split("-")
             if len(parts) == 1:
                 parts.append("0.1")
