@@ -16,10 +16,6 @@ from tox.venv import VirtualEnv
 from tox.config import parseconfig
 from tox.result import ResultLog
 from subprocess import STDOUT
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
 
 
 def now():
