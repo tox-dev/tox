@@ -2,8 +2,8 @@ Thanks for submitting an issue!
 
 If submitting a BUG please provide:
 
-- [ ] Minimal reproduceable example or detailed description, assign "bug" 
-- [ ] OS and `pip list` output 
+- [ ] Minimal reproduceable example or detailed description, assign "bug"
+- [ ] OS and `pip list` output
 
 
 if submitting an ENHANCEMENT issue:

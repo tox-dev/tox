@@ -30,15 +30,15 @@ To summarize - we would need a:
 
     [tox]
     envlist={py,27,py34}-{win32, linux}-{conda,virtualenv}
-    
+
     [packagedef:sdist]
     # how to build (e.g. {py27,py34}-{sdist})
     # how to match (e.g. {py27,py34}-{sdist})
-    
+
     [packagedef:conda]
     # how to build (e.g. {py27,py34}-{conda})
     # how to match (e.g. {py27,py34}-{conda})
-    
+
     [packagedef:wheel]
     # how to build
     # how to match
@@ -71,7 +71,7 @@ one to one relationship from environment to directory
 ## Proposal
 
 This feature shall allow to specify how plugins can specify new types of package formats and environments to run test
-commands in. 
+commands in.
 
 Such plugins would take care of setting up the environment, create packages and run test commands using hooks provided
 by tox. The actual knowledge how to create a certain package format is implement in the plugin.
@@ -82,7 +82,7 @@ Plugin decides which is the required python interpreter to use in order to creat
 ```ini
 [tox]
 plugins=conda # virtualenv plugin is builtin; intention here is to bail out early in case the specified plugins
-              # are not installed 
+              # are not installed
 envlist=py27,py35
 
 [testenv]
@@ -104,7 +104,7 @@ Lising tox environments (`tox --list`) would display the following output:
 ```
 
 To remain backward-compatible, the package format will not be displayed if only a single package format is specified.
- 
+
 
 
 How to skip building a package for a specific factor?
@@ -150,6 +150,6 @@ tox_testenv_updated(env_meta, package_type) ->  # returns True if hte environmen
                                                 # otherwise, tox will remove the environment completely and
                                                 # create a new one
 ```
-                                            
-                                                  
+
+
 
