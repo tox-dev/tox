@@ -123,8 +123,7 @@ class Action(object):
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
             fout = self._initlogpath(self.id)
-            fout.write("actionid: %s\nmsg: %s\ncmdargs: %r\nenv: %s\n\n" % (
-                self.id, self.msg, args, env))
+            fout.write("actionid: %s\nmsg: %s\ncmdargs: %r\n\n" % (self.id, self.msg, args))
             fout.flush()
             self.popen_outpath = outpath = py.path.local(fout.name)
             fin = outpath.open()
