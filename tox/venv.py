@@ -433,7 +433,7 @@ def tox_testenv_create(venv, action):
     # default (virtualenv.ini)
     args.extend(['--python', str(config_interpreter)])
     # if sys.platform == "win32":
-    #    f, path, _ = py.std.imp.find_module("virtualenv")
+    #    f, path, _ = imp.find_module("virtualenv")
     #    f.close()
     #    args[:1] = [str(config_interpreter), str(path)]
     # else:

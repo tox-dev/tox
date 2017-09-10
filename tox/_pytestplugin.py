@@ -7,6 +7,8 @@ import os
 import sys
 from fnmatch import fnmatch
 import six
+import subprocess
+import textwrap
 import time
 from .config import parseconfig
 from .venv import VirtualEnv
@@ -37,7 +39,7 @@ def newconfig(request, tmpdir):
         if source is None:
             source = args
             args = []
-        s = py.std.textwrap.dedent(source)
+        s = textwrap.dedent(source)
         p = tmpdir.join("tox.ini")
         p.write(s)
         old = tmpdir.chdir()
@@ -190,14 +192,12 @@ class Cmd:
         target.chdir()
 
     def popen(self, argv, stdout, stderr, **kw):
-        if not hasattr(py.std, 'subprocess'):
-            pytest.skip("no subprocess module")
         env = os.environ.copy()
         env['PYTHONPATH'] = ":".join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
         # print "env", env
-        return py.std.subprocess.Popen(argv, stdout=stdout, stderr=stderr, **kw)
+        return subprocess.Popen(argv, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *argv):
         if argv[0] == "tox" and sys.version_info[:2] < (2, 7):
@@ -339,5 +339,5 @@ def create_files(base, filedefs):
         if isinstance(value, dict):
             create_files(base.ensure(key, dir=1), value)
         elif isinstance(value, str):
-            s = py.std.textwrap.dedent(value)
+            s = textwrap.dedent(value)
             base.join(key).write(s)

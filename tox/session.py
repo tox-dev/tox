@@ -10,17 +10,16 @@ from __future__ import with_statement
 import tox
 import py
 import os
-import sys
+import re
+import shutil
 import subprocess
+import sys
+import time
 from tox._verlib import NormalizedVersion, IrrationalVersionError
 from tox.venv import VirtualEnv
 from tox.config import parseconfig
 from tox.result import ResultLog
 from subprocess import STDOUT
-
-
-def now():
-    return py.std.time.time()
 
 
 def prepare(args):
@@ -154,7 +153,7 @@ class Action(object):
                 if resultjson and not redirect:
                     assert popen.stderr is None  # prevent deadlock
                     out = None
-                    last_time = now()
+                    last_time = time.time()
                     while 1:
                         fin_pos = fin.tell()
                         # we have to read one byte at a time, otherwise there
@@ -162,18 +161,18 @@ class Action(object):
                         data = fin.read(1)
                         if data:
                             sys.stdout.write(data)
-                            if '\n' in data or (now() - last_time) > 1:
+                            if '\n' in data or (time.time() - last_time) > 1:
                                 # we flush on newlines or after 1 second to
                                 # provide quick enough feedback to the user
                                 # when printing a dot per test
                                 sys.stdout.flush()
-                                last_time = now()
+                                last_time = time.time()
                         elif popen.poll() is not None:
                             if popen.stdout is not None:
                                 popen.stdout.close()
                             break
                         else:
-                            py.std.time.sleep(0.1)
+                            time.sleep(0.1)
                             fin.seek(fin_pos)
                     fin.close()
                 else:
@@ -257,10 +256,10 @@ class Reporter(object):
         msg = action.msg + " " + " ".join(map(str, action.args))
         self.verbosity2("%s start: %s" % (action.venvname, msg), bold=True)
         assert not hasattr(action, "_starttime")
-        action._starttime = now()
+        action._starttime = time.time()
 
     def logaction_finish(self, action):
-        duration = now() - action._starttime
+        duration = time.time() - action._starttime
         # self.cumulated_time += duration
         self.verbosity2("%s finish: %s after %.2f seconds" % (
             action.venvname, action.msg, duration), bold=True)
@@ -437,7 +436,7 @@ class Session:
     def make_emptydir(self, path):
         if path.check():
             self.report.info("  removing %s" % path)
-            py.std.shutil.rmtree(str(path), ignore_errors=True)
+            shutil.rmtree(str(path), ignore_errors=True)
             path.ensure(dir=1)
 
     def setupenv(self, venv):
@@ -717,7 +716,7 @@ class Session:
             return candidates[0]
 
 
-_rex_getversion = py.std.re.compile("[\w_\-\+\.]+-(.*)(\.zip|\.tar.gz)")
+_rex_getversion = re.compile("[\w_\-\+\.]+-(.*)(\.zip|\.tar.gz)")
 
 
 def getversion(basename):

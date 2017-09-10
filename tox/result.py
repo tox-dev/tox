@@ -1,3 +1,4 @@
+import socket
 import sys
 import py
 from tox import __version__ as toxver
@@ -12,7 +13,7 @@ class ResultLog:
         self.dict = dict
         self.dict.update({"reportversion": "1", "toxversion": toxver})
         self.dict["platform"] = sys.platform
-        self.dict["host"] = py.std.socket.getfqdn()
+        self.dict["host"] = socket.getfqdn()
 
     def set_header(self, installpkg):
         """

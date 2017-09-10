@@ -1,3 +1,4 @@
+import socket
 import sys
 import py
 from tox.result import ResultLog
@@ -19,7 +20,7 @@ def test_pre_set_header(pkg):
     assert replog.dict["reportversion"] == "1"
     assert replog.dict["toxversion"] == tox.__version__
     assert replog.dict["platform"] == sys.platform
-    assert replog.dict["host"] == py.std.socket.getfqdn()
+    assert replog.dict["host"] == socket.getfqdn()
     data = replog.dumps_json()
     replog2 = ResultLog.loads_json(data)
     assert replog2.dict == replog.dict
@@ -33,7 +34,7 @@ def test_set_header(pkg):
     assert replog.dict["reportversion"] == "1"
     assert replog.dict["toxversion"] == tox.__version__
     assert replog.dict["platform"] == sys.platform
-    assert replog.dict["host"] == py.std.socket.getfqdn()
+    assert replog.dict["host"] == socket.getfqdn()
     assert replog.dict["installpkg"] == {
         "basename": "hello-1.0.tar.gz",
         "md5": pkg.computehash("md5"),

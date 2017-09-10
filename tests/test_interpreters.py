@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 
 import py
 import pytest
@@ -54,8 +55,7 @@ def test_tox_get_python_executable():
         envconfig.basepython = name
         p = tox_get_python_executable(envconfig)
         assert p
-        popen = py.std.subprocess.Popen([str(p), '-V'],
-                                        stderr=py.std.subprocess.PIPE)
+        popen = subprocess.Popen([str(p), '-V'], stderr=subprocess.PIPE)
         stdout, stderr = popen.communicate()
         assert ver in stderr.decode('ascii')
 
