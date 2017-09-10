@@ -295,10 +295,7 @@ def initproj(request, tmpdir):
     def initproj(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}
-        if (
-                isinstance(nameversion, six.text_type) or
-                isinstance(nameversion, bytes)
-        ):
+        if isinstance(nameversion, six.string_types):
             parts = nameversion.split("-")
             if len(parts) == 1:
                 parts.append("0.1")
