@@ -1,13 +1,18 @@
-import py
-import tox
-import pytest
 import os
 import sys
+
+import py
+import pytest
+
+import tox
 import tox.config
 from tox.hookspecs import hookimpl
 from tox.interpreters import NoInterpreterInfo
-from tox.venv import VirtualEnv, tox_testenv_create, tox_testenv_install_deps, CreationConfig,\
-    getdigest
+from tox.venv import CreationConfig
+from tox.venv import getdigest
+from tox.venv import tox_testenv_create
+from tox.venv import tox_testenv_install_deps
+from tox.venv import VirtualEnv
 
 # def test_global_virtualenv(capfd):
 #    v = VirtualEnv()

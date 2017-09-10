@@ -1,11 +1,14 @@
 import ast
-import os
-import sys
-import re
 import codecs
+import os
+import re
+import sys
+
 import py
+
 import tox
-from .config import DepConfig, hookimpl
+from .config import DepConfig
+from .config import hookimpl
 
 
 class CreationConfig:

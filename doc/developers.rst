@@ -27,9 +27,9 @@ For tox to find them you'll need to:
 - add the main installation version to the systems ``PATH`` variable (e.g. ``D:\Anaconda`` - you can use `patheditor2`_)
 - for other versions create a BAT scripts into the main installation folder to delegate the call to the correct Python
   interpreter:
-  
+
   .. code-block:: bat
-     
+
      # python2.7.bat
      @D:\Anaconda\pkgs\python-2.7.13-1\python.exe %*
 

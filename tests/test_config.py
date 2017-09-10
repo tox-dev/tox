@@ -1,15 +1,19 @@
-import sys
 import os
+import sys
 from textwrap import dedent
 
 import py
 import pytest
+
 import tox
 import tox.config
-from tox.config import (
-    SectionReader, is_section_substitution, CommandParser,
-    parseconfig, DepOption, get_homedir, getcontextname,
-)
+from tox.config import CommandParser
+from tox.config import DepOption
+from tox.config import get_homedir
+from tox.config import getcontextname
+from tox.config import is_section_substitution
+from tox.config import parseconfig
+from tox.config import SectionReader
 from tox.venv import VirtualEnv
 
 

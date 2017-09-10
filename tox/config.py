@@ -1,25 +1,24 @@
 from __future__ import print_function
 
 import argparse
+import itertools
 import os
 import random
-from fnmatch import fnmatchcase
-import sys
 import re
 import shlex
 import string
-import pkg_resources
-import itertools
-import pluggy
+import sys
+from fnmatch import fnmatchcase
 from subprocess import list2cmdline
 
-import tox.interpreters
-from tox import hookspecs
-from tox._verlib import NormalizedVersion
-
+import pkg_resources
+import pluggy
 import py
 
 import tox
+import tox.interpreters
+from tox import hookspecs
+from tox._verlib import NormalizedVersion
 
 iswin32 = sys.platform == "win32"
 

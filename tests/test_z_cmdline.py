@@ -1,8 +1,10 @@
-import tox
+import platform
+
 import py
 import pytest
+
+import tox
 from tox._pytestplugin import ReportExpectMock
-import platform
 try:
     import json
 except ImportError:

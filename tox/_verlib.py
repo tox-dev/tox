@@ -7,7 +7,6 @@ licensed under the PSF license (i guess)
 
 UPDATE 2017-09-06: removed suggest_normalized_version function as it is not needed by the project
 """
-
 import re
 
 

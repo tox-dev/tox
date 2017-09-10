@@ -1,7 +1,7 @@
-from datetime import date
 import os
 import subprocess
 import sys
+from datetime import date
 
 from pkg_resources import get_distribution
 
