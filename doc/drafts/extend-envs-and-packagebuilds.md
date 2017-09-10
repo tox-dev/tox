@@ -150,6 +150,3 @@ tox_testenv_updated(env_meta, package_type) ->  # returns True if hte environmen
                                                 # otherwise, tox will remove the environment completely and
                                                 # create a new one
 ```
-
-
-

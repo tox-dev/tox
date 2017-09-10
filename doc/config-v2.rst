@@ -289,4 +289,3 @@ commands::
                          --DATABASE_USER=postgres {posargs}
          mysql: {envpython} runtests.py --DATABASE_ENGINE=mysql \
                                         --DATABASE_USER=root {posargs}
-

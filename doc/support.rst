@@ -23,4 +23,3 @@ experienced well-known Python developers.
 .. _`tetamap blog`: http://holgerkrekel.net
 .. _`tox-dev mailing list`: https://mail.python.org/mm3/mailman3/lists/tox-dev.python.org/
 .. _`fork the github repository`: https://github.com/tox-dev/tox
-

@@ -13,4 +13,3 @@ tox configuration and usage examples
    example/jenkins.rst
    example/devenv.rst
    example/platform.rst
-
