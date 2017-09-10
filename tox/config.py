@@ -217,7 +217,9 @@ def parseconfig(args=None, plugins=()):
     config = Config(pluginmanager=pm, option=option, interpreters=interpreters)
     config._parser = parser
     config._testenv_attr = parser._testenv_attr
-
+    if config.option.version:
+        print_version_info(pm)
+        raise SystemExit(0)
     # parse ini file
     basename = config.option.configfile
     if os.path.isfile(basename):
@@ -258,11 +260,16 @@ def feedback(msg, sysexit=False):
         raise SystemExit(1)
 
 
-class VersionAction(argparse.Action):
-    def __call__(self, argparser, *args, **kwargs):
-        version = tox.__version__
-        print("%s imported from %s" % (version, tox.__file__))
-        raise SystemExit(0)
+def print_version_info(pm):
+    print("%s imported from %s" % (tox.__version__, tox.__file__))
+    plugin_dist_info = pm.list_plugin_distinfo()
+    if not plugin_dist_info:
+        return
+    print('registered plugins:')
+    for mod, egg_info in plugin_dist_info:
+        source = getattr(mod, '__file__', repr(mod))
+        info = "%s-%s at %s" % (egg_info.project_name, egg_info.version, source)
+        print("    " + info)
 
 
 class SetenvDict(object):
@@ -312,8 +319,7 @@ class SetenvDict(object):
 @hookimpl
 def tox_addoption(parser):
     # formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--version", nargs=0, action=VersionAction,
-                        dest="version",
+    parser.add_argument("--version", action="store_true", dest="version",
                         help="report version information to stdout.")
     parser.add_argument("-h", "--help", action="store_true", dest="help",
                         help="show help about options")
