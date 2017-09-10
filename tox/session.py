@@ -5,7 +5,6 @@ setup by using virtualenv. Configuration is generally done through an
 INI-style "tox.ini" file.
 """
 from __future__ import print_function
-from __future__ import with_statement
 
 import tox
 import py
