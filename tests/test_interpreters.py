@@ -1,13 +1,14 @@
-import sys
 import os
 import subprocess
+import sys
 
 import py
 import pytest
 
 from tox.config import get_plugin_manager
-from tox.interpreters import Interpreters, tox_get_python_executable, \
-    run_and_get_interpreter_info
+from tox.interpreters import Interpreters
+from tox.interpreters import run_and_get_interpreter_info
+from tox.interpreters import tox_get_python_executable
 
 
 @pytest.fixture

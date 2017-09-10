@@ -1,19 +1,21 @@
 from __future__ import print_function
 
-import py
-import pytest
-import tox
 import os
-import sys
-from fnmatch import fnmatch
-import six
 import subprocess
+import sys
 import textwrap
 import time
+from fnmatch import fnmatch
+
+import py
+import pytest
+import six
+
+import tox
 from .config import parseconfig
-from .venv import VirtualEnv
-from .session import Action
 from .result import ResultLog
+from .session import Action
+from .venv import VirtualEnv
 
 
 def pytest_configure():

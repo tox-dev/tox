@@ -6,19 +6,22 @@ INI-style "tox.ini" file.
 """
 from __future__ import print_function
 
-import tox
-import py
 import os
 import re
 import shutil
 import subprocess
 import sys
 import time
-from tox._verlib import NormalizedVersion, IrrationalVersionError
-from tox.venv import VirtualEnv
+from subprocess import STDOUT
+
+import py
+
+import tox
+from tox._verlib import IrrationalVersionError
+from tox._verlib import NormalizedVersion
 from tox.config import parseconfig
 from tox.result import ResultLog
-from subprocess import STDOUT
+from tox.venv import VirtualEnv
 
 
 def prepare(args):

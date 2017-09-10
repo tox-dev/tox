@@ -1,6 +1,8 @@
-from pkg_resources import get_distribution, DistributionNotFound
+from pkg_resources import DistributionNotFound
+from pkg_resources import get_distribution
 
-from .hookspecs import hookspec, hookimpl
+from .hookspecs import hookimpl
+from .hookspecs import hookspec
 
 try:
     _full_version = get_distribution(__name__).version

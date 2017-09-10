@@ -1,9 +1,11 @@
 import socket
 import sys
+
 import py
-from tox.result import ResultLog
-import tox
 import pytest
+
+import tox
+from tox.result import ResultLog
 
 
 @pytest.fixture

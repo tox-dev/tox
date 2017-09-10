@@ -1,8 +1,10 @@
+import json
 import socket
 import sys
+
 import py
+
 from tox import __version__ as toxver
-import json
 
 
 class ResultLog:

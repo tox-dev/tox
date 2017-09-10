@@ -1,7 +1,9 @@
-import sys
-import py
-import re
 import inspect
+import re
+import sys
+
+import py
+
 from tox import hookimpl
 
 
