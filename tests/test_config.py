@@ -4,12 +4,14 @@ from textwrap import dedent
 
 import py
 import pytest
+from pluggy import PluginManager
 
 import tox
 import tox.config
 from tox.config import CommandParser
 from tox.config import DepOption
 from tox.config import get_homedir
+from tox.config import get_version_info
 from tox.config import getcontextname
 from tox.config import is_section_substitution
 from tox.config import parseconfig
@@ -2024,12 +2026,57 @@ class TestCmdInvocation:
             "*help*",
         ])
 
-    def test_version(self, cmd):
+    def test_version_simple(self, cmd):
         result = cmd.run("tox", "--version")
         assert not result.ret
         stdout = result.stdout.str()
         assert tox.__version__ in stdout
         assert "imported from" in stdout
+
+    def test_version_no_plugins(self):
+        pm = PluginManager('fakeprject')
+        version_info = get_version_info(pm)
+        assert "imported from" in version_info
+        assert "registered plugins:" not in version_info
+
+    def test_version_with_normal_plugin(self, monkeypatch):
+        def fake_normal_plugin_distinfo():
+            class MockModule:
+                __file__ = 'some-file'
+
+            class MockEggInfo:
+                project_name = 'some-project'
+                version = '1.0'
+            return [(MockModule, MockEggInfo)]
+
+        pm = PluginManager('fakeproject')
+        monkeypatch.setattr(
+            pm, 'list_plugin_distinfo', fake_normal_plugin_distinfo)
+        version_info = get_version_info(pm)
+        assert "registered plugins:" in version_info
+        assert "some-file" in version_info
+        assert "some-project" in version_info
+        assert "1.0" in version_info
+
+    def test_version_with_fileless_module(self, monkeypatch):
+        def fake_no_file_plugin_distinfo():
+            class MockModule:
+                def __repr__(self):
+                    return "some-repr"
+
+            class MockEggInfo:
+                project_name = 'some-project'
+                version = '1.0'
+            return [(MockModule(), MockEggInfo)]
+
+        pm = PluginManager('fakeproject')
+        monkeypatch.setattr(
+            pm, 'list_plugin_distinfo', fake_no_file_plugin_distinfo)
+        version_info = get_version_info(pm)
+        assert "registered plugins:" in version_info
+        assert "some-project" in version_info
+        assert "some-repr" in version_info
+        assert "1.0" in version_info
 
     def test_listenvs(self, cmd, initproj):
         initproj('listenvs', filedefs={
