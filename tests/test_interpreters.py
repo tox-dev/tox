@@ -1,3 +1,4 @@
+import distutils.spawn
 import os
 import subprocess
 import sys
@@ -19,20 +20,26 @@ def interpreters():
 
 @pytest.mark.skipif("sys.platform != 'win32'")
 def test_locate_via_py(monkeypatch):
-    class PseudoPy:
-        def sysexec(self, *args):
-            assert args[0] == '-3.2'
-            assert args[1] == '-c'
-            # Return value needs to actually exist!
-            return sys.executable
-
-    @staticmethod
-    def ret_pseudopy(name):
-        assert name == 'py'
-        return PseudoPy()
-    # Monkeypatch py.path.local.sysfind to return PseudoPy
-    monkeypatch.setattr(py.path.local, 'sysfind', ret_pseudopy)
     from tox.interpreters import locate_via_py
+
+    def fake_find_exe(exe):
+        assert exe == 'py'
+        return 'py'
+
+    def fake_popen(cmd, stdout):
+        assert cmd[:3] == ('py', '-3.2', '-c')
+
+        class proc:
+            returncode = 0
+
+            @staticmethod
+            def communicate():
+                return sys.executable.encode(), None
+        return proc
+
+    # Monkeypatch modules to return our faked value
+    monkeypatch.setattr(distutils.spawn, 'find_executable', fake_find_exe)
+    monkeypatch.setattr(subprocess, 'Popen', fake_popen)
     assert locate_via_py('3', '2') == sys.executable
 
 

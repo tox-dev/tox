@@ -1,5 +1,7 @@
+import distutils.util
 import inspect
 import re
+import subprocess
 import sys
 
 import py
@@ -164,16 +166,14 @@ else:
     def locate_via_py(v_maj, v_min):
         ver = "-%s.%s" % (v_maj, v_min)
         script = "import sys; print(sys.executable)"
-        py_exe = py.path.local.sysfind('py')
+        py_exe = distutils.spawn.find_executable('py')
         if py_exe:
-            try:
-                exe = py_exe.sysexec(ver, '-c', script).strip()
-            except py.process.cmdexec.Error:
-                exe = None
-            if exe:
-                exe = py.path.local(exe)
-                if exe.check():
-                    return exe
+            proc = subprocess.Popen(
+                (py_exe, ver, '-c', script), stdout=subprocess.PIPE,
+            )
+            out, _ = proc.communicate()
+            if not proc.returncode:
+                return out.decode('UTF-8').strip()
 
 
 def pyinfo():

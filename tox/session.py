@@ -12,7 +12,6 @@ import shutil
 import subprocess
 import sys
 import time
-from subprocess import STDOUT
 
 import py
 
@@ -138,7 +137,7 @@ class Action(object):
             cwd = py.path.local()
         try:
             popen = self._popen(args, cwd, env=env,
-                                stdout=stdout, stderr=STDOUT)
+                                stdout=stdout, stderr=subprocess.STDOUT)
         except OSError as e:
             self.report.error("invocation failed (errno %d), args: %s, cwd: %s" %
                               (e.errno, args, cwd))
@@ -673,12 +672,12 @@ class Session:
 
     def info_versions(self):
         versions = ['tox-%s' % tox.__version__]
-        try:
-            version = py.process.cmdexec("virtualenv --version")
-        except py.process.cmdexec.Error:
-            versions.append("virtualenv-1.9.1 (vendored)")
-        else:
-            versions.append("virtualenv-%s" % version.strip())
+        proc = subprocess.Popen(
+            (sys.executable, '-m', 'virtualenv', '--version'),
+            stdout=subprocess.PIPE,
+        )
+        out, _ = proc.communicate()
+        versions.append('virtualenv-{0}'.format(out.decode('UTF-8').strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
 
     def _resolve_pkg(self, pkgspec):
