@@ -218,7 +218,7 @@ def parseconfig(args=None, plugins=()):
     config._parser = parser
     config._testenv_attr = parser._testenv_attr
     if config.option.version:
-        print_version_info(pm)
+        print(get_version_info(pm))
         raise SystemExit(0)
     # parse ini file
     basename = config.option.configfile
@@ -260,16 +260,16 @@ def feedback(msg, sysexit=False):
         raise SystemExit(1)
 
 
-def print_version_info(pm):
-    print("%s imported from %s" % (tox.__version__, tox.__file__))
+def get_version_info(pm):
+    out = ["%s imported from %s" % (tox.__version__, tox.__file__)]
     plugin_dist_info = pm.list_plugin_distinfo()
-    if not plugin_dist_info:
-        return
-    print('registered plugins:')
-    for mod, egg_info in plugin_dist_info:
-        source = getattr(mod, '__file__', repr(mod))
-        info = "%s-%s at %s" % (egg_info.project_name, egg_info.version, source)
-        print("    " + info)
+    if plugin_dist_info:
+        out.append('registered plugins:')
+        for mod, egg_info in plugin_dist_info:
+            source = getattr(mod, '__file__', repr(mod))
+            out.append("    %s-%s at %s" % (
+                egg_info.project_name, egg_info.version, source))
+    return '\n'.join(out)
 
 
 class SetenvDict(object):
