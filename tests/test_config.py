@@ -8,9 +8,10 @@ from pluggy import PluginManager
 
 import tox
 import tox.config
-from tox.config import CommandParser, get_version_info
+from tox.config import CommandParser
 from tox.config import DepOption
 from tox.config import get_homedir
+from tox.config import get_version_info
 from tox.config import getcontextname
 from tox.config import is_section_substitution
 from tox.config import parseconfig
