@@ -668,25 +668,37 @@ def _alwayscopy_not_supported():
 
 
 @pytest.mark.skipif(_alwayscopy_not_supported(), reason="Platform doesnt support alwayscopy")
-def test_alwayscopy(initproj, cmd):
+def test_alwayscopy(initproj, cmd, mocksession):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
             commands={envpython} --version
             alwayscopy=True
     """})
+    venv = mocksession.getenv('python')
     result = cmd.run("tox", "-vv")
     assert not result.ret
-    assert "virtualenv --always-copy" in result.stdout.str()
+
+    out = result.stdout.str()
+    if venv._ispython3():
+        assert "venv --copies" in out
+    else:
+        assert "virtualenv --always-copy" in out
 
 
-def test_alwayscopy_default(initproj, cmd):
+def test_alwayscopy_default(initproj, cmd, mocksession):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
             commands={envpython} --version
     """})
+    venv = mocksession.getenv('python')
     result = cmd.run("tox", "-vv")
     assert not result.ret
-    assert "virtualenv --always-copy" not in result.stdout.str()
+
+    out = result.stdout.str()
+    if venv._ispython3():
+        assert "venv --copies" not in out
+    else:
+        assert "virtualenv --always-copy" not in out
 
 
 def test_empty_activity_ignored(initproj, cmd):

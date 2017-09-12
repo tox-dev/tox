@@ -51,6 +51,20 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
 
 
+def test_module(mocksession, newconfig):
+    config = newconfig([], """
+        [testenv:py2]
+        basepython=python2.7
+
+        [testenv:py3]
+        basepython=python3.6
+    """)
+    venv = VirtualEnv(config.envconfigs['py2'], session=mocksession)
+    assert venv._module() == 'virtualenv'
+    venv = VirtualEnv(config.envconfigs['py3'], session=mocksession)
+    assert venv._module() == 'venv'
+
+
 def test_create(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
@@ -64,7 +78,8 @@ def test_create(monkeypatch, mocksession, newconfig):
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
-    assert "virtualenv" == str(args[2])
+    module = 'venv' if venv._ispython3() else 'virtualenv'
+    assert module == str(args[2])
     if sys.platform != "win32":
         # realpath is needed for stuff like the debian symlinks
         assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
@@ -488,7 +503,8 @@ class TestCreationConfig:
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
-        assert 'virtualenv' in " ".join(args1)
+        module = 'venv' if venv._ispython3() else 'virtualenv'
+        assert module in " ".join(args1)
         mocksession.report.expect("*", "*create*")
         # modify config and check that recreation happens
         mocksession._clearmocks()
