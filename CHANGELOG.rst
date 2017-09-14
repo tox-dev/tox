@@ -16,8 +16,8 @@ on Github:
 
 .. towncrier release notes start
 
-Tox 2.9.0 (2017-09-14)
-======================
+2.9.0rc1 (2017-09-14)
+=====================
 
 Features
 --------
