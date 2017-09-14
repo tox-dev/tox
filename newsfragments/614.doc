@@ -1,3 +1,0 @@
-add `towncrier <https://github.com/hawkowl/towncrier>`_ to allow adding changelog entries with the pull requests without
-generating merge conflicts; with this release notes are now grouped into four distinct collections: `Features`,
-`Bugfixes`, `Improved Documentation` and `Deprecations and Removals`.
