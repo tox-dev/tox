@@ -716,7 +716,7 @@ class Session:
             return candidates[0]
 
 
-_rex_getversion = re.compile("[\w_\-\+\.]+-(.*)(\.zip|\.tar.gz)")
+_rex_getversion = re.compile(r"[\w_\-\+\.]+-(.*)(\.zip|\.tar.gz)")
 
 
 def getversion(basename):

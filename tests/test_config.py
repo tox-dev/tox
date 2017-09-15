@@ -1201,7 +1201,7 @@ class TestConfigTestEnv:
         assert argv[0] == ['echo', 'bah']
 
     def test_posargs_backslashed_or_quoted(self, tmpdir, newconfig):
-        inisource = """
+        inisource = r"""
             [testenv:py27]
             commands =
                 echo "\{posargs\}" = {posargs}
