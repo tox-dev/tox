@@ -2,6 +2,7 @@
     package = "tox"
     filename = "CHANGELOG.rst"
     directory = "tox/changelog"
+    template = "tox/changelog/template.jinja2"
     title_format = "{version} ({project_date})"
     issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
     pr_format = "`pr{issue} <https://github.com/tox-dev/tox/pull/{issue}>`_"
