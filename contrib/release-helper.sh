@@ -2,16 +2,14 @@
 
 set -e
 
-devpiUsername=${TOX_RELEASE_DEVPI_USERNAME:-obestwalter}
-pypiUsername=${TOX_RELEASE_PYPI_USERNAME:-obestwalter}
-remote=${TOX_RELEASE_REMOTE:-upstream}
+DEVPI_USERNAME=${TOX_RELEASE_DEVPI_USERNAME:-obestwalter}
+PYPI_USERNAME=${TOX_RELEASE_PYPI_USERNAME:-obestwalter}
+RELEASE_REMOTE=${TOX_RELEASE_REMOTE:-upstream}
 
 if [ -z "$1" ]; then
     echo "usage: $0 prep <version> -> test -> rel"
     exit 1
 fi
-
-COMMAND=$1
 
 if [ -z "$2" ]; then
     VERSION=$2
@@ -58,9 +56,9 @@ devpi-upload () {
         echo "needs builds in dist. Build first."
         exit 1
     fi
-    echo "loggging in to devpi $devpiUsername"
-    devpi login ${devpiUsername}
-    devpi use https://devpi.net/${devpiUsername}/dev
+    echo "loggging in to devpi $DEVPI_USERNAME"
+    devpi login ${DEVPI_USERNAME}
+    devpi use https://devpi.net/${DEVPI_USERNAME}/dev
     echo "upload to devpi: $(ls dist/*)"
     _confirm
     devpi upload dist/*
@@ -85,8 +83,8 @@ rel () {
     echo "upload to devpi: $(ls dist/*)"
     _confirm
     twine upload dist/tox-$1-py2.py3-none-any.whl dist/tox-$1.tar.gz
-    git push ${remote} master
-    git push ${remote} --tags
+    git push ${RELEASE_REMOTE} master
+    git push ${RELEASE_REMOTE} --tags
 }
 
 _confirm () {
