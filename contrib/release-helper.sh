@@ -36,7 +36,7 @@ dispatch () {
 
 prep () {
     python3.6 contrib/release-pre-process.py
-    towncrier --draft --version ${VERSION} | ${PAGER}
+    towncrier --draft --version ${VERSION}
     tox --version
     echo "consolidate?"
     _confirm
