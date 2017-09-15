@@ -16,7 +16,7 @@ class exception:
         def __str__(self):
             return "%s: %s" % (self.__class__.__name__, self.args[0])
 
-    class MissingSubstitution(Exception):
+    class MissingSubstitution(Error):
         FLAG = 'TOX_MISSING_SUBSTITUTION'
         """placeholder for debugging configurations"""
         def __init__(self, name):
