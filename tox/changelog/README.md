@@ -19,6 +19,9 @@ file `tox/changelog/pr666.rst`:
 
 ```rst
 This is the change to end all changes. I deleted all lines of code
-containing the letter `p` might break some things, but works for me - 
+containing the letter `p`!
+
+Might break some things, but works for me.
+ 
 by @obestwalter.
 ```
