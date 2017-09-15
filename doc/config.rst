@@ -45,6 +45,12 @@ and will first lookup global tox settings in this section::
     always overrides this setting if passed on the invokation.
     **Default:** ``False``
 
+    .. versionadded:: (unreleased)
+
+    The ``--no-skip-missing-interpreters`` command line option can also be used
+    to override the configuration value to *ensure* failure on missing
+    interpreters.
+
 .. confval:: envlist=CSV
 
     Determining the environment list that ``tox`` is to operate on

@@ -387,7 +387,13 @@ def tox_addoption(parser):
     parser.add_argument("--alwayscopy", action="store_true",
                         help="override alwayscopy setting to True in all envs")
     parser.add_argument("--skip-missing-interpreters", action="store_true",
+                        default=None,
                         help="don't fail tests for missing interpreters")
+    parser.add_argument(
+        '--no-skip-missing-interpreters', action='store_false',
+        dest='skip_missing_interpreters',
+        help='Ensure failure when interpreters are missing.',
+    )
     parser.add_argument("--workdir", action="store",
                         dest="workdir", metavar="PATH", default=None,
                         help="tox working directory")
@@ -749,9 +755,10 @@ class parseini:
         else:
             config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
 
-        if not config.option.skip_missing_interpreters:
-            config.option.skip_missing_interpreters = \
-                reader.getbool("skip_missing_interpreters", False)
+        if config.option.skip_missing_interpreters is None:
+            config.option.skip_missing_interpreters = reader.getbool(
+                'skip_missing_interpreters', False,
+            )
 
         # determine indexserver dictionary
         config.indexserver = {'default': IndexServerConfig('default')}
