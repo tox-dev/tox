@@ -9,7 +9,7 @@ remote=${TOX_RELEASE_REMOTE:-upstream}
 
 dispatch () {
     if [ -z "$1" ]; then
-        echo "usage: $0 command [version]"
+        echo "usage: $0 prepare->test->publish [version]"
         exit 1
     fi
     if [ "$1" == "prepare" ]; then
@@ -32,9 +32,9 @@ dispatch () {
 }
 
 prepare-release () {
-    pip install -U "git+git://github.com/avira/towncrier.git@tox"
+    pip install git+git://github.com/avira/towncrier.git@add-pr-links
     python3.6 contrib/towncrier-pre-process.py
-    towncrier --draft --version $1 | most
+    towncrier --draft | most
     tox --version
     echo "consolidate?"
     confirm
@@ -47,27 +47,43 @@ prepare-release () {
 build-package () {
     rm dist/tox*
     python setup.py sdist bdist_wheel
-    ls dist
 }
 
 devpi-upload () {
+    if [ ! -d dist ]; then
+        echo "needs builds in dist. Build first."
+        exit 1
+    fi
+    echo "loggging in to devpi $devpiUsernames"
     devpi login ${devpiUsername}
     devpi use https://devpi.net/${devpiUsername}/dev
-    devpi upload dist/tox-$1-py2.py3-none-any.whl dist/tox-$1.tar.gz
+    echo "upload to devpi: $(ls dist/*)"
+    confirm
+    devpi upload dist/*
 }
 
 trigger-cloud-test () {
-    cd ../devpi-cloud-test-tox
+    cloudTestPath=../devpi-cloud-test-tox
+    tag=get-current-tag
+    if [ ! -d "$cloudTestPath" ]; then
+        echo "needs $cloudTestPath"
+        exit 1
+    fi
+    echo "trigger devpi cloud tests for $tag?"
+    confirm
+    cd ${cloudTestPath}
     dct trigger $1
     xdg-open https://github.com/obestwalter/devpi-cloud-test-tox
     cd ../tox
 }
 
 publish () {
-    echo -n "publish from dist?"
+    echo -n "publish "
+    echo "upload to devpi: $(ls dist/*)"
     confirm
+    twine upload dist/tox-$1-py2.py3-none-any.whl dist/tox-$1.tar.gz
     git push ${remote} master
-    twine upload upload dist/tox-$1-py2.py3-none-any.whl dist/tox-$1.tar.gz
+    git push ${remote} --tags
 }
 
 undo-prepare-release () {
@@ -84,7 +100,6 @@ undo-prepare-release () {
 get-current-tag () {
     echo $(git describe --abbrev=0 --tags)
 }
-
 
 confirm () {
     select confirmation in yes no; do
