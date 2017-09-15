@@ -15,6 +15,7 @@ The changes get rendered to [CHANGELOG](../../CHANGELOG.rst) and will be the mos
 
 ## Full example
 
+file `tox/changelog/pr666.rst`:
 
 ```rst
 This is the change to end all changes. I deleted all lines of code
