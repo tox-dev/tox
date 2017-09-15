@@ -22,6 +22,6 @@ This is the change to end all changes. I deleted all lines of code
 containing the letter `p`!
 
 Might break some things, but works for me.
- 
+
 by @obestwalter.
 ```
