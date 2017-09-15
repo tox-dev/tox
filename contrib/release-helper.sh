@@ -37,11 +37,11 @@ dispatch () {
 prep () {
     python3.6 contrib/release-pre-process.py
     pip install git+git://github.com/avira/towncrier.git@add-pr-links
-    towncrier --draft | ${PAGER}
+    towncrier --draft --version ${VERSION} | ${PAGER}
     tox --version
     echo "consolidate?"
     _confirm
-    towncrier --yes --version $1
+    towncrier --yes --version ${VERSION}
     git add .
     git status
     _confirm
