@@ -4,4 +4,4 @@
 
 [release-helper](release-helper.sh)
 
-[towncrier-pre-process](towncrier-pre-process.py)
+[release-pre-process](release-pre-process.py)
