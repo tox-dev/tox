@@ -1,16 +1,14 @@
 [tool.towncrier]
     package = "tox"
-    package_dir = ".."
     filename = "CHANGELOG.rst"
+    directory = "tox/changelog"
+    title_format = "{version} ({project_date})"
     issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
+    pr_format = "`pr{issue} <https://github.com/tox-dev/tox/pull/{issue}>`_"
+    underlines = ["-", "^"]
 
     [[tool.towncrier.section]]
         path = ""
-
-    [[tool.towncrier.type]]
-        directory = "feature"
-        name = "Features"
-        showcontent = true
 
     [[tool.towncrier.type]]
         directory = "bugfix"
@@ -18,16 +16,26 @@
         showcontent = true
 
     [[tool.towncrier.type]]
-        directory = "doc"
-        name = "Improved Documentation"
+        directory = "breaking"
+        name = "Backward incompatible changes"
         showcontent = true
 
     [[tool.towncrier.type]]
-        directory = "removal"
-        name = "Deprecations and Removals"
+        directory = "doc"
+        name = "Documentation improvements"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "feature"
+        name = "Features"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "misc"
-        name = "Misc"
-        showcontent = false
+        name = "Miscellaneous / trivial changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "deprecation"
+        name = "Deprecations (removal in next major release)"
+        showcontent = true
