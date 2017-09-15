@@ -6,47 +6,51 @@ devpiUsername=${TOX_RELEASE_DEVPI_USERNAME:-obestwalter}
 pypiUsername=${TOX_RELEASE_PYPI_USERNAME:-obestwalter}
 remote=${TOX_RELEASE_REMOTE:-upstream}
 
+if [ -z "$1" ]; then
+    echo "usage: $0 prep <version> -> test -> rel"
+    exit 1
+fi
+
+COMMAND=$1
+
+if [ -z "$2" ]; then
+    VERSION=$2
+else
+    VERSION=$(git describe --abbrev=0 --tags)
+fi
 
 dispatch () {
-    if [ -z "$1" ]; then
-        echo "usage: $0 prepare->test->publish [version]"
-        exit 1
-    fi
-    if [ "$1" == "prepare" ]; then
+    if [ "$1" == "prep" ]; then
         if [ -z "$2" ]; then
-            echo "usage: $0 prepare [version]"
+            echo "usage: $0 prep <version>"
             exit 1
         fi
-        prepare-release $2
-        build-package
+        prep $2
     elif [ "$1" == "test" ]; then
          devpi-upload
-         trigger-cloud-test $2
-    elif [ "$1" == "publish" ]; then
-        publish $2
-    elif [ "$1" == "undo" ]; then
-        undo-prepare-release
+         cloud-test
+    elif [ "$1" == "rel" ]; then
+        rel
     else
-        echo "dunno what to do with <<$1>>"
+        exit 1
     fi
 }
 
-prepare-release () {
+prep () {
+    python3.6 contrib/release-pre-process.py
     pip install git+git://github.com/avira/towncrier.git@add-pr-links
-    python3.6 contrib/towncrier-pre-process.py
-    towncrier --draft | most
+    towncrier --draft | ${PAGER}
     tox --version
     echo "consolidate?"
-    confirm
+    _confirm
     towncrier --yes --version $1
-    git add CHANGELOG.rst
+    git add .
+    git status
+    _confirm
     git commit -m "towncrier generated changelog"
-    git tag $1
-}
-
-build-package () {
     rm dist/tox*
     python setup.py sdist bdist_wheel
+    git tag ${VERSION}
 }
 
 devpi-upload () {
@@ -54,54 +58,38 @@ devpi-upload () {
         echo "needs builds in dist. Build first."
         exit 1
     fi
-    echo "loggging in to devpi $devpiUsernames"
+    echo "loggging in to devpi $devpiUsername"
     devpi login ${devpiUsername}
     devpi use https://devpi.net/${devpiUsername}/dev
     echo "upload to devpi: $(ls dist/*)"
-    confirm
+    _confirm
     devpi upload dist/*
 }
 
-trigger-cloud-test () {
+cloud-test () {
     cloudTestPath=../devpi-cloud-test-tox
-    tag=get-current-tag
     if [ ! -d "$cloudTestPath" ]; then
         echo "needs $cloudTestPath"
         exit 1
     fi
-    echo "trigger devpi cloud tests for $tag?"
-    confirm
+    echo "trigger devpi cloud tests for ${VERSION}?"
+    _confirm
     cd ${cloudTestPath}
-    dct trigger $1
+    dct trigger ${VERSION}
     xdg-open https://github.com/obestwalter/devpi-cloud-test-tox
     cd ../tox
 }
 
-publish () {
+rel () {
     echo -n "publish "
     echo "upload to devpi: $(ls dist/*)"
-    confirm
+    _confirm
     twine upload dist/tox-$1-py2.py3-none-any.whl dist/tox-$1.tar.gz
     git push ${remote} master
     git push ${remote} --tags
 }
 
-undo-prepare-release () {
-    lastTag=$(git describe --abbrev=0 --tags)
-    echo "reset ${lastTag}?"
-    confirm
-    git tag -d ${lastTag}
-    git status
-    echo "stashing those changes away ..."
-    git stash
-    rm dist/tox*
-}
-
-get-current-tag () {
-    echo $(git describe --abbrev=0 --tags)
-}
-
-confirm () {
+_confirm () {
     select confirmation in yes no; do
         if [ ${confirmation} == "no" ]; then
             exit 1
