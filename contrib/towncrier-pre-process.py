@@ -1,20 +1,25 @@
 #!/usr/bin/env python3.6
+import re
 import sys
 from pathlib import Path
 
-import re
-
 
 def main():
-    make_user_links()
+    make_replacements()
 
 
-def make_user_links():
+def make_replacements():
+    home = 'https://github.com'
+    issue = '%s/issue' % home
+    pull = '%s/pull' % home
     fragmentsPath = Path(__file__).parents[1] / 'tox' / 'changelog'
-    for path in fragmentsPath.glob('*.rst'):
-        content = path.read_text()
-        content = re.sub(r'[^`]@([^,\s]+)', r'`@\1 <https://github.com/\1>`_', content)
-        path.write_text(content)
+    for pattern, replacement in (
+        (r'[^`]@([^,\s]+)', r'`@\1 <%s/\1>`_' % home),
+        (r'[^`]#pr([\d]+)', r'`#\1 <%s/\1>`_' % issue),
+        (r'[^`]#([\d]+)', r'`#pr\1 <%s/\1>`_' % pull),
+    ):
+        for path in fragmentsPath.glob('*.rst'):
+            path.write_text(re.sub(pattern, replacement, path.read_text()))
 
 
 if __name__ == '__main__':
