@@ -160,7 +160,7 @@ else:
     # Exceptions to the usual windows mapping
     win32map = {
         'python': sys.executable,
-        'jython': "c:\jython2.5.1\jython.bat",
+        'jython': r"c:\jython2.5.1\jython.bat",
     }
 
     def locate_via_py(v_maj, v_min):

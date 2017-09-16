@@ -927,7 +927,7 @@ class IndexServerConfig:
 
 #: Check value matches substitution form
 #: of referencing value from other section. E.g. {[base]commands}
-is_section_substitution = re.compile("{\[[^{}\s]+\]\S+?}").match
+is_section_substitution = re.compile(r"{\[[^{}\s]+\]\S+?}").match
 
 
 class SectionReader:
