@@ -304,7 +304,7 @@ Improved Documentation
   plugins to do additional work on creation or installing
   deps.  These hooks are experimental mainly because of
   the involved "venv" and session objects whose current public
-  API is not fully guranteed.
+  API is not fully guaranteed.
 
 - internal: push some optional object creation into tests because
   tox core doesn't need it.
@@ -542,7 +542,7 @@ Improved Documentation
 1.7.1 (2014-03-28)
 ==================
 
-- fix :issue:`162`: don't list python 2.5 as compatibiliy/supported
+- fix :issue:`162`: don't list python 2.5 as compatibility/supported
 
 - fix :issue:`158` and fix :issue:`155`: windows/virtualenv properly works now:
   call virtualenv through "python -m virtualenv" with the same

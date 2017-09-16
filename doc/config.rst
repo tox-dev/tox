@@ -486,7 +486,7 @@ Substitution for values from other sections
 
 .. versionadded:: 1.4
 
-Values from other sections can be refered to via::
+Values from other sections can be referred to via::
 
    {[sectionname]valuename}
 

@@ -77,8 +77,8 @@ def test_create(monkeypatch, mocksession, newconfig):
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
-def test_commandpath_venv_precendence(tmpdir, monkeypatch,
-                                      mocksession, newconfig):
+def test_commandpath_venv_precedence(tmpdir, monkeypatch,
+                                     mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
     """)

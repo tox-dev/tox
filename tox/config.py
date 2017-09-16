@@ -734,7 +734,7 @@ class parseini:
 
         reader.addsubstitutions(toxinidir=config.toxinidir,
                                 homedir=config.homedir)
-        # As older versions of tox may have bugs or incompatabilities that
+        # As older versions of tox may have bugs or incompatibilities that
         # prevent parsing of tox.ini this must be the first thing checked.
         config.minversion = reader.getstring("minversion", None)
         if config.minversion:

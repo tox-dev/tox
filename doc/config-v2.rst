@@ -168,7 +168,7 @@ Showing all expanded sections
 To help with understanding how the variants will produce section values,
 you can ask tox to show their expansion with a new option::
 
-    $ tox -l [XXX output ommitted for now]
+    $ tox -l [XXX output omitted for now]
 
 Making sure your packages installs with easy_install
 ------------------------------------------------------

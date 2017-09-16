@@ -144,7 +144,7 @@ tox_testenv_create(env_meta, package_type) -> # creates an environment for given
                                                   # information from env_meta (like .envdir)
                                                   # returns: an "env" object which is forwaded to the next hooks
 tox_testenv_install(env_meta, package_type, env) -> # installs deps and package into environment
-tox_testenv_runtest(env_meta, package_type, env) -> # activates enviroment and runs test commands
+tox_testenv_runtest(env_meta, package_type, env) -> # activates environment and runs test commands
 
 tox_testenv_updated(env_meta, package_type) ->  # returns True if hte environment is already up to date
                                                 # otherwise, tox will remove the environment completely and
