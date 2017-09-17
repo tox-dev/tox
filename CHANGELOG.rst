@@ -52,6 +52,11 @@ Improved Documentation
   Removals`. (`#614 <https://github.com/tox-dev/tox/issues/614>`_)
 
 
+2.8.2 (2017-10-09)
+==================
+
+- `#466 <https://github.com/tox-dev/tox/issues/466>`_: stop env var leakage if popen failed with resultjson or redirect
+
 2.8.1 (2017-09-04)
 ==================
 
