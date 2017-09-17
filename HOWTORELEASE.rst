@@ -59,7 +59,7 @@ and you get a help message like::
 
 The script executes the necessary actions and asks for confirmation to go on before committing or tagging stuff. So there is no danger to dry run the process, as long as you don't call the final `release` command with packages in your dist/* - if you managed to screw things up entirely there is always `git reset --hard HEAD` at your service.
 
-**note:** `**`pra` is short for "personal release assistant" :) - if you want to see what this involves or rather do everything by hand, please read the scripts in `tasks <https://github.com/tox-dev/tox/tree/master/tasks>`.
+**note:** `**`pra` is short for "personal release assistant" :) - if you want to see what this involves or rather do everything by hand, please read the scripts in `tasks <https://github.com/tox-dev/tox/tree/master/tasks>`_.
 
 
 Get started with devpi cloud test
