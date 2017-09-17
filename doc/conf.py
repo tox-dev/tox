@@ -5,7 +5,8 @@ from datetime import date
 
 from pkg_resources import get_distribution
 
-sys.path.insert(0, os.path.dirname(__file__))
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.extlinks',
               'sphinx.ext.intersphinx',
@@ -66,12 +67,16 @@ def generate_newsfragments():
     whenever a new release is done there should be no news fragment and as such this will have
     no effect
     """
-    from os import path as p
-    with open('../.tox/docs/fragments.rst', 'w') as file_handle:
-        project_base = p.abspath(p.join(p.dirname(__file__), p.pardir))
-        cmd = ['towncrier', '--draft', '--dir', project_base]
-        out = subprocess.check_output(cmd).decode('utf-8').strip()
-        file_handle.write(out)
+    current_path = os.getcwd()
+    project_root = os.path.join(here, os.path.pardir)
+    try:
+        os.chdir(project_root)
+        with open('.tox/docs/fragments.rst', 'w') as f:
+            cmd = ['towncrier', '--draft', '--dir', project_root]
+            out = subprocess.check_output(cmd).decode('utf-8').strip()
+            f.write(out)
+    finally:
+        os.chdir(current_path)
 
 
 generate_newsfragments()
