@@ -64,7 +64,7 @@ with this:
     exec urllib.urlopen(url).read() in d
     d['cmdline'](['--recreate'])
 
-The downloaded `toxbootstrap.py` file downloads all neccessary files to
+The downloaded `toxbootstrap.py` file downloads all necessary files to
 install ``tox`` in a virtual sub environment.  Notes:
 
 * uncomment the line containing ``USETOXDEV`` to use the latest
@@ -82,7 +82,7 @@ Integrating "sphinx" documentation checks in a Jenkins job
 If you are using a multi-configuration Jenkins job which collects
 JUnit Test results you will run into problems using the previous
 method of running the sphinx-build command because it will not
-generate JUnit results.  To accomodate this issue one solution
+generate JUnit results.  To accommodate this issue one solution
 is to have ``pytest`` wrap the sphinx-checks and create a
 JUnit result file which wraps the result of calling sphinx-build.
 Here is an example:
@@ -93,7 +93,7 @@ Here is an example:
 
       [testenv:docs]
       basepython = python
-      changedir = doc # or whereever you keep your sphinx-docs
+      changedir = doc # or wherever you keep your sphinx-docs
       deps = sphinx
              py
       commands = pytest --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py

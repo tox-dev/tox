@@ -74,7 +74,7 @@ which will make the sphinx tests part of your test run.
 Selecting one or more environments to run tests against
 --------------------------------------------------------
 
-Using the ``-e ENV[,ENV2,...]``  option you explicitely list
+Using the ``-e ENV[,ENV2,...]``  option you explicitly list
 the environments where you want to run tests against. For
 example, given the previous sphinx example you may call:
 

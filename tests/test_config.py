@@ -481,7 +481,7 @@ class TestIniParser:
         x = reader.getstring("key3")
         assert x == ""
 
-    def test_value_matches_section_substituion(self):
+    def test_value_matches_section_substitution(self):
         assert is_section_substitution("{[setup]commands}")
 
     def test_value_doesn_match_section_substitution(self):
@@ -738,7 +738,7 @@ class TestIniParserPrefix:
         x = reader.getstring("key3", "world")
         assert x == "world"
 
-    def test_value_matches_prefixed_section_substituion(self):
+    def test_value_matches_prefixed_section_substitution(self):
         assert is_section_substitution("{[p:setup]commands}")
 
     def test_value_doesn_match_prefixed_section_substitution(self):
@@ -1201,7 +1201,7 @@ class TestConfigTestEnv:
         assert argv[0] == ['echo', 'bah']
 
     def test_posargs_backslashed_or_quoted(self, tmpdir, newconfig):
-        inisource = """
+        inisource = r"""
             [testenv:py27]
             commands =
                 echo "\{posargs\}" = {posargs}

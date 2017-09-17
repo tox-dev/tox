@@ -53,7 +53,7 @@ def test_tox_get_python_executable():
         name = "python%s" % ver
         if sys.platform == "win32":
             pydir = "python%s" % ver.replace(".", "")
-            x = py.path.local("c:\%s" % pydir)
+            x = py.path.local(r"c:\%s" % pydir)
             print(x)
             if not x.check():
                 continue
