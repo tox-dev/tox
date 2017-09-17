@@ -25,7 +25,8 @@ Prerequisites
 * Accountability: if you cut a release that breaks the CI builds of projects using tox, you are expected to fix this within a reasonable time frame (hours/days - not weeks/months) - if you don't feel quite capable of doing this yet, partner up with a more experienced member of the team and make sure they got your back if things break.
 
 pypi/devpi configuration
-°°°°°°°°°°°°°°°°°°°°°°°°
+------------------------
+
 **note:** this is in a state of flux due to changes in pypi infrastructure and depending whether devpi push can be used or not. **Please keep this updated according to current process**
 
 **Current process** pypi upload packages from `dist/` via twine.
@@ -64,9 +65,7 @@ The script executes the necessary actions and asks for confirmation to go on bef
 Get started with devpi cloud test
 ---------------------------------
 
-Configure a repository as per-instructions on
-devpi-cloud-test_ to test the package on Travis_ and AppVeyor_.
-All test environments should pass.
+Configure a repository as per-instructions on devpi-cloud-test_ to test the package on Travis_ and AppVeyor_. All test environments should pass.
 
 If you don't want or can't do the cloud test step ...
 -----------------------------------------------------
