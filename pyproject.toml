@@ -4,20 +4,11 @@
     directory = "tox/changelog"
     template = "tox/changelog/template.jinja2"
     title_format = "{version} ({project_date})"
+    issue_format = "`#{id} <https://github.com/tox-dev/tox/issues/{id}>`_"
     underlines = ["=", "-"]
 
     [[tool.towncrier.section]]
         path = ""
-
-    [[tool.towncrier.format]]
-        kind = "issue"
-        patterns = ["issue(\\d)", "(\\d)"]
-        format = "`#{id} <https://github.com/tox-dev/tox/issues/{id}>`_"
-
-    [[tool.towncrier.format]]
-        kind = "pull request"
-        patterns = ["pr(\\d)", "pull-request(\\d)"]
-        format = "`#{id} <https://github.com/tox-dev/tox/pull/{id}>`_"
 
     [[tool.towncrier.type]]
         directory = "bugfix"
