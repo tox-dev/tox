@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
 
+# Personal Release Assistant (TM)
+
 set -e
 
-DEVPI_USERNAME=${TOX_RELEASE_DEVPI_USERNAME:-obestwalter}
-PYPI_USERNAME=${TOX_RELEASE_PYPI_USERNAME:-obestwalter}
-RELEASE_REMOTE=${TOX_RELEASE_REMOTE:-upstream}
-
 if [ -z "$1" ]; then
-    echo "usage: $0 prep <version> -> test -> rel"
+    echo "workflow: $0 <command> [arg]"
+    echo "    prep <version>"
+    echo "    upload <devpi username>"
+    echo "    test <devpi username> (optional)"
+    echo "    release"
     exit 1
 fi
 
 if [ -z "$2" ]; then
+    # only the prep step needs the version
     VERSION=$2
 else
+    # all other steps take it from tag created in prep
     VERSION=$(git describe --abbrev=0 --tags)
 fi
 
@@ -23,34 +27,36 @@ dispatch () {
             echo "usage: $0 prep <version>"
             exit 1
         fi
-        prep $2
+        prep
+    elif [ "$1" == "upload" ]; then
+         devpi_upload
     elif [ "$1" == "test" ]; then
-         devpi-upload
-         cloud-test
-    elif [ "$1" == "rel" ]; then
-        rel
+         devpi_cloud_test
+    elif [ "$1" == "release" ]; then
+        pypi_upload
     else
         exit 1
     fi
 }
 
 prep () {
-    python3.6 contrib/release-pre-process.py
+    python3.6 tasks/pre-process-changelog.py
     towncrier --draft --version ${VERSION}
+    _confirm "towncrier news to be added o.k.?"
     tox --version
-    echo "consolidate?"
-    _confirm
+    _confirm "version of package o.k.?"
     towncrier --yes --version ${VERSION}
-    git add .
-    git status
-    _confirm
-    git commit -m "towncrier generated changelog"
+    git add --verbose .
+    git status --verbose
+    _confirm "changes to repository o.k.?"
+    git commit -m "release preparation for ${VERSION}"
+    _confirm "rm dist/*, build, git tag ${VERSION}"
     rm dist/tox*
     python setup.py sdist bdist_wheel
     git tag ${VERSION}
 }
 
-devpi-upload () {
+devpi_upload () {
     if [ ! -d dist ]; then
         echo "needs builds in dist. Build first."
         exit 1
@@ -63,7 +69,7 @@ devpi-upload () {
     devpi upload dist/*
 }
 
-cloud-test () {
+devpi_cloud_test () {
     cloudTestPath=../devpi-cloud-test-tox
     if [ ! -d "$cloudTestPath" ]; then
         echo "needs $cloudTestPath"
@@ -77,16 +83,17 @@ cloud-test () {
     cd ../tox
 }
 
-rel () {
-    echo -n "publish "
-    echo "upload to devpi: $(ls dist/*)"
-    _confirm
-    twine upload dist/tox-$1-py2.py3-none-any.whl dist/tox-$1.tar.gz
-    git push ${RELEASE_REMOTE} master
-    git push ${RELEASE_REMOTE} --tags
+# TODO get devpi push to work again
+pypi_upload () {
+    PACKAGES=$(ls dist/*)
+    _confirm "upload to pypi: $PACKAGES"
+    twine upload ${PACKAGES}
+    git push upstream master
+    git push upstream ${VERSION}
 }
 
 _confirm () {
+    echo "please confirm: $1"
     select confirmation in yes no; do
         if [ ${confirmation} == "no" ]; then
             exit 1
