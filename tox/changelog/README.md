@@ -4,18 +4,18 @@ If you contribute something non trivial to the tox project, let the world know o
 
 To see what news sections there are see the type sections in [pyproject](../../pyproject.toml) - the naming follows the following scheme
 
-    <issue id> | pr<pull request id>.type.rst
+    <issue or pull request number>.type.rst
 
 e.g.
 
     614.feature.rst
-    pr324.bugfix.rst
+    324.bugfix.rst
 
 The changes get rendered to [CHANGELOG](../../CHANGELOG.rst) and will be the most important source of news for our beloved users.
 
 ## Full example
 
-file `tox/changelog/pr666.rst`:
+file `tox/changelog/666.rst`:
 
 ```rst
 This is the change to end all changes. I deleted all lines of code
