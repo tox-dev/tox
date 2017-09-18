@@ -4,8 +4,8 @@
     directory = "tox/changelog"
     template = "tox/changelog/template.jinja2"
     title_format = "{version} ({project_date})"
-    issue_format = "`#{id} <https://github.com/tox-dev/tox/issues/{id}>`_"
-    underlines = ["=", "-"]
+    issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
+    underlines = ["-", "^"]
 
     [[tool.towncrier.section]]
         path = ""

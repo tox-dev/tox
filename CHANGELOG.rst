@@ -1,4 +1,3 @@
-=========
 CHANGELOG
 =========
 
@@ -8,7 +7,7 @@ Backward incompatible (breaking) changes will only be introduced in major versio
 with advance notice in the **Deprecations** section of releases.
 
 Changes that already arrived in master, but are not released yet can be found as fragments in the
-`"changelog" directory <https://github.com/tox-dev/tox/tree/master/changelog>`_.
+`"changelog" directory <https://github.com/tox-dev/tox/tree/master/CHANGELOG.rst>`_.
 
 If you want to know more details: since version 2.8 releases are organized as Github projects.
 To see all closed issues and merged pull requests, contained in a release, visit the projects
@@ -24,17 +23,17 @@ on Github:
 .. towncrier release notes start
 
 2.9.0rc1 (2017-09-14)
-=====================
+---------------------
 
 Features
---------
+^^^^^^^^
 
 - ``tox --version`` now shows information about all registered plugins - by
   `@obestwalter <https://github.com/obestwalter>`_ (`#544 <https://github.com/tox-dev/tox/issues/544>`_)
 
 
 Bugfixes
---------
+^^^^^^^^
 
 - ``skip_install`` overrides ``usedevelop`` (``usedevelop`` is an option to
   choose the installation type if the package is installed and `skip_install`
@@ -43,7 +42,7 @@ Bugfixes
 
 
 Improved Documentation
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 - add `towncrier <https://github.com/hawkowl/towncrier>`_ to allow adding
   changelog entries with the pull requests without generating merge conflicts;
@@ -53,19 +52,19 @@ Improved Documentation
 
 
 2.8.2 (2017-10-09)
-==================
+------------------
 
 - `#466 <https://github.com/tox-dev/tox/issues/466>`_: stop env var leakage if popen failed with resultjson or redirect
 
 2.8.1 (2017-09-04)
-==================
+------------------
 
 - `pull request 599 <https://github.com/tox-dev/tox/pull/599>`_: fix problems with implementation of `#515 <https://github.com/tox-dev/tox/issues/515>`_.
   Substitutions from other sections were not made anymore if they were not in `envlist`.
   Thanks to Clark Boylan (`@cboylan <https://github.com/cboylan>`_) for helping to get this fixed (`pull request 597 <https://github.com/tox-dev/tox/pull/597>`_).
 
 2.8.0 (2017-09-01)
-===================
+-------------------
 
 - `#276 <https://github.com/tox-dev/tox/issues/276>`_: Remove easy_install from docs (TL;DR: use pip). Thanks Martin Andrysík (`@sifuraz <https://github.com/sifuraz>`_).
 
@@ -115,7 +114,7 @@ Improved Documentation
 - `pull request 588 <https://github.com/tox-dev/tox/pull/588>`_: Run pytest wit xfail_strict and adapt affected tests.
 
 2.7.0 (2017-04-02)
-==================
+------------------
 
 - `pull request 450 <https://github.com/tox-dev/tox/pull/450>`_: Stop after the first installdeps and first testenv create hooks
   succeed. This changes the default behaviour of `tox_testenv_create`
@@ -153,7 +152,7 @@ Improved Documentation
   Thanks Jason R. Coombs (`@jaraco <https://github.com/jaraco>`_).
 
 2.6.0 (2017-02-04)
-==================
+------------------
 
 - add "alwayscopy" config option to instruct virtualenv to always copy
   files instead of symlinking. Thanks Igor Duarte Cardoso (`@igordcard <https://github.com/igordcard>`_).
@@ -175,7 +174,7 @@ Improved Documentation
   Thanks Allan Feldman (`@a-feld <https://github.com/a-feld>`_).
 
 2.5.0 (2016-11-16)
-==================
+------------------
 
 - slightly backward incompatible: fix `#310 <https://github.com/tox-dev/tox/issues/310>`_: the {posargs} substitution
   now properly preserves the tox command line positional arguments. Positional
@@ -218,13 +217,13 @@ Improved Documentation
   succeeded', with relevant error message displayed. Thanks Lukasz Rogalski.
 
 2.4.1 (2016-10-12)
-==================
+------------------
 
 - fix `#380 <https://github.com/tox-dev/tox/issues/380>`_: properly perform substitution again. Thanks Ian
   Cordasco.
 
 2.4.0 (2016-10-12)
-==================
+------------------
 
 - remove PYTHONPATH from environment during the install phase because a
   tox-run should not have hidden dependencies and the test commands will also
@@ -277,7 +276,7 @@ Improved Documentation
   maintained, uses deprecated pytest API)
 
 2.3.2 (2016-02-11)
-==================
+------------------
 
 - fix `#314 <https://github.com/tox-dev/tox/issues/314>`_: fix command invocation with .py scripts on windows.
 
@@ -285,12 +284,12 @@ Improved Documentation
   posargs. Thanks Sachi King for the PR.
 
 2.3.1 (2015-12-14)
-==================
+------------------
 
 - fix `#294 <https://github.com/tox-dev/tox/issues/294>`_: re-allow cross-section substitution for setenv.
 
 2.3.0 (2015-12-09)
-==================
+------------------
 
 - DEPRECATE use of "indexservers" in tox.ini.  It complicates
   the internal code and it is recommended to rather use the
@@ -322,13 +321,13 @@ Improved Documentation
   tox core doesn't need it.
 
 2.2.1 (2015-12-09)
-==================
+------------------
 
 - fix bug where {envdir} substitution could not be used in setenv
   if that env value is then used in {basepython}. Thanks Florian Bruhin.
 
 2.2.0 (2015-11-11)
-==================
+------------------
 
 - fix `#265 <https://github.com/tox-dev/tox/issues/265>`_ and add LD_LIBRARY_PATH to passenv on linux by default
   because otherwise the python interpreter might not start up in
@@ -353,14 +352,14 @@ Improved Documentation
 
 
 2.1.1 (2015-06-23)
-==================
+------------------
 
 - fix platform skipping for detox
 
 - report skipped platforms as skips in the summary
 
 2.1.0 (2015-06-19)
-==================
+------------------
 
 - fix `#258 <https://github.com/tox-dev/tox/issues/258>`_, fix `#248 <https://github.com/tox-dev/tox/issues/248>`_, fix `#253 <https://github.com/tox-dev/tox/issues/253>`_: for non-test commands
   (installation, venv creation) we pass in the full invocation environment.
@@ -380,7 +379,7 @@ Improved Documentation
   Thanks Marc Abramowitz for pushing in this direction.
 
 2.0.2 (2015-06-03)
-==================
+------------------
 
 - fix `#247 <https://github.com/tox-dev/tox/issues/247>`_: tox now passes the LANG variable from the tox invocation
   environment to the test environment by default.
@@ -389,12 +388,12 @@ Improved Documentation
   Thanks Michael Krause.
 
 2.0.1 (2015-05-13)
-==================
+------------------
 
 - fix wheel packaging to properly require argparse on py26.
 
 2.0.0 (2015-05-12)
-==================
+------------------
 
 - (new) introduce environment variable isolation:
   tox now only passes the PATH and PIP_INDEX_URL variable from the tox
@@ -453,7 +452,7 @@ Improved Documentation
 - DEPRECATE distshare in documentation
 
 1.9.2 (2015-03-23)
-==================
+------------------
 
 - backout ability that --force-dep substitutes name/versions in
   requirement files due to various issues.
@@ -461,7 +460,7 @@ Improved Documentation
   which popped up with 1.9.1.
 
 1.9.1 (2015-03-23)
-==================
+------------------
 
 - use a file instead of a pipe for command output in "--result-json".
   Fixes some termination issues with python2.6.
@@ -474,7 +473,7 @@ Improved Documentation
 
 
 1.9.0 (2015-02-24)
-==================
+------------------
 
 - fix `#193 <https://github.com/tox-dev/tox/issues/193>`_: Remove ``--pre`` from the default ``install_command``; by
   default tox will now only install final releases from PyPI for unpinned
@@ -499,7 +498,7 @@ Improved Documentation
 
 
 1.8.1 (2014-10-24)
-==================
+------------------
 
 - fix `#190 <https://github.com/tox-dev/tox/issues/190>`_: allow setenv to be empty.
 
@@ -512,7 +511,7 @@ Improved Documentation
   Gedminas.
 
 1.8.0 (2014-09-24)
-==================
+------------------
 
 - new multi-dimensional configuration support.  Many thanks to
   Alexander Schepanovski for the complete PR with docs.
@@ -529,7 +528,7 @@ Improved Documentation
 
 
 1.7.2 (2014-07-15)
-==================
+------------------
 
 - fix `#150 <https://github.com/tox-dev/tox/issues/150>`_: parse {posargs} more like we used to do it pre 1.7.0.
   The 1.7.0 behaviour broke a lot of OpenStack projects.
@@ -552,7 +551,7 @@ Improved Documentation
   memory errors.  Thanks March Schlaich for the PR90.
 
 1.7.1 (2014-03-28)
-==================
+------------------
 
 - fix `#162 <https://github.com/tox-dev/tox/issues/162>`_: don't list python 2.5 as compatibiliy/supported
 
@@ -561,7 +560,7 @@ Improved Documentation
   interpreter which invoked tox.  Thanks Chris Withers, Ionel Maries Cristian.
 
 1.7.0 (2014-01-29)
-==================
+------------------
 
 - don't lookup "pip-script" anymore but rather just "pip" on windows
   as this is a pip implementation detail and changed with pip-1.5.
@@ -622,7 +621,7 @@ Improved Documentation
 - fix `#105 <https://github.com/tox-dev/tox/issues/105>`_ -- don't depend on an existing HOME directory from tox tests.
 
 1.6.1 (2013-09-04)
-==================
+------------------
 
 - fix `#119 <https://github.com/tox-dev/tox/issues/119>`_: {envsitepackagesdir} is now correctly computed and has
   a better test to prevent regression.
@@ -647,7 +646,7 @@ Improved Documentation
   this allows to use relative path like in "-rrequirements.txt".
 
 1.6.0 (2013-08-15)
-==================
+------------------
 
 - fix `#35 <https://github.com/tox-dev/tox/issues/35>`_: add new EXPERIMENTAL "install_command" testenv-option to
   configure the installation command with options for dep/pkg install.
@@ -689,7 +688,7 @@ Improved Documentation
   tox/interpreters.py file, tests in tests/test_interpreters.py.
 
 1.5.0 (2013-06-22)
-==================
+------------------
 
 - fix `#104 <https://github.com/tox-dev/tox/issues/104>`_: use setuptools by default, instead of distribute,
   now that setuptools has distribute merged.
@@ -716,7 +715,7 @@ Improved Documentation
 
 
 1.4.3 (2013-02-28)
-==================
+------------------
 
 - use pip-script.py instead of pip.exe on win32 to avoid the lock exe
   file on execution issue (thanks Philip Thiem)
@@ -764,20 +763,20 @@ Improved Documentation
   thanks to Barry Warsaw for both.
 
 1.4.2 (2012-07-20)
-==================
+------------------
 
 - fix some tests which fail if /tmp is a symlink to some other place
 - "python setup.py test" now runs tox tests via tox :)
   also added an example on how to do it for your project.
 
 1.4.1 (2012-07-03)
-==================
+------------------
 
 - fix `#41 <https://github.com/tox-dev/tox/issues/41>`_ better quoting on windows - you can now use "<" and ">" in
   deps specifications, thanks Chris Withers for reporting
 
 1.4 (2012-06-13)
-================
+----------------
 
 - fix `#26 <https://github.com/tox-dev/tox/issues/26>`_ - no warnings on absolute or relative specified paths for commands
 - fix `#33 <https://github.com/tox-dev/tox/issues/33>`_ - commentchars are ignored in key-value settings allowing
@@ -798,7 +797,7 @@ Improved Documentation
   python-2.4, just tox itself requires 2.5 or higher.
 
 1.3 2011-12-21
-==============
+--------------
 
 - fix: allow to specify wildcard filesystem paths when
   specifying dependencies such that tox searches for
@@ -812,7 +811,7 @@ Improved Documentation
 
 
 1.2 2011-11-10
-==============
+--------------
 
 - remove the virtualenv.py that was distributed with tox and depend
   on >=virtualenv-1.6.4 (possible now since the latter fixes a few bugs
@@ -824,7 +823,7 @@ Improved Documentation
   (thanks Michael Foord for reporting)
 
 1.1 (2011-07-08)
-================
+----------------
 
 - fix `#5 <https://github.com/tox-dev/tox/issues/5>`_ - don't require argparse for python versions that have it
 - fix `#6 <https://github.com/tox-dev/tox/issues/6>`_ - recreate virtualenv if installing dependencies failed
@@ -841,7 +840,7 @@ Improved Documentation
 - rework and enhance docs for display on readthedocs.org
 
 1.0
-===
+---
 
 - move repository and toxbootstrap links to https://bitbucket.org/hpk42/tox
 - fix `#7 <https://github.com/tox-dev/tox/issues/7>`_: introduce a "minversion" directive such that tox
@@ -867,7 +866,7 @@ Improved Documentation
 - added a CONTRIBUTORS file
 
 0.9
-===
+---
 
 - fix pip-installation mixups by always unsetting PIP_RESPECT_VIRTUALENV
   (thanks Armin Ronacher)
@@ -881,7 +880,7 @@ Improved Documentation
   more readable)
 
 0.8
-===
+---
 
 - work around a virtualenv limitation which crashes if
   PYTHONDONTWRITEBYTECODE is set.
@@ -895,7 +894,7 @@ Improved Documentation
 - change all internal source to strip trailing whitespaces
 
 0.7
-===
+---
 
 - use virtualenv5 (my own fork of virtualenv3) for now to create python3
   environments, fixes a couple of issues and makes tox more likely to
@@ -918,7 +917,7 @@ Improved Documentation
 - recreate virtualenv on changed configurations
 
 0.6
-===
+---
 
 - fix OSX related bugs that could cause the caller's environment to get
   screwed (sorry).  tox was using the same file as virtualenv for tracking
@@ -928,6 +927,6 @@ Improved Documentation
 - fix long description, thanks Michael Foord
 
 0.5
-===
+---
 
 - initial release

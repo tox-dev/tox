@@ -59,24 +59,3 @@ linkcheck_ignore = [r'http://holgerkrekel.net']
 extlinks = {'issue': ('https://github.com/tox-dev/tox/issues/%s', '#'),
             'pull': ('https://github.com/tox-dev/tox/pull/%s', 'p'),
             'user': ('https://github.com/%s', '@')}
-
-
-def generate_newsfragments():
-    """
-    generate and include into the changelog news fragments so they are also subject to the CI,
-    whenever a new release is done there should be no news fragment and as such this will have
-    no effect
-    """
-    current_path = os.getcwd()
-    project_root = os.path.join(here, os.path.pardir)
-    try:
-        os.chdir(project_root)
-        with open('.tox/docs/fragments.rst', 'w') as f:
-            cmd = ['towncrier', '--draft', '--dir', project_root]
-            out = subprocess.check_output(cmd).decode('utf-8').strip()
-            f.write(out)
-    finally:
-        os.chdir(current_path)
-
-
-generate_newsfragments()
