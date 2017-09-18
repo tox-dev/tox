@@ -8,6 +8,9 @@
     :target: https://ci.appveyor.com/project/RonnyPfannschmidt/tox
 .. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/tox-dev/tox
+.. image:: https://readthedocs.org/projects/tox/badge/?version=latest
+  :target: http://tox.readthedocs.io/en/latest/?badge=latest
+  :alt: Documentation Status
 
 tox automation project
 ======================
