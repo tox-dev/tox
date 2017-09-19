@@ -160,8 +160,8 @@ tox leverages bash-style syntax if you specify mintoxversion = 1.4:
 - $VARNAME or ${...} syntax instead of the older {} substitution.
 - XXX go through config.rst and see how it would need to be changed
 
-Transforming the examples: django-rest
---------------------------------------
+Example: django-rest
+--------------------
 
 The original `django-rest-framework tox.ini
 <https://github.com/encode/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini>`_
