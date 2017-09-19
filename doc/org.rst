@@ -16,7 +16,7 @@ Getting in contact:
 
 .. _support:
 
-paid professional support
+Paid professional support
 -------------------------
 
 contact `holger <http://holgerkrekel.net>`_ (`holger-twitter <http://twitter.com/hpk42>`_) at

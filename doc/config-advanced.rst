@@ -3,8 +3,8 @@ Advanced configuration
 
 **factor-based, multi-dimensional, platform-specific configuration**
 
-Example: Generating and selecting variants
-------------------------------------------
+Generating and selecting variants
+---------------------------------
 
 Suppose you want to test your package against python2.6, python2.7 and on the
 windows and linux platforms.  Today you would have to
@@ -81,21 +81,21 @@ Nothing special here :)
     Voila, this multi-dimensional ``tox.ini`` configuration
     defines 2*2=4 environments.
 
-The new "platform" setting
---------------------------
+The platform setting
+--------------------
 
-A testenv can define a new ``platform`` setting.  If its value
+A testenv can define a ``platform`` setting.  If its value
 is not contained in the string obtained from calling
 ``sys.platform`` the environment will be skipped.
 
-Expanding the ``envlist`` setting
----------------------------------
+Expand the ``envlist`` setting
+------------------------------
 
-The new ``envlist`` setting allows to use ``{}`` bash-style
+The ``envlist`` setting allows to use ``{}`` bash-style
 expressions.  XXX explanation or pointer to bash-docs
 
-Templating based on environments names
---------------------------------------
+Templating based on environment names
+-------------------------------------
 
 For a given environment name, all lines in a testenv section which
 start with "NAME: ..." will be checked for being part in the environment
@@ -105,16 +105,23 @@ Parts of an environment name are obtained by ``-``-splitting it.
 
 Variant specification with [variant:VARNAME]
 
-Showing all expanded sections
------------------------------
+Show all expanded sections
+--------------------------
 
 To help with understanding how the variants will produce section values,
 you can ask tox to show their expansion with a new option::
 
-    $ tox -l [XXX output omitted for now]
+    $ tox -[v]l
 
-Making sure your packages installs with easy_install
-----------------------------------------------------
+To show all environments (including ones not in envlist)::
+
+    $ tox -[v]a
+
+**note:** adding the ``v`` flag outputs the descriptions of environments if they are set via
+the `description` key.
+
+Make sure your packages installs with easy_install
+--------------------------------------------------
 
 The new "installer" testenv setting allows to specify the tool for
 installation in a given test environment::

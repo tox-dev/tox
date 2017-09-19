@@ -3,9 +3,8 @@ tox plugins
 
 .. versionadded:: 2.0
 
-With tox-2.0 a few aspects of tox running can be experimentally modified
-by writing hook functions.  The list of of available hook function is
-to grow over time on a per-need basis.
+Sonce tox 2 a few aspects of tox running can be experimentally modified by writing hook functions.
+The list of of available hook function is growing on a per-need basis.
 
 writing a setuptools entrypoints plugin
 ---------------------------------------
