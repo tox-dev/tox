@@ -1,5 +1,5 @@
-configuration specification
-===========================
+tox.ini reference
+=================
 
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html
 
@@ -7,7 +7,7 @@ configuration specification
 Below you find the specification, but you might want to skim some
 :doc:`examples` first and use this page as a reference.
 
-global settings
+Global settings
 ---------------
 
 List of optional global options::
@@ -412,7 +412,6 @@ then the value will be retrieved as ``os.environ['KEY']``
 and raise an Error if the environment variable
 does not exist.
 
-
 Environment variables with defaults
 +++++++++++++++++++++++++++++++++++
 
@@ -477,7 +476,6 @@ Previous versions of tox supported the ``[.*]`` pattern to denote
 positional arguments with defaults. This format has been deprecated.
 Use ``{posargs:DEFAULTS}`` to specify those.
 
-
 Values from other sections
 ++++++++++++++++++++++++++
 
@@ -505,7 +503,6 @@ You can put default values in one section and reference them in others to avoid 
     deps =
         mercurial
         {[base]deps}
-
 
 Generate environments, conditional settings
 -------------------------------------------
@@ -655,7 +652,6 @@ example could be rewritten as ``py{26,27}-sqlite``.
     - could be matched with expressions ``py26``, ``py26-mysql``,
       ``mysql-py26``,
     - but not with ``py2`` or ``py26-sql``.
-
 
 Other Rules and notes
 ---------------------

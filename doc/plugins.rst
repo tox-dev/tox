@@ -1,4 +1,4 @@
-plugins
+Plugins
 =======
 
 .. versionadded:: 2.0

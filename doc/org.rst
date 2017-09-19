@@ -22,13 +22,17 @@ Paid professional support
 contact `holger <http://holgerkrekel.net>`_ (`holger-twitter <http://twitter.com/hpk42>`_) at
 `merlinux.eu <http://merlinux.eu>`_, an association of experienced well-known Python developers.
 
-.. include:: developer-faq.rst
+.. include:: ../CHANGELOG.rst
+
+.. include:: ../CONTRIBUTING.rst
+
+.. include:: ../HOWTORELEASE.rst
 
 Historical information
-======================
+----------------------
 
 Less announcing, more change-logging
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 With version 2.5.0 we dropped creating special announcement documents and rely on communicating
 all relevant changes through the
