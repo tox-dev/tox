@@ -137,7 +137,7 @@ Here is a simple overview, with tox-specific bits:
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
-#. Install tox
+#. Install tox in development mode
 
    Of course tox is used to run all the tests of itself::
 

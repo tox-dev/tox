@@ -1,5 +1,5 @@
 Platform specification
-============================
+======================
 
 Basic multi-platform example
 ----------------------------

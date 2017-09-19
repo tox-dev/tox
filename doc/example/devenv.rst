@@ -1,4 +1,3 @@
-=======================
 Development environment
 =======================
 
@@ -14,12 +13,11 @@ Here are some examples illustrating how to set up a project's development
 environment using tox. For illustration purposes, let us call the development
 environment ``devenv``.
 
+Basic scenario
+--------------
 
-Example 1: Basic scenario
-=========================
-
-Step 1 - Configure the development environment
-----------------------------------------------
+Configure the development environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First, we prepare the tox configuration for our development environment by
 defining a ``[testenv:devenv]`` section in the project's ``tox.ini``
@@ -50,9 +48,8 @@ configuration:
     commands =
     deps =
 
-
-Step 2 - Create the development environment
--------------------------------------------
+Create the development environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the ``[testenv:devenv]`` configuration section has been defined, we create
 the actual development environment by running the following:
@@ -65,8 +62,8 @@ This creates the environment at the path specified by the environment's
 ``envdir`` configuration value.
 
 
-Example 2: A more complex scenario
-==================================
+Advanced  scenario
+==================
 
 Let us say we want our project development environment to:
 

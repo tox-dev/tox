@@ -1,8 +1,8 @@
 Basic usage
-=============================================
+===========
 
-a simple tox.ini / default environments
------------------------------------------------
+A simple tox.ini
+----------------
 
 Put basic information about your project and the test environments you
 want your project to run in into a ``tox.ini`` file that should
@@ -58,7 +58,7 @@ However, you can also create your own test environment names,
 see some of the examples in :doc:`examples <../examples>`.
 
 specifying a platform
------------------------------------------------
+---------------------
 
 .. versionadded:: 2.0
 
@@ -73,7 +73,7 @@ If the expression does not match against ``sys.platform``
 the test environment will be skipped.
 
 whitelisting non-virtualenv commands
------------------------------------------------
+------------------------------------
 
 .. versionadded:: 1.5
 
@@ -99,7 +99,8 @@ depending on requirements.txt or defining constraints
 
 .. versionadded:: 1.6.1
 
-(experimental) If you have a ``requirements.txt`` file or a ``constraints.txt`` file you can add it to your ``deps`` variable like this:
+(experimental) If you have a ``requirements.txt`` file or a ``constraints.txt`` file you
+can add it to your ``deps`` variable like this:
 
 .. code-block:: ini
 
@@ -117,10 +118,13 @@ or
 
     deps = -rrequirements.txt -cconstraints.txt
 
-All installation commands are executed using ``{toxinidir}`` (the directory where ``tox.ini`` resides) as the current working directory.
-Therefore, the underlying ``pip`` installation will assume ``requirements.txt`` or ``constraints.txt`` to exist at ``{toxinidir}/requirements.txt`` or ``{toxinidir}/contrains.txt``.
+All installation commands are executed using ``{toxinidir}`` (the directory where ``tox.ini``
+resides) as the current working directory.
+Therefore, the underlying ``pip`` installation will assume ``requirements.txt`` or
+``constraints.txt`` to exist at ``{toxinidir}/requirements.txt`` or ``{toxinidir}/contrains.txt``.
 
-This is actually a side effect that all elements of the dependency list is directly passed to ``pip``.
+This is actually a side effect that all elements of the dependency list is directly
+passed to ``pip``.
 
 For more details on ``requirements.txt`` files or ``constraints.txt`` files please see:
 
@@ -128,7 +132,7 @@ For more details on ``requirements.txt`` files or ``constraints.txt`` files plea
 * https://pip.pypa.io/en/stable/user_guide/#constraints-files
 
 using a different default PyPI url
------------------------------------------------
+----------------------------------
 
 .. versionadded:: 0.9
 
@@ -151,7 +155,7 @@ You can cause the same effect by this ``tox.ini`` content:
         default = http://pypi.my-alternative-index.org
 
 installing dependencies from multiple PyPI servers
----------------------------------------------------
+--------------------------------------------------
 
 .. versionadded:: 0.9
 
@@ -200,7 +204,7 @@ an alternative source for your dependencies:
 .. _pip: https://pip.pypa.io/en/stable/
 
 forcing re-creation of virtual environments
------------------------------------------------
+-------------------------------------------
 
 .. versionadded:: 0.9
 
@@ -214,7 +218,7 @@ would trigger a complete reinstallation of the existing py27 environment
 (or create it afresh if it doesn't exist).
 
 passing down environment variables
--------------------------------------------
+----------------------------------
 
 .. versionadded:: 2.0
 
@@ -232,7 +236,7 @@ When your test commands execute they will execute with
 the same LANG setting as the one with which tox was invoked.
 
 setting environment variables
--------------------------------------------
+-----------------------------
 
 .. versionadded:: 1.0
 
@@ -250,7 +254,7 @@ from the ``subdir`` below the directory where your ``tox.ini``
 file resides.
 
 special handling of PYTHONHASHSEED
--------------------------------------------
+----------------------------------
 
 .. versionadded:: 1.6.2
 
@@ -276,7 +280,7 @@ If you wish to disable this feature, you can pass the command line option
 .. _PYTHONHASHSEED: https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHASHSEED
 
 Integration with "setup.py test" command
-----------------------------------------------------
+----------------------------------------
 
 .. warning::
 
@@ -289,8 +293,6 @@ Integration with "setup.py test" command
   <https://docs.pytest.org/en/latest/goodpractices.html#integrating-with-setuptools-python-setup-py-test-pytest-runner>`_.
   As the python eco-system rather moves away from using ``setup.py`` as a tool entry
   point it's maybe best to not go for any ``setup.py test`` integration.
-
-
 
 Ignoring a command exit code
 ----------------------------

@@ -1,5 +1,3 @@
-.. be in -*- rst -*- mode!
-
 tox plugins
 ===========
 
@@ -8,7 +6,6 @@ tox plugins
 With tox-2.0 a few aspects of tox running can be experimentally modified
 by writing hook functions.  The list of of available hook function is
 to grow over time on a per-need basis.
-
 
 writing a setuptools entrypoints plugin
 ---------------------------------------
@@ -48,7 +45,6 @@ and later publish it via something like:
 
     python setup.py sdist register upload
 
-
 Writing hook implementations
 ----------------------------
 
@@ -71,8 +67,6 @@ by decorating them with tox's ``hookimpl`` marker:
 
 If you put this into a module and make it pypi-installable with the ``tox``
 entry point you'll get your code executed as part of a tox run.
-
-
 
 tox hook specifications and related API
 ---------------------------------------

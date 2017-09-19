@@ -3,12 +3,10 @@
 .. toctree::
 
    start
-   install
    examples
    config
-   config-v2
+   config-advanced
    plugins
-   example/result
    org
 
 .. include:: ../CHANGELOG.rst

@@ -2,17 +2,14 @@
 Welcome to the tox automation project
 =====================================
 
-vision: standardize testing in Python
-=====================================
-
 ``tox`` aims to automate and standardize testing in Python.  It is part
 of a larger vision of easing the packaging, testing and release process
 of Python software.
 
+**vision: standardize testing in Python  - testing out of the box**
+
 What is tox?
 ============
-
-**testing out of the box**
 
 tox is a generic virtualenv_ management and test command line tool you can use for:
 
@@ -23,6 +20,26 @@ tox is a generic virtualenv_ management and test command line tool you can use f
 * acting as a frontend to Continuous Integration servers, greatly
   reducing boilerplate and merging CI and shell-based testing.
 
+* in a nutshell:
+
+    **Installation**: pip install tox
+
+    **Supported Pythons**: CPython 2.6-3.6, jython, pypy
+
+    **Operating systems**: Linux, Windows, macOS, Unix
+
+    **License**: MIT
+
+    **development**: https://github.com/tox-dev
+
+Installation
+============
+
+.. code-block:: shell
+
+   pip install tox
+
+It is fine to install ``tox`` itself into a virtualenv_ environment.
 
 Basic example
 =============

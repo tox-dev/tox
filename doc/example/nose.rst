@@ -1,12 +1,12 @@
-nose and tox
-=================================
+tox and nose
+============
 
 It is easy to integrate `nosetests`_ runs with tox.
 For starters here is a simple ``tox.ini`` config to configure your project
 for running with nose:
 
 Basic nosetests example
---------------------------
+-----------------------
 
 Assuming the following layout:
 
@@ -30,7 +30,7 @@ then run the specified test command.
 
 
 More examples?
-------------------------------------------
+--------------
 
 You can use and combine other features of ``tox`` with your tox runs,
 e.g. :ref:`sphinx checks`.  If you figure out some particular configurations

@@ -1,11 +1,11 @@
-pytest and tox
-=================================
+tox and pytest
+==============
 
 It is easy to integrate `pytest`_ runs with tox.  If you encounter
 issues, please check if they are `listed as a known issue`_ and/or use the :ref:`support`.
 
 Basic example
---------------------------
+-------------
 
 Assuming the following layout:
 
@@ -30,8 +30,10 @@ you can now invoke ``tox`` in the directory where your ``tox.ini`` resides.
 with the ``python2.6`` and ``python3.1`` interpreters, respectively, and will
 then run the specified test command in each of them.
 
-Extended example: change dir before test and use per-virtualenv tempdir
---------------------------------------------------------------------------
+Advanced example
+----------------
+
+*change dir before test and use per-virtualenv tempdir*
 
 Assuming the following layout:
 
@@ -60,8 +62,8 @@ and the test run will use the per-virtualenv temporary directory.
 
 .. _`passing positional arguments`:
 
-Using multiple CPUs for test runs
------------------------------------
+Run test on multiple CPUs
+-------------------------
 
 ``pytest`` supports distributing tests to multiple processes and hosts
 through the `pytest-xdist`_ plugin.  Here is an example configuration
@@ -79,8 +81,8 @@ to make ``tox`` use this feature:
 
 .. _`listed as a known issue`:
 
-Known Issues and limitations
------------------------------
+Issues and limitations
+----------------------
 
 **Too long filenames**. you may encounter "too long filenames" for temporarily
 created files in your pytest run.  Try to not use the "--basetemp" parameter.

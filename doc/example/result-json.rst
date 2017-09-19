@@ -1,12 +1,11 @@
-Writing a json result file
---------------------------------------------------------
+Write a json report file
+------------------------
 
 .. versionadded: 1.6
 
 You can instruct tox to write a json-report file via:
 
 .. code-block:: shell
-
 
     tox --result-json=PATH
 

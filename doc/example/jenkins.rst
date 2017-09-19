@@ -1,14 +1,14 @@
-Using tox with the Jenkins Integration Server
-=================================================
+Using tox with Jenkins
+======================
 
 Using Jenkins multi-configuration jobs
--------------------------------------------
+--------------------------------------
 
 The Jenkins_ continuous integration server allows to define "jobs" with
-"build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
+"build steps" which can be test invocations.  install ``tox`` on your
 default Python installation on each Jenkins slave, you can easily create
-a Jenkins multi-configuration job that will drive your tox runs from the CI-server side,
-using these steps:
+a Jenkins multi-configuration job that will drive your tox runs from the
+CI-server side, using these steps:
 
 * install the Python plugin for Jenkins under "manage jenkins"
 * create a "multi-configuration" job, give it a name of your choice
@@ -39,45 +39,8 @@ for example with ``pytest`` it is done like this:
 
     commands = pytest --junitxml=junit-{envname}.xml
 
-
-
-**zero-installation** for slaves
--------------------------------------------------------------
-
-.. note::
-
-    This feature is broken currently because "toxbootstrap.py"
-    has been removed.  Please file an issue if you'd like to
-    see it back.
-
-If you manage many Jenkins slaves and want to use the latest officially
-released tox (or latest development version) and want to skip manually
-installing ``tox`` then substitute the above **Python build step** code
-with this:
-
-.. code-block:: python
-
-    import urllib, os
-    url = "https://bitbucket.org/hpk42/tox/raw/default/toxbootstrap.py"
-    #os.environ['USETOXDEV']="1"  # use tox dev version
-    d = dict(__file__='toxbootstrap.py')
-    exec urllib.urlopen(url).read() in d
-    d['cmdline'](['--recreate'])
-
-The downloaded `toxbootstrap.py` file downloads all necessary files to
-install ``tox`` in a virtual sub environment.  Notes:
-
-* uncomment the line containing ``USETOXDEV`` to use the latest
-  development-release version of tox instead of the
-  latest released version.
-
-* adapt the options in the last line as needed (the example code
-  will cause tox to reinstall all virtual environments all the time
-  which is often what one wants in CI server contexts)
-
-
 Integrating "sphinx" documentation checks in a Jenkins job
-----------------------------------------------------------------
+----------------------------------------------------------
 
 If you are using a multi-configuration Jenkins job which collects
 JUnit Test results you will run into problems using the previous
@@ -128,7 +91,7 @@ and does not need to be in use or installed with any other environment.
 .. _`jenkins artifact example`:
 
 Access package artifacts between Jenkins jobs
---------------------------------------------------------
+---------------------------------------------
 
 .. _`Jenkins Copy Artifact plugin`: https://wiki.jenkins.io/display/JENKINS/Copy+Artifact+Plugin
 
@@ -167,9 +130,8 @@ So if you are using defaults you can re-use and debug exactly the
 same ``tox.ini`` file and make use of automatic sharing of
 your artifacts between runs or Jenkins jobs.
 
-
 Avoiding the "path too long" error with long shebang lines
----------------------------------------------------------------
+----------------------------------------------------------
 
 If you are using Jenkins builds you might run into the issue
 that tox can not call ``pip`` because the so called "shebang"
@@ -183,6 +145,5 @@ directory for storing its workdir results and removes
 it after the tox run finishes.  This could be used
 from CI environments where you probably anyway want
 to recreate everything on new runs.
-
 
 .. include:: ../_shared-links.rst

@@ -1,8 +1,8 @@
 unittest2, discover and tox
-===============================
+===========================
 
-Running unittests with 'discover'
-------------------------------------------
+Run unittests with 'discover'
+-----------------------------
 
 .. _Pygments: https://pypi.python.org/pypi/Pygments
 
@@ -30,8 +30,8 @@ If you now invoke ``tox`` you will see the creation of
 three virtual environments and a unittest-run performed
 in each of them.
 
-Running unittest2 and sphinx tests in one go
------------------------------------------------------
+Run unittest2 and sphinx tests in one go
+----------------------------------------
 
 .. _`Michael Foord`: http://www.voidspace.org.uk/
 .. _tox.ini: https://github.com/testing-cabal/mock/blob/master/tox.ini
@@ -98,4 +98,3 @@ in each of the environments. This allows you to customize test discovery
 in your ``tox`` runs.
 
 .. include:: ../_shared-links.rst
-
