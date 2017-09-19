@@ -3,8 +3,8 @@ Advanced configuration
 
 **factor-based, multi-dimensional, platform-specific configuration**
 
-Generating and selecting variants
----------------------------------
+Generate and select variants
+----------------------------
 
 Suppose you want to test your package against python2.6, python2.7 and on the
 windows and linux platforms.  Today you would have to
@@ -105,8 +105,8 @@ Parts of an environment name are obtained by ``-``-splitting it.
 
 Variant specification with [variant:VARNAME]
 
-Show all expanded sections
---------------------------
+Show all sections
+-----------------
 
 To help with understanding how the variants will produce section values,
 you can ask tox to show their expansion with a new option::
@@ -123,7 +123,7 @@ the `description` key.
 Make sure your packages installs with easy_install
 --------------------------------------------------
 
-The new "installer" testenv setting allows to specify the tool for
+The "installer" testenv setting allows to specify the tool for
 installation in a given test environment::
 
     [testenv]
@@ -193,8 +193,8 @@ Note that ``{,-example}`` in the envlist denotes two values, an empty
 one and a ``example`` one.  The empty value means that there are no specific
 settings and thus no need to define a variant name.
 
-Transforming the examples: django-treebeard
--------------------------------------------
+Example: django-treebeard
+-------------------------
 
 Another `tox.ini
 <https://bitbucket.org/tabo/django-treebeard/raw/93b579395a9c/tox.ini>`_
