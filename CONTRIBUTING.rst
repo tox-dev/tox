@@ -46,8 +46,6 @@ Fix bugs
 Look through the GitHub issues for bugs.  Here is a filter you can use:
 https://github.com/tox-dev/tox/labels/bug
 
-:ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
-
 Don't forget to check the issue trackers of your favourite plugins, too!
 
 .. _writeplugins:
@@ -58,16 +56,12 @@ Implement features
 Look through the GitHub issues for enhancements.  Here is a filter you can use:
 https://github.com/tox-dev/tox/labels/enhancement
 
-:ref:`Talk <contact>` to developers to find out how you can implement specific
-features.
-
 Write documentation
 -------------------
 
 tox could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
-* Documentation translations.  We currently have only English.
 * Docstrings.  There can never be too many of them.
 * Blog posts, articles and such -- they're all very appreciated.
 
@@ -81,61 +75,9 @@ without using a local copy.  This can be convenient for small fixes.
 
         $ tox -e docs
 
-    The built documentation should be available in the ``doc/en/_build/``.
-
-    Where 'en' refers to the documentation language.
+    The built documentation should be available in the ``doc/_build/``.
 
 .. _submitplugin:
-
-Submitting plugins to tox-dev
------------------------------
-
-tox development of the core, some plugins and support code happens
-in repositories living under the ``tox-dev`` organisation:
-
-- `tox-dev on GitHub <https://github.com/tox-dev>`_
-
-All tox-dev team members have write access to all contained
-repositories.  tox core and plugins are generally developed
-using `pull requests`_ to respective repositories.
-
-The objectives of the ``tox-dev`` organisation are:
-
-* Having a central location for popular tox plugins
-* Sharing some of the maintenance responsibility (in case a maintainer no
-  longer wishes to maintain a plugin)
-
-You can submit your plugin by opening an `issue <https://github.com/tox-dev/tox/issues/new>`_ requesting to add you as a member of tox-dev to be able to integrate the plugin. As a member of the or you can then transfer the plugin yourself.
-
-The plugin must have the following:
-
-- PyPI presence with a ``setup.py`` that contains a license, ``tox-``
-  prefixed name, version number, authors, short and long description.
-
-- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
-
-- a ``README.txt`` describing how to use the plugin and on which
-  platforms it runs.
-
-- a ``LICENSE.txt`` file or equivalent containing the licensing
-  information, with matching info in ``setup.py``.
-
-- an issue tracker for bug reports and enhancement requests.
-
-- a `changelog <http://keepachangelog.com/>`_
-
-If no contributor strongly objects, the repository can then be
-transferred to the ``tox-dev`` organisation. For details see
-`about repository transfers <https://help.github.com/articles/about-repository-transfers/>`_
-
-The ``tox-dev/Contributors`` team has write access to all projects, and
-every project administrator is in it. We recommend that each plugin has at least three
-people who have the right to release to PyPI.
-
-Repository owners can rest assured that no ``tox-dev`` administrator will ever make
-releases of your repository or take ownership in any way, except in rare cases
-where someone becomes unresponsive after months of contact attempts.
-As stated, the objective is to share maintenance and avoid "plugin-abandon".
 
 .. _`pull requests`:
 .. _pull-requests:
@@ -163,7 +105,7 @@ Short version
    in the pull request form
 
 Long version
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 What is a "pull request"?  It informs the project's core developers about the
 changes you want to review and merge.  Pull requests are stored on
@@ -243,3 +185,54 @@ Here is a simple overview, with tox-specific bits:
 
     base-fork: tox-dev/tox
     base: master
+
+Submitting plugins to tox-dev
+-----------------------------
+
+tox development of the core, some plugins and support code happens
+in repositories living under the ``tox-dev`` organisation:
+
+- `tox-dev on GitHub <https://github.com/tox-dev>`_
+
+All tox-dev team members have write access to all contained
+repositories.  tox core and plugins are generally developed
+using `pull requests`_ to respective repositories.
+
+The objectives of the ``tox-dev`` organisation are:
+
+* Having a central location for popular tox plugins
+* Sharing some of the maintenance responsibility (in case a maintainer no
+  longer wishes to maintain a plugin)
+
+You can submit your plugin by opening an `issue <https://github.com/tox-dev/tox/issues/new>`_
+requesting to add you as a member of tox-dev to be able to integrate the plugin.
+As a member of the or you can then transfer the plugin yourself.
+
+The plugin must have the following:
+
+- PyPI presence with a ``setup.py`` that contains a license, ``tox-``
+  prefixed name, version number, authors, short and long description.
+
+- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
+
+- a ``README.txt`` describing how to use the plugin and on which
+  platforms it runs.
+
+- a ``LICENSE.txt`` file or equivalent containing the licensing
+  information, with matching info in ``setup.py``.
+
+- an issue tracker for bug reports and enhancement requests.
+
+- a `changelog <http://keepachangelog.com/>`_
+
+If no contributor strongly objects, the repository can then be
+transferred to the ``tox-dev`` organisation. For details see
+`about repository transfers <https://help.github.com/articles/about-repository-transfers/>`_
+
+Memebrs of the tox organization have write access to all projects.
+We recommend that each plugin has at least three people who have the right to release to PyPI.
+
+Repository owners can rest assured that no ``tox-dev`` administrator will ever make
+releases of your repository or take ownership in any way, except in rare cases
+where someone becomes unresponsive after months of contact attempts.
+As stated, the objective is to share maintenance and avoid "plugin-abandon".
