@@ -1,20 +1,16 @@
-============================
 Contribution getting started
 ============================
 
 Contributions are highly welcomed and appreciated.  Every little help counts,
-so do not hesitate!
+so do not hesitate! If you like tox, also share some love on Twitter or in your blog posts.
 
 .. contents:: Contribution links
    :depth: 2
-
 
 .. _submitfeedback:
 
 Feature requests and feedback
 -----------------------------
-
-Do you like tox?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
 `submit them as issues <https://github.com/tox-dev/tox/issues>`_ and:
@@ -22,26 +18,25 @@ We'd also like to hear about your propositions and suggestions.  Feel free to
 * Explain in detail how they should work.
 * Keep the scope as narrow as possible.  This will make it easier to implement.
 
-
 .. _reportbugs:
 
 Report bugs
 -----------
 
-Report bugs for pytest in the `issue tracker <https://github.com/tox-dev/tox/issues>`_.
+Report bugs for tox in the `issue tracker <https://github.com/tox-dev/tox/issues>`_.
 
 If you are reporting a bug, please include:
 
 * Your operating system name and version.
 * Any details about your local setup that might be helpful in troubleshooting,
-  specifically the Python interpreter version, installed libraries, and pytest
+  specifically the Python interpreter version, installed libraries, and tox
   version.
-* Detailed steps to reproduce the bug.
+* Detailed steps to reproduce the bug, or - even better, a n xfaling test reproduces the bug
 
 If you can write a demonstration test that currently fails but should pass
 (xfail), that is a very useful commit to make as well, even if you cannot
-fix the bug itself.
-
+fix the bug itself (e.g. something like this in
+`test_config <https://github.com/tox-dev/tox/blob/2.8.2/tests/test_config.py#L2206>)`_
 
 .. _fixbugs:
 
@@ -100,22 +95,21 @@ in repositories living under the ``tox-dev`` organisation:
 
 - `tox-dev on GitHub <https://github.com/tox-dev>`_
 
-All tox-dev Contributors team members have write access to all contained
-repositories.  Pytest core and plugins are generally developed
+All tox-dev team members have write access to all contained
+repositories.  tox core and plugins are generally developed
 using `pull requests`_ to respective repositories.
 
 The objectives of the ``tox-dev`` organisation are:
 
-* Having a central location for popular pytest plugins
+* Having a central location for popular tox plugins
 * Sharing some of the maintenance responsibility (in case a maintainer no
   longer wishes to maintain a plugin)
 
-You can submit your plugin by subscribing to the `tox-dev mail list
-<https://mail.python.org/mailman/listinfo/tox-dev>`_ and writing a
-mail pointing to your existing pytest plugin repository which must have
-the following:
+You can submit your plugin by opening an `issue <https://github.com/tox-dev/tox/issues/new>`_ requesting to add you as a member of tox-dev to be able to integrate the plugin. As a member of the or you can then transfer the plugin yourself.
 
-- PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
+The plugin must have the following:
+
+- PyPI presence with a ``setup.py`` that contains a license, ``tox-``
   prefixed name, version number, authors, short and long description.
 
 - a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
@@ -130,18 +124,9 @@ the following:
 
 - a `changelog <http://keepachangelog.com/>`_
 
-If no contributor strongly objects and two agree, the repository can then be
-transferred to the ``tox-dev`` organisation.
-
-Here's a rundown of how a repository transfer usually proceeds
-(using a repository named ``joedoe/pytest-xyz`` as example):
-
-* ``joedoe`` transfers repository ownership to ``tox-dev`` administrator ``calvin``.
-* ``calvin`` creates ``pytest-xyz-admin`` and ``pytest-xyz-developers`` teams, inviting ``joedoe`` to both as **maintainer**.
-* ``calvin`` transfers repository to ``tox-dev`` and configures team access:
-
-  - ``pytest-xyz-admin`` **admin** access;
-  - ``pytest-xyz-developers`` **write** access;
+If no contributor strongly objects, the repository can then be
+transferred to the ``tox-dev`` organisation. For details see
+`about repository transfers <https://help.github.com/articles/about-repository-transfers/>`_
 
 The ``tox-dev/Contributors`` team has write access to all projects, and
 every project administrator is in it. We recommend that each plugin has at least three
@@ -152,7 +137,6 @@ releases of your repository or take ownership in any way, except in rare cases
 where someone becomes unresponsive after months of contact attempts.
 As stated, the objective is to share maintenance and avoid "plugin-abandon".
 
-
 .. _`pull requests`:
 .. _pull-requests:
 
@@ -160,22 +144,23 @@ Preparing Pull Requests
 -----------------------
 
 Short version
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
-#. Fork the repository;
-#. Always target ``master``
+#. `Fork the repository<https://help.github.com/articles/fork-a-repo/>`_
+#. Make your changes.
+#. open a `pull request <https://help.github.com/articles/about-pull-requests/>`_ targeting the ``master`` branch.
 #. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
-#. Tests are run using ``tox``::
+   You can also add a pre commit hook to your local clone to run the style checks and fixes
+   (see hint after running ``tox -e fix-lint``)
+#. Tests for tox are (obvioulsy) run using ``tox``::
 
-    tox -e style,py27,py36
+    tox -e fix-lint,py27,py36
 
    The test environments above are usually enough to cover most cases locally.
 
-#. Write a ``changelog`` entry: ``changelog/2574.bugfix``, use issue id number
-   and one of ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or
-   ``trivial`` for the issue type.
-#. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
-
+#. Consider the
+   `checklist <https://github.com/Avira/tox/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`_
+   in the pull request form
 
 Long version
 ~~~~~~~~~~~~
@@ -188,17 +173,17 @@ even add more commits to it later on. There's an excellent tutorial on how Pull
 Requests work in the
 `GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_.
 
-Here is a simple overview, with pytest-specific bits:
+Here is a simple overview, with tox-specific bits:
 
 #. Fork the
-   `pytest GitHub repository <https://github.com/tox-dev/tox>`__.  It's
+   `tox GitHub repository <https://github.com/tox-dev/tox>`__.  It's
    fine to use ``tox`` as your fork repository name because it will live
    under your user.
 
 #. Clone your fork locally using `git <https://git-scm.com/>`_ and create a branch::
 
-    $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
-    $ cd pytest
+    $ git clone git@github.com:YOUR_GITHUB_USERNAME/tox.git
+    $ cd tox
     # now, to fix a bug create your own branch off "master":
 
         $ git checkout -b your-bugfix-branch-name master
@@ -207,43 +192,29 @@ Here is a simple overview, with pytest-specific bits:
 
         $ git checkout -b your-feature-branch-name features
 
-   Given we have "major.minor.micro" version numbers, bugfixes will usually
-   be released in micro releases whereas features will be released in
-   minor releases and incompatible changes in major releases.
-
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
 #. Install tox
 
-   Tox is used to run all the tests and will automatically setup virtualenvs
-   to run the tests in.
-   (will implicitly use http://www.virtualenv.org/en/latest/)::
+   Of course tox is used to run all the tests of itself::
 
-    $ pip install tox
+    $ cd </path/to/your/tox/clone>
+    $ pip install [-e] .
 
 #. Run all the tests
 
    You need to have Python 2.7 and 3.6 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ tox -e linting,py27,py36
+    $ tox -e fix-lint,py27,py36
 
    This command will run tests via the "tox" tool against Python 2.7 and 3.6
-   and also perform "lint" coding-style checks.
+   and also perform style checks with some automatic fixes.
 
 #. You can now edit your local working copy. Please follow PEP-8.
 
    You can now make the changes you want and run the tests again as necessary.
-
-   If you have too much linting errors, try running::
-
-    $ tox -e fix-lint
-
-   To fix pep8 related errors.
-
-   You can pass different options to ``tox``. For example, to run tests on Python 2.7 and pass options to pytest
-   (e.g. enter pdb on failure) to pytest you can do::
 
     $ tox -e py27 -- --pdb
 
@@ -251,18 +222,21 @@ Here is a simple overview, with pytest-specific bits:
 
     $ tox -e py36 -- testing/test_config.py
 
+   You can also use the dev environment:
+
+    $ tox -e dev
+
+   To get information about all environements, type:
+
+   $ tox -av
+
 #. Commit and push once your tests pass and you are happy with your change(s)::
 
     $ git commit -a -m "<commit message>"
     $ git push -u
 
-#. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>``,
-   where *issueid* is the number of the issue related to the change and *type* is one of
-   ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or ``trivial``.
 
-#. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
-
-#. Finally, submit a pull request through the GitHub website using this data::
+#. submit a pull request through the GitHub website and and consider the `checklist <https://github.com/Avira/tox/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`_ in the pull request form::
 
     head-fork: YOUR_GITHUB_USERNAME/tox
     compare: your-branch-name
