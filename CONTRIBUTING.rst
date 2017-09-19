@@ -269,5 +269,3 @@ Here is a simple overview, with pytest-specific bits:
 
     base-fork: tox-dev/tox
     base: master
-
-
