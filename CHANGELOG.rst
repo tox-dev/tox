@@ -7,7 +7,7 @@ Backward incompatible (breaking) changes will only be introduced in major versio
 with advance notice in the **Deprecations** section of releases.
 
 Changes that already arrived in master, but are not released yet can be found as fragments in the
-`"changelog" directory <https://github.com/tox-dev/tox/tree/master/CHANGELOG.rst>`_.
+`"changelog" directory <https://github.com/tox-dev/tox/tree/master/changelog>`_.
 
 If you want to know more details: since version 2.8 releases are organized as Github projects.
 To see all closed issues and merged pull requests, contained in a release, visit the projects
