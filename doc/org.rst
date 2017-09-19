@@ -1,7 +1,7 @@
 Organisatorical
 ===============
 
-support and contact channels
+Support and contact channels
 ----------------------------
 
 Getting in contact:
@@ -22,10 +22,6 @@ Paid professional support
 contact `holger <http://holgerkrekel.net>`_ (`holger-twitter <http://twitter.com/hpk42>`_) at
 `merlinux.eu <http://merlinux.eu>`_, an association of experienced well-known Python developers.
 
-.. include:: ../CHANGELOG.rst
-
-.. include:: ../CONTRIBUTING.rst
-
 .. include:: ../HOWTORELEASE.rst
 
 Historical information
@@ -40,18 +36,17 @@ all relevant changes through the
 `pypi <https://pypi.org/project/tox/>`_ for a rendered version of the last changes containing
 links to the important issues and pull requests that were integrated into the release.
 
-The historic release announcements are still online here for various versions:
-
-* `0.5 <http://tox.readthedocs.io/en/2.4.0/announce/release-0.5.html>`_
-* `1.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.0.html>`_
-* `1.1 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.1.html>`_
-* `1.2 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.2.html>`_
-* `1.3 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.3.html>`_
-* `1.4 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.4.html>`_
-* `1.4.3 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.4.3.html>`_
-* `1.8 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.8.html>`_
-* `1.9 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.9.html>`_
-* `2.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.0.html>`_
-* `2.4.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.4.0.html>`_
+The historic release announcements cna be found here:
+`0.5 <http://tox.readthedocs.io/en/2.4.0/announce/release-0.5.html>`_,
+`1.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.0.html>`_,
+`1.1 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.1.html>`_,
+`1.2 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.2.html>`_,
+`1.3 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.3.html>`_,
+`1.4 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.4.html>`_,
+`1.4.3 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.4.3.html>`_,
+`1.8 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.8.html>`_,
+`1.9 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.9.html>`_,
+`2.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.0.html>`_,
+`2.4.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.4.0.html>`_
 
 .. include:: _shared-links.rst

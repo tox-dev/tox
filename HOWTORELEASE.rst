@@ -1,5 +1,5 @@
-How to release tox
-==================
+tox release process
+-------------------
 
 This matches the current model that can be summarized as this:
 
@@ -12,7 +12,7 @@ This matches the current model that can be summarized as this:
 **"Special" releases**: (in seldom cases when master has moved on and is not in a state where a quick release should be done from that state): the current release tag is checked out, the necessary fixes are cherry picked and a package with a patch release increase is built from that state. This is not very clean but seems good enough at the moment as it does not happen very often. If it does happen more often, this needs some rethinking (and rather into the direction of making less buggy releases than complicating release development/release process).
 
 Prerequisites
--------------
+^^^^^^^^^^^^^
 
 * Push rights for https://github.com/tox-dev/tox
 * Release rights for https://pypi.org/project/tox/
@@ -21,7 +21,7 @@ Prerequisites
 * Accountability: if you cut a release that breaks the CI builds of projects using tox, you are expected to fix this within a reasonable time frame (hours/days - not weeks/months) - if you don't feel quite capable of doing this yet, partner up with a more experienced member of the team and make sure they got your back if things break.
 
 pypi/devpi configuration
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 **note:** this is in a state of flux due to changes in pypi infrastructure and depending whether devpi push can be used or not. **Please keep this updated according to current process**
 
@@ -59,12 +59,12 @@ The script executes the necessary actions and asks for confirmation to go on bef
 
 
 Get started with devpi cloud test
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Configure a repository as per-instructions on devpi-cloud-test_ to test the package on Travis_ and AppVeyor_. All test environments should pass.
 
 If you don't want or can't do the cloud test step ...
------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Run from multiple machines::
 

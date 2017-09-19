@@ -1,6 +1,7 @@
-include CHANGELOG
-include README.rst
+include CHANGELOG.rst
 include CONTRIBUTORS
+include CONTRIBUTING.rst
+include README.rst
 include LICENSE
 include setup.py
 include tox.ini

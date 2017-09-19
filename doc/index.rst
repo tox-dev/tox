@@ -1,12 +1,11 @@
-=====================================
-Welcome to the tox automation project
-=====================================
+===========================
+Testing out of the box -tox
+===========================
 
-``tox`` aims to automate and standardize testing in Python.  It is part
-of a larger vision of easing the packaging, testing and release process
-of Python software.
+**Welcome to the tox automation project - helping to standardize testing in Python since 2012**
 
-**vision: standardize testing in Python  - testing out of the box**
+``tox`` aims to automate and standardize testing in Python.  It is part of a larger vision of
+easing the packaging, testing and release process of Python software.
 
 What is tox?
 ============
@@ -115,5 +114,9 @@ Current features
     plugins
     developer-faq
     org
+
+.. include:: ../CHANGELOG.rst
+
+.. include:: ../CONTRIBUTING.rst
 
 .. include:: _shared-links.rst

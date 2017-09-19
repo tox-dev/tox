@@ -1,13 +1,8 @@
-Contribution getting started
-============================
+CONTRIBUTING
+============
 
 Contributions are highly welcomed and appreciated.  Every little help counts,
 so do not hesitate! If you like tox, also share some love on Twitter or in your blog posts.
-
-.. contents:: Contribution links
-   :depth: 2
-
-.. _submitfeedback:
 
 Feature requests and feedback
 -----------------------------
@@ -17,8 +12,6 @@ We'd also like to hear about your propositions and suggestions.  Feel free to
 
 * Explain in detail how they should work.
 * Keep the scope as narrow as possible.  This will make it easier to implement.
-
-.. _reportbugs:
 
 Report bugs
 -----------
@@ -38,8 +31,6 @@ If you can write a demonstration test that currently fails but should pass
 fix the bug itself (e.g. something like this in
 `test_config <https://github.com/tox-dev/tox/blob/2.8.2/tests/test_config.py#L2206>`_
 
-.. _fixbugs:
-
 Fix bugs
 --------
 
@@ -47,8 +38,6 @@ Look through the GitHub issues for bugs.  Here is a filter you can use:
 https://github.com/tox-dev/tox/labels/bug
 
 Don't forget to check the issue trackers of your favourite plugins, too!
-
-.. _writeplugins:
 
 Implement features
 ------------------
@@ -76,11 +65,6 @@ without using a local copy.  This can be convenient for small fixes.
         $ tox -e docs
 
     The built documentation should be available in the ``doc/_build/``.
-
-.. _submitplugin:
-
-.. _`pull requests`:
-.. _pull-requests:
 
 Preparing Pull Requests
 -----------------------
@@ -196,7 +180,7 @@ in repositories living under the ``tox-dev`` organisation:
 
 All tox-dev team members have write access to all contained
 repositories.  tox core and plugins are generally developed
-using `pull requests`_ to respective repositories.
+using pull requests to respective repositories.
 
 The objectives of the ``tox-dev`` organisation are:
 
@@ -223,7 +207,7 @@ The plugin must have the following:
 
 - an issue tracker for bug reports and enhancement requests.
 
-- a `changelog <http://keepachangelog.com/>`_
+- a CHANGELOG (e.g see http://keepachangelog.com)
 
 If no contributor strongly objects, the repository can then be
 transferred to the ``tox-dev`` organisation. For details see
