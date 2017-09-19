@@ -3,7 +3,7 @@
 envlist=py27,py35
 
 [testenv]
-commands= py.test --timeout=180 {posargs:tests}
+commands= pytest --timeout=180 {posargs:tests}
 deps=pytest>=2.3.5
     pytest-timeout
 
@@ -71,11 +71,11 @@ command = python setup.py bdist_wheel
 command = conda build ./conda-recipe
 
 [testenv:{sdist,wheel}]
-commands = py.test
+commands = pytest
 
 [testenv:conda]
 packages = sdist,wheel
-commands = py.test --conda-only
+commands = pytest --conda-only
 ```
 
 * tox_addoption

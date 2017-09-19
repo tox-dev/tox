@@ -1,3 +1,32 @@
+Organisatorical
+===============
+
+support and contact channels
+----------------------------
+
+Getting in contact:
+
+* file a `report on the issue tracker <https://github.com/tox-dev/tox/issues>`_
+* join the `tox-dev mailing list <https://mail.python.org/mm3/mailman3/lists/tox-dev.python.org/>`_
+  for tox related questions, discussions and release announcements.
+* `fork the github repository <https://github.com/tox-dev/tox>`_ and submit merge/pull requests
+* hang out on the irc.freenode.net #pylib channel
+* join the `Testing In Python (TIP) mailing list <http://lists.idyll.org/listinfo/testing-in-python>`_
+  for tool transcneding discussions about these topics
+
+.. _support:
+
+paid professional support
+-------------------------
+
+contact `holger <http://holgerkrekel.net>`_ (`holger-twitter <http://twitter.com/hpk42>`_) at
+`merlinux.eu <http://merlinux.eu>`_, an association of experienced well-known Python developers.
+
+.. include:: developer-faq.rst
+
+Historical information
+======================
+
 Less announcing, more change-logging
 ------------------------------------
 
@@ -21,6 +50,4 @@ The historic release announcements are still online here for various versions:
 * `2.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.0.html>`_,
 * `2.4.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.4.0.html>`_.
 
-
-Happy testing,
-The tox maintainers
+.. include:: _shared-links.rst

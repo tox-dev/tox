@@ -90,7 +90,7 @@ package_formats=            # new option to specify wanted package formats for t
                             # defaults to "sdist" if not set
     py35: sdist wheel conda # names here are provided by plugins (reserved keywords)
     py27: sdist conda
-commands = py.test
+commands = pytest
 ```
 
 Lising tox environments (`tox --list`) would display the following output:
@@ -118,7 +118,7 @@ envlist={py27,py35}, py27-xdist
 
 [testenv]
 package_formats=sdist wheel conda
-commands = py.test
+commands = pytest
 exclude_package_formats=        # new option which filters out packages
     py27-xdist: wheel
 ```

@@ -1,4 +1,3 @@
-==================
 How to release tox
 ==================
 
@@ -11,9 +10,6 @@ This matches the current model that can be summarized as this:
 **Normal releases**: done from master when enough changes have accumaluted (whatever that means at any given point in time).
 
 **"Special" releases**: (in seldom cases when master has moved on and is not in a state where a quick release should be done from that state): the current release tag is checked out, the necessary fixes are cherry picked and a package with a patch release increase is built from that state. This is not very clean but seems good enough at the moment as it does not happen very often. If it does happen more often, this needs some rethinking (and rather into the direction of making less buggy releases than complicating release development/release process).
-
-HOWTO
-=====
 
 Prerequisites
 -------------

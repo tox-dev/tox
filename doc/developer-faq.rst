@@ -1,11 +1,6 @@
-.. _developers:
-
-Developers FAQ
-==============
+Developer FAQ
+=============
 This section contains information for users who want to extend the tox source code.
-
-General information about contributing to tox can be found in :doc:`contributing`
-
 
 .. contents::
    :local:
