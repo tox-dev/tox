@@ -203,4 +203,4 @@ itself calls ``setup.py develop``.
 There is an optimization coded in to not bother re-running the command if
 ``$projectname.egg-info`` is newer than ``setup.py`` or ``setup.cfg``.
 
-.. include:: ../links.rst
+.. include:: ../_shared-links.rst

@@ -38,4 +38,4 @@ for nose/tox interactions please submit them.
 
 Also you might want to checkout :doc:`general`.
 
-.. include:: ../links.rst
+.. include:: ../_shared-links.rst

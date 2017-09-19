@@ -97,4 +97,5 @@ which will ultimately invoke:
 in each of the environments. This allows you to customize test discovery
 in your ``tox`` runs.
 
-.. include:: ../links.rst
+.. include:: ../_shared-links.rst
+

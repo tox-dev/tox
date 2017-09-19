@@ -1,25 +1,22 @@
 .. _support:
 
+============================
 support and contact channels
-=====================================
+============================
 
 Getting in contact:
 
-* join the `tox-dev mailing list`_ for tox related questions and development discussions.
-* file a `report on the issue tracker`_
+* file a `report on the issue tracker <https://github.com/tox-dev/tox/issues>`_
+* join the `tox-dev mailing list <https://mail.python.org/mm3/mailman3/lists/tox-dev.python.org/>`_
+  for tox related questions, discussions and release announcements.
+* `fork the github repository <https://github.com/tox-dev/tox>`_ and submit merge/pull requests
+  (see the developers help page -- :ref:`developers`)
 * hang out on the irc.freenode.net #pylib channel
-* `fork the github repository`_ and submit merge/pull requests (see the developers help page -- :ref:`developers`)
+* join the `Testing In Python (TIP) mailing list <http://lists.idyll.org/listinfo/testing-in-python>`_
+  for tool transcneding discussions about these topics
 
 paid professional support
-----------------------------
+=========================
 
-contact holger at `merlinux.eu`_, an association of
-experienced well-known Python developers.
-
-.. _`Testing In Python (TIP) mailing list`: http://lists.idyll.org/listinfo/testing-in-python
-.. _`holger's twitter presence`: http://twitter.com/hpk42
-.. _`merlinux.eu`: http://merlinux.eu
-.. _`report on the issue tracker`: https://github.com/tox-dev/tox/issues
-.. _`tetamap blog`: http://holgerkrekel.net
-.. _`tox-dev mailing list`: https://mail.python.org/mm3/mailman3/lists/tox-dev.python.org/
-.. _`fork the github repository`: https://github.com/tox-dev/tox
+contact `holger <http://holgerkrekel.net>`_ (`holger-twitter <http://twitter.com/hpk42>`_) at
+`merlinux.eu <http://merlinux.eu>`_, an association of experienced well-known Python developers.

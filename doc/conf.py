@@ -4,6 +4,8 @@ from datetime import date
 
 from pkg_resources import get_distribution
 
+import sphinx_rtd_theme
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 extensions = ['sphinx.ext.autodoc',
@@ -26,15 +28,14 @@ source_suffix = '.rst'
 exclude_patterns = ['_build']
 
 templates_path = ['_templates']
-pygments_style = 'sphinx'
-html_theme = 'sphinxdoc'
-html_static_path = ['_static']
+# pygments_style = 'sphinx'
+# html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_show_sourcelink = False
 htmlhelp_basename = '{}doc'.format(project)
-latex_documents = [('index', 'tox.tex', u'{} Documentation'.format(project),
-                    author, 'manual')]
-man_pages = [('index', project, u'{} Documentation'.format(project),
-              [author], 1)]
+latex_documents = [('index', 'tox.tex', u'{} Documentation'.format(project), author, 'manual')]
+man_pages = [('index', project, u'{} Documentation'.format(project), [author], 1)]
 epub_title = project
 epub_author = author
 epub_publisher = author
@@ -44,11 +45,10 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 
 
 def setup(app):
-    # from sphinx.ext.autodoc import cut_lines
-    # app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
-    app.add_description_unit('confval', 'confval',
-                             objname='configuration value',
-                             indextemplate='pair: %s; configuration value')
+    app.add_object_type(
+        'confval', 'confval',
+        objname='configuration value',
+        indextemplate='pair: %s; configuration value')
 
 
 tls_cacerts = os.getenv('SSL_CERT_FILE')  # we don't care here about the validity of certificates

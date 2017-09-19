@@ -46,4 +46,4 @@ or just activate your checkout in your environment like this:
 
 so that you can do changes and submit patches.
 
-.. include:: links.rst
+.. include:: _shared-links.rst

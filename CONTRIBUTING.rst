@@ -36,7 +36,7 @@ If you are reporting a bug, please include:
 If you can write a demonstration test that currently fails but should pass
 (xfail), that is a very useful commit to make as well, even if you cannot
 fix the bug itself (e.g. something like this in
-`test_config <https://github.com/tox-dev/tox/blob/2.8.2/tests/test_config.py#L2206>)`_
+`test_config <https://github.com/tox-dev/tox/blob/2.8.2/tests/test_config.py#L2206>`_
 
 .. _fixbugs:
 
@@ -88,7 +88,7 @@ Preparing Pull Requests
 Short version
 ^^^^^^^^^^^^^
 
-#. `Fork the repository<https://help.github.com/articles/fork-a-repo/>`_
+#. `Fork the repository <https://help.github.com/articles/fork-a-repo/>`_
 #. Make your changes.
 #. open a `pull request <https://help.github.com/articles/about-pull-requests/>`_ targeting the ``master`` branch.
 #. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.

@@ -1,5 +1,6 @@
 .. be in -*- rst -*- mode!
 
+===============================
 tox configuration specification
 ===============================
 
@@ -668,4 +669,4 @@ Other Rules and notes
   it will be considered as relative to the ``toxinidir``, the directory
   where the configuration file resides.
 
-.. include:: links.rst
+.. include:: _shared-links.rst

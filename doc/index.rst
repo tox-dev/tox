@@ -1,20 +1,23 @@
+=====================================
 Welcome to the tox automation project
-===============================================
+=====================================
+
 
 vision: standardize testing in Python
----------------------------------------------
+=====================================
 
 ``tox`` aims to automate and standardize testing in Python.  It is part
 of a larger vision of easing the packaging, testing and release process
 of Python software.
 
 What is tox?
---------------------
+============
+
+**testing out of the box**
 
 tox is a generic virtualenv_ management and test command line tool you can use for:
 
-* checking your package installs correctly with different Python versions and
-  interpreters
+* checking your package installs correctly with different Python versions and interpreters
 
 * running your tests in each of the environments, configuring your test tool of choice
 
@@ -23,7 +26,7 @@ tox is a generic virtualenv_ management and test command line tool you can use f
 
 
 Basic example
------------------
+=============
 
 First, install ``tox`` with ``pip install tox``.
 Then put basic information about your project and the test environments you
@@ -44,14 +47,14 @@ To sdist-package, install and test your project against Python2.6 and Python2.7,
 
     tox
 
-and watch things happening (you must have python2.6 and python2.7 installed in your
+... and watch things happening (you must have python2.6 and python2.7 installed in your
 environment otherwise you will see errors).  When you run ``tox`` a second time
 you'll note that it runs much faster because it keeps track of virtualenv details
 and will not recreate or re-install dependencies.  You also might want to
-checkout :doc:`examples` to get some more ideas.
+checkout the :doc:`examples` to get some more ideas.
 
 Current features
--------------------
+================
 
 * **automation of tedious Python related test activities**
 
@@ -68,18 +71,15 @@ Current features
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
   through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher,
-  Jython and pypy_.
+* **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher, Jython and pypy_.
 
 * **cross-platform**: Windows and Unix style environments
 
-* **integrates with continuous integration servers** like Jenkins_
-  (formerly known as Hudson) and helps you to avoid boilerplatish
-  and platform-specific build-step hacks.
+* **integrates with continuous integration servers** like Jenkins_ and helps you to avoid
+  boilerplatish and platform-specific build-step hacks.
 
-* **full interoperability with devpi**: is integrated with and
-  is used for testing in the devpi_ system, a versatile pypi
-  index server and release managing tool.
+* **full interoperability with devpi**: is integrated with and is used for testing in the
+  devpi_ system, a versatile pypi index server and release managing tool.
 
 * **driven by a simple ini-style config file**
 
@@ -90,7 +90,6 @@ Current features
 * **professionally** :doc:`supported <support>`
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
-
 
 .. _pypy: http://pypy.org
 
@@ -105,11 +104,11 @@ Current features
    config-v2
    support
    changelog
-   links
    plugins
    developers
    example/result
-   announce/changelog-only
+   contributing
+   org
 
 
-.. include:: links.rst
+.. include:: _shared-links.rst
