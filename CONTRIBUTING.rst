@@ -14,10 +14,10 @@ so do not hesitate!
 Feature requests and feedback
 -----------------------------
 
-Do you like pytest?  Share some love on Twitter or in your blog posts!
+Do you like tox?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
-`submit them as issues <https://github.com/pytest-dev/pytest/issues>`_ and:
+`submit them as issues <https://github.com/tox-dev/tox/issues>`_ and:
 
 * Explain in detail how they should work.
 * Keep the scope as narrow as possible.  This will make it easier to implement.
@@ -28,7 +28,7 @@ We'd also like to hear about your propositions and suggestions.  Feel free to
 Report bugs
 -----------
 
-Report bugs for pytest in the `issue tracker <https://github.com/pytest-dev/pytest/issues>`_.
+Report bugs for pytest in the `issue tracker <https://github.com/tox-dev/tox/issues>`_.
 
 If you are reporting a bug, please include:
 
@@ -49,7 +49,7 @@ Fix bugs
 --------
 
 Look through the GitHub issues for bugs.  Here is a filter you can use:
-https://github.com/pytest-dev/pytest/labels/bug
+https://github.com/tox-dev/tox/labels/bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
@@ -61,7 +61,7 @@ Implement features
 ------------------
 
 Look through the GitHub issues for enhancements.  Here is a filter you can use:
-https://github.com/pytest-dev/pytest/labels/enhancement
+https://github.com/tox-dev/tox/labels/enhancement
 
 :ref:`Talk <contact>` to developers to find out how you can implement specific
 features.
@@ -69,7 +69,7 @@ features.
 Write documentation
 -------------------
 
-Pytest could always use more documentation.  What exactly is needed?
+tox could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
 * Documentation translations.  We currently have only English.
@@ -92,28 +92,26 @@ without using a local copy.  This can be convenient for small fixes.
 
 .. _submitplugin:
 
-Submitting Plugins to pytest-dev
---------------------------------
+Submitting plugins to tox-dev
+-----------------------------
 
-Pytest development of the core, some plugins and support code happens
-in repositories living under the ``pytest-dev`` organisations:
+tox development of the core, some plugins and support code happens
+in repositories living under the ``tox-dev`` organisation:
 
-- `pytest-dev on GitHub <https://github.com/pytest-dev>`_
+- `tox-dev on GitHub <https://github.com/tox-dev>`_
 
-- `pytest-dev on Bitbucket <https://bitbucket.org/pytest-dev>`_
-
-All pytest-dev Contributors team members have write access to all contained
+All tox-dev Contributors team members have write access to all contained
 repositories.  Pytest core and plugins are generally developed
 using `pull requests`_ to respective repositories.
 
-The objectives of the ``pytest-dev`` organisation are:
+The objectives of the ``tox-dev`` organisation are:
 
 * Having a central location for popular pytest plugins
 * Sharing some of the maintenance responsibility (in case a maintainer no
   longer wishes to maintain a plugin)
 
-You can submit your plugin by subscribing to the `pytest-dev mail list
-<https://mail.python.org/mailman/listinfo/pytest-dev>`_ and writing a
+You can submit your plugin by subscribing to the `tox-dev mail list
+<https://mail.python.org/mailman/listinfo/tox-dev>`_ and writing a
 mail pointing to your existing pytest plugin repository which must have
 the following:
 
@@ -133,23 +131,23 @@ the following:
 - a `changelog <http://keepachangelog.com/>`_
 
 If no contributor strongly objects and two agree, the repository can then be
-transferred to the ``pytest-dev`` organisation.
+transferred to the ``tox-dev`` organisation.
 
 Here's a rundown of how a repository transfer usually proceeds
 (using a repository named ``joedoe/pytest-xyz`` as example):
 
-* ``joedoe`` transfers repository ownership to ``pytest-dev`` administrator ``calvin``.
+* ``joedoe`` transfers repository ownership to ``tox-dev`` administrator ``calvin``.
 * ``calvin`` creates ``pytest-xyz-admin`` and ``pytest-xyz-developers`` teams, inviting ``joedoe`` to both as **maintainer**.
-* ``calvin`` transfers repository to ``pytest-dev`` and configures team access:
+* ``calvin`` transfers repository to ``tox-dev`` and configures team access:
 
   - ``pytest-xyz-admin`` **admin** access;
   - ``pytest-xyz-developers`` **write** access;
 
-The ``pytest-dev/Contributors`` team has write access to all projects, and
+The ``tox-dev/Contributors`` team has write access to all projects, and
 every project administrator is in it. We recommend that each plugin has at least three
 people who have the right to release to PyPI.
 
-Repository owners can rest assured that no ``pytest-dev`` administrator will ever make
+Repository owners can rest assured that no ``tox-dev`` administrator will ever make
 releases of your repository or take ownership in any way, except in rare cases
 where someone becomes unresponsive after months of contact attempts.
 As stated, the objective is to share maintenance and avoid "plugin-abandon".
@@ -185,7 +183,7 @@ Long version
 
 What is a "pull request"?  It informs the project's core developers about the
 changes you want to review and merge.  Pull requests are stored on
-`GitHub servers <https://github.com/pytest-dev/pytest/pulls>`_.
+`GitHub servers <https://github.com/tox-dev/tox/pulls>`_.
 Once you send a pull request, we can discuss its potential modifications and
 even add more commits to it later on. There's an excellent tutorial on how Pull
 Requests work in the
@@ -194,7 +192,7 @@ Requests work in the
 Here is a simple overview, with pytest-specific bits:
 
 #. Fork the
-   `pytest GitHub repository <https://github.com/pytest-dev/pytest>`__.  It's
+   `pytest GitHub repository <https://github.com/tox-dev/tox>`__.  It's
    fine to use ``pytest`` as your fork repository name because it will live
    under your user.
 
@@ -270,7 +268,7 @@ Here is a simple overview, with pytest-specific bits:
     head-fork: YOUR_GITHUB_USERNAME/pytest
     compare: your-branch-name
 
-    base-fork: pytest-dev/pytest
+    base-fork: tox-dev/tox
     base: master          # if it's a bugfix
     base: features        # if it's a feature
 
