@@ -163,12 +163,11 @@ Short version
 ~~~~~~~~~~~~~
 
 #. Fork the repository;
-#. Target ``master`` for bugfixes and doc changes;
-#. Target ``features`` for new features or functionality changes.
+#. Always target ``master``
 #. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
 #. Tests are run using ``tox``::
 
-    tox -e linting,py27,py36
+    tox -e style,py27,py36
 
    The test environments above are usually enough to cover most cases locally.
 
@@ -193,7 +192,7 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Fork the
    `pytest GitHub repository <https://github.com/tox-dev/tox>`__.  It's
-   fine to use ``pytest`` as your fork repository name because it will live
+   fine to use ``tox`` as your fork repository name because it will live
    under your user.
 
 #. Clone your fork locally using `git <https://git-scm.com/>`_ and create a branch::
@@ -265,11 +264,10 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Finally, submit a pull request through the GitHub website using this data::
 
-    head-fork: YOUR_GITHUB_USERNAME/pytest
+    head-fork: YOUR_GITHUB_USERNAME/tox
     compare: your-branch-name
 
     base-fork: tox-dev/tox
-    base: master          # if it's a bugfix
-    base: features        # if it's a feature
+    base: master
 
 
