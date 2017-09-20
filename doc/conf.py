@@ -4,8 +4,7 @@ from datetime import date
 
 from pkg_resources import get_distribution
 
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
+sys.path.insert(0, os.path.dirname(__file__))
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.extlinks',
               'sphinx.ext.intersphinx',
