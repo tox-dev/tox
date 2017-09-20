@@ -6,8 +6,7 @@ import sys
 from pathlib import Path
 
 
-def main():
-    manipulate_the_news()
+main = manipulate_the_news
 
 
 # todo integrate that into the test/build process somehow
