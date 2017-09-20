@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from textwrap import dedent
 
@@ -42,7 +43,7 @@ class TestVenvConfig:
             deps=
                 world1
                 :xyz:http://hello/world
-        """ % (tmpdir, ))
+        """ % (tmpdir,))
         assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
         assert config.envconfigs['py1'].envdir == tmpdir.join("py1")
@@ -1262,10 +1263,10 @@ class TestConfigTestEnv:
         (['py27', 'py34'], ('pytest', 'py{27,34}: pytest-cov')),
     ])
     def test_take_dependencies_from_other_testenv(
-        self,
-        newconfig,
-        envlist,
-        deps
+            self,
+            newconfig,
+            envlist,
+            deps
     ):
         inisource = """
             [tox]
@@ -1371,7 +1372,7 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource)
         configs = conf.envconfigs
         assert [dep.name for dep in configs['a-x'].deps] == \
-            ["dep-all", "dep-a", "dep-x"]
+               ["dep-all", "dep-a", "dep-x"]
         assert [dep.name for dep in configs['b'].deps] == ["dep-all", "dep-b"]
 
     def test_factor_ops(self, newconfig):
@@ -1474,8 +1475,7 @@ class TestConfigTestEnv:
         """
         configs = newconfig([], inisource).envconfigs
         assert sorted(configs) == ["py27-django1.6", "py27-django1.7"]
-        assert [d.name for d in configs["py27-django1.6"].deps] \
-            == ["Django==1.6"]
+        assert [d.name for d in configs["py27-django1.6"].deps] == ["Django==1.6"]
 
     def test_ignore_outcome(self, newconfig):
         inisource = """
@@ -1605,8 +1605,8 @@ class TestGlobalOptions:
             envlist = py{26,27}-dep{1,2}
         """
         config = newconfig([], inisource)
-        assert config.envlist == \
-            ["py26-dep1", "py26-dep2", "py27-dep1", "py27-dep2"]
+        expected = ["py26-dep1", "py26-dep2", "py27-dep1", "py27-dep2"]
+        assert config.envlist == expected
 
     def test_envlist_multiline(self, newconfig):
         inisource = """
@@ -1616,8 +1616,7 @@ class TestGlobalOptions:
               py34
         """
         config = newconfig([], inisource)
-        assert config.envlist == \
-            ["py27", "py34"]
+        assert config.envlist == ["py27", "py34"]
 
     def test_minversion(self, tmpdir, newconfig, monkeypatch):
         inisource = """
@@ -1663,7 +1662,6 @@ class TestGlobalOptions:
 
 
 class TestHashseedOption:
-
     def _get_envconfigs(self, newconfig, args=None, tox_ini=None,
                         make_hashseed=None):
         if args is None:
@@ -1673,7 +1671,6 @@ class TestHashseedOption:
                 [testenv]
             """
         if make_hashseed is None:
-
             def make_hashseed():
                 return '123456789'
 
@@ -1755,11 +1752,13 @@ class TestHashseedOption:
             [testenv:hash2]
         """
         next_seed = [1000]
+
         # This function is guaranteed to generate a different value each time.
 
         def make_hashseed():
             next_seed[0] += 1
             return str(next_seed[0])
+
         # Check that make_hashseed() works.
         assert make_hashseed() == '1001'
         envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini,
@@ -2001,7 +2000,6 @@ class TestConfigConstSubstitutions:
 
 
 class TestParseEnv:
-
     def test_parse_recreate(self, newconfig):
         inisource = ""
         config = newconfig([], inisource)
@@ -2020,18 +2018,16 @@ class TestParseEnv:
 
 class TestCmdInvocation:
     def test_help(self, cmd):
-        result = cmd.run("tox", "-h")
+        result = cmd("-h")
         assert not result.ret
-        result.stdout.fnmatch_lines([
-            "*help*",
-        ])
+        assert not result.err
+        assert re.match(r'usage:.*help.*', result.out, re.DOTALL)
 
     def test_version_simple(self, cmd):
-        result = cmd.run("tox", "--version")
+        result = cmd("--version")
         assert not result.ret
-        stdout = result.stdout.str()
-        assert tox.__version__ in stdout
-        assert "imported from" in stdout
+        from tox import __version__
+        assert "{0} imported from".format(__version__) in result.out
 
     def test_version_no_plugins(self):
         pm = PluginManager('fakeprject')
@@ -2047,6 +2043,7 @@ class TestCmdInvocation:
             class MockEggInfo:
                 project_name = 'some-project'
                 version = '1.0'
+
             return [(MockModule, MockEggInfo)]
 
         pm = PluginManager('fakeproject')
@@ -2067,6 +2064,7 @@ class TestCmdInvocation:
             class MockEggInfo:
                 project_name = 'some-project'
                 version = '1.0'
+
             return [(MockModule(), MockEggInfo)]
 
         pm = PluginManager('fakeproject')
@@ -2096,14 +2094,8 @@ class TestCmdInvocation:
             changedir = docs
             ''',
         })
-        result = cmd.run("tox", "-l")
-        result.stdout.fnmatch_lines("""
-            py26
-            py27
-            py33
-            pypy
-            docs
-        """)
+        result = cmd("-l")
+        assert result.out == '\n'.join(["py26", "py27", "py33", "pypy", "docs", ''])
 
     def test_listenvs_verbose_description(self, cmd, initproj):
         initproj('listenvs_verbose_description', filedefs={
@@ -2126,15 +2118,13 @@ class TestCmdInvocation:
             description = let me overwrite that
             ''',
         })
-        result = cmd.run("tox", "-lv")
-        result.stdout.fnmatch_lines("""
-            default environments:
-            py26 -> run pytest on Python 2.6
-            py27 -> run pytest on Python 2.7
-            py33 -> run pytest on Python 3.3
-            pypy -> publish to pypy
-            docs -> let me overwrite that
-        """)
+        result = cmd("-lv")
+        assert result.outlines[-6:] == ["default environments:",
+                                        "py26 -> run pytest on Python 2.6",
+                                        "py27 -> run pytest on Python 2.7",
+                                        "py33 -> run pytest on Python 3.3",
+                                        "pypy -> publish to pypy",
+                                        "docs -> let me overwrite that"]
 
     def test_listenvs_all(self, cmd, initproj):
         initproj('listenvs_all', filedefs={
@@ -2149,15 +2139,8 @@ class TestCmdInvocation:
             changedir = docs
             ''',
         })
-        result = cmd.run("tox", "-a")
-        result.stdout.fnmatch_lines("""
-            py26
-            py27
-            py33
-            pypy
-            docs
-            notincluded
-        """)
+        result = cmd("tox", "-a")
+        assert result.out == '\n'.join(["py26", "py27", "py33", "pypy", "docs", "notincluded", ''])
 
     def test_listenvs_all_verbose_description(self, cmd, initproj):
         initproj('listenvs_all_verbose_description', filedefs={
@@ -2176,17 +2159,17 @@ class TestCmdInvocation:
             changedir = docs
             ''',
         })
-        result = cmd.run("tox", "-av")
-        result.stdout.fnmatch_lines("""
-            default environments:
-            py27-windows -> run pytest on Python 2.7 on Windows platform
-            py27-linux   -> run pytest on Python 2.7 on Linux platform
-            py36-windows -> run pytest on Python 3.6 on Windows platform
-            py36-linux   -> run pytest on Python 3.6 on Linux platform
-
-            additional environments:
-            docs         -> generate documentation
-        """)
+        result = cmd("-av")
+        expected = [
+            "default environments:",
+            "py27-windows -> run pytest on Python 2.7 on Windows platform",
+            "py27-linux   -> run pytest on Python 2.7 on Linux platform",
+            "py36-windows -> run pytest on Python 3.6 on Windows platform",
+            "py36-linux   -> run pytest on Python 3.6 on Linux platform",
+            "",
+            "additional environments:",
+            "docs         -> generate documentation"]
+        assert result.outlines[-len(expected):] == expected
 
     def test_listenvs_all_verbose_description_no_additional_environments(self, cmd, initproj):
         initproj('listenvs_all_verbose_description', filedefs={
@@ -2195,29 +2178,25 @@ class TestCmdInvocation:
             envlist=py27,py36
             ''',
         })
-        result = cmd.run("tox", "-av")
-        result.stdout.fnmatch_lines("""
-            default environments:
-            py27 -> [no description]
-            py36 -> [no description]
-        """)
-        assert 'additional environments' not in result.stdout.str()
+        result = cmd("-av")
+        expected = ["default environments:",
+                    "py27 -> [no description]",
+                    "py36 -> [no description]"]
+        assert result.out.splitlines()[-3:] == expected
+        assert 'additional environments' not in result.out
 
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
-        result = cmd.run("tox", "-c", ini, "--showconfig")
+        result = cmd("-c", ini, "--showconfig")
         assert not result.ret
-        result.stdout.fnmatch_lines([
-            "*config-file*hello.ini*",
-        ])
+        assert result.outlines[1] == 'config-file: {0}'.format(ini)
 
     def test_no_tox_ini(self, cmd, initproj):
         initproj("noini-0.5", )
-        result = cmd.run("tox")
+        result = cmd()
         assert result.ret
-        result.stderr.fnmatch_lines([
-            "*ERROR*tox.ini*not*found*",
-        ])
+        assert result.out == ''
+        assert result.err == "ERROR: toxini file 'tox.ini' not found\n"
 
     def test_override_workdir(self, tmpdir, cmd, initproj):
         baddir = "badworkdir-123"
@@ -2228,11 +2207,10 @@ class TestCmdInvocation:
             toxworkdir=%s
             ''' % baddir,
         })
-        result = cmd.run("tox", "--workdir", gooddir, "--showconfig")
+        result = cmd("--workdir", gooddir, "--showconfig")
         assert not result.ret
-        stdout = result.stdout.str()
-        assert gooddir in stdout
-        assert baddir not in stdout
+        assert gooddir in result.out
+        assert baddir not in result.out
         assert py.path.local(gooddir).check()
         assert not py.path.local(baddir).check()
 
@@ -2247,18 +2225,14 @@ class TestCmdInvocation:
                 dep2
             ''',
         })
-        result = cmd.run("tox", "--showconfig")
+        result = cmd("--showconfig")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            r'*deps*dep1==2.3, dep2*',
-        ])
+        assert any(re.match(r'.*deps.*dep1==2.3, dep2.*', l) for l in result.outlines)
         # override dep1 specific version, and force version for dep2
-        result = cmd.run("tox", "--showconfig", "--force-dep=dep1",
-                         "--force-dep=dep2==5.0")
+        result = cmd("tox", "--showconfig", "--force-dep=dep1",
+                     "--force-dep=dep2==5.0")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            r'*deps*dep1, dep2==5.0*',
-        ])
+        assert any(re.match(r'.*deps.*dep1, dep2==5.0.*', l) for l in result.outlines)
 
     @pytest.mark.xfail(
         "'pypy' not in sys.executable",
@@ -2267,13 +2241,13 @@ class TestCmdInvocation:
         initproj('colon:_symbol_in_dir_name', filedefs={
             'tox.ini': '''
             [tox]
-            envlist = py27
+            envlist = testenv
 
             [testenv]
             commands = pip --version
             ''',
         })
-        result = cmd.run("tox")
+        result = cmd()
         assert result.ret == 0
 
 
@@ -2290,7 +2264,6 @@ def test_env_spec(cmdline, envlist):
 
 
 class TestCommandParser:
-
     def test_command_parser_for_word(self):
         p = CommandParser('word')
         # import pytest; pytest.set_trace()

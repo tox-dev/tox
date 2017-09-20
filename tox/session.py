@@ -38,6 +38,8 @@ def main(args=None):
     try:
         config = prepare(args)
         retcode = Session(config).runcommand()
+        if retcode is None:
+            retcode = 0
         raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)

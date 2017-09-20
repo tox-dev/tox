@@ -1,11 +1,13 @@
 import os
 import platform
+import re
 
 import py
 import pytest
 
 import tox
 from tox._pytestplugin import ReportExpectMock
+
 try:
     import json
 except ImportError:
@@ -179,11 +181,9 @@ def XXX_test_package(cmd, initproj):
             """,
         'tox.ini': ''
     })
-    result = cmd.run("tox", "package")
+    result = cmd("package")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*created sdist package at*",
-    ])
+    assert any(re.match(r'.*created sdist package at.*', l) for l in result.outlines)
 
 
 def test_minversion(cmd, initproj):
@@ -194,10 +194,9 @@ def test_minversion(cmd, initproj):
             minversion = 6.0
         '''
     })
-    result = cmd.run("tox", "-v")
-    result.stdout.fnmatch_lines([
-        "*ERROR*tox version is * required is at least 6.0*"
-    ])
+    result = cmd("-v")
+    assert re.match(r'ERROR: MinVersionError: tox version is .*,'
+                    r' required is at least 6.0', result.out)
     assert result.ret
 
 
@@ -205,13 +204,10 @@ def test_notoxini_help_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
     })
-    result = cmd.run("tox", "-h")
-    result.stderr.fnmatch_lines([
-        "*ERROR*tox.ini*"
-    ])
-    result.stdout.fnmatch_lines([
-        "*--help*"
-    ])
+    result = cmd("-h")
+    assert result.err == "ERROR: toxini file 'tox.ini' not found\n"
+    assert result.out.startswith('usage: ')
+    assert any('--help' in l for l in result.outlines)
     assert not result.ret
 
 
@@ -219,13 +215,8 @@ def test_notoxini_help_ini_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},
     })
-    result = cmd.run("tox", "--help-ini")
-    result.stderr.fnmatch_lines([
-        "*ERROR*tox.ini*"
-    ])
-    result.stdout.fnmatch_lines([
-        "*setenv*"
-    ])
+    result = cmd("--help-ini")
+    assert any('setenv' in l for l in result.outlines)
     assert not result.ret
 
 
@@ -236,11 +227,9 @@ def test_envdir_equals_toxini_errors_out(cmd, initproj):
             envdir={toxinidir}
         '''
     })
-    result = cmd.run("tox")
-    result.stdout.fnmatch_lines([
-        "ERROR*venv*delete*",
-        "*ConfigError*envdir must not equal toxinidir*",
-    ])
+    result = cmd()
+    assert result.outlines[1] == "ERROR: ConfigError: envdir must not equal toxinidir"
+    assert re.match(r'ERROR: venv \'python\' in .* would delete project', result.outlines[0])
     assert result.ret
 
 
@@ -251,10 +240,9 @@ def test_run_custom_install_command_error(cmd, initproj):
             install_command=./tox.ini {opts} {packages}
         '''
     })
-    result = cmd.run("tox")
-    result.stdout.fnmatch_lines([
-        "ERROR: invocation failed (errno *), args: ['*/tox.ini*",
-    ])
+    result = cmd()
+    assert re.match(r"ERROR: invocation failed \(errno \d+\), args: \['.*[/\\]tox\.ini",
+                    result.outlines[-1])
     assert result.ret
 
 
@@ -268,17 +256,13 @@ def test_unknown_interpreter_and_env(cmd, initproj):
             changedir=tests
         '''
     })
-    result = cmd.run("tox")
+    result = cmd()
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
-    ])
+    assert any('ERROR: InterpreterNotFound: xyz_unknown_interpreter' == l for l in result.outlines)
 
-    result = cmd.run("tox", "-exyz")
+    result = cmd("-exyz")
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*ERROR*unknown*",
-    ])
+    assert result.out == "ERROR: unknown environment 'xyz'\n"
 
 
 def test_unknown_interpreter(cmd, initproj):
@@ -291,11 +275,9 @@ def test_unknown_interpreter(cmd, initproj):
             changedir=tests
         '''
     })
-    result = cmd.run("tox")
+    result = cmd()
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*ERROR*InterpreterNotFound*xyz_unknown_interpreter*",
-    ])
+    assert any('ERROR: InterpreterNotFound: xyz_unknown_interpreter' == l for l in result.outlines)
 
 
 def test_skip_platform_mismatch(cmd, initproj):
@@ -307,11 +289,9 @@ def test_skip_platform_mismatch(cmd, initproj):
             platform=x123
         '''
     })
-    result = cmd.run("tox")
+    result = cmd()
     assert not result.ret
-    result.stdout.fnmatch_lines("""
-        SKIPPED*platform mismatch*
-    """)
+    assert any('SKIPPED:  python: platform mismatch' == l for l in result.outlines)
 
 
 def test_skip_unknown_interpreter(cmd, initproj):
@@ -324,11 +304,10 @@ def test_skip_unknown_interpreter(cmd, initproj):
             changedir=tests
         '''
     })
-    result = cmd.run("tox", "--skip-missing-interpreters")
+    result = cmd("--skip-missing-interpreters")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*SKIPPED*InterpreterNotFound*xyz_unknown_interpreter*",
-    ])
+    msg = 'SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter'
+    assert any(msg == l for l in result.outlines)
 
 
 def test_unknown_dep(cmd, initproj):
@@ -340,11 +319,9 @@ def test_unknown_dep(cmd, initproj):
             changedir=tests
         '''
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*ERROR*could not install*qweqwe123*",
-    ])
+    assert result.outlines[-1].startswith('ERROR:   python: could not install deps [qweqwe123];')
 
 
 def test_venv_special_chars_issue252(cmd, initproj):
@@ -357,22 +334,18 @@ def test_venv_special_chars_issue252(cmd, initproj):
             changedir=tests
         '''
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*installed*pkg123*"
-    ])
+    assert any(line == 'special&&1 installed: pkg123==0.7' for line in result.outlines)
 
 
 def test_unknown_environment(cmd, initproj):
     initproj("env123-0.7", filedefs={
         'tox.ini': ''
     })
-    result = cmd.run("tox", "-e", "qpwoei")
+    result = cmd("-e", "qpwoei")
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*ERROR*unknown*environment*qpwoei*",
-    ])
+    assert result.out == "ERROR: unknown environment 'qpwoei'\n"
 
 
 def test_skip_sdist(cmd, initproj):
@@ -388,7 +361,7 @@ def test_skip_sdist(cmd, initproj):
             commands=python -c "print('done')"
         '''
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret == 0
 
 
@@ -398,13 +371,10 @@ def test_minimal_setup_py_empty(cmd, initproj):
         'setup.py': """
         """,
         'tox.ini': ''
-
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret == 1
-    result.stdout.fnmatch_lines([
-        "*ERROR*empty*",
-    ])
+    assert result.outlines[-1] == 'ERROR: setup.py is empty'
 
 
 def test_minimal_setup_py_comment_only(cmd, initproj):
@@ -416,11 +386,9 @@ def test_minimal_setup_py_comment_only(cmd, initproj):
         'tox.ini': ''
 
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret == 1
-    result.stdout.fnmatch_lines([
-        "*ERROR*empty*",
-    ])
+    assert result.outlines[-1] == 'ERROR: setup.py is empty'
 
 
 def test_minimal_setup_py_non_functional(cmd, initproj):
@@ -433,11 +401,9 @@ def test_minimal_setup_py_non_functional(cmd, initproj):
         'tox.ini': ''
 
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret == 1
-    result.stdout.fnmatch_lines([
-        "*ERROR*check setup.py*",
-    ])
+    assert any(re.match(r'.*ERROR.*check setup.py.*', l) for l in result.outlines)
 
 
 def test_sdist_fails(cmd, initproj):
@@ -448,11 +414,9 @@ def test_sdist_fails(cmd, initproj):
         """,
         'tox.ini': '',
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*FAIL*could not package project*",
-    ])
+    assert any(re.match(r'.*FAIL.*could not package project.*', l) for l in result.outlines)
 
 
 def test_no_setup_py_exits(cmd, initproj):
@@ -463,11 +427,9 @@ def test_no_setup_py_exits(cmd, initproj):
         """
     })
     os.remove("setup.py")
-    result = cmd.run("tox", )
+    result = cmd("tox", )
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*ERROR*No setup.py file found*"
-    ])
+    assert any(re.match(r'.*ERROR.*No setup.py file found.*', l) for l in result.outlines)
 
 
 def test_package_install_fails(cmd, initproj):
@@ -487,17 +449,15 @@ def test_package_install_fails(cmd, initproj):
             """,
         'tox.ini': '',
     })
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret
-    result.stdout.fnmatch_lines([
-        "*InvocationError*",
-    ])
+    assert result.outlines[-1].startswith('ERROR:   python: InvocationError: ')
 
 
 class TestToxRun:
     @pytest.fixture
     def example123(self, initproj):
-        initproj("example123-0.5", filedefs={
+        yield initproj("example123-0.5", filedefs={
             'tests': {
                 'test_hello.py': """
                     def test_hello(pytestconfig):
@@ -514,54 +474,46 @@ class TestToxRun:
         })
 
     def test_toxuone_env(self, cmd, example123):
-        result = cmd.run("tox")
+        result = cmd()
         assert not result.ret
-        result.stdout.fnmatch_lines([
-            "*junit-python.xml*",
-            "*1 passed*",
-        ])
-        result = cmd.run("tox", "-epython", )
+        assert re.match(r'.*generated\W+xml\W+file.*junit-python\.xml'
+                        r'.*\W+1\W+passed.*', result.out, re.DOTALL)
+        result = cmd("-epython", )
         assert not result.ret
-        result.stdout.fnmatch_lines([
-            "*1 passed*",
-            "*summary*",
-            "*python: commands succeeded"
-        ])
+        assert re.match(r'.*\W+1\W+passed.*'
+                        r'summary.*'
+                        r'python:\W+commands\W+succeeded.*', result.out, re.DOTALL)
 
     def test_different_config_cwd(self, cmd, example123, monkeypatch):
         # see that things work with a different CWD
-        monkeypatch.chdir(cmd.tmpdir)
-        result = cmd.run("tox", "-c", "example123/tox.ini")
+        monkeypatch.chdir(example123.dirname)
+        result = cmd("-c", "example123/tox.ini")
         assert not result.ret
-        result.stdout.fnmatch_lines([
-            "*1 passed*",
-            "*summary*",
-            "*python: commands succeeded"
-        ])
+        assert re.match(r'.*\W+1\W+passed.*'
+                        r'summary.*'
+                        r'python:\W+commands\W+succeeded.*', result.out, re.DOTALL)
 
     def test_json(self, cmd, example123):
         # see that tests can also fail and retcode is correct
         testfile = py.path.local("tests").join("test_hello.py")
         assert testfile.check()
         testfile.write("def test_fail(): assert 0")
-        jsonpath = cmd.tmpdir.join("res.json")
-        result = cmd.run("tox", "--result-json", jsonpath)
+        jsonpath = example123.join("res.json")
+        result = cmd("--result-json", jsonpath)
         assert result.ret == 1
         data = json.load(jsonpath.open("r"))
         verify_json_report_format(data)
-        result.stdout.fnmatch_lines([
-            "*1 failed*",
-            "*summary*",
-            "*python: *failed*",
-        ])
+        assert re.match(r'.*\W+1\W+failed.*'
+                        r'summary.*'
+                        r'python:\W+commands\W+failed.*', result.out, re.DOTALL)
 
 
-def test_develop(initproj, cmd):
+def test_developz(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
     """})
-    result = cmd.run("tox", "-vv", "--develop")
+    result = cmd("-vv", "--develop")
     assert not result.ret
-    assert "sdist-make" not in result.stdout.str()
+    assert "sdist-make" not in result.out
 
 
 def test_usedevelop(initproj, cmd):
@@ -569,9 +521,9 @@ def test_usedevelop(initproj, cmd):
             [testenv]
             usedevelop=True
     """})
-    result = cmd.run("tox", "-vv")
+    result = cmd("-vv")
     assert not result.ret
-    assert "sdist-make" not in result.stdout.str()
+    assert "sdist-make" not in result.out
 
 
 def test_usedevelop_mixed(initproj, cmd):
@@ -583,19 +535,19 @@ def test_usedevelop_mixed(initproj, cmd):
     """})
 
     # running only 'devenv' should not do sdist
-    result = cmd.run("tox", "-vv", "-e", "devenv")
+    result = cmd("-vv", "-e", "devenv")
     assert not result.ret
-    assert "sdist-make" not in result.stdout.str()
+    assert "sdist-make" not in result.out
 
     # running all envs should do sdist
-    result = cmd.run("tox", "-vv")
+    result = cmd("-vv")
     assert not result.ret
-    assert "sdist-make" in result.stdout.str()
+    assert "sdist-make" in result.out
 
 
 @pytest.mark.parametrize("src_root", [".", "src"])
-def test_test_usedevelop(cmd, initproj, src_root):
-    initproj("example123-0.5", src_root=src_root, filedefs={
+def test_test_usedevelop(cmd, initproj, src_root, monkeypatch):
+    base = initproj("example123-0.5", src_root=src_root, filedefs={
         'tests': {
             'test_hello.py': """
                 def test_hello(pytestconfig):
@@ -611,50 +563,45 @@ def test_test_usedevelop(cmd, initproj, src_root):
             deps=pytest
         '''
     })
-    result = cmd.run("tox", "-v")
+    result = cmd("-v")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*junit-python.xml*",
-        "*1 passed*",
-    ])
-    assert "sdist-make" not in result.stdout.str()
-    result = cmd.run("tox", "-epython", )
+    assert re.match(r'.*generated\W+xml\W+file.*junit-python\.xml'
+                    r'.*\W+1\W+passed.*', result.out, re.DOTALL)
+    assert "sdist-make" not in result.out
+    result = cmd("-epython", )
     assert not result.ret
-    assert "develop-inst-noop" in result.stdout.str()
-    result.stdout.fnmatch_lines([
-        "*1 passed*",
-        "*summary*",
-        "*python: commands succeeded"
-    ])
+    assert "develop-inst-noop" in result.out
+    assert re.match(r'.*\W+1\W+passed.*'
+                    r'summary.*'
+                    r'python:\W+commands\W+succeeded.*', result.out, re.DOTALL)
+
     # see that things work with a different CWD
-    old = cmd.tmpdir.chdir()
-    result = cmd.run("tox", "-c", "example123/tox.ini")
+    monkeypatch.chdir(base.dirname)
+    result = cmd("-c", "example123/tox.ini")
     assert not result.ret
-    assert "develop-inst-noop" in result.stdout.str()
-    result.stdout.fnmatch_lines([
-        "*1 passed*",
-        "*summary*",
-        "*python: commands succeeded"
-    ])
-    old.chdir()
+    assert "develop-inst-noop" in result.out
+    assert re.match(r'.*\W+1\W+passed.*'
+                    r'summary.*'
+                    r'python:\W+commands\W+succeeded.*', result.out, re.DOTALL)
+    monkeypatch.chdir(base)
+
     # see that tests can also fail and retcode is correct
     testfile = py.path.local("tests").join("test_hello.py")
     assert testfile.check()
     testfile.write("def test_fail(): assert 0")
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret
-    assert "develop-inst-noop" in result.stdout.str()
-    result.stdout.fnmatch_lines([
-        "*1 failed*",
-        "*summary*",
-        "*python: *failed*",
-    ])
+    assert "develop-inst-noop" in result.out
+    assert re.match(r'.*\W+1\W+failed.*'
+                    r'summary.*'
+                    r'python:\W+commands\W+failed.*', result.out, re.DOTALL)
+
     # test develop is called if setup.py changes
     setup_py = py.path.local("setup.py")
     setup_py.write(setup_py.read() + ' ')
-    result = cmd.run("tox", )
+    result = cmd()
     assert result.ret
-    assert "develop-inst-nodeps" in result.stdout.str()
+    assert "develop-inst-nodeps" in result.out
 
 
 def _alwayscopy_not_supported():
@@ -674,9 +621,9 @@ def test_alwayscopy(initproj, cmd):
             commands={envpython} --version
             alwayscopy=True
     """})
-    result = cmd.run("tox", "-vv")
+    result = cmd("-vv")
     assert not result.ret
-    assert "virtualenv --always-copy" in result.stdout.str()
+    assert "virtualenv --always-copy" in result.out
 
 
 def test_alwayscopy_default(initproj, cmd):
@@ -684,9 +631,9 @@ def test_alwayscopy_default(initproj, cmd):
             [testenv]
             commands={envpython} --version
     """})
-    result = cmd.run("tox", "-vv")
+    result = cmd("-vv")
     assert not result.ret
-    assert "virtualenv --always-copy" not in result.stdout.str()
+    assert "virtualenv --always-copy" not in result.out
 
 
 def test_test_piphelp(initproj, cmd):
@@ -699,7 +646,7 @@ def test_test_piphelp(initproj, cmd):
         [testenv:py27]
         basepython=python
     """})
-    result = cmd.run("tox")
+    result = cmd()
     assert not result.ret
 
 
@@ -709,59 +656,49 @@ def test_notest(initproj, cmd):
         [testenv:py26]
         basepython=python
     """})
-    result = cmd.run("tox", "-v", "--notest")
+    result = cmd("-v", "--notest")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*summary*",
-        "*py26*skipped tests*",
-    ])
-    result = cmd.run("tox", "-v", "--notest", "-epy26")
+    assert re.match(r'.*summary.*'
+                    r'py26\W+skipped\W+tests.*', result.out, re.DOTALL)
+    result = cmd("-v", "--notest", "-epy26")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*py26*reusing*",
-    ])
+    assert re.match(r'.*py26\W+reusing.*', result.out, re.DOTALL)
 
 
 def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={'tox.ini': ''})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
-    result = cmd.run("tox", "-v", "--notest")
+    result = cmd("-v", "--notest")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*create*",
-    ])
+    assert 'create' in result.out
 
 
 def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={'tox.ini': ''})
     monkeypatch.setenv("VIRTUALENV_PYTHON", '/FOO')
-    result = cmd.run("tox", "-v", "--notest")
-    assert not result.ret, result.stdout.lines
-    result.stdout.fnmatch_lines([
-        "*create*",
-    ])
+    result = cmd("-v", "--notest")
+    assert not result.ret, result.outlines
+    assert 'create' in result.out
 
 
 def test_sdistonly(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
     """})
-    result = cmd.run("tox", "-v", "--sdistonly")
+    result = cmd("-v", "--sdistonly")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*sdist-make*setup.py*",
-    ])
-    assert "-mvirtualenv" not in result.stdout.str()
+    assert re.match(r'.*sdist-make.*setup.py.*', result.out, re.DOTALL)
+    assert "-mvirtualenv" not in result.out
 
 
-def test_separate_sdist_no_sdistfile(cmd, initproj):
-    distshare = cmd.tmpdir.join("distshare")
+def test_separate_sdist_no_sdistfile(cmd, initproj, tmpdir):
+    distshare = tmpdir.join("distshare")
     initproj(("pkg123-foo", "0.7"), filedefs={
         'tox.ini': """
             [tox]
-            distshare=%s
-        """ % distshare
+            distshare={0}
+        """.format(distshare)
     })
-    result = cmd.run("tox", "--sdistonly")
+    result = cmd("--sdistonly")
     assert not result.ret
     distshare_files = distshare.listdir()
     assert len(distshare_files) == 1
@@ -769,8 +706,8 @@ def test_separate_sdist_no_sdistfile(cmd, initproj):
     assert 'pkg123-foo-0.7.zip' in str(sdistfile)
 
 
-def test_separate_sdist(cmd, initproj):
-    distshare = cmd.tmpdir.join("distshare")
+def test_separate_sdist(cmd, initproj, tmpdir):
+    distshare = tmpdir.join("distshare")
     initproj("pkg123-0.7", filedefs={
         'tox.ini': """
             [tox]
@@ -778,16 +715,14 @@ def test_separate_sdist(cmd, initproj):
             sdistsrc={distshare}/pkg123-0.7.zip
         """ % distshare
     })
-    result = cmd.run("tox", "--sdistonly")
+    result = cmd("--sdistonly")
     assert not result.ret
     sdistfiles = distshare.listdir()
     assert len(sdistfiles) == 1
     sdistfile = sdistfiles[0]
-    result = cmd.run("tox", "-v", "--notest")
+    result = cmd("-v", "--notest")
     assert not result.ret
-    result.stdout.fnmatch_lines([
-        "*inst*%s*" % sdistfile,
-    ])
+    assert "python inst: {0}".format(sdistfile) in result.out
 
 
 def test_sdist_latest(tmpdir, newconfig):
@@ -819,11 +754,9 @@ def test_envsitepackagesdir(cmd, initproj):
         commands=
             python -c "print(r'X:{envsitepackagesdir}')"
     """})
-    result = cmd.run("tox")
+    result = cmd()
     assert result.ret == 0
-    result.stdout.fnmatch_lines("""
-        X:*tox*site-packages*
-    """)
+    assert re.match(r'.*\nX:.*tox.*site-packages.*', result.out, re.DOTALL)
 
 
 def test_envsitepackagesdir_skip_missing_issue280(cmd, initproj):
@@ -834,11 +767,9 @@ def test_envsitepackagesdir_skip_missing_issue280(cmd, initproj):
         commands=
             {envsitepackagesdir}
     """})
-    result = cmd.run("tox", "--skip-missing-interpreters")
+    result = cmd("--skip-missing-interpreters")
     assert result.ret == 0
-    result.stdout.fnmatch_lines("""
-        SKIPPED:*qwelkj*
-    """)
+    assert re.match(r'.*SKIPPED:.*qwelkj.*', result.out, re.DOTALL)
 
 
 @pytest.mark.parametrize('verbosity', ['', '-v', '-vv'])
@@ -847,7 +778,7 @@ def test_verbosity(cmd, initproj, verbosity):
         'tox.ini': """
         [testenv]
     """})
-    result = cmd.run("tox", verbosity)
+    result = cmd(verbosity)
     assert result.ret == 0
 
     needle = "Successfully installed pkgX-0.0.5"
@@ -896,15 +827,16 @@ def test_envtmpdir(initproj, cmd):
         '''
     })
 
-    result = cmd.run("tox")
+    result = cmd()
     assert not result.ret
 
-    result = cmd.run("tox")
+    result = cmd()
     assert not result.ret
 
 
 def test_missing_env_fails(initproj, cmd):
     initproj("foo", filedefs={'tox.ini': "[testenv:foo]\ncommands={env:VAR}"})
-    result = cmd.run("tox")
+    result = cmd()
     assert result.ret == 1
-    result.stdout.fnmatch_lines(["*foo: unresolvable substitution(s): 'VAR'*"])
+    assert result.out.endswith("foo: unresolvable substitution(s): 'VAR'."
+                               " Environment variables are missing or defined recursively.\n")

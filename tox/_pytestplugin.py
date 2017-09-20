@@ -1,7 +1,7 @@
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import os
-import subprocess
 import sys
 import textwrap
 import time
@@ -15,6 +15,7 @@ import tox
 from .config import parseconfig
 from .result import ResultLog
 from .session import Action
+from .session import main
 from .venv import VirtualEnv
 
 
@@ -32,7 +33,7 @@ def pytest_addoption(parser):
 
 
 def pytest_report_header():
-    return "tox comes from: %r" % (tox.__file__)
+    return "tox comes from: {0}".format(repr(tox.__file__))
 
 
 @pytest.fixture
@@ -49,14 +50,62 @@ def newconfig(request, tmpdir):
             return parseconfig(args, plugins=plugins)
         finally:
             old.chdir()
+
     return newconfig
 
 
 @pytest.fixture
-def cmd(request):
+def cmd(request, capfd, monkeypatch):
     if request.config.option.no_network:
         pytest.skip("--no-network was specified, test cannot run")
-    return Cmd(request)
+    request.addfinalizer(py.path.local().chdir)
+
+    def run(*argv):
+        if sys.version_info[:2] < (2, 7):
+            pytest.skip("can not run tests involving calling tox on python2.6. "
+                        "(and python2.6 is about to be deprecated anyway)")
+        key = str(b'PYTHONPATH')
+        python_paths = (i for i in (str(os.getcwd()), os.getenv(key)) if i)
+        monkeypatch.setenv(key, os.pathsep.join(python_paths))
+        with RunResult(capfd, argv) as result:
+            try:
+                main([str(x) for x in argv])
+                assert False  # this should always exist with SystemExit
+            except SystemExit as exception:
+                result.ret = exception.code
+            except OSError as e:
+                result.ret = e.errno
+        return result
+
+    yield run
+
+
+class RunResult:
+    def __init__(self, capfd, args):
+        self._capfd = capfd
+        self.args = args
+        self.ret = None
+        self.duration = None
+        self.out = None
+        self.err = None
+
+    def __enter__(self):
+        self._start = time.time()
+        # noinspection PyProtectedMember
+        self._capfd._start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.duration = time.time() - self._start
+        self.out, self.err = self._capfd.readouterr()
+
+    @property
+    def outlines(self):
+        return self.out.splitlines()
+
+    def __repr__(self):
+        return 'RunResult(ret={0}, args={1}, out=\n{2}\n, err=\n{3})'.format(
+            self.ret, ' '.join(str(i) for i in self.args), self.out, self.err)
 
 
 class ReportExpectMock:
@@ -77,12 +126,13 @@ class ReportExpectMock:
 
         def generic_report(*args, **kwargs):
             self._calls.append((name,) + args)
-            print("%s" % (self._calls[-1], ))
+            print("%s" % (self._calls[-1],))
+
         return generic_report
 
     def action(self, venv, msg, *args):
         self._calls.append(("action", venv, msg))
-        print("%s" % (self._calls[-1], ))
+        print("%s" % (self._calls[-1],))
         return Action(self.session, venv, msg, args)
 
     def getnext(self, cat):
@@ -169,6 +219,7 @@ def mocksession(request):
             pm = pcallMock(args, cwd, env, stdout, stderr, shell)
             self._pcalls.append(pm)
             return pm
+
     return MockSession()
 
 
@@ -180,120 +231,22 @@ def newmocksession(request):
     def newmocksession(args, source, plugins=()):
         mocksession.config = newconfig(args, source, plugins=plugins)
         return mocksession
+
     return newmocksession
 
 
-class Cmd:
-    def __init__(self, request):
-        self.tmpdir = request.getfixturevalue("tmpdir")
-        self.request = request
-        current = py.path.local()
-        self.request.addfinalizer(current.chdir)
-
-    def chdir(self, target):
-        target.chdir()
-
-    def popen(self, argv, stdout, stderr, **kw):
-        env = os.environ.copy()
-        env['PYTHONPATH'] = ":".join(filter(None, [
-            str(os.getcwd()), env.get('PYTHONPATH', '')]))
-        kw['env'] = env
-        # print "env", env
-        return subprocess.Popen(argv, stdout=stdout, stderr=stderr, **kw)
-
-    def run(self, *argv):
-        if argv[0] == "tox" and sys.version_info[:2] < (2, 7):
-            pytest.skip("can not run tests involving calling tox on python2.6. "
-                        "(and python2.6 is about to be deprecated anyway)")
-        argv = [str(x) for x in argv]
-        assert py.path.local.sysfind(str(argv[0])), argv[0]
-        p1 = self.tmpdir.join("stdout")
-        p2 = self.tmpdir.join("stderr")
-        print("%s$ %s" % (os.getcwd(), " ".join(argv)))
-        f1 = p1.open("wb")
-        f2 = p2.open("wb")
-        now = time.time()
-        popen = self.popen(argv, stdout=f1, stderr=f2,
-                           close_fds=(sys.platform != "win32"))
-        ret = popen.wait()
-        f1.close()
-        f2.close()
-        out = p1.read("rb")
-        out = getdecoded(out).splitlines()
-        err = p2.read("rb")
-        err = getdecoded(err).splitlines()
-
-        def dump_lines(lines, fp):
-            try:
-                for line in lines:
-                    print(line, file=fp)
-            except UnicodeEncodeError:
-                print("couldn't print to %s because of encoding" % (fp,))
-        dump_lines(out, sys.stdout)
-        dump_lines(err, sys.stderr)
-        return RunResult(ret, out, err, time.time() - now)
-
-
 def getdecoded(out):
-        try:
-            return out.decode("utf-8")
-        except UnicodeDecodeError:
-            return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-                py.io.saferepr(out),)
-
-
-class RunResult:
-    def __init__(self, ret, outlines, errlines, duration):
-        self.ret = ret
-        self.outlines = outlines
-        self.errlines = errlines
-        self.stdout = LineMatcher(outlines)
-        self.stderr = LineMatcher(errlines)
-        self.duration = duration
-
-
-class LineMatcher:
-    def __init__(self, lines):
-        self.lines = lines
-
-    def str(self):
-        return "\n".join(self.lines)
-
-    def fnmatch_lines(self, lines2):
-        if isinstance(lines2, str):
-            lines2 = py.code.Source(lines2)
-        if isinstance(lines2, py.code.Source):
-            lines2 = lines2.strip().lines
-
-        from fnmatch import fnmatch
-        lines1 = self.lines[:]
-        nextline = None
-        extralines = []
-        __tracebackhide__ = True
-        for line in lines2:
-            nomatchprinted = False
-            while lines1:
-                nextline = lines1.pop(0)
-                if line == nextline:
-                    print("exact match:", repr(line))
-                    break
-                elif fnmatch(nextline, line):
-                    print("fnmatch:", repr(line))
-                    print("   with:", repr(nextline))
-                    break
-                else:
-                    if not nomatchprinted:
-                        print("nomatch:", repr(line))
-                        nomatchprinted = True
-                    print("    and:", repr(nextline))
-                extralines.append(nextline)
-            else:
-                assert line == nextline
+    try:
+        return out.decode("utf-8")
+    except UnicodeDecodeError:
+        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
+            py.io.saferepr(out),)
 
 
 @pytest.fixture
 def initproj(request, tmpdir):
     """ create a factory function for creating example projects. """
+
     def initproj(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}
@@ -330,6 +283,8 @@ def initproj(request, tmpdir):
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
         print("created project in %s" % (base,))
         base.chdir()
+        return base
+
     return initproj
 
 
@@ -337,6 +292,6 @@ def create_files(base, filedefs):
     for key, value in filedefs.items():
         if isinstance(value, dict):
             create_files(base.ensure(key, dir=1), value)
-        elif isinstance(value, str):
+        elif isinstance(value, six.string_types):
             s = textwrap.dedent(value)
             base.join(key).write(s)
