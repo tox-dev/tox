@@ -1,35 +1,33 @@
-===========================
-Testing out of the box -tox
-===========================
+============================
+tox - testing out of the box
+============================
 
 **Welcome to the tox automation project - helping to standardize testing in Python since 2012**
-
-``tox`` aims to automate and standardize testing in Python.  It is part of a larger vision of
-easing the packaging, testing and release process of Python software.
 
 What is tox?
 ============
 
-tox is a generic virtualenv_ management and test command line tool you can use for:
+``tox`` aims to automate and standardize testing and task automation in Python.  It is part of a larger vision to be unifying frontend between CI systems and local development activity therfore easing the packaging, testing and release process.
 
-* checking your package installs correctly with different Python versions and interpreters
 
-* running your tests in each of the environments, configuring your test tool of choice
+Most typical usages are:
 
-* acting as a frontend to Continuous Integration servers, greatly
-  reducing boilerplate and merging CI and shell-based testing.
+* Build your package and check if it installs correctly with different Python versions and interpreters
 
-* in a nutshell:
+* Run your tests in each of the environments, configuring your test tool of choice
 
-    **Installation**: pip install tox
+* Build and deploy the documentation of the project
 
-    **Supported Pythons**: CPython 2.6-3.6, jython, pypy
+In a nutshell
+-------------
 
-    **Operating systems**: Linux, Windows, macOS, Unix
+**Supported Pythons**: CPython 2.6-3.6, jython, pypy
 
-    **License**: MIT
+**Supported operating systems**: Linux, Windows, macOS, Unix
 
-    **development**: https://github.com/tox-dev
+**License**: MIT
+
+**development**: https://github.com/tox-dev
 
 Installation
 ============
@@ -81,7 +79,7 @@ Current features
 
     - test-tool agnostic: runs pytest, nose or unittests in a uniform manner
 
-* :doc:`(new in 2.0) plugin system <plugins>` to modify tox execution with simple hooks.
+* :doc:`plugin system <plugins>` to modify tox execution with simple hooks.
 
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
   through :confval:`install_command=ARGV`.
