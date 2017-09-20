@@ -33,7 +33,7 @@ pypi/devpi configuration
 
 If you want to use the scripts in `task/` you need a `.pypirc` with a correctly configured `pypi` section (see below). Otherwise just upload the release package which ever way you see fit.
 
-[pypi] section in `.pypirc` should look somehow like this
+[pypi] section in `.pypirc` should look somehow like this:
 
 .. code-block:: ini
 
