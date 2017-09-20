@@ -6,7 +6,7 @@ This matches the current model that can be summarized as this:
 
 * tox has no long lived branches.
 
-* Pull requests get integrated into master by members of the project when they feel confident that this could be part of the next release. Small fix ups might be done right after merge instead of disscussing back and forth to get minor problems fixed. to keep the workflow simple.
+* Pull requests get integrated into master by members of the project when they feel confident that this could be part of the next release. Small fix ups might be done right after merge instead of disscussing back and forth to get minor problems fixed, to keep the workflow simple.
 
 **Normal releases**: done from master when enough changes have accumaluted (whatever that means at any given point in time).
 
