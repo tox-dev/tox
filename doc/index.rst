@@ -69,7 +69,7 @@ checkout the :doc:`examples` to get some more ideas.
 Current features
 ================
 
-* **automation of tedious Python related test activities**
+* **automation of tedious developer tasks like packaging, testing and deployment**
 
 * **test your Python package against many interpreter and dependency configs**
 
