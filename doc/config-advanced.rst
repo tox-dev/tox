@@ -1,66 +1,10 @@
-V2: new tox multi-dimensional, platform-specific configuration
---------------------------------------------------------------------
+Advanced configuration
+======================
 
-.. note::
+**factor-based, multi-dimensional, platform-specific configuration**
 
-   This is a draft document sketching a to-be-done implementation.
-   It does not fully specify each change yet but should give a good
-   idea of where things are heading.  For feedback, mail the
-   testing-in-python mailing list or open a pull request at
-   https://github.com/tox-dev/tox.
-
-**Abstract**: Adding multi-dimensional configuration, platform-specification
-and multiple installers to tox.ini.
-
-**Target audience**: Developers using or wanting to use tox for testing
-their python projects.
-
-Issues with current tox (1.4) configuration
-------------------------------------------------
-
-tox is used as a tool for creating and managing virtualenv environments
-and running tests in them. As of tox-1.4 there are some issues frequently
-coming up with its configuration language:
-
-- there is no way to instruct tox to parametrize testenv specifications
-  other than to list all combinations by specifying a ``[testenv:...]``
-  section for each combination. Examples of real life situations
-  arising from this:
-
-  * https://github.com/encode/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini
-
-  * https://bitbucket.org/tabo/django-treebeard/src/93b579395a9c/tox.ini
-
-- there is no way to have platform specific settings other than to
-  define specific testenvs and invoke tox with a platform-specific
-  testenv list.
-
-- there is no way to specify the platforms against which a project
-  shall successfully run.
-
-- tox always uses pip for installing packages currently.  This has
-  several issues:
-
-  - no way to check if installing via easy_install works
-  - no installs of packages with compiled c-extensions (win32 standard)
-
-
-Goals, resolving those issues
-------------------------------------
-
-This document discusses a possible solution for each of these issues,
-namely these goals:
-
-- allow to more easily define and run dependency/interpreter variants
-  with testenvs
-- allow platform-specific settings
-- allow to specify platforms against which tests should run
-- allow to run installer-variants (easy_install or pip, xxx)
-- try to mimick/re-use bash-style syntax to ease learning curve.
-
-
-Example: Generating and selecting variants
-----------------------------------------------
+Generate and select variants
+----------------------------
 
 Suppose you want to test your package against python2.6, python2.7 and on the
 windows and linux platforms.  Today you would have to
@@ -137,22 +81,21 @@ Nothing special here :)
     Voila, this multi-dimensional ``tox.ini`` configuration
     defines 2*2=4 environments.
 
+The platform setting
+--------------------
 
-The new "platform" setting
---------------------------------------
-
-A testenv can define a new ``platform`` setting.  If its value
+A testenv can define a ``platform`` setting.  If its value
 is not contained in the string obtained from calling
 ``sys.platform`` the environment will be skipped.
 
-Expanding the ``envlist`` setting
-----------------------------------------------------------
+Expand the ``envlist`` setting
+------------------------------
 
-The new ``envlist`` setting allows to use ``{}`` bash-style
+The ``envlist`` setting allows to use ``{}`` bash-style
 expressions.  XXX explanation or pointer to bash-docs
 
-Templating based on environments names
--------------------------------------------------
+Templating based on environment names
+-------------------------------------
 
 For a given environment name, all lines in a testenv section which
 start with "NAME: ..." will be checked for being part in the environment
@@ -162,18 +105,25 @@ Parts of an environment name are obtained by ``-``-splitting it.
 
 Variant specification with [variant:VARNAME]
 
-Showing all expanded sections
--------------------------------
+Show all sections
+-----------------
 
 To help with understanding how the variants will produce section values,
 you can ask tox to show their expansion with a new option::
 
-    $ tox -l [XXX output omitted for now]
+    $ tox -[v]l
 
-Making sure your packages installs with easy_install
-------------------------------------------------------
+To show all environments (including ones not in envlist)::
 
-The new "installer" testenv setting allows to specify the tool for
+    $ tox -[v]a
+
+**note:** adding the ``v`` flag outputs the descriptions of environments if they are set via
+the `description` key.
+
+Make sure your packages installs with easy_install
+--------------------------------------------------
+
+The "installer" testenv setting allows to specify the tool for
 installation in a given test environment::
 
     [testenv]
@@ -190,7 +140,7 @@ and pip, you can list them in your envlist likes this::
 If no installer is specified, ``pip`` will be used.
 
 Default settings related to environments names/variants
----------------------------------------------------------------
+-------------------------------------------------------
 
 tox comes with predefined settings for certain variants, namely:
 
@@ -202,18 +152,16 @@ tox comes with predefined settings for certain variants, namely:
 You can use those in your “envlist” specification
 without the need to define them yourself.
 
-
 Use more bash-style syntax
---------------------------------------
+--------------------------
 
 tox leverages bash-style syntax if you specify mintoxversion = 1.4:
 
 - $VARNAME or ${...} syntax instead of the older {} substitution.
 - XXX go through config.rst and see how it would need to be changed
 
-
-Transforming the examples: django-rest
-------------------------------------------------
+Example: django-rest
+--------------------
 
 The original `django-rest-framework tox.ini
 <https://github.com/encode/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini>`_
@@ -245,8 +193,8 @@ Note that ``{,-example}`` in the envlist denotes two values, an empty
 one and a ``example`` one.  The empty value means that there are no specific
 settings and thus no need to define a variant name.
 
-Transforming the examples: django-treebeard
-------------------------------------------------
+Example: django-treebeard
+-------------------------
 
 Another `tox.ini
 <https://bitbucket.org/tabo/django-treebeard/raw/93b579395a9c/tox.ini>`_
@@ -258,8 +206,7 @@ we also produce 36 specific testenvs with specific dependencies and test
 commands::
 
     [tox]
-    envlist =
-     {py24,py25,py26,py27}-{django11,django12,django13}-{nodb,pg,mysql}, docs
+    envlist = {py24,py25,py26,py27}-{django11,django12,django13}-{nodb,pg,mysql}, docs
 
     [testenv:docs]
     changedir = docs
@@ -270,22 +217,22 @@ commands::
         make clean
         make html
 
-     [testenv]
-     deps=
-           coverage
-           pysqlite
-           django11: django==1.1.4
-           django12: django==1.2.7
-           django13: django==1.3.1
-           django14: django==1.4
-           nodb: pysqlite
-           pg: psycopg2
-           mysql: MySQL-python
+    [testenv]
+    deps=
+        coverage
+        pysqlite
+        django11: django==1.1.4
+        django12: django==1.2.7
+        django13: django==1.3.1
+        django14: django==1.4
+        nodb: pysqlite
+        pg: psycopg2
+        mysql: MySQL-python
 
-     commands =
-         nodb: {envpython} runtests.py {posargs}
-         pg: {envpython} runtests.py {posargs} \
-                         --DATABASE_ENGINE=postgresql_psycopg2 \
-                         --DATABASE_USER=postgres {posargs}
-         mysql: {envpython} runtests.py --DATABASE_ENGINE=mysql \
-                                        --DATABASE_USER=root {posargs}
+    commands =
+        nodb: {envpython} runtests.py {posargs}
+        pg: {envpython} runtests.py {posargs} \
+                        --DATABASE_ENGINE=postgresql_psycopg2 \
+                        --DATABASE_USER=postgres {posargs}
+        mysql: {envpython} runtests.py --DATABASE_ENGINE=mysql \
+                                       --DATABASE_USER=root {posargs}

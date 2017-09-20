@@ -1,7 +1,5 @@
-.. be in -*- rst -*- mode!
-
-tox configuration specification
-===============================
+tox.ini reference
+=================
 
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html
 
@@ -9,8 +7,8 @@ tox configuration specification
 Below you find the specification, but you might want to skim some
 :doc:`examples` first and use this page as a reference.
 
-tox global settings
--------------------
+Global settings
+---------------
 
 List of optional global options::
 
@@ -360,8 +358,8 @@ You can escape curly braces with the ``\`` character if you need them, for examp
 
     commands = echo "\{posargs\}" = {posargs}
 
-Globally available substitutions
-++++++++++++++++++++++++++++++++
+Global
+++++++
 
 ``{toxinidir}``
     the directory where tox.ini is located
@@ -384,8 +382,8 @@ Globally available substitutions
     OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in `setenv`,
     when target variable is path variable (e.g. PATH or PYTHONPATH).
 
-substitutions for virtualenv-related sections
-+++++++++++++++++++++++++++++++++++++++++++++
+Testenv specific
+++++++++++++++++
 
 ``{envname}``
     the name of the virtual environment
@@ -403,9 +401,8 @@ substitutions for virtualenv-related sections
 ``{envlogdir}``
     the environment log directory
 
-
-environment variable substitutions
-++++++++++++++++++++++++++++++++++
+Environment variables
++++++++++++++++++++++
 
 If you specify a substitution string like this::
 
@@ -415,9 +412,8 @@ then the value will be retrieved as ``os.environ['KEY']``
 and raise an Error if the environment variable
 does not exist.
 
-
-environment variable substitutions with default values
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Environment variables with defaults
++++++++++++++++++++++++++++++++++++
 
 If you specify a substitution string like this::
 
@@ -446,8 +442,8 @@ the above example is roughly equivalent to
 .. _`command positional substitution`:
 .. _`positional substitution`:
 
-substitutions for positional arguments in commands
-++++++++++++++++++++++++++++++++++++++++++++++++++
+Positional arguments in commands
+++++++++++++++++++++++++++++++++
 
 .. versionadded:: 1.0
 
@@ -480,9 +476,8 @@ Previous versions of tox supported the ``[.*]`` pattern to denote
 positional arguments with defaults. This format has been deprecated.
 Use ``{posargs:DEFAULTS}`` to specify those.
 
-
-Substitution for values from other sections
-+++++++++++++++++++++++++++++++++++++++++++
+Values from other sections
+++++++++++++++++++++++++++
 
 .. versionadded:: 1.4
 
@@ -509,9 +504,8 @@ You can put default values in one section and reference them in others to avoid 
         mercurial
         {[base]deps}
 
-
-Generating environments, conditional settings
----------------------------------------------
+Generate environments, conditional settings
+-------------------------------------------
 
 .. versionadded:: 1.8
 
@@ -549,7 +543,7 @@ Let's go through this step by step.
 .. _generative-envlist:
 
 Generative envlist
-+++++++++++++++++++++++
+++++++++++++++++++
 
 ::
 
@@ -584,7 +578,7 @@ You can still list environments explicitly along with generated ones::
 .. _factors:
 
 Factors and factor-conditional settings
-++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++
 
 Parts of an environment name delimited by hyphens are called factors and can
 be used to set values conditionally::
@@ -618,7 +612,6 @@ Reading it line by line:
     tox provides good defaults for basepython setting, so the above
     ini-file can be further reduced by omitting the ``basepython``
     setting.
-
 
 Complex factor conditions
 +++++++++++++++++++++++++
@@ -660,12 +653,11 @@ example could be rewritten as ``py{26,27}-sqlite``.
       ``mysql-py26``,
     - but not with ``py2`` or ``py26-sql``.
 
-
 Other Rules and notes
-=====================
+---------------------
 
 * ``path`` specifications: if a specified ``path`` is a relative path
   it will be considered as relative to the ``toxinidir``, the directory
   where the configuration file resides.
 
-.. include:: links.rst
+.. include:: _shared-links.rst

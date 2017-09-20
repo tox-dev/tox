@@ -1,10 +1,8 @@
-.. be in -*- rst -*- mode!
-
 General tips and tricks
-================================
+=======================
 
-Interactively passing positional arguments
------------------------------------------------
+Passing positional arguments
+----------------------------
 
 If you invoke ``tox`` like this:
 
@@ -39,8 +37,8 @@ syntax:
 
 .. _`sphinx checks`:
 
-Integrating "sphinx" documentation checks
-----------------------------------------------
+Integrate "sphinx" doc checks
+-----------------------------
 
 In a ``testenv`` environment you can specify any command and
 thus you can easily integrate sphinx_ documentation integrity during
@@ -68,11 +66,10 @@ You can now call:
 
 which will make the sphinx tests part of your test run.
 
-
 .. _`TOXENV`:
 
-Selecting one or more environments to run tests against
---------------------------------------------------------
+Select environments
+-------------------
 
 Using the ``-e ENV[,ENV2,...]``  option you explicitly list
 the environments where you want to run tests against. For
@@ -109,8 +106,8 @@ or override it from the command line or from the environment variable
 
 .. _artifacts:
 
-Access package artifacts between multiple tox-runs
---------------------------------------------------------
+Share package artifacts between testruns
+----------------------------------------
 
 If you have multiple projects using tox you can make use of
 a ``distshare`` directory where ``tox`` will copy in sdist-packages so
@@ -141,8 +138,8 @@ If you want to use this with Jenkins_, also checkout the :ref:`jenkins artifact 
 
 .. _verlib: https://bitbucket.org/tarek/distutilsversion/
 
-basepython defaults, overriding
-++++++++++++++++++++++++++++++++++++++++++
+Basepython defaults, overriding
+-------------------------------
 
 By default, for any ``pyXY`` test environment name
 the underlying "pythonX.Y" executable will be searched in
@@ -203,4 +200,4 @@ itself calls ``setup.py develop``.
 There is an optimization coded in to not bother re-running the command if
 ``$projectname.egg-info`` is newer than ``setup.py`` or ``setup.cfg``.
 
-.. include:: ../links.rst
+.. include:: ../_shared-links.rst

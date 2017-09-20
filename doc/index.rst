@@ -1,29 +1,45 @@
-Welcome to the tox automation project
-===============================================
+============================
+tox - testing out of the box
+============================
 
-vision: standardize testing in Python
----------------------------------------------
-
-``tox`` aims to automate and standardize testing in Python.  It is part
-of a larger vision of easing the packaging, testing and release process
-of Python software.
+**Welcome to the tox automation project - helping to standardize testing in Python since 2012**
 
 What is tox?
---------------------
+============
 
-tox is a generic virtualenv_ management and test command line tool you can use for:
+``tox`` aims to automate and standardize testing and task automation in Python.  It is part of a larger vision to be unifying frontend between CI systems and local development activity therfore easing the packaging, testing and release process.
 
-* checking your package installs correctly with different Python versions and
-  interpreters
 
-* running your tests in each of the environments, configuring your test tool of choice
+Most typical usages are:
 
-* acting as a frontend to Continuous Integration servers, greatly
-  reducing boilerplate and merging CI and shell-based testing.
+* Build your package and check if it installs correctly with different Python versions and interpreters
 
+* Run your tests in each of the environments, configuring your test tool of choice
+
+* Build and deploy the documentation of the project
+
+In a nutshell
+-------------
+
+**Supported Pythons**: CPython 2.6-3.6, jython, pypy
+
+**Supported operating systems**: Linux, Windows, macOS, Unix
+
+**License**: MIT
+
+**development**: https://github.com/tox-dev
+
+Installation
+============
+
+.. code-block:: shell
+
+   pip install tox
+
+It is fine to install ``tox`` itself into a virtualenv_ environment.
 
 Basic example
------------------
+=============
 
 First, install ``tox`` with ``pip install tox``.
 Then put basic information about your project and the test environments you
@@ -44,16 +60,16 @@ To sdist-package, install and test your project against Python2.6 and Python2.7,
 
     tox
 
-and watch things happening (you must have python2.6 and python2.7 installed in your
+... and watch things happening (you must have python2.6 and python2.7 installed in your
 environment otherwise you will see errors).  When you run ``tox`` a second time
 you'll note that it runs much faster because it keeps track of virtualenv details
 and will not recreate or re-install dependencies.  You also might want to
-checkout :doc:`examples` to get some more ideas.
+checkout the :doc:`examples` to get some more ideas.
 
 Current features
--------------------
+================
 
-* **automation of tedious Python related test activities**
+* **automation of tedious developer tasks like packaging, testing and deployment**
 
 * **test your Python package against many interpreter and dependency configs**
 
@@ -63,23 +79,20 @@ Current features
 
     - test-tool agnostic: runs pytest, nose or unittests in a uniform manner
 
-* :doc:`(new in 2.0) plugin system <plugins>` to modify tox execution with simple hooks.
+* :doc:`plugin system <plugins>` to modify tox execution with simple hooks.
 
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
   through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher,
-  Jython and pypy_.
+* **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher, Jython and pypy_.
 
 * **cross-platform**: Windows and Unix style environments
 
-* **integrates with continuous integration servers** like Jenkins_
-  (formerly known as Hudson) and helps you to avoid boilerplatish
-  and platform-specific build-step hacks.
+* **integrates with continuous integration servers** like Jenkins_ and helps you to avoid
+  boilerplatish and platform-specific build-step hacks.
 
-* **full interoperability with devpi**: is integrated with and
-  is used for testing in the devpi_ system, a versatile pypi
-  index server and release managing tool.
+* **full interoperability with devpi**: is integrated with and is used for testing in the
+  devpi_ system, a versatile pypi index server and release managing tool.
 
 * **driven by a simple ini-style config file**
 
@@ -87,29 +100,21 @@ Current features
 
 * **concise reporting** about tool invocations and configuration errors
 
-* **professionally** :doc:`supported <support>`
+* **professionally** :ref:`support`
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 
-
-.. _pypy: http://pypy.org
-
-.. _`tox.ini`: :doc:configfile
-
 .. toctree::
-   :hidden:
 
-   install
-   examples
-   config
-   config-v2
-   support
-   changelog
-   links
-   plugins
-   developers
-   example/result
-   announce/changelog-only
+    examples
+    config
+    config-advanced
+    plugins
+    developer-faq
+    org
 
+.. include:: ../CHANGELOG.rst
 
-.. include:: links.rst
+.. include:: ../CONTRIBUTING.rst
+
+.. include:: _shared-links.rst
