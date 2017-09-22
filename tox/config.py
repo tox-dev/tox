@@ -564,6 +564,14 @@ def tox_addoption(parser):
 
     parser.add_testenv_attribute_obj(InstallcmdOption())
 
+    def constraints(testenv_config, value):
+        return None if value == '' else value
+
+    parser.add_testenv_attribute(
+        name="constraints", type="string", postprocess=constraints,
+        default=None,
+        help="Location of the pip constraints file if needed")
+
     parser.add_testenv_attribute(
         name="list_dependencies_command",
         type="argv",
@@ -1109,7 +1117,7 @@ class Replacer:
         # special case: opts and packages. Leave {opts} and
         # {packages} intact, they are replaced manually in
         # _venv.VirtualEnv.run_install_command.
-        if sub_value in ('opts', 'packages'):
+        if sub_value in ('opts', 'packages', 'constraints'):
             return '{%s}' % sub_value
 
         try:

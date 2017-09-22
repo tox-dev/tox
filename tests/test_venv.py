@@ -777,3 +777,87 @@ def test_tox_testenv_pre_post(newmocksession):
     assert l == []
     mocksession.runtestenv(venv)
     assert l == ['started', 'finished']
+
+
+def test_simple_constraints_action_hello(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        constraints = ./upper-constraints.txt
+        install_command = pip install -U {constraints} {opts} {packages}
+    """)
+    venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+    action = mocksession.newaction(venv, "hello")
+    venv.run_install_command(packages=["whatever"], action=action)
+    calls = mocksession._pcalls
+    assert len(calls) == 1
+    assert '-c' not in calls[0].args
+
+
+def test_simple_constraints_action_installdeps(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        constraints = ./upper-constraints.txt
+        install_command = pip install -U {constraints} {opts} {packages}
+    """)
+    venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+    action = mocksession.newaction(venv, "installdeps")
+    venv.run_install_command(packages=["whatever"], action=action)
+    calls = mocksession._pcalls
+
+    assert len(calls) == 1
+    assert '-c' in calls[0].args
+
+
+def test_variable_constraints(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        constraints = {toxinidir}/upper-constraints.txt
+        install_command = pip install -U {constraints} {opts} {packages}
+    """)
+    venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+    action = mocksession.newaction(venv, "installdeps")
+    venv.run_install_command(packages=["whatever"], action=action)
+    calls = mocksession._pcalls
+
+    assert len(calls) == 1
+    assert '-c' in calls[0].args
+    assert calls[0].args[4].endswith('/upper-constraints.txt')
+    assert '{toxinidir}/upper-constraints.txt' != calls[0].args[4]
+
+
+def test_missing_constraints_defn(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        constraints =
+        install_command = pip install -U {constraints} {opts} {packages}
+    """)
+    venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+    action = mocksession.newaction(venv, "installdeps")
+    venv.run_install_command(packages=["whatever"], action=action)
+    calls = mocksession._pcalls
+
+    assert '-c' not in calls[0].args
+
+
+def test_missing_constraints_token(newmocksession):
+    mocksession = newmocksession([], """
+        [testenv]
+        constraints = ./upper-constraints.txt
+        install_command = pip install -U {opts} {packages}
+    """)
+    venv = mocksession.getenv('python')
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+    action = mocksession.newaction(venv, "installdeps")
+    venv.run_install_command(packages=["whatever"], action=action)
+    calls = mocksession._pcalls
+
+    assert '-c' not in calls[0].args

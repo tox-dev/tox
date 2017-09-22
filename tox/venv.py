@@ -281,6 +281,7 @@ class VirtualEnv(object):
         return l
 
     def run_install_command(self, packages, action, options=()):
+        constraints = self.envconfig.constraints
         argv = self.envconfig.install_command[:]
         # use pip-script on win32 to avoid the executable locking
         i = argv.index('{packages}')
@@ -288,6 +289,14 @@ class VirtualEnv(object):
         if '{opts}' in argv:
             i = argv.index('{opts}')
             argv[i:i + 1] = list(options)
+
+        if '{constraints}' in argv:
+            i = argv.index('{constraints}')
+            if (constraints is not None and
+                    action.activity in ['installdeps']):
+                argv[i:i+1] = ['-c', constraints]
+            else:
+                del argv[i]
 
         for x in ('PIP_RESPECT_VIRTUALENV', 'PIP_REQUIRE_VIRTUALENV',
                   '__PYVENV_LAUNCHER__'):

@@ -643,10 +643,12 @@ def test_test_usedevelop(cmd, initproj, src_root):
 
 def _alwayscopy_not_supported():
     # This is due to virtualenv bugs with alwayscopy in some platforms
-    # see: https://github.com/pypa/virtualenv/issues/565
+    # See: https://github.com/pypa/virtualenv/issues/565
+    # See also: https://github.com/pypa/virtualenv/pull/1010 for the fix
     if hasattr(platform, 'linux_distribution'):
         _dist = platform.linux_distribution(full_distribution_name=False)
-        if _dist[0] == 'centos' and _dist[1][0] == '7':
+        if ((_dist[0] == 'centos' and _dist[1][0] == '7') or
+                (_dist[0] == 'fedora')):
             return True
     return False
 
