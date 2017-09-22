@@ -89,6 +89,15 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Similar to ``make`` recipe lines, any command with a leading ``-``
     will ignore the exit code.
 
+.. confval:: constraints=STRING
+
+    .. versionadded:: 2.10
+
+    Constraints are a new feature in pip 9.x, designed to enforce a specific
+    ''constrainted'' set of installed libraries.  This option when paired with
+    ''{constratints}'' in your install_command will instruct pip where to get
+    the constratints from.
+
 .. confval:: install_command=ARGV
 
     .. versionadded:: 1.6
