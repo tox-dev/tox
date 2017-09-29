@@ -49,8 +49,8 @@ prep () {
     git add CHANGELOG.rst
     git status
     _confirm "changes to repository o.k.?"
-    git commit -m "release preparation for ${VERSION}"
-    git tag -s ${VERSION} -m "release tox ${VERSION}"
+    git commit -m "release preparation for ${VERSION}" || true
+    git tag -s ${VERSION} -m "release tox ${VERSION}" || true
     pip install -U dist/tox-${VERSION}.tar.gz
     _confirm "version of package o.k.?"
     tox --version
