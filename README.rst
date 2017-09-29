@@ -37,9 +37,3 @@ For more information and the repository please see:
 - home and docs: https://tox.readthedocs.org
 
 - repository: https://github.com/tox-dev/tox
-
-Code coverage of latest master build
-====================================
-
-.. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graphs/sunburst.svg
-  :target: https://codecov.io/gh/tox-dev/tox/branch/master
