@@ -81,7 +81,7 @@ devpi_cloud_test () {
     _confirm
     cd ${cloudTestPath}
     dct trigger ${VERSION}
-    xdg-open https://github.com/obestwalter/devpi-cloud-test-tox
+    xdg-open https://github.com/tox-dev/devpi-cloud-test-tox
     cd ../tox
 }
 
