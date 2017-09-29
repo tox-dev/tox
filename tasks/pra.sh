@@ -51,7 +51,7 @@ prep () {
     _confirm "changes to repository o.k.?"
     git commit -m "release preparation for ${VERSION}"
     git tag -s ${VERSION} -m "release tox ${VERSION}"
-    pip install -U dist *.tar.gz
+    pip install -U dist/tox-${VERSION}.tar.gz
     _confirm "version of package o.k.?"
     tox --version
     _confirm "rm dist/*, build, git tag ${VERSION}"
