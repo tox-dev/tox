@@ -1,8 +1,22 @@
-Thanks for contributing a PR!
+## Thanks for contributing a pull request!
 
-Here's a quick checklist of what we'd like you to think off:
+If you are contributing for the first time or provide a trivial fix don't worry too
+much about the checklist - we will help you get started.
 
-- [ ] Make sure to include one or more tests for your change;
-- [ ] if an enhancement PR please create docs and at best an example
-- [ ] Add yourself to `CONTRIBUTORS`;
-- [ ] make a descriptive Pull Request text (it will be used for changelog)
+## Contribution checklist:
+
+(also see [CONTRIBUTING.rst](https://github.com/tox-dev/tox/tree/master/CONTRIBUTING.rst) for details)
+
+- [ ] wrote descriptive pull request text
+- [ ] added/updated test(s)
+- [ ] updated/extended the documentation
+- [ ] added relevant [issue keyword](https://help.github.com/articles/closing-issues-using-keywords/)
+      in message body
+- [ ] added news fragment in [changelog folder](https://github.com/tox-dev/tox/tree/master/changelog)
+  * fragment name: `<issue number>.<type>.rst` for example (588.bugfix.rst)
+  * `<type>` is must be one of `bugfix`, `feature`, `deprecation`,`breaking`, `doc`, `misc`
+  * if pr has no issue: consider creating one first or change it to the pr number after creating the pr
+  * "sign" fragment with "by @<your username>"
+  * please use full sentences with correct case and punctuation, for example: "Fix issue with non-ascii contents in doctest text files - by @superuser."
+  * also see [examples](https://github.com/tox-dev/tox/tree/master/changelog/examples.rst)
+- [ ] added yourself to `CONTRIBUTORS` (preserving alphabetical order)

@@ -1,16 +1,14 @@
 [tool.towncrier]
     package = "tox"
-    package_dir = ".."
     filename = "CHANGELOG.rst"
+    directory = "changelog"
+    template = "changelog/template.jinja2"
+    title_format = "{version} ({project_date})"
     issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
+    underlines = ["-", "^"]
 
     [[tool.towncrier.section]]
         path = ""
-
-    [[tool.towncrier.type]]
-        directory = "feature"
-        name = "Features"
-        showcontent = true
 
     [[tool.towncrier.type]]
         directory = "bugfix"
@@ -18,16 +16,26 @@
         showcontent = true
 
     [[tool.towncrier.type]]
-        directory = "doc"
-        name = "Improved Documentation"
+        directory = "feature"
+        name = "Features"
         showcontent = true
 
     [[tool.towncrier.type]]
-        directory = "removal"
-        name = "Deprecations and Removals"
+        directory = "deprecation"
+        name = "Deprecations (removal in next major release)"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "breaking"
+        name = "Backward incompatible changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "doc"
+        name = "Documentation improvements"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "misc"
-        name = "Misc"
-        showcontent = false
+        name = "Miscellaneous / trivial changes"
+        showcontent = true

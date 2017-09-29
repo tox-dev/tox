@@ -1,6 +1,6 @@
 environment:
   matrix:
-    - TOXENV: style
+    - TOXENV: fix-lint
     - TOXENV: py26
     - TOXENV: py27
     - TOXENV: py33
