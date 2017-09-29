@@ -46,7 +46,7 @@ If you want to use the scripts in `task/` you need a `.pypirc` with a correctly 
 
 to get info about the workflow invoke::
 
-    tox -e tpra
+    tox -e pra
 
 and you get a help message like::
 
