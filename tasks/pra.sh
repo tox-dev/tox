@@ -2,7 +2,7 @@
 
 # Personal Release Assistant (TM)
 
-set -e
+set -xe
 
 if [ -z "$1" ]; then
     echo "workflow: $0 <command> [arg]"
@@ -14,11 +14,11 @@ if [ -z "$1" ]; then
 fi
 
 if [ -z "$2" ]; then
+    # if not passed: take it from tag created in prep
+    VERSION=$(git describe --abbrev=0 --tags)
+else
     # only the prep step needs the version
     VERSION=$2
-else
-    # all other steps take it from tag created in prep
-    VERSION=$(git describe --abbrev=0 --tags)
 fi
 
 dispatch () {
@@ -42,18 +42,21 @@ dispatch () {
 prep () {
     python3.6 tasks/pre-process-changelog.py
     towncrier --draft --version ${VERSION}
-    _confirm "towncrier news to be added o.k.?"
-    tox --version
-    _confirm "version of package o.k.?"
     towncrier --yes --version ${VERSION}
-    git add --verbose .
+    pip install -U readme-renderer
+    python setup.py check -r -s
+    _confirm "towncrier news rendered - move on?"
+    git add CHANGELOG.rst
     git status --verbose
     _confirm "changes to repository o.k.?"
     git commit -m "release preparation for ${VERSION}"
+    git tag -s ${VERSION} -m "release tox ${VERSION}"
+    pip install -U dist *.tar.gz
+    _confirm "version of package o.k.?"
+    tox --version
     _confirm "rm dist/*, build, git tag ${VERSION}"
     rm dist/tox*
     python setup.py sdist bdist_wheel
-    git tag ${VERSION}
 }
 
 devpi_upload () {
@@ -61,9 +64,9 @@ devpi_upload () {
         echo "needs builds in dist. Build first."
         exit 1
     fi
-    echo "loggging in to devpi $DEVPI_USERNAME"
-    devpi login ${DEVPI_USERNAME}
-    devpi use https://devpi.net/${DEVPI_USERNAME}/dev
+    echo "loggging in to devpi $1"
+    devpi login $1
+    devpi use https://devpi.net/$1/dev
     echo "upload to devpi: $(ls dist/*)"
     _confirm
     devpi upload dist/*
