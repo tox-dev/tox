@@ -47,7 +47,7 @@ prep () {
     python setup.py check -r -s
     _confirm "towncrier news rendered - move on?"
     git add CHANGELOG.rst
-    git status --verbose
+    git status
     _confirm "changes to repository o.k.?"
     git commit -m "release preparation for ${VERSION}"
     git tag -s ${VERSION} -m "release tox ${VERSION}"
