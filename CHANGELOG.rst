@@ -24,6 +24,16 @@ on Github:
 
 .. towncrier release notes start
 
+2.9.1 (2017-09-29)
+------------------
+
+Misc
+^^^^
+
+- integrated new release process and fixed changelog rendering for pypi.org -
+  by `@obestwalter <https://github.com/obestwalter>`_.
+
+
 2.9.0 (2017-09-29)
 ------------------
 
@@ -31,7 +41,8 @@ Features
 ^^^^^^^^
 
 - ``tox --version`` now shows information about all registered plugins - by
-  `@obestwalter <https://github.com/obestwalter>`_ (`#544 <https://github.com/tox-dev/tox/issues/544>`_)
+  `@obestwalter <https://github.com/obestwalter>`_
+  (`#544 <https://github.com/tox-dev/tox/issues/544>`_)
 
 
 Bugfixes
@@ -39,20 +50,22 @@ Bugfixes
 
 - ``skip_install`` overrides ``usedevelop`` (``usedevelop`` is an option to
   choose the installation type if the package is installed and `skip_install`
-  determines if it should be installed at all) - by `@ferdonline <https://github.com/ferdonline>`_ (`#571
-  <https://github.com/tox-dev/tox/issues/571>`_)
+  determines if it should be installed at all) - by `@ferdonline <https://github.com/ferdonline>`_
+  (`#571 <https://github.com/tox-dev/tox/issues/571>`_)
 
 
 Misc
-----
+^^^^
 
-- :pull:`635` inherit from correct exception - by :user:`obestwalter`
+- `#635 <https://github.com/tox-dev/tox/issues/635>`_ inherit from correct exception -
+  by `@obestwalter <https://github.com/obestwalter>`_
   (`#635 <https://github.com/tox-dev/tox/issues/635>`_).
-- spelling  and escape sequence fixes - by :user:`scoop`
+- spelling  and escape sequence fixes - by `@scoop <https://github.com/scoop>`_
   (`#637 <https://github.com/tox-dev/tox/issues/637>`_ and
   `#638 <https://github.com/tox-dev/tox/issues/638>`_).
 - add a badge to show build status of documentation on readthedocs.io -
-  by :user:`obestwalter`.
+  by `@obestwalter <https://github.com/obestwalter>`_.
+
 
 Improved Documentation
 ^^^^^^^^^^^^^^^^^^^^^^
