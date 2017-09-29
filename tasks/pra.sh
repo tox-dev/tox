@@ -51,7 +51,7 @@ prep () {
     _confirm "changes to repository o.k.?"
     git commit -m "release preparation for ${VERSION}" || true
     git tag -s ${VERSION} -m "release tox ${VERSION}" || true
-    rm dist/tox*
+    rm dist/tox* || true
     python setup.py sdist bdist_wheel
     pip install -U dist/tox-${VERSION}.tar.gz
     tox --version
