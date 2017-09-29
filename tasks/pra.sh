@@ -51,12 +51,11 @@ prep () {
     _confirm "changes to repository o.k.?"
     git commit -m "release preparation for ${VERSION}" || true
     git tag -s ${VERSION} -m "release tox ${VERSION}" || true
-    pip install -U dist/tox-${VERSION}.tar.gz
-    _confirm "version of package o.k.?"
-    tox --version
-    _confirm "rm dist/*, build, git tag ${VERSION}"
     rm dist/tox*
     python setup.py sdist bdist_wheel
+    pip install -U dist/tox-${VERSION}.tar.gz
+    tox --version
+    _confirm "version of package o.k.?"
 }
 
 devpi_upload () {
