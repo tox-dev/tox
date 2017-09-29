@@ -2,7 +2,7 @@
 
 # Personal Release Assistant (TM)
 
-set -xe
+set -e
 
 if [ -z "$1" ]; then
     echo "workflow: $0 <command> [arg]"
