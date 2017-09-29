@@ -29,11 +29,11 @@ dispatch () {
         fi
         prep
     elif [ "$1" == "upload" ]; then
-         devpi_upload
+         devpi_upload $2
     elif [ "$1" == "test" ]; then
          devpi_cloud_test
     elif [ "$1" == "release" ]; then
-        pypi_upload
+        pypi_release
     else
         exit 1
     fi
@@ -86,7 +86,7 @@ devpi_cloud_test () {
 }
 
 # TODO get devpi push to work again
-pypi_upload () {
+pypi_release () {
     PACKAGES=$(ls dist/*)
     _confirm "upload to pypi: $PACKAGES"
     twine upload ${PACKAGES}
