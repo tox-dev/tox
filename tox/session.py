@@ -404,7 +404,17 @@ class Session:
     def _makesdist(self):
         setup = self.config.setupdir.join("setup.py")
         if not setup.check():
-            raise tox.exception.MissingFile(setup)
+            self.report.error(
+                "No setup.py file found. The expected location is:\n"
+                "  %s\n"
+                "You can\n"
+                "  1. Create one:\n"
+                "     https://packaging.python.org/tutorials/distributing-packages/#setup-py\n"
+                "  2. Configure tox to avoid running sdist:\n"
+                "     http://tox.readthedocs.io/en/latest/example/general.html"
+                "#avoiding-expensive-sdist" % setup
+            )
+            raise SystemExit(1)
         action = self.newaction(None, "packaging")
         with action:
             action.setactivity("sdist-make", setup)
