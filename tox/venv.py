@@ -2,6 +2,7 @@ import ast
 import codecs
 import os
 import re
+import subprocess
 import sys
 
 import py
@@ -148,6 +149,21 @@ class VirtualEnv(object):
                 if p.fnmatch(x + add):
                     return True
         return False
+
+    def _real_python3(self, python):
+        """ use real_prefix to determine if we're running inside a virtualenv,
+            and if so, use it as the base path to determine the real python
+            executable path.
+        """
+        args = [str(python), '-c', 'import sys; print(sys.real_prefix)']
+
+        process = subprocess.Popen(args, stdout=subprocess.PIPE)
+        output, _ = process.communicate()
+        output = output.decode('UTF-8').strip()
+        path = os.path.join(output, 'bin/python3')
+
+        valid = process.returncode == 0 and os.path.isfile(path)
+        return path if valid else python
 
     def _ispython3(self):
         return "python3" in str(self.envconfig.basepython)
@@ -432,7 +448,8 @@ def tox_testenv_create(venv, action):
     is_python3 = venv._ispython3()
 
     if is_python3:
-        args = [config_interpreter, '-m', venv._module()]
+        real_executable = venv._real_python3(config_interpreter)
+        args = [real_executable, '-m', venv._module()]
     else:
         args = [sys.executable, '-m', venv._module()]
 
