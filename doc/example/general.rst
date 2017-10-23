@@ -52,7 +52,7 @@ a tox test run.  Here is an example ``tox.ini`` configuration:
     basepython = python
     changedir = doc
     deps = sphinx
-    commands = sphinx-build -W -b html -d {envtmpdir}/doctrees .  {envtmpdir}/html
+    commands = sphinx-build -W -b html -d {envtmpdir}/doctrees . {envtmpdir}/html
 
 This will create a dedicated ``docs`` virtual environment and install
 the ``sphinx`` dependency which itself will install the ``sphinx-build`` tool
