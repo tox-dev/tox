@@ -1,5 +1,4 @@
 import io
-import os
 import sys
 
 import setuptools
@@ -40,9 +39,8 @@ def has_environment_marker_support():
 
 
 def get_long_description():
-    here = os.path.abspath('.')
-    with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
-        with io.open(os.path.join(here, 'CHANGELOG.rst'), encoding='utf-8') as g:
+    with io.open('README.rst', encoding='utf-8') as f:
+        with io.open('CHANGELOG.rst', encoding='utf-8') as g:
             return "%s\n\n%s" % (f.read(), g.read())
 
 
