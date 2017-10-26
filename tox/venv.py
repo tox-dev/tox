@@ -157,7 +157,7 @@ class VirtualEnv(object):
         """
         args = [str(python), '-c', 'import sys; print(sys.real_prefix)']
 
-        process = subprocess.Popen(args, stdout=subprocess.PIPE)
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, _ = process.communicate()
         output = output.decode('UTF-8').strip()
         path = os.path.join(output, 'bin/python3')
