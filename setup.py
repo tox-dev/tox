@@ -82,17 +82,17 @@ def main():
         install_requires=install_requires,
         extras_require=extras_require,
         classifiers=[
-                        'Development Status :: 5 - Production/Stable',
-                        'Intended Audience :: Developers',
-                        'License :: OSI Approved :: MIT License',
-                        'Operating System :: POSIX',
-                        'Operating System :: Microsoft :: Windows',
-                        'Operating System :: MacOS :: MacOS X',
-                        'Topic :: Software Development :: Testing',
-                        'Topic :: Software Development :: Libraries',
-                        'Topic :: Utilities'] + [
-                        ('Programming Language :: Python :: %s' % x) for x in
-                        '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
+            'Development Status :: 5 - Production/Stable',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: MIT License',
+            'Operating System :: POSIX',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: MacOS :: MacOS X',
+            'Topic :: Software Development :: Testing',
+            'Topic :: Software Development :: Libraries',
+            'Topic :: Utilities'] + [
+                ('Programming Language :: Python :: %s' % x) for x in
+                '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
     )
 
 
