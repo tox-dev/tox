@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import argparse
 import itertools
+import hashlib
 import os
 import random
 import re
@@ -909,6 +910,18 @@ class DepConfig:
     def __init__(self, name, indexserver=None):
         self.name = name
         self.indexserver = indexserver
+
+    @property
+    def digest(self):
+        fname = None
+        if self.name.startswith('-r'):
+            fname = self.name[2:]
+        else:
+            fname = self.name
+        path = py.path.local(fname)
+        if not path.check(file=1):
+            return hashlib.md5(path).hexdigest()
+        return path.computehash()
 
     def __str__(self):
         if self.indexserver:
