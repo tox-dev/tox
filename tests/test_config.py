@@ -1,5 +1,7 @@
+import hashlib
 import os
 import sys
+import tempfile
 from textwrap import dedent
 
 import py
@@ -9,6 +11,7 @@ from pluggy import PluginManager
 import tox
 import tox.config
 from tox.config import CommandParser
+from tox.config import DepConfig
 from tox.config import DepOption
 from tox.config import get_homedir
 from tox.config import get_version_info
@@ -128,6 +131,16 @@ class TestVenvConfig:
         assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<2.0')
         assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
         assert not DepOption._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
+
+
+    def test_digest(self):
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write('hello_world==1.0')
+            fh.flush()
+            assert (DepConfig('-r%s' % fh.name).digest ==
+                    hashlib.md5('hello_world==1.0').hexdigest())
+        assert (DepConfig('pkg_helloworld3==1.0').digest ==
+                hashlib.md5('pkg_helloworld3==1.0').hexdigest())
 
 
 class TestConfigPlatform:

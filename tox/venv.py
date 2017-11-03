@@ -1,6 +1,5 @@
 import ast
 import codecs
-import hashlib
 import os
 import re
 import sys
@@ -157,7 +156,6 @@ class VirtualEnv(object):
         """ return status string for updating actual venv to match configuration.
             if status string is empty, all is ok.
         """
-
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
            rconfig.matches(self._getliveconfig()):
@@ -415,10 +413,10 @@ class VirtualEnv(object):
 
 
 def getdigest(path):
-    fpath = py.path.local(path)
-    if not fpath.check(file=1):
-        return hashlib.md5(path).hexdigest()
-    return fpath.computehash()
+    path = py.path.local(path)
+    if not path.check(file=1):
+        return "0" * 32
+    return path.computehash()
 
 
 @hookimpl
