@@ -132,7 +132,6 @@ class TestVenvConfig:
         assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
         assert not DepOption._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
 
-
     def test_digest(self):
         with tempfile.NamedTemporaryFile() as fh:
             fh.write('hello_world==1.0')

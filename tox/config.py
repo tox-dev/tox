@@ -920,7 +920,7 @@ class DepConfig:
             fname = self.name
         path = py.path.local(fname)
         if not path.check(file=1):
-            return hashlib.md5(self.name + self.indexserver or '').hexdigest()
+            return hashlib.md5(self.name + (self.indexserver or '')).hexdigest()
         return path.computehash()
 
     def __str__(self):
