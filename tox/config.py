@@ -913,14 +913,14 @@ class DepConfig:
 
     @property
     def digest(self):
-        fname = None
-        if self.name.startswith('-r'):
-            fname = self.name[2:]
+        fname = str(self.name)
+        if fname.startswith('-r'):
+            fname = fname[2:]
         else:
-            fname = self.name
+            fname = fname
         path = py.path.local(fname)
         if not path.check(file=1):
-            return hashlib.md5(self.name + (self.indexserver or '')).hexdigest()
+            return hashlib.md5(fname + (self.indexserver or '')).hexdigest()
         return path.computehash()
 
     def __str__(self):
