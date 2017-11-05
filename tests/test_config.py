@@ -1,7 +1,6 @@
 import hashlib
 import os
 import sys
-import tempfile
 from textwrap import dedent
 
 import py
@@ -132,12 +131,10 @@ class TestVenvConfig:
         assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
         assert not DepOption._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
 
-    def test_digest(self):
-        with tempfile.NamedTemporaryFile() as fh:
-            fh.write('hello_world==1.0')
-            fh.flush()
-            assert (DepConfig('-r%s' % fh.name).digest ==
-                    hashlib.md5('hello_world==1.0').hexdigest())
+    def test_digest(self, tmpdir):
+        reqs = tmpdir.join('reqs.txt')
+        reqs.write('hello_world==1.0')
+        assert (DepConfig('-r%s' % (str(reqs))).digest == reqs.computehash())
         assert (DepConfig('pkg_helloworld3==1.0').digest ==
                 hashlib.md5('pkg_helloworld3==1.0').hexdigest())
 
