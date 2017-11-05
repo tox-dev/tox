@@ -136,7 +136,7 @@ class TestVenvConfig:
         reqs.write('hello_world==1.0')
         assert (DepConfig('-r%s' % (str(reqs))).digest == reqs.computehash())
         assert (DepConfig('pkg_helloworld3==1.0').digest ==
-                hashlib.md5('pkg_helloworld3==1.0').hexdigest())
+                hashlib.md5(b'pkg_helloworld3==1.0').hexdigest())
 
 
 class TestConfigPlatform:

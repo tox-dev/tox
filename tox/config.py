@@ -916,11 +916,9 @@ class DepConfig:
         fname = str(self.name)
         if fname.startswith('-r'):
             fname = fname[2:]
-        else:
-            fname = fname
         path = py.path.local(fname)
         if not path.check(file=1):
-            return hashlib.md5(fname + (self.indexserver or '')).hexdigest()
+            return "0" * 32
         return path.computehash()
 
     def __str__(self):
