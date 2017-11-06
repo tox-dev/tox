@@ -31,6 +31,18 @@ hookimpl = pluggy.HookimplMarker("tox")
 
 _dummy = object()
 
+PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{}'.format(option) for option in [
+    'c', 'e', 'r', 'b', 't', 'd',
+]]
+
+PIP_INSTALL_LONG_OPTIONS_ARGUMENT = ['--{}'.format(option) for option in [
+    'constraint', 'editable', 'requirement', 'build', 'target', 'download',
+    'src', 'upgrade-strategy', 'install-options', 'global-option',
+    'root', 'prefix', 'no-binary', 'only-binary', 'index-url',
+    'extra-index-url', 'find-links', 'proxy', 'retries', 'timeout',
+    'exists-action', 'trusted-host', 'client-cert', 'cache-dir',
+]]
+
 
 def get_plugin_manager(plugins=()):
     # initialize plugin manager
@@ -124,6 +136,20 @@ class DepOption:
             else:
                 name = depline.strip()
                 ixserver = None
+
+                # we need to process options, in case they contain a space,
+                # as the subprocess call to pip install will otherwise fail.
+
+                # in case of a short option, we remove the space
+                for option in PIP_INSTALL_SHORT_OPTIONS_ARGUMENT:
+                    if name.startswith(option):
+                        name = option + name[len(option):].strip()
+
+                # in case of a long option, we add an equal sign
+                for option in PIP_INSTALL_LONG_OPTIONS_ARGUMENT:
+                    if name.startswith(option):
+                        name = option + '=' + name[len(option):].strip()
+
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
         return deps
