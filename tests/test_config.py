@@ -160,7 +160,7 @@ class TestConfigPlatform:
         monkeypatch.setattr(sys, "platform", "win32")
         config = newconfig([], """
             [tox]
-            envlist = py27-{win,lin,osx}
+            envlist = py27-{win, lin,osx }
             [testenv]
             platform =
                 win: win32
