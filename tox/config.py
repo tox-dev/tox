@@ -147,7 +147,7 @@ class DepOption:
 
                 # in case of a long option, we add an equal sign
                 for option in PIP_INSTALL_LONG_OPTIONS_ARGUMENT:
-                    if name.startswith(option):
+                    if name.startswith(option + ' '):
                         name = option + '=' + name[len(option):].strip()
 
             name = self._replace_forced_dep(name, config)
