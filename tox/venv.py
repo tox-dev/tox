@@ -195,14 +195,14 @@ class VirtualEnv(object):
                               sitepackages, develop, deps, alwayscopy)
 
     def _getresolvedeps(self):
-        l = []
+        deps = []
         for dep in self.envconfig.deps:
             if dep.indexserver is None:
                 res = self.session._resolve_pkg(dep.name)
                 if res != dep.name:
                     dep = dep.__class__(res)
-            l.append(dep)
-        return l
+            deps.append(dep)
+        return deps
 
     def getsupportedinterpreter(self):
         return self.envconfig.getsupportedinterpreter()
@@ -273,12 +273,12 @@ class VirtualEnv(object):
         self._install([sdistpath], extraopts=extraopts, action=action)
 
     def _installopts(self, indexserver):
-        l = []
+        options = []
         if indexserver:
-            l += ["-i", indexserver]
+            options += ["-i", indexserver]
         if self.envconfig.pip_pre:
-            l.append("--pre")
-        return l
+            options.append("--pre")
+        return options
 
     def run_install_command(self, packages, action, options=()):
         argv = self.envconfig.install_command[:]
@@ -312,7 +312,7 @@ class VirtualEnv(object):
         if not deps:
             return
         d = {}
-        l = []
+        ixservers = []
         for dep in deps:
             if isinstance(dep, (str, py.path.local)):
                 dep = DepConfig(str(dep), None)
@@ -322,11 +322,11 @@ class VirtualEnv(object):
             else:
                 ixserver = dep.indexserver
             d.setdefault(ixserver, []).append(dep.name)
-            if ixserver not in l:
-                l.append(ixserver)
+            if ixserver not in ixservers:
+                ixservers.append(ixserver)
             assert ixserver.url is None or isinstance(ixserver.url, str)
 
-        for ixserver in l:
+        for ixserver in ixservers:
             packages = d[ixserver]
             options = self._installopts(ixserver.url)
             if extraopts:
