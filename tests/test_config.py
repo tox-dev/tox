@@ -118,6 +118,24 @@ class TestVenvConfig:
             'dep1==1.5', 'https://pypi.python.org/xyz/pkg1.tar.gz'
         ]
 
+    def test_process_deps(self, newconfig):
+        config = newconfig([], """
+            [testenv]
+            deps =
+                -r requirements.txt
+                --index-url https://pypi.org/simple
+                -fhttps://pypi.org/packages
+                --global-option=foo
+                -v dep1
+                --help dep2
+        """)  # note that those last two are invalid
+        envconfig = config.envconfigs['python']
+        assert [str(x) for x in config.envconfigs['python'].deps] == [
+            '-rrequirements.txt', '--index-url=https://pypi.org/simple',
+            '-fhttps://pypi.org/packages', '--global-option=foo',
+            '-v dep1', '--help dep2'
+        ]
+
     def test_is_same_dep(self):
         """
         Ensure correct parseini._is_same_dep is working with a few samples.
