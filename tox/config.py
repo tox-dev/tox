@@ -31,11 +31,11 @@ hookimpl = pluggy.HookimplMarker("tox")
 
 _dummy = object()
 
-PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{}'.format(option) for option in [
+PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{0}'.format(option) for option in [
     'c', 'e', 'r', 'b', 't', 'd',
 ]]
 
-PIP_INSTALL_LONG_OPTIONS_ARGUMENT = ['--{}'.format(option) for option in [
+PIP_INSTALL_LONG_OPTIONS_ARGUMENT = ['--{0}'.format(option) for option in [
     'constraint', 'editable', 'requirement', 'build', 'target', 'download',
     'src', 'upgrade-strategy', 'install-options', 'global-option',
     'root', 'prefix', 'no-binary', 'only-binary', 'index-url',
