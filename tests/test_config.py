@@ -129,7 +129,6 @@ class TestVenvConfig:
                 -v dep1
                 --help dep2
         """)  # note that those last two are invalid
-        envconfig = config.envconfigs['python']
         assert [str(x) for x in config.envconfigs['python'].deps] == [
             '-rrequirements.txt', '--index-url=https://pypi.org/simple',
             '-fhttps://pypi.org/packages', '--global-option=foo',
