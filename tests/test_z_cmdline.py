@@ -747,9 +747,9 @@ def test_separate_sdist_no_sdistfile(cmd, initproj):
     })
     result = cmd.run("tox", "--sdistonly")
     assert not result.ret
-    l = distshare.listdir()
-    assert len(l) == 1
-    sdistfile = l[0]
+    distshare_files = distshare.listdir()
+    assert len(distshare_files) == 1
+    sdistfile = distshare_files[0]
     assert 'pkg123-foo-0.7.zip' in str(sdistfile)
 
 
@@ -764,9 +764,9 @@ def test_separate_sdist(cmd, initproj):
     })
     result = cmd.run("tox", "--sdistonly")
     assert not result.ret
-    l = distshare.listdir()
-    assert len(l) == 1
-    sdistfile = l[0]
+    sdistfiles = distshare.listdir()
+    assert len(sdistfiles) == 1
+    sdistfile = sdistfiles[0]
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
