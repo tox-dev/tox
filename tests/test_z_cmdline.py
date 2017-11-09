@@ -1,3 +1,4 @@
+import os
 import platform
 
 import py
@@ -451,6 +452,21 @@ def test_sdist_fails(cmd, initproj):
     assert result.ret
     result.stdout.fnmatch_lines([
         "*FAIL*could not package project*",
+    ])
+
+
+def test_no_setup_py_exits(cmd, initproj):
+    initproj("pkg123-0.7", filedefs={
+        'tox.ini': """
+            [testenv]
+            commands=python -c "2 + 2"
+        """
+    })
+    os.remove("setup.py")
+    result = cmd.run("tox", )
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*ERROR*No setup.py file found*"
     ])
 
 
