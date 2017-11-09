@@ -63,8 +63,7 @@ class EnvLog:
             version=version)
 
     def get_commandlog(self, name):
-        list = self.dict.setdefault(name, [])
-        return CommandLog(self, list)
+        return CommandLog(self, self.dict.setdefault(name, []))
 
     def set_installed(self, packages):
         self.dict["installed_packages"] = packages
