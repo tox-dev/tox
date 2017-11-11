@@ -1,0 +1,1 @@
+Fix pycodestyle (formerly pep8) errors E741 (ambiguous variable names, in this case, 'l's) and remove ignore of this error in tox.ini - by @cryvate

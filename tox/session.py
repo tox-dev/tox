@@ -109,12 +109,11 @@ class Action(object):
         else:
             logdir = self.session.config.logdir
         try:
-            l = logdir.listdir("%s-*" % actionid)
+            log_count = len(logdir.listdir("%s-*" % actionid))
         except (py.error.ENOENT, py.error.ENOTDIR):
             logdir.ensure(dir=1)
-            l = []
-        num = len(l)
-        path = logdir.join("%s-%s.log" % (actionid, num))
+            log_count = 0
+        path = logdir.join("%s-%s.log" % (actionid, log_count))
         f = path.open('w')
         f.flush()
         return f
