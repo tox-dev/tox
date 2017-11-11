@@ -567,6 +567,11 @@ You can still list environments explicitly along with generated ones::
 
     envlist = {py26,py27}-django{15,16}, docs, flake
 
+Keep in mind that whitespace characters (except newline) within ``{}``
+are stripped, so the following line defines the same environment names::
+
+    envlist = {py26, py27}-django{ 15, 16 }, docs, flake
+
 .. note::
 
     To help with understanding how the variants will produce section values,
