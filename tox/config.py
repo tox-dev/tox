@@ -143,12 +143,16 @@ class DepOption:
                 # in case of a short option, we remove the space
                 for option in PIP_INSTALL_SHORT_OPTIONS_ARGUMENT:
                     if name.startswith(option):
-                        name = option + name[len(option):].strip()
+                        name = '{0}{1}'.format(
+                            option, name[len(option):].strip()
+                        )
 
                 # in case of a long option, we add an equal sign
                 for option in PIP_INSTALL_LONG_OPTIONS_ARGUMENT:
                     if name.startswith(option + ' '):
-                        name = option + '=' + name[len(option):].strip()
+                        name = '{0}={1}'.format(
+                            option, name[len(option):].strip()
+                        )
 
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
