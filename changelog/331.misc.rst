@@ -1,0 +1,1 @@
+Running ``tox`` without a ``setup.py`` now has a more friendly error message and gives troubleshooting suggestions - by @Volcyy.
