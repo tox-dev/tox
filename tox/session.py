@@ -98,7 +98,10 @@ class Action(object):
 
     def setactivity(self, name, msg):
         self.activity = name
-        self.report.verbosity0("%s %s: %s" % (self.venvname, name, msg), bold=True)
+        if msg:
+            self.report.verbosity0("%s %s: %s" % (self.venvname, name, msg), bold=True)
+        else:
+            self.report.verbosity1("%s %s: %s" % (self.venvname, name, msg), bold=True)
 
     def info(self, name, msg):
         self.report.verbosity1("%s %s: %s" % (self.venvname, name, msg), bold=True)
