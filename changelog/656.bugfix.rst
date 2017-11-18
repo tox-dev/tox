@@ -1,0 +1,3 @@
+Exclude ``setuptools`` versions 34 & 35 from dependencies, and install before ``six``.
+This avoids a potential race condition when installing a package that ``setuptools``
+itself depends on - by @rpkilby.
