@@ -81,8 +81,13 @@ def test_create(monkeypatch, mocksession, newconfig):
     module = 'venv' if venv._ispython3() else 'virtualenv'
     assert module == str(args[2])
     if sys.platform != "win32":
+        executable = sys.executable
+        if venv._ispython3() and hasattr(sys, 'real_prefix'):
+            # workaround virtualenv prefixing issue w/ venv on python3
+            _, executable = executable.rsplit('bin/', 1)
+            executable = os.path.join(sys.real_prefix, 'bin/', executable)
         # realpath is needed for stuff like the debian symlinks
-        assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
+        assert py.path.local(executable).realpath() == py.path.local(args[0]).realpath()
         # assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
