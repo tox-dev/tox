@@ -689,6 +689,28 @@ def test_alwayscopy_default(initproj, cmd):
     assert "virtualenv --always-copy" not in result.stdout.str()
 
 
+def test_empty_activity_ignored(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+            [testenv]
+            list_dependencies_command=echo
+            commands={envpython} --version
+    """})
+    result = cmd.run("tox")
+    assert not result.ret
+    assert "installed:" not in result.stdout.str()
+
+
+def test_empty_activity_shown_verbose(initproj, cmd):
+    initproj("example123", filedefs={'tox.ini': """
+            [testenv]
+            list_dependencies_command=echo
+            commands={envpython} --version
+    """})
+    result = cmd.run("tox", "-v")
+    assert not result.ret
+    assert "installed:" in result.stdout.str()
+
+
 def test_test_piphelp(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini

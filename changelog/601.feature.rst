@@ -1,0 +1,1 @@
+Headings like ``installed: <packages>`` will not be printed if there is no output to display after the :, unless verbosity is set. By @cryvate
