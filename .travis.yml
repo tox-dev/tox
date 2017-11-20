@@ -23,7 +23,7 @@ matrix:
     language: generic
 
 before_install: if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
-install: pip install six && pip install --pre -U tox
+install: pip install -U six && pip install --pre -U tox
 script: tox -e py
 after_success:
   - tox -e coverage
