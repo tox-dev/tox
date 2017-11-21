@@ -51,6 +51,20 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
 
 
+def test_module(mocksession, newconfig):
+    config = newconfig([], """
+        [testenv:py2]
+        basepython=python2.7
+
+        [testenv:py3]
+        basepython=python3.6
+    """)
+    venv = VirtualEnv(config.envconfigs['py2'], session=mocksession)
+    assert venv._module() == 'virtualenv'
+    venv = VirtualEnv(config.envconfigs['py3'], session=mocksession)
+    assert venv._module() == 'venv'
+
+
 def test_create(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
@@ -64,10 +78,16 @@ def test_create(monkeypatch, mocksession, newconfig):
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
-    assert "virtualenv" == str(args[2])
+    module = 'venv' if venv._ispython3() else 'virtualenv'
+    assert module == str(args[2])
     if sys.platform != "win32":
+        executable = sys.executable
+        if venv._ispython3() and hasattr(sys, 'real_prefix'):
+            # workaround virtualenv prefixing issue w/ venv on python3
+            _, executable = executable.rsplit('bin/', 1)
+            executable = os.path.join(sys.real_prefix, 'bin/', executable)
         # realpath is needed for stuff like the debian symlinks
-        assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
+        assert py.path.local(executable).realpath() == py.path.local(args[0]).realpath()
         # assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
@@ -384,11 +404,11 @@ def test_install_command_not_installed_bash(newmocksession):
 
 
 def test_install_python3(tmpdir, newmocksession):
-    if not py.path.local.sysfind('python3.3'):
-        pytest.skip("needs python3.3")
+    if not py.path.local.sysfind('python3.6'):
+        pytest.skip("needs python3.6")
     mocksession = newmocksession([], """
         [testenv:py123]
-        basepython=python3.3
+        basepython=python3.6
         deps=
             dep1
             dep2
@@ -399,7 +419,7 @@ def test_install_python3(tmpdir, newmocksession):
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     args = pcalls[0].args
-    assert str(args[2]) == 'virtualenv'
+    assert str(args[2]) == 'venv'
     pcalls[:] = []
     action = mocksession.newaction(venv, "hello")
     venv._install(["hello"], action=action)
@@ -488,7 +508,8 @@ class TestCreationConfig:
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
-        assert 'virtualenv' in " ".join(args1)
+        module = 'venv' if venv._ispython3() else 'virtualenv'
+        assert module in " ".join(args1)
         mocksession.report.expect("*", "*create*")
         # modify config and check that recreation happens
         mocksession._clearmocks()

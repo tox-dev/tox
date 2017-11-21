@@ -2,6 +2,7 @@ import ast
 import codecs
 import os
 import re
+import subprocess
 import sys
 
 import py
@@ -149,8 +150,26 @@ class VirtualEnv(object):
                     return True
         return False
 
+    def _real_python3(self, python):
+        """ use real_prefix to determine if we're running inside a virtualenv,
+            and if so, use it as the base path to determine the real python
+            executable path.
+        """
+        args = [str(python), '-c', 'import sys; print(sys.real_prefix)']
+
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, _ = process.communicate()
+        output = output.decode('UTF-8').strip()
+        path = os.path.join(output, 'bin/python3')
+
+        valid = process.returncode == 0 and os.path.isfile(path)
+        return path if valid else python
+
     def _ispython3(self):
         return "python3" in str(self.envconfig.basepython)
+
+    def _module(self):
+        return "venv" if self._ispython3() else "virtualenv"
 
     def update(self, action):
         """ return status string for updating actual venv to match configuration.
@@ -426,14 +445,23 @@ def tox_testenv_create(venv, action):
     # if self.getcommandpath("activate").dirpath().check():
     #    return
     config_interpreter = venv.getsupportedinterpreter()
-    args = [sys.executable, '-m', 'virtualenv']
+    is_python3 = venv._ispython3()
+
+    if is_python3:
+        real_executable = venv._real_python3(config_interpreter)
+        args = [real_executable, '-m', venv._module()]
+    else:
+        args = [sys.executable, '-m', venv._module()]
+
     if venv.envconfig.sitepackages:
         args.append('--system-site-packages')
     if venv.envconfig.alwayscopy:
-        args.append('--always-copy')
+        args.append('--copies' if is_python3 else '--always-copy')
+
     # add interpreter explicitly, to prevent using
     # default (virtualenv.ini)
-    args.extend(['--python', str(config_interpreter)])
+    if not is_python3:
+        args.extend(['--python', config_interpreter])
     # if sys.platform == "win32":
     #    f, path, _ = imp.find_module("virtualenv")
     #    f.close()
