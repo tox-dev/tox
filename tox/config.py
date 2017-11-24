@@ -906,8 +906,8 @@ class parseini:
 def _split_env(env):
     """if handed a list, action="append" was used for -e """
     if not isinstance(env, list):
-        if '\n' in env:
-            env = ','.join(env.split('\n'))
+        env = [e.split('#', 1)[0].strip() for e in env.split('\n')]
+        env = ','.join([e for e in env if e])
         env = [env]
     return mapcat(_expand_envstr, env)
 
