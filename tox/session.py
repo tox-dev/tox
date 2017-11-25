@@ -128,7 +128,7 @@ class Action(object):
             fout = self._initlogpath(self.id)
             fout.write("actionid: %s\nmsg: %s\ncmdargs: %r\n\n" % (self.id, self.msg, args))
             fout.flush()
-            self.popen_outpath = outpath = py.path.local(fout.name)
+            outpath = py.path.local(fout.name)
             fin = outpath.open()
             fin.read()  # read the header, so it won't be written to stdout
             stdout = fout
