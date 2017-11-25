@@ -182,7 +182,7 @@ class Action(object):
             except KeyboardInterrupt:
                 self.report.keyboard_interrupt()
                 popen.wait()
-                raise KeyboardInterrupt()
+                raise
             ret = popen.wait()
         finally:
             self._popenlist.remove(popen)
