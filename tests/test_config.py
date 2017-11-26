@@ -1518,6 +1518,14 @@ class TestGlobalOptions:
         config = newconfig(["-vv"], "")
         assert config.option.verbosity == 2
 
+    def test_quiet(self, newconfig):
+        config = newconfig([], "")
+        assert config.option.quiet == 0
+        config = newconfig(["-q"], "")
+        assert config.option.quiet == 1
+        config = newconfig(["-qq"], "")
+        assert config.option.quiet == 2
+
     def test_substitution_jenkins_default(self, tmpdir,
                                           monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")

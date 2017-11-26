@@ -242,7 +242,7 @@ class Reporter(object):
     @property
     def verbosity(self):
         if self.session:
-            return self.session.config.option.verbosity
+            return self.session.config.option.verbosity - self.session.config.option.quiet
         else:
             return 2
 
@@ -268,7 +268,8 @@ class Reporter(object):
         delattr(action, '_starttime')
 
     def startsummary(self):
-        self.tw.sep("_", "summary")
+        if self.verbosity >= -1:
+            self.tw.sep("_", "summary")
 
     def info(self, msg):
         if self.verbosity >= 2:
@@ -298,13 +299,16 @@ class Reporter(object):
         self.logline(msg, green=True)
 
     def warning(self, msg):
-        self.logline("WARNING:" + msg, red=True)
+        if self.verbosity >= -1:
+            self.logline("WARNING:" + msg, red=True)
 
     def error(self, msg):
-        self.logline("ERROR: " + msg, red=True)
+        if self.verbosity >= -1:
+            self.logline("ERROR: " + msg, red=True)
 
     def skip(self, msg):
-        self.logline("SKIPPED:" + msg, yellow=True)
+        if self.verbosity >= -1:
+            self.logline("SKIPPED:" + msg, yellow=True)
 
     def logline(self, msg, **opts):
         self._reportedlines.append(msg)
