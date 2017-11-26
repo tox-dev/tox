@@ -1,0 +1,1 @@
+Add a ``-q`` option to progressively silence tox's output. By @sigmavirus24
