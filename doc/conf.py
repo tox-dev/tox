@@ -26,7 +26,9 @@ exclude_patterns = ['_build']
 
 templates_path = ['_templates']
 pygments_style = 'sphinx'
-html_theme = 'sphinxdoc'
+html_theme = 'alabaster'
+html_logo = 'img/tox.png'
+html_favicon = 'img/toxfavi.ico'
 html_static_path = ['_static']
 html_show_sourcelink = False
 htmlhelp_basename = '{}doc'.format(project)
