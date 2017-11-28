@@ -169,8 +169,9 @@ else:
         py_exe = distutils.spawn.find_executable('py')
         if py_exe:
             proc = subprocess.Popen(
-                (py_exe, ver, '-c', script), stdout=subprocess.PIPE,
-            )
+                (py_exe, ver, '-c', script),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
             out, _ = proc.communicate()
             if not proc.returncode:
                 return out.decode('UTF-8').strip()

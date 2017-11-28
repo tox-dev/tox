@@ -1,0 +1,3 @@
+avoid ``Requested Python version (X.Y) not installed`` stderr output when a
+Python environment is looked up using the ``py`` Python launcher on Windows and
+the environment is not found installed on the system - by @jurko-gospodnetic
