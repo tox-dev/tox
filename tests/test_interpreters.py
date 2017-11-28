@@ -26,8 +26,15 @@ def test_locate_via_py(monkeypatch):
         assert exe == 'py'
         return 'py'
 
-    def fake_popen(cmd, stdout):
+    def fake_popen(cmd, stdout, stderr):
         assert cmd[:3] == ('py', '-3.2', '-c')
+
+        # need to pipe all stdout to collect the version information & need to
+        # do the same for stderr output to avoid it being forwarded as the
+        # current process's output, e.g. when the python launcher reports the
+        # requested Python interpreter not being installed on the system
+        assert stdout is subprocess.PIPE
+        assert stderr is subprocess.PIPE
 
         class proc:
             returncode = 0

@@ -168,9 +168,8 @@ else:
         script = "import sys; print(sys.executable)"
         py_exe = distutils.spawn.find_executable('py')
         if py_exe:
-            proc = subprocess.Popen(
-                (py_exe, ver, '-c', script), stdout=subprocess.PIPE,
-            )
+            proc = subprocess.Popen((py_exe, ver, '-c', script),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, _ = proc.communicate()
             if not proc.returncode:
                 return out.decode('UTF-8').strip()
