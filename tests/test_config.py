@@ -1403,6 +1403,33 @@ class TestConfigTestEnv:
         assert get_deps("b-x") == ["dep-a-or-b"]
         assert get_deps("b-y") == ["dep-a-or-b", "dep-ab-and-y"]
 
+    def test_envconfigs_based_on_factors(self, newconfig):
+        inisource = """
+            [testenv]
+            some-setting=
+                a: something
+                b,c: something
+                d-e: something
+
+            [unknown-section]
+            some-setting=
+                eggs: something
+        """
+        config = newconfig(["-e spam"], inisource)
+        assert not config.envconfigs
+        assert config.envlist == ["spam"]
+        config = newconfig(["-e eggs"], inisource)
+        assert not config.envconfigs
+        assert config.envlist == ["eggs"]
+        config = newconfig(["-e py3-spam"], inisource)
+        assert not config.envconfigs
+        assert config.envlist == ["py3-spam"]
+        for x in "abcde":
+            env = "py3-{}".format(x)
+            config = newconfig(["-e {}".format(env)], inisource)
+            assert sorted(config.envconfigs) == [env]
+            assert config.envlist == [env]
+
     def test_default_factors(self, newconfig):
         inisource = """
             [tox]
