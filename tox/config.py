@@ -848,8 +848,8 @@ class parseini:
         factors = set()
         if section in self._cfg:
             for _, value in self._cfg[section].items():
-                exprs = re.findall(r'^([\w{}\.,-]+)\:\s+', value, re.M)
-                factors.update(*mapcat(_split_factor_expr, exprs))
+                exprs = re.findall(r'^([\w{}\.!,-]+)\:\s+', value, re.M)
+                factors.update(*mapcat(_split_factor_expr_all, exprs))
         return factors
 
     def make_envconfig(self, name, section, subs, config, replace=True):
@@ -912,9 +912,31 @@ def _split_env(env):
     return mapcat(_expand_envstr, env)
 
 
+def _is_negated_factor(factor):
+    return factor.startswith('!')
+
+
+def _base_factor_name(factor):
+    return factor[1:] if _is_negated_factor(factor) else factor
+
+
 def _split_factor_expr(expr):
+    def split_single(e):
+        raw = e.split('-')
+        included = {_base_factor_name(factor) for factor in raw
+                    if not _is_negated_factor(factor)}
+        excluded = {_base_factor_name(factor) for factor in raw
+                    if _is_negated_factor(factor)}
+        return included, excluded
+
     partial_envs = _expand_envstr(expr)
-    return [set(e.split('-')) for e in partial_envs]
+    return [split_single(e) for e in partial_envs]
+
+
+def _split_factor_expr_all(expr):
+    partial_envs = _expand_envstr(expr)
+    return [{_base_factor_name(factor) for factor in e.split('-')}
+            for e in partial_envs]
 
 
 def _expand_envstr(envstr):
@@ -1064,12 +1086,14 @@ class SectionReader:
 
     def _apply_factors(self, s):
         def factor_line(line):
-            m = re.search(r'^([\w{}\.,-]+)\:\s+(.+)', line)
+            m = re.search(r'^([\w{}\.!,-]+)\:\s+(.+)', line)
             if not m:
                 return line
 
             expr, line = m.groups()
-            if any(fs <= self.factors for fs in _split_factor_expr(expr)):
+            if any(included <= self.factors
+                    and not any(x in self.factors for x in excluded)
+                    for included, excluded in _split_factor_expr(expr)):
                 return line
 
         lines = s.strip().splitlines()
