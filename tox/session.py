@@ -336,7 +336,7 @@ class Session:
         self.resultlog = ResultLog()
         self.report = Report(self)
         self.make_emptydir(config.logdir)
-        config.logdir.ensure(dir=1)
+        config.logdir.realpath().ensure(dir=1)
         # self.report.using("logdir %s" %(self.config.logdir,))
         self.report.using("tox.ini: %s" % (self.config.toxinipath,))
         self._spec2pkg = {}
