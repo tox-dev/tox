@@ -32,7 +32,7 @@ right next to your ``setup.py`` file::
 
     # content of: tox.ini , put in same dir as setup.py
     [tox]
-    envlist = py26,py27
+    envlist = py27,py36
     [testenv]
     deps=pytest       # install pytest in the venvs
     commands=pytest  # or 'nosetests' or ...
@@ -40,11 +40,11 @@ right next to your ``setup.py`` file::
 You can also try generating a ``tox.ini`` file automatically, by running
 ``tox-quickstart`` and then answering a few simple questions.
 
-To sdist-package, install and test your project against Python2.6 and Python2.7, just type::
+To sdist-package, install and test your project against Python2.7 and Python3.6, just type::
 
     tox
 
-and watch things happening (you must have python2.6 and python2.7 installed in your
+and watch things happening (you must have python3.6 and python2.7 installed in your
 environment otherwise you will see errors).  When you run ``tox`` a second time
 you'll note that it runs much faster because it keeps track of virtualenv details
 and will not recreate or re-install dependencies.  You also might want to
@@ -68,7 +68,7 @@ Current features
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
   through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: CPython-2.6, 2.7, 3.2 and higher,
+* **cross-Python compatible**: CPython-2.7, 3.3 and higher,
   Jython and pypy_.
 
 * **cross-platform**: Windows and Unix style environments

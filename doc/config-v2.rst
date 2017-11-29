@@ -62,7 +62,7 @@ namely these goals:
 Example: Generating and selecting variants
 ----------------------------------------------
 
-Suppose you want to test your package against python2.6, python2.7 and on the
+Suppose you want to test your package against python3.6, python2.7 and on the
 windows and linux platforms.  Today you would have to
 write down 2*2 = 4 ``[testenv:*]`` sections and then instruct
 tox to run a specific list of environments on each platform.
@@ -71,7 +71,7 @@ With tox-1.X you can directlys specify combinations::
 
     # combination syntax gives 2 * 2 = 4 testenv names
     #
-    envlist = {py26,py27}-{win,linux}
+    envlist = {py27,py36}-{win,linux}
 
     [testenv]
     deps = pytest
@@ -79,19 +79,19 @@ With tox-1.X you can directlys specify combinations::
            win: windows
            linux: linux
     basepython =
-           py26: python2.6
            py27: python2.7
+           py36: python3.6
     commands = pytest
 
 Let's go through this step by step::
 
-    envlist = {py26,py27}-{windows,linux}
+    envlist = {py27,py36}-{windows,linux}
 
 This is bash-style syntax and will create ``2*2=4`` environment names
 like this::
 
-    py26-windows
-    py26-linux
+    py36-windows
+    py36-linux
     py27-windows
     py27-linux
 
@@ -110,10 +110,10 @@ The next configuration item in the ``testenv`` section deals with
 the python interpreter::
 
     basepython =
-           py26: python2.6
+           py36: python3.6
            py27: python2.7
 
-This defines a python executable, depending on if ``py26`` or ``py27``
+This defines a python executable, depending on if ``py36`` or ``py27``
 appears in the environment name.
 
 The last config item is simply the invocation of the test runner::
@@ -128,7 +128,7 @@ Nothing special here :)
     settings, so the above ini-file can be further reduced::
 
         [tox]
-        envlist = {py26,py27}-{win,linux}
+        envlist = {py27,py36}-{win,linux}
 
         [testenv]
         deps = pytest
@@ -185,7 +185,7 @@ If you want to have your package installed with both easy_install
 and pip, you can list them in your envlist likes this::
 
     [tox]
-    envlist = py[26,27,32]-django[13,14]-[easy,pip]
+    envlist = py[36,27,35]-django[13,14]-[easy,pip]
 
 If no installer is specified, ``pip`` will be used.
 
@@ -195,7 +195,7 @@ Default settings related to environments names/variants
 tox comes with predefined settings for certain variants, namely:
 
 * ``{easy,pip}`` use easy_install or pip respectively
-* ``{py24,py25,py26,py27,py31,py32,py33,py34,pypy19]`` use the respective
+* ``{py27,py36,py35,py34,pypy19]`` use the respective
   pythonNN or PyPy interpreter
 * ``{win32,linux,darwin}`` defines the according ``platform``.
 
@@ -221,7 +221,7 @@ file has 159 lines and a lot of repetition, the new one would +have 20
 lines and almost no repetition::
 
      [tox]
-     envlist = {py25,py26,py27}-{django12,django13}{,-example}
+     envlist = {py35,py27,py36}-{django12,django13}{,-example}
 
      [testenv]
      deps=
@@ -253,13 +253,13 @@ Another `tox.ini
 has 233 lines and runs tests against multiple Postgres and Mysql
 engines.  It also performs backend-specific test commands, passing
 different command line options to the test script.  With the new tox-1.X
-we not only can do the same with 32 non-repetive configuration lines but
+we not only can do the same with 35 non-repetive configuration lines but
 we also produce 36 specific testenvs with specific dependencies and test
 commands::
 
     [tox]
     envlist =
-     {py24,py25,py26,py27}-{django11,django12,django13}-{nodb,pg,mysql}, docs
+     {py34,py35,py27,py36}-{django11,django12,django13}-{nodb,pg,mysql}, docs
 
     [testenv:docs]
     changedir = docs

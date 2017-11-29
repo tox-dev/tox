@@ -12,7 +12,7 @@ reside next to your ``setup.py`` file:
 
     # content of: tox.ini , put in same dir as setup.py
     [tox]
-    envlist = py26,py27
+    envlist = py36,py27
     [testenv]
     deps=pytest # or 'nose' or ...
     commands=pytest  # or 'nosetests' or ...
@@ -30,9 +30,9 @@ the specified command in each of them.  With:
 
 .. code-block:: shell
 
-    tox -e py26
+    tox -e py36
 
-you can run restrict the test run to the python2.6 environment.
+you can run restrict the test run to the python3.6 environment.
 
 Available "default" test environments names are:
 
@@ -40,10 +40,8 @@ Available "default" test environments names are:
 
     py
     py2
-    py26
     py27
     py3
-    py33
     py34
     py35
     py36
@@ -319,15 +317,15 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
 .. code-block:: ini
 
     [tox]
-    envlist = py{26,27,33}-django{15,16}-{sqlite,mysql}
+    envlist = py{36,27,34}-django{15,16}-{sqlite,mysql}
 
     [testenv]
     deps =
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        py33-mysql: PyMySQL     ; use if both py33 and mysql are in an env name
-        py26,py27: urllib3      ; use if any of py26 or py27 are in an env name
-        py{26,27}-sqlite: mock  ; mocking sqlite in python 2.x
+        py34-mysql: PyMySQL     ; use if both py34 and mysql are in an env name
+        py36,py27: urllib3      ; use if any of py36 or py27 are in an env name
+        py{36,27}-sqlite: mock  ; mocking sqlite in python 2.x
 
 Prevent symbolic links in virtualenv
 ------------------------------------

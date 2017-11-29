@@ -1,9 +1,7 @@
 environment:
   matrix:
     - TOXENV: fix-lint
-    - TOXENV: py26
     - TOXENV: py27
-    - TOXENV: py33
     - TOXENV: py34
     - TOXENV: py35
     - TOXENV: py36
@@ -15,8 +13,8 @@ build: false  # Not a C# project
 install: C:\Python36\python -m pip install --pre -U tox
 test_script: C:\Python36\scripts\tox
 after_test:
-  - if exist .coverage.* (C:\Python36\scripts\tox -e coverage) else (echo no .coverage files)
-  - if exist coverage.xml (C:\Python36\scripts\tox -e codecov) else (echo no coverage.xml)
+  - if exist .tox\.coverage.* (C:\Python36\scripts\tox -e coverage) else (echo no .coverage files)
+  - if exist .tox\coverage.xml (C:\Python36\scripts\tox -e codecov) else (echo no coverage.xml)
 
 cache:
   - '%LOCALAPPDATA%\pip\cache'

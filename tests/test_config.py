@@ -42,7 +42,7 @@ class TestVenvConfig:
             deps=
                 world1
                 :xyz:http://hello/world
-        """ % (tmpdir, ))
+        """ % (tmpdir,))
         assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
         assert config.envconfigs['py1'].envdir == tmpdir.join("py1")
@@ -1022,7 +1022,7 @@ class TestConfigTestEnv:
             changedir=xyz
             [testenv:python]
             changedir=abc
-            basepython=python2.6
+            basepython=python3.6
         """)
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs['python']
@@ -1075,13 +1075,13 @@ class TestConfigTestEnv:
 
     def test_simple(tmpdir, newconfig):
         config = newconfig("""
-            [testenv:py26]
-            basepython=python2.6
+            [testenv:py36]
+            basepython=python3.6
             [testenv:py27]
             basepython=python2.7
         """)
         assert len(config.envconfigs) == 2
-        assert "py26" in config.envconfigs
+        assert "py36" in config.envconfigs
         assert "py27" in config.envconfigs
 
     def test_substitution_error(tmpdir, newconfig):
@@ -1279,10 +1279,10 @@ class TestConfigTestEnv:
         (['py27', 'py34'], ('pytest', 'py{27,34}: pytest-cov')),
     ])
     def test_take_dependencies_from_other_testenv(
-        self,
-        newconfig,
-        envlist,
-        deps
+            self,
+            newconfig,
+            envlist,
+            deps
     ):
         inisource = """
             [tox]
@@ -1388,7 +1388,7 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource)
         configs = conf.envconfigs
         assert [dep.name for dep in configs['a-x'].deps] == \
-            ["dep-all", "dep-a", "dep-x"]
+               ["dep-all", "dep-a", "dep-x"]
         assert [dep.name for dep in configs['b'].deps] == ["dep-all", "dep-b"]
 
     def test_factor_ops(self, newconfig):
@@ -1415,7 +1415,7 @@ class TestConfigTestEnv:
     def test_default_factors(self, newconfig):
         inisource = """
             [tox]
-            envlist = py{26,27,33,34}-dep
+            envlist = py{27,34,36}-dep
 
             [testenv]
             deps=
@@ -1430,7 +1430,7 @@ class TestConfigTestEnv:
     def test_factors_in_boolean(self, newconfig):
         inisource = """
             [tox]
-            envlist = py{27,33}
+            envlist = py{27,36}
 
             [testenv]
             recreate =
@@ -1438,13 +1438,13 @@ class TestConfigTestEnv:
         """
         configs = newconfig([], inisource).envconfigs
         assert configs["py27"].recreate
-        assert not configs["py33"].recreate
+        assert not configs["py36"].recreate
 
     @pytest.mark.issue190
     def test_factors_in_setenv(self, newconfig):
         inisource = """
             [tox]
-            envlist = py27,py26
+            envlist = py27,py36
 
             [testenv]
             setenv =
@@ -1452,7 +1452,7 @@ class TestConfigTestEnv:
         """
         configs = newconfig([], inisource).envconfigs
         assert configs["py27"].setenv["X"] == "1"
-        assert "X" not in configs["py26"].setenv
+        assert "X" not in configs["py36"].setenv
 
     @pytest.mark.issue191
     def test_factor_use_not_checked(self, newconfig):
@@ -1491,8 +1491,7 @@ class TestConfigTestEnv:
         """
         configs = newconfig([], inisource).envconfigs
         assert sorted(configs) == ["py27-django1.6", "py27-django1.7"]
-        assert [d.name for d in configs["py27-django1.6"].deps] \
-            == ["Django==1.6"]
+        assert [d.name for d in configs["py27-django1.6"].deps] == ["Django==1.6"]
 
     def test_ignore_outcome(self, newconfig):
         inisource = """
@@ -1558,28 +1557,26 @@ class TestGlobalOptions:
     def test_env_selection(self, tmpdir, newconfig, monkeypatch):
         inisource = """
             [tox]
-            envlist = py26
-            [testenv:py26]
-            basepython=python2.6
-            [testenv:py31]
-            basepython=python3.1
+            envlist = py36
+            [testenv:py36]
+            basepython=python3.6
+            [testenv:py35]
+            basepython=python3.5
             [testenv:py27]
             basepython=python2.7
         """
-        # pytest.raises(tox.exception.ConfigError,
-        #    "newconfig(['-exyz'], inisource)")
         config = newconfig([], inisource)
-        assert config.envlist == ["py26"]
-        config = newconfig(["-epy31"], inisource)
-        assert config.envlist == ["py31"]
-        monkeypatch.setenv("TOXENV", "py31,py26")
+        assert config.envlist == ["py36"]
+        config = newconfig(["-epy35"], inisource)
+        assert config.envlist == ["py35"]
+        monkeypatch.setenv("TOXENV", "py35,py36")
         config = newconfig([], inisource)
-        assert config.envlist == ["py31", "py26"]
+        assert config.envlist == ["py35", "py36"]
         monkeypatch.setenv("TOXENV", "ALL")
         config = newconfig([], inisource)
-        assert config.envlist == ['py26', 'py27', 'py31']
+        assert config.envlist == ['py27', 'py35', 'py36']
         config = newconfig(["-eALL"], inisource)
-        assert config.envlist == ['py26', 'py27', 'py31']
+        assert config.envlist == ['py27', 'py35', 'py36']
 
     def test_py_venv(self, tmpdir, newconfig, monkeypatch):
         config = newconfig(["-epy"], "")
@@ -1587,7 +1584,7 @@ class TestGlobalOptions:
         assert str(env.basepython) == sys.executable
 
     def test_default_environments(self, tmpdir, newconfig, monkeypatch):
-        envs = "py26,py27,py32,py33,py34,py35,py36,py37,jython,pypy,pypy3,py2,py3"
+        envs = "py27,py34,py35,py36,py37,jython,pypy,pypy3,py2,py3"
         inisource = """
             [tox]
             envlist = %s
@@ -1611,19 +1608,19 @@ class TestGlobalOptions:
     def test_envlist_expansion(self, newconfig):
         inisource = """
             [tox]
-            envlist = py{26,27},docs
+            envlist = py{36,27},docs
         """
         config = newconfig([], inisource)
-        assert config.envlist == ["py26", "py27", "docs"]
+        assert config.envlist == ["py36", "py27", "docs"]
 
     def test_envlist_cross_product(self, newconfig):
         inisource = """
             [tox]
-            envlist = py{26,27}-dep{1,2}
+            envlist = py{36,27}-dep{1,2}
         """
         config = newconfig([], inisource)
-        assert config.envlist == \
-            ["py26-dep1", "py26-dep2", "py27-dep1", "py27-dep2"]
+        envs = ["py36-dep1", "py36-dep2", "py27-dep1", "py27-dep2"]
+        assert config.envlist == envs
 
     def test_envlist_multiline(self, newconfig):
         inisource = """
@@ -1633,8 +1630,7 @@ class TestGlobalOptions:
               py34
         """
         config = newconfig([], inisource)
-        assert config.envlist == \
-            ["py27", "py34"]
+        assert config.envlist == ["py27", "py34"]
 
     def test_minversion(self, tmpdir, newconfig, monkeypatch):
         inisource = """
@@ -1690,7 +1686,6 @@ class TestHashseedOption:
                 [testenv]
             """
         if make_hashseed is None:
-
             def make_hashseed():
                 return '123456789'
 
@@ -1772,11 +1767,13 @@ class TestHashseedOption:
             [testenv:hash2]
         """
         next_seed = [1000]
+
         # This function is guaranteed to generate a different value each time.
 
         def make_hashseed():
             next_seed[0] += 1
             return str(next_seed[0])
+
         # Check that make_hashseed() works.
         assert make_hashseed() == '1001'
         envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini,
@@ -2064,6 +2061,7 @@ class TestCmdInvocation:
             class MockEggInfo:
                 project_name = 'some-project'
                 version = '1.0'
+
             return [(MockModule, MockEggInfo)]
 
         pm = PluginManager('fakeproject')
@@ -2084,6 +2082,7 @@ class TestCmdInvocation:
             class MockEggInfo:
                 project_name = 'some-project'
                 version = '1.0'
+
             return [(MockModule(), MockEggInfo)]
 
         pm = PluginManager('fakeproject')
@@ -2099,9 +2098,9 @@ class TestCmdInvocation:
         initproj('listenvs', filedefs={
             'tox.ini': '''
             [tox]
-            envlist=py26,py27,py33,pypy,docs
+            envlist=py36,py27,py34,pypy,docs
             description= py27: run pytest on Python 2.7
-                         py33: run pytest on Python 3.6
+                         py34: run pytest on Python 3.6
                          pypy: publish to pypy
                          docs: document stuff
                          notincluded: random extra
@@ -2115,9 +2114,9 @@ class TestCmdInvocation:
         })
         result = cmd.run("tox", "-l")
         result.stdout.fnmatch_lines("""
-            py26
+            py36
             py27
-            py33
+            py34
             pypy
             docs
         """)
@@ -2126,11 +2125,11 @@ class TestCmdInvocation:
         initproj('listenvs_verbose_description', filedefs={
             'tox.ini': '''
             [tox]
-            envlist=py26,py27,py33,pypy,docs
+            envlist=py36,py27,py34,pypy,docs
             [testenv]
-            description= py26: run pytest on Python 2.6
+            description= py36: run pytest on Python 3.6
                          py27: run pytest on Python 2.7
-                         py33: run pytest on Python 3.3
+                         py34: run pytest on Python 3.4
                          pypy: publish to pypy
                          docs: document stuff
                          notincluded: random extra
@@ -2146,9 +2145,9 @@ class TestCmdInvocation:
         result = cmd.run("tox", "-lv")
         result.stdout.fnmatch_lines("""
             default environments:
-            py26 -> run pytest on Python 2.6
+            py36 -> run pytest on Python 3.6
             py27 -> run pytest on Python 2.7
-            py33 -> run pytest on Python 3.3
+            py34 -> run pytest on Python 3.4
             pypy -> publish to pypy
             docs -> let me overwrite that
         """)
@@ -2157,7 +2156,7 @@ class TestCmdInvocation:
         initproj('listenvs_all', filedefs={
             'tox.ini': '''
             [tox]
-            envlist=py26,py27,py33,pypy,docs
+            envlist=py36,py27,py34,pypy,docs
 
             [testenv:notincluded]
             changedir = whatever
@@ -2168,9 +2167,9 @@ class TestCmdInvocation:
         })
         result = cmd.run("tox", "-a")
         result.stdout.fnmatch_lines("""
-            py26
+            py36
             py27
-            py33
+            py34
             pypy
             docs
             notincluded
@@ -2295,10 +2294,10 @@ class TestCmdInvocation:
 
 
 @pytest.mark.parametrize("cmdline,envlist", [
-    ("-e py26", ['py26']),
-    ("-e py26,py33", ['py26', 'py33']),
-    ("-e py26,py26", ['py26', 'py26']),
-    ("-e py26,py33 -e py33,py27", ['py26', 'py33', 'py33', 'py27'])
+    ("-e py36", ['py36']),
+    ("-e py36,py34", ['py36', 'py34']),
+    ("-e py36,py36", ['py36', 'py36']),
+    ("-e py36,py34 -e py34,py27", ['py36', 'py34', 'py34', 'py27'])
 ])
 def test_env_spec(cmdline, envlist):
     args = cmdline.split()
@@ -2365,8 +2364,8 @@ class TestCommandParser:
     @pytest.mark.skipif("sys.platform != 'win32'")
     def test_commands_with_backslash(self, newconfig):
         config = newconfig([r"hello\world"], """
-            [testenv:py26]
+            [testenv:py36]
             commands = some {posargs}
         """)
-        envconfig = config.envconfigs["py26"]
+        envconfig = config.envconfigs["py36"]
         assert envconfig.commands[0] == ["some", r"hello\world"]

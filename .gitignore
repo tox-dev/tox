@@ -22,5 +22,3 @@ htmlcov
 .idea
 .eggs/
 py27/
-
-.coverage.*

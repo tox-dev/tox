@@ -515,7 +515,7 @@ Generating environments, conditional settings
 
 .. versionadded:: 1.8
 
-Suppose you want to test your package against python2.6, python2.7 and against
+Suppose you want to test your package against python3.6, python2.7 and against
 several versions of a dependency, say Django 1.5 and Django 1.6. You can
 accomplish that by writing down 2*2 = 4 ``[testenv:*]`` sections and then
 listing all of them in ``envlist``.
@@ -523,17 +523,17 @@ listing all of them in ``envlist``.
 However, a better approach looks like this::
 
     [tox]
-    envlist = {py26,py27}-django{15,16}
+    envlist = {py36,py27}-django{15,16}
 
     [testenv]
     basepython =
-        py26: python2.6
+        py36: python3.6
         py27: python2.7
     deps =
         pytest
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        py26: unittest2
+        py36: unittest2
     commands = pytest
 
 This uses two new facilities of tox-1.8:
@@ -553,24 +553,24 @@ Generative envlist
 
 ::
 
-    envlist = {py26,py27}-django{15,16}
+    envlist = {py36,py27}-django{15,16}
 
 This is bash-style syntax and will create ``2*2=4`` environment names
 like this::
 
-    py26-django15
-    py26-django16
+    py36-django15
+    py36-django16
     py27-django15
     py27-django16
 
 You can still list environments explicitly along with generated ones::
 
-    envlist = {py26,py27}-django{15,16}, docs, flake
+    envlist = {py36,py27}-django{15,16}, docs, flake
 
 Keep in mind that whitespace characters (except newline) within ``{}``
 are stripped, so the following line defines the same environment names::
 
-    envlist = {py26, py27}-django{ 15, 16 }, docs, flake
+    envlist = {py36, py27}-django{ 15, 16 }, docs, flake
 
 .. note::
 
@@ -578,8 +578,8 @@ are stripped, so the following line defines the same environment names::
     you can ask tox to show their expansion with a new option::
 
         $ tox -l
-        py26-django15
-        py26-django16
+        py36-django15
+        py36-django16
         py27-django15
         py27-django16
         docs
@@ -595,12 +595,12 @@ Parts of an environment name delimited by hyphens are called factors and can
 be used to set values conditionally::
 
     basepython =
-        py26: python2.6
+        py36: python3.6
         py27: python2.7
 
-This conditional setting will lead to either ``python2.6`` or
-``python2.7`` used as base python, e.g. ``python2.6`` is selected if current
-environment contains ``py26`` factor.
+This conditional setting will lead to either ``python3.6`` or
+``python2.7`` used as base python, e.g. ``python3.6`` is selected if current
+environment contains ``py36`` factor.
 
 In list settings such as ``deps`` or ``commands`` you can freely intermix
 optional lines with unconditional ones::
@@ -609,14 +609,14 @@ optional lines with unconditional ones::
         pytest
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        py26: unittest2
+        py36: unittest2
 
 Reading it line by line:
 
 - ``pytest`` will be included unconditionally,
 - ``Django>=1.5,<1.6`` will be included for environments containing ``django15`` factor,
 - ``Django>=1.6,<1.7`` similarly depends on ``django16`` factor,
-- ``unittest`` will be loaded for Python 2.6 environments.
+- ``unittest`` will be loaded for Python 3.6 environments.
 
 .. note::
 
@@ -632,25 +632,25 @@ Sometimes you need to specify the same line for several factors or create a
 special case for a combination of factors. Here is how you do it::
 
     [tox]
-    envlist = py{26,27,33}-django{15,16}-{sqlite,mysql}
+    envlist = py{36,27,34}-django{15,16}-{sqlite,mysql}
 
     [testenv]
     deps =
-        py33-mysql: PyMySQL     ; use if both py33 and mysql are in an env name
-        py26,py27: urllib3      ; use if any of py26 or py27 are in an env name
-        py{26,27}-sqlite: mock  ; mocking sqlite in python 2.x
+        py34-mysql: PyMySQL     ; use if both py34 and mysql are in an env name
+        py36,py27: urllib3      ; use if any of py36 or py27 are in an env name
+        py{36,27}-sqlite: mock  ; mocking sqlite in python 2.x
 
 Take a look at first ``deps`` line. It shows how you can special case something
 for a combination of factors, you just join combining factors with a hyphen.
 This particular line states that ``PyMySQL`` will be loaded for python 3.3,
-mysql environments, e.g. ``py33-django15-mysql`` and ``py33-django16-mysql``.
+mysql environments, e.g. ``py34-django15-mysql`` and ``py34-django16-mysql``.
 
 The second line shows how you use same line for several factors - by listing
 them delimited by commas. It's possible to list not only simple factors, but
-also their combinations like ``py26-sqlite,py27-sqlite``.
+also their combinations like ``py36-sqlite,py27-sqlite``.
 
 Finally, factor expressions are expanded the same way as envlist, so last
-example could be rewritten as ``py{26,27}-sqlite``.
+example could be rewritten as ``py{36,27}-sqlite``.
 
 .. note::
 
@@ -659,11 +659,11 @@ example could be rewritten as ``py{26,27}-sqlite``.
     expression are also factors of an env then that condition is considered
     hold.
 
-    For example, environment ``py26-mysql``:
+    For example, environment ``py36-mysql``:
 
-    - could be matched with expressions ``py26``, ``py26-mysql``,
-      ``mysql-py26``,
-    - but not with ``py2`` or ``py26-sql``.
+    - could be matched with expressions ``py36``, ``py36-mysql``,
+      ``mysql-py36``,
+    - but not with ``py2`` or ``py36-sql``.
 
 
 Other Rules and notes

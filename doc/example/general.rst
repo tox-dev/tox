@@ -74,7 +74,7 @@ which will make the sphinx tests part of your test run.
 Selecting one or more environments to run tests against
 --------------------------------------------------------
 
-Using the ``-e ENV[,ENV2,...]``  option you explicitly list
+Using the ``-e ENV[,ENV236,...]``  option you explicitly list
 the environments where you want to run tests against. For
 example, given the previous sphinx example you may call:
 
@@ -88,9 +88,9 @@ one environment like this:
 
 .. code-block:: shell
 
-    tox -e py25,py26
+    tox -e py27,py36
 
-which would run the commands of the ``py25`` and ``py26`` testenvironments
+which would run the commands of the ``py27`` and ``py36`` testenvironments
 respectively.  The special value ``ALL`` selects all environments.
 
 You can also specify an environment list in your ``tox.ini``:
@@ -98,14 +98,14 @@ You can also specify an environment list in your ``tox.ini``:
 .. code-block:: ini
 
     [tox]
-    envlist = py25,py26
+    envlist = py27,py36
 
 or override it from the command line or from the environment variable
 ``TOXENV``:
 
 .. code-block:: shell
 
-    export TOXENV=py25,py26 # in bash style shells
+    export TOXENV=py27,py36 # in bash style shells
 
 .. _artifacts:
 

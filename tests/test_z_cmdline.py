@@ -716,7 +716,7 @@ def test_test_piphelp(initproj, cmd):
         # content of: tox.ini
         [testenv]
         commands=pip -h
-        [testenv:py26]
+        [testenv:py36]
         basepython=python
         [testenv:py27]
         basepython=python
@@ -728,19 +728,19 @@ def test_test_piphelp(initproj, cmd):
 def test_notest(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
         # content of: tox.ini
-        [testenv:py26]
+        [testenv:py36]
         basepython=python
     """})
     result = cmd.run("tox", "-v", "--notest")
     assert not result.ret
     result.stdout.fnmatch_lines([
         "*summary*",
-        "*py26*skipped tests*",
+        "*py36*skipped tests*",
     ])
-    result = cmd.run("tox", "-v", "--notest", "-epy26")
+    result = cmd.run("tox", "-v", "--notest", "-epy36")
     assert not result.ret
     result.stdout.fnmatch_lines([
-        "*py26*reusing*",
+        "*py36*reusing*",
     ])
 
 

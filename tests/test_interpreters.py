@@ -49,7 +49,7 @@ def test_tox_get_python_executable():
         envname = "pyxx"
     p = tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
-    for ver in [""] + "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split():
+    for ver in "2.7 3.4 3.5 3.6".split():
         name = "python%s" % ver
         if sys.platform == "win32":
             pydir = "python%s" % ver.replace(".", "")
@@ -63,9 +63,10 @@ def test_tox_get_python_executable():
         envconfig.basepython = name
         p = tox_get_python_executable(envconfig)
         assert p
-        popen = subprocess.Popen([str(p), '-V'], stderr=subprocess.PIPE)
+        popen = subprocess.Popen([str(p), '-V'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, stderr = popen.communicate()
-        assert ver in stderr.decode('ascii')
+        assert not stdout or not stderr
+        assert ver in stderr.decode('ascii') or ver in stdout.decode('ascii')
 
 
 def test_find_executable_extra(monkeypatch):

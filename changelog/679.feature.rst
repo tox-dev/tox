@@ -1,0 +1,2 @@
+drop Pyhton ``2.6`` and ``3.3`` support: ``setuptools`` dropped supporting these, and as we depend on it we'll follow
+up with doing the same (use ``tox <= 2.9.1`` if you still need this support) - by @gaborbernat
