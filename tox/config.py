@@ -985,9 +985,9 @@ class SectionReader:
             self.posargs = _posargs
 
     def getpath(self, name, defaultpath, replace=True):
-        toxinidir = self._subs['toxinidir']
         path = self.getstring(name, defaultpath, replace=replace)
         if path is not None:
+            toxinidir = self._subs['toxinidir']
             return toxinidir.join(path, abs=True)
 
     def getlist(self, name, sep="\n"):
