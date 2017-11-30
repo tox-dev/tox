@@ -1387,8 +1387,7 @@ class TestConfigTestEnv:
         """
         conf = newconfig([], inisource)
         configs = conf.envconfigs
-        assert [dep.name for dep in configs['a-x'].deps] == \
-               ["dep-all", "dep-a", "dep-x"]
+        assert [dep.name for dep in configs['a-x'].deps] == ["dep-all", "dep-a", "dep-x"]
         assert [dep.name for dep in configs['b'].deps] == ["dep-all", "dep-b"]
 
     def test_factor_ops(self, newconfig):

@@ -515,7 +515,7 @@ Generating environments, conditional settings
 
 .. versionadded:: 1.8
 
-Suppose you want to test your package against python3.6, python2.7 and against
+Suppose you want to test your package against python2.7, python3.6 and against
 several versions of a dependency, say Django 1.5 and Django 1.6. You can
 accomplish that by writing down 2*2 = 4 ``[testenv:*]`` sections and then
 listing all of them in ``envlist``.
@@ -523,12 +523,12 @@ listing all of them in ``envlist``.
 However, a better approach looks like this::
 
     [tox]
-    envlist = {py36,py27}-django{15,16}
+    envlist = {py27,py36}-django{15,16}
 
     [testenv]
     basepython =
-        py36: python3.6
         py27: python2.7
+        py36: python3.6
     deps =
         pytest
         django15: Django>=1.5,<1.6
@@ -558,19 +558,19 @@ Generative envlist
 This is bash-style syntax and will create ``2*2=4`` environment names
 like this::
 
-    py36-django15
-    py36-django16
     py27-django15
     py27-django16
+    py36-django15
+    py36-django16
 
 You can still list environments explicitly along with generated ones::
 
-    envlist = {py36,py27}-django{15,16}, docs, flake
+    envlist = {py27,py36}-django{15,16}, docs, flake
 
 Keep in mind that whitespace characters (except newline) within ``{}``
 are stripped, so the following line defines the same environment names::
 
-    envlist = {py36, py27}-django{ 15, 16 }, docs, flake
+    envlist = {py27,py36}-django{ 15, 16 }, docs, flake
 
 .. note::
 
@@ -578,10 +578,10 @@ are stripped, so the following line defines the same environment names::
     you can ask tox to show their expansion with a new option::
 
         $ tox -l
-        py36-django15
-        py36-django16
         py27-django15
         py27-django16
+        py36-django15
+        py36-django16
         docs
         flake
 
@@ -595,8 +595,8 @@ Parts of an environment name delimited by hyphens are called factors and can
 be used to set values conditionally::
 
     basepython =
-        py36: python3.6
         py27: python2.7
+        py36: python3.6
 
 This conditional setting will lead to either ``python3.6`` or
 ``python2.7`` used as base python, e.g. ``python3.6`` is selected if current
@@ -632,13 +632,13 @@ Sometimes you need to specify the same line for several factors or create a
 special case for a combination of factors. Here is how you do it::
 
     [tox]
-    envlist = py{36,27,34}-django{15,16}-{sqlite,mysql}
+    envlist = py{27,34,36}-django{15,16}-{sqlite,mysql}
 
     [testenv]
     deps =
         py34-mysql: PyMySQL     ; use if both py34 and mysql are in an env name
-        py36,py27: urllib3      ; use if any of py36 or py27 are in an env name
-        py{36,27}-sqlite: mock  ; mocking sqlite in python 2.x
+        py27,py36: urllib3      ; use if any of py36 or py27 are in an env name
+        py{27,36}-sqlite: mock  ; mocking sqlite in python 2.x
 
 Take a look at first ``deps`` line. It shows how you can special case something
 for a combination of factors, you just join combining factors with a hyphen.
@@ -647,10 +647,10 @@ mysql environments, e.g. ``py34-django15-mysql`` and ``py34-django16-mysql``.
 
 The second line shows how you use same line for several factors - by listing
 them delimited by commas. It's possible to list not only simple factors, but
-also their combinations like ``py36-sqlite,py27-sqlite``.
+also their combinations like ``py27-sqlite,py36-sqlite``.
 
 Finally, factor expressions are expanded the same way as envlist, so last
-example could be rewritten as ``py{36,27}-sqlite``.
+example could be rewritten as ``py{27,36}-sqlite``.
 
 .. note::
 

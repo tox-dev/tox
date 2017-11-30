@@ -68,7 +68,7 @@ Current features
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
   through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: CPython-2.7, 3.3 and higher,
+* **cross-Python compatible**: CPython-2.7, 3.4 and higher,
   Jython and pypy_.
 
 * **cross-platform**: Windows and Unix style environments

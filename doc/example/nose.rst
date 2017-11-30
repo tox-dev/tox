@@ -25,7 +25,7 @@ and the following ``tox.ini`` content:
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
 ``tox`` will sdist-package your project create two virtualenv environments
-with the ``python3.6`` and ``python2.5`` interpreters, respectively, and will
+with the ``python3.6`` and ``python2.7`` interpreters, respectively, and will
 then run the specified test command.
 
 

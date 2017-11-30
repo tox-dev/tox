@@ -32,13 +32,6 @@ def get_long_description():
 
 
 def main():
-    virtualenv_open = ['virtualenv>=1.11.2']
-    install_requires = ['py>=1.4.17', 'pluggy>=0.3.0,<1.0', 'six']
-    extras_require = {}
-    if has_environment_marker_support():
-        extras_require[':python_version!="3.2"'] = virtualenv_open
-    else:
-        install_requires.append(virtualenv_open)
     setuptools.setup(
         name='tox',
         description='virtualenv-based automation of test activities',
@@ -53,8 +46,10 @@ def main():
         entry_points={'console_scripts': 'tox=tox:cmdline\ntox-quickstart=tox._quickstart:main'},
         python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
         setup_requires=['setuptools_scm'],
-        install_requires=install_requires,
-        extras_require=extras_require,
+        install_requires=['py>=1.4.17',
+                          'pluggy>=0.3.0,<1.0',
+                          'six',
+                          'virtualenv>=1.11.2'],
         classifiers=['Development Status :: 5 - Production/Stable',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',

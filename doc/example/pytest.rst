@@ -22,7 +22,7 @@ and the following ``tox.ini`` content:
 .. code-block:: ini
 
     [tox]
-    envlist = py36,py35
+    envlist = py35,py36
 
     [testenv]
     deps = pytest               # PYPI package providing pytest
@@ -30,7 +30,7 @@ and the following ``tox.ini`` content:
 
 you can now invoke ``tox`` in the directory where your ``tox.ini`` resides.
 ``tox`` will sdist-package your project, create two virtualenv environments
-with the ``python3.6`` and ``python3.1`` interpreters, respectively, and will
+with the ``python3.5`` and ``python3.6`` interpreters, respectively, and will
 then run the specified test command in each of them.
 
 Extended example: change dir before test and use per-virtualenv tempdir
@@ -49,7 +49,7 @@ and the following ``tox.ini`` content:
 .. code-block:: ini
 
     [tox]
-    envlist = py36,py3531
+    envlist = py35,py36
     [testenv]
     changedir=tests
     deps=pytest

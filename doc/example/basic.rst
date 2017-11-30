@@ -12,7 +12,7 @@ reside next to your ``setup.py`` file:
 
     # content of: tox.ini , put in same dir as setup.py
     [tox]
-    envlist = py36,py27
+    envlist = py27,py36
     [testenv]
     deps=pytest # or 'nose' or ...
     commands=pytest  # or 'nosetests' or ...
@@ -317,15 +317,15 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
 .. code-block:: ini
 
     [tox]
-    envlist = py{36,27,34}-django{15,16}-{sqlite,mysql}
+    envlist = py{27,34,36}-django{15,16}-{sqlite,mysql}
 
     [testenv]
     deps =
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
         py34-mysql: PyMySQL     ; use if both py34 and mysql are in an env name
-        py36,py27: urllib3      ; use if any of py36 or py27 are in an env name
-        py{36,27}-sqlite: mock  ; mocking sqlite in python 2.x
+        py27,py36: urllib3      ; use if any of py36 or py27 are in an env name
+        py{27,36}-sqlite: mock  ; mocking sqlite in python 2.x
 
 Prevent symbolic links in virtualenv
 ------------------------------------

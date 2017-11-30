@@ -90,10 +90,10 @@ Let's go through this step by step::
 This is bash-style syntax and will create ``2*2=4`` environment names
 like this::
 
-    py36-windows
-    py36-linux
     py27-windows
     py27-linux
+    py36-windows
+    py36-linux
 
 Our ``[testenv]`` uses a new templating style for the ``platform`` definition::
 
@@ -110,8 +110,8 @@ The next configuration item in the ``testenv`` section deals with
 the python interpreter::
 
     basepython =
-           py36: python3.6
            py27: python2.7
+           py36: python3.6
 
 This defines a python executable, depending on if ``py36`` or ``py27``
 appears in the environment name.
@@ -185,7 +185,7 @@ If you want to have your package installed with both easy_install
 and pip, you can list them in your envlist likes this::
 
     [tox]
-    envlist = py[36,27,35]-django[13,14]-[easy,pip]
+    envlist = py[27,35,36]-django[13,14]-[easy,pip]
 
 If no installer is specified, ``pip`` will be used.
 
@@ -195,7 +195,7 @@ Default settings related to environments names/variants
 tox comes with predefined settings for certain variants, namely:
 
 * ``{easy,pip}`` use easy_install or pip respectively
-* ``{py27,py36,py35,py34,pypy19]`` use the respective
+* ``{py27,py34,py35,py36,pypy19]`` use the respective
   pythonNN or PyPy interpreter
 * ``{win32,linux,darwin}`` defines the according ``platform``.
 
@@ -217,11 +217,11 @@ Transforming the examples: django-rest
 
 The original `django-rest-framework tox.ini
 <https://github.com/encode/django-rest-framework/blob/b001a146d73348af18cfc4c943d87f2f389349c9/tox.ini>`_
-file has 159 lines and a lot of repetition, the new one would +have 20
+file has 159 lines and a lot of repetition, the new one would have ``20+``
 lines and almost no repetition::
 
      [tox]
-     envlist = {py35,py27,py36}-{django12,django13}{,-example}
+     envlist = {py27,py35,py36}-{django12,django13}{,-example}
 
      [testenv]
      deps=
@@ -259,7 +259,7 @@ commands::
 
     [tox]
     envlist =
-     {py34,py35,py27,py36}-{django11,django12,django13}-{nodb,pg,mysql}, docs
+     {py27,py34,py35,py36}-{django11,django12,django13}-{nodb,pg,mysql}, docs
 
     [testenv:docs]
     changedir = docs
