@@ -31,11 +31,11 @@ hookimpl = pluggy.HookimplMarker("tox")
 
 _dummy = object()
 
-PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{0}'.format(option) for option in [
+PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{}'.format(option) for option in [
     'c', 'e', 'r', 'b', 't', 'd',
 ]]
 
-PIP_INSTALL_LONG_OPTIONS_ARGUMENT = ['--{0}'.format(option) for option in [
+PIP_INSTALL_LONG_OPTIONS_ARGUMENT = ['--{}'.format(option) for option in [
     'constraint', 'editable', 'requirement', 'build', 'target', 'download',
     'src', 'upgrade-strategy', 'install-options', 'global-option',
     'root', 'prefix', 'no-binary', 'only-binary', 'index-url',
@@ -143,14 +143,14 @@ class DepOption:
                 # in case of a short option, we remove the space
                 for option in PIP_INSTALL_SHORT_OPTIONS_ARGUMENT:
                     if name.startswith(option):
-                        name = '{0}{1}'.format(
+                        name = '{}{}'.format(
                             option, name[len(option):].strip()
                         )
 
                 # in case of a long option, we add an equal sign
                 for option in PIP_INSTALL_LONG_OPTIONS_ARGUMENT:
                     if name.startswith(option + ' '):
-                        name = '{0}={1}'.format(
+                        name = '{}={}'.format(
                             option, name[len(option):].strip()
                         )
 
@@ -508,9 +508,9 @@ def tox_addoption(parser):
             itertools.chain.from_iterable(
                 [x.split(' ') for x in value]))
 
-        passenv = set([
+        passenv = {
             "PATH", "PIP_INDEX_URL", "LANG", "LANGUAGE", "LD_LIBRARY_PATH"
-        ])
+        }
 
         # read in global passenv settings
         p = os.environ.get("TOX_TESTENV_PASSENV", None)
@@ -890,7 +890,7 @@ class parseini:
         envlist = _split_env(envstr)
 
         # collect section envs
-        all_envs = set(envlist) - set(["ALL"])
+        all_envs = set(envlist) - {"ALL"}
         for section in self._cfg:
             if section.name.startswith(testenvprefix):
                 all_envs.add(section.name[len(testenvprefix):])
