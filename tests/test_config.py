@@ -1463,7 +1463,7 @@ class TestConfigTestEnv:
             deps = b: test
         """
         configs = newconfig([], inisource).envconfigs
-        assert set(configs.keys()) == set(['py27-a', 'py27-b'])
+        assert set(configs.keys()) == {'py27-a', 'py27-b'}
 
     @pytest.mark.issue198
     def test_factors_groups_touch(self, newconfig):
@@ -1476,7 +1476,7 @@ class TestConfigTestEnv:
                 a,b,x,y: dep
         """
         configs = newconfig([], inisource).envconfigs
-        assert set(configs.keys()) == set(['a', 'a-x', 'b', 'b-x'])
+        assert set(configs.keys()) == {'a', 'a-x', 'b', 'b-x'}
 
     def test_period_in_factor(self, newconfig):
         inisource = """

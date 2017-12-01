@@ -669,7 +669,7 @@ class Session:
         def report_env(e):
             if description:
                 text = env_conf[e].description or '[no description]'
-                msg = '{0} -> {1}'.format(e.ljust(max_length), text).strip()
+                msg = '{} -> {}'.format(e.ljust(max_length), text).strip()
             else:
                 msg = e
             self.report.line(msg)
@@ -689,7 +689,7 @@ class Session:
             stdout=subprocess.PIPE,
         )
         out, _ = proc.communicate()
-        versions.append('virtualenv-{0}'.format(out.decode('UTF-8').strip()))
+        versions.append('virtualenv-{}'.format(out.decode('UTF-8').strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
 
     def _resolve_pkg(self, pkgspec):

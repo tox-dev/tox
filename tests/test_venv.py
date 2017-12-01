@@ -632,7 +632,7 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
     assert pcalls[0].env["YY"] == "456"
     assert "YY" not in pcalls[1].env
 
-    assert set(["ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"])\
+    assert {"ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"}\
         .issubset(pcalls[1].env)
 
     # setenv does not trigger PYTHONPATH warnings
