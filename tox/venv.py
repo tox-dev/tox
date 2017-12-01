@@ -282,7 +282,6 @@ class VirtualEnv(object):
 
     def run_install_command(self, packages, action, options=()):
         argv = self.envconfig.install_command[:]
-        # use pip-script on win32 to avoid the executable locking
         i = argv.index('{packages}')
         argv[i:i + 1] = packages
         if '{opts}' in argv:
