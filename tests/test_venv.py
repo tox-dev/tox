@@ -384,11 +384,11 @@ def test_install_command_not_installed_bash(newmocksession):
 
 
 def test_install_python3(tmpdir, newmocksession):
-    if not py.path.local.sysfind('python3.3'):
-        pytest.skip("needs python3.3")
+    if not py.path.local.sysfind('python3.5'):
+        pytest.skip("needs python3.5")
     mocksession = newmocksession([], """
         [testenv:py123]
-        basepython=python3.3
+        basepython=python3.5
         deps=
             dep1
             dep2
@@ -699,7 +699,7 @@ def test_run_custom_install_command(newmocksession):
     assert pcalls[0].args[1:] == ['whatever']
 
 
-def test_command_relative_issue26(newmocksession, tmpdir, monkeypatch):
+def test_command_relative_issue36(newmocksession, tmpdir, monkeypatch):
     mocksession = newmocksession([], """
         [testenv]
     """)

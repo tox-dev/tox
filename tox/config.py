@@ -24,7 +24,7 @@ iswin32 = sys.platform == "win32"
 
 default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
                    'py': sys.executable, 'py2': 'python2', 'py3': 'python3'}
-for version in '26,27,32,33,34,35,36,37'.split(','):
+for version in '27,34,35,36,37'.split(','):
     default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
 hookimpl = pluggy.HookimplMarker("tox")

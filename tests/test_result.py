@@ -49,7 +49,7 @@ def test_set_header(pkg):
 def test_addenv_setpython(pkg):
     replog = ResultLog()
     replog.set_header(installpkg=pkg)
-    envlog = replog.get_envlog("py26")
+    envlog = replog.get_envlog("py36")
     envlog.set_python_info(py.path.local(sys.executable))
     assert envlog.dict["python"]["version_info"] == list(sys.version_info)
     assert envlog.dict["python"]["version"] == sys.version
@@ -59,7 +59,7 @@ def test_addenv_setpython(pkg):
 def test_get_commandlog(pkg):
     replog = ResultLog()
     replog.set_header(installpkg=pkg)
-    envlog = replog.get_envlog("py26")
+    envlog = replog.get_envlog("py36")
     assert "setup" not in envlog.dict
     setuplog = envlog.get_commandlog("setup")
     setuplog.add_command(["virtualenv", "..."], "venv created", 0)
@@ -67,5 +67,5 @@ def test_get_commandlog(pkg):
                               "output": "venv created",
                               "retcode": "0"}]
     assert envlog.dict["setup"]
-    setuplog2 = replog.get_envlog("py26").get_commandlog("setup")
+    setuplog2 = replog.get_envlog("py36").get_commandlog("setup")
     assert setuplog2.list == setuplog.list
