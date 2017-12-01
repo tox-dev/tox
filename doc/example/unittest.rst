@@ -19,7 +19,7 @@ and add the following ``tox.ini`` to it:
 .. code-block:: ini
 
     [tox]
-    envlist = py35,py36,py27
+    envlist = py27,py35,py36
 
     [testenv]
     changedir = tests
@@ -50,7 +50,7 @@ the checkout has a tox.ini_ that looks like this:
 .. code-block:: ini
 
     [tox]
-    envlist = py34,py35,py36,py27
+    envlist = py27,py34,py35,py36
 
     [testenv]
     deps = unittest2
@@ -76,7 +76,7 @@ the checkout has a tox.ini_ that looks like this:
 
 mock uses unittest2_ to run the tests. Invoking ``tox`` starts test
 discovery by executing the ``unit2 discover``
-commands on Python 2.4, 2.5, 3.6 and 2.7 respectively.  Against
+commands on Python 2.7, 3.4, 3.5 and 3.6 respectively.  Against
 Python3.6 and Python2.7 it will additionally run sphinx-mediated
 doctests. If building the docs fails, due to a reST error, or
 any of the doctests fails, it will be reported by the tox run.

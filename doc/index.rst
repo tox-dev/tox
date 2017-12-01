@@ -44,7 +44,7 @@ To sdist-package, install and test your project against Python2.7 and Python3.6,
 
     tox
 
-and watch things happening (you must have python3.6 and python2.7 installed in your
+and watch things happening (you must have python2.7 and python3.6 installed in your
 environment otherwise you will see errors).  When you run ``tox`` a second time
 you'll note that it runs much faster because it keeps track of virtualenv details
 and will not recreate or re-install dependencies.  You also might want to

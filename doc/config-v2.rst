@@ -253,7 +253,7 @@ Another `tox.ini
 has 233 lines and runs tests against multiple Postgres and Mysql
 engines.  It also performs backend-specific test commands, passing
 different command line options to the test script.  With the new tox-1.X
-we not only can do the same with 35 non-repetive configuration lines but
+we not only can do the same with 32 non-repetive configuration lines but
 we also produce 36 specific testenvs with specific dependencies and test
 commands::
 
