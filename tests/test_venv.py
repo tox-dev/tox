@@ -533,7 +533,7 @@ class TestCreationConfig:
 
 class TestVenvTest:
 
-    def test_envbinddir_path(self, newmocksession, monkeypatch):
+    def test_envbindir_path(self, newmocksession, monkeypatch):
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession([], """
             [testenv:python]
