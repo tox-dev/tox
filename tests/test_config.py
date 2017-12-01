@@ -172,7 +172,7 @@ class TestConfigPlatform:
         monkeypatch.undo()
         assert not venv.matching_platform()
 
-    @pytest.mark.parametrize("plat", ["win", "lin", ])
+    @pytest.mark.parametrize("plat", ["win", "lin", "osx"])
     def test_config_parse_platform_with_factors(self, newconfig, plat, monkeypatch):
         monkeypatch.setattr(sys, "platform", "win32")
         config = newconfig([], """
@@ -185,7 +185,7 @@ class TestConfigPlatform:
         """)
         assert len(config.envconfigs) == 3
         platform = config.envconfigs['py27-' + plat].platform
-        expected = {"win": "win32", "lin": "linux2"}.get(plat)
+        expected = {"win": "win32", "lin": "linux2", "osx": ""}.get(plat)
         assert platform == expected
 
 
@@ -526,8 +526,6 @@ class TestIniParser:
         """)
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        # pytest.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         x = reader.getargvlist("key2")
         assert x == [["cmd1", "with", "space", "grr"],
@@ -552,8 +550,6 @@ class TestIniParser:
         """)
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        # pytest.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         x = reader.getargvlist("key2")
         assert x == [["cmd1", "with", "space", "grr"]]
@@ -600,8 +596,6 @@ class TestIniParser:
         reader = SectionReader("section", config._cfg)
         posargs = ['hello', 'world']
         reader.addsubstitutions(posargs, item2="value2")
-        # pytest.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         argvlist = reader.getargvlist("key2")
         assert argvlist[0] == ["cmd1"] + posargs
@@ -609,8 +603,6 @@ class TestIniParser:
 
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([], item2="value2")
-        # pytest.raises(tox.exception.ConfigError,
-        #    "reader.getargvlist('key1')")
         assert reader.getargvlist('key1') == []
         argvlist = reader.getargvlist("key2")
         assert argvlist[0] == ["cmd1"]
@@ -1411,6 +1403,33 @@ class TestConfigTestEnv:
         assert get_deps("b-x") == ["dep-a-or-b"]
         assert get_deps("b-y") == ["dep-a-or-b", "dep-ab-and-y"]
 
+    def test_envconfigs_based_on_factors(self, newconfig):
+        inisource = """
+            [testenv]
+            some-setting=
+                a: something
+                b,c: something
+                d-e: something
+
+            [unknown-section]
+            some-setting=
+                eggs: something
+        """
+        config = newconfig(["-e spam"], inisource)
+        assert not config.envconfigs
+        assert config.envlist == ["spam"]
+        config = newconfig(["-e eggs"], inisource)
+        assert not config.envconfigs
+        assert config.envlist == ["eggs"]
+        config = newconfig(["-e py3-spam"], inisource)
+        assert not config.envconfigs
+        assert config.envlist == ["py3-spam"]
+        for x in "abcde":
+            env = "py3-{}".format(x)
+            config = newconfig(["-e {}".format(env)], inisource)
+            assert sorted(config.envconfigs) == [env]
+            assert config.envlist == [env]
+
     def test_default_factors(self, newconfig):
         inisource = """
             [tox]
@@ -1576,6 +1595,8 @@ class TestGlobalOptions:
         assert config.envlist == ['py27', 'py35', 'py36']
         config = newconfig(["-eALL"], inisource)
         assert config.envlist == ['py27', 'py35', 'py36']
+        config = newconfig(['-espam'], inisource)
+        assert config.envlist == ["spam"]
 
     def test_py_venv(self, tmpdir, newconfig, monkeypatch):
         config = newconfig(["-epy"], "")
@@ -2308,7 +2329,6 @@ class TestCommandParser:
 
     def test_command_parser_for_word(self):
         p = CommandParser('word')
-        # import pytest; pytest.set_trace()
         assert list(p.words()) == ['word']
 
     def test_command_parser_for_posargs(self):
