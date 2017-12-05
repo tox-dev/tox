@@ -2269,7 +2269,7 @@ class TestCmdInvocation:
         ])
 
     def test_no_tox_ini(self, cmd, initproj):
-        initproj("noini-0.5", )
+        initproj("noini-0.5")
         result = cmd.run("tox")
         assert result.ret
         result.stderr.fnmatch_lines([

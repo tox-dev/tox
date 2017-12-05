@@ -340,7 +340,7 @@ def test_unknown_dep(cmd, initproj):
             changedir=tests
         '''
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret
     result.stdout.fnmatch_lines([
         "*ERROR*could not install*qweqwe123*",
@@ -357,7 +357,7 @@ def test_venv_special_chars_issue252(cmd, initproj):
             changedir=tests
         '''
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*installed*pkg123*"
@@ -388,7 +388,7 @@ def test_skip_sdist(cmd, initproj):
             commands=python -c "print('done')"
         '''
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret == 0
 
 
@@ -400,7 +400,7 @@ def test_minimal_setup_py_empty(cmd, initproj):
         'tox.ini': ''
 
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret == 1
     result.stdout.fnmatch_lines([
         "*ERROR*empty*",
@@ -416,7 +416,7 @@ def test_minimal_setup_py_comment_only(cmd, initproj):
         'tox.ini': ''
 
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret == 1
     result.stdout.fnmatch_lines([
         "*ERROR*empty*",
@@ -433,7 +433,7 @@ def test_minimal_setup_py_non_functional(cmd, initproj):
         'tox.ini': ''
 
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret == 1
     result.stdout.fnmatch_lines([
         "*ERROR*check setup.py*",
@@ -448,7 +448,7 @@ def test_sdist_fails(cmd, initproj):
         """,
         'tox.ini': '',
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret
     result.stdout.fnmatch_lines([
         "*FAIL*could not package project*",
@@ -463,7 +463,7 @@ def test_no_setup_py_exits(cmd, initproj):
         """
     })
     os.remove("setup.py")
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret
     result.stdout.fnmatch_lines([
         "*ERROR*No setup.py file found*"
@@ -487,7 +487,7 @@ def test_package_install_fails(cmd, initproj):
             """,
         'tox.ini': '',
     })
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret
     result.stdout.fnmatch_lines([
         "*InvocationError*",
@@ -520,7 +520,7 @@ class TestToxRun:
             "*junit-python.xml*",
             "*1 passed*",
         ])
-        result = cmd.run("tox", "-epython", )
+        result = cmd.run("tox", "-epython")
         assert not result.ret
         result.stdout.fnmatch_lines([
             "*1 passed*",
@@ -618,7 +618,7 @@ def test_test_usedevelop(cmd, initproj, src_root):
         "*1 passed*",
     ])
     assert "sdist-make" not in result.stdout.str()
-    result = cmd.run("tox", "-epython", )
+    result = cmd.run("tox", "-epython")
     assert not result.ret
     assert "develop-inst-noop" in result.stdout.str()
     result.stdout.fnmatch_lines([
@@ -641,7 +641,7 @@ def test_test_usedevelop(cmd, initproj, src_root):
     testfile = py.path.local("tests").join("test_hello.py")
     assert testfile.check()
     testfile.write("def test_fail(): assert 0")
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret
     assert "develop-inst-noop" in result.stdout.str()
     result.stdout.fnmatch_lines([
@@ -652,7 +652,7 @@ def test_test_usedevelop(cmd, initproj, src_root):
     # test develop is called if setup.py changes
     setup_py = py.path.local("setup.py")
     setup_py.write(setup_py.read() + ' ')
-    result = cmd.run("tox", )
+    result = cmd.run("tox")
     assert result.ret
     assert "develop-inst-nodeps" in result.stdout.str()
 
