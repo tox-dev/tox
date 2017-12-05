@@ -237,7 +237,6 @@ class Reporter(object):
         self.tw = py.io.TerminalWriter()
         self.session = session
         self._reportedlines = []
-        # self.cumulated_time = 0.0
 
     @property
     def verbosity(self):
@@ -262,7 +261,6 @@ class Reporter(object):
 
     def logaction_finish(self, action):
         duration = time.time() - action._starttime
-        # self.cumulated_time += duration
         self.verbosity2("%s finish: %s after %.2f seconds" % (
             action.venvname, action.msg, duration), bold=True)
         delattr(action, '_starttime')
@@ -280,9 +278,6 @@ class Reporter(object):
 
     def keyboard_interrupt(self):
         self.error("KEYBOARDINTERRUPT")
-
-#    def venv_installproject(self, venv, pkg):
-#        self.logline("installing to %s: %s" % (venv.envconfig.envname, pkg))
 
     def keyvalue(self, name, value):
         if name.endswith(":"):
@@ -337,7 +332,6 @@ class Session:
         self.report = Report(self)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
-        # self.report.using("logdir %s" %(self.config.logdir,))
         self.report.using("tox.ini: %s" % (self.config.toxinipath,))
         self._spec2pkg = {}
         self._name2venv = {}
