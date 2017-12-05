@@ -67,7 +67,7 @@ windows and linux platforms.  Today you would have to
 write down 2*2 = 4 ``[testenv:*]`` sections and then instruct
 tox to run a specific list of environments on each platform.
 
-With tox-1.X you can directlys specify combinations::
+With tox-1.X you can directly specify combinations::
 
     # combination syntax gives 2 * 2 = 4 testenv names
     #
@@ -151,7 +151,7 @@ Expanding the ``envlist`` setting
 The new ``envlist`` setting allows to use ``{}`` bash-style
 expressions.  XXX explanation or pointer to bash-docs
 
-Templating based on environments names
+Templating based on environment names
 -------------------------------------------------
 
 For a given environment name, all lines in a testenv section which
@@ -170,7 +170,7 @@ you can ask tox to show their expansion with a new option::
 
     $ tox -l [XXX output omitted for now]
 
-Making sure your packages installs with easy_install
+Making sure your package installs with easy_install
 ------------------------------------------------------
 
 The new "installer" testenv setting allows to specify the tool for
@@ -182,14 +182,14 @@ installation in a given test environment::
         pip: pip
 
 If you want to have your package installed with both easy_install
-and pip, you can list them in your envlist likes this::
+and pip, you can list them in your envlist like this::
 
     [tox]
     envlist = py[27,35,36]-django[13,14]-[easy,pip]
 
 If no installer is specified, ``pip`` will be used.
 
-Default settings related to environments names/variants
+Default settings related to environment names/variants
 ---------------------------------------------------------------
 
 tox comes with predefined settings for certain variants, namely:
