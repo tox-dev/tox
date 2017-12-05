@@ -123,6 +123,21 @@ exclude_package_formats=        # new option which filters out packages
     py27-xdist: wheel
 ```
 
+or possibly using the negated factor condition support:
+
+```ini
+[tox]
+plugins=conda
+envlist=py27,py35,py27-xdist
+
+[testenv]
+commands = py.test
+package_formats=
+    sdist
+    !py27,!xdist: wheel
+    conda
+```
+
 Output of `tox --list`:
 
 ```
