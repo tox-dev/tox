@@ -940,6 +940,16 @@ class DepConfig:
         self.name = name
         self.indexserver = indexserver
 
+    @property
+    def digest(self):
+        fname = str(self.name)
+        if fname.startswith('-r'):
+            fname = fname[2:]
+        path = py.path.local(fname)
+        if not path.check(file=1):
+            return "0" * 32
+        return path.computehash()
+
     def __str__(self):
         if self.indexserver:
             if self.indexserver.name == "default":

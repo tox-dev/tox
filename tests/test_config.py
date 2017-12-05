@@ -9,6 +9,7 @@ from pluggy import PluginManager
 import tox
 import tox.config
 from tox.config import CommandParser
+from tox.config import DepConfig
 from tox.config import DepOption
 from tox.config import get_homedir
 from tox.config import get_version_info
@@ -145,6 +146,12 @@ class TestVenvConfig:
         assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<2.0')
         assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
         assert not DepOption._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
+
+    def test_digest(self, tmpdir):
+        reqs = tmpdir.join('reqs.txt')
+        reqs.write('hello_world==1.0')
+        assert (DepConfig('-r%s' % (str(reqs))).digest == reqs.computehash())
+        assert (DepConfig('pkg_helloworld3==1.0').digest == "0" * 32)
 
 
 class TestConfigPlatform:

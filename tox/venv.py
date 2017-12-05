@@ -188,9 +188,7 @@ class VirtualEnv(object):
         alwayscopy = self.envconfig.alwayscopy
         deps = []
         for dep in self._getresolvedeps():
-            raw_dep = dep.name
-            md5 = getdigest(raw_dep)
-            deps.append((md5, raw_dep))
+            deps.append((dep.digest, dep.name))
         return CreationConfig(md5, python, version,
                               sitepackages, develop, deps, alwayscopy)
 
