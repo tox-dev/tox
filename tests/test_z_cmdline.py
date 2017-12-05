@@ -667,7 +667,7 @@ def _alwayscopy_not_supported():
     return False
 
 
-@pytest.mark.skipif(_alwayscopy_not_supported(), reason="Platform doesnt support alwayscopy")
+@pytest.mark.skipif(_alwayscopy_not_supported(), reason="Platform doesn't support alwayscopy")
 def test_alwayscopy(initproj, cmd):
     initproj("example123", filedefs={'tox.ini': """
             [testenv]
