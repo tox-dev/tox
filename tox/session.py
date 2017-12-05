@@ -249,7 +249,7 @@ class Reporter(object):
         """ log information about the action.popen() created process. """
         cmd = " ".join(map(str, popen.args))
         if popen.outpath:
-            self.verbosity1("  %s$ %s >%s" % (popen.cwd, cmd, popen.outpath,))
+            self.verbosity1("  %s$ %s >%s" % (popen.cwd, cmd, popen.outpath))
         else:
             self.verbosity1("  %s$ %s " % (popen.cwd, cmd))
 
