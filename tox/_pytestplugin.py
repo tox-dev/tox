@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import os.path
 import subprocess
 import sys
 import textwrap
@@ -294,6 +295,8 @@ def initproj(request, tmpdir):
     def initproj(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}
+        if not src_root:
+            src_root = '.'
         if isinstance(nameversion, six.string_types):
             parts = nameversion.split("-")
             if len(parts) == 1:
@@ -301,9 +304,17 @@ def initproj(request, tmpdir):
             name, version = parts
         else:
             name, version = nameversion
-        base = tmpdir.ensure(name, dir=1)
+
+        base = tmpdir.join(name)
+        src_root_path = _path_join(base, src_root)
+        assert base == src_root_path or src_root_path.relto(base), (
+            '`src_root` must be the constructed project folder or its direct '
+            'or indirect subfolder')
+
+        base.ensure(dir=1)
         create_files(base, filedefs)
-        if 'setup.py' not in filedefs:
+
+        if not _filedefs_contains(base, filedefs, 'setup.py'):
             create_files(base, {'setup.py': '''
                 from setuptools import setup, find_packages
                 setup(
@@ -316,18 +327,64 @@ def initproj(request, tmpdir):
                     package_dir={'':'%(src_root)s'},
                 )
             ''' % locals()})
-        if name not in filedefs:
-            src_dir = base.ensure(src_root, dir=1)
-            create_files(src_dir, {
+
+        if not _filedefs_contains(base, filedefs, src_root_path.join(name)):
+            create_files(src_root_path, {
                 name: {'__init__.py': '__version__ = %r' % version}
             })
-        manifestlines = []
-        for p in base.visit(lambda x: x.check(file=1)):
-            manifestlines.append("include %s" % p.relto(base))
+
+        manifestlines = ["include %s" % p.relto(base)
+                         for p in base.visit(lambda x: x.check(file=1))]
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
+
         print("created project in %s" % (base,))
         base.chdir()
     return initproj
+
+
+def _path_parts(path):
+    path = path and str(path)  # py.path.local support
+    parts = []
+    while path:
+        folder, name = os.path.split(path)
+        if folder == path:  # root folder
+            folder, name = name, folder
+        if name:
+            parts.append(name)
+        path = folder
+    parts.reverse()
+    return parts
+
+
+def _path_join(base, *args):
+    # workaround for a py.path.local bug on Windows (`path.join('/x', abs=1)`
+    # should be py.path.local('X:\\x') where `X` is the current drive, when in
+    # fact it comes out as py.path.local('\\x'))
+    return py.path.local(base.join(*args, abs=1))
+
+
+def _filedefs_contains(base, filedefs, path):
+    """
+    whether `filedefs` defines a file/folder with the given `path`
+
+    `path`, if relative, will be interpreted relative to the `base` folder, and
+    whether relative or not, must refer to either the `base` folder or one of
+    its direct or indirect children. The base folder itself is considered
+    created if the filedefs structure is not empty.
+
+    """
+    unknown = object()
+    base = py.path.local(base)
+    path = _path_join(base, path)
+
+    path_rel_parts = _path_parts(path.relto(base))
+    for part in path_rel_parts:
+        if not isinstance(filedefs, dict):
+            return False
+        filedefs = filedefs.get(part, unknown)
+        if filedefs is unknown:
+            return False
+    return path_rel_parts or path == base and filedefs
 
 
 def create_files(base, filedefs):
