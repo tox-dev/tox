@@ -636,34 +636,42 @@ special case for a combination of factors. Here is how you do it::
 
     [testenv]
     deps =
-        py34-mysql: PyMySQL     ; use if both py34 and mysql are in an env name
-        py27,py36: urllib3      ; use if any of py36 or py27 are in an env name
-        py{27,36}-sqlite: mock  ; mocking sqlite in python 2.x
+        py34-mysql: PyMySQL     ; use if both py34 and mysql are in the env name
+        py27,py36: urllib3      ; use if either py36 or py27 are in the env name
+        py{27,36}-sqlite: mock  ; mocking sqlite in python 2.x & 3.6
+        !py34-sqlite: mock      ; mocking sqlite, except in python 3.4
+        sqlite-!py34: mock      ; (same as the line above)
 
-Take a look at first ``deps`` line. It shows how you can special case something
-for a combination of factors, you just join combining factors with a hyphen.
-This particular line states that ``PyMySQL`` will be loaded for python 3.3,
-mysql environments, e.g. ``py34-django15-mysql`` and ``py34-django16-mysql``.
+Take a look at the first ``deps`` line. It shows how you can special case
+something for a combination of factors, by just hyphenating the combining
+factors together. This particular line states that ``PyMySQL`` will be loaded
+for python 3.3, mysql environments, e.g. ``py34-django15-mysql`` and
+``py34-django16-mysql``.
 
-The second line shows how you use same line for several factors - by listing
-them delimited by commas. It's possible to list not only simple factors, but
-also their combinations like ``py27-sqlite,py36-sqlite``.
+The second line shows how you use the same setting for several factors - by
+listing them delimited by commas. It's possible to list not only simple factors,
+but also their combinations like ``py27-sqlite,py36-sqlite``.
 
-Finally, factor expressions are expanded the same way as envlist, so last
-example could be rewritten as ``py{27,36}-sqlite``.
+The remaining lines all have the same effect and use conditions equivalent to
+``py27-sqlite,py36-sqlite``. They have all been added only to help demonstrate
+the following:
+
+- how factor expressions get expanded the same way as in envlist
+- how to use negated factor conditions by prefixing negated factors with ``!``
+- that the order in which factors are hyphenated together does not matter
 
 .. note::
 
     Factors don't do substring matching against env name, instead every
-    hyphenated expression is split by ``-`` and if ALL the factors in an
-    expression are also factors of an env then that condition is considered
-    hold.
+    hyphenated expression is split by ``-`` and if ALL of its non-negated
+    factors and NONE of its negated ones are also factors of an env then that
+    condition is considered to hold for that env.
 
-    For example, environment ``py36-mysql``:
+    For example, environment ``py36-mysql-!dev``:
 
-    - could be matched with expressions ``py36``, ``py36-mysql``,
+    - would be matched by expressions ``py36``, ``py36-mysql`` or
       ``mysql-py36``,
-    - but not with ``py2`` or ``py36-sql``.
+    - but not ``py2``, ``py36-sql`` or ``py36-mysql-dev``.
 
 
 Other Rules and notes

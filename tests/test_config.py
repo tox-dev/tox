@@ -1376,11 +1376,20 @@ class TestConfigTestEnv:
                 a: dep-a
                 b: dep-b
                 x: dep-x
+                !a: dep-!a
+                !b: dep-!b
+                !x: dep-!x
         """
         conf = newconfig([], inisource)
         configs = conf.envconfigs
-        assert [dep.name for dep in configs['a-x'].deps] == ["dep-all", "dep-a", "dep-x"]
-        assert [dep.name for dep in configs['b'].deps] == ["dep-all", "dep-b"]
+        expected = ["dep-all", "dep-a", "dep-x", "dep-!b"]
+        assert [dep.name for dep in configs['a-x'].deps] == expected
+        expected = ["dep-all", "dep-b", "dep-!a", "dep-!x"]
+        assert [dep.name for dep in configs['b'].deps] == expected
+        expected = ["dep-all", "dep-a", "dep-x", "dep-!b"]
+        assert [dep.name for dep in configs['a-x'].deps] == expected
+        expected = ["dep-all", "dep-b", "dep-!a", "dep-!x"]
+        assert [dep.name for dep in configs['b'].deps] == expected
 
     def test_factor_ops(self, newconfig):
         inisource = """
@@ -1392,16 +1401,25 @@ class TestConfigTestEnv:
                 a,b: dep-a-or-b
                 a-x: dep-a-and-x
                 {a,b}-y: dep-ab-and-y
+                a-!x: dep-a-and-!x
+                a,!x: dep-a-or-!x
+                !a-!x: dep-!a-and-!x
+                !a,!x: dep-!a-or-!x
+                !a-!b: dep-!a-and-!b
+                !a-!b-!x-!y: dep-!a-and-!b-and-!x-and-!y
         """
         configs = newconfig([], inisource).envconfigs
 
         def get_deps(env):
             return [dep.name for dep in configs[env].deps]
 
-        assert get_deps("a-x") == ["dep-a-or-b", "dep-a-and-x"]
-        assert get_deps("a-y") == ["dep-a-or-b", "dep-ab-and-y"]
-        assert get_deps("b-x") == ["dep-a-or-b"]
-        assert get_deps("b-y") == ["dep-a-or-b", "dep-ab-and-y"]
+        assert get_deps("a-x") == ["dep-a-or-b", "dep-a-and-x", "dep-a-or-!x"]
+        assert get_deps("a-y") == ["dep-a-or-b", "dep-ab-and-y",
+                                   "dep-a-and-!x", "dep-a-or-!x",
+                                   "dep-!a-or-!x"]
+        assert get_deps("b-x") == ["dep-a-or-b", "dep-!a-or-!x"]
+        assert get_deps("b-y") == ["dep-a-or-b", "dep-ab-and-y", "dep-a-or-!x",
+                                   "dep-!a-and-!x", "dep-!a-or-!x"]
 
     def test_envconfigs_based_on_factors(self, newconfig):
         inisource = """
@@ -1410,6 +1428,9 @@ class TestConfigTestEnv:
                 a: something
                 b,c: something
                 d-e: something
+                !f: something
+                !g,!h: something
+                !i-!j: something
 
             [unknown-section]
             some-setting=
@@ -1424,7 +1445,7 @@ class TestConfigTestEnv:
         config = newconfig(["-e py3-spam"], inisource)
         assert not config.envconfigs
         assert config.envlist == ["py3-spam"]
-        for x in "abcde":
+        for x in "abcdefghij":
             env = "py3-{}".format(x)
             config = newconfig(["-e {}".format(env)], inisource)
             assert sorted(config.envconfigs) == [env]

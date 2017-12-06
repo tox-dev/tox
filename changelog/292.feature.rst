@@ -1,0 +1,1 @@
+add support for negated factor conditions, e.g. ``!dev: production_log`` - by @jurko-gospodnetic

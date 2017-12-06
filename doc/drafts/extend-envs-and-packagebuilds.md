@@ -18,7 +18,7 @@ Goal: drive building of packages and the environments needed to test them, exerc
 
 It should be possible to build other kinds of packages than just the standard sdist and it should also be possible to create different kinds of builds that can be used from different environments. To make this possible there has to be some concept of factorized package definitions and a way to match these factorized builds to environments with a similar way of matching like what is in place already to generate environments. sdist would for example would match to a "sdist" factor to only be matched against virtualenvs as the default.
 
-This could then be used to hae virtualenv, conda, nixos, docker, pyenv, rpm, deb, etc. builds and tie them to concrete test environments.
+This could then be used to have virtualenv, conda, nixos, docker, pyenv, rpm, deb, etc. builds and tie them to concrete test environments.
 
 To summarize - we would need a:
 
@@ -114,19 +114,35 @@ Illustrate how to exclude a certain package format for a factor:
 ```ini
 [tox]
 plugins=conda
-envlist={py27,py35}, py27-xdist
+envlist=py27,py35,py27-xdist
 
 [testenv]
-package_formats=sdist wheel conda
 commands = py.test
+package_formats=sdist wheel conda
 exclude_package_formats=        # new option which filters out packages
     py27-xdist: wheel
+```
+
+or possibly using the negated factor condition support:
+
+```ini
+[tox]
+plugins=conda
+envlist=py27,py35,py27-xdist
+
+[testenv]
+commands = py.test
+package_formats=
+    sdist
+    !py27,!xdist: wheel
+    conda
 ```
 
 Output of `tox --list`:
 
 ```
 (sdist) py27
+(wheel) py27
 (conda) py27
 (sdist) py35
 (wheel) py35
