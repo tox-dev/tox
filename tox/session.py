@@ -213,7 +213,7 @@ class Action(object):
             newargs.append(str(arg))
 
         # subprocess does not always take kindly to .py scripts
-        # so adding the interpreter here.
+        # so adding the interpreter here
         if sys.platform == "win32":
             ext = os.path.splitext(str(newargs[0]))[1].lower()
             if ext == '.py' and self.venv:
