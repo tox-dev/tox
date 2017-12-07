@@ -533,7 +533,7 @@ class TestCreationConfig:
 
 class TestVenvTest:
 
-    def test_envbinddir_path(self, newmocksession, monkeypatch):
+    def test_envbindir_path(self, newmocksession, monkeypatch):
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession([], """
             [testenv:python]
@@ -558,7 +558,8 @@ class TestVenvTest:
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
         monkeypatch.setenv("__PYVENV_LAUNCHER__", "1")
-        pytest.raises(ZeroDivisionError, "venv.run_install_command(['qwe'], action=action)")
+        with pytest.raises(ZeroDivisionError):
+            venv.run_install_command(['qwe'], action=action)
         assert 'PIP_RESPECT_VIRTUALENV' not in os.environ
         assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
         assert '__PYVENV_LAUNCHER__' not in os.environ

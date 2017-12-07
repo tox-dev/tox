@@ -213,7 +213,7 @@ class Action(object):
             newargs.append(str(arg))
 
         # subprocess does not always take kindly to .py scripts
-        # so adding the interpreter here.
+        # so adding the interpreter here
         if sys.platform == "win32":
             ext = os.path.splitext(str(newargs[0]))[1].lower()
             if ext == '.py' and self.venv:
@@ -237,7 +237,6 @@ class Reporter(object):
         self.tw = py.io.TerminalWriter()
         self.session = session
         self._reportedlines = []
-        # self.cumulated_time = 0.0
 
     @property
     def verbosity(self):
@@ -250,7 +249,7 @@ class Reporter(object):
         """ log information about the action.popen() created process. """
         cmd = " ".join(map(str, popen.args))
         if popen.outpath:
-            self.verbosity1("  %s$ %s >%s" % (popen.cwd, cmd, popen.outpath,))
+            self.verbosity1("  %s$ %s >%s" % (popen.cwd, cmd, popen.outpath))
         else:
             self.verbosity1("  %s$ %s " % (popen.cwd, cmd))
 
@@ -262,7 +261,6 @@ class Reporter(object):
 
     def logaction_finish(self, action):
         duration = time.time() - action._starttime
-        # self.cumulated_time += duration
         self.verbosity2("%s finish: %s after %.2f seconds" % (
             action.venvname, action.msg, duration), bold=True)
         delattr(action, '_starttime')
@@ -280,9 +278,6 @@ class Reporter(object):
 
     def keyboard_interrupt(self):
         self.error("KEYBOARDINTERRUPT")
-
-#    def venv_installproject(self, venv, pkg):
-#        self.logline("installing to %s: %s" % (venv.envconfig.envname, pkg))
 
     def keyvalue(self, name, value):
         if name.endswith(":"):
@@ -337,7 +332,6 @@ class Session:
         self.report = Report(self)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
-        # self.report.using("logdir %s" %(self.config.logdir,))
         self.report.using("tox.ini: %s" % (self.config.toxinipath,))
         self._spec2pkg = {}
         self._name2venv = {}
