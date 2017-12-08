@@ -284,8 +284,7 @@ commands::
 
      commands =
          nodb: {envpython} runtests.py {posargs}
-         pg: {envpython} runtests.py {posargs} \
-                         --DATABASE_ENGINE=postgresql_psycopg2 \
-                         --DATABASE_USER=postgres {posargs}
+         pg: {envpython} runtests.py --DATABASE_ENGINE=postgresql_psycopg2 \
+                                     --DATABASE_USER=postgres {posargs}
          mysql: {envpython} runtests.py --DATABASE_ENGINE=mysql \
                                         --DATABASE_USER=root {posargs}
