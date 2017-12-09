@@ -239,7 +239,7 @@ def test_run_custom_install_command_error(cmd, initproj):
     initproj("interp123-0.5", filedefs={
         'tox.ini': '''
             [testenv]
-            install_command=./tox.ini {opts} {packages}
+            install_command={toxinidir}/tox.ini {opts} {packages}
         '''
     })
     result = cmd()

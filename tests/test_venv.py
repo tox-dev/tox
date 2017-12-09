@@ -140,7 +140,8 @@ def test_install_deps_wildcard(newmocksession):
     tox_testenv_install_deps(action=action, venv=venv)
     assert len(pcalls) == 2
     args = pcalls[-1].args
-    assert pcalls[-1].cwd == venv.envconfig.config.toxinidir
+    expected_cwd = venv.envconfig.config.toxinidir.join('install_from_here')
+    assert pcalls[-1].cwd == expected_cwd
     assert "pip" in str(args[0])
     assert args[1] == "install"
     args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
@@ -683,6 +684,8 @@ def test_run_install_command(newmocksession):
     assert 'install' in pcalls[0].args
     env = pcalls[0].env
     assert env is not None
+    expected_cwd = venv.envconfig.config.toxinidir.join('install_from_here')
+    assert pcalls[-1].cwd == expected_cwd
 
 
 def test_run_custom_install_command(newmocksession):
@@ -699,6 +702,8 @@ def test_run_custom_install_command(newmocksession):
     assert len(pcalls) == 1
     assert 'easy_install' in pcalls[0].args[0]
     assert pcalls[0].args[1:] == ['whatever']
+    expected_cwd = venv.envconfig.config.toxinidir.join('install_from_here')
+    assert pcalls[-1].cwd == expected_cwd
 
 
 def test_command_relative_issue36(newmocksession, tmpdir, monkeypatch):
