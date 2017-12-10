@@ -48,9 +48,8 @@ class Interpreters:
             res = exec_on_interpreter(info.executable,
                                       [inspect.getsource(sitepackagesdir),
                                        "print(sitepackagesdir(%r))" % envdir])
-        except ExecFailed:
-            val = sys.exc_info()[1]
-            print("execution failed: %s -- %s" % (val.out, val.err))
+        except ExecFailed as e:
+            print("execution failed: %s -- %s" % (e.out, e.err))
             return ""
         else:
             return res["dir"]
@@ -61,10 +60,9 @@ def run_and_get_interpreter_info(name, executable):
     try:
         result = exec_on_interpreter(executable,
                                      [inspect.getsource(pyinfo), "print(pyinfo())"])
-    except ExecFailed:
-        val = sys.exc_info()[1]
-        return NoInterpreterInfo(name, executable=val.executable,
-                                 out=val.out, err=val.err)
+    except ExecFailed as e:
+        return NoInterpreterInfo(name, executable=e.executable,
+                                 out=e.out, err=e.err)
     else:
         return InterpreterInfo(name, executable, **result)
 
