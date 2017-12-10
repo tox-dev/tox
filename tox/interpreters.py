@@ -58,8 +58,8 @@ class Interpreters:
 def run_and_get_interpreter_info(name, executable):
     assert executable
     try:
-        result = exec_on_interpreter(executable,
-                                     [inspect.getsource(pyinfo), "print(pyinfo())"])
+        result = exec_on_interpreter(executable, [inspect.getsource(pyinfo),
+                                                  "print(pyinfo())"])
     except ExecFailed as e:
         return NoInterpreterInfo(name, executable=e.executable,
                                  out=e.out, err=e.err)

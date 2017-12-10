@@ -70,7 +70,8 @@ def test_tox_get_python_executable():
         envconfig.basepython = name
         p = tox_get_python_executable(envconfig)
         assert p
-        popen = subprocess.Popen([str(p), '-V'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        popen = subprocess.Popen([str(p), '-V'], stderr=subprocess.PIPE,
+                                 stdout=subprocess.PIPE)
         stdout, stderr = popen.communicate()
         assert not stdout or not stderr
         assert ver in stderr.decode('ascii') or ver in stdout.decode('ascii')
