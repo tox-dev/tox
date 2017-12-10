@@ -121,7 +121,7 @@ class NoInterpreterInfo:
 
     def __str__(self):
         if self.executable:
-            return "<executable at %s, not runnable>"
+            return "<executable at %s, not runnable>" % self.executable
         else:
             return "<executable not found for: %s>" % self.name
 
