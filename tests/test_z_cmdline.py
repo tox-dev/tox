@@ -930,3 +930,51 @@ def test_missing_env_fails(initproj, cmd):
     result = cmd.run("tox")
     assert result.ret == 1
     result.stdout.fnmatch_lines(["*foo: unresolvable substitution(s): 'VAR'*"])
+
+
+def test_install_setuptools(cmd, initproj):
+    initproj("pkg518-1.0", filedefs={
+        'test_setuptools_gone.py': """
+            import unittest
+
+            class Test(unittest.TestCase):
+                def test_imports(self):
+                    with self.assertRaises(ImportError):
+                        import setuptools
+
+                    with self.assertRaises(ImportError):
+                        import wheel
+
+            unittest.main()
+        """,
+        'test_setuptools_available.py': """
+            import setuptools
+            import wheel
+        """,
+
+        'tox.ini': """
+            [tox]
+            skipsdist=true
+
+            [testenv:setuptools_gone]
+            install_setuptools=false
+            commands=python "{toxinidir}/test_setuptools_gone.py"
+
+            [testenv:setuptools_default]
+            commands=python "{toxinidir}/test_setuptools_available.py"
+        """
+    })
+
+    # Check that the "python installed" line only contains PIP when setuptools
+    # are not used
+    result = cmd.run("tox", "-v", "-e", "setuptools_gone")
+    assert not result.ret
+    result.stdout.fnmatch_lines("""
+        setuptools_gone installed: pip==*
+    """)
+    assert "setuptools==" not in result.stdout.str()
+    assert "wheel==" not in result.stdout.str()
+
+    # Check that scripts expecting the default behaviour continue to work
+    result = cmd.run("tox", "-v", "-e", "setuptools_default")
+    assert not result.ret

@@ -595,9 +595,25 @@ def tox_addoption(parser):
     parser.add_testenv_attribute_obj(InstallcmdOption())
 
     parser.add_testenv_attribute(
+        name="install_setuptools", type="bool", default=True,
+        help="If true the ``setuptools`` and ``wheel`` packages will "
+             "automatically be installed into the virtual environment.")
+
+    def list_dependencies_command(testenv_config, value):
+        using_setuptools = testenv_config.install_setuptools
+
+        # Display setuptools and wheel when listing dependencies of an
+        # environment where they are not present by default
+        if value == ["pip", "freeze"] and not using_setuptools:
+            value.append("--all")
+
+        return value
+
+    parser.add_testenv_attribute(
         name="list_dependencies_command",
         type="argv",
         default="pip freeze",
+        postprocess=list_dependencies_command,
         help="list dependencies for a virtual environment")
 
     parser.add_testenv_attribute_obj(DepOption())
@@ -656,6 +672,14 @@ class TestenvConfig:
         problem if the env is not part of the current testrun. So we need to remember this and
         check later when the testenv is actually run and crash only then.
         """
+
+    def __str__(self):
+        return "<{0}: config={2!r}, envname={3!r}, factors={4!r} at 0x{1:x}>".format(
+            self.__class__.__name__, id(self),
+            self.config,
+            self.envname,
+            self.factors
+        )
 
     def get_envbindir(self):
         """ path to directory where scripts/binaries reside. """
@@ -832,6 +856,12 @@ class parseini:
             for env in _split_env(stated_envlist):
                 known_factors.update(env.split('-'))
 
+        # sdist creation environment
+        config.sdist_envconfig = self.make_envconfig(
+            "sdist", "toxenv:sdist", reader._subs, config, replace=True,
+            fallbacksections=[]
+        )
+
         # configure testenvs
         for name in all_envs:
             section = testenvprefix + name
@@ -843,6 +873,7 @@ class parseini:
                           config.envconfigs[name].usedevelop for name in config.envlist)
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
+        config.venvsdist = reader.getbool("venvsdist", False)
 
     def _list_section_factors(self, section):
         factors = set()
@@ -852,10 +883,14 @@ class parseini:
                 factors.update(*mapcat(_split_factor_expr_all, exprs))
         return factors
 
-    def make_envconfig(self, name, section, subs, config, replace=True):
+    def make_envconfig(self, name, section, subs, config, replace=True,
+                       fallbacksections=None):
+        if fallbacksections is None:
+            fallbacksections = ["testenv"]
+
         factors = set(name.split('-'))
-        reader = SectionReader(section, self._cfg, fallbacksections=["testenv"],
-                               factors=factors)
+        reader = SectionReader(section, self._cfg, factors=factors,
+                               fallbacksections=fallbacksections)
         tc = TestenvConfig(name, config, factors, reader)
         reader.addsubstitutions(
             envname=name, envbindir=tc.get_envbindir, envsitepackagesdir=tc.get_envsitepackagesdir,
