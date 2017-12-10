@@ -1550,11 +1550,21 @@ class TestGlobalOptions:
 
     def test_verbosity(self, newconfig):
         config = newconfig([], "")
-        assert config.option.verbosity == 0
+        assert config.option.verbose_level == 0
         config = newconfig(["-v"], "")
-        assert config.option.verbosity == 1
+        assert config.option.verbose_level == 1
         config = newconfig(["-vv"], "")
-        assert config.option.verbosity == 2
+        assert config.option.verbose_level == 2
+
+    @pytest.mark.parametrize('args, expected', [
+        ([], 0),
+        (["-q"], 1),
+        (["-qq"], 2),
+        (["-qqq"], 3),
+    ])
+    def test_quiet(self, args, expected, newconfig):
+        config = newconfig(args, "")
+        assert config.option.quiet_level == expected
 
     def test_substitution_jenkins_default(self, tmpdir,
                                           monkeypatch, newconfig):
