@@ -1,0 +1,1 @@
+touched up ``interpreters.py`` code and added some missing tests for it - by @jurko-gospodnetic

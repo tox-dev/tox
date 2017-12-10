@@ -48,9 +48,8 @@ class Interpreters:
             res = exec_on_interpreter(info.executable,
                                       [inspect.getsource(sitepackagesdir),
                                        "print(sitepackagesdir(%r))" % envdir])
-        except ExecFailed:
-            val = sys.exc_info()[1]
-            print("execution failed: %s -- %s" % (val.out, val.err))
+        except ExecFailed as e:
+            print("execution failed: %s -- %s" % (e.out, e.err))
             return ""
         else:
             return res["dir"]
@@ -59,12 +58,11 @@ class Interpreters:
 def run_and_get_interpreter_info(name, executable):
     assert executable
     try:
-        result = exec_on_interpreter(executable,
-                                     [inspect.getsource(pyinfo), "print(pyinfo())"])
-    except ExecFailed:
-        val = sys.exc_info()[1]
-        return NoInterpreterInfo(name, executable=val.executable,
-                                 out=val.out, err=val.err)
+        result = exec_on_interpreter(executable, [inspect.getsource(pyinfo),
+                                                  "print(pyinfo())"])
+    except ExecFailed as e:
+        return NoInterpreterInfo(name, executable=e.executable,
+                                 out=e.out, err=e.err)
     else:
         return InterpreterInfo(name, executable, **result)
 
@@ -123,7 +121,7 @@ class NoInterpreterInfo:
 
     def __str__(self):
         if self.executable:
-            return "<executable at %s, not runnable>"
+            return "<executable at %s, not runnable>" % self.executable
         else:
             return "<executable not found for: %s>" % self.name
 
@@ -184,5 +182,5 @@ def pyinfo():
 
 
 def sitepackagesdir(envdir):
-    from distutils.sysconfig import get_python_lib
-    return dict(dir=get_python_lib(prefix=envdir))
+    import distutils.sysconfig
+    return dict(dir=distutils.sysconfig.get_python_lib(prefix=envdir))
