@@ -291,7 +291,30 @@ class LineMatcher:
 
 @pytest.fixture
 def initproj(request, tmpdir):
-    """ create a factory function for creating example projects. """
+    """Create a factory function for creating example projects
+
+    Constructed folder/file hierarchy examples:
+
+    with `src_root` other than `.`:
+
+      tmpdir/
+          name/                  # base
+            src_root/            # src_root
+                name/            # package_dir
+                    __init__.py
+                name.egg-info/   # created later on package build
+            setup.py
+
+    with `src_root` given as `.`:
+
+      tmpdir/
+          name/                  # base, src_root
+            name/                # package_dir
+                __init__.py
+            name.egg-info/       # created later on package build
+            setup.py
+
+    """
     def initproj(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}

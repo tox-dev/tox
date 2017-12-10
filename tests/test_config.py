@@ -95,7 +95,7 @@ class TestVenvConfig:
         assert config.option.force_dep == [
             'dep1==1.5', 'dep2==2.1', 'dep3==3.0']
         assert [str(x) for x in config.envconfigs['python'].deps] == [
-            'dep1==1.5', 'dep2==2.1', 'dep3==3.0', 'dep4==4.0',
+            'dep1==1.5', 'dep2==2.1', 'dep3==3.0', 'dep4==4.0'
         ]
 
     def test_force_dep_with_url(self, initproj):
@@ -313,7 +313,7 @@ class TestIniParserAgainstCommandsKey:
             "cmd2 param21 param22".split(),
             "cmd1 param11 param12".split(),
             "cmd2 param21 param22".split(),
-            ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"],
+            ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"]
         ]
 
     def test_command_substitution_from_other_section_posargs(self, newconfig):
@@ -1137,7 +1137,7 @@ class TestConfigTestEnv:
         """)
         conf = config.envconfigs['standard-greeting']
         assert conf.commands == [
-            ['python', '-c', 'print("Hello, world!")'],
+            ['python', '-c', 'print("Hello, world!")']
         ]
 
     def test_substitution_nested_env_defaults(tmpdir, newconfig, monkeypatch):
@@ -1268,7 +1268,7 @@ class TestConfigTestEnv:
 
     @pytest.mark.parametrize('envlist, deps', [
         (['py27'], ('pytest', 'pytest-cov')),
-        (['py27', 'py34'], ('pytest', 'py{27,34}: pytest-cov')),
+        (['py27', 'py34'], ('pytest', 'py{27,34}: pytest-cov'))
     ])
     def test_take_dependencies_from_other_testenv(
             self,
@@ -2078,7 +2078,7 @@ class TestCmdInvocation:
         result = cmd.run("tox", "-h")
         assert not result.ret
         result.stdout.fnmatch_lines([
-            "*help*",
+            "*help*"
         ])
 
     def test_version_simple(self, cmd):
@@ -2151,7 +2151,7 @@ class TestCmdInvocation:
 
             [testenv:docs]
             changedir = docs
-            ''',
+            '''
         })
         result = cmd.run("tox", "-l")
         result.stdout.fnmatch_lines("""
@@ -2181,7 +2181,7 @@ class TestCmdInvocation:
             [testenv:docs]
             changedir = docs
             description = let me overwrite that
-            ''',
+            '''
         })
         result = cmd.run("tox", "-lv")
         result.stdout.fnmatch_lines("""
@@ -2204,7 +2204,7 @@ class TestCmdInvocation:
 
             [testenv:docs]
             changedir = docs
-            ''',
+            '''
         })
         result = cmd.run("tox", "-a")
         result.stdout.fnmatch_lines("""
@@ -2231,7 +2231,7 @@ class TestCmdInvocation:
 
             [testenv:docs]
             changedir = docs
-            ''',
+            '''
         })
         result = cmd.run("tox", "-av")
         result.stdout.fnmatch_lines("""
@@ -2250,7 +2250,7 @@ class TestCmdInvocation:
             'tox.ini': '''
             [tox]
             envlist=py27,py36
-            ''',
+            '''
         })
         result = cmd.run("tox", "-av")
         result.stdout.fnmatch_lines("""
@@ -2265,7 +2265,7 @@ class TestCmdInvocation:
         result = cmd.run("tox", "-c", ini, "--showconfig")
         assert not result.ret
         result.stdout.fnmatch_lines([
-            "*config-file*hello.ini*",
+            "*config-file*hello.ini*"
         ])
 
     def test_no_tox_ini(self, cmd, initproj):
@@ -2273,7 +2273,7 @@ class TestCmdInvocation:
         result = cmd.run("tox")
         assert result.ret
         result.stderr.fnmatch_lines([
-            "*ERROR*tox.ini*not*found*",
+            "*ERROR*tox.ini*not*found*"
         ])
 
     def test_override_workdir(self, tmpdir, cmd, initproj):
@@ -2283,7 +2283,7 @@ class TestCmdInvocation:
             'tox.ini': '''
             [tox]
             toxworkdir=%s
-            ''' % baddir,
+            ''' % baddir
         })
         result = cmd.run("tox", "--workdir", gooddir, "--showconfig")
         assert not result.ret
@@ -2302,19 +2302,19 @@ class TestCmdInvocation:
             deps=
                 dep1==2.3
                 dep2
-            ''',
+            '''
         })
         result = cmd.run("tox", "--showconfig")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            r'*deps*dep1==2.3, dep2*',
+            r'*deps*dep1==2.3, dep2*'
         ])
         # override dep1 specific version, and force version for dep2
         result = cmd.run("tox", "--showconfig", "--force-dep=dep1",
                          "--force-dep=dep2==5.0")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            r'*deps*dep1, dep2==5.0*',
+            r'*deps*dep1, dep2==5.0*'
         ])
 
     @pytest.mark.xfail(
@@ -2328,7 +2328,7 @@ class TestCmdInvocation:
 
             [testenv]
             commands = pip --version
-            ''',
+            '''
         })
         result = cmd.run("tox")
         assert result.ret == 0
@@ -2374,7 +2374,7 @@ class TestCommandParser:
             'word', ' ', '[]', ' ', '[literal]', ' ', '{something}', ' ', '{some:other thing}',
             ' ', 'w', '{ord}', ' ', 'w', '{or}', 'd', ' ', 'w', '{ord}', ' ', 'w', '{o:rd}', ' ',
             'w', '{o:r}', 'd', ' ', '{w:or}', 'd',
-            ' ', 'w[]ord', ' ', '{posargs:{a key}}',
+            ' ', 'w[]ord', ' ', '{posargs:{a key}}'
         ]
 
         assert parsed == expected
