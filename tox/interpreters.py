@@ -182,5 +182,5 @@ def pyinfo():
 
 
 def sitepackagesdir(envdir):
-    from distutils.sysconfig import get_python_lib
-    return dict(dir=get_python_lib(prefix=envdir))
+    import distutils.sysconfig
+    return dict(dir=distutils.sysconfig.get_python_lib(prefix=envdir))

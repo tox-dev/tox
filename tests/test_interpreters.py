@@ -7,8 +7,13 @@ import py
 import pytest
 
 from tox.config import get_plugin_manager
+from tox.interpreters import ExecFailed
+from tox.interpreters import InterpreterInfo
 from tox.interpreters import Interpreters
+from tox.interpreters import NoInterpreterInfo
+from tox.interpreters import pyinfo
 from tox.interpreters import run_and_get_interpreter_info
+from tox.interpreters import sitepackagesdir
 from tox.interpreters import tox_get_python_executable
 
 
@@ -131,3 +136,92 @@ class TestInterpreters:
         info = interpreters.get_info(envconfig)
         s = interpreters.get_sitepackagesdir(info, "")
         assert s
+
+
+def test_pyinfo(monkeypatch):
+    monkeypatch.setattr(sys, "version_info", [42, 4242])
+    monkeypatch.setattr(sys, "platform", "an unladen swallow")
+    result = pyinfo()
+    assert len(result) == 2
+    assert result["version_info"] == (42, 4242)
+    assert result["sysplatform"] == "an unladen swallow"
+
+
+def test_sitepackagesdir(monkeypatch):
+    import distutils.sysconfig as sysconfig
+    test_envdir = "holy grail"
+    test_dir = "Now go away or I will taunt you a second time."
+
+    def dummy_get_python_lib(prefix):
+        assert prefix is test_envdir
+        return test_dir
+
+    monkeypatch.setattr(sysconfig, "get_python_lib", dummy_get_python_lib)
+    assert sitepackagesdir(test_envdir) == {"dir": test_dir}
+
+
+def test_exec_failed():
+    x = ExecFailed("my-executable", "my-source", "my-out", "my-err")
+    assert isinstance(x, Exception)
+    assert x.executable == "my-executable"
+    assert x.source == "my-source"
+    assert x.out == "my-out"
+    assert x.err == "my-err"
+
+
+class TestInterpreterInfo:
+
+    def info(self, name="my-name", executable="my-executable",
+             version_info="my-version-info", sysplatform="my-sys-platform"):
+        return InterpreterInfo(name, executable, version_info, sysplatform)
+
+    def test_runnable(self):
+        assert self.info().runnable
+
+    @pytest.mark.parametrize("missing_arg", ("executable", "version_info"))
+    def test_assert_on_missing_args(self, missing_arg):
+        with pytest.raises(AssertionError):
+            self.info(**{missing_arg: None})
+
+    def test_data(self):
+        x = self.info("larry", "moe", "shemp", "curly")
+        assert x.name == "larry"
+        assert x.executable == "moe"
+        assert x.version_info == "shemp"
+        assert x.sysplatform == "curly"
+
+    def test_str(self):
+        x = self.info(executable="foo", version_info="bar")
+        assert str(x) == "<executable at foo, version_info bar>"
+
+
+class TestNoInterpreterInfo:
+
+    def test_runnable(self):
+        assert not NoInterpreterInfo("foo").runnable
+        assert not NoInterpreterInfo("foo", executable=sys.executable).runnable
+
+    def test_default_data(self):
+        x = NoInterpreterInfo("foo")
+        assert x.name == "foo"
+        assert x.executable is None
+        assert x.version_info is None
+        assert x.out is None
+        assert x.err == "not found"
+
+    def test_set_data(self):
+        x = NoInterpreterInfo("migraine", executable="my-executable",
+                              out="my-out", err="my-err")
+        assert x.name == "migraine"
+        assert x.executable == "my-executable"
+        assert x.version_info is None
+        assert x.out == "my-out"
+        assert x.err == "my-err"
+
+    def test_str_without_executable(self):
+        x = NoInterpreterInfo("coconut")
+        assert str(x) == "<executable not found for: coconut>"
+
+    def test_str_with_executable(self):
+        x = NoInterpreterInfo("coconut", executable="bang/em/together")
+        assert str(x) == "<executable at bang/em/together, not runnable>"
