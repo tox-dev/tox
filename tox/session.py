@@ -230,6 +230,14 @@ class Action(object):
                                   stdout=stdout, stderr=stderr, env=env)
 
 
+class Verbosity(object):
+    DEBUG = 2
+    INFO = 1
+    DEFAULT = 0
+    QUIET = -1
+    EXTRA_QUIET = -2
+
+
 class Reporter(object):
     actionchar = "-"
 
@@ -242,9 +250,10 @@ class Reporter(object):
     @property
     def verbosity(self):
         if self.session:
-            return self.session.config.option.verbosity - self.session.config.option.quiet
+            return (self.session.config.option.verbose_level -
+                    self.session.config.option.quiet_level)
         else:
-            return 2
+            return Verbosity.DEBUG
 
     def logpopen(self, popen, env):
         """ log information about the action.popen() created process. """
@@ -268,11 +277,11 @@ class Reporter(object):
         delattr(action, '_starttime')
 
     def startsummary(self):
-        if self.verbosity >= -1:
+        if self.verbosity >= Verbosity.QUIET:
             self.tw.sep("_", "summary")
 
     def info(self, msg):
-        if self.verbosity >= 2:
+        if self.verbosity >= Verbosity.DEBUG:
             self.logline(msg)
 
     def using(self, msg):
@@ -299,15 +308,15 @@ class Reporter(object):
         self.logline(msg, green=True)
 
     def warning(self, msg):
-        if self.verbosity >= -1:
+        if self.verbosity >= Verbosity.QUIET:
             self.logline("WARNING:" + msg, red=True)
 
     def error(self, msg):
-        if self.verbosity >= -1:
+        if self.verbosity >= Verbosity.QUIET:
             self.logline("ERROR: " + msg, red=True)
 
     def skip(self, msg):
-        if self.verbosity >= -1:
+        if self.verbosity >= Verbosity.QUIET:
             self.logline("SKIPPED:" + msg, yellow=True)
 
     def logline(self, msg, **opts):
@@ -315,15 +324,15 @@ class Reporter(object):
         self.tw.line("%s" % msg, **opts)
 
     def verbosity0(self, msg, **opts):
-        if self.verbosity >= 0:
+        if self.verbosity >= Verbosity.DEFAULT:
             self.logline("%s" % msg, **opts)
 
     def verbosity1(self, msg, **opts):
-        if self.verbosity >= 1:
+        if self.verbosity >= Verbosity.INFO:
             self.logline("%s" % msg, **opts)
 
     def verbosity2(self, msg, **opts):
-        if self.verbosity >= 2:
+        if self.verbosity >= Verbosity.DEBUG:
             self.logline("%s" % msg, **opts)
 
     # def log(self, msg):
@@ -388,12 +397,13 @@ class Session:
 
     def runcommand(self):
         self.report.using("tox-%s from %s" % (tox.__version__, tox.__file__))
+        verbosity = (self.report.verbosity > Verbosity.DEFAULT)
         if self.config.option.showconfig:
             self.showconfig()
         elif self.config.option.listenvs:
-            self.showenvs(all_envs=False, description=self.config.option.verbosity > 0)
+            self.showenvs(all_envs=False, description=verbosity)
         elif self.config.option.listenvs_all:
-            self.showenvs(all_envs=True, description=self.config.option.verbosity > 0)
+            self.showenvs(all_envs=True, description=verbosity)
         else:
             return self.subcommand_test()
 

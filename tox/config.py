@@ -355,10 +355,10 @@ def tox_addoption(parser):
                         help="show help about options")
     parser.add_argument("--help-ini", "--hi", action="store_true", dest="helpini",
                         help="show help about ini-names")
-    parser.add_argument("-v", action='count', dest="verbosity", default=0,
+    parser.add_argument("-v", action='count', dest="verbose_level", default=0,
                         help="increase verbosity of reporting output. -vv mode turns off "
                         "output redirection for package installation")
-    parser.add_argument("-q", action="count", dest="quiet", default=0,
+    parser.add_argument("-q", action="count", dest="quiet_level", default=0,
                         help="progressively silence reporting output.")
     parser.add_argument("--showconfig", action="store_true",
                         help="show configuration information for all environments. ")

@@ -1,1 +1,5 @@
-Add a ``-q`` option to progressively silence tox's output. By @sigmavirus24
+Add a ``-q`` option to progressively silence tox's output. For each time you specify ``-q`` to tox,
+the output provided by tox reduces. This option allows you to see only your command output without
+the default verbosity of what tox is doing. This also counter-acts usage of ``-v``. For example,
+running ``tox -v -q ...`` will provide you with the default verbosity. ``tox -vv -q`` is equivalent
+to ``tox -v``. By @sigmavirus24
