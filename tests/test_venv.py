@@ -14,6 +14,7 @@ from tox.venv import tox_testenv_create
 from tox.venv import tox_testenv_install_deps
 from tox.venv import VirtualEnv
 
+
 # def test_global_virtualenv(capfd):
 #    v = VirtualEnv()
 #    assert v.list()
@@ -544,7 +545,7 @@ class TestVenvTest:
         monkeypatch.setenv("PATH", "xyz")
         sysfind_calls = []
         monkeypatch.setattr("py.path.local.sysfind", classmethod(
-                            lambda *args, **kwargs: sysfind_calls.append(kwargs) or 0 / 0))
+            lambda *args, **kwargs: sysfind_calls.append(kwargs) or 0 / 0))
 
         with pytest.raises(ZeroDivisionError):
             venv._install(list('123'), action=action)
@@ -633,7 +634,7 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
     assert pcalls[0].env["YY"] == "456"
     assert "YY" not in pcalls[1].env
 
-    assert {"ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"}\
+    assert {"ENV_VAR", "VIRTUAL_ENV", "PYTHONHASHSEED", "X123", "PATH"} \
         .issubset(pcalls[1].env)
 
     # setenv does not trigger PYTHONPATH warnings

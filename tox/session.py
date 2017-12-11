@@ -38,6 +38,8 @@ def main(args=None):
     try:
         config = prepare(args)
         retcode = Session(config).runcommand()
+        if retcode is None:
+            retcode = 0
         raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)
@@ -198,7 +200,7 @@ class Action(object):
                 raise tox.exception.InvocationError(
                     "%s (see %s)" % (invoked, outpath), ret)
             else:
-                raise tox.exception.InvocationError("%r" % (invoked, ), ret)
+                raise tox.exception.InvocationError("%r" % (invoked,), ret)
         if not out and outpath:
             out = outpath.read()
         if hasattr(self, "commandlog"):
@@ -462,9 +464,9 @@ class Session:
     def setupenv(self, venv):
         if venv.envconfig.missing_subs:
             venv.status = (
-                "unresolvable substitution(s): %s. "
-                "Environment variables are missing or defined recursively." %
-                (','.join(["'%s'" % m for m in venv.envconfig.missing_subs])))
+                    "unresolvable substitution(s): %s. "
+                    "Environment variables are missing or defined recursively." %
+                    (','.join(["'%s'" % m for m in venv.envconfig.missing_subs])))
             return
         if not venv.matching_platform():
             venv.status = "platform mismatch"
@@ -479,13 +481,13 @@ class Session:
                 if e.args[0] != 2:
                     raise
                 status = (
-                    "Error creating virtualenv. Note that spaces in paths are "
-                    "not supported by virtualenv. Error details: %r" % e)
+                        "Error creating virtualenv. Note that spaces in paths are "
+                        "not supported by virtualenv. Error details: %r" % e)
             except tox.exception.InvocationError as e:
                 status = (
-                    "Error creating virtualenv. Note that some special "
-                    "characters (e.g. ':' and unicode symbols) in paths are "
-                    "not supported by virtualenv. Error details: %r" % e)
+                        "Error creating virtualenv. Note that some special "
+                        "characters (e.g. ':' and unicode symbols) in paths are "
+                        "not supported by virtualenv. Error details: %r" % e)
             if status:
                 commandlog = envlog.get_commandlog("setup")
                 commandlog.add_command(["setup virtualenv"], str(status), 1)
@@ -681,6 +683,7 @@ class Session:
             else:
                 msg = e
             self.report.line(msg)
+
         for e in default:
             report_env(e)
         if all_envs and extra:

@@ -55,7 +55,6 @@ try:
 except NameError:
     term_input = input
 
-
 all_envs = ['py27', 'py34', 'py35', 'py36', 'pypy', 'jython']
 
 PROMPT_PREFIX = '> '
@@ -90,6 +89,7 @@ def choice(*l):
         if x not in l:
             raise ValidationError('Please enter one of %s.' % ', '.join(l))
         return x
+
     return val
 
 
@@ -119,7 +119,7 @@ def do_prompt(d, key, text, default=None, validator=nonempty):
         x = term_input(prompt)
         if default and not x:
             x = default
-        if sys.version_info < (3, ) and not isinstance(x, unicode):  # noqa
+        if sys.version_info < (3,) and not isinstance(x, unicode):  # noqa
             # for Python 2.x, try to get a Unicode string out of it
             if x.decode('ascii', 'replace').encode('ascii', 'replace') != x:
                 if TERM_ENCODING:

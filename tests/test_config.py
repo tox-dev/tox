@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from textwrap import dedent
 
@@ -2085,18 +2086,16 @@ class TestParseEnv:
 
 class TestCmdInvocation:
     def test_help(self, cmd):
-        result = cmd.run("tox", "-h")
+        result = cmd("-h")
         assert not result.ret
-        result.stdout.fnmatch_lines([
-            "*help*"
-        ])
+        assert not result.err
+        assert re.match(r'usage:.*help.*', result.out, re.DOTALL)
 
     def test_version_simple(self, cmd):
-        result = cmd.run("tox", "--version")
+        result = cmd("--version")
         assert not result.ret
-        stdout = result.stdout.str()
-        assert tox.__version__ in stdout
-        assert "imported from" in stdout
+        from tox import __version__
+        assert "{} imported from".format(__version__) in result.out
 
     def test_version_no_plugins(self):
         pm = PluginManager('fakeprject')
@@ -2163,14 +2162,8 @@ class TestCmdInvocation:
             changedir = docs
             '''
         })
-        result = cmd.run("tox", "-l")
-        result.stdout.fnmatch_lines("""
-            py36
-            py27
-            py34
-            pypy
-            docs
-        """)
+        result = cmd("-l")
+        assert result.outlines == ['py36', 'py27', 'py34', 'pypy', 'docs']
 
     def test_listenvs_verbose_description(self, cmd, initproj):
         initproj('listenvs_verbose_description', filedefs={
@@ -2193,15 +2186,14 @@ class TestCmdInvocation:
             description = let me overwrite that
             '''
         })
-        result = cmd.run("tox", "-lv")
-        result.stdout.fnmatch_lines("""
-            default environments:
-            py36 -> run pytest on Python 3.6
-            py27 -> run pytest on Python 2.7
-            py34 -> run pytest on Python 3.4
-            pypy -> publish to pypy
-            docs -> let me overwrite that
-        """)
+        result = cmd("-lv")
+        assert result.outlines[2:] == [
+            'default environments:',
+            'py36 -> run pytest on Python 3.6',
+            'py27 -> run pytest on Python 2.7',
+            'py34 -> run pytest on Python 3.4',
+            'pypy -> publish to pypy',
+            'docs -> let me overwrite that']
 
     def test_listenvs_all(self, cmd, initproj):
         initproj('listenvs_all', filedefs={
@@ -2216,15 +2208,8 @@ class TestCmdInvocation:
             changedir = docs
             '''
         })
-        result = cmd.run("tox", "-a")
-        result.stdout.fnmatch_lines("""
-            py36
-            py27
-            py34
-            pypy
-            docs
-            notincluded
-        """)
+        result = cmd("-a")
+        assert result.outlines == ['py36', 'py27', 'py34', 'pypy', 'docs', 'notincluded']
 
     def test_listenvs_all_verbose_description(self, cmd, initproj):
         initproj('listenvs_all_verbose_description', filedefs={
@@ -2241,19 +2226,19 @@ class TestCmdInvocation:
 
             [testenv:docs]
             changedir = docs
-            '''
+            ''',
         })
-        result = cmd.run("tox", "-av")
-        result.stdout.fnmatch_lines("""
-            default environments:
-            py27-windows -> run pytest on Python 2.7 on Windows platform
-            py27-linux   -> run pytest on Python 2.7 on Linux platform
-            py36-windows -> run pytest on Python 3.6 on Windows platform
-            py36-linux   -> run pytest on Python 3.6 on Linux platform
-
-            additional environments:
-            docs         -> generate documentation
-        """)
+        result = cmd("-av")
+        expected = [
+            "default environments:",
+            "py27-windows -> run pytest on Python 2.7 on Windows platform",
+            "py27-linux   -> run pytest on Python 2.7 on Linux platform",
+            "py36-windows -> run pytest on Python 3.6 on Windows platform",
+            "py36-linux   -> run pytest on Python 3.6 on Linux platform",
+            "",
+            "additional environments:",
+            "docs         -> generate documentation"]
+        assert result.outlines[-len(expected):] == expected
 
     def test_listenvs_all_verbose_description_no_additional_environments(self, cmd, initproj):
         initproj('listenvs_all_verbose_description', filedefs={
@@ -2262,29 +2247,25 @@ class TestCmdInvocation:
             envlist=py27,py36
             '''
         })
-        result = cmd.run("tox", "-av")
-        result.stdout.fnmatch_lines("""
-            default environments:
-            py27 -> [no description]
-            py36 -> [no description]
-        """)
-        assert 'additional environments' not in result.stdout.str()
+        result = cmd("-av")
+        expected = ["default environments:",
+                    "py27 -> [no description]",
+                    "py36 -> [no description]"]
+        assert result.out.splitlines()[-3:] == expected
+        assert 'additional environments' not in result.out
 
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
-        result = cmd.run("tox", "-c", ini, "--showconfig")
+        result = cmd("-c", ini, "--showconfig")
         assert not result.ret
-        result.stdout.fnmatch_lines([
-            "*config-file*hello.ini*"
-        ])
+        assert result.outlines[1] == 'config-file: {}'.format(ini)
 
     def test_no_tox_ini(self, cmd, initproj):
-        initproj("noini-0.5")
-        result = cmd.run("tox")
+        initproj("noini-0.5", )
+        result = cmd()
         assert result.ret
-        result.stderr.fnmatch_lines([
-            "*ERROR*tox.ini*not*found*"
-        ])
+        assert result.out == ''
+        assert result.err == "ERROR: toxini file 'tox.ini' not found\n"
 
     def test_override_workdir(self, tmpdir, cmd, initproj):
         baddir = "badworkdir-123"
@@ -2293,13 +2274,12 @@ class TestCmdInvocation:
             'tox.ini': '''
             [tox]
             toxworkdir=%s
-            ''' % baddir
+            ''' % baddir,
         })
-        result = cmd.run("tox", "--workdir", gooddir, "--showconfig")
+        result = cmd("--workdir", gooddir, "--showconfig")
         assert not result.ret
-        stdout = result.stdout.str()
-        assert gooddir in stdout
-        assert baddir not in stdout
+        assert gooddir in result.out
+        assert baddir not in result.out
         assert py.path.local(gooddir).check()
         assert not py.path.local(baddir).check()
 
@@ -2312,20 +2292,16 @@ class TestCmdInvocation:
             deps=
                 dep1==2.3
                 dep2
-            '''
+            ''',
         })
-        result = cmd.run("tox", "--showconfig")
+        result = cmd("--showconfig")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            r'*deps*dep1==2.3, dep2*'
-        ])
+        assert any(re.match(r'.*deps.*dep1==2.3, dep2.*', l) for l in result.outlines)
         # override dep1 specific version, and force version for dep2
-        result = cmd.run("tox", "--showconfig", "--force-dep=dep1",
-                         "--force-dep=dep2==5.0")
+        result = cmd("--showconfig", "--force-dep=dep1",
+                     "--force-dep=dep2==5.0")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            r'*deps*dep1, dep2==5.0*'
-        ])
+        assert any(re.match(r'.*deps.*dep1, dep2==5.0.*', l) for l in result.outlines)
 
     @pytest.mark.xfail(
         "'pypy' not in sys.executable",
@@ -2340,7 +2316,7 @@ class TestCmdInvocation:
             commands = pip --version
             '''
         })
-        result = cmd.run("tox")
+        result = cmd()
         assert result.ret == 0
 
 
