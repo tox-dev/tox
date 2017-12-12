@@ -336,7 +336,8 @@ def test_venv_special_chars_issue252(cmd, initproj):
     })
     result = cmd()
     assert result.ret == 0
-    assert any(line == 'special&&1 installed: pkg123==0.7' for line in result.outlines)
+    pattern = re.compile('special&&1 installed: .*pkg123==0.7.*')
+    assert any(pattern.match(line) for line in result.outlines)
 
 
 def test_unknown_environment(cmd, initproj):
