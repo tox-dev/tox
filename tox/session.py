@@ -34,7 +34,7 @@ def prepare(args):
     return config
 
 
-def main(args=None):
+def main(args):
     try:
         config = prepare(args)
         retcode = Session(config).runcommand()

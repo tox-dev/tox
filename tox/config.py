@@ -224,19 +224,15 @@ class InstallcmdOption:
         return value
 
 
-def parseconfig(args=None, plugins=()):
+def parseconfig(args, plugins=()):
     """
-    :param list[str] args: Optional list of arguments.
+    :param list[str] args: list of arguments.
     :type pkg: str
     :rtype: :class:`Config`
     :raise SystemExit: toxinit file is not found
     """
 
     pm = get_plugin_manager(plugins)
-
-    if args is None:
-        args = sys.argv[1:]
-
     # prepare command line options
     parser = Parser()
     pm.hook.tox_addoption(parser=parser)
