@@ -7,6 +7,17 @@ This section contains information for users who want to extend the tox source co
 .. contents::
    :local:
 
+PyCharm
+-------
+1. To generate the **project interpreter** you can use ``tox -rvvve dev``.
+2. For tests we use **pytest**, therefore change the `Default test runner <https://www.jetbrains.com/help/pycharm/python-integrated-tools.html>`_ to ``pytest``.
+3. In order to be able to **debug** tests which create
+   a virtual environment (the ones in ``test_z_cmdline.py``) one needs to disable the PyCharm feature
+   `Attach to subprocess automatically while debugging <https://www.jetbrains.com/help/pycharm/python-debugger.html>`_
+   (because virtualenv creation calls via subprocess to the ``pip`` executable, and PyCharm rewrites all calls to
+   Python interpreters to attach to its debugger - however, this rewrite for pip makes it to have bad arguments:
+   ``no such option --port``).
+
 Multiple Python versions on Windows
 -----------------------------------
 In order to run the unit tests locally all Python versions enlisted in ``tox.ini`` need to be installed.
