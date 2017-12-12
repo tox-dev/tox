@@ -14,7 +14,6 @@ import six
 import tox
 from .config import parseconfig
 from .result import ResultLog
-from .session import Action
 from .session import main
 from .venv import VirtualEnv
 
@@ -129,11 +128,6 @@ class ReportExpectMock:
             print("%s" % (self._calls[-1],))
 
         return generic_report
-
-    def action(self, venv, msg, *args):
-        self._calls.append(("action", venv, msg))
-        print("%s" % (self._calls[-1],))
-        return Action(self.session, venv, msg, args)
 
     def getnext(self, cat):
         __tracebackhide__ = True
