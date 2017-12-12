@@ -158,7 +158,7 @@ class VirtualEnv(object):
         """
         rconfig = CreationConfig.readconfig(self.path_config)
         if not self.envconfig.recreate and rconfig and \
-           rconfig.matches(self._getliveconfig()):
+                rconfig.matches(self._getliveconfig()):
             action.info("reusing", self.envconfig.envdir)
             return
         if rconfig is None:

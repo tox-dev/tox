@@ -12,10 +12,10 @@ from tox._pytestplugin import _path_parts
 
 class TestInitProj:
     @pytest.mark.parametrize('kwargs', (
-        {},
-        {'src_root': None},
-        {'src_root': ''},
-        {'src_root': '.'}))
+            {},
+            {'src_root': None},
+            {'src_root': ''},
+            {'src_root': '.'}))
     def test_no_src_root(self, kwargs, tmpdir, initproj):
         initproj('black_knight-42', **kwargs)
         init_file = tmpdir.join('black_knight', 'black_knight', '__init__.py')
@@ -64,14 +64,14 @@ class TestInitProj:
 
 class TestPathParts:
     @pytest.mark.parametrize('input, expected', (
-        ('', []),
-        ('/', ['/']),
-        ('//', ['//']),
-        ('/a', ['/', 'a']),
-        ('/a/', ['/', 'a']),
-        ('/a/b', ['/', 'a', 'b']),
-        ('a', ['a']),
-        ('a/b', ['a', 'b'])))
+            ('', []),
+            ('/', ['/']),
+            ('//', ['//']),
+            ('/a', ['/', 'a']),
+            ('/a/', ['/', 'a']),
+            ('/a/b', ['/', 'a', 'b']),
+            ('a', ['a']),
+            ('a/b', ['a', 'b'])))
     def test_path_parts(self, input, expected):
         assert _path_parts(input) == expected
 
@@ -82,18 +82,18 @@ class TestPathParts:
 
 
 @pytest.mark.parametrize('base, filedefs, target, expected', (
-    ('/base', {}, '', False),
-    ('/base', {}, '/base', False),
-    ('/base', {'a': {'b': 'data'}}, '', True),
-    ('/base', {'a': {'b': 'data'}}, 'a', True),
-    ('/base', {'a': {'b': 'data'}}, 'a/b', True),
-    ('/base', {'a': {'b': 'data'}}, 'a/x', False),
-    ('/base', {'a': {'b': 'data'}}, 'a/b/c', False),
-    ('/base', {'a': {'b': 'data'}}, '/base', True),
-    ('/base', {'a': {'b': 'data'}}, '/base/a', True),
-    ('/base', {'a': {'b': 'data'}}, '/base/a/b', True),
-    ('/base', {'a': {'b': 'data'}}, '/base/a/x', False),
-    ('/base', {'a': {'b': 'data'}}, '/base/a/b/c', False),
-    ('/base', {'a': {'b': 'data'}}, '/a', False)))
+        ('/base', {}, '', False),
+        ('/base', {}, '/base', False),
+        ('/base', {'a': {'b': 'data'}}, '', True),
+        ('/base', {'a': {'b': 'data'}}, 'a', True),
+        ('/base', {'a': {'b': 'data'}}, 'a/b', True),
+        ('/base', {'a': {'b': 'data'}}, 'a/x', False),
+        ('/base', {'a': {'b': 'data'}}, 'a/b/c', False),
+        ('/base', {'a': {'b': 'data'}}, '/base', True),
+        ('/base', {'a': {'b': 'data'}}, '/base/a', True),
+        ('/base', {'a': {'b': 'data'}}, '/base/a/b', True),
+        ('/base', {'a': {'b': 'data'}}, '/base/a/x', False),
+        ('/base', {'a': {'b': 'data'}}, '/base/a/b/c', False),
+        ('/base', {'a': {'b': 'data'}}, '/a', False)))
 def test_filedefs_contains(base, filedefs, target, expected):
     assert bool(_filedefs_contains(base, filedefs, target)) == expected

@@ -19,23 +19,31 @@ class exception:
     class MissingSubstitution(Error):
         FLAG = 'TOX_MISSING_SUBSTITUTION'
         """placeholder for debugging configurations"""
+
         def __init__(self, name):
             self.name = name
 
     class ConfigError(Error):
         """ error in tox configuration. """
+
     class UnsupportedInterpreter(Error):
         """signals an unsupported Interpreter"""
+
     class InterpreterNotFound(Error):
         """signals that an interpreter could not be found"""
+
     class InvocationError(Error):
         """ an error while invoking a script. """
+
     class MissingFile(Error):
         """ an error while invoking a script. """
+
     class MissingDirectory(Error):
         """ a directory did not exist. """
+
     class MissingDependency(Error):
         """ a dependency could not be found or determined. """
+
     class MinVersionError(Error):
         """ the installed tox version is lower than requested minversion. """
 

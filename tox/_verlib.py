@@ -73,6 +73,7 @@ class NormalizedVersion(object):
         1.2a        # release level must have a release serial
         1.2.3b
     """
+
     def __init__(self, s, error_on_huge_major_num=True):
         """Create a NormalizedVersion instance from a version string.
 

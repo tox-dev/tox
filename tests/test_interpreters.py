@@ -47,6 +47,7 @@ def test_locate_via_py(monkeypatch):
             @staticmethod
             def communicate():
                 return sys.executable.encode(), None
+
         return proc
 
     # Monkeypatch modules to return our faked value
@@ -59,6 +60,7 @@ def test_tox_get_python_executable():
     class envconfig:
         basepython = sys.executable
         envname = "pyxx"
+
     p = tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
     for ver in "2.7 3.4 3.5 3.6".split():
@@ -86,6 +88,7 @@ def test_find_executable_extra(monkeypatch):
     @staticmethod
     def sysfind(x):
         return "hello"
+
     monkeypatch.setattr(py.path.local, "sysfind", sysfind)
 
     class envconfig:
@@ -122,6 +125,7 @@ class TestInterpreters:
         class envconfig:
             basepython = "1lkj23"
             envname = "pyxx"
+
         assert not interpreters.get_executable(envconfig)
         info = interpreters.get_info(envconfig)
         assert not info.version_info
@@ -133,6 +137,7 @@ class TestInterpreters:
         class envconfig:
             basepython = sys.executable
             envname = "123"
+
         info = interpreters.get_info(envconfig)
         s = interpreters.get_sitepackagesdir(info, "")
         assert s

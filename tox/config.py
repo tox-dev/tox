@@ -224,19 +224,15 @@ class InstallcmdOption:
         return value
 
 
-def parseconfig(args=None, plugins=()):
+def parseconfig(args, plugins=()):
     """
-    :param list[str] args: Optional list of arguments.
+    :param list[str] args: list of arguments.
     :type pkg: str
     :rtype: :class:`Config`
     :raise SystemExit: toxinit file is not found
     """
 
     pm = get_plugin_manager(plugins)
-
-    if args is None:
-        args = sys.argv[1:]
-
     # prepare command line options
     parser = Parser()
     pm.hook.tox_addoption(parser=parser)
@@ -357,7 +353,7 @@ def tox_addoption(parser):
                         help="show help about ini-names")
     parser.add_argument("-v", action='count', dest="verbose_level", default=0,
                         help="increase verbosity of reporting output. -vv mode turns off "
-                        "output redirection for package installation")
+                             "output redirection for package installation")
     parser.add_argument("-q", action="count", dest="quiet_level", default=0,
                         help="progressively silence reporting output.")
     parser.add_argument("--showconfig", action="store_true",
@@ -400,7 +396,7 @@ def tox_addoption(parser):
     parser.add_argument("--result-json", action="store",
                         dest="resultjson", metavar="PATH",
                         help="write a json file with detailed information "
-                        "about all commands and results involved.")
+                             "about all commands and results involved.")
 
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument("--hashseed", action="store",
@@ -526,16 +522,16 @@ def tox_addoption(parser):
         # so we just pass it on by default for now.
         if sys.platform == "win32":
             passenv.add("SYSTEMDRIVE")  # needed for pip6
-            passenv.add("SYSTEMROOT")   # needed for python's crypto module
-            passenv.add("PATHEXT")      # needed for discovering executables
-            passenv.add("COMSPEC")      # needed for distutils cygwincompiler
+            passenv.add("SYSTEMROOT")  # needed for python's crypto module
+            passenv.add("PATHEXT")  # needed for discovering executables
+            passenv.add("COMSPEC")  # needed for distutils cygwincompiler
             passenv.add("TEMP")
             passenv.add("TMP")
             # for `multiprocessing.cpu_count()` on Windows
             # (prior to Python 3.4).
             passenv.add("NUMBER_OF_PROCESSORS")
             passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
-            passenv.add("MSYSTEM")      # fixes #429
+            passenv.add("MSYSTEM")  # fixes #429
         else:
             passenv.add("TMPDIR")
         for spec in value:
@@ -621,6 +617,7 @@ def tox_addoption(parser):
 
 class Config(object):
     """ Global Tox config object. """
+
     def __init__(self, pluginmanager, option, interpreters):
         #: dictionary containing envname to envconfig mappings
         self.envconfigs = {}
@@ -643,6 +640,7 @@ class TestenvConfig:
     In addition to some core attributes/properties this config object holds all
     per-testenv ini attributes as attributes, see "tox --help-ini" for an overview.
     """
+
     def __init__(self, envname, config, factors, reader):
         #: test environment name
         self.envname = envname
@@ -662,7 +660,7 @@ class TestenvConfig:
     def get_envbindir(self):
         """ path to directory where scripts/binaries reside. """
         if sys.platform == "win32" and "jython" not in self.basepython and \
-           "pypy" not in self.basepython:
+                "pypy" not in self.basepython:
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")
@@ -709,9 +707,6 @@ class TestenvConfig:
         if not info.version_info:
             raise tox.exception.InvocationError(
                 'Failed to get version_info for %s: %s' % (info.name, info.err))
-        if info.version_info < (2, 6):
-            raise tox.exception.UnsupportedInterpreter(
-                "python2.5 is not supported anymore, sorry")
         return info.executable
 
 
@@ -885,10 +880,10 @@ class parseini:
         return tc
 
     def _getenvdata(self, reader):
-        envstr = self.config.option.env                                \
-            or os.environ.get("TOXENV")                                \
-            or reader.getstring("envlist", replace=False) \
-            or []
+        envstr = self.config.option.env \
+                 or os.environ.get("TOXENV") \
+                 or reader.getstring("envlist", replace=False) \
+                 or []
         envlist = _split_env(envstr)
 
         # collect section envs
@@ -970,6 +965,7 @@ class DepConfig:
                 return self.name
             return ":%s:%s" % (self.indexserver.name, self.name)
         return str(self.name)
+
     __repr__ = __str__
 
 
@@ -1048,7 +1044,7 @@ class SectionReader:
             s = default
         if s is None:
             raise KeyError("no config value [%s] %s found" % (
-                           self.section_name, name))
+                self.section_name, name))
 
         if not isinstance(s, bool):
             if s.lower() == "true":
@@ -1094,8 +1090,8 @@ class SectionReader:
 
             expr, line = m.groups()
             if any(included <= self.factors
-                    and not any(x in self.factors for x in excluded)
-                    for included, excluded in _split_factor_expr(expr)):
+                   and not any(x in self.factors for x in excluded)
+                   for included, excluded in _split_factor_expr(expr)):
                 return line
 
         lines = s.strip().splitlines()
@@ -1137,6 +1133,7 @@ class Replacer:
         '''
         Recursively expand substitutions starting from the innermost expression
         '''
+
         def substitute_once(x):
             return self.RE_ITEM_REF.sub(self._replace_match, x)
 
@@ -1294,7 +1291,6 @@ class _ArgvlistReader:
 
 
 class CommandParser(object):
-
     class State(object):
         def __init__(self):
             self.word = ''
