@@ -1,6 +1,8 @@
 import os
 import platform
 import re
+import subprocess
+import sys
 
 import py
 import pytest
@@ -865,3 +867,19 @@ def test_missing_env_fails(initproj, cmd):
     assert result.ret == 1
     assert result.out.endswith("foo: unresolvable substitution(s): 'VAR'."
                                " Environment variables are missing or defined recursively.\n")
+
+
+def test_tox_console_script():
+    result = subprocess.check_call(['tox', '--help'])
+    assert result == 0
+
+
+def test_tox_quickstart_script():
+    result = subprocess.check_call(['tox-quickstart', '--help'])
+    assert result == 0
+
+
+def test_tox_cmdline(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', ['caller_scrip', '--help'])
+    with pytest.raises(SystemExit):
+        tox.cmdline()
