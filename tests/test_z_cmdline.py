@@ -880,6 +880,6 @@ def test_tox_quickstart_script():
 
 
 def test_tox_cmdline(monkeypatch):
-    monkeypatch.setattr(sys, 'argv', ['caller_scrip', '--help'])
+    monkeypatch.setattr(sys, 'argv', ['caller_script', '--help'])
     with pytest.raises(SystemExit):
         tox.cmdline()
