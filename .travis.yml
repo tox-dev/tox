@@ -30,7 +30,7 @@ matrix:
 before_install:
  - pyenv versions
  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
- 
+
 install:
   - pip install -U six
   - pip install --pre -U tox
