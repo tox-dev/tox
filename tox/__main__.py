@@ -1,6 +1,4 @@
-import sys
-
-from tox.session import main
+from tox.session import run_main
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    run_main()
