@@ -59,7 +59,7 @@ def main():
                                  'towncrier >= 17.8.0'],
                         'lint': ['flake8 == 3.4.1',
                                  'flake8-bugbear == 17.4.0',
-                                 'pre-commit == 1.3.0'],
+                                 'pre-commit == 1.4.3'],
                         'publish': ['devpi',
                                     'twine']},
         classifiers=['Development Status :: 5 - Production/Stable',
