@@ -302,10 +302,14 @@ class VirtualEnv(object):
                 os.environ.pop('PYTHONPATH')
 
         old_stdout = sys.stdout
-        sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-        self._pcall(argv, cwd=self.envconfig.config.toxinidir, action=action,
-                    redirect=self.session.report.verbosity < 2)
-        sys.stdout = old_stdout
+        try:
+            sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+            self._pcall(argv, cwd=self.envconfig.config.toxinidir, action=action,
+                        redirect=self.session.report.verbosity < 2)
+        except Exception:
+            raise
+        finally:
+            sys.stdout = old_stdout
 
     def _install(self, deps, extraopts=None, action=None):
         if not deps:
