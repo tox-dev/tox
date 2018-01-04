@@ -1,0 +1,12 @@
+fix performing pip upgrades on Windows using the tox's default install_command
+- by @jurko-gospodnetic
+
+Changes:
+
+- default `install_command` changed to ``python -m pip`` instead of the
+  setuptools based ``pip`` executable
+- now the install commands are run from the ``{toxinidir}/install_from_here``
+  folder to avoid install commands (e.g. ``python -m pip``) accidentally picking
+  up ``.egg-info`` folders in the current working folder as indications of
+  already installed packages, thus causing it to potentially not install those
+  packages into the target environment

@@ -140,9 +140,12 @@ def test_install_deps_wildcard(newmocksession):
     tox_testenv_install_deps(action=action, venv=venv)
     assert len(pcalls) == 2
     args = pcalls[-1].args
-    assert pcalls[-1].cwd == venv.envconfig.config.toxinidir
-    assert "pip" in str(args[0])
-    assert args[1] == "install"
+    expected_cwd = venv.envconfig.config.toxinidir.join('install_from_here')
+    assert pcalls[-1].cwd == expected_cwd
+    assert "python" in str(args[0])
+    assert "-m" == args[1]
+    assert "pip" == args[2]
+    assert "install" == args[3]
     args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
     assert len(args) == 1
 
@@ -406,7 +409,10 @@ def test_install_python3(tmpdir, newmocksession):
     venv._install(["hello"], action=action)
     assert len(pcalls) == 1
     args = pcalls[0].args
-    assert "pip" in args[0]
+    assert "python" in args[0]
+    assert "-m" == args[1]
+    assert "pip" == args[2]
+    assert "install" == args[3]
     for _ in args:
         assert "--download-cache" not in args, args
 
@@ -538,6 +544,7 @@ class TestVenvTest:
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession([], """
             [testenv:python]
+            install_command=install-command {packages}
             commands=abc
         """)
         venv = mocksession.getenv("python")
@@ -679,10 +686,14 @@ def test_run_install_command(newmocksession):
     venv.run_install_command(packages=["whatever"], action=action)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
-    assert 'pip' in pcalls[0].args[0]
-    assert 'install' in pcalls[0].args
+    assert "python" in pcalls[0].args[0]
+    assert "-m" == pcalls[0].args[1]
+    assert "pip" == pcalls[0].args[2]
+    assert "install" == pcalls[0].args[3]
     env = pcalls[0].env
     assert env is not None
+    expected_cwd = venv.envconfig.config.toxinidir.join('install_from_here')
+    assert pcalls[-1].cwd == expected_cwd
 
 
 def test_run_custom_install_command(newmocksession):
@@ -699,6 +710,8 @@ def test_run_custom_install_command(newmocksession):
     assert len(pcalls) == 1
     assert 'easy_install' in pcalls[0].args[0]
     assert pcalls[0].args[1:] == ['whatever']
+    expected_cwd = venv.envconfig.config.toxinidir.join('install_from_here')
+    assert pcalls[-1].cwd == expected_cwd
 
 
 def test_command_relative_issue36(newmocksession, tmpdir, monkeypatch):

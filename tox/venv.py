@@ -301,9 +301,17 @@ class VirtualEnv(object):
                 )
                 os.environ.pop('PYTHONPATH')
 
+        # install from a neutral folder to avoid any adverse interactions
+        # between the current folder and the installation command, e.g.
+        # `python -m pip` command will add the current folder to the Python
+        # path, and thus fail to install any package located in that folder for
+        # which there also exists an `.egg-info` folder in that same folder
+        toxinidir = self.envconfig.config.toxinidir
+        install_command_cwd = toxinidir.join('install_from_here')
+
         old_stdout = sys.stdout
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-        self._pcall(argv, cwd=self.envconfig.config.toxinidir, action=action,
+        self._pcall(argv, cwd=install_command_cwd, action=action,
                     redirect=self.session.report.verbosity < 2)
         sys.stdout = old_stdout
 
