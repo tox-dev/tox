@@ -312,6 +312,27 @@ def test_skip_unknown_interpreter(cmd, initproj):
     assert any(msg == l for l in result.outlines)
 
 
+def test_skip_unknown_interpreter_result_json(cmd, initproj, tmpdir):
+    report_path = tmpdir.join("toxresult.json")
+    initproj("interp123-0.5", filedefs={
+        'tests': {'test_hello.py': "def test_hello(): pass"},
+        'tox.ini': '''
+            [testenv:python]
+            basepython=xyz_unknown_interpreter
+            [testenv]
+            changedir=tests
+        '''
+    })
+    result = cmd("--skip-missing-interpreters", "--result-json", report_path)
+    assert not result.ret
+    msg = 'SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter'
+    assert any(msg == l for l in result.outlines)
+    setup_result_from_json = json.load(report_path)["testenvs"]["python"]["setup"]
+    for setup_step in setup_result_from_json:
+        assert "InterpreterNotFound" in setup_step["output"]
+        assert setup_step["retcode"] == "0"
+
+
 def test_unknown_dep(cmd, initproj):
     initproj("dep123-0.7", filedefs={
         'tests': {'test_hello.py': "def test_hello(): pass"},

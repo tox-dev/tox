@@ -15,6 +15,7 @@ doc/_build/
 tox.egg-info
 .tox
 .cache
+.python-version
 
 coverage.xml
 htmlcov
