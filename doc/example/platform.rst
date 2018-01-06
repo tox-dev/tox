@@ -26,7 +26,7 @@ and the following ``tox.ini`` content:
                mymacos: darwin
                mywindows: win32
 
-    # you can specify dependencies and their versions based on platform filtered envirements
+    # you can specify dependencies and their versions based on platform filtered environments
     deps = mylinux,mymacos: py==1.4.32
            mywindows: py==1.4.30
 
