@@ -149,9 +149,6 @@ class VirtualEnv(object):
                     return True
         return False
 
-    def _ispython3(self):
-        return "python3" in str(self.envconfig.basepython)
-
     def update(self, action):
         """ return status string for updating actual venv to match configuration.
             if status string is empty, all is ok.
