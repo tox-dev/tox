@@ -135,7 +135,7 @@ class Action(object):
             fout.write("actionid: %s\nmsg: %s\ncmdargs: %r\n\n" % (self.id, self.msg, args))
             fout.flush()
             outpath = py.path.local(fout.name)
-            fin = outpath.open()
+            fin = outpath.open('rb')
             fin.read()  # read the header, so it won't be written to stdout
             stdout = fout
         elif returnout:
@@ -163,13 +163,12 @@ class Action(object):
                     out = None
                     last_time = time.time()
                     while 1:
-                        fin_pos = fin.tell()
                         # we have to read one byte at a time, otherwise there
                         # might be no output for a long time with slow tests
                         data = fin.read(1)
                         if data:
                             sys.stdout.write(data)
-                            if '\n' in data or (time.time() - last_time) > 1:
+                            if b'\n' in data or (time.time() - last_time) > 1:
                                 # we flush on newlines or after 1 second to
                                 # provide quick enough feedback to the user
                                 # when printing a dot per test
@@ -181,7 +180,8 @@ class Action(object):
                             break
                         else:
                             time.sleep(0.1)
-                            fin.seek(fin_pos)
+                            # the seek updates internal read buffers
+                            fin.seek(0, 1)
                     fin.close()
                 else:
                     out, err = popen.communicate()
