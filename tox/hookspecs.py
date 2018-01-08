@@ -103,3 +103,11 @@ def tox_runtest_post(venv):
 
     This could be used to have per-venv test reporting of pass/fail status.
     """
+
+
+@hookspec(firstresult=True)
+def tox_runenvreport(venv, action):
+    """ [experimental] Get the installed packages and versions in this venv
+
+    This could be used for alternative (ie non-pip) package managers
+    """

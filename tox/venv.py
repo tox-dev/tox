@@ -465,3 +465,17 @@ def tox_runtest(venv, redirect):
     venv.test(redirect=redirect)
     # Return non-None to indicate the plugin has completed
     return True
+
+
+@hookimpl
+def tox_runenvreport(venv, action):
+    # write out version dependency information
+    args = venv.envconfig.list_dependencies_command
+    output = venv._pcall(args,
+                         cwd=venv.envconfig.config.toxinidir,
+                         action=action)
+    # the output contains a mime-header, skip it
+    output = output.split("\n\n")[-1]
+    packages = output.strip().split("\n")
+    # Return non-None to indicate the plugin has completed
+    return packages
