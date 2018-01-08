@@ -101,7 +101,7 @@ Short version
    The test environments above are usually enough to cover most cases locally.
 
 #. Consider the
-   `checklist <https://github.com/Avira/tox/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`_
+   `checklist <https://github.com/tox-dev/tox/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`_
    in the pull request form
 
 Long version
@@ -178,7 +178,7 @@ Here is a simple overview, with tox-specific bits:
     $ git push -u
 
 
-#. submit a pull request through the GitHub website and and consider the `checklist <https://github.com/Avira/tox/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`_ in the pull request form::
+#. submit a pull request through the GitHub website and and consider the `checklist <https://github.com/tox-dev/tox/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`_ in the pull request form::
 
     head-fork: YOUR_GITHUB_USERNAME/tox
     compare: your-branch-name
