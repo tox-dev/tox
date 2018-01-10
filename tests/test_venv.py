@@ -385,11 +385,11 @@ def test_install_command_not_installed_bash(newmocksession):
 
 
 def test_install_python3(tmpdir, newmocksession):
-    if not py.path.local.sysfind('python3.6'):
-        pytest.skip("needs python3.6")
+    if not py.path.local.sysfind('python3'):
+        pytest.skip("needs python3")
     mocksession = newmocksession([], """
         [testenv:py123]
-        basepython=python3.6
+        basepython=python3
         deps=
             dep1
             dep2
