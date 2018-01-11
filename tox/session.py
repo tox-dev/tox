@@ -159,7 +159,9 @@ class Action(object):
             self.report.logpopen(popen, env=env)
             try:
                 if resultjson and not redirect:
-                    assert popen.stderr is None  # prevent deadlock
+                    if popen.stderr is not None:
+                        # prevent deadlock
+                        raise ValueError("stderr must not be piped here")
                     # we read binary from the process and must write using a
                     # binary stream
                     buf = getattr(sys.stdout, 'buffer', sys.stdout)
