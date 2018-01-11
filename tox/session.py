@@ -490,9 +490,9 @@ class Session:
                         "not supported by virtualenv. Error details: %r" % e)
             except tox.exception.InvocationError as e:
                 status = (
-                    "Error creating virtualenv. Note that some special "
-                    "characters (e.g. ':' and unicode symbols) in paths are "
-                    "not supported by virtualenv. Error details: %r" % e)
+                        "Error creating virtualenv. Note that some special "
+                        "characters (e.g. ':' and unicode symbols) in paths are "
+                        "not supported by virtualenv. Error details: %r" % e)
             except tox.exception.InterpreterNotFound as e:
                 status = e
                 if self.config.option.skip_missing_interpreters:
