@@ -160,6 +160,9 @@ class Action(object):
             try:
                 if resultjson and not redirect:
                     assert popen.stderr is None  # prevent deadlock
+                    # we read binary from the process and must write using a
+                    # binary stream
+                    buf = getattr(sys.stdout, 'buffer', sys.stdout)
                     out = None
                     last_time = time.time()
                     while 1:
@@ -167,12 +170,12 @@ class Action(object):
                         # might be no output for a long time with slow tests
                         data = fin.read(1)
                         if data:
-                            sys.stdout.write(data)
+                            buf.write(data)
                             if b'\n' in data or (time.time() - last_time) > 1:
                                 # we flush on newlines or after 1 second to
                                 # provide quick enough feedback to the user
                                 # when printing a dot per test
-                                sys.stdout.flush()
+                                buf.flush()
                                 last_time = time.time()
                         elif popen.poll() is not None:
                             if popen.stdout is not None:
