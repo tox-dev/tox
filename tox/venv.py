@@ -167,8 +167,6 @@ class VirtualEnv(object):
             self.just_created = True
         except tox.exception.UnsupportedInterpreter:
             return sys.exc_info()[1]
-        except tox.exception.InterpreterNotFound:
-            return sys.exc_info()[1]
         try:
             self.hook.tox_testenv_install_deps(action=action, venv=self)
         except tox.exception.InvocationError:

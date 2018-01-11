@@ -483,6 +483,7 @@ class Session:
         action = self.newaction(venv, "getenv", venv.envconfig.envdir)
         with action:
             venv.status = 0
+            default_ret_code = 1
             envlog = self.resultlog.get_envlog(venv.name)
             try:
                 status = venv.update(action=action)
@@ -497,11 +498,18 @@ class Session:
                         "Error creating virtualenv. Note that some special "
                         "characters (e.g. ':' and unicode symbols) in paths are "
                         "not supported by virtualenv. Error details: %r" % e)
+            except tox.exception.InterpreterNotFound as e:
+                status = e
+                if self.config.option.skip_missing_interpreters:
+                    default_ret_code = 0
             if status:
                 commandlog = envlog.get_commandlog("setup")
-                commandlog.add_command(["setup virtualenv"], str(status), 1)
+                commandlog.add_command(["setup virtualenv"], str(status), default_ret_code)
                 venv.status = status
-                self.report.error(str(status))
+                if default_ret_code == 0:
+                    self.report.skip(str(status))
+                else:
+                    self.report.error(str(status))
                 return False
             commandpath = venv.getcommandpath("python")
             envlog.set_python_info(commandpath)
