@@ -195,7 +195,7 @@ Default settings related to environment names/variants
 tox comes with predefined settings for certain variants, namely:
 
 * ``{easy,pip}`` use easy_install or pip respectively
-* ``{py27,py34,py35,py36,pypy19]`` use the respective
+* ``{py27,py34,py35,py36,pypy19}`` use the respective
   pythonNN or PyPy interpreter
 * ``{win32,linux,darwin}`` defines the according ``platform``.
 
