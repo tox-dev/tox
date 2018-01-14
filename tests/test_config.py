@@ -908,6 +908,7 @@ class TestConfigTestEnv:
             assert "TEMP" in envconfig.passenv
             assert "TMP" in envconfig.passenv
             assert "NUMBER_OF_PROCESSORS" in envconfig.passenv
+            assert "PROCESSOR_ARCHITECTURE" in envconfig.passenv
             assert "USERPROFILE" in envconfig.passenv
             assert "MSYSTEM" in envconfig.passenv
         else:

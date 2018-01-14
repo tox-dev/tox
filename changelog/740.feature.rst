@@ -1,0 +1,2 @@
+Forward ``PROCESSOR_ARCHITECTURE`` by default on Windows to fix
+``platform.machine()``.
