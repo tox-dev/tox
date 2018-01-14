@@ -530,6 +530,7 @@ def tox_addoption(parser):
             # for `multiprocessing.cpu_count()` on Windows
             # (prior to Python 3.4).
             passenv.add("NUMBER_OF_PROCESSORS")
+            passenv.add("PROCESSOR_ARCHITECTURE")  # platform.machine()
             passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
             passenv.add("MSYSTEM")  # fixes #429
         else:
