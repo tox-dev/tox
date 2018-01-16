@@ -177,10 +177,10 @@ else:
 
 def pyinfo():
     import sys
-    return dict(version_info=tuple(sys.version_info),
-                sysplatform=sys.platform)
+    return {"version_info": tuple(sys.version_info),
+            "sysplatform": sys.platform}
 
 
 def sitepackagesdir(envdir):
     import distutils.sysconfig
-    return dict(dir=distutils.sysconfig.get_python_lib(prefix=envdir))
+    return {"dir": distutils.sysconfig.get_python_lib(prefix=envdir)}

@@ -2216,7 +2216,7 @@ class TestCmdInvocation:
         initproj('listenvs_all_verbose_description', filedefs={
             'tox.ini': '''
             [tox]
-            envlist={py27,py36}-{windows,linux} # py26
+            envlist={py27,py36}-{windows,linux} # py35
             [testenv]
             description= py27: run pytest on Python 2.7
                          py36: run pytest on Python 3.6

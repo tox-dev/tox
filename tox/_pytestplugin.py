@@ -2,7 +2,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
-import sys
 import textwrap
 import time
 from fnmatch import fnmatch
@@ -60,9 +59,6 @@ def cmd(request, capfd, monkeypatch):
     request.addfinalizer(py.path.local().chdir)
 
     def run(*argv):
-        if sys.version_info[:2] < (2, 7):
-            pytest.skip("can not run tests involving calling tox on python2.6. "
-                        "(and python2.6 is about to be deprecated anyway)")
         key = str(b'PYTHONPATH')
         python_paths = (i for i in (str(os.getcwd()), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
