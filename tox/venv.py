@@ -397,8 +397,7 @@ class VirtualEnv(object):
 
     def _pcall(self, args, cwd, venv=True, testcommand=False,
                action=None, redirect=True, ignore_ret=False):
-        for name in ("VIRTUALENV_PYTHON", "PYTHONDONTWRITEBYTECODE"):
-            os.environ.pop(name, None)
+        os.environ.pop('VIRTUALENV_PYTHON', None)
 
         cwd.ensure(dir=1)
         args[0] = self.getcommandpath(args[0], venv, cwd)
