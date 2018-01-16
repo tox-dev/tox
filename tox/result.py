@@ -21,11 +21,11 @@ class ResultLog:
         """
         :param py.path.local installpkg: Path ot the package.
         """
-        self.dict["installpkg"] = dict(
-            md5=installpkg.computehash("md5"),
-            sha256=installpkg.computehash("sha256"),
-            basename=installpkg.basename,
-        )
+        self.dict["installpkg"] = {
+            "md5": installpkg.computehash("md5"),
+            "sha256": installpkg.computehash("sha256"),
+            "basename": installpkg.basename,
+        }
 
     def get_envlog(self, name):
         testenvs = self.dict.setdefault("testenvs", {})
@@ -57,10 +57,11 @@ class EnvLog:
         executable = lines.pop(0)
         version_info = eval(lines.pop(0))
         version = "\n".join(lines)
-        self.dict["python"] = dict(
-            executable=executable,
-            version_info=version_info,
-            version=version)
+        self.dict["python"] = {
+            "executable": executable,
+            "version_info": version_info,
+            "version": version,
+        }
 
     def get_commandlog(self, name):
         return CommandLog(self, self.dict.setdefault(name, []))
