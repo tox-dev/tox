@@ -689,9 +689,9 @@ def test_test_piphelp(initproj, cmd):
         # content of: tox.ini
         [testenv]
         commands=pip -h
-        [testenv:py26]
-        basepython=python
         [testenv:py27]
+        basepython=python
+        [testenv:py36]
         basepython=python
     """})
     result = cmd()
