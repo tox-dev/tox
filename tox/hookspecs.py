@@ -109,5 +109,6 @@ def tox_runtest_post(venv):
 def tox_runenvreport(venv, action):
     """ [experimental] Get the installed packages and versions in this venv
 
-    This could be used for alternative (ie non-pip) package managers
+    This could be used for alternative (ie non-pip) package managers, this
+    plugin should return a ``list`` of type ``str``
     """
