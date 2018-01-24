@@ -605,23 +605,22 @@ class Session:
                     else:
                         self.installpkg(venv, path)
 
-                # write out version dependency information
-                action = self.newaction(venv, "envreport")
-                with action:
-                    args = venv.envconfig.list_dependencies_command
-                    output = venv._pcall(args,
-                                         cwd=self.config.toxinidir,
-                                         action=action)
-                    # the output contains a mime-header, skip it
-                    output = output.split("\n\n")[-1]
-                    packages = output.strip().split("\n")
-                    action.setactivity("installed", ",".join(packages))
-                    envlog = self.resultlog.get_envlog(venv.name)
-                    envlog.set_installed(packages)
-
+                self.runenvreport(venv)
                 self.runtestenv(venv)
         retcode = self._summary()
         return retcode
+
+    def runenvreport(self, venv):
+        """
+        Run an environment report to show which package
+        versions are installed in the venv
+        """
+        action = self.newaction(venv, "envreport")
+        with action:
+            packages = self.hook.tox_runenvreport(venv=venv, action=action)
+        action.setactivity("installed", ",".join(packages))
+        envlog = self.resultlog.get_envlog(venv.name)
+        envlog.set_installed(packages)
 
     def runtestenv(self, venv, redirect=False):
         if not self.config.option.notest:

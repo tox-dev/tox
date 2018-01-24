@@ -1090,8 +1090,8 @@ class SectionReader:
                 return line
 
             expr, line = m.groups()
-            if any(included <= self.factors
-                   and not any(x in self.factors for x in excluded)
+            if any(included <= self.factors and not
+                   any(x in self.factors for x in excluded)
                    for included, excluded in _split_factor_expr(expr)):
                 return line
 
