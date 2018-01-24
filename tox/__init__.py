@@ -34,6 +34,19 @@ class exception:
 
     class InvocationError(Error):
         """ an error while invoking a script. """
+        def __init__(self, *args):
+            super(exception.Error, self).__init__(*args)
+            self.command = args[0]
+            try:
+                self.exitcode = args[1]
+            except IndexError:
+                self.exitcode = None
+
+        def __str__(self):
+            if self.exitcode:
+                return "%s: %s (exitcode %d)" % (self.__class__.__name__,
+                                                 self.command, self.exitcode)
+            return "%s: %s" % (self.__class__.__name__, self.command)
 
     class MissingFile(Error):
         """ an error while invoking a script. """
