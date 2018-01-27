@@ -636,7 +636,8 @@ def _alwayscopy_not_supported():
     if hasattr(platform, 'linux_distribution'):
         _dist = platform.linux_distribution(full_distribution_name=False)
         (name, version, arch) = _dist
-        if ((name == 'centos' and version[0] == '7') or
+        if (
+            (name == 'centos' and version[0] == '7') or
             (name == 'SuSE' and arch == 'x86_64')
            ):
             return True
