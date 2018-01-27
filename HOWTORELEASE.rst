@@ -20,7 +20,7 @@ Prerequisites
 
 * Push rights for https://github.com/tox-dev/tox
 * Release rights for https://pypi.org/project/tox/
-* [optional] An account on https://devpi.net to upload the package under test
+* [optional] An account on https://m.devpi.net to upload the package under test
 * A system with either tox + `bash <https://www.gnu.org/software/bash/>`_ or `vagrant <https://github.com/tox-dev/tox/blob/master/Vagrantfile>`_ (which contains tox + bash)
 * Accountability: if you cut a release that breaks the CI builds of projects using tox, you are expected to fix this within a reasonable time frame (hours/days - not weeks/months) - if you don't feel quite capable of doing this yet, partner up with a more experienced member of the team and make sure they got your back if things break.
 
@@ -74,7 +74,7 @@ If you don't want or can't do the cloud test step ...
 
 Run from multiple machines::
 
-   devpi use https://devpi.net/<your devpi user name>/dev
+   devpi use https://m.devpi.net/<your devpi user name>/dev
    devpi test tox==<VERSION>
 
 Check that tests pass for relevant combinations with::
