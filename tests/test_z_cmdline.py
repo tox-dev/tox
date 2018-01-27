@@ -635,7 +635,10 @@ def _alwayscopy_not_supported():
     # see: https://github.com/pypa/virtualenv/issues/565
     if hasattr(platform, 'linux_distribution'):
         _dist = platform.linux_distribution(full_distribution_name=False)
-        if _dist[0] == 'centos' and _dist[1][0] == '7':
+        (name, version, arch) = _dist
+        if ((name == 'centos' and version[0] == '7') or
+            (name == 'SuSE' and arch == 'x86_64')
+           ):
             return True
     return False
 
