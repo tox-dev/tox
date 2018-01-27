@@ -25,6 +25,84 @@ on Github:
 
 .. towncrier release notes start
 
+3.0.0rc1 (2018-01-27)
+---------------------
+
+Bugfixes
+^^^^^^^^
+
+- Write directly to stdout buffer if possible to prevent str vs bytes issues -
+  by @asottile (`#426 <https://github.com/tox-dev/tox/issues/426>`_)
+- fix #672 reporting to json file when skip-missing-interpreters option is used
+  - by @r2dan (`#672 <https://github.com/tox-dev/tox/issues/672>`_)
+- avoid ``Requested Python version (X.Y) not installed`` stderr output when a
+  Python environment is looked up using the ``py`` Python launcher on Windows
+  and the environment is not found installed on the system - by
+  @jurko-gospodnetic (`#692 <https://github.com/tox-dev/tox/issues/692>`_)
+- Fixed an issue where invocation of Tox from the Python package, where
+  invocation errors (failed actions) occur results in a change in the
+  sys.stdout stream encoding in Python 3.x. New behaviour is that sys.stdout is
+  reset back to its original encoding after invocation errors - by @tonybaloney
+  (`#723 <https://github.com/tox-dev/tox/issues/723>`_)
+- The reading of command output sometimes failed with ``IOError: [Errno 0]
+  Error`` on Windows, this was fixed by using a simpler method to update the
+  read buffers. - by @fschulze (`#727
+  <https://github.com/tox-dev/tox/issues/727>`_)
+
+
+Features
+^^^^^^^^
+
+- Add a ``-q`` option to progressively silence tox's output. For each time you
+  specify ``-q`` to tox, the output provided by tox reduces. This option allows
+  you to see only your command output without the default verbosity of what tox
+  is doing. This also counter-acts usage of ``-v``. For example, running ``tox
+  -v -q ...`` will provide you with the default verbosity. ``tox -vv -q`` is
+  equivalent to ``tox -v``. By @sigmavirus24 (`#256
+  <https://github.com/tox-dev/tox/issues/256>`_)
+- add support for negated factor conditions, e.g. ``!dev: production_log`` - by
+  @jurko-gospodnetic (`#292 <https://github.com/tox-dev/tox/issues/292>`_)
+- Headings like ``installed: <packages>`` will not be printed if there is no
+  output to display after the :, unless verbosity is set. By @cryvate (`#601
+  <https://github.com/tox-dev/tox/issues/601>`_)
+- Allow spaces in command line options to pip in deps. Where previously only
+  ``deps=-rreq.txt`` and ``deps=--requirement=req.txt`` worked, now also
+  ``deps=-r req.txt`` and ``deps=--requirement req.txt`` work - by @cryvate
+  (`#668 <https://github.com/tox-dev/tox/issues/668>`_)
+- drop Python ``2.6`` and ``3.3`` support: ``setuptools`` dropped supporting
+  these, and as we depend on it we'll follow up with doing the same (use ``tox
+  <= 2.9.1`` if you still need this support) - by @gaborbernat (`#679
+  <https://github.com/tox-dev/tox/issues/679>`_)
+- Add tox_runenvreport as a possible plugin, allowing the overriding of the
+  default behaviour to execute a command to get the installed packages within a
+  virtual environment - by @tonybaloney (`#725
+  <https://github.com/tox-dev/tox/issues/725>`_)
+- Forward ``PROCESSOR_ARCHITECTURE`` by default on Windows to fix
+  ``platform.machine()``. (`#740 <https://github.com/tox-dev/tox/issues/740>`_)
+
+
+Documentation improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Change sphinx theme to alabaster and add logo/favicon - by @hazalozturk
+  (`#639 <https://github.com/tox-dev/tox/issues/639>`_)
+
+
+Miscellaneous / trivial changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Running ``tox`` without a ``setup.py`` now has a more friendly error message
+  and gives troubleshooting suggestions - by @Volcyy. (`#331
+  <https://github.com/tox-dev/tox/issues/331>`_)
+- Fix pycodestyle (formerly pep8) errors E741 (ambiguous variable names, in
+  this case, 'l's) and remove ignore of this error in tox.ini - by @cryvate
+  (`#663 <https://github.com/tox-dev/tox/issues/663>`_)
+- touched up ``interpreters.py`` code and added some missing tests for it - by
+  @jurko-gospodnetic (`#708 <https://github.com/tox-dev/tox/issues/708>`_)
+- The ``PYTHONDONTWRITEBYTECODE`` environment variable is no longer unset - by
+  @stephenfin. (`#744 <https://github.com/tox-dev/tox/issues/744>`_)
+
+
 2.9.1 (2017-09-29)
 ------------------
 

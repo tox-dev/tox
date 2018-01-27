@@ -1,2 +1,0 @@
-Add tox_runenvreport as a possible plugin, allowing the overriding of the default behaviour to execute a command
-to get the installed packages within a virtual environment - by @tonybaloney

@@ -1,2 +1,0 @@
-The ``PYTHONDONTWRITEBYTECODE`` environment variable is no longer unset - by
-@stephenfin.

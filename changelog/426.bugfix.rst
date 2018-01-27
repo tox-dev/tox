@@ -1,1 +1,0 @@
-Write directly to stdout buffer if possible to prevent str vs bytes issues - by @asottile

@@ -1,1 +1,0 @@
-Allow spaces in command line options to pip in deps. Where previously only ``deps=-rreq.txt`` and ``deps=--requirement=req.txt`` worked, now also ``deps=-r req.txt`` and ``deps=--requirement req.txt`` work - by @cryvate

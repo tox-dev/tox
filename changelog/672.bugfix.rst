@@ -1,1 +1,0 @@
-fix #672 reporting to json file when skip-missing-interpreters option is used - by @r2dan
