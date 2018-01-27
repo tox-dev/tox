@@ -13,6 +13,7 @@ If you want to know more details: since version 2.8 releases are organized as Gi
 To see all closed issues and merged pull requests, contained in a release, visit the projects
 on Github:
 
+- `3.0 series of releases <https://github.com/tox-dev/tox/projects/7>`_
 - `2.9 series of releases <https://github.com/tox-dev/tox/projects/11>`_
 - `2.8 series of releases <https://github.com/tox-dev/tox/projects/6>`_
 
