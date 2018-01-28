@@ -45,17 +45,16 @@ prep () {
     towncrier --yes --version ${VERSION}
     pip install -U readme-renderer
     python setup.py check -r -s
-    _confirm "towncrier news rendered - move on?"
     git add CHANGELOG.rst
     git status
-    _confirm "changes to repository o.k.?"
+    _confirm "commit changelog and tag repo as ${VERSION}?"
     git commit -m "release preparation for ${VERSION}" || true
     git tag -s ${VERSION} -m "release tox ${VERSION}" || true
     rm dist/tox* || true
     python setup.py sdist bdist_wheel
     pip install -U dist/tox-${VERSION}.tar.gz
     tox --version
-    _confirm "version of package o.k.?"
+    _confirm "package and version o.k.?"
 }
 
 devpi_upload () {
@@ -66,8 +65,7 @@ devpi_upload () {
     echo "loggging in to devpi $1"
     devpi login $1
     devpi use https://m.devpi.net/$1/dev
-    echo "upload to devpi: $(ls dist/*)"
-    _confirm
+    _confirm "upload to devpi: $(ls dist/*)?"
     devpi upload dist/*
 }
 
@@ -77,8 +75,7 @@ devpi_cloud_test () {
         echo "needs $cloudTestPath"
         exit 1
     fi
-    echo "trigger devpi cloud tests for ${VERSION}?"
-    _confirm
+    _confirm "trigger devpi cloud tests for ${VERSION}?"
     cd ${cloudTestPath}
     dct trigger ${VERSION}
     xdg-open https://github.com/tox-dev/devpi-cloud-test-tox
@@ -88,7 +85,7 @@ devpi_cloud_test () {
 # TODO get devpi push to work again
 pypi_release () {
     PACKAGES=$(ls dist/*)
-    _confirm "upload to pypi: $PACKAGES"
+    _confirm "upload to pypi: $PACKAGES?"
     twine upload ${PACKAGES}
     git push upstream master
     git push upstream ${VERSION}
