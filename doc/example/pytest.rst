@@ -98,6 +98,7 @@ installed package.
 This issue may be characterised by pytest test-collection error messages, in python 3.x environments, that look like:
 
 .. code-block:: shell
+
     import file mismatch:
     imported module 'myproj.foo.tests.test_foo' has this __file__ attribute:
       /home/myuser/repos/myproj/build/lib/myproj/foo/tests/test_foo.py
