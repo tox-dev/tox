@@ -95,6 +95,16 @@ importable from somewhere then your ``pytest`` invocation may end up
 importing the package from the checkout directory rather than the
 installed package.
 
+This issue may be characterised by pytest test-collection error messages, in python 3.x environments, that look like:
+
+.. code-block:: shell
+    import file mismatch:
+    imported module 'myproj.foo.tests.test_foo' has this __file__ attribute:
+      /home/myuser/repos/myproj/build/lib/myproj/foo/tests/test_foo.py
+    which is not the same as the test file we want to collect:
+      /home/myuser/repos/myproj/myproj/foo/tests/test_foo.py
+    HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+
 There are a few ways to prevent this.
 
 With installed tests (the tests packages are known to ``setup.py``), a
