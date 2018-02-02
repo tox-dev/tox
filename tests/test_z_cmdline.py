@@ -474,7 +474,7 @@ def test_package_install_fails(cmd, initproj):
     })
     result = cmd()
     assert result.ret
-    assert result.outlines[-1].startswith('ERROR:   python: InvocationError: ')
+    assert result.outlines[-1].startswith('ERROR:   python: InvocationError for command ')
 
 
 @pytest.fixture
@@ -904,3 +904,20 @@ def test_tox_quickstart_script():
 def test_tox_cmdline(monkeypatch):
     with pytest.raises(SystemExit):
         tox.cmdline(['caller_script', '--help'])
+
+
+@pytest.mark.parametrize('exitcode', [0, 5, 129])
+def test_exitcode(initproj, cmd, exitcode):
+    tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exitcode
+    initproj("foo", filedefs={'tox.ini': tox_ini_content})
+    result = cmd()
+    if exitcode:
+        needle = "(exited with code %d)" % exitcode
+        assert any(needle in line for line in result.outlines)
+        if exitcode > 128:
+            needle = ("Note: On unix systems, an exit code larger than 128 "
+                      "often means a fatal error (e.g. 139=128+11: segmentation fault)")
+            assert any(needle in line for line in result.outlines)
+    else:
+        needle = "(exited with code"
+        assert all(needle not in line for line in result.outlines)
