@@ -229,7 +229,7 @@ If no contributor strongly objects, the repository can then be
 transferred to the ``tox-dev`` organisation. For details see
 `about repository transfers <https://help.github.com/articles/about-repository-transfers/>`_
 
-Memebrs of the tox organization have write access to all projects.
+Members of the tox organization have write access to all projects.
 We recommend that each plugin has at least three people who have the right to release to PyPI.
 
 Repository owners can rest assured that no ``tox-dev`` administrator will ever make
