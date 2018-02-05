@@ -34,13 +34,10 @@ class exception:
 
     class InvocationError(Error):
         """ an error while invoking a script. """
-        def __init__(self, *args):
-            super(exception.Error, self).__init__(*args)
-            self.command = args[0]
-            try:
-                self.exitcode = args[1]
-            except IndexError:
-                self.exitcode = None
+        def __init__(self, command, exitcode=None):
+            super(exception.Error, self).__init__(command, exitcode)
+            self.command = command
+            self.exitcode = exitcode
 
         def __str__(self):
             str_ = "%s for command %s" % (self.__class__.__name__, self.command)
