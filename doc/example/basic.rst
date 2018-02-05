@@ -289,6 +289,7 @@ Integration with "setup.py test" command
   point it's maybe best to not go for any ``setup.py test`` integration.
 
 
+.. _`ignoring exit code`:
 
 Ignoring a command exit code
 ----------------------------
