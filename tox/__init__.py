@@ -34,6 +34,19 @@ class exception:
 
     class InvocationError(Error):
         """ an error while invoking a script. """
+        def __init__(self, command, exitcode=None):
+            super(exception.Error, self).__init__(command, exitcode)
+            self.command = command
+            self.exitcode = exitcode
+
+        def __str__(self):
+            str_ = "%s for command %s" % (self.__class__.__name__, self.command)
+            if self.exitcode:
+                str_ += " (exited with code %d)" % (self.exitcode)
+                if self.exitcode > 128:
+                    str_ += ("\nNote: On unix systems, an exit code larger than 128 "
+                             "often means a fatal error (e.g. 139=128+11: segmentation fault)")
+            return str_
 
     class MissingFile(Error):
         """ an error while invoking a script. """

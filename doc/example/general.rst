@@ -204,3 +204,49 @@ There is an optimization coded in to not bother re-running the command if
 ``$projectname.egg-info`` is newer than ``setup.py`` or ``setup.cfg``.
 
 .. include:: ../links.rst
+
+
+Understanding ``InvocationError`` exit codes
+--------------------------------------------
+
+When a command (defined by ``commands =`` in ``tox.ini``) fails,
+it has a non-zero exit code,
+and an ``InvocationError`` exception is raised by ``tox``:
+
+.. code-block:: shell
+
+    ERROR: InvocationError for command
+           '<command defined in tox.ini>' (exited with code 1)
+
+If the command starts with ``pytest`` or ``python setup.py test`` for instance,
+then the `pytest exit codes`_ are relevant.
+
+On unix systems, there are some rather `common exit codes`_.
+This is why for exit codes larger than 128, an additional hint is given:
+
+.. code-block:: shell
+
+    ERROR: InvocationError for command
+           '<command defined in tox.ini>' (exited with code 139)
+    Note: On unix systems, an exit code larger than 128 often means a fatal error (e.g. 139=128+11: segmentation fault)
+
+The signal numbers (e.g. 11 for a segmentation fault) can be found in the
+"Standard signals" section of the `signal man page`_.
+Their meaning is described in `POSIX signals`_.
+
+Beware that programs may issue custom exit codes with any value,
+so their documentation should be consulted.
+
+
+Sometimes, no exit code is given at all.
+An example may be found in `pytest-qt issue #170`_,
+where Qt was calling ``abort()`` instead of ``exit()``.
+
+.. seealso:: :ref:`ignoring exit code`.
+
+.. _`pytest exit codes`: https://docs.pytest.org/en/latest/usage.html#possible-exit-codes
+.. _`common exit codes`: http://www.faqs.org/docs/abs/HTML/exitcodes.html
+.. _`abort()``: http://www.unix.org/version2/sample/abort.html
+.. _`pytest-qt issue #170` : https://github.com/pytest-dev/pytest-qt/issues/170
+.. _`signal man page`: http://man7.org/linux/man-pages/man7/signal.7.html
+.. _`POSIX signals`: https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals
