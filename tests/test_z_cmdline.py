@@ -906,18 +906,16 @@ def test_tox_cmdline(monkeypatch):
         tox.cmdline(['caller_script', '--help'])
 
 
-@pytest.mark.parametrize('exitcode', [0, 5, 129])
+@pytest.mark.parametrize('exitcode', [0, 6])
 def test_exitcode(initproj, cmd, exitcode):
+    """ Check for correct InvocationError, with exit code,
+        except for zero exit code """
     tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exitcode
     initproj("foo", filedefs={'tox.ini': tox_ini_content})
     result = cmd()
     if exitcode:
         needle = "(exited with code %d)" % exitcode
         assert any(needle in line for line in result.outlines)
-        if exitcode > 128:
-            needle = ("Note: On unix systems, an exit code larger than 128 "
-                      "often means a fatal error (e.g. 139=128+11: segmentation fault)")
-            assert any(needle in line for line in result.outlines)
     else:
-        needle = "(exited with code"
+        needle = "InvocationError"
         assert all(needle not in line for line in result.outlines)

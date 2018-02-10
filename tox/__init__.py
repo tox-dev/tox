@@ -1,8 +1,11 @@
+import signal
+
 from pkg_resources import DistributionNotFound
 from pkg_resources import get_distribution
 
 from .hookspecs import hookimpl
 from .hookspecs import hookspec
+
 
 try:
     _full_version = get_distribution(__name__).version
@@ -41,11 +44,18 @@ class exception:
 
         def __str__(self):
             str_ = "%s for command %s" % (self.__class__.__name__, self.command)
-            if self.exitcode:
+            if self.exitcode is not None:
                 str_ += " (exited with code %d)" % (self.exitcode)
                 if self.exitcode > 128:
-                    str_ += ("\nNote: On unix systems, an exit code larger than 128 "
-                             "often means a fatal error (e.g. 139=128+11: segmentation fault)")
+                    signals = {number: name
+                               for name, number in vars(signal).items()
+                               if name.startswith("SIG")}
+                    number = self.exitcode - 128
+                    name = signals.get(number)
+                    (eg_number, eg_name) = (number, name) if name else (11, "SIGSEGV")
+                    str_ += ("\nNote: On unix systems, an exit code larger than 128 often "
+                             "means a fatal error signal "
+                             "(e.g. {}=128+{}: {})".format(eg_number+128, eg_number, eg_name))
             return str_
 
     class MissingFile(Error):

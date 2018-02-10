@@ -1,3 +1,4 @@
+import signal
 import socket
 import sys
 
@@ -69,3 +70,30 @@ def test_get_commandlog(pkg):
     assert envlog.dict["setup"]
     setuplog2 = replog.get_envlog("py36").get_commandlog("setup")
     assert setuplog2.list == setuplog.list
+
+
+@pytest.mark.parametrize('exitcode', [None, 0, 5, 128 + signal.SIGTERM, 1234])
+def test_InvocationError(exitcode):
+    if exitcode is None:
+        exception = tox.exception.InvocationError("<command>")
+    else:
+        exception = tox.exception.InvocationError("<command>", exitcode)
+    result = str(exception)
+    if exitcode is None:
+        needle = "(exited with code"
+        assert needle not in result
+    else:
+        needle = "(exited with code %d)" % exitcode
+        assert needle in result
+        if exitcode > 128:
+            needle = ("Note: On unix systems, an exit code larger than 128 often "
+                      "means a fatal error signal")
+            assert needle in result
+            if exitcode == 128 + signal.SIGTERM:
+                eg_number = signal.SIGTERM
+                eg_name = "SIGTERM"
+            else:
+                eg_number = 11
+                eg_name = "SIGSEGV"
+            eg_str = "(e.g. {}=128+{}: {})".format(eg_number+128, eg_number, eg_name)
+            assert eg_str in result

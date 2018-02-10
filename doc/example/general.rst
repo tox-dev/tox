@@ -228,8 +228,11 @@ This is why for exit codes larger than 128, an additional hint is given:
 
     ERROR: InvocationError for command
            '<command defined in tox.ini>' (exited with code 139)
-    Note: On unix systems, an exit code larger than 128 often means a fatal error (e.g. 139=128+11: segmentation fault)
+    Note: On unix systems, an exit code larger than 128 often
+          means a fatal error signal (e.g. 139=128+11: SIGSEGV)
 
+The example given is based on ``<exit code> - 128``
+if it is found in the :py:mod:`signal` module.
 The signal numbers (e.g. 11 for a segmentation fault) can be found in the
 "Standard signals" section of the `signal man page`_.
 Their meaning is described in `POSIX signals`_.
