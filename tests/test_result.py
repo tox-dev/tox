@@ -73,7 +73,7 @@ def test_get_commandlog(pkg):
 
 
 @pytest.mark.parametrize('exit_code', [None, 0, 5, 128 + signal.SIGTERM, 1234])
-def test_InvocationError(exit_code):
+def test_invocation_error(exit_code):
     if exit_code is None:
         exception = tox.exception.InvocationError("<command>")
     else:
