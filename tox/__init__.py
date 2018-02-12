@@ -37,20 +37,20 @@ class exception:
 
     class InvocationError(Error):
         """ an error while invoking a script. """
-        def __init__(self, command, exitcode=None):
-            super(exception.Error, self).__init__(command, exitcode)
+        def __init__(self, command, exit_code=None):
+            super(exception.Error, self).__init__(command, exit_code)
             self.command = command
-            self.exitcode = exitcode
+            self.exit_code = exit_code
 
         def __str__(self):
             str_ = "%s for command %s" % (self.__class__.__name__, self.command)
-            if self.exitcode is not None:
-                str_ += " (exited with code %d)" % (self.exitcode)
-                if self.exitcode > 128:
+            if self.exit_code is not None:
+                str_ += " (exited with code %d)" % (self.exit_code)
+                if self.exit_code > 128:
                     signals = {number: name
                                for name, number in vars(signal).items()
                                if name.startswith("SIG")}
-                    number = self.exitcode - 128
+                    number = self.exit_code - 128
                     name = signals.get(number)
                     (eg_number, eg_name) = (number, name) if name else (11, "SIGSEGV")
                     str_ += ("\nNote: On unix systems, an exit code larger than 128 often "
