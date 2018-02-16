@@ -94,7 +94,7 @@ def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     else:
         needle = "(exited with code %d)" % exit_code
         assert needle in result
-        note = ("Note: this exit code might indicate a fatal error signal")
+        note = ("Note: this might indicate a fatal error signal")
         if (os_name == 'posix') and (exit_code == 128 + signal.SIGTERM):
             assert note in result
             number = signal.SIGTERM

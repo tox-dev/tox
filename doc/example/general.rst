@@ -230,7 +230,7 @@ in the :py:mod:`signal` module, an additional hint is given:
 
     ERROR: InvocationError for command
            '<command>' (exited with code 139)
-    Note: this exit code might indicate a fatal error signal (139 - 128 = 11: SIGSEGV)
+    Note: this might indicate a fatal error signal (139 - 128 = 11: SIGSEGV)
 
 where ``<command>`` is the command defined in ``tox.ini``, with quotes removed.
 

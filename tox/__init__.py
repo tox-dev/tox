@@ -32,7 +32,7 @@ def _exit_code_str(exception_name, command, exit_code):
             number = exit_code - 128
             name = signals.get(number)
             if name:
-                str_ += ("\nNote: this exit code might indicate a fatal error signal "
+                str_ += ("\nNote: this might indicate a fatal error signal "
                          "({} - 128 = {}: {})".format(number+128, number, name))
     return str_
 
