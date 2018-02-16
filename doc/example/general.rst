@@ -222,17 +222,18 @@ If the command starts with ``pytest`` or ``python setup.py test`` for instance,
 then the `pytest exit codes`_ are relevant.
 
 On unix systems, there are some rather `common exit codes`_.
-This is why for exit codes larger than 128, an additional hint is given:
+This is why for exit codes larger than 128,
+if a signal with number equal to ``<exit code> - 128`` is found
+in the :py:mod:`signal` module, an additional hint is given:
 
 .. code-block:: shell
 
     ERROR: InvocationError for command
-           '<command defined in tox.ini>' (exited with code 139)
-    Note: On unix systems, an exit code larger than 128 often
-          means a fatal error signal (e.g. 139=128+11: SIGSEGV)
+           '<command>' (exited with code 139)
+    Note: this exit code might indicate a fatal error signal (139 - 128 = 11: SIGSEGV)
 
-The example given is based on ``<exit code> - 128``
-if it is found in the :py:mod:`signal` module.
+where ``<command>`` is the command defined in ``tox.ini``, with quotes removed.
+
 The signal numbers (e.g. 11 for a segmentation fault) can be found in the
 "Standard signals" section of the `signal man page`_.
 Their meaning is described in `POSIX signals`_.

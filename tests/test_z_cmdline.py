@@ -907,15 +907,24 @@ def test_tox_cmdline(monkeypatch):
 
 
 @pytest.mark.parametrize('exit_code', [0, 6])
-def test_exit_code(initproj, cmd, exit_code):
+def test_exit_code(initproj, cmd, exit_code, mocker):
     """ Check for correct InvocationError, with exit code,
         except for zero exit code """
+    mocker.spy(tox, '_exit_code_str')
     tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exit_code
     initproj("foo", filedefs={'tox.ini': tox_ini_content})
-    result = cmd()
+    cmd()
     if exit_code:
-        needle = "(exited with code %d)" % exit_code
-        assert any(needle in line for line in result.outlines)
+        # need mocker.spy above
+        assert tox._exit_code_str.call_count == 1
+        (args, kwargs) = tox._exit_code_str.call_args
+        assert kwargs == {}
+        (call_error_name, call_command, call_exit_code) = args
+        assert call_error_name == 'InvocationError'
+        # quotes are removed in result.out
+        expected_command_arg = 'python -c import sys; sys.exit(%d)' % exit_code
+        assert expected_command_arg in call_command
+        assert call_exit_code == exit_code
     else:
-        needle = "InvocationError"
-        assert all(needle not in line for line in result.outlines)
+        # need mocker.spy above
+        assert tox._exit_code_str.call_count == 0

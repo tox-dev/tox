@@ -53,6 +53,7 @@ def main():
                           'virtualenv>=1.11.2'],
         extras_require={'testing': ['pytest >= 3.0.0',
                                     'pytest-cov',
+                                    'pytest-mock',
                                     'pytest-timeout',
                                     'pytest-xdist'],
                         'docs': ['sphinx >= 1.6.3, < 2',

@@ -1,3 +1,4 @@
+import os
 import signal
 import socket
 import sys
@@ -73,27 +74,32 @@ def test_get_commandlog(pkg):
 
 
 @pytest.mark.parametrize('exit_code', [None, 0, 5, 128 + signal.SIGTERM, 1234])
-def test_invocation_error(exit_code):
+@pytest.mark.parametrize('os_name', ['posix', 'nt'])
+def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
+    monkeypatch.setattr(os, 'name', value=os_name)
+    mocker.spy(tox, '_exit_code_str')
     if exit_code is None:
         exception = tox.exception.InvocationError("<command>")
     else:
         exception = tox.exception.InvocationError("<command>", exit_code)
     result = str(exception)
+    # check that mocker works,
+    # because it will be our only test in test_z_cmdline.py::test_exit_code
+    # need the mocker.spy above
+    assert tox._exit_code_str.call_count == 1
+    assert tox._exit_code_str.call_args == mocker.call('InvocationError', "<command>", exit_code)
     if exit_code is None:
         needle = "(exited with code"
         assert needle not in result
     else:
         needle = "(exited with code %d)" % exit_code
         assert needle in result
-        if exit_code > 128:
-            needle = ("Note: On unix systems, an exit code larger than 128 often "
-                      "means a fatal error signal")
-            assert needle in result
-            if exit_code == 128 + signal.SIGTERM:
-                eg_number = signal.SIGTERM
-                eg_name = "SIGTERM"
-            else:
-                eg_number = 11
-                eg_name = "SIGSEGV"
-            eg_str = "(e.g. {}=128+{}: {})".format(eg_number+128, eg_number, eg_name)
-            assert eg_str in result
+        note = ("Note: this exit code might indicate a fatal error signal")
+        if (os_name == 'posix') and (exit_code == 128 + signal.SIGTERM):
+            assert note in result
+            number = signal.SIGTERM
+            name = "SIGTERM"
+            signal_str = "({} - 128 = {}: {})".format(exit_code, number, name)
+            assert signal_str in result
+        else:
+            assert note not in result

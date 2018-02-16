@@ -1,3 +1,4 @@
+import os
 import signal
 
 from pkg_resources import DistributionNotFound
@@ -12,6 +13,28 @@ try:
     __version__ = _full_version.split('+', 1)[0]
 except DistributionNotFound:
     __version__ = '0.0.0.dev0'
+
+
+# separate function because pytest-mock `spy` does not work on Exceptions
+# can use neither a class method nor a static because of
+# https://bugs.python.org/issue23078
+# even a normal method failed with
+# TypeError: descriptor '__getattribute__' requires a 'BaseException' object but received a 'type'
+def _exit_code_str(exception_name, command, exit_code):
+    """ string representation for an InvocationError, with exit code """
+    str_ = "%s for command %s" % (exception_name, command)
+    if exit_code is not None:
+        str_ += " (exited with code %d)" % (exit_code)
+        if (os.name == 'posix') and (exit_code > 128):
+            signals = {number: name
+                       for name, number in vars(signal).items()
+                       if name.startswith("SIG")}
+            number = exit_code - 128
+            name = signals.get(number)
+            if name:
+                str_ += ("\nNote: this exit code might indicate a fatal error signal "
+                         "({} - 128 = {}: {})".format(number+128, number, name))
+    return str_
 
 
 class exception:
@@ -43,20 +66,7 @@ class exception:
             self.exit_code = exit_code
 
         def __str__(self):
-            str_ = "%s for command %s" % (self.__class__.__name__, self.command)
-            if self.exit_code is not None:
-                str_ += " (exited with code %d)" % (self.exit_code)
-                if self.exit_code > 128:
-                    signals = {number: name
-                               for name, number in vars(signal).items()
-                               if name.startswith("SIG")}
-                    number = self.exit_code - 128
-                    name = signals.get(number)
-                    (eg_number, eg_name) = (number, name) if name else (11, "SIGSEGV")
-                    str_ += ("\nNote: On unix systems, an exit code larger than 128 often "
-                             "means a fatal error signal "
-                             "(e.g. {}=128+{}: {})".format(eg_number+128, eg_number, eg_name))
-            return str_
+            return _exit_code_str(self.__class__.__name__, self.command, self.exit_code)
 
     class MissingFile(Error):
         """ an error while invoking a script. """
