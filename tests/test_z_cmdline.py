@@ -922,7 +922,8 @@ def test_exit_code(initproj, cmd, exit_code, mocker):
         (call_error_name, call_command, call_exit_code) = args
         assert call_error_name == 'InvocationError'
         # quotes are removed in result.out
-        expected_command_arg = 'python -c import sys; sys.exit(%d)' % exit_code
+        # do not include "python" as it is changed to python.EXE by appveyor
+        expected_command_arg = ' -c import sys; sys.exit(%d)' % exit_code
         assert expected_command_arg in call_command
         assert call_exit_code == exit_code
     else:
