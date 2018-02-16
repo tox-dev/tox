@@ -7,7 +7,6 @@ from pkg_resources import get_distribution
 from .hookspecs import hookimpl
 from .hookspecs import hookspec
 
-
 try:
     _full_version = get_distribution(__name__).version
     __version__ = _full_version.split('+', 1)[0]
