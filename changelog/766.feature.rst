@@ -1,0 +1,1 @@
+Hint for possible signal upon ``InvocationError``, on posix systems - by @ederag and @asottile.
