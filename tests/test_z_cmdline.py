@@ -906,18 +906,26 @@ def test_tox_cmdline(monkeypatch):
         tox.cmdline(['caller_script', '--help'])
 
 
-@pytest.mark.parametrize('exitcode', [0, 5, 129])
-def test_exitcode(initproj, cmd, exitcode):
-    tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exitcode
+@pytest.mark.parametrize('exit_code', [0, 6])
+def test_exit_code(initproj, cmd, exit_code, mocker):
+    """ Check for correct InvocationError, with exit code,
+        except for zero exit code """
+    mocker.spy(tox, '_exit_code_str')
+    tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exit_code
     initproj("foo", filedefs={'tox.ini': tox_ini_content})
-    result = cmd()
-    if exitcode:
-        needle = "(exited with code %d)" % exitcode
-        assert any(needle in line for line in result.outlines)
-        if exitcode > 128:
-            needle = ("Note: On unix systems, an exit code larger than 128 "
-                      "often means a fatal error (e.g. 139=128+11: segmentation fault)")
-            assert any(needle in line for line in result.outlines)
+    cmd()
+    if exit_code:
+        # need mocker.spy above
+        assert tox._exit_code_str.call_count == 1
+        (args, kwargs) = tox._exit_code_str.call_args
+        assert kwargs == {}
+        (call_error_name, call_command, call_exit_code) = args
+        assert call_error_name == 'InvocationError'
+        # quotes are removed in result.out
+        # do not include "python" as it is changed to python.EXE by appveyor
+        expected_command_arg = ' -c import sys; sys.exit(%d)' % exit_code
+        assert expected_command_arg in call_command
+        assert call_exit_code == exit_code
     else:
-        needle = "(exited with code"
-        assert all(needle not in line for line in result.outlines)
+        # need mocker.spy above
+        assert tox._exit_code_str.call_count == 0
