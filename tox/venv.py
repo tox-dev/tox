@@ -229,10 +229,10 @@ class VirtualEnv(object):
                 break
         else:
             return True
-        for conf_file in (setup_py, setup_cfg):
-            if conf_file.check() and conf_file.mtime() > egg_info.mtime():
-                return True
-        return False
+        return any(
+            conf_file.check() and conf_file.mtime() > egg_info.mtime()
+            for conf_file in (setup_py, setup_cfg)
+        )
 
     def developpkg(self, setupdir, action):
         assert action is not None
