@@ -8,7 +8,7 @@ if [ -z "$1" ]; then
     echo "workflow: $0 <command> [arg]"
     echo "    prep <version>"
     echo "    upload <devpi username>"
-    echo "    test <devpi username> (optional)"
+    echo "    test (optional)"
     echo "    release"
     exit 1
 fi
