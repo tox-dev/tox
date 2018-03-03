@@ -25,6 +25,33 @@ on Github:
 
 .. towncrier release notes start
 
+3.0.0rc2 (2018-03-03)
+---------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix #755 by reverting the ``cmdline`` import to the old location and changing
+  the entry point instead - by @fschulze (`#755
+  <https://github.com/tox-dev/tox/issues/755>`_)
+
+
+Features
+^^^^^^^^
+
+- ``tox`` displays exit code together with ``InvocationError`` - by @blueyed
+  and @ederag. (`#290 <https://github.com/tox-dev/tox/issues/290>`_)
+- Hint for possible signal upon ``InvocationError``, on posix systems - by
+  @ederag and @asottile. (`#766 <https://github.com/tox-dev/tox/issues/766>`_)
+
+
+Documentation improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Change favicon to the vector beach ball - by @hazalozturk (`#748
+  <https://github.com/tox-dev/tox/issues/748>`_)
+
+
 3.0.0rc1 (2018-01-27)
 ---------------------
 
