@@ -84,6 +84,6 @@ class exception:
             super(exception.MinVersionError, self).__init__(message)
 
 
-from .session import main as cmdline  # noqa
+from .session import run_main as cmdline  # noqa
 
 __all__ = ('hookspec', 'hookimpl', 'cmdline', 'exception', '__version__')
