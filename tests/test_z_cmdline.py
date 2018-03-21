@@ -2,6 +2,7 @@ import os
 import platform
 import re
 import subprocess
+import sys
 
 import py
 import pytest
@@ -902,8 +903,9 @@ def test_tox_quickstart_script():
 
 
 def test_tox_cmdline(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', ['caller_script', '--help'])
     with pytest.raises(SystemExit):
-        tox.cmdline(['caller_script', '--help'])
+        tox.cmdline()
 
 
 @pytest.mark.parametrize('exit_code', [0, 6])
