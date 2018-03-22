@@ -25,6 +25,16 @@ on Github:
 
 .. towncrier release notes start
 
+3.0.0rc3 (2018-03-22)
+---------------------
+
+Bugfixes
+^^^^^^^^
+
+- Revert breaking change of tox.cmdline not callable with no args - by
+  @gaborbernat. (`#773 <https://github.com/tox-dev/tox/issues/773>`_)
+
+
 3.0.0rc2 (2018-03-03)
 ---------------------
 
