@@ -1,1 +1,0 @@
-fix #755 by reverting the ``cmdline`` import to the old location and changing the entry point instead - by @fschulze
