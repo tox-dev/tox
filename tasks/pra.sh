@@ -29,9 +29,9 @@ dispatch () {
         fi
         prep
     elif [ "$1" == "upload" ]; then
-         devpi_upload $2
+        devpi_upload $2
     elif [ "$1" == "test" ]; then
-         devpi_cloud_test
+        devpi_cloud_test
     elif [ "$1" == "release" ]; then
         pypi_release
     else
@@ -70,11 +70,13 @@ devpi_upload () {
 }
 
 devpi_cloud_test () {
+    dctPath=../devpi-cloud-test
     cloudTestPath=../devpi-cloud-test-tox
     if [ ! -d "$cloudTestPath" ]; then
         echo "needs $cloudTestPath"
         exit 1
     fi
+    pip install -e ${dctPath}
     _confirm "trigger devpi cloud tests for ${VERSION}?"
     cd ${cloudTestPath}
     dct trigger ${VERSION}
@@ -82,13 +84,20 @@ devpi_cloud_test () {
     cd ../tox
 }
 
-# TODO get devpi push to work again
 pypi_release () {
     PACKAGES=$(ls dist/*)
     _confirm "upload to pypi: $PACKAGES?"
+    # TODO get devpi push to work again
+    # get rid of this ...
     twine upload ${PACKAGES}
-    git push upstream master
-    git push upstream ${VERSION}
+    # ... and do this when this is fixed:
+    # https://github.com/devpi/devpi/issues/449
+    # devpi push tox==${VERSION} pypi:pypi
+
+    # TODO do the right thing here when using a release branch
+    # promote changes in code and tag to repo
+    # git push upstream master
+    # git push upstream ${VERSION}
 }
 
 _confirm () {
