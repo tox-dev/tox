@@ -63,8 +63,8 @@ devpi_upload () {
         exit 1
     fi
     echo "loggging in to devpi $1"
-    devpi login $1
     devpi use https://m.devpi.net/$1/dev
+    devpi login $1
     _confirm "upload to devpi: $(ls dist/*)?"
     devpi upload dist/*
 }
