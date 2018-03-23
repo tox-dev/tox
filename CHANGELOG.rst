@@ -28,7 +28,8 @@ on Github:
 3.0.0rc4 (2018-03-23)
 ---------------------
 
-No significant changes.
+- fix up tox.cmdline to be callable without args - by
+  @gaborbernat. (`#773 <https://github.com/tox-dev/tox/issues/773>`_)
 
 
 3.0.0rc3 (2018-03-22)
