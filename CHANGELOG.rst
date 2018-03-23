@@ -25,6 +25,12 @@ on Github:
 
 .. towncrier release notes start
 
+3.0.0rc4 (2018-03-23)
+---------------------
+
+No significant changes.
+
+
 3.0.0rc3 (2018-03-22)
 ---------------------
 
