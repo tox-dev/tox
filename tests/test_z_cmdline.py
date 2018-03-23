@@ -902,10 +902,15 @@ def test_tox_quickstart_script():
     assert result == 0
 
 
-def test_tox_cmdline(monkeypatch):
+def test_tox_cmdline_no_args(monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['caller_script', '--help'])
     with pytest.raises(SystemExit):
         tox.cmdline()
+
+
+def test_tox_cmdline_args(monkeypatch):
+    with pytest.raises(SystemExit):
+        tox.cmdline(['caller_script', '--help'])
 
 
 @pytest.mark.parametrize('exit_code', [0, 6])

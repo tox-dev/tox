@@ -34,8 +34,10 @@ def prepare(args):
     return config
 
 
-def run_main():
-    main(sys.argv[1:])
+def run_main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    main(args)
 
 
 def main(args):
