@@ -89,6 +89,7 @@ pypi_release () {
     _confirm "upload to pypi: $PACKAGES?"
     # TODO get devpi push to work again
     # get rid of this ...
+    pip install -U twine
     twine upload ${PACKAGES}
     # ... and do this when this is fixed:
     # https://github.com/devpi/devpi/issues/449
