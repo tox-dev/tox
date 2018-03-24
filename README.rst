@@ -1,16 +1,21 @@
 .. image:: https://img.shields.io/pypi/v/tox.svg
    :target: https://pypi.org/project/tox/
+   :alt: Latest version on pypi
 .. image:: https://img.shields.io/pypi/pyversions/tox.svg
   :target: https://pypi.org/project/tox/
+  :alt: Supported Python versions
 .. image:: https://travis-ci.org/tox-dev/tox.svg?branch=master
-    :target: https://travis-ci.org/tox-dev/tox
-.. image:: https://img.shields.io/appveyor/ci/RonnyPfannschmidt/tox/master.svg
-    :target: https://ci.appveyor.com/project/RonnyPfannschmidt/tox
+  :target: https://travis-ci.org/tox-dev/tox
+  :alt: Travis-CI build status
+.. image:: https://ci.appveyor.com/api/projects/status/n7d984nl8nevtou8/branch/master?svg=true
+  :target: https://ci.appveyor.com/project/obestwalter/tox/branch/master
+  :alt: Appveyor build status
 .. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/tox-dev/tox
+  :alt: Code coverage Status
 .. image:: https://readthedocs.org/projects/tox/badge/?version=latest
   :target: http://tox.readthedocs.io/en/latest/?badge=latest
-  :alt: Documentation Status
+  :alt: Documentation status
 
 tox automation project
 ======================
