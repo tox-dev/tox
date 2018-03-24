@@ -236,3 +236,39 @@ Repository owners can rest assured that no ``tox-dev`` administrator will ever m
 releases of your repository or take ownership in any way, except in rare cases
 where someone becomes unresponsive after months of contact attempts.
 As stated, the objective is to share maintenance and avoid "plugin-abandon".
+
+Poject organization
+-------------------
+
+Team members can review code and merge PRs. They can also label issues and change their status.
+
+Issue labels
+^^^^^^^^^^^^
+
+Short overview about how labels should be used:
+
+**bugs:**
+
+* bug:minor -> does not affect many people or has no big impact
+* bug:normal -> affects many people or has quite an impact
+* bug:critical -> bad, bad thing (e.g. security or can cause data loss). Should be fixed as soon as possible
+* bug:upstream -> something does not behave as it should, but can't or shouldn't be fixed in tox, but in a project tox depends on (e.g. pluggy, virtualenv, pip). Will be left open until the upstream bug is fixed for better visibility. Ideally we have an xfailing reproducer so we noticed automatically noticed if the bug is fixed (e.g. see https://github.com/tox-dev/tox/pull/553)
+
+**features:**
+
+* feature:new -> something does not exist yet, but should
+* feature:change -> something exists already but should behave differently
+* feature:deprecate -> something already exists, but shouldn't really :)
+
+**types:**
+
+* type:internal -> should have no impact on the user (refactoring, infrastructure, tools, etc.)
+* type:organization -> has to do with the organization of the project (process)
+* type:invalid -> not applicable - e.g. a misunderstanging about how tox works or a "bug" that is actually a feature. This could cleared up right in the issue.
+* type:question -> not a bug or feature request, more of a question about how things work or if something is a bug or a feature
+
+**levels:**
+
+easy, medium and hard
+
+A completely from the hip gut feeling estimation of how hard something is to fix or implement, basing on size of necessary changes and necessary knowledge of the tox code base and its surrounding ecosystem.
