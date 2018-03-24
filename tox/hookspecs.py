@@ -1,9 +1,11 @@
 """ Hook specifications for tox.
 
 """
+from pluggy import HookimplMarker
 from pluggy import HookspecMarker
 
 hookspec = HookspecMarker("tox")
+hookimpl = HookimplMarker("tox")
 
 
 @hookspec
