@@ -7,6 +7,7 @@ set -e
 if [ -z "$1" ]; then
     echo "workflow: $0 <command> [arg]"
     echo "    prep <version>"
+    echo "    build"
     echo "    upload <devpi username>"
     echo "    test (optional)"
     echo "    release"
@@ -28,6 +29,8 @@ dispatch () {
             exit 1
         fi
         prep
+    elif [ "$1" == "build" ]; then
+        build
     elif [ "$1" == "upload" ]; then
         devpi_upload $2
     elif [ "$1" == "test" ]; then
@@ -50,6 +53,9 @@ prep () {
     _confirm "commit changelog and tag repo as ${VERSION}?"
     git commit -m "release preparation for ${VERSION}" || true
     git tag -s ${VERSION} -m "release tox ${VERSION}" || true
+}
+
+build () {
     rm dist/tox* || true
     python setup.py sdist bdist_wheel
     pip install -U dist/tox-${VERSION}.tar.gz
