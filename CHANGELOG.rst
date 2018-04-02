@@ -25,52 +25,8 @@ on Github:
 
 .. towncrier release notes start
 
-3.0.0rc4 (2018-03-23)
----------------------
-
-- fix up tox.cmdline to be callable without args - by
-  @gaborbernat. (`#773 <https://github.com/tox-dev/tox/issues/773>`_)
-
-
-3.0.0rc3 (2018-03-22)
----------------------
-
-Bugfixes
-^^^^^^^^
-
-- Revert breaking change of tox.cmdline not callable with no args - by
-  @gaborbernat. (`#773 <https://github.com/tox-dev/tox/issues/773>`_)
-
-
-3.0.0rc2 (2018-03-03)
----------------------
-
-Bugfixes
-^^^^^^^^
-
-- fix #755 by reverting the ``cmdline`` import to the old location and changing
-  the entry point instead - by @fschulze (`#755
-  <https://github.com/tox-dev/tox/issues/755>`_)
-
-
-Features
-^^^^^^^^
-
-- ``tox`` displays exit code together with ``InvocationError`` - by @blueyed
-  and @ederag. (`#290 <https://github.com/tox-dev/tox/issues/290>`_)
-- Hint for possible signal upon ``InvocationError``, on posix systems - by
-  @ederag and @asottile. (`#766 <https://github.com/tox-dev/tox/issues/766>`_)
-
-
-Documentation improvements
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Change favicon to the vector beach ball - by @hazalozturk (`#748
-  <https://github.com/tox-dev/tox/issues/748>`_)
-
-
-3.0.0rc1 (2018-01-27)
----------------------
+3.0.0 (2018-04-02)
+------------------
 
 Bugfixes
 ^^^^^^^^
@@ -92,11 +48,22 @@ Bugfixes
   Error`` on Windows, this was fixed by using a simpler method to update the
   read buffers. - by @fschulze (`#727
   <https://github.com/tox-dev/tox/issues/727>`_)
+- (only affected rc releases) fix up tox.cmdline to be callable without args - by
+  @gaborbernat. (`#773 <https://github.com/tox-dev/tox/issues/773>`_)
+- (only affected rc releases) Revert breaking change of tox.cmdline not callable
+  with no args - by @gaborbernat. (`#773 <https://github.com/tox-dev/tox/issues/773>`_)
+- (only affected rc releases) fix #755 by reverting the ``cmdline`` import to the old
+  location and changing the entry point instead - by @fschulze
+  (`#755 <https://github.com/tox-dev/tox/issues/755>`_)
 
 
 Features
 ^^^^^^^^
 
+- ``tox`` displays exit code together with ``InvocationError`` - by @blueyed
+  and @ederag. (`#290 <https://github.com/tox-dev/tox/issues/290>`_)
+- Hint for possible signal upon ``InvocationError``, on posix systems - by
+  @ederag and @asottile. (`#766 <https://github.com/tox-dev/tox/issues/766>`_)
 - Add a ``-q`` option to progressively silence tox's output. For each time you
   specify ``-q`` to tox, the output provided by tox reduces. This option allows
   you to see only your command output without the default verbosity of what tox
@@ -128,6 +95,8 @@ Features
 Documentation improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Change favicon to the vector beach ball - by @hazalozturk
+  (`#748 <https://github.com/tox-dev/tox/issues/748>`_)
 - Change sphinx theme to alabaster and add logo/favicon - by @hazalozturk
   (`#639 <https://github.com/tox-dev/tox/issues/639>`_)
 
@@ -136,8 +105,8 @@ Miscellaneous / trivial changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Running ``tox`` without a ``setup.py`` now has a more friendly error message
-  and gives troubleshooting suggestions - by @Volcyy. (`#331
-  <https://github.com/tox-dev/tox/issues/331>`_)
+  and gives troubleshooting suggestions - by @Volcyy.
+  (`#331 <https://github.com/tox-dev/tox/issues/331>`_)
 - Fix pycodestyle (formerly pep8) errors E741 (ambiguous variable names, in
   this case, 'l's) and remove ignore of this error in tox.ini - by @cryvate
   (`#663 <https://github.com/tox-dev/tox/issues/663>`_)
