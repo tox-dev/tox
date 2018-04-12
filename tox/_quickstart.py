@@ -185,7 +185,7 @@ What command should be used to test your project -- examples:
     - python setup.py test
     - nosetests package.module
     - trial package.module''')
-    do_prompt(d, 'commands', 'Command to run to test project', '{envpython} setup.py test')
+    do_prompt(d, 'commands', 'Command to run to test project', 'pytest')
 
     default_deps = ' '
     if any(c in d['commands'] for c in ['pytest', 'py.test']):
