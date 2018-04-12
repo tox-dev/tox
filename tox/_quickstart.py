@@ -44,7 +44,6 @@ import sys
 from codecs import open
 from os import path
 
-TERM_ENCODING = getattr(sys.stdin, 'encoding', None)
 
 from tox import __version__  # noqa #E402 module level import not at top of file
 
@@ -55,10 +54,7 @@ try:
 except NameError:
     term_input = input
 
-all_envs = ['py27', 'py34', 'py35', 'py36', 'pypy', 'jython']
-
-PROMPT_PREFIX = '> '
-
+ALL_PY_ENVS = ['py27', 'py34', 'py35', 'py36', 'pypy', 'jython']
 QUICKSTART_CONF = '''\
 # tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
@@ -69,8 +65,8 @@ QUICKSTART_CONF = '''\
 envlist = %(envlist)s
 
 [testenv]
-commands = %(commands)s
 deps = %(deps)s
+commands = %(commands)s
 '''
 
 
@@ -111,19 +107,21 @@ def ok(x):
 
 
 def do_prompt(d, key, text, default=None, validator=nonempty):
+    prompt_prefix = '> '
     while True:
         if default:
-            prompt = PROMPT_PREFIX + '%s [%s]: ' % (text, default)
+            prompt = prompt_prefix + '%s [%s]: ' % (text, default)
         else:
-            prompt = PROMPT_PREFIX + text + ': '
+            prompt = prompt_prefix + text + ': '
         x = term_input(prompt)
         if default and not x:
             x = default
         if sys.version_info < (3,) and not isinstance(x, unicode):  # noqa
             # for Python 2.x, try to get a Unicode string out of it
             if x.decode('ascii', 'replace').encode('ascii', 'replace') != x:
-                if TERM_ENCODING:
-                    x = x.decode(TERM_ENCODING)
+                term_encoding = getattr(sys.stdin, 'encoding', None)
+                if term_encoding:
+                    x = x.decode(term_encoding)
                 else:
                     print('* Note: non-ASCII characters entered '
                           'and terminal encoding unknown -- assuming '
@@ -143,50 +141,37 @@ def do_prompt(d, key, text, default=None, validator=nonempty):
 
 
 def ask_user(d):
-    """Ask the user for quickstart values missing from *d*.
-
-    """
-
+    """Ask the user for quickstart values missing from *d*."""
     print('Welcome to the tox %s quickstart utility.' % __version__)
-    print('''
-This utility will ask you a few questions and then generate a simple tox.ini
-file to help get you started using tox.
-
-Please enter values for the following settings (just press Enter to
-accept a default value, if one is given in brackets).''')
-
-    sys.stdout.write('\n')
-
-    print('''
-What Python versions do you want to test against? Choices:
-    [1] py27
-    [2] py27, py36
-    [3] (All versions) %s
-    [4] Choose each one-by-one''' % ', '.join(all_envs))
+    print('This utility will ask you a few questions and then generate a simple tox.ini '
+          'file to help get you started using tox.\n'
+          'Please enter values for the following settings (just press Enter to accept a '
+          'default value, if one is given in brackets).\n')
+    print('What Python versions do you want to test against? Choices:'
+          '    [1] py27\n'
+          '    [2] py27, py36\n'
+          '    [3] (All versions) %s\n'
+          '    [4] Choose each one-by-one' % ', '.join(ALL_PY_ENVS))
     do_prompt(d, 'canned_pyenvs', 'Enter the number of your choice',
               '3', choice('1', '2', '3', '4'))
-
     if d['canned_pyenvs'] == '1':
         d['py27'] = True
     elif d['canned_pyenvs'] == '2':
         for pyenv in ('py27', 'py36'):
             d[pyenv] = True
     elif d['canned_pyenvs'] == '3':
-        for pyenv in all_envs:
+        for pyenv in ALL_PY_ENVS:
             d[pyenv] = True
     elif d['canned_pyenvs'] == '4':
-        for pyenv in all_envs:
+        for pyenv in ALL_PY_ENVS:
             if pyenv not in d:
                 do_prompt(d, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y', boolean)
-
-    print('''
-What command should be used to test your project -- examples:
-    - pytest
-    - python setup.py test
-    - nosetests package.module
-    - trial package.module''')
+    print('What command should be used to test your project -- examples:\n'
+          '    - pytest\n'
+          '    - python setup.py test\n'
+          '    - nosetests package.module\n'
+          '    - trial package.module\n')
     do_prompt(d, 'commands', 'Command to run to test project', 'pytest')
-
     default_deps = ' '
     if any(c in d['commands'] for c in ['pytest', 'py.test']):
         default_deps = 'pytest'
@@ -194,101 +179,57 @@ What command should be used to test your project -- examples:
         default_deps = 'nose'
     if 'trial' in d['commands']:
         default_deps = 'twisted'
-
-    print('''
-What extra dependencies do your tests have?''')
+    print('What extra dependencies do your tests have?')
     do_prompt(d, 'deps', 'Comma-separated list of dependencies', default_deps)
 
 
 def process_input(d):
-    d['envlist'] = ', '.join([env for env in all_envs if d.get(env) is True])
-    d['deps'] = '\n' + '\n'.join([
-        '    %s' % dep.strip()
-        for dep in d['deps'].split(',')])
-
+    d['envlist'] = ', '.join([env for env in ALL_PY_ENVS if d.get(env) is True])
+    d['deps'] = '\n' + '\n'.join(['    %s' % dep.strip() for dep in d['deps'].split(',')])
     return d
-
-
-def rtrim_right(text):
-    lines = []
-    for line in text.split("\n"):
-        lines.append(line.rstrip())
-    return "\n".join(lines)
 
 
 def generate(d, overwrite=True, silent=False):
     """Generate project based on values in *d*."""
-
-    conf_text = QUICKSTART_CONF % d
-    conf_text = rtrim_right(conf_text)
-
-    def write_file(fpath, mode, content):
-        print('Creating file %s.' % fpath)
-        try:
-            with open(fpath, mode, encoding='utf-8') as f:
-                f.write(content)
-        except IOError:
-            print('Error writing file.')
-            raise
-
-    sys.stdout.write('\n')
-
-    fpath = path.join(d.get('path', ''), 'tox.ini')
-
+    conf_text = '\n'.join([l.rstrip() for l in (QUICKSTART_CONF % d).split("\n")])
+    fpath = path.join(d.get('3path', ''), 'tox.ini')
     if path.isfile(fpath) and not overwrite:
         print('File %s already exists.' % fpath)
-        do_prompt(
-            d,
-            'fpath',
-            'Alternative path to write tox.ini contents to',
-            path.join(d.get('path', ''), 'tox-generated.ini'))
+        do_prompt(d, 'fpath', 'Alternative path to write tox.ini contents to',
+                  path.join(d.get('path', ''), 'tox-generated.ini'))
         fpath = d['fpath']
-
-    write_file(fpath, 'w', conf_text)
-
+    with open(fpath, 'w', encoding='utf-8') as f:
+        f.write(conf_text)
     if silent:
         return
-    sys.stdout.write('\n')
-    print('Finished: A tox.ini file has been created. For information on this file, '
-          'see https://tox.readthedocs.io/en/latest/config.html')
-    print('''
-Execute `tox` to test your project.
-''')
+    print('Finished: Your tox.ini has been created. For information on this file, '
+          'see https://tox.readthedocs.io/en/latest/config.html\n'
+          'Execute `tox` to test your project.')
 
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(
-        description='Command-line script to quickly setup tox.ini for a Python project.'
-    )
+        description='Command-line script to quickly setup tox.ini for a Python project.')
     parser.add_argument(
         'root', type=str, nargs='?', default='.',
-        help='Custom root directory to write tox.ini to. Defaults to current directory.'
-    )
+        help='Custom root directory to write tox.ini to. Defaults to current directory.')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
-
-    args = argv[1:]
-    return parser.parse_args(args)
+    return parser.parse_args(argv[1:])
 
 
 def main(argv=sys.argv):
     args = parse_args(argv)
-
-    d = {}
-    d['path'] = args.root
-
+    d = {'path': args.root}
     try:
         ask_user(d)
     except (KeyboardInterrupt, EOFError):
-        print()
-        print('[Interrupted.]')
+        print('\n[Interrupted.]')
         return
-
     d = process_input(d)
     try:
         generate(d, overwrite=False)
     except Exception:
         return 2
-
     return 0
 
 
