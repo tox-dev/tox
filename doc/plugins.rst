@@ -44,17 +44,19 @@ contents of ``tox_fireworks.py``:
 
 .. code-block:: python
 
-    import tox
+    import pluggy
 
-    @tox.hookimpl
+    hookimpl = pluggy.HookimplMarker("tox")
+
+    @hookimpl
     def tox_addoption(parser):
         """Add command line option to display fireworks on request."""
 
-    @tox.hookimpl
+    @hookimpl
     def tox_configure(config):
         """Post process config after parsing."""
 
-    @tox.hookimpl
+    @hookimpl
     def tox_runenvreport(config):
         """Display fireworks if all was fine and requested."""
 
