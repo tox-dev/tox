@@ -16,15 +16,14 @@ import time
 import py
 
 import tox
-from tox._verlib import IrrationalVersionError
-from tox._verlib import NormalizedVersion
-from tox.config import parseconfig
-from tox.result import ResultLog
-from tox.venv import VirtualEnv
+import tox._verlib
+import tox.config
+import tox.result
+import tox.venv
 
 
 def prepare(args):
-    config = parseconfig(args)
+    config = tox.config.parseconfig(args)
     if config.option.help:
         show_help(config)
         raise SystemExit(0)
@@ -34,7 +33,7 @@ def prepare(args):
     return config
 
 
-def run_main(args=None):
+def cmdline(args=None):
     if args is None:
         args = sys.argv[1:]
     main(args)
@@ -354,7 +353,7 @@ class Session:
     def __init__(self, config, popen=subprocess.Popen, Report=Reporter):
         self.config = config
         self.popen = popen
-        self.resultlog = ResultLog()
+        self.resultlog = tox.result.ResultLog()
         self.report = Report(self)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
@@ -386,7 +385,7 @@ class Session:
             self.report.error(
                 "venv %r in %s would delete project" % (name, envconfig.envdir))
             raise tox.exception.ConfigError('envdir must not equal toxinidir')
-        venv = VirtualEnv(envconfig=envconfig, session=self)
+        venv = tox.venv.VirtualEnv(envconfig=envconfig, session=self)
         self._name2venv[name] = venv
         return venv
 
@@ -766,6 +765,6 @@ def getversion(basename):
         return None
     version = m.group(1)
     try:
-        return NormalizedVersion(version)
-    except IrrationalVersionError:
+        return tox._verlib.NormalizedVersion(version)
+    except tox._verlib.IrrationalVersionError:
         return None

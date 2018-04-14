@@ -3,7 +3,7 @@
     tox._quickstart
     ~~~~~~~~~~~~~~~~~
 
-    Command-line script to quickly setup tox.ini for a Python project
+    Command-line script to quickly setup a configuration for a Python project
 
     This file was heavily inspired by and uses code from ``sphinx-quickstart``
     in the BSD-licensed `Sphinx project`_.
@@ -40,21 +40,19 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 import argparse
+import codecs
+import os
 import sys
-from codecs import open
-from os import path
 
+import six
 
-from tox import __version__  # noqa #E402 module level import not at top of file
+import tox
 
-# function to get input from terminal -- overridden by the test suite
-try:
-    # this raw_input is not converted by 2to3
-    term_input = raw_input
-except NameError:
-    term_input = input
-
-ALL_PY_ENVS = ['py27', 'py34', 'py35', 'py36', 'pypy', 'jython']
+NAME = 'tox.ini'
+ALTERNATIVE_NAME = 'tox-generated.ini'
+CURRENT_RELEASE_ENV = 'py36'
+"""Should hold currently released py -> for easy updating as default in choices"""
+ALL_PY_ENVS = ['py27', 'py34', 'py35', CURRENT_RELEASE_ENV, 'pypy', 'jython']
 QUICKSTART_CONF = '''\
 # tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
@@ -65,8 +63,10 @@ QUICKSTART_CONF = '''\
 envlist = %(envlist)s
 
 [testenv]
-deps = %(deps)s
-commands = %(commands)s
+deps =
+    %(deps)s
+commands =
+    %(commands)s
 '''
 
 
@@ -106,131 +106,144 @@ def ok(x):
     return x
 
 
-def do_prompt(d, key, text, default=None, validator=nonempty):
-    prompt_prefix = '> '
+def list_modificator(answer, existing=None):
+    if not existing:
+        existing = []
+    if not isinstance(existing, list):
+        existing = [existing]
+    if not answer:
+        return existing
+    existing.extend([t.strip() for t in answer.split(',') if t.strip()])
+    return existing
+
+
+def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=None):
     while True:
-        if default:
-            prompt = prompt_prefix + '%s [%s]: ' % (text, default)
-        else:
-            prompt = prompt_prefix + text + ': '
-        x = term_input(prompt)
-        if default and not x:
-            x = default
-        if sys.version_info < (3,) and not isinstance(x, unicode):  # noqa
+        prompt = '> %s [%s]: ' % (text, default) if default else '> %s: ' % text
+        answer = six.moves.input(prompt)
+        if default and not answer:
+            answer = default
+        # FIXME use six instead of self baked solution
+        if sys.version_info < (3,) and not isinstance(answer, unicode):  # noqa
             # for Python 2.x, try to get a Unicode string out of it
-            if x.decode('ascii', 'replace').encode('ascii', 'replace') != x:
+            if answer.decode('ascii', 'replace').encode('ascii', 'replace') != answer:
                 term_encoding = getattr(sys.stdin, 'encoding', None)
                 if term_encoding:
-                    x = x.decode(term_encoding)
+                    answer = answer.decode(term_encoding)
                 else:
-                    print('* Note: non-ASCII characters entered '
-                          'and terminal encoding unknown -- assuming '
-                          'UTF-8 or Latin-1.')
+                    print('* Note: non-ASCII characters entered but terminal encoding unknown '
+                          '-> assuming UTF-8 or Latin-1.')
                     try:
-                        x = x.decode('utf-8')
+                        answer = answer.decode('utf-8')
                     except UnicodeDecodeError:
-                        x = x.decode('latin1')
-        try:
-            x = validator(x)
-        except ValidationError:
-            err = sys.exc_info()[1]
-            print('* ' + str(err))
-            continue
+                        answer = answer.decode('latin1')
+        if validator:
+            try:
+                answer = validator(answer)
+            except ValidationError:
+                err = sys.exc_info()[1]
+                print('* ' + str(err))
+                continue
         break
-    d[key] = x
+    map_[key] = modificator(answer, map_.get(key)) if modificator else answer
 
 
-def ask_user(d):
-    """Ask the user for quickstart values missing from *d*."""
-    print('Welcome to the tox %s quickstart utility.' % __version__)
-    print('This utility will ask you a few questions and then generate a simple tox.ini '
+def ask_user(map_):
+    """modify *map_* in place by getting info from the user."""
+    print('Welcome to the tox %s quickstart utility.' % tox.__version__)
+    print('This utility will ask you a few questions and then generate a simple configuration '
           'file to help get you started using tox.\n'
           'Please enter values for the following settings (just press Enter to accept a '
           'default value, if one is given in brackets).\n')
-    print('What Python versions do you want to test against? Choices:'
-          '    [1] py27\n'
-          '    [2] py27, py36\n'
+    print('What Python versions do you want to test against?\n'
+          '    [1] %s\n'
+          '    [2] py27, %s\n'
           '    [3] (All versions) %s\n'
-          '    [4] Choose each one-by-one' % ', '.join(ALL_PY_ENVS))
-    do_prompt(d, 'canned_pyenvs', 'Enter the number of your choice',
-              '3', choice('1', '2', '3', '4'))
-    if d['canned_pyenvs'] == '1':
-        d['py27'] = True
-    elif d['canned_pyenvs'] == '2':
-        for pyenv in ('py27', 'py36'):
-            d[pyenv] = True
-    elif d['canned_pyenvs'] == '3':
+          '    [4] Choose each one-by-one' % (
+              CURRENT_RELEASE_ENV, CURRENT_RELEASE_ENV, ', '.join(ALL_PY_ENVS)))
+    do_prompt(map_, 'canned_pyenvs', 'Enter the number of your choice',
+              default='3', validator=choice('1', '2', '3', '4'))
+    if map_['canned_pyenvs'] == '1':
+        map_[CURRENT_RELEASE_ENV] = True
+    elif map_['canned_pyenvs'] == '2':
+        for pyenv in ('py27', CURRENT_RELEASE_ENV):
+            map_[pyenv] = True
+    elif map_['canned_pyenvs'] == '3':
         for pyenv in ALL_PY_ENVS:
-            d[pyenv] = True
-    elif d['canned_pyenvs'] == '4':
+            map_[pyenv] = True
+    elif map_['canned_pyenvs'] == '4':
         for pyenv in ALL_PY_ENVS:
-            if pyenv not in d:
-                do_prompt(d, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y', boolean)
-    print('What command should be used to test your project -- examples:\n'
+            if pyenv not in map_:
+                do_prompt(map_, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y',
+                          validator=boolean)
+    print('What command should be used to test your project? Examples:\n'
           '    - pytest\n'
           '    - python setup.py test\n'
           '    - nosetests package.module\n'
           '    - trial package.module\n')
-    do_prompt(d, 'commands', 'Command to run to test project', 'pytest')
-    default_deps = ' '
-    if any(c in d['commands'] for c in ['pytest', 'py.test']):
-        default_deps = 'pytest'
-    if 'nosetests' in d['commands']:
-        default_deps = 'nose'
-    if 'trial' in d['commands']:
-        default_deps = 'twisted'
+    do_prompt(map_, 'commands', 'Type the command to run your tests',
+              default='pytest', modificator=list_modificator)
     print('What extra dependencies do your tests have?')
-    do_prompt(d, 'deps', 'Comma-separated list of dependencies', default_deps)
+    map_['deps'] = get_default_deps(map_['commands'])
+    if map_['deps']:
+        print("default dependencies are: %s" % map_['deps'])
+    do_prompt(map_, 'deps', 'Comma-separated list of dependencies',
+              validator=None, modificator=list_modificator)
 
 
-def process_input(d):
-    d['envlist'] = ', '.join([env for env in ALL_PY_ENVS if d.get(env) is True])
-    d['deps'] = '\n' + '\n'.join(['    %s' % dep.strip() for dep in d['deps'].split(',')])
-    return d
+def get_default_deps(commands):
+    if commands and any(c in str(commands) for c in ['pytest', 'py.test']):
+        return ['pytest']
+    if 'nosetests' in commands:
+        return ['nose']
+    if 'trial' in commands:
+        return ['twisted']
+    return []
 
 
-def generate(d, overwrite=True, silent=False):
+def post_process_input(map_):
+    map_['envlist'] = ', '.join([env for env in ALL_PY_ENVS if map_.get(env) is True])
+    map_['commands'] = '\n    '.join([cmd.strip() for cmd in map_['commands']])
+    map_['deps'] = '\n    '.join([dep.strip() for dep in set(map_['deps'])])
+
+
+def generate(map_):
     """Generate project based on values in *d*."""
-    conf_text = '\n'.join([l.rstrip() for l in (QUICKSTART_CONF % d).split("\n")])
-    fpath = path.join(d.get('3path', ''), 'tox.ini')
-    if path.isfile(fpath) and not overwrite:
-        print('File %s already exists.' % fpath)
-        do_prompt(d, 'fpath', 'Alternative path to write tox.ini contents to',
-                  path.join(d.get('path', ''), 'tox-generated.ini'))
-        fpath = d['fpath']
-    with open(fpath, 'w', encoding='utf-8') as f:
-        f.write(conf_text)
-    if silent:
-        return
-    print('Finished: Your tox.ini has been created. For information on this file, '
-          'see https://tox.readthedocs.io/en/latest/config.html\n'
-          'Execute `tox` to test your project.')
+    dpath = map_.get('path', os.getcwd())
+    altpath = os.path.join(dpath, ALTERNATIVE_NAME)
+    while True:
+        name = map_.get('name', NAME)
+        targetpath = os.path.join(dpath, name)
+        if not os.path.isfile(targetpath):
+            break
+        do_prompt(map_, 'name', '%s exists - choose an alternative' % targetpath, altpath)
+    with codecs.open(targetpath, 'w', encoding='utf-8') as f:
+        f.write('\n'.join([line.rstrip() for line in (QUICKSTART_CONF % map_).split("\n")]))
+        print('Finished: %s has been created. For information on this file, '
+              'see https://tox.readthedocs.io/en/latest/config.html\n'
+              'Execute `tox` to test your project.' % targetpath)
 
 
-def parse_args(argv):
+def parse_args():
     parser = argparse.ArgumentParser(
-        description='Command-line script to quickly setup tox.ini for a Python project.')
+        description='Command-line script to quickly tox config file for a Python project.')
     parser.add_argument(
         'root', type=str, nargs='?', default='.',
-        help='Custom root directory to write tox.ini to. Defaults to current directory.')
-    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
-    return parser.parse_args(argv[1:])
+        help='Custom root directory to write config to. Defaults to current directory.')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + tox.__version__)
+    return parser.parse_args()
 
 
-def main(argv=sys.argv):
-    args = parse_args(argv)
-    d = {'path': args.root}
+def main():
+    args = parse_args()
+    map_ = {'path': args.root}
     try:
-        ask_user(d)
+        ask_user(map_)
     except (KeyboardInterrupt, EOFError):
         print('\n[Interrupted.]')
-        return
-    d = process_input(d)
-    try:
-        generate(d, overwrite=False)
-    except Exception:
-        return 2
-    return 0
+        return 1
+    post_process_input(map_)
+    generate(map_)
 
 
 if __name__ == '__main__':

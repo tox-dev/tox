@@ -1,580 +1,211 @@
+import os
+
 import pytest
 
 import tox._quickstart
 
-
-@pytest.fixture(autouse=True)
-def cleandir(tmpdir):
-    tmpdir.chdir()
+ALL_PY_ENVS_AS_STRING = ', '.join(tox._quickstart.ALL_PY_ENVS)
+ALL_PY_ENVS_WO_LAST_AS_STRING = ', '.join(tox._quickstart.ALL_PY_ENVS[:-1])
 
 
-class TestToxQuickstartMain(object):
+class _term_input:
+    """Simulate a series of terminal inputs by popping them from a list if called."""
+    def __init__(self, inputs):
+        self._inputs = [str(i) for i in inputs]
 
-    def mock_term_input_return_values(self, return_values):
-        for return_val in return_values:
-            yield return_val
+    def extend(self, items):
+        self._inputs.extend(items)
 
-    def get_mock_term_input(self, return_values):
-        generator = self.mock_term_input_return_values(return_values)
+    def __str__(self):
+        return "|".join(self._inputs)
 
-        def mock_term_input(prompt):
-            try:
-                return next(generator)
-            except NameError:
-                return generator.next()  # noqa
-
-        return mock_term_input
-
-    def test_quickstart_main_choose_individual_pythons_and_pytest(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '4',  # Python versions: choose one by one
-                    'Y',  # py27
-                    'Y',  # py34
-                    'Y',  # py35
-                    'Y',  # py36
-                    'Y',  # pypy
-                    'N',  # jython
-                    'py.test',  # command to run tests
-                    'pytest'  # test dependencies
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, py36, pypy
-
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_choose_individual_pythons_and_nose_adds_deps(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '4',  # Python versions: choose one by one
-                    'Y',  # py27
-                    'Y',  # py34
-                    'Y',  # py35
-                    'Y',  # py36
-                    'Y',  # pypy
-                    'N',  # jython
-                    'nosetests',  # command to run tests
-                    ''  # test dependencies
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, py36, pypy
-
-[testenv]
-commands = nosetests
-deps =
-    nose
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_choose_individual_pythons_and_trial_adds_deps(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '4',  # Python versions: choose one by one
-                    'Y',  # py27
-                    'Y',  # py34
-                    'Y',  # py35
-                    'Y',  # py36
-                    'Y',  # pypy
-                    'N',  # jython
-                    'trial',  # command to run tests
-                    ''  # test dependencies
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, py36, pypy
-
-[testenv]
-commands = trial
-deps =
-    twisted
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_choose_individual_pythons_and_pytest_adds_deps(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '4',  # Python versions: choose one by one
-                    'Y',  # py27
-                    'Y',  # py34
-                    'Y',  # py35
-                    'Y',  # py36
-                    'Y',  # pypy
-                    'N',  # jython
-                    'py.test',  # command to run tests
-                    ''  # test dependencies
-                ]
-            )
-        )
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, py36, pypy
-
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_choose_py27_and_pytest_adds_deps(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '1',  # py27
-                    'py.test',  # command to run tests
-                    ''  # test dependencies
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27
-
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_choose_py27_and_py34_and_pytest_adds_deps(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '2',  # py27 and py36
-                    'py.test',  # command to run tests
-                    ''  # test dependencies
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py36
-
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_choose_all_pythons_and_pytest_adds_deps(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '3',  # all Python versions
-                    'py.test',  # command to run tests
-                    ''  # test dependencies
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, py36, pypy, jython
-
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_choose_individual_pythons_and_defaults(
-            self,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '4',  # Python versions: choose one by one
-                    '',  # py27
-                    '',  # py34
-                    '',  # py35
-                    '',  # py36
-                    '',  # pypy
-                    '',  # jython
-                    '',  # command to run tests
-                    ''  # test dependencies
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, py36, pypy, jython
-
-[testenv]
-commands = {envpython} setup.py test
-deps =
-
-""".lstrip()
-        result = read_tox()
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_existing_tox_ini(self, monkeypatch):
+    def __call__(self, prompt):
+        print("prompt: '%s'" % prompt)
         try:
-            f = open('tox.ini', 'w')
-            f.write('foo bar\n')
-        finally:
-            f.close()
-
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '4',  # Python versions: choose one by one
-                    '',  # py27
-                    '',  # py34
-                    '',  # py35
-                    '',  # py36
-                    '',  # pypy
-                    '',  # jython
-                    '',  # command to run tests
-                    '',  # test dependencies
-                    '',  # tox.ini already exists; overwrite?
-                ]
-            )
-        )
-
-        tox._quickstart.main(argv=['tox-quickstart'])
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, py36, pypy, jython
-
-[testenv]
-commands = {envpython} setup.py test
-deps =
-
-""".lstrip()
-        result = read_tox('tox-generated.ini')
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_tox_ini_location_can_be_overridden(
-            self,
-            tmpdir,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '1',  # py27 and py34
-                    'py.test',  # command to run tests
-                    '',  # test dependencies
-                ]
-            )
-        )
-
-        root_dir = tmpdir.mkdir('alt-root')
-        tox_ini_path = root_dir.join('tox.ini')
-
-        tox._quickstart.main(argv=['tox-quickstart', root_dir.basename])
-
-        assert tox_ini_path.isfile()
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27
-
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        result = read_tox(fname=tox_ini_path.strpath)
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_custom_tox_ini_location_with_existing_tox_ini(
-            self,
-            tmpdir,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '1',  # py27 and py34
-                    'py.test',  # command to run tests
-                    '',  # test dependencies
-                    '',  # tox.ini already exists; overwrite?
-                ]
-            )
-        )
-
-        root_dir = tmpdir.mkdir('alt-root')
-        tox_ini_path = root_dir.join('tox.ini')
-        tox_ini_path.write('foo\nbar\n')
-
-        tox._quickstart.main(argv=['tox-quickstart', root_dir.basename])
-        tox_ini_path = root_dir.join('tox-generated.ini')
-
-        assert tox_ini_path.isfile()
-
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27
-
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        result = read_tox(fname=tox_ini_path.strpath)
-        assert (result == expected_tox_ini)
-
-    def test_quickstart_main_custom_nonexistent_tox_ini_location(
-            self,
-            tmpdir,
-            monkeypatch):
-        monkeypatch.setattr(
-            tox._quickstart, 'term_input',
-            self.get_mock_term_input(
-                [
-                    '1',  # py27 and py34
-                    'py.test',  # command to run tests
-                    '',  # test dependencies
-                ]
-            )
-        )
-
-        root_dir = tmpdir.join('nonexistent-root')
-
-        assert tox._quickstart.main(argv=['tox-quickstart', root_dir.basename]) == 2
+            answer = self._inputs.pop(0)
+            print("user answer: '%s'" % answer)
+            return answer
+        except IndexError:
+            pytest.fail("missing user answer for '%s'" % prompt)
 
 
-class TestToxQuickstart(object):
-    def test_pytest(self):
-        d = {
-            'py27': True,
-            'py34': True,
-            'pypy': True,
-            'commands': 'py.test',
-            'deps': 'pytest',
-        }
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
+class _ini:
+    """Handle files and args for different test scenarios."""
+    SOME_CONTENT = 'dontcare'
 
-[tox]
-envlist = py27, py34, pypy
+    def __init__(self, exists=False, names=None, pass_path=False):
+        self.original_name = tox._quickstart.NAME
+        self.names = names or [tox._quickstart.ALTERNATIVE_NAME]
+        self.exists = exists
+        self.pass_path = pass_path
 
-[testenv]
-commands = py.test
-deps =
-    pytest
-""".lstrip()
-        d = tox._quickstart.process_input(d)
-        tox._quickstart.generate(d)
-        result = read_tox()
-        # print(result)
-        assert (result == expected_tox_ini)
+    def __str__(self):
+        return self.original_name if not self.exists else str(self.names)
 
-    def test_setup_py_test(self):
-        d = {
-            'py36': True,
-            'py27': True,
-            'commands': 'python setup.py test',
-            'deps': '',
-        }
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
+    @property
+    def argv(self):
+        argv = ['tox-quickstart']
+        if self.pass_path:
+            argv.append(os.getcwd())
+        return argv
 
-[tox]
-envlist = py27, py36
+    @property
+    def dpath(self):
+        return os.getcwd() if self.pass_path else ''
 
-[testenv]
-commands = python setup.py test
-deps =
+    def create(self):
+        paths_to_create = {self.original_path}
+        for name in self.names[:-1]:
+            paths_to_create.add(os.path.join(self.dpath, name))
+        for path in paths_to_create:
+            with open(path, 'w') as f:
+                f.write(self.SOME_CONTENT)
 
-""".lstrip()
-        d = tox._quickstart.process_input(d)
-        tox._quickstart.generate(d)
-        result = read_tox()
-        # print(result)
-        assert (result == expected_tox_ini)
+    @property
+    def actual_path(self):
+        return os.path.join(os.getcwd(), self.names[-1] if self.exists else self.original_name)
 
-    def test_trial(self):
-        d = {
-            'py27': True,
-            'commands': 'trial',
-            'deps': 'Twisted',
-        }
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
+    @property
+    def original_path(self):
+        return os.path.join(self.dpath, self.original_name)
 
-[tox]
-envlist = py27
+    @property
+    def alternative_path(self):
+        return os.path.join(self.dpath, self.names[-1])
 
-[testenv]
-commands = trial
-deps =
-    Twisted
-""".lstrip()
-        d = tox._quickstart.process_input(d)
-        tox._quickstart.generate(d)
-        result = read_tox()
-        # print(result)
-        assert (result == expected_tox_ini)
+    @property
+    def original_content(self):
+        with open(self.original_path) as f:
+            return f.read()
 
-    def test_nosetests(self):
-        d = {
-            'py27': True,
-            'py34': True,
-            'py35': True,
-            'pypy': True,
-            'commands': 'nosetests -v',
-            'deps': 'nose',
-        }
-        expected_tox_ini = """
-# tox (https://tox.readthedocs.io/) is a tool for running tests
-# in multiple virtualenvs. This configuration file will run the
-# test suite on all supported python versions. To use it, "pip install tox"
-# and then run "tox" from this directory.
-
-[tox]
-envlist = py27, py34, py35, pypy
-
-[testenv]
-commands = nosetests -v
-deps =
-    nose
-""".lstrip()
-        d = tox._quickstart.process_input(d)
-        tox._quickstart.generate(d)
-        result = read_tox()
-        # print(result)
-        assert (result == expected_tox_ini)
+    @property
+    def alternative_content(self):
+        with open(self.alternative_path) as f:
+            return f.read()
 
 
-def read_tox(fname='tox.ini'):
-    with open(fname) as f:
-        return f.read()
+class _exp:
+    """Holds test expectations and a user scenario description."""
+    STANDARD_EPECTATIONS = [ALL_PY_ENVS_AS_STRING, 'pytest', 'pytest']
+
+    def __init__(self, name, exp=None):
+        self.name = name
+        exp = exp or self.STANDARD_EPECTATIONS
+        # NOTE extra mangling here ensures formatting is the same in file and exp
+        self.map = {'deps': tox._quickstart.list_modificator(exp[1]),
+                    'commands': tox._quickstart.list_modificator(exp[2])}
+        tox._quickstart.post_process_input(self.map)
+        self.map['envlist'] = exp[0]
+
+    def __str__(self):
+        return self.name
+
+
+@pytest.mark.usefixtures('work_in_clean_dir')
+@pytest.mark.parametrize(argnames='term_input, exp, ini', ids=lambda param: str(param), argvalues=(
+    (
+        _term_input([4, 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'pytest', 'pytest']),
+        _exp('choose versions individually and use pytest',
+             [ALL_PY_ENVS_WO_LAST_AS_STRING, 'pytest', 'pytest']),
+        _ini(),
+    ),
+    (
+        _term_input([4, 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'py.test', '']),
+        _exp('choose versions individually and use old fashioned py.test',
+             [ALL_PY_ENVS_WO_LAST_AS_STRING, 'pytest', 'py.test']),
+        _ini(),
+    ),
+    (
+        _term_input([1, 'pytest', '']),
+        _exp('choose current release Python and pytest with defaut deps',
+             [tox._quickstart.CURRENT_RELEASE_ENV, 'pytest', 'pytest']),
+        _ini(),
+    ),
+    (
+        _term_input([1, 'pytest -n auto', 'pytest-xdist']),
+        _exp('choose current release Python and pytest with xdist and some args',
+             [tox._quickstart.CURRENT_RELEASE_ENV, 'pytest, pytest-xdist', 'pytest -n auto']),
+        _ini(),
+    ),
+    (
+        _term_input([2, 'pytest', '']),
+        _exp('choose py27, current release Python and pytest with defaut deps',
+             ['py27, %s' % tox._quickstart.CURRENT_RELEASE_ENV, 'pytest', 'pytest']),
+        _ini(),
+    ),
+    (
+        _term_input([3, 'pytest', '']),
+        _exp('choose all supported version and pytest with defaut deps'),
+        _ini(),
+    ),
+    (
+        _term_input([4, 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'py.test', '']),
+        _exp('choose versions individually and use old fashioned py.test',
+             [ALL_PY_ENVS_WO_LAST_AS_STRING, 'pytest', 'py.test']),
+        _ini(),
+    ),
+    (
+        _term_input([4, '', '', '', '', '', '', '', '']),
+        _exp('choose no version individually and defaults'),
+        _ini(),
+    ),
+    (
+        _term_input([4, 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'nosetests', '']),
+        _exp('choose versions individually and use nose with default deps',
+             [ALL_PY_ENVS_WO_LAST_AS_STRING, 'nose', 'nosetests']),
+        _ini(),
+    ),
+    (
+        _term_input([4, 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'nosetests', '']),
+        _exp('choose versions individually and use nose with default deps',
+             [ALL_PY_ENVS_WO_LAST_AS_STRING, 'nose', 'nosetests']),
+        _ini(),
+    ),
+    (
+        _term_input([4, 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'trial', '']),
+        _exp('choose versions individually and use twisted tests with default deps',
+             [ALL_PY_ENVS_WO_LAST_AS_STRING, 'twisted', 'trial']),
+        _ini(),
+    ),
+    (
+        _term_input([4, '', '', '', '', '', '', '', '']),
+        _exp('existing not overriden, generated to alternative with default name'),
+        _ini(exists=True),
+    ),
+    (
+        _term_input([4, '', '', '', '', '', '', '', '']),
+        _exp('existing not overriden, generated to alternative with custom name'),
+        _ini(exists=True, names=['some-other.ini']),
+    ),
+    (
+        _term_input([4, '', '', '', '', '', '', '', '']),
+        _exp('existing not override, generated to alternative'),
+        _ini(exists=True, names=['tox.ini', 'some-other.ini']),
+    ),
+    (
+        _term_input([4, '', '', '', '', '', '', '', '']),
+        _exp('existing alternatives are not overriden, generated to alternative'),
+        _ini(exists=True, names=['tox.ini', 'setup.py', 'some-other.ini']),
+    ),
+))
+def test_quickstart(term_input, ini, exp, monkeypatch):
+    """Test quickstart script using some little helpers.
+
+    :param _term_input term_input: user interaction simulation
+    :param _ini ini: ini file expectation/creation handler
+    :param _exp exp: expectation handler
+    """
+    monkeypatch.setattr('six.moves.input', term_input)
+    monkeypatch.setattr('sys.argv', ini.argv)
+    if ini.exists:
+        term_input.extend(ini.names)
+        ini.create()
+    tox._quickstart.main()
+    generated_content = tox._quickstart.QUICKSTART_CONF % exp.map
+    print("ini at %s" % ini.actual_path)
+    if ini.exists:
+        assert ini.original_content == ini.SOME_CONTENT
+        assert ini.alternative_content == generated_content
+    else:
+        assert ini.original_content == generated_content
+        assert not os.path.exists(ini.alternative_path)

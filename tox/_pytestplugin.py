@@ -35,6 +35,15 @@ def pytest_report_header():
 
 
 @pytest.fixture
+def work_in_clean_dir(tmpdir):
+    old = tmpdir.chdir()
+    try:
+        yield
+    finally:
+        old.chdir()
+
+
+@pytest.fixture
 def newconfig(request, tmpdir):
     def newconfig(args, source=None, plugins=()):
         if source is None:

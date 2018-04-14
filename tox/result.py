@@ -4,16 +4,15 @@ import sys
 
 import py
 
-from tox import __version__ as toxver
+import tox
 
 
 class ResultLog:
-
-    def __init__(self, dict=None):
-        if dict is None:
-            dict = {}
-        self.dict = dict
-        self.dict.update({"reportversion": "1", "toxversion": toxver})
+    def __init__(self, result_dict=None):
+        if result_dict is None:
+            result_dict = {}
+        self.dict = result_dict
+        self.dict.update({"reportversion": "1", "toxversion": tox.__version__})
         self.dict["platform"] = sys.platform
         self.dict["host"] = socket.getfqdn()
 

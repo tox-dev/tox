@@ -8,6 +8,7 @@ import py
 import pytest
 
 import tox
+import tox.exc
 from tox._pytestplugin import ReportExpectMock
 
 try:
@@ -917,14 +918,14 @@ def test_tox_cmdline_args(monkeypatch):
 def test_exit_code(initproj, cmd, exit_code, mocker):
     """ Check for correct InvocationError, with exit code,
         except for zero exit code """
-    mocker.spy(tox, '_exit_code_str')
+    mocker.spy(tox.exc, '_exit_code_str')
     tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exit_code
     initproj("foo", filedefs={'tox.ini': tox_ini_content})
     cmd()
     if exit_code:
         # need mocker.spy above
-        assert tox._exit_code_str.call_count == 1
-        (args, kwargs) = tox._exit_code_str.call_args
+        assert tox.exc._exit_code_str.call_count == 1
+        (args, kwargs) = tox.exc._exit_code_str.call_args
         assert kwargs == {}
         (call_error_name, call_command, call_exit_code) = args
         assert call_error_name == 'InvocationError'
@@ -935,4 +936,4 @@ def test_exit_code(initproj, cmd, exit_code, mocker):
         assert call_exit_code == exit_code
     else:
         # need mocker.spy above
-        assert tox._exit_code_str.call_count == 0
+        assert tox.exc._exit_code_str.call_count == 0

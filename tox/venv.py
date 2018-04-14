@@ -8,7 +8,6 @@ import py
 
 import tox
 from .config import DepConfig
-from .config import hookimpl
 
 
 class CreationConfig:
@@ -416,7 +415,7 @@ def getdigest(path):
     return path.computehash()
 
 
-@hookimpl
+@tox.hookimpl
 def tox_testenv_create(venv, action):
     # if self.getcommandpath("activate").dirpath().check():
     #    return
@@ -443,7 +442,7 @@ def tox_testenv_create(venv, action):
     return True
 
 
-@hookimpl
+@tox.hookimpl
 def tox_testenv_install_deps(venv, action):
     deps = venv._getresolvedeps()
     if deps:
@@ -454,14 +453,14 @@ def tox_testenv_install_deps(venv, action):
     return True
 
 
-@hookimpl
+@tox.hookimpl
 def tox_runtest(venv, redirect):
     venv.test(redirect=redirect)
     # Return non-None to indicate the plugin has completed
     return True
 
 
-@hookimpl
+@tox.hookimpl
 def tox_runenvreport(venv, action):
     # write out version dependency information
     args = venv.envconfig.list_dependencies_command

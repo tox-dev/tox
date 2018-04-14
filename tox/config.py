@@ -17,19 +17,21 @@ import py
 
 import tox
 import tox.interpreters
-from tox import hookspecs
 from tox._verlib import NormalizedVersion
 
 iswin32 = sys.platform == "win32"
+
+# DEPRECATED - will go away in tox 4
+# this should never be imported from anywhere
+# Instead instantiate the hookimpl by using exactly this call in your plugin code
+hookimpl = pluggy.HookimplMarker("tox")
+
 
 default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
                    'py': sys.executable, 'py2': 'python2', 'py3': 'python3'}
 for version in '27,34,35,36,37'.split(','):
     default_factors['py' + version] = 'python%s.%s' % tuple(version)
 
-hookimpl = pluggy.HookimplMarker("tox")
-
-_dummy = object()
 
 PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{}'.format(option) for option in [
     'c', 'e', 'r', 'b', 't', 'd',
@@ -48,7 +50,7 @@ def get_plugin_manager(plugins=()):
     # initialize plugin manager
     import tox.venv
     pm = pluggy.PluginManager("tox")
-    pm.add_hookspecs(hookspecs)
+    pm.add_hookspecs(tox.hookspecs)
     pm.register(tox.config)
     pm.register(tox.interpreters)
     pm.register(tox.venv)
@@ -225,18 +227,17 @@ class InstallcmdOption:
 
 
 def parseconfig(args, plugins=()):
-    """
+    """Parse the configuration file and create a Config object.
+
+    :param plugins:
     :param list[str] args: list of arguments.
-    :type pkg: str
     :rtype: :class:`Config`
     :raise SystemExit: toxinit file is not found
     """
-
     pm = get_plugin_manager(plugins)
     # prepare command line options
     parser = Parser()
     pm.hook.tox_addoption(parser=parser)
-
     # parse command line options
     option = parser._parse_args(args)
     interpreters = tox.interpreters.Interpreters(hook=pm.hook)
@@ -299,6 +300,8 @@ def get_version_info(pm):
 
 
 class SetenvDict(object):
+    _DUMMY = object()
+
     def __init__(self, definitions, reader):
         self.definitions = definitions
         self.reader = reader
@@ -329,8 +332,8 @@ class SetenvDict(object):
             return res
 
     def __getitem__(self, name):
-        x = self.get(name, _dummy)
-        if x is _dummy:
+        x = self.get(name, self._DUMMY)
+        if x is self._DUMMY:
             raise KeyError(name)
         return x
 
@@ -342,7 +345,7 @@ class SetenvDict(object):
         self.resolved[name] = value
 
 
-@hookimpl
+@tox.hookimpl
 def tox_addoption(parser):
     # formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version", action="store_true", dest="version",

@@ -6,7 +6,7 @@ import sys
 
 import py
 
-from tox import hookimpl
+import tox
 
 
 class Interpreters:
@@ -127,12 +127,12 @@ class NoInterpreterInfo:
 
 
 if sys.platform != "win32":
-    @hookimpl
+    @tox.hookimpl
     def tox_get_python_executable(envconfig):
         return py.path.local.sysfind(envconfig.basepython)
 
 else:
-    @hookimpl
+    @tox.hookimpl
     def tox_get_python_executable(envconfig):
         name = envconfig.basepython
         p = py.path.local.sysfind(name)

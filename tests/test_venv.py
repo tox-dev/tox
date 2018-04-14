@@ -1,12 +1,12 @@
 import os
 import sys
 
+import pluggy
 import py
 import pytest
 
 import tox
 import tox.config
-from tox.hookspecs import hookimpl
 from tox.interpreters import NoInterpreterInfo
 from tox.venv import CreationConfig
 from tox.venv import getdigest
@@ -14,14 +14,10 @@ from tox.venv import tox_testenv_create
 from tox.venv import tox_testenv_install_deps
 from tox.venv import VirtualEnv
 
-
-# def test_global_virtualenv(capfd):
-#    v = VirtualEnv()
-#    assert v.list()
-#    out, err = capfd.readouterr()
-#    assert not out
-#    assert not err
-#
+# DEPRECATED - will go away in tox 4
+# WARNING OBSOLETE: this should never be imported from anywhere
+# Instead instantiate the hookimpl by using exactly this call in your client code
+hookimpl = pluggy.HookimplMarker("tox")
 
 
 def test_getdigest(tmpdir):
@@ -737,11 +733,11 @@ def test_tox_testenv_create(newmocksession):
     log = []
 
     class Plugin:
-        @hookimpl
+        @tox.hookimpl
         def tox_testenv_create(self, action, venv):
             log.append(1)
 
-        @hookimpl
+        @tox.hookimpl
         def tox_testenv_install_deps(self, action, venv):
             log.append(2)
 
@@ -760,11 +756,11 @@ def test_tox_testenv_pre_post(newmocksession):
     log = []
 
     class Plugin:
-        @hookimpl
+        @tox.hookimpl
         def tox_runtest_pre(self, venv):
             log.append('started')
 
-        @hookimpl
+        @tox.hookimpl
         def tox_runtest_post(self, venv):
             log.append('finished')
 

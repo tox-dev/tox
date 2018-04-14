@@ -43,7 +43,7 @@ def main():
         author='holger krekel',
         author_email='holger@merlinux.eu',
         packages=['tox'],
-        entry_points={'console_scripts': ['tox=tox.session:run_main',
+        entry_points={'console_scripts': ['tox=tox:cmdline',
                                           'tox-quickstart=tox._quickstart:main']},
         python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
         setup_requires=['setuptools_scm'],
