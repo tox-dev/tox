@@ -11,15 +11,13 @@ A growing number of `pluggy`_ hooks make tox extendable by writing plugins.
 Writing a setuptools entrypoints plugin
 ---------------------------------------
 
-You can create a new tox plugin with all bells and whistles via `Cookiecutter`_ (see `cookiecutter-tox-plugin <https://github.com/tox-dev/cookiecutter-tox-plugin>`_):
+You can create a new tox plugin with all bells and whistles via a `Cookiecutter`_ template (see `cookiecutter-tox-plugin <https://github.com/tox-dev/cookiecutter-tox-plugin>`_) - this will create a complete pypi-releasable, documented project with license, documentation and CI.
 
 .. code-block:: console
 
     $ pip install -U cookiecutter
     $ cookiecutter gh:tox-dev/cookiecutter-tox-plugin
 
-This will create a complete pypi-releasable, documented project with license, documentation,
-CI builds and other bells and whistles.
 
 Tutorial: a minimal tox plugin
 ------------------------------
