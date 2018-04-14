@@ -36,11 +36,8 @@ def pytest_report_header():
 
 @pytest.fixture
 def work_in_clean_dir(tmpdir):
-    old = tmpdir.chdir()
-    try:
+    with tmpdir.as_cwd():
         yield
-    finally:
-        old.chdir()
 
 
 @pytest.fixture
