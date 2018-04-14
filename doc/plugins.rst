@@ -85,8 +85,10 @@ it like:
 .. code-block:: console
 
     $ cd </path/to/tox-fireworks>
-    $ python setup.py sdist register upload
+    $ python setup.py sdist bdist_wheel upload
 
+For more information about packaging Python projects see the
+`Python Packaging User Guide <https://packaging.python.org/>`_.
 
 tox hook specifications and related API
 ---------------------------------------
