@@ -2,8 +2,12 @@ import os
 import signal
 
 
-def _exit_code_str(exception_name, command, exit_code):
+def exit_code_str(exception_name, command, exit_code):
     """String representation for an InvocationError, with exit code
+
+    NOTE: this might also be used by plugin tests (tox-venv at the time of writing),
+    so some coordination is needed, if this is ever moved or a different solution for this hack
+    is found.
 
     NOTE: this is aseparate function because pytest-mock `spy` does not work on Exceptions
     We can use neither a class method nor a static because of https://bugs.python.org/issue23078.
@@ -54,7 +58,7 @@ class exception:
             self.exit_code = exit_code
 
         def __str__(self):
-            return _exit_code_str(self.__class__.__name__, self.command, self.exit_code)
+            return exit_code_str(self.__class__.__name__, self.command, self.exit_code)
 
     class MissingFile(Error):
         """ an error while invoking a script. """

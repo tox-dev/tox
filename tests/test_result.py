@@ -77,7 +77,7 @@ def test_get_commandlog(pkg):
 @pytest.mark.parametrize('os_name', ['posix', 'nt'])
 def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     monkeypatch.setattr(os, 'name', value=os_name)
-    mocker.spy(tox.exc, '_exit_code_str')
+    mocker.spy(tox.exc, 'exit_code_str')
     if exit_code is None:
         exception = tox.exception.InvocationError("<command>")
     else:
@@ -85,8 +85,8 @@ def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     result = str(exception)
     # check that mocker works, because it will be our only test in
     # test_z_cmdline.py::test_exit_code need the mocker.spy above
-    assert tox.exc._exit_code_str.call_count == 1
-    assert tox.exc._exit_code_str.call_args == mocker.call(
+    assert tox.exc.exit_code_str.call_count == 1
+    assert tox.exc.exit_code_str.call_args == mocker.call(
         'InvocationError', "<command>", exit_code)
     if exit_code is None:
         needle = "(exited with code"
