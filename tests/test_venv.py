@@ -733,11 +733,11 @@ def test_tox_testenv_create(newmocksession):
     log = []
 
     class Plugin:
-        @tox.hookimpl
+        @hookimpl
         def tox_testenv_create(self, action, venv):
             log.append(1)
 
-        @tox.hookimpl
+        @hookimpl
         def tox_testenv_install_deps(self, action, venv):
             log.append(2)
 
@@ -756,11 +756,11 @@ def test_tox_testenv_pre_post(newmocksession):
     log = []
 
     class Plugin:
-        @tox.hookimpl
+        @hookimpl
         def tox_runtest_pre(self, venv):
             log.append('started')
 
-        @tox.hookimpl
+        @hookimpl
         def tox_runtest_post(self, venv):
             log.append('finished')
 
