@@ -3,20 +3,25 @@ from pkg_resources import DistributionNotFound
 from pkg_resources import get_distribution
 
 from . import exception
+from .constants import COMPAT
+from .constants import CONFIG
+from .constants import PIP
 from .hookspecs import hookspec
 
-# NOTE: hookimpl and hookspec objects will be removed from API in tox 4 - see warning below
-__all__ = ('hookspec', 'hookimpl', 'cmdline', 'exception', '__version__')
+__all__ = (
+    'cmdline', 'exception', '__version__',
+    'CONFIG', 'COMPAT', 'PIP',
+    'hookspec', 'hookimpl',  # DEPRECATED will be removed from API - see warning below
+)
 """Everything explicitly exported here is part of the tox programmatic API.
 
-To override/modify tox behaviour also see tox.hookspec and its use with pluggy.
-
+To override/modify tox behaviour via plugins see tox.hookspec and its use with pluggy.
 """
 
-# DEPRECATED - will go away in tox 4
-# this should never be imported from anywhere
-# Instead instantiate the hookimpl by using exactly this call in your plugin code
 hookimpl = pluggy.HookimplMarker("tox")
+"""DEPRECATED - REMOVE - this should never be imported from anywhere
+# Instead instantiate the hookimpl by using exactly this call in your plugin code
+"""
 
 try:
     _full_version = get_distribution(__name__).version

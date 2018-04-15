@@ -19,31 +19,18 @@ import tox
 import tox.interpreters
 from tox._verlib import NormalizedVersion
 
-iswin32 = sys.platform == "win32"
 
-# DEPRECATED - will go away in tox 4
-# this should never be imported from anywhere
-# Instead instantiate the hookimpl by using exactly this call in your plugin code
-hookimpl = pluggy.HookimplMarker("tox")
+hookimpl = tox.hookimpl
+"""DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
 
+Instead create a hookimpl in your code with:
 
-default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
-                   'py': sys.executable, 'py2': 'python2', 'py3': 'python3'}
-for version in '27,34,35,36,37'.split(','):
-    default_factors['py' + version] = 'python%s.%s' % tuple(version)
+    import pluggy
+    hookimpl = pluggy.HookimplMarker("tox")
+"""
 
-
-PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{}'.format(option) for option in [
-    'c', 'e', 'r', 'b', 't', 'd',
-]]
-
-PIP_INSTALL_LONG_OPTIONS_ARGUMENT = ['--{}'.format(option) for option in [
-    'constraint', 'editable', 'requirement', 'build', 'target', 'download',
-    'src', 'upgrade-strategy', 'install-options', 'global-option',
-    'root', 'prefix', 'no-binary', 'only-binary', 'index-url',
-    'extra-index-url', 'find-links', 'proxy', 'retries', 'timeout',
-    'exists-action', 'trusted-host', 'client-cert', 'cache-dir',
-]]
+default_factors = tox.CONFIG.DEFAULT_FACTORS
+"""DEPRECATED MOVE - please update to new position"""
 
 
 def get_plugin_manager(plugins=()):
@@ -138,24 +125,16 @@ class DepOption:
             else:
                 name = depline.strip()
                 ixserver = None
-
                 # we need to process options, in case they contain a space,
                 # as the subprocess call to pip install will otherwise fail.
-
                 # in case of a short option, we remove the space
-                for option in PIP_INSTALL_SHORT_OPTIONS_ARGUMENT:
+                for option in tox.PIP.INSTALL_SHORT_OPTIONS_ARGUMENT:
                     if name.startswith(option):
-                        name = '{}{}'.format(
-                            option, name[len(option):].strip()
-                        )
-
+                        name = '%s%s' % (option, name[len(option):].strip())
                 # in case of a long option, we add an equal sign
-                for option in PIP_INSTALL_LONG_OPTIONS_ARGUMENT:
+                for option in tox.PIP.INSTALL_LONG_OPTIONS_ARGUMENT:
                     if name.startswith(option + ' '):
-                        name = '{}={}'.format(
-                            option, name[len(option):].strip()
-                        )
-
+                        name = '%s=%s' % (option, name[len(option):].strip())
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
         return deps
@@ -445,9 +424,9 @@ def tox_addoption(parser):
 
     def basepython_default(testenv_config, value):
         if value is None:
-            for f in testenv_config.factors:
-                if f in default_factors:
-                    return default_factors[f]
+            for factor in testenv_config.factors:
+                if factor in tox.CONFIG.DEFAULT_FACTORS:
+                    return tox.CONFIG.DEFAULT_FACTORS[factor]
             return sys.executable
         return str(value)
 
@@ -824,7 +803,7 @@ class parseini:
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
-        known_factors.update(default_factors)
+        known_factors.update(tox.CONFIG.DEFAULT_FACTORS)
         known_factors.add("python")
 
         # factors stated in config envlist
