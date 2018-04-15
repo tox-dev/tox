@@ -46,12 +46,13 @@ def test_report_protocol(newconfig):
 def test__resolve_pkg(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
     spec = distshare.join("pkg123-*")
-    pytest.raises(tox.exception.MissingDirectory, 'mocksession._resolve_pkg(spec)')
+    with pytest.raises(tox.exception.MissingDirectory):
+        mocksession._resolve_pkg(spec)
     distshare.ensure(dir=1)
-    pytest.raises(tox.exception.MissingDependency, 'mocksession._resolve_pkg(spec)')
+    with pytest.raises(tox.exception.MissingDependency):
+        mocksession._resolve_pkg(spec)
     distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
-
     mocksession.report.clear()
     result = mocksession._resolve_pkg(spec)
     assert result == p
@@ -166,22 +167,8 @@ class TestSession:
         venv1 = session.getvenv("world")
         venv2 = session.getvenv("world")
         assert venv1 is venv2
-        pytest.raises(LookupError, lambda: session.getvenv("qwe"))
-
-
-# not sure we want this option ATM
-def XXX_test_package(cmd, initproj):
-    initproj("myproj-0.6", filedefs={
-        'tests': {'test_hello.py': "def test_hello(): pass"},
-        'MANIFEST.in': """
-            include doc
-            include myproj
-            """,
-        'tox.ini': ''
-    })
-    result = cmd("package")
-    assert not result.ret
-    assert any(re.match(r'.*created sdist package at.*', l) for l in result.outlines)
+        with pytest.raises(LookupError):
+            session.getvenv("qwe")
 
 
 def test_minversion(cmd, initproj):

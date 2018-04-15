@@ -714,8 +714,10 @@ class TestIniParser:
         assert reader.getbool("key1a") is True
         assert reader.getbool("key2") is False
         assert reader.getbool("key2a") is False
-        pytest.raises(KeyError, 'reader.getbool("key3")')
-        pytest.raises(tox.exception.ConfigError, 'reader.getbool("key5")')
+        with pytest.raises(KeyError):
+            reader.getbool("key3")
+        with pytest.raises(tox.exception.ConfigError):
+            reader.getbool("key5")
 
 
 class TestIniParserPrefix:
@@ -1032,10 +1034,8 @@ class TestConfigTestEnv:
             'some_install', '{packages}']
 
     def test_install_command_must_contain_packages(self, newconfig):
-        pytest.raises(tox.exception.ConfigError, newconfig, """
-            [testenv]
-            install_command=pip install
-        """)
+        with pytest.raises(tox.exception.ConfigError):
+            newconfig("[testenv]\ninstall_command=pip install")
 
     def test_install_command_substitutions(self, newconfig):
         config = newconfig("""
@@ -1066,7 +1066,7 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs['python']
         assert envconfig.pip_pre
 
-    def test_simple(tmpdir, newconfig):
+    def test_simple(self, newconfig):
         config = newconfig("""
             [testenv:py36]
             basepython=python3.6
@@ -1077,13 +1077,11 @@ class TestConfigTestEnv:
         assert "py36" in config.envconfigs
         assert "py27" in config.envconfigs
 
-    def test_substitution_error(tmpdir, newconfig):
-        pytest.raises(tox.exception.ConfigError, newconfig, """
-            [testenv:py27]
-            basepython={xyz}
-        """)
+    def test_substitution_error(self, newconfig):
+        with pytest.raises(tox.exception.ConfigError):
+            newconfig("[testenv:py27]\nbasepython={xyz}")
 
-    def test_substitution_defaults(tmpdir, newconfig):
+    def test_substitution_defaults(self, newconfig):
         config = newconfig("""
             [testenv:py27]
             commands =
@@ -1109,7 +1107,7 @@ class TestConfigTestEnv:
         assert argv[7][0] == config.homedir.join(".tox", "distshare")
         assert argv[8][0] == conf.envlogdir
 
-    def test_substitution_notfound_issue246(tmpdir, newconfig):
+    def test_substitution_notfound_issue246(self, newconfig):
         config = newconfig("""
             [testenv:py27]
             setenv =
@@ -1121,7 +1119,7 @@ class TestConfigTestEnv:
         assert 'FOO' in env
         assert 'BAR' in env
 
-    def test_substitution_notfound_issue515(tmpdir, newconfig):
+    def test_substitution_notfound_issue515(self, newconfig):
         config = newconfig("""
             [tox]
             envlist = standard-greeting
@@ -1141,7 +1139,7 @@ class TestConfigTestEnv:
             ['python', '-c', 'print("Hello, world!")']
         ]
 
-    def test_substitution_nested_env_defaults(tmpdir, newconfig, monkeypatch):
+    def test_substitution_nested_env_defaults(self, newconfig, monkeypatch):
         monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
         monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")
         config = newconfig("""
@@ -1382,7 +1380,8 @@ class TestConfigTestEnv:
             deps=
                 {[testing:pytest]deps}
         """
-        pytest.raises(ValueError, newconfig, [], inisource)
+        with pytest.raises(ValueError):
+            newconfig([], inisource)
 
     def test_single_value_from_other_secton(self, newconfig, tmpdir):
         inisource = """

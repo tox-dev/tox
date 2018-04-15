@@ -3,7 +3,9 @@ from pkg_resources import DistributionNotFound
 from pkg_resources import get_distribution
 
 from . import exception
-from .constants import PYTHON, INFO, PIP
+from .constants import INFO
+from .constants import PIP
+from .constants import PYTHON
 from .hookspecs import hookspec
 
 __all__ = (

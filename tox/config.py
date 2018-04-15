@@ -606,7 +606,7 @@ class Config(object):
     def homedir(self):
         homedir = get_homedir()
         if homedir is None:
-            homedir = self.toxinidir  # XXX good idea?
+            homedir = self.toxinidir  # FIXME XXX good idea?
         return homedir
 
 

@@ -142,7 +142,7 @@ class Action(object):
         elif returnout:
             stdout = subprocess.PIPE
         if cwd is None:
-            # XXX cwd = self.session.config.cwd
+            # FIXME XXX cwd = self.session.config.cwd
             cwd = py.path.local()
         try:
             popen = self._popen(args, cwd, env=env,
