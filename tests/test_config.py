@@ -2122,8 +2122,7 @@ class TestCmdInvocation:
     def test_version_simple(self, cmd):
         result = cmd("--version")
         assert not result.ret
-        from tox import __version__
-        assert "{} imported from".format(__version__) in result.out
+        assert "{} imported from".format(tox.__version__) in result.out
 
     def test_version_no_plugins(self):
         pm = PluginManager('fakeprject')

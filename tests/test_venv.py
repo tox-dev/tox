@@ -48,6 +48,30 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
 
 
+def test_getsupportedinterpreter_2(monkeypatch, newconfig, mocksession):
+    config = newconfig([], """
+        [testenv:python]
+        basepython=%s
+    """ % sys.executable)
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
+    interp = venv.getsupportedinterpreter()
+    # realpath needed for debian symlinks
+    assert py.path.local(interp).realpath() == py.path.local(sys.executable).realpath()
+    monkeypatch.setattr(sys, 'platform', "win32")
+    monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
+    pytest.raises(tox.exception.UnsupportedInterpreter, venv.getsupportedinterpreter)
+    monkeypatch.undo()
+    monkeypatch.setattr(venv.envconfig, "envname", "py1")
+    monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
+    pytest.raises(tox.exception.InterpreterNotFound, venv.getsupportedinterpreter)
+    monkeypatch.undo()
+    # check that we properly report when no version_info is present
+    info = NoInterpreterInfo(name=venv.name)
+    info.executable = "something"
+    monkeypatch.setattr(config.interpreters, "get_info", lambda *args, **kw: info)
+    pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
+
+
 def test_create(monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]

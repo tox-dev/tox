@@ -2,7 +2,7 @@ import pluggy
 from pkg_resources import DistributionNotFound
 from pkg_resources import get_distribution
 
-from .exc import exception  # noqa
+from . import exception
 from .hookspecs import hookspec
 
 # NOTE: hookimpl and hookspec objects will be removed from API in tox 4 - see warning below
