@@ -23,19 +23,22 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     interp = venv.getsupportedinterpreter()
     # realpath needed for debian symlinks
     assert py.path.local(interp).realpath() == py.path.local(sys.executable).realpath()
-    monkeypatch.setattr(sys, 'platform', "win32")
+    monkeypatch.setattr(tox.INFO, 'IS_WIN', True)
     monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
-    pytest.raises(tox.exception.UnsupportedInterpreter, venv.getsupportedinterpreter)
+    with pytest.raises(tox.exception.UnsupportedInterpreter):
+        venv.getsupportedinterpreter()
     monkeypatch.undo()
     monkeypatch.setattr(venv.envconfig, "envname", "py1")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
-    pytest.raises(tox.exception.InterpreterNotFound, venv.getsupportedinterpreter)
+    with pytest.raises(tox.exception.InterpreterNotFound):
+        venv.getsupportedinterpreter()
     monkeypatch.undo()
     # check that we properly report when no version_info is present
     info = tox.interpreters.NoInterpreterInfo(name=venv.name)
     info.executable = "something"
     monkeypatch.setattr(config.interpreters, "get_info", lambda *args, **kw: info)
-    pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
+    with pytest.raises(tox.exception.InvocationError):
+        venv.getsupportedinterpreter()
 
 
 def test_create(mocksession, newconfig):
@@ -52,7 +55,7 @@ def test_create(mocksession, newconfig):
     assert len(pcalls) >= 1
     args = pcalls[0].args
     assert "virtualenv" == str(args[2])
-    if sys.platform != "win32":
+    if not tox.INFO.IS_WIN:
         # realpath is needed for stuff like the debian symlinks
         assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
         # assert Envconfig.toxworkdir in args
@@ -62,9 +65,8 @@ def test_create(mocksession, newconfig):
     assert venv.path_config.check(exists=False)
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
-def test_commandpath_venv_precedence(tmpdir, monkeypatch,
-                                     mocksession, newconfig):
+@pytest.mark.skipif(tox.INFO.IS_WIN, reason="only on windows")
+def test_commandpath_venv_precedence(tmpdir, monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
     """)

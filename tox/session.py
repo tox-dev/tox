@@ -220,26 +220,21 @@ class Action(object):
     def _rewriteargs(self, cwd, args):
         newargs = []
         for arg in args:
-            if sys.platform != "win32" and isinstance(arg, py.path.local):
+            if not tox.INFO.IS_WIN and isinstance(arg, py.path.local):
                 arg = cwd.bestrelpath(arg)
             newargs.append(str(arg))
-
-        # subprocess does not always take kindly to .py scripts
-        # so adding the interpreter here
-        if sys.platform == "win32":
+        # subprocess does not always take kindly to .py scripts so adding the interpreter here
+        if tox.INFO.IS_WIN:
             ext = os.path.splitext(str(newargs[0]))[1].lower()
             if ext == '.py' and self.venv:
                 newargs = [str(self.venv.envconfig.envpython)] + newargs
-
         return newargs
 
     def _popen(self, args, cwd, stdout, stderr, env=None):
-        args = self._rewriteargs(cwd, args)
         if env is None:
             env = os.environ.copy()
-        return self.session.popen(args, shell=False, cwd=str(cwd),
-                                  universal_newlines=True,
-                                  stdout=stdout, stderr=stderr, env=env)
+        return self.session.popen(self._rewriteargs(cwd, args), shell=False, cwd=str(cwd),
+                                  universal_newlines=True, stdout=stdout, stderr=stderr, env=env)
 
 
 class Verbosity(object):

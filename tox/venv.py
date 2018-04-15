@@ -136,7 +136,7 @@ class VirtualEnv(object):
 
     def is_allowed_external(self, p):
         tryadd = [""]
-        if sys.platform == "win32":
+        if tox.INFO.IS_WIN:
             tryadd += [
                 os.path.normcase(x)
                 for x in os.environ['PATHEXT'].split(os.pathsep)
@@ -417,29 +417,20 @@ def getdigest(path):
 
 @tox.hookimpl
 def tox_testenv_create(venv, action):
-    # if self.getcommandpath("activate").dirpath().check():
-    #    return
     config_interpreter = venv.getsupportedinterpreter()
     args = [sys.executable, '-m', 'virtualenv']
     if venv.envconfig.sitepackages:
         args.append('--system-site-packages')
     if venv.envconfig.alwayscopy:
         args.append('--always-copy')
-    # add interpreter explicitly, to prevent using
-    # default (virtualenv.ini)
+    # add interpreter explicitly, to prevent using default (virtualenv.ini)
     args.extend(['--python', str(config_interpreter)])
-    # if sys.platform == "win32":
-    #    f, path, _ = imp.find_module("virtualenv")
-    #    f.close()
-    #    args[:1] = [str(config_interpreter), str(path)]
-    # else:
     venv.session.make_emptydir(venv.path)
     basepath = venv.path.dirpath()
     basepath.ensure(dir=1)
     args.append(venv.path.basename)
     venv._pcall(args, venv=False, action=action, cwd=basepath)
-    # Return non-None to indicate the plugin has completed
-    return True
+    return True  # Return non-None to indicate plugin has completed
 
 
 @tox.hookimpl
@@ -449,15 +440,13 @@ def tox_testenv_install_deps(venv, action):
         depinfo = ", ".join(map(str, deps))
         action.setactivity("installdeps", "%s" % depinfo)
         venv._install(deps, action=action)
-    # Return non-None to indicate the plugin has completed
-    return True
+    return True  # Return non-None to indicate plugin has completed
 
 
 @tox.hookimpl
 def tox_runtest(venv, redirect):
     venv.test(redirect=redirect)
-    # Return non-None to indicate the plugin has completed
-    return True
+    return True  # Return non-None to indicate plugin has completed
 
 
 @tox.hookimpl
@@ -470,5 +459,4 @@ def tox_runenvreport(venv, action):
     # the output contains a mime-header, skip it
     output = output.split("\n\n")[-1]
     packages = output.strip().split("\n")
-    # Return non-None to indicate the plugin has completed
-    return packages
+    return packages  # Return non-None to indicate plugin has completed

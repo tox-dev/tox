@@ -496,15 +496,14 @@ def tox_addoption(parser):
         # we could also set it to the per-venv "envtmpdir"
         # but this leads to very long paths when run with jenkins
         # so we just pass it on by default for now.
-        if sys.platform == "win32":
+        if tox.INFO.IS_WIN:
             passenv.add("SYSTEMDRIVE")  # needed for pip6
             passenv.add("SYSTEMROOT")  # needed for python's crypto module
             passenv.add("PATHEXT")  # needed for discovering executables
             passenv.add("COMSPEC")  # needed for distutils cygwincompiler
             passenv.add("TEMP")
             passenv.add("TMP")
-            # for `multiprocessing.cpu_count()` on Windows
-            # (prior to Python 3.4).
+            # for `multiprocessing.cpu_count()` on Windows (prior to Python 3.4).
             passenv.add("NUMBER_OF_PROCESSORS")
             passenv.add("PROCESSOR_ARCHITECTURE")  # platform.machine()
             passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
@@ -675,8 +674,7 @@ class TestenvConfig:
         return self.config.interpreters.get_info(envconfig=self)
 
     def getsupportedinterpreter(self):
-        if sys.platform == "win32" and self.basepython and \
-                "jython" in self.basepython:
+        if tox.INFO.IS_WIN and self.basepython and "jython" in self.basepython:
             raise tox.exception.UnsupportedInterpreter(
                 "Jython/Windows does not support installing scripts")
         info = self.config.interpreters.get_info(envconfig=self)
@@ -700,7 +698,7 @@ def get_homedir():
 
 def make_hashseed():
     max_seed = 4294967295
-    if sys.platform == 'win32':
+    if tox.INFO.IS_WIN:
         max_seed = 1024
     return str(random.randint(1, max_seed))
 
@@ -954,7 +952,7 @@ class IndexServerConfig:
 
 
 is_section_substitution = re.compile(r"{\[[^{}\s]+\]\S+?}").match
-"""Check value matches substitution form of referencing value from other section. 
+"""Check value matches substitution form of referencing value from other section.
 
 E.g. {[base]commands}
 """
