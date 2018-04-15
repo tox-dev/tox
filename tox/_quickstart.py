@@ -178,8 +178,8 @@ def ask_user(map_):
                           validator=boolean)
     print('What command should be used to test your project? Examples:\n'
           '    - pytest\n'
+          '    - python -m unittest discover\n'
           '    - python setup.py test\n'
-          '    - nosetests package.module\n'
           '    - trial package.module\n')
     do_prompt(map_, 'commands', 'Type the command to run your tests',
               default='pytest', modificator=list_modificator)
@@ -194,8 +194,6 @@ def ask_user(map_):
 def get_default_deps(commands):
     if commands and any(c in str(commands) for c in ['pytest', 'py.test']):
         return ['pytest']
-    if 'nosetests' in commands:
-        return ['nose']
     if 'trial' in commands:
         return ['twisted']
     return []
@@ -218,10 +216,14 @@ def generate(map_):
             break
         do_prompt(map_, 'name', '%s exists - choose an alternative' % targetpath, altpath)
     with codecs.open(targetpath, 'w', encoding='utf-8') as f:
-        f.write('\n'.join([line.rstrip() for line in (QUICKSTART_CONF % map_).split("\n")]))
+        f.write(prepare_content(QUICKSTART_CONF % map_))
         print('Finished: %s has been created. For information on this file, '
               'see https://tox.readthedocs.io/en/latest/config.html\n'
               'Execute `tox` to test your project.' % targetpath)
+
+
+def prepare_content(content):
+    return '\n'.join([line.rstrip() for line in content.split("\n")])
 
 
 def parse_args():
