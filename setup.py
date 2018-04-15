@@ -20,8 +20,8 @@ def has_environment_marker_support():
     try:
         v = pkg_resources.parse_version(setuptools.__version__)
         return v >= pkg_resources.parse_version('0.7.2')
-    except Exception as exc:
-        sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
+    except Exception as e:
+        sys.stderr.write("Could not test setuptool's version: %s\n" % e)
         return False
 
 
