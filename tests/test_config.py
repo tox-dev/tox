@@ -174,8 +174,7 @@ class TestConfigPlatform:
         assert not venv.matching_platform()
 
     @pytest.mark.parametrize("plat", ["win", "lin", "osx"])
-    def test_config_parse_platform_with_factors(self, newconfig, plat, monkeypatch):
-        monkeypatch.setattr(sys, "platform", "win32")
+    def test_config_parse_platform_with_factors(self, newconfig, plat):
         config = newconfig([], """
             [tox]
             envlist = py27-{win, lin,osx }
