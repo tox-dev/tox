@@ -3,14 +3,12 @@ from pkg_resources import DistributionNotFound
 from pkg_resources import get_distribution
 
 from . import exception
-from .constants import COMPAT
-from .constants import CONFIG
-from .constants import PIP
+from .constants import PYTHON, INFO, PIP
 from .hookspecs import hookspec
 
 __all__ = (
     'cmdline', 'exception', '__version__',
-    'CONFIG', 'COMPAT', 'PIP',
+    'PYTHON', 'INFO', 'PIP',
     'hookspec', 'hookimpl',  # DEPRECATED will be removed from API - see warning below
 )
 """Everything explicitly exported here is part of the tox programmatic API.

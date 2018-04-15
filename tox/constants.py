@@ -1,22 +1,22 @@
-"""All non private names (no leading underscore) here are part of the tox API
+"""All non private names (no leading underscore) here are part of the tox API.
+
 They live in the tox namespace and can be accessed as tox.[NAMESPACE.]NAME
 """
-import os as _os
 import sys as _sys
 
 
-class CONFIG:
-    SUPPORTED_CPYTHON_VERSION_TUPLES = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7)]
-    SUPPORTED_OTHER_PYTHON_INTERPRETERS = ['jython', 'pypy', 'pypy3']
+class PYTHON:
+    CPYTHON_VERSION_TUPLES = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7)]
+    OTHER_PYTHON_INTERPRETERS = ['jython', 'pypy', 'pypy3']
     _map = {'py': _sys.executable, 'py2': 'python2', 'py3': 'python3'}
     _map.update({'py%s%s' % (major, minor): 'python%s.%s' % (major, minor)
-                 for major, minor in SUPPORTED_CPYTHON_VERSION_TUPLES})
-    _map.update({interpreter: interpreter for interpreter in SUPPORTED_OTHER_PYTHON_INTERPRETERS})
+                 for major, minor in CPYTHON_VERSION_TUPLES})
+    _map.update({interpreter: interpreter for interpreter in OTHER_PYTHON_INTERPRETERS})
     DEFAULT_FACTORS = _map
 
 
-class COMPAT:
-    IS_WIN = _os.name == "nt"
+class INFO:
+    IS_WIN = _sys.platform == "win32"
 
 
 class PIP:

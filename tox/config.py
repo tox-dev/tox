@@ -29,7 +29,7 @@ Instead create a hookimpl in your code with:
     hookimpl = pluggy.HookimplMarker("tox")
 """
 
-default_factors = tox.CONFIG.DEFAULT_FACTORS
+default_factors = tox.PYTHON.DEFAULT_FACTORS
 """DEPRECATED MOVE - please update to new position"""
 
 
@@ -50,8 +50,7 @@ def get_plugin_manager(plugins=()):
 
 
 class Parser:
-    """ command line and ini-parser control object. """
-
+    """Command line and ini-parser control object."""
     def __init__(self):
         self.argparser = argparse.ArgumentParser(
             description="tox options", add_help=False)
@@ -425,8 +424,8 @@ def tox_addoption(parser):
     def basepython_default(testenv_config, value):
         if value is None:
             for factor in testenv_config.factors:
-                if factor in tox.CONFIG.DEFAULT_FACTORS:
-                    return tox.CONFIG.DEFAULT_FACTORS[factor]
+                if factor in tox.PYTHON.DEFAULT_FACTORS:
+                    return tox.PYTHON.DEFAULT_FACTORS[factor]
             return sys.executable
         return str(value)
 
@@ -599,16 +598,15 @@ def tox_addoption(parser):
 
 
 class Config(object):
-    """ Global Tox config object. """
-
+    """Global Tox config object."""
     def __init__(self, pluginmanager, option, interpreters):
-        #: dictionary containing envname to envconfig mappings
         self.envconfigs = {}
+        """Mapping envname -> envconfig"""
         self.invocationcwd = py.path.local()
         self.interpreters = interpreters
         self.pluginmanager = pluginmanager
-        #: option namespace containing all parsed command line options
         self.option = option
+        """option namespace containing all parsed command line options"""
 
     @property
     def homedir(self):
@@ -623,7 +621,6 @@ class TestenvConfig:
     In addition to some core attributes/properties this config object holds all
     per-testenv ini attributes as attributes, see "tox --help-ini" for an overview.
     """
-
     def __init__(self, envname, config, factors, reader):
         #: test environment name
         self.envname = envname
@@ -803,7 +800,7 @@ class parseini:
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
-        known_factors.update(tox.CONFIG.DEFAULT_FACTORS)
+        known_factors.update(tox.PYTHON.DEFAULT_FACTORS)
         known_factors.add("python")
 
         # factors stated in config envlist
