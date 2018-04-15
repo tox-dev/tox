@@ -13,6 +13,10 @@ class PYTHON:
                  for major, minor in CPYTHON_VERSION_TUPLES})
     _map.update({interpreter: interpreter for interpreter in OTHER_PYTHON_INTERPRETERS})
     DEFAULT_FACTORS = _map
+    CURRENT_RELEASE_ENV = 'py36'
+    """Should hold currently released py -> for easy updating"""
+    QUICKSTART_PY_ENVS = ['py27', 'py34', 'py35', CURRENT_RELEASE_ENV, 'pypy', 'jython']
+    """For choices in tox-quickstart"""
 
 
 class INFO:

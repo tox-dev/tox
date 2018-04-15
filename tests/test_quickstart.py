@@ -4,8 +4,8 @@ import pytest
 
 import tox._quickstart
 
-ALL_PY_ENVS_AS_STRING = ', '.join(tox._quickstart.ALL_PY_ENVS)
-ALL_PY_ENVS_WO_LAST_AS_STRING = ', '.join(tox._quickstart.ALL_PY_ENVS[:-1])
+ALL_PY_ENVS_AS_STRING = ', '.join(tox.PYTHON.QUICKSTART_PY_ENVS)
+ALL_PY_ENVS_WO_LAST_AS_STRING = ', '.join(tox.PYTHON.QUICKSTART_PY_ENVS[:-1])
 SIGNS_OF_SANITY = (
     'tox.readthedocs.io', '[tox]', '[testenv]', 'envlist = ', 'deps =', 'commands =')
 """A bunch of elements to be expected in the generated config as marker for basic sanity"""
@@ -136,20 +136,20 @@ class _exp:
         (
             _answers([1, 'pytest', '']),
             _exp('choose current release Python and pytest with defaut deps',
-                 [tox._quickstart.CURRENT_RELEASE_ENV, 'pytest', 'pytest']),
+                 [tox.PYTHON.CURRENT_RELEASE_ENV, 'pytest', 'pytest']),
             _cnf(),
         ),
         (
             _answers([1, 'pytest -n auto', 'pytest-xdist']),
             _exp('choose current release Python and pytest with xdist and some args',
-                 [tox._quickstart.CURRENT_RELEASE_ENV, 'pytest, pytest-xdist',
+                 [tox.PYTHON.CURRENT_RELEASE_ENV, 'pytest, pytest-xdist',
                   'pytest -n auto']),
             _cnf(),
         ),
         (
             _answers([2, 'pytest', '']),
             _exp('choose py27, current release Python and pytest with defaut deps',
-                 ['py27, %s' % tox._quickstart.CURRENT_RELEASE_ENV, 'pytest', 'pytest']),
+                 ['py27, %s' % tox.PYTHON.CURRENT_RELEASE_ENV, 'pytest', 'pytest']),
             _cnf(),
         ),
         (

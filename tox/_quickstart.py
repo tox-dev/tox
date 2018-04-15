@@ -50,9 +50,6 @@ import tox
 
 NAME = 'tox.ini'
 ALTERNATIVE_NAME = 'tox-generated.ini'
-CURRENT_RELEASE_ENV = 'py36'
-"""Should hold currently released py -> for easy updating as default in choices"""
-ALL_PY_ENVS = ['py27', 'py34', 'py35', CURRENT_RELEASE_ENV, 'pypy', 'jython']
 QUICKSTART_CONF = '''\
 # tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
@@ -160,19 +157,20 @@ def ask_user(map_):
           '    [2] py27, %s\n'
           '    [3] (All versions) %s\n'
           '    [4] Choose each one-by-one' % (
-              CURRENT_RELEASE_ENV, CURRENT_RELEASE_ENV, ', '.join(ALL_PY_ENVS)))
+              tox.PYTHON.CURRENT_RELEASE_ENV, tox.PYTHON.CURRENT_RELEASE_ENV,
+              ', '.join(tox.PYTHON.QUICKSTART_PY_ENVS)))
     do_prompt(map_, 'canned_pyenvs', 'Enter the number of your choice',
               default='3', validator=choice('1', '2', '3', '4'))
     if map_['canned_pyenvs'] == '1':
-        map_[CURRENT_RELEASE_ENV] = True
+        map_[tox.PYTHON.CURRENT_RELEASE_ENV] = True
     elif map_['canned_pyenvs'] == '2':
-        for pyenv in ('py27', CURRENT_RELEASE_ENV):
+        for pyenv in ('py27', tox.PYTHON.CURRENT_RELEASE_ENV):
             map_[pyenv] = True
     elif map_['canned_pyenvs'] == '3':
-        for pyenv in ALL_PY_ENVS:
+        for pyenv in tox.PYTHON.QUICKSTART_PY_ENVS:
             map_[pyenv] = True
     elif map_['canned_pyenvs'] == '4':
-        for pyenv in ALL_PY_ENVS:
+        for pyenv in tox.PYTHON.QUICKSTART_PY_ENVS:
             if pyenv not in map_:
                 do_prompt(map_, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y',
                           validator=boolean)
@@ -200,7 +198,8 @@ def get_default_deps(commands):
 
 
 def post_process_input(map_):
-    map_['envlist'] = ', '.join([env for env in ALL_PY_ENVS if map_.get(env) is True])
+    envlist = [env for env in tox.PYTHON.QUICKSTART_PY_ENVS if map_.get(env) is True]
+    map_['envlist'] = ', '.join(envlist)
     map_['commands'] = '\n    '.join([cmd.strip() for cmd in map_['commands']])
     map_['deps'] = '\n    '.join([dep.strip() for dep in set(map_['deps'])])
 
