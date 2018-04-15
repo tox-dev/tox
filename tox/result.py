@@ -8,10 +8,13 @@ import tox
 
 
 class ResultLog:
-    def __init__(self, result_dict=None):
-        if result_dict is None:
-            result_dict = {}
-        self.dict = result_dict
+    def __init__(self, data=None):
+        if not data:
+            self.dict = {}
+        elif isinstance(data, dict):
+            self.dict = data
+        else:
+            self.dict = json.loads(data)
         self.dict.update({"reportversion": "1", "toxversion": tox.__version__})
         self.dict["platform"] = sys.platform
         self.dict["host"] = socket.getfqdn()
@@ -33,10 +36,6 @@ class ResultLog:
 
     def dumps_json(self):
         return json.dumps(self.dict, indent=2)
-
-    @classmethod
-    def loads_json(cls, data):
-        return cls(json.loads(data))
 
 
 class EnvLog:

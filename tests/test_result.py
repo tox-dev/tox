@@ -26,7 +26,7 @@ def test_pre_set_header():
     assert replog.dict["platform"] == sys.platform
     assert replog.dict["host"] == socket.getfqdn()
     data = replog.dumps_json()
-    replog2 = tox.result.ResultLog.loads_json(data)
+    replog2 = tox.result.ResultLog(data)
     assert replog2.dict == replog.dict
 
 
@@ -44,7 +44,7 @@ def test_set_header(pkg):
         "md5": pkg.computehash("md5"),
         "sha256": pkg.computehash("sha256")}
     data = replog.dumps_json()
-    replog2 = tox.result.ResultLog.loads_json(data)
+    replog2 = tox.result.ResultLog(data)
     assert replog2.dict == replog.dict
 
 
