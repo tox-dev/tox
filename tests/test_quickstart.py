@@ -211,8 +211,8 @@ def test_quickstart(answers, cnf, exp, monkeypatch):
     """Test quickstart script using some little helpers.
 
     :param _answers answers: user interaction simulation
-    :param _cnf cnf: ini file expectation/creation handler
-    :param _exp exp: expectation handler
+    :param _cnf cnf: helper for args and config file paths and contents
+    :param _exp exp: expectation helper
     """
     monkeypatch.setattr('six.moves.input', answers)
     monkeypatch.setattr('sys.argv', cnf.argv)
