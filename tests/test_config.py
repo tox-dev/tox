@@ -1758,7 +1758,6 @@ class TestGlobalOptions:
 
 
 class TestHashseedOption:
-
     def _get_envconfigs(self, newconfig, args=None, tox_ini=None,
                         make_hashseed=None):
         if args is None:
@@ -2097,7 +2096,6 @@ class TestConfigConstSubstitutions:
 
 
 class TestParseEnv:
-
     def test_parse_recreate(self, newconfig):
         inisource = ""
         config = newconfig([], inisource)
@@ -2363,7 +2361,6 @@ def test_env_spec(cmdline, envlist):
 
 
 class TestCommandParser:
-
     def test_command_parser_for_word(self):
         p = CommandParser('word')
         assert list(p.words()) == ['word']

@@ -408,7 +408,6 @@ def test_install_python3(tmpdir, newmocksession):
 
 
 class TestCreationConfig:
-
     def test_basic(self, newconfig, mocksession, tmpdir):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
@@ -529,7 +528,6 @@ class TestCreationConfig:
 
 
 class TestVenvTest:
-
     def test_envbindir_path(self, newmocksession, monkeypatch):
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession([], """

@@ -108,7 +108,6 @@ def test_run_and_get_interpreter_info():
 
 
 class TestInterpreters:
-
     def test_get_executable(self, interpreters):
         class envconfig:
             basepython = sys.executable
@@ -175,7 +174,6 @@ def test_exec_failed():
 
 
 class TestInterpreterInfo:
-
     def info(self, name="my-name", executable="my-executable",
              version_info="my-version-info", sysplatform="my-sys-platform"):
         return InterpreterInfo(name, executable, version_info, sysplatform)
@@ -201,7 +199,6 @@ class TestInterpreterInfo:
 
 
 class TestNoInterpreterInfo:
-
     def test_runnable(self):
         assert not NoInterpreterInfo("foo").runnable
         assert not NoInterpreterInfo("foo", executable=sys.executable).runnable
