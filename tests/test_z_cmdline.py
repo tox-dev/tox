@@ -9,14 +9,13 @@ import py
 import pytest
 
 import tox
+import tox.config
 import tox.exception
+import tox.session
 from tox._pytestplugin import ReportExpectMock
 
 
 pytest_plugins = "pytester"
-
-from tox.session import Session  # noqa #E402 module level import not at top of file
-from tox.config import parseconfig  # noqa #E402 module level import not at top of file
 
 
 def test_report_protocol(newconfig):
@@ -35,8 +34,7 @@ def test_report_protocol(newconfig):
         def wait(self):
             pass
 
-    session = Session(config, popen=Popen,
-                      Report=ReportExpectMock)
+    session = tox.session.Session(config, popen=Popen, Report=ReportExpectMock)
     report = session.report
     report.expect("using")
     venv = session.getvenv("mypython")
@@ -86,8 +84,8 @@ class TestSession:
             'tox.ini': '''
             '''
         })
-        config = parseconfig([])
-        session = Session(config)
+        config = tox.config.parseconfig([])
+        session = tox.session.Session(config)
         sdist = session.get_installpkg_path()
         assert sdist.check()
         assert sdist.ext == ".zip"
@@ -96,7 +94,7 @@ class TestSession:
         assert sdist2 == sdist
         sdist.write("hello")
         assert sdist.stat().size < 10
-        sdist_new = Session(config).get_installpkg_path()
+        sdist_new = tox.session.Session(config).get_installpkg_path()
         assert sdist_new == sdist
         assert sdist_new.stat().size > 10
 
@@ -109,8 +107,8 @@ class TestSession:
             distshare=%s
             ''' % distshare
         })
-        config = parseconfig([])
-        session = Session(config)
+        config = tox.config.parseconfig([])
+        session = tox.session.Session(config)
         sdist = session.get_installpkg_path()
         assert sdist.check()
         assert sdist.ext == ".zip"
@@ -136,8 +134,8 @@ class TestSession:
             [testenv:world]
             '''
         })
-        config = parseconfig([])
-        session = Session(config)
+        config = tox.config.parseconfig([])
+        session = tox.session.Session(config)
         envs = session.venvlist
         assert len(envs) == 2
         env1, env2 = envs
@@ -160,8 +158,8 @@ class TestSession:
             [testenv:world]
             '''
         })
-        config = parseconfig([])
-        session = Session(config)
+        config = tox.config.parseconfig([])
+        session = tox.session.Session(config)
         venv1 = session.getvenv("hello")
         venv2 = session.getvenv("hello")
         assert venv1 is venv2
@@ -782,7 +780,7 @@ def test_sdist_latest(tmpdir, newconfig):
     """ % distshare)
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
-    session = Session(config)
+    session = tox.session.Session(config)
     sdist_path = session.get_installpkg_path()
     assert sdist_path == p
 
@@ -790,7 +788,7 @@ def test_sdist_latest(tmpdir, newconfig):
 def test_installpkg(tmpdir, newconfig):
     p = tmpdir.ensure("pkg123-1.0.zip")
     config = newconfig(["--installpkg=%s" % p], "")
-    session = Session(config)
+    session = tox.session.Session(config)
     sdist_path = session.get_installpkg_path()
     assert sdist_path == p
 
