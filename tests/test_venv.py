@@ -9,11 +9,6 @@ import tox.config
 import tox.interpreters
 import tox.venv
 
-# DEPRECATED - will go away in tox 4
-# WARNING OBSOLETE: this should never be imported from anywhere
-# Instead instantiate the hookimpl by using exactly this call in your client code
-hookimpl = pluggy.HookimplMarker("tox")
-
 
 def test_getdigest(tmpdir):
     assert tox.venv.getdigest(tmpdir) == "0" * 32
@@ -750,12 +745,16 @@ def test_tox_testenv_create(newmocksession):
     log = []
 
     class Plugin:
-        @hookimpl
+        @tox.hookimpl
         def tox_testenv_create(self, action, venv):
+            assert isinstance(action, tox.session.Action)
+            assert isinstance(venv, tox.venv.VirtualEnv)
             log.append(1)
 
-        @hookimpl
+        @tox.hookimpl
         def tox_testenv_install_deps(self, action, venv):
+            assert isinstance(action, tox.session.Action)
+            assert isinstance(venv, tox.venv.VirtualEnv)
             log.append(2)
 
     mocksession = newmocksession([], """
@@ -773,12 +772,12 @@ def test_tox_testenv_pre_post(newmocksession):
     log = []
 
     class Plugin:
-        @hookimpl
-        def tox_runtest_pre(self, venv):
+        @tox.hookimpl
+        def tox_runtest_pre(self):
             log.append('started')
 
-        @hookimpl
-        def tox_runtest_post(self, venv):
+        @tox.hookimpl
+        def tox_runtest_post(self):
             log.append('finished')
 
     mocksession = newmocksession([], """
