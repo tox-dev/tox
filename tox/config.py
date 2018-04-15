@@ -30,7 +30,7 @@ Instead create a hookimpl in your code with:
 """
 
 default_factors = tox.PYTHON.DEFAULT_FACTORS
-"""DEPRECATED MOVE - please update to new position"""
+"""DEPRECATED MOVE - please update to new location."""
 
 
 def get_plugin_manager(plugins=()):
@@ -139,12 +139,10 @@ class DepOption:
         return deps
 
     def _replace_forced_dep(self, name, config):
-        """
-        Override the given dependency config name taking --force-dep-version
-        option into account.
+        """Override given dependency config name. Take ``--force-dep-version`` option into account.
 
         :param name: dep config, for example ["pkg==1.0", "other==2.0"].
-        :param config: Config instance
+        :param config: ``Config`` instance
         :return: the new dependency that should be used for virtual environments
         """
         if not config.option.force_dep:
@@ -156,10 +154,7 @@ class DepOption:
 
     @classmethod
     def _is_same_dep(cls, dep1, dep2):
-        """
-        Returns True if both dependency definitions refer to the
-        same package, even if versions differ.
-        """
+        """Definitions are the same if they refer to the same package, even if versions differ."""
         dep1_name = pkg_resources.Requirement.parse(dep1).project_name
         try:
             dep2_name = pkg_resources.Requirement.parse(dep2).project_name
@@ -617,7 +612,8 @@ class Config(object):
 
 
 class TestenvConfig:
-    """ Testenv Configuration object.
+    """Testenv Configuration object.
+
     In addition to some core attributes/properties this config object holds all
     per-testenv ini attributes as attributes, see "tox --help-ini" for an overview.
     """
@@ -638,9 +634,10 @@ class TestenvConfig:
         """
 
     def get_envbindir(self):
-        """ path to directory where scripts/binaries reside. """
-        if sys.platform == "win32" and "jython" not in self.basepython and \
-                "pypy" not in self.basepython:
+        """Path to directory where scripts/binaries reside."""
+        if (tox.INFO.IS_WIN and
+                "jython" not in self.basepython and
+                "pypy" not in self.basepython):
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")
@@ -651,7 +648,7 @@ class TestenvConfig:
 
     @property
     def envpython(self):
-        """ path to python executable. """
+        """Path to python executable."""
         return self.get_envpython()
 
     def get_envpython(self):
@@ -663,8 +660,9 @@ class TestenvConfig:
         return self.envbindir.join(name)
 
     def get_envsitepackagesdir(self):
-        """ return sitepackagesdir of the virtualenv environment.
-        (only available during execution, not parsing)
+        """Return sitepackagesdir of the virtualenv environment.
+
+        NOTE: Only available during execution, not during parsing.
         """
         x = self.config.interpreters.get_sitepackagesdir(
             info=self.python_info,
@@ -673,7 +671,7 @@ class TestenvConfig:
 
     @property
     def python_info(self):
-        """ return sitepackagesdir of the virtualenv environment. """
+        """Return sitepackagesdir of the virtualenv environment."""
         return self.config.interpreters.get_info(envconfig=self)
 
     def getsupportedinterpreter(self):
@@ -955,9 +953,11 @@ class IndexServerConfig:
         self.url = url
 
 
-#: Check value matches substitution form
-#: of referencing value from other section. E.g. {[base]commands}
 is_section_substitution = re.compile(r"{\[[^{}\s]+\]\S+?}").match
+"""Check value matches substitution form of referencing value from other section. 
+
+E.g. {[base]commands}
+"""
 
 
 class SectionReader:
