@@ -1,3 +1,4 @@
+import json
 import os
 import platform
 import re
@@ -11,10 +12,6 @@ import tox
 import tox.exception
 from tox._pytestplugin import ReportExpectMock
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 pytest_plugins = "pytester"
 
