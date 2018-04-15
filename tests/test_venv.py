@@ -1,7 +1,6 @@
 import os
 import sys
 
-import pluggy
 import py
 import pytest
 
