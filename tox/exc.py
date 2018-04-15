@@ -6,10 +6,10 @@ def exit_code_str(exception_name, command, exit_code):
     """String representation for an InvocationError, with exit code
 
     NOTE: this might also be used by plugin tests (tox-venv at the time of writing),
-    so some coordination is needed, if this is ever moved or a different solution for this hack
+    so some coordination is needed if this is ever moved or a different solution for this hack
     is found.
 
-    NOTE: this is aseparate function because pytest-mock `spy` does not work on Exceptions
+    NOTE: this is a separate function because pytest-mock `spy` does not work on Exceptions
     We can use neither a class method nor a static because of https://bugs.python.org/issue23078.
     Even a normal method failed with "TypeError: descriptor '__getattribute__' requires a
     'BaseException' object but received a 'type'".
@@ -25,7 +25,7 @@ def exit_code_str(exception_name, command, exit_code):
             name = signals.get(number)
             if name:
                 str_ += ("\nNote: this might indicate a fatal error signal "
-                         "({} - 128 = {}: {})".format(number+128, number, name))
+                         "(%s - 128 = %s: %s)" % (number+128, number, name))
     return str_
 
 
