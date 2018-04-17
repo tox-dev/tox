@@ -4,11 +4,9 @@ unittest2, discover and tox
 Running unittests with 'discover'
 ------------------------------------------
 
-.. _Pygments: https://pypi.python.org/pypi/Pygments
-
 The discover_ project allows to discover and run unittests
 and we can easily integrate it in a ``tox`` run.  As an example,
-perform a checkout of Pygments_:
+perform a checkout of `Pygments <https://pypi.org/project/Pygments>`_:
 
 .. code-block:: shell
 

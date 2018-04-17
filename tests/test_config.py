@@ -107,7 +107,7 @@ class TestVenvConfig:
             [testenv]
             deps=
                 dep1==1.0
-                https://pypi.python.org/xyz/pkg1.tar.gz
+                https://pypi.org/xyz/pkg1.tar.gz
             '''
         })
         config = parseconfig(
@@ -116,7 +116,7 @@ class TestVenvConfig:
             'dep1==1.5'
         ]
         assert [str(x) for x in config.envconfigs['python'].deps] == [
-            'dep1==1.5', 'https://pypi.python.org/xyz/pkg1.tar.gz'
+            'dep1==1.5', 'https://pypi.org/xyz/pkg1.tar.gz'
         ]
 
     def test_process_deps(self, newconfig):
@@ -2058,7 +2058,7 @@ class TestIndexServer:
                 default = file://{homedir}/.pip/downloads/simple
                 local1  = file://{homedir}/.pip/downloads/simple
                 local2  = file://{toxinidir}/downloads/simple
-                pypi    = http://pypi.python.org/simple
+                pypi    = http://pypi.org/simple
         """
         config = newconfig([], inisource)
         expected = "file://%s/.pip/downloads/simple" % config.homedir
