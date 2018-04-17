@@ -342,8 +342,7 @@ class Reporter(object):
 
 
 class Session:
-    """ (unstable API).  the session object that ties
-    together configuration, reporting, venv creation, testing. """
+    """The session object that ties together configuration, reporting, venv creation, testing."""
 
     def __init__(self, config, popen=subprocess.Popen, Report=Reporter):
         self.config = config
