@@ -57,7 +57,7 @@ def test_tox_get_python_executable():
     p = tox.interpreters.tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
     for major, minor in tox.PYTHON.CPYTHON_VERSION_TUPLES:
-        name = "python%s%s" % (major, minor)
+        name = "python%s.%s" % (major, minor)
         if tox.INFO.IS_WIN:
             pydir = "python%s%s" % (major, minor)
             x = py.path.local(r"c:\%s" % pydir)
@@ -75,7 +75,7 @@ def test_tox_get_python_executable():
         stdout, stderr = popen.communicate()
         assert not stdout or not stderr
         all_output = stderr.decode('ascii') + stdout.decode('ascii')
-        assert "%s%s" % (major, minor) in all_output
+        assert "%s.%s" % (major, minor) in all_output
 
 
 def test_find_executable_extra(monkeypatch):
