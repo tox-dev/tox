@@ -38,7 +38,6 @@ If you want to use the scripts in `task/` you need a `.pypirc` with a correctly 
 .. code-block:: ini
 
     [pypi]
-    ;repository=https://pypi.python.org/pypi
     ;repository=https://upload.pypi.io/legacy/
     username=<your username>
     password=<your password>

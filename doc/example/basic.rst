@@ -88,7 +88,7 @@ configuration:
                           /bin/bash
 
 
-.. _virtualenv: https://pypi.python.org/pypi/virtualenv
+.. _virtualenv: https://pypi.org/project/virtualenv
 
 .. _multiindex:
 
@@ -175,8 +175,8 @@ like this:
 
 .. code-block:: shell
 
-    tox -i DEV=http://pypi.python.org/simple  # changes :DEV: package URLs
-    tox -i http://pypi.python.org/simple      # changes default
+    tox -i DEV=http://pypi.org/simple  # changes :DEV: package URLs
+    tox -i http://pypi.org/simple      # changes default
 
 further customizing installation
 ---------------------------------
