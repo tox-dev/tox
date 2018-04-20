@@ -233,8 +233,14 @@ class Action(object):
     def _popen(self, args, cwd, stdout, stderr, env=None):
         if env is None:
             env = os.environ.copy()
+        new_session = {}
+        if sys.platform != 'win32':
+            new_session['preexec_fn'] = os.setsid
+        else:
+            new_session['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
         return self.session.popen(self._rewriteargs(cwd, args), shell=False, cwd=str(cwd),
-                                  universal_newlines=True, stdout=stdout, stderr=stderr, env=env)
+                                  universal_newlines=True, stdout=stdout, stderr=stderr, env=env,
+                                  **new_session)
 
 
 class Verbosity(object):
