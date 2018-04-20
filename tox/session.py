@@ -9,6 +9,7 @@ from __future__ import print_function
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -199,6 +200,7 @@ class Action(object):
                 timer_to_kill = threading.Timer(5, kill, [popen])
                 try:
                     timer_to_kill.start()
+                    popen.send_signal(signal.SIGINT)
                     popen.wait()
                 finally:
                     timer_to_kill.cancel()

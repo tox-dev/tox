@@ -920,10 +920,11 @@ def test_exit_code(initproj, cmd, exit_code, mocker):
         # need mocker.spy above
         assert tox.exception.exit_code_str.call_count == 0
 
+@pytest.mark.skipif("sys.platform == 'win32'")
 def test_new_session(initproj, cmd):
     initproj("suckzoo", filedefs={
         # This file first registers SIGINT handler and send SIGINT to itself.
-        'suicide.py': '''
+        'self_signal.py': '''
 import os
 import signal
 
@@ -934,7 +935,31 @@ os.kill(0, signal.SIGINT)
         'tox.ini': '''
 [testenv]
 commands =
-    python suicide.py
+    python self_signal.py
+        '''
+    })
+
+    result = cmd()
+    assert not result.ret
+
+@pytest.mark.skipif("sys.platform != 'win32'")
+@pytest.mark.xfail(reason="Signal on win32 behaves differently with POSIX.")
+def test_new_session_win32(initproj, cmd):
+    initproj("suckzoo", filedefs={
+        # This file first registers SIGTERM handler and send SIGTERM to itself.
+        'self_signal.py': '''
+import os
+import sys
+import signal
+
+
+signal.signal(signal.SIGINT, lambda *args: None)
+os.kill(0, signal.SIGINT)
+        ''',
+        'tox.ini': '''
+[testenv]
+commands =
+    python self_signal.py
         '''
     })
 
