@@ -7,14 +7,16 @@ import py
 import pytest
 
 import tox
-import tox.config
-import tox.interpreters
+from tox.config import get_plugin_manager
+from tox.interpreters import (
+    ExecFailed, InterpreterInfo, Interpreters, NoInterpreterInfo, pyinfo,
+    run_and_get_interpreter_info, sitepackagesdir, tox_get_python_executable)
 
 
 @pytest.fixture(name="interpreters")
 def create_interpreters_instance():
-    pm = tox.config.get_plugin_manager()
-    return tox.interpreters.Interpreters(hook=pm.hook)
+    pm = get_plugin_manager()
+    return Interpreters(hook=pm.hook)
 
 
 @pytest.mark.skipif(not tox.INFO.IS_WIN, reason="not for windows")
@@ -54,7 +56,7 @@ def test_tox_get_python_executable():
         basepython = sys.executable
         envname = "pyxx"
 
-    p = tox.interpreters.tox_get_python_executable(envconfig)
+    p = tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
     for major, minor in tox.PYTHON.CPYTHON_VERSION_TUPLES:
         name = "python%s.%s" % (major, minor)
@@ -68,7 +70,7 @@ def test_tox_get_python_executable():
             if not py.path.local.sysfind(name):
                 continue
         envconfig.basepython = name
-        p = tox.interpreters.tox_get_python_executable(envconfig)
+        p = tox_get_python_executable(envconfig)
         assert p
         popen = subprocess.Popen([str(p), '-V'], stderr=subprocess.PIPE,
                                  stdout=subprocess.PIPE)
@@ -89,13 +91,13 @@ def test_find_executable_extra(monkeypatch):
         basepython = "1lk23j"
         envname = "pyxx"
 
-    t = tox.interpreters.tox_get_python_executable(envconfig)
+    t = tox_get_python_executable(envconfig)
     assert t == "hello"
 
 
 def test_run_and_get_interpreter_info():
     name = os.path.basename(sys.executable)
-    info = tox.interpreters.run_and_get_interpreter_info(name, sys.executable)
+    info = run_and_get_interpreter_info(name, sys.executable)
     assert info.version_info == tuple(sys.version_info)
     assert info.name == name
     assert info.executable == sys.executable
@@ -139,7 +141,7 @@ class TestInterpreters:
 def test_pyinfo(monkeypatch):
     monkeypatch.setattr(sys, "version_info", [42, 4242])
     monkeypatch.setattr(sys, "platform", "an unladen swallow")
-    result = tox.interpreters.pyinfo()
+    result = pyinfo()
     assert len(result) == 2
     assert result["version_info"] == (42, 4242)
     assert result["sysplatform"] == "an unladen swallow"
@@ -155,11 +157,11 @@ def test_sitepackagesdir(monkeypatch):
         return test_dir
 
     monkeypatch.setattr(sysconfig, "get_python_lib", dummy_get_python_lib)
-    assert tox.interpreters.sitepackagesdir(test_envdir) == {"dir": test_dir}
+    assert sitepackagesdir(test_envdir) == {"dir": test_dir}
 
 
 def test_exec_failed():
-    x = tox.interpreters.ExecFailed("my-executable", "my-source", "my-out", "my-err")
+    x = ExecFailed("my-executable", "my-source", "my-out", "my-err")
     assert isinstance(x, Exception)
     assert x.executable == "my-executable"
     assert x.source == "my-source"
@@ -171,7 +173,7 @@ class TestInterpreterInfo:
     @staticmethod
     def info(name="my-name", executable="my-executable",
              version_info="my-version-info", sysplatform="my-sys-platform"):
-        return tox.interpreters.InterpreterInfo(name, executable, version_info, sysplatform)
+        return InterpreterInfo(name, executable, version_info, sysplatform)
 
     def test_runnable(self):
         assert self.info().runnable
@@ -195,11 +197,11 @@ class TestInterpreterInfo:
 
 class TestNoInterpreterInfo:
     def test_runnable(self):
-        assert not tox.interpreters.NoInterpreterInfo("foo").runnable
-        assert not tox.interpreters.NoInterpreterInfo("foo", executable=sys.executable).runnable
+        assert not NoInterpreterInfo("foo").runnable
+        assert not NoInterpreterInfo("foo", executable=sys.executable).runnable
 
     def test_default_data(self):
-        x = tox.interpreters.NoInterpreterInfo("foo")
+        x = NoInterpreterInfo("foo")
         assert x.name == "foo"
         assert x.executable is None
         assert x.version_info is None
@@ -207,7 +209,7 @@ class TestNoInterpreterInfo:
         assert x.err == "not found"
 
     def test_set_data(self):
-        x = tox.interpreters.NoInterpreterInfo(
+        x = NoInterpreterInfo(
             "migraine", executable="my-executable", out="my-out", err="my-err")
         assert x.name == "migraine"
         assert x.executable == "my-executable"
@@ -216,9 +218,9 @@ class TestNoInterpreterInfo:
         assert x.err == "my-err"
 
     def test_str_without_executable(self):
-        x = tox.interpreters.NoInterpreterInfo("coconut")
+        x = NoInterpreterInfo("coconut")
         assert str(x) == "<executable not found for: coconut>"
 
     def test_str_with_executable(self):
-        x = tox.interpreters.NoInterpreterInfo("coconut", executable="bang/em/together")
+        x = NoInterpreterInfo("coconut", executable="bang/em/together")
         assert str(x) == "<executable at bang/em/together, not runnable>"

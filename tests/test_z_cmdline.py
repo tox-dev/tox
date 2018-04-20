@@ -9,11 +9,10 @@ import py
 import pytest
 
 import tox
-import tox.config
-import tox.exception
-import tox.session
 from tox._pytestplugin import ReportExpectMock
-
+from tox.config import parseconfig
+from tox.exception import MissingDirectory, MissingDependency
+from tox.session import Session
 
 pytest_plugins = "pytester"
 
@@ -34,7 +33,7 @@ def test_report_protocol(newconfig):
         def wait(self):
             pass
 
-    session = tox.session.Session(config, popen=Popen, Report=ReportExpectMock)
+    session = Session(config, popen=Popen, Report=ReportExpectMock)
     report = session.report
     report.expect("using")
     venv = session.getvenv("mypython")
@@ -46,10 +45,10 @@ def test_report_protocol(newconfig):
 def test__resolve_pkg(tmpdir, mocksession):
     distshare = tmpdir.join("distshare")
     spec = distshare.join("pkg123-*")
-    with pytest.raises(tox.exception.MissingDirectory):
+    with pytest.raises(MissingDirectory):
         mocksession._resolve_pkg(spec)
     distshare.ensure(dir=1)
-    with pytest.raises(tox.exception.MissingDependency):
+    with pytest.raises(MissingDependency):
         mocksession._resolve_pkg(spec)
     distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
@@ -85,8 +84,8 @@ class TestSession:
             'tox.ini': '''
             '''
         })
-        config = tox.config.parseconfig([])
-        session = tox.session.Session(config)
+        config = parseconfig([])
+        session = Session(config)
         sdist = session.get_installpkg_path()
         assert sdist.check()
         assert sdist.ext == ".zip"
@@ -95,7 +94,7 @@ class TestSession:
         assert sdist2 == sdist
         sdist.write("hello")
         assert sdist.stat().size < 10
-        sdist_new = tox.session.Session(config).get_installpkg_path()
+        sdist_new = Session(config).get_installpkg_path()
         assert sdist_new == sdist
         assert sdist_new.stat().size > 10
 
@@ -108,8 +107,8 @@ class TestSession:
             distshare=%s
             ''' % distshare
         })
-        config = tox.config.parseconfig([])
-        session = tox.session.Session(config)
+        config = parseconfig([])
+        session = Session(config)
         sdist = session.get_installpkg_path()
         assert sdist.check()
         assert sdist.ext == ".zip"
@@ -135,8 +134,8 @@ class TestSession:
             [testenv:world]
             '''
         })
-        config = tox.config.parseconfig([])
-        session = tox.session.Session(config)
+        config = parseconfig([])
+        session = Session(config)
         envs = session.venvlist
         assert len(envs) == 2
         env1, env2 = envs
@@ -151,7 +150,7 @@ class TestSession:
         exp = "%s: commands succeeded" % env2.envconfig.envname
         assert exp in out
 
-    def test_getvenv(self, initproj, capfd):
+    def test_getvenv(self, initproj):
         initproj("logexample123-0.5", filedefs={
             'tests': {'test_hello.py': "def test_hello(): pass"},
             'tox.ini': '''
@@ -159,8 +158,8 @@ class TestSession:
             [testenv:world]
             '''
         })
-        config = tox.config.parseconfig([])
-        session = tox.session.Session(config)
+        config = parseconfig([])
+        session = Session(config)
         venv1 = session.getvenv("hello")
         venv2 = session.getvenv("hello")
         assert venv1 is venv2
@@ -767,7 +766,7 @@ def test_sdist_latest(tmpdir, newconfig):
     """ % distshare)
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
-    session = tox.session.Session(config)
+    session = Session(config)
     sdist_path = session.get_installpkg_path()
     assert sdist_path == p
 
@@ -775,7 +774,7 @@ def test_sdist_latest(tmpdir, newconfig):
 def test_installpkg(tmpdir, newconfig):
     p = tmpdir.ensure("pkg123-1.0.zip")
     config = newconfig(["--installpkg=%s" % p], "")
-    session = tox.session.Session(config)
+    session = Session(config)
     sdist_path = session.get_installpkg_path()
     assert sdist_path == p
 
@@ -891,7 +890,7 @@ def test_tox_cmdline_no_args(monkeypatch):
         tox.cmdline()
 
 
-def test_tox_cmdline_args(monkeypatch):
+def test_tox_cmdline_args():
     with pytest.raises(SystemExit):
         tox.cmdline(['caller_script', '--help'])
 
@@ -900,6 +899,7 @@ def test_tox_cmdline_args(monkeypatch):
 def test_exit_code(initproj, cmd, exit_code, mocker):
     """ Check for correct InvocationError, with exit code,
         except for zero exit code """
+    import tox.exception
     mocker.spy(tox.exception, 'exit_code_str')
     tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exit_code
     initproj("foo", filedefs={'tox.ini': tox_ini_content})

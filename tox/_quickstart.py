@@ -48,8 +48,7 @@ import six
 
 import tox
 
-NAME = 'tox.ini'
-ALTERNATIVE_NAME = 'tox-generated.ini'
+ALTERNATIVE_CONFIG_NAME = 'tox-generated.ini'
 QUICKSTART_CONF = '''\
 # tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
@@ -57,13 +56,13 @@ QUICKSTART_CONF = '''\
 # and then run "tox" from this directory.
 
 [tox]
-envlist = %(envlist)s
+envlist = {envlist}
 
 [testenv]
 deps =
-    %(deps)s
+    {deps}
 commands =
-    %(commands)s
+    {commands}
 '''
 
 
@@ -207,15 +206,15 @@ def post_process_input(map_):
 def generate(map_):
     """Generate project based on values in *d*."""
     dpath = map_.get('path', os.getcwd())
-    altpath = os.path.join(dpath, ALTERNATIVE_NAME)
+    altpath = os.path.join(dpath, ALTERNATIVE_CONFIG_NAME)
     while True:
-        name = map_.get('name', NAME)
+        name = map_.get('name', tox.INFO.DEFAULT_CONFIG_NAME)
         targetpath = os.path.join(dpath, name)
         if not os.path.isfile(targetpath):
             break
         do_prompt(map_, 'name', '%s exists - choose an alternative' % targetpath, altpath)
     with codecs.open(targetpath, 'w', encoding='utf-8') as f:
-        f.write(prepare_content(QUICKSTART_CONF % map_))
+        f.write(prepare_content(QUICKSTART_CONF.format(**map_)))
         print('Finished: %s has been created. For information on this file, '
               'see https://tox.readthedocs.io/en/latest/config.html\n'
               'Execute `tox` to test your project.' % targetpath)

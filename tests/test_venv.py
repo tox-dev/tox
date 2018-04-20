@@ -5,13 +5,13 @@ import py
 import pytest
 
 import tox
-import tox.config
-import tox.interpreters
-import tox.venv
+from tox.interpreters import NoInterpreterInfo
+from tox.venv import (
+    getdigest, VirtualEnv, tox_testenv_create, tox_testenv_install_deps, CreationConfig)
 
 
 def test_getdigest(tmpdir):
-    assert tox.venv.getdigest(tmpdir) == "0" * 32
+    assert getdigest(tmpdir) == "0" * 32
 
 
 def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
@@ -19,7 +19,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
         [testenv:python]
         basepython=%s
     """ % sys.executable)
-    venv = tox.venv.VirtualEnv(config.envconfigs['python'], session=mocksession)
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     interp = venv.getsupportedinterpreter()
     # realpath needed for debian symlinks
     assert py.path.local(interp).realpath() == py.path.local(sys.executable).realpath()
@@ -34,7 +34,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
         venv.getsupportedinterpreter()
     monkeypatch.undo()
     # check that we properly report when no version_info is present
-    info = tox.interpreters.NoInterpreterInfo(name=venv.name)
+    info = NoInterpreterInfo(name=venv.name)
     info.executable = "something"
     monkeypatch.setattr(config.interpreters, "get_info", lambda *args, **kw: info)
     with pytest.raises(tox.exception.InvocationError):
@@ -46,11 +46,11 @@ def test_create(mocksession, newconfig):
         [testenv:py123]
     """)
     envconfig = config.envconfigs['py123']
-    venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+    venv = VirtualEnv(envconfig, session=mocksession)
     assert venv.path == envconfig.envdir
     assert not venv.path.check()
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -71,7 +71,7 @@ def test_commandpath_venv_precedence(tmpdir, monkeypatch, mocksession, newconfig
         [testenv:py123]
     """)
     envconfig = config.envconfigs['py123']
-    venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+    venv = VirtualEnv(envconfig, session=mocksession)
     tmpdir.ensure("easy_install")
     monkeypatch.setenv("PATH", str(tmpdir), prepend=os.pathsep)
     envconfig.envbindir.ensure("easy_install")
@@ -88,9 +88,9 @@ def test_create_sitepackages(mocksession, newconfig):
         sitepackages=False
     """)
     envconfig = config.envconfigs['site']
-    venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+    venv = VirtualEnv(envconfig, session=mocksession)
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -98,9 +98,9 @@ def test_create_sitepackages(mocksession, newconfig):
     mocksession._clearmocks()
 
     envconfig = config.envconfigs['nosite']
-    venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+    venv = VirtualEnv(envconfig, session=mocksession)
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -118,14 +118,14 @@ def test_install_deps_wildcard(newmocksession):
     """)
     venv = mocksession.getenv("py123")
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     distshare = venv.session.config.distshare
     distshare.ensure("dep1-1.0.zip")
     distshare.ensure("dep1-1.1.zip")
 
-    tox.venv.tox_testenv_install_deps(action=action, venv=venv)
+    tox_testenv_install_deps(action=action, venv=venv)
     assert len(pcalls) == 2
     args = pcalls[-1].args
     assert pcalls[-1].cwd == venv.envconfig.config.toxinidir
@@ -149,12 +149,12 @@ def test_install_deps_indexserver(newmocksession):
     """)
     venv = mocksession.getenv('py123')
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
 
-    tox.venv.tox_testenv_install_deps(action=action, venv=venv)
+    tox_testenv_install_deps(action=action, venv=venv)
     # two different index servers, two calls
     assert len(pcalls) == 3
     args = " ".join(pcalls[0].args)
@@ -178,12 +178,12 @@ def test_install_deps_pre(newmocksession):
     """)
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
 
-    tox.venv.tox_testenv_install_deps(action=action, venv=venv)
+    tox_testenv_install_deps(action=action, venv=venv)
     assert len(pcalls) == 1
     args = " ".join(pcalls[0].args)
     assert "--pre " in args
@@ -230,7 +230,7 @@ def test_install_sdist_extras(newmocksession):
     """)
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -247,7 +247,7 @@ def test_develop_extras(newmocksession, tmpdir):
     """)
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -268,7 +268,7 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
             CUSTOM_VAR = 789
     """)
 
-    venv = tox.venv.VirtualEnv(config.envconfigs['python'], session=mocksession)
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     action = mocksession.newaction(venv, "hello")
 
     venv._needs_reinstall(tmpdir, action)
@@ -291,20 +291,15 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
     assert env["TEMP_NOPASS_VAR"] == "456"
 
 
-def test_test_hashseed_is_in_output(newmocksession):
-    original_make_hashseed = tox.config.make_hashseed
-    tox.config.make_hashseed = lambda: '123456789'
-    try:
-        mocksession = newmocksession([], '''
-            [testenv]
-        ''')
-    finally:
-        tox.config.make_hashseed = original_make_hashseed
+def test_test_hashseed_is_in_output(newmocksession, monkeypatch):
+    seed = '123456789'
+    monkeypatch.setattr('tox.config.make_hashseed', lambda: seed)
+    mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "update")
     venv.update(action)
     venv.test()
-    mocksession.report.expect("verbosity0", "python runtests: PYTHONHASHSEED='123456789'")
+    mocksession.report.expect("verbosity0", "runtests: PYTHONHASHSEED='{}'".format(seed))
 
 
 def test_test_runtests_action_command_is_in_output(newmocksession):
@@ -384,7 +379,7 @@ def test_install_python3(newmocksession):
     """)
     venv = mocksession.getenv('py123')
     action = mocksession.newaction(venv, "getenv")
-    tox.venv.tox_testenv_create(action=action, venv=venv)
+    tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     args = pcalls[0].args
@@ -403,12 +398,12 @@ class TestCreationConfig:
     def test_basic(self, newconfig, mocksession, tmpdir):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         assert cconfig.matches(cconfig)
         path = tmpdir.join("configdump")
         cconfig.writeconfig(path)
-        newconfig = tox.venv.CreationConfig.readconfig(path)
+        newconfig = CreationConfig.readconfig(path)
         assert newconfig.matches(cconfig)
         assert cconfig.matches(newconfig)
 
@@ -418,14 +413,14 @@ class TestCreationConfig:
             deps=abc
         """)
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         config = newconfig([], """
             [testenv]
             deps=xyz
         """)
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         otherconfig = venv._getliveconfig()
         assert not cconfig.matches(otherconfig)
 
@@ -440,7 +435,7 @@ class TestCreationConfig:
         xyz = config.distshare.join("xyz.zip")
         xyz.ensure()
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         assert cconfig.matches(cconfig)
         xyz.write("hello")
@@ -457,7 +452,7 @@ class TestCreationConfig:
         config.distshare.ensure("xyz-1.2.0.zip")
         xyz2 = config.distshare.ensure("xyz-1.2.1.zip")
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         md5, path = cconfig.deps[0]
         assert path == xyz2
@@ -467,7 +462,7 @@ class TestCreationConfig:
         pkg = tmpdir.ensure("package.tar.gz")
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         cconfig = venv._getliveconfig()
         action = mocksession.newaction(venv, "update")
         venv.update(action)
@@ -493,7 +488,7 @@ class TestCreationConfig:
     def test_dep_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         action = mocksession.newaction(venv, "update")
         venv.update(action)
         cconfig = venv._getliveconfig()
@@ -507,7 +502,7 @@ class TestCreationConfig:
     def test_develop_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
-        venv = tox.venv.VirtualEnv(envconfig, session=mocksession)
+        venv = VirtualEnv(envconfig, session=mocksession)
         action = mocksession.newaction(venv, "update")
         venv.update(action)
         cconfig = venv._getliveconfig()
@@ -601,7 +596,7 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
     """)
     mocksession._clearmocks()
 
-    venv = tox.venv.VirtualEnv(config.envconfigs['python'], session=mocksession)
+    venv = VirtualEnv(config.envconfigs['python'], session=mocksession)
     mocksession.installpkg(venv, pkg)
     venv.test()
 
@@ -726,13 +721,13 @@ def test_tox_testenv_create(newmocksession):
         @tox.hookimpl
         def tox_testenv_create(self, action, venv):
             assert isinstance(action, tox.session.Action)
-            assert isinstance(venv, tox.venv.VirtualEnv)
+            assert isinstance(venv, VirtualEnv)
             log.append(1)
 
         @tox.hookimpl
         def tox_testenv_install_deps(self, action, venv):
             assert isinstance(action, tox.session.Action)
-            assert isinstance(venv, tox.venv.VirtualEnv)
+            assert isinstance(venv, VirtualEnv)
             log.append(2)
 
     mocksession = newmocksession([], """

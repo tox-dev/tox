@@ -16,7 +16,7 @@ import pluggy
 import py
 
 import tox
-import tox.interpreters
+from tox.interpreters import Interpreters
 from tox._verlib import NormalizedVersion
 
 
@@ -213,7 +213,7 @@ def parseconfig(args, plugins=()):
     pm.hook.tox_addoption(parser=parser)
     # parse command line options
     option = parser._parse_args(args)
-    interpreters = tox.interpreters.Interpreters(hook=pm.hook)
+    interpreters = Interpreters(hook=pm.hook)
     config = Config(pluginmanager=pm, option=option, interpreters=interpreters)
     config._parser = parser
     config._testenv_attr = parser._testenv_attr

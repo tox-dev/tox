@@ -20,6 +20,7 @@ class PYTHON:
 
 
 class INFO:
+    DEFAULT_CONFIG_NAME = 'tox.ini'
     IS_WIN = _sys.platform == "win32"
 
 

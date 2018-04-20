@@ -2,7 +2,10 @@ import os
 
 import pytest
 
-import tox._quickstart
+import tox
+from tox._quickstart import (
+    ALTERNATIVE_CONFIG_NAME, list_modificator, main, post_process_input, prepare_content,
+    QUICKSTART_CONF)
 
 ALL_PY_ENVS_AS_STRING = ', '.join(tox.PYTHON.QUICKSTART_PY_ENVS)
 ALL_PY_ENVS_WO_LAST_AS_STRING = ', '.join(tox.PYTHON.QUICKSTART_PY_ENVS[:-1])
@@ -38,8 +41,8 @@ class _cnf:
     SOME_CONTENT = 'dontcare'
 
     def __init__(self, exists=False, names=None, pass_path=False):
-        self.original_name = tox._quickstart.NAME
-        self.names = names or [tox._quickstart.ALTERNATIVE_NAME]
+        self.original_name = tox.INFO.DEFAULT_CONFIG_NAME
+        self.names = names or [ALTERNATIVE_CONFIG_NAME]
         self.exists = exists
         self.pass_path = pass_path
 
@@ -108,12 +111,10 @@ class _exp:
         self.name = name
         exp = exp or self.STANDARD_EPECTATIONS
         # NOTE extra mangling here ensures formatting is the same in file and exp
-        map_ = {'deps': tox._quickstart.list_modificator(exp[1]),
-                'commands': tox._quickstart.list_modificator(exp[2])}
-        tox._quickstart.post_process_input(map_)
+        map_ = {'deps': list_modificator(exp[1]), 'commands': list_modificator(exp[2])}
+        post_process_input(map_)
         map_['envlist'] = exp[0]
-        self.content = tox._quickstart.prepare_content(
-            tox._quickstart.QUICKSTART_CONF % map_)
+        self.content = prepare_content(QUICKSTART_CONF.format(**map_))
 
     def __str__(self):
         return self.name
@@ -219,7 +220,7 @@ def test_quickstart(answers, cnf, exp, monkeypatch):
     if cnf.exists:
         answers.extend(cnf.names)
         cnf.create()
-    tox._quickstart.main()
+    main()
     print("generated config at %s:\n%s\n" % (cnf.path_to_generated, cnf.generated_content))
     check_basic_sanity(cnf.generated_content, SIGNS_OF_SANITY)
     assert cnf.generated_content == exp.content

@@ -1,5 +1,4 @@
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 import os
 import textwrap
@@ -11,10 +10,10 @@ import pytest
 import six
 
 import tox
-import tox.config
-import tox.result
-import tox.session
-import tox.venv
+from tox.config import parseconfig
+from tox.result import ResultLog
+from tox.session import main, Session
+from tox.venv import VirtualEnv
 
 
 def pytest_configure():
@@ -49,7 +48,7 @@ def create_new_config_file(tmpdir):
         p = tmpdir.join("tox.ini")
         p.write(s)
         with tmpdir.as_cwd():
-            return tox.config.parseconfig(args, plugins=plugins)
+            return parseconfig(args, plugins=plugins)
     return create_new_config_file_
 
 
@@ -65,7 +64,7 @@ def cmd(request, capfd, monkeypatch):
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
         with RunResult(capfd, argv) as result:
             try:
-                tox.session.main([str(x) for x in argv])
+                main([str(x) for x in argv])
                 assert False  # this should always exist with SystemExit
             except SystemExit as exception:
                 result.ret = exception.code
@@ -184,15 +183,15 @@ class pcallMock:
 
 @pytest.fixture(name="mocksession")
 def create_mocksession(request):
-    class MockSession(tox.session.Session):
+    class MockSession(Session):
         def __init__(self):
             self._clearmocks()
             self.config = request.getfixturevalue("newconfig")([], "")
-            self.resultlog = tox.result.ResultLog()
+            self.resultlog = ResultLog()
             self._actions = []
 
         def getenv(self, name):
-            return tox.venv.VirtualEnv(self.config.envconfigs[name], session=self)
+            return VirtualEnv(self.config.envconfigs[name], session=self)
 
         def _clearmocks(self):
             self._pcalls = []

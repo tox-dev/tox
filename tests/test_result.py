@@ -7,7 +7,7 @@ import py
 import pytest
 
 import tox
-import tox.result
+from tox.result import ResultLog
 
 
 @pytest.fixture(name="pkg")
@@ -18,7 +18,7 @@ def create_fake_pkg(tmpdir):
 
 
 def test_pre_set_header():
-    replog = tox.result.ResultLog()
+    replog = ResultLog()
     d = replog.dict
     assert replog.dict == d
     assert replog.dict["reportversion"] == "1"
@@ -26,12 +26,12 @@ def test_pre_set_header():
     assert replog.dict["platform"] == sys.platform
     assert replog.dict["host"] == socket.getfqdn()
     data = replog.dumps_json()
-    replog2 = tox.result.ResultLog(data)
+    replog2 = ResultLog(data)
     assert replog2.dict == replog.dict
 
 
 def test_set_header(pkg):
-    replog = tox.result.ResultLog()
+    replog = ResultLog()
     d = replog.dict
     replog.set_header(installpkg=pkg)
     assert replog.dict == d
@@ -44,12 +44,12 @@ def test_set_header(pkg):
         "md5": pkg.computehash("md5"),
         "sha256": pkg.computehash("sha256")}
     data = replog.dumps_json()
-    replog2 = tox.result.ResultLog(data)
+    replog2 = ResultLog(data)
     assert replog2.dict == replog.dict
 
 
 def test_addenv_setpython(pkg):
-    replog = tox.result.ResultLog()
+    replog = ResultLog()
     replog.set_header(installpkg=pkg)
     envlog = replog.get_envlog("py36")
     envlog.set_python_info(py.path.local(sys.executable))
@@ -59,7 +59,7 @@ def test_addenv_setpython(pkg):
 
 
 def test_get_commandlog(pkg):
-    replog = tox.result.ResultLog()
+    replog = ResultLog()
     replog.set_header(installpkg=pkg)
     envlog = replog.get_envlog("py36")
     assert "setup" not in envlog.dict
