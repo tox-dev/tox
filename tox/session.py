@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 
 import py
@@ -193,7 +194,13 @@ class Action(object):
                     out, err = popen.communicate()
             except KeyboardInterrupt:
                 self.report.keyboard_interrupt()
-                popen.wait()
+                kill = lambda popen: popen.kill()
+                timer_to_kill = threading.Timer(5, kill, [popen])
+                try:
+                    timer_to_kill.start()
+                    popen.wait()
+                finally:
+                    timer_to_kill.cancel()
                 raise
             ret = popen.wait()
         finally:
