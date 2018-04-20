@@ -33,9 +33,12 @@ right next to your ``setup.py`` file::
     # content of: tox.ini , put in same dir as setup.py
     [tox]
     envlist = py27,py36
+
     [testenv]
-    deps=pytest       # install pytest in the venvs
-    commands=pytest  # or 'nosetests' or ...
+    deps = pytest       # install pytest in the virtualenv where commands will be executed
+    commands =
+        # whatever extra steps before testing might be necessary
+        pytest          # or any other test runner that you might use
 
 You can also try generating a ``tox.ini`` file automatically, by running
 ``tox-quickstart`` and then answering a few simple questions.
@@ -63,13 +66,12 @@ Current features
 
     - test-tool agnostic: runs pytest, nose or unittests in a uniform manner
 
-* :doc:`(new in 2.0) plugin system <plugins>` to modify tox execution with simple hooks.
+* :doc:`plugin system <plugins>` to modify tox execution with simple hooks.
 
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
   through :confval:`install_command=ARGV`.
 
-* **cross-Python compatible**: CPython-2.7, 3.4 and higher,
-  Jython and pypy_.
+* **cross-Python compatible**: CPython-2.7, 3.4 and higher, Jython and pypy_.
 
 * **cross-platform**: Windows and Unix style environments
 
@@ -91,10 +93,6 @@ Current features
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 
-
-.. _pypy: http://pypy.org
-
-.. _`tox.ini`: :doc:configfile
 
 .. toctree::
    :hidden:

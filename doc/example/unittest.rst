@@ -32,7 +32,6 @@ Running unittest2 and sphinx tests in one go
 -----------------------------------------------------
 
 .. _`Michael Foord`: http://www.voidspace.org.uk/
-.. _tox.ini: https://github.com/testing-cabal/mock/blob/master/tox.ini
 
 `Michael Foord`_ has contributed a ``tox.ini`` file that
 allows you to run all tests for his mock_ project,
@@ -43,7 +42,8 @@ its repository with:
 
     git clone https://github.com/testing-cabal/mock.git
 
-the checkout has a tox.ini_ that looks like this:
+The checkout has a `tox.ini file <https://github.com/testing-cabal/mock/blob/master/tox.ini>`_
+that looks like this:
 
 .. code-block:: ini
 

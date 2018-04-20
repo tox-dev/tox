@@ -1,10 +1,12 @@
-
+.. _`Cookiecutter`: https://cookiecutter.readthedocs.io
+.. _`pluggy`: https://pluggy.readthedocs.io
+.. _`cookiecutter-tox-plugin`: https://github.com/tox-dev/cookiecutter-tox-plugin
 .. _devpi: http://doc.devpi.net
 .. _Python: http://www.python.org
 .. _virtualenv: https://pypi.org/project/virtualenv
 .. _virtualenv3: https://pypi.org/project/virtualenv3
 .. _virtualenv5: https://pypi.org/project/virtualenv5
-.. _`py.test`: http://pytest.org
+.. _`pytest`: https://pytest.org
 .. _nosetests:
 .. _`nose`: https://pypi.org/project/nose
 .. _`Holger Krekel`: https://twitter.com/hpk42
@@ -18,3 +20,6 @@
 .. _discover: https://pypi.org/project/discover
 .. _unittest2: https://pypi.org/project/unittest2
 .. _mock: https://pypi.org/project/mock/
+.. _pypy: http://pypy.org
+
+.. _`tox.ini`: :doc:configfile
