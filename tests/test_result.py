@@ -91,6 +91,6 @@ def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
         note = "Note: this might indicate a fatal error signal"
         if (os_name == 'posix') and (exit_code == 128 + signal.SIGTERM):
             assert note in result
-            assert "(%s - 128 = %d: SIGTERM)" % (exit_code, signal.SIGTERM) in result
+            assert "({} - 128 = {}: SIGTERM)".format(exit_code, signal.SIGTERM) in result
         else:
             assert note not in result
