@@ -1,11 +1,7 @@
-"""Hook specifications for tox."""
+"""Hook specifications for tox - see https://pluggy.readthedocs.io/"""
 import pluggy
 
-
 hookspec = pluggy.HookspecMarker("tox")
-"""NOTE this should never be imported from anywhere
-Instead instantiate the hookspec by using exactly this call in your plugin code
-"""
 
 
 @hookspec
