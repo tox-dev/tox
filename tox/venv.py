@@ -400,6 +400,8 @@ class VirtualEnv(object):
 
         cwd.ensure(dir=1)
         args[0] = self.getcommandpath(args[0], venv, cwd)
+        if sys.platform != 'win32' and 'TOX_LIMITED_SHEBANG' in os.environ:
+            args = prepend_shebang_interpreter(args)
         env = self._getenv(testcommand=testcommand)
         bindir = str(self.envconfig.envbindir)
         env['PATH'] = p = os.pathsep.join([bindir, os.environ["PATH"]])
@@ -413,6 +415,30 @@ def getdigest(path):
     if not path.check(file=1):
         return "0" * 32
     return path.computehash()
+
+
+def prepend_shebang_interpreter(args):
+    # prepend interpreter directive (if any) to argument list
+    #
+    # When preparing virtual environments in a file container which has large
+    # length, the system might not be able to invoke shebang scripts which
+    # define interpreters beyond system limits (e.x. Linux as a limit of 128;
+    # BINPRM_BUF_SIZE). This method can be used to check if the executable is
+    # a script containing a shebang line. If so, extract the interpreter (and
+    # possible optional argument) and prepend the values to the provided
+    # argument list. tox will only attempt to read an interpreter directive of
+    # a maximum size of 2048 bytes to limit excessive reading and support UNIX
+    # systems which may support a longer interpret length.
+    try:
+        with open(args[0], 'rb') as f:
+            if f.read(1) == b'#' and f.read(1) == b'!':
+                MAXINTERP = 2048
+                interp = f.readline(MAXINTERP).rstrip()
+                interp_args = interp.split(None, 1)[:2]
+                return interp_args + args
+    except IOError:
+        pass
+    return args
 
 
 @tox.hookimpl
