@@ -133,10 +133,12 @@ contents of ``setup.py``:
     from setuptools import setup
 
     setup(name='tox-fireworks', py_modules=['tox_fireworks'],
-          entry_points={'tox': ['fireworks = tox_fireworks']})
+          entry_points={'tox': ['fireworks = tox_fireworks']}
+          classifiers=['Framework:: tox'])
 
-Using the  **tox-** prefix in ``tox-fireworks`` is necessary for it to be an official plugin and
-makes finding it easy with e.g. ``pip search 'tox-'`` once it is released on PyPi.
+Using the  **tox-** prefix in ``tox-fireworks`` is an established convention to be able to
+see from the project name that this is a plugin for tox. It also makes it easier to find with
+e.g. ``pip search 'tox-'`` once it is released on PyPi.
 
 To make your new plugin discoverable by tox, you need to install it. During development you should
 install it with ``-e`` or ``--editable``, so that changes to the code are immediately active:
