@@ -7,7 +7,8 @@ import pytest
 import tox
 from tox.interpreters import NoInterpreterInfo
 from tox.venv import (
-    CreationConfig, VirtualEnv, getdigest, tox_testenv_create, tox_testenv_install_deps)
+    CreationConfig, VirtualEnv, getdigest, prepend_shebang_interpreter,
+    tox_testenv_create, tox_testenv_install_deps)
 
 
 def test_getdigest(tmpdir):
@@ -761,3 +762,108 @@ def test_tox_testenv_pre_post(newmocksession):
     assert log == []
     mocksession.runtestenv(venv)
     assert log == ['started', 'finished']
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_empty_instance(tmpdir):
+    testfile = tmpdir.join('check_shebang_empty_instance.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # empty instance
+    testfile.write('')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_empty_interpreter(tmpdir):
+    testfile = tmpdir.join('check_shebang_empty_interpreter.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # empty interpreter
+    testfile.write('#!')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_empty_interpreter_ws(tmpdir):
+    testfile = tmpdir.join('check_shebang_empty_interpreter_ws.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # empty interpreter (whitespaces)
+    testfile.write('#!    \n')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_interpreter_simple(tmpdir):
+    testfile = tmpdir.join('check_shebang_interpreter_simple.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # interpreter (simple)
+    testfile.write('#!interpreter')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == [b'interpreter'] + base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_interpreter_ws(tmpdir):
+    testfile = tmpdir.join('check_shebang_interpreter_ws.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # interpreter (whitespaces)
+    testfile.write('#!  interpreter  \n\n')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == [b'interpreter'] + base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_interpreter_arg(tmpdir):
+    testfile = tmpdir.join('check_shebang_interpreter_arg.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # interpreter with argument
+    testfile.write('#!interpreter argx\n')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == [b'interpreter', b'argx'] + base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_interpreter_args(tmpdir):
+    testfile = tmpdir.join('check_shebang_interpreter_args.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # interpreter with argument (ensure single argument)
+    testfile.write('#!interpreter argx argx-part2\n')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == [b'interpreter', b'argx argx-part2'] + base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_real(tmpdir):
+    testfile = tmpdir.join('check_shebang_real.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # interpreter (real example)
+    testfile.write('#!/usr/bin/env python\n')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == [b'/usr/bin/env', b'python'] + base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_long_example(tmpdir):
+    testfile = tmpdir.join('check_shebang_long_example.py')
+    base_args = [str(testfile), 'arg1', 'arg2', 'arg3']
+
+    # interpreter (long example)
+    testfile.write(
+        '#!this-is-an-example-of-a-very-long-interpret-directive-what-should-'
+        'be-directly-invoked-when-tox-needs-to-invoked-the-provided-script-'
+        'name-in-the-argument-list')
+    args = prepend_shebang_interpreter(base_args)
+    assert args == [
+        b'this-is-an-example-of-a-very-long-interpret-directive-what-should-be-'
+        b'directly-invoked-when-tox-needs-to-invoked-the-provided-script-name-'
+        b'in-the-argument-list'] + base_args
