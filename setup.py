@@ -64,6 +64,7 @@ def main():
                         'publish': ['devpi',
                                     'twine']},
         classifiers=['Development Status :: 5 - Production/Stable',
+                     'Framework :: tox',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
                      'Operating System :: POSIX',
