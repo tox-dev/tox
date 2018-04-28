@@ -12,9 +12,7 @@ from pkg_resources import get_distribution
 import pluggy
 
 from . import exception
-from .constants import INFO
-from .constants import PIP
-from .constants import PYTHON
+from .constants import INFO, PIP, PYTHON
 from .hookspecs import hookspec
 
 __all__ = (
