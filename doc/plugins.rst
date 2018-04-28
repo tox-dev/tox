@@ -156,7 +156,8 @@ If you think the rest of the world could profit using your plugin you can publis
 You need to add some more meta data to ``setup.py`` (see `cookiecutter-tox-plugin`_ for a complete
 example or consult the `setup.py docs <https://docs.python.org/3/distutils/setupscript.html>`_).
 
-..note::
+
+.. note::
 
     Make sure your plugin project name is prefixed by `tox-` to be easy to find via e.g.
     `pip search tox-`
@@ -173,7 +174,7 @@ You can and publish it like:
     You could also use `twine <https://pypi.org/project/twine/>`_ for secure uploads.
 
     For more information about packaging and deploying Python projects see the
-    `Python Packaging User Guide <https://packaging.python.org/>`_.
+    `Python Packaging Guide`_.
 
 .. _toxHookSpecsApi:
 
