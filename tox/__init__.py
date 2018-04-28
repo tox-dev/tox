@@ -11,7 +11,8 @@ from .hookspecs import hookspec
 __all__ = (
     'cmdline', 'exception', '__version__',
     'PYTHON', 'INFO', 'PIP',
-    'hookspec', 'hookimpl',  # DEPRECATED will be removed from API - see warning below
+    'hookimpl',
+    'hookspec',  # DEPRECATED will be removed from API - see warning below
 )
 """Everything explicitly exported here is part of the tox programmatic API.
 
@@ -19,9 +20,7 @@ To override/modify tox behaviour via plugins see tox.hookspec and its use with p
 """
 
 hookimpl = pluggy.HookimplMarker("tox")
-"""DEPRECATED - REMOVE - this should never be imported from anywhere
-# Instead instantiate the hookimpl by using exactly this call in your plugin code
-"""
+"""Hook implementation marker to be imported by plugins."""
 
 try:
     _full_version = get_distribution(__name__).version
