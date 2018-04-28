@@ -178,8 +178,8 @@ You can and publish it like:
 
 .. _toxHookSpecsApi:
 
-tox hook specifications and related API
----------------------------------------
+Hook specifications and related API
+-----------------------------------
 
 .. automodule:: tox.hookspecs
     :members:
