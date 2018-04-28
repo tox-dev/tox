@@ -6,8 +6,7 @@ If objects are marked experimental they might change between minor versions.
 
 To override/modify tox behaviour via plugins see `tox.hookspec` and its use with pluggy.
 """
-from pkg_resources import DistributionNotFound
-from pkg_resources import get_distribution
+from pkg_resources import DistributionNotFound, get_distribution
 
 import pluggy
 
