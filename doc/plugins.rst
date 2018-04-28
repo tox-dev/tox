@@ -159,7 +159,7 @@ example or consult the `setup.py docs <https://docs.python.org/3/distutils/setup
 ..note::
 
     Make sure your plugin project name is prefixed by `tox-` to be easy to find via e.g.
-    `pip serach tox-`
+    `pip search tox-`
 
 You can and publish it like:
 
