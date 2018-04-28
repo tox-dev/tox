@@ -4,8 +4,6 @@
 .. _devpi: http://doc.devpi.net
 .. _Python: http://www.python.org
 .. _virtualenv: https://pypi.org/project/virtualenv
-.. _virtualenv3: https://pypi.org/project/virtualenv3
-.. _virtualenv5: https://pypi.org/project/virtualenv5
 .. _`pytest`: https://pytest.org
 .. _nosetests:
 .. _`nose`: https://pypi.org/project/nose
