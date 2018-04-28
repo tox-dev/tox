@@ -20,4 +20,5 @@
 .. _mock: https://pypi.org/project/mock/
 .. _pypy: http://pypy.org
 
+.. _`Python Packaging Guide`: https://packaging.python.org/tutorials/distributing-packages/#packaging-your-project
 .. _`tox.ini`: :doc:configfile
