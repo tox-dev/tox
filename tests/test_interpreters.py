@@ -7,6 +7,7 @@ import py
 import pytest
 
 import tox
+from tox._pytestplugin import mark_dont_run_on_posix
 from tox.config import get_plugin_manager
 from tox.interpreters import (
     ExecFailed, InterpreterInfo, Interpreters, NoInterpreterInfo, pyinfo,
@@ -19,7 +20,7 @@ def create_interpreters_instance():
     return Interpreters(hook=pm.hook)
 
 
-@pytest.mark.skipif(not tox.INFO.IS_WIN, reason="not for windows")
+@mark_dont_run_on_posix
 def test_locate_via_py(monkeypatch):
     from tox.interpreters import locate_via_py
 

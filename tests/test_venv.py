@@ -7,7 +7,7 @@ import pytest
 import tox
 from tox.interpreters import NoInterpreterInfo
 from tox.venv import (
-    getdigest, VirtualEnv, tox_testenv_create, tox_testenv_install_deps, CreationConfig)
+    CreationConfig, VirtualEnv, getdigest, tox_testenv_create, tox_testenv_install_deps)
 
 
 def test_getdigest(tmpdir):
@@ -65,7 +65,6 @@ def test_create(mocksession, newconfig):
     assert venv.path_config.check(exists=False)
 
 
-@pytest.mark.skipif(tox.INFO.IS_WIN, reason="only on windows")
 def test_commandpath_venv_precedence(tmpdir, monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
@@ -355,7 +354,6 @@ def test_install_command_whitelisted(newmocksession):
     assert venv.status == "commands failed"
 
 
-@pytest.mark.skipif("not sys.platform.startswith('linux')")
 def test_install_command_not_installed_bash(newmocksession):
     mocksession = newmocksession(['--recreate'], """
         [testenv]

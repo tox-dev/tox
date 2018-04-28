@@ -11,7 +11,7 @@ import pytest
 import tox
 from tox._pytestplugin import ReportExpectMock
 from tox.config import parseconfig
-from tox.exception import MissingDirectory, MissingDependency
+from tox.exception import MissingDependency, MissingDirectory
 from tox.session import Session
 
 pytest_plugins = "pytester"

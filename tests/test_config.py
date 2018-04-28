@@ -9,8 +9,8 @@ from pluggy import PluginManager
 
 import tox
 from tox.config import (
-    CommandParser, DepOption, get_homedir, get_version_info, getcontextname,
-    is_section_substitution, parseconfig, SectionReader)
+    CommandParser, DepOption, SectionReader, get_homedir, get_version_info,
+    getcontextname, is_section_substitution, parseconfig)
 from tox.venv import VirtualEnv
 
 
@@ -2398,7 +2398,7 @@ class TestCommandParser:
             '--with-doctest', ' ', '[]'
         ]
 
-    @pytest.mark.skipif(not tox.INFO.IS_WIN, reason="not for windows")
+    # @mark_dont_run_on_windows
     def test_commands_with_backslash(self, newconfig):
         config = newconfig([r"hello\world"], """
             [testenv:py36]

@@ -12,8 +12,13 @@ import six
 import tox
 from tox.config import parseconfig
 from tox.result import ResultLog
-from tox.session import main, Session
+from tox.session import Session, main
 from tox.venv import VirtualEnv
+
+mark_dont_run_on_windows = pytest.mark.skipif(os.name == 'nt')
+"""Use this as a decorator to skip a test if run on Windows"""
+mark_dont_run_on_posix = pytest.mark.skipif(os.name == 'posix')
+"""Use this as a decorator to skip a test if run on Liunx or macOS"""
 
 
 def pytest_configure():
