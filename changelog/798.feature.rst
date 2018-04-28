@@ -1,0 +1,1 @@
+introduce a constants module to be used internally and as experimental API - by @obestwalter
