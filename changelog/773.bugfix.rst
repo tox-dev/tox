@@ -1,1 +1,0 @@
-Revert breaking change of tox.cmdline not callable with no args - by @gaborbernat.
