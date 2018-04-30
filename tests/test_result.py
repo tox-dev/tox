@@ -10,14 +10,14 @@ import tox
 from tox.result import ResultLog
 
 
-@pytest.fixture
-def pkg(tmpdir):
-    p = tmpdir.join("hello-1.0.tar.gz")
-    p.write("whatever")
-    return p
+@pytest.fixture(name="pkg")
+def create_fake_pkg(tmpdir):
+    pkg = tmpdir.join("hello-1.0.tar.gz")
+    pkg.write("whatever")
+    return pkg
 
 
-def test_pre_set_header(pkg):
+def test_pre_set_header():
     replog = ResultLog()
     d = replog.dict
     assert replog.dict == d
@@ -26,7 +26,7 @@ def test_pre_set_header(pkg):
     assert replog.dict["platform"] == sys.platform
     assert replog.dict["host"] == socket.getfqdn()
     data = replog.dumps_json()
-    replog2 = ResultLog.loads_json(data)
+    replog2 = ResultLog(data)
     assert replog2.dict == replog.dict
 
 
@@ -44,7 +44,7 @@ def test_set_header(pkg):
         "md5": pkg.computehash("md5"),
         "sha256": pkg.computehash("sha256")}
     data = replog.dumps_json()
-    replog2 = ResultLog.loads_json(data)
+    replog2 = ResultLog(data)
     assert replog2.dict == replog.dict
 
 
@@ -77,29 +77,20 @@ def test_get_commandlog(pkg):
 @pytest.mark.parametrize('os_name', ['posix', 'nt'])
 def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     monkeypatch.setattr(os, 'name', value=os_name)
-    mocker.spy(tox, '_exit_code_str')
+    mocker.spy(tox.exception, 'exit_code_str')
+    result = str(tox.exception.InvocationError("<command>", exit_code=exit_code))
+    # check that mocker works, because it will be our only test in
+    # test_z_cmdline.py::test_exit_code needs the mocker.spy above
+    assert tox.exception.exit_code_str.call_count == 1
+    assert tox.exception.exit_code_str.call_args == mocker.call(
+        'InvocationError', "<command>", exit_code)
     if exit_code is None:
-        exception = tox.exception.InvocationError("<command>")
+        assert "(exited with code" not in result
     else:
-        exception = tox.exception.InvocationError("<command>", exit_code)
-    result = str(exception)
-    # check that mocker works,
-    # because it will be our only test in test_z_cmdline.py::test_exit_code
-    # need the mocker.spy above
-    assert tox._exit_code_str.call_count == 1
-    assert tox._exit_code_str.call_args == mocker.call('InvocationError', "<command>", exit_code)
-    if exit_code is None:
-        needle = "(exited with code"
-        assert needle not in result
-    else:
-        needle = "(exited with code %d)" % exit_code
-        assert needle in result
-        note = ("Note: this might indicate a fatal error signal")
+        assert "(exited with code %d)" % exit_code in result
+        note = "Note: this might indicate a fatal error signal"
         if (os_name == 'posix') and (exit_code == 128 + signal.SIGTERM):
             assert note in result
-            number = signal.SIGTERM
-            name = "SIGTERM"
-            signal_str = "({} - 128 = {}: {})".format(exit_code, number, name)
-            assert signal_str in result
+            assert "({} - 128 = {}: SIGTERM)".format(exit_code, signal.SIGTERM) in result
         else:
             assert note not in result

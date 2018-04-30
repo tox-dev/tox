@@ -1,11 +1,7 @@
-""" Hook specifications for tox.
+"""Hook specifications for tox - see https://pluggy.readthedocs.io/"""
+import pluggy
 
-"""
-from pluggy import HookimplMarker
-from pluggy import HookspecMarker
-
-hookspec = HookspecMarker("tox")
-hookimpl = HookimplMarker("tox")
+hookspec = pluggy.HookspecMarker("tox")
 
 
 @hookspec
@@ -15,15 +11,16 @@ def tox_addoption(parser):
 
 @hookspec
 def tox_configure(config):
-    """ called after command line options have been parsed and the ini-file has
-    been read.  Please be aware that the config object layout may change as its
-    API was not designed yet wrt to providing stability (it was an internal
-    thing purely before tox-2.0). """
+    """Called after command line options are parsed and ini-file has been read.
+
+    Please be aware that the config object layout may change between major tox versions.
+    """
 
 
 @hookspec(firstresult=True)
 def tox_get_python_executable(envconfig):
-    """ return a python executable for the given python base name.
+    """Return a python executable for the given python base name.
+
     The first plugin/hook which returns an executable path will determine it.
 
     ``envconfig`` is the testenv configuration which contains
@@ -34,7 +31,7 @@ def tox_get_python_executable(envconfig):
 
 @hookspec(firstresult=True)
 def tox_testenv_create(venv, action):
-    """ [experimental] perform creation action for this venv.
+    """Perform creation action for this venv.
 
     Some example usage:
 
@@ -47,16 +44,16 @@ def tox_testenv_create(venv, action):
     .. note:: This api is experimental due to the unstable api of
         :class:`tox.venv.VirtualEnv`.
 
-    .. note:: This hook uses ``firstresult=True`` (see pluggy_) -- hooks
+    .. note:: This hook uses ``firstresult=True`` (see `pluggy first result only`_) -- hooks
         implementing this will be run until one returns non-``None``.
 
-    .. _pluggy: http://pluggy.readthedocs.io/en/latest/#first-result-only
+    .. _`pluggy first result only`: http://pluggy.readthedocs.io/en/latest/#first-result-only
     """
 
 
 @hookspec(firstresult=True)
 def tox_testenv_install_deps(venv, action):
-    """ [experimental] perform install dependencies action for this venv.
+    """Perform install dependencies action for this venv.
 
     Some example usage:
 
@@ -71,18 +68,17 @@ def tox_testenv_install_deps(venv, action):
     .. note:: This api is experimental due to the unstable api of
         :class:`tox.venv.VirtualEnv`.
 
-    .. note:: This hook uses ``firstresult=True`` (see pluggy_) -- hooks
+    .. note:: This hook uses ``firstresult=True`` (see `pluggy first result only`_) -- hooks
         implementing this will be run until one returns non-``None``.
 
     .. _pip-accel: https://github.com/paylogic/pip-accel
     .. _pip-faster: https://github.com/Yelp/venv-update
-    .. _pluggy: http://pluggy.readthedocs.io/en/latest/#first-result-only
     """
 
 
 @hookspec
 def tox_runtest_pre(venv):
-    """ [experimental] perform arbitrary action before running tests for this venv.
+    """Perform arbitrary action before running tests for this venv.
 
     This could be used to indicate that tests for a given venv have started, for instance.
     """
@@ -90,16 +86,16 @@ def tox_runtest_pre(venv):
 
 @hookspec(firstresult=True)
 def tox_runtest(venv, redirect):
-    """ [experimental] run the tests for this venv.
+    """Run the tests for this venv.
 
-    .. note:: This hook uses ``firstresult=True`` (see pluggy_) -- hooks
+    .. note:: This hook uses ``firstresult=True`` (see `pluggy first result only`_) -- hooks
         implementing this will be run until one returns non-``None``.
     """
 
 
 @hookspec
 def tox_runtest_post(venv):
-    """ [experimental] perform arbitrary action after running tests for this venv.
+    """Perform arbitrary action after running tests for this venv.
 
     This could be used to have per-venv test reporting of pass/fail status.
     """
@@ -107,7 +103,7 @@ def tox_runtest_post(venv):
 
 @hookspec(firstresult=True)
 def tox_runenvreport(venv, action):
-    """ [experimental] Get the installed packages and versions in this venv
+    """Get the installed packages and versions in this venv.
 
     This could be used for alternative (ie non-pip) package managers, this
     plugin should return a ``list`` of type ``str``

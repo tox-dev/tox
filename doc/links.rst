@@ -1,20 +1,24 @@
-
+.. _`Cookiecutter`: https://cookiecutter.readthedocs.io
+.. _`pluggy`: https://pluggy.readthedocs.io
+.. _`cookiecutter-tox-plugin`: https://github.com/tox-dev/cookiecutter-tox-plugin
 .. _devpi: http://doc.devpi.net
 .. _Python: http://www.python.org
-.. _virtualenv: https://pypi.python.org/pypi/virtualenv
-.. _virtualenv3: https://pypi.python.org/pypi/virtualenv3
-.. _virtualenv5: https://pypi.python.org/pypi/virtualenv5
-.. _`py.test`: http://pytest.org
+.. _virtualenv: https://pypi.org/project/virtualenv
+.. _`pytest`: https://pytest.org
 .. _nosetests:
-.. _`nose`: https://pypi.python.org/pypi/nose
+.. _`nose`: https://pypi.org/project/nose
 .. _`Holger Krekel`: https://twitter.com/hpk42
-.. _`pytest-xdist`: https://pypi.python.org/pypi/pytest-xdist
+.. _`pytest-xdist`: https://pypi.org/project/pytest-xdist
 
 .. _`easy_install`: http://peak.telecommunity.com/DevCenter/EasyInstall
-.. _pip: https://pypi.python.org/pypi/pip
-.. _setuptools: https://pypi.python.org/pypi/setuptools
+.. _pip: https://pypi.org/project/pip
+.. _setuptools: https://pypi.org/project/setuptools
 .. _`jenkins`: https://jenkins.io/index.html
-.. _sphinx: https://pypi.python.org/pypi/Sphinx
-.. _discover: https://pypi.python.org/pypi/discover
-.. _unittest2: https://pypi.python.org/pypi/unittest2
-.. _mock: https://pypi.python.org/pypi/mock/
+.. _sphinx: https://pypi.org/project/Sphinx
+.. _discover: https://pypi.org/project/discover
+.. _unittest2: https://pypi.org/project/unittest2
+.. _mock: https://pypi.org/project/mock/
+.. _pypy: http://pypy.org
+
+.. _`Python Packaging Guide`: https://packaging.python.org/tutorials/distributing-packages/#packaging-your-project
+.. _`tox.ini`: :doc:configfile

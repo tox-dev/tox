@@ -1,4 +1,4 @@
-from tox.session import run_main
+import tox
 
 if __name__ == '__main__':
-    run_main()
+    tox.cmdline()

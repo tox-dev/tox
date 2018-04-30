@@ -5,8 +5,6 @@ It is easy to integrate `pytest`_ runs with tox.  If you encounter
 issues, please check if they are `listed as a known issue`_ and/or use
 the :doc:`support channels <../support>`.
 
-.. _`pytest`: https://docs.pytest.org/en/latest/
-
 Basic example
 --------------------------
 

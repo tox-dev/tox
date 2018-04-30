@@ -6,8 +6,7 @@ project test suite, e.g. as shown by the code coverage report.
 import py.path
 import pytest
 
-from tox._pytestplugin import _filedefs_contains
-from tox._pytestplugin import _path_parts
+from tox._pytestplugin import _filedefs_contains, _path_parts
 
 
 class TestInitProj:

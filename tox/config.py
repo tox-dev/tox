@@ -16,39 +16,28 @@ import pluggy
 import py
 
 import tox
-import tox.interpreters
-from tox import hookspecs
+from tox.interpreters import Interpreters
 from tox._verlib import NormalizedVersion
 
-iswin32 = sys.platform == "win32"
 
-default_factors = {'jython': 'jython', 'pypy': 'pypy', 'pypy3': 'pypy3',
-                   'py': sys.executable, 'py2': 'python2', 'py3': 'python3'}
-for version in '27,34,35,36,37'.split(','):
-    default_factors['py' + version] = 'python%s.%s' % tuple(version)
+hookimpl = tox.hookimpl
+"""DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
 
-hookimpl = pluggy.HookimplMarker("tox")
+Instead create a hookimpl in your code with:
 
-_dummy = object()
+    import pluggy
+    hookimpl = pluggy.HookimplMarker("tox")
+"""
 
-PIP_INSTALL_SHORT_OPTIONS_ARGUMENT = ['-{}'.format(option) for option in [
-    'c', 'e', 'r', 'b', 't', 'd',
-]]
-
-PIP_INSTALL_LONG_OPTIONS_ARGUMENT = ['--{}'.format(option) for option in [
-    'constraint', 'editable', 'requirement', 'build', 'target', 'download',
-    'src', 'upgrade-strategy', 'install-options', 'global-option',
-    'root', 'prefix', 'no-binary', 'only-binary', 'index-url',
-    'extra-index-url', 'find-links', 'proxy', 'retries', 'timeout',
-    'exists-action', 'trusted-host', 'client-cert', 'cache-dir',
-]]
+default_factors = tox.PYTHON.DEFAULT_FACTORS
+"""DEPRECATED MOVE - please update to new location."""
 
 
 def get_plugin_manager(plugins=()):
     # initialize plugin manager
     import tox.venv
     pm = pluggy.PluginManager("tox")
-    pm.add_hookspecs(hookspecs)
+    pm.add_hookspecs(tox.hookspecs)
     pm.register(tox.config)
     pm.register(tox.interpreters)
     pm.register(tox.venv)
@@ -61,8 +50,7 @@ def get_plugin_manager(plugins=()):
 
 
 class Parser:
-    """ command line and ini-parser control object. """
-
+    """Command line and ini-parser control object."""
     def __init__(self):
         self.argparser = argparse.ArgumentParser(
             description="tox options", add_help=False)
@@ -136,35 +124,25 @@ class DepOption:
             else:
                 name = depline.strip()
                 ixserver = None
-
                 # we need to process options, in case they contain a space,
                 # as the subprocess call to pip install will otherwise fail.
-
                 # in case of a short option, we remove the space
-                for option in PIP_INSTALL_SHORT_OPTIONS_ARGUMENT:
+                for option in tox.PIP.INSTALL_SHORT_OPTIONS_ARGUMENT:
                     if name.startswith(option):
-                        name = '{}{}'.format(
-                            option, name[len(option):].strip()
-                        )
-
+                        name = '%s%s' % (option, name[len(option):].strip())
                 # in case of a long option, we add an equal sign
-                for option in PIP_INSTALL_LONG_OPTIONS_ARGUMENT:
+                for option in tox.PIP.INSTALL_LONG_OPTIONS_ARGUMENT:
                     if name.startswith(option + ' '):
-                        name = '{}={}'.format(
-                            option, name[len(option):].strip()
-                        )
-
+                        name = '%s=%s' % (option, name[len(option):].strip())
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
         return deps
 
     def _replace_forced_dep(self, name, config):
-        """
-        Override the given dependency config name taking --force-dep-version
-        option into account.
+        """Override given dependency config name. Take ``--force-dep-version`` option into account.
 
         :param name: dep config, for example ["pkg==1.0", "other==2.0"].
-        :param config: Config instance
+        :param config: ``Config`` instance
         :return: the new dependency that should be used for virtual environments
         """
         if not config.option.force_dep:
@@ -176,10 +154,7 @@ class DepOption:
 
     @classmethod
     def _is_same_dep(cls, dep1, dep2):
-        """
-        Returns True if both dependency definitions refer to the
-        same package, even if versions differ.
-        """
+        """Definitions are the same if they refer to the same package, even if versions differ."""
         dep1_name = pkg_resources.Requirement.parse(dep1).project_name
         try:
             dep2_name = pkg_resources.Requirement.parse(dep2).project_name
@@ -225,21 +200,20 @@ class InstallcmdOption:
 
 
 def parseconfig(args, plugins=()):
-    """
+    """Parse the configuration file and create a Config object.
+
+    :param plugins:
     :param list[str] args: list of arguments.
-    :type pkg: str
     :rtype: :class:`Config`
     :raise SystemExit: toxinit file is not found
     """
-
     pm = get_plugin_manager(plugins)
     # prepare command line options
     parser = Parser()
     pm.hook.tox_addoption(parser=parser)
-
     # parse command line options
     option = parser._parse_args(args)
-    interpreters = tox.interpreters.Interpreters(hook=pm.hook)
+    interpreters = Interpreters(hook=pm.hook)
     config = Config(pluginmanager=pm, option=option, interpreters=interpreters)
     config._parser = parser
     config._testenv_attr = parser._testenv_attr
@@ -299,6 +273,8 @@ def get_version_info(pm):
 
 
 class SetenvDict(object):
+    _DUMMY = object()
+
     def __init__(self, definitions, reader):
         self.definitions = definitions
         self.reader = reader
@@ -329,8 +305,8 @@ class SetenvDict(object):
             return res
 
     def __getitem__(self, name):
-        x = self.get(name, _dummy)
-        if x is _dummy:
+        x = self.get(name, self._DUMMY)
+        if x is self._DUMMY:
             raise KeyError(name)
         return x
 
@@ -342,7 +318,7 @@ class SetenvDict(object):
         self.resolved[name] = value
 
 
-@hookimpl
+@tox.hookimpl
 def tox_addoption(parser):
     # formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version", action="store_true", dest="version",
@@ -442,9 +418,9 @@ def tox_addoption(parser):
 
     def basepython_default(testenv_config, value):
         if value is None:
-            for f in testenv_config.factors:
-                if f in default_factors:
-                    return default_factors[f]
+            for factor in testenv_config.factors:
+                if factor in tox.PYTHON.DEFAULT_FACTORS:
+                    return tox.PYTHON.DEFAULT_FACTORS[factor]
             return sys.executable
         return str(value)
 
@@ -520,15 +496,14 @@ def tox_addoption(parser):
         # we could also set it to the per-venv "envtmpdir"
         # but this leads to very long paths when run with jenkins
         # so we just pass it on by default for now.
-        if sys.platform == "win32":
+        if tox.INFO.IS_WIN:
             passenv.add("SYSTEMDRIVE")  # needed for pip6
             passenv.add("SYSTEMROOT")  # needed for python's crypto module
             passenv.add("PATHEXT")  # needed for discovering executables
             passenv.add("COMSPEC")  # needed for distutils cygwincompiler
             passenv.add("TEMP")
             passenv.add("TMP")
-            # for `multiprocessing.cpu_count()` on Windows
-            # (prior to Python 3.4).
+            # for `multiprocessing.cpu_count()` on Windows (prior to Python 3.4).
             passenv.add("NUMBER_OF_PROCESSORS")
             passenv.add("PROCESSOR_ARCHITECTURE")  # platform.machine()
             passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
@@ -617,31 +592,30 @@ def tox_addoption(parser):
 
 
 class Config(object):
-    """ Global Tox config object. """
-
+    """Global Tox config object."""
     def __init__(self, pluginmanager, option, interpreters):
-        #: dictionary containing envname to envconfig mappings
         self.envconfigs = {}
+        """Mapping envname -> envconfig"""
         self.invocationcwd = py.path.local()
         self.interpreters = interpreters
         self.pluginmanager = pluginmanager
-        #: option namespace containing all parsed command line options
         self.option = option
+        """option namespace containing all parsed command line options"""
 
     @property
     def homedir(self):
         homedir = get_homedir()
         if homedir is None:
-            homedir = self.toxinidir  # XXX good idea?
+            homedir = self.toxinidir  # FIXME XXX good idea?
         return homedir
 
 
 class TestenvConfig:
-    """ Testenv Configuration object.
+    """Testenv Configuration object.
+
     In addition to some core attributes/properties this config object holds all
     per-testenv ini attributes as attributes, see "tox --help-ini" for an overview.
     """
-
     def __init__(self, envname, config, factors, reader):
         #: test environment name
         self.envname = envname
@@ -659,9 +633,10 @@ class TestenvConfig:
         """
 
     def get_envbindir(self):
-        """ path to directory where scripts/binaries reside. """
-        if sys.platform == "win32" and "jython" not in self.basepython and \
-                "pypy" not in self.basepython:
+        """Path to directory where scripts/binaries reside."""
+        if (tox.INFO.IS_WIN and
+                "jython" not in self.basepython and
+                "pypy" not in self.basepython):
             return self.envdir.join("Scripts")
         else:
             return self.envdir.join("bin")
@@ -672,7 +647,7 @@ class TestenvConfig:
 
     @property
     def envpython(self):
-        """ path to python executable. """
+        """Path to python executable."""
         return self.get_envpython()
 
     def get_envpython(self):
@@ -684,8 +659,9 @@ class TestenvConfig:
         return self.envbindir.join(name)
 
     def get_envsitepackagesdir(self):
-        """ return sitepackagesdir of the virtualenv environment.
-        (only available during execution, not parsing)
+        """Return sitepackagesdir of the virtualenv environment.
+
+        NOTE: Only available during execution, not during parsing.
         """
         x = self.config.interpreters.get_sitepackagesdir(
             info=self.python_info,
@@ -694,12 +670,11 @@ class TestenvConfig:
 
     @property
     def python_info(self):
-        """ return sitepackagesdir of the virtualenv environment. """
+        """Return sitepackagesdir of the virtualenv environment."""
         return self.config.interpreters.get_info(envconfig=self)
 
     def getsupportedinterpreter(self):
-        if sys.platform == "win32" and self.basepython and \
-                "jython" in self.basepython:
+        if tox.INFO.IS_WIN and self.basepython and "jython" in self.basepython:
             raise tox.exception.UnsupportedInterpreter(
                 "Jython/Windows does not support installing scripts")
         info = self.config.interpreters.get_info(envconfig=self)
@@ -723,7 +698,7 @@ def get_homedir():
 
 def make_hashseed():
     max_seed = 4294967295
-    if sys.platform == 'win32':
+    if tox.INFO.IS_WIN:
         max_seed = 1024
     return str(random.randint(1, max_seed))
 
@@ -821,7 +796,7 @@ class parseini:
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
-        known_factors.update(default_factors)
+        known_factors.update(tox.PYTHON.DEFAULT_FACTORS)
         known_factors.add("python")
 
         # factors stated in config envlist
@@ -976,9 +951,11 @@ class IndexServerConfig:
         self.url = url
 
 
-#: Check value matches substitution form
-#: of referencing value from other section. E.g. {[base]commands}
 is_section_substitution = re.compile(r"{\[[^{}\s]+\]\S+?}").match
+"""Check value matches substitution form of referencing value from other section.
+
+E.g. {[base]commands}
+"""
 
 
 class SectionReader:

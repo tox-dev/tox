@@ -1,5 +1,4 @@
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 import os
 import textwrap
@@ -11,10 +10,13 @@ import pytest
 import six
 
 import tox
-from .config import parseconfig
-from .result import ResultLog
-from .session import main
-from .venv import VirtualEnv
+from tox.config import parseconfig
+from tox.result import ResultLog
+from tox.session import Session, main
+from tox.venv import VirtualEnv
+
+mark_dont_run_on_windows = pytest.mark.skipif(os.name == 'nt', reason="non windows test")
+mark_dont_run_on_posix = pytest.mark.skipif(os.name == 'posix', reason="non posix test")
 
 
 def pytest_configure():
@@ -25,8 +27,7 @@ def pytest_configure():
 
 
 def pytest_addoption(parser):
-    parser.addoption("--no-network", action="store_true",
-                     dest="no_network",
+    parser.addoption("--no-network", action="store_true", dest="no_network",
                      help="don't run tests requiring network")
 
 
@@ -35,21 +36,23 @@ def pytest_report_header():
 
 
 @pytest.fixture
-def newconfig(request, tmpdir):
-    def newconfig(args, source=None, plugins=()):
+def work_in_clean_dir(tmpdir):
+    with tmpdir.as_cwd():
+        yield
+
+
+@pytest.fixture(name="newconfig")
+def create_new_config_file(tmpdir):
+    def create_new_config_file_(args, source=None, plugins=()):
         if source is None:
             source = args
             args = []
         s = textwrap.dedent(source)
         p = tmpdir.join("tox.ini")
         p.write(s)
-        old = tmpdir.chdir()
-        try:
+        with tmpdir.as_cwd():
             return parseconfig(args, plugins=plugins)
-        finally:
-            old.chdir()
-
-    return newconfig
+    return create_new_config_file_
 
 
 @pytest.fixture
@@ -71,7 +74,6 @@ def cmd(request, capfd, monkeypatch):
             except OSError as e:
                 result.ret = e.errno
         return result
-
     yield run
 
 
@@ -119,7 +121,7 @@ class ReportExpectMock:
             # FIXME: special case for property on Reporter class, may it be generalized?
             return 0
 
-        def generic_report(*args, **kwargs):
+        def generic_report(*args, **_):
             self._calls.append((name,) + args)
             print("%s" % (self._calls[-1],))
 
@@ -174,17 +176,16 @@ class pcallMock:
         self.stderr = stderr
         self.shell = shell
 
-    def communicate(self):
+    @staticmethod
+    def communicate():
         return "", ""
 
     def wait(self):
         pass
 
 
-@pytest.fixture
-def mocksession(request):
-    from tox.session import Session
-
+@pytest.fixture(name="mocksession")
+def create_mocksession(request):
     class MockSession(Session):
         def __init__(self):
             self._clearmocks()
@@ -203,26 +204,19 @@ def mocksession(request):
         def make_emptydir(self, path):
             pass
 
-        def popen(self, args, cwd, shell=None,
-                  universal_newlines=False,
-                  stdout=None, stderr=None, env=None):
+        def popen(self, args, cwd, shell=None, stdout=None, stderr=None, env=None, **_):
             pm = pcallMock(args, cwd, env, stdout, stderr, shell)
             self._pcalls.append(pm)
             return pm
-
     return MockSession()
 
 
 @pytest.fixture
-def newmocksession(request):
-    mocksession = request.getfixturevalue("mocksession")
-    newconfig = request.getfixturevalue("newconfig")
-
-    def newmocksession(args, source, plugins=()):
+def newmocksession(mocksession, newconfig):
+    def newmocksession_(args, source, plugins=()):
         mocksession.config = newconfig(args, source, plugins=plugins)
         return mocksession
-
-    return newmocksession
+    return newmocksession_
 
 
 def getdecoded(out):
@@ -234,8 +228,8 @@ def getdecoded(out):
 
 
 @pytest.fixture
-def initproj(request, tmpdir):
-    """Create a factory function for creating example projects
+def initproj(tmpdir):
+    """Create a factory function for creating example projects.
 
     Constructed folder/file hierarchy examples:
 
@@ -257,10 +251,8 @@ def initproj(request, tmpdir):
                 __init__.py
             name.egg-info/       # created later on package build
             setup.py
-
     """
-
-    def initproj(nameversion, filedefs=None, src_root="."):
+    def initproj_(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}
         if not src_root:
@@ -272,18 +264,15 @@ def initproj(request, tmpdir):
             name, version = parts
         else:
             name, version = nameversion
-
         base = tmpdir.join(name)
         src_root_path = _path_join(base, src_root)
         assert base == src_root_path or src_root_path.relto(base), (
             '`src_root` must be the constructed project folder or its direct '
             'or indirect subfolder')
-
         base.ensure(dir=1)
         create_files(base, filedefs)
-
         if not _filedefs_contains(base, filedefs, 'setup.py'):
-            create_files(base, {'setup.py': '''
+            create_files(base, {'setup.py': """
                 from setuptools import setup, find_packages
                 setup(
                     name='%(name)s',
@@ -294,22 +283,16 @@ def initproj(request, tmpdir):
                     packages=find_packages('%(src_root)s'),
                     package_dir={'':'%(src_root)s'},
                 )
-            ''' % locals()})
-
+            """ % locals()})
         if not _filedefs_contains(base, filedefs, src_root_path.join(name)):
-            create_files(src_root_path, {
-                name: {'__init__.py': '__version__ = %r' % version}
-            })
-
+            create_files(src_root_path, {name: {'__init__.py': '__version__ = %r' % version}})
         manifestlines = ["include %s" % p.relto(base)
                          for p in base.visit(lambda x: x.check(file=1))]
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
-
-        print("created project in %s" % (base,))
+        print("created project in %s" % base)
         base.chdir()
         return base
-
-    return initproj
+    return initproj_
 
 
 def _path_parts(path):

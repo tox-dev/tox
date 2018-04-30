@@ -6,3 +6,6 @@ include setup.py
 include tox.ini
 graft doc
 graft tests
+
+global-exclude __pycache__
+global-exclude *.py[cod]

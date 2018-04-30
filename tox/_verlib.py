@@ -175,9 +175,8 @@ class NormalizedVersion(object):
 
     @classmethod
     def parts_to_str(cls, parts):
-        """Transforms a version expressed in tuple into its string
-        representation."""
-        # XXX This doesn't check for invalid tuples
+        """Transform a version expressed in tuple into its string representation."""
+        # FIXME XXX This doesn't check for invalid tuples
         main, prerel, postdev = parts
         s = '.'.join(str(v) for v in main)
         if prerel is not FINAL_MARKER:

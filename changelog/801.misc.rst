@@ -1,0 +1,1 @@
+improve tox quickstart and corresponding tests - @obestwalter

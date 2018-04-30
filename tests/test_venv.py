@@ -5,23 +5,9 @@ import py
 import pytest
 
 import tox
-import tox.config
-from tox.hookspecs import hookimpl
 from tox.interpreters import NoInterpreterInfo
-from tox.venv import CreationConfig
-from tox.venv import getdigest
-from tox.venv import tox_testenv_create
-from tox.venv import tox_testenv_install_deps
-from tox.venv import VirtualEnv
-
-
-# def test_global_virtualenv(capfd):
-#    v = VirtualEnv()
-#    assert v.list()
-#    out, err = capfd.readouterr()
-#    assert not out
-#    assert not err
-#
+from tox.venv import (
+    CreationConfig, VirtualEnv, getdigest, tox_testenv_create, tox_testenv_install_deps)
 
 
 def test_getdigest(tmpdir):
@@ -37,22 +23,25 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
     interp = venv.getsupportedinterpreter()
     # realpath needed for debian symlinks
     assert py.path.local(interp).realpath() == py.path.local(sys.executable).realpath()
-    monkeypatch.setattr(sys, 'platform', "win32")
+    monkeypatch.setattr(tox.INFO, 'IS_WIN', True)
     monkeypatch.setattr(venv.envconfig, 'basepython', 'jython')
-    pytest.raises(tox.exception.UnsupportedInterpreter, venv.getsupportedinterpreter)
+    with pytest.raises(tox.exception.UnsupportedInterpreter):
+        venv.getsupportedinterpreter()
     monkeypatch.undo()
     monkeypatch.setattr(venv.envconfig, "envname", "py1")
     monkeypatch.setattr(venv.envconfig, 'basepython', 'notexistingpython')
-    pytest.raises(tox.exception.InterpreterNotFound, venv.getsupportedinterpreter)
+    with pytest.raises(tox.exception.InterpreterNotFound):
+        venv.getsupportedinterpreter()
     monkeypatch.undo()
     # check that we properly report when no version_info is present
     info = NoInterpreterInfo(name=venv.name)
     info.executable = "something"
     monkeypatch.setattr(config.interpreters, "get_info", lambda *args, **kw: info)
-    pytest.raises(tox.exception.InvocationError, venv.getsupportedinterpreter)
+    with pytest.raises(tox.exception.InvocationError):
+        venv.getsupportedinterpreter()
 
 
-def test_create(monkeypatch, mocksession, newconfig):
+def test_create(mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
     """)
@@ -66,7 +55,7 @@ def test_create(monkeypatch, mocksession, newconfig):
     assert len(pcalls) >= 1
     args = pcalls[0].args
     assert "virtualenv" == str(args[2])
-    if sys.platform != "win32":
+    if not tox.INFO.IS_WIN:
         # realpath is needed for stuff like the debian symlinks
         assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
         # assert Envconfig.toxworkdir in args
@@ -76,9 +65,7 @@ def test_create(monkeypatch, mocksession, newconfig):
     assert venv.path_config.check(exists=False)
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
-def test_commandpath_venv_precedence(tmpdir, monkeypatch,
-                                     mocksession, newconfig):
+def test_commandpath_venv_precedence(tmpdir, monkeypatch, mocksession, newconfig):
     config = newconfig([], """
         [testenv:py123]
     """)
@@ -91,7 +78,7 @@ def test_commandpath_venv_precedence(tmpdir, monkeypatch,
     assert py.path.local(p).relto(envconfig.envbindir), p
 
 
-def test_create_sitepackages(monkeypatch, mocksession, newconfig):
+def test_create_sitepackages(mocksession, newconfig):
     config = newconfig([], """
         [testenv:site]
         sitepackages=True
@@ -303,20 +290,15 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
     assert env["TEMP_NOPASS_VAR"] == "456"
 
 
-def test_test_hashseed_is_in_output(newmocksession):
-    original_make_hashseed = tox.config.make_hashseed
-    tox.config.make_hashseed = lambda: '123456789'
-    try:
-        mocksession = newmocksession([], '''
-            [testenv]
-        ''')
-    finally:
-        tox.config.make_hashseed = original_make_hashseed
+def test_test_hashseed_is_in_output(newmocksession, monkeypatch):
+    seed = '123456789'
+    monkeypatch.setattr('tox.config.make_hashseed', lambda: seed)
+    mocksession = newmocksession([], "")
     venv = mocksession.getenv('python')
     action = mocksession.newaction(venv, "update")
     venv.update(action)
     venv.test()
-    mocksession.report.expect("verbosity0", "python runtests: PYTHONHASHSEED='123456789'")
+    mocksession.report.expect("verbosity0", "runtests: PYTHONHASHSEED='{}'".format(seed))
 
 
 def test_test_runtests_action_command_is_in_output(newmocksession):
@@ -331,7 +313,7 @@ def test_test_runtests_action_command_is_in_output(newmocksession):
     mocksession.report.expect("verbosity0", "*runtests*commands?0? | echo foo bar")
 
 
-def test_install_error(newmocksession, monkeypatch):
+def test_install_error(newmocksession):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
         deps=xyz
@@ -344,7 +326,7 @@ def test_install_error(newmocksession, monkeypatch):
     assert venv.status == "commands failed"
 
 
-def test_install_command_not_installed(newmocksession, monkeypatch):
+def test_install_command_not_installed(newmocksession):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
         commands=
@@ -356,7 +338,7 @@ def test_install_command_not_installed(newmocksession, monkeypatch):
     assert venv.status == 0
 
 
-def test_install_command_whitelisted(newmocksession, monkeypatch):
+def test_install_command_whitelisted(newmocksession):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
         whitelist_externals = pytest
@@ -372,7 +354,6 @@ def test_install_command_whitelisted(newmocksession, monkeypatch):
     assert venv.status == "commands failed"
 
 
-@pytest.mark.skipif("not sys.platform.startswith('linux')")
 def test_install_command_not_installed_bash(newmocksession):
     mocksession = newmocksession(['--recreate'], """
         [testenv]
@@ -384,7 +365,7 @@ def test_install_command_not_installed_bash(newmocksession):
     mocksession.report.expect("warning", "*test command found but not*")
 
 
-def test_install_python3(tmpdir, newmocksession):
+def test_install_python3(newmocksession):
     if not py.path.local.sysfind('python3'):
         pytest.skip("needs python3")
     mocksession = newmocksession([], """
@@ -412,7 +393,6 @@ def test_install_python3(tmpdir, newmocksession):
 
 
 class TestCreationConfig:
-
     def test_basic(self, newconfig, mocksession, tmpdir):
         config = newconfig([], "")
         envconfig = config.envconfigs['python']
@@ -533,7 +513,6 @@ class TestCreationConfig:
 
 
 class TestVenvTest:
-
     def test_envbindir_path(self, newmocksession, monkeypatch):
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession([], """
@@ -737,12 +716,16 @@ def test_tox_testenv_create(newmocksession):
     log = []
 
     class Plugin:
-        @hookimpl
+        @tox.hookimpl
         def tox_testenv_create(self, action, venv):
+            assert isinstance(action, tox.session.Action)
+            assert isinstance(venv, VirtualEnv)
             log.append(1)
 
-        @hookimpl
+        @tox.hookimpl
         def tox_testenv_install_deps(self, action, venv):
+            assert isinstance(action, tox.session.Action)
+            assert isinstance(venv, VirtualEnv)
             log.append(2)
 
     mocksession = newmocksession([], """
@@ -760,12 +743,12 @@ def test_tox_testenv_pre_post(newmocksession):
     log = []
 
     class Plugin:
-        @hookimpl
-        def tox_runtest_pre(self, venv):
+        @tox.hookimpl
+        def tox_runtest_pre(self):
             log.append('started')
 
-        @hookimpl
-        def tox_runtest_post(self, venv):
+        @tox.hookimpl
+        def tox_runtest_post(self):
             log.append('finished')
 
     mocksession = newmocksession([], """
