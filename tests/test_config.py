@@ -1656,7 +1656,7 @@ class TestGlobalOptions:
         env = config.envconfigs['py']
         assert str(env.basepython) == sys.executable
 
-    def test_default_factors(self, newconfig):
+    def test_correct_basepython_chosen_from_default_factors(self, newconfig):
         envlist = list(tox.PYTHON.DEFAULT_FACTORS.keys())
         config = newconfig([], "[tox]\nenvlist=%s" % ", ".join(envlist))
         assert config.envlist == envlist
