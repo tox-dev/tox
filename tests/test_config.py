@@ -1661,18 +1661,18 @@ class TestGlobalOptions:
         config = newconfig([], "[tox]\nenvlist=%s" % ", ".join(envlist))
         assert config.envlist == envlist
         for name in config.envlist:
-            env = config.envconfigs[name]
+            basepython = config.envconfigs[name].basepython
             if name == "jython":
-                assert env.basepython == "jython"
+                assert basepython == "jython"
             elif name.startswith("pypy"):
-                assert env.basepython == name
+                assert basepython == name
             elif name in ("py2", "py3"):
-                assert env.basepython == 'python' + name[-1]
+                assert basepython == 'python' + name[-1]
             elif name == 'py':
-                assert 'python' in env.basepython
+                assert 'python' in basepython
             else:
                 assert name.startswith("py")
-                assert env.basepython == "python%s.%s" % (name[2], name[3])
+                assert basepython == "python{}.{}".format(name[2], name[3])
 
     def test_envlist_expansion(self, newconfig):
         inisource = """
