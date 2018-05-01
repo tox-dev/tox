@@ -1669,7 +1669,7 @@ class TestGlobalOptions:
             elif name in ("py2", "py3"):
                 assert basepython == 'python' + name[-1]
             elif name == 'py':
-                assert 'python' in basepython
+                assert 'python' in basepython or "pypy" in basepython
             else:
                 assert name.startswith("py")
                 assert basepython == "python{}.{}".format(name[2], name[3])
