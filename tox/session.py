@@ -195,6 +195,7 @@ class Action(object):
                     out, err = popen.communicate()
             except KeyboardInterrupt:
                 self.report.keyboard_interrupt()
+
                 def kill(_popen):
                     _popen.kill()
                 timer_to_kill = threading.Timer(5, kill, [popen])
