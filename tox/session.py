@@ -307,7 +307,8 @@ class Reporter(object):
         self.logline(msg, **opts)
 
     def good(self, msg):
-        self.logline(msg, green=True)
+        if self.verbosity >= Verbosity.QUIET:
+            self.logline(msg, green=True)
 
     def warning(self, msg):
         if self.verbosity >= Verbosity.QUIET:
