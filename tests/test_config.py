@@ -1656,23 +1656,23 @@ class TestGlobalOptions:
         env = config.envconfigs['py']
         assert str(env.basepython) == sys.executable
 
-    def test_default_factors(self, newconfig):
+    def test_correct_basepython_chosen_from_default_factors(self, newconfig):
         envlist = list(tox.PYTHON.DEFAULT_FACTORS.keys())
         config = newconfig([], "[tox]\nenvlist=%s" % ", ".join(envlist))
         assert config.envlist == envlist
         for name in config.envlist:
-            env = config.envconfigs[name]
+            basepython = config.envconfigs[name].basepython
             if name == "jython":
-                assert env.basepython == "jython"
+                assert basepython == "jython"
             elif name.startswith("pypy"):
-                assert env.basepython == name
+                assert basepython == name
             elif name in ("py2", "py3"):
-                assert env.basepython == 'python' + name[-1]
+                assert basepython == 'python' + name[-1]
             elif name == 'py':
-                assert 'python' in env.basepython
+                assert 'python' in basepython or "pypy" in basepython
             else:
                 assert name.startswith("py")
-                assert env.basepython == "python%s.%s" % (name[2], name[3])
+                assert basepython == "python{}.{}".format(name[2], name[3])
 
     def test_envlist_expansion(self, newconfig):
         inisource = """
