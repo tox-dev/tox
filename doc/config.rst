@@ -699,6 +699,26 @@ With the previous configuration, it will install:
 - ``flake8`` package for ``py36`` environment.
 - ``flake8`` and ``coverage`` packages for ``coverage`` environment.
 
+Advanced settings
+-----------------
+
+Handle interpreter directives with long lengths
++++++++++++++++++++++++++++++++++++++++++++++++
+
+For systems supporting executable text files (scripts with a shebang), the
+system will attempt to parse the interpreter directive to determine the program
+to execute on the target text file. When ``tox`` prepares a virtual environment
+in a file container which has a large length (e.x. using Jenkins Pipelines), the
+system might not be able to invoke shebang scripts which define interpreters
+beyond system limits (e.x. Linux as a limit of 128; ``BINPRM_BUF_SIZE``). To
+workaround an environment which suffers from an interpreter directive limit, a
+user can bypass the system's interpreter parser by defining the
+``TOX_LIMITED_SHEBANG`` environment variable before invoking ``tox``::
+
+    export TOX_LIMITED_SHEBANG=1
+
+When the workaround is enabled, all tox-invoked text file executables will have
+their interpreter directive parsed by and explicitly executed by ``tox``.
 
 Other Rules and notes
 =====================
