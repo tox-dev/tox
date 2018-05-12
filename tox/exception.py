@@ -17,25 +17,28 @@ def exit_code_str(exception_name, command, exit_code):
     str_ = "%s for command %s" % (exception_name, command)
     if exit_code is not None:
         str_ += " (exited with code %d)" % (exit_code)
-        if (os.name == 'posix') and (exit_code > 128):
-            signals = {number: name
-                       for name, number in vars(signal).items()
-                       if name.startswith("SIG")}
+        if (os.name == "posix") and (exit_code > 128):
+            signals = {
+                number: name for name, number in vars(signal).items() if name.startswith("SIG")
+            }
             number = exit_code - 128
             name = signals.get(number)
             if name:
-                str_ += ("\nNote: this might indicate a fatal error signal "
-                         "(%d - 128 = %d: %s)" % (number+128, number, name))
+                str_ += (
+                    "\nNote: this might indicate a fatal error signal "
+                    "(%d - 128 = %d: %s)" % (number + 128, number, name)
+                )
     return str_
 
 
 class Error(Exception):
+
     def __str__(self):
         return "%s: %s" % (self.__class__.__name__, self.args[0])
 
 
 class MissingSubstitution(Error):
-    FLAG = 'TOX_MISSING_SUBSTITUTION'
+    FLAG = "TOX_MISSING_SUBSTITUTION"
     """placeholder for debugging configurations"""
 
     def __init__(self, name):
@@ -56,6 +59,7 @@ class InterpreterNotFound(Error):
 
 class InvocationError(Error):
     """An error while invoking a script."""
+
     def __init__(self, command, exit_code=None):
         super(Error, self).__init__(command, exit_code)
         self.command = command

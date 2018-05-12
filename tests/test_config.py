@@ -9,24 +9,37 @@ from pluggy import PluginManager
 
 import tox
 from tox.config import (
-    CommandParser, DepOption, SectionReader, get_homedir, get_version_info,
-    getcontextname, is_section_substitution, parseconfig)
+    CommandParser,
+    DepOption,
+    SectionReader,
+    get_homedir,
+    get_version_info,
+    getcontextname,
+    is_section_substitution,
+    parseconfig,
+)
 from tox.venv import VirtualEnv
 
 
 class TestVenvConfig:
+
     def test_config_parsing_minimal(self, tmpdir, newconfig):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [testenv:py1]
-        """)
+        """,
+        )
         assert len(config.envconfigs) == 1
         assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
-        assert config.envconfigs['py1'].basepython == sys.executable
-        assert config.envconfigs['py1'].deps == []
-        assert config.envconfigs['py1'].platform == ".*"
+        assert config.envconfigs["py1"].basepython == sys.executable
+        assert config.envconfigs["py1"].deps == []
+        assert config.envconfigs["py1"].platform == ".*"
 
     def test_config_parsing_multienv(self, tmpdir, newconfig):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [tox]
             toxworkdir = %s
             indexserver =
@@ -37,43 +50,53 @@ class TestVenvConfig:
             deps=
                 world1
                 :xyz:http://hello/world
-        """ % (tmpdir,))
+        """
+            % (tmpdir,),
+        )
         assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
-        assert config.envconfigs['py1'].envdir == tmpdir.join("py1")
-        dep = config.envconfigs['py1'].deps[0]
+        assert config.envconfigs["py1"].envdir == tmpdir.join("py1")
+        dep = config.envconfigs["py1"].deps[0]
         assert dep.name == "hello"
         assert dep.indexserver is None
-        assert config.envconfigs['py2'].envdir == tmpdir.join("py2")
-        dep1, dep2 = config.envconfigs['py2'].deps
+        assert config.envconfigs["py2"].envdir == tmpdir.join("py2")
+        dep1, dep2 = config.envconfigs["py2"].deps
         assert dep1.name == "world1"
         assert dep2.name == "http://hello/world"
         assert dep2.indexserver.name == "xyz"
         assert dep2.indexserver.url == "xyz_repo"
 
     def test_envdir_set_manually(self, tmpdir, newconfig):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [testenv:devenv]
             envdir = devenv
-        """)
-        envconfig = config.envconfigs['devenv']
-        assert envconfig.envdir == tmpdir.join('devenv')
+        """,
+        )
+        envconfig = config.envconfigs["devenv"]
+        assert envconfig.envdir == tmpdir.join("devenv")
 
     def test_envdir_set_manually_with_substitutions(self, newconfig):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [testenv:devenv]
             envdir = {toxworkdir}/foobar
-        """)
-        envconfig = config.envconfigs['devenv']
-        assert envconfig.envdir == config.toxworkdir.join('foobar')
+        """,
+        )
+        envconfig = config.envconfigs["devenv"]
+        assert envconfig.envdir == config.toxworkdir.join("foobar")
 
     def test_force_dep_version(self, initproj):
         """
         Make sure we can override dependencies configured in tox.ini when using the command line
         option --force-dep.
         """
-        initproj("example123-0.5", filedefs={
-            'tox.ini': '''
+        initproj(
+            "example123-0.5",
+            filedefs={
+                "tox.ini": """
             [tox]
 
             [testenv]
@@ -82,39 +105,43 @@ class TestVenvConfig:
                 dep2>=2.0
                 dep3
                 dep4==4.0
-            '''
-        })
+            """
+            },
+        )
         config = parseconfig(
-            ['--force-dep=dep1==1.5', '--force-dep=dep2==2.1',
-             '--force-dep=dep3==3.0'])
-        assert config.option.force_dep == [
-            'dep1==1.5', 'dep2==2.1', 'dep3==3.0']
-        assert [str(x) for x in config.envconfigs['python'].deps] == [
-            'dep1==1.5', 'dep2==2.1', 'dep3==3.0', 'dep4==4.0'
-        ]
+            ["--force-dep=dep1==1.5", "--force-dep=dep2==2.1", "--force-dep=dep3==3.0"]
+        )
+        assert config.option.force_dep == ["dep1==1.5", "dep2==2.1", "dep3==3.0"]
+        assert (
+            [str(x) for x in config.envconfigs["python"].deps]
+            == ["dep1==1.5", "dep2==2.1", "dep3==3.0", "dep4==4.0"]
+        )
 
     def test_force_dep_with_url(self, initproj):
-        initproj("example123-0.5", filedefs={
-            'tox.ini': '''
+        initproj(
+            "example123-0.5",
+            filedefs={
+                "tox.ini": """
             [tox]
 
             [testenv]
             deps=
                 dep1==1.0
                 https://pypi.org/xyz/pkg1.tar.gz
-            '''
-        })
-        config = parseconfig(
-            ['--force-dep=dep1==1.5'])
-        assert config.option.force_dep == [
-            'dep1==1.5'
-        ]
-        assert [str(x) for x in config.envconfigs['python'].deps] == [
-            'dep1==1.5', 'https://pypi.org/xyz/pkg1.tar.gz'
-        ]
+            """
+            },
+        )
+        config = parseconfig(["--force-dep=dep1==1.5"])
+        assert config.option.force_dep == ["dep1==1.5"]
+        assert (
+            [str(x) for x in config.envconfigs["python"].deps]
+            == ["dep1==1.5", "https://pypi.org/xyz/pkg1.tar.gz"]
+        )
 
     def test_process_deps(self, newconfig):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [testenv]
             deps =
                 -r requirements.txt
@@ -123,41 +150,55 @@ class TestVenvConfig:
                 --global-option=foo
                 -v dep1
                 --help dep2
-        """)  # note that those last two are invalid
-        assert [str(x) for x in config.envconfigs['python'].deps] == [
-            '-rrequirements.txt', '--index-url=https://pypi.org/simple',
-            '-fhttps://pypi.org/packages', '--global-option=foo',
-            '-v dep1', '--help dep2'
-        ]
+        """,
+        )  # note that those last two are invalid
+        assert (
+            [str(x) for x in config.envconfigs["python"].deps]
+            == [
+                "-rrequirements.txt",
+                "--index-url=https://pypi.org/simple",
+                "-fhttps://pypi.org/packages",
+                "--global-option=foo",
+                "-v dep1",
+                "--help dep2",
+            ]
+        )
 
     def test_is_same_dep(self):
         """
         Ensure correct parseini._is_same_dep is working with a few samples.
         """
-        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3')
-        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>=2.0')
-        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3>2.0')
-        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<2.0')
-        assert DepOption._is_same_dep('pkg_hello-world3==1.0', 'pkg_hello-world3<=2.0')
-        assert not DepOption._is_same_dep('pkg_hello-world3==1.0', 'otherpkg>=2.0')
+        assert DepOption._is_same_dep("pkg_hello-world3==1.0", "pkg_hello-world3")
+        assert DepOption._is_same_dep("pkg_hello-world3==1.0", "pkg_hello-world3>=2.0")
+        assert DepOption._is_same_dep("pkg_hello-world3==1.0", "pkg_hello-world3>2.0")
+        assert DepOption._is_same_dep("pkg_hello-world3==1.0", "pkg_hello-world3<2.0")
+        assert DepOption._is_same_dep("pkg_hello-world3==1.0", "pkg_hello-world3<=2.0")
+        assert not DepOption._is_same_dep("pkg_hello-world3==1.0", "otherpkg>=2.0")
 
 
 class TestConfigPlatform:
+
     def test_config_parse_platform(self, newconfig):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [testenv:py1]
             platform = linux2
-        """)
+        """,
+        )
         assert len(config.envconfigs) == 1
-        assert config.envconfigs['py1'].platform == "linux2"
+        assert config.envconfigs["py1"].platform == "linux2"
 
     def test_config_parse_platform_rex(self, newconfig, mocksession, monkeypatch):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [testenv:py1]
             platform = a123|b123
-        """)
+        """,
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['py1']
+        envconfig = config.envconfigs["py1"]
         venv = VirtualEnv(envconfig, session=mocksession)
         assert not venv.matching_platform()
         monkeypatch.setattr(sys, "platform", "a123")
@@ -169,26 +210,30 @@ class TestConfigPlatform:
 
     @pytest.mark.parametrize("plat", ["win", "lin", "osx"])
     def test_config_parse_platform_with_factors(self, newconfig, plat):
-        config = newconfig([], """
+        config = newconfig(
+            [],
+            """
             [tox]
             envlist = py27-{win, lin,osx }
             [testenv]
             platform =
                 win: win32
                 lin: linux2
-        """)
+        """,
+        )
         assert len(config.envconfigs) == 3
-        platform = config.envconfigs['py27-' + plat].platform
+        platform = config.envconfigs["py27-" + plat].platform
         expected = {"win": "win32", "lin": "linux2", "osx": ""}.get(plat)
         assert platform == expected
 
 
 class TestConfigPackage:
+
     def test_defaults(self, tmpdir, newconfig):
         config = newconfig([], "")
         assert config.setupdir.realpath() == tmpdir.realpath()
         assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         assert envconfig.args_are_paths
         assert not envconfig.recreate
         assert not envconfig.pip_pre
@@ -204,14 +249,18 @@ class TestConfigPackage:
         assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
 
     def test_project_paths(self, tmpdir, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [tox]
             toxworkdir=%s
-        """ % tmpdir)
+        """
+            % tmpdir
+        )
         assert config.toxworkdir == tmpdir
 
 
 class TestParseconfig:
+
     def test_search_parents(self, tmpdir):
         b = tmpdir.mkdir("a").mkdir("b")
         toxinipath = tmpdir.ensure("tox.ini")
@@ -226,31 +275,29 @@ class TestParseconfig:
         """
         Test explicitly setting config path, both with and without the filename
         """
-        path = tmpdir.mkdir('tox_tmp_directory')
-        config_file_path = path.ensure('tox.ini')
+        path = tmpdir.mkdir("tox_tmp_directory")
+        config_file_path = path.ensure("tox.ini")
 
-        config = parseconfig(['-c', str(config_file_path)])
+        config = parseconfig(["-c", str(config_file_path)])
         assert config.toxinipath == config_file_path
 
         # Passing directory of the config file should also be possible
         # ('tox.ini' filename is assumed)
-        config = parseconfig(['-c', str(path)])
+        config = parseconfig(["-c", str(path)])
         assert config.toxinipath == config_file_path
 
 
 def test_get_homedir(monkeypatch):
-    monkeypatch.setattr(py.path.local, "_gethomedir",
-                        classmethod(lambda x: {}[1]))
+    monkeypatch.setattr(py.path.local, "_gethomedir", classmethod(lambda x: {}[1]))
     assert not get_homedir()
-    monkeypatch.setattr(py.path.local, "_gethomedir",
-                        classmethod(lambda x: 0 / 0))
+    monkeypatch.setattr(py.path.local, "_gethomedir", classmethod(lambda x: 0 / 0))
     assert not get_homedir()
-    monkeypatch.setattr(py.path.local, "_gethomedir",
-                        classmethod(lambda x: "123"))
+    monkeypatch.setattr(py.path.local, "_gethomedir", classmethod(lambda x: "123"))
     assert get_homedir() == "123"
 
 
 class TestGetcontextname:
+
     def test_blank(self, monkeypatch):
         monkeypatch.setattr(os, "environ", {})
         assert getcontextname() is None
@@ -268,13 +315,15 @@ class TestIniParserAgainstCommandsKey:
     """Test parsing commands with substitutions"""
 
     def test_command_substitution_from_other_section(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key = whatever
             [testenv]
             commands =
                 echo {[section]key}
-            """)
+            """
+        )
         reader = SectionReader("testenv", config._cfg)
         x = reader.getargvlist("commands")
         assert x == [["echo", "whatever"]]
@@ -282,7 +331,8 @@ class TestIniParserAgainstCommandsKey:
     def test_command_substitution_from_other_section_multiline(self, newconfig):
         """Ensure referenced multiline commands form from other section injected
         as multiple commands."""
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             commands =
                       cmd1 param11 param12
@@ -299,70 +349,83 @@ class TestIniParserAgainstCommandsKey:
                 {[section]commands}
                 # comment is omitted
                 echo {[base]commands}
-            """)
+            """
+        )
         reader = SectionReader("testenv", config._cfg)
         x = reader.getargvlist("commands")
-        assert x == [
-            "cmd1 param11 param12".split(),
-            "cmd2 param21 param22".split(),
-            "cmd1 param11 param12".split(),
-            "cmd2 param21 param22".split(),
-            ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"]
-        ]
+        assert (
+            x
+            == [
+                "cmd1 param11 param12".split(),
+                "cmd2 param21 param22".split(),
+                "cmd1 param11 param12".split(),
+                "cmd2 param21 param22".split(),
+                ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"],
+            ]
+        )
 
     def test_command_substitution_from_other_section_posargs(self, newconfig):
         """Ensure subsitition from other section with posargs succeeds"""
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key = thing {posargs} arg2
             [testenv]
             commands =
                 {[section]key}
-            """)
+            """
+        )
         reader = SectionReader("testenv", config._cfg)
         reader.addsubstitutions([r"argpos"])
         x = reader.getargvlist("commands")
-        assert x == [['thing', 'argpos', 'arg2']]
+        assert x == [["thing", "argpos", "arg2"]]
 
     def test_command_section_and_posargs_substitution(self, newconfig):
         """Ensure subsitition from other section with posargs succeeds"""
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key = thing arg1
             [testenv]
             commands =
                 {[section]key} {posargs} endarg
-            """)
+            """
+        )
         reader = SectionReader("testenv", config._cfg)
         reader.addsubstitutions([r"argpos"])
         x = reader.getargvlist("commands")
-        assert x == [['thing', 'arg1', 'argpos', 'endarg']]
+        assert x == [["thing", "arg1", "argpos", "endarg"]]
 
     def test_command_env_substitution(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""
-        config = newconfig("""
+        config = newconfig(
+            """
            [testenv:py27]
            setenv =
              TEST=testvalue
            commands =
              ls {env:TEST}
-        """)
+        """
+        )
         envconfig = config.envconfigs["py27"]
         assert envconfig.commands == [["ls", "testvalue"]]
         assert envconfig.setenv["TEST"] == "testvalue"
 
     def test_command_env_substitution_global(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             setenv = FOO = bar
             commands = echo {env:FOO}
-        """)
-        envconfig = config.envconfigs['python']
+        """
+        )
+        envconfig = config.envconfigs["python"]
         assert envconfig.commands == [["echo", "bar"]]
 
     def test_regression_issue595(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [tox]
             envlist = foo
             [testenv]
@@ -371,18 +434,22 @@ class TestIniParserAgainstCommandsKey:
             setenv = {[testenv]setenv}
             [testenv:baz]
             setenv =
-        """)
-        assert config.envconfigs['foo'].setenv['VAR'] == 'x'
-        assert config.envconfigs['bar'].setenv['VAR'] == 'x'
-        assert 'VAR' not in config.envconfigs['baz'].setenv
+        """
+        )
+        assert config.envconfigs["foo"].setenv["VAR"] == "x"
+        assert config.envconfigs["bar"].setenv["VAR"] == "x"
+        assert "VAR" not in config.envconfigs["baz"].setenv
 
 
 class TestIniParser:
+
     def test_getstring_single(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key=value
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         x = reader.getstring("key")
         assert x == "value"
@@ -391,23 +458,27 @@ class TestIniParser:
         assert x == "world"
 
     def test_missing_substitution(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [mydefault]
             key2={xyz}
-        """)
-        reader = SectionReader("mydefault", config._cfg, fallbacksections=['mydefault'])
+        """
+        )
+        reader = SectionReader("mydefault", config._cfg, fallbacksections=["mydefault"])
         assert reader is not None
         with pytest.raises(tox.exception.ConfigError):
             reader.getstring("key2")
 
     def test_getstring_fallback_sections(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [mydefault]
             key2=value2
             [section]
             key=value
-        """)
-        reader = SectionReader("section", config._cfg, fallbacksections=['mydefault'])
+        """
+        )
+        reader = SectionReader("section", config._cfg, fallbacksections=["mydefault"])
         x = reader.getstring("key2")
         assert x == "value2"
         x = reader.getstring("key3")
@@ -416,13 +487,15 @@ class TestIniParser:
         assert x == "world"
 
     def test_getstring_substitution(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [mydefault]
             key2={value2}
             [section]
             key={value}
-        """)
-        reader = SectionReader("section", config._cfg, fallbacksections=['mydefault'])
+        """
+        )
+        reader = SectionReader("section", config._cfg, fallbacksections=["mydefault"])
         reader.addsubstitutions(value="newvalue", value2="newvalue2")
         x = reader.getstring("key2")
         assert x == "newvalue2"
@@ -432,31 +505,35 @@ class TestIniParser:
         assert x == "newvalue2"
 
     def test_getlist(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key2=
                 item1
                 {item2}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="not", item2="grr")
         x = reader.getlist("key2")
-        assert x == ['item1', 'grr']
+        assert x == ["item1", "grr"]
 
     def test_getdict(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key2=
                 key1=item1
                 key2={item2}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="not", item2="grr")
         x = reader.getdict("key2")
-        assert 'key1' in x
-        assert 'key2' in x
-        assert x['key1'] == 'item1'
-        assert x['key2'] == 'grr'
+        assert "key1" in x
+        assert "key2" in x
+        assert x["key1"] == "item1"
+        assert x["key2"] == "grr"
 
         x = reader.getdict("key3", {1: 2})
         assert x == {1: 2}
@@ -474,16 +551,18 @@ class TestIniParser:
     def test_missing_env_sub_populates_missing_subs(self, newconfig):
         config = newconfig("[testenv:foo]\ncommands={env:VAR}")
         print(SectionReader("section", config._cfg).getstring("commands"))
-        assert config.envconfigs['foo'].missing_subs == ['VAR']
+        assert config.envconfigs["foo"].missing_subs == ["VAR"]
 
     def test_getstring_environment_substitution_with_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key1={env:KEY1:DEFAULT_VALUE}
             key2={env:KEY2:DEFAULT_VALUE}
             key3={env:KEY3:}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         x = reader.getstring("key1")
         assert x == "hello"
@@ -501,164 +580,192 @@ class TestIniParser:
         assert is_section_substitution("{[setup] commands}") is None
 
     def test_getstring_other_section_substitution(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key = rue
             [testenv]
             key = t{[section]key}
-            """)
+            """
+        )
         reader = SectionReader("testenv", config._cfg)
         x = reader.getstring("key")
         assert x == "true"
 
     def test_argvlist(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key2=
                 cmd1 {item1} {item2}
                 cmd2 {item2}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        assert reader.getargvlist('key1') == []
+        assert reader.getargvlist("key1") == []
         x = reader.getargvlist("key2")
-        assert x == [["cmd1", "with", "space", "grr"],
-                     ["cmd2", "grr"]]
+        assert x == [["cmd1", "with", "space", "grr"], ["cmd2", "grr"]]
 
     def test_argvlist_windows_escaping(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             comm = pytest {posargs}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([r"hello\this"])
         argv = reader.getargv("comm")
         assert argv == ["pytest", "hello\\this"]
 
     def test_argvlist_multiline(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key2=
                 cmd1 {item1} \
                      {item2}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
-        assert reader.getargvlist('key1') == []
+        assert reader.getargvlist("key1") == []
         x = reader.getargvlist("key2")
         assert x == [["cmd1", "with", "space", "grr"]]
 
     def test_argvlist_quoting_in_command(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key1=
                 cmd1 'part one' \
                      'part two'
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         x = reader.getargvlist("key1")
         assert x == [["cmd1", "part one", "part two"]]
 
     def test_argvlist_comment_after_command(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key1=
                 cmd1 --flag  # run the flag on the command
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         x = reader.getargvlist("key1")
         assert x == [["cmd1", "--flag"]]
 
     def test_argvlist_command_contains_hash(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key1=
                 cmd1 --re  "use the # symbol for an arg"
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         x = reader.getargvlist("key1")
         assert x == [["cmd1", "--re", "use the # symbol for an arg"]]
 
     def test_argvlist_positional_substitution(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key2=
                 cmd1 []
                 cmd2 {posargs:{item2} \
                      other}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
-        posargs = ['hello', 'world']
+        posargs = ["hello", "world"]
         reader.addsubstitutions(posargs, item2="value2")
-        assert reader.getargvlist('key1') == []
+        assert reader.getargvlist("key1") == []
         argvlist = reader.getargvlist("key2")
         assert argvlist[0] == ["cmd1"] + posargs
         assert argvlist[1] == ["cmd2"] + posargs
 
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([], item2="value2")
-        assert reader.getargvlist('key1') == []
+        assert reader.getargvlist("key1") == []
         argvlist = reader.getargvlist("key2")
         assert argvlist[0] == ["cmd1"]
         assert argvlist[1] == ["cmd2", "value2", "other"]
 
     def test_argvlist_quoted_posargs(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key2=
                 cmd1 --foo-args='{posargs}'
                 cmd2 -f '{posargs}'
                 cmd3 -f {posargs}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(["foo", "bar"])
-        assert reader.getargvlist('key1') == []
+        assert reader.getargvlist("key1") == []
         x = reader.getargvlist("key2")
-        assert x == [["cmd1", "--foo-args=foo bar"],
-                     ["cmd2", "-f", "foo bar"],
-                     ["cmd3", "-f", "foo", "bar"]]
+        assert (
+            x
+            == [
+                ["cmd1", "--foo-args=foo bar"],
+                ["cmd2", "-f", "foo bar"],
+                ["cmd3", "-f", "foo", "bar"],
+            ]
+        )
 
     def test_argvlist_posargs_with_quotes(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key2=
                 cmd1 -f {posargs}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(["foo", "'bar", "baz'"])
-        assert reader.getargvlist('key1') == []
+        assert reader.getargvlist("key1") == []
         x = reader.getargvlist("key2")
         assert x == [["cmd1", "-f", "foo", "bar baz"]]
 
     def test_positional_arguments_are_only_replaced_when_standing_alone(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key=
                 cmd0 []
                 cmd1 -m '[abc]'
                 cmd2 -m '\'something\'' []
                 cmd3 something[]else
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
-        posargs = ['hello', 'world']
+        posargs = ["hello", "world"]
         reader.addsubstitutions(posargs)
 
-        argvlist = reader.getargvlist('key')
-        assert argvlist[0] == ['cmd0'] + posargs
-        assert argvlist[1] == ['cmd1', '-m', '[abc]']
-        assert argvlist[2] == ['cmd2', '-m', "something"] + posargs
-        assert argvlist[3] == ['cmd3', 'something[]else']
+        argvlist = reader.getargvlist("key")
+        assert argvlist[0] == ["cmd0"] + posargs
+        assert argvlist[1] == ["cmd1", "-m", "[abc]"]
+        assert argvlist[2] == ["cmd2", "-m", "something"] + posargs
+        assert argvlist[3] == ["cmd3", "something[]else"]
 
     def test_posargs_are_added_escaped_issue310(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key= cmd0 {posargs}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
-        posargs = ['hello world', '--x==y z', '--format=%(code)s: %(text)s']
+        posargs = ["hello world", "--x==y z", "--format=%(code)s: %(text)s"]
         reader.addsubstitutions(posargs)
-        argvlist = reader.getargvlist('key')
-        assert argvlist[0] == ['cmd0'] + posargs
+        argvlist = reader.getargvlist("key")
+        assert argvlist[0] == ["cmd0"] + posargs
 
     def test_substitution_with_multiple_words(self, newconfig):
         inisource = """
@@ -667,42 +774,46 @@ class TestIniParser:
             """
         config = newconfig(inisource)
         reader = SectionReader("section", config._cfg)
-        posargs = ['hello', 'world']
-        reader.addsubstitutions(posargs, envlogdir='ENV_LOG_DIR', envname='ENV_NAME')
+        posargs = ["hello", "world"]
+        reader.addsubstitutions(posargs, envlogdir="ENV_LOG_DIR", envname="ENV_NAME")
 
-        expected = [
-            'pytest', '-n5', '--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml', 'hello', 'world'
-        ]
-        assert reader.getargvlist('key')[0] == expected
+        expected = ["pytest", "-n5", "--junitxml=ENV_LOG_DIR/junit-ENV_NAME.xml", "hello", "world"]
+        assert reader.getargvlist("key")[0] == expected
 
     def test_getargv(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key=some command "with quoting"
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
-        expected = ['some', 'command', 'with quoting']
-        assert reader.getargv('key') == expected
+        expected = ["some", "command", "with quoting"]
+        assert reader.getargv("key") == expected
 
     def test_getpath(self, tmpdir, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             path1={HELLO}
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(toxinidir=tmpdir, HELLO="mypath")
         x = reader.getpath("path1", tmpdir)
         assert x == tmpdir.join("mypath")
 
     def test_getbool(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [section]
             key1=True
             key2=False
             key1a=true
             key2a=falsE
             key5=yes
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg)
         assert reader.getbool("key1") is True
         assert reader.getbool("key1a") is True
@@ -715,11 +826,14 @@ class TestIniParser:
 
 
 class TestIniParserPrefix:
+
     def test_basic_section_access(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [p:section]
             key=value
-        """)
+        """
+        )
         reader = SectionReader("section", config._cfg, prefix="p")
         x = reader.getstring("key")
         assert x == "value"
@@ -728,14 +842,17 @@ class TestIniParserPrefix:
         assert x == "world"
 
     def test_fallback_sections(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [p:mydefault]
             key2=value2
             [p:section]
             key=value
-        """)
-        reader = SectionReader("section", config._cfg, prefix="p",
-                               fallbacksections=['p:mydefault'])
+        """
+        )
+        reader = SectionReader(
+            "section", config._cfg, prefix="p", fallbacksections=["p:mydefault"]
+        )
         x = reader.getstring("key2")
         assert x == "value2"
         x = reader.getstring("key3")
@@ -752,45 +869,52 @@ class TestIniParserPrefix:
         assert is_section_substitution("{[p:setup] commands}") is None
 
     def test_other_section_substitution(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [p:section]
             key = rue
             [p:testenv]
             key = t{[p:section]key}
-            """)
+            """
+        )
         reader = SectionReader("testenv", config._cfg, prefix="p")
         x = reader.getstring("key")
         assert x == "true"
 
 
 class TestConfigTestEnv:
+
     def test_commentchars_issue33(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv] # hello
             deps = http://abc#123
             commands=
                 python -c "x ; y"
-        """)
+        """
+        )
         envconfig = config.envconfigs["python"]
         assert envconfig.deps[0].name == "http://abc#123"
         assert envconfig.commands[0] == ["python", "-c", "x ; y"]
 
     def test_defaults(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             commands=
                 xyz --abc
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         assert envconfig.commands == [["xyz", "--abc"]]
         assert envconfig.changedir == config.setupdir
         assert envconfig.sitepackages is False
         assert envconfig.usedevelop is False
         assert envconfig.ignore_errors is False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
-        assert list(envconfig.setenv.definitions.keys()) == ['PYTHONHASHSEED']
-        hashseed = envconfig.setenv['PYTHONHASHSEED']
+        assert list(envconfig.setenv.definitions.keys()) == ["PYTHONHASHSEED"]
+        hashseed = envconfig.setenv["PYTHONHASHSEED"]
         assert isinstance(hashseed, str)
         # The following line checks that hashseed parses to an integer.
         int_hashseed = int(hashseed)
@@ -800,29 +924,35 @@ class TestConfigTestEnv:
 
     def test_sitepackages_switch(self, newconfig):
         config = newconfig(["--sitepackages"], "")
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         assert envconfig.sitepackages is True
 
     def test_installpkg_tops_develop(self, newconfig):
-        config = newconfig(["--installpkg=abc"], """
+        config = newconfig(
+            ["--installpkg=abc"],
+            """
             [testenv]
             usedevelop = True
-        """)
+        """,
+        )
         assert not config.envconfigs["python"].usedevelop
 
     def test_specific_command_overrides(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             commands=xyz
             [testenv:py]
             commands=abc
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['py']
+        envconfig = config.envconfigs["py"]
         assert envconfig.commands == [["abc"]]
 
     def test_whitelist_externals(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             whitelist_externals = xyz
             commands=xyz
@@ -831,50 +961,60 @@ class TestConfigTestEnv:
             [testenv:py]
             whitelist_externals = xyz2
             commands=abc
-        """)
+        """
+        )
         assert len(config.envconfigs) == 2
-        envconfig = config.envconfigs['py']
+        envconfig = config.envconfigs["py"]
         assert envconfig.commands == [["abc"]]
         assert envconfig.whitelist_externals == ["xyz2"]
-        envconfig = config.envconfigs['x']
+        envconfig = config.envconfigs["x"]
         assert envconfig.whitelist_externals == ["xyz"]
 
     def test_changedir(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             changedir=xyz
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         assert envconfig.changedir.basename == "xyz"
         assert envconfig.changedir == config.toxinidir.join("xyz")
 
     def test_ignore_errors(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             ignore_errors=True
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         assert envconfig.ignore_errors is True
 
     def test_envbindir(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             basepython=python
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         assert envconfig.envpython == envconfig.envbindir.join("python")
 
     @pytest.mark.parametrize("bp", ["jython", "pypy", "pypy3"])
     def test_envbindir_jython(self, newconfig, bp):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             basepython=%s
-        """ % bp)
+        """
+            % bp
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         # on win32 and linux virtualenv uses "bin" for pypy/jython
         assert envconfig.envbindir.basename == "bin"
         if bp == "jython":
@@ -882,19 +1022,21 @@ class TestConfigTestEnv:
 
     @pytest.mark.parametrize("plat", ["win32", "linux2"])
     def test_passenv_as_multiline_list(self, newconfig, monkeypatch, plat):
-        monkeypatch.setattr(tox.INFO, 'IS_WIN', plat == 'win32')
+        monkeypatch.setattr(tox.INFO, "IS_WIN", plat == "win32")
         monkeypatch.setenv("A123A", "a")
         monkeypatch.setenv("A123B", "b")
         monkeypatch.setenv("BX23", "0")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             passenv =
                       A123*
                       # isolated comment
                       B?23
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         if plat == "win32":
             assert "PATHEXT" in envconfig.passenv
             assert "SYSTEMDRIVE" in envconfig.passenv
@@ -918,18 +1060,20 @@ class TestConfigTestEnv:
 
     @pytest.mark.parametrize("plat", ["win32", "linux2"])
     def test_passenv_as_space_separated_list(self, newconfig, monkeypatch, plat):
-        monkeypatch.setattr(tox.INFO, 'IS_WIN', plat == 'win32')
+        monkeypatch.setattr(tox.INFO, "IS_WIN", plat == "win32")
         monkeypatch.setenv("A123A", "a")
         monkeypatch.setenv("A123B", "b")
         monkeypatch.setenv("BX23", "0")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             passenv =
                       # comment
                       A123*  B?23
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         if plat == "win32":
             assert "PATHEXT" in envconfig.passenv
             assert "SYSTEMDRIVE" in envconfig.passenv
@@ -953,7 +1097,8 @@ class TestConfigTestEnv:
         monkeypatch.setenv("BX23", "0")
         monkeypatch.setenv("CCA43", "3")
         monkeypatch.setenv("CB21", "4")
-        config = newconfig("""
+        config = newconfig(
+            """
             [tox]
             envlist = {x1,x2}
             [testenv]
@@ -963,7 +1108,8 @@ class TestConfigTestEnv:
                 # passed to both environments
                 A123C
                 x2: A123B A123D
-        """)
+        """
+        )
         assert len(config.envconfigs) == 2
 
         assert "A123A" in config.envconfigs["x1"].passenv
@@ -986,10 +1132,12 @@ class TestConfigTestEnv:
         monkeypatch.setenv("A1", "a1")
         monkeypatch.setenv("A2", "a2")
         monkeypatch.setenv("TOX_TESTENV_PASSENV", "A1")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             passenv = A2
-        """)
+        """
+        )
         env = config.envconfigs["python"]
         assert "A1" in env.passenv
         assert "A2" in env.passenv
@@ -998,75 +1146,90 @@ class TestConfigTestEnv:
         monkeypatch.setenv("A1", "a1")
         monkeypatch.setenv("A2", "a2")
         monkeypatch.setenv("TOX_TESTENV_PASSENV", "A*")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
-        """)
+        """
+        )
         env = config.envconfigs["python"]
         assert "A1" in env.passenv
         assert "A2" in env.passenv
 
     def test_changedir_override(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             changedir=xyz
             [testenv:python]
             changedir=abc
             basepython=python3.6
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
+        envconfig = config.envconfigs["python"]
         assert envconfig.changedir.basename == "abc"
         assert envconfig.changedir == config.setupdir.join("abc")
 
     def test_install_command_setting(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             install_command=some_install {packages}
-        """)
-        envconfig = config.envconfigs['python']
-        assert envconfig.install_command == [
-            'some_install', '{packages}']
+        """
+        )
+        envconfig = config.envconfigs["python"]
+        assert envconfig.install_command == ["some_install", "{packages}"]
 
     def test_install_command_must_contain_packages(self, newconfig):
         with pytest.raises(tox.exception.ConfigError):
             newconfig("[testenv]\ninstall_command=pip install")
 
     def test_install_command_substitutions(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             install_command=some_install --arg={toxinidir}/foo \
                 {envname} {opts} {packages}
-        """)
-        envconfig = config.envconfigs['python']
-        assert envconfig.install_command == [
-            'some_install', '--arg=%s/foo' % config.toxinidir, 'python',
-            '{opts}', '{packages}']
+        """
+        )
+        envconfig = config.envconfigs["python"]
+        assert (
+            envconfig.install_command
+            == [
+                "some_install", "--arg=%s/foo" % config.toxinidir, "python", "{opts}", "{packages}"
+            ]
+        )
 
     def test_pip_pre(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             pip_pre=true
-        """)
-        envconfig = config.envconfigs['python']
+        """
+        )
+        envconfig = config.envconfigs["python"]
         assert envconfig.pip_pre
 
     def test_pip_pre_cmdline_override(self, newconfig):
         config = newconfig(
-            ['--pre'],
+            ["--pre"],
             """
             [testenv]
             pip_pre=false
-        """)
-        envconfig = config.envconfigs['python']
+        """,
+        )
+        envconfig = config.envconfigs["python"]
         assert envconfig.pip_pre
 
     def test_simple(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:py36]
             basepython=python3.6
             [testenv:py27]
             basepython=python2.7
-        """)
+        """
+        )
         assert len(config.envconfigs) == 2
         assert "py36" in config.envconfigs
         assert "py27" in config.envconfigs
@@ -1076,7 +1239,8 @@ class TestConfigTestEnv:
             newconfig("[testenv:py27]\nbasepython={xyz}")
 
     def test_substitution_defaults(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:py27]
             commands =
                 {toxinidir}
@@ -1088,8 +1252,9 @@ class TestConfigTestEnv:
                 {homedir}
                 {distshare}
                 {envlogdir}
-        """)
-        conf = config.envconfigs['py27']
+        """
+        )
+        conf = config.envconfigs["py27"]
         argv = conf.commands
         assert argv[0][0] == config.toxinidir
         assert argv[1][0] == config.toxworkdir
@@ -1102,19 +1267,22 @@ class TestConfigTestEnv:
         assert argv[8][0] == conf.envlogdir
 
     def test_substitution_notfound_issue246(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:py27]
             setenv =
                 FOO={envbindir}
                 BAR={envsitepackagesdir}
-        """)
-        conf = config.envconfigs['py27']
+        """
+        )
+        conf = config.envconfigs["py27"]
         env = conf.setenv
-        assert 'FOO' in env
-        assert 'BAR' in env
+        assert "FOO" in env
+        assert "BAR" in env
 
     def test_substitution_notfound_issue515(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [tox]
             envlist = standard-greeting
 
@@ -1127,16 +1295,16 @@ class TestConfigTestEnv:
                 NAME
             commands =
                 python -c 'print("Hello, {env:NAME}!")'
-        """)
-        conf = config.envconfigs['standard-greeting']
-        assert conf.commands == [
-            ['python', '-c', 'print("Hello, world!")']
-        ]
+        """
+        )
+        conf = config.envconfigs["standard-greeting"]
+        assert conf.commands == [["python", "-c", 'print("Hello, world!")']]
 
     def test_substitution_nested_env_defaults(self, newconfig, monkeypatch):
         monkeypatch.setenv("IGNORE_STATIC_DEFAULT", "env")
         monkeypatch.setenv("IGNORE_DYNAMIC_DEFAULT", "env")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:py27]
             passenv =
                 IGNORE_STATIC_DEFAULT
@@ -1151,15 +1319,16 @@ class TestConfigTestEnv:
                 USE_DYNAMIC_DEFAULT={env:USE_DYNAMIC_DEFAULT:{env:OTHER_VAR}+default}
                 IGNORE_OTHER_DEFAULT={env:OTHER_VAR:{env:OTHER_VAR}+default}
                 USE_OTHER_DEFAULT={env:NON_EXISTENT_VAR:{env:OTHER_VAR}+default}
-        """)
-        conf = config.envconfigs['py27']
+        """
+        )
+        conf = config.envconfigs["py27"]
         env = conf.setenv
-        assert env['IGNORE_STATIC_DEFAULT'] == "env"
-        assert env['USE_STATIC_DEFAULT'] == "default"
-        assert env['IGNORE_OTHER_DEFAULT'] == "other"
-        assert env['USE_OTHER_DEFAULT'] == "other+default"
-        assert env['IGNORE_DYNAMIC_DEFAULT'] == "env"
-        assert env['USE_DYNAMIC_DEFAULT'] == "other+default"
+        assert env["IGNORE_STATIC_DEFAULT"] == "env"
+        assert env["USE_STATIC_DEFAULT"] == "default"
+        assert env["IGNORE_OTHER_DEFAULT"] == "other"
+        assert env["USE_OTHER_DEFAULT"] == "other+default"
+        assert env["IGNORE_DYNAMIC_DEFAULT"] == "env"
+        assert env["USE_DYNAMIC_DEFAULT"] == "other+default"
 
     def test_substitution_positional(self, newconfig):
         inisource = """
@@ -1170,11 +1339,11 @@ class TestConfigTestEnv:
                 cmd1 {posargs:hello} \
                      world
         """
-        conf = newconfig([], inisource).envconfigs['py27']
+        conf = newconfig([], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "[hello]", "world"]
         assert argv[1] == ["cmd1", "hello", "world"]
-        conf = newconfig(['brave', 'new'], inisource).envconfigs['py27']
+        conf = newconfig(["brave", "new"], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "[hello]", "world"]
         assert argv[1] == ["cmd1", "brave", "new", "world"]
@@ -1184,7 +1353,7 @@ class TestConfigTestEnv:
             [testenv]
             commands = echo {posargs:foo}
         """
-        conf = newconfig([""], inisource).envconfigs['python']
+        conf = newconfig([""], inisource).envconfigs["python"]
         argv = conf.commands
         assert argv[0] == ["echo"]
 
@@ -1198,9 +1367,9 @@ class TestConfigTestEnv:
             commands =
                 echo {{[params]foo2}}
         """
-        conf = newconfig([], inisource).envconfigs['py27']
+        conf = newconfig([], inisource).envconfigs["py27"]
         argv = conf.commands
-        assert argv[0] == ['echo', 'bah']
+        assert argv[0] == ["echo", "bah"]
 
     def test_posargs_backslashed_or_quoted(self, newconfig):
         inisource = r"""
@@ -1209,15 +1378,15 @@ class TestConfigTestEnv:
                 echo "\{posargs\}" = {posargs}
                 echo "posargs = " "{posargs}"
         """
-        conf = newconfig([], inisource).envconfigs['py27']
+        conf = newconfig([], inisource).envconfigs["py27"]
         argv = conf.commands
-        assert argv[0] == ['echo', '{posargs}', '=']
-        assert argv[1] == ['echo', 'posargs = ', ""]
+        assert argv[0] == ["echo", "{posargs}", "="]
+        assert argv[1] == ["echo", "posargs = ", ""]
 
-        conf = newconfig(['dog', 'cat'], inisource).envconfigs['py27']
+        conf = newconfig(["dog", "cat"], inisource).envconfigs["py27"]
         argv = conf.commands
-        assert argv[0] == ['echo', '{posargs}', '=', 'dog', 'cat']
-        assert argv[1] == ['echo', 'posargs = ', 'dog cat']
+        assert argv[0] == ["echo", "{posargs}", "=", "dog", "cat"]
+        assert argv[1] == ["echo", "posargs = ", "dog cat"]
 
     def test_rewrite_posargs(self, tmpdir, newconfig):
         inisource = """
@@ -1226,16 +1395,16 @@ class TestConfigTestEnv:
             changedir = tests
             commands = cmd1 {posargs:hello}
         """
-        conf = newconfig([], inisource).envconfigs['py27']
+        conf = newconfig([], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
+        conf = newconfig(["tests/hello"], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "tests/hello"]
 
         tmpdir.ensure("tests", "hello")
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
+        conf = newconfig(["tests/hello"], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
@@ -1246,29 +1415,27 @@ class TestConfigTestEnv:
             changedir = tests
             commands = cmd1 {posargs}
         """
-        conf = newconfig([], inisource).envconfigs['py27']
+        conf = newconfig([], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1"]
 
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
+        conf = newconfig(["tests/hello"], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "tests/hello"]
 
         tmpdir.ensure("tests", "hello")
-        conf = newconfig(["tests/hello"], inisource).envconfigs['py27']
+        conf = newconfig(["tests/hello"], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
-    @pytest.mark.parametrize('envlist, deps', [
-        (['py27'], ('pytest', 'pytest-cov')),
-        (['py27', 'py34'], ('pytest', 'py{27,34}: pytest-cov'))
-    ])
-    def test_take_dependencies_from_other_testenv(
-            self,
-            newconfig,
-            envlist,
-            deps
-    ):
+    @pytest.mark.parametrize(
+        "envlist, deps",
+        [
+            (["py27"], ("pytest", "pytest-cov")),
+            (["py27", "py34"], ("pytest", "py{27,34}: pytest-cov")),
+        ],
+    )
+    def test_take_dependencies_from_other_testenv(self, newconfig, envlist, deps):
         inisource = """
             [tox]
             envlist = {envlist}
@@ -1280,15 +1447,14 @@ class TestConfigTestEnv:
                 fun
                 frob{{env:ENV_VAR:>1.0,<2.0}}
         """.format(
-            envlist=','.join(envlist),
-            deps='\n' + '\n'.join([' ' * 17 + d for d in deps])
+            envlist=",".join(envlist), deps="\n" + "\n".join([" " * 17 + d for d in deps])
         )
-        conf = newconfig([], inisource).envconfigs['py27']
+        conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
-        assert packages == ['pytest', 'pytest-cov', 'fun', 'frob>1.0,<2.0']
+        assert packages == ["pytest", "pytest-cov", "fun", "frob>1.0,<2.0"]
 
     # https://github.com/tox-dev/tox/issues/706
-    @pytest.mark.parametrize('envlist', [['py27', 'coverage', 'other']])
+    @pytest.mark.parametrize("envlist", [["py27", "coverage", "other"]])
     def test_regression_test_issue_706(self, newconfig, envlist):
         inisource = """
             [tox]
@@ -1302,19 +1468,19 @@ class TestConfigTestEnv:
                 {{[testenv]deps}}
                 fun
         """.format(
-            envlist=','.join(envlist),
+            envlist=",".join(envlist)
         )
-        conf = newconfig([], inisource).envconfigs['coverage']
+        conf = newconfig([], inisource).envconfigs["coverage"]
         packages = [dep.name for dep in conf.deps]
-        assert packages == ['flake8', 'coverage']
+        assert packages == ["flake8", "coverage"]
 
-        conf = newconfig([], inisource).envconfigs['other']
+        conf = newconfig([], inisource).envconfigs["other"]
         packages = [dep.name for dep in conf.deps]
-        assert packages == ['flake8']
+        assert packages == ["flake8"]
 
-        conf = newconfig([], inisource).envconfigs['py27']
+        conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
-        assert packages == ['flake8', 'fun']
+        assert packages == ["flake8", "fun"]
 
     def test_take_dependencies_from_other_section(self, newconfig):
         inisource = """
@@ -1332,9 +1498,9 @@ class TestConfigTestEnv:
                 fun
         """
         conf = newconfig([], inisource)
-        env = conf.envconfigs['python']
+        env = conf.envconfigs["python"]
         packages = [dep.name for dep in env.deps]
-        assert packages == ['pytest', 'pytest-cov', 'mock', 'fun']
+        assert packages == ["pytest", "pytest-cov", "mock", "fun"]
 
     def test_multilevel_substitution(self, newconfig):
         inisource = """
@@ -1357,9 +1523,9 @@ class TestConfigTestEnv:
                 fun
         """
         conf = newconfig([], inisource)
-        env = conf.envconfigs['python']
+        env = conf.envconfigs["python"]
         packages = [dep.name for dep in env.deps]
-        assert packages == ['pytest', 'pytest-cov', 'mock', 'fun']
+        assert packages == ["pytest", "pytest-cov", "mock", "fun"]
 
     def test_recursive_substitution_cycle_fails(self, newconfig):
         inisource = """
@@ -1384,8 +1550,8 @@ class TestConfigTestEnv:
             [testenv]
             changedir = {[common]changedir}
         """
-        conf = newconfig([], inisource).envconfigs['python']
-        assert conf.changedir.basename == 'testing'
+        conf = newconfig([], inisource).envconfigs["python"]
+        assert conf.changedir.basename == "testing"
         assert conf.changedir.dirpath().realpath() == tmpdir.realpath()
 
     def test_factors(self, newconfig):
@@ -1406,13 +1572,13 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource)
         configs = conf.envconfigs
         expected = ["dep-all", "dep-a", "dep-x", "dep-!b"]
-        assert [dep.name for dep in configs['a-x'].deps] == expected
+        assert [dep.name for dep in configs["a-x"].deps] == expected
         expected = ["dep-all", "dep-b", "dep-!a", "dep-!x"]
-        assert [dep.name for dep in configs['b'].deps] == expected
+        assert [dep.name for dep in configs["b"].deps] == expected
         expected = ["dep-all", "dep-a", "dep-x", "dep-!b"]
-        assert [dep.name for dep in configs['a-x'].deps] == expected
+        assert [dep.name for dep in configs["a-x"].deps] == expected
         expected = ["dep-all", "dep-b", "dep-!a", "dep-!x"]
-        assert [dep.name for dep in configs['b'].deps] == expected
+        assert [dep.name for dep in configs["b"].deps] == expected
 
     def test_factor_ops(self, newconfig):
         inisource = """
@@ -1437,12 +1603,15 @@ class TestConfigTestEnv:
             return [dep.name for dep in configs[env].deps]
 
         assert get_deps("a-x") == ["dep-a-or-b", "dep-a-and-x", "dep-a-or-!x"]
-        assert get_deps("a-y") == ["dep-a-or-b", "dep-ab-and-y",
-                                   "dep-a-and-!x", "dep-a-or-!x",
-                                   "dep-!a-or-!x"]
+        assert (
+            get_deps("a-y")
+            == ["dep-a-or-b", "dep-ab-and-y", "dep-a-and-!x", "dep-a-or-!x", "dep-!a-or-!x"]
+        )
         assert get_deps("b-x") == ["dep-a-or-b", "dep-!a-or-!x"]
-        assert get_deps("b-y") == ["dep-a-or-b", "dep-ab-and-y", "dep-a-or-!x",
-                                   "dep-!a-and-!x", "dep-!a-or-!x"]
+        assert (
+            get_deps("b-y")
+            == ["dep-a-or-b", "dep-ab-and-y", "dep-a-or-!x", "dep-!a-and-!x", "dep-!a-or-!x"]
+        )
 
     def test_envconfigs_based_on_factors(self, newconfig):
         inisource = """
@@ -1486,7 +1655,7 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource)
         configs = conf.envconfigs
         for name, config in configs.items():
-            assert config.basepython == 'python%s.%s' % (name[2], name[3])
+            assert config.basepython == "python%s.%s" % (name[2], name[3])
 
     @pytest.mark.issue188
     def test_factors_in_boolean(self, newconfig):
@@ -1526,7 +1695,7 @@ class TestConfigTestEnv:
             deps = b: test
         """
         configs = newconfig([], inisource).envconfigs
-        assert set(configs.keys()) == {'py27-a', 'py27-b'}
+        assert set(configs.keys()) == {"py27-a", "py27-b"}
 
     @pytest.mark.issue198
     def test_factors_groups_touch(self, newconfig):
@@ -1539,7 +1708,7 @@ class TestConfigTestEnv:
                 a,b,x,y: dep
         """
         configs = newconfig([], inisource).envconfigs
-        assert set(configs.keys()) == {'a', 'a-x', 'b', 'b-x'}
+        assert set(configs.keys()) == {"a", "a-x", "b", "b-x"}
 
     def test_period_in_factor(self, newconfig):
         inisource = """
@@ -1565,6 +1734,7 @@ class TestConfigTestEnv:
 
 
 class TestGlobalOptions:
+
     def test_notest(self, newconfig):
         config = newconfig([], "")
         assert not config.option.notest
@@ -1579,24 +1749,21 @@ class TestGlobalOptions:
         config = newconfig(["-vv"], "")
         assert config.option.verbose_level == 2
 
-    @pytest.mark.parametrize('args, expected', [
-        ([], 0),
-        (["-q"], 1),
-        (["-qq"], 2),
-        (["-qqq"], 3),
-    ])
+    @pytest.mark.parametrize("args, expected", [([], 0), (["-q"], 1), (["-qq"], 2), (["-qqq"], 3)])
     def test_quiet(self, args, expected, newconfig):
         config = newconfig(args, "")
         assert config.option.quiet_level == expected
 
     def test_substitution_jenkins_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:py27]
             commands =
                 {distshare}
-        """)
-        conf = config.envconfigs['py27']
+        """
+        )
+        conf = config.envconfigs["py27"]
         argv = conf.commands
         expect_path = config.toxworkdir.join("distshare")
         assert argv[0][0] == expect_path
@@ -1604,23 +1771,27 @@ class TestGlobalOptions:
     def test_substitution_jenkins_context(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         monkeypatch.setenv("WORKSPACE", tmpdir)
-        config = newconfig("""
+        config = newconfig(
+            """
             [tox:jenkins]
             distshare = {env:WORKSPACE}/hello
             [testenv:py27]
             commands =
                 {distshare}
-        """)
-        conf = config.envconfigs['py27']
+        """
+        )
+        conf = config.envconfigs["py27"]
         argv = conf.commands
         assert argv[0][0] == config.distshare
         assert config.distshare == tmpdir.join("hello")
 
     def test_sdist_specification(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [tox]
             sdistsrc = {distshare}/xyz.zip
-        """)
+        """
+        )
         assert config.sdistsrc == config.distshare.join("xyz.zip")
         config = newconfig([], "")
         assert not config.sdistsrc
@@ -1645,15 +1816,15 @@ class TestGlobalOptions:
         assert config.envlist == ["py35", "py36"]
         monkeypatch.setenv("TOXENV", "ALL")
         config = newconfig([], inisource)
-        assert config.envlist == ['py27', 'py35', 'py36']
+        assert config.envlist == ["py27", "py35", "py36"]
         config = newconfig(["-eALL"], inisource)
-        assert config.envlist == ['py27', 'py35', 'py36']
-        config = newconfig(['-espam'], inisource)
+        assert config.envlist == ["py27", "py35", "py36"]
+        config = newconfig(["-espam"], inisource)
         assert config.envlist == ["spam"]
 
     def test_py_venv(self, newconfig):
         config = newconfig(["-epy"], "")
-        env = config.envconfigs['py']
+        env = config.envconfigs["py"]
         assert str(env.basepython) == sys.executable
 
     def test_correct_basepython_chosen_from_default_factors(self, newconfig):
@@ -1667,9 +1838,9 @@ class TestGlobalOptions:
             elif name.startswith("pypy"):
                 assert basepython == name
             elif name in ("py2", "py3"):
-                assert basepython == 'python' + name[-1]
-            elif name == 'py':
-                assert 'python' in basepython or "pypy" in basepython
+                assert basepython == "python" + name[-1]
+            elif name == "py":
+                assert "python" in basepython or "pypy" in basepython
             else:
                 assert name.startswith("py")
                 assert basepython == "python{}.{}".format(name[2], name[3])
@@ -1727,7 +1898,7 @@ class TestGlobalOptions:
 
     def test_defaultenv_commandline(self, newconfig):
         config = newconfig(["-epy27"], "")
-        env = config.envconfigs['py27']
+        env = config.envconfigs["py27"]
         assert env.basepython == "python2.7"
         assert not env.commands
 
@@ -1739,14 +1910,14 @@ class TestGlobalOptions:
             commands= xyz
         """
         config = newconfig([], inisource)
-        env = config.envconfigs['py27']
+        env = config.envconfigs["py27"]
         assert env.basepython == "python2.7"
-        assert env.commands == [['xyz']]
+        assert env.commands == [["xyz"]]
 
 
 class TestHashseedOption:
-    def _get_envconfigs(self, newconfig, args=None, tox_ini=None,
-                        make_hashseed=None):
+
+    def _get_envconfigs(self, newconfig, args=None, tox_ini=None, make_hashseed=None):
         if args is None:
             args = []
         if tox_ini is None:
@@ -1754,8 +1925,9 @@ class TestHashseedOption:
                 [testenv]
             """
         if make_hashseed is None:
+
             def make_hashseed():
-                return '123456789'
+                return "123456789"
 
         original_make_hashseed = tox.config.make_hashseed
         tox.config.make_hashseed = make_hashseed
@@ -1766,37 +1938,36 @@ class TestHashseedOption:
         return config.envconfigs
 
     def _get_envconfig(self, newconfig, args=None, tox_ini=None):
-        envconfigs = self._get_envconfigs(newconfig, args=args,
-                                          tox_ini=tox_ini)
+        envconfigs = self._get_envconfigs(newconfig, args=args, tox_ini=tox_ini)
         return envconfigs["python"]
 
     def _check_hashseed(self, envconfig, expected):
-        assert envconfig.setenv['PYTHONHASHSEED'] == expected
+        assert envconfig.setenv["PYTHONHASHSEED"] == expected
 
     def _check_testenv(self, newconfig, expected, args=None, tox_ini=None):
         envconfig = self._get_envconfig(newconfig, args=args, tox_ini=tox_ini)
         self._check_hashseed(envconfig, expected)
 
     def test_default(self, newconfig):
-        self._check_testenv(newconfig, '123456789')
+        self._check_testenv(newconfig, "123456789")
 
     def test_passing_integer(self, newconfig):
-        args = ['--hashseed', '1']
-        self._check_testenv(newconfig, '1', args=args)
+        args = ["--hashseed", "1"]
+        self._check_testenv(newconfig, "1", args=args)
 
     def test_passing_string(self, newconfig):
-        args = ['--hashseed', 'random']
-        self._check_testenv(newconfig, 'random', args=args)
+        args = ["--hashseed", "random"]
+        self._check_testenv(newconfig, "random", args=args)
 
     def test_passing_empty_string(self, newconfig):
-        args = ['--hashseed', '']
-        self._check_testenv(newconfig, '', args=args)
+        args = ["--hashseed", ""]
+        self._check_testenv(newconfig, "", args=args)
 
     def test_passing_no_argument(self, newconfig):
         """Test that passing no arguments to --hashseed is not allowed."""
-        args = ['--hashseed']
+        args = ["--hashseed"]
         try:
-            self._check_testenv(newconfig, '', args=args)
+            self._check_testenv(newconfig, "", args=args)
         except SystemExit:
             e = sys.exc_info()[1]
             assert e.code == 2
@@ -1810,12 +1981,12 @@ class TestHashseedOption:
             setenv =
                 PYTHONHASHSEED = 2
         """
-        self._check_testenv(newconfig, '2', tox_ini=tox_ini)
-        args = ['--hashseed', '1']
-        self._check_testenv(newconfig, '2', args=args, tox_ini=tox_ini)
+        self._check_testenv(newconfig, "2", tox_ini=tox_ini)
+        args = ["--hashseed", "1"]
+        self._check_testenv(newconfig, "2", args=args, tox_ini=tox_ini)
 
     def test_noset(self, newconfig):
-        args = ['--hashseed', 'noset']
+        args = ["--hashseed", "noset"]
         envconfig = self._get_envconfig(newconfig, args=args)
         assert not envconfig.setenv.definitions
 
@@ -1825,8 +1996,8 @@ class TestHashseedOption:
             setenv =
                 PYTHONHASHSEED = 2
         """
-        args = ['--hashseed', 'noset']
-        self._check_testenv(newconfig, '2', args=args, tox_ini=tox_ini)
+        args = ["--hashseed", "noset"]
+        self._check_testenv(newconfig, "2", args=args, tox_ini=tox_ini)
 
     def test_one_random_hashseed(self, newconfig):
         """Check that different testenvs use the same random seed."""
@@ -1843,12 +2014,11 @@ class TestHashseedOption:
             return str(next_seed[0])
 
         # Check that make_hashseed() works.
-        assert make_hashseed() == '1001'
-        envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini,
-                                          make_hashseed=make_hashseed)
-        self._check_hashseed(envconfigs["hash1"], '1002')
+        assert make_hashseed() == "1001"
+        envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini, make_hashseed=make_hashseed)
+        self._check_hashseed(envconfigs["hash1"], "1002")
         # Check that hash2's value is not '1003', for example.
-        self._check_hashseed(envconfigs["hash2"], '1002')
+        self._check_hashseed(envconfigs["hash2"], "1002")
 
     def test_setenv_in_one_testenv(self, newconfig):
         """Check using setenv in one of multiple testenvs."""
@@ -1859,19 +2029,22 @@ class TestHashseedOption:
             [testenv:hash2]
         """
         envconfigs = self._get_envconfigs(newconfig, tox_ini=tox_ini)
-        self._check_hashseed(envconfigs["hash1"], '2')
-        self._check_hashseed(envconfigs["hash2"], '123456789')
+        self._check_hashseed(envconfigs["hash1"], "2")
+        self._check_hashseed(envconfigs["hash2"], "123456789")
 
 
 class TestSetenv:
+
     def test_getdict_lazy(self, newconfig, monkeypatch):
         monkeypatch.setenv("X", "2")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:X]
             key0 =
                 key1 = {env:X}
                 key2 = {env:Y:1}
-        """)
+        """
+        )
         envconfig = config.envconfigs["X"]
         val = envconfig._reader.getdict_setenv("key0")
         assert val["key1"] == "2"
@@ -1879,12 +2052,14 @@ class TestSetenv:
 
     def test_getdict_lazy_update(self, newconfig, monkeypatch):
         monkeypatch.setenv("X", "2")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:X]
             key0 =
                 key1 = {env:X}
                 key2 = {env:Y:1}
-        """)
+        """
+        )
         envconfig = config.envconfigs["X"]
         val = envconfig._reader.getdict_setenv("key0")
         d = {}
@@ -1893,97 +2068,114 @@ class TestSetenv:
 
     def test_setenv_uses_os_environ(self, newconfig, monkeypatch):
         monkeypatch.setenv("X", "1")
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:env1]
             setenv =
                 X = {env:X}
-        """)
+        """
+        )
         assert config.envconfigs["env1"].setenv["X"] == "1"
 
     def test_setenv_default_os_environ(self, newconfig, monkeypatch):
         monkeypatch.delenv("X", raising=False)
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:env1]
             setenv =
                 X = {env:X:2}
-        """)
+        """
+        )
         assert config.envconfigs["env1"].setenv["X"] == "2"
 
     def test_setenv_uses_other_setenv(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:env1]
             setenv =
                 Y = 5
                 X = {env:Y}
-        """)
+        """
+        )
         assert config.envconfigs["env1"].setenv["X"] == "5"
 
     def test_setenv_recursive_direct(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv:env1]
             setenv =
                 X = {env:X:3}
-        """)
+        """
+        )
         assert config.envconfigs["env1"].setenv["X"] == "3"
 
     def test_setenv_overrides(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             setenv =
                 PYTHONPATH = something
                 ANOTHER_VAL=else
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'PYTHONPATH' in envconfig.setenv
-        assert 'ANOTHER_VAL' in envconfig.setenv
-        assert envconfig.setenv['PYTHONPATH'] == 'something'
-        assert envconfig.setenv['ANOTHER_VAL'] == 'else'
+        envconfig = config.envconfigs["python"]
+        assert "PYTHONPATH" in envconfig.setenv
+        assert "ANOTHER_VAL" in envconfig.setenv
+        assert envconfig.setenv["PYTHONPATH"] == "something"
+        assert envconfig.setenv["ANOTHER_VAL"] == "else"
 
     def test_setenv_with_envdir_and_basepython(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             setenv =
                 VAL = {envdir}
             basepython = {env:VAL}
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'VAL' in envconfig.setenv
-        assert envconfig.setenv['VAL'] == envconfig.envdir
+        envconfig = config.envconfigs["python"]
+        assert "VAL" in envconfig.setenv
+        assert envconfig.setenv["VAL"] == envconfig.envdir
         assert envconfig.basepython == envconfig.envdir
 
     def test_setenv_ordering_1(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [testenv]
             setenv=
                 VAL={envdir}
             commands=echo {env:VAL}
-        """)
+        """
+        )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs['python']
-        assert 'VAL' in envconfig.setenv
-        assert envconfig.setenv['VAL'] == envconfig.envdir
+        envconfig = config.envconfigs["python"]
+        assert "VAL" in envconfig.setenv
+        assert envconfig.setenv["VAL"] == envconfig.envdir
         assert str(envconfig.envdir) in envconfig.commands[0]
 
     def test_setenv_cross_section_subst_issue294(self, monkeypatch, newconfig):
         """test that we can do cross-section substitution with setenv"""
-        monkeypatch.delenv('TEST', raising=False)
-        config = newconfig("""
+        monkeypatch.delenv("TEST", raising=False)
+        config = newconfig(
+            """
             [section]
             x =
               NOT_TEST={env:TEST:defaultvalue}
 
             [testenv]
             setenv = {[section]x}
-        """)
+        """
+        )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
 
     def test_setenv_cross_section_subst_twice(self, monkeypatch, newconfig):
         """test that we can do cross-section substitution with setenv"""
-        monkeypatch.delenv('TEST', raising=False)
-        config = newconfig("""
+        monkeypatch.delenv("TEST", raising=False)
+        config = newconfig(
+            """
             [section]
             x = NOT_TEST={env:TEST:defaultvalue}
             [section1]
@@ -1991,37 +2183,43 @@ class TestSetenv:
 
             [testenv]
             setenv = {[section1]y}
-        """)
+        """
+        )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
 
     def test_setenv_cross_section_mixed(self, monkeypatch, newconfig):
         """test that we can do cross-section substitution with setenv"""
-        monkeypatch.delenv('TEST', raising=False)
-        config = newconfig("""
+        monkeypatch.delenv("TEST", raising=False)
+        config = newconfig(
+            """
             [section]
             x = NOT_TEST={env:TEST:defaultvalue}
 
             [testenv]
             setenv = {[section]x}
                      y = 7
-        """)
+        """
+        )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
         assert envconfig.setenv["y"] == "7"
 
 
 class TestIndexServer:
+
     def test_indexserver(self, newconfig):
-        config = newconfig("""
+        config = newconfig(
+            """
             [tox]
             indexserver =
                 name1 = XYZ
                 name2 = ABC
-        """)
-        assert config.indexserver['default'].url is None
-        assert config.indexserver['name1'].url == "XYZ"
-        assert config.indexserver['name2'].url == "ABC"
+        """
+        )
+        assert config.indexserver["default"].url is None
+        assert config.indexserver["name1"].url == "XYZ"
+        assert config.indexserver["name2"].url == "ABC"
 
     def test_parse_indexserver(self, newconfig):
         inisource = """
@@ -2031,14 +2229,14 @@ class TestIndexServer:
                 name1 = whatever
         """
         config = newconfig([], inisource)
-        assert config.indexserver['default'].url == "http://pypi.somewhere.org"
-        assert config.indexserver['name1'].url == "whatever"
-        config = newconfig(['-i', 'qwe'], inisource)
-        assert config.indexserver['default'].url == "qwe"
-        assert config.indexserver['name1'].url == "whatever"
-        config = newconfig(['-i', 'name1=abc', '-i', 'qwe2'], inisource)
-        assert config.indexserver['default'].url == "qwe2"
-        assert config.indexserver['name1'].url == "abc"
+        assert config.indexserver["default"].url == "http://pypi.somewhere.org"
+        assert config.indexserver["name1"].url == "whatever"
+        config = newconfig(["-i", "qwe"], inisource)
+        assert config.indexserver["default"].url == "qwe"
+        assert config.indexserver["name1"].url == "whatever"
+        config = newconfig(["-i", "name1=abc", "-i", "qwe2"], inisource)
+        assert config.indexserver["default"].url == "qwe2"
+        assert config.indexserver["name1"].url == "abc"
 
         config = newconfig(["-i", "ALL=xzy"], inisource)
         assert len(config.indexserver) == 2
@@ -2056,19 +2254,22 @@ class TestIndexServer:
         """
         config = newconfig([], inisource)
         expected = "file://%s/.pip/downloads/simple" % config.homedir
-        assert config.indexserver['default'].url == expected
-        assert config.indexserver['local1'].url == config.indexserver['default'].url
+        assert config.indexserver["default"].url == expected
+        assert config.indexserver["local1"].url == config.indexserver["default"].url
 
 
 class TestConfigConstSubstitutions:
-    @pytest.mark.parametrize('pathsep', [':', ';'])
+
+    @pytest.mark.parametrize("pathsep", [":", ";"])
     def test_replace_pathsep_unix(self, monkeypatch, newconfig, pathsep):
-        monkeypatch.setattr('os.pathsep', pathsep)
-        config = newconfig("""
+        monkeypatch.setattr("os.pathsep", pathsep)
+        config = newconfig(
+            """
         [testenv]
         setenv =
             PATH = dira{:}dirb{:}dirc
-        """)
+        """
+        )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["PATH"] == pathsep.join(["dira", "dirb", "dirc"])
 
@@ -2077,34 +2278,36 @@ class TestConfigConstSubstitutions:
         regex = tox.config.Replacer.RE_ITEM_REF
         match = next(regex.finditer("{:}"))
         mdict = match.groupdict()
-        assert mdict['sub_type'] is None
-        assert mdict['substitution_value'] == ""
-        assert mdict['default_value'] == ""
+        assert mdict["sub_type"] is None
+        assert mdict["substitution_value"] == ""
+        assert mdict["default_value"] == ""
 
 
 class TestParseEnv:
+
     def test_parse_recreate(self, newconfig):
         inisource = ""
         config = newconfig([], inisource)
-        assert not config.envconfigs['python'].recreate
-        config = newconfig(['--recreate'], inisource)
-        assert config.envconfigs['python'].recreate
-        config = newconfig(['-r'], inisource)
-        assert config.envconfigs['python'].recreate
+        assert not config.envconfigs["python"].recreate
+        config = newconfig(["--recreate"], inisource)
+        assert config.envconfigs["python"].recreate
+        config = newconfig(["-r"], inisource)
+        assert config.envconfigs["python"].recreate
         inisource = """
             [testenv:hello]
             recreate = True
         """
         config = newconfig([], inisource)
-        assert config.envconfigs['hello'].recreate
+        assert config.envconfigs["hello"].recreate
 
 
 class TestCmdInvocation:
+
     def test_help(self, cmd):
         result = cmd("-h")
         assert not result.ret
         assert not result.err
-        assert re.match(r'usage:.*help.*', result.out, re.DOTALL)
+        assert re.match(r"usage:.*help.*", result.out, re.DOTALL)
 
     def test_version_simple(self, cmd):
         result = cmd("--version")
@@ -2112,25 +2315,26 @@ class TestCmdInvocation:
         assert "{} imported from".format(tox.__version__) in result.out
 
     def test_version_no_plugins(self):
-        pm = PluginManager('fakeprject')
+        pm = PluginManager("fakeprject")
         version_info = get_version_info(pm)
         assert "imported from" in version_info
         assert "registered plugins:" not in version_info
 
     def test_version_with_normal_plugin(self, monkeypatch):
+
         def fake_normal_plugin_distinfo():
+
             class MockModule:
-                __file__ = 'some-file'
+                __file__ = "some-file"
 
             class MockEggInfo:
-                project_name = 'some-project'
-                version = '1.0'
+                project_name = "some-project"
+                version = "1.0"
 
             return [(MockModule, MockEggInfo)]
 
-        pm = PluginManager('fakeproject')
-        monkeypatch.setattr(
-            pm, 'list_plugin_distinfo', fake_normal_plugin_distinfo)
+        pm = PluginManager("fakeproject")
+        monkeypatch.setattr(pm, "list_plugin_distinfo", fake_normal_plugin_distinfo)
         version_info = get_version_info(pm)
         assert "registered plugins:" in version_info
         assert "some-file" in version_info
@@ -2138,20 +2342,22 @@ class TestCmdInvocation:
         assert "1.0" in version_info
 
     def test_version_with_fileless_module(self, monkeypatch):
+
         def fake_no_file_plugin_distinfo():
+
             class MockModule:
+
                 def __repr__(self):
                     return "some-repr"
 
             class MockEggInfo:
-                project_name = 'some-project'
-                version = '1.0'
+                project_name = "some-project"
+                version = "1.0"
 
             return [(MockModule(), MockEggInfo)]
 
-        pm = PluginManager('fakeproject')
-        monkeypatch.setattr(
-            pm, 'list_plugin_distinfo', fake_no_file_plugin_distinfo)
+        pm = PluginManager("fakeproject")
+        monkeypatch.setattr(pm, "list_plugin_distinfo", fake_no_file_plugin_distinfo)
         version_info = get_version_info(pm)
         assert "registered plugins:" in version_info
         assert "some-project" in version_info
@@ -2159,8 +2365,10 @@ class TestCmdInvocation:
         assert "1.0" in version_info
 
     def test_listenvs(self, cmd, initproj):
-        initproj('listenvs', filedefs={
-            'tox.ini': '''
+        initproj(
+            "listenvs",
+            filedefs={
+                "tox.ini": """
             [tox]
             envlist=py36,py27,py34,pypy,docs
             description= py27: run pytest on Python 2.7
@@ -2174,14 +2382,17 @@ class TestCmdInvocation:
 
             [testenv:docs]
             changedir = docs
-            '''
-        })
+            """
+            },
+        )
         result = cmd("-l")
-        assert result.outlines == ['py36', 'py27', 'py34', 'pypy', 'docs']
+        assert result.outlines == ["py36", "py27", "py34", "pypy", "docs"]
 
     def test_listenvs_verbose_description(self, cmd, initproj):
-        initproj('listenvs_verbose_description', filedefs={
-            'tox.ini': '''
+        initproj(
+            "listenvs_verbose_description",
+            filedefs={
+                "tox.ini": """
             [tox]
             envlist=py36,py27,py34,pypy,docs
             [testenv]
@@ -2198,20 +2409,27 @@ class TestCmdInvocation:
             [testenv:docs]
             changedir = docs
             description = let me overwrite that
-            '''
-        })
+            """
+            },
+        )
         result = cmd("-lv")
-        assert result.outlines[2:] == [
-            'default environments:',
-            'py36 -> run pytest on Python 3.6',
-            'py27 -> run pytest on Python 2.7',
-            'py34 -> run pytest on Python 3.4',
-            'pypy -> publish to pypy',
-            'docs -> let me overwrite that']
+        assert (
+            result.outlines[2:]
+            == [
+                "default environments:",
+                "py36 -> run pytest on Python 3.6",
+                "py27 -> run pytest on Python 2.7",
+                "py34 -> run pytest on Python 3.4",
+                "pypy -> publish to pypy",
+                "docs -> let me overwrite that",
+            ]
+        )
 
     def test_listenvs_all(self, cmd, initproj):
-        initproj('listenvs_all', filedefs={
-            'tox.ini': '''
+        initproj(
+            "listenvs_all",
+            filedefs={
+                "tox.ini": """
             [tox]
             envlist=py36,py27,py34,pypy,docs
 
@@ -2220,14 +2438,17 @@ class TestCmdInvocation:
 
             [testenv:docs]
             changedir = docs
-            '''
-        })
+            """
+            },
+        )
         result = cmd("-a")
-        assert result.outlines == ['py36', 'py27', 'py34', 'pypy', 'docs', 'notincluded']
+        assert result.outlines == ["py36", "py27", "py34", "pypy", "docs", "notincluded"]
 
     def test_listenvs_all_verbose_description(self, cmd, initproj):
-        initproj('listenvs_all_verbose_description', filedefs={
-            'tox.ini': '''
+        initproj(
+            "listenvs_all_verbose_description",
+            filedefs={
+                "tox.ini": """
             [tox]
             envlist={py27,py36}-{windows,linux} # py35
             [testenv]
@@ -2240,8 +2461,9 @@ class TestCmdInvocation:
 
             [testenv:docs]
             changedir = docs
-            ''',
-        })
+            """
+            },
+        )
         result = cmd("-av")
         expected = [
             "default environments:",
@@ -2251,45 +2473,53 @@ class TestCmdInvocation:
             "py36-linux   -> run pytest on Python 3.6 on Linux platform",
             "",
             "additional environments:",
-            "docs         -> generate documentation"]
+            "docs         -> generate documentation",
+        ]
         assert result.outlines[-len(expected):] == expected
 
     def test_listenvs_all_verbose_description_no_additional_environments(self, cmd, initproj):
-        initproj('listenvs_all_verbose_description', filedefs={
-            'tox.ini': '''
+        initproj(
+            "listenvs_all_verbose_description",
+            filedefs={
+                "tox.ini": """
             [tox]
             envlist=py27,py36
-            '''
-        })
+            """
+            },
+        )
         result = cmd("-av")
-        expected = ["default environments:",
-                    "py27 -> [no description]",
-                    "py36 -> [no description]"]
+        expected = [
+            "default environments:", "py27 -> [no description]", "py36 -> [no description]"
+        ]
         assert result.out.splitlines()[-3:] == expected
-        assert 'additional environments' not in result.out
+        assert "additional environments" not in result.out
 
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
         result = cmd("-c", ini, "--showconfig")
         assert not result.ret
-        assert result.outlines[1] == 'config-file: {}'.format(ini)
+        assert result.outlines[1] == "config-file: {}".format(ini)
 
     def test_no_tox_ini(self, cmd, initproj):
-        initproj("noini-0.5", )
+        initproj("noini-0.5")
         result = cmd()
         assert result.ret
-        assert result.out == ''
+        assert result.out == ""
         assert result.err == "ERROR: toxini file 'tox.ini' not found\n"
 
     def test_override_workdir(self, cmd, initproj):
         baddir = "badworkdir-123"
         gooddir = "overridden-234"
-        initproj("overrideworkdir-0.5", filedefs={
-            'tox.ini': '''
+        initproj(
+            "overrideworkdir-0.5",
+            filedefs={
+                "tox.ini": """
             [tox]
             toxworkdir=%s
-            ''' % baddir,
-        })
+            """
+                % baddir
+            },
+        )
         result = cmd("--workdir", gooddir, "--showconfig")
         assert not result.ret
         assert gooddir in result.out
@@ -2298,46 +2528,54 @@ class TestCmdInvocation:
         assert not py.path.local(baddir).check()
 
     def test_showconfig_with_force_dep_version(self, cmd, initproj):
-        initproj('force_dep_version', filedefs={
-            'tox.ini': '''
+        initproj(
+            "force_dep_version",
+            filedefs={
+                "tox.ini": """
             [tox]
 
             [testenv]
             deps=
                 dep1==2.3
                 dep2
-            ''',
-        })
+            """
+            },
+        )
         result = cmd("--showconfig")
         assert result.ret == 0
-        assert any(re.match(r'.*deps.*dep1==2.3, dep2.*', l) for l in result.outlines)
+        assert any(re.match(r".*deps.*dep1==2.3, dep2.*", l) for l in result.outlines)
         # override dep1 specific version, and force version for dep2
-        result = cmd("--showconfig", "--force-dep=dep1",
-                     "--force-dep=dep2==5.0")
+        result = cmd("--showconfig", "--force-dep=dep1", "--force-dep=dep2==5.0")
         assert result.ret == 0
-        assert any(re.match(r'.*deps.*dep1, dep2==5.0.*', l) for l in result.outlines)
+        assert any(re.match(r".*deps.*dep1, dep2==5.0.*", l) for l in result.outlines)
 
-    @pytest.mark.xfail("'pypy' not in sys.executable", reason='Upstream bug. See #203')
+    @pytest.mark.xfail("'pypy' not in sys.executable", reason="Upstream bug. See #203")
     def test_colon_symbol_in_directory_name(self, cmd, initproj):
-        initproj('colon:_symbol_in_dir_name', filedefs={
-            'tox.ini': '''
+        initproj(
+            "colon:_symbol_in_dir_name",
+            filedefs={
+                "tox.ini": """
             [tox]
             envlist = py27
 
             [testenv]
             commands = pip --version
-            '''
-        })
+            """
+            },
+        )
         result = cmd()
         assert result.ret == 0
 
 
-@pytest.mark.parametrize("cmdline,envlist", [
-    ("-e py36", ['py36']),
-    ("-e py36,py34", ['py36', 'py34']),
-    ("-e py36,py36", ['py36', 'py36']),
-    ("-e py36,py34 -e py34,py27", ['py36', 'py34', 'py34', 'py27'])
-])
+@pytest.mark.parametrize(
+    "cmdline,envlist",
+    [
+        ("-e py36", ["py36"]),
+        ("-e py36,py34", ["py36", "py34"]),
+        ("-e py36,py36", ["py36", "py36"]),
+        ("-e py36,py34 -e py34,py27", ["py36", "py34", "py34", "py27"]),
+    ],
+)
 def test_env_spec(cmdline, envlist):
     args = cmdline.split()
     config = parseconfig(args)
@@ -2345,33 +2583,64 @@ def test_env_spec(cmdline, envlist):
 
 
 class TestCommandParser:
+
     def test_command_parser_for_word(self):
-        p = CommandParser('word')
-        assert list(p.words()) == ['word']
+        p = CommandParser("word")
+        assert list(p.words()) == ["word"]
 
     def test_command_parser_for_posargs(self):
-        p = CommandParser('[]')
-        assert list(p.words()) == ['[]']
+        p = CommandParser("[]")
+        assert list(p.words()) == ["[]"]
 
     def test_command_parser_for_multiple_words(self):
-        p = CommandParser('w1 w2 w3 ')
-        assert list(p.words()) == ['w1', ' ', 'w2', ' ', 'w3']
+        p = CommandParser("w1 w2 w3 ")
+        assert list(p.words()) == ["w1", " ", "w2", " ", "w3"]
 
     def test_command_parser_for_substitution_with_spaces(self):
-        p = CommandParser('{sub:something with spaces}')
-        assert list(p.words()) == ['{sub:something with spaces}']
+        p = CommandParser("{sub:something with spaces}")
+        assert list(p.words()) == ["{sub:something with spaces}"]
 
     def test_command_parser_with_complex_word_set(self):
         complex_case = (
-            'word [] [literal] {something} {some:other thing} w{ord} w{or}d w{ord} '
-            'w{o:rd} w{o:r}d {w:or}d w[]ord {posargs:{a key}}')
+            "word [] [literal] {something} {some:other thing} w{ord} w{or}d w{ord} "
+            "w{o:rd} w{o:r}d {w:or}d w[]ord {posargs:{a key}}"
+        )
         p = CommandParser(complex_case)
         parsed = list(p.words())
         expected = [
-            'word', ' ', '[]', ' ', '[literal]', ' ', '{something}', ' ', '{some:other thing}',
-            ' ', 'w', '{ord}', ' ', 'w', '{or}', 'd', ' ', 'w', '{ord}', ' ', 'w', '{o:rd}', ' ',
-            'w', '{o:r}', 'd', ' ', '{w:or}', 'd',
-            ' ', 'w[]ord', ' ', '{posargs:{a key}}'
+            "word",
+            " ",
+            "[]",
+            " ",
+            "[literal]",
+            " ",
+            "{something}",
+            " ",
+            "{some:other thing}",
+            " ",
+            "w",
+            "{ord}",
+            " ",
+            "w",
+            "{or}",
+            "d",
+            " ",
+            "w",
+            "{ord}",
+            " ",
+            "w",
+            "{o:rd}",
+            " ",
+            "w",
+            "{o:r}",
+            "d",
+            " ",
+            "{w:or}",
+            "d",
+            " ",
+            "w[]ord",
+            " ",
+            "{posargs:{a key}}",
         ]
 
         assert parsed == expected
@@ -2380,29 +2649,46 @@ class TestCommandParser:
         cmd = "cmd1 {item1}\n  {item2}"
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ['cmd1', ' ', '{item1}', '\n  ', '{item2}']
+        assert parsed == ["cmd1", " ", "{item1}", "\n  ", "{item2}"]
 
     def test_command_with_split_line_in_subst_arguments(self):
-        cmd = dedent(""" cmd2 {posargs:{item2}
-                         other}""")
+        cmd = dedent(
+            """ cmd2 {posargs:{item2}
+                         other}"""
+        )
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ['cmd2', ' ', '{posargs:{item2}\n                        other}']
+        assert parsed == ["cmd2", " ", "{posargs:{item2}\n                        other}"]
 
     def test_command_parsing_for_issue_10(self):
         cmd = "nosetests -v -a !deferred --with-doctest []"
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == [
-            'nosetests', ' ', '-v', ' ', '-a', ' ', '!deferred', ' ',
-            '--with-doctest', ' ', '[]'
-        ]
+        assert (
+            parsed
+            == [
+                "nosetests",
+                " ",
+                "-v",
+                " ",
+                "-a",
+                " ",
+                "!deferred",
+                " ",
+                "--with-doctest",
+                " ",
+                "[]",
+            ]
+        )
 
     # @mark_dont_run_on_windows
     def test_commands_with_backslash(self, newconfig):
-        config = newconfig([r"hello\world"], """
+        config = newconfig(
+            [r"hello\world"],
+            """
             [testenv:py36]
             commands = some {posargs}
-        """)
+        """,
+        )
         envconfig = config.envconfigs["py36"]
         assert envconfig.commands[0] == ["some", r"hello\world"]

@@ -59,24 +59,29 @@ def show_help(config):
     tw.write(config._parser._format_help())
     tw.line()
     tw.line("Environment variables", bold=True)
-    tw.line("TOXENV: comma separated list of environments "
-            "(overridable by '-e')")
-    tw.line("TOX_TESTENV_PASSENV: space-separated list of extra "
-            "environment variables to be passed into test command "
-            "environments")
+    tw.line("TOXENV: comma separated list of environments " "(overridable by '-e')")
+    tw.line(
+        "TOX_TESTENV_PASSENV: space-separated list of extra "
+        "environment variables to be passed into test command "
+        "environments"
+    )
 
 
 def show_help_ini(config):
     tw = py.io.TerminalWriter()
     tw.sep("-", "per-testenv attributes")
     for env_attr in config._testenv_attr:
-        tw.line("%-15s %-8s default: %s" %
-                (env_attr.name, "<" + env_attr.type + ">", env_attr.default), bold=True)
+        tw.line(
+            "%-15s %-8s default: %s"
+            % (env_attr.name, "<" + env_attr.type + ">", env_attr.default),
+            bold=True,
+        )
         tw.line(env_attr.help)
         tw.line()
 
 
 class Action(object):
+
     def __init__(self, session, venv, msg, args):
         self.venv = venv
         self.msg = msg
@@ -124,7 +129,7 @@ class Action(object):
             logdir.ensure(dir=1)
             log_count = 0
         path = logdir.join("%s-%s.log" % (actionid, log_count))
-        f = path.open('w')
+        f = path.open("w")
         f.flush()
         return f
 
@@ -136,7 +141,7 @@ class Action(object):
             fout.write("actionid: %s\nmsg: %s\ncmdargs: %r\n\n" % (self.id, self.msg, args))
             fout.flush()
             outpath = py.path.local(fout.name)
-            fin = outpath.open('rb')
+            fin = outpath.open("rb")
             fin.read()  # read the header, so it won't be written to stdout
             stdout = fout
         elif returnout:
@@ -145,11 +150,11 @@ class Action(object):
             # FIXME XXX cwd = self.session.config.cwd
             cwd = py.path.local()
         try:
-            popen = self._popen(args, cwd, env=env,
-                                stdout=stdout, stderr=subprocess.STDOUT)
+            popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=subprocess.STDOUT)
         except OSError as e:
-            self.report.error("invocation failed (errno %d), args: %s, cwd: %s" %
-                              (e.errno, args, cwd))
+            self.report.error(
+                "invocation failed (errno %d), args: %s, cwd: %s" % (e.errno, args, cwd)
+            )
             raise
         popen.outpath = outpath
         popen.args = [str(x) for x in args]
@@ -165,7 +170,7 @@ class Action(object):
                         raise ValueError("stderr must not be piped here")
                     # we read binary from the process and must write using a
                     # binary stream
-                    buf = getattr(sys.stdout, 'buffer', sys.stdout)
+                    buf = getattr(sys.stdout, "buffer", sys.stdout)
                     out = None
                     last_time = time.time()
                     while 1:
@@ -174,7 +179,7 @@ class Action(object):
                         data = fin.read(1)
                         if data:
                             buf.write(data)
-                            if b'\n' in data or (time.time() - last_time) > 1:
+                            if b"\n" in data or (time.time() - last_time) > 1:
                                 # we flush on newlines or after 1 second to
                                 # provide quick enough feedback to the user
                                 # when printing a dot per test
@@ -201,14 +206,12 @@ class Action(object):
         if ret and not ignore_ret:
             invoked = " ".join(map(str, popen.args))
             if outpath:
-                self.report.error("invocation failed (exit code %d), logfile: %s" %
-                                  (ret, outpath))
+                self.report.error("invocation failed (exit code %d), logfile: %s" % (ret, outpath))
                 out = outpath.read()
                 self.report.error(out)
                 if hasattr(self, "commandlog"):
                     self.commandlog.add_command(popen.args, out, ret)
-                raise tox.exception.InvocationError(
-                    "%s (see %s)" % (invoked, outpath), ret)
+                raise tox.exception.InvocationError("%s (see %s)" % (invoked, outpath), ret)
             else:
                 raise tox.exception.InvocationError("%r" % (invoked,), ret)
         if not out and outpath:
@@ -226,15 +229,22 @@ class Action(object):
         # subprocess does not always take kindly to .py scripts so adding the interpreter here
         if tox.INFO.IS_WIN:
             ext = os.path.splitext(str(newargs[0]))[1].lower()
-            if ext == '.py' and self.venv:
+            if ext == ".py" and self.venv:
                 newargs = [str(self.venv.envconfig.envpython)] + newargs
         return newargs
 
     def _popen(self, args, cwd, stdout, stderr, env=None):
         if env is None:
             env = os.environ.copy()
-        return self.session.popen(self._rewriteargs(cwd, args), shell=False, cwd=str(cwd),
-                                  universal_newlines=True, stdout=stdout, stderr=stderr, env=env)
+        return self.session.popen(
+            self._rewriteargs(cwd, args),
+            shell=False,
+            cwd=str(cwd),
+            universal_newlines=True,
+            stdout=stdout,
+            stderr=stderr,
+            env=env,
+        )
 
 
 class Verbosity(object):
@@ -256,8 +266,9 @@ class Reporter(object):
     @property
     def verbosity(self):
         if self.session:
-            return (self.session.config.option.verbose_level -
-                    self.session.config.option.quiet_level)
+            return (
+                self.session.config.option.verbose_level - self.session.config.option.quiet_level
+            )
         else:
             return Verbosity.DEBUG
 
@@ -277,9 +288,10 @@ class Reporter(object):
 
     def logaction_finish(self, action):
         duration = time.time() - action._starttime
-        self.verbosity2("%s finish: %s after %.2f seconds" % (
-            action.venvname, action.msg, duration), bold=True)
-        delattr(action, '_starttime')
+        self.verbosity2(
+            "%s finish: %s after %.2f seconds" % (action.venvname, action.msg, duration), bold=True
+        )
+        delattr(action, "_starttime")
 
     def startsummary(self):
         if self.verbosity >= Verbosity.QUIET:
@@ -356,10 +368,7 @@ class Session:
         self._spec2pkg = {}
         self._name2venv = {}
         try:
-            self.venvlist = [
-                self.getvenv(x)
-                for x in self.config.envlist
-            ]
+            self.venvlist = [self.getvenv(x) for x in self.config.envlist]
         except LookupError:
             raise SystemExit(1)
         except tox.exception.ConfigError as e:
@@ -377,9 +386,8 @@ class Session:
             self.report.error("unknown environment %r" % name)
             raise LookupError(name)
         elif envconfig.envdir == self.config.toxinidir:
-            self.report.error(
-                "venv %r in %s would delete project" % (name, envconfig.envdir))
-            raise tox.exception.ConfigError('envdir must not equal toxinidir')
+            self.report.error("venv %r in %s would delete project" % (name, envconfig.envdir))
+            raise tox.exception.ConfigError("envdir must not equal toxinidir")
         venv = VirtualEnv(envconfig=envconfig, session=self)
         self._name2venv[name] = venv
         return venv
@@ -436,9 +444,17 @@ class Session:
         with action:
             action.setactivity("sdist-make", setup)
             self.make_emptydir(self.config.distdir)
-            action.popen([sys.executable, setup, "sdist", "--formats=zip",
-                          "--dist-dir", self.config.distdir, ],
-                         cwd=self.config.setupdir)
+            action.popen(
+                [
+                    sys.executable,
+                    setup,
+                    "sdist",
+                    "--formats=zip",
+                    "--dist-dir",
+                    self.config.distdir,
+                ],
+                cwd=self.config.setupdir,
+            )
             try:
                 return self.config.distdir.listdir()[0]
             except py.error.ENOENT:
@@ -446,17 +462,15 @@ class Session:
                 data = []
                 with open(str(setup)) as fp:
                     for line in fp:
-                        if line and line[0] == '#':
+                        if line and line[0] == "#":
                             continue
                         data.append(line)
-                if not ''.join(data).strip():
-                    self.report.error(
-                        'setup.py is empty'
-                    )
+                if not "".join(data).strip():
+                    self.report.error("setup.py is empty")
                     raise SystemExit(1)
                 self.report.error(
-                    'No dist directory found. Please check setup.py, e.g with:\n'
-                    '     python setup.py sdist'
+                    "No dist directory found. Please check setup.py, e.g with:\n"
+                    "     python setup.py sdist"
                 )
                 raise SystemExit(1)
 
@@ -469,9 +483,10 @@ class Session:
     def setupenv(self, venv):
         if venv.envconfig.missing_subs:
             venv.status = (
-                    "unresolvable substitution(s): %s. "
-                    "Environment variables are missing or defined recursively." %
-                    (','.join(["'%s'" % m for m in venv.envconfig.missing_subs])))
+                "unresolvable substitution(s): %s. "
+                "Environment variables are missing or defined recursively."
+                % (",".join(["'%s'" % m for m in venv.envconfig.missing_subs]))
+            )
             return
         if not venv.matching_platform():
             venv.status = "platform mismatch"
@@ -487,13 +502,15 @@ class Session:
                 if e.args[0] != 2:
                     raise
                 status = (
-                        "Error creating virtualenv. Note that spaces in paths are "
-                        "not supported by virtualenv. Error details: %r" % e)
+                    "Error creating virtualenv. Note that spaces in paths are "
+                    "not supported by virtualenv. Error details: %r" % e
+                )
             except tox.exception.InvocationError as e:
                 status = (
-                        "Error creating virtualenv. Note that some special "
-                        "characters (e.g. ':' and unicode symbols) in paths are "
-                        "not supported by virtualenv. Error details: %r" % e)
+                    "Error creating virtualenv. Note that some special "
+                    "characters (e.g. ':' and unicode symbols) in paths are "
+                    "not supported by virtualenv. Error details: %r" % e
+                )
             except tox.exception.InterpreterNotFound as e:
                 status = e
                 if self.config.option.skip_missing_interpreters:
@@ -550,31 +567,29 @@ class Session:
         :return: Path to the distribution
         :rtype: py.path.local
         """
-        if not self.config.option.sdistonly and (self.config.sdistsrc or
-                                                 self.config.option.installpkg):
+        if (
+            not self.config.option.sdistonly
+            and (self.config.sdistsrc or self.config.option.installpkg)
+        ):
             path = self.config.option.installpkg
             if not path:
                 path = self.config.sdistsrc
             path = self._resolve_pkg(path)
-            self.report.info("using package %r, skipping 'sdist' activity " %
-                             str(path))
+            self.report.info("using package %r, skipping 'sdist' activity " % str(path))
         else:
             try:
                 path = self._makesdist()
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
-                self.report.error("FAIL could not package project - v = %r" %
-                                  v)
+                self.report.error("FAIL could not package project - v = %r" % v)
                 return
             sdistfile = self.config.distshare.join(path.basename)
             if sdistfile != path:
-                self.report.info("copying new sdistfile to %r" %
-                                 str(sdistfile))
+                self.report.info("copying new sdistfile to %r" % str(sdistfile))
                 try:
                     sdistfile.dirpath().ensure(dir=1)
                 except py.error.Error:
-                    self.report.warning("could not copy distfile to %s" %
-                                        sdistfile.dirpath())
+                    self.report.warning("could not copy distfile to %s" % sdistfile.dirpath())
                 else:
                     path.copy(sdistfile)
         return path
@@ -677,21 +692,20 @@ class Session:
         for envconfig in self.config.envconfigs.values():
             self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
             for attr in self.config._parser._testenv_attr:
-                self.report.line("  %-15s = %s"
-                                 % (attr.name, getattr(envconfig, attr.name)))
+                self.report.line("  %-15s = %s" % (attr.name, getattr(envconfig, attr.name)))
 
     def showenvs(self, all_envs=False, description=False):
         env_conf = self.config.envconfigs  # this contains all environments
         default = self.config.envlist  # this only the defaults
         extra = sorted(e for e in env_conf if e not in default) if all_envs else []
         if description:
-            self.report.line('default environments:')
+            self.report.line("default environments:")
             max_length = max(len(env) for env in (default + extra))
 
         def report_env(e):
             if description:
-                text = env_conf[e].description or '[no description]'
-                msg = '{} -> {}'.format(e.ljust(max_length), text).strip()
+                text = env_conf[e].description or "[no description]"
+                msg = "{} -> {}".format(e.ljust(max_length), text).strip()
             else:
                 msg = e
             self.report.line(msg)
@@ -700,19 +714,18 @@ class Session:
             report_env(e)
         if all_envs and extra:
             if description:
-                self.report.line('')
-                self.report.line('additional environments:')
+                self.report.line("")
+                self.report.line("additional environments:")
             for e in extra:
                 report_env(e)
 
     def info_versions(self):
-        versions = ['tox-%s' % tox.__version__]
+        versions = ["tox-%s" % tox.__version__]
         proc = subprocess.Popen(
-            (sys.executable, '-m', 'virtualenv', '--version'),
-            stdout=subprocess.PIPE,
+            (sys.executable, "-m", "virtualenv", "--version"), stdout=subprocess.PIPE
         )
         out, _ = proc.communicate()
-        versions.append('virtualenv-{}'.format(out.decode('UTF-8').strip()))
+        versions.append("virtualenv-{}".format(out.decode("UTF-8").strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
 
     def _resolve_pkg(self, pkgspec):
@@ -741,8 +754,7 @@ class Session:
                 if ver is not None:
                     items.append((ver, x))
                 else:
-                    self.report.warning("could not determine version of: %s" %
-                                        str(x))
+                    self.report.warning("could not determine version of: %s" % str(x))
             items.sort()
             if not items:
                 raise tox.exception.MissingDependency(pkgspec)

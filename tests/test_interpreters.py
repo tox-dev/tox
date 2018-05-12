@@ -10,8 +10,15 @@ import tox
 from tox._pytestplugin import mark_dont_run_on_posix
 from tox.config import get_plugin_manager
 from tox.interpreters import (
-    ExecFailed, InterpreterInfo, Interpreters, NoInterpreterInfo, pyinfo,
-    run_and_get_interpreter_info, sitepackagesdir, tox_get_python_executable)
+    ExecFailed,
+    InterpreterInfo,
+    Interpreters,
+    NoInterpreterInfo,
+    pyinfo,
+    run_and_get_interpreter_info,
+    sitepackagesdir,
+    tox_get_python_executable,
+)
 
 
 @pytest.fixture(name="interpreters")
@@ -25,11 +32,11 @@ def test_locate_via_py(monkeypatch):
     from tox.interpreters import locate_via_py
 
     def fake_find_exe(exe):
-        assert exe == 'py'
-        return 'py'
+        assert exe == "py"
+        return "py"
 
     def fake_popen(cmd, stdout, stderr):
-        assert cmd[:3] == ('py', '-3.2', '-c')
+        assert cmd[:3] == ("py", "-3.2", "-c")
 
         # need to pipe all stdout to collect the version information & need to
         # do the same for stderr output to avoid it being forwarded as the
@@ -47,12 +54,13 @@ def test_locate_via_py(monkeypatch):
 
         return proc
 
-    monkeypatch.setattr(distutils.spawn, 'find_executable', fake_find_exe)
-    monkeypatch.setattr(subprocess, 'Popen', fake_popen)
-    assert locate_via_py('3', '2') == sys.executable
+    monkeypatch.setattr(distutils.spawn, "find_executable", fake_find_exe)
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+    assert locate_via_py("3", "2") == sys.executable
 
 
 def test_tox_get_python_executable():
+
     class envconfig:
         basepython = sys.executable
         envname = "pyxx"
@@ -73,15 +81,15 @@ def test_tox_get_python_executable():
         envconfig.basepython = name
         p = tox_get_python_executable(envconfig)
         assert p
-        popen = subprocess.Popen([str(p), '-V'], stderr=subprocess.PIPE,
-                                 stdout=subprocess.PIPE)
+        popen = subprocess.Popen([str(p), "-V"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, stderr = popen.communicate()
         assert not stdout or not stderr
-        all_output = stderr.decode('ascii') + stdout.decode('ascii')
+        all_output = stderr.decode("ascii") + stdout.decode("ascii")
         assert "%s.%s" % (major, minor) in all_output
 
 
 def test_find_executable_extra(monkeypatch):
+
     @staticmethod
     def sysfind(_):
         return "hello"
@@ -105,7 +113,9 @@ def test_run_and_get_interpreter_info():
 
 
 class TestInterpreters:
+
     def test_get_executable(self, interpreters):
+
         class envconfig:
             basepython = sys.executable
             envname = "pyxx"
@@ -118,6 +128,7 @@ class TestInterpreters:
         assert info.runnable
 
     def test_get_executable_no_exist(self, interpreters):
+
         class envconfig:
             basepython = "1lkj23"
             envname = "pyxx"
@@ -130,6 +141,7 @@ class TestInterpreters:
         assert not info.runnable
 
     def test_get_sitepackagesdir_error(self, interpreters):
+
         class envconfig:
             basepython = sys.executable
             envname = "123"
@@ -150,6 +162,7 @@ def test_pyinfo(monkeypatch):
 
 def test_sitepackagesdir(monkeypatch):
     import distutils.sysconfig as sysconfig
+
     test_envdir = "holy grail"
     test_dir = "Now go away or I will taunt you a second time."
 
@@ -171,9 +184,14 @@ def test_exec_failed():
 
 
 class TestInterpreterInfo:
+
     @staticmethod
-    def info(name="my-name", executable="my-executable",
-             version_info="my-version-info", sysplatform="my-sys-platform"):
+    def info(
+        name="my-name",
+        executable="my-executable",
+        version_info="my-version-info",
+        sysplatform="my-sys-platform",
+    ):
         return InterpreterInfo(name, executable, version_info, sysplatform)
 
     def test_runnable(self):
@@ -197,6 +215,7 @@ class TestInterpreterInfo:
 
 
 class TestNoInterpreterInfo:
+
     def test_runnable(self):
         assert not NoInterpreterInfo("foo").runnable
         assert not NoInterpreterInfo("foo", executable=sys.executable).runnable
@@ -210,8 +229,7 @@ class TestNoInterpreterInfo:
         assert x.err == "not found"
 
     def test_set_data(self):
-        x = NoInterpreterInfo(
-            "migraine", executable="my-executable", out="my-out", err="my-err")
+        x = NoInterpreterInfo("migraine", executable="my-executable", out="my-out", err="my-err")
         assert x.name == "migraine"
         assert x.executable == "my-executable"
         assert x.version_info is None

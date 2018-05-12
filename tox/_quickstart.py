@@ -48,8 +48,8 @@ import six
 
 import tox
 
-ALTERNATIVE_CONFIG_NAME = 'tox-generated.ini'
-QUICKSTART_CONF = '''\
+ALTERNATIVE_CONFIG_NAME = "tox-generated.ini"
+QUICKSTART_CONF = """\
 # tox (https://tox.readthedocs.io/) is a tool for running tests
 # in multiple virtualenvs. This configuration file will run the
 # test suite on all supported python versions. To use it, "pip install tox"
@@ -63,7 +63,7 @@ deps =
     {deps}
 commands =
     {commands}
-'''
+"""
 
 
 class ValidationError(Exception):
@@ -77,24 +77,24 @@ def nonempty(x):
 
 
 def choice(*l):
+
     def val(x):
         if x not in l:
-            raise ValidationError('Please enter one of %s.' % ', '.join(l))
+            raise ValidationError("Please enter one of %s." % ", ".join(l))
         return x
 
     return val
 
 
 def boolean(x):
-    if x.upper() not in ('Y', 'YES', 'N', 'NO'):
+    if x.upper() not in ("Y", "YES", "N", "NO"):
         raise ValidationError("Please enter either 'y' or 'n'.")
-    return x.upper() in ('Y', 'YES')
+    return x.upper() in ("Y", "YES")
 
 
 def suffix(x):
-    if not (x[0:1] == '.' and len(x) > 1):
-        raise ValidationError("Please enter a file suffix, "
-                              "e.g. '.rst' or '.txt'.")
+    if not (x[0:1] == "." and len(x) > 1):
+        raise ValidationError("Please enter a file suffix, " "e.g. '.rst' or '.txt'.")
     return x
 
 
@@ -109,36 +109,38 @@ def list_modificator(answer, existing=None):
         existing = [existing]
     if not answer:
         return existing
-    existing.extend([t.strip() for t in answer.split(',') if t.strip()])
+    existing.extend([t.strip() for t in answer.split(",") if t.strip()])
     return existing
 
 
 def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=None):
     while True:
-        prompt = '> %s [%s]: ' % (text, default) if default else '> %s: ' % text
+        prompt = "> %s [%s]: " % (text, default) if default else "> %s: " % text
         answer = six.moves.input(prompt)
         if default and not answer:
             answer = default
         # FIXME use six instead of self baked solution
         if sys.version_info < (3,) and not isinstance(answer, unicode):  # noqa
             # for Python 2.x, try to get a Unicode string out of it
-            if answer.decode('ascii', 'replace').encode('ascii', 'replace') != answer:
-                term_encoding = getattr(sys.stdin, 'encoding', None)
+            if answer.decode("ascii", "replace").encode("ascii", "replace") != answer:
+                term_encoding = getattr(sys.stdin, "encoding", None)
                 if term_encoding:
                     answer = answer.decode(term_encoding)
                 else:
-                    print('* Note: non-ASCII characters entered but terminal encoding unknown '
-                          '-> assuming UTF-8 or Latin-1.')
+                    print(
+                        "* Note: non-ASCII characters entered but terminal encoding unknown "
+                        "-> assuming UTF-8 or Latin-1."
+                    )
                     try:
-                        answer = answer.decode('utf-8')
+                        answer = answer.decode("utf-8")
                     except UnicodeDecodeError:
-                        answer = answer.decode('latin1')
+                        answer = answer.decode("latin1")
         if validator:
             try:
                 answer = validator(answer)
             except ValidationError:
                 err = sys.exc_info()[1]
-                print('* ' + str(err))
+                print("* " + str(err))
                 continue
         break
     map_[key] = modificator(answer, map_.get(key)) if modificator else answer
@@ -146,105 +148,137 @@ def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=Non
 
 def ask_user(map_):
     """modify *map_* in place by getting info from the user."""
-    print('Welcome to the tox %s quickstart utility.' % tox.__version__)
-    print('This utility will ask you a few questions and then generate a simple configuration '
-          'file to help get you started using tox.\n'
-          'Please enter values for the following settings (just press Enter to accept a '
-          'default value, if one is given in brackets).\n')
-    print('What Python versions do you want to test against?\n'
-          '    [1] %s\n'
-          '    [2] py27, %s\n'
-          '    [3] (All versions) %s\n'
-          '    [4] Choose each one-by-one' % (
-              tox.PYTHON.CURRENT_RELEASE_ENV, tox.PYTHON.CURRENT_RELEASE_ENV,
-              ', '.join(tox.PYTHON.QUICKSTART_PY_ENVS)))
-    do_prompt(map_, 'canned_pyenvs', 'Enter the number of your choice',
-              default='3', validator=choice('1', '2', '3', '4'))
-    if map_['canned_pyenvs'] == '1':
+    print("Welcome to the tox %s quickstart utility." % tox.__version__)
+    print(
+        "This utility will ask you a few questions and then generate a simple configuration "
+        "file to help get you started using tox.\n"
+        "Please enter values for the following settings (just press Enter to accept a "
+        "default value, if one is given in brackets).\n"
+    )
+    print(
+        "What Python versions do you want to test against?\n"
+        "    [1] %s\n"
+        "    [2] py27, %s\n"
+        "    [3] (All versions) %s\n"
+        "    [4] Choose each one-by-one"
+        % (
+            tox.PYTHON.CURRENT_RELEASE_ENV,
+            tox.PYTHON.CURRENT_RELEASE_ENV,
+            ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS),
+        )
+    )
+    do_prompt(
+        map_,
+        "canned_pyenvs",
+        "Enter the number of your choice",
+        default="3",
+        validator=choice("1", "2", "3", "4"),
+    )
+    if map_["canned_pyenvs"] == "1":
         map_[tox.PYTHON.CURRENT_RELEASE_ENV] = True
-    elif map_['canned_pyenvs'] == '2':
-        for pyenv in ('py27', tox.PYTHON.CURRENT_RELEASE_ENV):
+    elif map_["canned_pyenvs"] == "2":
+        for pyenv in ("py27", tox.PYTHON.CURRENT_RELEASE_ENV):
             map_[pyenv] = True
-    elif map_['canned_pyenvs'] == '3':
+    elif map_["canned_pyenvs"] == "3":
         for pyenv in tox.PYTHON.QUICKSTART_PY_ENVS:
             map_[pyenv] = True
-    elif map_['canned_pyenvs'] == '4':
+    elif map_["canned_pyenvs"] == "4":
         for pyenv in tox.PYTHON.QUICKSTART_PY_ENVS:
             if pyenv not in map_:
-                do_prompt(map_, pyenv, 'Test your project with %s (Y/n)' % pyenv, 'Y',
-                          validator=boolean)
-    print('What command should be used to test your project? Examples:\n'
-          '    - pytest\n'
-          '    - python -m unittest discover\n'
-          '    - python setup.py test\n'
-          '    - trial package.module\n')
-    do_prompt(map_, 'commands', 'Type the command to run your tests',
-              default='pytest', modificator=list_modificator)
-    print('What extra dependencies do your tests have?')
-    map_['deps'] = get_default_deps(map_['commands'])
-    if map_['deps']:
-        print("default dependencies are: %s" % map_['deps'])
-    do_prompt(map_, 'deps', 'Comma-separated list of dependencies',
-              validator=None, modificator=list_modificator)
+                do_prompt(
+                    map_, pyenv, "Test your project with %s (Y/n)" % pyenv, "Y", validator=boolean
+                )
+    print(
+        "What command should be used to test your project? Examples:\n"
+        "    - pytest\n"
+        "    - python -m unittest discover\n"
+        "    - python setup.py test\n"
+        "    - trial package.module\n"
+    )
+    do_prompt(
+        map_,
+        "commands",
+        "Type the command to run your tests",
+        default="pytest",
+        modificator=list_modificator,
+    )
+    print("What extra dependencies do your tests have?")
+    map_["deps"] = get_default_deps(map_["commands"])
+    if map_["deps"]:
+        print("default dependencies are: %s" % map_["deps"])
+    do_prompt(
+        map_,
+        "deps",
+        "Comma-separated list of dependencies",
+        validator=None,
+        modificator=list_modificator,
+    )
 
 
 def get_default_deps(commands):
-    if commands and any(c in str(commands) for c in ['pytest', 'py.test']):
-        return ['pytest']
-    if 'trial' in commands:
-        return ['twisted']
+    if commands and any(c in str(commands) for c in ["pytest", "py.test"]):
+        return ["pytest"]
+    if "trial" in commands:
+        return ["twisted"]
     return []
 
 
 def post_process_input(map_):
     envlist = [env for env in tox.PYTHON.QUICKSTART_PY_ENVS if map_.get(env) is True]
-    map_['envlist'] = ', '.join(envlist)
-    map_['commands'] = '\n    '.join([cmd.strip() for cmd in map_['commands']])
-    map_['deps'] = '\n    '.join([dep.strip() for dep in set(map_['deps'])])
+    map_["envlist"] = ", ".join(envlist)
+    map_["commands"] = "\n    ".join([cmd.strip() for cmd in map_["commands"]])
+    map_["deps"] = "\n    ".join([dep.strip() for dep in set(map_["deps"])])
 
 
 def generate(map_):
     """Generate project based on values in *d*."""
-    dpath = map_.get('path', os.getcwd())
+    dpath = map_.get("path", os.getcwd())
     altpath = os.path.join(dpath, ALTERNATIVE_CONFIG_NAME)
     while True:
-        name = map_.get('name', tox.INFO.DEFAULT_CONFIG_NAME)
+        name = map_.get("name", tox.INFO.DEFAULT_CONFIG_NAME)
         targetpath = os.path.join(dpath, name)
         if not os.path.isfile(targetpath):
             break
-        do_prompt(map_, 'name', '%s exists - choose an alternative' % targetpath, altpath)
-    with codecs.open(targetpath, 'w', encoding='utf-8') as f:
+        do_prompt(map_, "name", "%s exists - choose an alternative" % targetpath, altpath)
+    with codecs.open(targetpath, "w", encoding="utf-8") as f:
         f.write(prepare_content(QUICKSTART_CONF.format(**map_)))
-        print('Finished: %s has been created. For information on this file, '
-              'see https://tox.readthedocs.io/en/latest/config.html\n'
-              'Execute `tox` to test your project.' % targetpath)
+        print(
+            "Finished: %s has been created. For information on this file, "
+            "see https://tox.readthedocs.io/en/latest/config.html\n"
+            "Execute `tox` to test your project." % targetpath
+        )
 
 
 def prepare_content(content):
-    return '\n'.join([line.rstrip() for line in content.split("\n")])
+    return "\n".join([line.rstrip() for line in content.split("\n")])
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Command-line script to quickly tox config file for a Python project.')
+        description="Command-line script to quickly tox config file for a Python project."
+    )
     parser.add_argument(
-        'root', type=str, nargs='?', default='.',
-        help='Custom root directory to write config to. Defaults to current directory.')
-    parser.add_argument('--version', action='version', version='%(prog)s ' + tox.__version__)
+        "root",
+        type=str,
+        nargs="?",
+        default=".",
+        help="Custom root directory to write config to. Defaults to current directory.",
+    )
+    parser.add_argument("--version", action="version", version="%(prog)s " + tox.__version__)
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    map_ = {'path': args.root}
+    map_ = {"path": args.root}
     try:
         ask_user(map_)
     except (KeyboardInterrupt, EOFError):
-        print('\n[Interrupted.]')
+        print("\n[Interrupted.]")
         return 1
     post_process_input(map_)
     generate(map_)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -15,20 +15,24 @@ from tox.result import ResultLog
 from tox.session import Session, main
 from tox.venv import VirtualEnv
 
-mark_dont_run_on_windows = pytest.mark.skipif(os.name == 'nt', reason="non windows test")
-mark_dont_run_on_posix = pytest.mark.skipif(os.name == 'posix', reason="non posix test")
+mark_dont_run_on_windows = pytest.mark.skipif(os.name == "nt", reason="non windows test")
+mark_dont_run_on_posix = pytest.mark.skipif(os.name == "posix", reason="non posix test")
 
 
 def pytest_configure():
-    if 'TOXENV' in os.environ:
-        del os.environ['TOXENV']
-    if 'HUDSON_URL' in os.environ:
-        del os.environ['HUDSON_URL']
+    if "TOXENV" in os.environ:
+        del os.environ["TOXENV"]
+    if "HUDSON_URL" in os.environ:
+        del os.environ["HUDSON_URL"]
 
 
 def pytest_addoption(parser):
-    parser.addoption("--no-network", action="store_true", dest="no_network",
-                     help="don't run tests requiring network")
+    parser.addoption(
+        "--no-network",
+        action="store_true",
+        dest="no_network",
+        help="don't run tests requiring network",
+    )
 
 
 def pytest_report_header():
@@ -43,6 +47,7 @@ def work_in_clean_dir(tmpdir):
 
 @pytest.fixture(name="newconfig")
 def create_new_config_file(tmpdir):
+
     def create_new_config_file_(args, source=None, plugins=()):
         if source is None:
             source = args
@@ -52,6 +57,7 @@ def create_new_config_file(tmpdir):
         p.write(s)
         with tmpdir.as_cwd():
             return parseconfig(args, plugins=plugins)
+
     return create_new_config_file_
 
 
@@ -62,7 +68,7 @@ def cmd(request, capfd, monkeypatch):
     request.addfinalizer(py.path.local().chdir)
 
     def run(*argv):
-        key = str(b'PYTHONPATH')
+        key = str(b"PYTHONPATH")
         python_paths = (i for i in (str(os.getcwd()), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
         with RunResult(capfd, argv) as result:
@@ -74,10 +80,12 @@ def cmd(request, capfd, monkeypatch):
             except OSError as e:
                 result.ret = e.errno
         return result
+
     yield run
 
 
 class RunResult:
+
     def __init__(self, capfd, args):
         self._capfd = capfd
         self.args = args
@@ -101,11 +109,13 @@ class RunResult:
         return self.out.splitlines()
 
     def __repr__(self):
-        return 'RunResult(ret={}, args={}, out=\n{}\n, err=\n{})'.format(
-            self.ret, ' '.join(str(i) for i in self.args), self.out, self.err)
+        return "RunResult(ret={}, args={}, out=\n{}\n, err=\n{})".format(
+            self.ret, " ".join(str(i) for i in self.args), self.out, self.err
+        )
 
 
 class ReportExpectMock:
+
     def __init__(self, session):
         self._calls = []
         self._index = -1
@@ -117,7 +127,7 @@ class ReportExpectMock:
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError(name)
-        elif name == 'verbosity':
+        elif name == "verbosity":
             # FIXME: special case for property on Reporter class, may it be generalized?
             return 0
 
@@ -138,8 +148,8 @@ class ReportExpectMock:
                 return call
             newindex += 1
         raise LookupError(
-            "looking for %r, no reports found at >=%d in %r" %
-            (cat, self._index + 1, self._calls))
+            "looking for %r, no reports found at >=%d in %r" % (cat, self._index + 1, self._calls)
+        )
 
     def expect(self, cat, messagepattern="*", invert=False):
         __tracebackhide__ = True
@@ -154,19 +164,22 @@ class ReportExpectMock:
                 lmsg = str(lmsg).replace("\n", " ")
                 if fnmatch(lmsg, messagepattern):
                     if invert:
-                        raise AssertionError("found %s(%r), didn't expect it" %
-                                             (cat, messagepattern))
+                        raise AssertionError(
+                            "found %s(%r), didn't expect it" % (cat, messagepattern)
+                        )
                     return
         if not invert:
             raise AssertionError(
-                "looking for %s(%r), no reports found at >=%d in %r" %
-                (cat, messagepattern, self._index + 1, self._calls))
+                "looking for %s(%r), no reports found at >=%d in %r"
+                % (cat, messagepattern, self._index + 1, self._calls)
+            )
 
     def not_expect(self, cat, messagepattern="*"):
         return self.expect(cat, messagepattern, invert=True)
 
 
 class pcallMock:
+
     def __init__(self, args, cwd, env, stdout, stderr, shell):
         self.arg0 = args[0]
         self.args = args[1:]
@@ -186,7 +199,9 @@ class pcallMock:
 
 @pytest.fixture(name="mocksession")
 def create_mocksession(request):
+
     class MockSession(Session):
+
         def __init__(self):
             self._clearmocks()
             self.config = request.getfixturevalue("newconfig")([], "")
@@ -208,14 +223,17 @@ def create_mocksession(request):
             pm = pcallMock(args, cwd, env, stdout, stderr, shell)
             self._pcalls.append(pm)
             return pm
+
     return MockSession()
 
 
 @pytest.fixture
 def newmocksession(mocksession, newconfig):
+
     def newmocksession_(args, source, plugins=()):
         mocksession.config = newconfig(args, source, plugins=plugins)
         return mocksession
+
     return newmocksession_
 
 
@@ -223,8 +241,7 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-            py.io.saferepr(out),)
+        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (py.io.saferepr(out),)
 
 
 @pytest.fixture
@@ -252,11 +269,12 @@ def initproj(tmpdir):
             name.egg-info/       # created later on package build
             setup.py
     """
+
     def initproj_(nameversion, filedefs=None, src_root="."):
         if filedefs is None:
             filedefs = {}
         if not src_root:
-            src_root = '.'
+            src_root = "."
         if isinstance(nameversion, six.string_types):
             parts = nameversion.split(str("-"))
             if len(parts) == 1:
@@ -267,12 +285,16 @@ def initproj(tmpdir):
         base = tmpdir.join(name)
         src_root_path = _path_join(base, src_root)
         assert base == src_root_path or src_root_path.relto(base), (
-            '`src_root` must be the constructed project folder or its direct '
-            'or indirect subfolder')
+            "`src_root` must be the constructed project folder or its direct "
+            "or indirect subfolder"
+        )
         base.ensure(dir=1)
         create_files(base, filedefs)
-        if not _filedefs_contains(base, filedefs, 'setup.py'):
-            create_files(base, {'setup.py': """
+        if not _filedefs_contains(base, filedefs, "setup.py"):
+            create_files(
+                base,
+                {
+                    "setup.py": """
                 from setuptools import setup, find_packages
                 setup(
                     name='%(name)s',
@@ -283,15 +305,20 @@ def initproj(tmpdir):
                     packages=find_packages('%(src_root)s'),
                     package_dir={'':'%(src_root)s'},
                 )
-            """ % locals()})
+            """
+                    % locals()
+                },
+            )
         if not _filedefs_contains(base, filedefs, src_root_path.join(name)):
-            create_files(src_root_path, {name: {'__init__.py': '__version__ = %r' % version}})
-        manifestlines = ["include %s" % p.relto(base)
-                         for p in base.visit(lambda x: x.check(file=1))]
+            create_files(src_root_path, {name: {"__init__.py": "__version__ = %r" % version}})
+        manifestlines = [
+            "include %s" % p.relto(base) for p in base.visit(lambda x: x.check(file=1))
+        ]
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
         print("created project in %s" % base)
         base.chdir()
         return base
+
     return initproj_
 
 

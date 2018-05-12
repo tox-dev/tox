@@ -17,28 +17,28 @@ def include_draft_newsfragments():
     current_path = os.getcwd()
     try:
         os.chdir(project_root)
-        cmd = ['towncrier', '--draft', '--dir', project_root]
-        out = subprocess.check_output(cmd).decode('utf-8').strip()
-        docs_build_dir = project_root / '.tox' / 'docs' / 'fragments.rst'
+        cmd = ["towncrier", "--draft", "--dir", project_root]
+        out = subprocess.check_output(cmd).decode("utf-8").strip()
+        docs_build_dir = project_root / ".tox" / "docs" / "fragments.rst"
         docs_build_dir.write(out)
     finally:
         os.chdir(current_path)
 
 
 def manipulate_the_news():
-    home = 'https://github.com'
-    issue = '%s/issue' % home
-    fragmentsPath = Path(__file__).parents[1] / 'tox' / 'changelog'
+    home = "https://github.com"
+    issue = "%s/issue" % home
+    fragmentsPath = Path(__file__).parents[1] / "tox" / "changelog"
     for pattern, replacement in (
-        (r'[^`]@([^,\s]+)', r'`@\1 <%s/\1>`_' % home),
-        (r'[^`]#([\d]+)', r'`#pr\1 <%s/\1>`_' % issue),
+        (r"[^`]@([^,\s]+)", r"`@\1 <%s/\1>`_" % home),
+        (r"[^`]#([\d]+)", r"`#pr\1 <%s/\1>`_" % issue),
     ):
-        for path in fragmentsPath.glob('*.rst'):
+        for path in fragmentsPath.glob("*.rst"):
             path.write_text(re.sub(pattern, replacement, path.read_text()))
 
 
 main = manipulate_the_news
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
