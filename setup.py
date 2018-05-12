@@ -29,7 +29,7 @@ def has_environment_marker_support():
 def get_long_description():
     with io.open("README.rst", encoding="utf-8") as f:
         with io.open("CHANGELOG.rst", encoding="utf-8") as g:
-            return "{}\n\n{}".format(f.read(), g.read())
+            return u"{}\n\n{}".format(f.read(), g.read())
 
 
 def main():
