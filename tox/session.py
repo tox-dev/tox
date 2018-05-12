@@ -522,13 +522,14 @@ class Session:
                 if self.config.option.skip_missing_interpreters:
                     default_ret_code = 0
             if status:
+                str_status = str(status)
                 commandlog = envlog.get_commandlog("setup")
-                commandlog.add_command(["setup virtualenv"], str(status), default_ret_code)
+                commandlog.add_command(["setup virtualenv"], str_status, default_ret_code)
                 venv.status = status
                 if default_ret_code == 0:
-                    self.report.skip(str(status))
+                    self.report.skip(str_status)
                 else:
-                    self.report.error(str(status))
+                    self.report.error(str_status)
                 return False
             commandpath = venv.getcommandpath("python")
             envlog.set_python_info(commandpath)
@@ -657,14 +658,14 @@ class Session:
         for venv in self.venvlist:
             status = venv.status
             if isinstance(status, tox.exception.InterpreterNotFound):
-                msg = "  {}: {}".format(venv.envconfig.envname, str(status))
+                msg = " {}: {}".format(venv.envconfig.envname, str(status))
                 if self.config.option.skip_missing_interpreters:
                     self.report.skip(msg)
                 else:
                     retcode = 1
                     self.report.error(msg)
             elif status == "platform mismatch":
-                msg = "  {}: {}".format(venv.envconfig.envname, str(status))
+                msg = " {}: {}".format(venv.envconfig.envname, str(status))
                 self.report.skip(msg)
             elif status and status == "ignored failed command":
                 msg = "  {}: {}".format(venv.envconfig.envname, str(status))

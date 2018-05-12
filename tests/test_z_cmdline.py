@@ -212,14 +212,14 @@ def test_notoxini_help_still_works(initproj, cmd):
     result = cmd("-h")
     assert result.err == "ERROR: toxini file 'tox.ini' not found\n"
     assert result.out.startswith("usage: ")
-    assert any("--help" in l for l in result.outlines)
+    assert any("--help" in l for l in result.outlines), result.outlines
     assert not result.ret
 
 
 def test_notoxini_help_ini_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={"tests": {"test_hello.py": "def test_hello(): pass"}})
     result = cmd("--help-ini")
-    assert any("setenv" in l for l in result.outlines)
+    assert any("setenv" in l for l in result.outlines), result.outlines
     assert not result.ret
 
 
@@ -271,7 +271,9 @@ def test_unknown_interpreter_and_env(cmd, initproj):
     )
     result = cmd()
     assert result.ret
-    assert any("ERROR: InterpreterNotFound: xyz_unknown_interpreter" == l for l in result.outlines)
+    assert any(
+        "ERROR: InterpreterNotFound: xyz_unknown_interpreter" == l for l in result.outlines
+    ), result.outlines
 
     result = cmd("-exyz")
     assert result.ret
@@ -293,7 +295,9 @@ def test_unknown_interpreter(cmd, initproj):
     )
     result = cmd()
     assert result.ret
-    assert any("ERROR: InterpreterNotFound: xyz_unknown_interpreter" == l for l in result.outlines)
+    assert any(
+        "ERROR: InterpreterNotFound: xyz_unknown_interpreter" == l for l in result.outlines
+    ), result.outlines
 
 
 def test_skip_platform_mismatch(cmd, initproj):
@@ -310,7 +314,9 @@ def test_skip_platform_mismatch(cmd, initproj):
     )
     result = cmd()
     assert not result.ret
-    assert any("SKIPPED:  python: platform mismatch" == l for l in result.outlines)
+    assert any(
+        "SKIPPED:  python: platform mismatch" == l for l in result.outlines
+    ), result.outlines
 
 
 def test_skip_unknown_interpreter(cmd, initproj):
@@ -329,7 +335,7 @@ def test_skip_unknown_interpreter(cmd, initproj):
     result = cmd("--skip-missing-interpreters")
     assert not result.ret
     msg = "SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter"
-    assert any(msg == l for l in result.outlines)
+    assert any(msg == l for l in result.outlines), result.outlines
 
 
 def test_skip_unknown_interpreter_result_json(cmd, initproj, tmpdir):
@@ -349,7 +355,7 @@ def test_skip_unknown_interpreter_result_json(cmd, initproj, tmpdir):
     result = cmd("--skip-missing-interpreters", "--result-json", report_path)
     assert not result.ret
     msg = "SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter"
-    assert any(msg == l for l in result.outlines)
+    assert any(msg == l for l in result.outlines), result.outlines
     setup_result_from_json = json.load(report_path)["testenvs"]["python"]["setup"]
     for setup_step in setup_result_from_json:
         assert "InterpreterNotFound" in setup_step["output"]
@@ -389,7 +395,7 @@ def test_venv_special_chars_issue252(cmd, initproj):
     result = cmd()
     assert result.ret == 0
     pattern = re.compile("special&&1 installed: .*pkg123==0.7.*")
-    assert any(pattern.match(line) for line in result.outlines)
+    assert any(pattern.match(line) for line in result.outlines), result.outlines
 
 
 def test_unknown_environment(cmd, initproj):
@@ -464,7 +470,7 @@ def test_minimal_setup_py_non_functional(cmd, initproj):
     )
     result = cmd()
     assert result.ret == 1
-    assert any(re.match(r".*ERROR.*check setup.py.*", l) for l in result.outlines)
+    assert any(re.match(r".*ERROR.*check setup.py.*", l) for l in result.outlines), result.outlines
 
 
 def test_sdist_fails(cmd, initproj):
@@ -480,7 +486,9 @@ def test_sdist_fails(cmd, initproj):
     )
     result = cmd()
     assert result.ret
-    assert any(re.match(r".*FAIL.*could not package project.*", l) for l in result.outlines)
+    assert any(
+        re.match(r".*FAIL.*could not package project.*", l) for l in result.outlines
+    ), result.outlines
 
 
 def test_no_setup_py_exits(cmd, initproj):
@@ -496,7 +504,9 @@ def test_no_setup_py_exits(cmd, initproj):
     os.remove("setup.py")
     result = cmd()
     assert result.ret
-    assert any(re.match(r".*ERROR.*No setup.py file found.*", l) for l in result.outlines)
+    assert any(
+        re.match(r".*ERROR.*No setup.py file found.*", l) for l in result.outlines
+    ), result.outlines
 
 
 def test_package_install_fails(cmd, initproj):
@@ -971,9 +981,9 @@ def test_verbosity(cmd, initproj, verbosity):
 
     needle = "Successfully installed pkgX-0.0.5"
     if verbosity == "-vv":
-        assert any(needle in line for line in result.outlines)
+        assert any(needle in line for line in result.outlines), result.outlines
     else:
-        assert all(needle not in line for line in result.outlines)
+        assert all(needle not in line for line in result.outlines), result.outlines
 
 
 def verify_json_report_format(data, testenvs=True):

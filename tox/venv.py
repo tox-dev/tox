@@ -25,7 +25,7 @@ class CreationConfig:
         lines = [
             "{} {}".format(self.md5, self.python),
             "{} {:d} {:d} {:d}".format(
-                self.version, self.sitepackages, self.usedevelop, self.alwayscopyf
+                self.version, self.sitepackages, self.usedevelop, self.alwayscopy
             ),
         ]
         for dep in self.deps:
