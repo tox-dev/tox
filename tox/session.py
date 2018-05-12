@@ -9,8 +9,10 @@ from __future__ import print_function
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
+import threading
 import time
 
 import py
@@ -193,7 +195,16 @@ class Action(object):
                     out, err = popen.communicate()
             except KeyboardInterrupt:
                 self.report.keyboard_interrupt()
-                popen.wait()
+
+                def kill(_popen):
+                    _popen.kill()
+                timer_to_kill = threading.Timer(5, kill, [popen])
+                try:
+                    timer_to_kill.start()
+                    popen.send_signal(signal.SIGINT)
+                    popen.wait()
+                finally:
+                    timer_to_kill.cancel()
                 raise
             ret = popen.wait()
         finally:
@@ -233,8 +244,14 @@ class Action(object):
     def _popen(self, args, cwd, stdout, stderr, env=None):
         if env is None:
             env = os.environ.copy()
+        new_session = {}
+        if sys.platform != 'win32':
+            new_session['preexec_fn'] = os.setsid
+        else:
+            new_session['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
         return self.session.popen(self._rewriteargs(cwd, args), shell=False, cwd=str(cwd),
-                                  universal_newlines=True, stdout=stdout, stderr=stderr, env=env)
+                                  universal_newlines=True, stdout=stdout, stderr=stderr, env=env,
+                                  **new_session)
 
 
 class Verbosity(object):

@@ -1,0 +1,1 @@
+Prevent tox from being killed by chiled process - by @Suckzoo

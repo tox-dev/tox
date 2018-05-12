@@ -1,0 +1,1 @@
+Stops child process immediately after waiting for 5 seconds - by @Suckzoo
