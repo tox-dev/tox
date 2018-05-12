@@ -48,10 +48,13 @@ class Interpreters:
         try:
             res = exec_on_interpreter(
                 info.executable,
-                [inspect.getsource(sitepackagesdir), "print(sitepackagesdir(%r))" % envdir],
+                [
+                    inspect.getsource(sitepackagesdir),
+                    "print(sitepackagesdir({!r}))".format(envdir),
+                ],
             )
         except ExecFailed as e:
-            print("execution failed: %s -- %s" % (e.out, e.err))
+            print("execution failed: {} -- {}".format(e.out, e.err))
             return ""
         else:
             return res["dir"]
@@ -81,7 +84,7 @@ def exec_on_interpreter(executable, source):
     try:
         result = eval(out.strip())
     except Exception:
-        raise ExecFailed(executable, source, out, "could not decode %r" % out)
+        raise ExecFailed(executable, source, out, "could not decode {!r}".format(out))
     return result
 
 
@@ -105,7 +108,7 @@ class InterpreterInfo:
         self.sysplatform = sysplatform
 
     def __str__(self):
-        return "<executable at %s, version_info %s>" % (self.executable, self.version_info)
+        return "<executable at {}, version_info {}>".format(self.executable, self.version_info)
 
 
 class NoInterpreterInfo:
@@ -120,9 +123,9 @@ class NoInterpreterInfo:
 
     def __str__(self):
         if self.executable:
-            return "<executable at %s, not runnable>" % self.executable
+            return "<executable at {}, not runnable>".format(self.executable)
         else:
-            return "<executable not found for: %s>" % self.name
+            return "<executable not found for: {}>".format(self.name)
 
 
 if not tox.INFO.IS_WIN:

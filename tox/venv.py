@@ -22,12 +22,14 @@ class CreationConfig:
         self.deps = deps
 
     def writeconfig(self, path):
-        lines = ["%s %s" % (self.md5, self.python)]
-        lines.append(
-            "%s %d %d %d" % (self.version, self.sitepackages, self.usedevelop, self.alwayscopy)
-        )
+        lines = [
+            "%s %s" % (self.md5, self.python),
+            "{} {:d} {:d} {:d}".format(
+                self.version, self.sitepackages, self.usedevelop, self.alwayscopy
+            ),
+        ]
         for dep in self.deps:
-            lines.append("%s %s" % dep)
+            lines.append("{} {}".format(*dep))
         path.ensure()
         path.write("\n".join(lines))
 
@@ -87,7 +89,7 @@ class VirtualEnv(object):
         return self.envconfig.envname
 
     def __repr__(self):
-        return "<VirtualEnv at %r>" % (self.path)
+        return "<VirtualEnv at {!r}>".format(self.path)
 
     def getcommandpath(self, name, venv=True, cwd=None):
         """ Return absolute path (str or localpath) for specified command name.
@@ -110,7 +112,7 @@ class VirtualEnv(object):
             path = self._normal_lookup(name)
 
         if path is None:
-            raise tox.exception.InvocationError("could not find executable %r" % (name,))
+            raise tox.exception.InvocationError("could not find executable {!r}".format(name))
 
         return str(path)  # will not be rewritten for reporting
 
@@ -132,11 +134,12 @@ class VirtualEnv(object):
         if not self.is_allowed_external(path):
             self.session.report.warning(
                 "test command found but not installed in testenv\n"
-                "  cmd: %s\n"
-                "  env: %s\n"
+                "  cmd: {}\n"
+                "  env: {}\n"
                 "Maybe you forgot to specify a dependency? "
-                "See also the whitelist_externals envconfig setting."
-                % (path, self.envconfig.envdir)
+                "See also the whitelist_externals envconfig setting.".format(
+                    path, self.envconfig.envdir
+                )
             )
 
     def is_allowed_external(self, p):
@@ -171,7 +174,7 @@ class VirtualEnv(object):
             self.hook.tox_testenv_install_deps(action=action, venv=self)
         except tox.exception.InvocationError:
             v = sys.exc_info()[1]
-            return "could not install deps %s; v = %r" % (self.envconfig.deps, v)
+            return "could not install deps {}; v = {!r}".format(self.envconfig.deps, v)
 
     def _getliveconfig(self):
         python = self.envconfig.python_info.executable
@@ -245,7 +248,7 @@ class VirtualEnv(object):
             extraopts = ["--no-deps"]
 
         if action.venv.envconfig.extras:
-            setupdir += "[%s]" % ",".join(action.venv.envconfig.extras)
+            setupdir += "[{}]".format(",".join(action.venv.envconfig.extras))
 
         self._install(["-e", setupdir], extraopts=extraopts, action=action)
 
@@ -260,7 +263,7 @@ class VirtualEnv(object):
             extraopts = ["-U", "--no-deps"]
 
         if action.venv.envconfig.extras:
-            sdistpath += "[%s]" % ",".join(action.venv.envconfig.extras)
+            sdistpath += "[{}]".format(",".join(action.venv.envconfig.extras))
 
         self._install([sdistpath], extraopts=extraopts, action=action)
 
@@ -356,7 +359,7 @@ class VirtualEnv(object):
             cwd = self.envconfig.changedir
             env = self._getenv(testcommand=True)
             # Display PYTHONHASHSEED to assist with reproducibility.
-            action.setactivity("runtests", "PYTHONHASHSEED=%r" % env.get("PYTHONHASHSEED"))
+            action.setactivity("runtests", "PYTHONHASHSEED={!r}".format(env.get("PYTHONHASHSEED")))
             for i, argv in enumerate(self.envconfig.commands):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
@@ -385,8 +388,9 @@ class VirtualEnv(object):
                 except tox.exception.InvocationError as err:
                     if self.envconfig.ignore_outcome:
                         self.session.report.warning(
-                            "command failed but result from testenv is ignored\n"
-                            "  cmd: %s" % (str(err),)
+                            "command failed but result from testenv is ignored\ncmd: {}".format(
+                                str(err)
+                            )
                         )
                         self.status = "ignored failed command"
                         continue  # keep processing commands
@@ -470,7 +474,7 @@ def tox_testenv_install_deps(venv, action):
     deps = venv._getresolvedeps()
     if deps:
         depinfo = ", ".join(map(str, deps))
-        action.setactivity("installdeps", "%s" % depinfo)
+        action.setactivity("installdeps", depinfo)
         venv._install(deps, action=action)
     return True  # Return non-None to indicate plugin has completed
 

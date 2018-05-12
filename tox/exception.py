@@ -14,9 +14,9 @@ def exit_code_str(exception_name, command, exit_code):
     Even a normal method failed with "TypeError: descriptor '__getattribute__' requires a
     'BaseException' object but received a 'type'".
     """
-    str_ = "%s for command %s" % (exception_name, command)
+    str_ = "{} for command {}".format(exception_name, command)
     if exit_code is not None:
-        str_ += " (exited with code %d)" % (exit_code)
+        str_ += " (exited with code {:d})".format(exit_code)
         if (os.name == "posix") and (exit_code > 128):
             signals = {
                 number: name for name, number in vars(signal).items() if name.startswith("SIG")
@@ -26,7 +26,7 @@ def exit_code_str(exception_name, command, exit_code):
             if name:
                 str_ += (
                     "\nNote: this might indicate a fatal error signal "
-                    "(%d - 128 = %d: %s)" % (number + 128, number, name)
+                    "({:d} - 128 = {:d}: {})".format(number + 128, number, name)
                 )
     return str_
 

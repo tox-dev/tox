@@ -142,8 +142,9 @@ class NormalizedVersion(object):
         self.parts = tuple(parts)
         if error_on_huge_major_num and self.parts[0][0] > 1980:
             raise HugeMajorVersionNumError(
-                "huge major version number, %r, "
-                "which might cause future problems: %r" % (self.parts[0][0], s)
+                "huge major version number, {!r}, which might cause future problems: {!r}".format(
+                    self.parts[0][0], s
+                )
             )
 
     def _parse_numdots(self, s, full_ver_str, drop_trailing_zeros=True, pad_zeros_length=0):
@@ -161,8 +162,9 @@ class NormalizedVersion(object):
         for n in s.split("."):
             if len(n) > 1 and n[0] == "0":
                 raise IrrationalVersionError(
-                    "cannot have leading zero in "
-                    "version number segment: '%s' in %r" % (n, full_ver_str)
+                    "cannot have leading zero in version number segment: '{}' in {!r}".format(
+                        n, full_ver_str
+                    )
                 )
             nums.append(int(n))
         if drop_trailing_zeros:
@@ -199,7 +201,9 @@ class NormalizedVersion(object):
         return "%s('%s')" % (self.__class__.__name__, self)
 
     def _cannot_compare(self, other):
-        raise TypeError("cannot compare %s and %s" % (type(self).__name__, type(other).__name__))
+        raise TypeError(
+            "cannot compare {} and {}".format(type(self).__name__, type(other).__name__)
+        )
 
     def __eq__(self, other):
         if not isinstance(other, NormalizedVersion):

@@ -1,13 +1,13 @@
 from __future__ import print_function, unicode_literals
 
-import os
-import textwrap
 import time
-from fnmatch import fnmatch
 
+import os
 import py
 import pytest
 import six
+import textwrap
+from fnmatch import fnmatch
 
 import tox
 from tox.config import parseconfig
@@ -36,7 +36,7 @@ def pytest_addoption(parser):
 
 
 def pytest_report_header():
-    return "tox comes from: {}".format(repr(tox.__file__))
+    return "tox comes from: {!r}".format(tox.__file__)
 
 
 @pytest.fixture
@@ -148,7 +148,9 @@ class ReportExpectMock:
                 return call
             newindex += 1
         raise LookupError(
-            "looking for %r, no reports found at >=%d in %r" % (cat, self._index + 1, self._calls)
+            "looking for {!r}, no reports found at >={:d} in {!r}".format(
+                cat, self._index + 1, self._calls
+            )
         )
 
     def expect(self, cat, messagepattern="*", invert=False):
@@ -165,13 +167,14 @@ class ReportExpectMock:
                 if fnmatch(lmsg, messagepattern):
                     if invert:
                         raise AssertionError(
-                            "found %s(%r), didn't expect it" % (cat, messagepattern)
+                            "found {}({!r}), didn't expect it".format(cat, messagepattern)
                         )
                     return
         if not invert:
             raise AssertionError(
-                "looking for %s(%r), no reports found at >=%d in %r"
-                % (cat, messagepattern, self._index + 1, self._calls)
+                "looking for {}({!r}), no reports found at >={:d} in {!r}".format(
+                    cat, messagepattern, self._index + 1, self._calls
+                )
             )
 
     def not_expect(self, cat, messagepattern="*"):
@@ -241,7 +244,7 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (py.io.saferepr(out),)
+        return "INTERNAL not-utf8-decodeable, truncated string:\n{}".format(py.io.saferepr(out))
 
 
 @pytest.fixture
@@ -284,10 +287,10 @@ def initproj(tmpdir):
             name, version = nameversion
         base = tmpdir.join(name)
         src_root_path = _path_join(base, src_root)
-        assert base == src_root_path or src_root_path.relto(base), (
-            "`src_root` must be the constructed project folder or its direct "
-            "or indirect subfolder"
-        )
+        assert (
+            base == src_root_path or src_root_path.relto(base)
+        ), "`src_root` must be the constructed project folder or its direct or indirect subfolder"
+
         base.ensure(dir=1)
         create_files(base, filedefs)
         if not _filedefs_contains(base, filedefs, "setup.py"):
@@ -297,25 +300,28 @@ def initproj(tmpdir):
                     "setup.py": """
                 from setuptools import setup, find_packages
                 setup(
-                    name='%(name)s',
-                    description='%(name)s project',
-                    version='%(version)s',
+                    name='{name}',
+                    description='{name} project',
+                    version='{version}',
                     license='MIT',
                     platforms=['unix', 'win32'],
-                    packages=find_packages('%(src_root)s'),
-                    package_dir={'':'%(src_root)s'},
+                    packages=find_packages('{src_root}'),
+                    package_dir={{'':'{src_root}'}},
                 )
-            """
-                    % locals()
+            """.format(
+                        **locals()
+                    )
                 },
             )
         if not _filedefs_contains(base, filedefs, src_root_path.join(name)):
-            create_files(src_root_path, {name: {"__init__.py": "__version__ = %r" % version}})
+            create_files(
+                src_root_path, {name: {"__init__.py": "__version__ = {!r}".format(version)}}
+            )
         manifestlines = [
-            "include %s" % p.relto(base) for p in base.visit(lambda x: x.check(file=1))
+            "include {}".format(p.relto(base)) for p in base.visit(lambda x: x.check(file=1))
         ]
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
-        print("created project in %s" % base)
+        print("created project in {}".format(base))
         base.chdir()
         return base
 

@@ -9,7 +9,7 @@ def _contruct_default_factors(version_tuples, other_interpreters):
     default_factors = {"py": _sys.executable, "py2": "python2", "py3": "python3"}
     default_factors.update(
         {
-            "py%s%s" % (major, minor): "python%s.%s" % (major, minor)
+            "py{}{}".format(major, minor): "python{}.{}".format(major, minor)
             for major, minor in version_tuples
         }
     )
@@ -60,5 +60,5 @@ class PIP:
         "trusted-host",
         "upgrade-strategy",
     ]
-    INSTALL_SHORT_OPTIONS_ARGUMENT = ["-%s" % option for option in SHORT_OPTIONS]
-    INSTALL_LONG_OPTIONS_ARGUMENT = ["--%s" % option for option in LONG_OPTIONS]
+    INSTALL_SHORT_OPTIONS_ARGUMENT = ["-{}".format(option) for option in SHORT_OPTIONS]
+    INSTALL_LONG_OPTIONS_ARGUMENT = ["--{}".format(option) for option in LONG_OPTIONS]

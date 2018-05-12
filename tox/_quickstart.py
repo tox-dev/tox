@@ -45,6 +45,7 @@ import os
 import sys
 
 import six
+import textwrap
 
 import tox
 
@@ -80,7 +81,7 @@ def choice(*l):
 
     def val(x):
         if x not in l:
-            raise ValidationError("Please enter one of %s." % ", ".join(l))
+            raise ValidationError("Please enter one of {}.".format(", ".join(l)))
         return x
 
     return val
@@ -120,6 +121,7 @@ def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=Non
         if default and not answer:
             answer = default
         # FIXME use six instead of self baked solution
+        # noinspection PyUnresolvedReferences
         if sys.version_info < (3,) and not isinstance(answer, unicode):  # noqa
             # for Python 2.x, try to get a Unicode string out of it
             if answer.decode("ascii", "replace").encode("ascii", "replace") != answer:
@@ -128,8 +130,8 @@ def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=Non
                     answer = answer.decode(term_encoding)
                 else:
                     print(
-                        "* Note: non-ASCII characters entered but terminal encoding unknown "
-                        "-> assuming UTF-8 or Latin-1."
+                        "* Note: non-ASCII characters entered but terminal encoding unknown"
+                        " -> assuming UTF-8 or Latin-1."
                     )
                     try:
                         answer = answer.decode("utf-8")
@@ -156,12 +158,13 @@ def ask_user(map_):
         "default value, if one is given in brackets).\n"
     )
     print(
-        "What Python versions do you want to test against?\n"
-        "    [1] %s\n"
-        "    [2] py27, %s\n"
-        "    [3] (All versions) %s\n"
-        "    [4] Choose each one-by-one"
-        % (
+        textwrap.dedent(
+            """What Python versions do you want to test against?
+            [1] %s
+            [2] py27, %s
+            [3] (All versions) %s
+            [4] Choose each one-by-one"""
+        ).format(
             tox.PYTHON.CURRENT_RELEASE_ENV,
             tox.PYTHON.CURRENT_RELEASE_ENV,
             ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS),
@@ -186,14 +189,20 @@ def ask_user(map_):
         for pyenv in tox.PYTHON.QUICKSTART_PY_ENVS:
             if pyenv not in map_:
                 do_prompt(
-                    map_, pyenv, "Test your project with %s (Y/n)" % pyenv, "Y", validator=boolean
+                    map_,
+                    pyenv,
+                    "Test your project with {} (Y/n)".format(pyenv),
+                    "Y",
+                    validator=boolean,
                 )
     print(
-        "What command should be used to test your project? Examples:\n"
-        "    - pytest\n"
-        "    - python -m unittest discover\n"
-        "    - python setup.py test\n"
-        "    - trial package.module\n"
+        textwrap.dedent(
+            """What command should be used to test your project? Examples:\
+            - pytest\n"
+            - python -m unittest discover
+            - python setup.py test
+            - trial package.module"""
+        )
     )
     do_prompt(
         map_,
@@ -239,13 +248,13 @@ def generate(map_):
         targetpath = os.path.join(dpath, name)
         if not os.path.isfile(targetpath):
             break
-        do_prompt(map_, "name", "%s exists - choose an alternative" % targetpath, altpath)
+        do_prompt(map_, "name", "{} exists - choose an alternative".format(targetpath), altpath)
     with codecs.open(targetpath, "w", encoding="utf-8") as f:
         f.write(prepare_content(QUICKSTART_CONF.format(**map_)))
         print(
-            "Finished: %s has been created. For information on this file, "
+            "Finished: {} has been created. For information on this file, "
             "see https://tox.readthedocs.io/en/latest/config.html\n"
-            "Execute `tox` to test your project." % targetpath
+            "Execute `tox` to test your project.".format(targetpath)
         )
 
 

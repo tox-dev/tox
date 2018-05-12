@@ -22,14 +22,14 @@ def has_environment_marker_support():
         v = pkg_resources.parse_version(setuptools.__version__)
         return v >= pkg_resources.parse_version("0.7.2")
     except Exception as e:
-        sys.stderr.write("Could not test setuptool's version: %s\n" % e)
+        sys.stderr.write("Could not test setuptool's version: {}\n".format(e))
         return False
 
 
 def get_long_description():
     with io.open("README.rst", encoding="utf-8") as f:
         with io.open("CHANGELOG.rst", encoding="utf-8") as g:
-            return "%s\n\n%s" % (f.read(), g.read())
+            return "{}\n\n{}".format(f.read(), g.read())
 
 
 def main():

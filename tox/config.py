@@ -239,7 +239,7 @@ def parseconfig(args, plugins=()):
             inipath = py.path.local().join("setup.cfg")
             if not inipath.check():
                 helpoptions = option.help or option.helpini
-                feedback("toxini file %r not found" % (basename), sysexit=not helpoptions)
+                feedback("toxini file {!r} not found".format(basename), sysexit=not helpoptions)
                 if helpoptions:
                     return config
 
@@ -248,7 +248,7 @@ def parseconfig(args, plugins=()):
     except tox.exception.InterpreterNotFound:
         exn = sys.exc_info()[1]
         # Use stdout to match test expectations
-        print("ERROR: " + str(exn))
+        print("ERROR: {}".format(exn))
 
     # post process config object
     pm.hook.tox_configure(config=config)
@@ -263,13 +263,13 @@ def feedback(msg, sysexit=False):
 
 
 def get_version_info(pm):
-    out = ["%s imported from %s" % (tox.__version__, tox.__file__)]
+    out = ["{} imported from {}".format(tox.__version__, tox.__file__)]
     plugin_dist_info = pm.list_plugin_distinfo()
     if plugin_dist_info:
         out.append("registered plugins:")
         for mod, egg_info in plugin_dist_info:
             source = getattr(mod, "__file__", repr(mod))
-            out.append("    %s-%s at %s" % (egg_info.project_name, egg_info.version, source))
+            out.append("    {}-{} at {}".format(egg_info.project_name, egg_info.version, source))
     return "\n".join(out)
 
 
@@ -283,7 +283,7 @@ class SetenvDict(object):
         self._lookupstack = []
 
     def __repr__(self):
-        return "%s: %s" % (self.__class__.__name__, self.definitions)
+        return "{}: {}".format(self.__class__.__name__, self.definitions)
 
     def __contains__(self, name):
         return name in self.definitions
@@ -519,8 +519,7 @@ def tox_addoption(parser):
         type="string",
         default=None,
         postprocess=basepython_default,
-        help="executable name or path of interpreter used to create a "
-        "virtual test environment.",
+        help="executable name or path of interpreter used to create a virtual test environment.",
     )
 
     def merge_description(testenv_config, value):
@@ -564,17 +563,16 @@ def tox_addoption(parser):
         name="skip_install",
         type="bool",
         default=False,
-        help="Do not install the current package. This can be used when "
-        "you need the virtualenv management but do not want to install "
-        "the current package",
+        help="Do not install the current package. This can be used when you need the virtualenv "
+        "management but do not want to install the current package",
     )
 
     parser.add_testenv_attribute(
         name="ignore_errors",
         type="bool",
         default=False,
-        help="if set to True all commands will be executed irrespective of their "
-        "result error status.",
+        help="if set to True all commands will be executed irrespective of their result error "
+        "status.",
     )
 
     def recreate(testenv_config, value):
@@ -630,11 +628,10 @@ def tox_addoption(parser):
         name="passenv",
         type="line-list",
         postprocess=passenv,
-        help="environment variables needed during executing test commands "
-        "(taken from invocation environment). Note that tox always "
-        "passes through some basic environment variables which are "
-        "needed for basic functioning of the Python system. "
-        "See --showconfig for the eventual passenv setting.",
+        help="environment variables needed during executing test commands (taken from invocation "
+        "environment). Note that tox always  passes through some basic environment variables "
+        "which are needed for basic functioning of the Python system. See --showconfig for the "
+        "eventual passenv setting.",
     )
 
     parser.add_testenv_attribute(
@@ -822,7 +819,7 @@ class TestenvConfig:
             raise tox.exception.InterpreterNotFound(self.basepython)
         if not info.version_info:
             raise tox.exception.InvocationError(
-                "Failed to get version_info for %s: %s" % (info.name, info.err)
+                "Failed to get version_info for {}: {}".format(info.name, info.err)
             )
         return info.executable
 
@@ -1084,7 +1081,7 @@ class DepConfig:
         if self.indexserver:
             if self.indexserver.name == "default":
                 return self.name
-            return ":%s:%s" % (self.indexserver.name, self.name)
+            return ":{}:{}".format(self.indexserver.name, self.name)
         return str(self.name)
 
     __repr__ = __str__
@@ -1167,7 +1164,7 @@ class SectionReader:
         if not s or not replace:
             s = default
         if s is None:
-            raise KeyError("no config value [%s] %s found" % (self.section_name, name))
+            raise KeyError("no config value [{}] {} found".format(self.section_name, name))
 
         if not isinstance(s, bool):
             if s.lower() == "true":
@@ -1233,8 +1230,8 @@ class SectionReader:
         except tox.exception.MissingSubstitution:
             if not section_name.startswith(testenvprefix):
                 raise tox.exception.ConfigError(
-                    "substitution env:%r: unknown or recursive definition in "
-                    "section %r." % (value, section_name)
+                    "substitution env:{!r}: unknown or recursive definition in"
+                    " section {!r}.".format(value, section_name)
                 )
             raise
         return replaced
@@ -1295,7 +1292,7 @@ class Replacer:
         # {packages} intact, they are replaced manually in
         # _venv.VirtualEnv.run_install_command.
         if sub_value in ("opts", "packages"):
-            return "{%s}" % sub_value
+            return "{{{}}}".format(sub_value)
 
         try:
             sub_type = g["sub_type"]
@@ -1330,14 +1327,14 @@ class Replacer:
             if section in cfg and item in cfg[section]:
                 if (section, item) in self.reader._subststack:
                     raise ValueError(
-                        "%s already in %s" % ((section, item), self.reader._subststack)
+                        "{} already in {}".format((section, item), self.reader._subststack)
                     )
                 x = str(cfg[section][item])
                 return self.reader._replace(
                     x, name=item, section_name=section, crossonly=self.crossonly
                 )
 
-        raise tox.exception.ConfigError("substitution key %r not found" % key)
+        raise tox.exception.ConfigError("substitution key {!r} not found".format(key))
 
     def _replace_substitution(self, match):
         sub_key = match.group("substitution_value")

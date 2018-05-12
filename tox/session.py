@@ -61,9 +61,8 @@ def show_help(config):
     tw.line("Environment variables", bold=True)
     tw.line("TOXENV: comma separated list of environments " "(overridable by '-e')")
     tw.line(
-        "TOX_TESTENV_PASSENV: space-separated list of extra "
-        "environment variables to be passed into test command "
-        "environments"
+        "TOX_TESTENV_PASSENV: space-separated list of extra environment variables to be "
+        "passed into test command environments"
     )
 
 
@@ -72,8 +71,9 @@ def show_help_ini(config):
     tw.sep("-", "per-testenv attributes")
     for env_attr in config._testenv_attr:
         tw.line(
-            "%-15s %-8s default: %s"
-            % (env_attr.name, "<" + env_attr.type + ">", env_attr.default),
+            "{:<15} {:<8} default: {}".format(
+                env_attr.name, "<" + env_attr.type + ">", env_attr.default
+            ),
             bold=True,
         )
         tw.line(env_attr.help)
@@ -111,12 +111,12 @@ class Action(object):
     def setactivity(self, name, msg):
         self.activity = name
         if msg:
-            self.report.verbosity0("%s %s: %s" % (self.venvname, name, msg), bold=True)
+            self.report.verbosity0("{} {}: {}".format(self.venvname, name, msg), bold=True)
         else:
-            self.report.verbosity1("%s %s: %s" % (self.venvname, name, msg), bold=True)
+            self.report.verbosity1("{} {}: {}".format(self.venvname, name, msg), bold=True)
 
     def info(self, name, msg):
-        self.report.verbosity1("%s %s: %s" % (self.venvname, name, msg), bold=True)
+        self.report.verbosity1("{} {}: {}".format(self.venvname, name, msg), bold=True)
 
     def _initlogpath(self, actionid):
         if self.venv:
@@ -124,11 +124,11 @@ class Action(object):
         else:
             logdir = self.session.config.logdir
         try:
-            log_count = len(logdir.listdir("%s-*" % actionid))
+            log_count = len(logdir.listdir("{}-*".format(actionid)))
         except (py.error.ENOENT, py.error.ENOTDIR):
             logdir.ensure(dir=1)
             log_count = 0
-        path = logdir.join("%s-%s.log" % (actionid, log_count))
+        path = logdir.join("{}-{}.log".format(actionid, log_count))
         f = path.open("w")
         f.flush()
         return f
@@ -138,7 +138,7 @@ class Action(object):
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
             fout = self._initlogpath(self.id)
-            fout.write("actionid: %s\nmsg: %s\ncmdargs: %r\n\n" % (self.id, self.msg, args))
+            fout.write("actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(self.id, self.msg, args))
             fout.flush()
             outpath = py.path.local(fout.name)
             fin = outpath.open("rb")
@@ -153,7 +153,7 @@ class Action(object):
             popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=subprocess.STDOUT)
         except OSError as e:
             self.report.error(
-                "invocation failed (errno %d), args: %s, cwd: %s" % (e.errno, args, cwd)
+                "invocation failed (errno {:d}), args: {}, cwd: {}".format(e.errno, args, cwd)
             )
             raise
         popen.outpath = outpath
@@ -206,14 +206,16 @@ class Action(object):
         if ret and not ignore_ret:
             invoked = " ".join(map(str, popen.args))
             if outpath:
-                self.report.error("invocation failed (exit code %d), logfile: %s" % (ret, outpath))
+                self.report.error(
+                    "invocation failed (exit code {:d}), logfile: {}".format(ret, outpath)
+                )
                 out = outpath.read()
                 self.report.error(out)
                 if hasattr(self, "commandlog"):
                     self.commandlog.add_command(popen.args, out, ret)
-                raise tox.exception.InvocationError("%s (see %s)" % (invoked, outpath), ret)
+                raise tox.exception.InvocationError("{} (see {})".format(invoked, outpath), ret)
             else:
-                raise tox.exception.InvocationError("%r" % (invoked,), ret)
+                raise tox.exception.InvocationError("{!r}".format(invoked), ret)
         if not out and outpath:
             out = outpath.read()
         if hasattr(self, "commandlog"):
@@ -276,20 +278,21 @@ class Reporter(object):
         """ log information about the action.popen() created process. """
         cmd = " ".join(map(str, popen.args))
         if popen.outpath:
-            self.verbosity1("  %s$ %s >%s" % (popen.cwd, cmd, popen.outpath))
+            self.verbosity1("  {}$ {} >{}".format(popen.cwd, cmd, popen.outpath))
         else:
-            self.verbosity1("  %s$ %s " % (popen.cwd, cmd))
+            self.verbosity1("  {}$ {} ".format(popen.cwd, cmd))
 
     def logaction_start(self, action):
-        msg = action.msg + " " + " ".join(map(str, action.args))
-        self.verbosity2("%s start: %s" % (action.venvname, msg), bold=True)
+        msg = "{} {}".format(action.msg, " ".join(map(str, action.args)))
+        self.verbosity2("{} start: {}".format(action.venvname, msg), bold=True)
         assert not hasattr(action, "_starttime")
         action._starttime = time.time()
 
     def logaction_finish(self, action):
         duration = time.time() - action._starttime
         self.verbosity2(
-            "%s finish: %s after %.2f seconds" % (action.venvname, action.msg, duration), bold=True
+            "{} finish: {} after {:.2f} seconds".format(action.venvname, action.msg, duration),
+            bold=True,
         )
         delattr(action, "_starttime")
 
@@ -324,31 +327,31 @@ class Reporter(object):
 
     def warning(self, msg):
         if self.verbosity >= Verbosity.QUIET:
-            self.logline("WARNING:" + msg, red=True)
+            self.logline("WARNING: {}".format(msg), red=True)
 
     def error(self, msg):
         if self.verbosity >= Verbosity.QUIET:
-            self.logline("ERROR: " + msg, red=True)
+            self.logline("ERROR: {}".format(msg), red=True)
 
     def skip(self, msg):
         if self.verbosity >= Verbosity.QUIET:
-            self.logline("SKIPPED:" + msg, yellow=True)
+            self.logline("SKIPPED: {}".format(msg), yellow=True)
 
     def logline(self, msg, **opts):
         self._reportedlines.append(msg)
-        self.tw.line("%s" % msg, **opts)
+        self.tw.line("{}".format(msg), **opts)
 
     def verbosity0(self, msg, **opts):
         if self.verbosity >= Verbosity.DEFAULT:
-            self.logline("%s" % msg, **opts)
+            self.logline("{}".format(msg), **opts)
 
     def verbosity1(self, msg, **opts):
         if self.verbosity >= Verbosity.INFO:
-            self.logline("%s" % msg, **opts)
+            self.logline("{}".format(msg), **opts)
 
     def verbosity2(self, msg, **opts):
         if self.verbosity >= Verbosity.DEBUG:
-            self.logline("%s" % msg, **opts)
+            self.logline("{}".format(msg), **opts)
 
     # def log(self, msg):
     #    print(msg, file=sys.stderr)
@@ -364,7 +367,7 @@ class Session:
         self.report = Report(self)
         self.make_emptydir(config.logdir)
         config.logdir.ensure(dir=1)
-        self.report.using("tox.ini: %s" % (self.config.toxinipath,))
+        self.report.using("tox.ini: {}".format(self.config.toxinipath))
         self._spec2pkg = {}
         self._name2venv = {}
         try:
@@ -386,7 +389,9 @@ class Session:
             self.report.error("unknown environment %r" % name)
             raise LookupError(name)
         elif envconfig.envdir == self.config.toxinidir:
-            self.report.error("venv %r in %s would delete project" % (name, envconfig.envdir))
+            self.report.error(
+                "venv {!r} in {} would delete project".format(name, envconfig.envdir)
+            )
             raise tox.exception.ConfigError("envdir must not equal toxinidir")
         venv = VirtualEnv(envconfig=envconfig, session=self)
         self._name2venv[name] = venv
@@ -420,7 +425,7 @@ class Session:
         for relpath in pathlist:
             src = srcdir.join(relpath)
             if not src.check():
-                self.report.error("missing source file: %s" % (src,))
+                self.report.error("missing source file: {}".format(src))
                 raise SystemExit(1)
             target = destdir.join(relpath)
             target.dirpath().ensure(dir=1)
@@ -483,9 +488,10 @@ class Session:
     def setupenv(self, venv):
         if venv.envconfig.missing_subs:
             venv.status = (
-                "unresolvable substitution(s): %s. "
-                "Environment variables are missing or defined recursively."
-                % (",".join(["'%s'" % m for m in venv.envconfig.missing_subs]))
+                "unresolvable substitution(s): {}. "
+                "Environment variables are missing or defined recursively.".format(
+                    ",".join(["'%s'" % m for m in venv.envconfig.missing_subs])
+                )
             )
             return
         if not venv.matching_platform():
@@ -507,9 +513,9 @@ class Session:
                 )
             except tox.exception.InvocationError as e:
                 status = (
-                    "Error creating virtualenv. Note that some special "
-                    "characters (e.g. ':' and unicode symbols) in paths are "
-                    "not supported by virtualenv. Error details: %r" % e
+                    "Error creating virtualenv. Note that some special characters (e.g. ':' and "
+                    "unicode symbols) in paths are not supported by virtualenv. Error details: "
+                    "{!r}".format(e)
                 )
             except tox.exception.InterpreterNotFound as e:
                 status = e
@@ -575,21 +581,23 @@ class Session:
             if not path:
                 path = self.config.sdistsrc
             path = self._resolve_pkg(path)
-            self.report.info("using package %r, skipping 'sdist' activity " % str(path))
+            self.report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
         else:
             try:
                 path = self._makesdist()
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
-                self.report.error("FAIL could not package project - v = %r" % v)
+                self.report.error("FAIL could not package project - v = {!r}".format(v))
                 return
             sdistfile = self.config.distshare.join(path.basename)
             if sdistfile != path:
-                self.report.info("copying new sdistfile to %r" % str(sdistfile))
+                self.report.info("copying new sdistfile to {!r}".format(str(sdistfile)))
                 try:
                     sdistfile.dirpath().ensure(dir=1)
                 except py.error.Error:
-                    self.report.warning("could not copy distfile to %s" % sdistfile.dirpath())
+                    self.report.warning(
+                        "could not copy distfile to {}".format(sdistfile.dirpath())
+                    )
                 else:
                     path.copy(sdistfile)
         return path
@@ -649,26 +657,26 @@ class Session:
         for venv in self.venvlist:
             status = venv.status
             if isinstance(status, tox.exception.InterpreterNotFound):
-                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
+                msg = "  {}: {}".format(venv.envconfig.envname, str(status))
                 if self.config.option.skip_missing_interpreters:
                     self.report.skip(msg)
                 else:
                     retcode = 1
                     self.report.error(msg)
             elif status == "platform mismatch":
-                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
+                msg = "  {}: {}".format(venv.envconfig.envname, str(status))
                 self.report.skip(msg)
             elif status and status == "ignored failed command":
-                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
+                msg = "  {}: {}".format(venv.envconfig.envname, str(status))
                 self.report.good(msg)
             elif status and status != "skipped tests":
-                msg = "  %s: %s" % (venv.envconfig.envname, str(status))
+                msg = "  {}: {}".format(venv.envconfig.envname, str(status))
                 self.report.error(msg)
                 retcode = 1
             else:
                 if not status:
                     status = "commands succeeded"
-                self.report.good("  %s: %s" % (venv.envconfig.envname, status))
+                self.report.good("  {}: {}".format(venv.envconfig.envname, status))
         if not retcode:
             self.report.good("  congratulations :)")
 
@@ -676,7 +684,7 @@ class Session:
         if path:
             path = py.path.local(path)
             path.write(self.resultlog.dumps_json())
-            self.report.line("wrote json report at: %s" % path)
+            self.report.line("wrote json report at: {}".format(path))
         return retcode
 
     def showconfig(self):
@@ -690,9 +698,9 @@ class Session:
         self.report.keyvalue("skipsdist:  ", self.config.skipsdist)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():
-            self.report.line("[testenv:%s]" % envconfig.envname, bold=True)
+            self.report.line("[testenv:{}]".format(envconfig.envname), bold=True)
             for attr in self.config._parser._testenv_attr:
-                self.report.line("  %-15s = %s" % (attr.name, getattr(envconfig, attr.name)))
+                self.report.line("  {:<15} = {}".format(attr.name, getattr(envconfig, attr.name)))
 
     def showenvs(self, all_envs=False, description=False):
         env_conf = self.config.envconfigs  # this contains all environments
@@ -743,7 +751,7 @@ class Session:
             return p
         if not p.dirpath().check(dir=1):
             raise tox.exception.MissingDirectory(p.dirpath())
-        self.report.info("determining %s" % p)
+        self.report.info("determining {}".format(p))
         candidates = p.dirpath().listdir(p.basename)
         if len(candidates) == 0:
             raise tox.exception.MissingDependency(pkgspec)
@@ -754,7 +762,7 @@ class Session:
                 if ver is not None:
                     items.append((ver, x))
                 else:
-                    self.report.warning("could not determine version of: %s" % str(x))
+                    self.report.warning("could not determine version of: {}".format(str(x)))
             items.sort()
             if not items:
                 raise tox.exception.MissingDependency(pkgspec)
