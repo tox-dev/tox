@@ -100,7 +100,6 @@ Current features
    install
    examples
    config
-   config-v2
    support
    changelog
    links
