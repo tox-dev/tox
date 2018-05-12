@@ -804,7 +804,7 @@ def test_ignore_outcome_failing_cmd(newmocksession):
     venv = mocksession.getenv("python")
     venv.test()
     assert venv.status == "ignored failed command"
-    mocksession.report.expect("warning", "*command failed but result from " "testenv is ignored*")
+    mocksession.report.expect("warning", "*command failed but result from testenv is ignored*")
 
 
 def test_tox_testenv_create(newmocksession):

@@ -95,7 +95,7 @@ def boolean(x):
 
 def suffix(x):
     if not (x[0:1] == "." and len(x) > 1):
-        raise ValidationError("Please enter a file suffix, " "e.g. '.rst' or '.txt'.")
+        raise ValidationError("Please enter a file suffix, e.g. '.rst' or '.txt'.")
     return x
 
 

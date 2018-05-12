@@ -359,14 +359,14 @@ def tox_addoption(parser):
         "--listenvs",
         action="store_true",
         dest="listenvs",
-        help="show list of test environments " "(with description if verbose)",
+        help="show list of test environments (with description if verbose)",
     )
     parser.add_argument(
         "-a",
         "--listenvs-all",
         action="store_true",
         dest="listenvs_all",
-        help="show list of all defined environments" "(with description if verbose)",
+        help="show list of all defined environments (with description if verbose)",
     )
     parser.add_argument(
         "-c",
@@ -396,13 +396,13 @@ def tox_addoption(parser):
         action="store",
         default=None,
         metavar="PATH",
-        help="use specified package for installation into venv, instead of " "creating an sdist.",
+        help="use specified package for installation into venv, instead of creating an sdist.",
     )
     parser.add_argument(
         "--develop",
         action="store_true",
         dest="develop",
-        help="install package in the venv using 'setup.py develop' via " "'pip -e .'",
+        help="install package in the venv using 'setup.py develop' via 'pip -e .'",
     )
     parser.add_argument(
         "-i",
@@ -681,7 +681,7 @@ def tox_addoption(parser):
         type="bool",
         default=False,
         postprocess=pip_pre,
-        help="If ``True``, adds ``--pre`` to the ``opts`` passed to " "the install command. ",
+        help="If ``True``, adds ``--pre`` to the ``opts`` passed to the install command. ",
     )
 
     def develop(testenv_config, value):
@@ -725,7 +725,7 @@ def tox_addoption(parser):
     parser.add_testenv_attribute(
         "extras",
         type="line-list",
-        help="list of extras to install with the source distribution or " "develop install",
+        help="list of extras to install with the source distribution or develop install",
     )
 
 
