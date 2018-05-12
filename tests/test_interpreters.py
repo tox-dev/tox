@@ -9,16 +9,9 @@ import pytest
 import tox
 from tox._pytestplugin import mark_dont_run_on_posix
 from tox.config import get_plugin_manager
-from tox.interpreters import (
-    ExecFailed,
-    InterpreterInfo,
-    Interpreters,
-    NoInterpreterInfo,
-    pyinfo,
-    run_and_get_interpreter_info,
-    sitepackagesdir,
-    tox_get_python_executable,
-)
+from tox.interpreters import ExecFailed, InterpreterInfo, Interpreters, NoInterpreterInfo
+from tox.interpreters import pyinfo, run_and_get_interpreter_info, sitepackagesdir
+from tox.interpreters import tox_get_python_executable
 
 
 @pytest.fixture(name="interpreters")
@@ -68,10 +61,10 @@ def test_tox_get_python_executable():
     p = tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
     for major, minor in tox.PYTHON.CPYTHON_VERSION_TUPLES:
-        name = "python%s.%s" % (major, minor)
+        name = "python{}.{}".format(major, minor)
         if tox.INFO.IS_WIN:
-            pydir = "python%s%s" % (major, minor)
-            x = py.path.local(r"c:\%s" % pydir)
+            pydir = "python{}{}".format(major, minor)
+            x = py.path.local(r"c:\{}".format(pydir))
             print(x)
             if not x.check():
                 continue
@@ -85,7 +78,7 @@ def test_tox_get_python_executable():
         stdout, stderr = popen.communicate()
         assert not stdout or not stderr
         all_output = stderr.decode("ascii") + stdout.decode("ascii")
-        assert "%s.%s" % (major, minor) in all_output
+        assert "{}.{}".format(major, minor) in all_output
 
 
 def test_find_executable_extra(monkeypatch):

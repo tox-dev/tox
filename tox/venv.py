@@ -23,9 +23,9 @@ class CreationConfig:
 
     def writeconfig(self, path):
         lines = [
-            "%s %s" % (self.md5, self.python),
+            "{} {}".format(self.md5, self.python),
             "{} {:d} {:d} {:d}".format(
-                self.version, self.sitepackages, self.usedevelop, self.alwayscopy
+                self.version, self.sitepackages, self.usedevelop, self.alwayscopyf
             ),
         ]
         for dep in self.deps:
@@ -363,7 +363,7 @@ class VirtualEnv(object):
             for i, argv in enumerate(self.envconfig.commands):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
-                message = "commands[%s] | %s" % (i, " ".join([str(x) for x in argv]))
+                message = "commands[{}] | {}".format(i, " ".join([str(x) for x in argv]))
                 action.setactivity("runtests", message)
                 # check to see if we need to ignore the return code
                 # if so, we need to alter the command line arguments
@@ -416,7 +416,7 @@ class VirtualEnv(object):
         env = self._getenv(testcommand=testcommand)
         bindir = str(self.envconfig.envbindir)
         env["PATH"] = p = os.pathsep.join([bindir, os.environ["PATH"]])
-        self.session.report.verbosity2("setting PATH=%s" % p)
+        self.session.report.verbosity2("setting PATH={}".format(p))
         return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
 
 

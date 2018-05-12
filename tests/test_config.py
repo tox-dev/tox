@@ -8,16 +8,9 @@ import pytest
 from pluggy import PluginManager
 
 import tox
-from tox.config import (
-    CommandParser,
-    DepOption,
-    SectionReader,
-    get_homedir,
-    get_version_info,
-    getcontextname,
-    is_section_substitution,
-    parseconfig,
-)
+from tox.config import CommandParser, DepOption, SectionReader, get_homedir
+from tox.config import get_version_info, getcontextname, is_section_substitution, parseconfig
+
 from tox.venv import VirtualEnv
 
 
@@ -41,7 +34,7 @@ class TestVenvConfig:
             [],
             """
             [tox]
-            toxworkdir = %s
+            toxworkdir = {}
             indexserver =
                 xyz = xyz_repo
             [testenv:py1]
@@ -50,8 +43,9 @@ class TestVenvConfig:
             deps=
                 world1
                 :xyz:http://hello/world
-        """
-            % (tmpdir,),
+        """.format(
+                tmpdir
+            ),
         )
         assert config.toxworkdir == tmpdir
         assert len(config.envconfigs) == 2
@@ -252,9 +246,10 @@ class TestConfigPackage:
         config = newconfig(
             """
             [tox]
-            toxworkdir=%s
-        """
-            % tmpdir
+            toxworkdir={}
+        """.format(
+                tmpdir
+            )
         )
         assert config.toxworkdir == tmpdir
 
@@ -1009,9 +1004,10 @@ class TestConfigTestEnv:
         config = newconfig(
             """
             [testenv]
-            basepython=%s
-        """
-            % bp
+            basepython={}
+        """.format(
+                bp
+            )
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1196,7 +1192,11 @@ class TestConfigTestEnv:
         assert (
             envconfig.install_command
             == [
-                "some_install", "--arg=%s/foo" % config.toxinidir, "python", "{opts}", "{packages}"
+                "some_install",
+                "--arg={}/foo".format(config.toxinidir),
+                "python",
+                "{opts}",
+                "{packages}",
             ]
         )
 
@@ -1655,7 +1655,7 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource)
         configs = conf.envconfigs
         for name, config in configs.items():
-            assert config.basepython == "python%s.%s" % (name[2], name[3])
+            assert config.basepython == "python{}.{}".format(name[2], name[3])
 
     @pytest.mark.issue188
     def test_factors_in_boolean(self, newconfig):
@@ -1829,7 +1829,7 @@ class TestGlobalOptions:
 
     def test_correct_basepython_chosen_from_default_factors(self, newconfig):
         envlist = list(tox.PYTHON.DEFAULT_FACTORS.keys())
-        config = newconfig([], "[tox]\nenvlist=%s" % ", ".join(envlist))
+        config = newconfig([], "[tox]\nenvlist={}".format(", ".join(envlist)))
         assert config.envlist == envlist
         for name in config.envlist:
             basepython = config.envconfigs[name].basepython
@@ -2253,7 +2253,7 @@ class TestIndexServer:
                 pypi    = http://pypi.org/simple
         """
         config = newconfig([], inisource)
-        expected = "file://%s/.pip/downloads/simple" % config.homedir
+        expected = "file://{}/.pip/downloads/simple".format(config.homedir)
         assert config.indexserver["default"].url == expected
         assert config.indexserver["local1"].url == config.indexserver["default"].url
 
@@ -2515,9 +2515,10 @@ class TestCmdInvocation:
             filedefs={
                 "tox.ini": """
             [tox]
-            toxworkdir=%s
-            """
-                % baddir
+            toxworkdir={}
+            """.format(
+                    baddir
+                )
             },
         )
         result = cmd("--workdir", gooddir, "--showconfig")

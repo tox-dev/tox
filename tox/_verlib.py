@@ -198,7 +198,7 @@ class NormalizedVersion(object):
         return s
 
     def __repr__(self):
-        return "%s('%s')" % (self.__class__.__name__, self)
+        return "{}('{}')".format(self.__class__.__name__, self)
 
     def _cannot_compare(self, other):
         raise TypeError(

@@ -131,11 +131,11 @@ class DepOption:
                 # in case of a short option, we remove the space
                 for option in tox.PIP.INSTALL_SHORT_OPTIONS_ARGUMENT:
                     if name.startswith(option):
-                        name = "%s%s" % (option, name[len(option):].strip())
+                        name = "{}{}".format(option, name[len(option):].strip())
                 # in case of a long option, we add an equal sign
                 for option in tox.PIP.INSTALL_LONG_OPTIONS_ARGUMENT:
                     if name.startswith(option + " "):
-                        name = "%s=%s" % (option, name[len(option):].strip())
+                        name = "{}={}".format(option, name[len(option):].strip())
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
         return deps
@@ -884,7 +884,7 @@ class parseini:
             toxversion = NormalizedVersion(tox.__version__)
             if toxversion < minversion:
                 raise tox.exception.MinVersionError(
-                    "tox version is %s, required is at least %s" % (toxversion, minversion)
+                    "tox version is {}, required is at least {}".format(toxversion, minversion)
                 )
         if config.option.workdir is None:
             config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
@@ -989,7 +989,7 @@ class parseini:
                 elif atype == "line-list":
                     res = reader.getlist(env_attr.name, sep="\n")
                 else:
-                    raise ValueError("unknown type %r" % (atype,))
+                    raise ValueError("unknown type {!r}".format(atype))
                 if env_attr.postprocess:
                     res = env_attr.postprocess(testenv_config=tc, value=res)
             except tox.exception.MissingSubstitution as e:
@@ -1107,7 +1107,7 @@ class SectionReader:
         if prefix is None:
             self.section_name = section_name
         else:
-            self.section_name = "%s:%s" % (prefix, section_name)
+            self.section_name = "{}:{}".format(prefix, section_name)
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
         self.factors = factors
@@ -1304,7 +1304,9 @@ class Replacer:
         if sub_type == "env":
             return self._replace_env(match)
         if sub_type is not None:
-            raise tox.exception.ConfigError("No support for the %s substitution type" % sub_type)
+            raise tox.exception.ConfigError(
+                "No support for the {} substitution type".format(sub_type)
+            )
         return self._replace_substitution(match)
 
     def _replace_env(self, match):
@@ -1379,8 +1381,9 @@ class _ArgvlistReader:
         else:
             if current_command:
                 raise tox.exception.ConfigError(
-                    "line-continuation ends nowhere while resolving for [%s] %s"
-                    % (reader.section_name, "commands")
+                    "line-continuation ends nowhere while resolving for [{}] {}".format(
+                        reader.section_name, "commands"
+                    )
                 )
         return commands
 

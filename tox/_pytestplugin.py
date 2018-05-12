@@ -133,7 +133,7 @@ class ReportExpectMock:
 
         def generic_report(*args, **_):
             self._calls.append((name,) + args)
-            print("%s" % (self._calls[-1],))
+            print("{}".format(self._calls[-1]))
 
         return generic_report
 

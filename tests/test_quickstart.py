@@ -3,14 +3,8 @@ import os
 import pytest
 
 import tox
-from tox._quickstart import (
-    ALTERNATIVE_CONFIG_NAME,
-    list_modificator,
-    main,
-    post_process_input,
-    prepare_content,
-    QUICKSTART_CONF,
-)
+from tox._quickstart import ALTERNATIVE_CONFIG_NAME, list_modificator, main, post_process_input
+from tox._quickstart import prepare_content, QUICKSTART_CONF
 
 ALL_PY_ENVS_AS_STRING = ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS)
 ALL_PY_ENVS_WO_LAST_AS_STRING = ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS[:-1])
@@ -33,13 +27,13 @@ class _answers:
         return "|".join(self._inputs)
 
     def __call__(self, prompt):
-        print("prompt: '%s'" % prompt)
+        print("prompt: '{}'".format(prompt))
         try:
             answer = self._inputs.pop(0)
-            print("user answer: '%s'" % answer)
+            print("user answer: '{}'".format(answer))
             return answer
         except IndexError:
-            pytest.fail("missing user answer for '%s'" % prompt)
+            pytest.fail("missing user answer for '{}'".format(prompt))
 
 
 class _cnf:
@@ -167,7 +161,7 @@ class _exp:
             _answers([2, "pytest", ""]),
             _exp(
                 "choose py27, current release Python and pytest with defaut deps",
-                ["py27, %s" % tox.PYTHON.CURRENT_RELEASE_ENV, "pytest", "pytest"],
+                ["py27, {}".format(tox.PYTHON.CURRENT_RELEASE_ENV), "pytest", "pytest"],
             ),
             _cnf(),
         ),
@@ -248,7 +242,7 @@ def test_quickstart(answers, cnf, exp, monkeypatch):
         answers.extend(cnf.names)
         cnf.create()
     main()
-    print("generated config at %s:\n%s\n" % (cnf.path_to_generated, cnf.generated_content))
+    print("generated config at {}:\n{}\n".format(cnf.path_to_generated, cnf.generated_content))
     check_basic_sanity(cnf.generated_content, SIGNS_OF_SANITY)
     assert cnf.generated_content == exp.content
     if cnf.exists:
@@ -258,4 +252,4 @@ def test_quickstart(answers, cnf, exp, monkeypatch):
 def check_basic_sanity(content, signs):
     for sign in signs:
         if sign not in content:
-            pytest.fail("%s not in\n%s" % (sign, content))
+            pytest.fail("{} not in\n{}".format(sign, content))

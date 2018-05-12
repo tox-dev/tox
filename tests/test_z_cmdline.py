@@ -114,9 +114,10 @@ class TestSession:
                 "tests": {"test_hello.py": "def test_hello(): pass"},
                 "tox.ini": """
             [tox]
-            distshare=%s
-            """
-                % distshare,
+            distshare={}
+            """.format(
+                    distshare
+                ),
             },
         )
         config = parseconfig([])
@@ -160,9 +161,9 @@ class TestSession:
         assert not env2.status
         session._summary()
         out, err = capfd.readouterr()
-        exp = "%s: FAIL XYZ" % env1.envconfig.envname
+        exp = "{}: FAIL XYZ".format(env1.envconfig.envname)
         assert exp in out
-        exp = "%s: commands succeeded" % env2.envconfig.envname
+        exp = "{}: commands succeeded".format(env2.envconfig.envname)
         assert exp in out
 
     def test_getvenv(self, initproj):
@@ -878,10 +879,11 @@ def test_separate_sdist(cmd, initproj, tmpdir):
         filedefs={
             "tox.ini": """
             [tox]
-            distshare=%s
-            sdistsrc={distshare}/pkg123-0.7.zip
-        """
-            % distshare
+            distshare={}
+            sdistsrc={{distshare}}/pkg123-0.7.zip
+        """.format(
+                distshare
+            )
         },
     )
     result = cmd("--sdistonly")
@@ -900,10 +902,11 @@ def test_sdist_latest(tmpdir, newconfig):
         [],
         """
             [tox]
-            distshare=%s
-            sdistsrc={distshare}/pkg123-*
-    """
-        % distshare,
+            distshare={}
+            sdistsrc={{distshare}}/pkg123-*
+    """.format(
+            distshare
+        ),
     )
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
@@ -914,7 +917,7 @@ def test_sdist_latest(tmpdir, newconfig):
 
 def test_installpkg(tmpdir, newconfig):
     p = tmpdir.ensure("pkg123-1.0.zip")
-    config = newconfig(["--installpkg=%s" % p], "")
+    config = newconfig(["--installpkg={}".format(p)], "")
     session = Session(config)
     sdist_path = session.get_installpkg_path()
     assert sdist_path == p
@@ -1060,7 +1063,9 @@ def test_exit_code(initproj, cmd, exit_code, mocker):
     import tox.exception
 
     mocker.spy(tox.exception, "exit_code_str")
-    tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit(%d)'" % exit_code
+    tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit({:d})'".format(
+        exit_code
+    )
     initproj("foo", filedefs={"tox.ini": tox_ini_content})
     cmd()
     if exit_code:
@@ -1072,7 +1077,7 @@ def test_exit_code(initproj, cmd, exit_code, mocker):
         assert call_error_name == "InvocationError"
         # quotes are removed in result.out
         # do not include "python" as it is changed to python.EXE by appveyor
-        expected_command_arg = " -c import sys; sys.exit(%d)" % exit_code
+        expected_command_arg = " -c import sys; sys.exit({:d})".format(exit_code)
         assert expected_command_arg in call_command
         assert call_exit_code == exit_code
     else:

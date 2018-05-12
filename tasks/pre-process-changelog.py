@@ -27,11 +27,11 @@ def include_draft_newsfragments():
 
 def manipulate_the_news():
     home = "https://github.com"
-    issue = "%s/issue" % home
+    issue = "{}/issue".format(home)
     fragmentsPath = Path(__file__).parents[1] / "tox" / "changelog"
     for pattern, replacement in (
-        (r"[^`]@([^,\s]+)", r"`@\1 <%s/\1>`_" % home),
-        (r"[^`]#([\d]+)", r"`#pr\1 <%s/\1>`_" % issue),
+        (r"[^`]@([^,\s]+)", r"`@\1 <{}/\1>`_".format(home)),
+        (r"[^`]#([\d]+)", r"`#pr\1 <{}/\1>`_".format(issue)),
     ):
         for path in fragmentsPath.glob("*.rst"):
             path.write_text(re.sub(pattern, replacement, path.read_text()))

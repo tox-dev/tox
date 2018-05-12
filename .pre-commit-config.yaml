@@ -1,4 +1,10 @@
 repos:
+-   repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+    - id: black
+      args: [--line-length=99, --safe]
+      python_version: python3.6
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v1.2.3
     hooks:
@@ -7,12 +13,6 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
     -   id: flake8
--   repo: https://github.com/ambv/black
-    rev: stable
-    hooks:
-    - id: black
-      args: [--line-length=99, --safe]
-      python_version: python3.6
 -   repo: https://github.com/asottile/pyupgrade
     rev: v1.2.0
     hooks:

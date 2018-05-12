@@ -148,7 +148,7 @@ else:
         m = re.match(r"python(\d)\.(\d)", name)
         if m:
             # The standard names are in predictable places.
-            actual = r"c:\python%s%s\python.exe" % m.groups()
+            actual = r"c:\python{}{}\python.exe".format(m.groups())
         if not actual:
             actual = win32map.get(name, None)
         if actual:
@@ -164,7 +164,7 @@ else:
     win32map = {"python": sys.executable, "jython": r"c:\jython2.5.1\jython.bat"}
 
     def locate_via_py(v_maj, v_min):
-        ver = "-%s.%s" % (v_maj, v_min)
+        ver = "-{}.{}".format(v_maj, v_min)
         script = "import sys; print(sys.executable)"
         py_exe = distutils.spawn.find_executable("py")
         if py_exe:

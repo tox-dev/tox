@@ -116,7 +116,7 @@ def list_modificator(answer, existing=None):
 
 def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=None):
     while True:
-        prompt = "> %s [%s]: " % (text, default) if default else "> %s: " % text
+        prompt = "> {} [{}]: ".format(text, default) if default else "> {}: ".format(text)
         answer = six.moves.input(prompt)
         if default and not answer:
             answer = default
@@ -150,7 +150,7 @@ def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=Non
 
 def ask_user(map_):
     """modify *map_* in place by getting info from the user."""
-    print("Welcome to the tox %s quickstart utility." % tox.__version__)
+    print("Welcome to the tox {} quickstart utility.".format(tox.__version__))
     print(
         "This utility will ask you a few questions and then generate a simple configuration "
         "file to help get you started using tox.\n"
@@ -160,9 +160,9 @@ def ask_user(map_):
     print(
         textwrap.dedent(
             """What Python versions do you want to test against?
-            [1] %s
-            [2] py27, %s
-            [3] (All versions) %s
+            [1] {}
+            [2] py27, {}
+            [3] (All versions) {}
             [4] Choose each one-by-one"""
         ).format(
             tox.PYTHON.CURRENT_RELEASE_ENV,
@@ -214,7 +214,7 @@ def ask_user(map_):
     print("What extra dependencies do your tests have?")
     map_["deps"] = get_default_deps(map_["commands"])
     if map_["deps"]:
-        print("default dependencies are: %s" % map_["deps"])
+        print("default dependencies are: {}".format(map_["deps"]))
     do_prompt(
         map_,
         "deps",

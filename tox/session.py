@@ -306,7 +306,7 @@ class Reporter(object):
 
     def using(self, msg):
         if self.verbosity >= 1:
-            self.logline("using %s" % (msg,), bold=True)
+            self.logline("using {}".format(msg), bold=True)
 
     def keyboard_interrupt(self):
         self.error("KEYBOARDINTERRUPT")
@@ -386,7 +386,7 @@ class Session:
     def _makevenv(self, name):
         envconfig = self.config.envconfigs.get(name, None)
         if envconfig is None:
-            self.report.error("unknown environment %r" % name)
+            self.report.error("unknown environment {!r}".format(name))
             raise LookupError(name)
         elif envconfig.envdir == self.config.toxinidir:
             self.report.error(
@@ -410,7 +410,7 @@ class Session:
         return action
 
     def runcommand(self):
-        self.report.using("tox-%s from %s" % (tox.__version__, tox.__file__))
+        self.report.using("tox-{} from {}".format(tox.__version__, tox.__file__))
         verbosity = (self.report.verbosity > Verbosity.DEFAULT)
         if self.config.option.showconfig:
             self.showconfig()
@@ -436,13 +436,13 @@ class Session:
         if not setup.check():
             self.report.error(
                 "No setup.py file found. The expected location is:\n"
-                "  %s\n"
+                "  {}\n"
                 "You can\n"
                 "  1. Create one:\n"
                 "     https://packaging.python.org/tutorials/distributing-packages/#setup-py\n"
                 "  2. Configure tox to avoid running sdist:\n"
                 "     http://tox.readthedocs.io/en/latest/example/general.html"
-                "#avoiding-expensive-sdist" % setup
+                "#avoiding-expensive-sdist".format(setup)
             )
             raise SystemExit(1)
         action = self.newaction(None, "packaging")
@@ -481,7 +481,7 @@ class Session:
 
     def make_emptydir(self, path):
         if path.check():
-            self.report.info("  removing %s" % path)
+            self.report.info("  removing {}".format(path))
             shutil.rmtree(str(path), ignore_errors=True)
             path.ensure(dir=1)
 
@@ -490,7 +490,7 @@ class Session:
             venv.status = (
                 "unresolvable substitution(s): {}. "
                 "Environment variables are missing or defined recursively.".format(
-                    ",".join(["'%s'" % m for m in venv.envconfig.missing_subs])
+                    ",".join(["'{}'".format(m) for m in venv.envconfig.missing_subs])
                 )
             )
             return
@@ -509,7 +509,7 @@ class Session:
                     raise
                 status = (
                     "Error creating virtualenv. Note that spaces in paths are "
-                    "not supported by virtualenv. Error details: %r" % e
+                    "not supported by virtualenv. Error details: {!r}".format(e)
                 )
             except tox.exception.InvocationError as e:
                 status = (
@@ -728,7 +728,7 @@ class Session:
                 report_env(e)
 
     def info_versions(self):
-        versions = ["tox-%s" % tox.__version__]
+        versions = ["tox-{}".format(tox.__version__)]
         proc = subprocess.Popen(
             (sys.executable, "-m", "virtualenv", "--version"), stdout=subprocess.PIPE
         )

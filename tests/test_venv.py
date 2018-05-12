@@ -6,14 +6,8 @@ import pytest
 
 import tox
 from tox.interpreters import NoInterpreterInfo
-from tox.venv import (
-    CreationConfig,
-    VirtualEnv,
-    getdigest,
-    prepend_shebang_interpreter,
-    tox_testenv_create,
-    tox_testenv_install_deps,
-)
+from tox.venv import CreationConfig, VirtualEnv, getdigest, prepend_shebang_interpreter
+from tox.venv import tox_testenv_create, tox_testenv_install_deps
 
 
 def test_getdigest(tmpdir):
@@ -25,9 +19,10 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
         [],
         """
         [testenv:python]
-        basepython=%s
-    """
-        % sys.executable,
+        basepython={}
+    """.format(
+            sys.executable
+        ),
     )
     venv = VirtualEnv(config.envconfigs["python"], session=mocksession)
     interp = venv.getsupportedinterpreter()
@@ -292,7 +287,7 @@ def test_develop_extras(newmocksession, tmpdir):
     pcalls[:] = []
 
     venv.developpkg(tmpdir, action=action)
-    expected = "%s[testing,development]" % tmpdir.strpath
+    expected = "{}[testing,development]".format(tmpdir.strpath)
     assert expected in pcalls[-1].args
 
 

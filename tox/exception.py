@@ -34,7 +34,7 @@ def exit_code_str(exception_name, command, exit_code):
 class Error(Exception):
 
     def __str__(self):
-        return "%s: %s" % (self.__class__.__name__, self.args[0])
+        return "{}: {}".format(self.__class__.__name__, self.args[0])
 
 
 class MissingSubstitution(Error):
