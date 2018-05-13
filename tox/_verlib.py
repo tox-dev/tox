@@ -40,9 +40,10 @@ class HugeMajorVersionNumError(IrrationalVersionError):
 #                                                              |
 #   'dev' < 'f' ----------------------------------------------/
 # Other letters would do, but 'f' for 'final' is kind of nice.
-FINAL_MARKER = ('f',)
+FINAL_MARKER = ("f",)
 
-VERSION_RE = re.compile(r'''
+VERSION_RE = re.compile(
+    r"""
     ^
     (?P<version>\d+\.\d+)          # minimum 'N.N'
     (?P<extraversion>(?:\.\d+)*)   # any number of extra '.N' segments
@@ -52,7 +53,9 @@ VERSION_RE = re.compile(r'''
         (?P<prerelversion>\d+(?:\.\d+)*)
     )?
     (?P<postdev>(\.post(?P<post>\d+))?(\.dev(?P<dev>\d+))?)?
-    $''', re.VERBOSE)
+    $""",
+    re.VERBOSE,
+)
 
 
 class NormalizedVersion(object):
@@ -94,8 +97,7 @@ class NormalizedVersion(object):
         self._parse(s, error_on_huge_major_num)
 
     @classmethod
-    def from_parts(cls, version, prerelease=FINAL_MARKER,
-                   devpost=FINAL_MARKER):
+    def from_parts(cls, version, prerelease=FINAL_MARKER, devpost=FINAL_MARKER):
         return cls(cls.parts_to_str((version, prerelease, devpost)))
 
     def _parse(self, s, error_on_huge_major_num=True):
@@ -108,44 +110,44 @@ class NormalizedVersion(object):
         parts = []
 
         # main version
-        block = self._parse_numdots(groups['version'], s, False, 2)
-        extraversion = groups.get('extraversion')
-        if extraversion not in ('', None):
+        block = self._parse_numdots(groups["version"], s, False, 2)
+        extraversion = groups.get("extraversion")
+        if extraversion not in ("", None):
             block += self._parse_numdots(extraversion[1:], s)
         parts.append(tuple(block))
 
         # prerelease
-        prerel = groups.get('prerel')
+        prerel = groups.get("prerel")
         if prerel is not None:
             block = [prerel]
-            block += self._parse_numdots(groups.get('prerelversion'), s,
-                                         pad_zeros_length=1)
+            block += self._parse_numdots(groups.get("prerelversion"), s, pad_zeros_length=1)
             parts.append(tuple(block))
         else:
             parts.append(FINAL_MARKER)
 
         # postdev
-        if groups.get('postdev'):
-            post = groups.get('post')
-            dev = groups.get('dev')
+        if groups.get("postdev"):
+            post = groups.get("post")
+            dev = groups.get("dev")
             postdev = []
             if post is not None:
-                postdev.extend([FINAL_MARKER[0], 'post', int(post)])
+                postdev.extend([FINAL_MARKER[0], "post", int(post)])
                 if dev is None:
                     postdev.append(FINAL_MARKER[0])
             if dev is not None:
-                postdev.extend(['dev', int(dev)])
+                postdev.extend(["dev", int(dev)])
             parts.append(tuple(postdev))
         else:
             parts.append(FINAL_MARKER)
         self.parts = tuple(parts)
         if error_on_huge_major_num and self.parts[0][0] > 1980:
             raise HugeMajorVersionNumError(
-                "huge major version number, %r, "
-                "which might cause future problems: %r" % (self.parts[0][0], s))
+                "huge major version number, {!r}, which might cause future problems: {!r}".format(
+                    self.parts[0][0], s
+                )
+            )
 
-    def _parse_numdots(self, s, full_ver_str, drop_trailing_zeros=True,
-                       pad_zeros_length=0):
+    def _parse_numdots(self, s, full_ver_str, drop_trailing_zeros=True, pad_zeros_length=0):
         """Parse 'N.N.N' sequences, return a list of ints.
 
         @param s {str} 'N.N.N..." sequence to be parsed
@@ -158,10 +160,12 @@ class NormalizedVersion(object):
         """
         nums = []
         for n in s.split("."):
-            if len(n) > 1 and n[0] == '0':
+            if len(n) > 1 and n[0] == "0":
                 raise IrrationalVersionError(
-                    "cannot have leading zero in "
-                    "version number segment: '%s' in %r" % (n, full_ver_str))
+                    "cannot have leading zero in version number segment: '{}' in {!r}".format(
+                        n, full_ver_str
+                    )
+                )
             nums.append(int(n))
         if drop_trailing_zeros:
             while nums and nums[-1] == 0:
@@ -178,27 +182,28 @@ class NormalizedVersion(object):
         """Transform a version expressed in tuple into its string representation."""
         # FIXME XXX This doesn't check for invalid tuples
         main, prerel, postdev = parts
-        s = '.'.join(str(v) for v in main)
+        s = ".".join(str(v) for v in main)
         if prerel is not FINAL_MARKER:
             s += prerel[0]
-            s += '.'.join(str(v) for v in prerel[1:])
+            s += ".".join(str(v) for v in prerel[1:])
         if postdev and postdev is not FINAL_MARKER:
-            if postdev[0] == 'f':
+            if postdev[0] == "f":
                 postdev = postdev[1:]
             i = 0
             while i < len(postdev):
                 if i % 2 == 0:
-                    s += '.'
+                    s += "."
                 s += str(postdev[i])
                 i += 1
         return s
 
     def __repr__(self):
-        return "%s('%s')" % (self.__class__.__name__, self)
+        return "{}('{}')".format(self.__class__.__name__, self)
 
     def _cannot_compare(self, other):
-        raise TypeError("cannot compare %s and %s"
-                        % (type(self).__name__, type(other).__name__))
+        raise TypeError(
+            "cannot compare {} and {}".format(type(self).__name__, type(other).__name__)
+        )
 
     def __eq__(self, other):
         if not isinstance(other, NormalizedVersion):

@@ -10,6 +10,7 @@ import tox
 
 
 class Interpreters:
+
     def __init__(self, hook):
         self.name2executable = {}
         self.executable2info = {}
@@ -45,11 +46,15 @@ class Interpreters:
             return ""
         envdir = str(envdir)
         try:
-            res = exec_on_interpreter(info.executable,
-                                      [inspect.getsource(sitepackagesdir),
-                                       "print(sitepackagesdir(%r))" % envdir])
+            res = exec_on_interpreter(
+                info.executable,
+                [
+                    inspect.getsource(sitepackagesdir),
+                    "print(sitepackagesdir({!r}))".format(envdir),
+                ],
+            )
         except ExecFailed as e:
-            print("execution failed: %s -- %s" % (e.out, e.err))
+            print("execution failed: {} -- {}".format(e.out, e.err))
             return ""
         else:
             return res["dir"]
@@ -58,11 +63,9 @@ class Interpreters:
 def run_and_get_interpreter_info(name, executable):
     assert executable
     try:
-        result = exec_on_interpreter(executable, [inspect.getsource(pyinfo),
-                                                  "print(pyinfo())"])
+        result = exec_on_interpreter(executable, [inspect.getsource(pyinfo), "print(pyinfo())"])
     except ExecFailed as e:
-        return NoInterpreterInfo(name, executable=e.executable,
-                                 out=e.out, err=e.err)
+        return NoInterpreterInfo(name, executable=e.executable, out=e.out, err=e.err)
     else:
         return InterpreterInfo(name, executable, **result)
 
@@ -71,6 +74,7 @@ def exec_on_interpreter(executable, source):
     if isinstance(source, list):
         source = "\n".join(source)
     from subprocess import Popen, PIPE
+
     args = [str(executable)]
     popen = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     popen.stdin.write(source.encode("utf8"))
@@ -80,12 +84,12 @@ def exec_on_interpreter(executable, source):
     try:
         result = eval(out.strip())
     except Exception:
-        raise ExecFailed(executable, source, out,
-                         "could not decode %r" % out)
+        raise ExecFailed(executable, source, out, "could not decode {!r}".format(out))
     return result
 
 
 class ExecFailed(Exception):
+
     def __init__(self, executable, source, out, err):
         self.executable = executable
         self.source = source
@@ -104,15 +108,13 @@ class InterpreterInfo:
         self.sysplatform = sysplatform
 
     def __str__(self):
-        return "<executable at %s, version_info %s>" % (
-            self.executable, self.version_info)
+        return "<executable at {}, version_info {}>".format(self.executable, self.version_info)
 
 
 class NoInterpreterInfo:
     runnable = False
 
-    def __init__(self, name, executable=None,
-                 out=None, err="not found"):
+    def __init__(self, name, executable=None, out=None, err="not found"):
         self.name = name
         self.executable = executable
         self.version_info = None
@@ -121,17 +123,20 @@ class NoInterpreterInfo:
 
     def __str__(self):
         if self.executable:
-            return "<executable at %s, not runnable>" % self.executable
+            return "<executable at {}, not runnable>".format(self.executable)
         else:
-            return "<executable not found for: %s>" % self.name
+            return "<executable not found for: {}>".format(self.name)
 
 
 if not tox.INFO.IS_WIN:
+
     @tox.hookimpl
     def tox_get_python_executable(envconfig):
         return py.path.local.sysfind(envconfig.basepython)
 
+
 else:
+
     @tox.hookimpl
     def tox_get_python_executable(envconfig):
         name = envconfig.basepython
@@ -143,7 +148,7 @@ else:
         m = re.match(r"python(\d)\.(\d)", name)
         if m:
             # The standard names are in predictable places.
-            actual = r"c:\python%s%s\python.exe" % m.groups()
+            actual = r"c:\python{}{}\python.exe".format(*m.groups())
         if not actual:
             actual = win32map.get(name, None)
         if actual:
@@ -156,31 +161,28 @@ else:
             return locate_via_py(*m.groups())
 
     # Exceptions to the usual windows mapping
-    win32map = {
-        'python': sys.executable,
-        'jython': r"c:\jython2.5.1\jython.bat",
-    }
+    win32map = {"python": sys.executable, "jython": r"c:\jython2.5.1\jython.bat"}
 
     def locate_via_py(v_maj, v_min):
-        ver = "-%s.%s" % (v_maj, v_min)
+        ver = "-{}.{}".format(v_maj, v_min)
         script = "import sys; print(sys.executable)"
-        py_exe = distutils.spawn.find_executable('py')
+        py_exe = distutils.spawn.find_executable("py")
         if py_exe:
             proc = subprocess.Popen(
-                (py_exe, ver, '-c', script),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+                (py_exe, ver, "-c", script), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             out, _ = proc.communicate()
             if not proc.returncode:
-                return out.decode('UTF-8').strip()
+                return out.decode("UTF-8").strip()
 
 
 def pyinfo():
     import sys
-    return {"version_info": tuple(sys.version_info),
-            "sysplatform": sys.platform}
+
+    return {"version_info": tuple(sys.version_info), "sysplatform": sys.platform}
 
 
 def sitepackagesdir(envdir):
     import distutils.sysconfig
+
     return {"dir": distutils.sysconfig.get_python_lib(prefix=envdir)}
