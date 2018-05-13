@@ -1,13 +1,13 @@
 from __future__ import print_function, unicode_literals
 
-import time
-
 import os
+import textwrap
+import time
+from fnmatch import fnmatch
+
 import py
 import pytest
 import six
-import textwrap
-from fnmatch import fnmatch
 
 import tox
 from tox.config import parseconfig

@@ -387,11 +387,8 @@ class VirtualEnv(object):
                     )
                 except tox.exception.InvocationError as err:
                     if self.envconfig.ignore_outcome:
-                        self.session.report.warning(
-                            "command failed but result from testenv is ignored\ncmd: {}".format(
-                                str(err)
-                            )
-                        )
+                        msg = "command failed but result from testenv is ignored\ncmd:"
+                        self.session.report.warning("{} {}".format(msg, err))
                         self.status = "ignored failed command"
                         continue  # keep processing commands
 

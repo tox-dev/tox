@@ -8,9 +8,16 @@ import pytest
 from pluggy import PluginManager
 
 import tox
-from tox.config import CommandParser, DepOption, SectionReader, get_homedir
-from tox.config import get_version_info, getcontextname, is_section_substitution, parseconfig
-
+from tox.config import (
+    CommandParser,
+    DepOption,
+    SectionReader,
+    get_homedir,
+    get_version_info,
+    getcontextname,
+    is_section_substitution,
+    parseconfig,
+)
 from tox.venv import VirtualEnv
 
 
@@ -106,10 +113,8 @@ class TestVenvConfig:
             ["--force-dep=dep1==1.5", "--force-dep=dep2==2.1", "--force-dep=dep3==3.0"]
         )
         assert config.option.force_dep == ["dep1==1.5", "dep2==2.1", "dep3==3.0"]
-        assert (
-            [str(x) for x in config.envconfigs["python"].deps]
-            == ["dep1==1.5", "dep2==2.1", "dep3==3.0", "dep4==4.0"]
-        )
+        expected_deps = ["dep1==1.5", "dep2==2.1", "dep3==3.0", "dep4==4.0"]
+        assert expected_deps == [str(x) for x in config.envconfigs["python"].deps]
 
     def test_force_dep_with_url(self, initproj):
         initproj(
@@ -127,10 +132,8 @@ class TestVenvConfig:
         )
         config = parseconfig(["--force-dep=dep1==1.5"])
         assert config.option.force_dep == ["dep1==1.5"]
-        assert (
-            [str(x) for x in config.envconfigs["python"].deps]
-            == ["dep1==1.5", "https://pypi.org/xyz/pkg1.tar.gz"]
-        )
+        expected_deps = ["dep1==1.5", "https://pypi.org/xyz/pkg1.tar.gz"]
+        assert [str(x) for x in config.envconfigs["python"].deps] == expected_deps
 
     def test_process_deps(self, newconfig):
         config = newconfig(
@@ -146,17 +149,15 @@ class TestVenvConfig:
                 --help dep2
         """,
         )  # note that those last two are invalid
-        assert (
-            [str(x) for x in config.envconfigs["python"].deps]
-            == [
-                "-rrequirements.txt",
-                "--index-url=https://pypi.org/simple",
-                "-fhttps://pypi.org/packages",
-                "--global-option=foo",
-                "-v dep1",
-                "--help dep2",
-            ]
-        )
+        expected_deps = [
+            "-rrequirements.txt",
+            "--index-url=https://pypi.org/simple",
+            "-fhttps://pypi.org/packages",
+            "--global-option=foo",
+            "-v dep1",
+            "--help dep2",
+        ]
+        assert [str(x) for x in config.envconfigs["python"].deps] == expected_deps
 
     def test_is_same_dep(self):
         """
@@ -348,16 +349,14 @@ class TestIniParserAgainstCommandsKey:
         )
         reader = SectionReader("testenv", config._cfg)
         x = reader.getargvlist("commands")
-        assert (
-            x
-            == [
-                "cmd1 param11 param12".split(),
-                "cmd2 param21 param22".split(),
-                "cmd1 param11 param12".split(),
-                "cmd2 param21 param22".split(),
-                ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"],
-            ]
-        )
+        expected_deps = [
+            "cmd1 param11 param12".split(),
+            "cmd2 param21 param22".split(),
+            "cmd1 param11 param12".split(),
+            "cmd2 param21 param22".split(),
+            ["echo", "cmd", "1", "2", "3", "4", "cmd", "2"],
+        ]
+        assert x == expected_deps
 
     def test_command_substitution_from_other_section_posargs(self, newconfig):
         """Ensure subsitition from other section with posargs succeeds"""
@@ -705,14 +704,10 @@ class TestIniParser:
         reader.addsubstitutions(["foo", "bar"])
         assert reader.getargvlist("key1") == []
         x = reader.getargvlist("key2")
-        assert (
-            x
-            == [
-                ["cmd1", "--foo-args=foo bar"],
-                ["cmd2", "-f", "foo bar"],
-                ["cmd3", "-f", "foo", "bar"],
-            ]
-        )
+        expected_deps = [
+            ["cmd1", "--foo-args=foo bar"], ["cmd2", "-f", "foo bar"], ["cmd3", "-f", "foo", "bar"]
+        ]
+        assert x == expected_deps
 
     def test_argvlist_posargs_with_quotes(self, newconfig):
         config = newconfig(
@@ -1189,16 +1184,14 @@ class TestConfigTestEnv:
         """
         )
         envconfig = config.envconfigs["python"]
-        assert (
-            envconfig.install_command
-            == [
-                "some_install",
-                "--arg={}/foo".format(config.toxinidir),
-                "python",
-                "{opts}",
-                "{packages}",
-            ]
-        )
+        expected_deps = [
+            "some_install",
+            "--arg={}/foo".format(config.toxinidir),
+            "python",
+            "{opts}",
+            "{packages}",
+        ]
+        assert envconfig.install_command == expected_deps
 
     def test_pip_pre(self, newconfig):
         config = newconfig(
@@ -1603,15 +1596,11 @@ class TestConfigTestEnv:
             return [dep.name for dep in configs[env].deps]
 
         assert get_deps("a-x") == ["dep-a-or-b", "dep-a-and-x", "dep-a-or-!x"]
-        assert (
-            get_deps("a-y")
-            == ["dep-a-or-b", "dep-ab-and-y", "dep-a-and-!x", "dep-a-or-!x", "dep-!a-or-!x"]
-        )
+        expected = ["dep-a-or-b", "dep-ab-and-y", "dep-a-and-!x", "dep-a-or-!x", "dep-!a-or-!x"]
+        assert get_deps("a-y") == expected
         assert get_deps("b-x") == ["dep-a-or-b", "dep-!a-or-!x"]
-        assert (
-            get_deps("b-y")
-            == ["dep-a-or-b", "dep-ab-and-y", "dep-a-or-!x", "dep-!a-and-!x", "dep-!a-or-!x"]
-        )
+        expected = ["dep-a-or-b", "dep-ab-and-y", "dep-a-or-!x", "dep-!a-and-!x", "dep-!a-or-!x"]
+        assert get_deps("b-y") == expected
 
     def test_envconfigs_based_on_factors(self, newconfig):
         inisource = """
@@ -2413,17 +2402,15 @@ class TestCmdInvocation:
             },
         )
         result = cmd("-lv")
-        assert (
-            result.outlines[2:]
-            == [
-                "default environments:",
-                "py36 -> run pytest on Python 3.6",
-                "py27 -> run pytest on Python 2.7",
-                "py34 -> run pytest on Python 3.4",
-                "pypy -> publish to pypy",
-                "docs -> let me overwrite that",
-            ]
-        )
+        expected = [
+            "default environments:",
+            "py36 -> run pytest on Python 3.6",
+            "py27 -> run pytest on Python 2.7",
+            "py34 -> run pytest on Python 3.4",
+            "pypy -> publish to pypy",
+            "docs -> let me overwrite that",
+        ]
+        assert result.outlines[2:] == expected
 
     def test_listenvs_all(self, cmd, initproj):
         initproj(
@@ -2442,7 +2429,8 @@ class TestCmdInvocation:
             },
         )
         result = cmd("-a")
-        assert result.outlines == ["py36", "py27", "py34", "pypy", "docs", "notincluded"]
+        expected = ["py36", "py27", "py34", "pypy", "docs", "notincluded"]
+        assert result.outlines == expected
 
     def test_listenvs_all_verbose_description(self, cmd, initproj):
         initproj(
@@ -2659,28 +2647,17 @@ class TestCommandParser:
         )
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert parsed == ["cmd2", " ", "{posargs:{item2}\n                        other}"]
+        expected = ["cmd2", " ", "{posargs:{item2}\n                        other}"]
+        assert parsed == expected
 
     def test_command_parsing_for_issue_10(self):
         cmd = "nosetests -v -a !deferred --with-doctest []"
         p = CommandParser(cmd)
         parsed = list(p.words())
-        assert (
-            parsed
-            == [
-                "nosetests",
-                " ",
-                "-v",
-                " ",
-                "-a",
-                " ",
-                "!deferred",
-                " ",
-                "--with-doctest",
-                " ",
-                "[]",
-            ]
-        )
+        expected = [
+            "nosetests", " ", "-v", " ", "-a", " ", "!deferred", " ", "--with-doctest", " ", "[]"
+        ]
+        assert parsed == expected
 
     # @mark_dont_run_on_windows
     def test_commands_with_backslash(self, newconfig):

@@ -59,7 +59,7 @@ def show_help(config):
     tw.write(config._parser._format_help())
     tw.line()
     tw.line("Environment variables", bold=True)
-    tw.line("TOXENV: comma separated list of environments " "(overridable by '-e')")
+    tw.line("TOXENV: comma separated list of environments (overridable by '-e')")
     tw.line(
         "TOX_TESTENV_PASSENV: space-separated list of extra environment variables to be "
         "passed into test command environments"

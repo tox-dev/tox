@@ -39,14 +39,12 @@ def test_set_header(pkg):
     assert replog.dict["toxversion"] == tox.__version__
     assert replog.dict["platform"] == sys.platform
     assert replog.dict["host"] == socket.getfqdn()
-    assert (
-        replog.dict["installpkg"]
-        == {
-            "basename": "hello-1.0.tar.gz",
-            "md5": pkg.computehash("md5"),
-            "sha256": pkg.computehash("sha256"),
-        }
-    )
+    expected = {
+        "basename": "hello-1.0.tar.gz",
+        "md5": pkg.computehash("md5"),
+        "sha256": pkg.computehash("sha256"),
+    }
+    assert replog.dict["installpkg"] == expected
     data = replog.dumps_json()
     replog2 = ResultLog(data)
     assert replog2.dict == replog.dict
@@ -69,10 +67,8 @@ def test_get_commandlog(pkg):
     assert "setup" not in envlog.dict
     setuplog = envlog.get_commandlog("setup")
     setuplog.add_command(["virtualenv", "..."], "venv created", 0)
-    assert (
-        setuplog.list
-        == [{"command": ["virtualenv", "..."], "output": "venv created", "retcode": "0"}]
-    )
+    expected = [{"command": ["virtualenv", "..."], "output": "venv created", "retcode": "0"}]
+    assert setuplog.list == expected
     assert envlog.dict["setup"]
     setuplog2 = replog.get_envlog("py36").get_commandlog("setup")
     assert setuplog2.list == setuplog.list
@@ -87,10 +83,8 @@ def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     # check that mocker works, because it will be our only test in
     # test_z_cmdline.py::test_exit_code needs the mocker.spy above
     assert tox.exception.exit_code_str.call_count == 1
-    assert (
-        tox.exception.exit_code_str.call_args
-        == mocker.call("InvocationError", "<command>", exit_code)
-    )
+    call_args = tox.exception.exit_code_str.call_args
+    assert call_args == mocker.call("InvocationError", "<command>", exit_code)
     if exit_code is None:
         assert "(exited with code" not in result
     else:

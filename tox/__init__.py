@@ -6,9 +6,8 @@ If objects are marked experimental they might change between minor versions.
 
 To override/modify tox behaviour via plugins see `tox.hookspec` and its use with pluggy.
 """
-from pkg_resources import DistributionNotFound, get_distribution
-
 import pluggy
+from pkg_resources import DistributionNotFound, get_distribution
 
 from . import exception
 from .constants import INFO, PIP, PYTHON
@@ -34,7 +33,6 @@ try:
     __version__ = _full_version.split("+", 1)[0]
 except DistributionNotFound:
     __version__ = "0.0.0.dev0"
-
 
 # NOTE: must come last due to circular import
 from .session import cmdline  # noqa

@@ -16,9 +16,8 @@ import pluggy
 import py
 
 import tox
-from tox.interpreters import Interpreters
 from tox._verlib import NormalizedVersion
-
+from tox.interpreters import Interpreters
 
 hookimpl = tox.hookimpl
 """DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
@@ -1001,23 +1000,26 @@ class parseini:
         return tc
 
     def _getenvdata(self, reader):
-        envstr = self.config.option.env or os.environ.get("TOXENV") or reader.getstring(
-            "envlist", replace=False
-        ) or []
-        envlist = _split_env(envstr)
+        candidates = (
+            self.config.option.env,
+            os.environ.get("TOXENV"),
+            reader.getstring("envlist", replace=False),
+        )
+        env_str = next((i for i in candidates if i), [])
+        env_list = _split_env(env_str)
 
         # collect section envs
-        all_envs = set(envlist) - {"ALL"}
+        all_envs = set(env_list) - {"ALL"}
         for section in self._cfg:
             if section.name.startswith(testenvprefix):
                 all_envs.add(section.name[len(testenvprefix):])
         if not all_envs:
             all_envs.add("python")
 
-        if not envlist or "ALL" in envlist:
-            envlist = sorted(all_envs)
+        if not env_list or "ALL" in env_list:
+            env_list = sorted(all_envs)
 
-        return envlist, all_envs
+        return env_list, all_envs
 
 
 def _split_env(env):

@@ -6,8 +6,14 @@ import pytest
 
 import tox
 from tox.interpreters import NoInterpreterInfo
-from tox.venv import CreationConfig, VirtualEnv, getdigest, prepend_shebang_interpreter
-from tox.venv import tox_testenv_create, tox_testenv_install_deps
+from tox.venv import (
+    CreationConfig,
+    VirtualEnv,
+    getdigest,
+    prepend_shebang_interpreter,
+    tox_testenv_create,
+    tox_testenv_install_deps,
+)
 
 
 def test_getdigest(tmpdir):
@@ -65,7 +71,8 @@ def test_create(mocksession, newconfig):
     assert "virtualenv" == str(args[2])
     if not tox.INFO.IS_WIN:
         # realpath is needed for stuff like the debian symlinks
-        assert py.path.local(sys.executable).realpath() == py.path.local(args[0]).realpath()
+        our_sys_path = py.path.local(sys.executable).realpath()
+        assert our_sys_path == py.path.local(args[0]).realpath()
         # assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
     interp = venv._getliveconfig().python
@@ -963,12 +970,10 @@ def test_tox_testenv_interpret_shebang_long_example(tmpdir):
         "name-in-the-argument-list"
     )
     args = prepend_shebang_interpreter(base_args)
-    assert (
-        args
-        == [
-            b"this-is-an-example-of-a-very-long-interpret-directive-what-should-be-"
-            b"directly-invoked-when-tox-needs-to-invoked-the-provided-script-name-"
-            b"in-the-argument-list"
-        ]
-        + base_args
-    )
+    expected = [
+        b"this-is-an-example-of-a-very-long-interpret-directive-what-should-be-"
+        b"directly-invoked-when-tox-needs-to-invoked-the-provided-script-name-"
+        b"in-the-argument-list"
+    ]
+
+    assert args == expected + base_args

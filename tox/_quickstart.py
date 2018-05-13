@@ -43,9 +43,9 @@ import argparse
 import codecs
 import os
 import sys
+import textwrap
 
 import six
-import textwrap
 
 import tox
 
