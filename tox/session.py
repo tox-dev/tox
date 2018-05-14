@@ -104,6 +104,7 @@ class Action(object):
 
     def __enter__(self):
         self.report.logaction_start(self)
+        return self
 
     def __exit__(self, *args):
         self.report.logaction_finish(self)
@@ -445,8 +446,7 @@ class Session:
                 "#avoiding-expensive-sdist".format(setup)
             )
             raise SystemExit(1)
-        action = self.newaction(None, "packaging")
-        with action:
+        with self.newaction(None, "packaging") as action:
             action.setactivity("sdist-make", setup)
             self.make_emptydir(self.config.distdir)
             action.popen(
@@ -497,8 +497,7 @@ class Session:
         if not venv.matching_platform():
             venv.status = "platform mismatch"
             return  # we simply omit non-matching platforms
-        action = self.newaction(venv, "getenv", venv.envconfig.envdir)
-        with action:
+        with self.newaction(venv, "getenv", venv.envconfig.envdir) as action:
             venv.status = 0
             default_ret_code = 1
             envlog = self.resultlog.get_envlog(venv.name)
@@ -536,14 +535,12 @@ class Session:
             return True
 
     def finishvenv(self, venv):
-        action = self.newaction(venv, "finishvenv")
-        with action:
+        with self.newaction(venv, "finishvenv"):
             venv.finish()
             return True
 
     def developpkg(self, venv, setupdir):
-        action = self.newaction(venv, "developpkg", setupdir)
-        with action:
+        with self.newaction(venv, "developpkg", setupdir) as action:
             try:
                 venv.developpkg(setupdir, action)
                 return True
@@ -560,8 +557,7 @@ class Session:
         :rtype: bool
         """
         self.resultlog.set_header(installpkg=py.path.local(path))
-        action = self.newaction(venv, "installpkg", path)
-        with action:
+        with self.newaction(venv, "installpkg", path) as action:
             try:
                 venv.installpkg(path, action)
                 return True
@@ -635,8 +631,7 @@ class Session:
         Run an environment report to show which package
         versions are installed in the venv
         """
-        action = self.newaction(venv, "envreport")
-        with action:
+        with self.newaction(venv, "envreport") as action:
             packages = self.hook.tox_runenvreport(venv=venv, action=action)
         action.setactivity("installed", ",".join(packages))
         envlog = self.resultlog.get_envlog(venv.name)

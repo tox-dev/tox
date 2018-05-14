@@ -352,8 +352,7 @@ class VirtualEnv(object):
         return env
 
     def test(self, redirect=False):
-        action = self.session.newaction(self, "runtests")
-        with action:
+        with self.session.newaction(self, "runtests") as action:
             self.status = 0
             self.session.make_emptydir(self.envconfig.envtmpdir)
             self.envconfig.envtmpdir.ensure(dir=1)
