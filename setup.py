@@ -55,7 +55,7 @@ def main():
                 "pytest >= 3.0.0", "pytest-cov", "pytest-mock", "pytest-timeout", "pytest-xdist"
             ],
             "docs": ["sphinx >= 1.6.3, < 2", "towncrier >= 17.8.0"],
-            "lint": ["flake8 == 3.5.0", "flake8-bugbear == 18.2.0", "pre-commit == 1.8.2"],
+            "lint": ["pre-commit == 1.8.2"],
             "publish": ["devpi", "twine"],
         },
         classifiers=[

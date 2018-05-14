@@ -16,7 +16,7 @@ import time
 import py
 
 import tox
-from tox._verlib import NormalizedVersion, IrrationalVersionError
+from tox._verlib import IrrationalVersionError, NormalizedVersion
 from tox.config import parseconfig
 from tox.result import ResultLog
 from tox.venv import VirtualEnv
