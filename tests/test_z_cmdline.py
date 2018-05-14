@@ -139,6 +139,15 @@ class TestSession:
         assert match[1].outpath.relto(mocksession.config.logdir)
         assert match[1].shell is False
 
+    def test_pcall_shell(self, mocksession):
+        action = mocksession.newaction(None, "something")
+        output = action.popen(
+            "{} --version".format(sys.executable), returnout=True, redirect=False, shell=True
+        )
+        match = mocksession.report.getnext("logpopen")
+        assert match[1].shell is True
+        assert output == ""
+
     def test_summary_status(self, initproj, capfd):
         initproj(
             "logexample123-0.5",

@@ -14,6 +14,7 @@ import sys
 import time
 
 import py
+import six
 
 import tox
 from tox._verlib import IrrationalVersionError, NormalizedVersion
@@ -133,7 +134,16 @@ class Action(object):
         f.flush()
         return f
 
-    def popen(self, args, cwd=None, env=None, redirect=True, returnout=False, ignore_ret=False):
+    def popen(
+        self,
+        args,
+        cwd=None,
+        env=None,
+        redirect=True,
+        returnout=False,
+        ignore_ret=False,
+        shell=False,
+    ):
         stdout = outpath = None
         resultjson = self.session.config.option.resultjson
         if resultjson or redirect:
@@ -150,14 +160,16 @@ class Action(object):
             # FIXME XXX cwd = self.session.config.cwd
             cwd = py.path.local()
         try:
-            popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=subprocess.STDOUT)
+            popen = self._popen(
+                args, cwd, env=env, stdout=stdout, stderr=subprocess.STDOUT, shell=shell
+            )
         except OSError as e:
             self.report.error(
                 "invocation failed (errno {:d}), args: {}, cwd: {}".format(e.errno, args, cwd)
             )
             raise
         popen.outpath = outpath
-        popen.args = [str(x) for x in args]
+        popen.args = args if isinstance(str, six.string_types) else [str(x) for x in args]
         popen.cwd = cwd
         popen.action = self
         self._popenlist.append(popen)
@@ -235,12 +247,12 @@ class Action(object):
                 newargs = [str(self.venv.envconfig.envpython)] + newargs
         return newargs
 
-    def _popen(self, args, cwd, stdout, stderr, env=None):
+    def _popen(self, args, cwd, stdout, stderr, env=None, shell=False):
         if env is None:
             env = os.environ.copy()
         return self.session.popen(
             self._rewriteargs(cwd, args),
-            shell=False,
+            shell=shell,
             cwd=str(cwd),
             universal_newlines=True,
             stdout=stdout,
