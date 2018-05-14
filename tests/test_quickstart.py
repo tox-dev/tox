@@ -3,8 +3,14 @@ import os
 import pytest
 
 import tox
-from tox._quickstart import ALTERNATIVE_CONFIG_NAME, list_modificator, main, post_process_input
-from tox._quickstart import prepare_content, QUICKSTART_CONF
+from tox._quickstart import (
+    ALTERNATIVE_CONFIG_NAME,
+    QUICKSTART_CONF,
+    list_modificator,
+    main,
+    post_process_input,
+    prepare_content,
+)
 
 ALL_PY_ENVS_AS_STRING = ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS)
 ALL_PY_ENVS_WO_LAST_AS_STRING = ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS[:-1])
