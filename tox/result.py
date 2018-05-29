@@ -8,7 +8,6 @@ import tox
 
 
 class ResultLog:
-
     def __init__(self, data=None):
         if not data:
             self.dict = {}
@@ -40,7 +39,6 @@ class ResultLog:
 
 
 class EnvLog:
-
     def __init__(self, reportlog, name, dict):
         self.reportlog = reportlog
         self.name = name
@@ -60,7 +58,9 @@ class EnvLog:
         version_info = eval(lines.pop(0))
         version = "\n".join(lines)
         self.dict["python"] = {
-            "executable": executable, "version_info": version_info, "version": version
+            "executable": executable,
+            "version_info": version_info,
+            "version": version,
         }
 
     def get_commandlog(self, name):
@@ -71,7 +71,6 @@ class EnvLog:
 
 
 class CommandLog:
-
     def __init__(self, envlog, list):
         self.envlog = envlog
         self.list = list

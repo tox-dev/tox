@@ -15,7 +15,12 @@ from tox._quickstart import (
 ALL_PY_ENVS_AS_STRING = ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS)
 ALL_PY_ENVS_WO_LAST_AS_STRING = ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS[:-1])
 SIGNS_OF_SANITY = (
-    "tox.readthedocs.io", "[tox]", "[testenv]", "envlist = ", "deps =", "commands ="
+    "tox.readthedocs.io",
+    "[tox]",
+    "[testenv]",
+    "envlist = ",
+    "deps =",
+    "commands =",
 )
 """A bunch of elements to be expected in the generated config as marker for basic sanity"""
 
@@ -44,6 +49,7 @@ class _answers:
 
 class _cnf:
     """Handle files and args for different test scenarios."""
+
     SOME_CONTENT = "dontcare"
 
     def __init__(self, exists=False, names=None, pass_path=False):
@@ -111,6 +117,7 @@ class _cnf:
 
 class _exp:
     """Holds test expectations and a user scenario description."""
+
     STANDARD_EPECTATIONS = [ALL_PY_ENVS_AS_STRING, "pytest", "pytest"]
 
     def __init__(self, name, exp=None):

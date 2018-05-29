@@ -99,7 +99,6 @@ class Parser:
 
 
 class VenvAttribute:
-
     def __init__(self, name, type, default, help, postprocess):
         self.name = name
         self.type = type
@@ -130,11 +129,11 @@ class DepOption:
                 # in case of a short option, we remove the space
                 for option in tox.PIP.INSTALL_SHORT_OPTIONS_ARGUMENT:
                     if name.startswith(option):
-                        name = "{}{}".format(option, name[len(option):].strip())
+                        name = "{}{}".format(option, name[len(option) :].strip())
                 # in case of a long option, we add an equal sign
                 for option in tox.PIP.INSTALL_LONG_OPTIONS_ARGUMENT:
                     if name.startswith(option + " "):
-                        name = "{}={}".format(option, name[len(option):].strip())
+                        name = "{}={}".format(option, name[len(option) :].strip())
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
         return deps
@@ -841,7 +840,6 @@ def make_hashseed():
 
 
 class parseini:
-
     def __init__(self, config, inipath):
         config.toxinipath = inipath
         config.toxinidir = config.toxinipath.dirpath()
@@ -1012,7 +1010,7 @@ class parseini:
         all_envs = set(env_list) - {"ALL"}
         for section in self._cfg:
             if section.name.startswith(testenvprefix):
-                all_envs.add(section.name[len(testenvprefix):])
+                all_envs.add(section.name[len(testenvprefix) :])
         if not all_envs:
             all_envs.add("python")
 
@@ -1040,7 +1038,6 @@ def _base_factor_name(factor):
 
 
 def _split_factor_expr(expr):
-
     def split_single(e):
         raw = e.split("-")
         included = {_base_factor_name(factor) for factor in raw if not _is_negated_factor(factor)}
@@ -1074,7 +1071,6 @@ def mapcat(f, seq):
 
 
 class DepConfig:
-
     def __init__(self, name, indexserver=None):
         self.name = name
         self.indexserver = indexserver
@@ -1090,7 +1086,6 @@ class DepConfig:
 
 
 class IndexServerConfig:
-
     def __init__(self, name, url=None):
         self.name = name
         self.url = url
@@ -1104,7 +1099,6 @@ E.g. {[base]commands}
 
 
 class SectionReader:
-
     def __init__(self, section_name, cfgparser, fallbacksections=None, factors=(), prefix=None):
         if prefix is None:
             self.section_name = section_name
@@ -1204,7 +1198,6 @@ class SectionReader:
         return x
 
     def _apply_factors(self, s):
-
         def factor_line(line):
             m = re.search(r"^([\w{}\.!,-]+)\:\s+(.+)", line)
             if not m:
@@ -1326,7 +1319,7 @@ class Replacer:
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
             i = key.find("]")
-            section, item = key[1:i], key[i + 1:]
+            section, item = key[1:i], key[i + 1 :]
             cfg = self.reader._cfg
             if section in cfg and item in cfg[section]:
                 if (section, item) in self.reader._subststack:
@@ -1351,7 +1344,6 @@ class Replacer:
 
 
 class _ArgvlistReader:
-
     @classmethod
     def getargvlist(cls, reader, value, replace=True):
         """Parse ``commands`` argvlist multiline string.
@@ -1428,9 +1420,7 @@ class _ArgvlistReader:
 
 
 class CommandParser(object):
-
     class State(object):
-
         def __init__(self):
             self.word = ""
             self.depth = 0

@@ -22,7 +22,6 @@ from tox.venv import VirtualEnv
 
 
 class TestVenvConfig:
-
     def test_config_parsing_minimal(self, tmpdir, newconfig):
         config = newconfig(
             [],
@@ -172,7 +171,6 @@ class TestVenvConfig:
 
 
 class TestConfigPlatform:
-
     def test_config_parse_platform(self, newconfig):
         config = newconfig(
             [],
@@ -223,7 +221,6 @@ class TestConfigPlatform:
 
 
 class TestConfigPackage:
-
     def test_defaults(self, tmpdir, newconfig):
         config = newconfig([], "")
         assert config.setupdir.realpath() == tmpdir.realpath()
@@ -256,7 +253,6 @@ class TestConfigPackage:
 
 
 class TestParseconfig:
-
     def test_search_parents(self, tmpdir):
         b = tmpdir.mkdir("a").mkdir("b")
         toxinipath = tmpdir.ensure("tox.ini")
@@ -293,7 +289,6 @@ def test_get_homedir(monkeypatch):
 
 
 class TestGetcontextname:
-
     def test_blank(self, monkeypatch):
         monkeypatch.setattr(os, "environ", {})
         assert getcontextname() is None
@@ -436,7 +431,6 @@ class TestIniParserAgainstCommandsKey:
 
 
 class TestIniParser:
-
     def test_getstring_single(self, newconfig):
         config = newconfig(
             """
@@ -705,7 +699,9 @@ class TestIniParser:
         assert reader.getargvlist("key1") == []
         x = reader.getargvlist("key2")
         expected_deps = [
-            ["cmd1", "--foo-args=foo bar"], ["cmd2", "-f", "foo bar"], ["cmd3", "-f", "foo", "bar"]
+            ["cmd1", "--foo-args=foo bar"],
+            ["cmd2", "-f", "foo bar"],
+            ["cmd3", "-f", "foo", "bar"],
         ]
         assert x == expected_deps
 
@@ -816,7 +812,6 @@ class TestIniParser:
 
 
 class TestIniParserPrefix:
-
     def test_basic_section_access(self, newconfig):
         config = newconfig(
             """
@@ -873,7 +868,6 @@ class TestIniParserPrefix:
 
 
 class TestConfigTestEnv:
-
     def test_commentchars_issue33(self, newconfig):
         config = newconfig(
             """
@@ -1723,7 +1717,6 @@ class TestConfigTestEnv:
 
 
 class TestGlobalOptions:
-
     def test_notest(self, newconfig):
         config = newconfig([], "")
         assert not config.option.notest
@@ -1905,7 +1898,6 @@ class TestGlobalOptions:
 
 
 class TestHashseedOption:
-
     def _get_envconfigs(self, newconfig, args=None, tox_ini=None, make_hashseed=None):
         if args is None:
             args = []
@@ -2023,7 +2015,6 @@ class TestHashseedOption:
 
 
 class TestSetenv:
-
     def test_getdict_lazy(self, newconfig, monkeypatch):
         monkeypatch.setenv("X", "2")
         config = newconfig(
@@ -2196,7 +2187,6 @@ class TestSetenv:
 
 
 class TestIndexServer:
-
     def test_indexserver(self, newconfig):
         config = newconfig(
             """
@@ -2248,7 +2238,6 @@ class TestIndexServer:
 
 
 class TestConfigConstSubstitutions:
-
     @pytest.mark.parametrize("pathsep", [":", ";"])
     def test_replace_pathsep_unix(self, monkeypatch, newconfig, pathsep):
         monkeypatch.setattr("os.pathsep", pathsep)
@@ -2273,7 +2262,6 @@ class TestConfigConstSubstitutions:
 
 
 class TestParseEnv:
-
     def test_parse_recreate(self, newconfig):
         inisource = ""
         config = newconfig([], inisource)
@@ -2291,7 +2279,6 @@ class TestParseEnv:
 
 
 class TestCmdInvocation:
-
     def test_help(self, cmd):
         result = cmd("-h")
         assert not result.ret
@@ -2310,9 +2297,7 @@ class TestCmdInvocation:
         assert "registered plugins:" not in version_info
 
     def test_version_with_normal_plugin(self, monkeypatch):
-
         def fake_normal_plugin_distinfo():
-
             class MockModule:
                 __file__ = "some-file"
 
@@ -2331,11 +2316,8 @@ class TestCmdInvocation:
         assert "1.0" in version_info
 
     def test_version_with_fileless_module(self, monkeypatch):
-
         def fake_no_file_plugin_distinfo():
-
             class MockModule:
-
                 def __repr__(self):
                     return "some-repr"
 
@@ -2463,7 +2445,7 @@ class TestCmdInvocation:
             "additional environments:",
             "docs         -> generate documentation",
         ]
-        assert result.outlines[-len(expected):] == expected
+        assert result.outlines[-len(expected) :] == expected
 
     def test_listenvs_all_verbose_description_no_additional_environments(self, cmd, initproj):
         initproj(
@@ -2477,7 +2459,9 @@ class TestCmdInvocation:
         )
         result = cmd("-av")
         expected = [
-            "default environments:", "py27 -> [no description]", "py36 -> [no description]"
+            "default environments:",
+            "py27 -> [no description]",
+            "py36 -> [no description]",
         ]
         assert result.out.splitlines()[-3:] == expected
         assert "additional environments" not in result.out
@@ -2572,7 +2556,6 @@ def test_env_spec(cmdline, envlist):
 
 
 class TestCommandParser:
-
     def test_command_parser_for_word(self):
         p = CommandParser("word")
         assert list(p.words()) == ["word"]
@@ -2655,7 +2638,17 @@ class TestCommandParser:
         p = CommandParser(cmd)
         parsed = list(p.words())
         expected = [
-            "nosetests", " ", "-v", " ", "-a", " ", "!deferred", " ", "--with-doctest", " ", "[]"
+            "nosetests",
+            " ",
+            "-v",
+            " ",
+            "-a",
+            " ",
+            "!deferred",
+            " ",
+            "--with-doctest",
+            " ",
+            "[]",
         ]
         assert parsed == expected
 

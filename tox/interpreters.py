@@ -10,7 +10,6 @@ import tox
 
 
 class Interpreters:
-
     def __init__(self, hook):
         self.name2executable = {}
         self.executable2info = {}
@@ -89,7 +88,6 @@ def exec_on_interpreter(executable, source):
 
 
 class ExecFailed(Exception):
-
     def __init__(self, executable, source, out, err):
         self.executable = executable
         self.source = source

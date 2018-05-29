@@ -12,6 +12,7 @@ import re
 
 class IrrationalVersionError(Exception):
     """This is an irrational version."""
+
     pass
 
 
@@ -22,6 +23,7 @@ class HugeMajorVersionNumError(IrrationalVersionError):
     See `error_on_huge_major_num` option in `NormalizedVersion` for details.
     This guard can be disabled by setting that option False.
     """
+
     pass
 
 

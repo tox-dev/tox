@@ -60,7 +60,6 @@ def test_locate_via_py(monkeypatch):
 
 
 def test_tox_get_python_executable():
-
     class envconfig:
         basepython = sys.executable
         envname = "pyxx"
@@ -89,7 +88,6 @@ def test_tox_get_python_executable():
 
 
 def test_find_executable_extra(monkeypatch):
-
     @staticmethod
     def sysfind(_):
         return "hello"
@@ -113,9 +111,7 @@ def test_run_and_get_interpreter_info():
 
 
 class TestInterpreters:
-
     def test_get_executable(self, interpreters):
-
         class envconfig:
             basepython = sys.executable
             envname = "pyxx"
@@ -128,7 +124,6 @@ class TestInterpreters:
         assert info.runnable
 
     def test_get_executable_no_exist(self, interpreters):
-
         class envconfig:
             basepython = "1lkj23"
             envname = "pyxx"
@@ -141,7 +136,6 @@ class TestInterpreters:
         assert not info.runnable
 
     def test_get_sitepackagesdir_error(self, interpreters):
-
         class envconfig:
             basepython = sys.executable
             envname = "123"
@@ -184,7 +178,6 @@ def test_exec_failed():
 
 
 class TestInterpreterInfo:
-
     @staticmethod
     def info(
         name="my-name",
@@ -215,7 +208,6 @@ class TestInterpreterInfo:
 
 
 class TestNoInterpreterInfo:
-
     def test_runnable(self):
         assert not NoInterpreterInfo("foo").runnable
         assert not NoInterpreterInfo("foo", executable=sys.executable).runnable

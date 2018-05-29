@@ -81,7 +81,6 @@ def show_help_ini(config):
 
 
 class Action(object):
-
     def __init__(self, session, venv, msg, args):
         self.venv = venv
         self.msg = msg
@@ -412,7 +411,7 @@ class Session:
 
     def runcommand(self):
         self.report.using("tox-{} from {}".format(tox.__version__, tox.__file__))
-        verbosity = (self.report.verbosity > Verbosity.DEFAULT)
+        verbosity = self.report.verbosity > Verbosity.DEFAULT
         if self.config.option.showconfig:
             self.showconfig()
         elif self.config.option.listenvs:
@@ -570,9 +569,8 @@ class Session:
         :return: Path to the distribution
         :rtype: py.path.local
         """
-        if (
-            not self.config.option.sdistonly
-            and (self.config.sdistsrc or self.config.option.installpkg)
+        if not self.config.option.sdistonly and (
+            self.config.sdistsrc or self.config.option.installpkg
         ):
             path = self.config.option.installpkg
             if not path:
