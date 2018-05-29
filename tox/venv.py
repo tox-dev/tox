@@ -12,7 +12,6 @@ from .config import DepConfig
 
 
 class CreationConfig:
-
     def __init__(self, md5, python, version, sitepackages, usedevelop, deps, alwayscopy):
         self.md5 = md5
         self.python = python
@@ -66,7 +65,6 @@ class CreationConfig:
 
 
 class VirtualEnv(object):
-
     def __init__(self, envconfig=None, session=None):
         self.envconfig = envconfig
         self.session = session
@@ -279,10 +277,10 @@ class VirtualEnv(object):
     def run_install_command(self, packages, action, options=()):
         argv = self.envconfig.install_command[:]
         i = argv.index("{packages}")
-        argv[i:i + 1] = packages
+        argv[i : i + 1] = packages
         if "{opts}" in argv:
             i = argv.index("{opts}")
-            argv[i:i + 1] = list(options)
+            argv[i : i + 1] = list(options)
 
         for x in ("PIP_RESPECT_VIRTUALENV", "PIP_REQUIRE_VIRTUALENV", "__PYVENV_LAUNCHER__"):
             os.environ.pop(x, None)

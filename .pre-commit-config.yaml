@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 18.4a4
+    rev: 18.5b1
     hooks:
     - id: black
       args: [--line-length=99, --safe]

@@ -27,7 +27,6 @@ def test_report_protocol(newconfig):
     )
 
     class Popen:
-
         def __init__(self, *args, **kwargs):
             pass
 
@@ -82,7 +81,6 @@ def test__resolve_pkg_doubledash(tmpdir, mocksession):
 
 
 class TestSession:
-
     def test_make_sdist(self, initproj):
         initproj(
             "example123-0.5",

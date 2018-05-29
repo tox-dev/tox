@@ -47,7 +47,6 @@ def work_in_clean_dir(tmpdir):
 
 @pytest.fixture(name="newconfig")
 def create_new_config_file(tmpdir):
-
     def create_new_config_file_(args, source=None, plugins=()):
         if source is None:
             source = args
@@ -85,7 +84,6 @@ def cmd(request, capfd, monkeypatch):
 
 
 class RunResult:
-
     def __init__(self, capfd, args):
         self._capfd = capfd
         self.args = args
@@ -115,7 +113,6 @@ class RunResult:
 
 
 class ReportExpectMock:
-
     def __init__(self, session):
         self._calls = []
         self._index = -1
@@ -182,7 +179,6 @@ class ReportExpectMock:
 
 
 class pcallMock:
-
     def __init__(self, args, cwd, env, stdout, stderr, shell):
         self.arg0 = args[0]
         self.args = args[1:]
@@ -202,9 +198,7 @@ class pcallMock:
 
 @pytest.fixture(name="mocksession")
 def create_mocksession(request):
-
     class MockSession(Session):
-
         def __init__(self):
             self._clearmocks()
             self.config = request.getfixturevalue("newconfig")([], "")
@@ -232,7 +226,6 @@ def create_mocksession(request):
 
 @pytest.fixture
 def newmocksession(mocksession, newconfig):
-
     def newmocksession_(args, source, plugins=()):
         mocksession.config = newconfig(args, source, plugins=plugins)
         return mocksession
@@ -287,8 +280,8 @@ def initproj(tmpdir):
             name, version = nameversion
         base = tmpdir.join(name)
         src_root_path = _path_join(base, src_root)
-        assert (
-            base == src_root_path or src_root_path.relto(base)
+        assert base == src_root_path or src_root_path.relto(
+            base
         ), "`src_root` must be the constructed project folder or its direct or indirect subfolder"
 
         base.ensure(dir=1)

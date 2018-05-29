@@ -78,7 +78,6 @@ def nonempty(x):
 
 
 def choice(*l):
-
     def val(x):
         if x not in l:
             raise ValidationError("Please enter one of {}.".format(", ".join(l)))

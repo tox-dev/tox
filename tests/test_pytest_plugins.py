@@ -10,7 +10,6 @@ from tox._pytestplugin import _filedefs_contains, _path_parts
 
 
 class TestInitProj:
-
     @pytest.mark.parametrize(
         "kwargs", ({}, {"src_root": None}, {"src_root": ""}, {"src_root": "."})
     )
@@ -61,7 +60,6 @@ class TestInitProj:
 
 
 class TestPathParts:
-
     @pytest.mark.parametrize(
         "input, expected",
         (
@@ -81,7 +79,7 @@ class TestPathParts:
     def test_on_py_path(self):
         cwd_parts = _path_parts(py.path.local())
         folder_parts = _path_parts(py.path.local("a/b/c"))
-        assert folder_parts[len(cwd_parts):] == ["a", "b", "c"]
+        assert folder_parts[len(cwd_parts) :] == ["a", "b", "c"]
 
 
 @pytest.mark.parametrize(

@@ -52,7 +52,11 @@ def main():
         install_requires=["py>=1.4.17", "pluggy>=0.3.0,<1.0", "six", "virtualenv>=1.11.2"],
         extras_require={
             "testing": [
-                "pytest >= 3.0.0", "pytest-cov", "pytest-mock", "pytest-timeout", "pytest-xdist"
+                "pytest >= 3.0.0",
+                "pytest-cov",
+                "pytest-mock",
+                "pytest-timeout",
+                "pytest-xdist",
             ],
             "docs": ["sphinx >= 1.6.3, < 2", "towncrier >= 17.8.0"],
             "lint": ["pre-commit == 1.8.2"],

@@ -6,7 +6,10 @@ from pkg_resources import get_distribution
 
 sys.path.insert(0, os.path.dirname(__file__))
 extensions = [
-    "sphinx.ext.autodoc", "sphinx.ext.extlinks", "sphinx.ext.intersphinx", "sphinx.ext.viewcode"
+    "sphinx.ext.autodoc",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
 ]
 
 project = u"tox"

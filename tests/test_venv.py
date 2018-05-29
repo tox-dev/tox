@@ -455,7 +455,6 @@ def test_install_python3(newmocksession):
 
 
 class TestCreationConfig:
-
     def test_basic(self, newconfig, mocksession, tmpdir):
         config = newconfig([], "")
         envconfig = config.envconfigs["python"]
@@ -588,7 +587,6 @@ class TestCreationConfig:
 
 
 class TestVenvTest:
-
     def test_envbindir_path(self, newmocksession, monkeypatch):
         monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
         mocksession = newmocksession(
@@ -813,7 +811,6 @@ def test_tox_testenv_create(newmocksession):
     log = []
 
     class Plugin:
-
         @tox.hookimpl
         def tox_testenv_create(self, action, venv):
             assert isinstance(action, tox.session.Action)
@@ -845,7 +842,6 @@ def test_tox_testenv_pre_post(newmocksession):
     log = []
 
     class Plugin:
-
         @tox.hookimpl
         def tox_runtest_pre(self):
             log.append("started")
