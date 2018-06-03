@@ -39,7 +39,7 @@ Bugfixes
   Python environment is looked up using the ``py`` Python launcher on Windows
   and the environment is not found installed on the system - by
   @jurko-gospodnetic (`#692 <https://github.com/tox-dev/tox/issues/692>`_)
-- Fixed an issue where invocation of Tox from the Python package, where
+- Fixed an issue where invocation of tox from the Python package, where
   invocation errors (failed actions) occur results in a change in the
   sys.stdout stream encoding in Python 3.x. New behaviour is that sys.stdout is
   reset back to its original encoding after invocation errors - by @tonybaloney
