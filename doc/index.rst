@@ -28,7 +28,9 @@ Basic example
 First, install ``tox`` with ``pip install tox``.
 Then put basic information about your project and the test environments you
 want your project to run in into a ``tox.ini`` file residing
-right next to your ``setup.py`` file::
+right next to your ``setup.py`` file:
+
+.. code-block:: ini
 
     # content of: tox.ini , put in same dir as setup.py
     [tox]

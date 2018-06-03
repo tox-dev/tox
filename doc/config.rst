@@ -12,7 +12,9 @@ Below you find the specification, but you might want to skim some
 tox global settings
 -------------------
 
-List of optional global options::
+List of optional global options:
+
+.. code-block:: ini
 
     [tox]
     minversion=ver    # minimally required tox version
@@ -26,7 +28,9 @@ List of optional global options::
 
 ``tox`` autodetects if it is running in a Jenkins_ context
 (by checking for existence of the ``JENKINS_URL`` environment variable)
-and will first lookup global tox settings in this section::
+and will first lookup global tox settings in this section:
+
+.. code-block:: ini
 
     [tox:jenkins]
     ...               # override [tox] settings for the jenkins context
@@ -58,7 +62,9 @@ and will first lookup global tox settings in this section::
 Virtualenv test environment settings
 ------------------------------------
 
-Test environments are defined by a::
+Test environments are defined by a:
+
+.. code-block:: ini
 
     [testenv:NAME]
     ...
@@ -180,7 +186,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
     an :confval:`indexserver` to use for installing this dependency
     but this functionality is deprecated since tox-2.3.
     All derived dependencies (deps required by the dep) will then be
-    retrieved from the specified indexserver::
+    retrieved from the specified indexserver:
+
+    .. code-block:: ini
 
         deps = :myindexserver:pkg
 
@@ -288,7 +296,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
    specify using a specified index server through the
    ``:indexservername:depname`` pattern.  The ``default`` indexserver
    definition determines where unscoped dependencies and the sdist install
-   installs from.  Example::
+   installs from.  Example:
+
+   .. code-block:: ini
 
         [tox]
         indexserver =
@@ -491,7 +501,9 @@ Values from other sections can be referred to via::
    {[sectionname]valuename}
 
 which you can use to avoid repetition of config values.
-You can put default values in one section and reference them in others to avoid repeating the same values::
+You can put default values in one section and reference them in others to avoid repeating the same values:
+
+.. code-block:: ini
 
     [base]
     deps =
@@ -520,7 +532,9 @@ several versions of a dependency, say Django 1.5 and Django 1.6. You can
 accomplish that by writing down 2*2 = 4 ``[testenv:*]`` sections and then
 listing all of them in ``envlist``.
 
-However, a better approach looks like this::
+However, a better approach looks like this:
+
+.. code-block:: ini
 
     [tox]
     envlist = {py27,py36}-django{15,16}
@@ -592,7 +606,9 @@ Factors and factor-conditional settings
 ++++++++++++++++++++++++++++++++++++++++
 
 Parts of an environment name delimited by hyphens are called factors and can
-be used to set values conditionally::
+be used to set values conditionally:
+
+.. code-block:: ini
 
     basepython =
         py27: python2.7
@@ -603,7 +619,9 @@ This conditional setting will lead to either ``python3.6`` or
 environment contains ``py36`` factor.
 
 In list settings such as ``deps`` or ``commands`` you can freely intermix
-optional lines with unconditional ones::
+optional lines with unconditional ones:
+
+.. code-block:: ini
 
     deps =
         pytest
@@ -629,7 +647,9 @@ Complex factor conditions
 +++++++++++++++++++++++++
 
 Sometimes you need to specify the same line for several factors or create a
-special case for a combination of factors. Here is how you do it::
+special case for a combination of factors. Here is how you do it:
+
+.. code-block:: ini
 
     [tox]
     envlist = py{27,34,36}-django{15,16}-{sqlite,mysql}
@@ -678,7 +698,9 @@ Factors and values substitution are compatible
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 It is possible to mix both values substitution and factor expressions.
-For example::
+For example:
+
+.. code-block:: ini
 
     [tox]
     envlist = py27,py36,coverage

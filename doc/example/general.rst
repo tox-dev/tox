@@ -251,6 +251,6 @@ where Qt was calling ``abort()`` instead of ``exit()``.
 .. _`pytest exit codes`: https://docs.pytest.org/en/latest/usage.html#possible-exit-codes
 .. _`common exit codes`: http://www.faqs.org/docs/abs/HTML/exitcodes.html
 .. _`abort()``: http://www.unix.org/version2/sample/abort.html
-.. _`pytest-qt issue #170` : https://github.com/pytest-dev/pytest-qt/issues/170
+.. _`pytest-qt issue #170`: https://github.com/pytest-dev/pytest-qt/issues/170
 .. _`signal man page`: http://man7.org/linux/man-pages/man7/signal.7.html
 .. _`POSIX signals`: https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals
