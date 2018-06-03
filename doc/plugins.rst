@@ -31,10 +31,10 @@ You will get some output similar to this::
     tox-globinterpreter (0.3)            - tox plugin to allow specification of interpreter
                                            locationspaths to use
     tox-venv (0.2.0)                     - Use python3 venvs for python3 tox testenvs
-    tox-cmake (0.1.1)                    - Build CMake projects using Tox
-    tox-travis (0.10)                    - Seamless integration of Tox into Travis CI
+    tox-cmake (0.1.1)                    - Build CMake projects using tox
+    tox-travis (0.10)                    - Seamless integration of tox into Travis CI
     tox-py-backwards (0.1)               - tox plugin for py-backwards
-    tox-pytest-summary (0.1.2)           - Tox + Py.test summary
+    tox-pytest-summary (0.1.2)           - tox + Py.test summary
     tox-envreport (0.2.0)                - A tox-plugin to document the setup of used virtual
                                            environments.
     tox-no-internet (0.1.0)              - Workarounds for using tox with no internet connection
@@ -42,7 +42,7 @@ You will get some output similar to this::
     tox-run-command (0.4)                - tox plugin to run arbitrary commands in a virtualenv
     tox-pip-extensions (1.2.1)           - Augment tox with different installation methods via
                                            progressive enhancement.
-    tox-run-before (0.1)                 - Tox plugin to run shell commands before the test
+    tox-run-before (0.1)                 - tox plugin to run shell commands before the test
                                            environments are created.
     tox-docker (1.0.0)                   - Launch a docker instance around test runs
     tox-bitbucket-status (1.0)           - Update bitbucket status for each env
