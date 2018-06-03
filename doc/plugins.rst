@@ -110,13 +110,16 @@ contents of ``tox_fireworks.py``:
 
     hookimpl = pluggy.HookimplMarker("tox")
 
+
     @hookimpl
     def tox_addoption(parser):
         """Add command line option to display fireworks on request."""
 
+
     @hookimpl
     def tox_configure(config):
         """Post process config after parsing."""
+
 
     @hookimpl
     def tox_runenvreport(config):
@@ -132,9 +135,12 @@ contents of ``setup.py``:
 
     from setuptools import setup
 
-    setup(name='tox-fireworks', py_modules=['tox_fireworks'],
-          entry_points={'tox': ['fireworks = tox_fireworks']}
-          classifiers=['Framework:: tox'])
+    setup(
+        name="tox-fireworks",
+        py_modules=["tox_fireworks"],
+        entry_points={"tox": ["fireworks = tox_fireworks"]},
+        classifiers=["Framework:: tox"],
+    )
 
 Using the  **tox-** prefix in ``tox-fireworks`` is an established convention to be able to
 see from the project name that this is a plugin for tox. It also makes it easier to find with

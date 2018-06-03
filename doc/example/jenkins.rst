@@ -25,8 +25,8 @@ using these steps:
 
         import tox
 
-        os.chdir(os.getenv('WORKSPACE'))
-        tox.cmdline() # environment is selected by ``TOXENV`` env variable
+        os.chdir(os.getenv("WORKSPACE"))
+        tox.cmdline()  # environment is selected by ``TOXENV`` env variable
 
 * check ``Publish JUnit test result report`` and enter
   ``**/junit-*.xml`` as the pattern so that Jenkins collects
@@ -58,11 +58,12 @@ with this:
 .. code-block:: python
 
     import urllib, os
+
     url = "https://bitbucket.org/hpk42/tox/raw/default/toxbootstrap.py"
-    #os.environ['USETOXDEV']="1"  # use tox dev version
-    d = dict(__file__='toxbootstrap.py')
+    # os.environ['USETOXDEV']="1"  # use tox dev version
+    d = dict(__file__="toxbootstrap.py")
     exec urllib.urlopen(url).read() in d
-    d['cmdline'](['--recreate'])
+    d["cmdline"](["--recreate"])
 
 The downloaded `toxbootstrap.py` file downloads all necessary files to
 install ``tox`` in a virtual sub environment.  Notes:
@@ -105,19 +106,21 @@ Here is an example:
     import py
     import subprocess
 
+
     def test_linkcheck(tmpdir):
         doctrees = tmpdir.join("doctrees")
         htmldir = tmpdir.join("html")
         subprocess.check_call(
-            ["sphinx-build", "-W", "-blinkcheck",
-              "-d", str(doctrees), ".", str(htmldir)])
+            ["sphinx-build", "-W", "-blinkcheck", "-d", str(doctrees), ".", str(htmldir)]
+        )
+
 
     def test_build_docs(tmpdir):
         doctrees = tmpdir.join("doctrees")
         htmldir = tmpdir.join("html")
-        subprocess.check_call([
-            "sphinx-build", "-W", "-bhtml",
-              "-d", str(doctrees), ".", str(htmldir)])
+        subprocess.check_call(
+            ["sphinx-build", "-W", "-bhtml", "-d", str(doctrees), ".", str(htmldir)]
+        )
 
 3. run ``tox -e docs`` and then you may integrate this environment
    along with your other environments into Jenkins.
