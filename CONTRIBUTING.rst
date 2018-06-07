@@ -88,7 +88,7 @@ Preparing Pull Requests
 Short version
 ^^^^^^^^^^^^^
 
-#. `Fork the repository<https://help.github.com/articles/fork-a-repo/>`_
+#. `Fork the repository <https://help.github.com/articles/fork-a-repo/>`_.
 #. Make your changes.
 #. open a `pull request <https://help.github.com/articles/about-pull-requests/>`_ targeting the ``master`` branch.
 #. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
