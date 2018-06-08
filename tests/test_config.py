@@ -2345,10 +2345,10 @@ class TestCmdInvocation:
             filedefs={
                 "tox.ini": """
             [tox]
-            envlist=py36,py27,py34,pypy,docs
+            envlist=py36,py27,py34,pypi,docs
             description= py27: run pytest on Python 2.7
                          py34: run pytest on Python 3.6
-                         pypy: publish to pypy
+                         pypi: publish to PyPI
                          docs: document stuff
                          notincluded: random extra
 
@@ -2361,7 +2361,7 @@ class TestCmdInvocation:
             },
         )
         result = cmd("-l")
-        assert result.outlines == ["py36", "py27", "py34", "pypy", "docs"]
+        assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
 
     def test_listenvs_verbose_description(self, cmd, initproj):
         initproj(
@@ -2369,12 +2369,12 @@ class TestCmdInvocation:
             filedefs={
                 "tox.ini": """
             [tox]
-            envlist=py36,py27,py34,pypy,docs
+            envlist=py36,py27,py34,pypi,docs
             [testenv]
             description= py36: run pytest on Python 3.6
                          py27: run pytest on Python 2.7
                          py34: run pytest on Python 3.4
-                         pypy: publish to pypy
+                         pypi: publish to PyPI
                          docs: document stuff
                          notincluded: random extra
 
@@ -2393,7 +2393,7 @@ class TestCmdInvocation:
             "py36 -> run pytest on Python 3.6",
             "py27 -> run pytest on Python 2.7",
             "py34 -> run pytest on Python 3.4",
-            "pypy -> publish to pypy",
+            "pypi -> publish to PyPI",
             "docs -> let me overwrite that",
         ]
         assert result.outlines[2:] == expected
@@ -2404,7 +2404,7 @@ class TestCmdInvocation:
             filedefs={
                 "tox.ini": """
             [tox]
-            envlist=py36,py27,py34,pypy,docs
+            envlist=py36,py27,py34,pypi,docs
 
             [testenv:notincluded]
             changedir = whatever
@@ -2415,7 +2415,7 @@ class TestCmdInvocation:
             },
         )
         result = cmd("-a")
-        expected = ["py36", "py27", "py34", "pypy", "docs", "notincluded"]
+        expected = ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
         assert result.outlines == expected
 
     def test_listenvs_all_verbose_description(self, cmd, initproj):
