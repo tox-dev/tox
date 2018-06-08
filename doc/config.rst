@@ -58,6 +58,18 @@ and will first lookup global tox settings in this section:
     * environment variable ``TOXENV``
     * ``tox.ini`` file's ``envlist``
 
+.. confval:: ignore_basepython_conflict=True|False(default)
+
+    .. versionadded:: 3.1.0
+
+    If ``True``, :confval:`basepython` settings that conflict with the Python
+    variant for a environments using default factors, such as ``py27`` or
+    ``py35``, will be ignored. This allows you to configure
+    :confval:`basepython` in the global testenv without affecting these
+    factors. If ``False``, the default, a warning will be emitted if a conflict
+    is identified. In a future version of tox, this warning will become an
+    error.
+
 
 Virtualenv test environment settings
 ------------------------------------
@@ -81,8 +93,15 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: basepython=NAME-OR-PATH
 
-    name or path to a Python interpreter which will be used for creating
-    the virtual environment. **default**: interpreter used for tox invocation.
+    Name or path to a Python interpreter which will be used for creating
+    the virtual environment; if the environment name contains a :ref:`default
+    factor <factors>`, this value will be ignored. **default**: interpreter
+    used for tox invocation.
+
+    .. versionchanged:: 3.1
+
+       Environments that use a :ref:`default factor <factors>` now ignore this
+       value, defaulting to the interpreter defined for that factor.
 
 .. confval:: commands=ARGVLIST
 
@@ -546,9 +565,6 @@ However, a better approach looks like this:
     envlist = {py27,py36}-django{15,16}
 
     [testenv]
-    basepython =
-        py27: python2.7
-        py36: python3.6
     deps =
         pytest
         django15: Django>=1.5,<1.6
@@ -612,23 +628,12 @@ Factors and factor-conditional settings
 ++++++++++++++++++++++++++++++++++++++++
 
 Parts of an environment name delimited by hyphens are called factors and can
-be used to set values conditionally:
+be used to set values conditionally. In list settings such as ``deps`` or
+``commands`` you can freely intermix optional lines with unconditional ones:
 
 .. code-block:: ini
 
-    basepython =
-        py27: python2.7
-        py36: python3.6
-
-This conditional setting will lead to either ``python3.6`` or
-``python2.7`` used as base python, e.g. ``python3.6`` is selected if current
-environment contains ``py36`` factor.
-
-In list settings such as ``deps`` or ``commands`` you can freely intermix
-optional lines with unconditional ones:
-
-.. code-block:: ini
-
+    [testenv]
     deps =
         pytest
         django15: Django>=1.5,<1.6
@@ -638,16 +643,23 @@ optional lines with unconditional ones:
 Reading it line by line:
 
 - ``pytest`` will be included unconditionally,
-- ``Django>=1.5,<1.6`` will be included for environments containing ``django15`` factor,
+- ``Django>=1.5,<1.6`` will be included for environments containing
+  ``django15`` factor,
 - ``Django>=1.6,<1.7`` similarly depends on ``django16`` factor,
 - ``unittest`` will be loaded for Python 3.6 environments.
 
+tox provides a number of default factors corresponding to Python interpreter
+versions. The conditional setting above will lead to either ``python3.6`` or
+``python2.7`` used as base python, e.g. ``python3.6`` is selected if current
+environment contains ``py36`` factor.
+
 .. note::
 
-    tox provides good defaults for basepython setting, so the above
-    ini-file can be further reduced by omitting the ``basepython``
-    setting.
-
+    Configuring :confval:`basepython` for environments using default factors
+    will result in a warning. Configure :confval:`ignore_basepython_conflict`
+    if you wish to explicitly ignore these conflicts, allowing you to define a
+    global :confval:`basepython` for all environments *except* those with
+    default factors.
 
 Complex factor conditions
 +++++++++++++++++++++++++

@@ -505,11 +505,32 @@ def tox_addoption(parser):
     )
 
     def basepython_default(testenv_config, value):
+        """Configure a sane interpreter for the environment.
+
+        If the environment contains a default factor, this will always be the
+        interpreter associated with that factor overriding anything manually
+        set.
+        """
+        for factor in testenv_config.factors:
+            if factor in tox.PYTHON.DEFAULT_FACTORS:
+                default = tox.PYTHON.DEFAULT_FACTORS[factor]
+
+                if value is None or testenv_config.config.ignore_basepython_conflict:
+                    return default
+
+                if str(value) != default:
+                    # TODO(stephenfin): Raise an exception here in tox 4.0
+                    print(
+                        "WARNING: Conflicting basepython for environment '{}'; resolve conflict "
+                        "or configure ignore_basepython_conflict".format(
+                            testenv_config.envname, str(value), default
+                        ),
+                        file=sys.stderr,
+                    )
+
         if value is None:
-            for factor in testenv_config.factors:
-                if factor in tox.PYTHON.DEFAULT_FACTORS:
-                    return tox.PYTHON.DEFAULT_FACTORS[factor]
             return sys.executable
+
         return str(value)
 
     parser.add_testenv_attribute(
@@ -892,6 +913,8 @@ class parseini:
             config.option.skip_missing_interpreters = reader.getbool(
                 "skip_missing_interpreters", False
             )
+
+        config.ignore_basepython_conflict = reader.getbool("ignore_basepython_conflict", False)
 
         # determine indexserver dictionary
         config.indexserver = {"default": IndexServerConfig("default")}

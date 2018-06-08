@@ -49,7 +49,6 @@ a tox test run.  Here is an example ``tox.ini`` configuration:
 .. code-block:: ini
 
     [testenv:docs]
-    basepython = python
     changedir = doc
     deps = sphinx
     commands = sphinx-build -W -b html -d {envtmpdir}/doctrees . {envtmpdir}/html
@@ -142,26 +141,23 @@ If you want to use this with Jenkins_, also checkout the :ref:`jenkins artifact 
 .. _verlib: https://bitbucket.org/tarek/distutilsversion/
 
 basepython defaults, overriding
-++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++
 
-By default, for any ``pyXY`` test environment name
-the underlying "pythonX.Y" executable will be searched in
-your system ``PATH``. It must exist in order to successfully create
-virtualenv environments.  On Windows a ``pythonX.Y`` named executable
-will be searched in typical default locations using the
-``C:\PythonX.Y\python.exe`` pattern.
+For any ``pyXY`` test environment name the underlying ``pythonX.Y`` executable
+will be searched in your system ``PATH``. Similarly, for ``jython`` and
+``pypy`` the respective ``jython`` and ``pypy-c`` names will be looked for.
+The executable must exist in order to successfully create *virtualenv*
+environments. On Windows a ``pythonX.Y`` named executable will be searched in
+typical default locations using the ``C:\PythonX.Y\python.exe`` pattern.
 
-For ``jython`` and ``pypy`` the respective ``jython``
-and ``pypy-c`` names will be looked for.
-
-You can override any of the default settings by defining
-the ``basepython`` variable in a specific test environment
-section, for example:
+All other targets will use the system ``python`` instead. You can override any
+of the default settings by defining the :confval:`basepython` variable in a
+specific test environment section, for example:
 
 .. code-block:: ini
 
-    [testenv:py27]
-    basepython=/my/path/to/python2.7
+    [testenv:docs]
+    basepython = python2.7
 
 Avoiding expensive sdist
 ------------------------
