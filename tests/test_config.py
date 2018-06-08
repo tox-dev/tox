@@ -1817,12 +1817,16 @@ class TestGlobalOptions:
             basepython = config.envconfigs[name].basepython
             if name == "jython":
                 assert basepython == "jython"
-            elif name.startswith("pypy"):
-                assert basepython == name
+            elif name in ("pypy2", "pypy3"):
+                assert basepython == "pypy" + name[-1]
             elif name in ("py2", "py3"):
                 assert basepython == "python" + name[-1]
+            elif name == "pypy":
+                assert basepython == name
             elif name == "py":
                 assert "python" in basepython or "pypy" in basepython
+            elif "pypy" in name:
+                assert basepython == "pypy{}.{}".format(name[-2], name[-1])
             else:
                 assert name.startswith("py")
                 assert basepython == "python{}.{}".format(name[2], name[3])
