@@ -60,7 +60,6 @@ def main():
                 "pytest-xdist",
             ],
             "docs": ["sphinx >= 1.6.3, < 2", "towncrier >= 17.8.0"],
-            "lint": ["pre-commit == 1.8.2"],
             "publish": ["devpi", "twine"],
         },
         classifiers=[
