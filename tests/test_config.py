@@ -1817,12 +1817,16 @@ class TestGlobalOptions:
             basepython = config.envconfigs[name].basepython
             if name == "jython":
                 assert basepython == "jython"
-            elif name.startswith("pypy"):
-                assert basepython == name
+            elif name in ("pypy2", "pypy3"):
+                assert basepython == "pypy" + name[-1]
             elif name in ("py2", "py3"):
                 assert basepython == "python" + name[-1]
+            elif name == "pypy":
+                assert basepython == name
             elif name == "py":
                 assert "python" in basepython or "pypy" in basepython
+            elif "pypy" in name:
+                assert basepython == "pypy{}.{}".format(name[-2], name[-1])
             else:
                 assert name.startswith("py")
                 assert basepython == "python{}.{}".format(name[2], name[3])
@@ -2341,10 +2345,10 @@ class TestCmdInvocation:
             filedefs={
                 "tox.ini": """
             [tox]
-            envlist=py36,py27,py34,pypy,docs
+            envlist=py36,py27,py34,pypi,docs
             description= py27: run pytest on Python 2.7
                          py34: run pytest on Python 3.6
-                         pypy: publish to pypy
+                         pypi: publish to PyPI
                          docs: document stuff
                          notincluded: random extra
 
@@ -2357,7 +2361,7 @@ class TestCmdInvocation:
             },
         )
         result = cmd("-l")
-        assert result.outlines == ["py36", "py27", "py34", "pypy", "docs"]
+        assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
 
     def test_listenvs_verbose_description(self, cmd, initproj):
         initproj(
@@ -2365,12 +2369,12 @@ class TestCmdInvocation:
             filedefs={
                 "tox.ini": """
             [tox]
-            envlist=py36,py27,py34,pypy,docs
+            envlist=py36,py27,py34,pypi,docs
             [testenv]
             description= py36: run pytest on Python 3.6
                          py27: run pytest on Python 2.7
                          py34: run pytest on Python 3.4
-                         pypy: publish to pypy
+                         pypi: publish to PyPI
                          docs: document stuff
                          notincluded: random extra
 
@@ -2389,7 +2393,7 @@ class TestCmdInvocation:
             "py36 -> run pytest on Python 3.6",
             "py27 -> run pytest on Python 2.7",
             "py34 -> run pytest on Python 3.4",
-            "pypy -> publish to pypy",
+            "pypi -> publish to PyPI",
             "docs -> let me overwrite that",
         ]
         assert result.outlines[2:] == expected
@@ -2400,7 +2404,7 @@ class TestCmdInvocation:
             filedefs={
                 "tox.ini": """
             [tox]
-            envlist=py36,py27,py34,pypy,docs
+            envlist=py36,py27,py34,pypi,docs
 
             [testenv:notincluded]
             changedir = whatever
@@ -2411,7 +2415,7 @@ class TestCmdInvocation:
             },
         )
         result = cmd("-a")
-        expected = ["py36", "py27", "py34", "pypy", "docs", "notincluded"]
+        expected = ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
         assert result.outlines == expected
 
     def test_listenvs_all_verbose_description(self, cmd, initproj):
