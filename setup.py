@@ -43,7 +43,8 @@ def main():
         platforms=["unix", "linux", "osx", "cygwin", "win32"],
         author="holger krekel",
         author_email="holger@merlinux.eu",
-        packages=["tox"],
+        packages=setuptools.find_packages("src"),
+        package_dir={"": "src"},
         entry_points={
             "console_scripts": ["tox=tox:cmdline", "tox-quickstart=tox._quickstart:main"]
         },
