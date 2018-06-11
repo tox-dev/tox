@@ -43,7 +43,8 @@ def main():
         platforms=["unix", "linux", "osx", "cygwin", "win32"],
         author="holger krekel",
         author_email="holger@merlinux.eu",
-        packages=["tox"],
+        packages=setuptools.find_packages("src"),
+        package_dir={"": "src"},
         entry_points={
             "console_scripts": ["tox=tox:cmdline", "tox-quickstart=tox._quickstart:main"]
         },
@@ -59,7 +60,6 @@ def main():
                 "pytest-xdist",
             ],
             "docs": ["sphinx >= 1.6.3, < 2", "towncrier >= 17.8.0"],
-            "lint": ["pre-commit == 1.8.2"],
             "publish": ["devpi", "twine"],
         },
         classifiers=[
