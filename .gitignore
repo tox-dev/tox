@@ -14,6 +14,7 @@ dist
 doc/_build/
 tox.egg-info
 .tox
+.venv
 .cache
 .python-version
 
