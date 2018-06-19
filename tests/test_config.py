@@ -1641,36 +1641,35 @@ class TestConfigTestEnv:
             assert config.basepython == "python{}.{}".format(name[2], name[3])
 
     def test_default_factors_conflict(self, newconfig, capsys):
-        config = newconfig(
+        with pytest.warns(UserWarning, match=r"Conflicting basepython .*"):
+            config = newconfig(
+                """
+                [testenv]
+                basepython=python3
+                [testenv:py27]
+                commands = python --version
             """
-            [testenv]
-            basepython=python3
-            [testenv:py27]
-            commands = python --version
-        """
-        )
+            )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["py27"]
         assert envconfig.basepython == "python3"
-        captured = capsys.readouterr()
-        assert "WARNING: Conflicting basepython" in captured.err
 
     def test_default_factors_conflict_ignore(self, newconfig, capsys):
-        config = newconfig(
+        with pytest.warns(None) as record:
+            config = newconfig(
+                """
+                [tox]
+                ignore_basepython_conflict=True
+                [testenv]
+                basepython=python3
+                [testenv:py27]
+                commands = python --version
             """
-            [tox]
-            ignore_basepython_conflict=True
-            [testenv]
-            basepython=python3
-            [testenv:py27]
-            commands = python --version
-        """
-        )
+            )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["py27"]
         assert envconfig.basepython == "python2.7"
-        captured = capsys.readouterr()
-        assert captured.err == ""
+        assert len(record) == 0
 
     @pytest.mark.issue188
     def test_factors_in_boolean(self, newconfig):

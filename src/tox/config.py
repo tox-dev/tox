@@ -8,6 +8,7 @@ import re
 import shlex
 import string
 import sys
+import warnings
 from fnmatch import fnmatchcase
 from subprocess import list2cmdline
 
@@ -520,12 +521,11 @@ def tox_addoption(parser):
 
                 if str(value) != default:
                     # TODO(stephenfin): Raise an exception here in tox 4.0
-                    print(
-                        "WARNING: Conflicting basepython for environment '{}'; resolve conflict "
+                    warnings.warn(
+                        "Conflicting basepython for environment '{}'; resolve conflict "
                         "or configure ignore_basepython_conflict".format(
                             testenv_config.envname, str(value), default
-                        ),
-                        file=sys.stderr,
+                        )
                     )
 
         if value is None:
