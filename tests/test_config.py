@@ -1640,6 +1640,37 @@ class TestConfigTestEnv:
         for name, config in configs.items():
             assert config.basepython == "python{}.{}".format(name[2], name[3])
 
+    def test_default_factors_conflict(self, newconfig, capsys):
+        with pytest.warns(UserWarning, match=r"Conflicting basepython .*"):
+            config = newconfig(
+                """
+                [testenv]
+                basepython=python3
+                [testenv:py27]
+                commands = python --version
+            """
+            )
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs["py27"]
+        assert envconfig.basepython == "python3"
+
+    def test_default_factors_conflict_ignore(self, newconfig, capsys):
+        with pytest.warns(None) as record:
+            config = newconfig(
+                """
+                [tox]
+                ignore_basepython_conflict=True
+                [testenv]
+                basepython=python3
+                [testenv:py27]
+                commands = python --version
+            """
+            )
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs["py27"]
+        assert envconfig.basepython == "python2.7"
+        assert len(record) == 0
+
     @pytest.mark.issue188
     def test_factors_in_boolean(self, newconfig):
         inisource = """

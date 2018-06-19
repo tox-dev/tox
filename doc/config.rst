@@ -58,6 +58,18 @@ and will first lookup global tox settings in this section:
     * environment variable ``TOXENV``
     * ``tox.ini`` file's ``envlist``
 
+.. confval:: ignore_basepython_conflict=True|False(default)
+
+    .. versionadded:: 3.1.0
+
+    If ``True``, :confval:`basepython` settings that conflict with the Python
+    variant for a environments using default factors, such as ``py27`` or
+    ``py35``, will be ignored. This allows you to configure
+    :confval:`basepython` in the global testenv without affecting these
+    factors. If ``False``, the default, a warning will be emitted if a conflict
+    is identified. In a future version of tox, this warning will become an
+    error.
+
 
 Virtualenv test environment settings
 ------------------------------------
@@ -81,12 +93,19 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: basepython=NAME-OR-PATH
 
-    name or path to a Python interpreter which will be used for creating
-    the virtual environment. **default**: interpreter used for tox invocation.
+    Name or path to a Python interpreter which will be used for creating
+    the virtual environment; if the environment name contains a :ref:`default
+    factor <factors>`, this value will be ignored. **default**: interpreter
+    used for tox invocation.
+
+    .. versionchanged:: 3.1
+
+       Environments that use a :ref:`default factor <factors>` now ignore this
+       value, defaulting to the interpreter defined for that factor.
 
 .. confval:: commands=ARGVLIST
 
-    the commands to be called for testing. Each command is defined
+    The commands to be called for testing. Each command is defined
     by one or more lines; a command can have multiple lines if a line
     ends with the ``\`` character in which case the subsequent line
     will be appended (and may contain another ``\`` character ...).
@@ -99,7 +118,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionadded:: 1.6
 
-    the ``install_command`` setting is used for installing packages into
+    The ``install_command`` setting is used for installing packages into
     the virtual environment; both the package under test
     and its dependencies (defined with :confval:`deps`).
     Must contain the substitution key
@@ -114,38 +133,36 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
         pip install {opts} {packages}
 
-
 .. confval:: list_dependencies_command
 
     .. versionadded:: 2.4
 
-    the ``list_dependencies_command`` setting is used for listing
+    The ``list_dependencies_command`` setting is used for listing
     the packages installed into the virtual environment.
 
     **default**::
 
         pip freeze
 
-
 .. confval:: ignore_errors=True|False(default)
 
     .. versionadded:: 2.0
 
-      If ``True``, a non-zero exit code from one command will be ignored and
-      further commands will be executed (which was the default behavior in tox <
-      2.0).  If ``False`` (the default), then a non-zero exit code from one command
-      will abort execution of commands for that environment.
+    If ``True``, a non-zero exit code from one command will be ignored and
+    further commands will be executed (which was the default behavior in tox <
+    2.0).  If ``False`` (the default), then a non-zero exit code from one
+    command will abort execution of commands for that environment.
 
-      It may be helpful to note that this setting is analogous to the ``-i`` or
-      ``ignore-errors`` option of GNU Make. A similar name was chosen to reflect the
-      similarity in function.
+    It may be helpful to note that this setting is analogous to the ``-i`` or
+    ``ignore-errors`` option of GNU Make. A similar name was chosen to reflect
+    the similarity in function.
 
-      Note that in tox 2.0, the default behavior of tox with respect to
-      treating errors from commands changed. tox < 2.0 would ignore errors by
-      default. tox >= 2.0 will abort on an error by default, which is safer and more
-      typical of CI and command execution tools, as it doesn't make sense to
-      run tests if installing some prerequisite failed and it doesn't make sense to
-      try to deploy if tests failed.
+    Note that in tox 2.0, the default behavior of tox with respect to treating
+    errors from commands changed. tox < 2.0 would ignore errors by default. tox
+    >= 2.0 will abort on an error by default, which is safer and more typical
+    of CI and command execution tools, as it doesn't make sense to run tests if
+    installing some prerequisite failed and it doesn't make sense to try to
+    deploy if tests failed.
 
 .. confval:: pip_pre=True|False(default)
 
@@ -175,11 +192,12 @@ Complete list of settings that you can put into ``testenv*`` sections:
 .. confval:: changedir=path
 
     change to this working directory when executing the test command.
+
     **default**: ``{toxinidir}``
 
 .. confval:: deps=MULTI-LINE-LIST
 
-    test-specific dependencies - to be installed into the environment prior to project
+    Test-specific dependencies - to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
     passed to the installer command for processing (see :confval:`indexserver`).
     Each line specifies a file, a URL or a package name.  You can additionally specify
@@ -205,43 +223,43 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: setenv=MULTI-LINE-LIST
 
-   .. versionadded:: 0.9
+    .. versionadded:: 0.9
 
-   each line contains a NAME=VALUE environment variable setting which
-   will be used for all test command invocations as well as for installing
-   the sdist package into a virtual environment.
+    Each line contains a NAME=VALUE environment variable setting which
+    will be used for all test command invocations as well as for installing
+    the sdist package into a virtual environment.
 
 .. confval:: passenv=SPACE-SEPARATED-GLOBNAMES
 
-   .. versionadded:: 2.0
+    .. versionadded:: 2.0
 
-   A list of wildcard environment variable names which
-   shall be copied from the tox invocation environment to the test
-   environment when executing test commands.  If a specified environment
-   variable doesn't exist in the tox invocation environment it is ignored.
-   You can use ``*`` and ``?`` to match multiple environment variables with
-   one name.
+    A list of wildcard environment variable names which
+    shall be copied from the tox invocation environment to the test
+    environment when executing test commands.  If a specified environment
+    variable doesn't exist in the tox invocation environment it is ignored.
+    You can use ``*`` and ``?`` to match multiple environment variables with
+    one name.
 
-   Some variables are always passed through to ensure the basic functionality
-   of standard library functions or tooling like pip:
+    Some variables are always passed through to ensure the basic functionality
+    of standard library functions or tooling like pip:
 
-   * passed through on all platforms: ``PATH``, ``LANG``, ``LANGUAGE``,
-     ``LD_LIBRARY_PATH``, ``PIP_INDEX_URL``
-   * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
-      ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``
-   * Others (e.g. UNIX, macOS): ``TMPDIR``
+    * passed through on all platforms: ``PATH``, ``LANG``, ``LANGUAGE``,
+      ``LD_LIBRARY_PATH``, ``PIP_INDEX_URL``
+    * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
+       ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``
+    * Others (e.g. UNIX, macOS): ``TMPDIR``
 
-   You can override these variables with the ``setenv`` option.
+    You can override these variables with the ``setenv`` option.
 
-   If defined the ``TOX_TESTENV_PASSENV`` environment variable (in the tox
-   invocation environment) can define additional space-separated variable
-   names that are to be passed down to the test command environment.
+    If defined the ``TOX_TESTENV_PASSENV`` environment variable (in the tox
+    invocation environment) can define additional space-separated variable
+    names that are to be passed down to the test command environment.
 
-   .. versionchanged:: 2.7
+    .. versionchanged:: 2.7
 
-   ``PYTHONPATH`` will be passed down if explicitly defined. If ``PYTHONPATH``
-   exists in the host environment but is **not** declared in ``passenv`` a
-   warning will be emitted.
+        ``PYTHONPATH`` will be passed down if explicitly defined. If
+        ``PYTHONPATH`` exists in the host environment but is **not** declared
+        in ``passenv`` a warning will be emitted.
 
 .. confval:: recreate=True|False(default)
 
@@ -249,7 +267,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: downloadcache=path
 
-    **IGNORED** -- Since pip-8 has caching by default this option is now ignored.  Please remove it from your configs as a future tox version might bark on it.
+    **IGNORED** -- Since pip-8 has caching by default this option is now
+    ignored.  Please remove it from your configs as a future tox version might
+    bark on it.
 
 .. confval:: sitepackages=True|False
 
@@ -261,60 +281,65 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: alwayscopy=True|False
 
-    Set to ``True`` if you want virtualenv to always copy files rather than symlinking.
+    Set to ``True`` if you want virtualenv to always copy files rather than
+    symlinking.
 
-    This is useful for situations where hardlinks don't work (e.g. running in VMS with Windows guests).
+    This is useful for situations where hardlinks don't work (e.g. running in
+    VMS with Windows guests).
 
     **default:** False, meaning that virtualenvs will make use of symbolic links.
 
 .. confval:: args_are_paths=BOOL
 
-    treat positional arguments passed to ``tox`` as file system paths
+    Treat positional arguments passed to ``tox`` as file system paths
     and - if they exist on the filesystem - rewrite them according
     to the ``changedir``.
+
     **default**: True (due to the exists-on-filesystem check it's
     usually safe to try rewriting).
 
 .. confval:: envtmpdir=path
 
-    defines a temporary directory for the virtualenv which will be cleared
+    Defines a temporary directory for the virtualenv which will be cleared
     each time before the group of test commands is invoked.
+
     **default**: ``{envdir}/tmp``
 
 .. confval:: envlogdir=path
 
-    defines a directory for logging where tox will put logs of tool
+    Defines a directory for logging where tox will put logs of tool
     invocation.
+
     **default**: ``{envdir}/log``
 
 .. confval:: indexserver
 
-   .. versionadded:: 0.9
+    .. versionadded:: 0.9
 
-   (DEPRECATED, will be removed in a future version) Multi-line ``name =
-   URL`` definitions of python package servers.  Dependencies can
-   specify using a specified index server through the
-   ``:indexservername:depname`` pattern.  The ``default`` indexserver
-   definition determines where unscoped dependencies and the sdist install
-   installs from.  Example:
+    (DEPRECATED, will be removed in a future version) Multi-line ``name =
+    URL`` definitions of python package servers.  Dependencies can
+    specify using a specified index server through the
+    ``:indexservername:depname`` pattern.  The ``default`` indexserver
+    definition determines where unscoped dependencies and the sdist install
+    installs from.  Example:
 
-   .. code-block:: ini
+    .. code-block:: ini
 
         [tox]
         indexserver =
             default = http://mypypi.org
 
-   will make tox install all dependencies from this PYPI index server
-   (including when installing the project sdist package).
-
+    will make tox install all dependencies from this PYPI index server
+    (including when installing the project sdist package).
 
 .. confval:: envdir
 
-   .. versionadded:: 1.5
+    .. versionadded:: 1.5
 
-   User can set specific path for environment. If path would not be absolute it
-   would be treated as relative to ``{toxinidir}``. **default**:
-   ``{toxworkdir}/{envname}``
+    User can set specific path for environment. If path would not be absolute
+    it would be treated as relative to ``{toxinidir}``.
+
+    **default**: ``{toxworkdir}/{envname}``
 
 .. confval:: usedevelop=BOOL
 
@@ -356,7 +381,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: description=SINGLE-LINE-TEXT
 
-    a short description of the environment, this will be used to explain
+    A short description of the environment, this will be used to explain
     the environment to the user upon listing environments for the command
     line with any level of verbosity higher than zero. **default**: empty string
 
@@ -540,9 +565,6 @@ However, a better approach looks like this:
     envlist = {py27,py36}-django{15,16}
 
     [testenv]
-    basepython =
-        py27: python2.7
-        py36: python3.6
     deps =
         pytest
         django15: Django>=1.5,<1.6
@@ -606,23 +628,12 @@ Factors and factor-conditional settings
 ++++++++++++++++++++++++++++++++++++++++
 
 Parts of an environment name delimited by hyphens are called factors and can
-be used to set values conditionally:
+be used to set values conditionally. In list settings such as ``deps`` or
+``commands`` you can freely intermix optional lines with unconditional ones:
 
 .. code-block:: ini
 
-    basepython =
-        py27: python2.7
-        py36: python3.6
-
-This conditional setting will lead to either ``python3.6`` or
-``python2.7`` used as base python, e.g. ``python3.6`` is selected if current
-environment contains ``py36`` factor.
-
-In list settings such as ``deps`` or ``commands`` you can freely intermix
-optional lines with unconditional ones:
-
-.. code-block:: ini
-
+    [testenv]
     deps =
         pytest
         django15: Django>=1.5,<1.6
@@ -632,16 +643,23 @@ optional lines with unconditional ones:
 Reading it line by line:
 
 - ``pytest`` will be included unconditionally,
-- ``Django>=1.5,<1.6`` will be included for environments containing ``django15`` factor,
+- ``Django>=1.5,<1.6`` will be included for environments containing
+  ``django15`` factor,
 - ``Django>=1.6,<1.7`` similarly depends on ``django16`` factor,
 - ``unittest`` will be loaded for Python 3.6 environments.
 
+tox provides a number of default factors corresponding to Python interpreter
+versions. The conditional setting above will lead to either ``python3.6`` or
+``python2.7`` used as base python, e.g. ``python3.6`` is selected if current
+environment contains ``py36`` factor.
+
 .. note::
 
-    tox provides good defaults for basepython setting, so the above
-    ini-file can be further reduced by omitting the ``basepython``
-    setting.
-
+    Configuring :confval:`basepython` for environments using default factors
+    will result in a warning. Configure :confval:`ignore_basepython_conflict`
+    if you wish to explicitly ignore these conflicts, allowing you to define a
+    global :confval:`basepython` for all environments *except* those with
+    default factors.
 
 Complex factor conditions
 +++++++++++++++++++++++++

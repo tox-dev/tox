@@ -796,13 +796,9 @@ def test_test_piphelp(initproj, cmd):
         "example123",
         filedefs={
             "tox.ini": """
-        # content of: tox.ini
-        [testenv]
-        commands=pip -h
-        [testenv:py27]
-        basepython=python
-        [testenv:py36]
-        basepython=python
+            # content of: tox.ini
+            [testenv]
+            commands=pip -h
     """
         },
     )
