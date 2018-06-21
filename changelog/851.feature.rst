@@ -1,0 +1,1 @@
+While running tox invokes various commands (such as building the package, pip installing dependencies and so on), these were printed in case they failed as Python arrays. Changed the representation to a shell command, allowing the users to quickly replicate/debug the failure on their own. @gaborbernat

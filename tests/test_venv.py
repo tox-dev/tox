@@ -257,7 +257,7 @@ def test_install_recreate(newmocksession, tmpdir):
     mocksession.report.expect("verbosity0", "*recreate*")
 
 
-def test_install_sdist_extras(newmocksession):
+def test_install_wheel_extras(newmocksession):
     mocksession = newmocksession(
         [],
         """
@@ -273,8 +273,8 @@ def test_install_sdist_extras(newmocksession):
     assert len(pcalls) == 1
     pcalls[:] = []
 
-    venv.installpkg("distfile.tar.gz", action=action)
-    assert "distfile.tar.gz[testing,development]" in pcalls[-1].args
+    venv.installpkg("distfile.whl", action=action)
+    assert "distfile.whl[testing,development]" in pcalls[-1].args
 
 
 def test_develop_extras(newmocksession, tmpdir):

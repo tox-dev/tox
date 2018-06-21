@@ -81,53 +81,6 @@ def test__resolve_pkg_doubledash(tmpdir, mocksession):
 
 
 class TestSession:
-    def test_make_sdist(self, initproj):
-        initproj(
-            "example123-0.5",
-            filedefs={
-                "tests": {"test_hello.py": "def test_hello(): pass"},
-                "tox.ini": """
-            """,
-            },
-        )
-        config = parseconfig([])
-        session = Session(config)
-        sdist = session.get_installpkg_path()
-        assert sdist.check()
-        assert sdist.ext == ".zip"
-        assert sdist == config.distdir.join(sdist.basename)
-        sdist2 = session.get_installpkg_path()
-        assert sdist2 == sdist
-        sdist.write("hello")
-        assert sdist.stat().size < 10
-        sdist_new = Session(config).get_installpkg_path()
-        assert sdist_new == sdist
-        assert sdist_new.stat().size > 10
-
-    def test_make_sdist_distshare(self, tmpdir, initproj):
-        distshare = tmpdir.join("distshare")
-        initproj(
-            "example123-0.6",
-            filedefs={
-                "tests": {"test_hello.py": "def test_hello(): pass"},
-                "tox.ini": """
-            [tox]
-            distshare={}
-            """.format(
-                    distshare
-                ),
-            },
-        )
-        config = parseconfig([])
-        session = Session(config)
-        sdist = session.get_installpkg_path()
-        assert sdist.check()
-        assert sdist.ext == ".zip"
-        assert sdist == config.distdir.join(sdist.basename)
-        sdist_share = config.distshare.join(sdist.basename)
-        assert sdist_share.check()
-        assert sdist_share.read("rb") == sdist.read("rb"), (sdist_share, sdist)
-
     def test_log_pcall(self, mocksession):
         mocksession.config.logdir.ensure(dir=1)
         assert not mocksession.config.logdir.listdir()
@@ -249,7 +202,7 @@ def test_run_custom_install_command_error(cmd, initproj):
     )
     result = cmd()
     assert re.match(
-        r"ERROR: invocation failed \(errno \d+\), args: \['.*[/\\]tox\.ini", result.outlines[-1]
+        r"ERROR: invocation failed \(errno \d+\), args: .*[/\\]tox\.ini", result.outlines[-1]
     )
     assert result.ret
 
@@ -898,33 +851,6 @@ def test_separate_sdist(cmd, initproj, tmpdir):
     result = cmd("-v", "--notest")
     assert not result.ret
     assert "python inst: {}".format(sdistfile) in result.out
-
-
-def test_sdist_latest(tmpdir, newconfig):
-    distshare = tmpdir.join("distshare")
-    config = newconfig(
-        [],
-        """
-            [tox]
-            distshare={}
-            sdistsrc={{distshare}}/pkg123-*
-    """.format(
-            distshare
-        ),
-    )
-    p = distshare.ensure("pkg123-1.4.5.zip")
-    distshare.ensure("pkg123-1.4.5a1.zip")
-    session = Session(config)
-    sdist_path = session.get_installpkg_path()
-    assert sdist_path == p
-
-
-def test_installpkg(tmpdir, newconfig):
-    p = tmpdir.ensure("pkg123-1.0.zip")
-    config = newconfig(["--installpkg={}".format(p)], "")
-    session = Session(config)
-    sdist_path = session.get_installpkg_path()
-    assert sdist_path == p
 
 
 def test_envsitepackagesdir(cmd, initproj):

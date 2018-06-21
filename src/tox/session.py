@@ -7,6 +7,7 @@ INI-style "tox.ini" file.
 from __future__ import print_function
 
 import os
+import pipes
 import re
 import shutil
 import subprocess
@@ -136,9 +137,16 @@ class Action(object):
     def popen(self, args, cwd=None, env=None, redirect=True, returnout=False, ignore_ret=False):
         stdout = outpath = None
         resultjson = self.session.config.option.resultjson
+
+        cmd_args = [str(x) for x in args]
+        cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
         if resultjson or redirect:
             fout = self._initlogpath(self.id)
-            fout.write("actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(self.id, self.msg, args))
+            fout.write(
+                "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
+                    self.id, self.msg, cmd_args_shell
+                )
+            )
             fout.flush()
             outpath = py.path.local(fout.name)
             fin = outpath.open("rb")
@@ -153,11 +161,13 @@ class Action(object):
             popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=subprocess.STDOUT)
         except OSError as e:
             self.report.error(
-                "invocation failed (errno {:d}), args: {}, cwd: {}".format(e.errno, args, cwd)
+                "invocation failed (errno {:d}), args: {}, cwd: {}".format(
+                    e.errno, cmd_args_shell, cwd
+                )
             )
             raise
         popen.outpath = outpath
-        popen.args = [str(x) for x in args]
+        popen.args = cmd_args
         popen.cwd = cwd
         popen.action = self
         self._popenlist.append(popen)
@@ -431,7 +441,7 @@ class Session:
             target.dirpath().ensure(dir=1)
             src.copy(target)
 
-    def _makesdist(self):
+    def _get_package(self):
         setup = self.config.setupdir.join("setup.py")
         if not setup.check():
             self.report.error(
@@ -446,19 +456,8 @@ class Session:
             )
             raise SystemExit(1)
         with self.newaction(None, "packaging") as action:
-            action.setactivity("sdist-make", setup)
-            self.make_emptydir(self.config.distdir)
-            action.popen(
-                [
-                    sys.executable,
-                    setup,
-                    "sdist",
-                    "--formats=zip",
-                    "--dist-dir",
-                    self.config.distdir,
-                ],
-                cwd=self.config.setupdir,
-            )
+            action.setactivity("{}-make".format(self.config.build), setup)
+            self._make_package(action, setup)
             try:
                 return self.config.distdir.listdir()[0]
             except py.error.ENOENT:
@@ -477,6 +476,37 @@ class Session:
                     "     python setup.py sdist"
                 )
                 raise SystemExit(1)
+
+    def _make_package(self, action, setup):
+        self.make_emptydir(self.config.distdir)
+        if self.config.build == "sdist":
+            action.popen(
+                [
+                    sys.executable,
+                    setup,
+                    "sdist",
+                    "--formats=zip",
+                    "--dist-dir",
+                    self.config.distdir,
+                ],
+                cwd=self.config.setupdir,
+            )
+        elif self.config.build == "wheel":
+            action.popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "wheel",
+                    "-w",
+                    self.config.distdir,  # target folder
+                    "--no-deps",  # don't build wheels for package dependencies
+                    self.config.setupdir,  # what to build - ourselves
+                ],
+                cwd=self.config.setupdir,
+            )
+        else:
+            raise RuntimeError("invalid build type {}".format(self.config.build))
 
     def make_emptydir(self, path):
         if path.check():
@@ -576,23 +606,23 @@ class Session:
             if not path:
                 path = self.config.sdistsrc
             path = self._resolve_pkg(path)
-            self.report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
+            self.report.info(
+                "using package {!r}, skipping '{}' activity ".format(str(path), self.config.build)
+            )
         else:
             try:
-                path = self._makesdist()
+                path = self._get_package()
             except tox.exception.InvocationError:
                 v = sys.exc_info()[1]
                 self.report.error("FAIL could not package project - v = {!r}".format(v))
                 return
             sdistfile = self.config.distshare.join(path.basename)
             if sdistfile != path:
-                self.report.info("copying new sdistfile to {!r}".format(str(sdistfile)))
+                self.report.info("copying new package to {!r}".format(str(sdistfile)))
                 try:
                     sdistfile.dirpath().ensure(dir=1)
                 except py.error.Error:
-                    self.report.warning(
-                        "could not copy distfile to {}".format(sdistfile.dirpath())
-                    )
+                    self.report.warning("could not copy package to {}".format(sdistfile.dirpath()))
                 else:
                     path.copy(sdistfile)
         return path

@@ -943,6 +943,7 @@ class parseini:
             for name in config.indexserver:
                 config.indexserver[name] = IndexServerConfig(name, override)
 
+        config.build = reader.getstring("build", default="sdist")
         reader.addsubstitutions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
         reader.addsubstitutions(distdir=config.distdir)

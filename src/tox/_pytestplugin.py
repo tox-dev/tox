@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import os
+import re
 import textwrap
 import time
 from fnmatch import fnmatch
@@ -61,15 +62,12 @@ def create_new_config_file(tmpdir):
 
 
 @pytest.fixture
-def cmd(request, capfd, monkeypatch):
+def cmd(request, capfd):
     if request.config.option.no_network:
         pytest.skip("--no-network was specified, test cannot run")
     request.addfinalizer(py.path.local().chdir)
 
     def run(*argv):
-        key = str(b"PYTHONPATH")
-        python_paths = (i for i in (str(os.getcwd()), os.getenv(key)) if i)
-        monkeypatch.setenv(key, os.pathsep.join(python_paths))
         with RunResult(capfd, argv) as result:
             try:
                 main([str(x) for x in argv])
@@ -110,6 +108,10 @@ class RunResult:
         return "RunResult(ret={}, args={}, out=\n{}\n, err=\n{})".format(
             self.ret, " ".join(str(i) for i in self.args), self.out, self.err
         )
+
+    @property
+    def python_hash_seed(self):
+        return next(re.finditer(r"PYTHONHASHSEED='([0-9]+)'", self.out)).group(1)
 
 
 class ReportExpectMock:
