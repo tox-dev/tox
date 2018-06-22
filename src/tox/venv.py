@@ -414,6 +414,7 @@ class VirtualEnv(object):
         env = self._getenv(testcommand=testcommand)
         bindir = str(self.envconfig.envbindir)
         env["PATH"] = p = os.pathsep.join([bindir, os.environ["PATH"]])
+        env.pop("PYTHONPATH", None)
         self.session.report.verbosity2("setting PATH={}".format(p))
         return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
 
