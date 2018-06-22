@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import textwrap
 
 import pytest
@@ -123,7 +124,7 @@ def test_pyproject_toml_with_setuptools_scm(initproj, cmd):
 
                 [testenv]
                 passenv = PYTHONPATH
-                commands = python -c 'import demo; print(demo.__version__)'
+                commands = python -c 'import demo; print(demo.__version__, end="")'
             """,
         },
     )
@@ -133,23 +134,29 @@ def test_pyproject_toml_with_setuptools_scm(initproj, cmd):
     env["EMAIL"] = "joe@bloomberg.com"
     subprocess.check_call(["git", "init"], env=env)
     subprocess.check_call(["git", "add", "."], env=env)
+    subprocess.check_call(["git", "config", "commit.gpgsign", "false"], env=env)
     subprocess.check_call(["git", "commit", "-m", "first commit"], env=env)
     subprocess.check_call(["git", "tag", "0.1"], env=env)
 
     result = cmd()
-    expected = textwrap.dedent(
-        """    GLOB wheel-make: {0}/setup.py
-    py create: {0}/.tox/py
-    py inst: {0}/.tox/dist/demo-0.1-py2.py3-none-any.whl
+    base = textwrap.dedent(
+        """    GLOB wheel-make: {}
+    py create: {}
+    py inst: {}
     py installed: demo==0.1
-    py runtests: PYTHONHASHSEED='{1}'
-    py runtests: commands[0] | python -c 'import demo; print(demo.__version__)'
-    0.1
-    ___________________________________ summary ____________________________________
+    py runtests: PYTHONHASHSEED='{}'
+    py runtests: commands[0] | python -c 'import demo; print(demo.__version__, end="")'
+    0.1___________________________________ summary {}___________________________________
       py: commands succeeded
       congratulations :)
-    """.format(
-            os.getcwd(), result.python_hash_seed
-        )
+    """
+    )
+    cwd = os.getcwd()
+    expected = base.format(
+        os.path.join(cwd, "setup.py"),
+        os.path.join(cwd, ".tox", "py"),
+        os.path.join(cwd, ".tox", "dist", "demo-0.1-py2.py3-none-any.whl"),
+        result.python_hash_seed,
+        "" if sys.platform == "win32" else "_",
     )
     assert result.out == expected
