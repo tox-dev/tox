@@ -104,7 +104,6 @@ Current features
    config
    support
    changelog
-   links
    plugins
    developers
    example/result
