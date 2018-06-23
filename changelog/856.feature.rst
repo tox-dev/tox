@@ -1,0 +1,1 @@
+Make ``py2`` and ``py3`` aliases also resolve via ``py`` on windows

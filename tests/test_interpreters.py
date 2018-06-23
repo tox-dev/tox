@@ -36,7 +36,7 @@ def test_locate_via_py(monkeypatch):
         return "py"
 
     def fake_popen(cmd, stdout, stderr):
-        assert cmd[:3] == ("py", "-3.2", "-c")
+        fake_popen.last_call = cmd[:3]
 
         # need to pipe all stdout to collect the version information & need to
         # do the same for stderr output to avoid it being forwarded as the
@@ -56,13 +56,26 @@ def test_locate_via_py(monkeypatch):
 
     monkeypatch.setattr(distutils.spawn, "find_executable", fake_find_exe)
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
-    assert locate_via_py("3", "2") == sys.executable
+    assert locate_via_py("3", "6") == sys.executable
+    assert fake_popen.last_call == ("py", "-3.6", "-c")
+    assert locate_via_py("3") == sys.executable
+    assert fake_popen.last_call == ("py", "-3", "-c")
 
 
 def test_tox_get_python_executable():
     class envconfig:
         basepython = sys.executable
         envname = "pyxx"
+
+    def get_exe(name):
+        envconfig.basepython = name
+        p = tox_get_python_executable(envconfig)
+        assert p
+        return str(p)
+
+    def assert_version_in_output(exe, version):
+        out = subprocess.check_output((exe, "-V"), stderr=subprocess.STDOUT)
+        assert version in out.decode()
 
     p = tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
@@ -71,20 +84,24 @@ def test_tox_get_python_executable():
         if tox.INFO.IS_WIN:
             pydir = "python{}{}".format(major, minor)
             x = py.path.local(r"c:\{}".format(pydir))
-            print(x)
             if not x.check():
                 continue
         else:
-            if not py.path.local.sysfind(name):
+            if not py.path.local.sysfind(name) or subprocess.call((name, "-c", "")):
                 continue
-        envconfig.basepython = name
-        p = tox_get_python_executable(envconfig)
-        assert p
-        popen = subprocess.Popen([str(p), "-V"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, stderr = popen.communicate()
-        assert not stdout or not stderr
-        all_output = stderr.decode("ascii") + stdout.decode("ascii")
-        assert "{}.{}".format(major, minor) in all_output
+        exe = get_exe(name)
+        assert_version_in_output(exe, "{}.{}".format(major, minor))
+
+    for major in (2, 3):
+        name = "python{}".format(major)
+        if tox.INFO.IS_WIN:
+            if subprocess.call(("py", "-{}".format(major), "-c", "")):
+                continue
+        elif not py.path.local.sysfind(name):
+            continue
+
+        exe = get_exe(name)
+        assert_version_in_output(exe, str(major))
 
 
 def test_find_executable_extra(monkeypatch):
