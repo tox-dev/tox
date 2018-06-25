@@ -28,11 +28,23 @@ exclude_patterns = ["_build"]
 
 templates_path = ["_templates"]
 pygments_style = "sphinx"
+
 html_theme = "alabaster"
-html_logo = "img/tox.png"
-html_favicon = "img/toxfavi.ico"
-html_static_path = ["_static"]
+html_theme_options = {
+    "logo": "img/tox.png",
+    "github_user": "tox-dev",
+    "github_repo": "tox",
+    "description": "standardise testing in Python",
+    "github_banner": "true",
+    "travis_button": "true",
+    "badge_branch": "master",
+    "fixed_sidebar": "false",
+}
+html_sidebars = {
+    "**": ["about.html", "localtoc.html", "relations.html", "searchbox.html", "donate.html"]
+}
 html_show_sourcelink = False
+html_static_path = ["_static"]
 htmlhelp_basename = "{}doc".format(project)
 latex_documents = [("index", "tox.tex", u"{} Documentation".format(project), author, "manual")]
 man_pages = [("index", project, u"{} Documentation".format(project), [author], 1)]

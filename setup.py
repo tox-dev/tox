@@ -59,7 +59,7 @@ def main():
                 "pytest-timeout",
                 "pytest-xdist",
             ],
-            "docs": ["sphinx >= 1.6.3, < 2", "towncrier >= 17.8.0"],
+            "docs": ["sphinx >= 1.7.5, < 2", "towncrier >= 18.5.0"],
             "publish": ["devpi", "twine"],
         },
         classifiers=[

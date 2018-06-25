@@ -1,1 +1,1 @@
-extend the plugin documentation and make lot of small fixes and improvements - by @obestwalter
+extend the plugin documentation and make lot of small fixes and improvements - by :user:`obestwalter`

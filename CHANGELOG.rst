@@ -1,7 +1,4 @@
-CHANGELOG
-=========
-
-Versions follow `Semantic Versioning <https://semver.org/>`_ (<major>.<minor>.<patch>).
+Versions follow `Semantic Versioning <https://semver.org/>`_ (``<major>.<minor>.<patch>``).
 
 Backward incompatible (breaking) changes will only be introduced in major versions
 with advance notice in the **Deprecations** section of releases.
@@ -22,6 +19,8 @@ on Github:
     It is generated once as part of the release process rendering fragments from the `changelog`
     folder. If necessary, the generated text can be edited afterwards to e.g. merge rc changes
     into the final release notes.
+
+.. include:: ../.tox/docs_out/draft_changelog.rst
 
 .. towncrier release notes start
 

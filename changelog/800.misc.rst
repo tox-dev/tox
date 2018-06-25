@@ -1,1 +1,1 @@
-make the already existing implicit API explicit - by @obestwalter
+make the already existing implicit API explicit - by :user:`obestwalter`
