@@ -26,5 +26,4 @@ comment:
   require_changes: no
 
 ignore:
-  - "tox/_verlib.py"  # vendored in and not internally tested
-  - "tox/__main__.py"
+  - "src/tox/_verlib.py"  # vendored in and not internally tested
