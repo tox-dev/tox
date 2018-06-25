@@ -124,7 +124,7 @@ def test_pyproject_toml_with_setuptools_scm(initproj, cmd):
 
                 [testenv]
                 passenv = PYTHONPATH
-                commands = python -c 'import demo; print(demo.__version__, end="")'
+                commands = python -c 'from __future__ import print_function; import demo; print(demo.__version__, end="")'
             """,
         },
     )
@@ -145,7 +145,7 @@ def test_pyproject_toml_with_setuptools_scm(initproj, cmd):
     py inst: {}
     py installed: demo==0.1
     py runtests: PYTHONHASHSEED='{}'
-    py runtests: commands[0] | python -c 'import demo; print(demo.__version__, end="")'
+    py runtests: commands[0] | python -c 'from __future__ import print_function; import demo; print(demo.__version__, end="")'
     0.1___________________________________ summary {}___________________________________
       py: commands succeeded
       congratulations :)
