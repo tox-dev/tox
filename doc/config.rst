@@ -70,6 +70,31 @@ and will first lookup global tox settings in this section:
     is identified. In a future version of tox, this warning will become an
     error.
 
+.. confval:: build=sdist|wheel|none
+
+    .. versionadded:: 3.1.0
+
+    tox will try to build the project as a Python package and install it in a fresh virtual
+    environment before running your test commands. Here one can select the type of build
+    tox will do for the projects package:
+
+    - if it's ``none`` tox will not try to build the package (implies no install happens later),
+    - if it's ``sdist`` it will create a source distribution by using ``distutils``:
+
+        .. code-block:: ini
+
+            python setup.py sdist
+
+    - if it's ``wheel`` it will create a Python wheel by using ``pip``:
+
+        .. code-block:: ini
+
+            pip build wheel --no-dep
+
+
+    **Default:** ``sdist``
+
+
 
 Virtualenv test environment settings
 ------------------------------------
