@@ -143,11 +143,12 @@ else:
             return p
         actual = None
         # Is this a standard PythonX.Y name?
-        m = re.match(r"python(\d)\.(\d)", name)
+        m = re.match(r"python(\d)(?:\.(\d))?", name)
+        groups = [g for g in m.groups() if g] if m else []
         if m:
             # The standard names are in predictable places.
-            actual = r"c:\python{}{}\python.exe".format(*m.groups())
-        if not actual:
+            actual = r"c:\python{}\python.exe".format("".join(groups))
+        else:
             actual = win32map.get(name, None)
         if actual:
             actual = py.path.local(actual)
@@ -156,13 +157,13 @@ else:
         # The standard executables can be found as a last resort via the
         # Python launcher py.exe
         if m:
-            return locate_via_py(*m.groups())
+            return locate_via_py(*groups)
 
     # Exceptions to the usual windows mapping
     win32map = {"python": sys.executable, "jython": r"c:\jython2.5.1\jython.bat"}
 
-    def locate_via_py(v_maj, v_min):
-        ver = "-{}.{}".format(v_maj, v_min)
+    def locate_via_py(*parts):
+        ver = "-{}".format(".".join(parts))
         script = "import sys; print(sys.executable)"
         py_exe = distutils.spawn.find_executable("py")
         if py_exe:
