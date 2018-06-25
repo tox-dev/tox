@@ -91,8 +91,8 @@ Features
   ``platform.machine()``. (`#740 <https://github.com/tox-dev/tox/issues/740>`_)
 
 
-Documentation improvements
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Documentation
+^^^^^^^^^^^^^
 
 - Change favicon to the vector beach ball - by @hazalozturk
   (`#748 <https://github.com/tox-dev/tox/issues/748>`_)
@@ -118,8 +118,8 @@ Miscellaneous
 2.9.1 (2017-09-29)
 ------------------
 
-Misc
-^^^^
+Miscellaneous
+^^^^^^^^^^^^^
 
 - integrated new release process and fixed changelog rendering for pypi.org -
   by `@obestwalter <https://github.com/obestwalter>`_.
@@ -145,8 +145,8 @@ Bugfixes
   (`#571 <https://github.com/tox-dev/tox/issues/571>`_)
 
 
-Misc
-^^^^
+Miscellaneous
+^^^^^^^^^^^^^
 
 - `#635 <https://github.com/tox-dev/tox/issues/635>`_ inherit from correct exception -
   by `@obestwalter <https://github.com/obestwalter>`_
@@ -158,8 +158,8 @@ Misc
   by `@obestwalter <https://github.com/obestwalter>`_.
 
 
-Improved Documentation
-^^^^^^^^^^^^^^^^^^^^^^
+Documentation
+^^^^^^^^^^^^^
 
 - add `towncrier <https://github.com/hawkowl/towncrier>`_ to allow adding
   changelog entries with the pull requests without generating merge conflicts;

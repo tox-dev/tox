@@ -39,7 +39,7 @@ requires = [
 
     [[tool.towncrier.type]]
         directory = "doc"
-        name = "Documentation improvements"
+        name = "Documentation"
         showcontent = true
 
     [[tool.towncrier.type]]
