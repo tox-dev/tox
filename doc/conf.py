@@ -1,16 +1,37 @@
 import os
-import sys
+import re
+import subprocess
 from datetime import date
+from pathlib import Path
 
 from pkg_resources import get_distribution
 
-sys.path.insert(0, os.path.dirname(__file__))
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
 ]
+ROOT_SRC_TREE_DIR = Path(__file__).parents[1]
+
+
+def generate_draft_news():
+    home = "https://github.com"
+    issue = "{}/issue".format(home)
+    fragments_path = ROOT_SRC_TREE_DIR / "changelog"
+    for pattern, replacement in (
+        (r"[^`]@([^,\s]+)", r"`@\1 <{}/\1>`_".format(home)),
+        (r"[^`]#([\d]+)", r"`#pr\1 <{}/\1>`_".format(issue)),
+    ):
+        for path in fragments_path.glob("*.rst"):
+            path.write_text(re.sub(pattern, replacement, path.read_text()))
+    changelog = subprocess.check_output(
+        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR)
+    )
+    (ROOT_SRC_TREE_DIR / "_draft.rst").write_bytes(changelog)
+
+
+generate_draft_news()
 
 project = u"tox"
 _full_version = get_distribution(project).version

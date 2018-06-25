@@ -20,7 +20,7 @@ on Github:
     folder. If necessary, the generated text can be edited afterwards to e.g. merge rc changes
     into the final release notes.
 
-.. include:: ../.tox/docs_out/draft_changelog.rst
+.. include:: ../_draft.rst
 
 .. towncrier release notes start
 
