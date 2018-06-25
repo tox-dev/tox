@@ -100,8 +100,8 @@ Documentation improvements
   (`#639 <https://github.com/tox-dev/tox/issues/639>`_)
 
 
-Miscellaneous / trivial changes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Miscellaneous
+^^^^^^^^^^^^^
 
 - Running ``tox`` without a ``setup.py`` now has a more friendly error message
   and gives troubleshooting suggestions - by @Volcyy.

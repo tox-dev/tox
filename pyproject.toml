@@ -44,5 +44,5 @@ requires = [
 
     [[tool.towncrier.type]]
         directory = "misc"
-        name = "Miscellaneous / trivial changes"
+        name = "Miscellaneous"
         showcontent = true
