@@ -79,7 +79,7 @@ and will first lookup global tox settings in this section:
     tox will do for the projects package:
 
     - if it's ``none`` tox will not try to build the package (implies no install happens later),
-    - if it's ``sdist`` it will create a source distribution by using ``distutils``:
+    - if it's ``sdist`` it will create a source distribution by using:
 
         .. code-block:: ini
 
