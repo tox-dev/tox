@@ -11,7 +11,6 @@ import pytest
 import tox
 from tox._pytestplugin import ReportExpectMock
 from tox.config import parseconfig
-from tox.exception import MissingDependency, MissingDirectory
 from tox.session import Session
 
 pytest_plugins = "pytester"
@@ -43,41 +42,6 @@ def test_report_protocol(newconfig):
     action = session.newaction(venv, "update")
     venv.update(action)
     report.expect("logpopen")
-
-
-def test__resolve_pkg(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
-    spec = distshare.join("pkg123-*")
-    with pytest.raises(MissingDirectory):
-        mocksession._resolve_package(spec)
-    distshare.ensure(dir=1)
-    with pytest.raises(MissingDependency):
-        mocksession._resolve_package(spec)
-    distshare.ensure("pkg123-1.3.5.zip")
-    p = distshare.ensure("pkg123-1.4.5.zip")
-    mocksession.report.clear()
-    result = mocksession._resolve_package(spec)
-    assert result == p
-    mocksession.report.expect("info", "determin*pkg123*")
-    distshare.ensure("pkg123-1.4.7dev.zip")
-    mocksession._clearmocks()
-    result = mocksession._resolve_package(spec)
-    mocksession.report.expect("warning", "*1.4.7*")
-    assert result == p
-    mocksession._clearmocks()
-    distshare.ensure("pkg123-1.4.5a1.tar.gz")
-    result = mocksession._resolve_package(spec)
-    assert result == p
-
-
-def test__resolve_pkg_doubledash(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
-    p = distshare.ensure("pkg-mine-1.3.0.zip")
-    res = mocksession._resolve_package(distshare.join("pkg-mine*"))
-    assert res == p
-    distshare.ensure("pkg-mine-1.3.0a1.zip")
-    res = mocksession._resolve_package(distshare.join("pkg-mine*"))
-    assert res == p
 
 
 class TestSession:
@@ -185,24 +149,6 @@ class TestSession:
         assert venv1 is venv2
         with pytest.raises(LookupError):
             session.getvenv("qwe")
-
-
-def test_minversion(cmd, initproj):
-    initproj(
-        "interp123-0.5",
-        filedefs={
-            "tests": {"test_hello.py": "def test_hello(): pass"},
-            "tox.ini": """
-            [tox]
-            minversion = 6.0
-        """,
-        },
-    )
-    result = cmd("-v")
-    assert re.match(
-        r"ERROR: MinVersionError: tox version is .*," r" required is at least 6.0", result.out
-    )
-    assert result.ret
 
 
 def test_notoxini_help_still_works(initproj, cmd):
