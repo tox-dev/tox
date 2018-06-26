@@ -125,7 +125,7 @@ def test_pyproject_toml_with_setuptools_scm(initproj, cmd):
                 [testenv]
                 passenv = PYTHONPATH
                 commands = python -c 'from __future__ import print_function; import demo; print(demo.__version__, end="")'
-            """,
+            """,  # noqa
         },
     )
     env = os.environ.copy()
@@ -149,7 +149,7 @@ def test_pyproject_toml_with_setuptools_scm(initproj, cmd):
     0.1___________________________________ summary {}___________________________________
       py: commands succeeded
       congratulations :)
-    """
+    """  # noqa
     )
     cwd = os.getcwd()
     expected = base.format(
