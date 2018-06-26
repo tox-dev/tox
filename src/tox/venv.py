@@ -184,21 +184,21 @@ class VirtualEnv(object):
         develop = self.envconfig.usedevelop
         alwayscopy = self.envconfig.alwayscopy
         deps = []
-        for dep in self._getresolvedeps():
+        for dep in self._get_resolved_dependencies():
             raw_dep = dep.name
             md5 = getdigest(raw_dep)
             deps.append((md5, raw_dep))
         return CreationConfig(md5, python, version, sitepackages, develop, deps, alwayscopy)
 
-    def _getresolvedeps(self):
-        deps = []
-        for dep in self.envconfig.deps:
-            if dep.indexserver is None:
-                res = self.session._resolve_pkg(dep.name)
-                if res != dep.name:
-                    dep = dep.__class__(res)
-            deps.append(dep)
-        return deps
+    def _get_resolved_dependencies(self):
+        dependencies = []
+        for dependency in self.envconfig.deps:
+            if dependency.indexserver is None:
+                package = self.session._resolve_package(package_spec=dependency.name)
+                if package != dependency.name:
+                    dependency = dependency.__class__(package)
+            dependencies.append(dependency)
+        return dependencies
 
     def getsupportedinterpreter(self):
         return self.envconfig.getsupportedinterpreter()
@@ -469,7 +469,7 @@ def tox_testenv_create(venv, action):
 
 @tox.hookimpl
 def tox_testenv_install_deps(venv, action):
-    deps = venv._getresolvedeps()
+    deps = venv._get_resolved_dependencies()
     if deps:
         depinfo = ", ".join(map(str, deps))
         action.setactivity("installdeps", depinfo)

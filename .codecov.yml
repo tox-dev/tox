@@ -24,6 +24,3 @@ comment:
   layout: "header, diff"
   behavior: default
   require_changes: no
-
-ignore:
-  - "src/tox/_verlib.py"  # vendored in and not internally tested
