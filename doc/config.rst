@@ -89,7 +89,7 @@ and will first lookup global tox settings in this section:
 
         .. code-block:: ini
 
-            pip build wheel --no-dep
+            pip wheel . --no-dep
 
 
     **Default:** ``sdist``
