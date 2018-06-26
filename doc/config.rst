@@ -91,6 +91,11 @@ and will first lookup global tox settings in this section:
 
             pip wheel . --no-dep
 
+        .. note::
+
+           wheel should only be used with pip ``10+`` and a ``pyproject.toml``, the build will
+           fail if either is missing
+
 
     **Default:** ``sdist``
 

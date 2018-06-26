@@ -15,7 +15,8 @@ import sys
 import time
 
 import py
-from packaging.version import InvalidVersion, Version
+from packaging.version import InvalidVersion, Version, parse
+from pkg_resources import get_distribution
 
 import tox
 from tox.config import parseconfig
@@ -492,6 +493,15 @@ class Session:
                 cwd=self.config.setupdir,
             )
         elif self.config.build == "wheel":
+            if parse(get_distribution("pip").version).release[0] > 10:
+                raise RuntimeError("wheel support requires pip 10 or later")
+            py_project_toml = self.config.setupdir.join("pyproject.toml")
+            if not py_project_toml.exists():
+                raise RuntimeError(
+                    "wheel support requires creating and setting build-requires in {}".format(
+                        py_project_toml
+                    )
+                )
             action.popen(
                 [
                     sys.executable,
