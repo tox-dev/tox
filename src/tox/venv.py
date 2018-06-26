@@ -4,6 +4,7 @@ import os
 import pipes
 import re
 import sys
+import warnings
 
 import py
 
@@ -184,13 +185,21 @@ class VirtualEnv(object):
         develop = self.envconfig.usedevelop
         alwayscopy = self.envconfig.alwayscopy
         deps = []
-        for dep in self._get_resolved_dependencies():
+        for dep in self.get_resolved_dependencies():
             raw_dep = dep.name
             md5 = getdigest(raw_dep)
             deps.append((md5, raw_dep))
         return CreationConfig(md5, python, version, sitepackages, develop, deps, alwayscopy)
 
-    def _get_resolved_dependencies(self):
+    def _getresolvedeps(self):
+        warnings.warn(
+            "that's a private function there, use get_resolved_dependencies,"
+            "this will be removed in 3.2",
+            category=DeprecationWarning,
+        )
+        return self.get_resolved_dependencies()
+
+    def get_resolved_dependencies(self):
         dependencies = []
         for dependency in self.envconfig.deps:
             if dependency.indexserver is None:
@@ -469,7 +478,7 @@ def tox_testenv_create(venv, action):
 
 @tox.hookimpl
 def tox_testenv_install_deps(venv, action):
-    deps = venv._get_resolved_dependencies()
+    deps = venv.get_resolved_dependencies()
     if deps:
         depinfo = ", ".join(map(str, deps))
         action.setactivity("installdeps", depinfo)
