@@ -15,6 +15,7 @@ import sys
 import time
 
 import py
+from pkg_resources import get_distribution
 
 import tox
 from tox._verlib import IrrationalVersionError, NormalizedVersion
@@ -492,6 +493,15 @@ class Session:
                 cwd=self.config.setupdir,
             )
         elif self.config.build == "wheel":
+            if NormalizedVersion(get_distribution("pip").version).parts[0][0] > 10:
+                raise RuntimeError("wheel support requires pip 10 or later")
+            py_project_toml = self.config.setupdir.join("pyproject.toml")
+            if not py_project_toml.exists():
+                raise RuntimeError(
+                    "wheel support requires creating and setting build-requires in {}".format(
+                        py_project_toml
+                    )
+                )
             action.popen(
                 [
                     sys.executable,
