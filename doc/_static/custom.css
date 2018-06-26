@@ -1,0 +1,52 @@
+div.document {
+    width: 100%;
+    max-width: 1520px;
+}
+
+div.body {
+    max-width: 1280px;
+}
+
+img, div.figure {
+    margin: 0 !important
+}
+
+ul > li {
+    text-align: justify;
+}
+
+ul > li > p {
+    margin-bottom: 0;
+
+}
+
+div.body code.descclassname {
+    display: none
+}
+
+.wy-table-responsive table td {
+    white-space: normal !important;
+}
+
+.wy-table-responsive {
+    overflow: visible !important;
+}
+
+div.toctree-wrapper.compound > ul > li {
+    margin: 0;
+    padding: 0
+}
+
+code.docutils.literal {
+    background-color: #ECF0F3;
+    padding: 0 1px;
+}
+
+div#changelog-history h3{
+    margin-top: 10px;
+}
+
+div#changelog-history h2{
+    font-style: italic;
+    font-weight: bold;
+}

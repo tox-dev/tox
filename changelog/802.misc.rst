@@ -1,1 +1,1 @@
-tweak codecov settings via .codecov.yml - by @obestwalter
+tweak codecov settings via .codecov.yml - by :user:`obestwalter`

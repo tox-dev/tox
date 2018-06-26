@@ -1,16 +1,37 @@
 import os
-import sys
+import re
+import subprocess
 from datetime import date
+from pathlib import Path
 
 from pkg_resources import get_distribution
 
-sys.path.insert(0, os.path.dirname(__file__))
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
 ]
+ROOT_SRC_TREE_DIR = Path(__file__).parents[1]
+
+
+def generate_draft_news():
+    home = "https://github.com"
+    issue = "{}/issue".format(home)
+    fragments_path = ROOT_SRC_TREE_DIR / "changelog"
+    for pattern, replacement in (
+        (r"[^`]@([^,\s]+)", r"`@\1 <{}/\1>`_".format(home)),
+        (r"[^`]#([\d]+)", r"`#pr\1 <{}/\1>`_".format(issue)),
+    ):
+        for path in fragments_path.glob("*.rst"):
+            path.write_text(re.sub(pattern, replacement, path.read_text()))
+    changelog = subprocess.check_output(
+        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR)
+    )
+    (ROOT_SRC_TREE_DIR / "_draft.rst").write_bytes(changelog)
+
+
+generate_draft_news()
 
 project = u"tox"
 _full_version = get_distribution(project).version
@@ -28,11 +49,23 @@ exclude_patterns = ["_build"]
 
 templates_path = ["_templates"]
 pygments_style = "sphinx"
+
 html_theme = "alabaster"
-html_logo = "img/tox.png"
-html_favicon = "img/toxfavi.ico"
-html_static_path = ["_static"]
+html_theme_options = {
+    "logo": "img/tox.png",
+    "github_user": "tox-dev",
+    "github_repo": "tox",
+    "description": "standardise testing in Python",
+    "github_banner": "true",
+    "travis_button": "true",
+    "badge_branch": "master",
+    "fixed_sidebar": "false",
+}
+html_sidebars = {
+    "**": ["about.html", "localtoc.html", "relations.html", "searchbox.html", "donate.html"]
+}
 html_show_sourcelink = False
+html_static_path = ["_static"]
 htmlhelp_basename = "{}doc".format(project)
 latex_documents = [("index", "tox.tex", u"{} Documentation".format(project), author, "manual")]
 man_pages = [("index", project, u"{} Documentation".format(project), [author], 1)]

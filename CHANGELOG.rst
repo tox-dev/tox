@@ -1,7 +1,4 @@
-CHANGELOG
-=========
-
-Versions follow `Semantic Versioning <https://semver.org/>`_ (<major>.<minor>.<patch>).
+Versions follow `Semantic Versioning <https://semver.org/>`_ (``<major>.<minor>.<patch>``).
 
 Backward incompatible (breaking) changes will only be introduced in major versions
 with advance notice in the **Deprecations** section of releases.
@@ -22,6 +19,8 @@ on Github:
     It is generated once as part of the release process rendering fragments from the `changelog`
     folder. If necessary, the generated text can be edited afterwards to e.g. merge rc changes
     into the final release notes.
+
+.. include:: ../_draft.rst
 
 .. towncrier release notes start
 
@@ -92,8 +91,8 @@ Features
   ``platform.machine()``. (`#740 <https://github.com/tox-dev/tox/issues/740>`_)
 
 
-Documentation improvements
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Documentation
+^^^^^^^^^^^^^
 
 - Change favicon to the vector beach ball - by @hazalozturk
   (`#748 <https://github.com/tox-dev/tox/issues/748>`_)
@@ -101,8 +100,8 @@ Documentation improvements
   (`#639 <https://github.com/tox-dev/tox/issues/639>`_)
 
 
-Miscellaneous / trivial changes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Miscellaneous
+^^^^^^^^^^^^^
 
 - Running ``tox`` without a ``setup.py`` now has a more friendly error message
   and gives troubleshooting suggestions - by @Volcyy.
@@ -119,8 +118,8 @@ Miscellaneous / trivial changes
 2.9.1 (2017-09-29)
 ------------------
 
-Misc
-^^^^
+Miscellaneous
+^^^^^^^^^^^^^
 
 - integrated new release process and fixed changelog rendering for pypi.org -
   by `@obestwalter <https://github.com/obestwalter>`_.
@@ -146,8 +145,8 @@ Bugfixes
   (`#571 <https://github.com/tox-dev/tox/issues/571>`_)
 
 
-Misc
-^^^^
+Miscellaneous
+^^^^^^^^^^^^^
 
 - `#635 <https://github.com/tox-dev/tox/issues/635>`_ inherit from correct exception -
   by `@obestwalter <https://github.com/obestwalter>`_
@@ -159,8 +158,8 @@ Misc
   by `@obestwalter <https://github.com/obestwalter>`_.
 
 
-Improved Documentation
-^^^^^^^^^^^^^^^^^^^^^^
+Documentation
+^^^^^^^^^^^^^
 
 - add `towncrier <https://github.com/hawkowl/towncrier>`_ to allow adding
   changelog entries with the pull requests without generating merge conflicts;

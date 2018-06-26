@@ -1,3 +1,10 @@
+[build-system]
+requires = [
+    "setuptools >= 35.0.2",
+    "setuptools_scm >= 2.0.0, <3",
+    "wheel >= 0.29.0",
+]
+
 [tool.towncrier]
     package = "tox"
     filename = "CHANGELOG.rst"
@@ -32,10 +39,10 @@
 
     [[tool.towncrier.type]]
         directory = "doc"
-        name = "Documentation improvements"
+        name = "Documentation"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "misc"
-        name = "Miscellaneous / trivial changes"
+        name = "Miscellaneous"
         showcontent = true
