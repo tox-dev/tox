@@ -51,11 +51,11 @@ def main():
         python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
         setup_requires=["setuptools_scm"],
         install_requires=[
-            "py >= 1.4.17, <2",
+            "packaging  >= 17.1",
             "pluggy >= 0.3.0, <1",
+            "py >= 1.4.17, <2",
             "six >= 1.0.0, <2",
             "virtualenv >= 1.11.2",
-            "packaging  >= 17.1",
         ],
         extras_require={
             "testing": [
