@@ -15,9 +15,9 @@ from subprocess import list2cmdline
 import pkg_resources
 import pluggy
 import py
+from packaging.version import parse
 
 import tox
-from tox._verlib import NormalizedVersion
 from tox.interpreters import Interpreters
 
 hookimpl = tox.hookimpl
@@ -898,11 +898,13 @@ class parseini:
         # prevent parsing of tox.ini this must be the first thing checked.
         config.minversion = reader.getstring("minversion", None)
         if config.minversion:
-            minversion = NormalizedVersion(self.config.minversion)
-            toxversion = NormalizedVersion(tox.__version__)
-            if toxversion < minversion:
+            tox_version = parse(tox.__version__)
+            config_min_version = parse(self.config.minversion)
+            if config_min_version > tox_version:
                 raise tox.exception.MinVersionError(
-                    "tox version is {}, required is at least {}".format(toxversion, minversion)
+                    "tox version is {}, required is at least {}".format(
+                        tox.__version__, self.config.minversion
+                    )
                 )
         if config.option.workdir is None:
             config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")

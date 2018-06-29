@@ -1,0 +1,1 @@
+Replace the internal version parsing logic from the not well tested `PEP-386 <https://www.python.org/dev/peps/pep-0386/>`_ parser for the more general `PEP-440 <https://www.python.org/dev/peps/pep-0440/>`_. `packaging >= 17.1 <https://pypi.org/project/packaging/>`_ is now an install dependency by :user:`gaborbernat`.

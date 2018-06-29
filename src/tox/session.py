@@ -14,9 +14,9 @@ import sys
 import time
 
 import py
+from packaging.version import InvalidVersion, Version
 
 import tox
-from tox._verlib import IrrationalVersionError, NormalizedVersion
 from tox.config import parseconfig
 from tox.result import ResultLog
 from tox.venv import VirtualEnv
@@ -575,7 +575,7 @@ class Session:
             path = self.config.option.installpkg
             if not path:
                 path = self.config.sdistsrc
-            path = self._resolve_pkg(path)
+            path = self._resolve_package(path)
             self.report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
         else:
             try:
@@ -730,17 +730,17 @@ class Session:
         versions.append("virtualenv-{}".format(out.decode("UTF-8").strip()))
         self.report.keyvalue("tool-versions:", " ".join(versions))
 
-    def _resolve_pkg(self, pkgspec):
+    def _resolve_package(self, package_spec):
         try:
-            return self._spec2pkg[pkgspec]
+            return self._spec2pkg[package_spec]
         except KeyError:
-            self._spec2pkg[pkgspec] = x = self._resolvepkg(pkgspec)
+            self._spec2pkg[package_spec] = x = self._get_latest_version_of_package(package_spec)
             return x
 
-    def _resolvepkg(self, pkgspec):
-        if not os.path.isabs(str(pkgspec)):
-            return pkgspec
-        p = py.path.local(pkgspec)
+    def _get_latest_version_of_package(self, package_spec):
+        if not os.path.isabs(str(package_spec)):
+            return package_spec
+        p = py.path.local(package_spec)
         if p.check():
             return p
         if not p.dirpath().check(dir=1):
@@ -748,32 +748,33 @@ class Session:
         self.report.info("determining {}".format(p))
         candidates = p.dirpath().listdir(p.basename)
         if len(candidates) == 0:
-            raise tox.exception.MissingDependency(pkgspec)
+            raise tox.exception.MissingDependency(package_spec)
         if len(candidates) > 1:
-            items = []
-            for x in candidates:
-                ver = getversion(x.basename)
-                if ver is not None:
-                    items.append((ver, x))
+            version_package = []
+            for filename in candidates:
+                version = get_version_from_filename(filename.basename)
+                if version is not None:
+                    version_package.append((version, filename))
                 else:
-                    self.report.warning("could not determine version of: {}".format(str(x)))
-            items.sort()
-            if not items:
-                raise tox.exception.MissingDependency(pkgspec)
-            return items[-1][1]
+                    self.report.warning("could not determine version of: {}".format(str(filename)))
+            if not version_package:
+                raise tox.exception.MissingDependency(package_spec)
+            version_package.sort()
+            _, package_with_largest_version = version_package[-1]
+            return package_with_largest_version
         else:
             return candidates[0]
 
 
-_rex_getversion = re.compile(r"[\w_\-\+\.]+-(.*)\.(zip|tar\.gz)")
+_REGEX_FILE_NAME_WITH_VERSION = re.compile(r"[\w_\-\+\.]+-(.*)\.(zip|tar\.gz)")
 
 
-def getversion(basename):
-    m = _rex_getversion.match(basename)
+def get_version_from_filename(basename):
+    m = _REGEX_FILE_NAME_WITH_VERSION.match(basename)
     if m is None:
         return None
     version = m.group(1)
     try:
-        return NormalizedVersion(version)
-    except IrrationalVersionError:
+        return Version(version)
+    except InvalidVersion:
         return None
