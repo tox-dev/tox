@@ -432,7 +432,7 @@ Documentation
   plugins to do additional work on creation or installing
   deps.  These hooks are experimental mainly because of
   the involved "venv" and session objects whose current public
-  API is not fully guranteed.
+  API is not fully guaranteed.
 
 - internal: push some optional object creation into tests because
   tox core doesn't need it.
@@ -670,7 +670,7 @@ Documentation
 1.7.1 (2014-03-28)
 ------------------
 
-- fix `#162 <https://github.com/tox-dev/tox/issues/162>`_: don't list python 2.5 as compatibiliy/supported
+- fix `#162 <https://github.com/tox-dev/tox/issues/162>`_: don't list python 2.5 as compatible/supported
 
 - fix `#158 <https://github.com/tox-dev/tox/issues/158>`_ and fix `#155 <https://github.com/tox-dev/tox/issues/155>`_: windows/virtualenv properly works now:
   call virtualenv through "python -m virtualenv" with the same

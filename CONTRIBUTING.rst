@@ -94,7 +94,7 @@ Short version
 #. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
    You can also add a pre commit hook to your local clone to run the style checks and fixes
    (see hint after running ``tox -e fix-lint``)
-#. Tests for tox are (obvioulsy) run using ``tox``::
+#. Tests for tox are (obviously) run using ``tox``::
 
     tox -e fix-lint,py27,py36
 

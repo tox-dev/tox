@@ -222,12 +222,12 @@ class _exp:
         ),
         (
             _answers([4, "", "", "", "", "", "", "", ""]),
-            _exp("existing not overriden, generated to alternative with default name"),
+            _exp("existing not overridden, generated to alternative with default name"),
             _cnf(exists=True),
         ),
         (
             _answers([4, "", "", "", "", "", "", "", ""]),
-            _exp("existing not overriden, generated to alternative with custom name"),
+            _exp("existing not overridden, generated to alternative with custom name"),
             _cnf(exists=True, names=["some-other.ini"]),
         ),
         (
@@ -237,7 +237,7 @@ class _exp:
         ),
         (
             _answers([4, "", "", "", "", "", "", "", ""]),
-            _exp("existing alternatives are not overriden, generated to alternative"),
+            _exp("existing alternatives are not overridden, generated to alternative"),
             _cnf(exists=True, names=["tox.ini", "setup.py", "some-other.ini"]),
         ),
     ),
