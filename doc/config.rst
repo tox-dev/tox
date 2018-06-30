@@ -63,7 +63,7 @@ and will first lookup global tox settings in this section:
     .. versionadded:: 3.1.0
 
     If ``True``, :confval:`basepython` settings that conflict with the Python
-    variant for a environments using default factors, such as ``py27`` or
+    variant for environments using default factors, such as ``py27`` or
     ``py35``, will be ignored. This allows you to configure
     :confval:`basepython` in the global testenv without affecting these
     factors. If ``False``, the default, a warning will be emitted if a conflict
