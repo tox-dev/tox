@@ -1085,7 +1085,7 @@ def _expand_envstr(envstr):
 
     def expand(env):
         tokens = re.split(r"\{([^}]+)\}", env)
-        parts = [re.sub("\s+", "", token).split(",") for token in tokens]
+        parts = [re.sub(r"\s+", "", token).split(",") for token in tokens]
         return ["".join(variant) for variant in itertools.product(*parts)]
 
     return mapcat(expand, envlist)
