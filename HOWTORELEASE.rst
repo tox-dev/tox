@@ -62,6 +62,12 @@ The script executes the necessary actions and asks for confirmation to go on bef
 
 **note:** `pra` is short for "personal release assistant" :) - if you want to see what this involves or rather do everything by hand, please read the scripts in `tasks <https://github.com/tox-dev/tox/tree/master/tasks>`_.
 
+"Special" releases
+------------------
+
+If it is necessary to build a special release, where the standard flow can't be used and setuptools_scm gets in the way, you can do::
+
+    SETUPTOOLS_SCM_PRETEND_VERSION=X.X.X python setup.py sdist bdist_wheel
 
 Get started with devpi cloud test
 ---------------------------------
@@ -79,6 +85,62 @@ Run from multiple machines::
 Check that tests pass for relevant combinations with::
 
    devpi list tox
+
+Post release activities
+-----------------------
+
+Make sure to let the world know that a new version is out by whatever means you see fit.
+
+As a minimum, send a release mail like outlined below to::
+
+    testing-in-python@lists.idyll.org, tox-dev@python.org
+
+
+feature release::
+
+    The tox team is proud to announce the <VERSION> release!
+
+    tox aims to automate and standardize testing in Python. It is part of a
+    larger vision of easing the packaging, testing and release process of
+    Python software.
+
+    Details about the changes can be found in the CHANGELOG:
+
+        https://pypi.org/project/tox/<VERSION>/#changelog
+
+    For complete documentation, please visit:
+
+        https://tox.readthedocs.io/en/<VERSION>
+
+    As usual, you can upgrade from pypi via:
+
+        pip install --upgrade tox
+
+    or - if you also want to get pre release versions:
+
+        pip install -upgrade --pre tox
+
+    We thank all present and past contributors to tox. Have a look at https://github.com/tox-dev/tox/blob/master/CONTRIBUTORS to see who contributed.
+
+    Happy toxing,
+    the tox-dev team
+
+
+bug fix release::
+
+    The tox team is proud to announce the <VERSION> release!
+
+    tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
+
+    For details about the fix(es),please check the CHANGELOG:
+
+        https://pypi.org/project/tox/<VERSION>/#changelog
+
+    We thank all present and past contributors to tox. Have a look at https://github.com/tox-dev/tox/blob/master/CONTRIBUTORS to see who contributed.
+
+    Happy toxing,
+    the tox-dev team
+
 
 .. _devpi-cloud-test: https://github.com/obestwalter/devpi-cloud-test
 .. _AppVeyor: https://www.appveyor.com/
