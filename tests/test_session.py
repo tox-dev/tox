@@ -1,8 +1,14 @@
+import os
 import re
+import sys
+from threading import Thread
 
 import pytest
 
+import tox
+from tox import venv
 from tox.exception import MissingDependency, MissingDirectory
+from tox.venv import CreationConfig, VirtualEnv, getdigest
 
 
 def test__resolve_pkg_missing_directory(tmpdir, mocksession):
@@ -76,3 +82,84 @@ def test_minversion(cmd, initproj):
         r"ERROR: MinVersionError: tox version is .*," r" required is at least 6.0", result.out
     )
     assert result.ret
+
+
+def mock_venv(monkeypatch):
+    """This creates a mock virtual environment (e.g. will inherit the current interpreter).
+
+    Note: because we inherit, to keep things sane you must call the py environment and only that;
+    and cannot install any packages. """
+
+    class ProxyCurrentPython:
+        @classmethod
+        def readconfig(cls, path):
+            assert path.dirname.endswith("{}py".format(os.sep))
+            return CreationConfig(
+                md5=getdigest(sys.executable),
+                python=sys.executable,
+                version=tox.__version__,
+                sitepackages=False,
+                usedevelop=False,
+                deps=[],
+                alwayscopy=False,
+            )
+
+    monkeypatch.setattr(CreationConfig, "readconfig", ProxyCurrentPython.readconfig)
+
+    def venv_lookup(venv, name):
+        assert name == "python"
+        return sys.executable
+
+    monkeypatch.setattr(VirtualEnv, "_venv_lookup", venv_lookup)
+
+    @tox.hookimpl
+    def tox_runenvreport(venv, action):
+        return []
+
+    monkeypatch.setattr(venv, "tox_runenvreport", tox_runenvreport)
+
+
+def isolate_env_test(initproj, cmd, monkeypatch, env_var):
+    initproj(
+        "env_var_test",
+        filedefs={
+            "tox.ini": """
+                       [tox]
+                       skipsdist = True
+                       [testenv]
+                       commands = python -c "import os; print(os.environ['{}'])"
+                   """.format(
+                env_var
+            )
+        },
+    )
+
+    res = {"RESULT": None}
+
+    class EnvironmentTestRun(Thread):
+        """we wrap this invocation into a thread to avoid modifying in any way the
+         current threads environment variable (e.g. on failure of this test incorrect teardown)"""
+
+        def run(self):
+            mock_venv(monkeypatch)
+            res["RESULT"] = cmd("-q", "-e", "py").outlines
+
+    thread = EnvironmentTestRun()
+    thread.start()
+    thread.join()
+    return res["RESULT"]
+
+
+def test_tox_work_dir_env_var_injected(initproj, cmd, monkeypatch):
+    res = isolate_env_test(initproj, cmd, monkeypatch, "TOX_WORK_DIR")
+    assert res[0] == os.path.join(os.getcwd(), ".tox")
+
+
+def test_tox_env_name_env_var_injected(initproj, cmd, monkeypatch):
+    res = isolate_env_test(initproj, cmd, monkeypatch, "TOX_ENV_NAME")
+    assert res[0] == "py"
+
+
+def test_tox_env_work_dir_env_var_injected(initproj, cmd, monkeypatch):
+    res = isolate_env_test(initproj, cmd, monkeypatch, "TOX_ENV_WORK_DIR")
+    assert res[0] == os.path.join(os.getcwd(), ".tox", "py")

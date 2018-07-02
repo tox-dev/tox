@@ -1,0 +1,1 @@
+Set environment variables to indicate we are running inside tox: ``TOX_WORK_DIR`` env var is set to the tox work dir, ``TOX_ENV_NAME`` is set to the current running tox environment name, ``TOX_ENV_DIR`` is set to the current tox environments working dir. By :user:`gaborbernat`.

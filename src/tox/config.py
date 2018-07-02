@@ -611,7 +611,16 @@ def tox_addoption(parser):
         # Flatten the list to deal with space-separated values.
         value = list(itertools.chain.from_iterable([x.split(" ") for x in value]))
 
-        passenv = {"PATH", "PIP_INDEX_URL", "LANG", "LANGUAGE", "LD_LIBRARY_PATH"}
+        passenv = {
+            "PATH",
+            "PIP_INDEX_URL",
+            "LANG",
+            "LANGUAGE",
+            "LD_LIBRARY_PATH",
+            "TOX_WORK_DIR",
+            "TOX_ENV_NAME",
+            "TOX_ENV_WORK_DIR",
+        }
 
         # read in global passenv settings
         p = os.environ.get("TOX_TESTENV_PASSENV", None)

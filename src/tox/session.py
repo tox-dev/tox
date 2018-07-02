@@ -19,6 +19,7 @@ from packaging.version import InvalidVersion, Version
 import tox
 from tox.config import parseconfig
 from tox.result import ResultLog
+from tox.util import set_os_env_var
 from tox.venv import VirtualEnv
 
 
@@ -42,7 +43,8 @@ def cmdline(args=None):
 def main(args):
     try:
         config = prepare(args)
-        retcode = Session(config).runcommand()
+        with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
+            retcode = Session(config).runcommand()
         if retcode is None:
             retcode = 0
         raise SystemExit(retcode)
@@ -608,19 +610,22 @@ class Session:
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
-            if self.setupenv(venv):
-                if venv.envconfig.skip_install:
-                    self.finishvenv(venv)
-                else:
-                    if venv.envconfig.usedevelop:
-                        self.developpkg(venv, self.config.setupdir)
-                    elif self.config.skipsdist:
+            with set_os_env_var("TOX_ENV_NAME", venv.name), set_os_env_var(
+                "TOX_ENV_WORK_DIR", venv.path
+            ):
+                if self.setupenv(venv):
+                    if venv.envconfig.skip_install:
                         self.finishvenv(venv)
                     else:
-                        self.installpkg(venv, path)
+                        if venv.envconfig.usedevelop:
+                            self.developpkg(venv, self.config.setupdir)
+                        elif self.config.skipsdist:
+                            self.finishvenv(venv)
+                        else:
+                            self.installpkg(venv, path)
 
-                self.runenvreport(venv)
-                self.runtestenv(venv)
+                    self.runenvreport(venv)
+                    self.runtestenv(venv)
         retcode = self._summary()
         return retcode
 

@@ -100,6 +100,7 @@ Current features
    :hidden:
 
    install
+   overview
    examples
    config
    support
