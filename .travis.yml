@@ -1,42 +1,68 @@
+group: travis_latest
 sudo: false
 language: python
 cache: pip
-python:
-  - 2.7
-  - 3.4
-  - 3.5
-  - 3.6
-  - 3.7-dev
-  - nightly
-  - pypy
+
 env:
   TOXENV=py
+
+stages:
+  - quick # first run quick tests: lint and doc
+  - test  # make sure we run first mandatory tests
+  - extra # then run tests which can fail
+
+jobs:
+  include:
+  - python: 2.7    # 2.7.14 pip  9.0.1
+  - python: 3.4    # 3.4.6  pip  9.0.1
+  - python: 3.5    # 3.5.5  pip  9.0.1
+  - python: 3.6    # 3.6.3  pip  9.0.1
+  - python: 3.7    # 3.7.0  pip 10.0.1
+    dist: xenial
+    sudo: true
+  - python: 3.8-dev
+    dist: xenial
+    sudo: true
+    stage: extra
+  - python: nightly
+    dist: xenial
+    sudo: true
+    stage: extra
+  - python: pypy   # 2.7.13 pip  9.0.1
+    stage: extra
+  - python: pypy3  # 3.5.3  pip  9.0.1
+    stage: extra
+  - os: osx
+    language: generic
+    stage: extra
+  - python: 3.7
+    dist: xenial
+    sudo: true
+    env: TOXENV=docs
+    stage: quick
+  - python: 3.6
+    stage: quick
+    env: TOXENV=fix-lint
 
 matrix:
   fast_finish: true
   allow_failures:
   - os:  osx
-  - python: 3.7-dev
+  - python: 3.8-dev
   - python: nightly
   - python: pypy
-  include:
-    - python: 3.6
-      env: TOXENV=docs
-    - python: 3.6
-      env: TOXENV=fix-lint
-    - os: osx
-      language: generic
+  - python: pypy3
 
 before_install:
- - pyenv versions
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
+- pyenv versions
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
 
 install:
-  - pip install -U six
-  - pip install --pre -U tox
+- pip install -U six
+- pip install --pre -U tox
 
 script:
-  - tox
+- tox
 
 after_success:
-  - if [[ $TOXENV == "py" ]]; then tox -e coverage,codecov; fi
+- if [[ $TOXENV == "py" ]]; then tox -e coverage,codecov; fi
