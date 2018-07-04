@@ -2314,13 +2314,15 @@ class TestParseEnv:
 
 
 class TestCmdInvocation:
-    def test_help(self, cmd):
+    def test_help(self, cmd, initproj):
+        initproj("help", filedefs={"tox.ini": ""})
         result = cmd("-h")
         assert not result.ret
         assert not result.err
         assert re.match(r"usage:.*help.*", result.out, re.DOTALL)
 
-    def test_version_simple(self, cmd):
+    def test_version_simple(self, cmd, initproj):
+        initproj("help", filedefs={"tox.ini": ""})
         result = cmd("--version")
         assert not result.ret
         assert "{} imported from".format(tox.__version__) in result.out
