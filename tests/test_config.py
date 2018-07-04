@@ -2576,7 +2576,7 @@ class TestCmdInvocation:
 
 
 @pytest.mark.parametrize(
-    "cmdline,envlist",
+    "cli_args,run_envlist",
     [
         ("-e py36", ["py36"]),
         ("-e py36,py34", ["py36", "py34"]),
@@ -2584,10 +2584,22 @@ class TestCmdInvocation:
         ("-e py36,py34 -e py34,py27", ["py36", "py34", "py34", "py27"]),
     ],
 )
-def test_env_spec(cmdline, envlist):
-    args = cmdline.split()
+def test_env_spec(initproj, cli_args, run_envlist):
+    initproj(
+        "env_spec",
+        filedefs={
+            "tox.ini": """
+                [tox]
+                envlist =
+
+                [testenv]
+                commands = python -c ""
+                """
+        },
+    )
+    args = cli_args.split()
     config = parseconfig(args)
-    assert config.envlist == envlist
+    assert config.envlist == run_envlist
 
 
 class TestCommandParser:
