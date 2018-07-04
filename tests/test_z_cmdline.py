@@ -985,23 +985,27 @@ def test_missing_env_fails(initproj, cmd):
     )
 
 
-def test_tox_console_script():
+def test_tox_console_script(initproj):
+    initproj("help", filedefs={"tox.ini": ""})
     result = subprocess.check_call(["tox", "--help"])
     assert result == 0
 
 
-def test_tox_quickstart_script():
+def test_tox_quickstart_script(initproj):
+    initproj("help", filedefs={"tox.ini": ""})
     result = subprocess.check_call(["tox-quickstart", "--help"])
     assert result == 0
 
 
-def test_tox_cmdline_no_args(monkeypatch):
+def test_tox_cmdline_no_args(monkeypatch, initproj):
+    initproj("help", filedefs={"tox.ini": ""})
     monkeypatch.setattr(sys, "argv", ["caller_script", "--help"])
     with pytest.raises(SystemExit):
         tox.cmdline()
 
 
-def test_tox_cmdline_args():
+def test_tox_cmdline_args(initproj):
+    initproj("help", filedefs={"tox.ini": ""})
     with pytest.raises(SystemExit):
         tox.cmdline(["caller_script", "--help"])
 
