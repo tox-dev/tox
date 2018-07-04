@@ -59,11 +59,12 @@ def main():
         ],
         extras_require={
             "testing": [
-                "pytest >= 3.0.0",
-                "pytest-cov",
-                "pytest-mock",
-                "pytest-timeout",
-                "pytest-xdist",
+                "pytest >= 3.0.0, <4",
+                "pytest-cov >= 2.5.1, <3",
+                "pytest-mock >= 1.10.0, <2",
+                "pytest-timeout >= 1.3.0, <2",
+                "pytest-xdist >= 1.22.2, <2",
+                "pytest-randomly >= 1.2.3, <2",
             ],
             "docs": ["sphinx >= 1.7.5, < 2", "towncrier >= 18.5.0"],
         },
