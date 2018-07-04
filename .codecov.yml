@@ -1,11 +1,13 @@
 codecov:
   notify:
     require_ci_to_pass: yes
+  ignore:
+  - "tasks/*.py"
 
 coverage:
-  precision: 0
-  round: nearest
-  range: "70...95"
+  precision: 2
+  round: down
+  range: "70...100"
 
   status:
     project: yes

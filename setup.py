@@ -66,7 +66,6 @@ def main():
                 "pytest-xdist",
             ],
             "docs": ["sphinx >= 1.7.5, < 2", "towncrier >= 18.5.0"],
-            "publish": ["devpi", "twine"],
         },
         classifiers=[
             "Development Status :: 5 - Production/Stable",
