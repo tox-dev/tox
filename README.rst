@@ -7,8 +7,8 @@
 .. image:: https://travis-ci.org/tox-dev/tox.svg?branch=master
   :target: https://travis-ci.org/tox-dev/tox
   :alt: Travis-CI build status
-.. image:: https://ci.appveyor.com/api/projects/status/n7d984nl8nevtou8/branch/master?svg=true
-  :target: https://ci.appveyor.com/project/obestwalter/tox/branch/master
+.. image:: https://ci.appveyor.com/api/projects/status/2pw2n1wki9terluu?svg=true
+  :target: https://ci.appveyor.com/project/ToxDev/tox
   :alt: Appveyor build status
 .. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/tox-dev/tox

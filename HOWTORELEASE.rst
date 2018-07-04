@@ -42,9 +42,11 @@ Post release activities
 
 Make sure to let the world know that a new version is out by whatever means you see fit.
 
-As a minimum, send the automated release operation:
+As a minimum, send out a mail notification by triggering the notify tox environment:
 
 
 ```bash
 TOX_DEV_GOOGLE_SECRET=our_secret tox -e notify
 ```
+
+Note you'll need the ``TOX_DEV_GOOGLE_SECRET`` key, what you can acquire from other maintainers.

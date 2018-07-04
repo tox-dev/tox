@@ -53,7 +53,7 @@ def release_changelog(repo: Repo, version: Version) -> Commit:
     check_call(["towncrier", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))
     changed = [item.a_path for item in repo.index.diff(None)]
     if any((not i.startswith("changelog") or i == "CHANGELOG.rst") for i in changed):
-        raise RuntimeError(f"would add changes to not changelog {changed}")
+        raise RuntimeError(f"found changes outside of the changelog domain: {changed}")
     repo.index.add(changed)
     release_commit = repo.index.commit(f"release {version}")
     return release_commit

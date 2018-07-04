@@ -113,7 +113,7 @@ def update_upstream(repo: Repo) -> None:
 
 
 def send_mail_message(subject, content):
-    this_dir = Path(__file__).parents[0]
+    this_dir = Path(__file__).parent
     store = file.Storage("credentials.json")
     credentials = store.get()
     if not credentials or credentials.invalid:
