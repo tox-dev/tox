@@ -111,8 +111,16 @@ Complete list of settings that you can put into ``testenv*`` sections:
     will be appended (and may contain another ``\`` character ...).
     For eventually performing a call to ``subprocess.Popen(args, ...)``
     ``args`` are determined by splitting the whole command by whitespace.
-    Similar to ``make`` recipe lines, any command with a leading ``-``
-    will ignore the exit code.
+    
+    To execute commands that can fail, they can be prefixed with a dash (``-``).
+    For these commands the exitcode is ignored. In this example `ls -la` will 
+    always be executed although cat might return `1` for a not existing file::
+        
+        commands = 
+            - cat non-existing-file.txt
+            - ls -la
+    
+    This is similar to ``make`` recipe lines.
 
 .. confval:: install_command=ARGV
 
