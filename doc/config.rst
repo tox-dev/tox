@@ -113,8 +113,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
     ``args`` are determined by splitting the whole command by whitespace.
     
     To execute commands that can fail, they can be prefixed with a dash (``-``).
-    For these commands the exitcode is ignored. In this example `ls -la` will 
-    always be executed although cat might return `1` for a not existing file::
+    For these commands the exitcode is ignored. In this example ``ls -la`` will 
+    always be executed although ``cat`` might return ``1`` for a not existing file::
         
         commands = 
             - cat non-existing-file.txt
