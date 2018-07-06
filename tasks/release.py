@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import check_call
 from typing import Tuple
 
-from git import Commit, Head, Remote, Repo, TagReference
+from git import Commit, Head, Remote, Repo
 from packaging.version import Version
 
 ROOT_SRC_DIR = Path(__file__).parents[1]
@@ -19,20 +19,17 @@ def main(version_str: str) -> None:
         raise RuntimeError("Current repository is dirty. Please commit any changes and try again.")
 
     upstream, release_branch = create_release_branch(repo, version)
-    release_commit = release_changelog(repo, version)
-    tag = tag_release_commit(release_commit, repo, version)
-    print("push release tag")
-    repo.git.push(upstream.name, tag)
-    print("push release commit")
+    release_changelog(repo, version)
+    print("push release preparation commit")
     repo.git.push(upstream.name, release_branch)
     print("All done! ✨ 🍰 ✨")
 
 
 def create_release_branch(repo: Repo, version: Version) -> Tuple[Remote, Head]:
-    print("create release branch from upstream master")
+    print("create release preparation branch from upstream master")
     upstream = get_upstream(repo)
     upstream.fetch()
-    branch_name = f"release-{version}"
+    branch_name = f"prep-release-{version}"
     release_branch = repo.create_head(branch_name, upstream.refs.master, force=True)
     upstream.push(refspec=f"{branch_name}:{branch_name}", force=True)
     release_branch.set_tracking_branch(repo.refs[f"{upstream.name}/{branch_name}"])
@@ -49,25 +46,14 @@ def get_upstream(repo: Repo) -> Remote:
 
 
 def release_changelog(repo: Repo, version: Version) -> Commit:
-    print("generate release commit")
+    print("generate prepare release commit")
     check_call(["towncrier", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))
     changed = [item.a_path for item in repo.index.diff(None)]
     if any((not i.startswith("changelog") or i == "CHANGELOG.rst") for i in changed):
         raise RuntimeError(f"found changes outside of the changelog domain: {changed}")
     repo.index.add(changed)
-    release_commit = repo.index.commit(f"release {version}")
+    release_commit = repo.index.commit(f"prepare release {version}")
     return release_commit
-
-
-def tag_release_commit(release_commit, repo, version) -> TagReference:
-    print("tag release commit")
-    existing_tags = [x.name for x in repo.tags]
-    if version in existing_tags:
-        print("delete existing tag {}".format(version))
-        repo.delete_tag(version)
-    print("create tag {}".format(version))
-    tag = repo.create_tag(version, ref=release_commit, force=True)
-    return tag
 
 
 if __name__ == "__main__":
