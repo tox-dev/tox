@@ -1669,7 +1669,7 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["py27"]
         assert envconfig.basepython == "python2.7"
-        assert len(record) == 0
+        assert len(record) == 0, "\n".join(repr(r.message) for r in record)
 
     @pytest.mark.issue188
     def test_factors_in_boolean(self, newconfig):
