@@ -1,5 +1,0 @@
-Add ``ignore_basepython_conflict``, which determines whether conflicting
-``basepython`` settings for environments containing default factors, such as
-``py27`` or ``django18-py35``, should be ignored or result in warnings. This
-was a common source of misconfiguration and is rarely, if ever, desirable from
-a user perspective - by :user:`stephenfin`

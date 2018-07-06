@@ -8,11 +8,20 @@ coverage:
   precision: 2
   round: down
   range: "70...100"
-
   status:
-    project: yes
-    patch: yes
-    changes: no
+    project:
+      default:
+        threshold: null
+        if_no_uploads: success
+        if_not_found: success
+        if_ci_failed: success
+    patch:
+      default:
+        enabled: yes
+        threshold: 30
+        if_no_uploads: success
+        if_not_found: success
+        if_ci_failed: success
 
 parsers:
   gcov:

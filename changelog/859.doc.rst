@@ -1,1 +1,0 @@
-Various improvements to documentation: open browser once documentation generation is done, show Github/Travis info on documentation page, remove duplicate header for changelog, generate unreleased news as DRAFT on top of changelog, make the changelog page more compact and readable (width up to 1280px) by :user:`gaborbernat`
