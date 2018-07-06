@@ -1,3 +1,0 @@
-Add support for multiple PyPy versions using default factors. This allows you
-to use, for example, ``pypy27`` knowing that the correct intepreter will be
-used by default - by :user:`stephenfin`
