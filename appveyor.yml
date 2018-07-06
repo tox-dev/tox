@@ -1,23 +1,33 @@
 build: false  # Not a C# project
+
+only_commits: # we only run tests here, so only trigger if we modify the source files or the config
+  files:
+  - src/**/*
+  - tests/**/*
+  - appveyor.yml
+  - setup.py
+  - tox.ini
+  - MANIFEST.in
+
 environment:
   matrix:
-    - TOXENV: py27
-    - TOXENV: py34
-    - TOXENV: py35
-    - TOXENV: py36
+  - TOXENV: py27
+  - TOXENV: py34
+  - TOXENV: py35
+  - TOXENV: py36
 
 matrix:
   fast_finish: true
 
 install:
-  - C:\Python36\python -m pip install --pre -U tox
+- C:\Python36\python -m pip install --pre -U tox
 
 test_script:
-  - C:\Python36\scripts\tox
+- C:\Python36\scripts\tox
 
 after_test:
-  - C:\Python36\scripts\tox -e coverage,codecov
+- C:\Python36\scripts\tox -e coverage,codecov
 
 cache:
-  - '%LOCALAPPDATA%\pip\cache'
-  - '%USERPROFILE%\.cache\pre-commit'
+- '%LOCALAPPDATA%\pip\cache'
+- '%USERPROFILE%\.cache\pre-commit'
