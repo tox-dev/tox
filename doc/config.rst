@@ -237,6 +237,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
     will be used for all test command invocations as well as for installing
     the sdist package into a virtual environment.
 
+    Notice that when updating a path variable, you can consider the use of
+    variable substitution for the current value and to handle path separator.
+
+    .. code-block:: ini
+
+        setenv   =
+            PYTHONPATH = {env:PYTHONPATH}{:}{toxinidir}
+
 .. confval:: passenv=SPACE-SEPARATED-GLOBNAMES
 
     .. versionadded:: 2.0
