@@ -1,0 +1,5 @@
+Add support to explicitly invoke interpreter directives for environments with
+long path lengths. In the event that ``tox`` cannot invoke scripts with a
+system-limited shebang (e.x. a Linux host running a Jenkins Pipeline), a user
+can set the environment variable ``TOX_LIMITED_SHEBANG`` to workaround the
+system's limitation (e.x. ``export TOX_LIMITED_SHEBANG=1``) - by :user:`jdknight`

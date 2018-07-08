@@ -1,0 +1,1 @@
+filter out unwanted files in package - by :user:`obestwalter`

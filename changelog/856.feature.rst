@@ -1,0 +1,2 @@
+Make ``py2`` and ``py3`` aliases also resolve via ``py`` on windows by :user:`asottile`. This enables the following things:
+``tox -e py2`` and ``tox -e py3`` work on windows (they already work on posix); and setting ``basepython=python2`` or ``basepython=python3`` now works on windows.
