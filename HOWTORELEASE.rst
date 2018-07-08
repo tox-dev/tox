@@ -35,13 +35,9 @@ Run the release command and make sure you pass in the desired release number:
 tox -e release -- <version>
 ```
 
-Create a pull request and wait until it passes. Now squash the PR. Delete the release preparation branch. After this tag with the release version the merged commit and push it:
-
-```bash
-git tag <version> && git push upstream --tags
-```
-
-The CI will automatically pick the tag up and release it, wait to appear in PyPi.
+Create a pull request and wait until it the CI passes. Now make sure you merge the PR
+and delete the release branch. The CI will automatically pick the tag up and
+release it, wait to appear in PyPi. Only merge if the later happens.
 
 Post release activities
 -----------------------
