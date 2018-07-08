@@ -16,6 +16,12 @@ Changes that already arrived in master, but are not released yet can be found as
 
 .. towncrier release notes start
 
+3.1.0a2 (2018-07-08)
+--------------------
+
+No significant changes.
+
+
 3.1.0a1 (2018-07-06)
 --------------------
 
