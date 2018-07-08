@@ -48,9 +48,6 @@ jobs:
       skip_upload_docs: true
       password:
         secure: GpPLWTVHMAOpHh2Jq+cYo9hE6cwTxPJ6fMA+q+ERWHtUAqSC88kBqoZ4DQb0cyFIlN24Z9f5J2vm80Q7Qv2UWCGVKeNaWMWFqvZ+P5czGEn7ARoeTsTaiyKTCC2w/7iDsne7dPcSHT/y8V2fO/35kcwcrc0EGr4peb9GDJ4asTFpffiVzW9l5OjV2+jQn+ihWNA0ujSB3AR4TLexXGH+Gf6O5uEHK/kPJ63NEDbJVEdciWqLbDiU+OwWl5Xb5hFX1fjKQ9dP4zA7SolNsNB6pqs4rLl2aHqKYOt1RYGgjWSvANDXKP7S46Q5LFIPkmt4QbOeWxX63NUMZUmWadbjoAF65q1d9Dq41IemsLmElSqpdfPaLtLgLCbNlgHRLNVH+nJVqxjc3bvdxi28K8DZ9BB9KGmPkrbbj4NB0prsPouKiBkUS9NyoQuDt1EzJ3Rn2FzMOH41X5gIqzdsdxcy+3DV2Bb+eozNgg+51n27ESf7vwiYMW9GFENw/6AcPkxIPYakQu4joJ+327wVfK4t0gdy/m4qu2n0Lx6wOJUdSOcOAT5bPaRBQV92gXAaVUsROKMfrzwlVLuA+GXcnj8fft8aMXem30+N3r7y5FjbiAts345qnbjSWV3w9qEbNjM/Z9mt7z1OfsqCarJ2Mj5wKQyYfewddYMjdk7aPW5/9gQ=
-      on:
-        tags: true
-        repo: tox-dev/tox
 
 matrix:
   fast_finish: true
