@@ -15,18 +15,19 @@ environment:
   - TOXENV: py34
   - TOXENV: py35
   - TOXENV: py36
+  - TOXENV: py37
 
 matrix:
   fast_finish: true
 
 install:
-- C:\Python36\python -m pip install --pre -U tox
+- C:\Python37\python -m pip install --pre -U tox
 
 test_script:
-- C:\Python36\scripts\tox
+- C:\Python37\scripts\tox
 
 after_test:
-- C:\Python36\scripts\tox -e coverage,codecov
+- C:\Python37\scripts\tox -e coverage,codecov
 
 cache:
 - '%LOCALAPPDATA%\pip\cache'
