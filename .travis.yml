@@ -34,13 +34,15 @@ jobs:
     env: TOXENV=docs
   - python: 3.7
     env: TOXENV=fix-lint
+  - python: 3.7
+    env: TOXENV=package-description
 
   - stage: deploy
     python: '3.7'
     env:
     install: pip install "pip >= 10.0.0"
     script: skip
-    after_success: python -c 'print("All done! ✨ 🍰 ✨")'
+    after_success: python -c 'print("All done! ✨✨")'
     deploy:
       provider: pypi
       user: toxdev
