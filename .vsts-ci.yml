@@ -1,0 +1,224 @@
+name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
+
+trigger:
+  branches:
+    include:
+    - '*'
+
+phases:
+- phase: lint
+  queue:
+    name: 'Hosted Linux Preview'
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python
+    inputs:
+      versionSpec: '3.7.0-b2'
+
+  - script: 'python -c "import sys; import os; os.symlink(sys.executable, os.path.join(os.path.dirname(sys.executable), \"python3.7\"))"'
+    displayName: link python to python3.7
+
+  - script: 'python -m pip install -U tox setuptools'
+    displayName: install tox
+
+  - script: 'tox -e fix-lint'
+    displayName: run tox
+
+
+
+- phase: docs
+  queue:
+    name: 'Hosted Linux Preview'
+    parallel: 2
+    matrix:
+      readthedocs:
+        toxenv: 'docs'
+      packageDescription:
+        toxenv: 'package-description'
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python
+    inputs:
+      versionSpec: '3.7.0-b2'
+
+  - script: 'python -c "import sys; import os; os.symlink(sys.executable, os.path.join(os.path.dirname(sys.executable), \"python3.7\"))"'
+    displayName: link python to python3.7
+
+  - script: 'python -m pip install -U tox setuptools'
+    displayName: install tox
+
+  - script: 'tox -e $(toxenv)'
+    displayName: run tox
+
+- phase: linux
+  queue:
+    name: 'Hosted Linux Preview'
+    parallel: 4
+    matrix:
+      python27:
+        python.version: '2.7'
+      python34:
+        python.version: '3.4'
+      python35:
+        python.version: '3.5'
+      python36:
+        python.version: '3.6'
+      python37:
+        python.version: '3.7.0-b2'
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python$(python.version)
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: 'python -m pip install -U tox setuptools'
+    displayName: install tox
+
+  - script: 'python -m tox -e py --notest'
+    displayName: acquire env dependencies
+
+  - script: 'python -m tox -e py'
+    displayName: run tests
+
+  - task: PublishTestResults@2
+    displayName: publish test results
+    inputs:
+      testResultsFiles: '.tox/test-results.*.xml'
+      mergeTestResults: true
+      testRunTitle: '$(toxenv)'
+      platform: linux
+
+  - script: 'python -m tox -e coverage'
+    displayName: generate coverage.xml
+
+  - script: 'ls . -Ra'
+    displayName: show
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'cobertura'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
+      failIfCoverageEmpty: true
+
+  - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
+    displayName: upload codecov
+
+- phase: windows
+  queue:
+    name: 'Hosted VS2017'
+    parallel: 4
+    matrix:
+      python27:
+        python.version: '2.7'
+      python34:
+        python.version: '3.4'
+      python35:
+        python.version: '3.5'
+      python36:
+        python.version: '3.6'
+      python37:
+        python.version: '3.7.0-b2'
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python$(python.version)
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: 'python -m pip install -U tox setuptools'
+    displayName: install tox
+
+  - script: 'python -m tox -e py --notest'
+    displayName: acquire env dependencies
+
+  - script: 'python -m tox -e py'
+    displayName: run tests
+
+  - task: PublishTestResults@2
+    displayName: publish test results
+    inputs:
+      testResultsFiles: '.tox/test-results.*.xml'
+      mergeTestResults: true
+      testRunTitle: '$(toxenv)'
+      platform: windows
+
+  - script: 'python -m tox -e coverage'
+    displayName: generate coverage.xml
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'cobertura'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
+      failIfCoverageEmpty: true
+
+  - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
+    displayName: upload codecov
+
+- phase: macOS
+  queue:
+    name: 'Hosted macOS Preview'
+    parallel: 1
+    matrix:
+      python:
+        toxenv: 'py3'
+
+  steps:
+  - script: 'python3 -m pip install -U tox setuptools'
+    displayName: install tox
+
+  - script: 'python3 -m tox -e $(toxenv) --notest'
+    displayName: acquire env dependencies
+
+  - script: 'python3 -m tox -e $(toxenv)'
+    displayName: run tests
+
+  - task: PublishTestResults@2
+    displayName: publish test results
+    inputs:
+      testResultsFiles: '.tox/test-results.*.xml'
+      mergeTestResults: true
+      testRunTitle: '$(toxenv)'
+      platform: windows
+
+  - script: 'python3 -m tox -e coverage'
+    displayName: generate coverage.xml
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'cobertura'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
+      failIfCoverageEmpty: true
+
+  - script: 'python3 -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-python3" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=3'
+    displayName: upload codecov
+
+- phase: publish
+  dependsOn:
+  - macOs
+  - linux
+  - windows
+  - lint
+  - docs
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  queue:
+    name: 'Hosted Linux Preview'
+    parallel: 1
+    matrix:
+      python37:
+        python.version: '3.7.0-b2'
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python$(python.version)
+    inputs:
+      versionSpec: '$(python.version)'
+
+#  - task: PyPIPublisher@0
+#    displayName: Package and publish to PyPI
+#    inputs:
+#      pypiConnection: pypi
+#      packageDirectory: '$(System.DefaultWorkingDirectory)'
+#      alsoPublishWheel: true
