@@ -63,7 +63,7 @@ def get_message_body(release_version: Version, prev_version: Version) -> str:
 
                 tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
 
-                For details about the fix(es),please check the CHANGELOG: https://pypi.org/project/tox/{release_version}/#changelog
+                For details about the fix(es), please check the CHANGELOG: https://pypi.org/project/tox/{release_version}/#changelog
 
                 We thank all present and past contributors to tox. Have a look at https://github.com/tox-dev/tox/blob/master/CONTRIBUTORS to see who contributed.
 
