@@ -1,0 +1,31 @@
+name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
+
+phases:
+- phase: 'test'
+  queue:
+    name: 'Hosted Linux Preview'
+    parallel: 3
+    matrix:
+      docs:
+        variables:
+          TOXENV: docs
+      lint:
+        variables:
+          TOXENV: fix-lint
+      packageDescription:
+        variables:
+          TOXENV: package-description
+
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python
+    inputs:
+      versionSpec: '>= 3.7.0a'
+
+  - script: 'python -m pip install -U tox'
+    displayName: install tox
+
+  - script: 'tox -e $(TOXENV)'
+    displayName: run tox
+
