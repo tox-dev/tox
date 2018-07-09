@@ -1,0 +1,37 @@
+name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
+
+phases:
+- phase: 'test'
+  queue:
+    name: 'Hosted Linux Preview'
+    parallel: 4
+    matrix:
+      Python27:
+        python.version: '2.7'
+      Python35:
+        python.version: '3.5'
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: ' >= 3.7.0a'
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup $(python.version)
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: 'python -m pip install -U tox'
+    displayName: install tox
+
+  - script: 'tox -e py'
+    displayName: run tox
+
+  - task: PublishTestResults@2
+    displayName: publish test results
+    inputs:
+      testResultsFiles: 'test-results.*.xml'
+      searchFolder: '$(System.DefaultWorkingDirectory)\.tox'
+      mergeTestResults: true
+      testRunTitle: 'python$(python.version)'
+      platform: linux

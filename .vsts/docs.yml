@@ -1,0 +1,25 @@
+name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
+
+queue:
+  name: Hosted Linux Preview
+
+trigger:
+  branches:
+    include:
+    - master
+
+steps:
+- checkout: self
+  clean: true
+  fetchDepth: 2
+
+- task: UsePythonVersion@0
+  displayName: 'Python 3.7.0a or later'
+  inputs:
+    versionSpec: '>=3.7.0a'
+
+- script: 'pip install -U tox'
+  displayName: install tox
+
+- script: 'tox -e docs'
+  displayName: run doc build
