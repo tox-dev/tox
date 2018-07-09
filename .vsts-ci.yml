@@ -1,3 +1,11 @@
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+    - tasks/*
+
 phases:
 - phase: 'Test'
   queue:
@@ -15,7 +23,12 @@ phases:
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
-  - script: python -m pip install --upgrade pip && pip install -U tox
+  - script: pip install -U tox
     displayName: 'install tox'
   - script: tox -e py
-    displayName: 'pytest'
+    displayName: 'run tests'
+  - task: PublishTestResults@2
+    displayName: publish test results
+    inputs:
+      testResultsFiles: '.tox/test-results.*.xml'
+    condition: always()
