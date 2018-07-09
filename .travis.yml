@@ -61,17 +61,25 @@ matrix:
   - python: pypy3
   - os:  osx
 
+  # Sadly Travis at the moment does not provide as job filter option git changeset, however we emulate it via bash
+  # we have two type of tasks to run here
+  # - test (TOXENV=py) => run only if source/packaging/CI files change
+  # - linter and documentation -> always build
+  # if this is a tag build we force full build
+
 before_install:
 - python -c 'import sys; print(sys.version)'
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
+- export BUILD="setup.py pyproject.toml MANIFEST.in setup.cfg tox.ini .travis.yml appveyor.yml"
+- export SRC=$(git diff --name-only $TRAVIS_COMMIT_RANGE -- '*.py' $BUILD | grep -v conf.py | grep -v "tasks/.*.py")
+- '[[ "$TOXENV"!="py" || (-n "$SRC" && "$TOXENV"="py") ]] && export RUN="YES"'
 
 install:
-- pip install -U six
-- pip install --pre -U tox
-- tox --notest
+- '[ -n "$RUN" ] && pip install --pre -U tox'
+- '[ -n "$RUN" ] && tox --notest'
 
 script:
-- tox
+- '[ -n "$RUN" ] && tox'
 
 after_success:
-- if [[ $TOXENV == "py" ]]; then tox -e coverage,codecov; fi
+- '[[ -n "$RUN" && "$TOXENV"="py" ]] && tox -e coverage,codecov'
