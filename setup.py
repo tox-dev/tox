@@ -1,4 +1,5 @@
 import io
+import re
 import sys
 
 import setuptools
@@ -26,10 +27,19 @@ def has_environment_marker_support():
         return False
 
 
+def fix_changelog(text):
+    # first we need to prune the include draft, we don't have a draft for PyPi release
+    text = text.replace(".. include:: ../_draft.rst", "")
+    # now we need to fix the user custom directives: user
+    pattern = re.compile(r":user:`(\w+)`")
+    text = pattern.sub(r"`\1 <https://github.com/\1>`_", text)
+    return text
+
+
 def get_long_description():
     with io.open("README.rst", encoding="utf-8") as f:
         with io.open("CHANGELOG.rst", encoding="utf-8") as g:
-            return u"{}\n\n{}".format(f.read(), g.read())
+            return u"{}\n\n{}".format(f.read(), fix_changelog(g.read()))
 
 
 def main():

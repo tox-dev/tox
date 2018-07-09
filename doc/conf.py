@@ -27,8 +27,13 @@ def generate_draft_news():
             path.write_text(re.sub(pattern, replacement, path.read_text()))
     changelog = subprocess.check_output(
         ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR)
-    )
-    (ROOT_SRC_TREE_DIR / "_draft.rst").write_bytes(changelog)
+    ).decode("utf-8")
+    if "No significant changes" in changelog:
+        content = ""
+    else:
+        note = "Changes in master, but not released yet are under the draft section.\n\n"
+        content = "{}\n\n{}".format(note, changelog)
+    (ROOT_SRC_TREE_DIR / "_draft.rst").write_text(content)
 
 
 generate_draft_news()
