@@ -22,11 +22,11 @@ e.g.:
     $ pip install tox-travis
 
 You can search for available plugins on PyPi by typing ``pip search tox`` and filter for
-packages that are prefixed `tox-` or contain the "plugin" in the description.
+packages that are prefixed ``tox-`` or contain the "plugin" in the description.
 You will get some output similar to this::
 
     tox-pipenv (1.4.1)                   - A pipenv plugin for tox
-    tox-pyenv (1.1.0)                    - tox plugin that makes tox use `pyenv which` to find
+    tox-pyenv (1.1.0)                    - tox plugin that makes tox use ``pyenv which`` to find
                                            python executables
     tox-globinterpreter (0.3)            - tox plugin to allow specification of interpreter
                                            locationspaths to use
@@ -83,7 +83,7 @@ Tutorial: a minimal tox plugin
 
     This is the minimal implementation to demonstrate what is absolutely necessary to have a
     working plugin for internal use. To move from something like this to a publishable plugin
-    you could apply `cookiecutter -f cookiecutter-tox-plugin` and adapt the code to the
+    you could apply ``cookiecutter -f cookiecutter-tox-plugin`` and adapt the code to the
     package based structure used in the cookiecutter.
 
 Let us consider you want to extend tox behaviour by displaying fireworks at the end of a
@@ -165,8 +165,8 @@ example or consult the `setup.py docs <https://docs.python.org/3/distutils/setup
 
 .. note::
 
-    Make sure your plugin project name is prefixed by `tox-` to be easy to find via e.g.
-    `pip search tox-`
+    Make sure your plugin project name is prefixed by ``tox-`` to be easy to find via e.g.
+    ``pip search tox-``
 
 You can and publish it like:
 
