@@ -12,6 +12,17 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+3.1.1 (2018-07-09)
+------------------
+
+Bugfixes
+^^^^^^^^
+
+- PyPi documentation for ``3.1.0`` is broken. Added test to check for this, and
+  fix it by :user:`gaborbernat`. (`#879
+  <https://github.com/tox-dev/tox/issues/879>`_)
+
+
 3.1.0 (2018-07-08)
 ------------------
 

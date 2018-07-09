@@ -1,1 +1,0 @@
-PyPi documentation for ``3.1.0`` is broken. Added test to check for this, and fix it by :user:`gaborbernat`.
