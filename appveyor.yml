@@ -7,7 +7,12 @@ only_commits: # we only run tests here, so only trigger if we modify the source 
   - appveyor.yml
   - setup.py
   - tox.ini
+  - pyproject.toml
   - MANIFEST.in
+  - setup.cfg
+  - .travis.yml
+  - CHANGELOG.rst
+  # this final one acts as proxy for release commits
 
 environment:
   matrix:
