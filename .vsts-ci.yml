@@ -32,3 +32,4 @@ phases:
     inputs:
       testResultsFiles: '.tox/test-results.*.xml'
     condition: always()
+  - script: echo hello world
