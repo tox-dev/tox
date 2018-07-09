@@ -1,3 +1,5 @@
+image: "Visual Studio 2015"
+
 build: false  # Not a C# project
 
 only_commits: # we only run tests here, so only trigger if we modify the source files or the config
