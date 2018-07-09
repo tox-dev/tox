@@ -176,7 +176,7 @@ Bugfixes
 ^^^^^^^^
 
 - ``skip_install`` overrides ``usedevelop`` (``usedevelop`` is an option to
-  choose the installation type if the package is installed and `skip_install`
+  choose the installation type if the package is installed and ``skip_install``
   determines if it should be installed at all) - by `@ferdonline <https://github.com/ferdonline>`_
   (`#571 <https://github.com/tox-dev/tox/issues/571>`_)
 
@@ -200,8 +200,8 @@ Documentation
 - add `towncrier <https://github.com/hawkowl/towncrier>`_ to allow adding
   changelog entries with the pull requests without generating merge conflicts;
   with this release notes are now grouped into four distinct collections:
-  `Features`, `Bugfixes`, `Improved Documentation` and `Deprecations and
-  Removals`. (`#614 <https://github.com/tox-dev/tox/issues/614>`_)
+  ``Features``, ``Bugfixes``, ``Improved Documentation`` and ``Deprecations and
+  Removals``. (`#614 <https://github.com/tox-dev/tox/issues/614>`_)
 
 
 2.8.2 (2017-10-09)
@@ -213,7 +213,7 @@ Documentation
 ------------------
 
 - `pull request 599 <https://github.com/tox-dev/tox/pull/599>`_: fix problems with implementation of `#515 <https://github.com/tox-dev/tox/issues/515>`_.
-  Substitutions from other sections were not made anymore if they were not in `envlist`.
+  Substitutions from other sections were not made anymore if they were not in ``envlist``.
   Thanks to Clark Boylan (`@cboylan <https://github.com/cboylan>`_) for helping to get this fixed (`pull request 597 <https://github.com/tox-dev/tox/pull/597>`_).
 
 2.8.0 (2017-09-01)
@@ -234,16 +234,16 @@ Documentation
 
 - `#474 <https://github.com/tox-dev/tox/issues/474>`_: Start using setuptools_scm for tag based versioning.
 
-- `#484 <https://github.com/tox-dev/tox/issues/484>`_: Renamed `py.test` to `pytest` throughout the project. Thanks Slam (`@3lnc <https://github.com/3lnc>`_).
+- `#484 <https://github.com/tox-dev/tox/issues/484>`_: Renamed ``py.test`` to ``pytest`` throughout the project. Thanks Slam (`@3lnc <https://github.com/3lnc>`_).
 
-- `#504 <https://github.com/tox-dev/tox/issues/504>`_: With `-a`: do not show additional environments header if there are none. Thanks `@rndr <https://github.com/rndr>`_.
+- `#504 <https://github.com/tox-dev/tox/issues/504>`_: With ``-a``: do not show additional environments header if there are none. Thanks `@rndr <https://github.com/rndr>`_.
 
 - `#515 <https://github.com/tox-dev/tox/issues/515>`_: Don't require environment variables in test environments where they are not used.
   Thanks André Caron (`@AndreLouisCaron <https://github.com/AndreLouisCaron>`_).
 - `#517 <https://github.com/tox-dev/tox/issues/517>`_: Forward ``NUMBER_OF_PROCESSORS`` by default on Windows to fix ``multiprocessor.cpu_count()``.
   Thanks André Caron (`@AndreLouisCaron <https://github.com/AndreLouisCaron>`_).
 
-- `#518 <https://github.com/tox-dev/tox/issues/518>`_: Forward `USERPROFILE` by default on Windows. Thanks André Caron (`@AndreLouisCaron <https://github.com/AndreLouisCaron>`_).
+- `#518 <https://github.com/tox-dev/tox/issues/518>`_: Forward ``USERPROFILE`` by default on Windows. Thanks André Caron (`@AndreLouisCaron <https://github.com/AndreLouisCaron>`_).
 
 - `pull request 528 <https://github.com/tox-dev/tox/pull/528>`_: Fix some of the warnings displayed by pytest 3.1.0. Thanks Bruno Oliveira (`@nicoddemus <https://github.com/nicoddemus>`_).
 
@@ -270,21 +270,20 @@ Documentation
 ------------------
 
 - `pull request 450 <https://github.com/tox-dev/tox/pull/450>`_: Stop after the first installdeps and first testenv create hooks
-  succeed. This changes the default behaviour of `tox_testenv_create`
-  and `tox_testenv_install_deps` to not execute other registered hooks when
-  the first hook returns a result that is not `None`.
+  succeed. This changes the default behaviour of ``tox_testenv_create`` and ``tox_testenv_install_deps`` to not execute other registered hooks when the first hook returns a result that is not ``None``.
   Thanks Anthony Sottile (`@asottile <https://github.com/asottile>`_).
 
-- `#271 <https://github.com/tox-dev/tox/issues/271>`_ and `#464 <https://github.com/tox-dev/tox/issues/464>`_: Improve environment information for users.
+- `#271 <https://github.com/tox-dev/tox/issues/271>`_ and `#464 <https://github.com/tox-dev/tox/issues/464>`_:
+  Improve environment information for users.
 
-  New command line parameter: `-a` show **all** defined environments -
+  New command line parameter: ``-a`` show **all** defined environments -
   not just the ones defined in (or generated from) envlist.
 
-  New verbosity settings for `-l` and `-a`: show user defined descriptions
+  New verbosity settings for ``-l`` and ``-a``: show user defined descriptions
   of the environments. This also works for generated environments from factors
   by concatenating factor descriptions into a complete description.
 
-  Note that for backwards compatibility with scripts using the output of `-l`
+  Note that for backwards compatibility with scripts using the output of ``-l``
   it's output remains unchanged.
 
   Thanks Bernát Gábor (`@gaborbernat <https://github.com/gaborbernat>`_).

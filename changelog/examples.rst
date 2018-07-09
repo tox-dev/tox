@@ -12,7 +12,7 @@ file ``544.feature.rst``::
 file ``571.bugfix.rst``::
 
     ``skip_install`` overrides ``usedevelop`` (``usedevelop`` is an option to choose the
-    installation type if the package is installed and `skip_install` determines if it should be
+    installation type if the package is installed and ``skip_install`` determines if it should be
     installed at all) - by :user:`ferdonline`
 
 .. see tox/pyproject.toml for all available categories

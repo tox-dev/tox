@@ -65,7 +65,7 @@ with this:
     exec urllib.urlopen(url).read() in d
     d["cmdline"](["--recreate"])
 
-The downloaded `toxbootstrap.py` file downloads all necessary files to
+The downloaded ``toxbootstrap.py`` file downloads all necessary files to
 install ``tox`` in a virtual sub environment.  Notes:
 
 * uncomment the line containing ``USETOXDEV`` to use the latest

@@ -363,7 +363,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     Install the current package in development mode with "setup.py
     develop" instead of installing from the ``sdist`` package. (This
-    uses pip's `-e` option, so should be avoided if you've specified a
+    uses pip's ``-e`` option, so should be avoided if you've specified a
     custom :confval:`install_command` that does not support ``-e``).
 
     **default**: ``False``
@@ -432,7 +432,7 @@ Globally available substitutions
     they may be accessed by other processes or tox runs.
 
 ``{:}``
-    OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in `setenv`,
+    OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in ``setenv``,
     when target variable is path variable (e.g. PATH or PYTHONPATH).
 
 substitutions for virtualenv-related sections

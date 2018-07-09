@@ -34,3 +34,10 @@ repos:
     rev: v1.4.0
     hooks:
     -   id: pyupgrade
+-   repo: local
+    hooks:
+    -   id: rst-backticks
+        name: rst ``code`` is two backticks
+        entry: ' `[^`]+[^_]`([^_]|$)'
+        language: pygrep
+        types: [rst]
