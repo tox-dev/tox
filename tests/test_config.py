@@ -807,8 +807,10 @@ class TestIniParser:
         assert reader.getbool("key2a") is False
         with pytest.raises(KeyError):
             reader.getbool("key3")
-        with pytest.raises(tox.exception.ConfigError):
+        with pytest.raises(tox.exception.ConfigError) as excinfo:
             reader.getbool("key5")
+        msg, = excinfo.value.args
+        assert msg == "key5: boolean value 'yes' needs to be 'True' or 'False'"
 
 
 class TestIniParserPrefix:

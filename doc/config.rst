@@ -17,13 +17,20 @@ List of optional global options:
 .. code-block:: ini
 
     [tox]
-    minversion=ver    # minimally required tox version
-    toxworkdir=path   # tox working directory, defaults to {toxinidir}/.tox
-    setupdir=path     # defaults to {toxinidir}
-    distdir=path      # defaults to {toxworkdir}/dist
-    distshare=path    # (DEPRECATED) defaults to {homedir}/.tox/distshare
-    envlist=ENVLIST   # defaults to the list of all environments
-    skipsdist=BOOL    # defaults to false
+    # minimally required tox version
+    minversion=ver
+    # tox working directory, defaults to {toxinidir}/.tox
+    toxworkdir=path
+    # defaults to {toxinidir}
+    setupdir=path
+    # defaults to {toxworkdir}/dist
+    distdir=path
+    # (DEPRECATED) defaults to {homedir}/.tox/distshare
+    distshare=path
+    # defaults to the list of all environments
+    envlist=ENVLIST
+    # bool: defaults to False
+    skipsdist=False
 
 
 ``tox`` autodetects if it is running in a Jenkins_ context
@@ -33,7 +40,7 @@ and will first lookup global tox settings in this section:
 .. code-block:: ini
 
     [tox:jenkins]
-    ...               # override [tox] settings for the jenkins context
+    commands = ...  # override [tox] settings for the jenkins context
     # note: for jenkins distshare defaults to ``{toxworkdir}/distshare`` (DEPRECATED)
 
 .. confval:: skip_missing_interpreters=BOOL
@@ -79,13 +86,13 @@ Test environments are defined by a:
 .. code-block:: ini
 
     [testenv:NAME]
-    ...
+    commands = ...
 
 section.  The ``NAME`` will be the name of the virtual environment.
 Defaults for each setting in this section are looked up in the::
 
     [testenv]
-    ...
+    commands = ...
 
 testenvironment default section.
 
@@ -216,6 +223,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. code-block:: ini
 
+        [tox]
+        indexserver =
+            myindexserver = https://myindexserver.example.com/simple
+
+        [testenv]
         deps = :myindexserver:pkg
 
     (Experimentally introduced in 1.6.1) all installer commands are executed
@@ -242,6 +254,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. code-block:: ini
 
+        [testenv]
         setenv   =
             PYTHONPATH = {env:PYTHONPATH}{:}{toxinidir}
 
@@ -746,7 +759,7 @@ For example:
 
     [testenv:py27]
     deps =
-        {{[testenv]deps}}
+        {[testenv]deps}
         pytest
 
 With the previous configuration, it will install:

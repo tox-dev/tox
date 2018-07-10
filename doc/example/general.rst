@@ -18,13 +18,14 @@ test commands, for example using ``pytest``:
 
 .. code-block:: ini
 
-    # in the testenv or testenv:NAME section of your tox.ini
+    [testenv]  # or testenv:NAME section of your tox.ini
     commands = pytest {posargs}
 
 or using ``nosetests``:
 
 .. code-block:: ini
 
+    [testenv]
     commands = nosetests {posargs}
 
 the above ``tox`` invocation will trigger the test runners to
@@ -35,6 +36,7 @@ syntax:
 
 .. code-block:: ini
 
+    [testenv]
     commands = nosetests {posargs:--with-coverage}
 
 .. _`sphinx checks`:

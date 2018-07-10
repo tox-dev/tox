@@ -47,6 +47,7 @@ configuration:
 
 .. code-block:: ini
 
+    [testenv:devenv]
     commands =
     deps =
 
