@@ -18,10 +18,7 @@ only_commits: # we only run tests here, so only trigger if we modify the source 
 
 environment:
   matrix:
-  - TOXENV: py27
   - TOXENV: py34
-  - TOXENV: py35
-  - TOXENV: py36
 
 matrix:
   fast_finish: true
