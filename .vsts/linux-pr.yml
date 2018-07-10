@@ -6,32 +6,34 @@ phases:
     name: 'Hosted Linux Preview'
     parallel: 4
     matrix:
-      Python27:
+      python27:
         python.version: '2.7'
-      Python35:
+      python35:
         python.version: '3.5'
-      Python36:
+      python36:
         python.version: '3.6'
-      Python37:
-        python.version: ' >= 3.7.0a'
+      python37:
+        python.version: '>= 3.7.0a'
 
   steps:
   - task: UsePythonVersion@0
-    displayName: setup $(python.version)
+    displayName: setup python$(python.version)
     inputs:
       versionSpec: '$(python.version)'
 
   - script: 'python -m pip install -U tox'
     displayName: install tox
 
+  - script: 'tox -e py --notest'
+    displayName: acquire env dependencies
+
   - script: 'tox -e py'
-    displayName: run tox
+    displayName: run tests
 
   - task: PublishTestResults@2
     displayName: publish test results
     inputs:
-      testResultsFiles: 'test-results.*.xml'
-      searchFolder: '$(System.DefaultWorkingDirectory)\.tox'
+      testResultsFiles: '.tox/test-results.*.xml'
       mergeTestResults: true
       testRunTitle: 'python$(python.version)'
       platform: linux
