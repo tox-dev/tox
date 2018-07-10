@@ -37,6 +37,7 @@ for example with ``pytest`` it is done like this:
 
 .. code-block:: ini
 
+    [testenv]
     commands = pytest --junitxml=junit-{envname}.xml
 
 

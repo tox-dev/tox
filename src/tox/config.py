@@ -1193,7 +1193,9 @@ class SectionReader:
             elif s.lower() == "false":
                 s = False
             else:
-                raise tox.exception.ConfigError("boolean value %r needs to be 'True' or 'False'")
+                raise tox.exception.ConfigError(
+                    "{}: boolean value {!r} needs to be 'True' or 'False'".format(name, s)
+                )
         return s
 
     def getargvlist(self, name, default="", replace=True):

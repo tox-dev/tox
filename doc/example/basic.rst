@@ -65,6 +65,7 @@ runs on you can set a platform regular expression like this:
 
 .. code-block:: ini
 
+    [testenv]
     platform = linux2|darwin
 
 If the expression does not match against ``sys.platform``
@@ -101,18 +102,21 @@ depending on requirements.txt or defining constraints
 
 .. code-block:: ini
 
+    [testenv]
     deps = -rrequirements.txt
 
 or
 
 .. code-block:: ini
 
+    [testenv]
     deps = -cconstraints.txt
 
 or
 
 .. code-block:: ini
 
+    [testenv]
     deps = -rrequirements.txt -cconstraints.txt
 
 All installation commands are executed using ``{toxinidir}`` (the directory where ``tox.ini`` resides) as the current working directory.
