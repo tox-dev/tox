@@ -20,6 +20,15 @@ ul > li > p {
 
 }
 
+ol > li {
+    text-align: justify;
+}
+
+ol > li > p {
+    margin-bottom: 0;
+
+}
+
 div.body code.descclassname {
     display: none
 }

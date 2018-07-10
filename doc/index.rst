@@ -55,6 +55,72 @@ you'll note that it runs much faster because it keeps track of virtualenv detail
 and will not recreate or re-install dependencies.  You also might want to
 checkout :doc:`examples` to get some more ideas.
 
+System overview
+---------------
+
+.. figure:: img/tox_flow.png
+   :align: center
+   :width: 800px
+
+   tox workflow diagram
+
+..
+    The above image raw can be found and edited by using the toxdevorg Google role account under
+    https://www.lucidchart.com/documents/edit/5d921f32-f2e1-4618-a265-7f9e30503dc6/0
+
+tox roughly follows the following phases:
+
+1. **configuration:** load ``tox.ini`` and merge it with options from the command line and the
+   operating system environment variables.
+2. **packaging** (optional): create a source distribution of the current project by invoking
+
+   .. code-block:: bash
+
+      python setup.py sdist
+
+   Note that for this operation the same Python environment will be used as the one tox is
+   installed into (therefore you need to make sure that it contains your build dependencies).
+   Skip this step for application projects that don't have a ``setup.py``.
+
+3. **environment** - for each tox environment (e.g. ``py27``, ``py36``) do:
+
+    1. **environment creation**: create a fresh environment, by default Python virtual environments
+    are used via the virtualenv_ project. tox will automatically
+    try to discover a valid Python interpreter version by using the environment name (e.g. ``py27``
+    means Python 2.7 and the ``basepython`` configuration value) and the current operating system
+    ``PATH`` value. This step is done at first run only (or when :confval:`basepython` value
+    changes) and re-used at subsequent runs, unless the user requests explicitly recreating this
+    by passing in the ``-r`` flag.
+
+    2. **install** (optional): install the environment dependencies specified inside the
+    :confval:`deps` configuration section, and then the earlier packaged source distribution.
+    By default ``pip`` is used to install packages, however one can customise this via
+    :confval:`install_command`. Note ``pip`` will not update project dependencies (specified either
+    in the ``install_requires`` or the ``extras`` section of the ``setup.py``) if any version already
+    exists in the virtual environment; therefore we recommend to recreate your environments entirely
+    whenever your project dependencies change.
+
+    3. **commands**: run one by one the specified commands. Whenever the exit code of any of them
+    is not zero stop, and mark the environment failed. Note, starting a command with a single dash
+    character means ignore exit code.
+
+6. **report** print out a report of outcomes for each tox environment:
+
+   .. code:: bash
+
+      ____________________ summary ____________________
+      py27: commands succeeded
+      ERROR:   py36: commands failed
+
+    Only if all environments finished with success will the exit code of tox be success. In this
+    case you'll also see the message ``congratulations :)``.
+
+tox will take care of environment isolation for you: it will strip away all operating system
+environment variables not specified via :confval:`passenv`. Furthermore, it will also alter the
+``PATH`` variable so that your commands resolve first and foremost within the current active
+tox environment. It's possible to fallback to executables outside of this, however these need to
+be explicitly enabled via the :confval:`whitelist_external` configuration variable.
+
 Current features
 -------------------
 
