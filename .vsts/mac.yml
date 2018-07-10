@@ -1,0 +1,33 @@
+name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
+
+phases:
+- phase: 'test'
+  queue:
+    name: 'Hosted macOS Preview'
+    parallel: 1
+    matrix:
+      python27:
+        python.version: '2.7'
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python$(python.version)
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: 'python -m pip install -U tox'
+    displayName: install tox
+
+  - script: 'tox -e py --notest'
+    displayName: acquire env dependencies
+
+  - script: 'tox -e py'
+    displayName: run tests
+
+  - task: PublishTestResults@2
+    displayName: publish test results
+    inputs:
+      testResultsFiles: '.tox/test-results.*.xml'
+      mergeTestResults: true
+      testRunTitle: 'python$(python.version)'
+      platform: linux
