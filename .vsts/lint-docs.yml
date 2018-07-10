@@ -28,4 +28,3 @@ phases:
 
   - script: 'tox -e $(TOXENV)'
     displayName: run tox
-
