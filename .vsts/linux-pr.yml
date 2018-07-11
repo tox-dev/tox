@@ -7,27 +7,25 @@ phases:
     parallel: 4
     matrix:
       python27:
-        python.version: '2.7'
+        toxenv: 'py27'
+      python34:
+        toxenv: 'py34'
       python35:
-        python.version: '3.5'
+        toxenv: 'py35'
       python36:
-        python.version: '3.6'
+        toxenv: 'py36'
       python37:
-        python.version: '>= 3.7.0a'
+        toxenv: 'py37'
 
   steps:
-  - task: UsePythonVersion@0
-    displayName: setup python$(python.version)
-    inputs:
-      versionSpec: '$(python.version)'
 
-  - script: 'python -m pip install -U tox'
+  - script: 'python -m pip install -U tox setuptools'
     displayName: install tox
 
-  - script: 'tox -e py --notest'
+  - script: 'tox -e $(toxenv) --notest'
     displayName: acquire env dependencies
 
-  - script: 'tox -e py'
+  - script: 'tox -e $(toxenv)'
     displayName: run tests
 
   - task: PublishTestResults@2
@@ -35,5 +33,5 @@ phases:
     inputs:
       testResultsFiles: '.tox/test-results.*.xml'
       mergeTestResults: true
-      testRunTitle: 'python$(python.version)'
+      testRunTitle: '$(toxenv)'
       platform: linux

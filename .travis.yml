@@ -17,25 +17,13 @@ env:
 
 jobs:
   include:
-  - python: 2.7    # 2.7.14 pip  9.0.1
   - python: 3.4    # 3.4.6  pip  9.0.1
     dist: trusty
-  - python: 3.5    # 3.5.5  pip  9.0.1
-  - python: 3.6    # 3.6.3  pip  9.0.1
-  - python: 3.7    # 3.7.0  pip 10.0.1
   - python: 3.8-dev
   - python: pypy   # 2.7.13 pip  9.0.1
     dist: trusty
   - python: pypy3  # 3.5.3  pip  9.0.1
     dist: trusty
-  - os: osx
-    language: generic
-  - python: 3.7
-    env: TOXENV=docs
-  - python: 3.7
-    env: TOXENV=fix-lint
-  - python: 3.7
-    env: TOXENV=package-description
 
   - stage: deploy
     python: '3.7'
@@ -59,7 +47,6 @@ matrix:
   - python: 3.8-dev
   - python: pypy
   - python: pypy3
-  - os:  osx
 
   # Sadly Travis at the moment does not provide as job filter option git changeset, however we emulate it via bash
   # we have two type of tasks to run here
@@ -69,7 +56,6 @@ matrix:
 
 before_install:
 - python -c 'import sys; print(sys.version)'
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source .travis-osx; fi
 - export BUILD="setup.py pyproject.toml MANIFEST.in setup.cfg tox.ini .travis.yml appveyor.yml"
 - export SRC=$(git diff --name-only $TRAVIS_COMMIT_RANGE -- '*.py' $BUILD | grep -v conf.py | grep -v "tasks/.*.py")
 - '[[ "$TOXENV"!="py" || (-n "$SRC" && "$TOXENV"="py") ]] && export RUN="YES"'

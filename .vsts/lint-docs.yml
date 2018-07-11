@@ -7,24 +7,15 @@ phases:
     parallel: 3
     matrix:
       docs:
-        variables:
-          TOXENV: docs
+        toxenv: 'docs'
       lint:
-        variables:
-          TOXENV: fix-lint
+        toxenv: 'fix-lint'
       packageDescription:
-        variables:
-          TOXENV: package-description
-
+        toxenv: 'package-description'
 
   steps:
-  - task: UsePythonVersion@0
-    displayName: setup python
-    inputs:
-      versionSpec: '>= 3.7.0a'
-
-  - script: 'python -m pip install -U tox'
+  - script: 'python -m pip install -U tox setuptools'
     displayName: install tox
 
-  - script: 'tox -e $(TOXENV)'
+  - script: 'tox -e $(toxenv)'
     displayName: run tox
