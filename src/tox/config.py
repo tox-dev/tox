@@ -1217,10 +1217,10 @@ class SectionReader:
         if x is None:
             x = default
         else:
-            x = self._replace_if_needed(x, name, replace, crossonly)
             x = self._apply_factors(x)
 
-        x = self._replace_if_needed(x, name, replace, crossonly)
+        if replace and x and hasattr(x, 'replace'):
+            x = self._replace(x, name=name, crossonly=crossonly)
         # print "getstring", self.section_name, name, "returned", repr(x)
         return x
 
@@ -1257,11 +1257,6 @@ class SectionReader:
                 )
             raise
         return replaced
-
-    def _replace_if_needed(self, x, name, replace, crossonly):
-        if replace and x and hasattr(x, "replace"):
-            x = self._replace(x, name=name, crossonly=crossonly)
-        return x
 
 
 class Replacer:

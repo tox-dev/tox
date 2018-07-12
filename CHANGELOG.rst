@@ -12,6 +12,14 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+3.1.2 (2018-07-12)
+------------------
+
+Bugfixes
+^^^^^^^^
+
+- Revert "Fix bug with incorrectly defactorized dependencies (`#772 <https://github.com/tox-dev/tox/issues/772>`_)" due to a regression (`(#799) <https://github.com/tox-dev/tox/issues/899>`_) - by :user:`obestwalter`
+
 3.1.1 (2018-07-09)
 ------------------
 
