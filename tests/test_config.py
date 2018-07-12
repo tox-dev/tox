@@ -1440,9 +1440,11 @@ class TestConfigTestEnv:
         )
         conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
-        assert packages == ["pytest", "pytest-cov", "fun", "frob>1.0,<2.0"]
+        assert packages == list(deps) + ['fun', 'frob>1.0,<2.0']
+        # assert packages == ["pytest", "pytest-cov", "fun", "frob>1.0,<2.0"]
 
     # https://github.com/tox-dev/tox/issues/706
+    @pytest.mark.xfail(reason="reproduce bug 706")
     @pytest.mark.parametrize("envlist", [["py27", "coverage", "other"]])
     def test_regression_test_issue_706(self, newconfig, envlist):
         inisource = """

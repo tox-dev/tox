@@ -741,33 +741,6 @@ the following:
     - but not ``py2``, ``py36-sql`` or ``py36-mysql-dev``.
 
 
-Factors and values substitution are compatible
-++++++++++++++++++++++++++++++++++++++++++++++
-
-It is possible to mix both values substitution and factor expressions.
-For example:
-
-.. code-block:: ini
-
-    [tox]
-    envlist = py27,py36,coverage
-
-    [testenv]
-    deps =
-        flake8
-        coverage: coverage
-
-    [testenv:py27]
-    deps =
-        {[testenv]deps}
-        pytest
-
-With the previous configuration, it will install:
-
-- ``flake8`` and ``pytest`` packages for ``py27`` environment.
-- ``flake8`` package for ``py36`` environment.
-- ``flake8`` and ``coverage`` packages for ``coverage`` environment.
-
 Advanced settings
 -----------------
 
