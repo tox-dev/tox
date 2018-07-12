@@ -496,7 +496,7 @@ If you specify a substitution string like this::
     {env:KEY:}
 
 then the value will be retrieved as ``os.environ['KEY']``
-and replace with and empty string if the environment variable does not
+and replace with an empty string if the environment variable does not
 exist.
 
 Substitutions can also be nested. In that case they are expanded starting
