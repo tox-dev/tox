@@ -305,7 +305,7 @@ class Reporter(object):
             self.logline(msg)
 
     def using(self, msg):
-        if self.verbosity >= 1:
+        if self.verbosity >= Verbosity.INFO:
             self.logline("using {}".format(msg), bold=True)
 
     def keyboard_interrupt(self):
