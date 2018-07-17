@@ -1219,7 +1219,7 @@ class SectionReader:
         else:
             x = self._apply_factors(x)
 
-        if replace and x and hasattr(x, 'replace'):
+        if replace and x and hasattr(x, "replace"):
             x = self._replace(x, name=name, crossonly=crossonly)
         # print "getstring", self.section_name, name, "returned", repr(x)
         return x
