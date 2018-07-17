@@ -84,25 +84,24 @@ tox roughly follows the following phases:
 
 3. **environment** - for each tox environment (e.g. ``py27``, ``py36``) do:
 
-    1. **environment creation**: create a fresh environment, by default Python virtual environments
-    are used via the virtualenv_ project. tox will automatically
-    try to discover a valid Python interpreter version by using the environment name (e.g. ``py27``
-    means Python 2.7 and the ``basepython`` configuration value) and the current operating system
-    ``PATH`` value. This step is done at first run only (or when :confval:`basepython` value
-    changes) and re-used at subsequent runs, unless the user requests explicitly recreating this
-    by passing in the ``-r`` flag.
+    1. **environment creation**: create a fresh environment, by default virtualenv_ is used. tox will
+    automatically try to discover a valid Python interpreter version by using the environment name
+    (e.g. ``py27`` means Python 2.7 and the ``basepython`` configuration value) and the current
+    operating system ``PATH`` value. This is created at first run only to be re-used at subsequent
+    runs. If certain aspects of the project change, a re-creation of the environment is
+    automatically triggered. To force the recreation tox can be invoked with ``-r``/``--recreate``.
 
     2. **install** (optional): install the environment dependencies specified inside the
     :confval:`deps` configuration section, and then the earlier packaged source distribution.
     By default ``pip`` is used to install packages, however one can customise this via
     :confval:`install_command`. Note ``pip`` will not update project dependencies (specified either
     in the ``install_requires`` or the ``extras`` section of the ``setup.py``) if any version already
-    exists in the virtual environment; therefore we recommend to recreate your environments entirely
+    exists in the virtual environment; therefore we recommend to recreate your environments
     whenever your project dependencies change.
 
-    3. **commands**: run one by one the specified commands. Whenever the exit code of any of them
-    is not zero stop, and mark the environment failed. Note, starting a command with a single dash
-    character means ignore exit code.
+    3. **commands**: run the specified commands in the specified order. Whenever the exit code of
+    any of them is not zero stop, and mark the environment failed. Note, starting a command with a
+    single dash character means ignore exit code.
 
 6. **report** print out a report of outcomes for each tox environment:
 
@@ -112,14 +111,14 @@ tox roughly follows the following phases:
       py27: commands succeeded
       ERROR:   py36: commands failed
 
-    Only if all environments finished with success will the exit code of tox be success. In this
+    Only if all environments ran successfully tox will return exit code ``0`` (success). In this
     case you'll also see the message ``congratulations :)``.
 
 tox will take care of environment isolation for you: it will strip away all operating system
 environment variables not specified via :confval:`passenv`. Furthermore, it will also alter the
 ``PATH`` variable so that your commands resolve first and foremost within the current active
-tox environment. It's possible to fallback to executables outside of this, however these need to
-be explicitly enabled via the :confval:`whitelist_external` configuration variable.
+tox environment. In general all executables in the path are available in ``commands``, but tox will
+emit a warning if it was not explicitly allowed via :confval:`whitelist_external`.
 
 Current features
 -------------------
