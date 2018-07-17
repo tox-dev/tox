@@ -2,11 +2,12 @@
 
 They live in the tox namespace and can be accessed as tox.[NAMESPACE.]NAME
 """
-import sys as _sys
+import re
+import sys
 
 
 def _construct_default_factors(cpython_versions, pypy_versions, other_interpreters):
-    default_factors = {"py": _sys.executable, "py2": "python2", "py3": "python3"}
+    default_factors = {"py": sys.executable, "py2": "python2", "py3": "python3"}
     default_factors.update(
         {
             "py{}{}".format(major, minor): "python{}.{}".format(major, minor)
@@ -25,6 +26,8 @@ def _construct_default_factors(cpython_versions, pypy_versions, other_interprete
 
 
 class PYTHON:
+    PY_FACTORS_RE = re.compile("^(?!py$)(py|pypy|jython)([2-9][0-9]?)?$")
+    PY_FACTORS_MAP = {"py": "python", "pypy": "pypy", "jython": "jython"}
     CPYTHON_VERSION_TUPLES = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8)]
     PYPY_VERSION_TUPLES = [(2, 7), (3, 5)]
     OTHER_PYTHON_INTERPRETERS = ["jython"]
@@ -39,7 +42,7 @@ class PYTHON:
 
 class INFO:
     DEFAULT_CONFIG_NAME = "tox.ini"
-    IS_WIN = _sys.platform == "win32"
+    IS_WIN = sys.platform == "win32"
 
 
 class PIP:
