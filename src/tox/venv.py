@@ -238,10 +238,19 @@ class VirtualEnv(object):
                 break
         else:
             return True
-        return any(
+        needs_reinstall = any(
             conf_file.check() and conf_file.mtime() > egg_info.mtime()
             for conf_file in (setup_py, setup_cfg)
         )
+
+        # Ensure the modification time of the egg-info folder is updated so we
+        # won't need to do this again.
+        # TODO(stephenfin): Remove once the minimum version of setuptools is
+        # high enough to include https://github.com/pypa/setuptools/pull/1427/
+        if needs_reinstall:
+            egg_info.setmtime()
+
+        return needs_reinstall
 
     def developpkg(self, setupdir, action):
         assert action is not None

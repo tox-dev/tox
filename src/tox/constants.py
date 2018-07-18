@@ -25,7 +25,7 @@ def _construct_default_factors(cpython_versions, pypy_versions, other_interprete
 
 
 class PYTHON:
-    CPYTHON_VERSION_TUPLES = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7)]
+    CPYTHON_VERSION_TUPLES = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8)]
     PYPY_VERSION_TUPLES = [(2, 7), (3, 5)]
     OTHER_PYTHON_INTERPRETERS = ["jython"]
     DEFAULT_FACTORS = _construct_default_factors(

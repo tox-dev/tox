@@ -1440,7 +1440,7 @@ class TestConfigTestEnv:
         )
         conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
-        assert packages == list(deps) + ['fun', 'frob>1.0,<2.0']
+        assert packages == list(deps) + ["fun", "frob>1.0,<2.0"]
         # assert packages == ["pytest", "pytest-cov", "fun", "frob>1.0,<2.0"]
 
     # https://github.com/tox-dev/tox/issues/706

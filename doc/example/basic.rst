@@ -46,9 +46,13 @@ Available "default" test environments names are:
     py35
     py36
     py37
+    py38
     jython
     pypy
+    pypy2
+    pypy27
     pypy3
+    pypy35
 
 The environment ``py`` uses the version of Python used to invoke tox.
 
