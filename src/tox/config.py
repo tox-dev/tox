@@ -513,8 +513,11 @@ def tox_addoption(parser):
         set.
         """
         for factor in testenv_config.factors:
-            if factor in tox.PYTHON.DEFAULT_FACTORS:
-                default = tox.PYTHON.DEFAULT_FACTORS[factor]
+            match = tox.PYTHON.PY_FACTORS_RE.match(factor)
+            if match:
+                base_exe = tox.PYTHON.PY_FACTORS_MAP[match.group(1)]
+                version = ".".join(match.group(2) or "")
+                default = "{}{}".format(base_exe, version)
 
                 if value is None or testenv_config.config.ignore_basepython_conflict:
                     return default
@@ -958,8 +961,7 @@ class parseini:
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
-        known_factors.update(tox.PYTHON.DEFAULT_FACTORS)
-        known_factors.add("python")
+        known_factors.update({"py", "python"})
 
         # factors stated in config envlist
         stated_envlist = reader.getstring("envlist", replace=False)
@@ -971,7 +973,13 @@ class parseini:
         for name in all_envs:
             section = testenvprefix + name
             factors = set(name.split("-"))
-            if section in self._cfg or factors <= known_factors:
+            if (
+                section in self._cfg
+                or factors <= known_factors
+                or all(
+                    tox.PYTHON.PY_FACTORS_RE.match(factor) for factor in factors - known_factors
+                )
+            ):
                 config.envconfigs[name] = self.make_envconfig(name, section, reader._subs, config)
 
         all_develop = all(
