@@ -744,6 +744,8 @@ the following:
 Advanced settings
 -----------------
 
+.. _`long interpreter directives`:
+
 Handle interpreter directives with long lengths
 +++++++++++++++++++++++++++++++++++++++++++++++
 
