@@ -175,18 +175,17 @@ your artifacts between runs or Jenkins jobs.
 Avoiding the "path too long" error with long shebang lines
 ---------------------------------------------------------------
 
-If you are using Jenkins builds you might run into the issue
-that tox can not call ``pip`` because the so called "shebang"
-line is too long.  There is a limit of 127 chars on some systems.
-Probably the best way to fix the problem is to use the
-new ``--workdir`` option which tells tox to use a specific
-directory for its virtualenvironments.  Set it to some unique
-enough short path.  If somebody is interested to do a PR
-you could add a new option to tox which uses a random
-directory for storing its workdir results and removes
-it after the tox run finishes.  This could be used
-from CI environments where you probably anyway want
-to recreate everything on new runs.
+When using ``tox`` on a Jenkins instance, there may be a scenario where ``tox``
+can not invoke ``pip`` because the shebang (Unix) line is too long. Some systems
+only support a limited amount of characters for an interpreter directive (e.x.
+Linux as a limit of 128). There are two methods to workaround this issue:
+
+ 1. Invoke ``tox`` with the ``--workdir`` option which tells ``tox`` to use a
+    specific directory for its virtual environments. Using a unique and short
+    path can prevent this issue.
+ 2. Use the environment variable ``TOX_LIMITED_SHEBANG`` to deal with
+    environments with interpreter directive limitations (consult 
+    :ref:`long interpreter directives` for more information).
 
 
 .. include:: ../links.rst
