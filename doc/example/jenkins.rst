@@ -184,7 +184,7 @@ Linux as a limit of 128). There are two methods to workaround this issue:
     specific directory for its virtual environments. Using a unique and short
     path can prevent this issue.
  2. Use the environment variable ``TOX_LIMITED_SHEBANG`` to deal with
-    environments with interpreter directive limitations (consult 
+    environments with interpreter directive limitations (consult
     :ref:`long interpreter directives` for more information).
 
 
