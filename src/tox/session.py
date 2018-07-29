@@ -19,7 +19,7 @@ from packaging.version import InvalidVersion, Version
 import tox
 from tox.config import parseconfig
 from tox.result import ResultLog
-from tox.venv import VirtualEnv
+from tox.venv import VIRTUALENV_FILE, VirtualEnv
 
 
 def prepare(args):
@@ -724,7 +724,7 @@ class Session:
     def info_versions(self):
         versions = ["tox-{}".format(tox.__version__)]
         proc = subprocess.Popen(
-            (sys.executable, "-m", "virtualenv", "--version"), stdout=subprocess.PIPE
+            (sys.executable, VIRTUALENV_FILE, "--version"), stdout=subprocess.PIPE
         )
         out, _ = proc.communicate()
         versions.append("virtualenv-{}".format(out.decode("UTF-8").strip()))
