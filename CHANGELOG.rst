@@ -12,6 +12,38 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+3.1.3 (2018-08-03)
+------------------
+
+Bugfixes
+^^^^^^^^
+
+- A caching issue that caused the ``develop-inst-nodeps`` action, which
+  reinstalls the package under test, to always run has been resolved. The
+  ``develop-inst-noop`` action, which, as the name suggests, is a no-op, will now
+  run unless there are changes to ``setup.py`` or ``setup.cfg`` files that have
+  not been reflected - by @stephenfin (`#909 <https://github.com/tox-dev/tox/issues/909>`_)
+
+
+Features
+^^^^^^^^
+
+- Python version testenvs are now automatically detected instead of comparing
+  against a hard-coded list of supported versions.  This enables ``py38`` and
+  eventually ``py39`` / ``py40`` / etc. to work without requiring an upgrade to
+  ``tox``.  As such, the following public constants are now deprecated
+  (and scheduled for removal in ``tox`` 4.0: ``CPYTHON_VERSION_TUPLES``,
+  ``PYPY_VERSION_TUPLES``, ``OTHER_PYTHON_INTERPRETERS``, and ``DEFAULT_FACTORS`` -
+  by :user:`asottile` (`#914 <https://github.com/tox-dev/tox/issues/914>`_)
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Add a system overview section on the index page that explains briefly how tox works -
+  by :user:`gaborbernat`. (`#867 <https://github.com/tox-dev/tox/issues/867>`_)
+
+
 3.1.2 (2018-07-12)
 ------------------
 

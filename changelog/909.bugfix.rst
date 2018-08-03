@@ -1,5 +1,0 @@
-A caching issue that caused the ``develop-inst-nodeps`` action, which
-reinstalls the package under test, to always run has been resolved. The
-``develop-inst-noop`` action, which, as the name suggests, is a no-op, will now
-run unless there are changes to ``setup.py`` or ``setup.cfg`` files that have
-not been reflected - by @stephenfin
