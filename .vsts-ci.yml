@@ -3,7 +3,8 @@ name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
 trigger:
   branches:
     include:
-    - '*'
+    - master
+    - refs/tags/*
 
 phases:
 - phase: lint
@@ -216,9 +217,9 @@ phases:
     inputs:
       versionSpec: '$(python.version)'
 
-#  - task: PyPIPublisher@0
-#    displayName: Package and publish to PyPI
-#    inputs:
-#      pypiConnection: pypi
-#      packageDirectory: '$(System.DefaultWorkingDirectory)'
-#      alsoPublishWheel: true
+  - task: PyPIPublisher@0
+    displayName: Package and publish to PyPI
+    inputs:
+      pypiConnection: pypi-conn
+      packageDirectory: '$(System.DefaultWorkingDirectory)'
+      alsoPublishWheel: true
