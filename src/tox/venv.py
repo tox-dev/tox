@@ -421,7 +421,15 @@ class VirtualEnv(object):
                     raise
 
     def _pcall(
-        self, args, cwd, venv=True, testcommand=False, action=None, redirect=True, ignore_ret=False
+        self,
+        args,
+        cwd,
+        venv=True,
+        testcommand=False,
+        action=None,
+        redirect=True,
+        ignore_ret=False,
+        no_python_path=False,
     ):
         os.environ.pop("VIRTUALENV_PYTHON", None)
 
@@ -432,6 +440,8 @@ class VirtualEnv(object):
         env = self._getenv(testcommand=testcommand)
         bindir = str(self.envconfig.envbindir)
         env["PATH"] = p = os.pathsep.join([bindir, os.environ["PATH"]])
+        if no_python_path:
+            env.pop("PYTHONPATH", None)
         self.session.report.verbosity2("setting PATH={}".format(p))
         return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
 
@@ -505,7 +515,10 @@ def tox_runtest(venv, redirect):
 def tox_runenvreport(venv, action):
     # write out version dependency information
     args = venv.envconfig.list_dependencies_command
-    output = venv._pcall(args, cwd=venv.envconfig.config.toxinidir, action=action)
+    # we clear the PYTHONPATH to allow reporting packages outside of this environment
+    output = venv._pcall(
+        args, cwd=venv.envconfig.config.toxinidir, action=action, no_python_path=True
+    )
     # the output contains a mime-header, skip it
     output = output.split("\n\n")[-1]
     packages = output.strip().split("\n")
