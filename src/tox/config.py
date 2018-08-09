@@ -956,19 +956,20 @@ class parseini:
         if override:
             for name in config.indexserver:
                 config.indexserver[name] = IndexServerConfig(name, override)
+        unique_id = str(uuid.uuid4())
 
         reader.addsubstitutions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
-        if config.option.parallel_safe_build:
-            config.distdir = py.path.local(config.distdir.dirname).join(
-                "{}-{}".format(config.distdir.basename, str(uuid.uuid4()))
-            )
+        self._make_thread_safe_path(config, "distdir", unique_id)
+
         reader.addsubstitutions(distdir=config.distdir)
         config.distshare = reader.getpath("distshare", distshare_default)
+        self._make_thread_safe_path(config, "distshare", unique_id)
         reader.addsubstitutions(distshare=config.distshare)
         config.sdistsrc = reader.getpath("sdistsrc", None)
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
+        self._make_thread_safe_path(config, "logdir", unique_id)
 
         config.envlist, all_envs = self._getenvdata(reader)
 
@@ -1001,6 +1002,12 @@ class parseini:
         )
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
+
+    def _make_thread_safe_path(self, config, attr, unique_id):
+        if config.option.parallel_safe_build:
+            path = getattr(config, attr)
+            value = py.path.local(path.dirname).join("{}-{}".format(path.basename, unique_id))
+            setattr(config, attr, value)
 
     @staticmethod
     def ensure_requires_satisfied(specified):
