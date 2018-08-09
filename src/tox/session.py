@@ -42,7 +42,11 @@ def cmdline(args=None):
 def main(args):
     try:
         config = prepare(args)
-        retcode = Session(config).runcommand()
+        try:
+            retcode = Session(config).runcommand()
+        finally:
+            if config.option.parallel_safe_build:
+                config.distdir.remove(ignore_errors=True)
         if retcode is None:
             retcode = 0
         raise SystemExit(retcode)

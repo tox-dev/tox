@@ -8,6 +8,7 @@ import re
 import shlex
 import string
 import sys
+import uuid
 import warnings
 from fnmatch import fnmatchcase
 from subprocess import list2cmdline
@@ -389,6 +390,12 @@ def tox_addoption(parser):
         action="store_true",
         dest="sdistonly",
         help="only perform the sdist packaging activity.",
+    )
+    parser.add_argument(
+        "--parallel--safe-build",
+        action="store_true",
+        dest="parallel_safe_build",
+        help="ensure two tox builds can run in parallel",
     )
     parser.add_argument(
         "--installpkg",
@@ -864,7 +871,7 @@ def make_hashseed():
 
 
 class parseini:
-    def __init__(self, config, inipath):
+    def __init__(self, config, inipath):  # noqa
         config.toxinipath = inipath
         config.toxinidir = config.toxinipath.dirpath()
 
@@ -950,6 +957,10 @@ class parseini:
 
         reader.addsubstitutions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
+        if config.option.parallel_safe_build:
+            config.distdir = py.path.local(config.distdir.dirname).join(
+                "{}-{}".format(config.distdir.basename, str(uuid.uuid4()))
+            )
         reader.addsubstitutions(distdir=config.distdir)
         config.distshare = reader.getpath("distshare", distshare_default)
         reader.addsubstitutions(distshare=config.distshare)

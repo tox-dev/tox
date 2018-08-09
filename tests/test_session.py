@@ -1,4 +1,5 @@
 import re
+import uuid
 
 import pytest
 
@@ -76,3 +77,23 @@ def test_minversion(cmd, initproj):
         r"ERROR: MinVersionError: tox version is .*," r" required is at least 6.0", result.out
     )
     assert result.ret
+
+
+def test_tox_parallel_build_safe(initproj, cmd, mock_venv):
+    initproj(
+        "env_var_test",
+        filedefs={
+            "tox.ini": """
+                          [tox]
+                          envlist = py
+                          [testenv]
+                          skip_install = true
+                          commands = python --version
+                      """
+        },
+    )
+    result = cmd("--parallel--safe-build")
+    basename = result.session.config.distdir.basename
+    assert basename.startswith("dist-")
+    assert uuid.UUID(basename[len("dist-") :], version=4)
+    assert not result.session.config.distdir.exists()

@@ -188,4 +188,27 @@ Linux as a limit of 128). There are two methods to workaround this issue:
     :ref:`long interpreter directives` for more information).
 
 
+Running tox environments in parallel
+------------------------------------
+
+Jenkins has parallel stages allowing you to run commands in parallel, however tox package
+building it is not parallel safe. Use the ``--parallel--safe-build`` flag to enable parallel safe
+builds. Here's a generic stage definition demonstrating this:
+
+.. code-block:: groovy
+
+    stage('run tox envs') {
+      steps {
+        script {
+          def envs = sh(returnStdout: true, script: "tox -l").trim().split('\n')
+          def cmds = envs.collectEntries({ tox_env ->
+            [tox_env, {
+              sh "tox --parallel--safe-build -vve $tox_env"
+            }]
+          })
+          parallel(cmds)
+        }
+      }
+    }
+
 .. include:: ../links.rst
