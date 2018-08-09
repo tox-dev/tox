@@ -68,7 +68,7 @@ def test_create(mocksession, newconfig):
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
-    assert str(args[1]).endswith("virtualenv.py")
+    assert "virtualenv" == str(args[2])
     if not tox.INFO.IS_WIN:
         # realpath is needed for stuff like the debian symlinks
         our_sys_path = py.path.local(sys.executable).realpath()
@@ -443,7 +443,7 @@ def test_install_python3(newmocksession):
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     args = pcalls[0].args
-    assert str(args[1]).endswith("virtualenv.py")
+    assert str(args[2]) == "virtualenv"
     pcalls[:] = []
     action = mocksession.newaction(venv, "hello")
     venv._install(["hello"], action=action)

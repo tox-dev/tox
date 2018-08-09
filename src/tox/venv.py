@@ -7,16 +7,10 @@ import sys
 import warnings
 
 import py
-import virtualenv
 
 import tox
 
 from .config import DepConfig
-
-# Use virtualenv that comes with tox, don't assume other installed pythons have virtualenv
-VIRTUALENV_FILE = virtualenv.__file__
-if VIRTUALENV_FILE.endswith(".pyc"):
-    VIRTUALENV_FILE = VIRTUALENV_FILE[:-1]
 
 
 class CreationConfig:
@@ -476,7 +470,7 @@ def prepend_shebang_interpreter(args):
 @tox.hookimpl
 def tox_testenv_create(venv, action):
     config_interpreter = venv.getsupportedinterpreter()
-    args = [sys.executable, VIRTUALENV_FILE]
+    args = [sys.executable, "-m", "virtualenv"]
     if venv.envconfig.sitepackages:
         args.append("--system-site-packages")
     if venv.envconfig.alwayscopy:

@@ -687,7 +687,7 @@ def test_alwayscopy(initproj, cmd):
     )
     result = cmd("-vv")
     assert not result.ret
-    assert "virtualenv.py --always-copy" in result.out
+    assert "virtualenv --always-copy" in result.out
 
 
 def test_alwayscopy_default(initproj, cmd):
@@ -702,7 +702,7 @@ def test_alwayscopy_default(initproj, cmd):
     )
     result = cmd("-vv")
     assert not result.ret
-    assert "virtualenv.py --always-copy" not in result.out
+    assert "virtualenv --always-copy" not in result.out
 
 
 def test_empty_activity_ignored(initproj, cmd):
