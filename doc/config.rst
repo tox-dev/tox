@@ -77,6 +77,17 @@ and will first lookup global tox settings in this section:
     is identified. In a future version of tox, this warning will become an
     error.
 
+.. confval:: requires=LIST
+
+    Specify python packages that need to exist alongside the tox installation for the tox build
+    to be able to start. Use this to specify plugin requirements and build dependencies.
+
+    .. code-block:: ini
+
+        [tox]
+        requires = setuptools >= 30.0.0
+                   py
+
 
 Virtualenv test environment settings
 ------------------------------------
