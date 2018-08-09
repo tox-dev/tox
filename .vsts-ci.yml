@@ -15,10 +15,7 @@ phases:
   - task: UsePythonVersion@0
     displayName: setup python
     inputs:
-      versionSpec: '3.7.0-b2'
-
-  - script: 'python -c "import sys; import os; os.symlink(sys.executable, os.path.join(os.path.dirname(sys.executable), \"python3.7\"))"'
-    displayName: link python to python3.7
+      versionSpec: '3.7'
 
   - script: 'python -m pip install -U tox setuptools'
     displayName: install tox
@@ -42,10 +39,7 @@ phases:
   - task: UsePythonVersion@0
     displayName: setup python
     inputs:
-      versionSpec: '3.7.0-b2'
-
-  - script: 'python -c "import sys; import os; os.symlink(sys.executable, os.path.join(os.path.dirname(sys.executable), \"python3.7\"))"'
-    displayName: link python to python3.7
+      versionSpec: '3.7'
 
   - script: 'python -m pip install -U tox setuptools'
     displayName: install tox
@@ -67,7 +61,7 @@ phases:
       python36:
         python.version: '3.6'
       python37:
-        python.version: '3.7.0-b2'
+        python.version: '3.7'
 
   steps:
   - task: UsePythonVersion@0
@@ -209,7 +203,7 @@ phases:
     parallel: 1
     matrix:
       python37:
-        python.version: '3.7.0-b2'
+        python.version: '3.7'
 
   steps:
   - task: UsePythonVersion@0
