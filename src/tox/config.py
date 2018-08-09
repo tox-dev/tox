@@ -15,7 +15,6 @@ from subprocess import list2cmdline
 import pkg_resources
 import pluggy
 import py
-from packaging.version import parse
 
 import tox
 from tox.interpreters import Interpreters
@@ -901,14 +900,17 @@ class parseini:
         # prevent parsing of tox.ini this must be the first thing checked.
         config.minversion = reader.getstring("minversion", None)
         if config.minversion:
-            tox_version = parse(tox.__version__)
-            config_min_version = parse(self.config.minversion)
+            tox_version = pkg_resources.parse_version(tox.__version__)
+            config_min_version = pkg_resources.parse_version(self.config.minversion)
             if config_min_version > tox_version:
                 raise tox.exception.MinVersionError(
                     "tox version is {}, required is at least {}".format(
                         tox.__version__, self.config.minversion
                     )
                 )
+
+        self.ensure_requires_satisfied(reader.getlist("requires"))
+
         if config.option.workdir is None:
             config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
         else:
@@ -988,6 +990,22 @@ class parseini:
         )
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
+
+    @staticmethod
+    def ensure_requires_satisfied(specified):
+        fail = False
+        for s in specified:
+            try:
+                pkg_resources.get_distribution(s)
+            except pkg_resources.RequirementParseError:
+                raise
+            except Exception:
+                fail = True
+                print(
+                    "requirement missing {}".format(pkg_resources.Requirement(s)), file=sys.stderr
+                )
+        if fail:
+            raise RuntimeError("not all requirements satisfied, install them alongside tox")
 
     def _list_section_factors(self, section):
         factors = set()

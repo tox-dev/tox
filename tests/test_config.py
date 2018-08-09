@@ -2716,3 +2716,25 @@ class TestCommandParser:
         )
         envconfig = config.envconfigs["py36"]
         assert envconfig.commands[0] == ["some", r"hello\world"]
+
+
+def test_plugin_require(newconfig, capsys):
+    inisource = """
+        [tox]
+        requires = tox
+                   name[foo,bar]>=2,<3; python_version>"2.0" and os_name=='a'
+                   b
+    """
+    with pytest.raises(
+        RuntimeError, match="not all requirements satisfied, install them alongside tox"
+    ):
+        newconfig([], inisource)
+
+    out, err = capsys.readouterr()
+    assert err.strip() == "\n".join(
+        [
+            'requirement missing name[bar,foo]<3,>=2; python_version > "2.0" and os_name == "a"',
+            "requirement missing b",
+        ]
+    )
+    assert not out

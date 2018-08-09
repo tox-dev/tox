@@ -13,8 +13,8 @@ import subprocess
 import sys
 import time
 
+import pkg_resources
 import py
-from packaging.version import InvalidVersion, Version
 
 import tox
 from tox.config import parseconfig
@@ -775,6 +775,7 @@ def get_version_from_filename(basename):
         return None
     version = m.group(1)
     try:
-        return Version(version)
-    except InvalidVersion:
+
+        return pkg_resources.packaging.version.Version(version)
+    except pkg_resources.packaging.version.InvalidVersion:
         return None
