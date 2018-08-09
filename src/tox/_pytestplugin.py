@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import os
+import sys
 import textwrap
 import time
 from fnmatch import fnmatch
@@ -10,10 +11,11 @@ import pytest
 import six
 
 import tox
+from tox import venv
 from tox.config import parseconfig
 from tox.result import ResultLog
 from tox.session import Session, main
-from tox.venv import VirtualEnv
+from tox.venv import CreationConfig, VirtualEnv, getdigest
 
 mark_dont_run_on_windows = pytest.mark.skipif(os.name == "nt", reason="non windows test")
 mark_dont_run_on_posix = pytest.mark.skipif(os.name == "posix", reason="non posix test")
@@ -70,7 +72,16 @@ def cmd(request, capfd, monkeypatch):
         key = str(b"PYTHONPATH")
         python_paths = (i for i in (str(os.getcwd()), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
+
         with RunResult(capfd, argv) as result:
+            prev_run_command = Session.runcommand
+
+            def run_command(self):
+                result.session = self
+                return prev_run_command(self)
+
+            monkeypatch.setattr(Session, "runcommand", run_command)
+
             try:
                 main([str(x) for x in argv])
                 assert False  # this should always exist with SystemExit
@@ -91,6 +102,7 @@ class RunResult:
         self.duration = None
         self.out = None
         self.err = None
+        self.session = None
 
     def __enter__(self):
         self._start = time.time()
@@ -373,3 +385,38 @@ def create_files(base, filedefs):
         elif isinstance(value, six.string_types):
             s = textwrap.dedent(value)
             base.join(key).write(s)
+
+
+@pytest.fixture()
+def mock_venv(monkeypatch):
+    """This creates a mock virtual environment (e.g. will inherit the current interpreter).
+    Note: because we inherit, to keep things sane you must call the py environment and only that;
+    and cannot install any packages. """
+
+    class ProxyCurrentPython:
+        @classmethod
+        def readconfig(cls, path):
+            assert path.dirname.endswith("{}py".format(os.sep))
+            return CreationConfig(
+                md5=getdigest(sys.executable),
+                python=sys.executable,
+                version=tox.__version__,
+                sitepackages=False,
+                usedevelop=False,
+                deps=[],
+                alwayscopy=False,
+            )
+
+    monkeypatch.setattr(CreationConfig, "readconfig", ProxyCurrentPython.readconfig)
+
+    def venv_lookup(venv, name):
+        assert name == "python"
+        return sys.executable
+
+    monkeypatch.setattr(VirtualEnv, "_venv_lookup", venv_lookup)
+
+    @tox.hookimpl
+    def tox_runenvreport(venv, action):
+        return []
+
+    monkeypatch.setattr(venv, "tox_runenvreport", tox_runenvreport)
