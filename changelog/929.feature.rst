@@ -1,1 +1,0 @@
-Call virtualenv by invoking directly the virtualenv file (after import resolve) instead of ``-m`` (allows pex packaging tox) - trial accepted. - by :user:`zsimic`
