@@ -152,8 +152,10 @@ def test_install_deps_wildcard(newmocksession):
     assert len(pcalls) == 2
     args = pcalls[-1].args
     assert pcalls[-1].cwd == venv.envconfig.config.toxinidir
-    assert "pip" in str(args[0])
-    assert args[1] == "install"
+
+    assert py.path.local.sysfind("python") == args[0]
+    assert ["-m", "pip"] == args[1:3]
+    assert args[3] == "install"
     args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
     assert len(args) == 1
 
@@ -449,7 +451,8 @@ def test_install_python3(newmocksession):
     venv._install(["hello"], action=action)
     assert len(pcalls) == 1
     args = pcalls[0].args
-    assert "pip" in args[0]
+    assert py.path.local.sysfind("python") == args[0]
+    assert ["-m", "pip"] == args[1:3]
     for _ in args:
         assert "--download-cache" not in args, args
 
@@ -744,8 +747,10 @@ def test_run_install_command(newmocksession):
     venv.run_install_command(packages=["whatever"], action=action)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
-    assert "pip" in pcalls[0].args[0]
-    assert "install" in pcalls[0].args
+    args = pcalls[0].args
+    assert py.path.local.sysfind("python") == args[0]
+    assert ["-m", "pip"] == args[1:3]
+    assert "install" in args
     env = pcalls[0].env
     assert env is not None
 
