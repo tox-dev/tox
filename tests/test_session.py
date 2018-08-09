@@ -1,6 +1,7 @@
 import re
 import uuid
 
+import py
 import pytest
 
 from tox.exception import MissingDependency, MissingDirectory
@@ -93,7 +94,14 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv):
         },
     )
     result = cmd("--parallel--safe-build")
-    basename = result.session.config.distdir.basename
-    assert basename.startswith("dist-")
-    assert uuid.UUID(basename[len("dist-") :], version=4)
-    assert not result.session.config.distdir.exists()
+
+    for path, base in (
+        (result.session.config.distdir, "dist-"),
+        (result.session.config.logdir, "log-"),
+        (result.session.config.distshare, "distshare-"),
+    ):
+        basename = path.basename
+        assert basename.startswith(base)
+        assert uuid.UUID(basename[len(base) :], version=4)
+        assert not path.exists()
+        assert not py.path.local(path.dirname).join(base[:-1]).exists()

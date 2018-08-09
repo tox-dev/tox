@@ -46,7 +46,8 @@ def main(args):
             retcode = Session(config).runcommand()
         finally:
             if config.option.parallel_safe_build:
-                config.distdir.remove(ignore_errors=True)
+                for folder in ("distdir", "distshare", "logdir"):
+                    getattr(config, folder).remove(ignore_errors=True)
         if retcode is None:
             retcode = 0
         raise SystemExit(retcode)
