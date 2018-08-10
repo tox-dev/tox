@@ -1,1 +1,0 @@
-``--parallel--safe-build`` no longer cleans up its folders (``distdir``, ``distshare``, ``log``). - by :user:`gaborbernat`

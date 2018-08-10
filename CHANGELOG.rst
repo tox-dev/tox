@@ -12,6 +12,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+3.2.1 (2018-08-10)
+------------------
+
+Bugfixes
+^^^^^^^^
+
+- ``--parallel--safe-build`` no longer cleans up its folders (``distdir``, ``distshare``, ``log``). - by :user:`gaborbernat` (`#849 <https://github.com/tox-dev/tox/issues/849>`_)
+
+
 3.2.0 (2018-08-10)
 ------------------
 
