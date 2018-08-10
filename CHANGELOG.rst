@@ -12,6 +12,19 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+3.2.0 (2018-08-10)
+------------------
+
+Features
+^^^^^^^^
+
+- Switch pip invocations to use the module ``-m pip`` instead of direct invocation. This could help
+  avoid some of the shebang limitations.  - by :user:`gaborbernat` (`#935 <https://github.com/tox-dev/tox/issues/935>`_)
+- Ability to specify package requirements for the tox run via the ``tox.ini`` (``tox`` section under key ``requires`` - PEP-508 style): can be used to specify both plugin requirements or build dependencies. - by :user:`gaborbernat` (`#783 <https://github.com/tox-dev/tox/issues/783>`_)
+- Allow to run multiple tox instances in parallel by providing the
+  ``--parallel--safe-build`` flag. - by :user:`gaborbernat` (`#849 <https://github.com/tox-dev/tox/issues/849>`_)
+
+
 3.1.3 (2018-08-03)
 ------------------
 

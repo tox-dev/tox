@@ -1,2 +1,0 @@
-Allow to run multiple tox instances in parallel by providing the
-```--parallel--safe-build`` flag. - by :user:`gaborbernat`
