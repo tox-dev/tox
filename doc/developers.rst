@@ -41,7 +41,8 @@ For tox to find them you'll need to:
 
   .. code-block:: bat
 
-     # python2.7.bat
+     @echo off
+     REM python2.7.bat
      @D:\Anaconda\pkgs\python-2.7.13-1\python.exe %*
 
 .. _patheditor2: https://patheditor2.codeplex.com/
