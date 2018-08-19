@@ -904,6 +904,17 @@ def test_tox_testenv_interpret_shebang_empty_interpreter_ws(tmpdir):
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
+def test_tox_testenv_interpret_shebang_non_utf8(tmpdir):
+    testfile = tmpdir.join("check_non_utf8.py")
+    base_args = [str(testfile), "arg1", "arg2", "arg3"]
+
+    # empty interpreter (whitespaces)
+    testfile.write_binary(b"#!\x9a\xef\x12\xaf\n")
+    args = prepend_shebang_interpreter(base_args)
+    assert args == base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'")
 def test_tox_testenv_interpret_shebang_interpreter_simple(tmpdir):
     testfile = tmpdir.join("check_shebang_interpreter_simple.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -911,7 +922,7 @@ def test_tox_testenv_interpret_shebang_interpreter_simple(tmpdir):
     # interpreter (simple)
     testfile.write("#!interpreter")
     args = prepend_shebang_interpreter(base_args)
-    assert args == [b"interpreter"] + base_args
+    assert args == ["interpreter"] + base_args
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
@@ -922,7 +933,7 @@ def test_tox_testenv_interpret_shebang_interpreter_ws(tmpdir):
     # interpreter (whitespaces)
     testfile.write("#!  interpreter  \n\n")
     args = prepend_shebang_interpreter(base_args)
-    assert args == [b"interpreter"] + base_args
+    assert args == ["interpreter"] + base_args
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
@@ -933,7 +944,7 @@ def test_tox_testenv_interpret_shebang_interpreter_arg(tmpdir):
     # interpreter with argument
     testfile.write("#!interpreter argx\n")
     args = prepend_shebang_interpreter(base_args)
-    assert args == [b"interpreter", b"argx"] + base_args
+    assert args == ["interpreter", "argx"] + base_args
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
@@ -944,7 +955,7 @@ def test_tox_testenv_interpret_shebang_interpreter_args(tmpdir):
     # interpreter with argument (ensure single argument)
     testfile.write("#!interpreter argx argx-part2\n")
     args = prepend_shebang_interpreter(base_args)
-    assert args == [b"interpreter", b"argx argx-part2"] + base_args
+    assert args == ["interpreter", "argx argx-part2"] + base_args
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
@@ -955,7 +966,7 @@ def test_tox_testenv_interpret_shebang_real(tmpdir):
     # interpreter (real example)
     testfile.write("#!/usr/bin/env python\n")
     args = prepend_shebang_interpreter(base_args)
-    assert args == [b"/usr/bin/env", b"python"] + base_args
+    assert args == ["/usr/bin/env", "python"] + base_args
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
@@ -971,9 +982,9 @@ def test_tox_testenv_interpret_shebang_long_example(tmpdir):
     )
     args = prepend_shebang_interpreter(base_args)
     expected = [
-        b"this-is-an-example-of-a-very-long-interpret-directive-what-should-be-"
-        b"directly-invoked-when-tox-needs-to-invoked-the-provided-script-name-"
-        b"in-the-argument-list"
+        "this-is-an-example-of-a-very-long-interpret-directive-what-should-be-"
+        "directly-invoked-when-tox-needs-to-invoked-the-provided-script-name-"
+        "in-the-argument-list"
     ]
 
     assert args == expected + base_args
