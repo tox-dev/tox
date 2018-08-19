@@ -908,7 +908,6 @@ def test_tox_testenv_interpret_shebang_non_utf8(tmpdir):
     testfile = tmpdir.join("check_non_utf8.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
 
-    # empty interpreter (whitespaces)
     testfile.write_binary(b"#!\x9a\xef\x12\xaf\n")
     args = prepend_shebang_interpreter(base_args)
     assert args == base_args
