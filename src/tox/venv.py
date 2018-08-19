@@ -459,10 +459,10 @@ def prepend_shebang_interpreter(args):
         with open(args[0], "rb") as f:
             if f.read(1) == b"#" and f.read(1) == b"!":
                 MAXINTERP = 2048
-                interp = f.readline(MAXINTERP).rstrip()
+                interp = f.readline(MAXINTERP).rstrip().decode("UTF-8")
                 interp_args = interp.split(None, 1)[:2]
                 return interp_args + args
-    except IOError:
+    except (UnicodeDecodeError, IOError):
         pass
     return args
 
