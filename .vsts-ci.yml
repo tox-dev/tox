@@ -115,7 +115,7 @@ phases:
       python36:
         python.version: '3.6'
       python37:
-        python.version: '3.7.0-b2'
+        python.version: '3.7'
 
   steps:
   - task: UsePythonVersion@0
