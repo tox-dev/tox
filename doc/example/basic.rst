@@ -290,7 +290,7 @@ Integration with "setup.py test" command
   it breaks packaging/testing approaches used by downstream distributions
   which expect ``setup.py test`` to run tests with the invocation interpreter
   rather than setting up many virtualenvs and installing packages.  If you need to
-  define ``setup.py test`` ,you can see how to integrate your eventual
+  define ``setup.py test``, you can see how to integrate your eventual
   test runner with it, here is an `example of setup.py test integration with pytest
   <https://docs.pytest.org/en/latest/goodpractices.html#integrating-with-setuptools-python-setup-py-test-pytest-runner>`_.
   As the python eco-system rather moves away from using ``setup.py`` as a tool entry
