@@ -146,7 +146,7 @@ default PyPI server you can type interactively:
     tox -i http://pypi.my-alternative-index.org
 
 This causes tox to install dependencies and the sdist install step
-to use the specificied url as the index server.
+to use the specified url as the index server.
 
 You can cause the same effect by this ``tox.ini`` content:
 
@@ -287,10 +287,10 @@ Integration with "setup.py test" command
 .. warning::
 
   Integrating tox with ``setup.py test`` is as of October 2016 discouraged as
-  it breaks packaging/testing approaches as used by downstream distributions
+  it breaks packaging/testing approaches used by downstream distributions
   which expect ``setup.py test`` to run tests with the invocation interpreter
   rather than setting up many virtualenvs and installing packages.  If you need to
-  define ``setup.py test`` you can better see about integrating your eventual
+  define ``setup.py test`` ,you can see how to integrate your eventual
   test runner with it, here is an `example of setup.py test integration with pytest
   <https://docs.pytest.org/en/latest/goodpractices.html#integrating-with-setuptools-python-setup-py-test-pytest-runner>`_.
   As the python eco-system rather moves away from using ``setup.py`` as a tool entry
