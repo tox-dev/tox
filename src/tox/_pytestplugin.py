@@ -106,8 +106,7 @@ class RunResult:
 
     def __enter__(self):
         self._start = time.time()
-        # noinspection PyProtectedMember
-        self._capfd._start()
+        self._capfd.readouterr()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
