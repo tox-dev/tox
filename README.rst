@@ -10,6 +10,9 @@
 .. image:: https://ci.appveyor.com/api/projects/status/2pw2n1wki9terluu?svg=true
   :target: https://ci.appveyor.com/project/ToxDev/tox
   :alt: Appveyor build status
+.. image:: https://toxdev.visualstudio.com/tox/_apis/build/status/tox%20ci?branchName=master
+  :target: https://toxdev.visualstudio.com/tox/_build/latest?definitionId=9&branchName=master
+  :alt: VSTS build status
 .. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/tox-dev/tox
   :alt: Code coverage Status
