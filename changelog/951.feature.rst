@@ -1,0 +1,1 @@
+packaging now is exposed as a hook via ``tox_package(session, venv)`` - by :user:`gaborbernat`
