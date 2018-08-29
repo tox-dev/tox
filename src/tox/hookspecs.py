@@ -18,6 +18,13 @@ def tox_configure(config):
 
 
 @hookspec(firstresult=True)
+def tox_package(session, venv):
+    """Return the package to be installed for the given venv.
+
+    Called once for every environment."""
+
+
+@hookspec(firstresult=True)
 def tox_get_python_executable(envconfig):
     """Return a python executable for the given python base name.
 

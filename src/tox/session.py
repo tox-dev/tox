@@ -431,53 +431,6 @@ class Session:
             target.dirpath().ensure(dir=1)
             src.copy(target)
 
-    def _makesdist(self):
-        setup = self.config.setupdir.join("setup.py")
-        if not setup.check():
-            self.report.error(
-                "No setup.py file found. The expected location is:\n"
-                "  {}\n"
-                "You can\n"
-                "  1. Create one:\n"
-                "     https://packaging.python.org/tutorials/distributing-packages/#setup-py\n"
-                "  2. Configure tox to avoid running sdist:\n"
-                "     http://tox.readthedocs.io/en/latest/example/general.html"
-                "#avoiding-expensive-sdist".format(setup)
-            )
-            raise SystemExit(1)
-        with self.newaction(None, "packaging") as action:
-            action.setactivity("sdist-make", setup)
-            self.make_emptydir(self.config.distdir)
-            action.popen(
-                [
-                    sys.executable,
-                    setup,
-                    "sdist",
-                    "--formats=zip",
-                    "--dist-dir",
-                    self.config.distdir,
-                ],
-                cwd=self.config.setupdir,
-            )
-            try:
-                return self.config.distdir.listdir()[0]
-            except py.error.ENOENT:
-                # check if empty or comment only
-                data = []
-                with open(str(setup)) as fp:
-                    for line in fp:
-                        if line and line[0] == "#":
-                            continue
-                        data.append(line)
-                if not "".join(data).strip():
-                    self.report.error("setup.py is empty")
-                    raise SystemExit(1)
-                self.report.error(
-                    "No dist directory found. Please check setup.py, e.g with:\n"
-                    "     python setup.py sdist"
-                )
-                raise SystemExit(1)
-
     def make_emptydir(self, path):
         if path.check():
             self.report.info("  removing {}".format(path))
@@ -564,47 +517,14 @@ class Session:
                 venv.status = sys.exc_info()[1]
                 return False
 
-    def get_installpkg_path(self):
-        """
-        :return: Path to the distribution
-        :rtype: py.path.local
-        """
-        if not self.config.option.sdistonly and (
-            self.config.sdistsrc or self.config.option.installpkg
-        ):
-            path = self.config.option.installpkg
-            if not path:
-                path = self.config.sdistsrc
-            path = self._resolve_package(path)
-            self.report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
-        else:
-            try:
-                path = self._makesdist()
-            except tox.exception.InvocationError:
-                v = sys.exc_info()[1]
-                self.report.error("FAIL could not package project - v = {!r}".format(v))
-                return
-            sdistfile = self.config.distshare.join(path.basename)
-            if sdistfile != path:
-                self.report.info("copying new sdistfile to {!r}".format(str(sdistfile)))
-                try:
-                    sdistfile.dirpath().ensure(dir=1)
-                except py.error.Error:
-                    self.report.warning(
-                        "could not copy distfile to {}".format(sdistfile.dirpath())
-                    )
-                else:
-                    path.copy(sdistfile)
-        return path
-
     def subcommand_test(self):
         if self.config.skipsdist:
             self.report.info("skipping sdist step")
-            path = None
         else:
-            path = self.get_installpkg_path()
-            if not path:
-                return 2
+            for venv in self.venvlist:
+                venv.package = self.hook.tox_package(session=self, venv=venv)
+                if not venv.package:
+                    return 2
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
@@ -617,7 +537,7 @@ class Session:
                     elif self.config.skipsdist:
                         self.finishvenv(venv)
                     else:
-                        self.installpkg(venv, path)
+                        self.installpkg(venv, venv.package)
 
                 self.runenvreport(venv)
                 self.runtestenv(venv)
