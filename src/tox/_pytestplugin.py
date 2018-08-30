@@ -277,7 +277,7 @@ def initproj(tmpdir):
             setup.py
     """
 
-    def initproj_(nameversion, filedefs=None, src_root="."):
+    def initproj_(nameversion, filedefs=None, src_root=".", add_missing_setup_py=True):
         if filedefs is None:
             filedefs = {}
         if not src_root:
@@ -297,7 +297,7 @@ def initproj(tmpdir):
 
         base.ensure(dir=1)
         create_files(base, filedefs)
-        if not _filedefs_contains(base, filedefs, "setup.py"):
+        if not _filedefs_contains(base, filedefs, "setup.py") and add_missing_setup_py:
             create_files(
                 base,
                 {
@@ -319,7 +319,18 @@ def initproj(tmpdir):
             )
         if not _filedefs_contains(base, filedefs, src_root_path.join(name)):
             create_files(
-                src_root_path, {name: {"__init__.py": "__version__ = {!r}".format(version)}}
+                src_root_path,
+                {
+                    name: {
+                        "__init__.py": textwrap.dedent(
+                            """
+                \"\"\" module {} \"\"\"
+                __version__ = {!r}"""
+                        )
+                        .strip()
+                        .format(name, version)
+                    }
+                },
             )
         manifestlines = [
             "include {}".format(p.relto(base)) for p in base.visit(lambda x: x.check(file=1))

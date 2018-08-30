@@ -1,8 +1,17 @@
+import json
 import sys
+import textwrap
+from collections import namedtuple
 
+import pkg_resources
 import py
+import toml
 
 import tox
+from tox.config import DepConfig
+from tox.venv import CreationConfig
+
+BuildInfo = namedtuple("BuildInfo", ["requires", "backend_module", "backend_object"])
 
 
 @tox.hookimpl
@@ -27,10 +36,9 @@ def get_package(session):
         report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
     else:
         try:
-            path = make_sdist(report, config, session)
-        except tox.exception.InvocationError:
-            v = sys.exc_info()[1]
-            report.error("FAIL could not package project - v = {!r}".format(v))
+            path = build_package(config, report, session)
+        except tox.exception.InvocationError as exception:
+            report.error("FAIL could not package project - v = {!r}".format(exception))
             return None
         sdist_file = config.distshare.join(path.basename)
         if sdist_file != path:
@@ -44,7 +52,14 @@ def get_package(session):
     return path
 
 
-def make_sdist(report, config, session):
+def build_package(config, report, session):
+    if not config.isolated_build:
+        return make_sdist_legacy(report, config, session)
+    else:
+        build_isolated(config, report, session)
+
+
+def make_sdist_legacy(report, config, session):
     setup = config.setupdir.join("setup.py")
     if not setup.check():
         report.error(
@@ -83,3 +98,109 @@ def make_sdist(report, config, session):
                 "     python setup.py sdist"
             )
             raise SystemExit(1)
+
+
+def build_isolated(config, report, session):
+    build_info = get_build_info(config.setupdir, report)
+    package_venv = session.getvenv(".package")
+    package_venv.envconfig.deps_matches_subset = True
+
+    package_venv.envconfig.deps = [DepConfig(r, None) for r in build_info.requires]
+    toml_require = {pkg_resources.Requirement(r).key for r in build_info.requires}
+    if not session.setupenv(package_venv):
+        raise SystemExit(1)
+
+    live_config = package_venv._getliveconfig()
+    previous_config = CreationConfig.readconfig(package_venv.path_config)
+    if not previous_config or not previous_config.matches(live_config, True):
+        session.finishvenv(package_venv)
+
+    build_requires = get_build_requires(build_info, package_venv, session)
+    for requirement in build_requires:
+        pkg_requirement = pkg_resources.Requirement(requirement)
+        if pkg_requirement.key not in toml_require:
+            package_venv.envconfig.deps.append(DepConfig(requirement, None))
+
+    if not session.setupenv(package_venv):
+        raise SystemExit(1)
+
+    session.finishvenv(package_venv)
+    return perform_isolated_build(build_info, package_venv, session, config)
+
+
+def get_build_info(folder, report):
+    toml_file = folder.join("pyproject.toml")
+
+    # as per https://www.python.org/dev/peps/pep-0517/
+
+    def abort(message):
+        report.error("{} inside {}".format(message, toml_file))
+        raise SystemExit(1)
+
+    if not toml_file.exists():
+        abort("missing {}".format(toml_file))
+
+    with open(toml_file) as file_handler:
+        config_data = toml.load(file_handler)
+
+    if "build-system" not in config_data:
+        abort("build-system section missing")
+
+    build_system = config_data["build-system"]
+
+    if "requires" not in build_system:
+        abort("missing requires key at build-system section")
+    if "build-backend" not in build_system:
+        abort("missing build-backend key at build-system section")
+
+    requires = build_system["requires"]
+    if not isinstance(requires, list) or not all(isinstance(i, str) for i in requires):
+        abort("requires key at build-system section must be a list of string")
+
+    backend = build_system["build-backend"]
+    if not isinstance(backend, str):
+        abort("build-backend key at build-system section must be a string")
+
+    args = backend.split(":")
+    module = args[0]
+    obj = "" if len(args) == 1 else ".{}".format(args[1])
+
+    return BuildInfo(requires, module, "{}{}".format(module, obj))
+
+
+def perform_isolated_build(build_info, package_venv, session, config):
+    with session.newaction(
+        package_venv, "perform isolated build", package_venv.envconfig.envdir
+    ) as action:
+        script = textwrap.dedent(
+            """
+            import sys
+            import {}
+            basename = {}.build_{}("{}", {{ "--global-option": ["--formats=gztar"]}})
+            print(basename)""".format(
+                build_info.backend_module, build_info.backend_object, "sdist", config.distdir
+            )
+        )
+        config.distdir.ensure_dir()
+        result = action.popen([package_venv.envconfig.envpython, "-c", script], returnout=True)
+        return config.distdir.join(result.split("\n")[-2])
+
+
+def get_build_requires(build_info, package_venv, session):
+    with session.newaction(
+        package_venv, "get build requires", package_venv.envconfig.envdir
+    ) as action:
+        script = textwrap.dedent(
+            """
+                import {}
+                import json
+
+                backend = {}
+                for_build_requires = backend.get_requires_for_build_{}(None)
+                print(json.dumps(for_build_requires))
+                        """.format(
+                build_info.backend_module, build_info.backend_object, "sdist"
+            )
+        ).strip()
+        result = action.popen([package_venv.envconfig.envpython, "-c", script], returnout=True)
+        return json.loads(result.split("\n")[-2])

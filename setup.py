@@ -66,6 +66,7 @@ def main():
             "py >= 1.4.17, <2",
             "six >= 1.0.0, <2",
             "virtualenv >= 1.11.2",
+            "toml >=0.9.4",
         ],
         extras_require={
             "testing": [

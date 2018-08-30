@@ -1005,6 +1005,13 @@ class parseini:
         )
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
+        config.isolated_build = reader.getbool("isolated_build", False)
+        if config.isolated_build is True:
+            name = ".package"
+            if name not in config.envconfigs:
+                config.envconfigs[name] = self.make_envconfig(
+                    name, testenvprefix + name, reader._subs, config
+                )
 
     def _make_thread_safe_path(self, config, attr, unique_id):
         if config.option.parallel_safe_build:

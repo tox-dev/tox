@@ -263,7 +263,7 @@ class Reporter(object):
     def __init__(self, session):
         self.tw = py.io.TerminalWriter()
         self.session = session
-        self._reportedlines = []
+        self.reported_lines = []
 
     @property
     def verbosity(self):
@@ -338,7 +338,7 @@ class Reporter(object):
             self.logline("SKIPPED: {}".format(msg), yellow=True)
 
     def logline(self, msg, **opts):
-        self._reportedlines.append(msg)
+        self.reported_lines.append(msg)
         self.tw.line("{}".format(msg), **opts)
 
     def verbosity0(self, msg, **opts):
