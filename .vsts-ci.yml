@@ -1,5 +1,8 @@
 name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
 
+variables:
+  "System.PreferGit": true
+
 trigger:
   branches:
     include:

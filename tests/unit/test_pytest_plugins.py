@@ -16,13 +16,13 @@ class TestInitProj:
     def test_no_src_root(self, kwargs, tmpdir, initproj):
         initproj("black_knight-42", **kwargs)
         init_file = tmpdir.join("black_knight", "black_knight", "__init__.py")
-        assert init_file.read_binary() == b"__version__ = '42'"
+        assert init_file.read_binary() == b'""" module black_knight """\n__version__ = \'42\''
 
     def test_existing_src_root(self, tmpdir, initproj):
         initproj("spam-666", src_root="ham")
         assert not tmpdir.join("spam", "spam").check(exists=1)
         init_file = tmpdir.join("spam", "ham", "spam", "__init__.py")
-        assert init_file.read_binary() == b"__version__ = '666'"
+        assert init_file.read_binary() == b'""" module spam """\n__version__ = \'666\''
 
     def test_prebuilt_src_dir_with_no_src_root(self, tmpdir, initproj):
         initproj("spam-1.0", filedefs={"spam": {}})
@@ -56,7 +56,7 @@ class TestInitProj:
         initproj("spam-666", src_root=src_root)
 
         init_file = tmpdir.join("spam", "spam", "__init__.py")
-        assert init_file.read_binary() == b"__version__ = '666'"
+        assert init_file.read_binary() == b'""" module spam """\n__version__ = \'666\''
 
 
 class TestPathParts:

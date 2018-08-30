@@ -56,7 +56,7 @@ def build_package(config, report, session):
     if not config.isolated_build:
         return make_sdist_legacy(report, config, session)
     else:
-        build_isolated(config, report, session)
+        return build_isolated(config, report, session)
 
 
 def make_sdist_legacy(report, config, session):
@@ -138,7 +138,8 @@ def get_build_info(folder, report):
         raise SystemExit(1)
 
     if not toml_file.exists():
-        abort("missing {}".format(toml_file))
+        report.error("missing {}".format(toml_file))
+        raise SystemExit(1)
 
     with open(toml_file) as file_handler:
         config_data = toml.load(file_handler)

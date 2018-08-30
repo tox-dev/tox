@@ -1,4 +1,5 @@
 """Tests that require external access (e.g. pip install, virtualenv creation)"""
+import os
 import subprocess
 
 import pytest
@@ -59,9 +60,13 @@ def test_package_isolated_build_flit(initproj, cmd):
         },
         add_missing_setup_py=False,
     )
-    subprocess.check_call(["git", "init"])
-    subprocess.check_call(["git", "add", "-A", "."])
-    subprocess.check_call(["git", "commit", "-m", "first commit"])
+    env = os.environ.copy()
+    env["GIT_COMMITTER_NAME"] = "committer joe"
+    env["GIT_AUTHOR_NAME"] = "author joe"
+    env["EMAIL"] = "joe@bloomberg.com"
+    subprocess.check_call(["git", "init"], env=env)
+    subprocess.check_call(["git", "add", "-A", "."], env=env)
+    subprocess.check_call(["git", "commit", "-m", "first commit"], env=env)
     result = cmd("--sdistonly")
     assert result.ret == 0, result.out
 

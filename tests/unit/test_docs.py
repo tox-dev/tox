@@ -18,7 +18,7 @@ INI_BLOCK_RE = re.compile(
 
 
 RST_FILES = []
-TOX_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)))
+TOX_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 for root, _, filenames in os.walk(os.path.join(TOX_ROOT, "doc")):
     for f in filenames:
         if f.endswith(".rst"):

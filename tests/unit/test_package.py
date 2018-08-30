@@ -179,7 +179,7 @@ def toml_file_check(initproj, version, message, toml):
 
 
 def test_package_isolated_toml_no_build_system(initproj, cmd):
-    toml_file_check(initproj, "", 1, "build-system section missing")
+    toml_file_check(initproj, 1, "build-system section missing", "")
 
 
 def test_package_isolated_toml_no_requires(initproj, cmd):
