@@ -1,6 +1,7 @@
 """Tests that require external access (e.g. pip install, virtualenv creation)"""
 import os
 import subprocess
+import sys
 
 import pytest
 
@@ -35,6 +36,7 @@ def test_package_isolated_build_setuptools(initproj, cmd):
 
 @pytest.mark.network
 @need_git
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="flit is Python 3 only")
 def test_package_isolated_build_flit(initproj, cmd):
     initproj(
         "package_toml_flit-0.1",

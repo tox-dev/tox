@@ -180,7 +180,10 @@ def perform_isolated_build(build_info, package_venv, session, config):
             import {}
             basename = {}.build_{}("{}", {{ "--global-option": ["--formats=gztar"]}})
             print(basename)""".format(
-                build_info.backend_module, build_info.backend_object, "sdist", config.distdir
+                build_info.backend_module,
+                build_info.backend_object,
+                "sdist",
+                str(config.distdir).replace("\\", "\\\\"),
             )
         )
         config.distdir.ensure_dir()
