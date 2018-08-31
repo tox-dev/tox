@@ -207,7 +207,6 @@ jobs:
   strategy:
     maxParallel: 1
     matrix:
-    
       python37:
         python.version: '3.7'
 
