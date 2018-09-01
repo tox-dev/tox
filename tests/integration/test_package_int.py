@@ -65,10 +65,10 @@ def test_package_isolated_build_flit(initproj, cmd):
     env = os.environ.copy()
     env["GIT_COMMITTER_NAME"] = "committer joe"
     env["GIT_AUTHOR_NAME"] = "author joe"
-    env["EMAIL"] = "joe@bloomberg.com"
+    env["EMAIL"] = "joe@example.com"
     subprocess.check_call(["git", "init"], env=env)
     subprocess.check_call(["git", "add", "-A", "."], env=env)
-    subprocess.check_call(["git", "commit", "-m", "first commit"], env=env)
+    subprocess.check_call(["git", "commit", "-m", "first commit", "--no-gpg-sign"], env=env)
     result = cmd("--sdistonly")
     assert result.ret == 0, result.out
 

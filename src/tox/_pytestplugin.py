@@ -323,9 +323,9 @@ def initproj(tmpdir):
                 {
                     name: {
                         "__init__.py": textwrap.dedent(
-                            """
-                \"\"\" module {} \"\"\"
-                __version__ = {!r}"""
+                            '''
+                """ module {} """
+                __version__ = {!r}'''
                         )
                         .strip()
                         .format(name, version)

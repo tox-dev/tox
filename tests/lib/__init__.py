@@ -8,11 +8,11 @@ def need_executable(name, check_cmd):
         try:
             subprocess.check_output(check_cmd)
         except OSError:
-            return pytest.mark.skip(reason="%s is not available" % name)(fn)
+            return pytest.mark.skip(reason="{} is not available".format(name))(fn)
         return fn
 
     return wrapper
 
 
 def need_git(fn):
-    return pytest.mark.mercurial(need_executable("git", ("git", "--version"))(fn))
+    return pytest.mark.git(need_executable("git", ("git", "--version"))(fn))

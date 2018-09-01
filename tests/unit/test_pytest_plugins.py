@@ -65,9 +65,7 @@ class TestInitProj:
 
 
 def linesep_bytes():
-    if isinstance(os.linesep, bytes):
-        return os.linesep
-    return os.linesep.encode("utf-8")
+    return os.linesep.encode()
 
 
 class TestPathParts:

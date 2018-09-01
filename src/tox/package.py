@@ -103,7 +103,7 @@ def make_sdist_legacy(report, config, session):
 
 def build_isolated(config, report, session):
     build_info = get_build_info(config.setupdir, report)
-    package_venv = session.getvenv(".package")
+    package_venv = session.getvenv(config.isolated_build_package_env)
     package_venv.envconfig.deps_matches_subset = True
 
     package_venv.envconfig.deps = [DepConfig(r, None) for r in build_info.requires]
@@ -180,10 +180,7 @@ def perform_isolated_build(build_info, package_venv, session, config):
             import {}
             basename = {}.build_{}({!r}, {{ "--global-option": ["--formats=gztar"]}})
             print(basename)""".format(
-                build_info.backend_module,
-                build_info.backend_object,
-                "sdist",
-                str(config.distdir),
+                build_info.backend_module, build_info.backend_object, "sdist", str(config.distdir)
             )
         )
         config.distdir.ensure_dir()
