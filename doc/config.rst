@@ -107,7 +107,7 @@ and will first lookup global tox settings in this section:
     .. versionadded:: 3.3.0
 
     Name of the virtual environment used to create a source distribution from the
-    source tree.
+    source tree. By **default ``.package``** is used.
 
 
 Virtualenv test environment settings
