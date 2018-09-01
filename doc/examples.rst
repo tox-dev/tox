@@ -6,6 +6,7 @@ tox configuration and usage examples
    :maxdepth: 2
 
    example/basic.rst
+   example/package.rst
    example/pytest.rst
    example/unittest
    example/nose.rst

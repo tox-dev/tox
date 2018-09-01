@@ -1006,11 +1006,11 @@ class parseini:
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
         config.isolated_build = reader.getbool("isolated_build", False)
-        config.isolated_build_package_env = reader.getstring(
-            "isolated_build_package_env", ".package"
+        config.isolated_build_env = reader.getstring(
+            "isolated_build_env", ".package"
         )
         if config.isolated_build is True:
-            name = config.isolated_build_package_env
+            name = config.isolated_build_env
             if name not in config.envconfigs:
                 config.envconfigs[name] = self.make_envconfig(
                     name, testenvprefix + name, reader._subs, config

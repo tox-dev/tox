@@ -103,7 +103,7 @@ def make_sdist_legacy(report, config, session):
 
 def build_isolated(config, report, session):
     build_info = get_build_info(config.setupdir, report)
-    package_venv = session.getvenv(config.isolated_build_package_env)
+    package_venv = session.getvenv(config.isolated_build_env)
     package_venv.envconfig.deps_matches_subset = True
 
     package_venv.envconfig.deps = [DepConfig(r, None) for r in build_info.requires]

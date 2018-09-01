@@ -79,6 +79,8 @@ and will first lookup global tox settings in this section:
 
 .. confval:: requires=LIST
 
+    .. versionadded:: 3.2.0
+
     Specify python packages that need to exist alongside the tox installation for the tox build
     to be able to start. Use this to specify plugin requirements and build dependencies.
 
@@ -87,6 +89,25 @@ and will first lookup global tox settings in this section:
         [tox]
         requires = setuptools >= 30.0.0
                    py
+
+.. confval:: isolated_build=True|False(default)
+
+    .. versionadded:: 3.3.0
+
+    Activate isolated build environment. tox will use a virtual environment to build
+    a source distribution from the source tree. For build tools and arguments use
+    the ``pyproject.toml`` file as specified in
+    `PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ and
+    `PEP-518 <https://www.python.org/dev/peps/pep-0518/>`_. To specify the virtual
+    environment Python version define use the :confval:`isolated_build_env` config
+    section.
+
+.. confval:: isolated_build_env=str
+
+    .. versionadded:: 3.3.0
+
+    Name of the virtual environment used to create a source distribution from the
+    source tree.
 
 
 Virtualenv test environment settings
