@@ -1,0 +1,1 @@
+Updated the VSTS build YAML to use the latest jobs and pools syntax - by :user:`davidstaheli`
