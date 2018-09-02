@@ -1005,6 +1005,9 @@ class parseini:
         )
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
+        self.parse_build_isolation(config, reader)
+
+    def parse_build_isolation(self, config, reader):
         config.isolated_build = reader.getbool("isolated_build", False)
         config.isolated_build_env = reader.getstring("isolated_build_env", ".package")
         if config.isolated_build is True:

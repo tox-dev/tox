@@ -106,7 +106,8 @@ def build_isolated(config, report, session):
     package_venv = session.getvenv(config.isolated_build_env)
     package_venv.envconfig.deps_matches_subset = True
 
-    package_venv.envconfig.deps = [DepConfig(r, None) for r in build_info.requires]
+    build_requires_deps = [DepConfig(r, None) for r in build_info.requires]
+    package_venv.envconfig.deps.extend(build_requires_deps)
     toml_require = {pkg_resources.Requirement(r).key for r in build_info.requires}
     if not session.setupenv(package_venv):
         raise SystemExit(1)
