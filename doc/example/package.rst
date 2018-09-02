@@ -20,7 +20,7 @@ setuptools
 Using the ``pyproject.toml`` file at the root folder (alongside ``setup.py``) one can specify
 build requirements.
 
-.. code-block:: python
+.. code-block::
 
     [build-system]
     requires = [
@@ -29,6 +29,11 @@ build requirements.
     ]
     build-backend = "setuptools.build_meta"
 
+.. code-block:: ini
+
+   # tox.ini
+   [tox]
+   build_isolated = True
 
 flit
 ----
@@ -36,7 +41,7 @@ flit
 distribution can be installed under ``python 2``. Furthermore it does not require a ``setup.py``
 file as that information is also added to the ``pyproject.toml`` file.
 
-.. code-block:: python
+.. code-block::
 
     [build-system]
     requires = ["flit >= 1.1"]
@@ -47,3 +52,9 @@ file as that information is also added to the ``pyproject.toml`` file.
     author = "Happy Harry"
     author-email = "happy@harry.com"
     home-page = "https://github.com/happy-harry/is"
+
+.. code-block:: ini
+
+   # tox.ini
+   [tox]
+   build_isolated = True
