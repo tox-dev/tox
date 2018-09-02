@@ -62,6 +62,7 @@ html_theme_options = {
     "github_repo": "tox",
     "description": "standardise testing in Python",
     "github_banner": "true",
+    "github_type": "star",
     "travis_button": "true",
     "badge_branch": "master",
     "fixed_sidebar": "false",
