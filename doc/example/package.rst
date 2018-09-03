@@ -20,7 +20,7 @@ setuptools
 Using the ``pyproject.toml`` file at the root folder (alongside ``setup.py``) one can specify
 build requirements.
 
-.. code-block::
+.. code-block:: toml
 
     [build-system]
     requires = [
@@ -41,7 +41,7 @@ flit
 distribution can be installed under ``python 2``. Furthermore it does not require a ``setup.py``
 file as that information is also added to the ``pyproject.toml`` file.
 
-.. code-block::
+.. code-block:: toml
 
     [build-system]
     requires = ["flit >= 1.1"]

@@ -77,7 +77,11 @@ def main():
                 "pytest-xdist >= 1.22.2, <2",
                 "pytest-randomly >= 1.2.3, <2",
             ],
-            "docs": ["sphinx >= 1.7.5, < 2", "towncrier >= 18.5.0"],
+            "docs": [
+                "sphinx >= 1.7.5, < 2",
+                "towncrier >= 18.5.0",
+                "pygments-github-lexers >= 0.0.5",
+            ],
         },
         classifiers=[
             "Development Status :: 5 - Production/Stable",
