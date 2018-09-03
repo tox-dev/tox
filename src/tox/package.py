@@ -10,7 +10,6 @@ import toml
 
 import tox
 from tox.config import DepConfig
-from tox.venv import CreationConfig
 
 BuildInfo = namedtuple("BuildInfo", ["requires", "backend_module", "backend_object"])
 
@@ -106,27 +105,29 @@ def build_isolated(config, report, session):
     package_venv = session.getvenv(config.isolated_build_env)
     package_venv.envconfig.deps_matches_subset = True
 
-    build_requires_deps = [DepConfig(r, None) for r in build_info.requires]
-    package_venv.envconfig.deps.extend(build_requires_deps)
-    toml_require = {pkg_resources.Requirement(r).key for r in build_info.requires}
-    if not session.setupenv(package_venv):
-        raise SystemExit(1)
+    # we allow user specified dependencies so the users can write extensions to
+    # install additional type of dependencies (e.g. binary)
+    user_specified_deps = package_venv.envconfig.deps
+    package_venv.envconfig.deps = [DepConfig(r, None) for r in build_info.requires]
+    package_venv.envconfig.deps.extend(user_specified_deps)
 
-    live_config = package_venv._getliveconfig()
-    previous_config = CreationConfig.readconfig(package_venv.path_config)
-    if not previous_config or not previous_config.matches(live_config, True):
+    if not session.setupenv(package_venv):
         session.finishvenv(package_venv)
 
     build_requires = get_build_requires(build_info, package_venv, session)
-    for requirement in build_requires:
-        pkg_requirement = pkg_resources.Requirement(requirement)
-        if pkg_requirement.key not in toml_require:
-            package_venv.envconfig.deps.append(DepConfig(requirement, None))
-
-    if not session.setupenv(package_venv):
-        raise SystemExit(1)
-
-    session.finishvenv(package_venv)
+    # we need to filter out requirements already specified in pyproject.toml or user deps
+    base_build_deps = {pkg_resources.Requirement(r.name).key for r in package_venv.envconfig.deps}
+    build_requires_dep = [
+        DepConfig(r, None)
+        for r in build_requires
+        if pkg_resources.Requirement(r).key not in base_build_deps
+    ]
+    if build_requires_dep:
+        with session.newaction(
+            package_venv, "build_requires", package_venv.envconfig.envdir
+        ) as action:
+            package_venv.run_install_command(packages=build_requires_dep, action=action)
+        session.finishvenv(package_venv)
     return perform_isolated_build(build_info, package_venv, session, config)
 
 
