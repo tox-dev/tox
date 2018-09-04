@@ -85,8 +85,9 @@ jobs:
     inputs:
       testResultsFiles: '.tox/test-results.*.xml'
       mergeTestResults: true
-      testRunTitle: '$(toxenv)'
+      testRunTitle: '$(agent.os) py$(python.version)'
       platform: linux
+    condition: succeededOrFailed()
 
   - script: 'python -m tox -e coverage'
     displayName: generate coverage.xml
@@ -98,6 +99,7 @@ jobs:
     inputs:
       codeCoverageTool: 'cobertura'
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
       failIfCoverageEmpty: true
 
   - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
@@ -140,8 +142,9 @@ jobs:
     inputs:
       testResultsFiles: '.tox/test-results.*.xml'
       mergeTestResults: true
-      testRunTitle: '$(toxenv)'
+      testRunTitle: '$(agent.os) py$(python.version)'
       platform: windows
+    condition: succeededOrFailed()
 
   - script: 'python -m tox -e coverage'
     displayName: generate coverage.xml
@@ -150,6 +153,7 @@ jobs:
     inputs:
       codeCoverageTool: 'cobertura'
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
       failIfCoverageEmpty: true
 
   - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
@@ -180,7 +184,8 @@ jobs:
       testResultsFiles: '.tox/test-results.*.xml'
       mergeTestResults: true
       testRunTitle: '$(toxenv)'
-      platform: windows
+      platform: macos
+    condition: succeededOrFailed()
 
   - script: 'python3 -m tox -e coverage'
     displayName: generate coverage.xml
@@ -189,6 +194,7 @@ jobs:
     inputs:
       codeCoverageTool: 'cobertura'
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
       failIfCoverageEmpty: true
 
   - script: 'python3 -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-python3" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=3'
