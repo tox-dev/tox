@@ -104,6 +104,7 @@ jobs:
 
   - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
     displayName: upload codecov
+    condition: and(succeeded(), variables['CODECOV_TOKEN'])
 
 - job: windows
   pool:
@@ -158,6 +159,7 @@ jobs:
 
   - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
     displayName: upload codecov
+    condition: and(succeeded(), variables['CODECOV_TOKEN'])
 
 - job: macOS
   pool:
@@ -199,6 +201,7 @@ jobs:
 
   - script: 'python3 -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-python3" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=3'
     displayName: upload codecov
+    condition: and(succeeded(), variables['CODECOV_TOKEN'])
 
 - job: publish
   dependsOn:
