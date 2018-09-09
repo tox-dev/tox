@@ -619,7 +619,9 @@ class Session:
     def showenvs(self, all_envs=False, description=False):
         env_conf = self.config.envconfigs  # this contains all environments
         default = self.config.envlist  # this only the defaults
-        extra = sorted(e for e in env_conf if e not in default) if all_envs else []
+        ignore = {self.config.isolated_build_env}.union(default)
+        extra = sorted(e for e in env_conf if e not in ignore) if all_envs else []
+
         if description:
             self.report.line("default environments:")
             max_length = max(len(env) for env in (default + extra))

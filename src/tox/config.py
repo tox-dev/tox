@@ -1016,6 +1016,9 @@ class parseini:
                 config.envconfigs[name] = self.make_envconfig(
                     name, testenvprefix + name, reader._subs, config
                 )
+            if config.isolated_build_env in config.envlist:
+                msg = "isolated_build_env {} cannot be part of envlist".format(name)
+                raise tox.exception.ConfigError(msg)
 
     def _make_thread_safe_path(self, config, attr, unique_id):
         if config.option.parallel_safe_build:
