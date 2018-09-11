@@ -3,6 +3,8 @@ Test utility tests, intended to cover use-cases not used in the current
 project test suite, e.g. as shown by the code coverage report.
 
 """
+import os
+
 import py.path
 import pytest
 
@@ -16,13 +18,15 @@ class TestInitProj:
     def test_no_src_root(self, kwargs, tmpdir, initproj):
         initproj("black_knight-42", **kwargs)
         init_file = tmpdir.join("black_knight", "black_knight", "__init__.py")
-        assert init_file.read_binary() == b"__version__ = '42'"
+        expected = b'""" module black_knight """' + linesep_bytes() + b"__version__ = '42'"
+        assert init_file.read_binary() == expected
 
     def test_existing_src_root(self, tmpdir, initproj):
         initproj("spam-666", src_root="ham")
         assert not tmpdir.join("spam", "spam").check(exists=1)
         init_file = tmpdir.join("spam", "ham", "spam", "__init__.py")
-        assert init_file.read_binary() == b"__version__ = '666'"
+        expected = b'""" module spam """' + linesep_bytes() + b"__version__ = '666'"
+        assert init_file.read_binary() == expected
 
     def test_prebuilt_src_dir_with_no_src_root(self, tmpdir, initproj):
         initproj("spam-1.0", filedefs={"spam": {}})
@@ -56,7 +60,12 @@ class TestInitProj:
         initproj("spam-666", src_root=src_root)
 
         init_file = tmpdir.join("spam", "spam", "__init__.py")
-        assert init_file.read_binary() == b"__version__ = '666'"
+        expected = b'""" module spam """' + linesep_bytes() + b"__version__ = '666'"
+        assert init_file.read_binary() == expected
+
+
+def linesep_bytes():
+    return os.linesep.encode()
 
 
 class TestPathParts:

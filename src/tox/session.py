@@ -263,7 +263,7 @@ class Reporter(object):
     def __init__(self, session):
         self.tw = py.io.TerminalWriter()
         self.session = session
-        self._reportedlines = []
+        self.reported_lines = []
 
     @property
     def verbosity(self):
@@ -338,7 +338,7 @@ class Reporter(object):
             self.logline("SKIPPED: {}".format(msg), yellow=True)
 
     def logline(self, msg, **opts):
-        self._reportedlines.append(msg)
+        self.reported_lines.append(msg)
         self.tw.line("{}".format(msg), **opts)
 
     def verbosity0(self, msg, **opts):
@@ -619,7 +619,9 @@ class Session:
     def showenvs(self, all_envs=False, description=False):
         env_conf = self.config.envconfigs  # this contains all environments
         default = self.config.envlist  # this only the defaults
-        extra = sorted(e for e in env_conf if e not in default) if all_envs else []
+        ignore = {self.config.isolated_build_env}.union(default)
+        extra = sorted(e for e in env_conf if e not in ignore) if all_envs else []
+
         if description:
             self.report.line("default environments:")
             max_length = max(len(env) for env in (default + extra))

@@ -53,7 +53,7 @@ class CreationConfig:
         except Exception:
             return None
 
-    def matches(self, other):
+    def matches(self, other, deps_matches_subset=False):
         return (
             other
             and self.md5 == other.md5
@@ -62,7 +62,11 @@ class CreationConfig:
             and self.sitepackages == other.sitepackages
             and self.usedevelop == other.usedevelop
             and self.alwayscopy == other.alwayscopy
-            and self.deps == other.deps
+            and (
+                all(d in self.deps for d in other.deps)
+                if deps_matches_subset is True
+                else self.deps == other.deps
+            )
         )
 
 
@@ -159,7 +163,13 @@ class VirtualEnv(object):
             if status string is empty, all is ok.
         """
         rconfig = CreationConfig.readconfig(self.path_config)
-        if not self.envconfig.recreate and rconfig and rconfig.matches(self._getliveconfig()):
+        if (
+            not self.envconfig.recreate
+            and rconfig
+            and rconfig.matches(
+                self._getliveconfig(), getattr(self.envconfig, "deps_matches_subset", False)
+            )
+        ):
             action.info("reusing", self.envconfig.envdir)
             return
         if rconfig is None:
@@ -173,9 +183,8 @@ class VirtualEnv(object):
             return sys.exc_info()[1]
         try:
             self.hook.tox_testenv_install_deps(action=action, venv=self)
-        except tox.exception.InvocationError:
-            v = sys.exc_info()[1]
-            return "could not install deps {}; v = {!r}".format(self.envconfig.deps, v)
+        except tox.exception.InvocationError as exception:
+            return "could not install deps {}; v = {!r}".format(self.envconfig.deps, exception)
 
     def _getliveconfig(self):
         python = self.envconfig.python_info.executable

@@ -974,7 +974,8 @@ class parseini:
         config.logdir = config.toxworkdir.join("log")
         self._make_thread_safe_path(config, "logdir", unique_id)
 
-        config.envlist, all_envs = self._getenvdata(reader)
+        self.parse_build_isolation(config, reader)
+        config.envlist, all_envs = self._getenvdata(reader, config)
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
@@ -1005,6 +1006,16 @@ class parseini:
         )
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
+
+    def parse_build_isolation(self, config, reader):
+        config.isolated_build = reader.getbool("isolated_build", False)
+        config.isolated_build_env = reader.getstring("isolated_build_env", ".package")
+        if config.isolated_build is True:
+            name = config.isolated_build_env
+            if name not in config.envconfigs:
+                config.envconfigs[name] = self.make_envconfig(
+                    name, testenvprefix + name, reader._subs, config
+                )
 
     def _make_thread_safe_path(self, config, attr, unique_id):
         if config.option.parallel_safe_build:
@@ -1069,7 +1080,7 @@ class parseini:
                 reader.addsubstitutions(**{env_attr.name: res})
         return tc
 
-    def _getenvdata(self, reader):
+    def _getenvdata(self, reader, config):
         candidates = (
             self.config.option.env,
             os.environ.get("TOXENV"),
@@ -1086,8 +1097,16 @@ class parseini:
         if not all_envs:
             all_envs.add("python")
 
+        package_env = config.isolated_build_env
+        if config.isolated_build is True and package_env in all_envs:
+            all_envs.remove(package_env)
+
         if not env_list or "ALL" in env_list:
             env_list = sorted(all_envs)
+
+        if config.isolated_build is True and package_env in env_list:
+            msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
+            raise tox.exception.ConfigError(msg)
 
         return env_list, all_envs
 

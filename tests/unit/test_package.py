@@ -1,8 +1,11 @@
 import re
 
+import py
+import pytest
+
 from tox.config import parseconfig
-from tox.package import get_package
-from tox.session import Session
+from tox.package import get_build_info, get_package
+from tox.session import Reporter, Session
 
 
 def test_make_sdist(initproj):
@@ -138,3 +141,91 @@ def test_installpkg(tmpdir, newconfig):
     session = Session(config)
     sdist_path = get_package(session)
     assert sdist_path == p
+
+
+def test_package_isolated_no_pyproject_toml(initproj, cmd):
+    initproj(
+        "package_no_toml-0.1",
+        filedefs={
+            "tox.ini": """
+                [tox]
+                isolated_build = true
+            """
+        },
+    )
+    result = cmd("--sdistonly")
+    assert result.ret == 1
+    assert result.outlines == ["ERROR: missing {}".format(py.path.local().join("pyproject.toml"))]
+
+
+def toml_file_check(initproj, version, message, toml):
+    initproj(
+        "package_toml-{}".format(version),
+        filedefs={
+            "tox.ini": """
+                        [tox]
+                        isolated_build = true
+                    """,
+            "pyproject.toml": toml,
+        },
+    )
+    reporter = Reporter(None)
+
+    with pytest.raises(SystemExit, message=1):
+        get_build_info(py.path.local(), reporter)
+    toml_file = py.path.local().join("pyproject.toml")
+    msg = "ERROR: {} inside {}".format(message, toml_file)
+    assert reporter.reported_lines == [msg]
+
+
+def test_package_isolated_toml_no_build_system(initproj, cmd):
+    toml_file_check(initproj, 1, "build-system section missing", "")
+
+
+def test_package_isolated_toml_no_requires(initproj, cmd):
+    toml_file_check(
+        initproj,
+        2,
+        "missing requires key at build-system section",
+        """
+    [build-system]
+    """,
+    )
+
+
+def test_package_isolated_toml_no_backend(initproj, cmd):
+    toml_file_check(
+        initproj,
+        3,
+        "missing build-backend key at build-system section",
+        """
+    [build-system]
+    requires = []
+    """,
+    )
+
+
+def test_package_isolated_toml_bad_requires(initproj, cmd):
+    toml_file_check(
+        initproj,
+        4,
+        "requires key at build-system section must be a list of string",
+        """
+    [build-system]
+    requires = ""
+    build-backend = ""
+    """,
+    )
+
+
+def test_package_isolated_toml_bad_backend(initproj, cmd):
+    toml_file_check(
+        initproj,
+        5,
+        "build-backend key at build-system section must be a string",
+        """
+    [build-system]
+    requires = []
+    build-backend = []
+    """,
+    )

@@ -2376,137 +2376,6 @@ class TestCmdInvocation:
         assert "some-repr" in version_info
         assert "1.0" in version_info
 
-    def test_listenvs(self, cmd, initproj):
-        initproj(
-            "listenvs",
-            filedefs={
-                "tox.ini": """
-            [tox]
-            envlist=py36,py27,py34,pypi,docs
-            description= py27: run pytest on Python 2.7
-                         py34: run pytest on Python 3.6
-                         pypi: publish to PyPI
-                         docs: document stuff
-                         notincluded: random extra
-
-            [testenv:notincluded]
-            changedir = whatever
-
-            [testenv:docs]
-            changedir = docs
-            """
-            },
-        )
-        result = cmd("-l")
-        assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
-
-    def test_listenvs_verbose_description(self, cmd, initproj):
-        initproj(
-            "listenvs_verbose_description",
-            filedefs={
-                "tox.ini": """
-            [tox]
-            envlist=py36,py27,py34,pypi,docs
-            [testenv]
-            description= py36: run pytest on Python 3.6
-                         py27: run pytest on Python 2.7
-                         py34: run pytest on Python 3.4
-                         pypi: publish to PyPI
-                         docs: document stuff
-                         notincluded: random extra
-
-            [testenv:notincluded]
-            changedir = whatever
-
-            [testenv:docs]
-            changedir = docs
-            description = let me overwrite that
-            """
-            },
-        )
-        result = cmd("-lv")
-        expected = [
-            "default environments:",
-            "py36 -> run pytest on Python 3.6",
-            "py27 -> run pytest on Python 2.7",
-            "py34 -> run pytest on Python 3.4",
-            "pypi -> publish to PyPI",
-            "docs -> let me overwrite that",
-        ]
-        assert result.outlines[2:] == expected
-
-    def test_listenvs_all(self, cmd, initproj):
-        initproj(
-            "listenvs_all",
-            filedefs={
-                "tox.ini": """
-            [tox]
-            envlist=py36,py27,py34,pypi,docs
-
-            [testenv:notincluded]
-            changedir = whatever
-
-            [testenv:docs]
-            changedir = docs
-            """
-            },
-        )
-        result = cmd("-a")
-        expected = ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
-        assert result.outlines == expected
-
-    def test_listenvs_all_verbose_description(self, cmd, initproj):
-        initproj(
-            "listenvs_all_verbose_description",
-            filedefs={
-                "tox.ini": """
-            [tox]
-            envlist={py27,py36}-{windows,linux} # py35
-            [testenv]
-            description= py27: run pytest on Python 2.7
-                         py36: run pytest on Python 3.6
-                         windows: on Windows platform
-                         linux: on Linux platform
-                         docs: generate documentation
-            commands=pytest {posargs}
-
-            [testenv:docs]
-            changedir = docs
-            """
-            },
-        )
-        result = cmd("-av")
-        expected = [
-            "default environments:",
-            "py27-windows -> run pytest on Python 2.7 on Windows platform",
-            "py27-linux   -> run pytest on Python 2.7 on Linux platform",
-            "py36-windows -> run pytest on Python 3.6 on Windows platform",
-            "py36-linux   -> run pytest on Python 3.6 on Linux platform",
-            "",
-            "additional environments:",
-            "docs         -> generate documentation",
-        ]
-        assert result.outlines[-len(expected) :] == expected
-
-    def test_listenvs_all_verbose_description_no_additional_environments(self, cmd, initproj):
-        initproj(
-            "listenvs_all_verbose_description",
-            filedefs={
-                "tox.ini": """
-            [tox]
-            envlist=py27,py36
-            """
-            },
-        )
-        result = cmd("-av")
-        expected = [
-            "default environments:",
-            "py27 -> [no description]",
-            "py36 -> [no description]",
-        ]
-        assert result.out.splitlines()[-3:] == expected
-        assert "additional environments" not in result.out
-
     def test_config_specific_ini(self, tmpdir, cmd):
         ini = tmpdir.ensure("hello.ini")
         result = cmd("-c", ini, "--showconfig")
@@ -2737,4 +2606,21 @@ def test_plugin_require(newconfig, capsys):
             "requirement missing b",
         ]
     )
+    assert not out
+
+
+def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):
+    inisource = """
+            [tox]
+            envlist = py36,package
+            isolated_build = True
+            isolated_build_env = package
+        """
+    with pytest.raises(
+        tox.exception.ConfigError, match="isolated_build_env package cannot be part of envlist"
+    ):
+        newconfig([], inisource)
+
+    out, err = capsys.readouterr()
+    assert not err
     assert not out
