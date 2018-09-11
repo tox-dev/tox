@@ -1,0 +1,1 @@
+do not load entrypoint plugins during tests by default with ``newconfig`` fixture - by :user:`blueyed` (`#964 <https://github.com/tox-dev/tox/pull/964>`_)

@@ -36,8 +36,8 @@ default_factors = tox.PYTHON.DEFAULT_FACTORS
 """DEPRECATED MOVE - please update to new location."""
 
 
-def get_plugin_manager(plugins=()):
-    # initialize plugin manager
+def get_plugin_manager(plugins=(), load_entrypoints=True):
+    """Initialize plugin manager"""
     import tox.venv
 
     pm = pluggy.PluginManager("tox")
@@ -49,7 +49,8 @@ def get_plugin_manager(plugins=()):
     from tox import package
 
     pm.register(package)
-    pm.load_setuptools_entrypoints("tox")
+    if load_entrypoints:
+        pm.load_setuptools_entrypoints("tox")
     for plugin in plugins:
         pm.register(plugin)
     pm.check_pending()
@@ -208,15 +209,17 @@ class InstallcmdOption:
         return value
 
 
-def parseconfig(args, plugins=()):
+def parseconfig(args, plugins=(), load_entrypoints=True):
     """Parse the configuration file and create a Config object.
 
-    :param plugins:
     :param list[str] args: list of arguments.
+    :param plugins:
+    :param bool load_entrypoints:
+        Allows for skipping loading plugins from setuptools entrypoints in tests.
     :rtype: :class:`Config`
     :raise SystemExit: toxinit file is not found
     """
-    pm = get_plugin_manager(plugins)
+    pm = get_plugin_manager(plugins, load_entrypoints=load_entrypoints)
     config, option = parse_cli(args, pm)
 
     for config_file in propose_configs(option.configfile):
