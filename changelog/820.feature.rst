@@ -1,1 +1,0 @@
-`flit <https://flit.readthedocs.io>`_ support via implementing ``PEP-517`` by :user:`gaborbernat`

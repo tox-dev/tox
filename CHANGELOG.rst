@@ -12,6 +12,30 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+3.3.0 (2018-09-11)
+------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix ``TOX_LIMITED_SHEBANG`` when running under python3 - by :user:`asottile` (`#931 <https://github.com/tox-dev/tox/issues/931>`_)
+
+
+Features
+^^^^^^^^
+
+- `PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ source distribution support (create a
+  ``.package`` virtual environment to perform build operations inside) by :user:`gaborbernat` (`#573 <https://github.com/tox-dev/tox/issues/573>`_)
+- `flit <https://flit.readthedocs.io>`_ support via implementing ``PEP-517`` by :user:`gaborbernat` (`#820 <https://github.com/tox-dev/tox/issues/820>`_)
+- packaging now is exposed as a hook via ``tox_package(session, venv)`` - by :user:`gaborbernat` (`#951 <https://github.com/tox-dev/tox/issues/951>`_)
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- Updated the VSTS build YAML to use the latest jobs and pools syntax - by :user:`davidstaheli` (`#955 <https://github.com/tox-dev/tox/issues/955>`_)
+
+
 3.2.1 (2018-08-10)
 ------------------
 
