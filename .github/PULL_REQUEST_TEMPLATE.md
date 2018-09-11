@@ -17,6 +17,6 @@ much about the checklist - we will help you get started.
   * `<type>` is must be one of `bugfix`, `feature`, `deprecation`,`breaking`, `doc`, `misc`
   * if pr has no issue: consider creating one first or change it to the pr number after creating the pr
   * "sign" fragment with "by @<your username>"
-  * please use full sentences with correct case and punctuation, for example: "Fix issue with non-ascii contents in doctest text files - by @superuser."
+  * please use full sentences with correct case and punctuation, for example: "Fix issue with non-ascii contents in doctest text files - by :user:`superuser`."
   * also see [examples](https://github.com/tox-dev/tox/tree/master/changelog/examples.rst)
 - [ ] added yourself to `CONTRIBUTORS` (preserving alphabetical order)
