@@ -20,7 +20,7 @@ jobs:
     inputs:
       versionSpec: '3.7'
 
-  - script: 'python -m pip install -U tox setuptools'
+  - script: 'python -m pip install -U tox'
     displayName: install tox
 
   - script: 'tox -e fix-lint'
@@ -45,7 +45,7 @@ jobs:
     inputs:
       versionSpec: '3.7'
 
-  - script: 'python -m pip install -U tox setuptools'
+  - script: 'python -m pip install -U tox'
     displayName: install tox
 
   - script: 'tox -e $(toxenv)'
@@ -74,7 +74,7 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
 
-  - script: 'python -m pip install -U tox setuptools'
+  - script: 'python -m pip install -U tox'
     displayName: install tox
 
   - script: 'python -m tox -e py --notest'
@@ -132,7 +132,7 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
 
-  - script: 'python -m pip install -U tox setuptools'
+  - script: 'python -m pip install -U tox'
     displayName: install tox
 
   - script: 'python -m tox -e py --notest'
@@ -174,7 +174,7 @@ jobs:
         toxenv: 'py3'
 
   steps:
-  - script: 'python3 -m pip install -U tox setuptools'
+  - script: 'python3 -m pip install -U tox'
     displayName: install tox
 
   - script: 'python3 -m tox -e $(toxenv) --notest'
