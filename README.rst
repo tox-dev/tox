@@ -4,9 +4,9 @@
 .. image:: https://img.shields.io/pypi/pyversions/tox.svg
   :target: https://pypi.org/project/tox/
   :alt: Supported Python versions
-.. image:: https://toxdev.visualstudio.com/tox/_apis/build/status/tox%20ci?branchName=master
-  :target: https://toxdev.visualstudio.com/tox/_build/latest?definitionId=9&branchName=master
-  :alt: VSTS build status
+.. image:: https://dev.azure.com/toxdev/tox/_apis/build/status/tox%20ci?branchName=master
+  :target: https://dev.azure.com/toxdev/tox/_build/latest?definitionId=9&branchName=master
+  :alt: Azure Pipelines build status
 .. image:: https://travis-ci.org/tox-dev/tox.svg?branch=master
   :target: https://travis-ci.org/tox-dev/tox
   :alt: Travis-CI build status
