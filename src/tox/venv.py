@@ -261,38 +261,32 @@ class VirtualEnv(object):
 
         return needs_reinstall
 
-    def developpkg(self, setupdir, action):
+    def install_pkg(self, dir, action, name, is_develop=False):
         assert action is not None
+
         if getattr(self, "just_created", False):
-            action.setactivity("develop-inst", setupdir)
+            action.setactivity(name, dir)
             self.finish()
-            extraopts = []
+            pip_flags = ["--exists-action", "w"]
         else:
-            if not self._needs_reinstall(setupdir, action):
-                action.setactivity("develop-inst-noop", setupdir)
+            if is_develop and not self._needs_reinstall(dir, action):
+                action.setactivity("{}-noop".format(name), dir)
                 return
-            action.setactivity("develop-inst-nodeps", setupdir)
-            extraopts = ["--no-deps"]
+            action.setactivity("{}-nodeps".format(name), dir)
+            pip_flags = ["--no-deps"] + ([] if is_develop else ["-U"])
 
         if action.venv.envconfig.extras:
-            setupdir += "[{}]".format(",".join(action.venv.envconfig.extras))
+            dir += "[{}]".format(",".join(action.venv.envconfig.extras))
+        target = [dir]
+        if is_develop:
+            target.insert(0, "-e")
+        self._install(target, extraopts=pip_flags, action=action)
 
-        self._install(["-e", setupdir], extraopts=extraopts, action=action)
+    def developpkg(self, setupdir, action):
+        self.install_pkg(setupdir, action, "develop-inst", is_develop=True)
 
     def installpkg(self, sdistpath, action):
-        assert action is not None
-        if getattr(self, "just_created", False):
-            action.setactivity("inst", sdistpath)
-            self.finish()
-            extraopts = []
-        else:
-            action.setactivity("inst-nodeps", sdistpath)
-            extraopts = ["-U", "--no-deps"]
-
-        if action.venv.envconfig.extras:
-            sdistpath += "[{}]".format(",".join(action.venv.envconfig.extras))
-
-        self._install([sdistpath], extraopts=extraopts, action=action)
+        self.install_pkg(sdistpath, action, "inst")
 
     def _installopts(self, indexserver):
         options = []

@@ -721,7 +721,7 @@ def test_installpkg_no_upgrade(tmpdir, newmocksession):
     mocksession.installpkg(venv, pkg)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
-    assert "-U" not in pcalls[0].args
+    assert pcalls[0].args[1:-1] == ["-m", "pip", "install", "--exists-action", "w"]
 
 
 def test_installpkg_upgrade(newmocksession, tmpdir):
