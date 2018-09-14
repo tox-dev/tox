@@ -1,0 +1,1 @@
+do not build sdist if skip install is specified for the envs to be run - by :user:`gaborbernat`

@@ -302,26 +302,6 @@ def test_unknown_environment(cmd, initproj):
     assert result.out == "ERROR: unknown environment 'qpwoei'\n"
 
 
-def test_skip_sdist(cmd, initproj):
-    initproj(
-        "pkg123-0.7",
-        filedefs={
-            "tests": {"test_hello.py": "def test_hello(): pass"},
-            "setup.py": """
-            syntax error
-        """,
-            "tox.ini": """
-            [tox]
-            skipsdist=True
-            [testenv]
-            commands=python -c "print('done')"
-        """,
-        },
-    )
-    result = cmd()
-    assert result.ret == 0
-
-
 def test_minimal_setup_py_empty(cmd, initproj):
     initproj(
         "pkg123-0.7",
