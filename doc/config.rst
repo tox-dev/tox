@@ -189,7 +189,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     **default**::
 
-        pip install {opts} {packages}
+        python -m pip install {opts} {packages}
 
 .. confval:: list_dependencies_command
 
