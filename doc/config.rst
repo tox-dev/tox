@@ -10,7 +10,7 @@ tox supports at the moment three locations for specifying the configuration, in 
 3. ``setup.cfg``
 
 As far as the configuration format at the moment we only support standard ConfigParser_ "ini-style" format
-(with planned .
+(there is a plan to add a pure TOML one soon).
 ``tox.ini`` and ``setup.cfg`` are files are fully such files. ``pyproject.toml`` on the other hand is a TOML
 format. However, one can inline the *ini-style* format under the ``tool.tox.legacy_tox_ini`` key as a multi-line
 string.
