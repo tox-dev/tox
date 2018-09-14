@@ -1902,20 +1902,48 @@ class TestGlobalOptions:
             newconfig([], inisource)
 
     def test_skip_missing_interpreters_true(self, newconfig):
-        inisource = """
+        ini_source = """
             [tox]
             skip_missing_interpreters = True
         """
-        config = newconfig([], inisource)
-        assert config.option.skip_missing_interpreters
+        config = newconfig([], ini_source)
+        assert config.option.skip_missing_interpreters == "true"
 
     def test_skip_missing_interpreters_false(self, newconfig):
-        inisource = """
+        ini_source = """
             [tox]
             skip_missing_interpreters = False
         """
-        config = newconfig([], inisource)
-        assert not config.option.skip_missing_interpreters
+        config = newconfig([], ini_source)
+        assert config.option.skip_missing_interpreters == "false"
+
+    def test_skip_missing_interpreters_cli_no_arg(self, newconfig):
+        ini_source = """
+            [tox]
+            skip_missing_interpreters = False
+        """
+        config = newconfig(["--skip-missing-interpreters"], ini_source)
+        assert config.option.skip_missing_interpreters == "true"
+
+    def test_skip_missing_interpreters_cli_not_specified(self, newconfig):
+        config = newconfig([], "")
+        assert config.option.skip_missing_interpreters == "false"
+
+    def test_skip_missing_interpreters_cli_overrides_true(self, newconfig):
+        ini_source = """
+                    [tox]
+                    skip_missing_interpreters = False
+                """
+        config = newconfig(["--skip-missing-interpreters", "true"], ini_source)
+        assert config.option.skip_missing_interpreters == "true"
+
+    def test_skip_missing_interpreters_cli_overrides_false(self, newconfig):
+        ini_source = """
+                    [tox]
+                    skip_missing_interpreters = True
+                """
+        config = newconfig(["--skip-missing-interpreters", "false"], ini_source)
+        assert config.option.skip_missing_interpreters == "false"
 
     def test_defaultenv_commandline(self, newconfig):
         config = newconfig(["-epy27"], "")

@@ -54,18 +54,18 @@ and will first lookup global tox settings in this section:
     commands = ...  # override [tox] settings for the jenkins context
     # note: for jenkins distshare defaults to ``{toxworkdir}/distshare`` (DEPRECATED)
 
-.. confval:: skip_missing_interpreters=BOOL
+.. confval:: skip_missing_interpreters=config|true|false
 
     .. versionadded:: 1.7.2
 
-    Setting this to ``True`` is equivalent of passing the
-    ``--skip-missing-interpreters`` command line option, and will force ``tox`` to
-    return success even if some of the specified environments were missing. This is
-    useful for some CI systems or running on a developer box, where you might only
-    have a subset of all your supported interpreters installed but don't want to
-    mark the build as failed because of it. As expected, the command line switch
-    always overrides this setting if passed on the invokation.
-    **Default:** ``False``
+    When skip missing interpreters is ``true`` will force ``tox`` to return success even
+    if some of the specified environments were missing. This is useful for some CI
+    systems or running on a developer box, where you might only have a subset of
+    all your supported interpreters installed but don't want to mark the build as
+    failed because of it. As expected, the command line switch always overrides
+    this setting if passed on the invocation. Setting it to ``config``
+    means that the value is read from the config file (default is ``false``).
+    **Default:** ``config``
 
 .. confval:: envlist=CSV
 
