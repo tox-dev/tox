@@ -107,7 +107,8 @@ class TestSession:
 def test_notoxini_help_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={"tests": {"test_hello.py": "def test_hello(): pass"}})
     result = cmd("-h")
-    assert result.err == "ERROR: toxini file 'tox.ini' not found\n"
+    msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
+    assert result.err == msg
     assert result.out.startswith("usage: ")
     assert any("--help" in l for l in result.outlines), result.outlines
     assert not result.ret

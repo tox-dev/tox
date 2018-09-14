@@ -1,0 +1,1 @@
+``pyproject.toml`` config support initially by just inline the tox.ini under ``tool.tox.legacy_tox_ini`` key; config source priority order is ``pyproject.toml``, ``tox.ini`` and then ``setup.cfg`` - by :user:`gaborbernat`

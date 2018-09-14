@@ -3,11 +3,22 @@
 tox configuration specification
 ===============================
 
-.. _ConfigParser: https://docs.python.org/3/library/configparser.html
+tox supports at the moment three locations for specifying the configuration, in the following priority order:
 
-``tox.ini`` files uses the standard ConfigParser_ "ini-style" format.
-Below you find the specification, but you might want to skim some
+1. ``pyproject.toml``
+2. ``tox.ini``
+3. ``setup.cfg``
+
+As far as the configuration format at the moment we only support standard ConfigParser_ "ini-style" format
+(with planned .
+``tox.ini`` and ``setup.cfg`` are files are fully such files. ``pyproject.toml`` on the other hand is a TOML
+format. However, one can inline the *ini-style* format under the ``tool.tox.legacy_tox_ini`` key as a multi-line
+string.
+
+Below you find the specification for the *ini-style* format, but you might want to skim some
 :doc:`examples` first and use this page as a reference.
+
+.. _ConfigParser: https://docs.python.org/3/library/configparser.html
 
 tox global settings
 -------------------
