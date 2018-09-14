@@ -493,11 +493,8 @@ def tox_addoption(parser):
     parser.add_argument(
         "--alwayscopy", action="store_true", help="override alwayscopy setting to True in all envs"
     )
-    parser.add_argument(
-        "--skip-missing-interpreters",
-        action="store_true",
-        help="don't fail tests for missing interpreters",
-    )
+
+    cli_skip_missing_interpreter(parser)
     parser.add_argument(
         "--workdir",
         action="store",
@@ -780,6 +777,24 @@ def tox_addoption(parser):
     )
 
 
+def cli_skip_missing_interpreter(parser):
+    class SkipMissingInterpreterAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            value = "true" if values is None else values
+            if value not in ("config", "true", "false"):
+                raise argparse.ArgumentTypeError("value must be config, true or false")
+            setattr(namespace, self.dest, value)
+
+    parser.add_argument(
+        "--skip-missing-interpreters",
+        default="config",
+        metavar="val",
+        nargs="?",
+        action=SkipMissingInterpreterAction,
+        help="don't fail tests for missing interpreters: {config,true,false} choice",
+    )
+
+
 class Config(object):
     """Global Tox config object."""
 
@@ -947,10 +962,9 @@ class ParseIni(object):
         else:
             config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
 
-        if not config.option.skip_missing_interpreters:
-            config.option.skip_missing_interpreters = reader.getbool(
-                "skip_missing_interpreters", False
-            )
+        if config.option.skip_missing_interpreters == "config":
+            val = reader.getbool("skip_missing_interpreters", False)
+            config.option.skip_missing_interpreters = "true" if val else "false"
 
         config.ignore_basepython_conflict = reader.getbool("ignore_basepython_conflict", False)
 

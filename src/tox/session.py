@@ -470,7 +470,7 @@ class Session:
                 )
             except tox.exception.InterpreterNotFound as e:
                 status = e
-                if self.config.option.skip_missing_interpreters:
+                if self.config.option.skip_missing_interpreters == "true":
                     default_ret_code = 0
             if status:
                 str_status = str(status)
@@ -573,7 +573,7 @@ class Session:
             status = venv.status
             if isinstance(status, tox.exception.InterpreterNotFound):
                 msg = " {}: {}".format(venv.envconfig.envname, str(status))
-                if self.config.option.skip_missing_interpreters:
+                if self.config.option.skip_missing_interpreters == "true":
                     self.report.skip(msg)
                 else:
                     retcode = 1
