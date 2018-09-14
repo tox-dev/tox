@@ -10,6 +10,7 @@ import string
 import sys
 import uuid
 import warnings
+from collections import OrderedDict
 from fnmatch import fnmatchcase
 from subprocess import list2cmdline
 
@@ -783,7 +784,7 @@ class Config(object):
     """Global Tox config object."""
 
     def __init__(self, pluginmanager, option, interpreters, parser):
-        self.envconfigs = {}
+        self.envconfigs = OrderedDict()
         """Mapping envname -> envconfig"""
         self.invocationcwd = py.path.local()
         self.interpreters = interpreters
@@ -1110,25 +1111,28 @@ class ParseIni(object):
         env_list = _split_env(env_str)
 
         # collect section envs
-        all_envs = set(env_list) - {"ALL"}
+        all_envs = OrderedDict((i, None) for i in env_list)
+        if "ALL" in all_envs:
+            all_envs.pop("ALL")
         for section in self._cfg:
             if section.name.startswith(testenvprefix):
-                all_envs.add(section.name[len(testenvprefix) :])
+                all_envs[section.name[len(testenvprefix) :]] = None
         if not all_envs:
-            all_envs.add("python")
+            all_envs["python"] = None
 
         package_env = config.isolated_build_env
         if config.isolated_build is True and package_env in all_envs:
-            all_envs.remove(package_env)
+            all_envs.pop(package_env)
 
         if not env_list or "ALL" in env_list:
-            env_list = sorted(all_envs)
+            env_list = list(all_envs.keys())
 
         if config.isolated_build is True and package_env in env_list:
             msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
             raise tox.exception.ConfigError(msg)
 
-        return env_list, all_envs
+        all_env_list = list(all_envs.keys())
+        return env_list, all_env_list
 
 
 def _split_env(env):

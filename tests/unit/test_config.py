@@ -1833,9 +1833,9 @@ class TestGlobalOptions:
         assert config.envlist == ["py35", "py36"]
         monkeypatch.setenv("TOXENV", "ALL")
         config = newconfig([], inisource)
-        assert config.envlist == ["py27", "py35", "py36"]
+        assert config.envlist == ["py36", "py35", "py27"]
         config = newconfig(["-eALL"], inisource)
-        assert config.envlist == ["py27", "py35", "py36"]
+        assert config.envlist == ["py36", "py35", "py27"]
         config = newconfig(["-espam"], inisource)
         assert config.envlist == ["spam"]
 

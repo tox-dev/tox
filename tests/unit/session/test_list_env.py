@@ -150,3 +150,45 @@ def test_listenvs_packaging_excluded(cmd, initproj):
     result = cmd("-a")
     expected = ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
     assert result.outlines == expected, result.outlines
+
+
+def test_listenvs_all_extra_definition_order_decreasing(cmd, initproj):
+    initproj(
+        "listenvs_all",
+        filedefs={
+            "tox.ini": """
+        [tox]
+        envlist=py36
+
+        [testenv:b]
+        changedir = whatever
+
+        [testenv:a]
+        changedir = docs
+        """
+        },
+    )
+    result = cmd("-a")
+    expected = ["py36", "b", "a"]
+    assert result.outlines == expected
+
+
+def test_listenvs_all_extra_definition_order_increasing(cmd, initproj):
+    initproj(
+        "listenvs_all",
+        filedefs={
+            "tox.ini": """
+        [tox]
+        envlist=py36
+
+        [testenv:a]
+        changedir = whatever
+
+        [testenv:b]
+        changedir = docs
+        """
+        },
+    )
+    result = cmd("-a")
+    expected = ["py36", "a", "b"]
+    assert result.outlines == expected

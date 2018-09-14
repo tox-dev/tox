@@ -621,7 +621,7 @@ class Session:
         env_conf = self.config.envconfigs  # this contains all environments
         default = self.config.envlist  # this only the defaults
         ignore = {self.config.isolated_build_env}.union(default)
-        extra = sorted(e for e in env_conf if e not in ignore) if all_envs else []
+        extra = [e for e in env_conf if e not in ignore] if all_envs else []
 
         if description:
             self.report.line("default environments:")
