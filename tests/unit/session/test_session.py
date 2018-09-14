@@ -102,3 +102,41 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv):
         basename = path.basename
         assert basename.startswith(base)
         assert uuid.UUID(basename[len(base) :], version=4)
+
+
+def test_skip_sdist(cmd, initproj):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tests": {"test_hello.py": "def test_hello(): pass"},
+            "setup.py": """
+            syntax error
+        """,
+            "tox.ini": """
+            [tox]
+            skipsdist=True
+            [testenv]
+            commands=python -c "print('done')"
+        """,
+        },
+    )
+    result = cmd()
+    assert result.ret == 0
+
+
+def test_skip_install_skip_package(cmd, initproj, mock_venv):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "setup.py": """raise RuntimeError""",
+            "tox.ini": """
+            [tox]
+            envlist = py
+
+            [testenv]
+            skip_install = true
+        """,
+        },
+    )
+    result = cmd("--notest")
+    assert result.ret == 0

@@ -522,9 +522,10 @@ class Session:
             self.report.info("skipping sdist step")
         else:
             for venv in self.venvlist:
-                venv.package = self.hook.tox_package(session=self, venv=venv)
-                if not venv.package:
-                    return 2
+                if not venv.envconfig.skip_install:
+                    venv.package = self.hook.tox_package(session=self, venv=venv)
+                    if not venv.package:
+                        return 2
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:
