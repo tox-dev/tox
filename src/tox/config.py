@@ -16,8 +16,10 @@ from subprocess import list2cmdline
 import pkg_resources
 import pluggy
 import py
+import toml
 
 import tox
+from tox.constants import INFO
 from tox.interpreters import Interpreters
 
 hookimpl = tox.hookimpl
@@ -95,7 +97,7 @@ class Parser:
         assert hasattr(obj, "postprocess")
         self._testenv_attr.append(obj)
 
-    def _parse_args(self, args):
+    def parse_cli(self, args):
         return self.argparser.parse_args(args)
 
     def _format_help(self):
@@ -213,49 +215,66 @@ def parseconfig(args, plugins=()):
     :raise SystemExit: toxinit file is not found
     """
     pm = get_plugin_manager(plugins)
-    # prepare command line options
+    config, option = parse_cli(args, pm)
+
+    for config_file in propose_configs(option.configfile):
+        config_type = config_file.basename
+
+        content = None
+        if config_type == "pyproject.toml":
+            toml_content = get_py_project_toml(config_file)
+            try:
+                content = toml_content["tool"]["tox"]["legacy_tox_ini"]
+            except KeyError:
+                continue
+        try:
+            ParseIni(config, config_file, content)
+        except tox.exception.InterpreterNotFound as exception:
+            print("ERROR: {}".format(exception))  # Use stdout to match test expectations
+        pm.hook.tox_configure(config=config)  # post process config object
+        break
+    else:
+        msg = "tox config file (either {}) not found"
+        candidates = ", ".join(INFO.CONFIG_CANDIDATES)
+        feedback(msg.format(candidates), sysexit=not (option.help or option.helpini))
+    return config
+
+
+def get_py_project_toml(path):
+    with open(str(path)) as file_handler:
+        config_data = toml.load(file_handler)
+        return config_data
+
+
+def propose_configs(cli_config_file):
+    from_folder = py.path.local()
+    if cli_config_file is not None:
+        if os.path.isfile(cli_config_file):
+            yield py.path.local(cli_config_file)
+            return
+        if os.path.isdir(cli_config_file):
+            from_folder = py.path.local(cli_config_file)
+        else:
+            return
+    for basename in INFO.CONFIG_CANDIDATES:
+        if from_folder.join(basename).isfile():
+            yield from_folder.join(basename)
+        for path in from_folder.parts(reverse=True):
+            ini_path = path.join(basename)
+            if ini_path.check():
+                yield ini_path
+
+
+def parse_cli(args, pm):
     parser = Parser()
     pm.hook.tox_addoption(parser=parser)
-    # parse command line options
-    option = parser._parse_args(args)
-    interpreters = Interpreters(hook=pm.hook)
-    config = Config(pluginmanager=pm, option=option, interpreters=interpreters)
-    config._parser = parser
-    config._testenv_attr = parser._testenv_attr
-    if config.option.version:
+    option = parser.parse_cli(args)
+    if option.version:
         print(get_version_info(pm))
         raise SystemExit(0)
-    # parse ini file
-    basename = config.option.configfile
-    if os.path.isfile(basename):
-        inipath = py.path.local(basename)
-    elif os.path.isdir(basename):
-        # Assume 'tox.ini' filename if directory was passed
-        inipath = py.path.local(os.path.join(basename, "tox.ini"))
-    else:
-        for path in py.path.local().parts(reverse=True):
-            inipath = path.join(basename)
-            if inipath.check():
-                break
-        else:
-            inipath = py.path.local().join("setup.cfg")
-            if not inipath.check():
-                helpoptions = option.help or option.helpini
-                feedback("toxini file {!r} not found".format(basename), sysexit=not helpoptions)
-                if helpoptions:
-                    return config
-
-    try:
-        parseini(config, inipath)
-    except tox.exception.InterpreterNotFound:
-        exn = sys.exc_info()[1]
-        # Use stdout to match test expectations
-        print("ERROR: {}".format(exn))
-
-    # post process config object
-    pm.hook.tox_configure(config=config)
-
-    return config
+    interpreters = Interpreters(hook=pm.hook)
+    config = Config(pluginmanager=pm, option=option, interpreters=interpreters, parser=parser)
+    return config, option
 
 
 def feedback(msg, sysexit=False):
@@ -373,7 +392,7 @@ def tox_addoption(parser):
     parser.add_argument(
         "-c",
         action="store",
-        default="tox.ini",
+        default=None,
         dest="configfile",
         help="config file name or directory with 'tox.ini' file.",
     )
@@ -763,13 +782,16 @@ def tox_addoption(parser):
 class Config(object):
     """Global Tox config object."""
 
-    def __init__(self, pluginmanager, option, interpreters):
+    def __init__(self, pluginmanager, option, interpreters, parser):
         self.envconfigs = {}
         """Mapping envname -> envconfig"""
         self.invocationcwd = py.path.local()
         self.interpreters = interpreters
         self.pluginmanager = pluginmanager
         self.option = option
+        self._parser = parser
+        self._testenv_attr = parser._testenv_attr
+
         """option namespace containing all parsed command line options"""
 
     @property
@@ -872,19 +894,17 @@ def make_hashseed():
     return str(random.randint(1, max_seed))
 
 
-class parseini:
-    def __init__(self, config, inipath):  # noqa
-        config.toxinipath = inipath
+class ParseIni(object):
+    def __init__(self, config, ini_path, ini_data):  # noqa
+        config.toxinipath = ini_path
         config.toxinidir = config.toxinipath.dirpath()
 
-        self._cfg = py.iniconfig.IniConfig(config.toxinipath)
+        self._cfg = py.iniconfig.IniConfig(config.toxinipath, ini_data)
         config._cfg = self._cfg
         self.config = config
 
-        if inipath.basename == "setup.cfg":
-            prefix = "tox"
-        else:
-            prefix = None
+        prefix = "tox" if ini_path.basename == "setup.cfg" else None
+
         ctxname = getcontextname()
         if ctxname == "jenkins":
             reader = SectionReader(

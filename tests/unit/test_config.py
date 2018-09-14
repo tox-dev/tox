@@ -2387,7 +2387,8 @@ class TestCmdInvocation:
         result = cmd()
         assert result.ret
         assert result.out == ""
-        assert result.err == "ERROR: toxini file 'tox.ini' not found\n"
+        msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
+        assert result.err == msg
 
     def test_override_workdir(self, cmd, initproj):
         baddir = "badworkdir-123"
@@ -2624,3 +2625,31 @@ def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):
     out, err = capsys.readouterr()
     assert not err
     assert not out
+
+
+def test_config_via_pyproject_legacy(initproj):
+    initproj(
+        "config_via_pyproject_legacy-0.5",
+        filedefs={
+            "pyproject.toml": '''
+                [tool.tox]
+                legacy_tox_ini = """
+                [tox]
+                envlist = py27
+                """
+        '''
+        },
+    )
+    config = parseconfig([])
+    assert config.envlist == ["py27"]
+
+
+def test_config_bad_pyproject_specified(initproj, capsys):
+    base = initproj("config_via_pyproject_legacy-0.5", filedefs={"pyproject.toml": ""})
+    with pytest.raises(SystemExit):
+        parseconfig(["-c", str(base.join("pyproject.toml"))])
+
+    out, err = capsys.readouterr()
+    msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
+    assert err == msg
+    assert "ERROR:" not in out

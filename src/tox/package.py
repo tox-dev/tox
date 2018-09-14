@@ -6,10 +6,9 @@ from collections import namedtuple
 import pkg_resources
 import py
 import six
-import toml
 
 import tox
-from tox.config import DepConfig
+from tox.config import DepConfig, get_py_project_toml
 
 BuildInfo = namedtuple("BuildInfo", ["requires", "backend_module", "backend_object"])
 
@@ -144,8 +143,7 @@ def get_build_info(folder, report):
         report.error("missing {}".format(toml_file))
         raise SystemExit(1)
 
-    with open(str(toml_file)) as file_handler:
-        config_data = toml.load(file_handler)
+    config_data = get_py_project_toml(toml_file)
 
     if "build-system" not in config_data:
         abort("build-system section missing")
