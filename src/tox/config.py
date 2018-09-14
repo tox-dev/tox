@@ -227,10 +227,7 @@ def parseconfig(args, plugins=()):
                 content = toml_content["tool"]["tox"]["legacy_tox_ini"]
             except KeyError:
                 continue
-        try:
-            ParseIni(config, config_file, content)
-        except tox.exception.InterpreterNotFound as exception:
-            print("ERROR: {}".format(exception))  # Use stdout to match test expectations
+        ParseIni(config, config_file, content)
         pm.hook.tox_configure(config=config)  # post process config object
         break
     else:
@@ -255,6 +252,9 @@ def propose_configs(cli_config_file):
         if os.path.isdir(cli_config_file):
             from_folder = py.path.local(cli_config_file)
         else:
+            print(
+                "ERROR: {} is neither file or directory".format(cli_config_file), file=sys.stderr
+            )
             return
     for basename in INFO.CONFIG_CANDIDATES:
         if from_folder.join(basename).isfile():
@@ -905,25 +905,25 @@ class ParseIni(object):
 
         prefix = "tox" if ini_path.basename == "setup.cfg" else None
 
-        ctxname = getcontextname()
-        if ctxname == "jenkins":
+        context_name = getcontextname()
+        if context_name == "jenkins":
             reader = SectionReader(
                 "tox:jenkins", self._cfg, prefix=prefix, fallbacksections=["tox"]
             )
-            distshare_default = "{toxworkdir}/distshare"
-        elif not ctxname:
+            dist_share_default = "{toxworkdir}/distshare"
+        elif not context_name:
             reader = SectionReader("tox", self._cfg, prefix=prefix)
-            distshare_default = "{homedir}/.tox/distshare"
+            dist_share_default = "{homedir}/.tox/distshare"
         else:
             raise ValueError("invalid context")
 
         if config.option.hashseed is None:
-            hashseed = make_hashseed()
+            hash_seed = make_hashseed()
         elif config.option.hashseed == "noset":
-            hashseed = None
+            hash_seed = None
         else:
-            hashseed = config.option.hashseed
-        config.hashseed = hashseed
+            hash_seed = config.option.hashseed
+        config.hashseed = hash_seed
 
         reader.addsubstitutions(toxinidir=config.toxinidir, homedir=config.homedir)
         # As older versions of tox may have bugs or incompatibilities that
@@ -962,10 +962,10 @@ class ParseIni(object):
 
         override = False
         if config.option.indexurl:
-            for urldef in config.option.indexurl:
-                m = re.match(r"\W*(\w+)=(\S+)", urldef)
+            for url_def in config.option.indexurl:
+                m = re.match(r"\W*(\w+)=(\S+)", url_def)
                 if m is None:
-                    url = urldef
+                    url = url_def
                     name = "default"
                 else:
                     name, url = m.groups()
@@ -986,7 +986,7 @@ class ParseIni(object):
         self._make_thread_safe_path(config, "distdir", unique_id)
 
         reader.addsubstitutions(distdir=config.distdir)
-        config.distshare = reader.getpath("distshare", distshare_default)
+        config.distshare = reader.getpath("distshare", dist_share_default)
         self._make_thread_safe_path(config, "distshare", unique_id)
         reader.addsubstitutions(distshare=config.distshare)
         config.sdistsrc = reader.getpath("sdistsrc", None)

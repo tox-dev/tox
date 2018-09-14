@@ -2653,3 +2653,21 @@ def test_config_bad_pyproject_specified(initproj, capsys):
     msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
     assert err == msg
     assert "ERROR:" not in out
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="no named pipes on Windows")
+def test_config_bad_config_type_specified(monkeypatch, tmpdir, capsys):
+    monkeypatch.chdir(tmpdir)
+    name = tmpdir.join("named_pipe")
+    os.mkfifo(str(name))
+    with pytest.raises(SystemExit):
+        parseconfig(["-c", str(name)])
+
+    out, err = capsys.readouterr()
+    notes = (
+        "ERROR: {} is neither file or directory".format(name),
+        "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found",
+    )
+    msg = "\n".join(notes) + "\n"
+    assert err == msg
+    assert "ERROR:" not in out
