@@ -110,7 +110,7 @@ def build_isolated(config, report, session):
     package_venv.envconfig.deps = [DepConfig(r, None) for r in build_info.requires]
     package_venv.envconfig.deps.extend(user_specified_deps)
 
-    if not session.setupenv(package_venv):
+    if session.setupenv(package_venv):
         session.finishvenv(package_venv)
 
     build_requires = get_build_requires(build_info, package_venv, session)

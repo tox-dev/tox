@@ -31,6 +31,7 @@ def test_package_isolated_build_setuptools(initproj, cmd):
 
     result2 = cmd("--sdistonly")
     assert result2.ret == 0, result.out
+    assert ".package create" not in result2.out
     assert ".package recreate" not in result2.out
 
 
@@ -75,4 +76,5 @@ def test_package_isolated_build_flit(initproj, cmd):
     result2 = cmd("--sdistonly")
 
     assert result2.ret == 0, result.out
+    assert ".package create" not in result2.out
     assert ".package recreate" not in result2.out
