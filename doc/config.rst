@@ -80,13 +80,19 @@ and will first lookup global tox settings in this section:
 
     .. versionadded:: 3.1.0
 
-    If ``True``, :confval:`basepython` settings that conflict with the Python
-    variant for environments using default factors, such as ``py27`` or
-    ``py35``, will be ignored. This allows you to configure
-    :confval:`basepython` in the global testenv without affecting these
-    factors. If ``False``, the default, a warning will be emitted if a conflict
-    is identified. In a future version of tox, this warning will become an
-    error.
+    tox allows setting the python version for an environment via the :confval:`basepython`
+    setting. If that's not set tox can set a default value from the environment name (
+    e.g. ``py37`` implies Python 3.7). Matching up the python version with the environment
+    name has became expected at this point, leading to surprises when some configs don't
+    do so. To help with sanity of users a warning will be emitted whenever the environment
+    name version does not matches up with this expectation. In a future version of tox,
+    this warning will become an error.
+
+    Furthermore, we allow hard enforcing this rule (and bypassing the warning) by setting
+    this flag to ``True``. In such cases we ignore the :confval:`basepython` and instead
+    always use the base python implied from the Python name. This allows you to
+    configure :confval:`basepython` in the global testenv without affecting environments
+    that have implied base python versions.
 
 .. confval:: requires=LIST
 

@@ -1,0 +1,1 @@
+instead of assuming the Python version from the base python name ask the interpreter to reveal the version for the ``ignore_basepython_conflict`` flag - by :user:`gaborbernat`
