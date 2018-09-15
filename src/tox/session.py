@@ -7,6 +7,7 @@ INI-style "tox.ini" file.
 from __future__ import print_function
 
 import os
+import pipes
 import re
 import shutil
 import subprocess
@@ -136,9 +137,16 @@ class Action(object):
     def popen(self, args, cwd=None, env=None, redirect=True, returnout=False, ignore_ret=False):
         stdout = outpath = None
         resultjson = self.session.config.option.resultjson
+
+        cmd_args = [str(x) for x in args]
+        cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
         if resultjson or redirect:
             fout = self._initlogpath(self.id)
-            fout.write("actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(self.id, self.msg, args))
+            fout.write(
+                "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
+                    self.id, self.msg, cmd_args_shell
+                )
+            )
             fout.flush()
             outpath = py.path.local(fout.name)
             fin = outpath.open("rb")
@@ -153,11 +161,13 @@ class Action(object):
             popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=subprocess.STDOUT)
         except OSError as e:
             self.report.error(
-                "invocation failed (errno {:d}), args: {}, cwd: {}".format(e.errno, args, cwd)
+                "invocation failed (errno {:d}), args: {}, cwd: {}".format(
+                    e.errno, cmd_args_shell, cwd
+                )
             )
             raise
         popen.outpath = outpath
-        popen.args = [str(x) for x in args]
+        popen.args = cmd_args
         popen.cwd = cwd
         popen.action = self
         self._popenlist.append(popen)
