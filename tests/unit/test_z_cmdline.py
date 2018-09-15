@@ -149,7 +149,7 @@ def test_run_custom_install_command_error(cmd, initproj):
     )
     result = cmd()
     assert re.match(
-        r"ERROR: invocation failed \(errno \d+\), args: \['.*[/\\]tox\.ini", result.outlines[-1]
+        r"ERROR: invocation failed \(errno \d+\), args: .*[/\\]tox\.ini", result.outlines[-1]
     )
     assert result.ret
 
