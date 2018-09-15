@@ -1645,7 +1645,7 @@ class TestConfigTestEnv:
             assert config.basepython == "python{}.{}".format(name[2], name[3])
 
     def test_default_factors_conflict(self, newconfig, capsys):
-        with pytest.warns(UserWarning, match=r"Conflicting basepython .*"):
+        with pytest.warns(UserWarning, match=r"conflicting basepython .*"):
             config = newconfig(
                 """
                 [testenv]
@@ -1657,6 +1657,31 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["py27"]
         assert envconfig.basepython == "python3"
+
+    def test_default_factors_conflict_lying_name(
+        self, newconfig, capsys, tmpdir, recwarn, monkeypatch
+    ):
+        # we first need to create a lying Python here, let's mock out here
+        from tox.interpreters import Interpreters
+
+        def get_executable(self, envconfig):
+            return sys.executable
+
+        monkeypatch.setattr(Interpreters, "get_executable", get_executable)
+
+        major, minor = sys.version_info[0:2]
+        config = newconfig(
+            """
+            [testenv:py{0}{1}]
+            basepython=python{0}.{2}
+            commands = python --version
+        """.format(
+                major, minor, minor - 1
+            )
+        )
+        env_config = config.envconfigs["py{}{}".format(major, minor)]
+        assert env_config.basepython == "python{}.{}".format(major, minor - 1)
+        assert not recwarn.list, "\n".join(repr(i.message) for i in recwarn.list)
 
     def test_default_factors_conflict_ignore(self, newconfig, capsys):
         with pytest.warns(None) as record:
