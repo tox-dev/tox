@@ -5,15 +5,15 @@ tox configuration specification
 
 tox supports at the moment three locations for specifying the configuration, in the following priority order:
 
-1. ``pyproject.toml``
-2. ``tox.ini``
-3. ``setup.cfg``
+1. ``pyproject.toml``,
+2. ``tox.ini``,
+3. ``setup.cfg``.
 
 As far as the configuration format at the moment we only support standard ConfigParser_ "ini-style" format
 (there is a plan to add a pure TOML one soon).
-``tox.ini`` and ``setup.cfg`` are files are fully such files. ``pyproject.toml`` on the other hand is a TOML
-format. However, one can inline the *ini-style* format under the ``tool.tox.legacy_tox_ini`` key as a multi-line
-string.
+``tox.ini`` and ``setup.cfg`` are files are fully such files. Note ``setup.cfg`` requires the content to be under
+``tox:tox`` section. ``pyproject.toml`` on the other hand is a TOML format. However, one can inline the *ini-style* format under
+the ``tool.tox.legacy_tox_ini`` key as a multi-line string.
 
 Below you find the specification for the *ini-style* format, but you might want to skim some
 :doc:`examples` first and use this page as a reference.
