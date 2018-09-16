@@ -10,6 +10,7 @@ tox configuration and usage examples
    example/pytest.rst
    example/unittest
    example/nose.rst
+   example/documentation.rst
    example/general.rst
    example/jenkins.rst
    example/devenv.rst
