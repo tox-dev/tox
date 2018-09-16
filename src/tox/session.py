@@ -381,13 +381,25 @@ class Session:
         self._spec2pkg = {}
         self._name2venv = {}
         try:
-            self.venvlist = [self.getvenv(x) for x in self.config.envlist]
+            self.venvlist = [self.getvenv(x) for x in self.evaluated_env_list()]
         except LookupError:
             raise SystemExit(1)
         except tox.exception.ConfigError as e:
             self.report.error(str(e))
             raise SystemExit(1)
         self._actions = []
+
+    def evaluated_env_list(self):
+        tox_env_filter = os.environ.get("TOX_SKIP_ENV")
+        tox_env_filter_re = re.compile(tox_env_filter) if tox_env_filter is not None else None
+        for name in self.config.envlist:
+            if tox_env_filter_re is not None and tox_env_filter_re.match(name):
+                msg = "skip environment {}, matches filter {!r}".format(
+                    name, tox_env_filter_re.pattern
+                )
+                self.report.verbosity1(msg)
+                continue
+            yield name
 
     @property
     def hook(self):

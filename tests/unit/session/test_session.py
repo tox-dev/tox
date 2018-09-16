@@ -140,3 +140,73 @@ def test_skip_install_skip_package(cmd, initproj, mock_venv):
     )
     result = cmd("--notest")
     assert result.ret == 0
+
+
+@pytest.fixture()
+def venv_filter_project(initproj, cmd):
+    def func(*args):
+        initproj(
+            "pkg123-0.7",
+            filedefs={
+                "tox.ini": """
+                    [tox]
+                    envlist = {py27,py36}-{nocov,cov,diffcov}{,-extra}
+                    skipsdist = true
+
+                    [testenv]
+                    skip_install = true
+                    commands = python -c 'print("{envname}")'
+                """
+            },
+        )
+        result = cmd(*args)
+        assert result.ret == 0
+        active = [i.name for i in result.session.venvlist]
+        return active, result
+
+    yield func
+
+
+def test_venv_filter_empty_all_active(venv_filter_project, monkeypatch):
+    monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
+    active, result = venv_filter_project("-a")
+    assert result.outlines == [
+        "py27-nocov",
+        "py27-nocov-extra",
+        "py27-cov",
+        "py27-cov-extra",
+        "py27-diffcov",
+        "py27-diffcov-extra",
+        "py36-nocov",
+        "py36-nocov-extra",
+        "py36-cov",
+        "py36-cov-extra",
+        "py36-diffcov",
+        "py36-diffcov-extra",
+    ]
+    assert active == result.outlines
+
+
+def test_venv_filter_match_all_none_active(venv_filter_project, monkeypatch):
+    monkeypatch.setenv("TOX_SKIP_ENV", ".*")
+    active, result = venv_filter_project("-a")
+    assert not active
+    existing_envs = result.outlines
+
+    _, result = venv_filter_project("-avv")
+    for name in existing_envs:
+        msg = "skip environment {}, matches filter '.*'".format(name)
+        assert msg in result.outlines
+
+
+def test_venv_filter_match_some_some_active(venv_filter_project, monkeypatch):
+    monkeypatch.setenv("TOX_SKIP_ENV", "py27.*")
+    active, result = venv_filter_project("-avvv")
+    assert active == [
+        "py36-nocov",
+        "py36-nocov-extra",
+        "py36-cov",
+        "py36-cov-extra",
+        "py36-diffcov",
+        "py36-diffcov-extra",
+    ]

@@ -1,0 +1,1 @@
+use the os environment variable ``TOX_SKIP_ENV`` to filter out tox environment names from the run list (set by :confval:`envlist`)  - by :user:`gaborbernat`

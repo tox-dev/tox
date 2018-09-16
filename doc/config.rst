@@ -76,6 +76,13 @@ and will first lookup global tox settings in this section:
     * environment variable ``TOXENV``
     * ``tox.ini`` file's ``envlist``
 
+    .. versionadded:: 3.4.0
+
+        What tox environments are ran during the tox invocation can be further filtered
+        via the operating system environment variable ``TOX_SKIP_ENV`` regular expression
+        (e.g. ``py27.*`` means **don't** evaluate environments that start with the key ``py27``).
+        Skipped environments will be logged at level two verbosity level.
+
 .. confval:: ignore_basepython_conflict=True|False(default)
 
     .. versionadded:: 3.1.0
