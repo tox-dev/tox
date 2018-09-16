@@ -274,7 +274,7 @@ class VirtualEnv(object):
                 return
             action.setactivity("{}-nodeps".format(name), dir)
             pip_flags = ["--no-deps"] + ([] if is_develop else ["-U"])
-
+        pip_flags.extend(["-v"] * min(3, action.report.verbosity - 2))
         if action.venv.envconfig.extras:
             dir += "[{}]".format(",".join(action.venv.envconfig.extras))
         target = [dir]

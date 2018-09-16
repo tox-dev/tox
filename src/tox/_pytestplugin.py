@@ -14,7 +14,7 @@ import tox
 from tox import venv
 from tox.config import parseconfig
 from tox.result import ResultLog
-from tox.session import Session, main
+from tox.session import Reporter, Session, main
 from tox.venv import CreationConfig, VirtualEnv, getdigest
 
 mark_dont_run_on_windows = pytest.mark.skipif(os.name == "nt", reason="non windows test")
@@ -128,6 +128,7 @@ class ReportExpectMock:
         self._calls = []
         self._index = -1
         self.session = session
+        self.orig_reporter = Reporter(session)
 
     def clear(self):
         self._calls[:] = []
@@ -136,8 +137,7 @@ class ReportExpectMock:
         if name[0] == "_":
             raise AttributeError(name)
         elif name == "verbosity":
-            # FIXME: special case for property on Reporter class, may it be generalized?
-            return 0
+            return self.orig_reporter.verbosity
 
         def generic_report(*args, **_):
             self._calls.append((name,) + args)

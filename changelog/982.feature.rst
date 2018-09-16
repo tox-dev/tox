@@ -1,0 +1,1 @@
+when verbosity level increases above two start passing through verbosity flags to pip - by :user:`gaborbernat`
