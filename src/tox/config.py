@@ -1430,6 +1430,10 @@ class Replacer:
 
         if sub_type == "env":
             return self._replace_env(match)
+        if sub_type == "tty":
+            if is_interactive():
+                return match.group("substitution_value")
+            return match.group("default_value")
         if sub_type is not None:
             raise tox.exception.ConfigError(
                 "No support for the {} substitution type".format(sub_type)
@@ -1437,16 +1441,16 @@ class Replacer:
         return self._replace_substitution(match)
 
     def _replace_env(self, match):
-        envkey = match.group("substitution_value")
-        if not envkey:
+        key = match.group("substitution_value")
+        if not key:
             raise tox.exception.ConfigError("env: requires an environment variable name")
         default = match.group("default_value")
-        envvalue = self.reader.get_environ_value(envkey)
-        if envvalue is not None:
-            return envvalue
+        value = self.reader.get_environ_value(key)
+        if value is not None:
+            return value
         if default is not None:
             return default
-        raise tox.exception.MissingSubstitution(envkey)
+        raise tox.exception.MissingSubstitution(key)
 
     def _substitute_from_other_section(self, key):
         if key.startswith("[") and "]" in key:
@@ -1473,6 +1477,10 @@ class Replacer:
         if callable(val):
             val = val()
         return str(val)
+
+
+def is_interactive():
+    return sys.stdin.isatty()
 
 
 class _ArgvlistReader:

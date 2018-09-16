@@ -2724,3 +2724,29 @@ def test_config_bad_config_type_specified(monkeypatch, tmpdir, capsys):
     msg = "\n".join(notes) + "\n"
     assert err == msg
     assert "ERROR:" not in out
+
+
+def test_interactive_na(newconfig, monkeypatch):
+    monkeypatch.setattr(tox.config, "is_interactive", lambda: False)
+    config = newconfig(
+        """
+        [testenv:py]
+        setenv = A = {tty:X:Y}
+        """
+    )
+    assert config.envconfigs["py"].setenv["A"] == "Y"
+
+
+def test_interactive_available(newconfig, monkeypatch):
+    monkeypatch.setattr(tox.config, "is_interactive", lambda: True)
+    config = newconfig(
+        """
+        [testenv:py]
+        setenv = A = {tty:X:Y}
+        """
+    )
+    assert config.envconfigs["py"].setenv["A"] == "X"
+
+
+def test_interactive():
+    tox.config.is_interactive()

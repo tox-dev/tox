@@ -564,6 +564,17 @@ the above example is roughly equivalent to
 .. _`command positional substitution`:
 .. _`positional substitution`:
 
+interactive shell substitution
+++++++++++++++++++++++++++++++
+
+It's possible to inject a config value only when tox is running in interactive shell (standard input):
+
+    {tty:ON_VALUE:OFF_VALUE}
+
+The first value is the value to inject when the interactive terminal is available,
+the second value is the value to use when it's not. The later on is optional. A good use case
+for this is e.g. passing in the ``--pdb`` flag for pytest.
+
 substitutions for positional arguments in commands
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
