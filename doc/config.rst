@@ -149,49 +149,47 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: basepython=NAME-OR-PATH
 
-    Name or path to a Python interpreter which will be used for creating
-    the virtual environment; if the environment name contains a :ref:`default
-    factor <factors>`, this value will be ignored. **default**: interpreter
-    used for tox invocation.
+    Name or path to a Python interpreter which will be used for creating the virtual environment,
+    this determines in practice the python for what we'll create a virtual isolated environment.
+    Use this to specify the python version for a tox environment. If not specified the virtual
+    environments factors (e.g. name part) wil be used to automatically set one. E.g. ``py37``
+    means ``python3.7``, ``py3`` means ``python3`` and ``py`` means ``python``.
 
     .. versionchanged:: 3.1
 
-       Environments that use a :ref:`default factor <factors>` now ignore this
-       value, defaulting to the interpreter defined for that factor.
+        After resolving this value if the interpreter reports back a different version number
+        than implied from the name a warning will be printed by default. However, if
+        :confval:`ignore_basepython_conflict` is set, the value is ignored and we force the
+        ``basepython`` implied from the factor name.
 
 .. confval:: commands=ARGVLIST
 
-    The commands to be called for testing. Each command is defined
-    by one or more lines; a command can have multiple lines if a line
-    ends with the ``\`` character in which case the subsequent line
-    will be appended (and may contain another ``\`` character ...).
-    For eventually performing a call to ``subprocess.Popen(args, ...)``
-    ``args`` are determined by splitting the whole command by whitespace.
+    The commands to be called for testing. Each line is interpreted as one command;
+    however a command can be split over multiple lines by ending the line with the ``\``
+    character.
 
-    To execute commands that can fail, they can be prefixed with a dash (``-``).
-    For these commands the exitcode is ignored. In this example ``ls -la`` will
-    always be executed although ``cat`` might return ``1`` for a not existing file::
+    Commands will execute one by one in sequential fashion until one of them fails (their exit
+    code is non-zero) or all of them succeed. The exit code of a command may be ignored (meaning
+    they are always considered successful) by prefixing the command with a dash (``-``) - this is
+    similar to how ``make`` recipe lines work. The outcome of the environment is considered successful
+    only if all commands succeeded (exit code ignored via the ``-`` or success exit code value of zero).
 
-        commands =
-            - cat non-existing-file.txt
-            - ls -la
-
-    This is similar to ``make`` recipe lines.
+    :note: the virtual environment binary path (the ``bin`` folder within) is prepended to the os ``PATH``,
+        meaning commands will first try to resolve to an executable from within the
+        virtual environment, and only after that outside of it. Therefore ``python``
+        translates as the virtual environments ``python`` (having the same runtime version
+        as the :confval:`basepython`), and ``pip`` translates as the virtual environments ``pip``.
 
 .. confval:: install_command=ARGV
 
     .. versionadded:: 1.6
 
-    The ``install_command`` setting is used for installing packages into
-    the virtual environment; both the package under test
-    and its dependencies (defined with :confval:`deps`).
-    Must contain the substitution key
-    ``{packages}`` which will be replaced by the packages to
-    install.  You should also accept ``{opts}`` if you are using
-    pip -- it will contain index server options
-    such as ``--pre`` (configured as ``pip_pre``) and potentially
-    index-options from the deprecated :confval:`indexserver`
-    option.
+    Determines the command used for installing packages into the virtual environment;
+    both the package under test and its dependencies (defined with :confval:`deps`).
+    Must contain the substitution key ``{packages}`` which will be replaced by the package(s) to
+    install.  You should also accept ``{opts}`` if you are using pip -- it will contain index server options
+    such as ``--pre`` (configured as ``pip_pre``) and potentially index-options from the
+    deprecated :confval:`indexserver` option.
 
     **default**::
 
