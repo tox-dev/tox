@@ -361,8 +361,9 @@ def tox_addoption(parser):
         action="count",
         dest="verbose_level",
         default=0,
-        help="increase verbosity of reporting output. -vv mode turns off "
-        "output redirection for package installation",
+        help="increase verbosity of reporting output."
+        "-vv mode turns off output redirection for package installation, "
+        "above level two verbosity flags are passed through to pip (with two less level)",
     )
     parser.add_argument(
         "-q",

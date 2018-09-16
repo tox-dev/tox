@@ -724,6 +724,20 @@ def test_installpkg_no_upgrade(tmpdir, newmocksession):
     assert pcalls[0].args[1:-1] == ["-m", "pip", "install", "--exists-action", "w"]
 
 
+@pytest.mark.parametrize("count, level", [(0, 0), (1, 0), (2, 0), (3, 1), (4, 2), (5, 3), (6, 3)])
+def test_install_command_verbosity(tmpdir, newmocksession, count, level):
+    pkg = tmpdir.ensure("package.tar.gz")
+    mock_session = newmocksession(["-{}".format("v" * count)], "")
+    env = mock_session.getenv("python")
+    env.just_created = True
+    env.envconfig.envdir.ensure(dir=1)
+    mock_session.installpkg(env, pkg)
+    pcalls = mock_session._pcalls
+    assert len(pcalls) == 1
+    expected = ["-m", "pip", "install", "--exists-action", "w"] + (["-v"] * level)
+    assert pcalls[0].args[1:-1] == expected
+
+
 def test_installpkg_upgrade(newmocksession, tmpdir):
     pkg = tmpdir.ensure("package.tar.gz")
     mocksession = newmocksession([], "")
