@@ -625,6 +625,8 @@ class TestVenvTest:
         assert "PIP_RESPECT_VIRTUALENV" not in os.environ
         assert "PIP_REQUIRE_VIRTUALENV" not in os.environ
         assert "__PYVENV_LAUNCHER__" not in os.environ
+        assert os.environ["PIP_USER"] == "0"
+        assert os.environ["PIP_NO_DEPS"] == "0"
 
     def test_pythonpath_usage(self, newmocksession, monkeypatch):
         monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
