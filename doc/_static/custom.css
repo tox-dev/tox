@@ -7,6 +7,11 @@ div.body {
     max-width: 1280px;
 }
 
+div.body p, ol > li, div.body td {
+    text-align: justify;
+}
+
+
 img, div.figure {
     margin: 0 !important
 }
@@ -20,9 +25,6 @@ ul > li > p {
 
 }
 
-ol > li {
-    text-align: justify;
-}
 
 ol > li > p {
     margin-bottom: 0;
