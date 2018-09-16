@@ -5,6 +5,7 @@ import pipes
 import re
 import sys
 import warnings
+from itertools import chain
 
 import py
 
@@ -231,7 +232,7 @@ class VirtualEnv(object):
         setup_py = setupdir.join("setup.py")
         setup_cfg = setupdir.join("setup.cfg")
         args = [self.envconfig.envpython, str(setup_py), "--name"]
-        env = self._getenv()
+        env = self._get_os_environ()
         output = action.popen(args, cwd=setupdir, redirect=False, returnout=True, env=env)
         name = output.strip()
         args = [self.envconfig.envpython, "-c", "import sys; print(sys.path)"]
@@ -297,16 +298,36 @@ class VirtualEnv(object):
         return options
 
     def run_install_command(self, packages, action, options=()):
-        argv = self.envconfig.install_command[:]
-        i = argv.index("{packages}")
-        argv[i : i + 1] = packages
-        if "{opts}" in argv:
-            i = argv.index("{opts}")
-            argv[i : i + 1] = list(options)
+        def expand(val):
+            # expand an install command
+            if val == "{packages}":
+                for package in packages:
+                    yield package
+            elif val == "{opts}":
+                for opt in options:
+                    yield opt
+            else:
+                yield val
 
-        for x in ("PIP_RESPECT_VIRTUALENV", "PIP_REQUIRE_VIRTUALENV", "__PYVENV_LAUNCHER__"):
-            os.environ.pop(x, None)
+        cmd = list(chain.from_iterable(expand(val) for val in self.envconfig.install_command))
 
+        self.ensure_pip_os_environ_ok()
+
+        old_stdout = sys.stdout
+        sys.stdout = codecs.getwriter("utf8")(sys.stdout)
+        try:
+            self._pcall(
+                cmd,
+                cwd=self.envconfig.config.toxinidir,
+                action=action,
+                redirect=self.session.report.verbosity < 2,
+            )
+        finally:
+            sys.stdout = old_stdout
+
+    def ensure_pip_os_environ_ok(self):
+        for key in ("PIP_RESPECT_VIRTUALENV", "PIP_REQUIRE_VIRTUALENV", "__PYVENV_LAUNCHER__"):
+            os.environ.pop(key, None)
         if "PYTHONPATH" not in self.envconfig.passenv:
             # If PYTHONPATH not explicitly asked for, remove it.
             if "PYTHONPATH" in os.environ:
@@ -316,17 +337,11 @@ class VirtualEnv(object):
                 )
                 os.environ.pop("PYTHONPATH")
 
-        old_stdout = sys.stdout
-        sys.stdout = codecs.getwriter("utf8")(sys.stdout)
-        try:
-            self._pcall(
-                argv,
-                cwd=self.envconfig.config.toxinidir,
-                action=action,
-                redirect=self.session.report.verbosity < 2,
-            )
-        finally:
-            sys.stdout = old_stdout
+        # installing packages at user level may mean we're not installing inside the venv
+        os.environ["PIP_USER"] = "0"
+
+        # installing without dependencies may lead to broken packages
+        os.environ["PIP_NO_DEPS"] = "0"
 
     def _install(self, deps, extraopts=None, action=None):
         if not deps:
@@ -353,13 +368,13 @@ class VirtualEnv(object):
                 options.extend(extraopts)
             self.run_install_command(packages=packages, options=options, action=action)
 
-    def _getenv(self, testcommand=False):
-        if testcommand:
+    def _get_os_environ(self, is_test_command=False):
+        if is_test_command:
             # for executing tests we construct a clean environment
             env = {}
-            for envname in self.envconfig.passenv:
-                if envname in os.environ:
-                    env[envname] = os.environ[envname]
+            for env_key in self.envconfig.passenv:
+                if env_key in os.environ:
+                    env[env_key] = os.environ[env_key]
         else:
             # for executing non-test commands we use the full
             # invocation environment
@@ -377,7 +392,7 @@ class VirtualEnv(object):
             self.session.make_emptydir(self.envconfig.envtmpdir)
             self.envconfig.envtmpdir.ensure(dir=1)
             cwd = self.envconfig.changedir
-            env = self._getenv(testcommand=True)
+            env = self._get_os_environ(is_test_command=True)
             # Display PYTHONHASHSEED to assist with reproducibility.
             action.setactivity("runtests", "PYTHONHASHSEED={!r}".format(env.get("PYTHONHASHSEED")))
             for i, argv in enumerate(self.envconfig.commands):
@@ -405,7 +420,7 @@ class VirtualEnv(object):
                         action=action,
                         redirect=redirect,
                         ignore_ret=ignore_ret,
-                        testcommand=True,
+                        is_test_command=True,
                     )
                 except tox.exception.InvocationError as err:
                     if self.envconfig.ignore_outcome:
@@ -424,18 +439,28 @@ class VirtualEnv(object):
                     raise
 
     def _pcall(
-        self, args, cwd, venv=True, testcommand=False, action=None, redirect=True, ignore_ret=False
+        self,
+        args,
+        cwd,
+        venv=True,
+        is_test_command=False,
+        action=None,
+        redirect=True,
+        ignore_ret=False,
     ):
+        # construct environment variables
         os.environ.pop("VIRTUALENV_PYTHON", None)
+        env = self._get_os_environ(is_test_command=is_test_command)
+        bin_dir = str(self.envconfig.envbindir)
+        env["PATH"] = os.pathsep.join([bin_dir, os.environ["PATH"]])
+        self.session.report.verbosity2("setting PATH={}".format(env["PATH"]))
 
-        cwd.ensure(dir=1)
+        # get command
         args[0] = self.getcommandpath(args[0], venv, cwd)
         if sys.platform != "win32" and "TOX_LIMITED_SHEBANG" in os.environ:
             args = prepend_shebang_interpreter(args)
-        env = self._getenv(testcommand=testcommand)
-        bindir = str(self.envconfig.envbindir)
-        env["PATH"] = p = os.pathsep.join([bindir, os.environ["PATH"]])
-        self.session.report.verbosity2("setting PATH={}".format(p))
+
+        cwd.ensure(dir=1)  # ensure the cwd exists
         return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
 
 
