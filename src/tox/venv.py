@@ -180,8 +180,8 @@ class VirtualEnv(object):
         try:
             self.hook.tox_testenv_create(action=action, venv=self)
             self.just_created = True
-        except tox.exception.UnsupportedInterpreter:
-            return sys.exc_info()[1]
+        except tox.exception.UnsupportedInterpreter as exception:
+            return exception
         try:
             self.hook.tox_testenv_install_deps(action=action, venv=self)
         except tox.exception.InvocationError as exception:

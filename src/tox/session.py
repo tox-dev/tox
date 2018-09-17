@@ -73,7 +73,7 @@ def show_help_ini(config):
     for env_attr in config._testenv_attr:
         tw.line(
             "{:<15} {:<8} default: {}".format(
-                env_attr.name, "<" + env_attr.type + ">", env_attr.default
+                env_attr.name, "<{}>".format(env_attr.type), env_attr.default
             ),
             bold=True,
         )
@@ -518,8 +518,8 @@ class Session:
             try:
                 venv.developpkg(setupdir, action)
                 return True
-            except tox.exception.InvocationError:
-                venv.status = sys.exc_info()[1]
+            except tox.exception.InvocationError as exception:
+                venv.status = exception
                 return False
 
     def installpkg(self, venv, path):
@@ -535,8 +535,8 @@ class Session:
             try:
                 venv.installpkg(path, action)
                 return True
-            except tox.exception.InvocationError:
-                venv.status = sys.exc_info()[1]
+            except tox.exception.InvocationError as exception:
+                venv.status = exception
                 return False
 
     def subcommand_test(self):

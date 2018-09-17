@@ -139,7 +139,8 @@ class DepOption:
                         name = "{}{}".format(option, name[len(option) :].strip())
                 # in case of a long option, we add an equal sign
                 for option in tox.PIP.INSTALL_LONG_OPTIONS_ARGUMENT:
-                    if name.startswith(option + " "):
+                    name_start = "{} ".format(option)
+                    if name.startswith(name_start):
                         name = "{}={}".format(option, name[len(option) :].strip())
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
@@ -279,7 +280,7 @@ def parse_cli(args, pm):
 
 
 def feedback(msg, sysexit=False):
-    print("ERROR: " + msg, file=sys.stderr)
+    print("ERROR: {}".format(msg), file=sys.stderr)
     if sysexit:
         raise SystemExit(1)
 
@@ -1030,7 +1031,7 @@ class ParseIni(object):
 
         # configure testenvs
         for name in all_envs:
-            section = testenvprefix + name
+            section = "{}{}".format(testenvprefix, name)
             factors = set(name.split("-"))
             if (
                 section in self._cfg
@@ -1055,7 +1056,7 @@ class ParseIni(object):
             name = config.isolated_build_env
             if name not in config.envconfigs:
                 config.envconfigs[name] = self.make_envconfig(
-                    name, testenvprefix + name, reader._subs, config
+                    name, "{}{}".format(testenvprefix, name), reader._subs, config
                 )
 
     def _make_thread_safe_path(self, config, attr, unique_id):
@@ -1103,7 +1104,7 @@ class ParseIni(object):
             atype = env_attr.type
             try:
                 if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
-                    meth = getattr(reader, "get" + atype)
+                    meth = getattr(reader, "get{}".format(atype))
                     res = meth(env_attr.name, env_attr.default, replace=replace)
                 elif atype == "space-separated-list":
                     res = reader.getlist(env_attr.name, sep=" ")
@@ -1502,7 +1503,7 @@ class _ArgvlistReader:
             if not line:
                 continue
             if line.endswith("\\"):
-                current_command += " " + line[:-1]
+                current_command += " {}".format(line[:-1])
                 continue
             current_command += line
 
