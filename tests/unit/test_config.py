@@ -2753,3 +2753,22 @@ def test_interactive_available(newconfig, monkeypatch):
 
 def test_interactive():
     tox.config.is_interactive()
+
+
+def test_config_current_py(newconfig, current_tox_py, cmd, tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
+    config = newconfig(
+        """
+        [tox]
+        envlist = {0}
+        skipsdist = True
+
+        [testenv:{0}]
+        commands = python -c "print('all')"
+        """.format(
+            current_tox_py
+        )
+    )
+    assert config.envconfigs[current_tox_py]
+    result = cmd()
+    assert result.ret == 0, result.out

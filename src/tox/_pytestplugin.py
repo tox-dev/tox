@@ -430,3 +430,10 @@ def mock_venv(monkeypatch):
         return []
 
     monkeypatch.setattr(venv, "tox_runenvreport", tox_runenvreport)
+
+
+@pytest.fixture(scope="session")
+def current_tox_py():
+    """generate the current (test runners) python versions key
+    e.g. py37 when running under Python 3.7"""
+    return "py{}".format("".join(str(i) for i in sys.version_info[0:2]))
