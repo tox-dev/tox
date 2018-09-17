@@ -899,7 +899,11 @@ class TestConfigTestEnv:
         assert envconfig.usedevelop is False
         assert envconfig.ignore_errors is False
         assert envconfig.envlogdir == envconfig.envdir.join("log")
-        assert list(envconfig.setenv.definitions.keys()) == ["PYTHONHASHSEED"]
+        assert set(envconfig.setenv.definitions.keys()) == {
+            "PYTHONHASHSEED",
+            "TOX_ENV_NAME",
+            "TOX_ENV_DIR",
+        }
         hashseed = envconfig.setenv["PYTHONHASHSEED"]
         assert isinstance(hashseed, str)
         # The following line checks that hashseed parses to an integer.
@@ -2060,7 +2064,7 @@ class TestHashseedOption:
     def test_noset(self, newconfig):
         args = ["--hashseed", "noset"]
         envconfig = self._get_envconfig(newconfig, args=args)
-        assert not envconfig.setenv.definitions
+        assert set(envconfig.setenv.definitions.keys()) == {"TOX_ENV_DIR", "TOX_ENV_NAME"}
 
     def test_noset_with_setenv(self, newconfig):
         tox_ini = """

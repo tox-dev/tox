@@ -20,6 +20,7 @@ import py
 import tox
 from tox.config import parseconfig
 from tox.result import ResultLog
+from tox.util import set_os_env_var
 from tox.venv import VirtualEnv
 
 
@@ -43,7 +44,8 @@ def cmdline(args=None):
 def main(args):
     try:
         config = prepare(args)
-        retcode = Session(config).runcommand()
+        with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
+            retcode = build_session(config).runcommand()
         if retcode is None:
             retcode = 0
         raise SystemExit(retcode)
@@ -53,6 +55,10 @@ def main(args):
         r = Reporter(None)
         r.error(str(e))
         raise SystemExit(1)
+
+
+def build_session(config):
+    return Session(config)
 
 
 def show_help(config):

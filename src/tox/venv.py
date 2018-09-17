@@ -447,6 +447,7 @@ class VirtualEnv(object):
         action=None,
         redirect=True,
         ignore_ret=False,
+        returnout=False,
     ):
         # construct environment variables
         os.environ.pop("VIRTUALENV_PYTHON", None)
@@ -461,7 +462,9 @@ class VirtualEnv(object):
             args = prepend_shebang_interpreter(args)
 
         cwd.ensure(dir=1)  # ensure the cwd exists
-        return action.popen(args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret)
+        return action.popen(
+            args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret, returnout=returnout
+        )
 
 
 def getdigest(path):

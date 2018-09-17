@@ -172,7 +172,7 @@ def get_build_info(folder, report):
 
 def perform_isolated_build(build_info, package_venv, session, config):
     with session.newaction(
-        package_venv, "perform isolated build", package_venv.envconfig.envdir
+        package_venv, "perform-isolated-build", package_venv.envconfig.envdir
     ) as action:
         script = textwrap.dedent(
             """
@@ -184,13 +184,18 @@ def perform_isolated_build(build_info, package_venv, session, config):
             )
         )
         config.distdir.ensure_dir()
-        result = action.popen([package_venv.envconfig.envpython, "-c", script], returnout=True)
+        result = package_venv._pcall(
+            [package_venv.envconfig.envpython, "-c", script],
+            returnout=True,
+            action=action,
+            cwd=session.config.setupdir,
+        )
         return config.distdir.join(result.split("\n")[-2])
 
 
 def get_build_requires(build_info, package_venv, session):
     with session.newaction(
-        package_venv, "get build requires", package_venv.envconfig.envdir
+        package_venv, "get-build-requires", package_venv.envconfig.envdir
     ) as action:
         script = textwrap.dedent(
             """
@@ -204,5 +209,10 @@ def get_build_requires(build_info, package_venv, session):
                 build_info.backend_module, build_info.backend_object, "sdist"
             )
         ).strip()
-        result = action.popen([package_venv.envconfig.envpython, "-c", script], returnout=True)
+        result = package_venv._pcall(
+            [package_venv.envconfig.envpython, "-c", script],
+            returnout=True,
+            action=action,
+            cwd=session.config.setupdir,
+        )
         return json.loads(result.split("\n")[-2])
