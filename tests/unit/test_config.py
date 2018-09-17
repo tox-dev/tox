@@ -2041,9 +2041,8 @@ class TestHashseedOption:
         args = ["--hashseed"]
         try:
             self._check_testenv(newconfig, "", args=args)
-        except SystemExit:
-            e = sys.exc_info()[1]
-            assert e.code == 2
+        except SystemExit as exception:
+            assert exception.code == 2
             return
         assert False  # getting here means we failed the test.
 

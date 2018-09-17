@@ -139,9 +139,8 @@ def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=Non
         if validator:
             try:
                 answer = validator(answer)
-            except ValidationError:
-                err = sys.exc_info()[1]
-                print("* " + str(err))
+            except ValidationError as exception:
+                print("* {}".format(exception))
                 continue
         break
     map_[key] = modificator(answer, map_.get(key)) if modificator else answer
@@ -272,7 +271,7 @@ def parse_args():
         default=".",
         help="Custom root directory to write config to. Defaults to current directory.",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s " + tox.__version__)
+    parser.add_argument("--version", action="version", version="%(prog)s {}".format(tox.__version__))
     return parser.parse_args()
 
 

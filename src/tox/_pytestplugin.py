@@ -164,7 +164,7 @@ class ReportExpectMock:
     def expect(self, cat, messagepattern="*", invert=False):
         __tracebackhide__ = True
         if not messagepattern.startswith("*"):
-            messagepattern = "*" + messagepattern
+            messagepattern = "*{}".format(messagepattern)
         while self._index < len(self._calls):
             try:
                 call = self.getnext(cat)
