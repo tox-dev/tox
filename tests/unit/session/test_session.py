@@ -1,8 +1,11 @@
+import os
 import re
 import uuid
+from threading import Thread
 
 import pytest
 
+import tox
 from tox.exception import MissingDependency, MissingDirectory
 
 
@@ -210,3 +213,94 @@ def test_venv_filter_match_some_some_active(venv_filter_project, monkeypatch):
         "py36-diffcov",
         "py36-diffcov-extra",
     ]
+
+
+@pytest.fixture()
+def popen_env_test(initproj, cmd, monkeypatch):
+    def func(tox_env, isolated_build):
+        files = {
+            "tox.ini": """
+               [tox]
+               isolated_build = {}
+               [testenv:{}]
+               commands = python -c "print('ok')"
+               """.format(
+                "True" if isolated_build else "False", tox_env
+            )
+        }
+        if isolated_build:
+            files[
+                "pyproject.toml"
+            ] = """
+                [build-system]
+                requires = ["setuptools >= 35.0.2", "setuptools_scm >= 2.0.0, <3"]
+                build-backend = 'setuptools.build_meta'
+                """
+        initproj("env_var_test", filedefs=files)
+
+        class IsolatedResult(object):
+            def __init__(self):
+                self.popens = []
+                self.cwd = None
+
+        res = IsolatedResult()
+
+        class EnvironmentTestRun(Thread):
+            """we wrap this invocation into a thread to avoid modifying in any way the
+             current threads environment variable (e.g. on failure of this test incorrect teardown)
+             """
+
+            def run(self):
+                prev_build = tox.session.build_session
+
+                def build_session(config):
+                    res.session = prev_build(config)
+                    res._popen = res.session.popen
+                    monkeypatch.setattr(res.session, "popen", popen)
+                    return res.session
+
+                monkeypatch.setattr(tox.session, "build_session", build_session)
+
+                def popen(cmd, **kwargs):
+                    activity_id = res.session._actions[-1].id
+                    activity_name = res.session._actions[-1].activity
+                    try:
+                        ret = res._popen(cmd, **kwargs)
+                    except tox.exception.InvocationError as exception:
+                        ret = exception
+                    finally:
+                        res.popens.append(
+                            (activity_id, activity_name, kwargs.get("env"), ret, cmd)
+                        )
+                    return ret
+
+                res.result = cmd("-e", tox_env)
+                res.cwd = os.getcwd()
+
+        thread = EnvironmentTestRun()
+        thread.start()
+        thread.join()
+        return res
+
+    yield func
+
+
+@pytest.mark.network
+def test_tox_env_var_flags_inserted_non_isolated(popen_env_test):
+    res = popen_env_test("py", False)
+    assert_popen_env(res)
+
+
+@pytest.mark.network
+def test_tox_env_var_flags_inserted_isolated(popen_env_test):
+    res = popen_env_test("py", True)
+    assert_popen_env(res)
+
+
+def assert_popen_env(res):
+    assert res.result.ret == 0, res.result.out
+    for tox_id, _, env, __, ___ in res.popens:
+        assert env["TOX_WORK_DIR"] == os.path.join(res.cwd, ".tox")
+        if tox_id != "tox":
+            assert env["TOX_ENV_NAME"] == tox_id
+            assert env["TOX_ENV_DIR"] == os.path.join(res.cwd, ".tox", tox_id)

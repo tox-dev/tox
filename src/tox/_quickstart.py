@@ -271,7 +271,9 @@ def parse_args():
         default=".",
         help="Custom root directory to write config to. Defaults to current directory.",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s {}".format(tox.__version__))
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s {}".format(tox.__version__)
+    )
     return parser.parse_args()
 
 

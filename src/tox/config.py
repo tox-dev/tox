@@ -524,6 +524,9 @@ def tox_addoption(parser):
         config = testenv_config.config
         if "PYTHONHASHSEED" not in setenv and config.hashseed is not None:
             setenv["PYTHONHASHSEED"] = config.hashseed
+
+        setenv["TOX_ENV_NAME"] = str(testenv_config.envname)
+        setenv["TOX_ENV_DIR"] = str(testenv_config.envdir)
         return setenv
 
     parser.add_testenv_attribute(
@@ -647,7 +650,7 @@ def tox_addoption(parser):
         # Flatten the list to deal with space-separated values.
         value = list(itertools.chain.from_iterable([x.split(" ") for x in value]))
 
-        passenv = {"PATH", "PIP_INDEX_URL", "LANG", "LANGUAGE", "LD_LIBRARY_PATH"}
+        passenv = {"PATH", "PIP_INDEX_URL", "LANG", "LANGUAGE", "LD_LIBRARY_PATH", "TOX_WORK_DIR"}
 
         # read in global passenv settings
         p = os.environ.get("TOX_TESTENV_PASSENV", None)
