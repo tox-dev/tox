@@ -81,15 +81,6 @@ jobs:
   - script: 'python -m tox -e py'
     displayName: run tests
 
-  - task: PublishTestResults@2
-    displayName: publish test results
-    inputs:
-      testResultsFiles: '.tox/test-results.*.xml'
-      mergeTestResults: true
-      testRunTitle: '$(agent.os) py$(python.version)'
-      platform: linux
-    condition: succeededOrFailed()
-
   - script: 'python -m tox -e coverage'
     displayName: generate coverage.xml
 
@@ -139,15 +130,6 @@ jobs:
   - script: 'python -m tox -e py'
     displayName: run tests
 
-  - task: PublishTestResults@2
-    displayName: publish test results
-    inputs:
-      testResultsFiles: '.tox/test-results.*.xml'
-      mergeTestResults: true
-      testRunTitle: '$(agent.os) py$(python.version)'
-      platform: windows
-    condition: succeededOrFailed()
-
   - script: 'python -m tox -e coverage'
     displayName: generate coverage.xml
 
@@ -180,15 +162,6 @@ jobs:
 
   - script: 'python3 -m tox -e $(toxenv)'
     displayName: run tests
-
-  - task: PublishTestResults@2
-    displayName: publish test results
-    inputs:
-      testResultsFiles: '.tox/test-results.*.xml'
-      mergeTestResults: true
-      testRunTitle: '$(toxenv)'
-      platform: macos
-    condition: succeededOrFailed()
 
   - script: 'python3 -m tox -e coverage'
     displayName: generate coverage.xml
