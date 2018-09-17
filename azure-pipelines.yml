@@ -82,17 +82,7 @@ jobs:
     displayName: run tests
 
   - script: 'python -m tox -e coverage'
-    displayName: generate coverage.xml
-
-  - script: 'ls . -Ra'
-    displayName: show
-
-  - task: PublishCodeCoverageResults@1
-    inputs:
-      codeCoverageTool: 'cobertura'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
-      failIfCoverageEmpty: true
+    displayName: generate coverage report
 
   - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
     displayName: upload codecov
@@ -131,14 +121,7 @@ jobs:
     displayName: run tests
 
   - script: 'python -m tox -e coverage'
-    displayName: generate coverage.xml
-
-  - task: PublishCodeCoverageResults@1
-    inputs:
-      codeCoverageTool: 'cobertura'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
-      failIfCoverageEmpty: true
+    displayName: generate coverage report
 
   - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
     displayName: upload codecov
@@ -164,14 +147,7 @@ jobs:
     displayName: run tests
 
   - script: 'python3 -m tox -e coverage'
-    displayName: generate coverage.xml
-
-  - task: PublishCodeCoverageResults@1
-    inputs:
-      codeCoverageTool: 'cobertura'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
-      failIfCoverageEmpty: true
+    displayName: generate coverage report
 
   - script: 'python3 -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-python3" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=3'
     displayName: upload codecov

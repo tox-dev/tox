@@ -130,6 +130,8 @@ if not tox.INFO.IS_WIN:
 
     @tox.hookimpl
     def tox_get_python_executable(envconfig):
+        if envconfig.basepython == "python{}.{}".format(*sys.version_info[0:2]):
+            return sys.executable
         return py.path.local.sysfind(envconfig.basepython)
 
 
@@ -141,7 +143,7 @@ else:
         p = py.path.local.sysfind(name)
         if p:
             return p
-        actual = None
+
         # Is this a standard PythonX.Y name?
         m = re.match(r"python(\d)(?:\.(\d))?", name)
         groups = [g for g in m.groups() if g] if m else []
@@ -154,8 +156,9 @@ else:
             actual = py.path.local(actual)
             if actual.check():
                 return actual
-        # The standard executables can be found as a last resort via the
-        # Python launcher py.exe
+        if name == "python{}.{}".format(*sys.version_info[0:2]):
+            return sys.executable
+        # Use py.exe to determine location - PEP-514 & PEP-397
         if m:
             return locate_via_py(*groups)
 
