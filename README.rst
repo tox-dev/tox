@@ -14,7 +14,7 @@
   :target: https://codecov.io/gh/tox-dev/tox
   :alt: Code coverage Status
 .. image:: https://readthedocs.org/projects/tox/badge/?version=latest
-  :target: http://tox.readthedocs.io/en/latest/?badge=latest
+  :target: https://tox.readthedocs.io/en/latest/?badge=latest
   :alt: Documentation status
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
   :target: https://github.com/ambv/black

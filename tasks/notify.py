@@ -40,7 +40,7 @@ def get_message_body(release_version: Version, prev_version: Version) -> str:
         tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
 
         Details about the changes can be found in the CHANGELOG: https://pypi.org/project/tox/{release_version}/#changelog
-        For complete documentation, please visit: http://tox.readthedocs.io/en/{release_version}/changelog.html
+        For complete documentation, please visit: https://tox.readthedocs.io/en/{release_version}/changelog.html
 
         As usual, you can upgrade from pypi via:
 

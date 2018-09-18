@@ -167,7 +167,7 @@ default PyPI server you can type interactively:
 
 .. code-block:: shell
 
-    tox -i http://pypi.my-alternative-index.org
+    tox -i https://pypi.my-alternative-index.org
 
 This causes tox to install dependencies and the sdist install step
 to use the specified url as the index server.
@@ -178,7 +178,7 @@ You can cause the same effect by this ``tox.ini`` content:
 
     [tox]
     indexserver =
-        default = http://pypi.my-alternative-index.org
+        default = https://pypi.my-alternative-index.org
 
 installing dependencies from multiple PyPI servers
 ---------------------------------------------------
@@ -192,7 +192,7 @@ different PyPI servers, example:
 
     [tox]
     indexserver =
-        DEV = http://mypypiserver.org
+        DEV = https://mypypiserver.org
 
     [testenv]
     deps =
@@ -201,14 +201,14 @@ different PyPI servers, example:
 
 This configuration will install ``docutils`` from the default
 Python PYPI server and will install the ``mypackage`` from
-our ``DEV`` indexserver, and the respective ``http://mypypiserver.org``
+our ``DEV`` indexserver, and the respective ``https://mypypiserver.org``
 url.  You can override config file settings from the command line
 like this:
 
 .. code-block:: shell
 
-    tox -i DEV=http://pypi.org/simple  # changes :DEV: package URLs
-    tox -i http://pypi.org/simple      # changes default
+    tox -i DEV=https://pypi.org/simple  # changes :DEV: package URLs
+    tox -i https://pypi.org/simple      # changes default
 
 further customizing installation
 ---------------------------------
@@ -225,7 +225,7 @@ an alternative source for your dependencies:
 .. code-block:: ini
 
     [testenv]
-    install_command = pip install --pre --find-links http://packages.example.com --no-index {opts} {packages}
+    install_command = pip install --pre --find-links https://packages.example.com --no-index {opts} {packages}
 
 .. _pip: https://pip.pypa.io/en/stable/
 

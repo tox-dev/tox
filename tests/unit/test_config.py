@@ -2299,11 +2299,11 @@ class TestIndexServer:
         inisource = """
             [tox]
             indexserver =
-                default = http://pypi.somewhere.org
+                default = https://pypi.somewhere.org
                 name1 = whatever
         """
         config = newconfig([], inisource)
-        assert config.indexserver["default"].url == "http://pypi.somewhere.org"
+        assert config.indexserver["default"].url == "https://pypi.somewhere.org"
         assert config.indexserver["name1"].url == "whatever"
         config = newconfig(["-i", "qwe"], inisource)
         assert config.indexserver["default"].url == "qwe"
@@ -2324,7 +2324,7 @@ class TestIndexServer:
                 default = file://{homedir}/.pip/downloads/simple
                 local1  = file://{homedir}/.pip/downloads/simple
                 local2  = file://{toxinidir}/downloads/simple
-                pypi    = http://pypi.org/simple
+                pypi    = https://pypi.org/simple
         """
         config = newconfig([], inisource)
         expected = "file://{}/.pip/downloads/simple".format(config.homedir)

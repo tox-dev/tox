@@ -17,9 +17,9 @@ contact holger at `merlinux.eu`_, an association of
 experienced well-known Python developers.
 
 .. _`Testing In Python (TIP) mailing list`: http://lists.idyll.org/listinfo/testing-in-python
-.. _`holger's twitter presence`: http://twitter.com/hpk42
-.. _`merlinux.eu`: http://merlinux.eu
+.. _`holger's twitter presence`: https://twitter.com/hpk42
+.. _`merlinux.eu`: https://merlinux.eu
 .. _`report on the issue tracker`: https://github.com/tox-dev/tox/issues
-.. _`tetamap blog`: http://holgerkrekel.net
+.. _`tetamap blog`: https://holgerkrekel.net
 .. _`tox-dev mailing list`: https://mail.python.org/mm3/mailman3/lists/tox-dev.python.org/
 .. _`fork the github repository`: https://github.com/tox-dev/tox

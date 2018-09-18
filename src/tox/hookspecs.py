@@ -54,7 +54,7 @@ def tox_testenv_create(venv, action):
     .. note:: This hook uses ``firstresult=True`` (see `pluggy first result only`_) -- hooks
         implementing this will be run until one returns non-``None``.
 
-    .. _`pluggy first result only`: http://pluggy.readthedocs.io/en/latest/#first-result-only
+    .. _`pluggy first result only`: https://pluggy.readthedocs.io/en/latest/#first-result-only
     """
 
 

@@ -96,7 +96,7 @@ def setup(app):
 
 tls_cacerts = os.getenv("SSL_CERT_FILE")  # we don't care here about the validity of certificates
 linkcheck_timeout = 30
-linkcheck_ignore = [r"http://holgerkrekel.net"]
+linkcheck_ignore = [r"https://holgerkrekel.net"]
 
 extlinks = {
     "issue": ("https://github.com/tox-dev/tox/issues/%s", "#"),

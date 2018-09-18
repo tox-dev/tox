@@ -11,7 +11,7 @@ def has_environment_marker_support():
     Tests that setuptools has support for PEP-426 environment marker support.
 
     The first known release to support it is 0.7 (and the earliest on PyPI seems to be 0.7.2
-    so we're using that), see: http://pythonhosted.org/setuptools/history.html#id142
+    so we're using that), see: https://pythonhosted.org/setuptools/history.html#id142
 
     References:
 
@@ -60,7 +60,7 @@ def main():
                  """
             ).lstrip(),
         },
-        license="http://opensource.org/licenses/MIT",
+        license="https://opensource.org/licenses/MIT",
         platforms=["unix", "linux", "osx", "cygwin", "win32"],
         author="holger krekel",
         author_email="holger@merlinux.eu",
