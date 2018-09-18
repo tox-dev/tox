@@ -183,7 +183,12 @@ def perform_isolated_build(build_info, package_venv, session, config):
                 build_info.backend_module, build_info.backend_object, "sdist", str(config.distdir)
             )
         )
+
+        # need to start with an empty (but existing) source distribution folder
+        if config.distdir.exists():
+            config.distdir.remove(rec=1, ignore_errors=True)
         config.distdir.ensure_dir()
+
         result = package_venv._pcall(
             [package_venv.envconfig.envpython, "-c", script],
             returnout=True,

@@ -773,6 +773,20 @@ def tox_addoption(parser):
     )
 
     parser.add_testenv_attribute(
+        name="commands_pre",
+        type="argvlist",
+        default="",
+        help="each line specifies a setup command action and can use substitution.",
+    )
+
+    parser.add_testenv_attribute(
+        name="commands_post",
+        type="argvlist",
+        default="",
+        help="each line specifies a teardown command and can use substitution.",
+    )
+
+    parser.add_testenv_attribute(
         "ignore_outcome",
         type="bool",
         default=False,

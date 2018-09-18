@@ -69,7 +69,7 @@ def cmd(request, capfd, monkeypatch):
     request.addfinalizer(py.path.local().chdir)
 
     def run(*argv):
-        key = str(b"PYTHONPATH")
+        key = b"PYTHONPATH" if six.PY2 else "PYTHONPATH"
         python_paths = (i for i in (str(os.getcwd()), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
 
@@ -403,33 +403,94 @@ def mock_venv(monkeypatch):
     Note: because we inherit, to keep things sane you must call the py environment and only that;
     and cannot install any packages. """
 
+    # first ensure we have a clean python path
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+
+    # object to collect some data during the execution
+    class Result(object):
+        def __init__(self):
+            self.popens = []
+            self.cwd = None
+            self.session = None
+
+    res = Result()
+
+    # convince tox that the current running virtual environment is already the env we would create
     class ProxyCurrentPython:
         @classmethod
         def readconfig(cls, path):
-            assert path.dirname.endswith("{}py".format(os.sep))
-            return CreationConfig(
-                md5=getdigest(sys.executable),
-                python=sys.executable,
-                version=tox.__version__,
-                sitepackages=False,
-                usedevelop=False,
-                deps=[],
-                alwayscopy=False,
-            )
+            if path.dirname.endswith("{}py".format(os.sep)):
+                return CreationConfig(
+                    md5=getdigest(sys.executable),
+                    python=sys.executable,
+                    version=tox.__version__,
+                    sitepackages=False,
+                    usedevelop=False,
+                    deps=[],
+                    alwayscopy=False,
+                )
+            elif path.dirname.endswith("{}.package".format(os.sep)):
+                return CreationConfig(
+                    md5=getdigest(sys.executable),
+                    python=sys.executable,
+                    version=tox.__version__,
+                    sitepackages=False,
+                    usedevelop=False,
+                    deps=[(getdigest(""), "setuptools >= 35.0.2"), (getdigest(""), "wheel")],
+                    alwayscopy=False,
+                )
+            assert False  # pragma: no cover
 
     monkeypatch.setattr(CreationConfig, "readconfig", ProxyCurrentPython.readconfig)
 
+    # provide as Python the current python executable
     def venv_lookup(venv, name):
         assert name == "python"
+        venv.envconfig.envdir = py.path.local(sys.executable).join("..", "..")
         return sys.executable
 
     monkeypatch.setattr(VirtualEnv, "_venv_lookup", venv_lookup)
 
+    # don't allow overriding the tox config data for the host Python
+    def finish_venv(self):
+        return
+
+    monkeypatch.setattr(VirtualEnv, "finish", finish_venv)
+
+    # we lie that it's an environment with no packages in it
     @tox.hookimpl
     def tox_runenvreport(venv, action):
         return []
 
     monkeypatch.setattr(venv, "tox_runenvreport", tox_runenvreport)
+
+    # intercept the build session to save it and we intercept the popen invocations
+    prev_build = tox.session.build_session
+
+    def build_session(config):
+        res.session = prev_build(config)
+        res._popen = res.session.popen
+        monkeypatch.setattr(res.session, "popen", popen)
+        return res.session
+
+    monkeypatch.setattr(tox.session, "build_session", build_session)
+
+    # collect all popen calls
+    def popen(cmd, **kwargs):
+        # we don't want to perform installation of new packages, just replace with an always ok cmd
+        if "pip" in cmd and "install" in cmd:
+            cmd = ["python", "-c", "print({!r})".format(cmd)]
+        activity_id = res.session._actions[-1].id
+        activity_name = res.session._actions[-1].activity
+        try:
+            ret = res._popen(cmd, **kwargs)
+        except tox.exception.InvocationError as exception:  # pragma: no cover
+            ret = exception  # pragma: no cover
+        finally:
+            res.popens.append((activity_id, activity_name, kwargs.get("env"), ret, cmd))
+        return ret
+
+    return res
 
 
 @pytest.fixture(scope="session")

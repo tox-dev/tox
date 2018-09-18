@@ -229,3 +229,28 @@ def test_package_isolated_toml_bad_backend(initproj, cmd):
     build-backend = []
     """,
     )
+
+
+def test_dist_exists_version_change(mock_venv, initproj, cmd):
+    base = initproj(
+        "package_toml-{}".format("0.1"),
+        filedefs={
+            "tox.ini": """
+                [tox]
+                isolated_build = true
+                        """,
+            "pyproject.toml": """
+                [build-system]
+                requires = ["setuptools >= 35.0.2"]
+                build-backend = 'setuptools.build_meta'
+                            """,
+        },
+    )
+    result = cmd("-e", "py")
+    assert result.ret == 0, result.out
+
+    new_code = base.join("setup.py").read_text("utf-8").replace("0.1", "0.2")
+    base.join("setup.py").write_text(new_code, "utf-8")
+
+    result = cmd("-e", "py")
+    assert result.ret == 0, result.out

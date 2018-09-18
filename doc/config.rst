@@ -171,21 +171,34 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. confval:: commands=ARGVLIST
 
-    The commands to be called for testing. Each line is interpreted as one command;
-    however a command can be split over multiple lines by ending the line with the ``\``
-    character.
+    The commands to be called for testing. Only execute if :confval:`commands_pre` succeed.
+
+    Each line is interpreted as one command; however a command can be split over
+    multiple lines by ending the line with the ``\`` character.
 
     Commands will execute one by one in sequential fashion until one of them fails (their exit
     code is non-zero) or all of them succeed. The exit code of a command may be ignored (meaning
     they are always considered successful) by prefixing the command with a dash (``-``) - this is
     similar to how ``make`` recipe lines work. The outcome of the environment is considered successful
-    only if all commands succeeded (exit code ignored via the ``-`` or success exit code value of zero).
+    only if all commands (these + setup + teardown) succeeded (exit code ignored via the
+    ``-`` or success exit code value of zero).
 
     :note: the virtual environment binary path (the ``bin`` folder within) is prepended to the os ``PATH``,
         meaning commands will first try to resolve to an executable from within the
         virtual environment, and only after that outside of it. Therefore ``python``
         translates as the virtual environments ``python`` (having the same runtime version
         as the :confval:`basepython`), and ``pip`` translates as the virtual environments ``pip``.
+
+.. confval:: commands_pre=ARGVLIST
+
+    Commands to run before running the :confval:`commands`.
+    All evaluation and configuration logic applies from :confval:`commands`.
+
+.. confval:: commands_post=ARGVLIST
+
+    Commands to run after running the :confval:`commands`. Execute regardless of the outcome of
+    both :confval:`commands` and :confval:`commands_pre`.
+    All evaluation and configuration logic applies from :confval:`commands`.
 
 .. confval:: install_command=ARGV
 

@@ -178,7 +178,7 @@ class Action(object):
         popen.action = self
         self._popenlist.append(popen)
         try:
-            self.report.logpopen(popen, env=env)
+            self.report.logpopen(popen, cmd_args_shell)
             try:
                 if resultjson and not redirect:
                     if popen.stderr is not None:
@@ -290,13 +290,12 @@ class Reporter(object):
         else:
             return Verbosity.DEBUG
 
-    def logpopen(self, popen, env):
+    def logpopen(self, popen, cmd_args_shell):
         """ log information about the action.popen() created process. """
-        cmd = " ".join(map(str, popen.args))
         if popen.outpath:
-            self.verbosity1("  {}$ {} >{}".format(popen.cwd, cmd, popen.outpath))
+            self.verbosity1("  {}$ {} >{}".format(popen.cwd, cmd_args_shell, popen.outpath))
         else:
-            self.verbosity1("  {}$ {} ".format(popen.cwd, cmd))
+            self.verbosity1("  {}$ {} ".format(popen.cwd, cmd_args_shell))
 
     def logaction_start(self, action):
         msg = "{} {}".format(action.msg, " ".join(map(str, action.args)))
@@ -589,7 +588,8 @@ class Session:
             if venv.status:
                 return
             self.hook.tox_runtest_pre(venv=venv)
-            self.hook.tox_runtest(venv=venv, redirect=redirect)
+            if venv.status == 0:
+                self.hook.tox_runtest(venv=venv, redirect=redirect)
             self.hook.tox_runtest_post(venv=venv)
         else:
             venv.status = "skipped tests"
