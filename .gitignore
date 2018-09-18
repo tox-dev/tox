@@ -23,6 +23,8 @@ coverage.xml
 htmlcov
 
 .idea
+.vscode
+
 .eggs/
 py27/
 
@@ -30,3 +32,4 @@ py27/
 _draft.rst
 
 tasks/credentials.json
+
