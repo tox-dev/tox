@@ -223,7 +223,7 @@ The plugin must have the following:
 
 - an issue tracker for bug reports and enhancement requests.
 
-- a `changelog <http://keepachangelog.com/>`_
+- a `changelog <https://keepachangelog.com/>`_
 
 If no contributor strongly objects, the repository can then be
 transferred to the ``tox-dev`` organisation. For details see

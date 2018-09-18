@@ -9,17 +9,17 @@ links to the important issues and pull requests that were integrated into the re
 
 The historic release announcements are still online here for various versions:
 
-* `0.5 <http://tox.readthedocs.io/en/2.4.0/announce/release-0.5.html>`_,
-* `1.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.0.html>`_,
-* `1.1 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.1.html>`_,
-* `1.2 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.2.html>`_,
-* `1.3 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.3.html>`_,
-* `1.4 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.4.html>`_,
-* `1.4.3 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.4.3.html>`_,
-* `1.8 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.8.html>`_,
-* `1.9 <http://tox.readthedocs.io/en/2.4.0/announce/release-1.9.html>`_,
-* `2.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.0.html>`_,
-* `2.4.0 <http://tox.readthedocs.io/en/2.4.0/announce/release-2.4.0.html>`_.
+* `0.5 <https://tox.readthedocs.io/en/2.4.0/announce/release-0.5.html>`_,
+* `1.0 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.0.html>`_,
+* `1.1 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.1.html>`_,
+* `1.2 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.2.html>`_,
+* `1.3 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.3.html>`_,
+* `1.4 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.4.html>`_,
+* `1.4.3 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.4.3.html>`_,
+* `1.8 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.8.html>`_,
+* `1.9 <https://tox.readthedocs.io/en/2.4.0/announce/release-1.9.html>`_,
+* `2.0 <https://tox.readthedocs.io/en/2.4.0/announce/release-2.0.html>`_,
+* `2.4.0 <https://tox.readthedocs.io/en/2.4.0/announce/release-2.4.0.html>`_.
 
 
 Happy testing,
