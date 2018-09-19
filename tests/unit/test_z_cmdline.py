@@ -639,6 +639,7 @@ def test_alwayscopy_default(initproj, cmd):
     assert "virtualenv --always-copy" not in result.out
 
 
+@pytest.mark.skipif("sys.platform == 'win32'")
 def test_empty_activity_ignored(initproj, cmd):
     initproj(
         "example123",
@@ -655,6 +656,7 @@ def test_empty_activity_ignored(initproj, cmd):
     assert "installed:" not in result.out
 
 
+@pytest.mark.skipif("sys.platform == 'win32'")
 def test_empty_activity_shown_verbose(initproj, cmd):
     initproj(
         "example123",

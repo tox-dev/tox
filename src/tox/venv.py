@@ -35,7 +35,6 @@ class CreationConfig:
             lines.append("{} {}".format(*dep))
         path.ensure()
         path.write("\n".join(lines))
-        return lines
 
     @classmethod
     def readconfig(cls, path):
@@ -55,27 +54,26 @@ class CreationConfig:
         except Exception:
             return None
 
-    def matches(self, other, deps_matches_subset=False, provide_reason=False):
-        def nok(msg):
-            if provide_reason:
-                return False, msg()
-            return False
-
+    def matches_with_reason(self, other, deps_matches_subset=False):
         for attr in ("md5", "python", "version", "sitepackages", "usedevelop", "alwayscopy"):
             left = getattr(self, attr)
             right = getattr(other, attr)
             if left != right:
-                return nok(lambda: "attr {} {!r}!={!r}".format(attr, left, right))
+                return False, "attr {} {!r}!={!r}".format(attr, left, right)
         self_deps = set(self.deps)
         other_deps = set(other.deps)
         if self_deps != other_deps:
             if deps_matches_subset:
                 diff = other_deps - self_deps
                 if not diff:
-                    return nok(lambda: "missing in previous {!r}".format(diff))
+                    return False, "missing in previous {!r}".format(diff)
             else:
-                return nok(lambda: "{!r}!={!r}".format(self_deps, other_deps))
-        return (True, None) if provide_reason else True
+                return False, "{!r}!={!r}".format(self_deps, other_deps)
+        return True, None
+
+    def matches(self, other, deps_matches_subset=False):
+        outcome, _ = self.matches_with_reason(other, deps_matches_subset)
+        return outcome
 
 
 class VirtualEnv(object):
@@ -179,9 +177,7 @@ class VirtualEnv(object):
             else:
                 live_config = self._getliveconfig()
                 deps_subset_match = getattr(self.envconfig, "deps_matches_subset", False)
-                outcome, reason = rconfig.matches(
-                    live_config, deps_subset_match, provide_reason=True
-                )
+                outcome, reason = rconfig.matches_with_reason(live_config, deps_subset_match)
         if reason is None:
             action.info("reusing", self.envconfig.envdir)
             return

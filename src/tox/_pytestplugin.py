@@ -69,8 +69,8 @@ def cmd(request, capfd, monkeypatch):
     request.addfinalizer(py.path.local().chdir)
 
     def run(*argv):
-        key = b"PYTHONPATH" if six.PY2 else "PYTHONPATH"
-        python_paths = (i for i in (str(os.getcwd()), os.getenv(key)) if i)
+        key = str("PYTHONPATH")
+        python_paths = (i for i in (os.getcwd(), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
 
         with RunResult(capfd, argv) as result:

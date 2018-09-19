@@ -333,12 +333,15 @@ def test_command_prev_post_ok(cmd, initproj, mock_venv):
         command
         py run-test-post: commands[0] | python -c 'print("post")'
         post
-        ___________________________________ summary ____________________________________
+        ___________________________________ summary ___________________________________{}
           py: commands succeeded
           congratulations :)
-    """
+    """.format(
+            "_" if sys.platform != "win32" else ""
+        )
     )
-    assert expected in result.out
+    actual = result.out.replace(os.linesep, "\n")
+    assert expected in actual
 
 
 def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
@@ -364,10 +367,11 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
             ERROR: InvocationError for command '{} -c raise SystemExit(2)' (exited with code 2)
             py run-test-post: commands[0] | python -c 'print("post")'
             post
-            ___________________________________ summary ____________________________________
+            ___________________________________ summary ___________________________________{}
             ERROR:   py: commands failed
         """.format(
-            sys.executable
+            sys.executable.replace("\\", "\\\\"), "_" if sys.platform != "win32" else ""
         )
     )
-    assert expected in result.out
+    actual = result.out.replace(os.linesep, "\n")
+    assert expected in actual
