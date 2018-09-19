@@ -110,7 +110,7 @@ def main():
         ]
         + [
             ("Programming Language :: Python :: {}".format(x))
-            for x in "2 2.7 3 3.4 3.5 3.6".split()
+            for x in "2 2.7 3 3.4 3.5 3.6 3.7".split()
         ],
     )
 
