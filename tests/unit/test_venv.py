@@ -75,7 +75,7 @@ def test_create(mocksession, newconfig):
         assert our_sys_path == py.path.local(args[0]).realpath()
         # assert Envconfig.toxworkdir in args
         assert venv.getcommandpath("easy_install", cwd=py.path.local())
-    interp = venv._getliveconfig().python
+    interp = venv._getliveconfig().base_resolved_python_path
     assert interp == venv.envconfig.python_info.executable
     assert venv.path_config.check(exists=False)
 
@@ -539,7 +539,7 @@ class TestCreationConfig:
         config = newconfig([], "")
         envconfig = config.envconfigs["python"]
         venv = VirtualEnv(envconfig, session=mocksession)
-        cconfig = venv._getliveconfig()
+        create_config = venv._getliveconfig()
         action = mocksession.newaction(venv, "update")
         venv.update(action)
         assert not venv.path_config.check()
@@ -556,8 +556,8 @@ class TestCreationConfig:
         mocksession.report.expect("*", "*reusing*")
         mocksession._clearmocks()
         action = mocksession.newaction(venv, "update")
-        cconfig.python = py.path.local("balla")
-        cconfig.writeconfig(venv.path_config)
+        create_config.base_resolved_python_path = py.path.local("balla")
+        create_config.writeconfig(venv.path_config)
         venv.update(action)
         mocksession.report.expect("verbosity0", "*recreate*")
 
