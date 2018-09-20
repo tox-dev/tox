@@ -1,5 +1,5 @@
-import ast
 import codecs
+import json
 import os
 import pipes
 import re
@@ -41,7 +41,6 @@ class CreationConfig:
         try:
             lines = path.readlines(cr=0)
             value = lines.pop(0).split(None, 1)
-            md5, python = value
             version, sitepackages, usedevelop, alwayscopy = lines.pop(0).split(None, 4)
             sitepackages = bool(int(sitepackages))
             usedevelop = bool(int(usedevelop))
@@ -50,25 +49,31 @@ class CreationConfig:
             for line in lines:
                 md5, depstring = line.split(None, 1)
                 deps.append((md5, depstring))
+            md5, python = value
             return CreationConfig(md5, python, version, sitepackages, usedevelop, deps, alwayscopy)
         except Exception:
             return None
 
+    def matches_with_reason(self, other, deps_matches_subset=False):
+        for attr in ("md5", "python", "version", "sitepackages", "usedevelop", "alwayscopy"):
+            left = getattr(self, attr)
+            right = getattr(other, attr)
+            if left != right:
+                return False, "attr {} {!r}!={!r}".format(attr, left, right)
+        self_deps = set(self.deps)
+        other_deps = set(other.deps)
+        if self_deps != other_deps:
+            if deps_matches_subset:
+                diff = other_deps - self_deps
+                if not diff:
+                    return False, "missing in previous {!r}".format(diff)
+            else:
+                return False, "{!r}!={!r}".format(self_deps, other_deps)
+        return True, None
+
     def matches(self, other, deps_matches_subset=False):
-        return (
-            other
-            and self.md5 == other.md5
-            and self.python == other.python
-            and self.version == other.version
-            and self.sitepackages == other.sitepackages
-            and self.usedevelop == other.usedevelop
-            and self.alwayscopy == other.alwayscopy
-            and (
-                all(d in self.deps for d in other.deps)
-                if deps_matches_subset is True
-                else self.deps == other.deps
-            )
-        )
+        outcome, _ = self.matches_with_reason(other, deps_matches_subset)
+        return outcome
 
 
 class VirtualEnv(object):
@@ -164,15 +169,19 @@ class VirtualEnv(object):
             if status string is empty, all is ok.
         """
         rconfig = CreationConfig.readconfig(self.path_config)
-        if (
-            not self.envconfig.recreate
-            and rconfig
-            and rconfig.matches(
-                self._getliveconfig(), getattr(self.envconfig, "deps_matches_subset", False)
-            )
-        ):
+        if self.envconfig.recreate:
+            reason = "-r flag"
+        else:
+            if rconfig is None:
+                reason = "no previous config {}".format(self.path_config)
+            else:
+                live_config = self._getliveconfig()
+                deps_subset_match = getattr(self.envconfig, "deps_matches_subset", False)
+                outcome, reason = rconfig.matches_with_reason(live_config, deps_subset_match)
+        if reason is None:
             action.info("reusing", self.envconfig.envdir)
             return
+        action.info("cannot reuse", reason)
         if rconfig is None:
             action.setactivity("create", self.envconfig.envdir)
         else:
@@ -189,7 +198,6 @@ class VirtualEnv(object):
 
     def _getliveconfig(self):
         python = self.envconfig.python_info.executable
-        md5 = getdigest(python)
         version = tox.__version__
         sitepackages = self.envconfig.sitepackages
         develop = self.envconfig.usedevelop
@@ -199,6 +207,7 @@ class VirtualEnv(object):
             raw_dep = dep.name
             md5 = getdigest(raw_dep)
             deps.append((md5, raw_dep))
+        md5 = getdigest(python)
         return CreationConfig(md5, python, version, sitepackages, develop, deps, alwayscopy)
 
     def _getresolvedeps(self):
@@ -226,7 +235,13 @@ class VirtualEnv(object):
         return re.match(self.envconfig.platform, sys.platform)
 
     def finish(self):
-        self._getliveconfig().writeconfig(self.path_config)
+        previous_config = CreationConfig.readconfig(self.path_config)
+        live_config = self._getliveconfig()
+        if previous_config is None or not previous_config.matches(live_config):
+            self.session.report.verbosity1(
+                "write config to {} as {!r}".format(self.path_config, live_config)
+            )
+            live_config.writeconfig(self.path_config)
 
     def _needs_reinstall(self, setupdir, action):
         setup_py = setupdir.join("setup.py")
@@ -234,12 +249,18 @@ class VirtualEnv(object):
         args = [self.envconfig.envpython, str(setup_py), "--name"]
         env = self._get_os_environ()
         output = action.popen(args, cwd=setupdir, redirect=False, returnout=True, env=env)
-        name = output.strip()
-        args = [self.envconfig.envpython, "-c", "import sys; print(sys.path)"]
+        name = next(
+            (i for i in output.split("\n") if i and not i.startswith("pydev debugger:")), ""
+        )
+        args = [
+            self.envconfig.envpython,
+            "-c",
+            "import sys;  import json; print(json.dumps(sys.path))",
+        ]
         out = action.popen(args, redirect=False, returnout=True, env=env)
         try:
-            sys_path = ast.literal_eval(out.strip())
-        except SyntaxError:
+            sys_path = json.loads(out)
+        except ValueError:
             sys_path = []
         egg_info_fname = ".".join((name, "egg-info"))
         for d in reversed(sys_path):
@@ -386,22 +407,34 @@ class VirtualEnv(object):
         env["VIRTUAL_ENV"] = str(self.path)
         return env
 
-    def test(self, redirect=False):
-        with self.session.newaction(self, "runtests") as action:
-            self.status = 0
-            self.session.make_emptydir(self.envconfig.envtmpdir)
-            self.envconfig.envtmpdir.ensure(dir=1)
+    def test(
+        self,
+        redirect=False,
+        name="runtests",
+        commands=None,
+        ignore_outcome=None,
+        ignore_errors=None,
+        display_hash_seed=False,
+    ):
+        if commands is None:
+            commands = self.envconfig.commands
+        if ignore_outcome is None:
+            ignore_outcome = self.envconfig.ignore_outcome
+        if ignore_errors is None:
+            ignore_errors = self.envconfig.ignore_errors
+        with self.session.newaction(self, name) as action:
             cwd = self.envconfig.changedir
-            env = self._get_os_environ(is_test_command=True)
-            # Display PYTHONHASHSEED to assist with reproducibility.
-            action.setactivity("runtests", "PYTHONHASHSEED={!r}".format(env.get("PYTHONHASHSEED")))
-            for i, argv in enumerate(self.envconfig.commands):
+            if display_hash_seed:
+                env = self._get_os_environ(is_test_command=True)
+                # Display PYTHONHASHSEED to assist with reproducibility.
+                action.setactivity(name, "PYTHONHASHSEED={!r}".format(env.get("PYTHONHASHSEED")))
+            for i, argv in enumerate(commands):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
                 message = "commands[{}] | {}".format(
                     i, " ".join([pipes.quote(str(x)) for x in argv])
                 )
-                action.setactivity("runtests", message)
+                action.setactivity(name, message)
                 # check to see if we need to ignore the return code
                 # if so, we need to alter the command line arguments
                 if argv[0].startswith("-"):
@@ -423,7 +456,7 @@ class VirtualEnv(object):
                         is_test_command=True,
                     )
                 except tox.exception.InvocationError as err:
-                    if self.envconfig.ignore_outcome:
+                    if ignore_outcome:
                         msg = "command failed but result from testenv is ignored\ncmd:"
                         self.session.report.warning("{} {}".format(msg, err))
                         self.status = "ignored failed command"
@@ -431,7 +464,7 @@ class VirtualEnv(object):
 
                     self.session.report.error(str(err))
                     self.status = "commands failed"
-                    if not self.envconfig.ignore_errors:
+                    if not ignore_errors:
                         break  # Don't process remaining commands
                 except KeyboardInterrupt:
                     self.status = "keyboardinterrupt"
@@ -530,6 +563,32 @@ def tox_testenv_install_deps(venv, action):
 def tox_runtest(venv, redirect):
     venv.test(redirect=redirect)
     return True  # Return non-None to indicate plugin has completed
+
+
+@tox.hookimpl
+def tox_runtest_pre(venv):
+    venv.status = 0
+    venv.session.make_emptydir(venv.envconfig.envtmpdir)
+    venv.envconfig.envtmpdir.ensure(dir=1)
+    venv.test(
+        name="run-test-pre",
+        commands=venv.envconfig.commands_pre,
+        redirect=False,
+        ignore_outcome=False,
+        ignore_errors=False,
+        display_hash_seed=True,
+    )
+
+
+@tox.hookimpl
+def tox_runtest_post(venv):
+    venv.test(
+        name="run-test-post",
+        commands=venv.envconfig.commands_post,
+        redirect=False,
+        ignore_outcome=False,
+        ignore_errors=False,
+    )
 
 
 @tox.hookimpl

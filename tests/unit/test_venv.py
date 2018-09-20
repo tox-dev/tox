@@ -344,8 +344,8 @@ def test_test_hashseed_is_in_output(newmocksession, monkeypatch):
     venv = mocksession.getenv("python")
     action = mocksession.newaction(venv, "update")
     venv.update(action)
-    venv.test()
-    mocksession.report.expect("verbosity0", "runtests: PYTHONHASHSEED='{}'".format(seed))
+    tox.venv.tox_runtest_pre(venv)
+    mocksession.report.expect("verbosity0", "run-test-pre: PYTHONHASHSEED='{}'".format(seed))
 
 
 def test_test_runtests_action_command_is_in_output(newmocksession):
@@ -389,6 +389,7 @@ def test_install_command_not_installed(newmocksession):
     """,
     )
     venv = mocksession.getenv("python")
+    venv.status = 0
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*")
     assert venv.status == 0

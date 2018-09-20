@@ -23,6 +23,8 @@ coverage.xml
 htmlcov
 
 .idea
+.vscode
+
 .eggs/
 py27/
 

@@ -1,0 +1,3 @@
+add :confval:`commands_pre` and :confval:`commands_post` that run before and after running
+the :confval:`commands` (setup runs always, commands only if setup suceeds, teardown always - all
+run until the first failing command)  - by :user:`gaborbernat`

@@ -1,0 +1,1 @@
+PEP-517 packaging fails with sdist already exists, fixed via ensuring the dist folder is empty before invoking the backend and `pypa/setuptools#1481 <https://github.com/pypa/setuptools/pull/1481>`_ - by :user:`gaborbernat`

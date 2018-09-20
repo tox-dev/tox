@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+import textwrap
 import uuid
 from threading import Thread
 
@@ -304,3 +306,72 @@ def assert_popen_env(res):
         if tox_id != "tox":
             assert env["TOX_ENV_NAME"] == tox_id
             assert env["TOX_ENV_DIR"] == os.path.join(res.cwd, ".tox", tox_id)
+
+
+def test_command_prev_post_ok(cmd, initproj, mock_venv):
+    initproj(
+        "pkg_command_test_123-0.7",
+        filedefs={
+            "tox.ini": """
+            [tox]
+            envlist = py
+
+            [testenv]
+            commands_pre = python -c 'print("pre")'
+            commands = python -c 'print("command")'
+            commands_post = python -c 'print("post")'
+        """
+        },
+    )
+    result = cmd()
+    assert result.ret == 0
+    expected = textwrap.dedent(
+        """
+        py run-test-pre: commands[0] | python -c 'print("pre")'
+        pre
+        py runtests: commands[0] | python -c 'print("command")'
+        command
+        py run-test-post: commands[0] | python -c 'print("post")'
+        post
+        ___________________________________ summary ___________________________________{}
+          py: commands succeeded
+          congratulations :)
+    """.format(
+            "_" if sys.platform != "win32" else ""
+        )
+    )
+    actual = result.out.replace(os.linesep, "\n")
+    assert expected in actual
+
+
+def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
+    initproj(
+        "pkg_command_test_123-0.7",
+        filedefs={
+            "tox.ini": """
+                [tox]
+                envlist = py
+
+                [testenv]
+                commands_pre = python -c 'raise SystemExit(2)'
+                commands = python -c 'print("command")'
+                commands_post = python -c 'print("post")'
+            """
+        },
+    )
+    result = cmd()
+    assert result.ret == 1
+    expected = textwrap.dedent(
+        """
+            py run-test-pre: commands[0] | python -c 'raise SystemExit(2)'
+            ERROR: InvocationError for command '{} -c raise SystemExit(2)' (exited with code 2)
+            py run-test-post: commands[0] | python -c 'print("post")'
+            post
+            ___________________________________ summary ___________________________________{}
+            ERROR:   py: commands failed
+        """.format(
+            sys.executable.replace("\\", "\\\\"), "_" if sys.platform != "win32" else ""
+        )
+    )
+    actual = result.out.replace(os.linesep, "\n")
+    assert expected in actual
