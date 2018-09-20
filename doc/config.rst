@@ -3,6 +3,9 @@
 tox configuration specification
 ===============================
 
+configuration discovery
+-----------------------
+
 tox supports at the moment three locations for specifying the configuration, in the following priority order:
 
 1. ``pyproject.toml``,
@@ -20,57 +23,51 @@ Below you find the specification for the *ini-style* format, but you might want 
 
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html
 
+
 tox global settings
 -------------------
 
-List of optional global options:
+Global settings are defined under the ``tox`` section as:
 
 .. code-block:: ini
 
     [tox]
-    # minimally required tox version
-    minversion=ver
-    # tox working directory, defaults to {toxinidir}/.tox
-    toxworkdir=path
-    # defaults to {toxinidir}
-    setupdir=path
-    # defaults to {toxworkdir}/dist
-    distdir=path
-    # (DEPRECATED) defaults to {homedir}/.tox/distshare
-    distshare=path
-    # defaults to the list of all environments
-    envlist=ENVLIST
-    # bool: defaults to False
-    skipsdist=False
+    minversion = 3.4.0
+
+.. conf:: minversion
+
+   Define the minimal tox version required to run; if the host tox is less than this
+   the tool with exit with an error message indicating the user needs to upgrade tox.
+
+.. conf:: toxworkdir ^ PATH ^ {toxinidir}/.tox
+
+   Directory for tox to generate its environments into, will be created if it does not exist.
+
+.. conf:: skipsdist ^ true|false ^ false
+
+   Flag indicating to perform the packaging operation or not. Set it to ``true`` when using tox for
+   an application, instead of a library.
+
+.. conf:: setupdir ^ PATH ^ {toxinidir}
+
+   Indicates where the packaging root file exists (historically the ``setup.py`` for ``setuptools``).
+   This will be the working directory when performing the packaging.
 
 
-``tox`` autodetects if it is running in a Jenkins_ context
-(by checking for existence of the ``JENKINS_URL`` environment variable)
-and will first lookup global tox settings in this section:
+.. conf:: distdir ^ PATH ^ {toxworkdir}/dist
 
-.. code-block:: ini
+   Directory where the packaged source distribution should be put. Note this is cleaned at the start of
+   every packaging invocation.
 
-    [tox:jenkins]
-    commands = ...  # override [tox] settings for the jenkins context
-    # note: for jenkins distshare defaults to ``{toxworkdir}/distshare`` (DEPRECATED)
+.. conf:: distshare ^ PATH ^ {toxworkdir}/distshare
 
-.. confval:: skip_missing_interpreters=config|true|false
+   Folder where the packaged source distribution will be moved, this is not cleaned between packaging
+   invocations.
 
-    .. versionadded:: 1.7.2
+.. conf:: envlist ^ comma separated values
 
-    When skip missing interpreters is ``true`` will force ``tox`` to return success even
-    if some of the specified environments were missing. This is useful for some CI
-    systems or running on a developer box, where you might only have a subset of
-    all your supported interpreters installed but don't want to mark the build as
-    failed because of it. As expected, the command line switch always overrides
-    this setting if passed on the invocation. Setting it to ``config``
-    means that the value is read from the config file (default is ``false``).
-    **Default:** ``config``
-
-.. confval:: envlist=CSV
-
-    Determining the environment list that ``tox`` is to operate on
-    happens in this order (if any is found, no further lookups are made):
+    Determining the environment list that ``tox`` is to operate on happens in this order (if any is found,
+    no further lookups are made):
 
     * command line option ``-eENVLIST``
     * environment variable ``TOXENV``
@@ -83,11 +80,23 @@ and will first lookup global tox settings in this section:
         (e.g. ``py27.*`` means **don't** evaluate environments that start with the key ``py27``).
         Skipped environments will be logged at level two verbosity level.
 
-.. confval:: ignore_basepython_conflict=True|False(default)
+.. conf:: skip_missing_interpreters ^ config|true|false ^ config
+
+    .. versionadded:: 1.7.2
+
+    When skip missing interpreters is ``true`` will force ``tox`` to return success even
+    if some of the specified environments were missing. This is useful for some CI
+    systems or running on a developer box, where you might only have a subset of
+    all your supported interpreters installed but don't want to mark the build as
+    failed because of it. As expected, the command line switch always overrides
+    this setting if passed on the invocation. Setting it to ``config``
+    means that the value is read from the config file.
+
+.. conf:: ignore_basepython_conflict ^ true|false ^ false
 
     .. versionadded:: 3.1.0
 
-    tox allows setting the python version for an environment via the :confval:`basepython`
+    tox allows setting the python version for an environment via the :conf:`basepython`
     setting. If that's not set tox can set a default value from the environment name (
     e.g. ``py37`` implies Python 3.7). Matching up the python version with the environment
     name has became expected at this point, leading to surprises when some configs don't
@@ -96,12 +105,12 @@ and will first lookup global tox settings in this section:
     this warning will become an error.
 
     Furthermore, we allow hard enforcing this rule (and bypassing the warning) by setting
-    this flag to ``True``. In such cases we ignore the :confval:`basepython` and instead
+    this flag to ``true``. In such cases we ignore the :conf:`basepython` and instead
     always use the base python implied from the Python name. This allows you to
-    configure :confval:`basepython` in the global testenv without affecting environments
+    configure :conf:`basepython` in the global testenv without affecting environments
     that have implied base python versions.
 
-.. confval:: requires=LIST
+.. conf:: requires ^ LIST of PEP-508
 
     .. versionadded:: 3.2.0
 
@@ -114,7 +123,7 @@ and will first lookup global tox settings in this section:
         requires = setuptools >= 30.0.0
                    py
 
-.. confval:: isolated_build=True|False(default)
+.. conf:: isolated_build ^ true|false ^ false
 
     .. versionadded:: 3.3.0
 
@@ -123,19 +132,31 @@ and will first lookup global tox settings in this section:
     the ``pyproject.toml`` file as specified in
     `PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ and
     `PEP-518 <https://www.python.org/dev/peps/pep-0518/>`_. To specify the virtual
-    environment Python version define use the :confval:`isolated_build_env` config
+    environment Python version define use the :conf:`isolated_build_env` config
     section.
 
-.. confval:: isolated_build_env=str
+.. conf:: isolated_build_env ^ string ^ .package
 
     .. versionadded:: 3.3.0
 
     Name of the virtual environment used to create a source distribution from the
-    source tree. By **default ``.package``** is used.
+    source tree.
+
+Jenkins override
+++++++++++++++++
+
+It is possible to override global settings inside a Jenkins_ instance (
+detection is by checking for existence of the ``JENKINS_URL`` environment variable)
+by using the ``tox:jenkins`` section:
+
+.. code-block:: ini
+
+    [tox:jenkins]
+    commands = ...  # override settings for the jenkins context
 
 
-Virtualenv test environment settings
-------------------------------------
+tox environment settings
+------------------------
 
 Test environments are defined by a:
 
@@ -150,11 +171,11 @@ Defaults for each setting in this section are looked up in the::
     [testenv]
     commands = ...
 
-testenvironment default section.
+``testenv`` default section.
 
 Complete list of settings that you can put into ``testenv*`` sections:
 
-.. confval:: basepython=NAME-OR-PATH
+.. conf:: basepython ^ NAME-OR-PATH
 
     Name or path to a Python interpreter which will be used for creating the virtual environment,
     this determines in practice the python for what we'll create a virtual isolated environment.
@@ -166,12 +187,12 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
         After resolving this value if the interpreter reports back a different version number
         than implied from the name a warning will be printed by default. However, if
-        :confval:`ignore_basepython_conflict` is set, the value is ignored and we force the
+        :conf:`ignore_basepython_conflict` is set, the value is ignored and we force the
         ``basepython`` implied from the factor name.
 
-.. confval:: commands=ARGVLIST
+.. conf:: commands ^ ARGVLIST
 
-    The commands to be called for testing. Only execute if :confval:`commands_pre` succeed.
+    The commands to be called for testing. Only execute if :conf:`commands_pre` succeed.
 
     Each line is interpreted as one command; however a command can be split over
     multiple lines by ending the line with the ``\`` character.
@@ -187,52 +208,44 @@ Complete list of settings that you can put into ``testenv*`` sections:
         meaning commands will first try to resolve to an executable from within the
         virtual environment, and only after that outside of it. Therefore ``python``
         translates as the virtual environments ``python`` (having the same runtime version
-        as the :confval:`basepython`), and ``pip`` translates as the virtual environments ``pip``.
+        as the :conf:`basepython`), and ``pip`` translates as the virtual environments ``pip``.
 
-.. confval:: commands_pre=ARGVLIST
+.. conf:: commands_pre ^ ARGVLIST
 
-    Commands to run before running the :confval:`commands`.
-    All evaluation and configuration logic applies from :confval:`commands`.
+    Commands to run before running the :conf:`commands`.
+    All evaluation and configuration logic applies from :conf:`commands`.
 
-.. confval:: commands_post=ARGVLIST
+.. conf:: commands_post ^ ARGVLIST
 
-    Commands to run after running the :confval:`commands`. Execute regardless of the outcome of
-    both :confval:`commands` and :confval:`commands_pre`.
-    All evaluation and configuration logic applies from :confval:`commands`.
+    Commands to run after running the :conf:`commands`. Execute regardless of the outcome of
+    both :conf:`commands` and :conf:`commands_pre`.
+    All evaluation and configuration logic applies from :conf:`commands`.
 
-.. confval:: install_command=ARGV
+.. conf:: install_command ^ ARGV ^ python -m pip install {opts} {packages}
 
     .. versionadded:: 1.6
 
     Determines the command used for installing packages into the virtual environment;
-    both the package under test and its dependencies (defined with :confval:`deps`).
+    both the package under test and its dependencies (defined with :conf:`deps`).
     Must contain the substitution key ``{packages}`` which will be replaced by the package(s) to
     install.  You should also accept ``{opts}`` if you are using pip -- it will contain index server options
     such as ``--pre`` (configured as ``pip_pre``) and potentially index-options from the
-    deprecated :confval:`indexserver` option.
+    deprecated :conf:`indexserver` option.
 
-    **default**::
-
-        python -m pip install {opts} {packages}
-
-.. confval:: list_dependencies_command
+.. conf:: list_dependencies_command ^ ARGV ^ python -m pip freeze
 
     .. versionadded:: 2.4
 
     The ``list_dependencies_command`` setting is used for listing
     the packages installed into the virtual environment.
 
-    **default**::
-
-        pip freeze
-
-.. confval:: ignore_errors=True|False(default)
+.. conf:: ignore_errors ^ true|false ^ false
 
     .. versionadded:: 2.0
 
-    If ``True``, a non-zero exit code from one command will be ignored and
+    If ``true``, a non-zero exit code from one command will be ignored and
     further commands will be executed (which was the default behavior in tox <
-    2.0).  If ``False`` (the default), then a non-zero exit code from one
+    2.0).  If ``false``, then a non-zero exit code from one
     command will abort execution of commands for that environment.
 
     It may be helpful to note that this setting is analogous to the ``-i`` or
@@ -246,22 +259,22 @@ Complete list of settings that you can put into ``testenv*`` sections:
     installing some prerequisite failed and it doesn't make sense to try to
     deploy if tests failed.
 
-.. confval:: pip_pre=True|False(default)
+.. conf:: pip_pre ^ true|false ^ false
 
     .. versionadded:: 1.9
 
-    If ``True``, adds ``--pre`` to the ``opts`` passed to
-    :confval:`install_command`. If :confval:`install_command` uses pip, this
+    If ``true``, adds ``--pre`` to the ``opts`` passed to
+    :conf:`install_command`. If :conf:`install_command` uses pip, this
     will cause it to install the latest available pre-release of any
-    dependencies without a specified version. If ``False`` (the default), pip
+    dependencies without a specified version. If ``false``, pip
     will only install final releases of unpinned dependencies.
 
     Passing the ``--pre`` command-line option to tox will force this to
-    ``True`` for all testenvs.
+    ``true`` for all testenvs.
 
-    Don't set this option if your :confval:`install_command` does not use pip.
+    Don't set this option if your :conf:`install_command` does not use pip.
 
-.. confval:: whitelist_externals=MULTI-LINE-LIST
+.. conf:: whitelist_externals ^ MULTI-LINE-LIST
 
     each line specifies a command name (in glob-style pattern format)
     which can be used in the ``commands`` section without triggering
@@ -271,19 +284,17 @@ Complete list of settings that you can put into ``testenv*`` sections:
     If you don't want tox to issue a warning in any case, just use
     ``whitelist_externals=*`` which will match all commands (not recommended).
 
-.. confval:: changedir=path
+.. conf:: changedir ^ PATH ^ {toxinidir}
 
     change to this working directory when executing the test command.
 
-    **default**: ``{toxinidir}``
-
-.. confval:: deps=MULTI-LINE-LIST
+.. conf:: deps ^ MULTI-LINE-LIST
 
     Test-specific dependencies - to be installed into the environment prior to project
     package installation.  Each line defines a dependency, which will be
-    passed to the installer command for processing (see :confval:`indexserver`).
+    passed to the installer command for processing (see :conf:`indexserver`).
     Each line specifies a file, a URL or a package name.  You can additionally specify
-    an :confval:`indexserver` to use for installing this dependency
+    an :conf:`indexserver` to use for installing this dependency
     but this functionality is deprecated since tox-2.3.
     All derived dependencies (deps required by the dep) will then be
     retrieved from the specified indexserver:
@@ -300,7 +311,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     (Experimentally introduced in 1.6.1) all installer commands are executed
     using the ``{toxinidir}`` as the current working directory.
 
-.. confval:: platform=REGEX
+.. conf:: platform ^ REGEX
 
     .. versionadded:: 2.0
 
@@ -308,7 +319,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     If a non-empty expression is defined and does not match against the
     ``sys.platform`` string the test environment will be skipped.
 
-.. confval:: setenv=MULTI-LINE-LIST
+.. conf:: setenv ^ MULTI-LINE-LIST
 
     .. versionadded:: 0.9
 
@@ -325,7 +336,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
         setenv   =
             PYTHONPATH = {env:PYTHONPATH}{:}{toxinidir}
 
-.. confval:: passenv=SPACE-SEPARATED-GLOBNAMES
+.. conf:: passenv ^ SPACE-SEPARATED-GLOBNAMES
 
     .. versionadded:: 2.0
 
@@ -357,58 +368,47 @@ Complete list of settings that you can put into ``testenv*`` sections:
         ``PYTHONPATH`` exists in the host environment but is **not** declared
         in ``passenv`` a warning will be emitted.
 
-.. confval:: recreate=True|False(default)
+.. conf:: recreate ^ true|false ^ false
 
-    Always recreate virtual environment if this option is True.
+    Always recreate virtual environment if this option is true.
 
-.. confval:: downloadcache=path
+.. conf:: downloadcache ^ PATH
 
     **IGNORED** -- Since pip-8 has caching by default this option is now
     ignored.  Please remove it from your configs as a future tox version might
     bark on it.
 
-.. confval:: sitepackages=True|False
+.. conf:: sitepackages ^ true|false ^ false
 
-    Set to ``True`` if you want to create virtual environments that also
+    Set to ``true`` if you want to create virtual environments that also
     have access to globally installed packages.
 
-    **default:** False, meaning that virtualenvs will be
-    created without inheriting the global site packages.
+.. conf:: alwayscopy ^ true|false ^ false
 
-.. confval:: alwayscopy=True|False
-
-    Set to ``True`` if you want virtualenv to always copy files rather than
+    Set to ``true`` if you want virtualenv to always copy files rather than
     symlinking.
 
     This is useful for situations where hardlinks don't work (e.g. running in
     VMS with Windows guests).
 
-    **default:** False, meaning that virtualenvs will make use of symbolic links.
-
-.. confval:: args_are_paths=BOOL
+.. conf:: args_are_paths ^ true|false ^ false
 
     Treat positional arguments passed to ``tox`` as file system paths
     and - if they exist on the filesystem - rewrite them according
-    to the ``changedir``.
+    to the ``changedir``. Default is true due to the exists-on-filesystem check it's
+    usually safe to try rewriting.
 
-    **default**: True (due to the exists-on-filesystem check it's
-    usually safe to try rewriting).
-
-.. confval:: envtmpdir=path
+.. conf:: envtmpdir ^ PATH ^ {envdir}/tmp
 
     Defines a temporary directory for the virtualenv which will be cleared
     each time before the group of test commands is invoked.
 
-    **default**: ``{envdir}/tmp``
-
-.. confval:: envlogdir=path
+.. conf:: envlogdir ^ PATH ^ {envdir}/log
 
     Defines a directory for logging where tox will put logs of tool
     invocation.
 
-    **default**: ``{envdir}/log``
-
-.. confval:: indexserver
+.. conf:: indexserver ^ URL
 
     .. versionadded:: 0.9
 
@@ -428,27 +428,23 @@ Complete list of settings that you can put into ``testenv*`` sections:
     will make tox install all dependencies from this PYPI index server
     (including when installing the project sdist package).
 
-.. confval:: envdir
+.. conf:: envdir ^ PATH ^ {toxworkdir}/{envname}
 
     .. versionadded:: 1.5
 
     User can set specific path for environment. If path would not be absolute
     it would be treated as relative to ``{toxinidir}``.
 
-    **default**: ``{toxworkdir}/{envname}``
-
-.. confval:: usedevelop=BOOL
+.. conf:: usedevelop ^ true|false ^ false
 
     .. versionadded:: 1.6
 
     Install the current package in development mode with "setup.py
     develop" instead of installing from the ``sdist`` package. (This
     uses pip's ``-e`` option, so should be avoided if you've specified a
-    custom :confval:`install_command` that does not support ``-e``).
+    custom :conf:`install_command` that does not support ``-e``).
 
-    **default**: ``False``
-
-.. confval:: skip_install=BOOL
+.. conf:: skip_install ^ true|false ^ false
 
     .. versionadded:: 1.9
 
@@ -456,18 +452,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
     virtualenv management but do not want to install the current package
     into that environment.
 
-    **default**: ``False``
-
-.. confval:: ignore_outcome=BOOL
+.. conf:: ignore_outcome ^ true|false ^ false
 
     .. versionadded:: 2.2
 
-    If set to True a failing result of this testenv will not make tox fail,
+    If set to true a failing result of this testenv will not make tox fail,
     only a warning will be produced.
 
-    **default**: ``False``
-
-.. confval:: extras=MULTI-LINE-LIST
+.. conf:: extras ^ MULTI-LINE-LIST
 
     .. versionadded:: 2.4
 
@@ -475,11 +467,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
     For example, ``extras = testing`` is equivalent to ``[testing]`` in a
     ``pip install`` command.
 
-.. confval:: description=SINGLE-LINE-TEXT
+.. conf:: description ^ SINGLE-LINE-TEXT ^ no description
 
     A short description of the environment, this will be used to explain
     the environment to the user upon listing environments for the command
-    line with any level of verbosity higher than zero. **default**: empty string
+    line with any level of verbosity higher than zero.
 
 Substitutions
 -------------
@@ -762,10 +754,10 @@ environment contains ``py36`` factor.
 
 .. note::
 
-    Configuring :confval:`basepython` for environments using default factors
-    will result in a warning. Configure :confval:`ignore_basepython_conflict`
+    Configuring :conf:`basepython` for environments using default factors
+    will result in a warning. Configure :conf:`ignore_basepython_conflict`
     if you wish to explicitly ignore these conflicts, allowing you to define a
-    global :confval:`basepython` for all environments *except* those with
+    global :conf:`basepython` for all environments *except* those with
     default factors.
 
 Complex factor conditions

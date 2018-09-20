@@ -92,9 +92,9 @@ tox roughly follows the following phases:
     automatically triggered. To force the recreation tox can be invoked with ``-r``/``--recreate``.
 
     2. **install** (optional): install the environment dependencies specified inside the
-    :confval:`deps` configuration section, and then the earlier packaged source distribution.
+    :conf:`deps` configuration section, and then the earlier packaged source distribution.
     By default ``pip`` is used to install packages, however one can customise this via
-    :confval:`install_command`. Note ``pip`` will not update project dependencies (specified either
+    :conf:`install_command`. Note ``pip`` will not update project dependencies (specified either
     in the ``install_requires`` or the ``extras`` section of the ``setup.py``) if any version already
     exists in the virtual environment; therefore we recommend to recreate your environments
     whenever your project dependencies change.
@@ -115,10 +115,10 @@ tox roughly follows the following phases:
     case you'll also see the message ``congratulations :)``.
 
 tox will take care of environment isolation for you: it will strip away all operating system
-environment variables not specified via :confval:`passenv`. Furthermore, it will also alter the
+environment variables not specified via :conf:`passenv`. Furthermore, it will also alter the
 ``PATH`` variable so that your commands resolve first and foremost within the current active
 tox environment. In general all executables in the path are available in ``commands``, but tox will
-emit a warning if it was not explicitly allowed via :confval:`whitelist_external`.
+emit a warning if it was not explicitly allowed via :conf:`whitelist_external`.
 
 Current features
 -------------------
@@ -136,7 +136,7 @@ Current features
 * :doc:`plugin system <plugins>` to modify tox execution with simple hooks.
 
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
-  through :confval:`install_command=ARGV`.
+  through :conf:`install_command=ARGV`.
 
 * **cross-Python compatible**: CPython-2.7, 3.4 and higher, Jython and pypy_.
 
