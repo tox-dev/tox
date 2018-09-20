@@ -153,7 +153,7 @@ environments. On Windows a ``pythonX.Y`` named executable will be searched in
 typical default locations using the ``C:\PythonX.Y\python.exe`` pattern.
 
 All other targets will use the system ``python`` instead. You can override any
-of the default settings by defining the :confval:`basepython` variable in a
+of the default settings by defining the :conf:`basepython` variable in a
 specific test environment section, for example:
 
 .. code-block:: ini

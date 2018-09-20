@@ -4,7 +4,9 @@ import subprocess
 from datetime import date
 from pathlib import Path
 
+from docutils import nodes
 from pkg_resources import get_distribution
+from sphinx import addnodes
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -84,13 +86,28 @@ intersphinx_mapping = {"https://docs.python.org/": None}
 
 
 def setup(app):
-    # from sphinx.ext.autodoc import cut_lines
-    # app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
+    def parse_node(env, text, node):
+        args = text.split("^")
+        name = args[0].strip()
+
+        node += addnodes.literal_strong(name, name)
+
+        if len(args) > 2:
+            default = "={}".format(args[2].strip())
+            node += nodes.literal(text=default)
+
+        if len(args) > 1:
+            content = "({})".format(args[1].strip())
+            node += addnodes.compact_paragraph(text=content)
+
+        return name  # this will be the link
+
     app.add_object_type(
-        "confval",
-        "confval",
+        directivename="conf",
+        rolename="conf",
         objname="configuration value",
         indextemplate="pair: %s; configuration value",
+        parse_node=parse_node,
     )
 
 

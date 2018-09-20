@@ -218,7 +218,7 @@ further customizing installation
 By default tox uses `pip`_ to install packages, both the
 package-under-test and any dependencies you specify in ``tox.ini``.
 You can fully customize tox's install-command through the
-testenv-specific :confval:`install_command=ARGV` setting.
+testenv-specific :conf:`install_command=ARGV` setting.
 For instance, to use pip's ``--find-links`` and ``--no-index`` options to specify
 an alternative source for your dependencies:
 
