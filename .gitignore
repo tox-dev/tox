@@ -31,4 +31,4 @@ py27/
 .*_cache
 _draft.rst
 
-tasks/credentials.json
+credentials.json
