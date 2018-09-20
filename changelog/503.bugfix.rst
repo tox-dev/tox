@@ -1,1 +1,0 @@
-add ``--exists-action w`` to default pip flags to handle better VCS dependencies (`pip documentation on this <https://pip.pypa.io/en/latest/reference/pip/#exists-action-option>`_) - by :user:`gaborbernat`

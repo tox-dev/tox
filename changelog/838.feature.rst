@@ -1,1 +1,0 @@
-always set ``PIP_USER=0`` (do not install into the user site package, but inside the virtual environment created) and ``PIP_NO_DEPS=0`` (installing without dependencies can cause broken package installations) inside tox - by :user:`gaborbernat`

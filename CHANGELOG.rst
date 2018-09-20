@@ -12,6 +12,46 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+3.4.0 (2018-09-20)
+------------------
+
+Bugfixes
+^^^^^^^^
+
+- add ``--exists-action w`` to default pip flags to handle better VCS dependencies (`pip documentation on this <https://pip.pypa.io/en/latest/reference/pip/#exists-action-option>`_) - by :user:`gaborbernat` (`#503 <https://github.com/tox-dev/tox/issues/503>`_)
+- instead of assuming the Python version from the base python name ask the interpreter to reveal the version for the ``ignore_basepython_conflict`` flag - by :user:`gaborbernat` (`#908 <https://github.com/tox-dev/tox/issues/908>`_)
+- PEP-517 packaging fails with sdist already exists, fixed via ensuring the dist folder is empty before invoking the backend and `pypa/setuptools 1481 <https://github.com/pypa/setuptools/pull/1481>`_ - by :user:`gaborbernat` (`#1003 <https://github.com/tox-dev/tox/issues/1003>`_)
+
+
+Features
+^^^^^^^^
+
+- add ``commands_pre`` and ``commands_post`` that run before and after running
+  the ``commands`` (setup runs always, commands only if setup suceeds, teardown always - all
+  run until the first failing command)  - by :user:`gaborbernat` (`#167 <https://github.com/tox-dev/tox/issues/167>`_)
+- ``pyproject.toml`` config support initially by just inline the tox.ini under ``tool.tox.legacy_tox_ini`` key; config source priority order is ``pyproject.toml``, ``tox.ini`` and then ``setup.cfg`` - by :user:`gaborbernat` (`#814 <https://github.com/tox-dev/tox/issues/814>`_)
+- use the os environment variable ``TOX_SKIP_ENV`` to filter out tox environment names from the run list (set by ``envlist``)  - by :user:`gaborbernat` (`#824 <https://github.com/tox-dev/tox/issues/824>`_)
+- always set ``PIP_USER=0`` (do not install into the user site package, but inside the virtual environment created) and ``PIP_NO_DEPS=0`` (installing without dependencies can cause broken package installations) inside tox - by :user:`gaborbernat` (`#838 <https://github.com/tox-dev/tox/issues/838>`_)
+- tox will inject some environment variables that to indicate a command is running within tox: ``TOX_WORK_DIR`` env var is set to the tox work directory,
+  ``TOX_ENV_NAME`` is set to the current running tox environment name, ``TOX_ENV_DIR`` is set to the current tox environments working dir - by :user:`gaborbernat` (`#847 <https://github.com/tox-dev/tox/issues/847>`_)
+- While running tox invokes various commands (such as building the package, pip installing dependencies and so on), these were printed in case they failed as Python arrays. Changed the representation to a shell command, allowing the users to quickly replicate/debug the failure on their own - by :user:`gaborbernat` (`#851 <https://github.com/tox-dev/tox/issues/851>`_)
+- skip missing interpreters value from the config file can now be overridden via the ``--skip-missing-interpreters`` cli flag - by :user:`gaborbernat` (`#903 <https://github.com/tox-dev/tox/issues/903>`_)
+- keep additional environments config order when listing them - by :user:`gaborbernat` (`#921 <https://github.com/tox-dev/tox/issues/921>`_)
+- allow injecting config value inside the ini file dependent of the fact that we're connected to an interactive shell or not  - by :user:`gaborbernat` (`#947 <https://github.com/tox-dev/tox/issues/947>`_)
+- do not build sdist if skip install is specified for the envs to be run - by :user:`gaborbernat` (`#974 <https://github.com/tox-dev/tox/issues/974>`_)
+- when verbosity level increases above two start passing through verbosity flags to pip - by :user:`gaborbernat` (`#982 <https://github.com/tox-dev/tox/issues/982>`_)
+- when discovering the interpreter to use check if the tox host Python matches and use that if so - by :user:`gaborbernat` (`#994 <https://github.com/tox-dev/tox/issues/994>`_)
+- ``-vv`` will print out why a virtual environment is re-created whenever this operation is triggered - by :user:`gaborbernat` (`#1004 <https://github.com/tox-dev/tox/issues/1004>`_)
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- clarify that ``python`` and ``pip`` refer to the virtual environments executable - by :user:`gaborbernat` (`#305 <https://github.com/tox-dev/tox/issues/305>`_)
+- add Sphinx and mkdocs example of generating documentation via tox - by :user:`gaborbernat` (`#374 <https://github.com/tox-dev/tox/issues/374>`_)
+- specify that ``setup.cfg`` tox configuration needs to be inside the ``tox:tox`` namespace - by :user:`gaborbernat` (`#545 <https://github.com/tox-dev/tox/issues/545>`_)
+
+
 3.3.0 (2018-09-11)
 ------------------
 

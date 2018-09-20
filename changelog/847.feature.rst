@@ -1,2 +1,0 @@
-tox will inject some environment variables that to indicate a command is running within tox: ``TOX_WORK_DIR`` env var is set to the tox work directory,
-``TOX_ENV_NAME`` is set to the current running tox environment name, ``TOX_ENV_DIR`` is set to the current tox environments working dir - by :user:`gaborbernat`
