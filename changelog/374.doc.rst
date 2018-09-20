@@ -1,1 +1,0 @@
-add Sphinx and mkdocs example of generating documentation via tox - by :user:`gaborbernat`

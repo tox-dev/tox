@@ -1,1 +1,0 @@
-clarify that ``python`` and ``pip`` refer to the virtual environments executable - by :user:`gaborbernat`

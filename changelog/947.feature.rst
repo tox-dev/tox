@@ -1,1 +1,0 @@
-allow injecting config value inside the ini file dependent of the fact that we're connected to an interactive shell or not  - by :user:`gaborbernat`

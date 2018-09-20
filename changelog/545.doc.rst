@@ -1,1 +1,0 @@
-specify that ``setup.cfg`` tox configuration needs to be inside the ``tox:tox`` namespace - by :user:`gaborbernat`

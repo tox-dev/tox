@@ -1,1 +1,0 @@
-when discovering the interpreter to use check if the tox host Python matches and use that if so - by :user:`gaborbernat`
