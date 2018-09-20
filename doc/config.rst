@@ -849,6 +849,12 @@ user can bypass the system's interpreter parser by defining the
 When the workaround is enabled, all tox-invoked text file executables will have
 their interpreter directive parsed by and explicitly executed by ``tox``.
 
+cli
+===
+
+.. autoprogram:: tox.cli:cli
+   :prog: tox
+
 Injected environment variables
 ------------------------------
 tox will inject the following environment variables that you can use to test that your command is running within tox:

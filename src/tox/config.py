@@ -343,7 +343,6 @@ class SetenvDict(object):
 
 @tox.hookimpl
 def tox_addoption(parser):
-    # formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         "--version",
         action="store_true",

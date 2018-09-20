@@ -160,7 +160,6 @@ Current features
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 
-
 .. toctree::
    :hidden:
 

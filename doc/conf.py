@@ -13,6 +13,7 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.autoprogram",
 ]
 ROOT_SRC_TREE_DIR = Path(__file__).parents[1]
 
