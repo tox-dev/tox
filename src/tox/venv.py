@@ -15,10 +15,19 @@ from .config import DepConfig
 
 
 class CreationConfig:
-    def __init__(self, md5, python, version, sitepackages, usedevelop, deps, alwayscopy):
-        self.md5 = md5
-        self.python = python
-        self.version = version
+    def __init__(
+        self,
+        base_resolved_python_md5,
+        base_resolved_python_path,
+        tox_version,
+        sitepackages,
+        usedevelop,
+        deps,
+        alwayscopy,
+    ):
+        self.base_resolved_python_md5 = base_resolved_python_md5
+        self.base_resolved_python_path = base_resolved_python_path
+        self.tox_version = tox_version
         self.sitepackages = sitepackages
         self.usedevelop = usedevelop
         self.alwayscopy = alwayscopy
@@ -26,36 +35,53 @@ class CreationConfig:
 
     def writeconfig(self, path):
         lines = [
-            "{} {}".format(self.md5, self.python),
+            "{} {}".format(self.base_resolved_python_md5, self.base_resolved_python_path),
             "{} {:d} {:d} {:d}".format(
-                self.version, self.sitepackages, self.usedevelop, self.alwayscopy
+                self.tox_version, self.sitepackages, self.usedevelop, self.alwayscopy
             ),
         ]
         for dep in self.deps:
             lines.append("{} {}".format(*dep))
+        content = "\n".join(lines)
         path.ensure()
-        path.write("\n".join(lines))
+        path.write(content)
+        return content
 
     @classmethod
     def readconfig(cls, path):
         try:
             lines = path.readlines(cr=0)
-            value = lines.pop(0).split(None, 1)
-            version, sitepackages, usedevelop, alwayscopy = lines.pop(0).split(None, 4)
+            base_resolved_python_info = lines.pop(0).split(None, 1)
+            tox_version, sitepackages, usedevelop, alwayscopy = lines.pop(0).split(None, 4)
             sitepackages = bool(int(sitepackages))
             usedevelop = bool(int(usedevelop))
             alwayscopy = bool(int(alwayscopy))
             deps = []
             for line in lines:
-                md5, depstring = line.split(None, 1)
-                deps.append((md5, depstring))
-            md5, python = value
-            return CreationConfig(md5, python, version, sitepackages, usedevelop, deps, alwayscopy)
+                base_resolved_python_md5, depstring = line.split(None, 1)
+                deps.append((base_resolved_python_md5, depstring))
+            base_resolved_python_md5, base_resolved_python_path = base_resolved_python_info
+            return CreationConfig(
+                base_resolved_python_md5,
+                base_resolved_python_path,
+                tox_version,
+                sitepackages,
+                usedevelop,
+                deps,
+                alwayscopy,
+            )
         except Exception:
             return None
 
     def matches_with_reason(self, other, deps_matches_subset=False):
-        for attr in ("md5", "python", "version", "sitepackages", "usedevelop", "alwayscopy"):
+        for attr in (
+            "base_resolved_python_md5",
+            "base_resolved_python_path",
+            "tox_version",
+            "sitepackages",
+            "usedevelop",
+            "alwayscopy",
+        ):
             left = getattr(self, attr)
             right = getattr(other, attr)
             if left != right:
@@ -197,18 +223,25 @@ class VirtualEnv(object):
             return "could not install deps {}; v = {!r}".format(self.envconfig.deps, exception)
 
     def _getliveconfig(self):
-        python = self.envconfig.python_info.executable
+        base_resolved_python_path = self.envconfig.python_info.executable
         version = tox.__version__
         sitepackages = self.envconfig.sitepackages
         develop = self.envconfig.usedevelop
         alwayscopy = self.envconfig.alwayscopy
         deps = []
         for dep in self.get_resolved_dependencies():
-            raw_dep = dep.name
-            md5 = getdigest(raw_dep)
-            deps.append((md5, raw_dep))
-        md5 = getdigest(python)
-        return CreationConfig(md5, python, version, sitepackages, develop, deps, alwayscopy)
+            dep_name_md5 = getdigest(dep.name)
+            deps.append((dep_name_md5, dep.name))
+        base_resolved_python_md5 = getdigest(base_resolved_python_path)
+        return CreationConfig(
+            base_resolved_python_md5,
+            base_resolved_python_path,
+            version,
+            sitepackages,
+            develop,
+            deps,
+            alwayscopy,
+        )
 
     def _getresolvedeps(self):
         warnings.warn(
@@ -238,10 +271,10 @@ class VirtualEnv(object):
         previous_config = CreationConfig.readconfig(self.path_config)
         live_config = self._getliveconfig()
         if previous_config is None or not previous_config.matches(live_config):
+            content = live_config.writeconfig(self.path_config)
             self.session.report.verbosity1(
-                "write config to {} as {!r}".format(self.path_config, live_config)
+                "write config to {} as {!r}".format(self.path_config, content)
             )
-            live_config.writeconfig(self.path_config)
 
     def _needs_reinstall(self, setupdir, action):
         setup_py = setupdir.join("setup.py")

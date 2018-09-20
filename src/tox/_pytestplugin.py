@@ -421,9 +421,9 @@ def mock_venv(monkeypatch):
         def readconfig(cls, path):
             if path.dirname.endswith("{}py".format(os.sep)):
                 return CreationConfig(
-                    md5=getdigest(sys.executable),
-                    python=sys.executable,
-                    version=tox.__version__,
+                    base_resolved_python_md5=getdigest(sys.executable),
+                    base_resolved_python_path=sys.executable,
+                    tox_version=tox.__version__,
                     sitepackages=False,
                     usedevelop=False,
                     deps=[],
@@ -431,9 +431,9 @@ def mock_venv(monkeypatch):
                 )
             elif path.dirname.endswith("{}.package".format(os.sep)):
                 return CreationConfig(
-                    md5=getdigest(sys.executable),
-                    python=sys.executable,
-                    version=tox.__version__,
+                    base_resolved_python_md5=getdigest(sys.executable),
+                    base_resolved_python_path=sys.executable,
+                    tox_version=tox.__version__,
                     sitepackages=False,
                     usedevelop=False,
                     deps=[(getdigest(""), "setuptools >= 35.0.2"), (getdigest(""), "wheel")],
