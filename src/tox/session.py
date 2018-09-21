@@ -67,10 +67,12 @@ def show_help(config):
     tw.line()
     tw.line("Environment variables", bold=True)
     tw.line("TOXENV: comma separated list of environments (overridable by '-e')")
+    tw.line("TOX_SKIP_ENV: regular expression to filter down from running tox environments")
     tw.line(
         "TOX_TESTENV_PASSENV: space-separated list of extra environment variables to be "
         "passed into test command environments"
     )
+    tw.line("PY_COLORS: 0 disable colorized output, 1 enable (default)")
 
 
 def show_help_ini(config):
