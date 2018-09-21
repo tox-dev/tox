@@ -15,4 +15,4 @@ file ``571.bugfix.rst``::
     installation type if the package is installed and ``skip_install`` determines if it should be
     installed at all) - by :user:`ferdonline`
 
-.. see tox/pyproject.toml for all available categories
+.. see pyproject.toml for all available categories

@@ -109,7 +109,8 @@ class TestVenvConfig:
             },
         )
         config = parseconfig(
-            ["--force-dep=dep1==1.5", "--force-dep=dep2==2.1", "--force-dep=dep3==3.0"]
+            ["--force-dep=dep1==1.5", "--force-dep=dep2==2.1", "--force-dep=dep3==3.0"],
+            load_entrypoints=False,
         )
         assert config.option.force_dep == ["dep1==1.5", "dep2==2.1", "dep3==3.0"]
         expected_deps = ["dep1==1.5", "dep2==2.1", "dep3==3.0", "dep4==4.0"]
@@ -129,7 +130,7 @@ class TestVenvConfig:
             """
             },
         )
-        config = parseconfig(["--force-dep=dep1==1.5"])
+        config = parseconfig(["--force-dep=dep1==1.5"], load_entrypoints=False)
         assert config.option.force_dep == ["dep1==1.5"]
         expected_deps = ["dep1==1.5", "https://pypi.org/xyz/pkg1.tar.gz"]
         assert [str(x) for x in config.envconfigs["python"].deps] == expected_deps

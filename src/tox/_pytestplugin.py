@@ -49,7 +49,7 @@ def work_in_clean_dir(tmpdir):
 
 @pytest.fixture(name="newconfig")
 def create_new_config_file(tmpdir):
-    def create_new_config_file_(args, source=None, plugins=()):
+    def create_new_config_file_(args, source=None, plugins=(), load_entrypoints=False):
         if source is None:
             source = args
             args = []
@@ -57,7 +57,7 @@ def create_new_config_file(tmpdir):
         p = tmpdir.join("tox.ini")
         p.write(s)
         with tmpdir.as_cwd():
-            return parseconfig(args, plugins=plugins)
+            return parseconfig(args, plugins=plugins, load_entrypoints=load_entrypoints)
 
     return create_new_config_file_
 
