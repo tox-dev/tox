@@ -586,15 +586,15 @@ class Session:
         envlog.set_installed(packages)
 
     def runtestenv(self, venv, redirect=False):
-        if not self.config.option.notest:
+        if self.config.option.notest:
+            venv.status = "skipped tests"
+        else:
             if venv.status:
                 return
             self.hook.tox_runtest_pre(venv=venv)
             if venv.status == 0:
                 self.hook.tox_runtest(venv=venv, redirect=redirect)
             self.hook.tox_runtest_post(venv=venv)
-        else:
-            venv.status = "skipped tests"
 
     def _summary(self):
         self.report.startsummary()
