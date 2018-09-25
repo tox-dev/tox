@@ -1781,6 +1781,12 @@ class TestConfigTestEnv:
 
 
 class TestGlobalOptions:
+    def test_nodeps(self, newconfig):
+        config = newconfig([], "")
+        assert not config.option.nodeps
+        config = newconfig(["--nodeps"], "")
+        assert config.option.nodeps
+
     def test_notest(self, newconfig):
         config = newconfig([], "")
         assert not config.option.notest

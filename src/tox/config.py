@@ -407,6 +407,9 @@ def tox_addoption(parser):
         help="work against specified environments (ALL selects all).",
     )
     parser.add_argument(
+        "--nodeps", action="store_true", dest="nodeps", help="skip dependency installation."
+    )
+    parser.add_argument(
         "--notest", action="store_true", dest="notest", help="skip invoking test commands."
     )
     parser.add_argument(

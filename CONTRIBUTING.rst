@@ -162,7 +162,11 @@ Here is a simple overview, with tox-specific bits:
 
    Or to only run tests in a particular test module on Python 3.6::
 
-    $ tox -e py36 -- testing/test_config.py
+    $ tox -e py36 -- tests/unit/test_config.py
+
+   Or to only run a single specific test with more verbosity::
+
+    $ tox -e py36 -- -s -v -k test_notest tests/unit/test_config.py
 
    You can also use the dev environment:
 

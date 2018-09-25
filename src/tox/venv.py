@@ -217,10 +217,11 @@ class VirtualEnv(object):
             self.just_created = True
         except tox.exception.UnsupportedInterpreter as exception:
             return exception
-        try:
-            self.hook.tox_testenv_install_deps(action=action, venv=self)
-        except tox.exception.InvocationError as exception:
-            return "could not install deps {}; v = {!r}".format(self.envconfig.deps, exception)
+        if not self.session.config.option.nodeps:
+            try:
+                self.hook.tox_testenv_install_deps(action=action, venv=self)
+            except tox.exception.InvocationError as exception:
+                return "could not install deps {}; v = {!r}".format(self.envconfig.deps, exception)
 
     def _getliveconfig(self):
         base_resolved_python_path = self.envconfig.python_info.executable
