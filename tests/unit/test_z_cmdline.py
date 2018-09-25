@@ -688,6 +688,26 @@ def test_test_piphelp(initproj, cmd):
     assert not result.ret
 
 
+def test_nodeps(initproj, cmd):
+    initproj(
+        "example123",
+        filedefs={
+            "tox.ini": """
+        # content of: tox.ini
+        [testenv]
+        deps=qweqwe123
+    """
+        },
+    )
+    result = cmd("-v")
+    assert result.ret
+    assert result.outlines[-1].startswith("ERROR:   python: could not install deps [qweqwe123];")
+    result = cmd("-v", "--nodeps")
+    assert not result.ret
+    pattern = re.compile("python installed: example123==0.1")
+    assert any(pattern.match(line) for line in result.outlines), result.outlines
+
+
 def test_notest(initproj, cmd):
     initproj(
         "example123",

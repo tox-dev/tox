@@ -1,0 +1,1 @@
+add ``--nodeps`` command line option to enable skipping dependency installation (ignore deps=...) - by :user:`janhn`
