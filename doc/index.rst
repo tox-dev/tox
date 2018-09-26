@@ -111,8 +111,8 @@ tox roughly follows the following phases:
       py27: commands succeeded
       ERROR:   py36: commands failed
 
-    Only if all environments ran successfully tox will return exit code ``0`` (success). In this
-    case you'll also see the message ``congratulations :)``.
+   Only if all environments ran successfully tox will return exit code ``0`` (success). In this
+   case you'll also see the message ``congratulations :)``.
 
 tox will take care of environment isolation for you: it will strip away all operating system
 environment variables not specified via :conf:`passenv`. Furthermore, it will also alter the
