@@ -834,7 +834,7 @@ When the workaround is enabled, all tox-invoked text file executables will have
 their interpreter directive parsed by and explicitly executed by ``tox``.
 
 Injected environment variables
-==============================
+------------------------------
 tox will inject the following environment variables that you can use to test that your command is running within tox:
 
 .. versionadded:: 3.4
@@ -847,7 +847,7 @@ tox will inject the following environment variables that you can use to test tha
  commands called (e.g. install command - pip).
 
 Other Rules and notes
-=====================
+---------------------
 
 * ``path`` specifications: if a specified ``path`` is a relative path
   it will be considered as relative to the ``toxinidir``, the directory
