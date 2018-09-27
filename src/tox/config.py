@@ -1094,7 +1094,9 @@ class ParseIni(object):
                 missing_requirements.append(str(pkg_resources.Requirement(s)))
         if missing_requirements:
             raise tox.exception.MissingRequirement(
-                "Packages {} need to be installed alongside tox in {}".format(", ".join(missing_requirements), sys.executable)
+                "Packages {} need to be installed alongside tox in {}".format(
+                    ", ".join(missing_requirements), sys.executable
+                )
             )
 
     def _list_section_factors(self, section):
