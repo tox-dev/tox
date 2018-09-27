@@ -2644,26 +2644,20 @@ class TestCommandParser:
         assert envconfig.commands[0] == ["some", r"hello\world"]
 
 
-def test_plugin_require(newconfig, capsys):
+def test_plugin_require(newconfig):
     inisource = """
         [tox]
         requires = tox
                    name[foo,bar]>=2,<3; python_version>"2.0" and os_name=='a'
                    b
     """
-    with pytest.raises(
-        RuntimeError, match="not all requirements satisfied, install them alongside tox"
-    ):
+    with pytest.raises(tox.exception.MissingRequirement) as exc_info:
         newconfig([], inisource)
 
-    out, err = capsys.readouterr()
-    assert err.strip() == "\n".join(
-        [
-            'requirement missing name[bar,foo]<3,>=2; python_version > "2.0" and os_name == "a"',
-            "requirement missing b",
-        ]
+    assert exc_info.value.args[0] == (
+        r'Packages name[bar,foo]<3,>=2; python_version > "2.0" and os_name == "a", b '
+        r'need to be installed alongside tox in {}'.format(sys.executable)
     )
-    assert not out
 
 
 def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):
