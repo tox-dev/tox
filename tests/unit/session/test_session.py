@@ -266,6 +266,7 @@ def popen_env_test(initproj, cmd, monkeypatch):
                 def popen(cmd, **kwargs):
                     activity_id = res.session._actions[-1].id
                     activity_name = res.session._actions[-1].activity
+                    ret = "NOTSET"
                     try:
                         ret = res._popen(cmd, **kwargs)
                     except tox.exception.InvocationError as exception:

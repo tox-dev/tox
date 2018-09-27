@@ -111,14 +111,14 @@ tox roughly follows the following phases:
       py27: commands succeeded
       ERROR:   py36: commands failed
 
-    Only if all environments ran successfully tox will return exit code ``0`` (success). In this
-    case you'll also see the message ``congratulations :)``.
+   Only if all environments ran successfully tox will return exit code ``0`` (success). In this
+   case you'll also see the message ``congratulations :)``.
 
 tox will take care of environment isolation for you: it will strip away all operating system
 environment variables not specified via :conf:`passenv`. Furthermore, it will also alter the
 ``PATH`` variable so that your commands resolve first and foremost within the current active
 tox environment. In general all executables in the path are available in ``commands``, but tox will
-emit a warning if it was not explicitly allowed via :conf:`whitelist_external`.
+emit a warning if it was not explicitly allowed via :conf:`whitelist_externals`.
 
 Current features
 -------------------
