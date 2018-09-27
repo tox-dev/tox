@@ -51,7 +51,7 @@ def main(args):
         raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)
-    except tox.exception.MinVersionError as e:
+    except (tox.exception.MinVersionError, tox.exception.MissingRequirement) as e:
         r = Reporter(None)
         r.error(str(e))
         raise SystemExit(1)
