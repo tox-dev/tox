@@ -2656,7 +2656,7 @@ def test_plugin_require(newconfig):
 
     assert exc_info.value.args[0] == (
         r'Packages name[bar,foo]<3,>=2; python_version > "2.0" and os_name == "a", b '
-        r'need to be installed alongside tox in {}'.format(sys.executable)
+        r"need to be installed alongside tox in {}".format(sys.executable)
     )
 
 
