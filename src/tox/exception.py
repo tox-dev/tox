@@ -80,6 +80,10 @@ class MissingDependency(Error):
     """A dependency could not be found or determined."""
 
 
+class MissingRequirement(Error):
+    """A requirement defined in :config:`require` is not met."""
+
+
 class MinVersionError(Error):
     """The installed tox version is lower than requested minversion."""
 

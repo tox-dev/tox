@@ -120,8 +120,12 @@ Global settings are defined under the ``tox`` section as:
     .. code-block:: ini
 
         [tox]
-        requires = setuptools >= 30.0.0
-                   py
+        requires = tox-venv
+                   setuptools >= 30.0.0
+
+    .. note:: tox does **not** install those required packages for you. tox only checks if the
+              requirements are satisfied and crashes early with an helpful error rather then later
+              in the process.
 
 .. conf:: isolated_build ^ true|false ^ false
 

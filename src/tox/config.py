@@ -1084,19 +1084,20 @@ class ParseIni(object):
 
     @staticmethod
     def ensure_requires_satisfied(specified):
-        fail = False
+        missing_requirements = []
         for s in specified:
             try:
                 pkg_resources.get_distribution(s)
             except pkg_resources.RequirementParseError:
                 raise
             except Exception:
-                fail = True
-                print(
-                    "requirement missing {}".format(pkg_resources.Requirement(s)), file=sys.stderr
+                missing_requirements.append(str(pkg_resources.Requirement(s)))
+        if missing_requirements:
+            raise tox.exception.MissingRequirement(
+                "Packages {} need to be installed alongside tox in {}".format(
+                    ", ".join(missing_requirements), sys.executable
                 )
-        if fail:
-            raise RuntimeError("not all requirements satisfied, install them alongside tox")
+            )
 
     def _list_section_factors(self, section):
         factors = set()

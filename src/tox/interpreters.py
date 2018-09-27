@@ -151,6 +151,7 @@ else:
             # The standard names are in predictable places.
             actual = r"c:\python{}\python.exe".format("".join(groups))
         else:
+
             actual = win32map.get(name, None)
         if actual:
             actual = py.path.local(actual)
