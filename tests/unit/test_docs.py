@@ -4,6 +4,7 @@ import textwrap
 
 import pytest
 
+import tox
 from tox.config import parseconfig
 
 INI_BLOCK_RE = re.compile(
@@ -20,9 +21,9 @@ INI_BLOCK_RE = re.compile(
 RST_FILES = []
 TOX_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 for root, _, filenames in os.walk(os.path.join(TOX_ROOT, "doc")):
-    for f in filenames:
-        if f.endswith(".rst"):
-            RST_FILES.append(os.path.join(root, f))
+    for filename in filenames:
+        if filename.endswith(".rst"):
+            RST_FILES.append(os.path.join(root, filename))
 
 
 def test_some_files_exist():
@@ -35,10 +36,12 @@ def test_all_rst_ini_blocks_parse(filename, tmpdir):
         contents = f.read()
     for match in INI_BLOCK_RE.finditer(contents):
         code = textwrap.dedent(match.group("code"))
-        f = tmpdir.join("tox.ini")
-        f.write(code)
+        config_path = tmpdir / "tox.ini"
+        config_path.write(code)
         try:
-            parseconfig(("-c", str(f)))
+            parseconfig(["-c", str(config_path)])
+        except tox.exception.MissingRequirement:
+            assert "requires = tox-venv" in str(code)
         except Exception as e:
             raise AssertionError(
                 "Error parsing ini block\n\n"
