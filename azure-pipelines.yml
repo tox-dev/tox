@@ -2,6 +2,11 @@ name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
 
 variables:
   "System.PreferGit": true
+  CI_NAME: Azure Pipelines
+  CI_BUILD_ID: $(Build.BuildId)
+  CI_BUILD_URL: "https://toxdev.visualstudio.com/tox/_build/results?buildId=$(Build.BuildId)"
+  GIT_BRANCH: $(Build.SourceBranch)
+  GIT_COMMIT_SHA: $(Build.SourceVersion)
 
 trigger:
   batch: true
@@ -23,63 +28,154 @@ trigger:
     - tasks/*
 
 jobs:
-- template: azure-run-tox-env.yml
-  parameters: {name: check_code_style, tox: "fix-lint", python: '3.7',  image: 'Ubuntu 16.04'}
-- template: azure-run-tox-env.yml
-  parameters: {name: generate_docs, tox: docs, python: '3.7', image: 'Ubuntu 16.04'}
-- template: azure-run-tox-env.yml
-  parameters: {name: check_package_long_description, tox: "package-description", python: '3.7',  image: 'Ubuntu 16.04'}
-
-- template: azure-run-tox-env.yml
-  parameters: {name: windows_37, python: '3.7',  image: 'vs2017-win2016'}
-- template: azure-run-tox-env.yml
-  parameters: {name: windows_36, python: '3.6',  image: 'vs2017-win2016'}
-- template: azure-run-tox-env.yml
-  parameters: {name: windows_35, python: '3.5',  image: 'vs2017-win2016'}
-- template: azure-run-tox-env.yml
-  parameters: {name: windows_34, python: '3.4',  image: 'vs2017-win2016'}
-- template: azure-run-tox-env.yml
-  parameters: {name: windows_27, python: '2.7',  image: 'vs2017-win2016'}
-
-- template: azure-run-tox-env.yml
-  parameters: {name: linux_37, python: '3.7',  image: 'Ubuntu 16.04'}
-- template: azure-run-tox-env.yml
-  parameters: {name: linux_36, python: '3.6',  image: 'Ubuntu 16.04'}
-- template: azure-run-tox-env.yml
-  parameters: {name: linux_35, python: '3.5',  image: 'Ubuntu 16.04'}
-- template: azure-run-tox-env.yml
-  parameters: {name: linux_34, python: '3.4',  image: 'Ubuntu 16.04'}
-- template: azure-run-tox-env.yml
-  parameters: {name: linux_27, python: '2.7',  image: 'Ubuntu 16.04'}
-
-- template: azure-run-tox-env.yml
-  parameters: {name: macOS_36, python: '3.6',  image: 'macOS 10.13'}
-
-- job: tests_done
+- job: notify_build_start
   pool: {vmImage: 'Ubuntu 16.04'}
-  condition: always()
-  dependsOn:
-  - windows_37
-  - windows_36
-  - windows_35
-  - windows_34
-  - windows_27
-  - linux_37
-  - linux_36
-  - linux_35
-  - linux_34
-  - linux_27
-  - macOS_36
   steps:
-  - script: echo "done"
-    displayName: running tests done
+  - script: echo start
+  - script: |
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
+      chmod +x ./cc-test-reporter && \
+      ./cc-test-reporter before-build -d
+    displayName: notify code climate of new build
+    condition: eq(variables['system.pullrequest.isfork'], false)
+
+- template: azure-run-tox-env.yml
+  parameters: {tox: fix_lint, python: 3.7}
+- template: azure-run-tox-env.yml
+  parameters: {tox: docs, python: 3.7}
+- template: azure-run-tox-env.yml
+  parameters: {tox: package_description, python: 3.7}
+
+- template: azure-run-tox-env.yml
+  parameters: {tox: pypy, python: pypy, os: linux}
+- template: azure-run-tox-env.yml
+  parameters: {tox: pypy3, python: pypy3, os: linux}
+
+- template: azure-run-tox-env.yml
+  parameters: {tox: py37, python: 3.7, os: windows}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py36, python: 3.6, os: windows}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py35, python: 3.5, os: windows}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py34, python: 3.4, os: windows}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py27, python: 2.7, os: windows}
+
+- template: azure-run-tox-env.yml
+  parameters: {tox: py37, python: 3.7, os: linux}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py36, python: 3.6, os: linux}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py35, python: 3.5, os: linux}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py34, python: 3.4, os: linux}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py27, python: 2.7, os: linux}
+
+- template: azure-run-tox-env.yml
+  parameters: {tox: py36, python: 3.6, os: macOs}
+
+- job: report_coverage
+  pool: {vmImage: 'Ubuntu 16.04'}
+  condition: eq(variables['system.pullrequest.isfork'], false)
+  dependsOn:
+  - windows_py37
+  - windows_py36
+  - windows_py35
+  - windows_py34
+  - windows_py27
+  - linux_py37
+  - linux_py36
+  - linux_py35
+  - linux_py34
+  - linux_py27
+  - linux_pypy3
+  - linux_pypy
+  - macOS_py36
+  steps:
+  - task: DownloadBuildArtifacts@0
+    displayName: download coverage files for run
+    inputs:
+      buildType: current
+      downloadType: specific
+      itemPattern: coverage-*/*
+      downloadPath: $(Build.StagingDirectory)
+
+  - task: UsePythonVersion@0
+    displayName: setup python
+    inputs:
+      versionSpec: 3.7
+
+  - script: |
+      python -c '
+      from pathlib import Path
+      import shutil
+
+      from_folder = Path("$(Build.StagingDirectory)")
+      destination_folder = Path("$(System.DefaultWorkingDirectory)") / ".tox"
+      destination_folder.mkdir()
+      for coverage_file in from_folder.glob("*/.coverage"):
+          destination = destination_folder / f".coverage.{coverage_file.parent.name[9:]}"
+          print(f"{coverage_file} copy to {destination}")
+          shutil.copy(str(coverage_file), str(destination))'
+    displayName: move coverage files into .tox
+
+  - script: 'python -m pip install -U tox --pre'
+    displayName: install tox
+
+  - script: 'python -m tox -e py --sdistonly'
+    displayName: generate version.py
+
+  - script: 'python -m tox -e coverage'
+    displayName: create coverag report via tox
+
+  - task: PublishCodeCoverageResults@1
+    displayName: publish overall coverage report to Azure
+    inputs:
+      codeCoverageTool: 'cobertura'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
+      failIfCoverageEmpty: true
+
+  - script: |
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
+      chmod +x ./cc-test-reporter && \
+      python -c '
+      from xml.etree import ElementTree as et
+      from pathlib import Path
+      import subprocess
+
+      from_folder = Path("$(Build.StagingDirectory)")
+      for counter, coverage_file in enumerate(from_folder.glob("*/coverage.xml")):
+          key = coverage_file.parent.name[9:]
+          print(f"{counter}) {coverage_file}")
+          try:
+              cmd = ["$(System.DefaultWorkingDirectory)/cc-test-reporter", "format-coverage",
+                     str(coverage_file),
+                     "-d", "-t", "coverage.py",
+                     "-o", f"$(Build.StagingDirectory)/code-climate.{key}.json"]
+              print(f"\t{cmd}")
+              log = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
+              code = 0
+          except subprocess.CalledProcessError as exception:
+              log, code = exception.output, exception.returncode
+          finally:
+              print(code, log, "\n", sep="\n")' && \
+      ./cc-test-reporter sum-coverage -d --output - \
+          --parts $(ls -1 $(Build.StagingDirectory)/code-climate.*.json | wc -l) \
+          $(Build.StagingDirectory)/code-climate.*.json | \
+      ./cc-test-reporter -d -r d24f105984ab5e087773a21b8668acb0b36cb8311fc2637f78a2d9451e531e08 \
+          upload-coverage --input -
+    displayName: publish code climate
+    condition: succeededOrFailed()
 
 - job: publish
   dependsOn:
-  - tests_done
-  - check_code_style
-  - generate_docs
-  - check_package_long_description
+  - report_coverage
+  - linux_fix_lint
+  - linux_docs
+  - linux_package_description
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
   pool: {vmImage: 'Ubuntu 16.04'}
   steps:
@@ -90,5 +186,5 @@ jobs:
     displayName: Package and publish to PyPI
     inputs:
       pypiConnection: pypi-conn
-      packageDirectory: '$(System.DefaultWorkingDirectory)'
+      packageDirectory: $(System.DefaultWorkingDirectory)
       alsoPublishWheel: true
