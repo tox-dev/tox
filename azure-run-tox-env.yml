@@ -1,0 +1,36 @@
+parameters:
+  name: ''
+  tox: 'py'
+  python: ''
+  image: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  pool:
+    vmImage: ${{ parameters.image }}
+  steps:
+  - task: UsePythonVersion@0
+    displayName: setup python
+    inputs:
+      versionSpec: ${{ parameters.python }}
+
+  - script: 'python -m pip install -U tox --pre'
+    displayName: install tox
+
+  - script: 'python -m tox --notest'
+    displayName: acquire tox env dependencies
+    env:
+      TOXENV: ${{ parameters.tox }}
+
+  - script: 'python -m tox'
+    displayName: perform tox env run
+    env:
+      TOXENV: ${{ parameters.tox }}
+
+  - ${{ if eq(parameters.tox, 'py') }}:
+
+    - script: 'python -m tox -e coverage'
+      displayName: generate coverage report
+
+    - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) pyt+hon=$(python.version)'
+      displayName: upload codecov
