@@ -4,177 +4,88 @@ variables:
   "System.PreferGit": true
 
 trigger:
+  batch: true
   branches:
     include:
     - master
     - refs/tags/*
+  paths:
+    exclude:
+    - readthedocs.yml
+    - LICENSE
+    - HOWTORELEASE.rst
+    - CONTRIBUTORS
+    - CONTRIBUTING.rst
+    - CODE_OF_CONDUCT.md
+    - .travis.yml
+    - .gitignore
+    - .github/*
+    - tasks/*
 
 jobs:
-- job: lint
-  pool:
-    vmImage: 'Ubuntu 16.04'
+- template: azure-run-tox-env.yml
+  parameters: {name: check_code_style, tox: "fix-lint", python: '3.7',  image: 'Ubuntu 16.04'}
+- template: azure-run-tox-env.yml
+  parameters: {name: generate_docs, tox: docs, python: '3.7', image: 'Ubuntu 16.04'}
+- template: azure-run-tox-env.yml
+  parameters: {name: check_package_long_description, tox: "package-description", python: '3.7',  image: 'Ubuntu 16.04'}
 
+- template: azure-run-tox-env.yml
+  parameters: {name: windows_37, python: '3.7',  image: 'vs2017-win2016'}
+- template: azure-run-tox-env.yml
+  parameters: {name: windows_36, python: '3.6',  image: 'vs2017-win2016'}
+- template: azure-run-tox-env.yml
+  parameters: {name: windows_35, python: '3.5',  image: 'vs2017-win2016'}
+- template: azure-run-tox-env.yml
+  parameters: {name: windows_34, python: '3.4',  image: 'vs2017-win2016'}
+- template: azure-run-tox-env.yml
+  parameters: {name: windows_27, python: '2.7',  image: 'vs2017-win2016'}
+
+- template: azure-run-tox-env.yml
+  parameters: {name: linux_37, python: '3.7',  image: 'Ubuntu 16.04'}
+- template: azure-run-tox-env.yml
+  parameters: {name: linux_36, python: '3.6',  image: 'Ubuntu 16.04'}
+- template: azure-run-tox-env.yml
+  parameters: {name: linux_35, python: '3.5',  image: 'Ubuntu 16.04'}
+- template: azure-run-tox-env.yml
+  parameters: {name: linux_34, python: '3.4',  image: 'Ubuntu 16.04'}
+- template: azure-run-tox-env.yml
+  parameters: {name: linux_27, python: '2.7',  image: 'Ubuntu 16.04'}
+
+- template: azure-run-tox-env.yml
+  parameters: {name: macOS_36, python: '3.6',  image: 'macOS 10.13'}
+
+- job: tests_done
+  pool: {vmImage: 'Ubuntu 16.04'}
+  condition: always()
+  dependsOn:
+  - windows_37
+  - windows_36
+  - windows_35
+  - windows_34
+  - windows_27
+  - linux_37
+  - linux_36
+  - linux_35
+  - linux_34
+  - linux_27
+  - macOS_36
   steps:
-  - task: UsePythonVersion@0
-    displayName: setup python
-    inputs:
-      versionSpec: '3.7'
-
-  - script: 'python -m pip install -U tox'
-    displayName: install tox
-
-  - script: 'tox -e fix-lint'
-    displayName: run tox
-
-- job: docs
-  pool:
-    vmImage: 'Ubuntu 16.04'
-  strategy:
-    maxParallel: 2
-    matrix:
-      readthedocs:
-        toxenv: 'docs'
-      packageDescription:
-        toxenv: 'package-description'
-
-  steps:
-  - task: UsePythonVersion@0
-    displayName: setup python
-    inputs:
-      versionSpec: '3.7'
-
-  - script: 'python -m pip install -U tox'
-    displayName: install tox
-
-  - script: 'tox -e $(toxenv)'
-    displayName: run tox
-
-- job: linux
-  pool:
-    vmImage: 'Ubuntu 16.04'
-  strategy:
-    maxParallel: 4
-    matrix:
-      python27:
-        python.version: '2.7'
-      python34:
-        python.version: '3.4'
-      python35:
-        python.version: '3.5'
-      python36:
-        python.version: '3.6'
-      python37:
-        python.version: '3.7'
-
-  steps:
-  - task: UsePythonVersion@0
-    displayName: setup python$(python.version)
-    inputs:
-      versionSpec: '$(python.version)'
-
-  - script: 'python -m pip install -U tox'
-    displayName: install tox
-
-  - script: 'python -m tox -e py --notest'
-    displayName: acquire env dependencies
-
-  - script: 'python -m tox -e py'
-    displayName: run tests
-
-  - script: 'python -m tox -e coverage'
-    displayName: generate coverage report
-
-  - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
-    displayName: upload codecov
-    condition: and(succeeded(), variables['CODECOV_TOKEN'])
-
-- job: windows
-  pool:
-    vmImage: 'vs2017-win2016'
-  strategy:
-    maxParallel: 4
-    matrix:
-      python27:
-        python.version: '2.7'
-      python34:
-        python.version: '3.4'
-      python35:
-        python.version: '3.5'
-      python36:
-        python.version: '3.6'
-      python37:
-        python.version: '3.7'
-
-  steps:
-  - task: UsePythonVersion@0
-    displayName: setup python$(python.version)
-    inputs:
-      versionSpec: '$(python.version)'
-
-  - script: 'python -m pip install -U tox'
-    displayName: install tox
-
-  - script: 'python -m tox -e py --notest'
-    displayName: acquire env dependencies
-
-  - script: 'python -m tox -e py'
-    displayName: run tests
-
-  - script: 'python -m tox -e coverage'
-    displayName: generate coverage report
-
-  - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=$(python.version)'
-    displayName: upload codecov
-    condition: and(succeeded(), variables['CODECOV_TOKEN'])
-
-- job: macOS
-  pool:
-    vmImage: 'macOS 10.13'
-  strategy:
-    maxParallel: 1
-    matrix:
-      python:
-        toxenv: 'py3'
-
-  steps:
-  - script: 'python3 -m pip install -U tox'
-    displayName: install tox
-
-  - script: 'python3 -m tox -e $(toxenv) --notest'
-    displayName: acquire env dependencies
-
-  - script: 'python3 -m tox -e $(toxenv)'
-    displayName: run tests
-
-  - script: 'python3 -m tox -e coverage'
-    displayName: generate coverage report
-
-  - script: 'python3 -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-python3" --build "$(Build.DefinitionName)" --env OS=$(agent.os) python=3'
-    displayName: upload codecov
-    condition: and(succeeded(), variables['CODECOV_TOKEN'])
+  - script: echo "done"
+    displayName: running tests done
 
 - job: publish
   dependsOn:
-  - macOS
-  - linux
-  - windows
-  - lint
-  - docs
+  - tests_done
+  - check_code_style
+  - generate_docs
+  - check_package_long_description
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
-  pool:
-    vmImage: 'Ubuntu 16.04'
-  strategy:
-    maxParallel: 1
-    matrix:
-      python37:
-        python.version: '3.7'
-
+  pool: {vmImage: 'Ubuntu 16.04'}
   steps:
   - task: UsePythonVersion@0
-    displayName: setup python$(python.version)
-    inputs:
-      versionSpec: '$(python.version)'
-
+    displayName: setup python3.7
+    inputs: {versionSpec: '3.7'}
   - task: PyPIPublisher@0
     displayName: Package and publish to PyPI
     inputs:

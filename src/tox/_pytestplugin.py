@@ -404,7 +404,7 @@ def mock_venv(monkeypatch):
     and cannot install any packages. """
 
     # first ensure we have a clean python path
-    monkeypatch.delenv("PYTHONPATH", raising=False)
+    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
 
     # object to collect some data during the execution
     class Result(object):
