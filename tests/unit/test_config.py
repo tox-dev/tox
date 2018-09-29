@@ -2489,23 +2489,6 @@ class TestCmdInvocation:
         assert result.ret == 0
         assert any(re.match(r".*deps.*dep1, dep2==5.0.*", l) for l in result.outlines)
 
-    @pytest.mark.xfail("'pypy' not in sys.executable", reason="Upstream bug. See #203")
-    def test_colon_symbol_in_directory_name(self, cmd, initproj):
-        initproj(
-            "colon:_symbol_in_dir_name",
-            filedefs={
-                "tox.ini": """
-            [tox]
-            envlist = py27
-
-            [testenv]
-            commands = pip --version
-            """
-            },
-        )
-        result = cmd()
-        assert result.ret == 0
-
 
 @pytest.mark.parametrize(
     "cli_args,run_envlist",

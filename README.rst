@@ -7,13 +7,10 @@
 .. image:: https://dev.azure.com/toxdev/tox/_apis/build/status/tox%20ci?branchName=master
   :target: https://dev.azure.com/toxdev/tox/_build/latest?definitionId=9&branchName=master
   :alt: Azure Pipelines build status
-.. image:: https://travis-ci.org/tox-dev/tox.svg?branch=master
-  :target: https://travis-ci.org/tox-dev/tox
-  :alt: Travis-CI build status
-.. image:: https://codecov.io/gh/tox-dev/tox/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/tox-dev/tox
-  :alt: Code coverage Status
-.. image:: https://readthedocs.org/projects/tox/badge/?version=latest
+.. image:: https://api.codeclimate.com/v1/badges/425c19ab2169a35e1c16/test_coverage
+   :target: https://codeclimate.com/github/tox-dev/tox/test_coverage
+   :alt: Test Coverage
+.. image:: https://readthedocs.org/projects/tox/badge/?version=latest&style=flat-square
   :target: https://tox.readthedocs.io/en/latest/?badge=latest
   :alt: Documentation status
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
