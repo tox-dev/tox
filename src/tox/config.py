@@ -8,7 +8,6 @@ import re
 import shlex
 import string
 import sys
-import uuid
 import warnings
 from collections import OrderedDict
 from fnmatch import fnmatchcase
@@ -419,7 +418,8 @@ def tox_addoption(parser):
         "--parallel--safe-build",
         action="store_true",
         dest="parallel_safe_build",
-        help="ensure two tox builds can run in parallel",
+        help="(deprecated) ensure two tox builds can run in parallel "
+        "(uses a lock file in the tox workdir with .lock extension)",
     )
     parser.add_argument(
         "--installpkg",
@@ -1018,20 +1018,16 @@ class ParseIni(object):
         if override:
             for name in config.indexserver:
                 config.indexserver[name] = IndexServerConfig(name, override)
-        unique_id = str(uuid.uuid4())
 
         reader.addsubstitutions(toxworkdir=config.toxworkdir)
         config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
-        self._make_thread_safe_path(config, "distdir", unique_id)
 
         reader.addsubstitutions(distdir=config.distdir)
         config.distshare = reader.getpath("distshare", dist_share_default)
-        self._make_thread_safe_path(config, "distshare", unique_id)
         reader.addsubstitutions(distshare=config.distshare)
         config.sdistsrc = reader.getpath("sdistsrc", None)
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
-        self._make_thread_safe_path(config, "logdir", unique_id)
 
         self.parse_build_isolation(config, reader)
         config.envlist, all_envs = self._getenvdata(reader, config)
@@ -1075,12 +1071,6 @@ class ParseIni(object):
                 config.envconfigs[name] = self.make_envconfig(
                     name, "{}{}".format(testenvprefix, name), reader._subs, config
                 )
-
-    def _make_thread_safe_path(self, config, attr, unique_id):
-        if config.option.parallel_safe_build:
-            path = getattr(config, attr)
-            value = py.path.local(path.dirname).join("{}-{}".format(path.basename, unique_id))
-            setattr(config, attr, value)
 
     @staticmethod
     def ensure_requires_satisfied(specified):
