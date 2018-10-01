@@ -786,7 +786,7 @@ special case for a combination of factors. Here is how you do it:
 Take a look at the first ``deps`` line. It shows how you can special case
 something for a combination of factors, by just hyphenating the combining
 factors together. This particular line states that ``PyMySQL`` will be loaded
-for python 3.3, mysql environments, e.g. ``py34-django15-mysql`` and
+for python 3.4, mysql environments, e.g. ``py34-django15-mysql`` and
 ``py34-django16-mysql``.
 
 The second line shows how you use the same setting for several factors - by
