@@ -32,5 +32,14 @@ jobs:
     - script: 'python -m tox -e coverage'
       displayName: generate coverage report
 
-    - script: 'python -m tox -e codecov -- -t $(CODECOV_TOKEN) --required -n "$(agent.os)-$(python.version)" --build "$(Build.DefinitionName)" --env OS=$(agent.os) pyt+hon=$(python.version)'
+    - script: |
+        for i in 1 2 3; do
+        python -m tox -e codecov -- \
+        -t $(CODECOV_TOKEN) --required \
+        --name "$(agent.os)-$(python.version)" \
+        --build "$(Build.DefinitionName)" \
+        --pr $(System.PullRequest.PullRequestNumber)
+        --env OS=$(agent.os) python=$(python.version)' \
+        && break || sleep 15;
+        done
       displayName: upload codecov
