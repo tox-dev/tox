@@ -1,0 +1,1 @@
+intermittent failures with ``--parallel--safe-build``, instead of mangling with the file paths now uses a lock to make the package build operation thread safe and is now on by default (``--parallel--safe-build`` is now deprecated) - by :user:`gaborbernat`

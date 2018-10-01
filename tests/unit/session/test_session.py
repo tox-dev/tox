@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import textwrap
-import uuid
 from threading import Thread
 
 import pytest
@@ -82,31 +81,6 @@ def test_minversion(cmd, initproj):
         r"ERROR: MinVersionError: tox version is .*," r" required is at least 6.0", result.out
     )
     assert result.ret
-
-
-def test_tox_parallel_build_safe(initproj, cmd, mock_venv):
-    initproj(
-        "env_var_test",
-        filedefs={
-            "tox.ini": """
-                          [tox]
-                          envlist = py
-                          [testenv]
-                          skip_install = true
-                          commands = python --version
-                      """
-        },
-    )
-    result = cmd("--parallel--safe-build")
-
-    for path, base in (
-        (result.session.config.distdir, "dist-"),
-        (result.session.config.logdir, "log-"),
-        (result.session.config.distshare, "distshare-"),
-    ):
-        basename = path.basename
-        assert basename.startswith(base)
-        assert uuid.UUID(basename[len(base) :], version=4)
 
 
 def test_skip_sdist(cmd, initproj):

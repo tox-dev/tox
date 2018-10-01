@@ -6,6 +6,7 @@ from collections import namedtuple
 import pkg_resources
 import py
 import six
+from filelock import FileLock, Timeout
 
 import tox
 from tox.config import DepConfig, get_py_project_toml
@@ -27,6 +28,22 @@ def get_package(session):
     if config.skipsdist:
         report.info("skipping sdist step")
         return None
+    lock_file = str(
+        session.config.toxworkdir.join("{}.lock".format(session.config.isolated_build_env))
+    )
+    lock = FileLock(lock_file)
+    try:
+        try:
+            lock.acquire(0.0001)
+        except Timeout:
+            report.verbosity0("lock file {} present, will block until released".format(lock_file))
+            lock.acquire()
+        return acquire_package(config, report, session)
+    finally:
+        lock.release(force=True)
+
+
+def acquire_package(config, report, session):
     if not config.option.sdistonly and (config.sdistsrc or config.option.installpkg):
         path = config.option.installpkg
         if not path:

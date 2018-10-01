@@ -4,6 +4,7 @@ import os
 import sys
 import textwrap
 import time
+from collections import OrderedDict
 from fnmatch import fnmatch
 
 import py
@@ -408,12 +409,30 @@ def mock_venv(monkeypatch):
 
     # object to collect some data during the execution
     class Result(object):
-        def __init__(self):
+        def __init__(self, session):
             self.popens = []
-            self.cwd = None
-            self.session = None
+            self._popen = session.popen
 
-    res = Result()
+            # collect all popen calls
+            def popen(cmd, **kwargs):
+                # we don't want to perform installation of new packages,
+                # just replace with an always ok cmd
+                if "pip" in cmd and "install" in cmd:
+                    cmd = ["python", "-c", "print({!r})".format(cmd)]
+                activity_id = session._actions[-1].id
+                activity_name = session._actions[-1].activity
+                try:
+                    ret = self._popen(cmd, **kwargs)
+                except tox.exception.InvocationError as exception:  # pragma: no cover
+                    ret = exception  # pragma: no cover
+                finally:
+                    self.popens.append((activity_id, activity_name, kwargs.get("env"), ret, cmd))
+                return ret
+
+            monkeypatch.setattr(session, "popen", popen)
+            self.session = session
+
+    res = OrderedDict()
 
     # convince tox that the current running virtual environment is already the env we would create
     class ProxyCurrentPython:
@@ -468,28 +487,11 @@ def mock_venv(monkeypatch):
     prev_build = tox.session.build_session
 
     def build_session(config):
-        res.session = prev_build(config)
-        res._popen = res.session.popen
-        monkeypatch.setattr(res.session, "popen", popen)
-        return res.session
+        session = prev_build(config)
+        res[id(session)] = Result(session)
+        return session
 
     monkeypatch.setattr(tox.session, "build_session", build_session)
-
-    # collect all popen calls
-    def popen(cmd, **kwargs):
-        # we don't want to perform installation of new packages, just replace with an always ok cmd
-        if "pip" in cmd and "install" in cmd:
-            cmd = ["python", "-c", "print({!r})".format(cmd)]
-        activity_id = res.session._actions[-1].id
-        activity_name = res.session._actions[-1].activity
-        try:
-            ret = res._popen(cmd, **kwargs)
-        except tox.exception.InvocationError as exception:  # pragma: no cover
-            ret = exception  # pragma: no cover
-        finally:
-            res.popens.append((activity_id, activity_name, kwargs.get("env"), ret, cmd))
-        return ret
-
     return res
 
 
