@@ -44,7 +44,7 @@ Fix bugs
 --------
 
 Look through the GitHub issues for bugs.  Here is a filter you can use:
-https://github.com/tox-dev/tox/labels/bug
+https://github.com/tox-dev/tox/labels/bug:normal
 
 Don't forget to check the issue trackers of your favourite plugins, too!
 
@@ -54,7 +54,7 @@ Implement features
 ------------------
 
 Look through the GitHub issues for enhancements.  Here is a filter you can use:
-https://github.com/tox-dev/tox/labels/enhancement
+https://github.com/tox-dev/tox/labels/feature:new
 
 Write documentation
 -------------------
