@@ -254,3 +254,61 @@ def test_dist_exists_version_change(mock_venv, initproj, cmd):
 
     result = cmd("-e", "py")
     assert result.ret == 0, result.out
+
+
+def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
+    initproj(
+        "env_var_test",
+        filedefs={
+            "tox.ini": """
+                          [tox]
+                          envlist = py
+                          install_cmd = python -m -c 'print("ok")' -- {opts} {packages}'
+                          [testenv]
+                          commands = python --version
+                      """
+        },
+    )
+    import tox.package
+    import threading
+
+    triggered = threading.Event()
+    event = threading.Event()
+
+    result = {}
+
+    def run(name):
+        try:
+            outcome = cmd("--parallel--safe-build")
+            result[name] = outcome
+        except Exception as exception:
+            result[name] = exception
+
+    with monkeypatch.context() as m:
+        prev_build_package = tox.package.build_package
+
+        def build_package(config, report, session):
+            triggered.set()
+            event.wait()
+            return prev_build_package(config, report, session)
+
+        m.setattr(tox.package, "build_package", build_package)
+        t1 = threading.Thread(target=run, args=("t1",))
+        t1.start()
+        triggered.wait()
+
+    t2 = threading.Thread(target=run, args=("t2",))
+    t2.start()
+
+    t2.join(timeout=0.1)  # 100 ms should be enough to build the package
+    assert t2.is_alive()  # if still alive means something (our lock) prevented two parallel builds
+    event.set()
+    t1.join()
+    t2.join()
+    assert result
+    err = "\n".join((result["t1"].err, result["t2"].err)).strip()
+    out = "\n".join((result["t1"].out, result["t2"].out)).strip()
+    assert not err
+    lock_file = py.path.local().join(".tox", ".package.lock")
+    msg = "lock file {} present, will block until released".format(lock_file)
+    assert msg in out
