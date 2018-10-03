@@ -91,7 +91,7 @@ def main():
                 "pytest-randomly >= 1.2.3, <2",
             ],
             "docs": [
-                "sphinx >= 1.7.5, < 2",
+                "sphinx >= 1.8.0, < 2",
                 "towncrier >= 18.5.0",
                 "pygments-github-lexers >= 0.0.5",
             ],
