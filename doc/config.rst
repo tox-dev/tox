@@ -60,11 +60,15 @@ Global settings are defined under the ``tox`` section as:
    Indicates where the packaging root file exists (historically the ``setup.py`` for ``setuptools``).
    This will be the working directory when performing the packaging.
 
-
 .. conf:: distdir ^ PATH ^ {toxworkdir}/dist
 
    Directory where the packaged source distribution should be put. Note this is cleaned at the start of
    every packaging invocation.
+
+.. conf:: sdistsrc ^ PATH ^ {toxworkdir}/dist
+
+   Do not build the package, but instead use teh latest package available under this path.
+   You can override it via the command line flag ``--installpkg``.
 
 .. conf:: distshare ^ PATH ^ {homedir}/.tox/distshare
 

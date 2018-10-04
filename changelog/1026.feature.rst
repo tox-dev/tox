@@ -5,5 +5,3 @@ install it). The hard link is removed at the end of the run (what it points thou
 inside ``distdir``). This ensures that a tox session operates on the same package it built, even
 if a parallel tox run builds another version. Note ``distdir`` will contain only the last built
 package in such cases. - by :user:`gaborbernat`
-
-

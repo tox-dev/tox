@@ -318,13 +318,14 @@ class Reporter(object):
         if self.verbosity >= Verbosity.QUIET:
             self.tw.sep("_", "summary")
 
-    def info(self, msg):
-        if self.verbosity >= Verbosity.DEBUG:
-            self.logline(msg)
+    def logline_if(self, level, msg, key=None, **kwargs):
+        if self.verbosity >= level:
+            message = str(msg) if key is None else "{}{}".format(key, msg)
+            self.logline(message, **kwargs)
 
-    def using(self, msg):
-        if self.verbosity >= Verbosity.INFO:
-            self.logline("using {}".format(msg), bold=True)
+    def logline(self, msg, **opts):
+        self.reported_lines.append(msg)
+        self.tw.line("{}".format(msg), **opts)
 
     def keyboard_interrupt(self):
         self.error("KEYBOARDINTERRUPT")
@@ -339,40 +340,32 @@ class Reporter(object):
     def line(self, msg, **opts):
         self.logline(msg, **opts)
 
+    def info(self, msg):
+        self.logline_if(Verbosity.DEBUG, msg)
+
+    def using(self, msg):
+        self.logline_if(Verbosity.INFO, msg, "using ", bold=True)
+
     def good(self, msg):
-        if self.verbosity >= Verbosity.QUIET:
-            self.logline(msg, green=True)
+        self.logline_if(Verbosity.QUIET, msg, green=True)
 
     def warning(self, msg):
-        if self.verbosity >= Verbosity.QUIET:
-            self.logline("WARNING: {}".format(msg), red=True)
+        self.logline_if(Verbosity.QUIET, msg, "WARNING: ", red=True)
 
     def error(self, msg):
-        if self.verbosity >= Verbosity.QUIET:
-            self.logline("ERROR: {}".format(msg), red=True)
+        self.logline_if(Verbosity.QUIET, msg, "ERROR: ", red=True)
 
     def skip(self, msg):
-        if self.verbosity >= Verbosity.QUIET:
-            self.logline("SKIPPED: {}".format(msg), yellow=True)
-
-    def logline(self, msg, **opts):
-        self.reported_lines.append(msg)
-        self.tw.line("{}".format(msg), **opts)
+        self.logline_if(Verbosity.QUIET, msg, "SKIPPED: ", yellow=True)
 
     def verbosity0(self, msg, **opts):
-        if self.verbosity >= Verbosity.DEFAULT:
-            self.logline("{}".format(msg), **opts)
+        self.logline_if(Verbosity.DEFAULT, msg, **opts)
 
     def verbosity1(self, msg, **opts):
-        if self.verbosity >= Verbosity.INFO:
-            self.logline("{}".format(msg), **opts)
+        self.logline_if(Verbosity.INFO, msg, **opts)
 
     def verbosity2(self, msg, **opts):
-        if self.verbosity >= Verbosity.DEBUG:
-            self.logline("{}".format(msg), **opts)
-
-    # def log(self, msg):
-    #    print(msg, file=sys.stderr)
+        self.logline_if(Verbosity.DEBUG, msg, **opts)
 
 
 class Session:
@@ -459,7 +452,11 @@ class Session:
             yield
         finally:
             for tox_env in self.venvlist:
-                if hasattr(tox_env, "package") and tox_env.package.exists():
+                if (
+                    hasattr(tox_env, "package")
+                    and isinstance(tox_env.package, py.path.local)
+                    and tox_env.package.exists()
+                ):
                     self.report.verbosity2("cleanup {}".format(tox_env.package))
                     tox_env.package.remove()
 

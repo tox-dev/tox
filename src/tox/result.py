@@ -45,7 +45,7 @@ class EnvLog:
 
     def set_python_info(self, python_executable):
         cmd = [
-            python_executable,
+            str(python_executable),
             "-c",
             "import sys; import json;"
             "print(json.dumps({"

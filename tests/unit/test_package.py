@@ -1,3 +1,4 @@
+import os
 import re
 import traceback
 from functools import partial
@@ -21,15 +22,15 @@ def test_make_sdist(initproj):
     )
     config = parseconfig([])
     session = Session(config)
-    sdist = get_package(session)
+    _, sdist = get_package(session)
     assert sdist.check()
     assert sdist.ext == ".zip"
     assert sdist == config.distdir.join(sdist.basename)
-    sdist2 = get_package(session)
+    _, sdist2 = get_package(session)
     assert sdist2 == sdist
     sdist.write("hello")
     assert sdist.stat().size < 10
-    sdist_new = get_package(Session(config))
+    _, sdist_new = get_package(Session(config))
     assert sdist_new == sdist
     assert sdist_new.stat().size > 10
 
@@ -50,13 +51,18 @@ def test_make_sdist_distshare(tmpdir, initproj):
     )
     config = parseconfig([])
     session = Session(config)
-    sdist = get_package(session)
-    assert sdist.check()
-    assert sdist.ext == ".zip"
-    assert sdist == config.distdir.join(sdist.basename)
-    sdist_share = config.distshare.join(sdist.basename)
+    package, dist = get_package(session)
+    assert package.check()
+    assert package.ext == ".zip"
+    assert package == config.temp_dir.join(package.basename)
+
+    assert dist == config.distdir.join(package.basename[len("1-") :])
+    assert dist.check()
+    assert os.stat(str(dist)).st_ino == os.stat(str(package)).st_ino
+
+    sdist_share = config.distshare.join(package.basename[len("1-") :])
     assert sdist_share.check()
-    assert sdist_share.read("rb") == sdist.read("rb"), (sdist_share, sdist)
+    assert sdist_share.read("rb") == dist.read("rb"), (sdist_share, package)
 
 
 def test_sdistonly(initproj, cmd):
@@ -110,12 +116,21 @@ def test_separate_sdist(cmd, initproj, tmpdir):
     )
     result = cmd("--sdistonly")
     assert not result.ret
-    sdistfiles = distshare.listdir()
-    assert len(sdistfiles) == 1
-    sdistfile = sdistfiles[0]
+    dist_share_files = distshare.listdir()
+    assert len(dist_share_files) == 1
+    assert dist_share_files[0].check()
+
     result = cmd("-v", "--notest")
-    assert not result.ret
-    assert "python inst: {}".format(sdistfile) in result.out
+    assert not result.ret, result.out
+    msg = "python inst: {}".format(result.session.package)
+    assert msg in result.out, result.out
+    operation = "copied" if not hasattr(os, "link") else "links"
+    msg = "package {} {} to {}".format(
+        os.sep.join(("pkg123", ".tox", ".tmp", "1-pkg123-0.7.zip")),
+        operation,
+        os.sep.join(("distshare", "pkg123-0.7.zip")),
+    )
+    assert msg in result.out, result.out
 
 
 def test_sdist_latest(tmpdir, newconfig):
@@ -133,15 +148,15 @@ def test_sdist_latest(tmpdir, newconfig):
     p = distshare.ensure("pkg123-1.4.5.zip")
     distshare.ensure("pkg123-1.4.5a1.zip")
     session = Session(config)
-    sdist_path = get_package(session)
-    assert sdist_path == p
+    _, dist = get_package(session)
+    assert dist == p
 
 
 def test_installpkg(tmpdir, newconfig):
     p = tmpdir.ensure("pkg123-1.0.zip")
     config = newconfig(["--installpkg={}".format(p)], "")
     session = Session(config)
-    sdist_path = get_package(session)
+    _, sdist_path = get_package(session)
     assert sdist_path == p
 
 
@@ -347,10 +362,14 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
     for val in invoke_result.values():
         if isinstance(val, tuple):
             assert False, "{!r}\n{}".format(val[0], val[1])
-
-    # output has no error
-    err = "\n".join((invoke_result["t1"].err, invoke_result["t2"].err)).strip()
-    out = "\n".join((invoke_result["t1"].out, invoke_result["t2"].out)).strip()
+    err = "\n".join(
+        "{}=\n{}".format(k, v.err).strip() for k, v in invoke_result.items() if v.err.strip()
+    )
+    out = "\n".join(
+        "{}=\n{}".format(k, v.out).strip() for k, v in invoke_result.items() if v.out.strip()
+    )
+    for val in invoke_result.values():
+        assert not val.ret, "{}\n{}".format(err, out)
     assert not err
 
     # when the lock is hit we notify
