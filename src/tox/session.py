@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 
 import pkg_resources
 import py
@@ -448,7 +449,19 @@ class Session:
         elif self.config.option.listenvs_all:
             self.showenvs(all_envs=True, description=verbosity)
         else:
-            return self.subcommand_test()
+            with self.cleanup():
+                return self.subcommand_test()
+
+    @contextmanager
+    def cleanup(self):
+        self.config.temp_dir.ensure(dir=True)
+        try:
+            yield
+        finally:
+            for tox_env in self.venvlist:
+                if hasattr(tox_env, "package") and tox_env.package.exists():
+                    self.report.verbosity2("cleanup {}".format(tox_env.package))
+                    tox_env.package.remove()
 
     def _copyfiles(self, srcdir, pathlist, destdir):
         for relpath in pathlist:

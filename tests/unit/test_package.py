@@ -1,5 +1,6 @@
 import re
 import traceback
+from functools import partial
 
 import py
 import pytest
@@ -262,57 +263,110 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
         "env_var_test",
         filedefs={
             "tox.ini": """
-                          [tox]
-                          envlist = py
-                          install_cmd = python -m -c 'print("ok")' -- {opts} {packages}'
-                          [testenv]
-                          commands = python --version
+                  [tox]
+                  envlist = py
+                  install_cmd = python -m -c 'print("ok")' -- {opts} {packages}'
+                  [testenv]
+                  commands = python --version
                       """
         },
     )
+    # we try to recreate the following situation
+    # t1 starts and performs build
+    # t2 starts, but is blocked from t1 build lock to build
+    # t1 gets unblocked, t2 can now enter
+    # t1 is artificially blocked to run test command until t2 finishes build
+    #  (parallel build package present)
+    # t2 package build finishes both t1 and t2 can now finish and clean up their build packages
     import tox.package
     import threading
 
-    triggered = threading.Event()
-    event = threading.Event()
+    t1_build_started = threading.Event()
+    t1_build_blocker = threading.Event()
+    t2_build_started = threading.Event()
+    t2_build_finished = threading.Event()
 
-    result = {}
+    invoke_result = {}
 
-    def run(name):
+    def invoke_tox_in_thread(thread_name):
         try:
-            outcome = cmd("--parallel--safe-build")
-            result[name] = outcome
+            result = cmd("--parallel--safe-build", "-vv")
         except Exception as exception:
-            result[name] = exception, traceback.format_exc()
+            result = exception, traceback.format_exc()
+        invoke_result[thread_name] = result
+
+    prev_build_package = tox.package.build_package
 
     with monkeypatch.context() as m:
-        prev_build_package = tox.package.build_package
 
         def build_package(config, report, session):
-            triggered.set()
-            event.wait()
+            t1_build_started.set()
+            prev_run_test_env = tox.session.Session.runtestenv
+
+            def run_test_env(self, venv, redirect=False):
+                t2_build_finished.wait()
+                return prev_run_test_env(self, venv, redirect)
+
+            session.runtestenv = partial(run_test_env, session)
+
+            t1_build_blocker.wait()
             return prev_build_package(config, report, session)
 
         m.setattr(tox.package, "build_package", build_package)
-        t1 = threading.Thread(target=run, args=("t1",))
+
+        t1 = threading.Thread(target=invoke_tox_in_thread, args=("t1",))
         t1.start()
-        triggered.wait()
+        t1_build_started.wait()
 
-    t2 = threading.Thread(target=run, args=("t2",))
-    t2.start()
+    with monkeypatch.context() as m:
 
-    t2.join(timeout=0.1)  # 100 ms should be enough to build the package
-    assert t2.is_alive()  # if still alive means something (our lock) prevented two parallel builds
-    event.set()
-    t1.join()
+        def build_package(config, report, session):
+            t2_build_started.set()
+            try:
+                return prev_build_package(config, report, session)
+            finally:
+                t2_build_finished.set()
+
+        m.setattr(tox.package, "build_package", build_package)
+
+        t2 = threading.Thread(target=invoke_tox_in_thread, args=("t2",))
+        t2.start()
+
+        # t2 should get blocked by t1 build lock
+        t2_build_started.wait(timeout=0.1)
+        assert not t2_build_started.is_set()
+
+        t1_build_blocker.set()  # release t1 blocker -> t1 can now finish
+        # t1 at this point should block at run test until t2 build finishes
+        t2_build_started.wait()
+
+    t1.join()  # wait for both t1 and t2 to finish
     t2.join()
-    assert result
-    for val in result.values():
+
+    # all threads finished without error
+    for val in invoke_result.values():
         if isinstance(val, tuple):
             assert False, "{!r}\n{}".format(val[0], val[1])
-    err = "\n".join((result["t1"].err, result["t2"].err)).strip()
-    out = "\n".join((result["t1"].out, result["t2"].out)).strip()
+
+    # output has no error
+    err = "\n".join((invoke_result["t1"].err, invoke_result["t2"].err)).strip()
+    out = "\n".join((invoke_result["t1"].out, invoke_result["t2"].out)).strip()
     assert not err
+
+    # when the lock is hit we notify
     lock_file = py.path.local().join(".tox", ".package.lock")
     msg = "lock file {} present, will block until released".format(lock_file)
     assert msg in out
+
+    # intermediate packages are removed at end of build
+    t1_package = invoke_result["t1"].session.getvenv("py").package
+    t2_package = invoke_result["t1"].session.getvenv("py").package
+    assert t1 != t2
+    assert not t1_package.exists()
+    assert not t2_package.exists()
+
+    # the final distribution remains
+    dist_after = invoke_result["t1"].session.config.distdir.listdir()
+    assert len(dist_after) == 1
+    sdist = dist_after[0]
+    assert t1_package != sdist
