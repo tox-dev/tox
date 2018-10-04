@@ -1,8 +1,7 @@
 import json
 import socket
+import subprocess
 import sys
-
-import py
 
 import tox
 
@@ -44,24 +43,18 @@ class EnvLog:
         self.name = name
         self.dict = dict
 
-    def set_python_info(self, pythonexecutable):
-        pythonexecutable = py.path.local(pythonexecutable)
-        out = pythonexecutable.sysexec(
+    def set_python_info(self, python_executable):
+        cmd = [
+            python_executable,
             "-c",
-            "import sys; "
-            "print(sys.executable);"
-            "print(list(sys.version_info)); "
-            "print(sys.version)",
-        )
-        lines = out.splitlines()
-        executable = lines.pop(0)
-        version_info = eval(lines.pop(0))
-        version = "\n".join(lines)
-        self.dict["python"] = {
-            "executable": executable,
-            "version_info": version_info,
-            "version": version,
-        }
+            "import sys; import json;"
+            "print(json.dumps({"
+            "'executable': sys.executable,"
+            "'version_info': list(sys.version_info),"
+            "'version': sys.version}))",
+        ]
+        result = subprocess.check_output(cmd, universal_newlines=True)
+        self.dict["python"] = json.loads(result)
 
     def get_commandlog(self, name):
         return CommandLog(self, self.dict.setdefault(name, []))

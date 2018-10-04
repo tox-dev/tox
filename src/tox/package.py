@@ -1,7 +1,9 @@
 import json
+import os
 import sys
 import textwrap
 from collections import namedtuple
+from itertools import chain
 
 import pkg_resources
 import py
@@ -38,9 +40,38 @@ def get_package(session):
         except Timeout:
             report.verbosity0("lock file {} present, will block until released".format(lock_file))
             lock.acquire()
-        return acquire_package(config, report, session)
+        package = acquire_package(config, report, session)
+        return create_session_view(package, config.temp_dir, report)
     finally:
         lock.release(force=True)
+
+
+def create_session_view(package, temp_dir, report):
+    """once we build a package we cannot return that directly, as a subsequent call
+    might delete that package (in order to do its own build); therefore we need to
+    return a view of the file that it's not prone to deletion and can be removed when the
+    session ends
+    """
+    exists = [
+        i.basename[len(package.basename) + 1 :]
+        for i in temp_dir.listdir(fil="{}.*".format(package.basename))
+    ]
+    file_id = max(chain((0,), (int(i) for i in exists if six.text_type(i).isnumeric())))
+    session_package = temp_dir.join("{}.{}".format(package.basename, file_id + 1))
+    # if we can do hard links do that, otherwise just copy
+    operation = "links"
+    if hasattr(os, "link"):
+        os.link(str(package), str(session_package))
+    else:
+        operation = "copied"
+        package.copy(session_package)
+    common = session_package.common(package)
+    report.verbosity1(
+        "cwd {} package {} {} to {}".format(
+            common, common.bestrelpath(session_package), operation, common.bestrelpath(package)
+        )
+    )
+    return session_package
 
 
 def acquire_package(config, report, session):

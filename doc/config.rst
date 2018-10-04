@@ -43,6 +43,13 @@ Global settings are defined under the ``tox`` section as:
 
    Directory for tox to generate its environments into, will be created if it does not exist.
 
+.. conf:: temp_dir ^ PATH ^ {toxinidir}/.tmp
+
+   Directory where to put tox temporary files. For example: we create a hard link (if possible,
+   otherwise new copy) in this directory for the project package. This ensures tox works correctly
+   when having parallel runs (as each session will have its own copy of the project package - e.g.
+   the source distribution).
+
 .. conf:: skipsdist ^ true|false ^ false
 
    Flag indicating to perform the packaging operation or not. Set it to ``true`` when using tox for
@@ -59,10 +66,11 @@ Global settings are defined under the ``tox`` section as:
    Directory where the packaged source distribution should be put. Note this is cleaned at the start of
    every packaging invocation.
 
-.. conf:: distshare ^ PATH ^ {toxworkdir}/distshare
+.. conf:: distshare ^ PATH ^ {homedir}/.tox/distshare
 
    Folder where the packaged source distribution will be moved, this is not cleaned between packaging
-   invocations.
+   invocations. On Jenkins (exists ``JENKINS_URL`` or ``HUDSON_URL`` environment variable)
+   the default path is ``{toxworkdir}/distshare``.
 
 .. conf:: envlist ^ comma separated values
 
