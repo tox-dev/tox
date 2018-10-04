@@ -1,20 +1,37 @@
-engines:
-  duplication:
-    enabled: true
+version: "2"
+checks:
+  argument-count:
     config:
-      languages:
-        python:
-          python_version: 3
-  pep8:
-    enabled: true
-  radon:
-    enabled: true
+      threshold: 6
+  complex-logic:
+    config:
+      threshold: 10
+  file-lines:
+    config:
+      threshold: 500
+  method-complexity:
+    config:
+      threshold: 10
+  method-count:
+    config:
+      threshold: 20
+  method-lines:
+    config:
+      threshold: 50
+  nested-control-flow:
+    config:
+      threshold: 4
+  return-statements:
+    config:
+      threshold: 10
+
+plugins:
   sonar-python:
     enabled: true
     config:
       tests_patterns:
       - tests/**
-
-ratings:
-  paths:
-  - "**.py"
+  pep8:
+    enabled: false
+  radon:
+    enabled: false
