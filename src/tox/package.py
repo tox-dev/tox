@@ -20,7 +20,7 @@ BuildInfo = namedtuple("BuildInfo", ["requires", "backend_module", "backend_obje
 def tox_package(session, venv):
     """Build an sdist at first call return that for all calls"""
     if not hasattr(session, "package"):
-        session.package = get_package(session)
+        session.package, session.dist = get_package(session)
     return session.package
 
 
@@ -41,7 +41,8 @@ def get_package(session):
             report.verbosity0("lock file {} present, will block until released".format(lock_file))
             lock.acquire()
         package = acquire_package(config, report, session)
-        return create_session_view(package, config.temp_dir, report)
+        session_package = create_session_view(package, config.temp_dir, report)
+        return session_package, package
     finally:
         lock.release(force=True)
 
@@ -52,12 +53,19 @@ def create_session_view(package, temp_dir, report):
     return a view of the file that it's not prone to deletion and can be removed when the
     session ends
     """
+    if not package:
+        return package
+    temp_dir.ensure(dir=True)
+
+    # we'll prefix it with a unique number, note adding as suffix can cause conflicts
+    # with tools that check the files extension (e.g. pip)
     exists = [
-        i.basename[len(package.basename) + 1 :]
-        for i in temp_dir.listdir(fil="{}.*".format(package.basename))
+        i.basename[: -len(package.basename) - 1]
+        for i in temp_dir.listdir(fil="*-{}".format(package.basename))
     ]
     file_id = max(chain((0,), (int(i) for i in exists if six.text_type(i).isnumeric())))
-    session_package = temp_dir.join("{}.{}".format(package.basename, file_id + 1))
+    session_package = temp_dir.join("{}-{}".format(file_id + 1, package.basename))
+
     # if we can do hard links do that, otherwise just copy
     operation = "links"
     if hasattr(os, "link"):
@@ -67,20 +75,17 @@ def create_session_view(package, temp_dir, report):
         package.copy(session_package)
     common = session_package.common(package)
     report.verbosity1(
-        "cwd {} package {} {} to {}".format(
-            common, common.bestrelpath(session_package), operation, common.bestrelpath(package)
+        "package {} {} to {} ({})".format(
+            common.bestrelpath(session_package), operation, common.bestrelpath(package), common
         )
     )
     return session_package
 
 
 def acquire_package(config, report, session):
+    """acquire a source distribution (either by loading a local file or triggering a build)"""
     if not config.option.sdistonly and (config.sdistsrc or config.option.installpkg):
-        path = config.option.installpkg
-        if not path:
-            path = config.sdistsrc
-        path = session._resolve_package(path)
-        report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
+        path = get_local_package(config, report, session)
     else:
         try:
             path = build_package(config, report, session)
@@ -96,6 +101,15 @@ def acquire_package(config, report, session):
                 report.warning("could not copy distfile to {}".format(sdist_file.dirpath()))
             else:
                 path.copy(sdist_file)
+    return path
+
+
+def get_local_package(config, report, session):
+    path = config.option.installpkg
+    if not path:
+        path = config.sdistsrc
+    path = session._resolve_package(path)
+    report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
     return path
 
 
