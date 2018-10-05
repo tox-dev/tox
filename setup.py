@@ -95,6 +95,7 @@ def main():
                 "sphinx >= 1.8.0, < 2",
                 "towncrier >= 18.5.0",
                 "pygments-github-lexers >= 0.0.5",
+                "sphinxcontrib-autoprogram >= 0.1.5",
             ],
         },
         classifiers=[

@@ -35,7 +35,7 @@ create separate folders for each Python version.
 
 For tox to find them you'll need to:
 
-- add the main installation version to the systems ``PATH`` variable (e.g. ``D:\Anaconda`` - you can use `patheditor2`_)
+- add the main installation version to the systems ``PATH`` variable (e.g. ``D:\Anaconda`` - you can use `WindowsPathEditor`_)
 - for other versions create a BAT scripts into the main installation folder to delegate the call to the correct Python
   interpreter:
 
@@ -45,7 +45,7 @@ For tox to find them you'll need to:
      REM python2.7.bat
      @D:\Anaconda\pkgs\python-2.7.13-1\python.exe %*
 
-.. _patheditor2: https://patheditor2.codeplex.com/
+.. _WindowsPathEditor: https://rix0rrr.github.io/WindowsPathEditor/
 
 This way you can also directly call from cli the matching Python version  if you need to(similarly to UNIX systems), for
 example:
