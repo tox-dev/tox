@@ -1,0 +1,1 @@
+document command line interface under the config section `cli <https://tox.readthedocs.io/en/latest/config.html?highlight=cli#cli>`_ - by :user:`gaborbernat`
