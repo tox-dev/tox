@@ -70,9 +70,6 @@ def main():
             "console_scripts": ["tox=tox:cmdline", "tox-quickstart=tox._quickstart:main"]
         },
         python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
-        setup_requires=[
-            "setuptools-scm"
-        ],  # needed for https://github.com/pypa/readme_renderer/issues/118
         install_requires=[
             "setuptools  >= 30.0.0",
             "pluggy >= 0.3.0, <1",
