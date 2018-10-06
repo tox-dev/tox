@@ -75,7 +75,7 @@ without using a local copy.  This can be convenient for small fixes.
 
         $ tox -e docs
 
-    The built documentation should be available in the ``doc/_build/``.
+    The built documentation should be available in the ``docs/_build/``.
 
 .. _submitplugin:
 

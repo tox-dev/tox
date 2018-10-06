@@ -8,9 +8,9 @@ build-backend = 'setuptools.build_meta'
 
 [tool.towncrier]
     package = "tox"
-    filename = "CHANGELOG.rst"
-    directory = "changelog"
-    template = "changelog/template.jinja2"
+    filename = "changelog.rst"
+    directory = "docs/changelog"
+    template = "docs/changelog/template.jinja2"
     title_format = "{version} ({project_date})"
     issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
     underlines = ["-", "^"]
