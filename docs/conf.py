@@ -21,7 +21,7 @@ ROOT_SRC_TREE_DIR = Path(__file__).parents[1]
 def generate_draft_news():
     home = "https://github.com"
     issue = "{}/issue".format(home)
-    fragments_path = ROOT_SRC_TREE_DIR / "changelog"
+    fragments_path = ROOT_SRC_TREE_DIR / "docs" / "changelog"
     for pattern, replacement in (
         (r"[^`]@([^,\s]+)", r"`@\1 <{}/\1>`_".format(home)),
         (r"[^`]#([\d]+)", r"`#pr\1 <{}/\1>`_".format(issue)),
@@ -34,9 +34,9 @@ def generate_draft_news():
     if "No significant changes" in changelog:
         content = ""
     else:
-        note = "Changes in master, but not released yet are under the draft section.\n\n"
+        note = "*Changes in master, but not released yet are under the draft section*."
         content = "{}\n\n{}".format(note, changelog)
-    (ROOT_SRC_TREE_DIR / "_draft.rst").write_text(content)
+    (ROOT_SRC_TREE_DIR / "docs" / "_draft.rst").write_text(content)
 
 
 generate_draft_news()
@@ -53,7 +53,7 @@ copyright = u"2010-{}, {}".format(year, author)
 master_doc = "index"
 source_suffix = ".rst"
 
-exclude_patterns = ["_build"]
+exclude_patterns = ["changelog/*"]
 
 templates_path = ["_templates"]
 pygments_style = "sphinx"

@@ -12,7 +12,7 @@ much about the checklist - we will help you get started.
 - [ ] updated/extended the documentation
 - [ ] added relevant [issue keyword](https://help.github.com/articles/closing-issues-using-keywords/)
       in message body
-- [ ] added news fragment in [changelog folder](https://github.com/tox-dev/tox/tree/master/changelog)
+- [ ] added news fragment in [changelog folder](https://github.com/tox-dev/tox/tree/master/docs/changelog)
   * fragment name: `<issue number>.<type>.rst` for example (588.bugfix.rst)
   * `<type>` is must be one of `bugfix`, `feature`, `deprecation`,`breaking`, `doc`, `misc`
   * if pr has no issue: consider creating one first or change it to the pr number after creating the pr
