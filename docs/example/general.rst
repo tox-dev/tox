@@ -39,37 +39,6 @@ syntax:
     [testenv]
     commands = nosetests {posargs:--with-coverage}
 
-.. _`sphinx checks`:
-
-Integrating "sphinx" documentation checks
-----------------------------------------------
-
-In a ``testenv`` environment you can specify any command and
-thus you can easily integrate sphinx_ documentation integrity during
-a tox test run.  Here is an example ``tox.ini`` configuration:
-
-.. code-block:: ini
-
-    [testenv:docs]
-    changedir = doc
-    deps = sphinx
-    commands = sphinx-build -W -b html -d {envtmpdir}/doctrees . {envtmpdir}/html
-
-This will create a dedicated ``docs`` virtual environment and install
-the ``sphinx`` dependency which itself will install the ``sphinx-build`` tool
-which you can then use as a test command.  Note that sphinx output is redirected
-to the virtualenv environment temporary directory to prevent sphinx
-from caching results between runs.
-
-You can now call:
-
-.. code-block:: shell
-
-    tox
-
-which will make the sphinx tests part of your test run.
-
-
 .. _`TOXENV`:
 
 Selecting one or more environments to run tests against
