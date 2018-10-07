@@ -35,3 +35,13 @@ plugins:
     enabled: false
   radon:
     enabled: false
+
+exclude_patterns:
+  - "docs/"
+  - "tasks/"
+  - ".github/"
+  - ".pre-commit-config.yml"
+  - "*.yml"
+  - "*.yaml"
+  - "*.rst"
+  - "*.ini"
