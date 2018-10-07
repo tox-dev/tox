@@ -35,6 +35,7 @@ setup(
         "toml >=0.9.4",
         "filelock >= 3.0.0, <4",
     ],
+    setup_requires=["setuptools-scm>2, <4"],  # readthedocs needs it
     extras_require={
         "testing": [
             "pytest >= 3.0.0, <4",

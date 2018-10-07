@@ -1,12 +1,14 @@
 import os
 import re
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 
 from docutils import nodes
-from pkg_resources import get_distribution
 from sphinx import addnodes
+
+import tox
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -28,8 +30,12 @@ def generate_draft_news():
     ):
         for path in fragments_path.glob("*.rst"):
             path.write_text(re.sub(pattern, replacement, path.read_text()))
+    env = os.environ.copy()
+    env["PATH"] += os.pathsep.join(
+        [os.path.dirname(sys.executable)] + env["PATH"].split(os.pathsep)
+    )
     changelog = subprocess.check_output(
-        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR)
+        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR), env=env
     ).decode("utf-8")
     if "No significant changes" in changelog:
         content = ""
@@ -42,7 +48,7 @@ def generate_draft_news():
 generate_draft_news()
 
 project = u"tox"
-_full_version = get_distribution(project).version
+_full_version = tox.__version__
 release = _full_version.split("+", 1)[0]
 version = ".".join(release.split(".")[:2])
 
