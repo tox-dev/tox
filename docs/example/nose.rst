@@ -32,10 +32,6 @@ then run the specified test command.
 More examples?
 ------------------------------------------
 
-You can use and combine other features of ``tox`` with your tox runs,
-e.g. :ref:`sphinx checks`.  If you figure out some particular configurations
-for nose/tox interactions please submit them.
-
-Also you might want to checkout :doc:`general`.
+Also you might want to checkout :doc:`general` and :doc:`documentation`.
 
 .. include:: ../links.rst
