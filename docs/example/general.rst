@@ -39,6 +39,45 @@ syntax:
     [testenv]
     commands = nosetests {posargs:--with-coverage}
 
+.. _recreate:
+
+Dependency changes and tracking
+-------------------------------
+
+Creating virtual environments and installing dependencies is a expensive operation.
+Therefore tox tries to avoid it whenever possible, meaning it will never perform this
+unless it detects with absolute certainty that it needs to perform an update. A tox
+environment creation is made up of:
+
+- create the virtual environment
+- install dependencies specified inside deps
+- if it's a library project (has build package phase), install library dependencies
+  (with potential extras)
+
+These three steps are only performed once (given they all succeeded). Subsequent calls
+that don't detect changes to the traits of that step will not alter the virtual
+environment in any way. When a change is detected for any of the steps, the entire
+virtual environment is removed and the operation starts from scratch (this is
+because it's very hard to determine what would the delta changes would be needed -
+e.g. a dependency could migrate from one dependency to another, and in this case
+we would need to install the new while removing the old one).
+
+Here's what traits we track at the moment for each steps:
+
+- virtual environment trait is tied to the python path the :conf:`basepython`
+  resolves too (if this config changes, the virtual environment will be recreated),
+- :conf:`deps` sections changes (meaning any string-level change for the entries, note
+  requirement file content changes are not tracked),
+- library dependencies are tracked at :conf:`extras` level (because there's no
+  Python API to enquire about the actual dependencies in a non-tool specific way,
+  e.g. setuptools has one way, flit something else, and poetry another).
+
+Whenever you change traits that are not tracked we recommend you to manually trigger a
+rebuild of the tox environment by passing the ``-r`` flag for the tox invocation. For
+instance, for a setuptools project whenever you modify the ``install_requires`` keyword
+at the next run force the recreation of the tox environment by passing the recreate cli
+tox flag.
+
 .. _`TOXENV`:
 
 Selecting one or more environments to run tests against
