@@ -21,6 +21,7 @@ def tox_package(session, venv):
     """Build an sdist at first call return that for all calls"""
     if not hasattr(session, "package"):
         session.package, session.dist = get_package(session)
+    pass
     return session.package
 
 
