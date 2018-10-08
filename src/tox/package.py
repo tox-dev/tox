@@ -108,9 +108,9 @@ def get_local_package(config, report, session):
     path = config.option.installpkg
     if not path:
         path = config.sdistsrc
-    path = session._resolve_package(path)
-    report.info("using package {!r}, skipping 'sdist' activity ".format(str(path)))
-    return path
+    py_path = py.path.local(session._resolve_package(path))
+    report.info("using package {!r}, skipping 'sdist' activity ".format(str(py_path)))
+    return py_path
 
 
 def build_package(config, report, session):

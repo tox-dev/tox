@@ -1,0 +1,1 @@
+fix regression with ``3.5.0``: specifying ``--installpkg`` raises ``AttributeError: 'str' object has no attribute 'basename'``

@@ -389,3 +389,18 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
     assert len(dist_after) == 1
     sdist = dist_after[0]
     assert t1_package != sdist
+
+
+def test_install_via_installpkg(mock_venv, initproj, cmd):
+    base = initproj(
+        "pkg-0.1",
+        filedefs={
+            "tox.ini": """
+                [tox]
+                install_cmd = python -m -c 'print("ok")' -- {opts} {packages}'
+                """
+        },
+    )
+    fake_package = base.ensure(".tox", "dist", "pkg123-0.1.zip")
+    result = cmd("-e", "py", "--notest", "--installpkg", str(fake_package.relto(base)))
+    assert result.ret == 0, result.out
