@@ -1,1 +1,0 @@
-document all global tox flags and a more concise format to express default and type - by :user:`gaborbernat`
