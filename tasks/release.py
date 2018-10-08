@@ -49,10 +49,6 @@ def get_upstream(repo: Repo) -> Remote:
 def release_changelog(repo: Repo, version: Version) -> Commit:
     print("generate release commit")
     check_call(["towncrier", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))
-    changed = [item.a_path for item in repo.index.diff("HEAD")]
-    if any(not i.startswith("docs/changelog") for i in changed):
-        raise RuntimeError(f"found changes outside of the changelog domain: {changed}")
-    repo.index.add(changed)
     release_commit = repo.index.commit(f"release {version}")
     return release_commit
 
