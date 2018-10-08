@@ -143,10 +143,12 @@ def make_sdist_legacy(report, config, session):
     with session.newaction(None, "packaging") as action:
         action.setactivity("sdist-make", setup)
         session.make_emptydir(config.distdir)
-        action.popen(
+        build_log = action.popen(
             [sys.executable, setup, "sdist", "--formats=zip", "--dist-dir", config.distdir],
             cwd=config.setupdir,
+            returnout=True,
         )
+        report.verbosity2(build_log)
         try:
             return config.distdir.listdir()[0]
         except py.error.ENOENT:
@@ -195,7 +197,7 @@ def build_isolated(config, report, session):
         ) as action:
             package_venv.run_install_command(packages=build_requires_dep, action=action)
         session.finishvenv(package_venv)
-    return perform_isolated_build(build_info, package_venv, session, config)
+    return perform_isolated_build(build_info, package_venv, session, config, report)
 
 
 def get_build_info(folder, report):
@@ -238,7 +240,7 @@ def get_build_info(folder, report):
     return BuildInfo(requires, module, "{}{}".format(module, obj))
 
 
-def perform_isolated_build(build_info, package_venv, session, config):
+def perform_isolated_build(build_info, package_venv, session, config, report):
     with session.newaction(
         package_venv, "perform-isolated-build", package_venv.envconfig.envdir
     ) as action:
@@ -263,6 +265,7 @@ def perform_isolated_build(build_info, package_venv, session, config):
             action=action,
             cwd=session.config.setupdir,
         )
+        report.verbosity2(result)
         return config.distdir.join(result.split("\n")[-2])
 
 

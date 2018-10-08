@@ -1,4 +1,4 @@
 session packages are now put inside a numbered directory (instead of prefix numbering it,
 because pip fails when wheels are not named according to
 `PEP-491 <https://www.python.org/dev/peps/pep-0491/#id9>`_, and prefix numbering messes with this)
-- by user:`gaborbernat`
+- by :user:`gaborbernat`
