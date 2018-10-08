@@ -31,7 +31,10 @@ jobs:
   - script: "$(python) -c \"import sys; print(sys.version); print(sys.executable)\""
     displayName: show python information
 
-  - script: "python -m pip install -U tox --pre"
+  - script: "python -m pip install -U pip setuptools --user -v"
+    displayName: upgrade pip and setuptools
+
+  - script: "python -m pip install -U tox --pre --user -v"
     displayName: install tox
 
   - script: ${{ format('python -m tox -e {0} --notest', parameters.tox) }}
