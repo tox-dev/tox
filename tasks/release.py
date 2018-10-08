@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Handles creating a release PR"""
-import sys
 from pathlib import Path
 from subprocess import check_call
 from typing import Tuple
@@ -17,7 +16,6 @@ def main(version_str: str) -> None:
 
     if repo.is_dirty():
         raise RuntimeError("Current repository is dirty. Please commit any changes and try again.")
-
     upstream, release_branch = create_release_branch(repo, version)
     release_commit = release_changelog(repo, version)
     tag = tag_release_commit(release_commit, repo, version)
@@ -51,8 +49,8 @@ def get_upstream(repo: Repo) -> Remote:
 def release_changelog(repo: Repo, version: Version) -> Commit:
     print("generate release commit")
     check_call(["towncrier", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))
-    changed = [item.a_path for item in repo.index.diff(None)]
-    if any((not i.startswith("changelog") or i == "changelog.rst") for i in changed):
+    changed = [item.a_path for item in repo.index.diff("HEAD")]
+    if any(not i.startswith("docs/changelog") for i in changed):
         raise RuntimeError(f"found changes outside of the changelog domain: {changed}")
     repo.index.add(changed)
     release_commit = repo.index.commit(f"release {version}")
@@ -71,4 +69,9 @@ def tag_release_commit(release_commit, repo, version) -> TagReference:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    import argparse
+
+    parser = argparse.ArgumentParser(prog="release")
+    parser.add_argument("--version", required=True)
+    options = parser.parse_args()
+    main(options.version)
