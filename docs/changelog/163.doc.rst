@@ -1,1 +1,0 @@
-document inside the ``--help`` how to disable colorized output via the ``PY_COLORS`` operating system environment variable - by :user:`gaborbernat`

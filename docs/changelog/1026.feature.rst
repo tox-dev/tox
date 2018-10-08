@@ -1,7 +1,0 @@
-Added ``temp_dir`` folder configuration (defaults to ``{toxworkdir}/.tmp``) that contains tox
-temporary files. Package builds now create a hard link (if possible, otherwise copy - notably in
-case of Windows Python 2.7) to the built file, and feed that file downstream (e.g. for pip to
-install it). The hard link is removed at the end of the run (what it points though is kept
-inside ``distdir``). This ensures that a tox session operates on the same package it built, even
-if a parallel tox run builds another version. Note ``distdir`` will contain only the last built
-package in such cases. - by :user:`gaborbernat`
