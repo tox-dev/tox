@@ -11,6 +11,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.5.1 (2018-10-08)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix regression with ``3.5.0``: specifying ``--installpkg`` raises ``AttributeError: 'str' object has no attribute 'basename'`` (`#1042 <https://github.com/tox-dev/tox/issues/1042>`_)
+
+
 v3.5.0 (2018-10-08)
 -------------------
 
