@@ -11,6 +11,24 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.5.2 (2018-10-09)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- session packages are now put inside a numbered directory (instead of prefix numbering it,
+  because pip fails when wheels are not named according to
+  `PEP-491 <https://www.python.org/dev/peps/pep-0491/#id9>`_, and prefix numbering messes with this)
+  - by :user:`gaborbernat` (`#1042 <https://github.com/tox-dev/tox/issues/1042>`_)
+
+
+Features
+^^^^^^^^
+
+- level three verbosity (``-vvv``) show the packaging output - by :user:`gaborbernat` (`#1047 <https://github.com/tox-dev/tox/issues/1047>`_)
+
+
 v3.5.1 (2018-10-08)
 -------------------
 
