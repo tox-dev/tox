@@ -55,16 +55,18 @@ def create_session_view(package, temp_dir, report):
     """
     if not package:
         return package
-    temp_dir.ensure(dir=True)
+    package_dir = temp_dir.join("package")
+    package_dir.ensure(dir=True)
 
-    # we'll prefix it with a unique number, note adding as suffix can cause conflicts
-    # with tools that check the files extension (e.g. pip)
-    exists = [
-        i.basename[: -len(package.basename) - 1]
-        for i in temp_dir.listdir(fil="*-{}".format(package.basename))
-    ]
+    # we'll number the active instances, and use the max value as session folder for a new build
+    # note we cannot change package names as PEP-491 (wheel binary format)
+    # is strict about file name structure
+    exists = [i.basename for i in package_dir.listdir()]
     file_id = max(chain((0,), (int(i) for i in exists if six.text_type(i).isnumeric())))
-    session_package = temp_dir.join("{}-{}".format(file_id + 1, package.basename))
+
+    session_dir = package_dir.join(str(file_id + 1))
+    session_dir.ensure(dir=True)
+    session_package = session_dir.join(package.basename)
 
     # if we can do hard links do that, otherwise just copy
     operation = "links"

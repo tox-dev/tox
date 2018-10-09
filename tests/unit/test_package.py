@@ -54,13 +54,13 @@ def test_make_sdist_distshare(tmpdir, initproj):
     package, dist = get_package(session)
     assert package.check()
     assert package.ext == ".zip"
-    assert package == config.temp_dir.join(package.basename)
+    assert package == config.temp_dir.join("package", "1", package.basename)
 
-    assert dist == config.distdir.join(package.basename[len("1-") :])
+    assert dist == config.distdir.join(package.basename)
     assert dist.check()
     assert os.stat(str(dist)).st_ino == os.stat(str(package)).st_ino
 
-    sdist_share = config.distshare.join(package.basename[len("1-") :])
+    sdist_share = config.distshare.join(package.basename)
     assert sdist_share.check()
     assert sdist_share.read("rb") == dist.read("rb"), (sdist_share, package)
 
@@ -126,7 +126,7 @@ def test_separate_sdist(cmd, initproj, tmpdir):
     assert msg in result.out, result.out
     operation = "copied" if not hasattr(os, "link") else "links"
     msg = "package {} {} to {}".format(
-        os.sep.join(("pkg123", ".tox", ".tmp", "1-pkg123-0.7.zip")),
+        os.sep.join(("pkg123", ".tox", ".tmp", "package", "1", "pkg123-0.7.zip")),
         operation,
         os.sep.join(("distshare", "pkg123-0.7.zip")),
     )

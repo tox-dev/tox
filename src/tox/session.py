@@ -459,6 +459,7 @@ class Session:
                 ):
                     self.report.verbosity2("cleanup {}".format(tox_env.package))
                     tox_env.package.remove()
+                    py.path.local(tox_env.package.dirname).remove(ignore_errors=True)
 
     def _copyfiles(self, srcdir, pathlist, destdir):
         for relpath in pathlist:
