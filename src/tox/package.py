@@ -69,12 +69,16 @@ def create_session_view(package, temp_dir, report):
     session_package = session_dir.join(package.basename)
 
     # if we can do hard links do that, otherwise just copy
-    operation = "links"
+    links = False
     if hasattr(os, "link"):
-        os.link(str(package), str(session_package))
-    else:
-        operation = "copied"
+        try:
+            os.link(str(package), str(session_package))
+            links = True
+        except (OSError, NotImplementedError):
+            pass
+    if not links:
         package.copy(session_package)
+    operation = "links" if links else "copied"
     common = session_package.common(package)
     report.verbosity1(
         "package {} {} to {} ({})".format(
