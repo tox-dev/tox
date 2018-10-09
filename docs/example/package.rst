@@ -33,7 +33,7 @@ build requirements.
 
    # tox.ini
    [tox]
-   build_isolated = True
+   isolated_build = True
 
 flit
 ----
@@ -57,4 +57,4 @@ file as that information is also added to the ``pyproject.toml`` file.
 
    # tox.ini
    [tox]
-   build_isolated = True
+   isolated_build = True
