@@ -404,3 +404,40 @@ def test_install_via_installpkg(mock_venv, initproj, cmd):
     fake_package = base.ensure(".tox", "dist", "pkg123-0.1.zip")
     result = cmd("-e", "py", "--notest", "--installpkg", str(fake_package.relto(base)))
     assert result.ret == 0, result.out
+
+
+def test_verbose_isolated_build(initproj, mock_venv, cmd):
+    initproj(
+        "example123-0.5",
+        filedefs={
+            "tox.ini": """
+                    [tox]
+                    isolated_build = true
+                    """,
+            "pyproject.toml": """
+                    [build-system]
+                    requires = ["setuptools >= 35.0.2"]
+                    build-backend = 'setuptools.build_meta'
+                                """,
+        },
+    )
+    result = cmd("--sdistonly", "-vvv")
+    assert "running sdist" in result.out, result.out
+    assert "running egg_info" in result.out, result.out
+    assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out
+
+
+def test_verbose_legacy_build(initproj, mock_venv, cmd):
+    initproj(
+        "example123-0.5",
+        filedefs={
+            "tox.ini": """
+                    [tox]
+                    isolated_build = false
+                    """
+        },
+    )
+    result = cmd("--sdistonly", "-vvv")
+    assert "running sdist" in result.out, result.out
+    assert "running egg_info" in result.out, result.out
+    assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out

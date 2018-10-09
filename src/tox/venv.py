@@ -91,7 +91,7 @@ class CreationConfig:
         if self_deps != other_deps:
             if deps_matches_subset:
                 diff = other_deps - self_deps
-                if not diff:
+                if diff:
                     return False, "missing in previous {!r}".format(diff)
             else:
                 return False, "{!r}!={!r}".format(self_deps, other_deps)
