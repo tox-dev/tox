@@ -528,10 +528,12 @@ def test_usedevelop_mixed(initproj, cmd):
     assert "sdist-make" in result.out
 
 
+@pytest.mark.parametrize("skipsdist", [False, True])
 @pytest.mark.parametrize("src_root", [".", "src"])
-def test_test_usedevelop(cmd, initproj, src_root, monkeypatch):
+def test_test_usedevelop(cmd, initproj, src_root, skipsdist, monkeypatch):
+    name = "example123-spameggs"
     base = initproj(
-        "example123-0.5",
+        (name, "0.5"),
         src_root=src_root,
         filedefs={
             "tests": {
@@ -546,8 +548,12 @@ def test_test_usedevelop(cmd, initproj, src_root, monkeypatch):
             changedir=tests
             commands=
                 pytest --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
-            deps=pytest
-        """,
+            deps=pytest"""
+            + """
+            skipsdist={}
+        """.format(
+                skipsdist
+            ),
         },
     )
     result = cmd("-v")
@@ -567,76 +573,7 @@ def test_test_usedevelop(cmd, initproj, src_root, monkeypatch):
 
     # see that things work with a different CWD
     monkeypatch.chdir(base.dirname)
-    result = cmd("-c", "example123/tox.ini")
-    assert not result.ret
-    assert "develop-inst-noop" in result.out
-    assert re.match(
-        r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
-        result.out,
-        re.DOTALL,
-    )
-    monkeypatch.chdir(base)
-
-    # see that tests can also fail and retcode is correct
-    testfile = py.path.local("tests").join("test_hello.py")
-    assert testfile.check()
-    testfile.write("def test_fail(): assert 0")
-    result = cmd()
-    assert result.ret, "{}\n{}".format(result.err, result.out)
-    assert "develop-inst-noop" in result.out
-    assert re.match(
-        r".*\W+1\W+failed.*" r"summary.*" r"python:\W+commands\W+failed.*", result.out, re.DOTALL
-    )
-
-    # test develop is called if setup.py changes
-    setup_py = py.path.local("setup.py")
-    setup_py.write(setup_py.read() + " ")
-    result = cmd()
-    assert result.ret, "{}\n{}".format(result.err, result.out)
-    assert "develop-inst-nodeps" in result.out
-
-
-@pytest.mark.parametrize("src_root", [".", "src"])
-def test_test_usedevelop_skipsdist(cmd, initproj, src_root, monkeypatch):
-    base = initproj(
-        "example123-spameggs-0.5",
-        src_root=src_root,
-        filedefs={
-            "tests": {
-                "test_hello.py": """
-                def test_hello(pytestconfig):
-                    pass
-            """
-            },
-            "tox.ini": """
-            [testenv]
-            usedevelop=True
-            skipsdist=True
-            changedir=tests
-            commands=
-                pytest --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
-            deps=pytest
-        """,
-        },
-    )
-    result = cmd("-v")
-    assert not result.ret
-    assert re.match(
-        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL
-    )
-    assert "sdist-make" not in result.out
-    result = cmd("-epython")
-    assert not result.ret
-    assert "develop-inst-noop" in result.out
-    assert re.match(
-        r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
-        result.out,
-        re.DOTALL,
-    )
-
-    # see that things work with a different CWD
-    monkeypatch.chdir(base.dirname)
-    result = cmd("-c", "example123-spameggs/tox.ini")
+    result = cmd("-c", "{}/tox.ini".format(name))
     assert not result.ret
     assert "develop-inst-noop" in result.out
     assert re.match(
