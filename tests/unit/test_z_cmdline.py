@@ -528,10 +528,12 @@ def test_usedevelop_mixed(initproj, cmd):
     assert "sdist-make" in result.out
 
 
+@pytest.mark.parametrize("skipsdist", [False, True])
 @pytest.mark.parametrize("src_root", [".", "src"])
-def test_test_usedevelop(cmd, initproj, src_root, monkeypatch):
+def test_test_usedevelop(cmd, initproj, src_root, skipsdist, monkeypatch):
+    name = "example123-spameggs"
     base = initproj(
-        "example123-0.5",
+        (name, "0.5"),
         src_root=src_root,
         filedefs={
             "tests": {
@@ -546,8 +548,12 @@ def test_test_usedevelop(cmd, initproj, src_root, monkeypatch):
             changedir=tests
             commands=
                 pytest --basetemp={envtmpdir} --junitxml=junit-{envname}.xml []
-            deps=pytest
-        """,
+            deps=pytest"""
+            + """
+            skipsdist={}
+        """.format(
+                skipsdist
+            ),
         },
     )
     result = cmd("-v")
@@ -567,7 +573,7 @@ def test_test_usedevelop(cmd, initproj, src_root, monkeypatch):
 
     # see that things work with a different CWD
     monkeypatch.chdir(base.dirname)
-    result = cmd("-c", "example123/tox.ini")
+    result = cmd("-c", "{}/tox.ini".format(name))
     assert not result.ret
     assert "develop-inst-noop" in result.out
     assert re.match(

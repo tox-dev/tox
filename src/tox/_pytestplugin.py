@@ -284,7 +284,7 @@ def initproj(tmpdir):
         if not src_root:
             src_root = "."
         if isinstance(nameversion, six.string_types):
-            parts = nameversion.split(str("-"))
+            parts = nameversion.rsplit(str("-"), 1)
             if len(parts) == 1:
                 parts.append("0.1")
             name, version = parts
