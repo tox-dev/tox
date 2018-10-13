@@ -499,6 +499,14 @@ You can escape curly braces with the ``\`` character if you need them, for examp
 
     commands = echo "\{posargs\}" = {posargs}
 
+
+Note some substitutions (e.g. ``posargs``, ``env``) may have addition values attached to it,
+via the ``:`` character (e.g. ``posargs`` - default value, ``env`` - key).
+Such substitutions cannot have a space after the ``:`` character
+(e.g. ``{posargs: magic}`` while being at the start of a line
+inside the ini configuration (this would be parsed as factorial ``{posargs``,
+having value magic).
+
 Globally available substitutions
 ++++++++++++++++++++++++++++++++
 
