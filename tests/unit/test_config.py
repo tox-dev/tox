@@ -1444,11 +1444,9 @@ class TestConfigTestEnv:
         )
         conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
-        assert packages == list(deps) + ["fun", "frob>1.0,<2.0"]
-        # assert packages == ["pytest", "pytest-cov", "fun", "frob>1.0,<2.0"]
+        assert packages == ["pytest", "pytest-cov", "fun", "frob>1.0,<2.0"]
 
     # https://github.com/tox-dev/tox/issues/706
-    @pytest.mark.xfail(reason="reproduce bug 706")
     @pytest.mark.parametrize("envlist", [["py27", "coverage", "other"]])
     def test_regression_test_issue_706(self, newconfig, envlist):
         inisource = """
@@ -1476,6 +1474,226 @@ class TestConfigTestEnv:
         conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
         assert packages == ["flake8", "fun"]
+
+    def test_factor_expansion(self, newconfig):
+        inisource = """
+            [tox]
+            envlist = {py27, py37}-cover
+            [testenv]
+            deps=
+              {py27}: foo
+              {py37}: bar
+        """
+        conf = newconfig([], inisource).envconfigs["py27-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == ["foo"]
+
+        conf = newconfig([], inisource).envconfigs["py37-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == ["bar"]
+
+    # https://github.com/tox-dev/tox/issues/899
+    def test_regression_test__issue_899(self, newconfig):
+        inisource = """
+            [tox]
+            minversion = 2.0
+            skipsdist = True
+            envlist =
+                style
+                sdist
+                bdist_wheel
+                {py27,py34,py35,py36,pypy,pypy3}-cover
+                {py27,py34,py35,py36,pypy,pypy3}-nocov
+
+            [testenv]
+            skip_install = True
+            sitepackages = True
+            passenv =
+                CI
+                TRAVIS
+                TRAVIS_*
+                TOXENV
+                CODECOV_*
+            whitelist_externals =
+                bash
+                echo
+            install_command = pip install --only-binary=scipy {opts} {packages}
+            deps =
+                #Lines startings xxx: are filtered by the environment.
+                #Leaving py34 without any soft dependencies (just numpy)
+                cover: coverage
+                cover: codecov
+                {py27}: unittest2
+                {py27}: mysql-python
+                {py27,py36}: mmtf-python
+                {py27,py35}: reportlab
+                {py27,py34,py35,py36}: psycopg2-binary
+                {py27,py34,py35,py35}: mysql-connector-python-rf
+                {py27,py35,pypy}: rdflib
+                {pypy,pypy3}: numpy==1.12.1
+                {py27,py34,py36}: numpy
+                {py36}: scipy
+                {py27}: networkx
+                {py36}: matplotlib
+        """
+        conf = newconfig([], inisource).envconfigs["style"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == []
+
+        conf = newconfig([], inisource).envconfigs["py27-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "coverage", "codecov", "unittest2", "mysql-python", "mmtf-python",
+            "reportlab", "psycopg2-binary", "mysql-connector-python-rf",
+            "rdflib", "numpy", "networkx",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["py34-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "coverage", "codecov", "psycopg2-binary",
+            "mysql-connector-python-rf", "numpy" 
+        ]
+
+        conf = newconfig([], inisource).envconfigs["py35-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "coverage", "codecov", "reportlab", "psycopg2-binary",
+            "mysql-connector-python-rf", "rdflib",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["py36-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "coverage", "codecov", "mmtf-python", "psycopg2-binary", "numpy",
+            "scipy", "matplotlib",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["pypy-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "coverage", "codecov", "rdflib", "numpy==1.12.1",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["pypy3-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "coverage", "codecov", "numpy==1.12.1",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["py27-nocov"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "unittest2", "mysql-python", "mmtf-python", "reportlab",
+            "psycopg2-binary", "mysql-connector-python-rf", "rdflib", "numpy",
+            "networkx",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["py34-nocov"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "psycopg2-binary", "mysql-connector-python-rf", "numpy" 
+        ]
+
+        conf = newconfig([], inisource).envconfigs["py35-nocov"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "reportlab", "psycopg2-binary", "mysql-connector-python-rf",
+            "rdflib",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["py36-nocov"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "mmtf-python", "psycopg2-binary", "numpy", "scipy", "matplotlib",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["pypy-nocov"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == ["rdflib", "numpy==1.12.1"]
+
+        conf = newconfig([], inisource).envconfigs["pypy3-cover"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            "coverage", "codecov", "numpy==1.12.1",
+        ]
+
+    # https://github.com/tox-dev/tox/issues/906
+    def test_regression_test__issue_906(self, newconfig):
+        inisource = """
+            [tox]
+            envlist =
+                django_master-py{36,35}
+                django20-py{36,35,34,py3}
+                django111-py{36,35,34,27,py}
+                django18-py{35,34,27,py}
+                lint
+                docs
+            skipsdist = true
+
+            [testenv]
+            deps =
+                .[test]
+                django18: {[django]1.8.x}
+                django111: {[django]1.11.x}
+                django20: {[django]2.0.x}
+                django_master: {[django]master}
+            commands = py.test --ds=tests.settings --cov=./djmoney {posargs}
+            usedevelop = false
+
+            [django]
+            1.8.x  =
+                   Django>=1.8.0,<1.9.0
+                   django-reversion==1.10.0
+                   djangorestframework>=3.3.3,<3.7.0
+            1.11.x  =
+                   Django>=1.11.0,<2.0.0
+                   django-reversion>=2.0.8
+                   djangorestframework>=3.6.2
+            2.0.x  =
+                   Django>=2.0,<2.1
+                   django-reversion>=2.0.8
+                   djangorestframework>=3.7.3
+            master =
+                   https://github.com/django/django/tarball/master
+                   django-reversion>=2.0.8
+                   djangorestframework>=3.6.2
+        """
+        conf = newconfig([], inisource).envconfigs["django_master-py36"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            ".[test]", "https://github.com/django/django/tarball/master",
+            "django-reversion>=2.0.8", "djangorestframework>=3.6.2",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["django20-pypy3"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            ".[test]", "Django>=2.0,<2.1", "django-reversion>=2.0.8",
+            "djangorestframework>=3.7.3",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["django111-py34"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            ".[test]", "Django>=1.11.0,<2.0.0", "django-reversion>=2.0.8",
+            "djangorestframework>=3.6.2",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["django18-py27"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [
+            ".[test]", "Django>=1.8.0,<1.9.0", "django-reversion==1.10.0",
+            "djangorestframework>=3.3.3,<3.7.0",
+        ]
+
+        conf = newconfig([], inisource).envconfigs["lint"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [".[test]"]
+
+        conf = newconfig([], inisource).envconfigs["docs"]
+        packages = [dep.name for dep in conf.deps]
+        assert packages == [".[test]"]
 
     def test_take_dependencies_from_other_section(self, newconfig):
         inisource = """
