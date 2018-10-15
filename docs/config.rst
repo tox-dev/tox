@@ -67,7 +67,7 @@ Global settings are defined under the ``tox`` section as:
 
 .. conf:: sdistsrc ^ PATH ^ {toxworkdir}/dist
 
-   Do not build the package, but instead use teh latest package available under this path.
+   Do not build the package, but instead use the latest package available under this path.
    You can override it via the command line flag ``--installpkg``.
 
 .. conf:: distshare ^ PATH ^ {homedir}/.tox/distshare
