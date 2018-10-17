@@ -148,7 +148,7 @@ or
     deps = -rrequirements.txt -cconstraints.txt
 
 All installation commands are executed using ``{toxinidir}`` (the directory where ``tox.ini`` resides) as the current working directory.
-Therefore, the underlying ``pip`` installation will assume ``requirements.txt`` or ``constraints.txt`` to exist at ``{toxinidir}/requirements.txt`` or ``{toxinidir}/contrains.txt``.
+Therefore, the underlying ``pip`` installation will assume ``requirements.txt`` or ``constraints.txt`` to exist at ``{toxinidir}/requirements.txt`` or ``{toxinidir}/constraints.txt``.
 
 This is actually a side effect that all elements of the dependency list is directly passed to ``pip``.
 
