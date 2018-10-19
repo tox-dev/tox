@@ -37,14 +37,14 @@ jobs:
   - script: "python -m pip install -U tox --pre --user -v"
     displayName: install tox
 
-  - script: ${{ format('python -m tox -e {0} --notest', parameters.tox) }}
+  - script: ${{ format('python -m tox -vve {0} --notest', parameters.tox) }}
     displayName: install test dependencies
 
   - ${{ if startsWith(parameters.tox, 'py') }}:
     - script: python -m tox -e coverage --notest
       displayName: install coverage dependencies
 
-  - script: ${{ format('python -m tox -e {0}', parameters.tox) }}
+  - script: ${{ format('python -m tox -vve {0}', parameters.tox) }}
     displayName: run tests
 
   - ${{ if and( startsWith(parameters.tox, 'py'), eq(variables['system.pullrequest.isfork'], false) ) }}:

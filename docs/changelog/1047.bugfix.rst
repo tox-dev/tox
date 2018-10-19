@@ -1,0 +1,1 @@
+packaging output now is correctly shown with level three verbosity ``-vvv``, instead of ``-vv``

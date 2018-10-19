@@ -269,6 +269,7 @@ class Action(object):
 
 
 class Verbosity(object):
+    TOOL_VERBOSE = 3
     DEBUG = 2
     INFO = 1
     DEFAULT = 0
@@ -366,6 +367,9 @@ class Reporter(object):
 
     def verbosity2(self, msg, **opts):
         self.logline_if(Verbosity.DEBUG, msg, **opts)
+
+    def verbosity3(self, msg, **opts):
+        self.logline_if(Verbosity.TOOL_VERBOSE, msg, **opts)
 
 
 class Session:
@@ -563,9 +567,10 @@ class Session:
         else:
             for venv in self.venvlist:
                 if not venv.envconfig.skip_install:
-                    venv.package = self.hook.tox_package(session=self, venv=venv)
-                    if not venv.package:
+                    package = self.hook.tox_package(session=self, venv=venv)
+                    if package is None:
                         return 2
+                    venv.package = package.session_view
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:

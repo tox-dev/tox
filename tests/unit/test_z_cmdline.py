@@ -1,5 +1,4 @@
 import json
-import os
 import platform
 import re
 import subprocess
@@ -301,90 +300,6 @@ def test_unknown_environment(cmd, initproj):
     result = cmd("-e", "qpwoei")
     assert result.ret, "{}\n{}".format(result.err, result.out)
     assert result.out == "ERROR: unknown environment 'qpwoei'\n"
-
-
-def test_minimal_setup_py_empty(cmd, initproj):
-    initproj(
-        "pkg123-0.7",
-        filedefs={
-            "tests": {"test_hello.py": "def test_hello(): pass"},
-            "setup.py": """
-        """,
-            "tox.ini": "",
-        },
-    )
-    result = cmd()
-    assert result.ret == 1, "{}\n{}".format(result.err, result.out)
-    assert result.outlines[-1] == "ERROR: setup.py is empty"
-
-
-def test_minimal_setup_py_comment_only(cmd, initproj):
-    initproj(
-        "pkg123-0.7",
-        filedefs={
-            "tests": {"test_hello.py": "def test_hello(): pass"},
-            "setup.py": """\n# some comment
-
-        """,
-            "tox.ini": "",
-        },
-    )
-    result = cmd()
-    assert result.ret == 1, "{}\n{}".format(result.err, result.out)
-    assert result.outlines[-1] == "ERROR: setup.py is empty"
-
-
-def test_minimal_setup_py_non_functional(cmd, initproj):
-    initproj(
-        "pkg123-0.7",
-        filedefs={
-            "tests": {"test_hello.py": "def test_hello(): pass"},
-            "setup.py": """
-        import sys
-
-        """,
-            "tox.ini": "",
-        },
-    )
-    result = cmd()
-    assert result.ret == 1, "{}\n{}".format(result.err, result.out)
-    assert any(re.match(r".*ERROR.*check setup.py.*", l) for l in result.outlines), result.outlines
-
-
-def test_sdist_fails(cmd, initproj):
-    initproj(
-        "pkg123-0.7",
-        filedefs={
-            "tests": {"test_hello.py": "def test_hello(): pass"},
-            "setup.py": """
-            syntax error
-        """,
-            "tox.ini": "",
-        },
-    )
-    result = cmd()
-    assert result.ret, "{}\n{}".format(result.err, result.out)
-    assert any(
-        re.match(r".*FAIL.*could not package project.*", l) for l in result.outlines
-    ), result.outlines
-
-
-def test_no_setup_py_exits(cmd, initproj):
-    initproj(
-        "pkg123-0.7",
-        filedefs={
-            "tox.ini": """
-            [testenv]
-            commands=python -c "2 + 2"
-        """
-        },
-    )
-    os.remove("setup.py")
-    result = cmd()
-    assert result.ret, "{}\n{}".format(result.err, result.out)
-    assert any(
-        re.match(r".*ERROR.*No setup.py file found.*", l) for l in result.outlines
-    ), result.outlines
 
 
 def test_package_install_fails(cmd, initproj):
