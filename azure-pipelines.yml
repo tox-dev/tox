@@ -6,6 +6,8 @@ variables:
   CI_BUILD_ID: $(Build.BuildId)
   CI_BUILD_URL: "https://toxdev.visualstudio.com/tox/_build/results?buildId=$(Build.BuildId)"
   PYTEST_ADDOPTS: "-vv -ra --showlocals"
+  GIT_BRANCH: $[ coalesce(variables['System.PullRequest.SourceBranch'], variables['Build.SourceBranchName'], 'not-found') ]
+  GIT_COMMIT_SHA: $[ coalesce(variables['System.PullRequest.SourceCommitId'], variables['Build.SourceVersion'], 'not-found') ]
 
 trigger:
   batch: true
@@ -32,8 +34,6 @@ jobs:
   steps:
   - script: echo start
   - script: |
-      export GIT_BRANCH=$( [[ -n '$(System.PullRequest.PullRequestId)' ]] && echo $(System.PullRequest.SourceBranch) || echo $(Build.SourceBranchName) ) && \
-      export GIT_COMMIT_SHA=$( [[ -n '$(System.PullRequest.PullRequestId)' ]] && echo $(System.PullRequest.SourceCommitId) || echo $(Build.SourceVersion) ) && \
       printenv && \
       curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
       chmod +x ./cc-test-reporter && \
@@ -141,8 +141,6 @@ jobs:
       failIfCoverageEmpty: true
 
   - script: |
-      export GIT_BRANCH=$( [[ -n '$(System.PullRequest.PullRequestId)' ]] && echo $(System.PullRequest.SourceBranch) || echo $(Build.SourceBranchName) ) && \
-      export GIT_COMMIT_SHA=$( [[ -n '$(System.PullRequest.PullRequestId)' ]] && echo $(System.PullRequest.SourceCommitId) || echo $(Build.SourceVersion) ) && \
       curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
       chmod +x ./cc-test-reporter && \
       python -c '
