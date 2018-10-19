@@ -1,34 +1,21 @@
 *.pyc
 *.pyo
 *.swp
-*.html
-*.class
-*.orig
-*.rej
-*~
 __pycache__
 
 src/tox/version.py
 
 build
 dist
-doc/_build/
-tox.egg-info
-.tox
-.venv
-.cache
-.python-version
+docs/_build/
+src/tox.egg-info
 
-coverage.xml
-htmlcov
+.tox
 
 .idea
 .vscode
 
-.eggs/
-py27/
-
 .*_cache
-_draft.rst
+docs/_draft.rst
 
 credentials.json
