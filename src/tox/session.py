@@ -143,9 +143,20 @@ class Action(object):
         f.flush()
         return f
 
-    def popen(self, args, cwd=None, env=None, redirect=True, returnout=False, ignore_ret=False):
+    def popen(
+        self,
+        args,
+        cwd=None,
+        env=None,
+        redirect=True,
+        returnout=False,
+        ignore_ret=False,
+        capture_err=True,
+    ):
         stdout = outpath = None
         resultjson = self.session.config.option.resultjson
+
+        stderr = subprocess.STDOUT if capture_err else None
 
         cmd_args = [str(x) for x in args]
         cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
@@ -167,7 +178,7 @@ class Action(object):
             # FIXME XXX cwd = self.session.config.cwd
             cwd = py.path.local()
         try:
-            popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=subprocess.STDOUT)
+            popen = self._popen(args, cwd, env=env, stdout=stdout, stderr=stderr)
         except OSError as e:
             self.report.error(
                 "invocation failed (errno {:d}), args: {}, cwd: {}".format(
