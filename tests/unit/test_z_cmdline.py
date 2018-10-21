@@ -602,6 +602,30 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist, monkeypatch):
     assert "develop-inst-nodeps" in result.out
 
 
+def test_warning_emitted(cmd, initproj):
+    initproj(
+        "spam-0.0.1",
+        filedefs={
+            "tox.ini": """
+        [testenv]
+        skipsdist=True
+        usedevelop=True
+    """,
+            "setup.py": """
+        from setuptools import setup
+        from warnings import warn
+        warn("I am a warning")
+
+        setup(name="spam", version="0.0.1")
+    """,
+        },
+    )
+    result = cmd()
+    result = cmd()
+    assert "develop-inst-noop" in result.out
+    assert "I am a warning" in result.err
+
+
 def _alwayscopy_not_supported():
     # This is due to virtualenv bugs with alwayscopy in some platforms
     # see: https://github.com/pypa/virtualenv/issues/565

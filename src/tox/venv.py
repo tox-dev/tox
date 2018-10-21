@@ -282,7 +282,9 @@ class VirtualEnv(object):
         setup_cfg = setupdir.join("setup.cfg")
         args = [self.envconfig.envpython, str(setup_py), "--name"]
         env = self._get_os_environ()
-        output = action.popen(args, cwd=setupdir, redirect=False, returnout=True, env=env)
+        output = action.popen(
+            args, cwd=setupdir, redirect=False, returnout=True, env=env, capture_err=False
+        )
         name = next(
             (i for i in output.split("\n") if i and not i.startswith("pydev debugger:")), ""
         )
