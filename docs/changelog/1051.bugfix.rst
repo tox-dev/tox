@@ -1,3 +1,4 @@
-Do the same transformation to egg_info dirs that pkg_resources does.
-This makes it possible for hyphenated names to use the develop-inst-noop optimization (cf. 910), which previously only worked with non-hyphenated egg names - by
+do the same transformation to ``egg_info`` folders that ``pkg_resources`` does;
+this makes it possible for hyphenated names to use the ``develop-inst-noop`` optimization (cf. 910),
+which previously only worked with non-hyphenated egg names - by
 :user:`hashbrowncipher`
