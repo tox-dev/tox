@@ -6,23 +6,23 @@ __pycache__
 
 
 # packaging folders
-src/tox/version.py
-build/
-dist/
-src/tox.egg-info
+/src/tox/version.py
+/build/
+/dist/
+/src/tox.egg-info
 
 # tox working folder
-.tox
+/.tox
 
 # IDEs
-.idea
-.vscode
+/.idea
+/.vscode
 
 # tools
-.*_cache
+/.*_cache
 
 # documentation
-docs/_draft.rst
+/docs/_draft.rst
 
 # release
 credentials.json
