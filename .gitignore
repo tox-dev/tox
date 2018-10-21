@@ -1,21 +1,28 @@
+# python
 *.pyc
 *.pyo
 *.swp
 __pycache__
 
-src/tox/version.py
 
-build
-dist
-docs/_build/
+# packaging folders
+src/tox/version.py
+build/
+dist/
 src/tox.egg-info
 
+# tox working folder
 .tox
 
+# IDEs
 .idea
 .vscode
 
+# tools
 .*_cache
+
+# documentation
 docs/_draft.rst
 
+# release
 credentials.json

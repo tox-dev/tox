@@ -49,4 +49,4 @@ build-backend = 'setuptools.build_meta'
         showcontent = true
 
 [tool.black]
-line-length = 120
+line-length = 99

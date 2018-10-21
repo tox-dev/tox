@@ -39,5 +39,8 @@ def make_sdist(report, config, session):
             if not "".join(data).strip():
                 report.error("setup.py is empty")
                 raise SystemExit(1)
-            report.error("No dist directory found. Please check setup.py, e.g with:\n" "     python setup.py sdist")
+            report.error(
+                "No dist directory found. Please check setup.py, e.g with:\n"
+                "     python setup.py sdist"
+            )
             raise SystemExit(1)

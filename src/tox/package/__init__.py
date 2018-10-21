@@ -20,7 +20,9 @@ def get_package(session):
     if config.skipsdist:
         report.info("skipping sdist step")
         return None
-    lock_file = str(session.config.toxworkdir.join("{}.lock".format(session.config.isolated_build_env)))
+    lock_file = str(
+        session.config.toxworkdir.join("{}.lock".format(session.config.isolated_build_env))
+    )
     lock = FileLock(lock_file)
     try:
         try:

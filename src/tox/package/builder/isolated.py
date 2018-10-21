@@ -28,10 +28,14 @@ def build(config, report, session):
     # we need to filter out requirements already specified in pyproject.toml or user deps
     base_build_deps = {pkg_resources.Requirement(r.name).key for r in package_venv.envconfig.deps}
     build_requires_dep = [
-        DepConfig(r, None) for r in build_requires if pkg_resources.Requirement(r).key not in base_build_deps
+        DepConfig(r, None)
+        for r in build_requires
+        if pkg_resources.Requirement(r).key not in base_build_deps
     ]
     if build_requires_dep:
-        with session.newaction(package_venv, "build_requires", package_venv.envconfig.envdir) as action:
+        with session.newaction(
+            package_venv, "build_requires", package_venv.envconfig.envdir
+        ) as action:
             package_venv.run_install_command(packages=build_requires_dep, action=action)
         session.finishvenv(package_venv)
     return perform_isolated_build(build_info, package_venv, session, config, report)
@@ -78,7 +82,9 @@ def get_build_info(folder, report):
 
 
 def perform_isolated_build(build_info, package_venv, session, config, report):
-    with session.newaction(package_venv, "perform-isolated-build", package_venv.envconfig.envdir) as action:
+    with session.newaction(
+        package_venv, "perform-isolated-build", package_venv.envconfig.envdir
+    ) as action:
         script = textwrap.dedent(
             """
             import sys
@@ -95,14 +101,19 @@ def perform_isolated_build(build_info, package_venv, session, config, report):
         config.distdir.ensure_dir()
 
         result = package_venv._pcall(
-            [package_venv.envconfig.envpython, "-c", script], returnout=True, action=action, cwd=session.config.setupdir
+            [package_venv.envconfig.envpython, "-c", script],
+            returnout=True,
+            action=action,
+            cwd=session.config.setupdir,
         )
         report.verbosity2(result)
         return config.distdir.join(result.split("\n")[-2])
 
 
 def get_build_requires(build_info, package_venv, session):
-    with session.newaction(package_venv, "get-build-requires", package_venv.envconfig.envdir) as action:
+    with session.newaction(
+        package_venv, "get-build-requires", package_venv.envconfig.envdir
+    ) as action:
         script = textwrap.dedent(
             """
                 import {}
@@ -116,6 +127,9 @@ def get_build_requires(build_info, package_venv, session):
             )
         ).strip()
         result = package_venv._pcall(
-            [package_venv.envconfig.envpython, "-c", script], returnout=True, action=action, cwd=session.config.setupdir
+            [package_venv.envconfig.envpython, "-c", script],
+            returnout=True,
+            action=action,
+            cwd=session.config.setupdir,
         )
         return json.loads(result.split("\n")[-2])
