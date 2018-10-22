@@ -47,3 +47,6 @@ build-backend = 'setuptools.build_meta'
         directory = "misc"
         name = "Miscellaneous"
         showcontent = true
+
+[tool.black]
+line-length = 99
