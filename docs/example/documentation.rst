@@ -30,7 +30,7 @@ Note here we say we also require python 3.7, allowing us to use f-strings within
 links are correct.
 
 mkdocs
-======
+------
 
 Define one environment to write/generate the documentation, and another to deploy it. Use
 the config substitution logic to avoid defining dependencies multiple time:
