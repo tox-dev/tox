@@ -228,10 +228,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: commands_pre ^ ARGVLIST
 
+    .. versionadded:: 3.4
+
     Commands to run before running the :conf:`commands`.
     All evaluation and configuration logic applies from :conf:`commands`.
 
 .. conf:: commands_post ^ ARGVLIST
+
+    .. versionadded:: 3.4
 
     Commands to run after running the :conf:`commands`. Execute regardless of the outcome of
     both :conf:`commands` and :conf:`commands_pre`.
