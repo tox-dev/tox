@@ -14,9 +14,7 @@ from tox.interpreters import (
     InterpreterInfo,
     Interpreters,
     NoInterpreterInfo,
-    pyinfo,
     run_and_get_interpreter_info,
-    sitepackagesdir,
     tox_get_python_executable,
 )
 
@@ -160,29 +158,6 @@ class TestInterpreters:
         info = interpreters.get_info(envconfig)
         s = interpreters.get_sitepackagesdir(info, "")
         assert s
-
-
-def test_pyinfo(monkeypatch):
-    monkeypatch.setattr(sys, "version_info", [42, 4242])
-    monkeypatch.setattr(sys, "platform", "an unladen swallow")
-    result = pyinfo()
-    assert len(result) == 2
-    assert result["version_info"] == (42, 4242)
-    assert result["sysplatform"] == "an unladen swallow"
-
-
-def test_sitepackagesdir(monkeypatch):
-    import distutils.sysconfig as sysconfig
-
-    test_envdir = "holy grail"
-    test_dir = "Now go away or I will taunt you a second time."
-
-    def dummy_get_python_lib(prefix):
-        assert prefix is test_envdir
-        return test_dir
-
-    monkeypatch.setattr(sysconfig, "get_python_lib", dummy_get_python_lib)
-    assert sitepackagesdir(test_envdir) == {"dir": test_dir}
 
 
 def test_exec_failed():
