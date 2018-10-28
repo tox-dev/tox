@@ -1,1 +1,0 @@
-document substitutions with additional content starting with a space cannot be alone on a line inside the ini file - by :user:`gaborbernat`

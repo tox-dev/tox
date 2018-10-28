@@ -1,3 +1,0 @@
-previously, if a project's ``setup.py --name`` emitted extra information to
-stderr, tox would capture it and consider it part of the project's name; now,
-emissions to stderr are printed to the console - by :user:`hashbrowncipher`
