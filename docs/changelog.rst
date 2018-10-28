@@ -11,6 +11,31 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.5.3 (2018-10-28)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix bug with incorrectly defactorized dependencies - by :user:`bartsanchez` (`#706 <https://github.com/tox-dev/tox/issues/706>`_)
+- do the same transformation to ``egg_info`` folders that ``pkg_resources`` does;
+  this makes it possible for hyphenated names to use the ``develop-inst-noop`` optimization (cf. 910),
+  which previously only worked with non-hyphenated egg names - by
+  :user:`hashbrowncipher` (`#1051 <https://github.com/tox-dev/tox/issues/1051>`_)
+- previously, if a project's ``setup.py --name`` emitted extra information to
+  stderr, tox would capture it and consider it part of the project's name; now,
+  emissions to stderr are printed to the console - by :user:`hashbrowncipher` (`#1052 <https://github.com/tox-dev/tox/issues/1052>`_)
+- change the way we acquire interpreter information to make it compatible with ``jython`` interpreter, note to create jython envs one needs ``virtualenv > 16.0`` which will be released later :user:`gaborbernat` (`#1073 <https://github.com/tox-dev/tox/issues/1073>`_)
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- document substitutions with additional content starting with a space cannot be alone on a line inside the ini file - by :user:`gaborbernat` (`#437 <https://github.com/tox-dev/tox/issues/437>`_)
+- change the spelling of a single word from contrains to the proper word, constraints - by :user:`metasyn` (`#1061 <https://github.com/tox-dev/tox/issues/1061>`_)
+- Mention the minimum version required for ``commands_pre``/``commands_post`` support. (`#1071 <https://github.com/tox-dev/tox/issues/1071>`_)
+
+
 v3.5.2 (2018-10-09)
 -------------------
 
