@@ -1,1 +1,1 @@
-Fix bug with incorrectly defactorized dependencies - by @bartsanchez
+Fix bug with incorrectly defactorized dependencies - by :user:`bartsanchez`
