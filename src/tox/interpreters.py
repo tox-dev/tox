@@ -1,5 +1,5 @@
 import distutils.util
-import inspect
+import json
 import re
 import subprocess
 import sys
@@ -45,13 +45,13 @@ class Interpreters:
             return ""
         envdir = str(envdir)
         try:
-            res = exec_on_interpreter(
-                info.executable,
-                [
-                    inspect.getsource(sitepackagesdir),
-                    "print(sitepackagesdir({!r}))".format(envdir),
-                ],
+            code = (
+                "import distutils.sysconfig; import json;"
+                "print(json.dumps("
+                "{{ 'dir': distutils.sysconfig.get_python_lib(prefix={!r})}}"
+                "))"
             )
+            res = exec_on_interpreter(str(info.executable), "-c", code.format(envdir))
         except ExecFailed as e:
             print("execution failed: {} -- {}".format(e.out, e.err))
             return ""
@@ -62,28 +62,33 @@ class Interpreters:
 def run_and_get_interpreter_info(name, executable):
     assert executable
     try:
-        result = exec_on_interpreter(executable, [inspect.getsource(pyinfo), "print(pyinfo())"])
+        result = exec_on_interpreter(
+            str(executable),
+            "-c",
+            "import sys; import json;"
+            'print(json.dumps({"version_info": tuple(sys.version_info),'
+            '                  "sysplatform": sys.platform}))',
+        )
+        result["version_info"] = tuple(result["version_info"])  # fix json dump transformation
     except ExecFailed as e:
         return NoInterpreterInfo(name, executable=e.executable, out=e.out, err=e.err)
     else:
         return InterpreterInfo(name, executable, **result)
 
 
-def exec_on_interpreter(executable, source):
-    if isinstance(source, list):
-        source = "\n".join(source)
+def exec_on_interpreter(*args):
     from subprocess import Popen, PIPE
 
-    args = [str(executable)]
-    popen = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    popen.stdin.write(source.encode("utf8"))
+    popen = Popen(args, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     out, err = popen.communicate()
     if popen.returncode:
-        raise ExecFailed(executable, source, out, err)
+        raise ExecFailed(args[0], args[1:], out, err)
+    if err:
+        sys.stderr.write(err)
     try:
-        result = eval(out.strip())
+        result = json.loads(out)
     except Exception:
-        raise ExecFailed(executable, source, out, "could not decode {!r}".format(out))
+        raise ExecFailed(args[0], args[1:], out, "could not decode {!r}".format(out))
     return result
 
 
@@ -177,15 +182,3 @@ else:
             out, _ = proc.communicate()
             if not proc.returncode:
                 return out.decode("UTF-8").strip()
-
-
-def pyinfo():
-    import sys
-
-    return {"version_info": tuple(sys.version_info), "sysplatform": sys.platform}
-
-
-def sitepackagesdir(envdir):
-    import distutils.sysconfig
-
-    return {"dir": distutils.sysconfig.get_python_lib(prefix=envdir)}

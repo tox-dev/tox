@@ -1,0 +1,1 @@
+change the way we acquire interpreter information to make it compatible with ``jython`` interpreter, note to create jython envs one needs ``virtualenv > 16.0`` which will be released later :user:`gaborbernat`
