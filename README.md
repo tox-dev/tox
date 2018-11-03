@@ -61,6 +61,7 @@ commands =
 ```console
 $ tox
 
+[lots of output from what tox does]
 [lots of output from commands that were run]
 
 __________________ summary _________________
@@ -68,6 +69,9 @@ __________________ summary _________________
   py36: commands succeeded
   congratulations :)
 ```
+
+tox created two `testenvs` - one based on Python2.7 and one based on Python3.6, it installed pytest in them and ran the tests. The report at the end summarizes which
+`testenvs` have failed and which have succeeded.
 
 ## Projects using tox
 
