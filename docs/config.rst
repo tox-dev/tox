@@ -43,7 +43,7 @@ Global settings are defined under the ``tox`` section as:
 
    Directory for tox to generate its environments into, will be created if it does not exist.
 
-.. conf:: temp_dir ^ PATH ^ {toxinidir}/.tmp
+.. conf:: temp_dir ^ PATH ^ {toxworkdir}/.tmp
 
    Directory where to put tox temporary files. For example: we create a hard link (if possible,
    otherwise new copy) in this directory for the project package. This ensures tox works correctly
