@@ -37,12 +37,15 @@ tox creates virtual environments for all configured tox `testenvs`, installs the
 
 ## Usage
 
-# A simple example
+tox is mainly used as a command line tool and needs a `tox.ini` or a `tool.tox`
+section in `pyproject.toml` containing the configuration.
 
-To test a simple project that has some tests:
+### A simple example
+
+To test a simple project that has some tests, here is an example with the `tox.ini`
+in the root of the project:
 
 ```ini
-# content of: tox.ini , put in same dir as setup.py
 [tox]
 envlist = py27,py36
 
