@@ -81,11 +81,11 @@ tox is widely used, so this is only a very small selection:
 * [tox-dev](https://github.com/tox-dev) (obviously)
 * [and many more](https://github.com/tox-dev/tox/network/dependents)
 
-## Misc
+---
 
-Contributions are welcome, see [contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our [Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md).
+Contributions are welcome. See [contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our [Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md).
 
 * [docs are here](https://tox.readthedocs.org)
 * [code is here](https://github.com/tox-dev/tox)
 * [issue tracker is here](https://github.com/tox-dev/tox/issues)
-* [License is MIT](https://github.com/tox-dev/tox/blob/master/LICENSE)
+* [license is MIT](https://github.com/tox-dev/tox/blob/master/LICENSE)
