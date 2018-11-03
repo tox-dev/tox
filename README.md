@@ -23,6 +23,8 @@ tox creates virtual environments for all configured tox `testenvs`, installs the
 
 ![tox flow](https://tox.readthedocs.io/en/latest/_images/tox_flow.png)
 
+See [system overview](https://tox.readthedocs.io/en/latest/#system-overview) for more details.
+
 ## tox can be used for ...
 
 * creating develepment environments
