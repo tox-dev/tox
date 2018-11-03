@@ -19,6 +19,8 @@ tox is highly [configurable](https://tox.readthedocs.io/en/latest/config.html) a
 
 ## How it works
 
+tox creates virtual environments for all configured tox `testenv`s, installs the project and other necessary dependencies in it and runs the configured set of commands.
+
 ![tox flow](https://tox.readthedocs.io/en/latest/_images/tox_flow.png)
 
 ## tox can be used for ...
@@ -32,23 +34,6 @@ tox is highly [configurable](https://tox.readthedocs.io/en/latest/config.html) a
 * building and deploying project documentation
 * release automation
 * limit: your imagination
-
-## Projects using tox
-
-tox is widely used, so this is only a very small selection:
-
-* [ansibele](https://github.com/ansible/ansible) (devpi and plugins/tools)
-* [devpi](https://github.com/devpi) (devpi and plugins/tools)
-* [django](https://github.com/django/django)
-* [httpie](https://github.com/jakubroztocil/httpie)
-* [pallets](https://github.com/pallets) (flask, jinja, etc)
-* [pandas](https://github.com/pandas-dev/pandas)
-* [pytest-dev](https://github.com/pytest-dev) (pytest and plugins/tools)
-* [requests](https://github.com/requests/requests)
-* [tox-dev](https://github.com/tox-dev) (obviously)
-* [and many more](https://github.com/tox-dev/tox/network/dependents)
-
----
 
 ## Usage
 
@@ -77,6 +62,21 @@ __________________ summary _________________
   py27: commands succeeded
   py36: commands succeeded
 ```
+
+## Projects using tox
+
+tox is widely used, so this is only a very small selection:
+
+* [ansibele](https://github.com/ansible/ansible) (devpi and plugins/tools)
+* [devpi](https://github.com/devpi) (devpi and plugins/tools)
+* [django](https://github.com/django/django)
+* [httpie](https://github.com/jakubroztocil/httpie)
+* [pallets](https://github.com/pallets) (flask, jinja, etc)
+* [pandas](https://github.com/pandas-dev/pandas)
+* [pytest-dev](https://github.com/pytest-dev) (pytest and plugins/tools)
+* [requests](https://github.com/requests/requests)
+* [tox-dev](https://github.com/tox-dev) (obviously)
+* [and many more](https://github.com/tox-dev/tox/network/dependents)
 
 ## Misc
 
