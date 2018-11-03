@@ -70,7 +70,7 @@ __________________ summary _________________
 
 tox is widely used, so this is only a very small selection:
 
-* [ansible](https://github.com/ansible/ansible) (devpi and plugins/tools)
+* [ansible](https://github.com/ansible/ansible)
 * [devpi](https://github.com/devpi) (devpi and plugins/tools)
 * [django](https://github.com/django/django)
 * [httpie](https://github.com/jakubroztocil/httpie)
