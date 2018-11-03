@@ -19,11 +19,7 @@ tox is highly [configurable](https://tox.readthedocs.io/en/latest/config.html) a
 
 ## How it works
 
-tox creates virtual environments for all configured so called `testenvs`, it then installs the project and other necessary dependencies and runs the configured set of commands.
-
 ![tox flow](https://tox.readthedocs.io/en/latest/_images/tox_flow.png)
-
-See [system overview](https://tox.readthedocs.io/en/latest/#system-overview) for more details.
 
 ## tox can be used for ...
 
@@ -37,17 +33,31 @@ See [system overview](https://tox.readthedocs.io/en/latest/#system-overview) for
 * release automation
 * limit: your imagination
 
+## Projects using tox
+
+tox is widely used, so this is only a very small selection:
+
+* [ansibele](https://github.com/ansible/ansible) (devpi and plugins/tools)
+* [devpi](https://github.com/devpi) (devpi and plugins/tools)
+* [django](https://github.com/django/django)
+* [httpie](https://github.com/jakubroztocil/httpie)
+* [pallets](https://github.com/pallets) (flask, jinja, etc)
+* [pandas](https://github.com/pandas-dev/pandas)
+* [pytest-dev](https://github.com/pytest-dev) (pytest and plugins/tools)
+* [requests](https://github.com/requests/requests)
+* [tox-dev](https://github.com/tox-dev) (obviously)
+* [and many more](https://github.com/tox-dev/tox/network/dependents)
+
+---
+
 ## Usage
 
-tox is mainly used as a command line tool and needs a `tox.ini` or a `tool.tox`
-section in `pyproject.toml` containing the configuration.
+# A simple example
 
-### A simple example
-
-To test a simple project that has some tests, here is an example with the `tox.ini`
-in the root of the project:
+To test a simple project that has some tests:
 
 ```ini
+# content of: tox.ini , put in same dir as setup.py
 [tox]
 envlist = py27,py36
 
@@ -61,38 +71,18 @@ commands =
 ```console
 $ tox
 
-[lots of output from what tox does]
 [lots of output from commands that were run]
 
 __________________ summary _________________
   py27: commands succeeded
   py36: commands succeeded
-  congratulations :)
 ```
 
-tox created two `testenvs` - one based on Python2.7 and one based on Python3.6, it installed pytest in them and ran the tests. The report at the end summarizes which
-`testenvs` have failed and which have succeeded.
+## Misc
 
-## Projects using tox
-
-tox is widely used, so this is only a very small selection:
-
-* [ansible](https://github.com/ansible/ansible)
-* [devpi](https://github.com/devpi) (devpi and plugins/tools)
-* [django](https://github.com/django/django)
-* [httpie](https://github.com/jakubroztocil/httpie)
-* [pallets](https://github.com/pallets) (flask, jinja, etc)
-* [pandas](https://github.com/pandas-dev/pandas)
-* [pytest-dev](https://github.com/pytest-dev) (pytest and plugins/tools)
-* [requests](https://github.com/requests/requests)
-* [tox-dev](https://github.com/tox-dev) (obviously)
-* [and many more](https://github.com/tox-dev/tox/network/dependents)
-
----
-
-Contributions are welcome. See [contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our [Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md).
+Contributions are welcome, see [contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our [Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md).
 
 * [docs are here](https://tox.readthedocs.org)
 * [code is here](https://github.com/tox-dev/tox)
 * [issue tracker is here](https://github.com/tox-dev/tox/issues)
-* [license is MIT](https://github.com/tox-dev/tox/blob/master/LICENSE)
+* [License is MIT](https://github.com/tox-dev/tox/blob/master/LICENSE)
