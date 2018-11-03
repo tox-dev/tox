@@ -19,7 +19,7 @@ tox is highly [configurable](https://tox.readthedocs.io/en/latest/config.html) a
 
 ## How it works
 
-tox creates virtual environments for all configured tox `testenvs`, installs the project and other necessary dependencies in it and runs the configured set of commands.
+tox creates virtual environments for all configured so called `testenvs`, it then installs the project and other necessary dependencies and runs the configured set of commands.
 
 ![tox flow](https://tox.readthedocs.io/en/latest/_images/tox_flow.png)
 
