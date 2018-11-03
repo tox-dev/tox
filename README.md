@@ -66,6 +66,7 @@ $ tox
 __________________ summary _________________
   py27: commands succeeded
   py36: commands succeeded
+  congratulations :)
 ```
 
 ## Projects using tox
