@@ -215,10 +215,10 @@ The plugin must have the following:
 
 - a ``tox.ini`` for running tests using `tox <https://tox.readthedocs.io>`_.
 
-- a ``README.txt`` describing how to use the plugin and on which
+- a ``README`` describing how to use the plugin and on which
   platforms it runs.
 
-- a ``LICENSE.txt`` file or equivalent containing the licensing
+- a ``LICENSE`` file or equivalent containing the licensing
   information, with matching info in ``setup.py``.
 
 - an issue tracker for bug reports and enhancement requests.
