@@ -1,0 +1,1 @@
+Update Contributor Covenant URL to use https:// - by :user:`jdufresne`.
