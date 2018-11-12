@@ -445,7 +445,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
         indexserver =
             default = https://mypypi.org
 
-    will make tox install all dependencies from this PYPI index server
+    will make tox install all dependencies from this PyPI index server
     (including when installing the project sdist package).
 
 .. conf:: envdir ^ PATH ^ {toxworkdir}/{envname}

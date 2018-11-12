@@ -1,0 +1,1 @@
+Correct the capitalization of PyPI throughout the documentation - by :user:`jdufresne`.

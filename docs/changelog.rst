@@ -224,7 +224,7 @@ v3.1.1 (2018-07-09)
 Bugfixes
 ^^^^^^^^
 
-- PyPi documentation for ``3.1.0`` is broken. Added test to check for this, and
+- PyPI documentation for ``3.1.0`` is broken. Added test to check for this, and
   fix it by :user:`gaborbernat`. (`#879
   <https://github.com/tox-dev/tox/issues/879>`_)
 
@@ -1032,7 +1032,7 @@ v1.6.0 (2013-08-15)
   location ({envtmpdir}/pseudo-home).  If an index url was specified
   a .pydistutils.cfg file will be written with an index_url setting
   so that packages defining ``setup_requires`` dependencies will not
-  silently use your HOME-directory settings or PyPi.
+  silently use your HOME-directory settings or PyPI.
 
 - fix `#1 <https://github.com/tox-dev/tox/issues/1>`_: empty setup files are properly detected, thanks Anthon van
   der Neuth

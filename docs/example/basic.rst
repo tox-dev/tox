@@ -197,7 +197,7 @@ different PyPI servers, example:
     [testenv]
     deps =
         docutils        # comes from standard PyPI
-        :DEV:mypackage  # will be installed from custom "DEV" pypi url
+        :DEV:mypackage  # will be installed from custom "DEV" PyPI url
 
 This configuration will install ``docutils`` from the default
 Python PYPI server and will install the ``mypackage`` from
