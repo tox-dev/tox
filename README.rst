@@ -1,6 +1,6 @@
 .. image:: https://badge.fury.io/py/tox.svg
   :target: https://badge.fury.io/py/tox
-  :alt: Latest version on PyPi
+  :alt: Latest version on PyPI
 .. image:: https://img.shields.io/pypi/pyversions/tox.svg
   :target: https://pypi.org/project/tox/
   :alt: Supported Python versions

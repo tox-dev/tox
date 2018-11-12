@@ -147,7 +147,7 @@ Current features
   and platform-specific build-step hacks.
 
 * **full interoperability with devpi**: is integrated with and
-  is used for testing in the devpi_ system, a versatile pypi
+  is used for testing in the devpi_ system, a versatile PyPI
   index server and release managing tool.
 
 * **driven by a simple ini-style config file**

@@ -7,7 +7,7 @@ tox plugins
 
 A growing number of hooks make tox modifiable in different phases of execution by writing plugins.
 
-tox - like `pytest`_ and `devpi`_ - uses `pluggy`_ to provide an extension mechanism for pip-installable internal or devpi/PyPi-published plugins.
+tox - like `pytest`_ and `devpi`_ - uses `pluggy`_ to provide an extension mechanism for pip-installable internal or devpi/PyPI-published plugins.
 
 Using plugins
 -------------
@@ -21,7 +21,7 @@ e.g.:
 
     $ pip install tox-travis
 
-You can search for available plugins on PyPi by typing ``pip search tox`` and filter for
+You can search for available plugins on PyPI by typing ``pip search tox`` and filter for
 packages that are prefixed ``tox-`` or contain the "plugin" in the description.
 You will get some output similar to this::
 
@@ -49,7 +49,7 @@ You will get some output similar to this::
     tox-pipenv-install (1.0.3)           - Install packages from Pipfile
 
 
-There might also be some plugins not (yet) available from PyPi that could be installed directly
+There might also be some plugins not (yet) available from PyPI that could be installed directly
 fom source hosters like Github or Bitbucket (or from a local clone). See the
 
 To see what is installed you can call ``tox --version`` to get the version of the host and names
@@ -67,7 +67,7 @@ Creating a plugin
 Start from a template
 
 You can create a new tox plugin with all the bells and whistles via a `Cookiecutter`_ template
-(see `cookiecutter-tox-plugin`_ - this will create a complete pypi-releasable, documented
+(see `cookiecutter-tox-plugin`_ - this will create a complete PyPI-releasable, documented
 project with license, documentation and CI.
 
 .. code-block:: shell
@@ -144,7 +144,7 @@ contents of ``setup.py``:
 
 Using the  **tox-** prefix in ``tox-fireworks`` is an established convention to be able to
 see from the project name that this is a plugin for tox. It also makes it easier to find with
-e.g. ``pip search 'tox-'`` once it is released on PyPi.
+e.g. ``pip search 'tox-'`` once it is released on PyPI.
 
 To make your new plugin discoverable by tox, you need to install it. During development you should
 install it with ``-e`` or ``--editable``, so that changes to the code are immediately active:
@@ -154,10 +154,10 @@ install it with ``-e`` or ``--editable``, so that changes to the code are immedi
     $ pip install -e </path/to/tox-fireworks>
 
 
-Publish your plugin to PyPi
+Publish your plugin to PyPI
 ---------------------------
 
-If you think the rest of the world could profit using your plugin you can publish it to PyPi.
+If you think the rest of the world could profit using your plugin you can publish it to PyPI.
 
 You need to add some more meta data to ``setup.py`` (see `cookiecutter-tox-plugin`_ for a complete
 example or consult the `setup.py docs <https://docs.python.org/3/distutils/setupscript.html>`_).

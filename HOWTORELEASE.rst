@@ -37,7 +37,7 @@ tox -e release -- <version>
 
 Create a pull request and wait until it the CI passes. Now make sure you merge the PR
 and delete the release branch. The CI will automatically pick the tag up and
-release it, wait to appear in PyPi. Only merge if the later happens.
+release it, wait to appear in PyPI. Only merge if the later happens.
 
 Post release activities
 -----------------------

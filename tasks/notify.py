@@ -42,7 +42,7 @@ def get_message_body(release_version: Version, prev_version: Version) -> str:
         Details about the changes can be found at https://tox.readthedocs.io/en/{release_version}/changelog.html
         For complete documentation, please visit: https://tox.readthedocs.io/en/{release_version}/
 
-        As usual, you can upgrade from pypi via:
+        As usual, you can upgrade from PyPI via:
 
             pip install --upgrade tox
 
