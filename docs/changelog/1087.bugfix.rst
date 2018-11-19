@@ -1,0 +1,1 @@
+On windows, check ``sys.executable`` before others for interpreter version lookup.  This matches what happens on non-windows.

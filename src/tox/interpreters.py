@@ -144,26 +144,25 @@ else:
 
     @tox.hookimpl
     def tox_get_python_executable(envconfig):
-        name = envconfig.basepython
-        p = py.path.local.sysfind(name)
+        if envconfig.basepython == "python{}.{}".format(*sys.version_info[0:2]):
+            return sys.executable
+        p = py.path.local.sysfind(envconfig.basepython)
         if p:
             return p
 
         # Is this a standard PythonX.Y name?
-        m = re.match(r"python(\d)(?:\.(\d))?", name)
+        m = re.match(r"python(\d)(?:\.(\d))?", envconfig.basepython)
         groups = [g for g in m.groups() if g] if m else []
         if m:
             # The standard names are in predictable places.
             actual = r"c:\python{}\python.exe".format("".join(groups))
         else:
 
-            actual = win32map.get(name, None)
+            actual = win32map.get(envconfig.basepython, None)
         if actual:
             actual = py.path.local(actual)
             if actual.check():
                 return actual
-        if name == "python{}.{}".format(*sys.version_info[0:2]):
-            return sys.executable
         # Use py.exe to determine location - PEP-514 & PEP-397
         if m:
             return locate_via_py(*groups)
