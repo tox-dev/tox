@@ -195,8 +195,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     Name or path to a Python interpreter which will be used for creating the virtual environment,
     this determines in practice the python for what we'll create a virtual isolated environment.
-    Use this to specify the python version for a tox environment. If not specified the virtual
-    environments factors (e.g. name part) wil be used to automatically set one. E.g. ``py37``
+    Use this to specify the python version for a tox environment. If not specified, the virtual
+    environments factors (e.g. name part) will be used to automatically set one. For example, ``py37``
     means ``python3.7``, ``py3`` means ``python3`` and ``py`` means ``python``.
 
     .. versionchanged:: 3.1
