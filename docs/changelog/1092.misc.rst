@@ -1,0 +1,1 @@
+Don't warn when PYTHONPATH is present but empty - by :user:`Julian`.
