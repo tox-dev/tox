@@ -387,7 +387,7 @@ class VirtualEnv(object):
             os.environ.pop(key, None)
         if "PYTHONPATH" not in self.envconfig.passenv:
             # If PYTHONPATH not explicitly asked for, remove it.
-            if "PYTHONPATH" in os.environ:
+            if os.environ.get("PYTHONPATH"):
                 self.session.report.warning(
                     "Discarding $PYTHONPATH from environment, to override "
                     "specify PYTHONPATH in 'passenv' in your configuration."

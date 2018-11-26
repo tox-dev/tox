@@ -630,6 +630,26 @@ class TestVenvTest:
         assert os.environ["PIP_NO_DEPS"] == "0"
 
     def test_pythonpath_usage(self, newmocksession, monkeypatch):
+        # Empty PYTHONPATH doesn't warn
+        monkeypatch.setenv("PYTHONPATH", "")
+        mocksession = newmocksession(
+            [],
+            """
+            [testenv:python]
+            commands=abc
+        """,
+        )
+        venv = mocksession.getenv("python")
+        action = mocksession.newaction(venv, "getenv")
+        venv.run_install_command(["qwe"], action=action)
+        mocksession.report.not_expect("warning", "*Discarding $PYTHONPATH from environment*")
+        assert "PYTHONPATH" in os.environ
+
+        pcalls = mocksession._pcalls
+        assert len(pcalls) == 1
+        assert pcalls[0].env["PYTHONPATH"] == ""
+
+        # Non-empty PYTHONPATH does warn
         monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
         mocksession = newmocksession(
             [],
@@ -645,8 +665,8 @@ class TestVenvTest:
         mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
 
         pcalls = mocksession._pcalls
-        assert len(pcalls) == 1
-        assert "PYTHONPATH" not in pcalls[0].env
+        assert len(pcalls) == 2
+        assert "PYTHONPATH" not in pcalls[1].env
 
         # passenv = PYTHONPATH allows PYTHONPATH to stay in environment
         monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
@@ -665,8 +685,8 @@ class TestVenvTest:
         mocksession.report.not_expect("warning", "*Discarding $PYTHONPATH from environment*")
 
         pcalls = mocksession._pcalls
-        assert len(pcalls) == 2
-        assert pcalls[1].env["PYTHONPATH"] == "/my/awesome/library"
+        assert len(pcalls) == 3
+        assert pcalls[2].env["PYTHONPATH"] == "/my/awesome/library"
 
 
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
