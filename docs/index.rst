@@ -160,6 +160,17 @@ Current features
 
 * supports :ref:`using different / multiple PyPI index servers  <multiindex>`
 
+
+Related projects
+----------------
+
+tox has influenced several other projects in the Python test automation space. If tox doesn't quite fit your needs or you want to do more research, we recommend taking a look at these projects:
+
+- `Invoke <https://www.pyinvoke.org/>`__ is a general-purpose task execution library, similar to Make. Invoke is far more general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
+- `Nox <https://nox.thea.codes>`__ is a project similar in spirit to tox but different in approach. Nox's key difference is that it uses Python scripts instead of a configuration file. Nox might be useful if you find tox's configuration too limiting but aren't looking to move to something as general-purpose as Invoke or Make.
+
+
+
 .. toctree::
    :hidden:
 
