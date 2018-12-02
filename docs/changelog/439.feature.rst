@@ -1,0 +1,2 @@
+``tox --parallel`` now allows running tox environments in parallel. ``--parallel-live`` allows showing the live output of the standard output and error. Note that parallel evaluation
+ disables standard input. Use non parallel invocation if you need standard input. By :user:`gaborbernat`.

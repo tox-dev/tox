@@ -568,6 +568,14 @@ class Session:
                     venv.envconfig.setenv[str("TOX_PACKAGE")] = str(venv.package)
         if self.config.option.sdistonly:
             return
+        if self.config.option.parallel:
+            self.run_parallel()
+        else:
+            self.run_sequential()
+        retcode = self._summary()
+        return retcode
+
+    def run_sequential(self):
         for venv in self.venvlist:
             if self.setupenv(venv):
                 if venv.envconfig.skip_install:
@@ -581,9 +589,49 @@ class Session:
                         self.installpkg(venv, venv.package)
 
                 self.runenvreport(venv)
-                self.runtestenv(venv)
-        retcode = self._summary()
-        return retcode
+            self.runtestenv(venv)
+
+    def run_parallel(self):
+        """here we'll just start parallel sub-processes"""
+        live_out = self.config.option.parallel_live
+        args = [sys.executable, "-m", "tox"] + self.config.args
+        try:
+            position = args.index("--")
+        except ValueError:
+            position = len(args)
+        try:
+            parallel_at = args[0:position].index("--parallel")
+            del args[parallel_at]
+            position -= 1
+        except ValueError:
+            pass
+
+        tox_runs = {}
+        for venv in self.venvlist:
+            env = os.environ.copy()
+            env["_PARALLEL_TOXENV"] = venv.envconfig.envname
+            args_sub = list(args)
+            if hasattr(venv, "package"):
+                args_sub.insert(position, str(venv.package))
+                args_sub.insert(position, "--installpkg")
+            stdout, stderr = (None, None) if live_out else (subprocess.PIPE, subprocess.PIPE)
+            run = subprocess.Popen(args_sub, env=env, stdout=stdout, stderr=stderr)
+            tox_runs[venv.name] = (venv, run)
+
+        to_finish = set(tox_runs.keys())
+        while to_finish:
+            for name in set(to_finish):
+                venv, run = tox_runs[name]
+                res = run.poll()
+                if res is not None:
+                    venv.status = "skipped tests" if self.config.option.notest else res
+                    if not live_out:
+                        out, err = run.communicate()
+                        venv.out = out
+                        venv.err = err
+                    to_finish.remove(name)
+            if to_finish:
+                time.sleep(0.1)
 
     def runenvreport(self, venv):
         """

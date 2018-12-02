@@ -274,7 +274,9 @@ def parse_cli(args, pm):
         print(get_version_info(pm))
         raise SystemExit(0)
     interpreters = Interpreters(hook=pm.hook)
-    config = Config(pluginmanager=pm, option=option, interpreters=interpreters, parser=parser)
+    config = Config(
+        pluginmanager=pm, option=option, interpreters=interpreters, parser=parser, args=args
+    )
     return config, option
 
 
@@ -412,6 +414,15 @@ def tox_addoption(parser):
         action="store_true",
         dest="sdistonly",
         help="only perform the sdist packaging activity.",
+    )
+    parser.add_argument(
+        "--parallel", action="store_true", dest="parallel", help="run tox environments in parallel"
+    )
+    parser.add_argument(
+        "--parallel-live",
+        action="store_true",
+        dest="parallel_live",
+        help="connect to stdout while running environments",
     )
     parser.add_argument(
         "--parallel--safe-build",
@@ -822,7 +833,7 @@ def cli_skip_missing_interpreter(parser):
 class Config(object):
     """Global Tox config object."""
 
-    def __init__(self, pluginmanager, option, interpreters, parser):
+    def __init__(self, pluginmanager, option, interpreters, parser, args):
         self.envconfigs = OrderedDict()
         """Mapping envname -> envconfig"""
         self.invocationcwd = py.path.local()
@@ -831,6 +842,7 @@ class Config(object):
         self.option = option
         self._parser = parser
         self._testenv_attr = parser._testenv_attr
+        self.args = args
 
         """option namespace containing all parsed command line options"""
 
@@ -1133,6 +1145,7 @@ class ParseIni(object):
 
     def _getenvdata(self, reader, config):
         candidates = (
+            os.environ.get("_PARALLEL_TOXENV"),
             self.config.option.env,
             os.environ.get("TOXENV"),
             reader.getstring("envlist", replace=False),
