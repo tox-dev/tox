@@ -608,7 +608,7 @@ class Session:
         envlog.set_installed(packages)
 
     def runtestenv(self, venv, redirect=False):
-        if self.config.option.notest:
+        if venv.status == 0 and self.config.option.notest:
             venv.status = "skipped tests"
         else:
             if venv.status:
