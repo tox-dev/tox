@@ -11,6 +11,7 @@ import tox
 from tox.config import (
     CommandParser,
     DepOption,
+    PosargsOption,
     SectionReader,
     get_homedir,
     get_version_info,
@@ -2969,3 +2970,29 @@ def test_config_current_py(newconfig, current_tox_py, cmd, tmpdir, monkeypatch):
     assert config.envconfigs[current_tox_py]
     result = cmd()
     assert result.ret == 0, result.out
+
+
+def test_posargs_relative_changedir(newconfig, tmpdir):
+    dir1 = tmpdir.join("dir1").ensure()
+    tmpdir.join("dir2").ensure()
+    with tmpdir.as_cwd():
+        config = newconfig(
+            """\
+            [tox]
+            [testenv]
+            changedir = dir2
+            commands =
+                echo {posargs}
+            """
+        )
+        config.option.args = ["dir1", dir1.strpath, "dir3"]
+        testenv = config.envconfigs["python"]
+        PosargsOption().postprocess(testenv, config.option.args)
+
+        assert testenv._reader.posargs == [
+            # should have relative-ized
+            os.path.join("..", "dir1"),
+            # should have stayed the same,
+            dir1.strpath,
+            "dir3",
+        ]
