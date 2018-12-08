@@ -184,10 +184,10 @@ class PosargsOption:
             if value:
                 args = []
                 for arg in config.option.args:
-                    if arg:
-                        origpath = config.invocationcwd.join(arg, abs=True)
-                        if origpath.check():
-                            arg = testenv_config.changedir.bestrelpath(origpath)
+                    if arg and not os.path.isabs(arg):
+                        origpath = os.path.join(config.invocationcwd.strpath, arg)
+                        if os.path.exists(origpath):
+                            arg = os.path.relpath(origpath, testenv_config.changedir.strpath)
                     args.append(arg)
             testenv_config._reader.addsubstitutions(args)
         return value
