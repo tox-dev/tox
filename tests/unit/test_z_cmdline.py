@@ -737,6 +737,22 @@ def test_notest(initproj, cmd):
     assert re.match(r".*py26\W+reusing.*", result.out, re.DOTALL)
 
 
+def test_notest_setup_py_error(initproj, cmd):
+    initproj(
+        "example123",
+        filedefs={
+            "setup.py": """\
+                from setuptools import setup
+                setup(name='x', install_requires=['fakefakefakefakefakefake']),
+            """,
+            "tox.ini": "",
+        },
+    )
+    result = cmd("--notest")
+    assert result.ret
+    assert re.search("ERROR:.*InvocationError", result.out)
+
+
 def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={"tox.ini": ""})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
