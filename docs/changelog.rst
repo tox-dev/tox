@@ -11,6 +11,31 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.6.0 (2018-12-13)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- On windows, check ``sys.executable`` before others for interpreter version lookup.  This matches what happens on non-windows. (`#1087 <https://github.com/tox-dev/tox/issues/1087>`_)
+- Don't rewrite ``{posargs}`` substitution for absolute paths. (`#1095 <https://github.com/tox-dev/tox/issues/1095>`_)
+- Correctly fail ``tox --notest`` when setup fails. (`#1097 <https://github.com/tox-dev/tox/issues/1097>`_)
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Update Contributor Covenant URL to use https:// - by :user:`jdufresne`. (`#1082 <https://github.com/tox-dev/tox/issues/1082>`_)
+- Correct the capitalization of PyPI throughout the documentation - by :user:`jdufresne`. (`#1084 <https://github.com/tox-dev/tox/issues/1084>`_)
+- Link to related projects (Invoke and Nox) from the documentation - by :user:`theacodes`. (`#1088 <https://github.com/tox-dev/tox/issues/1088>`_)
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- Include the license file in the wheel distribution - by :user:`jdufresne`. (`#1083 <https://github.com/tox-dev/tox/issues/1083>`_)
+
+
 v3.5.3 (2018-10-28)
 -------------------
 
