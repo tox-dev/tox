@@ -1,1 +1,0 @@
-Don't rewrite ``{posargs}`` substitution for absolute paths.

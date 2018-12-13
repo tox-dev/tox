@@ -1,1 +1,0 @@
-Correctly fail ``tox --notest`` when setup fails.

@@ -1,1 +1,0 @@
-Include the license file in the wheel distribution - by :user:`jdufresne`.
