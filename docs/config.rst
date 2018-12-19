@@ -485,7 +485,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     A list of "extras" to be installed with the sdist or develop install.
     For example, ``extras = testing`` is equivalent to ``[testing]`` in a
-    ``pip install`` command.
+    ``pip install`` command. These are not installed if ``skip_install`` is
+    ``false``.
 
 .. conf:: description ^ SINGLE-LINE-TEXT ^ no description
 
