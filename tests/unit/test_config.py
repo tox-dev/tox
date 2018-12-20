@@ -1,11 +1,11 @@
-import os
-import re
 import sys
-from textwrap import dedent
 
+import os
 import py
 import pytest
+import re
 from pluggy import PluginManager
+from textwrap import dedent
 
 import tox
 from tox.config import (
@@ -70,22 +70,22 @@ class TestVenvConfig:
         config = newconfig(
             [],
             """
-            [testenv:devenv]
-            envdir = devenv
+            [testenv:dev]
+            envdir = dev
         """,
         )
-        envconfig = config.envconfigs["devenv"]
-        assert envconfig.envdir == tmpdir.join("devenv")
+        envconfig = config.envconfigs["dev"]
+        assert envconfig.envdir == tmpdir.join("dev")
 
     def test_envdir_set_manually_with_substitutions(self, newconfig):
         config = newconfig(
             [],
             """
-            [testenv:devenv]
+            [testenv:dev]
             envdir = {toxworkdir}/foobar
         """,
         )
-        envconfig = config.envconfigs["devenv"]
+        envconfig = config.envconfigs["dev"]
         assert envconfig.envdir == config.toxworkdir.join("foobar")
 
     def test_force_dep_version(self, initproj):

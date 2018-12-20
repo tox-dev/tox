@@ -1,12 +1,12 @@
+import sys
+
 import json
 import os
 import platform
-import re
-import subprocess
-import sys
-
 import py
 import pytest
+import re
+import subprocess
 
 import tox
 from tox._pytestplugin import ReportExpectMock
@@ -509,7 +509,7 @@ def test_usedevelop_mixed(initproj, cmd):
         "example123",
         filedefs={
             "tox.ini": """
-            [testenv:devenv]
+            [testenv:dev]
             usedevelop=True
             [testenv:nondev]
             usedevelop=False
@@ -517,8 +517,8 @@ def test_usedevelop_mixed(initproj, cmd):
         },
     )
 
-    # running only 'devenv' should not do sdist
-    result = cmd("-vv", "-e", "devenv")
+    # running only 'dev' should not do sdist
+    result = cmd("-vv", "-e", "dev")
     assert not result.ret
     assert "sdist-make" not in result.out
 
