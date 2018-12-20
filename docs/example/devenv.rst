@@ -38,7 +38,7 @@ In it we state:
   develop``, as opposed to building and installing its source distribution using
   ``setup.py install``.
 
-The development environment will reside in `toxworkdir` (default is `.tox`) just
+The development environment will reside in ``toxworkdir`` (default is ``.tox``) just
 like the other tox environments.
 
 We can configure a lot more, if we want to. For example, we can add the

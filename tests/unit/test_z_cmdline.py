@@ -1,12 +1,12 @@
-import sys
-
 import json
 import os
 import platform
-import py
-import pytest
 import re
 import subprocess
+import sys
+
+import py
+import pytest
 
 import tox
 from tox._pytestplugin import ReportExpectMock

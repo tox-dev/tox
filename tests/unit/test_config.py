@@ -1,11 +1,11 @@
-import sys
-
 import os
+import re
+import sys
+from textwrap import dedent
+
 import py
 import pytest
-import re
 from pluggy import PluginManager
-from textwrap import dedent
 
 import tox
 from tox.config import (
