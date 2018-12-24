@@ -896,6 +896,7 @@ tox will inject the following environment variables that you can use to test tha
 - ``TOX_WORK_DIR`` env var is set to the tox work directory
 - ``TOX_ENV_NAME`` is set to the current running tox environment name
 - ``TOX_ENV_DIR`` is set to the current tox environments working dir.
+- ``TOX_PACKAGE`` the packaging phases outcome path (useful to inspect and make assertion of the built package itself).
 
 :note: this applies for all tox envs (isolated packaging too) and all external
  commands called (e.g. install command - pip).
