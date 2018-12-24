@@ -1,1 +1,0 @@
-if the packaging phase successfully builds a package set it as environment variable under ``TOX_PACKAGE`` (useful to make assertions on the built package itself, instead of just how it ends up after installation) - by :user:`gaborbernat`
