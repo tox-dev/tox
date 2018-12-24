@@ -577,6 +577,7 @@ class Session:
                     venv.package = self.hook.tox_package(session=self, venv=venv)
                     if not venv.package:
                         return 2
+                    venv.envconfig.setenv[str("TOX_PACKAGE")] = str(venv.package)
         if self.config.option.sdistonly:
             return
         for venv in self.venvlist:

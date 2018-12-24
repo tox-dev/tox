@@ -104,3 +104,19 @@ def test_make_sdist(initproj):
     _, sdist_new = get_package(Session(config))
     assert sdist_new == sdist
     assert sdist_new.stat().size > 10
+
+
+def test_package_inject(initproj, cmd, monkeypatch, tmp_path):
+    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
+    initproj(
+        "example123-0.5",
+        filedefs={
+            "tox.ini": """
+            [testenv:py]
+            passenv = PYTHONPATH
+            commands = python -c 'import os; assert os.path.exists(os.environ["TOX_PACKAGE"])'
+        """
+        },
+    )
+    result = cmd("-q")
+    assert result.session.getvenv("py").envconfig.setenv.get("TOX_PACKAGE")
