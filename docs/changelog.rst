@@ -11,6 +11,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.6.1 (2018-12-24)
+-------------------
+
+Features
+^^^^^^^^
+
+- if the packaging phase successfully builds a package set it as environment variable under ``TOX_PACKAGE`` (useful to make assertions on the built package itself, instead of just how it ends up after installation) - by :user:`gaborbernat` (`#1081 <https://github.com/tox-dev/tox/issues/1081>`_)
+
+
 v3.6.0 (2018-12-13)
 -------------------
 
