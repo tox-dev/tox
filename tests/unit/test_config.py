@@ -2037,7 +2037,7 @@ class TestGlobalOptions:
 
     def test_substitution_jenkins_context(self, tmpdir, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
-        monkeypatch.setenv("WORKSPACE", tmpdir)
+        monkeypatch.setenv("WORKSPACE", str(tmpdir))
         config = newconfig(
             """
             [tox:jenkins]

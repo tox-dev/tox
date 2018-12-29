@@ -755,7 +755,7 @@ def test_notest_setup_py_error(initproj, cmd):
 
 def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={"tox.ini": ""})
-    monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", 1)
+    monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", "1")
     result = cmd("-v", "--notest")
     assert not result.ret
     assert "create" in result.out
