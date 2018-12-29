@@ -95,7 +95,8 @@ Here is an example:
 
       [testenv:docs]
       basepython = python
-      changedir = doc # or wherever you keep your sphinx-docs
+      # change to ``doc`` dir if that is where your sphinx-docs live
+      changedir = doc
       deps = sphinx
              py
       commands = pytest --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py

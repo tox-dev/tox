@@ -37,10 +37,11 @@ right next to your ``setup.py`` file:
     envlist = py27,py36
 
     [testenv]
-    deps = pytest       # install pytest in the virtualenv where commands will be executed
+    # install pytest in the virtualenv where commands will be executed
+    deps = pytest
     commands =
-        # whatever extra steps before testing might be necessary
-        pytest          # or any other test runner that you might use
+        # NOTE: you can run any command line tool here - not just tests
+        pytest
 
 You can also try generating a ``tox.ini`` file automatically, by running
 ``tox-quickstart`` and then answering a few simple questions.

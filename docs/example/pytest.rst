@@ -48,11 +48,12 @@ and the following ``tox.ini`` content:
 
     [tox]
     envlist = py35,py36
+
     [testenv]
-    changedir=tests
-    deps=pytest
-    commands= pytest  --basetemp={envtmpdir}  \ # pytest tempdir setting
-                      {posargs}                 # substitute with tox' positional arguments
+    changedir = tests
+    deps = pytest
+    # chnge pytest tempdir and add posargs from command line
+    commands = pytest --basetemp={envtmpdir} {posargs}
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
 Differently than in the previous example the ``pytest`` command
@@ -71,12 +72,13 @@ to make ``tox`` use this feature:
 .. code-block:: ini
 
     [testenv]
-    deps=pytest-xdist
-    changedir=tests
-    commands= pytest --basetemp={envtmpdir}  \
-                     --confcutdir=..         \
-                     -n 3                    \ # use three sub processes
-                     {posargs}
+    deps = pytest-xdist
+    changedir = tests
+    # use three sub processes
+    commands = pytest --basetemp={envtmpdir}  \
+                      --confcutdir=..         \
+                      -n 3                    \
+                      {posargs}
 
 .. _`listed as a known issue`:
 
