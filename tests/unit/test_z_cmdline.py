@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 
+import distro
 import py
 import pytest
 
@@ -630,7 +631,7 @@ def _alwayscopy_not_supported():
     # This is due to virtualenv bugs with alwayscopy in some platforms
     # see: https://github.com/pypa/virtualenv/issues/565
     if hasattr(platform, "linux_distribution"):
-        _dist = platform.linux_distribution(full_distribution_name=False)
+        _dist = distro.linux_distribution(full_distribution_name=False)
         (name, version, arch) = _dist
         if any((name == "centos" and version[0] == "7", name == "SuSE" and arch == "x86_64")):
             return True

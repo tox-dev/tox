@@ -39,6 +39,7 @@ setup(
     setup_requires=["setuptools-scm>2, <4"],  # readthedocs needs it
     extras_require={
         "testing": [
+            "distro",
             "pytest >= 3.0.0, <4",
             "pytest-cov >= 2.5.1, <3",
             "pytest-mock >= 1.10.0, <2",
