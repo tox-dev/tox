@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import textwrap
 
 from setuptools import find_packages, setup
@@ -20,8 +21,8 @@ setup(
     },
     license="https://opensource.org/licenses/MIT",
     platforms=["unix", "linux", "osx", "cygwin", "win32"],
-    author="holger krekel",
-    author_email="holger@merlinux.eu",
+    author="Holger Krekel, Oliver Bestwalter, Bernát Gábor and others",
+    author_email=" tox-dev@python.org",
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={"console_scripts": ["tox=tox:cmdline", "tox-quickstart=tox._quickstart:main"]},
