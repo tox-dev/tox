@@ -1,7 +1,6 @@
 |Latest version on PyPi| |Supported Python versions| |Azure Pipelines
 build status| |Test Coverage| |Documentation status| |Code style: black|
 
-
 .. raw:: html
 
     <a href="https://tox.readthedocs.io">
@@ -26,6 +25,9 @@ tox is highly
 
 A simple example
 ~~~~~~~~~~~~~~~~
+
+tox is mainly used as a command line tool and needs a ``tox.ini`` or a
+``tool.tox`` section in ``pyproject.toml`` containing the configuration.
 
 To test a simple project that has some tests, here is an example with
 the ``tox.ini`` in the root of the project:
@@ -64,16 +66,18 @@ How it works
 
 tox creates virtual environments for all configured so called
 ``testenvs``, it then installs the project and other necessary
-dependencies and runs the configured set of commands.
+dependencies and runs the configured set of commands. See `system
+overview <https://tox.readthedocs.io/en/latest/#system-overview>`__
+for more details.
 
-.. figure:: docs/img/tox_flow.png
-   :alt: tox flow
+.. raw:: html
 
-   tox flow
-
-See `system
-overview <https://tox.readthedocs.io/en/latest/#system-overview>`__ for
-more details.
+    <a href="https://tox.readthedocs.io/en/latest/#system-overview">
+        <img src="https://raw.githubusercontent.com/tox-dev/tox/master/docs/img/tox_flow.png"
+             alt="tox flow"
+             width="800px"
+             align="center">
+    </a>
 
 tox can be used for …
 ---------------------
@@ -88,12 +92,6 @@ tox can be used for …
 -  building and deploying project documentation
 -  releasing a package to PyPI or any other platform
 -  limit: your imagination
-
-Usage
------
-
-tox is mainly used as a command line tool and needs a ``tox.ini`` or a
-``tool.tox`` section in ``pyproject.toml`` containing the configuration.
 
 Documentation
 -------------
