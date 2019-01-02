@@ -102,11 +102,9 @@ Documentation for tox can be found at [Read The Docs](https://tox.readthedocs.or
 
 ### Communication and questions
 
-If you have questions about tox you can first check if they have already
-been answered or are already being discussed on our [issue
-tracker](https://github.com/tox-dev/tox/issues?utf8=%E2%9C%93&q=is%3Aissue+sort%3Aupdated-desc+label%3A%22type%3Aquestion+%3Agrey_question%3A%22+)
-or questions tagged with `tox` on [Stack
-Overflow](https://stackoverflow.com/questions/tagged/tox).
+If you have questions or suggestions you can first check if they have already
+been answered or discussed on our [issue tracker](https://github.com/tox-dev/tox/issues?utf8=%E2%9C%93&q=is%3Aissue+sort%3Aupdated-desc+label%3A%22type%3Aquestion+%3Agrey_question%3A%22+)
+on [Stack Overflow (tagged with `tox`)](https://stackoverflow.com/questions/tagged/tox).
 
 If you want to discuss topics or propose changes that might not (yet)
 fit into an issue, you can get in touch via mail through
