@@ -615,22 +615,30 @@ class Session:
                 args_sub.insert(position, str(venv.package))
                 args_sub.insert(position, "--installpkg")
             stdout, stderr = (None, None) if live_out else (subprocess.PIPE, subprocess.PIPE)
-            run = subprocess.Popen(args_sub, env=env, stdout=stdout, stderr=stderr)
+            run = subprocess.Popen(
+                args_sub, env=env, stdout=stdout, stderr=stderr, universal_newlines=True
+            )
             tox_runs[venv.name] = (venv, run)
 
-        to_finish = set(tox_runs.keys())
-        while to_finish:
-            for name in set(to_finish):
+        todo = set(tox_runs.keys())
+        while todo:
+            for name in set(todo):
                 venv, run = tox_runs[name]
                 res = run.poll()
                 if res is not None:
                     venv.status = "skipped tests" if self.config.option.notest else res
                     if not live_out:
-                        out, err = run.communicate()
-                        venv.out = out
-                        venv.err = err
-                    to_finish.remove(name)
-            if to_finish:
+                        venv.out, venv.err = run.communicate()
+                        if res:
+                            message = "Failed {} under process {}, stdout:\n{}{}".format(
+                                venv.name,
+                                run.pid,
+                                venv.out,
+                                "\nstderr:\n{}".format(venv.err) if venv.err else "",
+                            ).rstrip()
+                            self.report.logline_if(Verbosity.QUIET, message)
+                    todo.remove(name)
+            if todo:
                 time.sleep(0.1)
 
     def runenvreport(self, venv):
@@ -656,40 +664,44 @@ class Session:
             self.hook.tox_runtest_post(venv=venv)
 
     def _summary(self):
-        self.report.startsummary()
-        retcode = 0
+        is_parallel_child = "_PARALLEL_TOXENV" in os.environ
+        if not is_parallel_child:
+            self.report.startsummary()
+        exit_code = 0
         for venv in self.venvlist:
+            reporter = self.report.good
             status = venv.status
             if isinstance(status, tox.exception.InterpreterNotFound):
                 msg = " {}: {}".format(venv.envconfig.envname, str(status))
                 if self.config.option.skip_missing_interpreters == "true":
-                    self.report.skip(msg)
+                    reporter = self.report.skip
                 else:
-                    retcode = 1
-                    self.report.error(msg)
+                    exit_code = 1
+                    reporter = self.report.error
             elif status == "platform mismatch":
                 msg = " {}: {}".format(venv.envconfig.envname, str(status))
-                self.report.skip(msg)
+                reporter = self.report.skip
             elif status and status == "ignored failed command":
                 msg = "  {}: {}".format(venv.envconfig.envname, str(status))
-                self.report.good(msg)
             elif status and status != "skipped tests":
                 msg = "  {}: {}".format(venv.envconfig.envname, str(status))
-                self.report.error(msg)
-                retcode = 1
+                reporter = self.report.error
+                exit_code = 1
             else:
                 if not status:
                     status = "commands succeeded"
-                self.report.good("  {}: {}".format(venv.envconfig.envname, status))
-        if not retcode:
+                msg = "  {}: {}".format(venv.envconfig.envname, status)
+            if not is_parallel_child:
+                reporter(msg)
+        if not exit_code and not is_parallel_child:
             self.report.good("  congratulations :)")
-
-        path = self.config.option.resultjson
-        if path:
-            path = py.path.local(path)
-            path.write(self.resultlog.dumps_json())
-            self.report.line("wrote json report at: {}".format(path))
-        return retcode
+        if not is_parallel_child:
+            path = self.config.option.resultjson
+            if path:
+                path = py.path.local(path)
+                path.write(self.resultlog.dumps_json())
+                self.report.line("wrote json report at: {}".format(path))
+        return exit_code
 
     def showconfig(self):
         self.info_versions()
