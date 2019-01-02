@@ -363,11 +363,11 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
     deps =
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        ; use PyMySQL if factors py34 and mysql are present in env name
+        # use PyMySQL if factors py34 and mysql are present in env name
         py34-mysql: PyMySQL
-        ; use urllib3 if any of py36 or py27 are present in env name
+        # use urllib3 if any of py36 or py27 are present in env name
         py27,py36: urllib3
-        ; mocking sqlite in python 2.x
+        # mocking sqlite in python 2.x
         py{27,36}-sqlite: mock
 
 Prevent symbolic links in virtualenv
