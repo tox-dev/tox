@@ -1,11 +1,15 @@
 |Latest version on PyPi| |Supported Python versions| |Azure Pipelines
 build status| |Test Coverage| |Documentation status| |Code style: black|
 
-.. image:: docs/_static/img/tox.png
-   :target: https://tox.readthedocs.io
-   :scale: 10%
-   :alt: tox logo
-   :align: right
+
+.. raw:: html
+
+    <a href="https://tox.readthedocs.io">
+        <img src="https://raw.githubusercontent.com/tox-dev/tox/master/docs/_static/img/tox.png"
+             alt="tox logo"
+             height="150px"
+             align="right">
+    </a>
 
 tox automation project
 ======================
