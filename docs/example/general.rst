@@ -18,7 +18,8 @@ test commands, for example using ``pytest``:
 
 .. code-block:: ini
 
-    [testenv]  # or testenv:NAME section of your tox.ini
+    [testenv]
+    # Could also be in a specific ``[testenv:<NAME>]`` section
     commands = pytest {posargs}
 
 or using ``nosetests``:
@@ -137,7 +138,8 @@ the following entry:
 
     # example two/tox.ini
     [testenv]
-    deps = {distshare}/one-*.zip  # install latest package from "one" project
+    # install latest package from "one" project
+    deps = {distshare}/one-*.zip
 
 That's all.  tox running on project ``one`` will copy the sdist-package
 into the ``distshare`` directory after which a ``tox`` run on project

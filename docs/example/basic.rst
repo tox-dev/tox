@@ -14,8 +14,12 @@ reside next to your ``setup.py`` file:
     [tox]
     envlist = py27,py36
     [testenv]
-    deps=pytest # or 'nose' or ...
-    commands=pytest  # or 'nosetests' or ...
+    # install testing framework
+    # ... or install anything else you might need here
+    deps=pytest
+    # run the tests
+    # ... or run any other command line tool you need to run here
+    commands=pytest
 
 To sdist-package, install and test your project, you can
 now type at the command prompt:
@@ -62,8 +66,9 @@ see some of the examples in :doc:`examples <../examples>`.
 pyproject.toml tox legacy ini
 -----------------------------
 
-It's possible to put the tox ini configuration into the ``pyproject.toml`` file too (if want to avoid
-an extra file):
+The tox configuration can also be in ``pyproject.toml`` (if you want to avoid an extra file).
+
+Currently only the old format is supported via ``legacy_tox_ini``, a native implementation is planned though.
 
 .. code-block:: toml
 
@@ -196,8 +201,10 @@ different PyPI servers, example:
 
     [testenv]
     deps =
-        docutils        # comes from standard PyPI
-        :DEV:mypackage  # will be installed from custom "DEV" PyPI url
+        # docutils will be installed directly from PyPI
+        docutils
+        # mypackage will be installed from custom "DEV" PyPI url
+        :DEV:mypackage
 
 This configuration will install ``docutils`` from the default
 Python PYPI server and will install the ``mypackage`` from
@@ -356,9 +363,12 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
     deps =
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        py34-mysql: PyMySQL     ; use if both py34 and mysql are in an env name
-        py27,py36: urllib3      ; use if any of py36 or py27 are in an env name
-        py{27,36}-sqlite: mock  ; mocking sqlite in python 2.x
+        # use PyMySQL if factors py34 and mysql are present in env name
+        py34-mysql: PyMySQL
+        # use urllib3 if any of py36 or py27 are present in env name
+        py27,py36: urllib3
+        # mocking sqlite in python 2.x
+        py{27,36}-sqlite: mock
 
 Prevent symbolic links in virtualenv
 ------------------------------------

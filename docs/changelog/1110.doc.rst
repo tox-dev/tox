@@ -1,0 +1,1 @@
+Clarify explanations in examples and avoid unsupported end line comments - by :user:`obestwalter`

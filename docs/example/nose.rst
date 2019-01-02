@@ -20,8 +20,9 @@ and the following ``tox.ini`` content:
 .. code-block:: ini
 
     [testenv]
-    deps=nose
-    commands= nosetests [] # substitute with tox' positional arguments
+    deps = nose
+    # ``{posargs}`` will be substituted with positional arguments from comand line
+    commands = nosetests {posargs}
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
 ``tox`` will sdist-package your project create two virtualenv environments
