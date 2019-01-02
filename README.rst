@@ -95,7 +95,7 @@ tox can be used for …
 Documentation
 -------------
 
-Documentation for tox can be found on `Read The Docs <https://tox.readthedocs.org>`__
+Documentation for tox can be found at `Read The Docs <https://tox.readthedocs.org>`__.
 
 Communication / questions
 -------------------------
