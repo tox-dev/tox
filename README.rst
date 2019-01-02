@@ -3,7 +3,7 @@ build status| |Test Coverage| |Documentation status| |Code style: black|
 
 .. image:: docs/_static/img/tox.png
    :target: https://tox.readthedocs.io
-   :height: 150
+   :scale: 10%
    :alt: tox logo
    :align: right
 
