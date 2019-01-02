@@ -13,7 +13,7 @@ def test_parallel_live(cmd, initproj):
         """
         },
     )
-    result = cmd("--parallel", "--parallel-live")
+    result = cmd("--parallel", "all", "--parallel-live")
     assert result.ret == 0, "{}{}{}".format(result.err, os.linesep, result.out)
 
 
@@ -29,7 +29,7 @@ def test_parallel(cmd, initproj):
         """
         },
     )
-    result = cmd("--parallel")
+    result = cmd("--parallel", "all")
     assert result.ret == 0, "{}{}{}".format(result.err, os.linesep, result.out)
 
 
@@ -41,19 +41,18 @@ def test_parallel_error_report(cmd, initproj):
             [tox]
             envlist = a
             [testenv]
-            commands=python -c "from __future__ import print_function; import sys; \
-                                print('something', file=sys.stderr); raise SystemExit(17)"
+            commands=python -c "import sys, os; sys.stderr.write(str(12345) + os.linesep); raise SystemExit(17)"
         """
         },
     )
-    result = cmd("--parallel")
+    result = cmd("-p", "all")
     msg = "{}{}{}".format(result.err, os.linesep, result.out)
     assert result.ret == 1, msg
     # we print output
     assert "(exited with code 17)" in result.out, msg
     assert "Failed a under process " in result.out, msg
 
-    assert any(l for l in result.outlines if l == "something")
+    assert any(line for line in result.outlines if line == "12345")
 
     # single summary at end
     summary_lines = [j for j, l in enumerate(result.outlines) if " summary " in l]

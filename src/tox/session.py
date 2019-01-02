@@ -14,12 +14,15 @@ import subprocess
 import sys
 import time
 from contextlib import contextmanager
+from threading import Semaphore, Thread
 
 import pkg_resources
 import py
 
 import tox
 from tox.config import parseconfig
+from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from tox.config.parallel import OFF_VALUE as PARALLEL_OFF
 from tox.result import ResultLog
 from tox.util import set_os_env_var
 from tox.venv import VirtualEnv
@@ -568,7 +571,9 @@ class Session:
                     venv.envconfig.setenv[str("TOX_PACKAGE")] = str(venv.package)
         if self.config.option.sdistonly:
             return
-        if self.config.option.parallel:
+
+        within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+        if not within_parallel and self.config.option.parallel is not PARALLEL_OFF:
             self.run_parallel()
         else:
             self.run_sequential()
@@ -606,40 +611,47 @@ class Session:
         except ValueError:
             pass
 
-        tox_runs = {}
-        for venv in self.venvlist:
-            env = os.environ.copy()
-            env["_PARALLEL_TOXENV"] = venv.envconfig.envname
-            args_sub = list(args)
-            if hasattr(venv, "package"):
-                args_sub.insert(position, str(venv.package))
-                args_sub.insert(position, "--installpkg")
-            stdout, stderr = (None, None) if live_out else (subprocess.PIPE, subprocess.PIPE)
-            run = subprocess.Popen(
-                args_sub, env=env, stdout=stdout, stderr=stderr, universal_newlines=True
-            )
-            tox_runs[venv.name] = (venv, run)
+        max_parallel = self.config.option.parallel
+        if max_parallel is None:
+            max_parallel = len(self.venvlist)
+        semaphore = Semaphore(max_parallel)
+        sink = None if live_out else subprocess.PIPE
 
-        todo = set(tox_runs.keys())
-        while todo:
-            for name in set(todo):
-                venv, run = tox_runs[name]
-                res = run.poll()
-                if res is not None:
-                    venv.status = "skipped tests" if self.config.option.notest else res
-                    if not live_out:
-                        venv.out, venv.err = run.communicate()
-                        if res:
-                            message = "Failed {} under process {}, stdout:\n{}{}".format(
-                                venv.name,
-                                run.pid,
-                                venv.out,
-                                "\nstderr:\n{}".format(venv.err) if venv.err else "",
-                            ).rstrip()
-                            self.report.logline_if(Verbosity.QUIET, message)
-                    todo.remove(name)
-            if todo:
-                time.sleep(0.1)
+        def run_in_thread(venv, env):
+            try:
+                env[PARALLEL_ENV_VAR_KEY] = venv.envconfig.envname
+                args_sub = list(args)
+                if hasattr(venv, "package"):
+                    args_sub.insert(position, str(venv.package))
+                    args_sub.insert(position, "--installpkg")
+                run = subprocess.Popen(
+                    args_sub, env=env, stdout=sink, stderr=sink, universal_newlines=True
+                )
+                res = run.wait()
+            finally:
+                semaphore.release()
+            if res is not None:
+                venv.status = "skipped tests" if self.config.option.notest else res
+                if not live_out:
+                    venv.out, venv.err = run.communicate()
+                    if res:
+                        message = "Failed {} under process {}, stdout:\n{}{}".format(
+                            venv.name,
+                            run.pid,
+                            venv.out,
+                            "\nstderr:\n{}".format(venv.err) if venv.err else "",
+                        ).rstrip()
+                        self.report.logline_if(Verbosity.QUIET, message)
+
+        threads = []
+        for venv in self.venvlist:
+            semaphore.acquire(blocking=True)
+            thread = Thread(target=run_in_thread, args=(venv, os.environ.copy()))
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
 
     def runenvreport(self, venv):
         """
@@ -664,7 +676,7 @@ class Session:
             self.hook.tox_runtest_post(venv=venv)
 
     def _summary(self):
-        is_parallel_child = "_PARALLEL_TOXENV" in os.environ
+        is_parallel_child = PARALLEL_ENV_VAR_KEY in os.environ
         if not is_parallel_child:
             self.report.startsummary()
         exit_code = 0

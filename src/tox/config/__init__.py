@@ -21,6 +21,8 @@ import toml
 import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
+from .parallel import add_parallel_flags, ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+
 
 hookimpl = tox.hookimpl
 """DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
@@ -415,15 +417,7 @@ def tox_addoption(parser):
         dest="sdistonly",
         help="only perform the sdist packaging activity.",
     )
-    parser.add_argument(
-        "--parallel", action="store_true", dest="parallel", help="run tox environments in parallel"
-    )
-    parser.add_argument(
-        "--parallel-live",
-        action="store_true",
-        dest="parallel_live",
-        help="connect to stdout while running environments",
-    )
+    add_parallel_flags(parser)
     parser.add_argument(
         "--parallel--safe-build",
         action="store_true",
@@ -1145,7 +1139,7 @@ class ParseIni(object):
 
     def _getenvdata(self, reader, config):
         candidates = (
-            os.environ.get("_PARALLEL_TOXENV"),
+            os.environ.get(PARALLEL_ENV_VAR_KEY),
             self.config.option.env,
             os.environ.get("TOXENV"),
             reader.getstring("envlist", replace=False),
