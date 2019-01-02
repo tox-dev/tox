@@ -58,8 +58,7 @@ Python3.7, it installed pytest in them and ran the tests. The report at
 the end summarizes which ``testenvs`` have failed and which have
 succeeded.
 
-**Note:** To learn more about what you can do with tox, have a look at
-    `existing projects using tox <https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code>`__.
+**Note:** To learn more about what you can do with tox, have a look at `existing projects using tox <https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code>`__.
 
 How it works
 ------------
