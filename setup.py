@@ -6,7 +6,8 @@ from setuptools import find_packages, setup
 setup(
     name="tox",
     description="virtualenv-based automation of test activities",
-    long_description=open("README.rst").read(),
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     url="https://tox.readthedocs.org/",
     use_scm_version={
         "write_to": "src/tox/version.py",
