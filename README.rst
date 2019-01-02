@@ -24,6 +24,41 @@ tox is highly
 `configurable <https://tox.readthedocs.io/en/latest/config.html>`__ and
 `pluggable <https://tox.readthedocs.io/en/latest/plugins.html>`__.
 
+A simple example
+~~~~~~~~~~~~~~~~
+
+To test a simple project that has some tests, here is an example with
+the ``tox.ini`` in the root of the project:
+
+.. code:: ini
+
+   [tox]
+   envlist = py27,py37
+
+   [testenv]
+   deps = pytest
+   commands = pytest
+
+.. code:: console
+
+   $ tox
+
+   [lots of output from what tox does]
+   [lots of output from commands that were run]
+
+   __________________ summary _________________
+     py27: commands succeeded
+     py37: commands succeeded
+     congratulations :)
+
+tox created two ``testenvs`` - one based on Python2.7 and one based on
+Python3.7, it installed pytest in them and ran the tests. The report at
+the end summarizes which ``testenvs`` have failed and which have
+succeeded.
+
+**Note:** To learn more about what you can do with tox, have a look at
+    `existing projects using tox <https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code>`__.
+
 How it works
 ------------
 
@@ -59,43 +94,6 @@ Usage
 
 tox is mainly used as a command line tool and needs a ``tox.ini`` or a
 ``tool.tox`` section in ``pyproject.toml`` containing the configuration.
-
-A simple example
-~~~~~~~~~~~~~~~~
-
-To test a simple project that has some tests, here is an example with
-the ``tox.ini`` in the root of the project:
-
-.. code:: ini
-
-   [tox]
-   envlist = py27,py37
-
-   [testenv]
-   deps = pytest
-   commands = pytest
-
-.. code:: console
-
-   $ tox
-
-   [lots of output from what tox does]
-   [lots of output from commands that were run]
-
-   __________________ summary _________________
-     py27: commands succeeded
-     py37: commands succeeded
-     congratulations :)
-
-tox created two ``testenvs`` - one based on Python2.7 and one based on
-Python3.7, it installed pytest in them and ran the tests. The report at
-the end summarizes which ``testenvs`` have failed and which have
-succeeded.
-
-.. note::
-
-    To learn more about what you can do with tox, have a look at
-    `existing projects using tox <https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code>`__.
 
 Documentation
 -------------
