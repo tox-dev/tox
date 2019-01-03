@@ -1,0 +1,1 @@
+Added command line shortcut ``-s`` for ``--skip-missing-interpreters`` - by :user:`evandrocoan`
