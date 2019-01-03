@@ -809,6 +809,7 @@ def cli_skip_missing_interpreter(parser):
             setattr(namespace, self.dest, value)
 
     parser.add_argument(
+        "-s",
         "--skip-missing-interpreters",
         default="config",
         metavar="val",
