@@ -16,10 +16,10 @@ reside next to your ``setup.py`` file:
     [testenv]
     # install testing framework
     # ... or install anything else you might need here
-    deps=pytest
+    deps = pytest
     # run the tests
     # ... or run any other command line tool you need to run here
-    commands=pytest
+    commands = pytest
 
 To sdist-package, install and test your project, you can
 now type at the command prompt:
@@ -363,11 +363,11 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
     deps =
         django15: Django>=1.5,<1.6
         django16: Django>=1.6,<1.7
-        # use PyMySQL if factors py34 and mysql are present in env name
+        # use PyMySQL if factors "py34" and "mysql" are present in env name
         py34-mysql: PyMySQL
-        # use urllib3 if any of py36 or py27 are present in env name
+        # use urllib3 if any of "py36" or "py27" are present in env name
         py27,py36: urllib3
-        # mocking sqlite in python 2.x
+        # mocking sqlite on 2.7 and 3.6 if factor "sqlite" is present
         py{27,36}-sqlite: mock
 
 Prevent symbolic links in virtualenv
