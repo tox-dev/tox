@@ -158,6 +158,21 @@ Global settings are defined under the ``tox`` section as:
     Name of the virtual environment used to create a source distribution from the
     source tree.
 
+.. conf:: parallel_show_output ^ bool ^ false
+
+    .. versionadded:: 3.7.0
+
+    If set to True the content of the output will always be shown when running in parallel mode.
+
+.. conf:: depends ^ comma separated values
+
+    .. versionadded:: 3.7.0
+
+    tox environments this depends on. tox will try to run all dependent environments before running this
+    environment. Format is same as :conf:`envlist` (allows factor usage).
+
+
+
 Jenkins override
 ++++++++++++++++
 
