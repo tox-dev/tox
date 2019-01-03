@@ -41,7 +41,8 @@ def test_parallel_error_report(cmd, initproj):
             [tox]
             envlist = a
             [testenv]
-            commands=python -c "import sys, os; sys.stderr.write(str(12345) + os.linesep); raise SystemExit(17)"
+            commands=python -c "import sys, os; sys.stderr.write(str(12345) + os.linesep);\
+             raise SystemExit(17)"
         """
         },
     )

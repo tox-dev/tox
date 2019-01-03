@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from argparse import ArgumentTypeError
 
-ENV_VAR_KEY = "_PARALLEL_TOXENV"
+ENV_VAR_KEY = "TOX_PARALLEL_ENV"
 OFF_VALUE = 0
 DEFAULT_PARALLEL = OFF_VALUE
 
@@ -56,4 +56,19 @@ def add_parallel_flags(parser):
         action="store_true",
         dest="parallel_live",
         help="connect to stdout while running environments",
+    )
+
+
+def add_parallel_config(parser):
+    parser.add_testenv_attribute(
+        "depends",
+        type="env-list",
+        help="tox environments that this environment depends on (must be run after those)",
+    )
+    parser.add_testenv_attribute(
+        "parallel_show_output",
+        type="bool",
+        default=False,
+        help="if set to True the content of the output will always be shown "
+        "when running in parallel mode",
     )

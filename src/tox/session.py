@@ -13,8 +13,9 @@ import shutil
 import subprocess
 import sys
 import time
+from collections import OrderedDict
 from contextlib import contextmanager
-from threading import Semaphore, Thread
+from threading import Event, Semaphore, Thread
 
 import pkg_resources
 import py
@@ -25,6 +26,8 @@ from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.config.parallel import OFF_VALUE as PARALLEL_OFF
 from tox.result import ResultLog
 from tox.util import set_os_env_var
+from tox.util.graph import stable_topological_sort
+from tox.util.spinner import Spinner
 from tox.venv import VirtualEnv
 
 
@@ -397,8 +400,15 @@ class Session:
             self.venvlist = [self.getvenv(x) for x in self.evaluated_env_list()]
         except LookupError:
             raise SystemExit(1)
-        except tox.exception.ConfigError as e:
-            self.report.error(str(e))
+        except tox.exception.ConfigError as exception:
+            self.report.error(str(exception))
+            raise SystemExit(1)
+        try:
+            self.venv_order = stable_topological_sort(
+                OrderedDict((v.name, v.envconfig.depends) for v in self.venvlist)
+            )
+        except ValueError as exception:
+            self.report.error("circular dependency detected: {}".format(exception))
             raise SystemExit(1)
         self._actions = []
 
@@ -463,7 +473,8 @@ class Session:
         try:
             yield
         finally:
-            for tox_env in self.venvlist:
+            for name in self.venv_order:
+                tox_env = self.getvenv(name)
                 if (
                     hasattr(tox_env, "package")
                     and isinstance(tox_env.package, py.path.local)
@@ -563,7 +574,8 @@ class Session:
         if self.config.skipsdist:
             self.report.info("skipping sdist step")
         else:
-            for venv in self.venvlist:
+            for name in self.venv_order:
+                venv = self.getvenv(name)
                 if not venv.envconfig.skip_install:
                     venv.package = self.hook.tox_package(session=self, venv=venv)
                     if not venv.package:
@@ -581,7 +593,8 @@ class Session:
         return retcode
 
     def run_sequential(self):
-        for venv in self.venvlist:
+        for name in self.venv_order:
+            venv = self.getvenv(name)
             if self.setupenv(venv):
                 if venv.envconfig.skip_install:
                     self.finishvenv(venv)
@@ -613,45 +626,78 @@ class Session:
 
         max_parallel = self.config.option.parallel
         if max_parallel is None:
-            max_parallel = len(self.venvlist)
+            max_parallel = len(self.venv_order)
         semaphore = Semaphore(max_parallel)
+        finished = Event()
         sink = None if live_out else subprocess.PIPE
 
-        def run_in_thread(venv, env):
-            try:
-                env[PARALLEL_ENV_VAR_KEY] = venv.envconfig.envname
-                args_sub = list(args)
-                if hasattr(venv, "package"):
-                    args_sub.insert(position, str(venv.package))
-                    args_sub.insert(position, "--installpkg")
-                run = subprocess.Popen(
-                    args_sub, env=env, stdout=sink, stderr=sink, universal_newlines=True
-                )
-                res = run.wait()
-            finally:
-                semaphore.release()
-            if res is not None:
-                venv.status = "skipped tests" if self.config.option.notest else res
+        show_progress = not live_out and self.report.verbosity > Verbosity.QUIET
+        with Spinner(enabled=show_progress) as spinner:
+
+            def run_in_thread(tox_env, os_env):
+                res = None
+                env_name = tox_env.envconfig.envname
+                try:
+                    os_env[PARALLEL_ENV_VAR_KEY] = env_name
+                    args_sub = list(args)
+                    if hasattr(tox_env, "package"):
+                        args_sub.insert(position, str(tox_env.package))
+                        args_sub.insert(position, "--installpkg")
+                    process = subprocess.Popen(
+                        args_sub,
+                        env=os_env,
+                        stdout=sink,
+                        stderr=sink,
+                        stdin=None,
+                        universal_newlines=True,
+                    )
+                    res = process.wait()
+                finally:
+                    done.add(env_name)
+                    semaphore.release()
+                    finished.set()
+                    report = spinner.succeed
+                    if self.config.option.notest:
+                        report = spinner.fail
+                    elif res:
+                        report = spinner.fail
+                    report(env_name)
+
+                tox_env.status = "skipped tests" if self.config.option.notest else res
                 if not live_out:
-                    venv.out, venv.err = run.communicate()
-                    if res:
-                        message = "Failed {} under process {}, stdout:\n{}{}".format(
-                            venv.name,
-                            run.pid,
-                            venv.out,
-                            "\nstderr:\n{}".format(venv.err) if venv.err else "",
+                    out, err = process.communicate()
+                    if res or tox_env.envconfig.parallel_show_output:
+                        outcome = (
+                            "Failed {} under process {}, stdout:\n".format(env_name, process.pid)
+                            if res
+                            else ""
+                        )
+                        message = "{}{}{}".format(
+                            outcome, out, "\nstderr:\n{}".format(err) if err else ""
                         ).rstrip()
                         self.report.logline_if(Verbosity.QUIET, message)
 
-        threads = []
-        for venv in self.venvlist:
-            semaphore.acquire(blocking=True)
-            thread = Thread(target=run_in_thread, args=(venv, os.environ.copy()))
-            thread.start()
-            threads.append(thread)
+            threads = []
+            todo = OrderedDict(
+                (i, set(self.getvenv(i).envconfig.depends)) for i in self.venv_order
+            )
+            done = set()
+            while todo:
+                for name, depends in list(todo.items()):
+                    if depends - done:
+                        continue
+                    del todo[name]
+                    venv = self.getvenv(name)
+                    semaphore.acquire(blocking=True)
+                    spinner.add(venv.name)
+                    thread = Thread(target=run_in_thread, args=(venv, os.environ.copy()))
+                    thread.start()
+                    threads.append(thread)
+                finished.wait()
+                finished.clear()
 
-        for thread in threads:
-            thread.join()
+            for thread in threads:
+                thread.join()
 
     def runenvreport(self, venv):
         """
@@ -680,7 +726,8 @@ class Session:
         if not is_parallel_child:
             self.report.startsummary()
         exit_code = 0
-        for venv in self.venvlist:
+        for name in self.venv_order:
+            venv = self.getvenv(name)
             reporter = self.report.good
             status = venv.status
             if isinstance(status, tox.exception.InterpreterNotFound):
