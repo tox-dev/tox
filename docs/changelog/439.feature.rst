@@ -17,6 +17,7 @@ Parallel mode added (effectively ``detox`` now is merged into tox):
   will only schedule a tox environment to run once all of its dependencies finished (independent of their outcome).
 - ``--parallel-live``/``-o`` allows showing the live output of the standard output and error, also turns off reporting
   described above.
+- ``python -m detox`` or ``detox`` is now provided as an alias to ``tox -p all``.
 - Note: parallel evaluation disables standard input. Use non parallel invocation if you need standard input.
 
 Example final output:

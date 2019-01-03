@@ -59,4 +59,4 @@ def test_parallel_error_report(cmd, initproj):
     summary_lines = [j for j, l in enumerate(result.outlines) if " summary " in l]
     assert len(summary_lines) == 1, msg
 
-    assert result.outlines[summary_lines[0] + 1 :] == ["ERROR:   a: 1"]
+    assert result.outlines[summary_lines[0] + 1 :] == ["ERROR:   a: parallel child exit code 1"]

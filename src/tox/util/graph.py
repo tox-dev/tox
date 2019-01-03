@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 from collections import OrderedDict, defaultdict
 
 
@@ -5,7 +7,7 @@ def stable_topological_sort(graph):
     to_order = set(graph.keys())  # keep a log of what  we need to order
 
     # normalize graph - fill missing nodes (assume no dependency)
-    for values in graph.values():
+    for values in list(graph.values()):
         for value in values:
             if value not in graph:
                 graph[value] = tuple()

@@ -1,4 +1,6 @@
 """A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
+from __future__ import absolute_import, unicode_literals
+
 import os
 import sys
 import threading
@@ -55,7 +57,7 @@ class Spinner(object):
         text_frame = "[{}] {}".format(len(self._envs), " | ".join(self._envs))
         if len(text_frame) > self.max_width - 1:
             text_frame = "{}...".format(text_frame[: self.max_width - 1 - 3])
-        return u"{} {}".format(*[(frame, text_frame)][0])
+        return "{} {}".format(*[(frame, text_frame)][0])
 
     def __enter__(self):
         if self.enabled:

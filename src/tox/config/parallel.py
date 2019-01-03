@@ -60,11 +60,18 @@ def add_parallel_flags(parser):
 
 
 def add_parallel_config(parser):
+    def depends_check(testenv_config, value):
+        if value:
+            pass
+        return value
+
     parser.add_testenv_attribute(
         "depends",
         type="env-list",
         help="tox environments that this environment depends on (must be run after those)",
+        postprocess=depends_check,
     )
+
     parser.add_testenv_attribute(
         "parallel_show_output",
         type="bool",

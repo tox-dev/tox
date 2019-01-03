@@ -4,7 +4,6 @@ Python2 and Python3 based virtual environments. Environments are
 setup by using virtualenv. Configuration is generally done through an
 INI-style "tox.ini" file.
 """
-from __future__ import print_function
 
 import os
 import pipes
@@ -653,9 +652,14 @@ class Session:
                     )
                     res = process.wait()
                 finally:
-                    done.add(env_name)
                     semaphore.release()
                     finished.set()
+                    tox_env.status = (
+                        "skipped tests"
+                        if self.config.option.notest
+                        else ("parallel child exit code {}".format(res) if res else res)
+                    )
+                    done.add(env_name)
                     report = spinner.succeed
                     if self.config.option.notest:
                         report = spinner.fail
@@ -663,7 +667,6 @@ class Session:
                         report = spinner.fail
                     report(env_name)
 
-                tox_env.status = "skipped tests" if self.config.option.notest else res
                 if not live_out:
                     out, err = process.communicate()
                     if res or tox_env.envconfig.parallel_show_output:
@@ -678,8 +681,9 @@ class Session:
                         self.report.logline_if(Verbosity.QUIET, message)
 
             threads = []
+            todo_keys = set(self.venv_order)
             todo = OrderedDict(
-                (i, set(self.getvenv(i).envconfig.depends)) for i in self.venv_order
+                (i, todo_keys & set(self.getvenv(i).envconfig.depends)) for i in self.venv_order
             )
             done = set()
             while todo:
@@ -689,12 +693,13 @@ class Session:
                     del todo[name]
                     venv = self.getvenv(name)
                     semaphore.acquire(blocking=True)
-                    spinner.add(venv.name)
+                    spinner.add(name)
                     thread = Thread(target=run_in_thread, args=(venv, os.environ.copy()))
                     thread.start()
                     threads.append(thread)
-                finished.wait()
-                finished.clear()
+                if todo:
+                    finished.wait()
+                    finished.clear()
 
             for thread in threads:
                 thread.join()
