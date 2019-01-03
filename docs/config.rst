@@ -855,7 +855,7 @@ For example::
 
     [testenv:py27]
     deps =
-        {{[testenv]deps}}
+        {[testenv]deps}
         pytest
 
 With the previous configuration, it will install:
