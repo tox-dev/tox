@@ -1,0 +1,2 @@
+Set to PULL_REQUEST_TEMPLATE.md use relative instead of absolute URLs - by :user:`evandrocoan`
+Fixed PULL_REQUEST_TEMPLATE.md path for changelog/examples.rst to docs/changelog/examples.rst - by :user:`evandrocoan`
