@@ -637,7 +637,7 @@ class Session:
                 res = None
                 env_name = tox_env.envconfig.envname
                 try:
-                    os_env[PARALLEL_ENV_VAR_KEY] = env_name
+                    os_env[str(PARALLEL_ENV_VAR_KEY)] = str(env_name)
                     args_sub = list(args)
                     if hasattr(tox_env, "package"):
                         args_sub.insert(position, str(tox_env.package))
