@@ -19,7 +19,6 @@ if os.name == "nt":
 
 class Spinner(object):
     CLEAR_LINE = "\033[K"
-    stream = sys.stdout
     refresh_rate = 0.1
     max_width = 120
     frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
@@ -29,6 +28,7 @@ class Spinner(object):
         self._envs = dict()
         self._frame_index = 0
         self.enabled = enabled
+        self.stream = sys.stdout
 
     def add(self, name):
         self._envs[name] = datetime.now()
@@ -41,14 +41,15 @@ class Spinner(object):
 
     def render(self):
         while not self._stop_spinner.is_set():
-            if self.enabled:
-                with self._lock:
-                    frame = self.frame()
-                    output = "\r{}".format(frame)
-                    self.clear()
-                    self.stream.write(output)
+            self.render_frame()
             time.sleep(self.refresh_rate)
         return self
+
+    def render_frame(self):
+        if self.enabled:
+            with self._lock:
+                self.clear()
+                self.stream.write("\r{}".format(self.frame()))
 
     def frame(self):
         frame = self.frames[self._frame_index]
@@ -61,16 +62,7 @@ class Spinner(object):
 
     def __enter__(self):
         if self.enabled:
-            if self.stream.isatty():
-                if os.name == "nt":
-                    ci = _CursorInfo()
-                    handle = ctypes.windll.kernel32.GetStdHandle(-11)
-                    ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
-                    ci.visible = False
-                    ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
-                elif os.name == "posix":
-                    self.stream.write("\033[?25l")
-                    self.stream.flush()
+            self.disable_cursor()
 
         self._stop_spinner = threading.Event()
         self._spinner_thread = threading.Thread(target=self.render)
@@ -92,8 +84,6 @@ class Spinner(object):
         with self._lock:
             start_at = self._envs[key]
             del self._envs[key]
-            if not self._envs:
-                self.__exit__(None, None, None)
             if self.enabled:
                 self.clear()
             self.stream.write(
@@ -101,6 +91,8 @@ class Spinner(object):
                     status, key, td_human_readable(datetime.now() - start_at), os.linesep
                 )
             )
+            if not self._envs:
+                self.__exit__(None, None, None)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not self._stop_spinner.is_set():
@@ -112,18 +104,33 @@ class Spinner(object):
             self._spinner_id = None
             if self.enabled:
                 self.clear()
-                if self.stream.isatty():
-                    if os.name == "nt":
-                        ci = _CursorInfo()
-                        handle = ctypes.windll.kernel32.GetStdHandle(-11)
-                        ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
-                        ci.visible = True
-                        ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
-                    elif os.name == "posix":
-                        self.stream.write("\033[?25h")
-                        self.stream.flush()
+                self.enable_cursor()
 
         return self
+
+    def disable_cursor(self):
+        if self.stream.isatty():
+            if os.name == "nt":
+                ci = _CursorInfo()
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
+                ci.visible = False
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
+            elif os.name == "posix":
+                self.stream.write("\033[?25l")
+                self.stream.flush()
+
+    def enable_cursor(self):
+        if self.stream.isatty():
+            if os.name == "nt":
+                ci = _CursorInfo()
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
+                ci.visible = True
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
+            elif os.name == "posix":
+                self.stream.write("\033[?25h")
+                self.stream.flush()
 
 
 def td_human_readable(delta):

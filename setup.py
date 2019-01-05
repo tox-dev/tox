@@ -46,6 +46,7 @@ setup(
     setup_requires=["setuptools-scm>2, <4"],  # readthedocs needs it
     extras_require={
         "testing": [
+            "freezegun >= 0.3.11",
             "distro",
             "pytest >= 3.0.0, <4",
             "pytest-cov >= 2.5.1, <3",
