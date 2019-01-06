@@ -52,7 +52,7 @@ and the following ``tox.ini`` content:
     [testenv]
     changedir = tests
     deps = pytest
-    # chnge pytest tempdir and add posargs from command line
+    # change pytest tempdir and add posargs from command line
     commands = pytest --basetemp={envtmpdir} {posargs}
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
