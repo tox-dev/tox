@@ -174,7 +174,8 @@ class VirtualEnv(object):
                 "  cmd: {}\n"
                 "  env: {}\n"
                 "Maybe you forgot to specify a dependency? "
-                "See also the whitelist_externals envconfig setting.".format(
+                "See also the whitelist_externals envconfig setting.\n\n"
+                "DEPRECATION WARNING: this will be an error in tox 4 and above!".format(
                     path, self.envconfig.envdir
                 )
             )
