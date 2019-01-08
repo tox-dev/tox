@@ -42,7 +42,8 @@ def stable_topological_sort(graph):
 
     if len(result) < len(to_order):
         identify_cycle(graph)
-        raise ValueError("could not order tox environments and failed to detect circle")
+        msg = "could not order tox environments and failed to detect circle"  # pragma: no cover
+        raise ValueError(msg)  # pragma: no cover
     return result
 
 
@@ -64,4 +65,4 @@ def identify_cycle(graph):
     for node in graph:
         result = visit(node)
         if result is not None:
-            raise ValueError(" | ".join(result))
+            raise ValueError("{}".format(" | ".join(result)))
