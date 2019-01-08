@@ -68,10 +68,6 @@ class InvocationError(Error):
         return exit_code_str(self.__class__.__name__, self.command, self.exit_code)
 
 
-class MissingFile(Error):
-    """An error while invoking a script."""
-
-
 class MissingDirectory(Error):
     """A directory did not exist."""
 

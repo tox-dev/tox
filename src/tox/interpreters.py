@@ -101,8 +101,6 @@ class ExecFailed(Exception):
 
 
 class InterpreterInfo:
-    runnable = True
-
     def __init__(self, name, executable, version_info, sysplatform):
         assert executable and version_info
         self.name = name
@@ -115,8 +113,6 @@ class InterpreterInfo:
 
 
 class NoInterpreterInfo:
-    runnable = False
-
     def __init__(self, name, executable=None, out=None, err="not found"):
         self.name = name
         self.executable = executable

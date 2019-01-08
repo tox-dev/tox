@@ -27,7 +27,6 @@ def _construct_default_factors(cpython_versions, pypy_versions, other_interprete
 
 class PYTHON:
     PY_FACTORS_RE = re.compile("^(?!py$)(py|pypy|jython)([2-9][0-9]?)?$")
-    PY_FACTORS_MAP = {"py": "python", "pypy": "pypy", "jython": "jython"}
     CPYTHON_VERSION_TUPLES = [(2, 7), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8)]
     PYPY_VERSION_TUPLES = [(2, 7), (3, 5)]
     OTHER_PYTHON_INTERPRETERS = ["jython"]
