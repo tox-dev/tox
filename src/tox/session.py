@@ -584,7 +584,7 @@ class Session:
             return
 
         within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
-        if not within_parallel and self.config.option.parallel is not PARALLEL_OFF:
+        if not within_parallel and self.config.option.parallel != PARALLEL_OFF:
             self.run_parallel()
         else:
             self.run_sequential()
