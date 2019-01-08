@@ -48,21 +48,21 @@ def stable_topological_sort(graph):
 
 
 def identify_cycle(graph):
-    path = set()
+    path = OrderedDict()
     visited = set()
 
     def visit(vertex):
         if vertex in visited:
             return None
         visited.add(vertex)
-        path.add(vertex)
+        path[vertex] = None
         for neighbour in graph.get(vertex, ()):
             if neighbour in path or visit(neighbour):
                 return path
-        path.remove(vertex)
+        del path[vertex]
         return None
 
     for node in graph:
         result = visit(node)
         if result is not None:
-            raise ValueError("{}".format(" | ".join(result)))
+            raise ValueError("{}".format(" | ".join(result.keys())))

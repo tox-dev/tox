@@ -25,7 +25,7 @@ def test_topological_order_cycle():
     graph = OrderedDict()
     graph["A"] = "B", "C"
     graph["B"] = ("A",)
-    with pytest.raises(ValueError, match="B | A"):
+    with pytest.raises(ValueError, match="A | B"):
         stable_topological_sort(graph)
 
 
@@ -60,5 +60,5 @@ def test_two_sub_graph_circle():
     graph["A"] = "B", "C"
     graph["B"] = ("A",)
     graph["C"] = tuple()
-    with pytest.raises(ValueError, match="B | A"):
+    with pytest.raises(ValueError, match="A | B"):
         stable_topological_sort(graph)
