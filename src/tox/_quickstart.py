@@ -92,16 +92,6 @@ def boolean(x):
     return x.upper() in ("Y", "YES")
 
 
-def suffix(x):
-    if not (x[0:1] == "." and len(x) > 1):
-        raise ValidationError("Please enter a file suffix, e.g. '.rst' or '.txt'.")
-    return x
-
-
-def ok(x):
-    return x
-
-
 def list_modificator(answer, existing=None):
     if not existing:
         existing = []

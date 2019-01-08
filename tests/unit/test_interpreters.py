@@ -136,7 +136,7 @@ class TestInterpreters:
         info = interpreters.get_info(envconfig)
         assert info.version_info == tuple(sys.version_info)
         assert info.executable == sys.executable
-        assert info.runnable
+        assert isinstance(info, InterpreterInfo)
 
     def test_get_executable_no_exist(self, interpreters):
         class envconfig:
@@ -148,7 +148,7 @@ class TestInterpreters:
         assert not info.version_info
         assert info.name == "1lkj23"
         assert not info.executable
-        assert not info.runnable
+        assert isinstance(info, NoInterpreterInfo)
 
     def test_get_sitepackagesdir_error(self, interpreters):
         class envconfig:
@@ -179,9 +179,6 @@ class TestInterpreterInfo:
     ):
         return InterpreterInfo(name, executable, version_info, sysplatform)
 
-    def test_runnable(self):
-        assert self.info().runnable
-
     @pytest.mark.parametrize("missing_arg", ("executable", "version_info"))
     def test_assert_on_missing_args(self, missing_arg):
         with pytest.raises(AssertionError):
@@ -200,10 +197,6 @@ class TestInterpreterInfo:
 
 
 class TestNoInterpreterInfo:
-    def test_runnable(self):
-        assert not NoInterpreterInfo("foo").runnable
-        assert not NoInterpreterInfo("foo", executable=sys.executable).runnable
-
     def test_default_data(self):
         x = NoInterpreterInfo("foo")
         assert x.name == "foo"

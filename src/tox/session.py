@@ -288,8 +288,6 @@ class Verbosity(object):
 
 
 class Reporter(object):
-    actionchar = "-"
-
     def __init__(self, session):
         self.tw = py.io.TerminalWriter()
         self.session = session
@@ -471,16 +469,6 @@ class Session:
                     self.report.verbosity2("cleanup {}".format(tox_env.package))
                     tox_env.package.remove()
                     py.path.local(tox_env.package.dirname).remove(ignore_errors=True)
-
-    def _copyfiles(self, srcdir, pathlist, destdir):
-        for relpath in pathlist:
-            src = srcdir.join(relpath)
-            if not src.check():
-                self.report.error("missing source file: {}".format(src))
-                raise SystemExit(1)
-            target = destdir.join(relpath)
-            target.dirpath().ensure(dir=1)
-            src.copy(target)
 
     def make_emptydir(self, path):
         if path.check():

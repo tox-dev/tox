@@ -4,7 +4,6 @@ import os
 import pipes
 import re
 import sys
-import warnings
 from itertools import chain
 
 import py
@@ -243,14 +242,6 @@ class VirtualEnv(object):
             deps,
             alwayscopy,
         )
-
-    def _getresolvedeps(self):
-        warnings.warn(
-            "that's a private function there, use get_resolved_dependencies,"
-            "this will be removed in 3.2",
-            category=DeprecationWarning,
-        )
-        return self.get_resolved_dependencies()
 
     def get_resolved_dependencies(self):
         dependencies = []
