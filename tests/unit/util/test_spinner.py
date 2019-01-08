@@ -1,3 +1,4 @@
+import os
 import sys
 
 from freezegun import freeze_time
@@ -29,9 +30,10 @@ def test_spinner_atty(capfd, monkeypatch):
         spin.stream.write("\n")
     out, err = capfd.readouterr()
     lines = out.split("\n")
+    posix = os.name == "posix"
     assert lines == [
-        "\x1b[?25l\r{}\r{} [0] ".format(spin.CLEAR_LINE, spin.frames[0]),
-        "\r\x1b[K\x1b[?25h",
+        "{}\r{}\r{} [0] ".format("\x1b[?25l" if posix else "", spin.CLEAR_LINE, spin.frames[0]),
+        "{}[K\x1b[?25h".format("\r\x1b" if posix else ""),
     ]
 
 
