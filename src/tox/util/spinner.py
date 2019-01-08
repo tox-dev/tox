@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import threading
+from collections import OrderedDict
 from datetime import datetime
 
 threads = []
@@ -24,7 +25,7 @@ class Spinner(object):
         self.refresh_rate = refresh_rate
         self.enabled = enabled
         self.stream = sys.stdout
-        self._envs = dict()
+        self._envs = OrderedDict()
         self._frame_index = 0
 
     def clear(self):
