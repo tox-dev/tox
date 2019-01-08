@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
 from __future__ import absolute_import, unicode_literals
 

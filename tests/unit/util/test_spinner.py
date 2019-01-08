@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
+
 import os
 import sys
 import time
@@ -56,7 +59,7 @@ def test_spinner_atty(capfd, monkeypatch):
 def test_spinner_report(capfd, monkeypatch):
     with spinner.Spinner(refresh_rate=100) as spin:
         monkeypatch.setattr(spin.stream, "isatty", lambda: False)
-        spin.stream.write("\n")
+        spin.stream.write(os.linesep)
         spin.add("ok")
         spin.add("fail")
         spin.add("skip")
@@ -64,7 +67,7 @@ def test_spinner_report(capfd, monkeypatch):
         spin.fail("fail")
         spin.skip("skip")
     out, err = capfd.readouterr()
-    lines = out.split("\n")
+    lines = out.split(os.linesep)
     del lines[0]
     expected = [
         "\r{}✔ OK ok in 0.0 second".format(spin.CLEAR_LINE),
