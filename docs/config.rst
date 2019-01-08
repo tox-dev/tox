@@ -403,6 +403,21 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Set to ``true`` if you want to create virtual environments that also
     have access to globally installed packages.
 
+    .. warning::
+
+      In cases where a command line tool is also installed globally you have
+      to make sure that you use the tool installed in the virtualenv by using
+      ``python -m <command line tool>`` (if supported by the tool) or
+      ``{envbindir}/<command line tool>``.
+
+      If you forget to do that you will get a warning like this::
+
+        WARNING: test command found but not installed in testenv
+            cmd: /path/to/parent/interpreter/bin/<some command>
+            env: /foo/bar/.tox/python
+        Maybe you forgot to specify a dependency? See also the whitelist_externals envconfig setting.
+
+
 .. conf:: alwayscopy ^ true|false ^ false
 
     Set to ``true`` if you want virtualenv to always copy files rather than
