@@ -31,10 +31,11 @@ def test_spinner_atty(capfd, monkeypatch):
     out, err = capfd.readouterr()
     lines = out.split("\n")
     posix = os.name == "posix"
-    assert lines == [
+    expected = [
         "{}\r{}\r{} [0] ".format("\x1b[?25l" if posix else "", spin.CLEAR_LINE, spin.frames[0]),
         "{}[K\x1b[?25h".format("\r\x1b" if posix else ""),
     ]
+    assert lines == expected
 
 
 @freeze_time("2012-01-14")
@@ -51,12 +52,13 @@ def test_spinner_report(capfd, monkeypatch):
     out, err = capfd.readouterr()
     lines = out.split("\n")
     del lines[0]
-    assert lines == [
+    expected = [
         "\r{}✔ OK ok in 0.0 second".format(spin.CLEAR_LINE),
         "\r{}✖ FAIL fail in 0.0 second".format(spin.CLEAR_LINE),
         "\r{}⚠ SKIP skip in 0.0 second".format(spin.CLEAR_LINE),
         "\r{}".format(spin.CLEAR_LINE),
     ]
+    assert lines == expected
     assert not err
 
 
@@ -70,9 +72,10 @@ def test_spinner_long_text(capfd, monkeypatch):
         spin.stream.write("\n")
     out, err = capfd.readouterr()
     assert not err
-    expected = "\r{}\r{} [2] {} | {}...".format(
-        spin.CLEAR_LINE, spin.frames[1], "a" * 60, "b" * 49
-    )
+    expected = [
+        "\r{}\r{} [2] {} | {}...".format(spin.CLEAR_LINE, spin.frames[1], "a" * 60, "b" * 49),
+        "\r{}".format(spin.CLEAR_LINE),
+    ]
     lines = out.split("\n")
     del lines[0]
-    assert lines == [expected, "\r{}".format(spin.CLEAR_LINE)]
+    assert lines == expected
