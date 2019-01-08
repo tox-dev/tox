@@ -171,6 +171,11 @@ Global settings are defined under the ``tox`` section as:
     tox environments this depends on. tox will try to run all dependent environments before running this
     environment. Format is same as :conf:`envlist` (allows factor usage).
 
+    .. warning::
+
+       ``depends`` does not pull in dependencies into the run target, for example if you select ``py27,py36,coverage``
+       via the ``-e`` tox will only run those three (even if ``coverage`` may specify as ``depends`` other targets too -
+       such as ``py27, py35, py36, py37``).
 
 
 Jenkins override
