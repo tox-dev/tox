@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from freezegun import freeze_time
 
@@ -24,6 +25,19 @@ def test_spinner(capfd, monkeypatch):
 
 
 @freeze_time("2012-01-14")
+def test_spinner_progress(capfd, monkeypatch):
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
+    with spinner.Spinner() as spin:
+        for _ in range(len(spin.frames)):
+            spin.stream.write("\n")
+            time.sleep(spin.refresh_rate)
+
+    out, err = capfd.readouterr()
+    assert not err
+    assert len({i.strip() for i in out.split("[0]")}) > len(spin.frames) / 2
+
+
+@freeze_time("2012-01-14")
 def test_spinner_atty(capfd, monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     with spinner.Spinner(refresh_rate=100) as spin:
@@ -33,7 +47,7 @@ def test_spinner_atty(capfd, monkeypatch):
     posix = os.name == "posix"
     expected = [
         "{}\r{}\r{} [0] ".format("\x1b[?25l" if posix else "", spin.CLEAR_LINE, spin.frames[0]),
-        "{}[K\x1b[?25h".format("\r\x1b" if posix else ""),
+        "\r\x1b[K{}".format("\x1b[?25h" if posix else ""),
     ]
     assert lines == expected
 
