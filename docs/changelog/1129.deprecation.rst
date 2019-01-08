@@ -1,0 +1,1 @@
+Whitelisting of externals will be mandatory in tox 4: issue a deprecation warning as part of the already existing warning - by :user:`obestwalter`
