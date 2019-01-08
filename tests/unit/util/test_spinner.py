@@ -1,15 +1,14 @@
 import sys
 
 from freezegun import freeze_time
-
 from tox.util import spinner
 
 
 @freeze_time("2012-01-14")
 def test_spinner(capfd, monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
-    with spinner.Spinner() as spin:
-        for i in range(len(spin.frames) + 1):
+    with spinner.Spinner(refresh_rate=100) as spin:
+        for _ in range(len(spin.frames) + 1):
             spin.render_frame()
             spin.stream.write("\n")
         spin.stream.write("\n")
@@ -27,6 +26,7 @@ def test_spinner(capfd, monkeypatch):
 def test_spinner_atty(capfd, monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     with spinner.Spinner() as spin:
+        spin.refresh_rate = 100
         spin.stream.write("\n")
     out, err = capfd.readouterr()
     lines = out.split("\n")
@@ -35,9 +35,8 @@ def test_spinner_atty(capfd, monkeypatch):
 
 @freeze_time("2012-01-14")
 def test_spinner_report(capfd, monkeypatch):
-    monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
-
     with spinner.Spinner() as spin:
+        monkeypatch.setattr(spin.stream, "isatty", lambda: False)
         spin.add("ok")
         spin.add("fail")
         spin.add("skip")
@@ -57,13 +56,13 @@ def test_spinner_report(capfd, monkeypatch):
 
 
 def test_spinner_long_text(capfd, monkeypatch):
-    monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
-
     with spinner.Spinner() as spin:
+        spin.refresh_rate = 100
+        monkeypatch.setattr(spin.stream, "isatty", lambda: False)
         spin.add("a" * 60)
         spin.add("b" * 60)
         spin.render_frame()
-        sys.stdout.write("\n")
+        spin.stream.write("\n")
     out, err = capfd.readouterr()
     assert not err
     expected = "\r{0}\r{1} [2] {2} | {3}...\n\r{0}".format(

@@ -6,7 +6,6 @@ import sys
 import threading
 import time
 from datetime import datetime
-from threading import RLock
 
 threads = []
 
@@ -19,37 +18,31 @@ if os.name == "nt":
 
 class Spinner(object):
     CLEAR_LINE = "\033[K"
-    refresh_rate = 0.1
     max_width = 120
     frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
-    def __init__(self, enabled=True):
-        self._lock = RLock()
-        self._envs = dict()
-        self._frame_index = 0
+    def __init__(self, enabled=True, refresh_rate=0.1):
+        self.refresh_rate = refresh_rate
         self.enabled = enabled
         self.stream = sys.stdout
-
-    def add(self, name):
-        self._envs[name] = datetime.now()
+        self._envs = dict()
+        self._frame_index = 0
 
     def clear(self):
         if self.enabled:
-            with self._lock:
-                self.stream.write("\r")
-                self.stream.write(self.CLEAR_LINE)
+            self.stream.write("\r")
+            self.stream.write(self.CLEAR_LINE)
 
     def render(self):
         while not self._stop_spinner.is_set():
-            self.render_frame()
             time.sleep(self.refresh_rate)
+            self.render_frame()
         return self
 
     def render_frame(self):
         if self.enabled:
-            with self._lock:
-                self.clear()
-                self.stream.write("\r{}".format(self.frame()))
+            self.clear()
+            self.stream.write("\r{}".format(self.frame()))
 
     def frame(self):
         frame = self.frames[self._frame_index]
@@ -63,13 +56,29 @@ class Spinner(object):
     def __enter__(self):
         if self.enabled:
             self.disable_cursor()
+        self.render_frame()
 
         self._stop_spinner = threading.Event()
         self._spinner_thread = threading.Thread(target=self.render)
         self._spinner_thread.setDaemon(True)
-        self._spinner_id = self._spinner_thread.name
         self._spinner_thread.start()
         return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not self._stop_spinner.is_set():
+            if self._spinner_thread:
+                self._stop_spinner.set()
+                self._spinner_thread.join()
+
+            self._frame_index = 0
+            if self.enabled:
+                self.clear()
+                self.enable_cursor()
+
+        return self
+
+    def add(self, name):
+        self._envs[name] = datetime.now()
 
     def succeed(self, key):
         self.finalize(key, "✔ OK")
@@ -81,32 +90,17 @@ class Spinner(object):
         self.finalize(key, "⚠ SKIP")
 
     def finalize(self, key, status):
-        with self._lock:
-            start_at = self._envs[key]
-            del self._envs[key]
-            if self.enabled:
-                self.clear()
-            self.stream.write(
-                "{} {} in {}{}".format(
-                    status, key, td_human_readable(datetime.now() - start_at), os.linesep
-                )
+        start_at = self._envs[key]
+        del self._envs[key]
+        if self.enabled:
+            self.clear()
+        self.stream.write(
+            "{} {} in {}{}".format(
+                status, key, td_human_readable(datetime.now() - start_at), os.linesep
             )
-            if not self._envs:
-                self.__exit__(None, None, None)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self._stop_spinner.is_set():
-            if self._spinner_thread:
-                self._stop_spinner.set()
-                self._spinner_thread.join()
-
-            self._frame_index = 0
-            self._spinner_id = None
-            if self.enabled:
-                self.clear()
-                self.enable_cursor()
-
-        return self
+        )
+        if not self._envs:
+            self.__exit__(None, None, None)
 
     def disable_cursor(self):
         if self.stream.isatty():
