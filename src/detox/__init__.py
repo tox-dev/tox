@@ -5,7 +5,7 @@ from tox.config import parallel
 
 
 def run():
-    parallel.DEFAULT_PARALLEL = "all"
+    parallel.DEFAULT_PARALLEL = "auto"
     cmdline()
 
 
