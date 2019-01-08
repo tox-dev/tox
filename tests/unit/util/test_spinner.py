@@ -1,6 +1,7 @@
 import sys
 
 from freezegun import freeze_time
+
 from tox.util import spinner
 
 
@@ -8,15 +9,14 @@ from tox.util import spinner
 def test_spinner(capfd, monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner(refresh_rate=100) as spin:
-        for _ in range(len(spin.frames) + 1):
-            spin.render_frame()
+        for _ in range(len(spin.frames)):
             spin.stream.write("\n")
+            spin.render_frame()
         spin.stream.write("\n")
     out, err = capfd.readouterr()
     lines = out.split("\n")
     expected = ["\r{}\r{} [0] ".format(spin.CLEAR_LINE, i) for i in spin.frames] + [
         "\r{}\r{} [0] ".format(spin.CLEAR_LINE, spin.frames[0]),
-        "",
         "\r{}".format(spin.CLEAR_LINE),
     ]
     assert lines == expected
@@ -25,18 +25,21 @@ def test_spinner(capfd, monkeypatch):
 @freeze_time("2012-01-14")
 def test_spinner_atty(capfd, monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
-    with spinner.Spinner() as spin:
-        spin.refresh_rate = 100
+    with spinner.Spinner(refresh_rate=100) as spin:
         spin.stream.write("\n")
     out, err = capfd.readouterr()
     lines = out.split("\n")
-    assert lines == ["\x1b[?25l", "\r\x1b[K\x1b[?25h"]
+    assert lines == [
+        "\x1b[?25l\r{}\r{} [0] ".format(spin.CLEAR_LINE, spin.frames[0]),
+        "\r\x1b[K\x1b[?25h",
+    ]
 
 
 @freeze_time("2012-01-14")
 def test_spinner_report(capfd, monkeypatch):
-    with spinner.Spinner() as spin:
+    with spinner.Spinner(refresh_rate=100) as spin:
         monkeypatch.setattr(spin.stream, "isatty", lambda: False)
+        spin.stream.write("\n")
         spin.add("ok")
         spin.add("fail")
         spin.add("skip")
@@ -45,19 +48,19 @@ def test_spinner_report(capfd, monkeypatch):
         spin.skip("skip")
     out, err = capfd.readouterr()
     lines = out.split("\n")
-    clear = spinner.Spinner.CLEAR_LINE
+    del lines[0]
     assert lines == [
-        "\r{}✔ OK ok in 0.0 second".format(clear),
-        "\r{}✖ FAIL fail in 0.0 second".format(clear),
-        "\r{}⚠ SKIP skip in 0.0 second".format(clear),
-        "\r{}".format(clear),
+        "\r{}✔ OK ok in 0.0 second".format(spin.CLEAR_LINE),
+        "\r{}✖ FAIL fail in 0.0 second".format(spin.CLEAR_LINE),
+        "\r{}⚠ SKIP skip in 0.0 second".format(spin.CLEAR_LINE),
+        "\r{}".format(spin.CLEAR_LINE),
     ]
     assert not err
 
 
 def test_spinner_long_text(capfd, monkeypatch):
-    with spinner.Spinner() as spin:
-        spin.refresh_rate = 100
+    with spinner.Spinner(refresh_rate=100) as spin:
+        spin.stream.write("\n")
         monkeypatch.setattr(spin.stream, "isatty", lambda: False)
         spin.add("a" * 60)
         spin.add("b" * 60)
@@ -65,7 +68,9 @@ def test_spinner_long_text(capfd, monkeypatch):
         spin.stream.write("\n")
     out, err = capfd.readouterr()
     assert not err
-    expected = "\r{0}\r{1} [2] {2} | {3}...\n\r{0}".format(
-        spinner.Spinner.CLEAR_LINE, spinner.Spinner.frames[0], "a" * 60, "b" * 49
+    expected = "\r{}\r{} [2] {} | {}...".format(
+        spin.CLEAR_LINE, spin.frames[1], "a" * 60, "b" * 49
     )
-    assert out == expected
+    lines = out.split("\n")
+    del lines[0]
+    assert lines == [expected, "\r{}".format(spin.CLEAR_LINE)]

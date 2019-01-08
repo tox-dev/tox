@@ -4,7 +4,6 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import threading
-import time
 from datetime import datetime
 
 threads = []
@@ -34,8 +33,10 @@ class Spinner(object):
             self.stream.write(self.CLEAR_LINE)
 
     def render(self):
-        while not self._stop_spinner.is_set():
-            time.sleep(self.refresh_rate)
+        while True:
+            self._stop_spinner.wait(self.refresh_rate)
+            if self._stop_spinner.is_set():
+                break
             self.render_frame()
         return self
 
@@ -57,7 +58,6 @@ class Spinner(object):
         if self.enabled:
             self.disable_cursor()
         self.render_frame()
-
         self._stop_spinner = threading.Event()
         self._spinner_thread = threading.Thread(target=self.render)
         self._spinner_thread.setDaemon(True)
