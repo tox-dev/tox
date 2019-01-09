@@ -49,6 +49,7 @@ def add_parallel_flags(parser):
         action="store",
         type=parse_num_processes,
         default=DEFAULT_PARALLEL,
+        metavar="VAL",
     )
     parser.add_argument(
         "-o",

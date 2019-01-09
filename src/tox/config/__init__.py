@@ -60,7 +60,13 @@ class Parser:
     """Command line and ini-parser control object."""
 
     def __init__(self):
-        self.argparser = argparse.ArgumentParser(description="tox options", add_help=False)
+        class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+            def __init__(self, prog: str) -> None:
+                super().__init__(prog, max_help_position=35, width=190)
+
+        self.argparser = argparse.ArgumentParser(
+            description="tox options", add_help=False, prog="tox", formatter_class=HelpFormatter
+        )
         self._testenv_attr = []
 
     def add_argument(self, *args, **kwargs):
