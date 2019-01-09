@@ -194,7 +194,7 @@ Running tox environments in parallel
 
 Jenkins has parallel stages allowing you to run commands in parallel, however tox package
 building it is not parallel safe. Use the ``--parallel--safe-build`` flag to enable parallel safe
-builds (this will generate unique folder names for ``distdir``, ``ditshare`` and ``log``.
+builds (this will generate unique folder names for ``distdir``, ``distshare`` and ``log``.
 Here's a generic stage definition demonstrating how to use this inside Jenkins:
 
 .. code-block:: groovy
