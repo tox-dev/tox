@@ -57,8 +57,8 @@ def test_spinner_atty(capfd, monkeypatch):
 
 @freeze_time("2012-01-14")
 def test_spinner_report(capfd, monkeypatch):
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner(refresh_rate=100) as spin:
-        monkeypatch.setattr(spin.stream, "isatty", lambda: False)
         spin.stream.write(os.linesep)
         spin.add("ok")
         spin.add("fail")
@@ -80,9 +80,9 @@ def test_spinner_report(capfd, monkeypatch):
 
 
 def test_spinner_long_text(capfd, monkeypatch):
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner(refresh_rate=100) as spin:
         spin.stream.write("\n")
-        monkeypatch.setattr(spin.stream, "isatty", lambda: False)
         spin.add("a" * 60)
         spin.add("b" * 60)
         spin.render_frame()

@@ -8,6 +8,8 @@ import threading
 from collections import OrderedDict
 from datetime import datetime
 
+import py
+
 threads = []
 
 if os.name == "nt":
@@ -25,7 +27,8 @@ class Spinner(object):
     def __init__(self, enabled=True, refresh_rate=0.1):
         self.refresh_rate = refresh_rate
         self.enabled = enabled
-        self.stream = sys.stdout
+        self._file = sys.stdout
+        self.stream = py.io.TerminalWriter(file=self._file)
         self._envs = OrderedDict()
         self._frame_index = 0
 
@@ -83,15 +86,15 @@ class Spinner(object):
         self._envs[name] = datetime.now()
 
     def succeed(self, key):
-        self.finalize(key, "✔ OK")
+        self.finalize(key, "✔ OK", green=True)
 
     def fail(self, key):
-        self.finalize(key, "✖ FAIL")
+        self.finalize(key, "✖ FAIL", red=True)
 
     def skip(self, key):
-        self.finalize(key, "⚠ SKIP")
+        self.finalize(key, "⚠ SKIP", white=True)
 
-    def finalize(self, key, status):
+    def finalize(self, key, status, **kwargs):
         start_at = self._envs[key]
         del self._envs[key]
         if self.enabled:
@@ -99,13 +102,14 @@ class Spinner(object):
         self.stream.write(
             "{} {} in {}{}".format(
                 status, key, td_human_readable(datetime.now() - start_at), os.linesep
-            )
+            ),
+            **kwargs
         )
         if not self._envs:
             self.__exit__(None, None, None)
 
     def disable_cursor(self):
-        if self.stream.isatty():
+        if self._file.isatty():
             if os.name == "nt":
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
@@ -114,10 +118,9 @@ class Spinner(object):
                 ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
             elif os.name == "posix":
                 self.stream.write("\033[?25l")
-                self.stream.flush()
 
     def enable_cursor(self):
-        if self.stream.isatty():
+        if self._file.isatty():
             if os.name == "nt":
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
@@ -126,7 +129,6 @@ class Spinner(object):
                 ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
             elif os.name == "posix":
                 self.stream.write("\033[?25h")
-                self.stream.flush()
 
 
 def td_human_readable(delta):

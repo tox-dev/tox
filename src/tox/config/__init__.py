@@ -61,8 +61,8 @@ class Parser:
 
     def __init__(self):
         class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
-            def __init__(self, prog: str) -> None:
-                super().__init__(prog, max_help_position=35, width=190)
+            def __init__(self, prog):
+                super(HelpFormatter, self).__init__(prog, max_help_position=35, width=190)
 
         self.argparser = argparse.ArgumentParser(
             description="tox options", add_help=False, prog="tox", formatter_class=HelpFormatter
