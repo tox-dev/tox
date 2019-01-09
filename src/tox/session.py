@@ -662,7 +662,7 @@ class Session:
                     done.add(env_name)
                     report = spinner.succeed
                     if self.config.option.notest:
-                        report = spinner.fail
+                        report = spinner.skip
                     elif res:
                         report = spinner.fail
                     report(env_name)
@@ -689,6 +689,7 @@ class Session:
             while todo:
                 for name, depends in list(todo.items()):
                     if depends - done:
+                        # skip if has unfinished dependencies
                         continue
                     del todo[name]
                     venv = self.getvenv(name)
@@ -698,6 +699,7 @@ class Session:
                     thread.start()
                     threads.append(thread)
                 if todo:
+                    # wait until someone finishes and retry queuing jobs
                     finished.wait()
                     finished.clear()
 

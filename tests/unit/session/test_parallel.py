@@ -3,6 +3,24 @@ from __future__ import absolute_import, unicode_literals
 import os
 
 
+def test_parallel(cmd, initproj):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tox.ini": """
+            [tox]
+            envlist = a, b
+            [testenv]
+            commands=python -c "import sys; print(sys.executable)"
+            [testenv:b]
+            depends = a
+        """
+        },
+    )
+    result = cmd("--parallel", "all")
+    assert result.ret == 0, "{}{}{}".format(result.err, os.linesep, result.out)
+
+
 def test_parallel_live(cmd, initproj):
     initproj(
         "pkg123-0.7",
@@ -19,20 +37,23 @@ def test_parallel_live(cmd, initproj):
     assert result.ret == 0, "{}{}{}".format(result.err, os.linesep, result.out)
 
 
-def test_parallel(cmd, initproj):
+def test_parallel_circular(cmd, initproj):
     initproj(
         "pkg123-0.7",
         filedefs={
             "tox.ini": """
             [tox]
             envlist = a, b
-            [testenv]
-            commands=python -c "import sys; print(sys.executable)"
+            [testenv:a]
+            depends = b
+            [testenv:b]
+            depends = a
         """
         },
     )
-    result = cmd("--parallel", "all")
-    assert result.ret == 0, "{}{}{}".format(result.err, os.linesep, result.out)
+    result = cmd("--parallel", "1")
+    assert result.ret == 1, result.out
+    assert result.out == "ERROR: circular dependency detected: a | b\n"
 
 
 def test_parallel_error_report(cmd, initproj):
