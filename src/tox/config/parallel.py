@@ -10,11 +10,11 @@ DEFAULT_PARALLEL = OFF_VALUE
 def auto_detect_cpus():
     try:
         from os import sched_getaffinity
-    except ImportError:
-        try:
-            from os import cpu_count
-        except ImportError:
-            from multiprocessing import cpu_count
+    except ImportError:  # pragma: no cov
+        try:  # pragma: no cov
+            from os import cpu_count  # pragma: no cov
+        except ImportError:  # pragma: no cov
+            from multiprocessing import cpu_count  # pragma: no cov
     else:
 
         def cpu_count():
@@ -22,8 +22,8 @@ def auto_detect_cpus():
 
     try:
         n = cpu_count()
-    except NotImplementedError:
-        return 1
+    except NotImplementedError:  # pragma: no cov
+        n = None  # pragma: no cov
     return n if n else 1
 
 
