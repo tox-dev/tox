@@ -1,11 +1,11 @@
 import json
 import os
-import platform
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
-import distro
 import py
 import pytest
 
@@ -630,15 +630,24 @@ def test_warning_emitted(cmd, initproj):
 def _alwayscopy_not_supported():
     # This is due to virtualenv bugs with alwayscopy in some platforms
     # see: https://github.com/pypa/virtualenv/issues/565
-    if hasattr(platform, "linux_distribution"):
-        _dist = distro.linux_distribution(full_distribution_name=False)
-        (name, version, arch) = _dist
-        if any((name == "centos" and version[0] == "7", name == "SuSE" and arch == "x86_64")):
-            return True
-    return False
+    supported = True
+    tmpdir = tempfile.mkdtemp()
+    try:
+        with open(os.devnull) as fp:
+            subprocess.check_call(
+                [sys.executable, "-m", "virtualenv", "--always-copy", tmpdir], stdout=fp, stderr=fp
+            )
+    except subprocess.CalledProcessError:
+        supported = False
+    finally:
+        shutil.rmtree(tmpdir)
+    return not supported
 
 
-@pytest.mark.skipif(_alwayscopy_not_supported(), reason="Platform doesnt support alwayscopy")
+alwayscopy_not_supported = _alwayscopy_not_supported()
+
+
+@pytest.mark.skipif(alwayscopy_not_supported, reason="Platform doesnt support alwayscopy")
 def test_alwayscopy(initproj, cmd):
     initproj(
         "example123",
