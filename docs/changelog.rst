@@ -11,6 +11,35 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.7.0 (2019-01-11)
+-------------------
+
+Features
+^^^^^^^^
+
+- Parallel mode added (alternative to ``detox`` which is being deprecated), for more details see :ref:`parallel_mode` - by :user:`gaborbernat`.
+  `#439 <https://github.com/tox-dev/tox/issues/439>`_
+- Added command line shortcut ``-s`` for ``--skip-missing-interpreters`` - by :user:`evandrocoan`
+  `#1119 <https://github.com/tox-dev/tox/issues/1119>`_
+
+
+Deprecations (removal in next major release)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Whitelisting of externals will be mandatory in tox 4: issue a deprecation warning as part of the already existing warning - by :user:`obestwalter`
+  `#1129 <https://github.com/tox-dev/tox/issues/1129>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Clarify explanations in examples and avoid unsupported end line comments - by :user:`obestwalter`
+  `#1110 <https://github.com/tox-dev/tox/issues/1110>`_
+- Set to PULL_REQUEST_TEMPLATE.md use relative instead of absolute URLs - by :user:`evandrocoan`
+  Fixed PULL_REQUEST_TEMPLATE.md path for changelog/examples.rst to docs/changelog/examples.rst - by :user:`evandrocoan`
+  `#1120 <https://github.com/tox-dev/tox/issues/1120>`_
+
+
 v3.6.1 (2018-12-24)
 -------------------
 
