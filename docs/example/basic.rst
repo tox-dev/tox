@@ -412,7 +412,6 @@ Parallel mode
 
 - ``--parallel-live``/``-o`` allows showing the live output of the standard output and error, also turns off reporting
   described above.
-- ``python -m detox`` or ``detox`` is now provided as an alias to ``tox -p all``.
 - Note: parallel evaluation disables standard input. Use non parallel invocation if you need standard input.
 
 Example final output:
