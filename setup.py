@@ -47,7 +47,6 @@ setup(
     extras_require={
         "testing": [
             "freezegun >= 0.3.11",
-            "distro",
             "pytest >= 3.0.0, <4",
             "pytest-cov >= 2.5.1, <3",
             "pytest-mock >= 1.10.0, <2",
