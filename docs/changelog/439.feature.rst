@@ -1,1 +1,0 @@
-Parallel mode added (alternative to ``detox`` which is being deprecated), for more details see :ref:`parallel_mode` - by :user:`gaborbernat`.
