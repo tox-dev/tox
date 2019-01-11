@@ -58,7 +58,6 @@ and locations of all installed plugins::
     3.0.0 imported from /home/ob/.virtualenvs/tmp/lib/python3.6/site-packages/tox/__init__.py
     registered plugins:
         tox-travis-0.10 at /home/ob/.virtualenvs/tmp/lib/python3.6/site-packages/tox_travis/hooks.py
-        detox-0.12 at /home/ob/.virtualenvs/tmp/lib/python3.6/site-packages/detox/tox_proclimit.py
 
 
 Creating a plugin

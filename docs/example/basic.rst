@@ -381,3 +381,57 @@ meant exactly for that purpose, by setting the ``alwayscopy`` directive in your 
 
     [testenv]
     alwayscopy = True
+
+.. _`parallel_mode`:
+
+Parallel mode
+-------------
+``tox`` allows running environments in parallel:
+
+- Invoke by using the ``--parallel`` or ``-p`` flag. After the packaging phase completes tox will run in parallel
+  processes tox environments (spins a new instance of the tox interpreter, but passes through all host flags and
+  environment variables).
+- ``-p`` takes an argument specifying the degree of parallelization:
+
+  - ``all`` to run all invoked environments in parallel,
+  - ``auto`` to limit it to CPU count,
+  - or pass an integer to set that limit.
+- Parallel mode displays a progress spinner while running tox environments in parallel, and reports outcome of
+  these as soon as completed with a human readable duration timing attached.
+- Parallel mode by default shows output only of failed environments and ones marked as :conf:`parallel_show_output`
+  ``=True``.
+- There's now a concept of dependency between environments (specified via :conf:`depends`), tox will re-order the
+  environment list to be run to satisfy these dependencies (in sequential run too). Furthermore, in parallel mode,
+  will only schedule a tox environment to run once all of its dependencies finished (independent of their outcome).
+
+  .. warning::
+
+    ``depends`` does not pull in dependencies into the run target, for example if you select ``py27,py36,coverage``
+    via the ``-e`` tox will only run those three (even if ``coverage`` may specify as ``depends`` other targets too -
+    such as ``py27, py35, py36, py37``).
+
+- ``--parallel-live``/``-o`` allows showing the live output of the standard output and error, also turns off reporting
+  described above.
+- Note: parallel evaluation disables standard input. Use non parallel invocation if you need standard input.
+
+Example final output:
+
+.. code-block:: bash
+
+    $ tox -e py27,py36,coverage -p all
+    ✔ OK py36 in 9.533 seconds
+    ✔ OK py27 in 9.96 seconds
+    ✔ OK coverage in 2.0 seconds
+    ___________________________ summary ______________________________________________________
+      py27: commands succeeded
+      py36: commands succeeded
+      coverage: commands succeeded
+      congratulations :)
+
+
+Example progress bar, showing a rotating spinner, the number of environments running and their list (limited up to \
+120 characters):
+
+.. code-block:: bash
+
+    ⠹ [2] py27 | py36

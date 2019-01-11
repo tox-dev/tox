@@ -21,6 +21,7 @@ import toml
 import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
+from .parallel import add_parallel_flags, ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY, add_parallel_config
 
 hookimpl = tox.hookimpl
 """DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
@@ -59,7 +60,13 @@ class Parser:
     """Command line and ini-parser control object."""
 
     def __init__(self):
-        self.argparser = argparse.ArgumentParser(description="tox options", add_help=False)
+        class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+            def __init__(self, prog):
+                super(HelpFormatter, self).__init__(prog, max_help_position=35, width=190)
+
+        self.argparser = argparse.ArgumentParser(
+            description="tox options", add_help=False, prog="tox", formatter_class=HelpFormatter
+        )
         self._testenv_attr = []
 
     def add_argument(self, *args, **kwargs):
@@ -274,7 +281,9 @@ def parse_cli(args, pm):
         print(get_version_info(pm))
         raise SystemExit(0)
     interpreters = Interpreters(hook=pm.hook)
-    config = Config(pluginmanager=pm, option=option, interpreters=interpreters, parser=parser)
+    config = Config(
+        pluginmanager=pm, option=option, interpreters=interpreters, parser=parser, args=args
+    )
     return config, option
 
 
@@ -413,6 +422,7 @@ def tox_addoption(parser):
         dest="sdistonly",
         help="only perform the sdist packaging activity.",
     )
+    add_parallel_flags(parser)
     parser.add_argument(
         "--parallel--safe-build",
         action="store_true",
@@ -799,6 +809,8 @@ def tox_addoption(parser):
         help="list of extras to install with the source distribution or develop install",
     )
 
+    add_parallel_config(parser)
+
 
 def cli_skip_missing_interpreter(parser):
     class SkipMissingInterpreterAction(argparse.Action):
@@ -822,7 +834,7 @@ def cli_skip_missing_interpreter(parser):
 class Config(object):
     """Global Tox config object."""
 
-    def __init__(self, pluginmanager, option, interpreters, parser):
+    def __init__(self, pluginmanager, option, interpreters, parser, args):
         self.envconfigs = OrderedDict()
         """Mapping envname -> envconfig"""
         self.invocationcwd = py.path.local()
@@ -831,6 +843,7 @@ class Config(object):
         self.option = option
         self._parser = parser
         self._testenv_attr = parser._testenv_attr
+        self.args = args
 
         """option namespace containing all parsed command line options"""
 
@@ -1040,7 +1053,7 @@ class ParseIni(object):
         # factors stated in config envlist
         stated_envlist = reader.getstring("envlist", replace=False)
         if stated_envlist:
-            for env in _split_env(stated_envlist):
+            for env in config.envlist:
                 known_factors.update(env.split("-"))
 
         # configure testenvs
@@ -1119,6 +1132,9 @@ class ParseIni(object):
                     res = reader.getlist(env_attr.name, sep=" ")
                 elif atype == "line-list":
                     res = reader.getlist(env_attr.name, sep="\n")
+                elif atype == "env-list":
+                    res = reader.getstring(env_attr.name, replace=False)
+                    res = tuple(_split_env(res))
                 else:
                     raise ValueError("unknown type {!r}".format(atype))
                 if env_attr.postprocess:
@@ -1133,6 +1149,7 @@ class ParseIni(object):
 
     def _getenvdata(self, reader, config):
         candidates = (
+            os.environ.get(PARALLEL_ENV_VAR_KEY),
             self.config.option.env,
             os.environ.get("TOXENV"),
             reader.getstring("envlist", replace=False),
@@ -1167,6 +1184,8 @@ class ParseIni(object):
 
 def _split_env(env):
     """if handed a list, action="append" was used for -e """
+    if env is None:
+        return []
     if not isinstance(env, list):
         env = [e.split("#", 1)[0].strip() for e in env.split("\n")]
         env = ",".join([e for e in env if e])
