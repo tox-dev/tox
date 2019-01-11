@@ -10,11 +10,17 @@ def test_parallel(cmd, initproj):
             "tox.ini": """
             [tox]
             envlist = a, b
+            isolated_build = true
             [testenv]
             commands=python -c "import sys; print(sys.executable)"
             [testenv:b]
             depends = a
-        """
+        """,
+            "pyproject.toml": """
+            [build-system]
+            requires = ["setuptools >= 35.0.2"]
+            build-backend = 'setuptools.build_meta'
+                        """,
         },
     )
     result = cmd("--parallel", "all")
@@ -27,10 +33,16 @@ def test_parallel_live(cmd, initproj):
         filedefs={
             "tox.ini": """
             [tox]
+            isolated_build = true
             envlist = a, b
             [testenv]
             commands=python -c "import sys; print(sys.executable)"
-        """
+        """,
+            "pyproject.toml": """
+            [build-system]
+            requires = ["setuptools >= 35.0.2"]
+            build-backend = 'setuptools.build_meta'
+                        """,
         },
     )
     result = cmd("--parallel", "all", "--parallel-live")
@@ -43,12 +55,18 @@ def test_parallel_circular(cmd, initproj):
         filedefs={
             "tox.ini": """
             [tox]
+            isolated_build = true
             envlist = a, b
             [testenv:a]
             depends = b
             [testenv:b]
             depends = a
-        """
+        """,
+            "pyproject.toml": """
+            [build-system]
+            requires = ["setuptools >= 35.0.2"]
+            build-backend = 'setuptools.build_meta'
+                        """,
         },
     )
     result = cmd("--parallel", "1")
@@ -62,11 +80,17 @@ def test_parallel_error_report(cmd, initproj):
         filedefs={
             "tox.ini": """
             [tox]
+            isolated_build = true
             envlist = a
             [testenv]
             commands=python -c "import sys, os; sys.stderr.write(str(12345) + os.linesep);\
              raise SystemExit(17)"
-        """
+        """,
+            "pyproject.toml": """
+            [build-system]
+            requires = ["setuptools >= 35.0.2"]
+            build-backend = 'setuptools.build_meta'
+                        """,
         },
     )
     result = cmd("-p", "all")
