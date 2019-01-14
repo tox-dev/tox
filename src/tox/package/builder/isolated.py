@@ -5,13 +5,14 @@ from collections import namedtuple
 import pkg_resources
 import six
 
+from tox import reporter
 from tox.config import DepConfig, get_py_project_toml
 
 BuildInfo = namedtuple("BuildInfo", ["requires", "backend_module", "backend_object"])
 
 
-def build(config, report, session):
-    build_info = get_build_info(config.setupdir, report)
+def build(config, session):
+    build_info = get_build_info(config.setupdir)
     package_venv = session.getvenv(config.isolated_build_env)
     package_venv.envconfig.deps_matches_subset = True
 
@@ -21,10 +22,10 @@ def build(config, report, session):
     package_venv.envconfig.deps = [DepConfig(r, None) for r in build_info.requires]
     package_venv.envconfig.deps.extend(user_specified_deps)
 
-    if session.setupenv(package_venv):
-        session.finishvenv(package_venv)
+    if package_venv.setupenv():
+        package_venv.finishvenv()
 
-    build_requires = get_build_requires(build_info, package_venv, session)
+    build_requires = get_build_requires(build_info, package_venv, config.setupdir)
     # we need to filter out requirements already specified in pyproject.toml or user deps
     base_build_deps = {pkg_resources.Requirement(r.name).key for r in package_venv.envconfig.deps}
     build_requires_dep = [
@@ -33,25 +34,23 @@ def build(config, report, session):
         if pkg_resources.Requirement(r).key not in base_build_deps
     ]
     if build_requires_dep:
-        with session.newaction(
-            package_venv, "build_requires", package_venv.envconfig.envdir
-        ) as action:
+        with package_venv.newaction("build_requires", package_venv.envconfig.envdir) as action:
             package_venv.run_install_command(packages=build_requires_dep, action=action)
-        session.finishvenv(package_venv)
-    return perform_isolated_build(build_info, package_venv, session, config, report)
+        package_venv.finishvenv(package_venv)
+    return perform_isolated_build(build_info, package_venv, config.distdir, config.setupdir)
 
 
-def get_build_info(folder, report):
+def get_build_info(folder):
     toml_file = folder.join("pyproject.toml")
 
     # as per https://www.python.org/dev/peps/pep-0517/
 
     def abort(message):
-        report.error("{} inside {}".format(message, toml_file))
+        reporter.error("{} inside {}".format(message, toml_file))
         raise SystemExit(1)
 
     if not toml_file.exists():
-        report.error("missing {}".format(toml_file))
+        reporter.error("missing {}".format(toml_file))
         raise SystemExit(1)
 
     config_data = get_py_project_toml(toml_file)
@@ -81,9 +80,9 @@ def get_build_info(folder, report):
     return BuildInfo(requires, module, "{}{}".format(module, obj))
 
 
-def perform_isolated_build(build_info, package_venv, session, config, report):
-    with session.newaction(
-        package_venv, "perform-isolated-build", package_venv.envconfig.envdir
+def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
+    with package_venv.new_action(
+        "perform-isolated-build", package_venv.envconfig.envdir
     ) as action:
         script = textwrap.dedent(
             """
@@ -91,29 +90,27 @@ def perform_isolated_build(build_info, package_venv, session, config, report):
             import {}
             basename = {}.build_{}({!r}, {{ "--global-option": ["--formats=gztar"]}})
             print(basename)""".format(
-                build_info.backend_module, build_info.backend_object, "sdist", str(config.distdir)
+                build_info.backend_module, build_info.backend_object, "sdist", str(dist_dir)
             )
         )
 
         # need to start with an empty (but existing) source distribution folder
-        if config.distdir.exists():
-            config.distdir.remove(rec=1, ignore_errors=True)
-        config.distdir.ensure_dir()
+        if dist_dir.exists():
+            dist_dir.remove(rec=1, ignore_errors=True)
+        dist_dir.ensure_dir()
 
         result = package_venv._pcall(
             [package_venv.envconfig.envpython, "-c", script],
             returnout=True,
             action=action,
-            cwd=session.config.setupdir,
+            cwd=setup_dir,
         )
-        report.verbosity2(result)
-        return config.distdir.join(result.split("\n")[-2])
+        reporter.verbosity2(result)
+        return dist_dir.join(result.split("\n")[-2])
 
 
-def get_build_requires(build_info, package_venv, session):
-    with session.newaction(
-        package_venv, "get-build-requires", package_venv.envconfig.envdir
-    ) as action:
+def get_build_requires(build_info, package_venv, setup_dir):
+    with package_venv.new_action("get-build-requires", package_venv.envconfig.envdir) as action:
         script = textwrap.dedent(
             """
                 import {}
@@ -130,6 +127,6 @@ def get_build_requires(build_info, package_venv, session):
             [package_venv.envconfig.envpython, "-c", script],
             returnout=True,
             action=action,
-            cwd=session.config.setupdir,
+            cwd=setup_dir,
         )
         return json.loads(result.split("\n")[-2])

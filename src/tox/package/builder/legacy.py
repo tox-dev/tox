@@ -2,11 +2,14 @@ import sys
 
 import py
 
+from tox import reporter
+from tox.util.path import ensure_empty_dir
 
-def make_sdist(report, config, session):
+
+def make_sdist(config, session):
     setup = config.setupdir.join("setup.py")
     if not setup.check():
-        report.error(
+        reporter.error(
             "No setup.py file found. The expected location is:\n"
             "  {}\n"
             "You can\n"
@@ -17,15 +20,15 @@ def make_sdist(report, config, session):
             "#avoiding-expensive-sdist".format(setup)
         )
         raise SystemExit(1)
-    with session.newaction(None, "packaging") as action:
+    with session.newaction("GLOB", "packaging") as action:
         action.setactivity("sdist-make", setup)
-        session.make_emptydir(config.distdir)
+        ensure_empty_dir(config.distdir)
         build_log = action.popen(
             [sys.executable, setup, "sdist", "--formats=zip", "--dist-dir", config.distdir],
             cwd=config.setupdir,
             returnout=True,
         )
-        report.verbosity2(build_log)
+        reporter.verbosity2(build_log)
         try:
             return config.distdir.listdir()[0]
         except py.error.ENOENT:
@@ -37,9 +40,9 @@ def make_sdist(report, config, session):
                         continue
                     data.append(line)
             if not "".join(data).strip():
-                report.error("setup.py is empty")
+                reporter.error("setup.py is empty")
                 raise SystemExit(1)
-            report.error(
+            reporter.error(
                 "No dist directory found. Please check setup.py, e.g with:\n"
                 "     python setup.py sdist"
             )

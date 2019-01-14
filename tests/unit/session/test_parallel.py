@@ -94,7 +94,7 @@ def test_parallel_error_report(cmd, initproj):
         },
     )
     result = cmd("-p", "all")
-    msg = "{}{}{}".format(result.err, os.linesep, result.out)
+    msg = result.out
     assert result.ret == 1, msg
     # we print output
     assert "(exited with code 17)" in result.out, msg

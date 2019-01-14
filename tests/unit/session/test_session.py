@@ -140,7 +140,7 @@ def venv_filter_project(initproj, cmd):
         )
         result = cmd(*args)
         assert result.ret == 0
-        active = [i.name for i in result.session.venvlist]
+        active = [i.name for i in result.session.existing_venvs.values()]
         return active, result
 
     yield func
@@ -238,7 +238,7 @@ def popen_env_test(initproj, cmd, monkeypatch):
                 monkeypatch.setattr(tox.session, "build_session", build_session)
 
                 def popen(cmd, **kwargs):
-                    activity_id = res.session._actions[-1].id
+                    activity_id = res.session._actions[-1].name
                     activity_name = res.session._actions[-1].activity
                     ret = "NOTSET"
                     try:
@@ -314,9 +314,10 @@ def test_command_prev_post_ok(cmd, initproj, mock_venv):
     """.format(
             "_" if sys.platform != "win32" else ""
         )
-    )
-    actual = result.out.replace(os.linesep, "\n")
-    assert expected in actual
+    ).lstrip()
+    have = result.out.replace(os.linesep, "\n")
+    actual = have[len(have) - len(expected) :]
+    assert actual == expected
 
 
 def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):

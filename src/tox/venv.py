@@ -10,6 +10,10 @@ import py
 from pkg_resources import to_filename
 
 import tox
+from tox import reporter
+from tox.action import Action
+from tox.package.local import resolve_package
+from tox.util.path import ensure_empty_dir
 
 from .config import DepConfig
 
@@ -103,9 +107,25 @@ class CreationConfig:
 
 
 class VirtualEnv(object):
-    def __init__(self, envconfig=None, session=None):
+    def __init__(self, envconfig=None, popen=None, env_log=None):
         self.envconfig = envconfig
-        self.session = session
+        self.popen = popen
+        self._actions = []
+        self.env_log = env_log
+
+    def new_action(self, msg, *args):
+        config = self.envconfig.config
+        command_log = self.env_log.get_commandlog("test" if msg == "runtest" else "setup")
+        return Action(
+            self.name,
+            msg,
+            args,
+            self.envconfig.envlogdir,
+            config.option.resultjson,
+            command_log,
+            self.popen,
+            self.envconfig.envpython,
+        )
 
     @property
     def hook(self):
@@ -169,7 +189,7 @@ class VirtualEnv(object):
 
     def _check_external_allowed_and_warn(self, path):
         if not self.is_allowed_external(path):
-            self.session.report.warning(
+            reporter.warning(
                 "test command found but not installed in testenv\n"
                 "  cmd: {}\n"
                 "  env: {}\n"
@@ -248,7 +268,7 @@ class VirtualEnv(object):
         dependencies = []
         for dependency in self.envconfig.deps:
             if dependency.indexserver is None:
-                package = self.session._resolve_package(package_spec=dependency.name)
+                package = resolve_package(package_spec=dependency.name)
                 if package != dependency.name:
                     dependency = dependency.__class__(package)
             dependencies.append(dependency)
@@ -265,9 +285,7 @@ class VirtualEnv(object):
         live_config = self._getliveconfig()
         if previous_config is None or not previous_config.matches(live_config):
             content = live_config.writeconfig(self.path_config)
-            self.session.report.verbosity1(
-                "write config to {} as {!r}".format(self.path_config, content)
-            )
+            reporter.verbosity1("write config to {} as {!r}".format(self.path_config, content))
 
     def _needs_reinstall(self, setupdir, action):
         setup_py = setupdir.join("setup.py")
@@ -324,9 +342,9 @@ class VirtualEnv(object):
                 return
             action.setactivity("{}-nodeps".format(name), dir)
             pip_flags = ["--no-deps"] + ([] if is_develop else ["-U"])
-        pip_flags.extend(["-v"] * min(3, action.report.verbosity - 2))
-        if action.venv.envconfig.extras:
-            dir += "[{}]".format(",".join(action.venv.envconfig.extras))
+        pip_flags.extend(["-v"] * min(3, reporter.verbosity() - 2))
+        if self.envconfig.extras:
+            dir += "[{}]".format(",".join(self.envconfig.extras))
         target = [dir]
         if is_develop:
             target.insert(0, "-e")
@@ -369,7 +387,7 @@ class VirtualEnv(object):
                 cmd,
                 cwd=self.envconfig.config.toxinidir,
                 action=action,
-                redirect=self.session.report.verbosity < 2,
+                redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
             )
         finally:
             sys.stdout = old_stdout
@@ -380,7 +398,7 @@ class VirtualEnv(object):
         if "PYTHONPATH" not in self.envconfig.passenv:
             # If PYTHONPATH not explicitly asked for, remove it.
             if "PYTHONPATH" in os.environ:
-                self.session.report.warning(
+                reporter.warning(
                     "Discarding $PYTHONPATH from environment, to override "
                     "specify PYTHONPATH in 'passenv' in your configuration."
                 )
@@ -450,7 +468,7 @@ class VirtualEnv(object):
             ignore_outcome = self.envconfig.ignore_outcome
         if ignore_errors is None:
             ignore_errors = self.envconfig.ignore_errors
-        with self.session.newaction(self, name) as action:
+        with self.new_action(name) as action:
             cwd = self.envconfig.changedir
             if display_hash_seed:
                 env = self._get_os_environ(is_test_command=True)
@@ -486,17 +504,17 @@ class VirtualEnv(object):
                 except tox.exception.InvocationError as err:
                     if ignore_outcome:
                         msg = "command failed but result from testenv is ignored\ncmd:"
-                        self.session.report.warning("{} {}".format(msg, err))
+                        reporter.warning("{} {}".format(msg, err))
                         self.status = "ignored failed command"
                         continue  # keep processing commands
 
-                    self.session.report.error(str(err))
+                    reporter.error(str(err))
                     self.status = "commands failed"
                     if not ignore_errors:
                         break  # Don't process remaining commands
                 except KeyboardInterrupt:
                     self.status = "keyboardinterrupt"
-                    self.session.report.error(self.status)
+                    reporter.error(self.status)
                     raise
 
     def _pcall(
@@ -515,7 +533,7 @@ class VirtualEnv(object):
         env = self._get_os_environ(is_test_command=is_test_command)
         bin_dir = str(self.envconfig.envbindir)
         env["PATH"] = os.pathsep.join([bin_dir, os.environ["PATH"]])
-        self.session.report.verbosity2("setting PATH={}".format(env["PATH"]))
+        reporter.verbosity2("setting PATH={}".format(env["PATH"]))
 
         # get command
         args[0] = self.getcommandpath(args[0], venv, cwd)
@@ -526,6 +544,60 @@ class VirtualEnv(object):
         return action.popen(
             args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret, returnout=returnout
         )
+
+    def setupenv(self):
+        if self.envconfig.missing_subs:
+            self.status = (
+                "unresolvable substitution(s): {}. "
+                "Environment variables are missing or defined recursively.".format(
+                    ",".join(["'{}'".format(m) for m in self.envconfig.missing_subs])
+                )
+            )
+            return
+        if not self.matching_platform():
+            self.status = "platform mismatch"
+            return  # we simply omit non-matching platforms
+        with self.new_action("getenv", self.envconfig.envdir) as action:
+            self.status = 0
+            default_ret_code = 1
+            envlog = self.env_log
+            try:
+                status = self.update(action=action)
+            except IOError as e:
+                if e.args[0] != 2:
+                    raise
+                status = (
+                    "Error creating virtualenv. Note that spaces in paths are "
+                    "not supported by virtualenv. Error details: {!r}".format(e)
+                )
+            except tox.exception.InvocationError as e:
+                status = (
+                    "Error creating virtualenv. Note that some special characters (e.g. ':' and "
+                    "unicode symbols) in paths are not supported by virtualenv. Error details: "
+                    "{!r}".format(e)
+                )
+            except tox.exception.InterpreterNotFound as e:
+                status = e
+                if self.envconfig.config.option.skip_missing_interpreters == "true":
+                    default_ret_code = 0
+            if status:
+                str_status = str(status)
+                command_log = envlog.get_commandlog("setup")
+                command_log.add_command(["setup virtualenv"], str_status, default_ret_code)
+                self.status = status
+                if default_ret_code == 0:
+                    reporter.skip(str_status)
+                else:
+                    reporter.error(str_status)
+                return False
+            command_path = self.getcommandpath("python")
+            envlog.set_python_info(command_path)
+            return True
+
+    def finishvenv(self):
+        with self.new_action("finishvenv"):
+            self.finish()
+            return True
 
 
 def getdigest(path):
@@ -574,7 +646,7 @@ def tox_testenv_create(venv, action):
         args.append("--no-download")
     # add interpreter explicitly, to prevent using default (virtualenv.ini)
     args.extend(["--python", str(config_interpreter)])
-    venv.session.make_emptydir(venv.path)
+    ensure_empty_dir(venv.path)
     basepath = venv.path.dirpath()
     basepath.ensure(dir=1)
     args.append(venv.path.basename)
@@ -601,7 +673,7 @@ def tox_runtest(venv, redirect):
 @tox.hookimpl
 def tox_runtest_pre(venv):
     venv.status = 0
-    venv.session.make_emptydir(venv.envconfig.envtmpdir)
+    ensure_empty_dir(venv.envconfig.envtmpdir)
     venv.envconfig.envtmpdir.ensure(dir=1)
     venv.test(
         name="run-test-pre",

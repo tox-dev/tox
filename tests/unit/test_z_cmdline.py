@@ -10,39 +10,10 @@ import py
 import pytest
 
 import tox
-from tox._pytestplugin import ReportExpectMock
 from tox.config import parseconfig
 from tox.session import Session
 
 pytest_plugins = "pytester"
-
-
-def test_report_protocol(newconfig):
-    config = newconfig(
-        [],
-        """
-            [testenv:mypython]
-            deps=xy
-    """,
-    )
-
-    class Popen:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def communicate(self):
-            return "", ""
-
-        def wait(self):
-            pass
-
-    session = Session(config, popen=Popen, Report=ReportExpectMock)
-    report = session.report
-    report.expect("using")
-    venv = session.getvenv("mypython")
-    action = session.newaction(venv, "update")
-    venv.update(action)
-    report.expect("logpopen")
 
 
 class TestSession:
@@ -68,7 +39,7 @@ class TestSession:
         )
         config = parseconfig([])
         session = Session(config)
-        envs = session.venvlist
+        envs = list(session.venv_dict.values())
         assert len(envs) == 2
         env1, env2 = envs
         env1.status = "FAIL XYZ"
@@ -621,7 +592,7 @@ def test_warning_emitted(cmd, initproj):
     """,
         },
     )
-    result = cmd()
+    cmd()
     result = cmd()
     assert "develop-inst-noop" in result.out
     assert "I am a warning" in result.err
