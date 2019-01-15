@@ -30,13 +30,13 @@ tox is highly
 [configurable](https://tox.readthedocs.io/en/latest/config.html) and
 [pluggable](https://tox.readthedocs.io/en/latest/plugins.html).
 
-## A simple example
+## Example: run tests with Python 2.7 and Python 3.7
 
 tox is mainly used as a command line tool and needs a `tox.ini` or a
 `tool.tox` section in `pyproject.toml` containing the configuration.
 
 To test a simple project that has some tests, here is an example with
-the `tox.ini` in the root of the project:
+a `tox.ini` in the root of the project:
 
 ``` {.sourceCode .ini}
 [tox]
@@ -59,19 +59,21 @@ __________________ summary _________________
   congratulations :)
 ```
 
-tox created two `testenvs` - one based on Python2.7 and one based on
+tox created two ``testenvs`` - one based on Python2.7 and one based on
 Python3.7, it installed pytest in them and ran the tests. The report at
-the end summarizes which `testenvs` have failed and which have
+the end summarizes which ``testenvs`` have failed and which have
 succeeded.
 
 **Note:** To learn more about what you can do with tox, have a look at
-[existing projects using
+[the collection of examples in the
+documentation](https://tox.readthedocs.io/en/latest/examples.html)
+or [existing projects using
 tox](https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code).
 
 ### How it works
 
 tox creates virtual environments for all configured so called
-`testenvs`, it then installs the project and other necessary
+``testenvs``, it then installs the project and other necessary
 dependencies and runs the configured set of commands. See [system
 overview](https://tox.readthedocs.io/en/latest/#system-overview) for
 more details.
