@@ -65,9 +65,9 @@ the end summarizes which ``testenvs`` have failed and which have
 succeeded.
 
 **Note:** To learn more about what you can do with tox, have a look at
-[the collection of examples in the 
+[the collection of examples in the
 documentation](https://tox.readthedocs.io/en/latest/examples.html)
-or [existing projects using 
+or [existing projects using
 tox](https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code).
 
 ### How it works
