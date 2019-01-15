@@ -666,7 +666,7 @@ def tox_addoption(parser):
             "LANGUAGE",
             "LD_LIBRARY_PATH",
             "TOX_WORK_DIR",
-            PARALLEL_ENV_VAR_KEY,
+            str(PARALLEL_ENV_VAR_KEY),
         }
 
         # read in global passenv settings
