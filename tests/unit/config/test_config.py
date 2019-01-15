@@ -19,6 +19,7 @@ from tox.config import (
     is_section_substitution,
     parseconfig,
 )
+from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.venv import VirtualEnv
 
 
@@ -1047,6 +1048,7 @@ class TestConfigTestEnv:
         assert "LANG" in envconfig.passenv
         assert "LANGUAGE" in envconfig.passenv
         assert "LD_LIBRARY_PATH" in envconfig.passenv
+        assert PARALLEL_ENV_VAR_KEY in envconfig.passenv
         assert "A123A" in envconfig.passenv
         assert "A123B" in envconfig.passenv
 

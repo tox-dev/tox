@@ -932,6 +932,7 @@ tox will inject the following environment variables that you can use to test tha
 - ``TOX_ENV_NAME`` is set to the current running tox environment name
 - ``TOX_ENV_DIR`` is set to the current tox environments working dir.
 - ``TOX_PACKAGE`` the packaging phases outcome path (useful to inspect and make assertion of the built package itself).
+- ``TOX_PARALLEL_ENV`` is set to the current running tox environment name, only when running in parallel mode.
 
 :note: this applies for all tox envs (isolated packaging too) and all external
  commands called (e.g. install command - pip).
