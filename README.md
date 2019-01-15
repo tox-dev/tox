@@ -59,9 +59,9 @@ __________________ summary _________________
   congratulations :)
 ```
 
-tox created two `testenvs` - one based on Python2.7 and one based on
+tox created two ``testenvs`` - one based on Python2.7 and one based on
 Python3.7, it installed pytest in them and ran the tests. The report at
-the end summarizes which `testenvs` have failed and which have
+the end summarizes which ``testenvs`` have failed and which have
 succeeded.
 
 **Note:** To learn more about what you can do with tox, have a look at
@@ -73,7 +73,7 @@ tox](https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code).
 ### How it works
 
 tox creates virtual environments for all configured so called
-`testenvs`, it then installs the project and other necessary
+``testenvs``, it then installs the project and other necessary
 dependencies and runs the configured set of commands. See [system
 overview](https://tox.readthedocs.io/en/latest/#system-overview) for
 more details.
