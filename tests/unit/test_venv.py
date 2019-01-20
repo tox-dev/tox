@@ -539,7 +539,7 @@ class TestCreationConfig:
 
     def test_python_recreation(self, tmpdir, newconfig, mocksession):
         pkg = tmpdir.ensure("package.tar.gz")
-        config = newconfig([], "")
+        config = newconfig(["-v"], "")
         mocksession.new_config(config)
         venv = mocksession.getvenv("python")
         create_config = venv._getliveconfig()

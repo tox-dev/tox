@@ -3,6 +3,8 @@ from functools import partial
 
 import py
 
+from tox.session.commands.run import sequential
+
 
 def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
     initproj(
@@ -45,20 +47,20 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
 
     with monkeypatch.context() as m:
 
-        def build_package(config, report, session):
+        def build_package(config, session):
             t1_build_started.set()
-            prev_run_test_env = tox.session.Session.runtestenv
-
-            def run_test_env(self, venv, redirect=False):
-                t2_build_finished.wait()
-                return prev_run_test_env(self, venv, redirect)
-
-            session.runtestenv = partial(run_test_env, session)
-
             t1_build_blocker.wait()
-            return prev_build_package(config, report, session)
+            return prev_build_package(config, session)
 
         m.setattr(tox.package, "build_package", build_package)
+
+        prev_run_test_env = sequential.runtestenv
+
+        def run_test_env(venv, redirect=False):
+            t2_build_finished.wait()
+            return prev_run_test_env(venv, redirect)
+
+        m.setattr(sequential, "runtestenv", run_test_env)
 
         t1 = threading.Thread(target=invoke_tox_in_thread, args=("t1",))
         t1.start()
@@ -66,10 +68,10 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
 
     with monkeypatch.context() as m:
 
-        def build_package(config, report, session):
+        def build_package(config, session):
             t2_build_started.set()
             try:
-                return prev_build_package(config, report, session)
+                return prev_build_package(config, session)
             finally:
                 t2_build_finished.set()
 

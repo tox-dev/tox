@@ -2664,7 +2664,8 @@ class TestCmdInvocation:
         result = cmd()
         assert result.ret
         msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
-        assert result.out == msg
+        assert result.err == msg
+        assert not result.out
 
     def test_override_workdir(self, cmd, initproj):
         baddir = "badworkdir-123"

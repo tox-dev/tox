@@ -223,6 +223,7 @@ def create_mocksession(request):
             return process_call_mock
 
         def new_config(self, config):
+            update_default_reporter(config.option.quiet_level, config.option.verbose_level)
             self.config = config
             self.venv_dict.clear()
             self.existing_venvs.clear()
