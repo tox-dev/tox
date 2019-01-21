@@ -36,10 +36,10 @@ class Reporter(object):
 
     def log_popen(self, cwd, outpath, cmd_args_shell):
         """ log information about the action.popen() created process. """
+        msg = "  {}$ {} ".format(cwd, cmd_args_shell)
         if outpath:
-            self.verbosity1("  {}$ {} >{}".format(cwd, cmd_args_shell, outpath))
-        else:
-            self.verbosity1("  {}$ {} ".format(cwd, cmd_args_shell))
+            msg = "{} >{}".format(msg, outpath)
+        self.verbosity1(msg, of="logpopen")
 
     @property
     def messages(self):
@@ -100,8 +100,8 @@ class Reporter(object):
     def verbosity0(self, msg, **opts):
         self.logline_if(Verbosity.DEFAULT, "verbosity0", msg, **opts)
 
-    def verbosity1(self, msg, **opts):
-        self.logline_if(Verbosity.INFO, "verbosity1", msg, **opts)
+    def verbosity1(self, msg, of="verbosity1", **opts):
+        self.logline_if(Verbosity.INFO, of, msg, **opts)
 
     def verbosity2(self, msg, **opts):
         self.logline_if(Verbosity.DEBUG, "verbosity2", msg, **opts)

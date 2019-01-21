@@ -2,8 +2,11 @@
 
 They live in the tox namespace and can be accessed as tox.[NAMESPACE.]NAME
 """
+import os
 import re
 import sys
+
+_THIS_FILE = os.path.realpath(os.path.abspath(__file__))
 
 
 def _construct_default_factors(cpython_versions, pypy_versions, other_interpreters):
@@ -75,3 +78,10 @@ class PIP:
     ]
     INSTALL_SHORT_OPTIONS_ARGUMENT = ["-{}".format(option) for option in SHORT_OPTIONS]
     INSTALL_LONG_OPTIONS_ARGUMENT = ["--{}".format(option) for option in LONG_OPTIONS]
+
+
+_HELP_DIR = os.path.join(os.path.dirname(_THIS_FILE), "helper")
+VERSION_QUERY_SCRIPT = os.path.join(_HELP_DIR, "get_version.py")
+SITE_PACKAGE_QUERY_SCRIPT = os.path.join(_HELP_DIR, "get_site_package_dir.py")
+BUILD_REQUIRE_SCRIPT = os.path.join(_HELP_DIR, "build_requires.py")
+BUILD_ISOLATED = os.path.join(_HELP_DIR, "build_isolated.py")

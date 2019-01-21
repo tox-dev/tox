@@ -71,6 +71,7 @@ def cmd(request, monkeypatch):
     request.addfinalizer(py.path.local().chdir)
 
     def run(*argv):
+        reset_report()
         key = str("PYTHONPATH")
         python_paths = (i for i in (os.getcwd(), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
@@ -107,15 +108,17 @@ class RunResult:
 
     def __enter__(self):
         self._start = time.time()
+        self._out_tell = sys.stdout.tell()
+        self._err_tell = sys.stderr.tell()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.duration = time.time() - self._start
-        self.out = self._read(sys.stdout)
-        self.err = self._read(sys.stderr)
+        self.out = self._read(sys.stdout, self._out_tell)
+        self.err = self._read(sys.stderr, self._err_tell)
 
-    def _read(self, out):
-        out.buffer.seek(0)
+    def _read(self, out, pos):
+        out.buffer.seek(pos)
         return out.buffer.read().decode(out.encoding, errors=out.errors)
 
     @property
@@ -138,7 +141,10 @@ class ReportExpectMock:
 
     def clear(self):
         self._index = -1
-        self.instance.reported_lines.clear()
+        if six.PY3:
+            self.instance.reported_lines.clear()
+        else:
+            del self.instance.reported_lines[:]
 
     def getnext(self, cat):
         __tracebackhide__ = True
@@ -208,13 +214,16 @@ def create_mocksession(request):
 
     class MockSession(Session):
         def __init__(self, config):
-            update_default_reporter(config.option.quiet_level, config.option.verbose_level)
+            self.logging_levels(config.option.quiet_level, config.option.verbose_level)
             super(MockSession, self).__init__(config, popen=self.popen)
             self._pcalls = []
             self.report = ReportExpectMock()
 
         def _clearmocks(self):
-            self._pcalls.clear()
+            if six.PY3:
+                self._pcalls.clear()
+            else:
+                del self._pcalls[:]
             self.report.clear()
 
         def popen(self, args, cwd, shell=None, stdout=None, stderr=None, env=None, **_):
@@ -223,10 +232,16 @@ def create_mocksession(request):
             return process_call_mock
 
         def new_config(self, config):
-            update_default_reporter(config.option.quiet_level, config.option.verbose_level)
+            self.logging_levels(config.option.quiet_level, config.option.verbose_level)
             self.config = config
             self.venv_dict.clear()
             self.existing_venvs.clear()
+
+        def logging_levels(self, quiet, verbose):
+            update_default_reporter(quiet, verbose)
+            if hasattr(self, "config"):
+                self.config.option.quiet_level = quiet
+                self.config.option.verbose_level = verbose
 
     return MockSession(config)
 
@@ -494,18 +509,18 @@ def current_tox_py():
 
 
 def pytest_runtest_setup(item):
-    from tox.reporter import _INSTANCE
-
-    _INSTANCE._reset()
+    reset_report()
 
 
 def pytest_runtest_teardown(item):
-    from tox.reporter import _INSTANCE
-
-    _INSTANCE._reset()
+    reset_report()
 
 
 def pytest_pyfunc_call(pyfuncitem):
+    reset_report()
+
+
+def reset_report(quiet=0, verbose=0):
     from tox.reporter import _INSTANCE
 
-    _INSTANCE._reset()
+    _INSTANCE._reset(quiet_level=quiet, verbose_level=verbose)

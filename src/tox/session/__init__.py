@@ -85,7 +85,7 @@ def build_session(config):
     return Session(config)
 
 
-class Session:
+class Session(object):
     """The session object that ties together configuration, reporting, venv creation, testing."""
 
     def __init__(self, config, popen=subprocess.Popen):
@@ -149,9 +149,9 @@ class Session:
     def hook(self):
         return self.config.pluginmanager.hook
 
-    def newaction(self, env, msg, *args):
-        new_action = Action(
-            env,
+    def newaction(self, name, msg, *args):
+        return Action(
+            name,
             msg,
             args,
             self.config.logdir,
@@ -160,7 +160,6 @@ class Session:
             self.popen,
             sys.executable,
         )
-        return new_action
 
     def runcommand(self):
         reporter.using("tox-{} from {}".format(tox.__version__, tox.__file__))

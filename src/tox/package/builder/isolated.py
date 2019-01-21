@@ -1,5 +1,5 @@
+from __future__ import unicode_literals
 import json
-import textwrap
 from collections import namedtuple
 
 import pkg_resources
@@ -7,6 +7,7 @@ import six
 
 from tox import reporter
 from tox.config import DepConfig, get_py_project_toml
+from tox.constants import BUILD_ISOLATED, BUILD_REQUIRE_SCRIPT
 
 BuildInfo = namedtuple("BuildInfo", ["requires", "backend_module", "backend_object"])
 
@@ -75,32 +76,28 @@ def get_build_info(folder):
 
     args = backend.split(":")
     module = args[0]
-    obj = "" if len(args) == 1 else ".{}".format(args[1])
+    obj = args[1] if len(args) > 1 else ""
 
-    return BuildInfo(requires, module, "{}{}".format(module, obj))
+    return BuildInfo(requires, module, obj)
 
 
 def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
     with package_venv.new_action(
         "perform-isolated-build", package_venv.envconfig.envdir
     ) as action:
-        script = textwrap.dedent(
-            """
-            import sys
-            import {}
-            basename = {}.build_{}({!r}, {{ "--global-option": ["--formats=gztar"]}})
-            print(basename)""".format(
-                build_info.backend_module, build_info.backend_object, "sdist", str(dist_dir)
-            )
-        )
-
         # need to start with an empty (but existing) source distribution folder
         if dist_dir.exists():
             dist_dir.remove(rec=1, ignore_errors=True)
         dist_dir.ensure_dir()
 
         result = package_venv._pcall(
-            [package_venv.envconfig.envpython, "-c", script],
+            [
+                package_venv.envconfig.envpython,
+                BUILD_ISOLATED,
+                build_info.backend_module,
+                build_info.backend_object,
+                str(dist_dir),
+            ],
             returnout=True,
             action=action,
             cwd=setup_dir,
@@ -111,20 +108,13 @@ def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
 
 def get_build_requires(build_info, package_venv, setup_dir):
     with package_venv.new_action("get-build-requires", package_venv.envconfig.envdir) as action:
-        script = textwrap.dedent(
-            """
-                import {}
-                import json
-
-                backend = {}
-                for_build_requires = backend.get_requires_for_build_{}(None)
-                print(json.dumps(for_build_requires))
-                        """.format(
-                build_info.backend_module, build_info.backend_object, "sdist"
-            )
-        ).strip()
         result = package_venv._pcall(
-            [package_venv.envconfig.envpython, "-c", script],
+            [
+                package_venv.envconfig.envpython,
+                BUILD_REQUIRE_SCRIPT,
+                build_info.backend_module,
+                build_info.backend_object,
+            ],
             returnout=True,
             action=action,
             cwd=setup_dir,

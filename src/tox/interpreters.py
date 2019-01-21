@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import distutils.util
 import json
 import re
@@ -7,6 +9,7 @@ import sys
 import py
 
 import tox
+from tox.constants import SITE_PACKAGE_QUERY_SCRIPT, VERSION_QUERY_SCRIPT
 
 
 class Interpreters:
@@ -45,13 +48,7 @@ class Interpreters:
             return ""
         envdir = str(envdir)
         try:
-            code = (
-                "import distutils.sysconfig; import json;"
-                "print(json.dumps("
-                "{{ 'dir': distutils.sysconfig.get_python_lib(prefix={!r})}}"
-                "))"
-            )
-            res = exec_on_interpreter(str(info.executable), "-c", code.format(envdir))
+            res = exec_on_interpreter(str(info.executable), SITE_PACKAGE_QUERY_SCRIPT, str(envdir))
         except ExecFailed as e:
             print("execution failed: {} -- {}".format(e.out, e.err))
             return ""
@@ -62,18 +59,13 @@ class Interpreters:
 def run_and_get_interpreter_info(name, executable):
     assert executable
     try:
-        result = exec_on_interpreter(
-            str(executable),
-            "-c",
-            "import sys; import json;"
-            'print(json.dumps({"version_info": tuple(sys.version_info),'
-            '                  "sysplatform": sys.platform}))',
-        )
+        result = exec_on_interpreter(str(executable), VERSION_QUERY_SCRIPT)
         result["version_info"] = tuple(result["version_info"])  # fix json dump transformation
+        del result["version"]
     except ExecFailed as e:
         return NoInterpreterInfo(name, executable=e.executable, out=e.out, err=e.err)
     else:
-        return InterpreterInfo(name, executable, **result)
+        return InterpreterInfo(name, **result)
 
 
 def exec_on_interpreter(*args):
@@ -168,12 +160,12 @@ else:
 
     def locate_via_py(*parts):
         ver = "-{}".format(".".join(parts))
-        script = "import sys; print(sys.executable)"
         py_exe = distutils.spawn.find_executable("py")
         if py_exe:
             proc = subprocess.Popen(
-                (py_exe, ver, "-c", script), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                (py_exe, ver, VERSION_QUERY_SCRIPT), stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
             out, _ = proc.communicate()
+            result = json.loads(out)
             if not proc.returncode:
-                return out.decode("UTF-8").strip()
+                return result["executable"]

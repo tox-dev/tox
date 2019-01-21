@@ -11,6 +11,7 @@ import pytest
 
 import tox
 from tox.config import parseconfig
+from tox.reporter import Verbosity
 from tox.session import Session
 
 pytest_plugins = "pytester"
@@ -18,13 +19,16 @@ pytest_plugins = "pytester"
 
 class TestSession:
     def test_log_pcall(self, mocksession):
+        mocksession.logging_levels(quiet=Verbosity.DEFAULT, verbose=Verbosity.INFO)
         mocksession.config.logdir.ensure(dir=1)
         assert not mocksession.config.logdir.listdir()
-        action = mocksession.newaction(None, "something")
-        action.popen(["echo"])
-        match = mocksession.report.getnext("logpopen")
-        assert match[1].outpath.relto(mocksession.config.logdir)
-        assert match[1].shell is False
+        with mocksession.newaction("what", "something") as action:
+            action.popen(["echo"])
+            match = mocksession.report.getnext("logpopen")
+            log_name = py.path.local(match[1].split(">")[-1].strip()).relto(
+                mocksession.config.logdir
+            )
+            assert log_name == "what-0.log"
 
     def test_summary_status(self, initproj, capfd):
         initproj(
@@ -136,6 +140,7 @@ def test_unknown_interpreter_and_env(cmd, initproj):
             basepython=xyz_unknown_interpreter
             [testenv]
             changedir=tests
+            skip_install = true
         """,
         },
     )

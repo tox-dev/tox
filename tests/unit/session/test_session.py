@@ -9,6 +9,7 @@ import pytest
 import tox
 from tox.exception import MissingDependency, MissingDirectory
 from tox.package import resolve_package
+from tox.reporter import Verbosity
 
 
 def test_resolve_pkg_missing_directory(tmpdir, mocksession):
@@ -27,6 +28,7 @@ def test_resolve_pkg_missing_directory_in_distshare(tmpdir, mocksession):
 
 
 def test_resolve_pkg_multiple_valid_versions(tmpdir, mocksession):
+    mocksession.logging_levels(quiet=Verbosity.DEFAULT, verbose=Verbosity.DEBUG)
     distshare = tmpdir.join("distshare")
     distshare.ensure("pkg123-1.3.5.zip")
     p = distshare.ensure("pkg123-1.4.5.zip")
@@ -239,8 +241,8 @@ def popen_env_test(initproj, cmd, monkeypatch):
                 monkeypatch.setattr(tox.session, "build_session", build_session)
 
                 def popen(cmd, **kwargs):
-                    activity_id = res.session._actions[-1].name
-                    activity_name = res.session._actions[-1].activity
+                    activity_id = _actions[-1].name
+                    activity_name = _actions[-1].activity
                     ret = "NOTSET"
                     try:
                         ret = res._popen(cmd, **kwargs)
@@ -251,6 +253,25 @@ def popen_env_test(initproj, cmd, monkeypatch):
                             (activity_id, activity_name, kwargs.get("env"), ret, cmd)
                         )
                     return ret
+
+                _actions = []
+                from tox.action import Action
+
+                _prev_enter = Action.__enter__
+
+                def enter(self):
+                    _actions.append(self)
+                    return _prev_enter(self)
+
+                monkeypatch.setattr(Action, "__enter__", enter)
+
+                _prev_exit = Action.__exit__
+
+                def exit_func(self, *args, **kwargs):
+                    del _actions[_actions.index(self)]
+                    _prev_exit(self, *args, **kwargs)
+
+                monkeypatch.setattr(Action, "__exit__", exit_func)
 
                 res.result = cmd("-e", tox_env)
                 res.cwd = os.getcwd()
@@ -279,7 +300,7 @@ def assert_popen_env(res):
     assert res.result.ret == 0, res.result.out
     for tox_id, _, env, __, ___ in res.popens:
         assert env["TOX_WORK_DIR"] == os.path.join(res.cwd, ".tox")
-        if tox_id != "tox":
+        if tox_id != "GLOB":
             assert env["TOX_ENV_NAME"] == tox_id
             assert env["TOX_ENV_DIR"] == os.path.join(res.cwd, ".tox", tox_id)
 
@@ -341,7 +362,7 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
     expected = textwrap.dedent(
         """
             py run-test-pre: commands[0] | python -c 'raise SystemExit(2)'
-            ERROR: InvocationError for command '{} -c raise SystemExit(2)' (exited with code 2)
+            ERROR: InvocationError for command {} -c raise SystemExit(2) (exited with code 2)
             py run-test-post: commands[0] | python -c 'print("post")'
             post
             ___________________________________ summary ___________________________________{}
@@ -350,5 +371,6 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
             sys.executable.replace("\\", "\\\\"), "_" if sys.platform != "win32" else ""
         )
     )
-    actual = result.out.replace(os.linesep, "\n")
-    assert expected in actual
+    have = result.out.replace(os.linesep, "\n")
+    actual = have[len(have) - len(expected) :]
+    assert actual == expected

@@ -3,6 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import json
 import subprocess
 
+from tox.constants import VERSION_QUERY_SCRIPT
+
 from .command import CommandLog
 
 
@@ -15,17 +17,10 @@ class EnvLog(object):
         self.dict = dict
 
     def set_python_info(self, python_executable):
-        cmd = [
-            str(python_executable),
-            "-c",
-            "import sys; import json;"
-            "print(json.dumps({"
-            "'executable': sys.executable,"
-            "'version_info': list(sys.version_info),"
-            "'version': sys.version}))",
-        ]
+        cmd = [str(python_executable), VERSION_QUERY_SCRIPT]
         result = subprocess.check_output(cmd, universal_newlines=True)
-        self.dict["python"] = json.loads(result)
+        answer = json.loads(result)
+        self.dict["python"] = answer
 
     def get_commandlog(self, name):
         """get the command log for a given group name"""

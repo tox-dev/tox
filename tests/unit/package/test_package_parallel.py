@@ -1,5 +1,4 @@
 import traceback
-from functools import partial
 
 import py
 
@@ -15,7 +14,7 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
                   envlist = py
                   install_cmd = python -m -c 'print("ok")' -- {opts} {packages}'
                   [testenv]
-                  commands = python --version
+                  commands = python -c 'import sys; print(sys.version)'
                       """
         },
     )

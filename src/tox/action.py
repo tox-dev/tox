@@ -66,13 +66,15 @@ class Action(object):
         stream_getter = self._get_standard_streams(
             capture_err, cmd_args_shell, redirect, returnout
         )
+        cwd = os.getcwd() if cwd is None else cwd
         with stream_getter as (fin, out_path, stderr, stdout):
             try:
+                args = self._rewrite_args(cwd, args)
                 process = self.via_popen(
-                    self._rewrite_args(cwd, args),
+                    args,
                     stdout=stdout,
                     stderr=stderr,
-                    cwd=cwd,
+                    cwd=str(cwd),
                     env=os.environ.copy() if env is None else env,
                     universal_newlines=True,
                     shell=False,
@@ -88,20 +90,20 @@ class Action(object):
             output = self.feed_stdin(fin, process, redirect)
             exit_code = process.wait()
         if exit_code and not ignore_ret:
-            invoked = " ".join(map(str, process.args))
+            invoked = " ".join(map(str, args))
             if out_path:
                 reporter.error(
                     "invocation failed (exit code {:d}), logfile: {}".format(exit_code, out_path)
                 )
                 output = out_path.read()
                 reporter.error(output)
-                self.command_log.add_command(process.args, output, exit_code)
+                self.command_log.add_command(args, output, exit_code)
                 raise InvocationError(invoked, exit_code, out_path)
             else:
                 raise InvocationError(invoked, exit_code)
         if not output and out_path:
             output = out_path.read()
-        self.command_log.add_command(process.args, output, exit_code)
+        self.command_log.add_command(args, output, exit_code)
         return output
 
     def feed_stdin(self, fin, process, redirect):
@@ -149,14 +151,14 @@ class Action(object):
         stderr = subprocess.STDOUT if capture_err else None
         stdout_file = None
         if self.generate_tox_log or redirect:
-            stdout_file = open(self.get_log_path(self.name), "wt")
+            out_path = self.get_log_path(self.name)
+            stdout_file = out_path.open("wt")
             stdout_file.write(
                 "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
                     self.name, self.msg, cmd_args_shell
                 )
             )
             stdout_file.flush()
-            out_path = py.path.local(stdout_file.name)
             fin = out_path.open("rb")
             fin.read()  # read the header, so it won't be written to stdout
             stdout = stdout_file
