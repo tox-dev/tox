@@ -165,7 +165,11 @@ class VirtualEnv(object):
         return py.path.local.sysfind(name, paths=[self.envconfig.envbindir])
 
     def _normal_lookup(self, name):
-        return py.path.local.sysfind(name)
+        if self.envconfig.setenv["PATH"]:
+            search_path = self.envconfig.setenv["PATH"].split(":")
+        else:
+            search_path = os.environ["PATH"].split(":")
+        return py.path.local.sysfind(name, paths=search_path)
 
     def _check_external_allowed_and_warn(self, path):
         if not self.is_allowed_external(path):
@@ -514,7 +518,12 @@ class VirtualEnv(object):
         os.environ.pop("VIRTUALENV_PYTHON", None)
         env = self._get_os_environ(is_test_command=is_test_command)
         bin_dir = str(self.envconfig.envbindir)
-        env["PATH"] = os.pathsep.join([bin_dir, os.environ["PATH"]])
+        if "PATH" in self.envconfig.setenv:
+            env["PATH"] = os.pathsep.join([bin_dir, self.envconfig.setenv["PATH"]])
+        else:
+            env["PATH"] = os.pathsep.join([bin_dir, os.environ["PATH"]])
+        # Remove redundantly duplicated directories in PATH without changing order
+        env["PATH"] = ":".join(list(dict.fromkeys(env["PATH"].split(":"))))
         self.session.report.verbosity2("setting PATH={}".format(env["PATH"]))
 
         # get command
