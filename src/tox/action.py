@@ -116,7 +116,7 @@ class Action(object):
                 buf = getattr(sys.stdout, "buffer", sys.stdout)
                 out = None
                 last_time = time.time()
-                while 1:
+                while True:
                     # we have to read one byte at a time, otherwise there
                     # might be no output for a long time with slow tests
                     data = fin.read(1)
