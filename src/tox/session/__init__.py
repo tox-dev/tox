@@ -89,6 +89,9 @@ class Session(object):
     """The session object that ties together configuration, reporting, venv creation, testing."""
 
     def __init__(self, config, popen=subprocess.Popen):
+        self._reset(config, popen)
+
+    def _reset(self, config, popen=subprocess.Popen):
         self.config = config
         self.popen = popen
         self.resultlog = ResultLog()
