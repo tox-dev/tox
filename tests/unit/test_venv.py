@@ -80,6 +80,32 @@ def test_create(mocksession, newconfig):
     assert venv.path_config.check(exists=False)
 
 
+def test_setenv_executable_found(tmpdir, monkeypatch, mocksession, newconfig):
+    config = newconfig(
+        [],
+        """
+        [testenv]
+        passenv=
+          PATH
+        setenv=
+          PATH={env:PATH}:""" + str(tmpdir) + """/scrap/bin
+    """,
+    )
+    # Creating an executable file
+    basedir = str(tmpdir) + "/scrap/bin"
+    if not os.path.exists(basedir):
+        os.makedirs(basedir)
+    temp_executable_path = basedir + '/temp_executable'
+    open(temp_executable_path, 'a').close()
+    os.chmod(temp_executable_path, 0o755)
+    assert os.path.isfile(temp_executable_path)
+
+    envconfig = config.envconfigs["python"]
+    venv = VirtualEnv(envconfig, session=mocksession)
+    p = venv.getcommandpath("temp_executable")
+    assert str(p) == temp_executable_path
+
+
 def test_commandpath_venv_precedence(tmpdir, monkeypatch, mocksession, newconfig):
     config = newconfig(
         [],
