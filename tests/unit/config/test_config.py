@@ -2065,7 +2065,7 @@ class TestGlobalOptions:
         config = newconfig([], "")
         assert not config.sdistsrc
 
-    def test_env_selection(self, newconfig, monkeypatch):
+    def test_env_selection_with_section_name(self, newconfig, monkeypatch):
         inisource = """
             [tox]
             envlist = py36
@@ -2090,6 +2090,18 @@ class TestGlobalOptions:
         assert config.envlist == ["py36", "py35", "py27"]
         config = newconfig(["-espam"], inisource)
         assert config.envlist == ["spam"]
+
+    def test_env_selection_expanded_envlist(self, newconfig, monkeypatch):
+        inisource = """
+            [tox]
+            envlist = py{36,35,27}
+            [testenv:py36]
+            basepython=python3.6
+        """
+        config = newconfig([], inisource)
+        assert config.envlist == ["py36", "py35", "py27"]
+        config = newconfig(["-eALL"], inisource)
+        assert config.envlist == ["py36", "py35", "py27"]
 
     def test_py_venv(self, newconfig):
         config = newconfig(["-epy"], "")
