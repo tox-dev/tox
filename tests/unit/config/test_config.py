@@ -1910,6 +1910,46 @@ class TestConfigTestEnv:
         assert env_config.basepython == "python{}.{}".format(major, minor - 1)
         assert not recwarn.list, "\n".join(repr(i.message) for i in recwarn.list)
 
+    def test_default_single_digit_factors(self, newconfig, monkeypatch):
+        from tox.interpreters import Interpreters
+
+        def get_executable(self, envconfig):
+            return sys.executable
+
+        monkeypatch.setattr(Interpreters, "get_executable", get_executable)
+
+        major, minor = sys.version_info[0:2]
+
+        with pytest.warns(None) as lying:
+            config = newconfig(
+                """
+                [testenv:py{0}]
+                basepython=python{0}.{1}
+                commands = python --version
+                """.format(
+                    major, minor - 1
+                )
+            )
+
+        env_config = config.envconfigs["py{}".format(major)]
+        assert env_config.basepython == "python{}.{}".format(major, minor - 1)
+        assert len(lying) == 0, "\n".join(repr(r.message) for r in lying)
+
+        with pytest.warns(None) as truthful:
+            config = newconfig(
+                """
+                [testenv:py{0}]
+                basepython=python{0}.{1}
+                commands = python --version
+                """.format(
+                    major, minor
+                )
+            )
+
+        env_config = config.envconfigs["py{}".format(major)]
+        assert env_config.basepython == "python{}.{}".format(major, minor)
+        assert len(truthful) == 0, "\n".join(repr(r.message) for r in truthful)
+
     def test_default_factors_conflict_ignore(self, newconfig, capsys):
         with pytest.warns(None) as record:
             config = newconfig(

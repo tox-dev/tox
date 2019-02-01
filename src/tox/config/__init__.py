@@ -571,7 +571,8 @@ def tox_addoption(parser):
                 proposed_version = "".join(
                     str(i) for i in python_info_for_proposed.version_info[0:2]
                 )
-                if implied_version != proposed_version:
+                # '27'.startswith('2') or '27'.startswith('27')
+                if not proposed_version.startswith(implied_version):
                     # TODO(stephenfin): Raise an exception here in tox 4.0
                     warnings.warn(
                         "conflicting basepython version (set {}, should be {}) for env '{}';"
