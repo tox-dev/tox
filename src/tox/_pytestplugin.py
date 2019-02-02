@@ -250,7 +250,7 @@ def create_mocksession(request):
 def newmocksession(mocksession, newconfig):
     def newmocksession_(args, source, plugins=()):
         config = newconfig(args, source, plugins=plugins)
-        mocksession._reset(config)
+        mocksession._reset(config, mocksession.popen)
         return mocksession
 
     return newmocksession_
