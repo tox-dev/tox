@@ -232,10 +232,6 @@ class TestConfigPackage:
         assert not envconfig.recreate
         assert not envconfig.pip_pre
 
-    def test_defaults_distshare(self, newconfig):
-        config = newconfig([], "")
-        assert config.distshare == config.homedir.join(".tox", "distshare")
-
     def test_defaults_changed_dir(self, tmpdir, newconfig):
         tmpdir.mkdir("abc").chdir()
         config = newconfig([], "")
@@ -1246,7 +1242,6 @@ class TestConfigTestEnv:
                 {envtmpdir}
                 {envpython}
                 {homedir}
-                {distshare}
                 {envlogdir}
         """
         )
@@ -1259,8 +1254,7 @@ class TestConfigTestEnv:
         assert argv[4][0] == conf.envtmpdir
         assert argv[5][0] == conf.envpython
         assert argv[6][0] == str(config.homedir)
-        assert argv[7][0] == config.homedir.join(".tox", "distshare")
-        assert argv[8][0] == conf.envlogdir
+        assert argv[7][0] == conf.envlogdir
 
     def test_substitution_notfound_issue246(self, newconfig):
         config = newconfig(
@@ -2022,48 +2016,6 @@ class TestGlobalOptions:
     def test_quiet(self, args, expected, newconfig):
         config = newconfig(args, "")
         assert config.option.quiet_level == expected
-
-    def test_substitution_jenkins_default(self, monkeypatch, newconfig):
-        monkeypatch.setenv("HUDSON_URL", "xyz")
-        config = newconfig(
-            """
-            [testenv:py27]
-            commands =
-                {distshare}
-        """
-        )
-        conf = config.envconfigs["py27"]
-        argv = conf.commands
-        expect_path = config.toxworkdir.join("distshare")
-        assert argv[0][0] == expect_path
-
-    def test_substitution_jenkins_context(self, tmpdir, monkeypatch, newconfig):
-        monkeypatch.setenv("HUDSON_URL", "xyz")
-        monkeypatch.setenv("WORKSPACE", str(tmpdir))
-        config = newconfig(
-            """
-            [tox:jenkins]
-            distshare = {env:WORKSPACE}/hello
-            [testenv:py27]
-            commands =
-                {distshare}
-        """
-        )
-        conf = config.envconfigs["py27"]
-        argv = conf.commands
-        assert argv[0][0] == config.distshare
-        assert config.distshare == tmpdir.join("hello")
-
-    def test_sdist_specification(self, newconfig):
-        config = newconfig(
-            """
-            [tox]
-            sdistsrc = {distshare}/xyz.zip
-        """
-        )
-        assert config.sdistsrc == config.distshare.join("xyz.zip")
-        config = newconfig([], "")
-        assert not config.sdistsrc
 
     def test_env_selection(self, newconfig, monkeypatch):
         inisource = """

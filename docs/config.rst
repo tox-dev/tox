@@ -65,17 +65,6 @@ Global settings are defined under the ``tox`` section as:
    Directory where the packaged source distribution should be put. Note this is cleaned at the start of
    every packaging invocation.
 
-.. conf:: sdistsrc ^ PATH ^ {toxworkdir}/dist
-
-   Do not build the package, but instead use the latest package available under this path.
-   You can override it via the command line flag ``--installpkg``.
-
-.. conf:: distshare ^ PATH ^ {homedir}/.tox/distshare
-
-   Folder where the packaged source distribution will be moved, this is not cleaned between packaging
-   invocations. On Jenkins (exists ``JENKINS_URL`` or ``HUDSON_URL`` environment variable)
-   the default path is ``{toxworkdir}/distshare``.
-
 .. conf:: envlist ^ comma separated values
 
     Determining the environment list that ``tox`` is to operate on happens in this order (if any is found,
@@ -562,10 +551,6 @@ Globally available substitutions
 
 ``{distdir}``
     the directory where sdist-packages will be created in
-
-``{distshare}``
-    (DEPRECATED) the directory where sdist-packages will be copied to so that
-    they may be accessed by other processes or tox runs.
 
 ``{:}``
     OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in ``setenv``,

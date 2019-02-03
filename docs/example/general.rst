@@ -117,41 +117,6 @@ or override it from the command line or from the environment variable
 
     export TOXENV=py27,py36 # in bash style shells
 
-.. _artifacts:
-
-Access package artifacts between multiple tox-runs
---------------------------------------------------------
-
-If you have multiple projects using tox you can make use of
-a ``distshare`` directory where ``tox`` will copy in sdist-packages so
-that another tox run can find the "latest" dependency.  This feature
-allows to test a package against an unreleased development version
-or even an uncommitted version on your own machine.
-
-By default, ``{homedir}/.tox/distshare`` will be used for
-copying in and copying out artifacts (i.e. Python packages).
-
-For project ``two`` to depend on the ``one`` package you use
-the following entry:
-
-.. code-block:: ini
-
-    # example two/tox.ini
-    [testenv]
-    # install latest package from "one" project
-    deps = {distshare}/one-*.zip
-
-That's all.  tox running on project ``one`` will copy the sdist-package
-into the ``distshare`` directory after which a ``tox`` run on project
-``two`` will grab it because ``deps`` contain an entry with the
-``one-*.zip`` pattern.  If there is more than one matching package the
-highest version will be taken.  ``tox`` uses verlib_  to compare version
-strings which must be compliant with :pep:`386`.
-
-If you want to use this with Jenkins_, also checkout the :ref:`jenkins artifact example`.
-
-.. _verlib: https://bitbucket.org/tarek/distutilsversion/
-
 basepython defaults, overriding
 +++++++++++++++++++++++++++++++
 

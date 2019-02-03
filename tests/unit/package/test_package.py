@@ -28,46 +28,6 @@ def test_installpkg(tmpdir, newconfig):
     assert sdist_path == p
 
 
-def test_sdist_latest(tmpdir, newconfig):
-    distshare = tmpdir.join("distshare")
-    config = newconfig(
-        [],
-        """
-            [tox]
-            distshare={}
-            sdistsrc={{distshare}}/pkg123-*
-    """.format(
-            distshare
-        ),
-    )
-    p = distshare.ensure("pkg123-1.4.5.zip")
-    distshare.ensure("pkg123-1.4.5a1.zip")
-    session = Session(config)
-    _, dist = get_package(session)
-    assert dist == p
-
-
-def test_separate_sdist_no_sdistfile(cmd, initproj, tmpdir):
-    distshare = tmpdir.join("distshare")
-    initproj(
-        ("pkg123-foo", "0.7"),
-        filedefs={
-            "tox.ini": """
-            [tox]
-            distshare={}
-        """.format(
-                distshare
-            )
-        },
-    )
-    result = cmd("--sdistonly")
-    assert not result.ret
-    distshare_files = distshare.listdir()
-    assert len(distshare_files) == 1
-    sdistfile = distshare_files[0]
-    assert "pkg123-foo-0.7.zip" in str(sdistfile)
-
-
 def test_sdistonly(initproj, cmd):
     initproj(
         "example123",

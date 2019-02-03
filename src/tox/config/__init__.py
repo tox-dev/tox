@@ -971,10 +971,8 @@ class ParseIni(object):
             reader = SectionReader(
                 "tox:jenkins", self._cfg, prefix=prefix, fallbacksections=["tox"]
             )
-            dist_share_default = "{toxworkdir}/distshare"
         elif not context_name:
             reader = SectionReader("tox", self._cfg, prefix=prefix)
-            dist_share_default = "{homedir}/.tox/distshare"
         else:
             raise ValueError("invalid context")
 
@@ -1044,10 +1042,7 @@ class ParseIni(object):
         config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
 
         reader.addsubstitutions(distdir=config.distdir)
-        config.distshare = reader.getpath("distshare", dist_share_default)
         config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}/.tmp")
-        reader.addsubstitutions(distshare=config.distshare)
-        config.sdistsrc = reader.getpath("sdistsrc", None)
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
 

@@ -776,7 +776,6 @@ class Session:
         self.report.keyvalue("toxinidir:  ", self.config.toxinidir)
         self.report.keyvalue("toxworkdir: ", self.config.toxworkdir)
         self.report.keyvalue("setupdir:   ", self.config.setupdir)
-        self.report.keyvalue("distshare:  ", self.config.distshare)
         self.report.keyvalue("skipsdist:  ", self.config.skipsdist)
         self.report.tw.line()
         for envconfig in self.config.envconfigs.values():

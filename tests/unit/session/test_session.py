@@ -11,57 +11,54 @@ from tox.exception import MissingDependency, MissingDirectory
 
 
 def test__resolve_pkg_missing_directory(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
-    spec = distshare.join("pkg123-*")
+    spec = tmpdir.join("distdir").join("pkg123-*")
     with pytest.raises(MissingDirectory):
         mocksession._resolve_package(spec)
 
 
-def test__resolve_pkg_missing_directory_in_distshare(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
-    spec = distshare.join("pkg123-*")
-    distshare.ensure(dir=1)
+def test__resolve_pkg_missing_directory_in_distdir(tmpdir, mocksession):
+    spec = tmpdir.join("distdir").ensure_dir().join("pkg123-*")
     with pytest.raises(MissingDependency):
         mocksession._resolve_package(spec)
 
 
 def test__resolve_pkg_multiple_valid_versions(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
-    distshare.ensure("pkg123-1.3.5.zip")
-    p = distshare.ensure("pkg123-1.4.5.zip")
-    result = mocksession._resolve_package(distshare.join("pkg123-*"))
+    distdir = tmpdir.join("distdir")
+    distdir.ensure("pkg123-1.3.5.zip")
+    p = distdir.ensure("pkg123-1.4.5.zip")
+    result = mocksession._resolve_package(distdir.join("pkg123-*"))
     assert result == p
     mocksession.report.expect("info", "determin*pkg123*")
 
 
 def test__resolve_pkg_with_invalid_version(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
+    distdir = tmpdir.join("distdir")
 
-    distshare.ensure("pkg123-1.something_bad.zip")
-    distshare.ensure("pkg123-1.3.5.zip")
-    p = distshare.ensure("pkg123-1.4.5.zip")
+    distdir.ensure("pkg123-1.something_bad.zip")
+    distdir.ensure("pkg123-1.3.5.zip")
+    p = distdir.ensure("pkg123-1.4.5.zip")
 
-    result = mocksession._resolve_package(distshare.join("pkg123-*"))
+    result = mocksession._resolve_package(distdir.join("pkg123-*"))
     mocksession.report.expect("warning", "*1.something_bad*")
     assert result == p
 
 
 def test__resolve_pkg_with_alpha_version(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
-    distshare.ensure("pkg123-1.3.5.zip")
-    distshare.ensure("pkg123-1.4.5a1.tar.gz")
-    p = distshare.ensure("pkg123-1.4.5.zip")
-    result = mocksession._resolve_package(distshare.join("pkg123-*"))
+    distdir = tmpdir.join("distdir")
+    distdir.ensure("pkg123-1.3.5.zip")
+    distdir.ensure("pkg123-1.4.5a1.tar.gz")
+    p = distdir.ensure("pkg123-1.4.5.zip")
+    result = mocksession._resolve_package(distdir.join("pkg123-*"))
     assert result == p
 
 
 def test__resolve_pkg_doubledash(tmpdir, mocksession):
-    distshare = tmpdir.join("distshare")
-    p = distshare.ensure("pkg-mine-1.3.0.zip")
-    res = mocksession._resolve_package(distshare.join("pkg-mine*"))
+    distdir = tmpdir.join("distdir")
+    p = distdir.ensure("pkg-mine-1.3.0.zip")
+    res = mocksession._resolve_package(distdir.join("pkg-mine*"))
     assert res == p
-    distshare.ensure("pkg-mine-1.3.0a1.zip")
-    res = mocksession._resolve_package(distshare.join("pkg-mine*"))
+    distdir.ensure("pkg-mine-1.3.0a1.zip")
+    res = mocksession._resolve_package(distdir.join("pkg-mine*"))
     assert res == p
 
 

@@ -128,38 +128,6 @@ def test_create_sitepackages(mocksession, newconfig):
     assert "--no-site-packages" not in map(str, args)
 
 
-def test_install_deps_wildcard(newmocksession):
-    mocksession = newmocksession(
-        [],
-        """
-        [tox]
-        distshare = {toxworkdir}/distshare
-        [testenv:py123]
-        deps=
-            {distshare}/dep1-*
-    """,
-    )
-    venv = mocksession.getenv("py123")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
-    pcalls = mocksession._pcalls
-    assert len(pcalls) == 1
-    distshare = venv.session.config.distshare
-    distshare.ensure("dep1-1.0.zip")
-    distshare.ensure("dep1-1.1.zip")
-
-    tox_testenv_install_deps(action=action, venv=venv)
-    assert len(pcalls) == 2
-    args = pcalls[-1].args
-    assert pcalls[-1].cwd == venv.envconfig.config.toxinidir
-
-    assert py.path.local.sysfind("python") == args[0]
-    assert ["-m", "pip"] == args[1:3]
-    assert args[3] == "install"
-    args = [arg for arg in args if str(arg).endswith("dep1-1.1.zip")]
-    assert len(args) == 1
-
-
 def test_install_deps_indexserver(newmocksession):
     mocksession = newmocksession(
         [],
@@ -493,46 +461,6 @@ class TestCreationConfig:
         venv = VirtualEnv(envconfig, session=mocksession)
         otherconfig = venv._getliveconfig()
         assert not cconfig.matches(otherconfig)
-
-    def test_matchingdependencies_file(self, newconfig, mocksession):
-        config = newconfig(
-            [],
-            """
-            [tox]
-            distshare={toxworkdir}/distshare
-            [testenv]
-            deps=abc
-                 {distshare}/xyz.zip
-        """,
-        )
-        xyz = config.distshare.join("xyz.zip")
-        xyz.ensure()
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
-        cconfig = venv._getliveconfig()
-        assert cconfig.matches(cconfig)
-        xyz.write("hello")
-        newconfig = venv._getliveconfig()
-        assert not cconfig.matches(newconfig)
-
-    def test_matchingdependencies_latest(self, newconfig, mocksession):
-        config = newconfig(
-            [],
-            """
-            [tox]
-            distshare={toxworkdir}/distshare
-            [testenv]
-            deps={distshare}/xyz-*
-        """,
-        )
-        config.distshare.ensure("xyz-1.2.0.zip")
-        xyz2 = config.distshare.ensure("xyz-1.2.1.zip")
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
-        cconfig = venv._getliveconfig()
-        md5, path = cconfig.deps[0]
-        assert path == xyz2
-        assert md5 == path.computehash()
 
     def test_python_recreation(self, tmpdir, newconfig, mocksession):
         pkg = tmpdir.ensure("package.tar.gz")

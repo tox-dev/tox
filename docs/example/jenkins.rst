@@ -130,49 +130,6 @@ Here is an example:
 Note that ``pytest`` is only installed into the docs environment
 and does not need to be in use or installed with any other environment.
 
-.. _`jenkins artifact example`:
-
-Access package artifacts between Jenkins jobs
---------------------------------------------------------
-
-.. _`Jenkins Copy Artifact plugin`: https://wiki.jenkins.io/display/JENKINS/Copy+Artifact+Plugin
-
-In an extension to :ref:`artifacts` you can also configure Jenkins jobs to
-access each others artifacts.  ``tox`` uses the ``distshare`` directory
-to access artifacts and in a Jenkins context (detected via existence
-of the environment variable ``HUDSON_URL``); it defaults to
-to ``{toxworkdir}/distshare``.
-
-This means that each workspace will have its own ``distshare``
-directory and we need to configure Jenkins to perform artifact copying.
-The recommend way to do this is to install the `Jenkins Copy Artifact plugin`_
-and for each job which "receives" artifacts you add a **Copy artifacts from another project** build step
-using roughly this configuration:
-
-
-  .. code-block:: shell
-
-    Project-name: name of the other (tox-managed) job you want the artifact from
-    Artifacts to copy: .tox/dist/*.zip   # where tox jobs create artifacts
-    Target directory: .tox/distshare     # where we want it to appear for us
-    Flatten Directories: CHECK           # create no subdir-structure
-
-You also need to configure the "other" job to archive artifacts; This
-is done by checking ``Archive the artifacts`` and entering:
-
-  .. code-block:: shell
-
-    Files to archive: .tox/dist/*.zip
-
-So our "other" job will create an sdist-package artifact and
-the "copy-artifacts" plugin will copy it to our ``distshare`` area.
-Now everything proceeds as :ref:`artifacts` shows it.
-
-So if you are using defaults you can re-use and debug exactly the
-same ``tox.ini`` file and make use of automatic sharing of
-your artifacts between runs or Jenkins jobs.
-
-
 Avoiding the "path too long" error with long shebang lines
 ---------------------------------------------------------------
 
@@ -194,7 +151,7 @@ Running tox environments in parallel
 
 Jenkins has parallel stages allowing you to run commands in parallel, however tox package
 building it is not parallel safe. Use the ``--parallel--safe-build`` flag to enable parallel safe
-builds (this will generate unique folder names for ``distdir``, ``distshare`` and ``log``.
+builds (this will generate unique folder names for ``distdir``, and ``log``.
 Here's a generic stage definition demonstrating how to use this inside Jenkins:
 
 .. code-block:: groovy

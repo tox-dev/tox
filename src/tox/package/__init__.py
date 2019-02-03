@@ -39,7 +39,7 @@ def get_package(session):
 
 def acquire_package(config, report, session):
     """acquire a source distribution (either by loading a local file or triggering a build)"""
-    if not config.option.sdistonly and (config.sdistsrc or config.option.installpkg):
+    if not config.option.sdistonly and config.option.installpkg:
         path = get_local_package(config, report, session)
     else:
         try:
@@ -47,22 +47,11 @@ def acquire_package(config, report, session):
         except tox.exception.InvocationError as exception:
             report.error("FAIL could not package project - v = {!r}".format(exception))
             return None
-        sdist_file = config.distshare.join(path.basename)
-        if sdist_file != path:
-            report.info("copying new sdistfile to {!r}".format(str(sdist_file)))
-            try:
-                sdist_file.dirpath().ensure(dir=1)
-            except py.error.Error:
-                report.warning("could not copy distfile to {}".format(sdist_file.dirpath()))
-            else:
-                path.copy(sdist_file)
     return path
 
 
 def get_local_package(config, report, session):
     path = config.option.installpkg
-    if not path:
-        path = config.sdistsrc
     py_path = py.path.local(session._resolve_package(path))
     report.info("using package {!r}, skipping 'sdist' activity ".format(str(py_path)))
     return py_path
