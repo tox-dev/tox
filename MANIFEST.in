@@ -4,7 +4,7 @@ include CONTRIBUTORS
 include LICENSE
 include setup.py
 include tox.ini
-graft doc
+graft docs
 graft tests
 
 global-exclude __pycache__
