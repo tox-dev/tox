@@ -176,10 +176,10 @@ def test_exec_failed():
 class TestInterpreterInfo:
     @staticmethod
     def info(
-            name="my-name",
-            executable="my-executable",
-            version_info="my-version-info",
-            sysplatform="my-sys-platform",
+        name="my-name",
+        executable="my-executable",
+        version_info="my-version-info",
+        sysplatform="my-sys-platform",
     ):
         return InterpreterInfo(name, executable, version_info, sysplatform)
 

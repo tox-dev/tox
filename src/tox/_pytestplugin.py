@@ -16,7 +16,7 @@ import tox
 from tox import venv
 from tox.config import parseconfig
 from tox.reporter import update_default_reporter
-from tox.session import Session, main
+from tox.session import Session, main, setup_reporter
 from tox.venv import CreationConfig, VirtualEnv, getdigest
 
 mark_dont_run_on_windows = pytest.mark.skipif(os.name == "nt", reason="non windows test")
@@ -58,6 +58,7 @@ def create_new_config_file(tmpdir):
         s = textwrap.dedent(source)
         p = tmpdir.join("tox.ini")
         p.write(s)
+        setup_reporter(args)
         with tmpdir.as_cwd():
             return parseconfig(args, plugins=plugins)
 

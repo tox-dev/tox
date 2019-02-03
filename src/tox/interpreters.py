@@ -155,18 +155,18 @@ else:
         if m:
             return locate_via_py(*groups)
 
-
     # Exceptions to the usual windows mapping
     win32map = {"python": sys.executable, "jython": r"c:\jython2.5.1\jython.bat"}
-
 
     def locate_via_py(*parts):
         ver = "-{}".format(".".join(parts))
         py_exe = distutils.spawn.find_executable("py")
         if py_exe:
             proc = subprocess.Popen(
-                (py_exe, ver, VERSION_QUERY_SCRIPT), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                universal_newlines=True
+                (py_exe, ver, VERSION_QUERY_SCRIPT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
             )
             out, _ = proc.communicate()
             result = json.loads(out)

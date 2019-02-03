@@ -368,7 +368,7 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
             ___________________________________ summary ___________________________________{}
             ERROR:   py: commands failed
         """.format(
-            sys.executable.replace("\\", "\\\\"), "_" if sys.platform != "win32" else ""
+            sys.executable, "_" if sys.platform != "win32" else ""
         )
     )
     have = result.out.replace(os.linesep, "\n")
