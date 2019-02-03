@@ -95,9 +95,9 @@ def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
             [
                 package_venv.envconfig.envpython,
                 BUILD_ISOLATED,
+                str(dist_dir),
                 build_info.backend_module,
                 build_info.backend_object,
-                str(dist_dir),
             ],
             returnout=True,
             action=action,
