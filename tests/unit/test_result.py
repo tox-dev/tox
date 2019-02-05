@@ -7,7 +7,7 @@ import py
 import pytest
 
 import tox
-from tox.result import ResultLog
+from tox.logs import ResultLog
 
 
 @pytest.fixture(name="pkg")
@@ -26,14 +26,13 @@ def test_pre_set_header():
     assert replog.dict["platform"] == sys.platform
     assert replog.dict["host"] == socket.getfqdn()
     data = replog.dumps_json()
-    replog2 = ResultLog(data)
+    replog2 = ResultLog.from_json(data)
     assert replog2.dict == replog.dict
 
 
 def test_set_header(pkg):
     replog = ResultLog()
     d = replog.dict
-    replog.set_header(installpkg=pkg)
     assert replog.dict == d
     assert replog.dict["reportversion"] == "1"
     assert replog.dict["toxversion"] == tox.__version__
@@ -44,17 +43,20 @@ def test_set_header(pkg):
         "md5": pkg.computehash("md5"),
         "sha256": pkg.computehash("sha256"),
     }
-    assert replog.dict["installpkg"] == expected
+    env_log = replog.get_envlog("a")
+    env_log.set_header(installpkg=pkg)
+    assert env_log.dict["installpkg"] == expected
+
     data = replog.dumps_json()
-    replog2 = ResultLog(data)
+    replog2 = ResultLog.from_json(data)
     assert replog2.dict == replog.dict
 
 
 def test_addenv_setpython(pkg):
     replog = ResultLog()
-    replog.set_header(installpkg=pkg)
     envlog = replog.get_envlog("py36")
     envlog.set_python_info(py.path.local(sys.executable))
+    envlog.set_header(installpkg=pkg)
     assert envlog.dict["python"]["version_info"] == list(sys.version_info)
     assert envlog.dict["python"]["version"] == sys.version
     assert envlog.dict["python"]["executable"] == sys.executable
@@ -62,10 +64,10 @@ def test_addenv_setpython(pkg):
 
 def test_get_commandlog(pkg):
     replog = ResultLog()
-    replog.set_header(installpkg=pkg)
     envlog = replog.get_envlog("py36")
     assert "setup" not in envlog.dict
     setuplog = envlog.get_commandlog("setup")
+    envlog.set_header(installpkg=pkg)
     setuplog.add_command(["virtualenv", "..."], "venv created", 0)
     expected = [{"command": ["virtualenv", "..."], "output": "venv created", "retcode": "0"}]
     assert setuplog.list == expected

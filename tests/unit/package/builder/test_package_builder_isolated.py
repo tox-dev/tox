@@ -4,7 +4,7 @@ import py
 import pytest
 
 from tox.package.builder.isolated import get_build_info
-from tox.session import Reporter
+from tox.reporter import _INSTANCE
 
 
 def test_verbose_isolated_build(initproj, mock_venv, cmd):
@@ -79,20 +79,19 @@ def toml_file_check(initproj, version, message, toml):
             "pyproject.toml": toml,
         },
     )
-    reporter = Reporter(None)
 
     with pytest.raises(SystemExit, message=1):
-        get_build_info(py.path.local(), reporter)
+        get_build_info(py.path.local())
     toml_file = py.path.local().join("pyproject.toml")
     msg = "ERROR: {} inside {}".format(message, toml_file)
-    assert reporter.reported_lines == [msg]
+    assert _INSTANCE.messages == [msg]
 
 
-def test_package_isolated_toml_no_build_system(initproj, cmd):
+def test_package_isolated_toml_no_build_system(initproj):
     toml_file_check(initproj, 1, "build-system section missing", "")
 
 
-def test_package_isolated_toml_no_requires(initproj, cmd):
+def test_package_isolated_toml_no_requires(initproj):
     toml_file_check(
         initproj,
         2,
@@ -103,7 +102,7 @@ def test_package_isolated_toml_no_requires(initproj, cmd):
     )
 
 
-def test_package_isolated_toml_no_backend(initproj, cmd):
+def test_package_isolated_toml_no_backend(initproj):
     toml_file_check(
         initproj,
         3,
@@ -115,7 +114,7 @@ def test_package_isolated_toml_no_backend(initproj, cmd):
     )
 
 
-def test_package_isolated_toml_bad_requires(initproj, cmd):
+def test_package_isolated_toml_bad_requires(initproj):
     toml_file_check(
         initproj,
         4,
@@ -128,7 +127,7 @@ def test_package_isolated_toml_bad_requires(initproj, cmd):
     )
 
 
-def test_package_isolated_toml_bad_backend(initproj, cmd):
+def test_package_isolated_toml_bad_backend(initproj):
     toml_file_check(
         initproj,
         5,

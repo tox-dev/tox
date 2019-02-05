@@ -20,7 +20,6 @@ from tox.config import (
     parseconfig,
 )
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
-from tox.venv import VirtualEnv
 
 
 class TestVenvConfig:
@@ -192,9 +191,9 @@ class TestConfigPlatform:
             platform = a123|b123
         """,
         )
+        mocksession.config = config
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs["py1"]
-        venv = VirtualEnv(envconfig, session=mocksession)
+        venv = mocksession.getvenv("py1")
         assert not venv.matching_platform()
         monkeypatch.setattr(sys, "platform", "a123")
         assert venv.matching_platform()
@@ -2653,7 +2652,6 @@ class TestCmdInvocation:
         initproj("help", filedefs={"tox.ini": ""})
         result = cmd("-h")
         assert not result.ret
-        assert not result.err
         assert re.match(r"usage:.*help.*", result.out, re.DOTALL)
 
     def test_version_simple(self, cmd, initproj):
@@ -2717,9 +2715,9 @@ class TestCmdInvocation:
         initproj("noini-0.5")
         result = cmd()
         assert result.ret
-        assert result.out == ""
         msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
         assert result.err == msg
+        assert not result.out
 
     def test_override_workdir(self, cmd, initproj):
         baddir = "badworkdir-123"
@@ -2905,17 +2903,19 @@ class TestCommandParser:
 def test_plugin_require(newconfig):
     inisource = """
         [tox]
-        requires = tox
+        requires = setuptools
                    name[foo,bar]>=2,<3; python_version>"2.0" and os_name=='a'
                    b
     """
     with pytest.raises(tox.exception.MissingRequirement) as exc_info:
         newconfig([], inisource)
 
-    assert exc_info.value.args[0] == (
-        r'Packages name[bar,foo]<3,>=2; python_version > "2.0" and os_name == "a", b '
-        r"need to be installed alongside tox in {}".format(sys.executable)
+    expected = (
+        'Packages name[bar,foo]<3,>=2; python_version > "2.0" and os_name == "a", b '
+        "need to be installed alongside tox in {}".format(sys.executable)
     )
+    actual = exc_info.value.args[0]
+    assert actual == expected
 
 
 def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):

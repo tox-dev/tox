@@ -26,3 +26,5 @@ __pycache__
 
 # release
 credentials.json
+
+pip-wheel-metadata

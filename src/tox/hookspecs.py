@@ -115,3 +115,8 @@ def tox_runenvreport(venv, action):
     This could be used for alternative (ie non-pip) package managers, this
     plugin should return a ``list`` of type ``str``
     """
+
+
+@hookspec
+def tox_cleanup(session):
+    """Called just before the session is destroyed, allowing any final cleanup operation"""

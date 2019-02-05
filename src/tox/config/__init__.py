@@ -22,6 +22,7 @@ import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
 from .parallel import add_parallel_flags, ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY, add_parallel_config
+from .reporter import add_verbosity_commands
 
 hookimpl = tox.hookimpl
 """DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
@@ -364,22 +365,7 @@ def tox_addoption(parser):
     parser.add_argument(
         "--help-ini", "--hi", action="store_true", dest="helpini", help="show help about ini-names"
     )
-    parser.add_argument(
-        "-v",
-        action="count",
-        dest="verbose_level",
-        default=0,
-        help="increase verbosity of reporting output."
-        "-vv mode turns off output redirection for package installation, "
-        "above level two verbosity flags are passed through to pip (with two less level)",
-    )
-    parser.add_argument(
-        "-q",
-        action="count",
-        dest="quiet_level",
-        default=0,
-        help="progressively silence reporting output.",
-    )
+    add_verbosity_commands(parser)
     parser.add_argument(
         "--showconfig",
         action="store_true",
@@ -988,18 +974,23 @@ class ParseIni(object):
         config.hashseed = hash_seed
 
         reader.addsubstitutions(toxinidir=config.toxinidir, homedir=config.homedir)
+
         # As older versions of tox may have bugs or incompatibilities that
         # prevent parsing of tox.ini this must be the first thing checked.
         config.minversion = reader.getstring("minversion", None)
         if config.minversion:
-            tox_version = pkg_resources.parse_version(tox.__version__)
-            config_min_version = pkg_resources.parse_version(self.config.minversion)
-            if config_min_version > tox_version:
-                raise tox.exception.MinVersionError(
-                    "tox version is {}, required is at least {}".format(
-                        tox.__version__, self.config.minversion
+            # As older versions of tox may have bugs or incompatibilities that
+            # prevent parsing of tox.ini this must be the first thing checked.
+            config.minversion = reader.getstring("minversion", None)
+            if config.minversion:
+                tox_version = pkg_resources.parse_version(tox.__version__)
+                config_min_version = pkg_resources.parse_version(self.config.minversion)
+                if config_min_version > tox_version:
+                    raise tox.exception.MinVersionError(
+                        "tox version is {}, required is at least {}".format(
+                            tox.__version__, self.config.minversion
+                        )
                     )
-                )
 
         self.ensure_requires_satisfied(reader.getlist("requires"))
 

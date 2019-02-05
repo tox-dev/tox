@@ -59,10 +59,11 @@ class InterpreterNotFound(Error):
 class InvocationError(Error):
     """An error while invoking a script."""
 
-    def __init__(self, command, exit_code=None):
+    def __init__(self, command, exit_code=None, out=None):
         super(Error, self).__init__(command, exit_code)
         self.command = command
         self.exit_code = exit_code
+        self.out = out
 
     def __str__(self):
         return exit_code_str(self.__class__.__name__, self.command, self.exit_code)

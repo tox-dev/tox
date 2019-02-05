@@ -6,6 +6,7 @@ import pytest
 
 import tox
 from tox.interpreters import NoInterpreterInfo
+from tox.session.commands.run.sequential import installpkg, runtestenv
 from tox.venv import (
     CreationConfig,
     VirtualEnv,
@@ -30,7 +31,8 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
             sys.executable
         ),
     )
-    venv = VirtualEnv(config.envconfigs["python"], session=mocksession)
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("python")
     interp = venv.getsupportedinterpreter()
     # realpath needed for debian symlinks
     assert py.path.local(interp).realpath() == py.path.local(sys.executable).realpath()
@@ -60,11 +62,12 @@ def test_create(mocksession, newconfig):
     """,
     )
     envconfig = config.envconfigs["py123"]
-    venv = VirtualEnv(envconfig, session=mocksession)
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("py123")
     assert venv.path == envconfig.envdir
     assert not venv.path.check()
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -87,8 +90,9 @@ def test_commandpath_venv_precedence(tmpdir, monkeypatch, mocksession, newconfig
         [testenv:py123]
     """,
     )
-    envconfig = config.envconfigs["py123"]
-    venv = VirtualEnv(envconfig, session=mocksession)
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("py123")
+    envconfig = venv.envconfig
     tmpdir.ensure("easy_install")
     monkeypatch.setenv("PATH", str(tmpdir), prepend=os.pathsep)
     envconfig.envbindir.ensure("easy_install")
@@ -107,20 +111,19 @@ def test_create_sitepackages(mocksession, newconfig):
         sitepackages=False
     """,
     )
-    envconfig = config.envconfigs["site"]
-    venv = VirtualEnv(envconfig, session=mocksession)
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("site")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
     assert "--system-site-packages" in map(str, args)
     mocksession._clearmocks()
 
-    envconfig = config.envconfigs["nosite"]
-    venv = VirtualEnv(envconfig, session=mocksession)
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
+    venv = mocksession.getvenv("nosite")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -139,19 +142,19 @@ def test_install_deps_wildcard(newmocksession):
             {distshare}/dep1-*
     """,
     )
-    venv = mocksession.getenv("py123")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
-    pcalls = mocksession._pcalls
-    assert len(pcalls) == 1
-    distshare = venv.session.config.distshare
-    distshare.ensure("dep1-1.0.zip")
-    distshare.ensure("dep1-1.1.zip")
+    venv = mocksession.getvenv("py123")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
+        pcalls = mocksession._pcalls
+        assert len(pcalls) == 1
+        distshare = venv.envconfig.config.distshare
+        distshare.ensure("dep1-1.0.zip")
+        distshare.ensure("dep1-1.1.zip")
 
-    tox_testenv_install_deps(action=action, venv=venv)
-    assert len(pcalls) == 2
-    args = pcalls[-1].args
-    assert pcalls[-1].cwd == venv.envconfig.config.toxinidir
+        tox_testenv_install_deps(action=action, venv=venv)
+        assert len(pcalls) == 2
+        args = pcalls[-1].args
+        assert pcalls[-1].cwd == venv.envconfig.config.toxinidir
 
     assert py.path.local.sysfind("python") == args[0]
     assert ["-m", "pip"] == args[1:3]
@@ -175,26 +178,26 @@ def test_install_deps_indexserver(newmocksession):
             :abc2:dep3
     """,
     )
-    venv = mocksession.getenv("py123")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
-    pcalls = mocksession._pcalls
-    assert len(pcalls) == 1
-    pcalls[:] = []
+    venv = mocksession.getvenv("py123")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
+        pcalls = mocksession._pcalls
+        assert len(pcalls) == 1
+        pcalls[:] = []
 
-    tox_testenv_install_deps(action=action, venv=venv)
-    # two different index servers, two calls
-    assert len(pcalls) == 3
-    args = " ".join(pcalls[0].args)
-    assert "-i " not in args
-    assert "dep1" in args
+        tox_testenv_install_deps(action=action, venv=venv)
+        # two different index servers, two calls
+        assert len(pcalls) == 3
+        args = " ".join(pcalls[0].args)
+        assert "-i " not in args
+        assert "dep1" in args
 
-    args = " ".join(pcalls[1].args)
-    assert "-i ABC" in args
-    assert "dep2" in args
-    args = " ".join(pcalls[2].args)
-    assert "-i ABC" in args
-    assert "dep3" in args
+        args = " ".join(pcalls[1].args)
+        assert "-i ABC" in args
+        assert "dep2" in args
+        args = " ".join(pcalls[2].args)
+        assert "-i ABC" in args
+        assert "dep3" in args
 
 
 def test_install_deps_pre(newmocksession):
@@ -207,9 +210,9 @@ def test_install_deps_pre(newmocksession):
             dep1
     """,
     )
-    venv = mocksession.getenv("python")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -230,10 +233,10 @@ def test_installpkg_indexserver(newmocksession, tmpdir):
             default = ABC
     """,
     )
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     pcalls = mocksession._pcalls
     p = tmpdir.ensure("distfile.tar.gz")
-    mocksession.installpkg(venv, p)
+    installpkg(venv, p)
     # two different index servers, two calls
     assert len(pcalls) == 1
     args = " ".join(pcalls[0].args)
@@ -249,14 +252,14 @@ def test_install_recreate(newmocksession, tmpdir):
         deps=xyz
     """,
     )
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
 
-    action = mocksession.newaction(venv, "update")
-    venv.update(action)
-    mocksession.installpkg(venv, pkg)
-    mocksession.report.expect("verbosity0", "*create*")
-    venv.update(action)
-    mocksession.report.expect("verbosity0", "*recreate*")
+    with mocksession.newaction(venv.name, "update") as action:
+        venv.update(action)
+        installpkg(venv, pkg)
+        mocksession.report.expect("verbosity0", "*create*")
+        venv.update(action)
+        mocksession.report.expect("verbosity0", "*recreate*")
 
 
 def test_install_sdist_extras(newmocksession):
@@ -268,9 +271,9 @@ def test_install_sdist_extras(newmocksession):
             development
     """,
     )
-    venv = mocksession.getenv("python")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -288,9 +291,9 @@ def test_develop_extras(newmocksession, tmpdir):
             development
     """,
     )
-    venv = mocksession.getenv("python")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -313,11 +316,10 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
             CUSTOM_VAR = 789
     """,
     )
-
-    venv = VirtualEnv(config.envconfigs["python"], session=mocksession)
-    action = mocksession.newaction(venv, "hello")
-
-    venv._needs_reinstall(tmpdir, action)
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "hello") as action:
+        venv._needs_reinstall(tmpdir, action)
 
     pcalls = mocksession._pcalls
     assert len(pcalls) == 2
@@ -341,9 +343,9 @@ def test_test_hashseed_is_in_output(newmocksession, monkeypatch):
     seed = "123456789"
     monkeypatch.setattr("tox.config.make_hashseed", lambda: seed)
     mocksession = newmocksession([], "")
-    venv = mocksession.getenv("python")
-    action = mocksession.newaction(venv, "update")
-    venv.update(action)
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "update") as action:
+        venv.update(action)
     tox.venv.tox_runtest_pre(venv)
     mocksession.report.expect("verbosity0", "run-test-pre: PYTHONHASHSEED='{}'".format(seed))
 
@@ -356,9 +358,9 @@ def test_test_runtests_action_command_is_in_output(newmocksession):
         commands = echo foo bar
     """,
     )
-    venv = mocksession.getenv("python")
-    action = mocksession.newaction(venv, "update")
-    venv.update(action)
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "update") as action:
+        venv.update(action)
     venv.test()
     mocksession.report.expect("verbosity0", "*runtests*commands?0? | echo foo bar")
 
@@ -373,7 +375,7 @@ def test_install_error(newmocksession):
             qwelkqw
     """,
     )
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.test()
     mocksession.report.expect("error", "*not find*qwelkqw*")
     assert venv.status == "commands failed"
@@ -388,7 +390,7 @@ def test_install_command_not_installed(newmocksession):
             pytest
     """,
     )
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.status = 0
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*")
@@ -407,7 +409,7 @@ def test_install_command_whitelisted(newmocksession):
             xyz
     """,
     )
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*", invert=True)
     assert venv.status == "commands failed"
@@ -422,7 +424,7 @@ def test_install_command_not_installed_bash(newmocksession):
             bash
     """,
     )
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.test()
     mocksession.report.expect("warning", "*test command found but not*")
 
@@ -440,17 +442,17 @@ def test_install_python3(newmocksession):
             dep2
     """,
     )
-    venv = mocksession.getenv("py123")
-    action = mocksession.newaction(venv, "getenv")
-    tox_testenv_create(action=action, venv=venv)
-    pcalls = mocksession._pcalls
-    assert len(pcalls) == 1
-    args = pcalls[0].args
-    assert str(args[2]) == "virtualenv"
-    pcalls[:] = []
-    action = mocksession.newaction(venv, "hello")
-    venv._install(["hello"], action=action)
-    assert len(pcalls) == 1
+    venv = mocksession.getvenv("py123")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
+        pcalls = mocksession._pcalls
+        assert len(pcalls) == 1
+        args = pcalls[0].args
+        assert str(args[2]) == "virtualenv"
+        pcalls[:] = []
+    with mocksession.newaction(venv.name, "hello") as action:
+        venv._install(["hello"], action=action)
+        assert len(pcalls) == 1
     args = pcalls[0].args
     assert py.path.local.sysfind("python") == args[0]
     assert ["-m", "pip"] == args[1:3]
@@ -461,8 +463,8 @@ def test_install_python3(newmocksession):
 class TestCreationConfig:
     def test_basic(self, newconfig, mocksession, tmpdir):
         config = newconfig([], "")
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
         cconfig = venv._getliveconfig()
         assert cconfig.matches(cconfig)
         path = tmpdir.join("configdump")
@@ -479,8 +481,8 @@ class TestCreationConfig:
             deps=abc
         """,
         )
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
         cconfig = venv._getliveconfig()
         config = newconfig(
             [],
@@ -489,8 +491,8 @@ class TestCreationConfig:
             deps=xyz
         """,
         )
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
         otherconfig = venv._getliveconfig()
         assert not cconfig.matches(otherconfig)
 
@@ -507,8 +509,8 @@ class TestCreationConfig:
         )
         xyz = config.distshare.join("xyz.zip")
         xyz.ensure()
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
         cconfig = venv._getliveconfig()
         assert cconfig.matches(cconfig)
         xyz.write("hello")
@@ -527,8 +529,8 @@ class TestCreationConfig:
         )
         config.distshare.ensure("xyz-1.2.0.zip")
         xyz2 = config.distshare.ensure("xyz-1.2.1.zip")
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
         cconfig = venv._getliveconfig()
         md5, path = cconfig.deps[0]
         assert path == xyz2
@@ -536,14 +538,14 @@ class TestCreationConfig:
 
     def test_python_recreation(self, tmpdir, newconfig, mocksession):
         pkg = tmpdir.ensure("package.tar.gz")
-        config = newconfig([], "")
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
+        config = newconfig(["-v"], "")
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
         create_config = venv._getliveconfig()
-        action = mocksession.newaction(venv, "update")
-        venv.update(action)
-        assert not venv.path_config.check()
-        mocksession.installpkg(venv, pkg)
+        with mocksession.newaction(venv.name, "update") as action:
+            venv.update(action)
+            assert not venv.path_config.check()
+        installpkg(venv, pkg)
         assert venv.path_config.check()
         assert mocksession._pcalls
         args1 = map(str, mocksession._pcalls[0].args)
@@ -551,43 +553,43 @@ class TestCreationConfig:
         mocksession.report.expect("*", "*create*")
         # modify config and check that recreation happens
         mocksession._clearmocks()
-        action = mocksession.newaction(venv, "update")
-        venv.update(action)
-        mocksession.report.expect("*", "*reusing*")
-        mocksession._clearmocks()
-        action = mocksession.newaction(venv, "update")
-        create_config.base_resolved_python_path = py.path.local("balla")
-        create_config.writeconfig(venv.path_config)
-        venv.update(action)
-        mocksession.report.expect("verbosity0", "*recreate*")
+        with mocksession.newaction(venv.name, "update") as action:
+            venv.update(action)
+            mocksession.report.expect("*", "*reusing*")
+            mocksession._clearmocks()
+        with mocksession.newaction(venv.name, "update") as action:
+            create_config.base_resolved_python_path = py.path.local("balla")
+            create_config.writeconfig(venv.path_config)
+            venv.update(action)
+            mocksession.report.expect("verbosity0", "*recreate*")
 
     def test_dep_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
-        action = mocksession.newaction(venv, "update")
-        venv.update(action)
-        cconfig = venv._getliveconfig()
-        cconfig.deps[:] = [("1" * 32, "xyz.zip")]
-        cconfig.writeconfig(venv.path_config)
-        mocksession._clearmocks()
-        action = mocksession.newaction(venv, "update")
-        venv.update(action)
-        mocksession.report.expect("*", "*recreate*")
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
+        with mocksession.newaction(venv.name, "update") as action:
+            venv.update(action)
+            cconfig = venv._getliveconfig()
+            cconfig.deps[:] = [("1" * 32, "xyz.zip")]
+            cconfig.writeconfig(venv.path_config)
+            mocksession._clearmocks()
+        with mocksession.newaction(venv.name, "update") as action:
+            venv.update(action)
+            mocksession.report.expect("*", "*recreate*")
 
     def test_develop_recreation(self, newconfig, mocksession):
         config = newconfig([], "")
-        envconfig = config.envconfigs["python"]
-        venv = VirtualEnv(envconfig, session=mocksession)
-        action = mocksession.newaction(venv, "update")
-        venv.update(action)
-        cconfig = venv._getliveconfig()
-        cconfig.usedevelop = True
-        cconfig.writeconfig(venv.path_config)
-        mocksession._clearmocks()
-        action = mocksession.newaction(venv, "update")
-        venv.update(action)
-        mocksession.report.expect("verbosity0", "*recreate*")
+        mocksession.new_config(config)
+        venv = mocksession.getvenv("python")
+        with mocksession.newaction(venv.name, "update") as action:
+            venv.update(action)
+            cconfig = venv._getliveconfig()
+            cconfig.usedevelop = True
+            cconfig.writeconfig(venv.path_config)
+            mocksession._clearmocks()
+        with mocksession.newaction(venv.name, "update") as action:
+            venv.update(action)
+            mocksession.report.expect("verbosity0", "*recreate*")
 
 
 class TestVenvTest:
@@ -600,36 +602,36 @@ class TestVenvTest:
             commands=abc
         """,
         )
-        venv = mocksession.getenv("python")
-        action = mocksession.newaction(venv, "getenv")
-        monkeypatch.setenv("PATH", "xyz")
-        sysfind_calls = []
-        monkeypatch.setattr(
-            "py.path.local.sysfind",
-            classmethod(lambda *args, **kwargs: sysfind_calls.append(kwargs) or 0 / 0),
-        )
+        venv = mocksession.getvenv("python")
+        with mocksession.newaction(venv.name, "getenv") as action:
+            monkeypatch.setenv("PATH", "xyz")
+            sysfind_calls = []
+            monkeypatch.setattr(
+                "py.path.local.sysfind",
+                classmethod(lambda *args, **kwargs: sysfind_calls.append(kwargs) or 0 / 0),
+            )
 
-        with pytest.raises(ZeroDivisionError):
-            venv._install(list("123"), action=action)
-        assert sysfind_calls.pop()["paths"] == [venv.envconfig.envbindir]
-        with pytest.raises(ZeroDivisionError):
-            venv.test(action)
-        assert sysfind_calls.pop()["paths"] == [venv.envconfig.envbindir]
-        with pytest.raises(ZeroDivisionError):
-            venv.run_install_command(["qwe"], action=action)
-        assert sysfind_calls.pop()["paths"] == [venv.envconfig.envbindir]
-        monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
-        monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
-        monkeypatch.setenv("__PYVENV_LAUNCHER__", "1")
-        with pytest.raises(ZeroDivisionError):
-            venv.run_install_command(["qwe"], action=action)
-        assert "PIP_RESPECT_VIRTUALENV" not in os.environ
-        assert "PIP_REQUIRE_VIRTUALENV" not in os.environ
-        assert "__PYVENV_LAUNCHER__" not in os.environ
-        assert os.environ["PIP_USER"] == "0"
-        assert os.environ["PIP_NO_DEPS"] == "0"
+            with pytest.raises(ZeroDivisionError):
+                venv._install(list("123"), action=action)
+            assert sysfind_calls.pop()["paths"] == [venv.envconfig.envbindir]
+            with pytest.raises(ZeroDivisionError):
+                venv.test(action)
+            assert sysfind_calls.pop()["paths"] == [venv.envconfig.envbindir]
+            with pytest.raises(ZeroDivisionError):
+                venv.run_install_command(["qwe"], action=action)
+            assert sysfind_calls.pop()["paths"] == [venv.envconfig.envbindir]
+            monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
+            monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
+            monkeypatch.setenv("__PYVENV_LAUNCHER__", "1")
+            with pytest.raises(ZeroDivisionError):
+                venv.run_install_command(["qwe"], action=action)
+            assert "PIP_RESPECT_VIRTUALENV" not in os.environ
+            assert "PIP_REQUIRE_VIRTUALENV" not in os.environ
+            assert "__PYVENV_LAUNCHER__" not in os.environ
+            assert os.environ["PIP_USER"] == "0"
+            assert os.environ["PIP_NO_DEPS"] == "0"
 
-    def test_pythonpath_usage(self, newmocksession, monkeypatch):
+    def test_pythonpath_remove(self, newmocksession, monkeypatch, caplog):
         monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
         mocksession = newmocksession(
             [],
@@ -638,9 +640,9 @@ class TestVenvTest:
             commands=abc
         """,
         )
-        venv = mocksession.getenv("python")
-        action = mocksession.newaction(venv, "getenv")
-        venv.run_install_command(["qwe"], action=action)
+        venv = mocksession.getvenv("python")
+        with mocksession.newaction(venv.name, "getenv") as action:
+            venv.run_install_command(["qwe"], action=action)
         assert "PYTHONPATH" not in os.environ
         mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
 
@@ -648,6 +650,7 @@ class TestVenvTest:
         assert len(pcalls) == 1
         assert "PYTHONPATH" not in pcalls[0].env
 
+    def test_pythonpath_keep(self, newmocksession, monkeypatch, caplog):
         # passenv = PYTHONPATH allows PYTHONPATH to stay in environment
         monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
         mocksession = newmocksession(
@@ -658,15 +661,15 @@ class TestVenvTest:
             passenv = PYTHONPATH
         """,
         )
-        venv = mocksession.getenv("python")
-        action = mocksession.newaction(venv, "getenv")
-        venv.run_install_command(["qwe"], action=action)
-        assert "PYTHONPATH" in os.environ
+        venv = mocksession.getvenv("python")
+        with mocksession.newaction(venv.name, "getenv") as action:
+            venv.run_install_command(["qwe"], action=action)
         mocksession.report.not_expect("warning", "*Discarding $PYTHONPATH from environment*")
+        assert "PYTHONPATH" in os.environ
 
         pcalls = mocksession._pcalls
-        assert len(pcalls) == 2
-        assert pcalls[1].env["PYTHONPATH"] == "/my/awesome/library"
+        assert len(pcalls) == 1
+        assert pcalls[0].env["PYTHONPATH"] == "/my/awesome/library"
 
 
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
@@ -686,9 +689,9 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
     """,
     )
     mocksession._clearmocks()
-
-    venv = VirtualEnv(config.envconfigs["python"], session=mocksession)
-    mocksession.installpkg(venv, pkg)
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("python")
+    installpkg(venv, pkg)
     venv.test()
 
     pcalls = mocksession._pcalls
@@ -718,10 +721,10 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
 def test_installpkg_no_upgrade(tmpdir, newmocksession):
     pkg = tmpdir.ensure("package.tar.gz")
     mocksession = newmocksession([], "")
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
-    mocksession.installpkg(venv, pkg)
+    installpkg(venv, pkg)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     assert pcalls[0].args[1:-1] == ["-m", "pip", "install", "--exists-action", "w"]
@@ -731,10 +734,10 @@ def test_installpkg_no_upgrade(tmpdir, newmocksession):
 def test_install_command_verbosity(tmpdir, newmocksession, count, level):
     pkg = tmpdir.ensure("package.tar.gz")
     mock_session = newmocksession(["-{}".format("v" * count)], "")
-    env = mock_session.getenv("python")
+    env = mock_session.getvenv("python")
     env.just_created = True
     env.envconfig.envdir.ensure(dir=1)
-    mock_session.installpkg(env, pkg)
+    installpkg(env, pkg)
     pcalls = mock_session._pcalls
     assert len(pcalls) == 1
     expected = ["-m", "pip", "install", "--exists-action", "w"] + (["-v"] * level)
@@ -744,9 +747,9 @@ def test_install_command_verbosity(tmpdir, newmocksession, count, level):
 def test_installpkg_upgrade(newmocksession, tmpdir):
     pkg = tmpdir.ensure("package.tar.gz")
     mocksession = newmocksession([], "")
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     assert not hasattr(venv, "just_created")
-    mocksession.installpkg(venv, pkg)
+    installpkg(venv, pkg)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     index = pcalls[0].args.index(str(pkg))
@@ -757,11 +760,11 @@ def test_installpkg_upgrade(newmocksession, tmpdir):
 
 def test_run_install_command(newmocksession):
     mocksession = newmocksession([], "")
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
-    action = mocksession.newaction(venv, "hello")
-    venv.run_install_command(packages=["whatever"], action=action)
+    with mocksession.newaction(venv.name, "hello") as action:
+        venv.run_install_command(packages=["whatever"], action=action)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     args = pcalls[0].args
@@ -780,11 +783,11 @@ def test_run_custom_install_command(newmocksession):
         install_command=easy_install {opts} {packages}
     """,
     )
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
-    action = mocksession.newaction(venv, "hello")
-    venv.run_install_command(packages=["whatever"], action=action)
+    with mocksession.newaction(venv.name, "hello") as action:
+        venv.run_install_command(packages=["whatever"], action=action)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     assert "easy_install" in pcalls[0].args[0]
@@ -799,7 +802,7 @@ def test_command_relative_issue36(newmocksession, tmpdir, monkeypatch):
     """,
     )
     x = tmpdir.ensure("x")
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     x2 = venv.getcommandpath("./x", cwd=tmpdir)
     assert x == x2
     mocksession.report.not_expect("warning", "*test command found but not*")
@@ -822,7 +825,7 @@ def test_ignore_outcome_failing_cmd(newmocksession):
     """,
     )
 
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.test()
     assert venv.status == "ignored failed command"
     mocksession.report.expect("warning", "*command failed but result from testenv is ignored*")
@@ -854,8 +857,9 @@ def test_tox_testenv_create(newmocksession):
         plugins=[Plugin()],
     )
 
-    venv = mocksession.getenv("python")
-    venv.update(action=mocksession.newaction(venv, "getenv"))
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        venv.update(action=action)
     assert log == [1, 2]
 
 
@@ -880,10 +884,10 @@ def test_tox_testenv_pre_post(newmocksession):
         plugins=[Plugin()],
     )
 
-    venv = mocksession.getenv("python")
+    venv = mocksession.getvenv("python")
     venv.status = None
     assert log == []
-    mocksession.runtestenv(venv)
+    runtestenv(venv, venv.envconfig.config)
     assert log == ["started", "finished"]
 
 

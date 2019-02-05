@@ -1,4 +1,5 @@
 import distutils.spawn
+import inspect
 import os
 import subprocess
 import sys
@@ -33,7 +34,9 @@ def test_locate_via_py(monkeypatch):
         assert exe == "py"
         return "py"
 
-    def fake_popen(cmd, stdout, stderr):
+    from tox.helper import get_version
+
+    def fake_popen(cmd, stdout, stderr, universal_newlines):
         fake_popen.last_call = cmd[:3]
 
         # need to pipe all stdout to collect the version information & need to
@@ -42,22 +45,23 @@ def test_locate_via_py(monkeypatch):
         # requested Python interpreter not being installed on the system
         assert stdout is subprocess.PIPE
         assert stderr is subprocess.PIPE
+        assert universal_newlines is True
 
         class proc:
             returncode = 0
 
             @staticmethod
             def communicate():
-                return sys.executable.encode(), None
+                return get_version.info_as_dump, None
 
         return proc
 
     monkeypatch.setattr(distutils.spawn, "find_executable", fake_find_exe)
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
     assert locate_via_py("3", "6") == sys.executable
-    assert fake_popen.last_call == ("py", "-3.6", "-c")
+    assert fake_popen.last_call == ("py", "-3.6", inspect.getsourcefile(get_version))
     assert locate_via_py("3") == sys.executable
-    assert fake_popen.last_call == ("py", "-3", "-c")
+    assert fake_popen.last_call == ("py", "-3", inspect.getsourcefile(get_version))
 
 
 def test_tox_get_python_executable():

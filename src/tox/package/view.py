@@ -3,8 +3,10 @@ from itertools import chain
 
 import six
 
+from tox.reporter import verbosity1
 
-def create_session_view(package, temp_dir, report):
+
+def create_session_view(package, temp_dir):
     """once we build a package we cannot return that directly, as a subsequent call
     might delete that package (in order to do its own build); therefore we need to
     return a view of the file that it's not prone to deletion and can be removed when the
@@ -37,7 +39,7 @@ def create_session_view(package, temp_dir, report):
         package.copy(session_package)
     operation = "links" if links else "copied"
     common = session_package.common(package)
-    report.verbosity1(
+    verbosity1(
         "package {} {} to {} ({})".format(
             common.bestrelpath(session_package), operation, common.bestrelpath(package), common
         )

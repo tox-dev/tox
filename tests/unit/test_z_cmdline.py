@@ -10,50 +10,25 @@ import py
 import pytest
 
 import tox
-from tox._pytestplugin import ReportExpectMock
 from tox.config import parseconfig
+from tox.reporter import Verbosity
 from tox.session import Session
 
 pytest_plugins = "pytester"
 
 
-def test_report_protocol(newconfig):
-    config = newconfig(
-        [],
-        """
-            [testenv:mypython]
-            deps=xy
-    """,
-    )
-
-    class Popen:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def communicate(self):
-            return "", ""
-
-        def wait(self):
-            pass
-
-    session = Session(config, popen=Popen, Report=ReportExpectMock)
-    report = session.report
-    report.expect("using")
-    venv = session.getvenv("mypython")
-    action = session.newaction(venv, "update")
-    venv.update(action)
-    report.expect("logpopen")
-
-
 class TestSession:
     def test_log_pcall(self, mocksession):
+        mocksession.logging_levels(quiet=Verbosity.DEFAULT, verbose=Verbosity.INFO)
         mocksession.config.logdir.ensure(dir=1)
         assert not mocksession.config.logdir.listdir()
-        action = mocksession.newaction(None, "something")
-        action.popen(["echo"])
-        match = mocksession.report.getnext("logpopen")
-        assert match[1].outpath.relto(mocksession.config.logdir)
-        assert match[1].shell is False
+        with mocksession.newaction("what", "something") as action:
+            action.popen(["echo"])
+            match = mocksession.report.getnext("logpopen")
+            log_name = py.path.local(match[1].split(">")[-1].strip()).relto(
+                mocksession.config.logdir
+            )
+            assert log_name == "what-0.log"
 
     def test_summary_status(self, initproj, capfd):
         initproj(
@@ -68,7 +43,7 @@ class TestSession:
         )
         config = parseconfig([])
         session = Session(config)
-        envs = session.venvlist
+        envs = list(session.venv_dict.values())
         assert len(envs) == 2
         env1, env2 = envs
         env1.status = "FAIL XYZ"
@@ -165,6 +140,7 @@ def test_unknown_interpreter_and_env(cmd, initproj):
             basepython=xyz_unknown_interpreter
             [testenv]
             changedir=tests
+            skip_install = true
         """,
         },
     )
@@ -621,7 +597,7 @@ def test_warning_emitted(cmd, initproj):
     """,
         },
     )
-    result = cmd()
+    cmd()
     result = cmd()
     assert "develop-inst-noop" in result.out
     assert "I am a warning" in result.err

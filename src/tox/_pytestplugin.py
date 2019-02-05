@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import os
+import subprocess
 import sys
 import textwrap
 import time
@@ -14,8 +15,8 @@ import six
 import tox
 from tox import venv
 from tox.config import parseconfig
-from tox.result import ResultLog
-from tox.session import Reporter, Session, main
+from tox.reporter import update_default_reporter
+from tox.session import Session, main, setup_reporter
 from tox.venv import CreationConfig, VirtualEnv, getdigest
 
 mark_dont_run_on_windows = pytest.mark.skipif(os.name == "nt", reason="non windows test")
@@ -57,6 +58,7 @@ def create_new_config_file(tmpdir):
         s = textwrap.dedent(source)
         p = tmpdir.join("tox.ini")
         p.write(s)
+        setup_reporter(args)
         with tmpdir.as_cwd():
             return parseconfig(args, plugins=plugins)
 
@@ -64,17 +66,18 @@ def create_new_config_file(tmpdir):
 
 
 @pytest.fixture
-def cmd(request, capfd, monkeypatch):
+def cmd(request, monkeypatch, capfd):
     if request.config.option.no_network:
         pytest.skip("--no-network was specified, test cannot run")
     request.addfinalizer(py.path.local().chdir)
 
     def run(*argv):
+        reset_report()
         key = str("PYTHONPATH")
         python_paths = (i for i in (os.getcwd(), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
 
-        with RunResult(capfd, argv) as result:
+        with RunResult(argv, capfd) as result:
             prev_run_command = Session.runcommand
 
             def run_command(self):
@@ -96,23 +99,26 @@ def cmd(request, capfd, monkeypatch):
 
 
 class RunResult:
-    def __init__(self, capfd, args):
-        self._capfd = capfd
+    def __init__(self, args, capfd):
         self.args = args
         self.ret = None
         self.duration = None
         self.out = None
         self.err = None
         self.session = None
+        self.capfd = capfd
 
     def __enter__(self):
         self._start = time.time()
-        self._capfd.readouterr()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.duration = time.time() - self._start
-        self.out, self.err = self._capfd.readouterr()
+        self.out, self.err = self.capfd.readouterr()
+
+    def _read(self, out, pos):
+        out.buffer.seek(pos)
+        return out.buffer.read().decode(out.encoding, errors=out.errors)
 
     @property
     def outlines(self):
@@ -125,32 +131,25 @@ class RunResult:
 
 
 class ReportExpectMock:
-    def __init__(self, session):
-        self._calls = []
+    def __init__(self):
+        from tox import reporter
+
+        self.instance = reporter._INSTANCE
+        self.clear()
         self._index = -1
-        self.session = session
-        self.orig_reporter = Reporter(session)
 
     def clear(self):
-        self._calls[:] = []
-
-    def __getattr__(self, name):
-        if name[0] == "_":
-            raise AttributeError(name)
-        elif name == "verbosity":
-            return self.orig_reporter.verbosity
-
-        def generic_report(*args, **_):
-            self._calls.append((name,) + args)
-            print("{}".format(self._calls[-1]))
-
-        return generic_report
+        self._index = -1
+        if six.PY3:
+            self.instance.reported_lines.clear()
+        else:
+            del self.instance.reported_lines[:]
 
     def getnext(self, cat):
         __tracebackhide__ = True
         newindex = self._index + 1
-        while newindex < len(self._calls):
-            call = self._calls[newindex]
+        while newindex < len(self.instance.reported_lines):
+            call = self.instance.reported_lines[newindex]
             lcat = call[0]
             if fnmatch(lcat, cat):
                 self._index = newindex
@@ -158,7 +157,7 @@ class ReportExpectMock:
             newindex += 1
         raise LookupError(
             "looking for {!r}, no reports found at >={:d} in {!r}".format(
-                cat, self._index + 1, self._calls
+                cat, self._index + 1, self.instance.reported_lines
             )
         )
 
@@ -166,7 +165,7 @@ class ReportExpectMock:
         __tracebackhide__ = True
         if not messagepattern.startswith("*"):
             messagepattern = "*{}".format(messagepattern)
-        while self._index < len(self._calls):
+        while self._index < len(self.instance.reported_lines):
             try:
                 call = self.getnext(cat)
             except LookupError:
@@ -182,7 +181,7 @@ class ReportExpectMock:
         if not invert:
             raise AssertionError(
                 "looking for {}({!r}), no reports found at >={:d} in {!r}".format(
-                    cat, messagepattern, self._index + 1, self._calls
+                    cat, messagepattern, self._index + 1, self.instance.reported_lines
                 )
             )
 
@@ -193,7 +192,7 @@ class ReportExpectMock:
 class pcallMock:
     def __init__(self, args, cwd, env, stdout, stderr, shell):
         self.arg0 = args[0]
-        self.args = args[1:]
+        self.args = args
         self.cwd = cwd
         self.env = env
         self.stdout = stdout
@@ -210,36 +209,47 @@ class pcallMock:
 
 @pytest.fixture(name="mocksession")
 def create_mocksession(request):
-    class MockSession(Session):
-        def __init__(self):
-            self._clearmocks()
-            self.config = request.getfixturevalue("newconfig")([], "")
-            self.resultlog = ResultLog()
-            self._actions = []
+    config = request.getfixturevalue("newconfig")([], "")
 
-        def getenv(self, name):
-            return VirtualEnv(self.config.envconfigs[name], session=self)
+    class MockSession(Session):
+        def __init__(self, config):
+            self.logging_levels(config.option.quiet_level, config.option.verbose_level)
+            super(MockSession, self).__init__(config, popen=self.popen)
+            self._pcalls = []
+            self.report = ReportExpectMock()
 
         def _clearmocks(self):
-            self._pcalls = []
-            self._spec2pkg = {}
-            self.report = ReportExpectMock(self)
-
-        def make_emptydir(self, path):
-            pass
+            if six.PY3:
+                self._pcalls.clear()
+            else:
+                del self._pcalls[:]
+            self.report.clear()
 
         def popen(self, args, cwd, shell=None, stdout=None, stderr=None, env=None, **_):
-            pm = pcallMock(args, cwd, env, stdout, stderr, shell)
-            self._pcalls.append(pm)
-            return pm
+            process_call_mock = pcallMock(args, cwd, env, stdout, stderr, shell)
+            self._pcalls.append(process_call_mock)
+            return process_call_mock
 
-    return MockSession()
+        def new_config(self, config):
+            self.logging_levels(config.option.quiet_level, config.option.verbose_level)
+            self.config = config
+            self.venv_dict.clear()
+            self.existing_venvs.clear()
+
+        def logging_levels(self, quiet, verbose):
+            update_default_reporter(quiet, verbose)
+            if hasattr(self, "config"):
+                self.config.option.quiet_level = quiet
+                self.config.option.verbose_level = verbose
+
+    return MockSession(config)
 
 
 @pytest.fixture
 def newmocksession(mocksession, newconfig):
     def newmocksession_(args, source, plugins=()):
-        mocksession.config = newconfig(args, source, plugins=plugins)
+        config = newconfig(args, source, plugins=plugins)
+        mocksession._reset(config, mocksession.popen)
         return mocksession
 
     return newmocksession_
@@ -337,7 +347,6 @@ def initproj(tmpdir):
             "include {}".format(p.relto(base)) for p in base.visit(lambda x: x.check(file=1))
         ]
         create_files(base, {"MANIFEST.in": "\n".join(manifestlines)})
-        print("created project in {}".format(base))
         base.chdir()
         return base
 
@@ -410,26 +419,7 @@ def mock_venv(monkeypatch):
     # object to collect some data during the execution
     class Result(object):
         def __init__(self, session):
-            self.popens = []
-            self._popen = session.popen
-
-            # collect all popen calls
-            def popen(cmd, **kwargs):
-                # we don't want to perform installation of new packages,
-                # just replace with an always ok cmd
-                if "pip" in cmd and "install" in cmd:
-                    cmd = ["python", "-c", "print({!r})".format(cmd)]
-                activity_id = session._actions[-1].id
-                activity_name = session._actions[-1].activity
-                try:
-                    ret = self._popen(cmd, **kwargs)
-                except tox.exception.InvocationError as exception:  # pragma: no cover
-                    ret = exception  # pragma: no cover
-                finally:
-                    self.popens.append((activity_id, activity_name, kwargs.get("env"), ret, cmd))
-                return ret
-
-            monkeypatch.setattr(session, "popen", popen)
+            self.popens = popen_list
             self.session = session
 
     res = OrderedDict()
@@ -484,10 +474,25 @@ def mock_venv(monkeypatch):
     monkeypatch.setattr(venv, "tox_runenvreport", tox_runenvreport)
 
     # intercept the build session to save it and we intercept the popen invocations
-    prev_build = tox.session.build_session
+    # collect all popen calls
+    popen_list = []
+
+    def popen(cmd, **kwargs):
+        # we don't want to perform installation of new packages,
+        # just replace with an always ok cmd
+        if "pip" in cmd and "install" in cmd:
+            cmd = ["python", "-c", "print({!r})".format(cmd)]
+        ret = None
+        try:
+            ret = subprocess.Popen(cmd, **kwargs)
+        except tox.exception.InvocationError as exception:  # pragma: no cover
+            ret = exception  # pragma: no cover
+        finally:
+            popen_list.append((kwargs.get("env"), ret, cmd))
+        return ret
 
     def build_session(config):
-        session = prev_build(config)
+        session = Session(config, popen=popen)
         res[id(session)] = Result(session)
         return session
 
@@ -500,3 +505,21 @@ def current_tox_py():
     """generate the current (test runners) python versions key
     e.g. py37 when running under Python 3.7"""
     return "py{}".format("".join(str(i) for i in sys.version_info[0:2]))
+
+
+def pytest_runtest_setup(item):
+    reset_report()
+
+
+def pytest_runtest_teardown(item):
+    reset_report()
+
+
+def pytest_pyfunc_call(pyfuncitem):
+    reset_report()
+
+
+def reset_report(quiet=0, verbose=0):
+    from tox.reporter import _INSTANCE
+
+    _INSTANCE._reset(quiet_level=quiet, verbose_level=verbose)
