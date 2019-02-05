@@ -1,0 +1,1 @@
+Using ``py2`` and ``py3`` with a specific ``basepython`` will no longer raise a warning unless the major version conflicts - by :user:`demosdemon`.
