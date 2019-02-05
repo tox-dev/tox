@@ -66,7 +66,7 @@ def create_new_config_file(tmpdir):
 
 
 @pytest.fixture
-def cmd(request, monkeypatch):
+def cmd(request, monkeypatch, capfd):
     if request.config.option.no_network:
         pytest.skip("--no-network was specified, test cannot run")
     request.addfinalizer(py.path.local().chdir)
@@ -77,7 +77,7 @@ def cmd(request, monkeypatch):
         python_paths = (i for i in (os.getcwd(), os.getenv(key)) if i)
         monkeypatch.setenv(key, os.pathsep.join(python_paths))
 
-        with RunResult(argv) as result:
+        with RunResult(argv, capfd) as result:
             prev_run_command = Session.runcommand
 
             def run_command(self):
@@ -99,24 +99,22 @@ def cmd(request, monkeypatch):
 
 
 class RunResult:
-    def __init__(self, args):
+    def __init__(self, args, capfd):
         self.args = args
         self.ret = None
         self.duration = None
         self.out = None
         self.err = None
         self.session = None
+        self.capfd = capfd
 
     def __enter__(self):
         self._start = time.time()
-        self._out_tell = sys.stdout.tell()
-        self._err_tell = sys.stderr.tell()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.duration = time.time() - self._start
-        self.out = self._read(sys.stdout, self._out_tell)
-        self.err = self._read(sys.stderr, self._err_tell)
+        self.out, self.err = self.capfd.readouterr()
 
     def _read(self, out, pos):
         out.buffer.seek(pos)
