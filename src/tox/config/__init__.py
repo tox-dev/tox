@@ -1155,39 +1155,54 @@ class ParseIni(object):
                 reader.addsubstitutions(**{env_attr.name: res})
         return tc
 
-    def _getenvdata(self, reader, config):
-        candidates = (
-            os.environ.get(PARALLEL_ENV_VAR_KEY),
-            self.config.option.env,
-            os.environ.get("TOXENV"),
-            reader.getstring("envlist", replace=False),
-        )
-        env_str = next((i for i in candidates if i), [])
+    def _getallenvs(self, reader, extra_env_list=None):
+        extra_env_list = extra_env_list or []
+        env_str = reader.getstring("envlist", replace=False)
         env_list = _split_env(env_str)
+        for env in extra_env_list:
+            if env not in env_list:
+                env_list.append(env)
 
-        # collect section envs
         all_envs = OrderedDict((i, None) for i in env_list)
-        if "ALL" in all_envs:
-            all_envs.pop("ALL")
         for section in self._cfg:
             if section.name.startswith(testenvprefix):
                 all_envs[section.name[len(testenvprefix) :]] = None
         if not all_envs:
             all_envs["python"] = None
+        return list(all_envs.keys())
+
+    def _getenvdata(self, reader, config):
+        from_option = self.config.option.env
+        from_environ = os.environ.get("TOXENV")
+        from_config = reader.getstring("envlist", replace=False)
+
+        env_list = []
+        if (from_option and "ALL" in from_option) or (
+            not from_option and from_environ and "ALL" in from_environ.split(",")
+        ):
+            all_envs = self._getallenvs(reader)
+        else:
+            candidates = (
+                os.environ.get(PARALLEL_ENV_VAR_KEY),
+                from_option,
+                from_environ,
+                from_config,
+            )
+            env_str = next((i for i in candidates if i), [])
+            env_list = _split_env(env_str)
+            all_envs = self._getallenvs(reader, env_list)
+
+        if not env_list:
+            env_list = all_envs
 
         package_env = config.isolated_build_env
         if config.isolated_build is True and package_env in all_envs:
-            all_envs.pop(package_env)
-
-        if not env_list or "ALL" in env_list:
-            env_list = list(all_envs.keys())
+            all_envs.remove(package_env)
 
         if config.isolated_build is True and package_env in env_list:
             msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
             raise tox.exception.ConfigError(msg)
-
-        all_env_list = list(all_envs.keys())
-        return env_list, all_env_list
+        return env_list, all_envs
 
 
 def _split_env(env):
