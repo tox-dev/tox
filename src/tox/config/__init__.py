@@ -1053,7 +1053,7 @@ class ParseIni(object):
         # factors stated in config envlist
         stated_envlist = reader.getstring("envlist", replace=False)
         if stated_envlist:
-            for env in config.envlist:
+            for env in _split_env(stated_envlist):
                 known_factors.update(env.split("-"))
 
         # configure testenvs

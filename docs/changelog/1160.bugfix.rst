@@ -1,0 +1,1 @@
+Fix missing error for ``tox -e unknown`` when tox.ini declares ``envlist``. - by :user:`medmunds`
