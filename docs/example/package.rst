@@ -58,3 +58,40 @@ file as that information is also added to the ``pyproject.toml`` file.
    # tox.ini
    [tox]
    isolated_build = True
+
+   [tox:.package]
+   # note tox will use the same python version as under what tox is installed to package
+   # so unless this is python 3 you can require a given python version for the packaging
+   # environment via the basepython key
+   basepython = python3
+
+
+poetry
+------
+`poetry <https://poetry.eustace.io/>`_ requires ``Python 3``, however the generated source
+distribution can be installed under ``python 2``. Furthermore it does not require a ``setup.py``
+file as that information is also added to the ``pyproject.toml`` file.
+
+.. code-block:: toml
+
+    [build-system]
+    requires = ["flit >= 1.1"]
+    build-backend = "flit.buildapi"
+
+    [tool.poetry]
+    name = "package_toml_poetry"
+    version = "0.1.0"
+    description = ""
+    authors = ["Name <email@email.com>"]
+
+.. code-block:: ini
+
+   # tox.ini
+   [tox]
+   isolated_build = True
+
+   [tox:.package]
+   # note tox will use the same python version as under what tox is installed to package
+   # so unless this is python 3 you can require a given python version for the packaging
+   # environment via the basepython key
+   basepython = python3

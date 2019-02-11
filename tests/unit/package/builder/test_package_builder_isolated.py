@@ -63,7 +63,7 @@ def test_package_isolated_no_pyproject_toml(initproj, cmd):
             """
         },
     )
-    result = cmd("--sdistonly")
+    result = cmd("--sdistonly", "-e", "py")
     assert result.ret == 1
     assert result.outlines == ["ERROR: missing {}".format(py.path.local().join("pyproject.toml"))]
 

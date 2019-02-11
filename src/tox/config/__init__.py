@@ -1068,7 +1068,6 @@ class ParseIni(object):
                 )
             ):
                 config.envconfigs[name] = self.make_envconfig(name, section, reader._subs, config)
-
         all_develop = all(
             name in config.envconfigs and config.envconfigs[name].usedevelop
             for name in config.envlist

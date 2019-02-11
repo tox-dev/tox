@@ -40,7 +40,8 @@ setup(
     setup_requires=["setuptools-scm>2, <4"],  # readthedocs needs it
     extras_require={
         "testing": [
-            "freezegun >= 0.3.11",
+            "freezegun >= 0.3.11, <1",
+            "pathlib2 >= 2.3.3, <3",
             "pytest >= 3.0.0, <4",
             "pytest-cov >= 2.5.1, <3",
             "pytest-mock >= 1.10.0, <2",
