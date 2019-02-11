@@ -91,12 +91,12 @@ Short version
 #. `Fork the repository <https://help.github.com/articles/fork-a-repo/>`_.
 #. Make your changes.
 #. open a `pull request <https://help.github.com/articles/about-pull-requests/>`_ targeting the ``master`` branch.
-#. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
+#. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix_lint``.
    You can also add a pre commit hook to your local clone to run the style checks and fixes
-   (see hint after running ``tox -e fix-lint``)
+   (see hint after running ``tox -e fix_lint``)
 #. Tests for tox are (obviously) run using ``tox``::
 
-    tox -e fix-lint,py27,py36
+    tox -e fix_lint,py27,py36
 
    The test environments above are usually enough to cover most cases locally.
 
@@ -149,7 +149,7 @@ Here is a simple overview, with tox-specific bits:
    You need to have Python 2.7 and 3.6 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ tox -e fix-lint,py27,py36
+    $ tox -e fix_lint,py27,py36
 
    This command will run tests via the "tox" tool against Python 2.7 and 3.6
    and also perform style checks with some automatic fixes.
