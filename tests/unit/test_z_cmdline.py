@@ -280,6 +280,17 @@ def test_unknown_environment(cmd, initproj):
     assert result.out == "ERROR: unknown environment 'qpwoei'\n"
 
 
+def test_unknown_environment_with_envlist(cmd, initproj):
+    initproj("pkg123", filedefs={
+        "tox.ini": """
+            [tox]
+            envlist = py{36,37}-django{20,21}
+        """})
+    result = cmd("-e", "py36-djagno21")
+    assert result.ret, "{}\n{}".format(result.err, result.out)
+    assert result.out == "ERROR: unknown environment 'py36-djagno21'\n"
+
+
 def test_minimal_setup_py_empty(cmd, initproj):
     initproj(
         "pkg123-0.7",

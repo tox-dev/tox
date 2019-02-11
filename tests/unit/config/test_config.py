@@ -2147,6 +2147,15 @@ class TestGlobalOptions:
         env = config.envconfigs["py"]
         assert str(env.basepython) == sys.executable
 
+    def test_no_implicit_venv_from_cli_with_envlist(self, newconfig):
+        # See issue 1160.
+        inisource = """
+            [tox]
+            envlist = stated-factors
+        """
+        config = newconfig(["-etypo-factor"], inisource)
+        assert "typo-factor" not in config.envconfigs
+
     def test_correct_basepython_chosen_from_default_factors(self, newconfig):
         envlist = list(tox.PYTHON.DEFAULT_FACTORS.keys())
         config = newconfig([], "[tox]\nenvlist={}".format(", ".join(envlist)))
