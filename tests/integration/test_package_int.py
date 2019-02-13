@@ -10,9 +10,9 @@ from tests.lib import need_git
 
 
 @pytest.mark.network
-def test_package_isolated_build_setuptools(initproj, cmd):
+def test_package_setuptools(initproj, cmd):
     initproj(
-        "package_toml_setuptools-0.1",
+        "magic-0.1",
         filedefs={
             "tox.ini": """
                     [tox]
@@ -27,15 +27,15 @@ def test_package_isolated_build_setuptools(initproj, cmd):
                     """,
         },
     )
-    run(cmd, "package_toml_setuptools-0.1.tar.gz")
+    run(cmd, "magic-0.1.tar.gz")
 
 
 @pytest.mark.network
 @need_git
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="flit is Python 3 only")
-def test_package_isolated_build_flit(initproj, cmd):
+def test_package_flit(initproj, cmd):
     initproj(
-        "package_toml_flit-0.1",
+        "magic-0.1",
         filedefs={
             "tox.ini": """
                     [tox]
@@ -49,7 +49,7 @@ def test_package_isolated_build_flit(initproj, cmd):
                     build-backend = "flit.buildapi"
 
                     [tool.flit.metadata]
-                    module = "package_toml_flit"
+                    module = "magic"
                     author = "Happy Harry"
                     author-email = "happy@harry.com"
                     home-page = "https://github.com/happy-harry/is"
@@ -66,14 +66,14 @@ def test_package_isolated_build_flit(initproj, cmd):
     subprocess.check_call(["git", "add", "-A", "."], env=env)
     subprocess.check_call(["git", "commit", "-m", "first commit", "--no-gpg-sign"], env=env)
 
-    run(cmd, "package_toml_flit-0.1.tar.gz")
+    run(cmd, "magic-0.1.tar.gz")
 
 
 @pytest.mark.network
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="poetry is Python 3 only")
-def test_package_isolated_build_poetry(initproj, cmd):
+def test_package_poetry(initproj, cmd):
     initproj(
-        "package_toml_poetry-0.1",
+        "magic-0.1",
         filedefs={
             "tox.ini": """
                     [tox]
@@ -87,7 +87,7 @@ def test_package_isolated_build_poetry(initproj, cmd):
                     build-backend = "poetry.masonry.api"
 
                     [tool.poetry]
-                    name = "package_toml_poetry"
+                    name = "magic"
                     version = "0.1.0"
                     description = ""
                     authors = ["Name <email@email.com>"]
@@ -97,7 +97,7 @@ def test_package_isolated_build_poetry(initproj, cmd):
         },
         add_missing_setup_py=False,
     )
-    run(cmd, "package_toml_poetry-0.1.0.tar.gz")
+    run(cmd, "magic-0.1.0.tar.gz")
 
 
 def run(cmd, package):
