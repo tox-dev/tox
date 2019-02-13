@@ -60,7 +60,7 @@ def test_separate_sdist_no_sdistfile(cmd, initproj, tmpdir):
             )
         },
     )
-    result = cmd("--sdistonly")
+    result = cmd("--sdistonly", "-e", "py")
     assert not result.ret
     distshare_files = distshare.listdir()
     assert len(distshare_files) == 1
@@ -76,7 +76,7 @@ def test_sdistonly(initproj, cmd):
     """
         },
     )
-    result = cmd("-v", "--sdistonly")
+    result = cmd("-v", "--sdistonly", "-e", "py")
     assert not result.ret
     assert re.match(r".*sdist-make.*setup.py.*", result.out, re.DOTALL)
     assert "-mvirtualenv" not in result.out

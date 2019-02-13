@@ -49,7 +49,7 @@ def test_separate_sdist(cmd, initproj, tmpdir):
             )
         },
     )
-    result = cmd("--sdistonly")
+    result = cmd("--sdistonly", "-e", "py")
     assert not result.ret
     dist_share_files = distshare.listdir()
     assert len(dist_share_files) == 1

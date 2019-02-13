@@ -15,6 +15,7 @@ jobs:
       vmImage: "Ubuntu 16.04"
 
   variables:
+    TMPDIR: $(Build.BinariesDirectory)
     ${{ if in(parameters.python, 'pypy', 'pypy3') }}:
       python: ${{ parameters.python }}
     ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
