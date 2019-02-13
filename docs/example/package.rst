@@ -75,8 +75,8 @@ file as that information is also added to the ``pyproject.toml`` file.
 .. code-block:: toml
 
     [build-system]
-   requires = ["poetry >= 0.12, <1"]
-   build-backend = "poetry.masonry.api"
+    requires = ["poetry >= 0.12, <1"]
+    build-backend = "poetry.masonry.api"
 
     [tool.poetry]
     name = "package_toml_poetry"
