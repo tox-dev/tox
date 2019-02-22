@@ -42,7 +42,7 @@ setup(
         "testing": [
             "freezegun >= 0.3.11, <1",
             "pathlib2 >= 2.3.3, <3",
-            "pytest >= 3.0.0, <4",
+            "pytest >= 3.0.0, <5",
             "pytest-cov >= 2.5.1, <3",
             "pytest-mock >= 1.10.0, <2",
             "pytest-timeout >= 1.3.0, <2",
