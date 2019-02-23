@@ -49,6 +49,15 @@ def work_in_clean_dir(tmpdir):
         yield
 
 
+@pytest.fixture(autouse=True)
+def check_cwd_not_changed_by_test():
+    old = os.getcwd()
+    yield
+    new = os.getcwd()
+    if old != new:
+        pytest.fail("test changed cwd: {!r} => {!r}".format(old, new))
+
+
 @pytest.fixture(name="newconfig")
 def create_new_config_file(tmpdir):
     def create_new_config_file_(args, source=None, plugins=()):
