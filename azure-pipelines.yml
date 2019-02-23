@@ -128,7 +128,7 @@ jobs:
     displayName: generate version.py
 
   - script: 'python -m tox -e coverage'
-    displayName: create coverag report via tox
+    displayName: create coverage report via tox
 
   - task: PublishCodeCoverageResults@1
     displayName: publish overall coverage report to Azure
@@ -139,8 +139,6 @@ jobs:
       failIfCoverageEmpty: true
 
   - script: |
-      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
-      chmod +x ./cc-test-reporter && \
       python -c '
       from xml.etree import ElementTree as et
       from pathlib import Path
