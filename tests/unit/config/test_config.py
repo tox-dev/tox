@@ -290,7 +290,7 @@ class TestParseconfig:
 
         tmpdir.ensure("tox.ini")
         with tmpdir.as_cwd():
-            config = parseconfig(["--workdir", str(symlink), "--help"])
+            config = parseconfig(["--workdir", str(symlink)])
         assert config.toxworkdir == real
 
 
