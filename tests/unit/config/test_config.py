@@ -236,8 +236,8 @@ class TestConfigPackage:
         assert config.distshare == config.homedir.join(".tox", "distshare")
 
     def test_defaults_changed_dir(self, tmpdir, newconfig):
-        tmpdir.mkdir("abc").chdir()
-        config = newconfig([], "")
+        with tmpdir.mkdir("abc").as_cwd():
+            config = newconfig([], "")
         assert config.setupdir.realpath() == tmpdir.realpath()
         assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
 
@@ -257,11 +257,8 @@ class TestParseconfig:
     def test_search_parents(self, tmpdir):
         b = tmpdir.mkdir("a").mkdir("b")
         toxinipath = tmpdir.ensure("tox.ini")
-        old = b.chdir()
-        try:
+        with b.as_cwd():
             config = parseconfig([])
-        finally:
-            old.chdir()
         assert config.toxinipath == toxinipath
 
     def test_explicit_config_path(self, tmpdir):

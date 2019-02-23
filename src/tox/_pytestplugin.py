@@ -350,7 +350,8 @@ def initproj(tmpdir):
         base.chdir()
         return base
 
-    return initproj_
+    with py.path.local().as_cwd():
+        yield initproj_
 
 
 def _path_parts(path):

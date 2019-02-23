@@ -441,10 +441,10 @@ def test_toxuone_env(cmd, example123):
     )
 
 
-def test_different_config_cwd(cmd, example123, monkeypatch):
+def test_different_config_cwd(cmd, example123):
     # see that things work with a different CWD
-    monkeypatch.chdir(example123.dirname)
-    result = cmd("-c", "example123/tox.ini")
+    with example123.dirpath().as_cwd():
+        result = cmd("-c", "example123/tox.ini")
     assert not result.ret
     assert re.match(
         r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
@@ -522,7 +522,7 @@ def test_usedevelop_mixed(initproj, cmd):
 
 @pytest.mark.parametrize("skipsdist", [False, True])
 @pytest.mark.parametrize("src_root", [".", "src"])
-def test_test_usedevelop(cmd, initproj, src_root, skipsdist, monkeypatch):
+def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
     name = "example123-spameggs"
     base = initproj(
         (name, "0.5"),
@@ -564,16 +564,15 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist, monkeypatch):
     )
 
     # see that things work with a different CWD
-    monkeypatch.chdir(base.dirname)
-    result = cmd("-c", "{}/tox.ini".format(name))
-    assert not result.ret
-    assert "develop-inst-noop" in result.out
-    assert re.match(
-        r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
-        result.out,
-        re.DOTALL,
-    )
-    monkeypatch.chdir(base)
+    with base.dirpath().as_cwd():
+        result = cmd("-c", "{}/tox.ini".format(name))
+        assert not result.ret
+        assert "develop-inst-noop" in result.out
+        assert re.match(
+            r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
+            result.out,
+            re.DOTALL,
+        )
 
     # see that tests can also fail and retcode is correct
     testfile = py.path.local("tests").join("test_hello.py")
