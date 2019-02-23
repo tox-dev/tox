@@ -288,7 +288,9 @@ class TestParseconfig:
         symlink = tmpdir.join("link")
         symlink.mksymlinkto(real)
 
-        config = parseconfig(["--workdir", str(symlink), "--help"])
+        tmpdir.ensure("tox.ini")
+        with tmpdir.as_cwd():
+            config = parseconfig(["--workdir", str(symlink), "--help"])
         assert config.toxworkdir == real
 
 
