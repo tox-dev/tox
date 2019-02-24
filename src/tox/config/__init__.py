@@ -999,6 +999,9 @@ class ParseIni(object):
         else:
             config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
 
+        if os.path.exists(str(config.toxworkdir)):
+            config.toxworkdir = config.toxworkdir.realpath()
+
         if config.option.skip_missing_interpreters == "config":
             val = reader.getbool("skip_missing_interpreters", False)
             config.option.skip_missing_interpreters = "true" if val else "false"

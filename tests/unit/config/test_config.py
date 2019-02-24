@@ -276,6 +276,21 @@ class TestParseconfig:
         config = parseconfig(["-c", str(path)])
         assert config.toxinipath == config_file_path
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="no symlinks on Windows")
+    def test_workdir_gets_resolved(self, tmp_path, monkeypatch):
+        """
+        Test explicitly setting config path, both with and without the filename
+        """
+        real = tmp_path / "real"
+        real.mkdir()
+        symlink = tmp_path / "link"
+        symlink.symlink_to(real)
+
+        (tmp_path / "tox.ini").touch()
+        monkeypatch.chdir(tmp_path)
+        config = parseconfig(["--workdir", str(symlink)])
+        assert config.toxworkdir == real
+
 
 def test_get_homedir(monkeypatch):
     monkeypatch.setattr(py.path.local, "_gethomedir", classmethod(lambda x: {}[1]))
