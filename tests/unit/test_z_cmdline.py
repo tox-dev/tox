@@ -190,7 +190,9 @@ def test_skip_platform_mismatch(cmd, initproj):
     result = cmd()
     assert not result.ret
     assert any(
-        "SKIPPED:  python: platform mismatch" == l for l in result.outlines
+        "SKIPPED:  python: platform mismatch ({!r} does not match 'x123')".format(sys.platform)
+        == l
+        for l in result.outlines
     ), result.outlines
 
 
