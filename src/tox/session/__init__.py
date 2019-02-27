@@ -222,7 +222,9 @@ class Session(object):
                     exit_code = 1
                     report = reporter.error
             elif status == "platform mismatch":
-                msg = " {}: {}".format(venv.envconfig.envname, str(status))
+                msg = " {}: {} ({!r} does not match {!r})".format(
+                    venv.envconfig.envname, str(status), sys.platform, venv.envconfig.platform
+                )
                 report = reporter.skip
             elif status and status == "ignored failed command":
                 msg = "  {}: {}".format(venv.envconfig.envname, str(status))
