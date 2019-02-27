@@ -8,11 +8,10 @@ file ``544.feature.rst``::
 
     ``tox --version`` now shows information about all registered plugins - by :user:`obestwalter`
 
-
 file ``571.bugfix.rst``::
 
     ``skip_install`` overrides ``usedevelop`` (``usedevelop`` is an option to choose the
     installation type if the package is installed and ``skip_install`` determines if it should be
     installed at all) - by :user:`ferdonline`
 
-.. see tox/pyproject.toml for all available categories
+.. see pyproject.toml for all available categories  (tool.towncrier.type)
