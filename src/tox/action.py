@@ -149,26 +149,25 @@ class Action(object):
     def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout):
         stdout = out_path = fin = None
         stderr = subprocess.STDOUT if capture_err else None
-        stdout_file = None
+
         if self.generate_tox_log or redirect:
             out_path = self.get_log_path(self.name)
-            stdout_file = out_path.open("wt")
-            stdout_file.write(
-                "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
-                    self.name, self.msg, cmd_args_shell
+            with out_path.open("wt") as stdout, out_path.open("rb") as fin:
+                stdout.write(
+                    "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
+                        self.name, self.msg, cmd_args_shell
+                    )
                 )
-            )
-            stdout_file.flush()
-            fin = out_path.open("rb")
-            fin.read()  # read the header, so it won't be written to stdout
-            stdout = stdout_file
-        elif returnout:
+                stdout.flush()
+                fin.read()  # read the header, so it won't be written to stdout
+
+                yield fin, out_path, stderr, stdout
+                return
+
+        if returnout:
             stdout = subprocess.PIPE
-        try:
-            yield fin, out_path, stderr, stdout
-        finally:
-            if stdout_file is not None:
-                stdout_file.close()
+
+        yield fin, out_path, stderr, stdout
 
     def get_log_path(self, actionid):
         return get_unique_file(

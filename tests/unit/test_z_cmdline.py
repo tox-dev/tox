@@ -463,7 +463,8 @@ def test_json(cmd, example123):
     jsonpath = example123.join("res.json")
     result = cmd("--result-json", jsonpath)
     assert result.ret == 1, "{}\n{}".format(result.err, result.out)
-    data = json.load(jsonpath.open("r"))
+    with jsonpath.open("r") as f:
+        data = json.load(f)
     verify_json_report_format(data)
     assert re.match(
         r".*\W+1\W+failed.*" r"summary.*" r"python:\W+commands\W+failed.*", result.out, re.DOTALL
