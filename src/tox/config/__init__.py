@@ -21,7 +21,9 @@ import toml
 import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
-from .parallel import add_parallel_flags, ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY, add_parallel_config
+
+from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from .parallel import add_parallel_config, add_parallel_flags
 from .reporter import add_verbosity_commands
 
 hookimpl = tox.hookimpl

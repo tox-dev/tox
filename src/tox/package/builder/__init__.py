@@ -1,5 +1,5 @@
-from .legacy import make_sdist
 from .isolated import build
+from .legacy import make_sdist
 
 
 def build_package(config, session):

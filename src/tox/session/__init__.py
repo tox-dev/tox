@@ -16,22 +16,23 @@ import py
 
 import tox
 from tox import reporter
+from tox.action import Action
 from tox.config import parseconfig
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.config.parallel import OFF_VALUE as PARALLEL_OFF
 from tox.logs.result import ResultLog
+from tox.reporter import update_default_reporter
 from tox.util import set_os_env_var
 from tox.util.graph import stable_topological_sort
 from tox.util.path import ensure_empty_dir
 from tox.venv import VirtualEnv
-from tox.action import Action
+
 from .commands.help import show_help
 from .commands.help_ini import show_help_ini
 from .commands.run.parallel import run_parallel
 from .commands.run.sequential import run_sequential
 from .commands.show_config import show_config
 from .commands.show_env import show_envs
-from tox.reporter import update_default_reporter
 
 
 def cmdline(args=None):
