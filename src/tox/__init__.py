@@ -29,4 +29,4 @@ __all__ = (
 hookimpl = pluggy.HookimplMarker("tox")
 
 # NOTE: must come last due to circular import
-from .session import cmdline  # noqa
+from .session import cmdline  # isort:skip
