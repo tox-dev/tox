@@ -437,3 +437,29 @@ Example progress bar, showing a rotating spinner, the number of environments run
 .. code-block:: bash
 
     ⠹ [2] py27 | py36
+
+.. _`auto-provision`:
+
+tox auto-provisioning
+---------------------
+In case the host tox does not satisfy either the :conf:`minversion` or the :conf:`requires`, tox will now automatically
+create a virtual environment under :conf:`provision_tox_env` that satisfies those constraints and delegate all calls
+to this meta environment. This should allow automatically satisfying constraints on your tox environment,
+given you have at least version ``3.8.0`` of tox.
+
+For example given:
+
+.. code-block:: ini
+
+    [tox]
+    minversion = 3.10.0
+    requires = tox_venv >= 1.0.0
+
+if the user runs it with tox ``3.8.0`` or later installed tox will automatically ensured that both the minimum version
+and requires constraints are satisfied, by creating a virtual environment under ``.tox`` folder, and then installing
+into it ``tox >= 3.10.0`` and ``tox_venv >= 1.0.0``. Afterwards all tox invocations are forwarded to the tox installed
+inside ``.tox\.tox`` folder (referred to as meta-tox or auto-provisioned tox).
+
+This allows tox to automatically setup itself with all its plugins for the current project.  If the host tox satisfies
+the constraints expressed with the :conf:`requires` and :conf:`minversion` no such provisioning is done (to avoid
+setup cost when it's not explicitly needed).

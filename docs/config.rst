@@ -225,6 +225,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Use this to specify the python version for a tox environment. If not specified, the virtual
     environments factors (e.g. name part) will be used to automatically set one. For example, ``py37``
     means ``python3.7``, ``py3`` means ``python3`` and ``py`` means ``python``.
+    :conf:`provision_tox_env` environment does not inherit this setting from the ``toxenv`` section.
 
     .. versionchanged:: 3.1
 
@@ -232,6 +233,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
         than implied from the name a warning will be printed by default. However, if
         :conf:`ignore_basepython_conflict` is set, the value is ignored and we force the
         ``basepython`` implied from the factor name.
+
 
 .. conf:: commands ^ ARGVLIST
 
