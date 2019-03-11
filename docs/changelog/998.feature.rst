@@ -1,0 +1,6 @@
+Auto provision host tox requirements. In case the host tox does not satisfy either the
+:conf:`minversion` or the :conf:`requires`, tox will now automatically create a virtual environment
+under :conf:`provision_tox_env` that satisfies those constraints and delegate all calls to this
+meta environment. This should allow automatically satisfying constraints on your tox environment,
+given you have at least version ``3.8.0`` of tox. Plugins no longer need to be manually satisfied
+by the users, increasing their ease of use.

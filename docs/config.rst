@@ -37,7 +37,31 @@ Global settings are defined under the ``tox`` section as:
 .. conf:: minversion
 
    Define the minimal tox version required to run; if the host tox is less than this
-   the tool with exit with an error message indicating the user needs to upgrade tox.
+   the tool with create an environment and provision it with a tox that satisfies it
+   under :conf:`provision_tox_env`.
+
+.. conf:: requires ^ LIST of PEP-508
+
+    .. versionadded:: 3.2.0
+
+    Specify python packages that need to exist alongside the tox installation for the tox build
+    to be able to start. Use this to specify plugin requirements (or the version of ``virtualenv`` -
+    determines the default ``pip``, ``setuptools``, and ``wheel`` versions the tox environments
+    start with). If these dependencies are not specified tox will create :conf:`provision_tox_env`
+    environment so that they are satisfied and delegate all calls to that.
+
+    .. code-block:: ini
+
+        [tox]
+        requires = tox-venv
+                   setuptools >= 30.0.0
+
+.. conf:: provision_tox_env ^ string ^ .tox
+
+    .. versionadded:: 3.8.0
+
+    Name of the virtual environment used to provision a tox having all dependencies specified
+    inside :conf:`requires` and :conf:`minversion`.
 
 .. conf:: toxworkdir ^ PATH ^ {toxinidir}/.tox
 
@@ -121,23 +145,6 @@ Global settings are defined under the ``tox`` section as:
     always use the base python implied from the Python name. This allows you to
     configure :conf:`basepython` in the global testenv without affecting environments
     that have implied base python versions.
-
-.. conf:: requires ^ LIST of PEP-508
-
-    .. versionadded:: 3.2.0
-
-    Specify python packages that need to exist alongside the tox installation for the tox build
-    to be able to start. Use this to specify plugin requirements and build dependencies.
-
-    .. code-block:: ini
-
-        [tox]
-        requires = tox-venv
-                   setuptools >= 30.0.0
-
-    .. note:: tox does **not** install those required packages for you. tox only checks if the
-              requirements are satisfied and crashes early with an helpful error rather then later
-              in the process.
 
 .. conf:: isolated_build ^ true|false ^ false
 

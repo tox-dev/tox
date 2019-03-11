@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import textwrap
 from threading import Thread
@@ -66,24 +65,6 @@ def test_resolve_pkg_doubledash(tmpdir, mocksession):
     distshare.ensure("pkg-mine-1.3.0a1.zip")
     res = resolve_package(distshare.join("pkg-mine*"))
     assert res == p
-
-
-def test_minversion(cmd, initproj):
-    initproj(
-        "interp123-0.5",
-        filedefs={
-            "tests": {"test_hello.py": "def test_hello(): pass"},
-            "tox.ini": """
-            [tox]
-            minversion = 6.0
-        """,
-        },
-    )
-    result = cmd("-v")
-    assert re.match(
-        r"ERROR: MinVersionError: tox version is .*," r" required is at least 6.0", result.out
-    )
-    assert result.ret
 
 
 def test_skip_sdist(cmd, initproj):

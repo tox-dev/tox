@@ -29,6 +29,7 @@ from tox.venv import VirtualEnv
 
 from .commands.help import show_help
 from .commands.help_ini import show_help_ini
+from .commands.provision import provision_tox
 from .commands.run.parallel import run_parallel
 from .commands.run.sequential import run_sequential
 from .commands.show_config import show_config
@@ -55,7 +56,6 @@ def main(args):
     setup_reporter(args)
     try:
         config = load_config(args)
-        update_default_reporter(config.option.quiet_level, config.option.verbose_level)
         reporter.using("tox.ini: {}".format(config.toxinipath))
         config.logdir.ensure(dir=1)
         ensure_empty_dir(config.logdir)
@@ -66,19 +66,19 @@ def main(args):
         raise SystemExit(retcode)
     except KeyboardInterrupt:
         raise SystemExit(2)
-    except (tox.exception.MinVersionError, tox.exception.MissingRequirement) as exception:
-        reporter.error(str(exception))
-        raise SystemExit(1)
 
 
 def load_config(args):
-    config = parseconfig(args)
-    if config.option.help:
-        show_help(config)
-        raise SystemExit(0)
-    elif config.option.helpini:
-        show_help_ini(config)
-        raise SystemExit(0)
+    try:
+        config = parseconfig(args)
+        if config.option.help:
+            show_help(config)
+            raise SystemExit(0)
+        elif config.option.helpini:
+            show_help_ini(config)
+            raise SystemExit(0)
+    except tox.exception.MissingRequirement as exception:
+        config = exception.config
     return config
 
 
@@ -97,7 +97,7 @@ class Session(object):
         self.popen = popen
         self.resultlog = ResultLog()
         self.existing_venvs = OrderedDict()
-        self.venv_dict = self._build_venvs()
+        self.venv_dict = {} if self.config.run_provision else self._build_venvs()
 
     def _build_venvs(self):
         try:
@@ -168,15 +168,19 @@ class Session(object):
     def runcommand(self):
         reporter.using("tox-{} from {}".format(tox.__version__, tox.__file__))
         show_description = reporter.has_level(reporter.Verbosity.DEFAULT)
-        if self.config.option.showconfig:
-            self.showconfig()
-        elif self.config.option.listenvs:
-            self.showenvs(all_envs=False, description=show_description)
-        elif self.config.option.listenvs_all:
-            self.showenvs(all_envs=True, description=show_description)
+        if self.config.run_provision:
+            provision_tox_venv = self.getvenv(self.config.provision_tox_env)
+            provision_tox(provision_tox_venv, self.config.args)
         else:
-            with self.cleanup():
-                return self.subcommand_test()
+            if self.config.option.showconfig:
+                self.showconfig()
+            elif self.config.option.listenvs:
+                self.showenvs(all_envs=False, description=show_description)
+            elif self.config.option.listenvs_all:
+                self.showenvs(all_envs=True, description=show_description)
+            else:
+                with self.cleanup():
+                    return self.subcommand_test()
 
     @contextmanager
     def cleanup(self):

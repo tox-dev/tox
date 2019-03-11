@@ -1,4 +1,5 @@
 import os
+import pipes
 import signal
 
 
@@ -80,10 +81,8 @@ class MissingDependency(Error):
 class MissingRequirement(Error):
     """A requirement defined in :config:`require` is not met."""
 
+    def __init__(self, config):
+        self.config = config
 
-class MinVersionError(Error):
-    """The installed tox version is lower than requested minversion."""
-
-    def __init__(self, message):
-        self.message = message
-        super(MinVersionError, self).__init__(message)
+    def __str__(self):
+        return " ".join(pipes.quote(i) for i in self.config.requires)

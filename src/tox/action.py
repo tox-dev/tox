@@ -140,7 +140,6 @@ class Action(object):
             else:
                 out, err = process.communicate()
         except KeyboardInterrupt:
-            reporter.error("KEYBOARDINTERRUPT")
             process.wait()
             raise
         return out
