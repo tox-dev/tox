@@ -218,7 +218,7 @@ class Session(object):
         exit_code = 0
         for venv in self.venv_dict.values():
             report = reporter.good
-            status = venv.status
+            status = getattr(venv, "status", "undefined")
             if isinstance(status, tox.exception.InterpreterNotFound):
                 msg = " {}: {}".format(venv.envconfig.envname, str(status))
                 if self.config.option.skip_missing_interpreters == "true":

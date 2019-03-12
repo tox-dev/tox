@@ -1,4 +1,5 @@
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -40,7 +41,7 @@ def run_parallel(config, venv_dict):
     show_progress = not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
     with Spinner(enabled=show_progress) as spinner, ctx() as sink:
 
-        def run_in_thread(tox_env, os_env):
+        def run_in_thread(tox_env, os_env, processes):
             res = None
             env_name = tox_env.envconfig.envname
             try:
@@ -57,6 +58,8 @@ def run_parallel(config, venv_dict):
                     stdin=None,
                     universal_newlines=True,
                 )
+                processes[env_name] = process
+                reporter.verbosity2("started {} with pid {}".format(env_name, process.pid))
                 res = process.wait()
             finally:
                 semaphore.release()
@@ -87,25 +90,55 @@ def run_parallel(config, venv_dict):
                     reporter.quiet(message)
 
         threads = []
+        processes = {}
         todo_keys = set(venv_dict.keys())
         todo = OrderedDict((n, todo_keys & set(v.envconfig.depends)) for n, v in venv_dict.items())
         done = set()
-        while todo:
-            for name, depends in list(todo.items()):
-                if depends - done:
-                    # skip if has unfinished dependencies
+        try:
+            while todo:
+                for name, depends in list(todo.items()):
+                    if depends - done:
+                        # skip if has unfinished dependencies
+                        continue
+                    del todo[name]
+                    venv = venv_dict[name]
+                    semaphore.acquire(blocking=True)
+                    spinner.add(name)
+                    thread = Thread(
+                        target=run_in_thread, args=(venv, os.environ.copy(), processes)
+                    )
+                    thread.daemon = True
+                    thread.start()
+                    threads.append(thread)
+                if todo:
+                    # wait until someone finishes and retry queuing jobs
+                    finished.wait()
+                    finished.clear()
+            for thread in threads:
+                while thread.is_alive():
+                    thread.join(0.1)
+                    # join suspends signal handling (ctrl+c), periodically time-out to check for it
+        except KeyboardInterrupt:
+            reporter.verbosity0("keyboard interrupt")
+            while True:
+                # do not allow to interrupt until children interrupt
+                try:
+                    # first try to request a graceful shutdown
+                    for name, proc in list(processes.items()):
+                        if proc.returncode is None:
+                            proc.send_signal(
+                                signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
+                            )
+                            reporter.verbosity2("send CTRL+C {}-{}".format(name, proc.pid))
+                    for thread in threads:
+                        thread.join(0.1)
+                    # now if being gentle did not work now be forceful
+                    for name, proc in list(processes.items()):
+                        if proc.returncode is None:
+                            proc.terminate()
+                            reporter.verbosity2("terminate {}-{}".format(name, proc.pid))
+                    for thread in threads:
+                        thread.join()
+                except KeyboardInterrupt:
                     continue
-                del todo[name]
-                venv = venv_dict[name]
-                semaphore.acquire(blocking=True)
-                spinner.add(name)
-                thread = Thread(target=run_in_thread, args=(venv, os.environ.copy()))
-                thread.start()
-                threads.append(thread)
-            if todo:
-                # wait until someone finishes and retry queuing jobs
-                finished.wait()
-                finished.clear()
-
-        for thread in threads:
-            thread.join()
+                raise KeyboardInterrupt

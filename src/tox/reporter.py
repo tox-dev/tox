@@ -67,7 +67,7 @@ class Reporter(object):
 
     def logline(self, of, msg, **opts):
         self.reported_lines.append((of, msg))
-        self.tw.line("{}".format(msg), **opts)
+        self.tw.write("{}\n".format(msg), **opts)
 
     def keyvalue(self, name, value):
         if name.endswith(":"):

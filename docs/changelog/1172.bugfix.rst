@@ -1,0 +1,2 @@
+Interrupting parallel runs via keyboard interrupt no longer leaves the child runs running
+(now forwards the keyboard interrupt to the children and waits until they finish) - by :user:`gaborbernat`.
