@@ -2217,14 +2217,6 @@ class TestGlobalOptions:
         config = newconfig([], inisource)
         assert config.envlist == ["py27", "py34"]
 
-    def test_minversion(self, newconfig):
-        inisource = """
-            [tox]
-            minversion = 10.0
-        """
-        with pytest.raises(tox.exception.MinVersionError):
-            newconfig([], inisource)
-
     def test_skip_missing_interpreters_true(self, newconfig):
         ini_source = """
             [tox]
@@ -2919,24 +2911,6 @@ class TestCommandParser:
         )
         envconfig = config.envconfigs["py36"]
         assert envconfig.commands[0] == ["some", r"hello\world"]
-
-
-def test_plugin_require(newconfig):
-    inisource = """
-        [tox]
-        requires = setuptools
-                   name[foo,bar]>=2,<3; python_version>"2.0" and os_name=='a'
-                   b
-    """
-    with pytest.raises(tox.exception.MissingRequirement) as exc_info:
-        newconfig([], inisource)
-
-    expected = (
-        'Packages name[bar,foo]<3,>=2; python_version > "2.0" and os_name == "a", b '
-        "need to be installed alongside tox in {}".format(sys.executable)
-    )
-    actual = exc_info.value.args[0]
-    assert actual == expected
 
 
 def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):

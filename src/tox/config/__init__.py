@@ -21,6 +21,7 @@ import toml
 import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
+from tox.reporter import update_default_reporter
 
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
@@ -227,6 +228,7 @@ def parseconfig(args, plugins=()):
     """
     pm = get_plugin_manager(plugins)
     config, option = parse_cli(args, pm)
+    update_default_reporter(config.option.quiet_level, config.option.verbose_level)
 
     for config_file in propose_configs(option.configfile):
         config_type = config_file.basename
@@ -572,7 +574,7 @@ def tox_addoption(parser):
 
     parser.add_testenv_attribute(
         name="basepython",
-        type="string",
+        type="basepython",
         default=None,
         postprocess=basepython_default,
         help="executable name or path of interpreter used to create a virtual test environment.",
@@ -977,25 +979,6 @@ class ParseIni(object):
 
         reader.addsubstitutions(toxinidir=config.toxinidir, homedir=config.homedir)
 
-        # As older versions of tox may have bugs or incompatibilities that
-        # prevent parsing of tox.ini this must be the first thing checked.
-        config.minversion = reader.getstring("minversion", None)
-        if config.minversion:
-            # As older versions of tox may have bugs or incompatibilities that
-            # prevent parsing of tox.ini this must be the first thing checked.
-            config.minversion = reader.getstring("minversion", None)
-            if config.minversion:
-                tox_version = pkg_resources.parse_version(tox.__version__)
-                config_min_version = pkg_resources.parse_version(self.config.minversion)
-                if config_min_version > tox_version:
-                    raise tox.exception.MinVersionError(
-                        "tox version is {}, required is at least {}".format(
-                            tox.__version__, self.config.minversion
-                        )
-                    )
-
-        self.ensure_requires_satisfied(reader.getlist("requires"))
-
         if config.option.workdir is None:
             config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
         else:
@@ -1004,11 +987,18 @@ class ParseIni(object):
         if os.path.exists(str(config.toxworkdir)):
             config.toxworkdir = config.toxworkdir.realpath()
 
-        if config.option.skip_missing_interpreters == "config":
-            val = reader.getbool("skip_missing_interpreters", False)
-            config.option.skip_missing_interpreters = "true" if val else "false"
-
+        reader.addsubstitutions(toxworkdir=config.toxworkdir)
         config.ignore_basepython_conflict = reader.getbool("ignore_basepython_conflict", False)
+
+        config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
+
+        reader.addsubstitutions(distdir=config.distdir)
+        config.distshare = reader.getpath("distshare", dist_share_default)
+        config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}/.tmp")
+        reader.addsubstitutions(distshare=config.distshare)
+        config.sdistsrc = reader.getpath("sdistsrc", None)
+        config.setupdir = reader.getpath("setupdir", "{toxinidir}")
+        config.logdir = config.toxworkdir.join("log")
 
         # determine indexserver dictionary
         config.indexserver = {"default": IndexServerConfig("default")}
@@ -1016,6 +1006,10 @@ class ParseIni(object):
         for line in reader.getlist(prefix):
             name, url = map(lambda x: x.strip(), line.split("=", 1))
             config.indexserver[name] = IndexServerConfig(name, url)
+
+        if config.option.skip_missing_interpreters == "config":
+            val = reader.getbool("skip_missing_interpreters", False)
+            config.option.skip_missing_interpreters = "true" if val else "false"
 
         override = False
         if config.option.indexurl:
@@ -1037,16 +1031,7 @@ class ParseIni(object):
             for name in config.indexserver:
                 config.indexserver[name] = IndexServerConfig(name, override)
 
-        reader.addsubstitutions(toxworkdir=config.toxworkdir)
-        config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
-
-        reader.addsubstitutions(distdir=config.distdir)
-        config.distshare = reader.getpath("distshare", dist_share_default)
-        config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}/.tmp")
-        reader.addsubstitutions(distshare=config.distshare)
-        config.sdistsrc = reader.getpath("sdistsrc", None)
-        config.setupdir = reader.getpath("setupdir", "{toxinidir}")
-        config.logdir = config.toxworkdir.join("log")
+        self.handle_provision(config, reader)
 
         self.parse_build_isolation(config, reader)
         config.envlist, all_envs = self._getenvdata(reader, config)
@@ -1080,6 +1065,34 @@ class ParseIni(object):
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
 
+    def handle_provision(self, config, reader):
+        requires_list = reader.getlist("requires")
+        config.minversion = reader.getstring("minversion", None)
+        requires_list.append("tox >= {}".format(config.minversion or tox.__version__))
+        config.provision_tox_env = name = reader.getstring("provision_tox_env", ".tox")
+        env_config = self.make_envconfig(
+            name, "{}{}".format(testenvprefix, name), reader._subs, config
+        )
+        env_config.deps = [DepConfig(r, None) for r in requires_list]
+        self.ensure_requires_satisfied(config, env_config)
+
+    @staticmethod
+    def ensure_requires_satisfied(config, env_config):
+        missing_requirements = []
+        deps = env_config.deps
+        for require in deps:
+            # noinspection PyBroadException
+            try:
+                pkg_resources.get_distribution(require.name)
+            except pkg_resources.RequirementParseError:
+                raise
+            except Exception:
+                missing_requirements.append(str(pkg_resources.Requirement(require.name)))
+        config.run_provision = bool(missing_requirements)
+        if missing_requirements:
+            config.envconfigs[config.provision_tox_env] = env_config
+            raise tox.exception.MissingRequirement(config)
+
     def parse_build_isolation(self, config, reader):
         config.isolated_build = reader.getbool("isolated_build", False)
         config.isolated_build_env = reader.getstring("isolated_build_env", ".package")
@@ -1089,23 +1102,6 @@ class ParseIni(object):
                 config.envconfigs[name] = self.make_envconfig(
                     name, "{}{}".format(testenvprefix, name), reader._subs, config
                 )
-
-    @staticmethod
-    def ensure_requires_satisfied(specified):
-        missing_requirements = []
-        for s in specified:
-            try:
-                pkg_resources.get_distribution(s)
-            except pkg_resources.RequirementParseError:
-                raise
-            except Exception:
-                missing_requirements.append(str(pkg_resources.Requirement(s)))
-        if missing_requirements:
-            raise tox.exception.MissingRequirement(
-                "Packages {} need to be installed alongside tox in {}".format(
-                    ", ".join(missing_requirements), sys.executable
-                )
-            )
 
     def _list_section_factors(self, section):
         factors = set()
@@ -1132,6 +1128,11 @@ class ParseIni(object):
                 if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
                     meth = getattr(reader, "get{}".format(atype))
                     res = meth(env_attr.name, env_attr.default, replace=replace)
+                elif atype == "basepython":
+                    no_fallback = name in (config.provision_tox_env,)
+                    res = reader.getstring(
+                        env_attr.name, env_attr.default, replace=replace, no_fallback=no_fallback
+                    )
                 elif atype == "space-separated-list":
                     res = reader.getlist(env_attr.name, sep=" ")
                 elif atype == "line-list":
@@ -1363,9 +1364,10 @@ class SectionReader:
     def getargv(self, name, default="", replace=True):
         return self.getargvlist(name, default, replace=replace)[0]
 
-    def getstring(self, name, default=None, replace=True, crossonly=False):
+    def getstring(self, name, default=None, replace=True, crossonly=False, no_fallback=False):
         x = None
-        for s in [self.section_name] + self.fallbacksections:
+        sections = [self.section_name] + ([] if no_fallback else self.fallbacksections)
+        for s in sections:
             try:
                 x = self._cfg[s][name]
                 break

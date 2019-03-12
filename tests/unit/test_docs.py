@@ -41,7 +41,7 @@ def test_all_rst_ini_blocks_parse(filename, tmpdir):
         try:
             parseconfig(["-c", str(config_path)])
         except tox.exception.MissingRequirement:
-            assert "requires = tox-venv" in str(code)
+            pass
         except Exception as e:
             raise AssertionError(
                 "Error parsing ini block\n\n"

@@ -37,7 +37,31 @@ Global settings are defined under the ``tox`` section as:
 .. conf:: minversion
 
    Define the minimal tox version required to run; if the host tox is less than this
-   the tool with exit with an error message indicating the user needs to upgrade tox.
+   the tool with create an environment and provision it with a tox that satisfies it
+   under :conf:`provision_tox_env`.
+
+.. conf:: requires ^ LIST of PEP-508
+
+    .. versionadded:: 3.2.0
+
+    Specify python packages that need to exist alongside the tox installation for the tox build
+    to be able to start. Use this to specify plugin requirements (or the version of ``virtualenv`` -
+    determines the default ``pip``, ``setuptools``, and ``wheel`` versions the tox environments
+    start with). If these dependencies are not specified tox will create :conf:`provision_tox_env`
+    environment so that they are satisfied and delegate all calls to that.
+
+    .. code-block:: ini
+
+        [tox]
+        requires = tox-venv
+                   setuptools >= 30.0.0
+
+.. conf:: provision_tox_env ^ string ^ .tox
+
+    .. versionadded:: 3.8.0
+
+    Name of the virtual environment used to provision a tox having all dependencies specified
+    inside :conf:`requires` and :conf:`minversion`.
 
 .. conf:: toxworkdir ^ PATH ^ {toxinidir}/.tox
 
@@ -122,23 +146,6 @@ Global settings are defined under the ``tox`` section as:
     configure :conf:`basepython` in the global testenv without affecting environments
     that have implied base python versions.
 
-.. conf:: requires ^ LIST of PEP-508
-
-    .. versionadded:: 3.2.0
-
-    Specify python packages that need to exist alongside the tox installation for the tox build
-    to be able to start. Use this to specify plugin requirements and build dependencies.
-
-    .. code-block:: ini
-
-        [tox]
-        requires = tox-venv
-                   setuptools >= 30.0.0
-
-    .. note:: tox does **not** install those required packages for you. tox only checks if the
-              requirements are satisfied and crashes early with an helpful error rather then later
-              in the process.
-
 .. conf:: isolated_build ^ true|false ^ false
 
     .. versionadded:: 3.3.0
@@ -218,6 +225,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Use this to specify the python version for a tox environment. If not specified, the virtual
     environments factors (e.g. name part) will be used to automatically set one. For example, ``py37``
     means ``python3.7``, ``py3`` means ``python3`` and ``py`` means ``python``.
+    :conf:`provision_tox_env` environment does not inherit this setting from the ``toxenv`` section.
 
     .. versionchanged:: 3.1
 
@@ -225,6 +233,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
         than implied from the name a warning will be printed by default. However, if
         :conf:`ignore_basepython_conflict` is set, the value is ignored and we force the
         ``basepython`` implied from the factor name.
+
 
 .. conf:: commands ^ ARGVLIST
 

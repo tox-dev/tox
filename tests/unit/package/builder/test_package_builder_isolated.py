@@ -80,7 +80,7 @@ def toml_file_check(initproj, version, message, toml):
         },
     )
 
-    with pytest.raises(SystemExit, message=1):
+    with pytest.raises(SystemExit, match="1"):
         get_build_info(py.path.local())
     toml_file = py.path.local().join("pyproject.toml")
     msg = "ERROR: {} inside {}".format(message, toml_file)
