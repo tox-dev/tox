@@ -1,0 +1,2 @@
+In a posix shell, setting the PATH environment variable to an empty value is equivalent to not setting it at all;
+therefore we no longer if the user sets PYTHONPATH an empty string on python 3.4 or later - by :user:`gaborbernat`.

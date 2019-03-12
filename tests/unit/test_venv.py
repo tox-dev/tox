@@ -671,6 +671,28 @@ class TestVenvTest:
         assert len(pcalls) == 1
         assert pcalls[0].env["PYTHONPATH"] == "/my/awesome/library"
 
+    def test_pythonpath_empty(self, newmocksession, monkeypatch, caplog):
+        monkeypatch.setenv("PYTHONPATH", "")
+        mocksession = newmocksession(
+            [],
+            """
+            [testenv:python]
+            commands=abc
+        """,
+        )
+        venv = mocksession.getvenv("python")
+        with mocksession.newaction(venv.name, "getenv") as action:
+            venv.run_install_command(["qwe"], action=action)
+        assert "PYTHONPATH" not in os.environ
+        if sys.version_info < (3, 4):
+            mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
+        else:
+            with pytest.raises(AssertionError):
+                mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
+        pcalls = mocksession._pcalls
+        assert len(pcalls) == 1
+        assert "PYTHONPATH" not in pcalls[0].env
+
 
 def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
     monkeypatch.delenv("PYTHONPATH", raising=False)
