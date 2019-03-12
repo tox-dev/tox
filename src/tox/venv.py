@@ -398,10 +398,14 @@ class VirtualEnv(object):
         if "PYTHONPATH" not in self.envconfig.passenv:
             # If PYTHONPATH not explicitly asked for, remove it.
             if "PYTHONPATH" in os.environ:
-                reporter.warning(
-                    "Discarding $PYTHONPATH from environment, to override "
-                    "specify PYTHONPATH in 'passenv' in your configuration."
-                )
+                if sys.version_info < (3, 4) or bool(os.environ["PYTHONPATH"]):
+                    # https://docs.python.org/3/whatsnew/3.4.html#changes-in-python-command-behavior
+                    # In a posix shell, setting the PATH environment variable to an empty value is
+                    # equivalent to not setting it at all.
+                    reporter.warning(
+                        "Discarding $PYTHONPATH from environment, to override "
+                        "specify PYTHONPATH in 'passenv' in your configuration."
+                    )
                 os.environ.pop("PYTHONPATH")
 
         # installing packages at user level may mean we're not installing inside the venv
