@@ -1,29 +1,26 @@
+from collections import OrderedDict
+
+import inspect
 import os
 import signal
 import subprocess
 import sys
 import tempfile
-from collections import OrderedDict
 from threading import Event, Semaphore, Thread
 
+from tox import __main__ as main
 from tox import reporter
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.util.spinner import Spinner
+from tox.util.stdlib import nullcontext
 
-if sys.version_info >= (3, 7):
-    from contextlib import nullcontext
-else:
-    import contextlib
-
-    @contextlib.contextmanager
-    def nullcontext(enter_result=None):
-        yield enter_result
+MAIN_FILE = inspect.getsourcefile(main)
 
 
 def run_parallel(config, venv_dict):
     """here we'll just start parallel sub-processes"""
     live_out = config.option.parallel_live
-    args = [sys.executable, "-m", "tox"] + config.args
+    args = [sys.executable, MAIN_FILE] + config.args
     try:
         position = args.index("--")
     except ValueError:
@@ -116,10 +113,10 @@ def run_parallel(config, venv_dict):
                     finished.clear()
             for thread in threads:
                 while thread.is_alive():
-                    thread.join(0.1)
+                    thread.join(0.05)
                     # join suspends signal handling (ctrl+c), periodically time-out to check for it
         except KeyboardInterrupt:
-            reporter.verbosity0("keyboard interrupt")
+            reporter.verbosity0("keyboard interrupt parallel - stopping children")
             while True:
                 # do not allow to interrupt until children interrupt
                 try:
@@ -130,8 +127,9 @@ def run_parallel(config, venv_dict):
                                 signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
                             )
                             reporter.verbosity2("send CTRL+C {}-{}".format(name, proc.pid))
-                    for thread in threads:
-                        thread.join(0.1)
+                    if len(threads):
+                        threads[0].join(0.2)  # wait at most 200ms for all to finish
+
                     # now if being gentle did not work now be forceful
                     for name, proc in list(processes.items()):
                         if proc.returncode is None:

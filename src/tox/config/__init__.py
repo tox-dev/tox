@@ -21,7 +21,7 @@ import toml
 import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
-from tox.reporter import update_default_reporter
+from tox.reporter import REPORTER_TIMESTAMP_ON_ENV, update_default_reporter
 
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
@@ -657,6 +657,7 @@ def tox_addoption(parser):
             "LANGUAGE",
             "LD_LIBRARY_PATH",
             "TOX_WORK_DIR",
+            str(REPORTER_TIMESTAMP_ON_ENV),
             str(PARALLEL_ENV_VAR_KEY),
         }
 

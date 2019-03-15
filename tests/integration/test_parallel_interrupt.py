@@ -7,25 +7,29 @@ from datetime import datetime
 
 from pathlib2 import Path
 
+from tox import __main__ as main
+from tox import reporter
 
-def test_parallel_interrupt(initproj, cmd):
 
+def test_parallel_interrupt(initproj, cmd, monkeypatch):
+    monkeypatch.setenv(reporter.REPORTER_TIMESTAMP_ON_ENV, "1")
+    monkeypatch.setattr(reporter, "REPORTER_TIMESTAMP_ON", True)
     start = datetime.now()
     initproj(
         "pkg123-0.7",
         filedefs={
             "tox.ini": """
                     [tox]
-                    skipsdist=True
                     envlist = a, b
                     [testenv]
+                    host_env = True
                     commands = python -c "open('{envname}', 'w').write('done'); \
                      import time; time.sleep(3)"
 
                 """
         },
     )
-    cmd = [sys.executable, "-m", "tox", "-v", "-v", "-p", "all"]
+    cmd = [sys.executable, main.__file__, "-v", "-v", "-p", "all", "-o"]
     process = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True
     )
@@ -36,7 +40,26 @@ def test_parallel_interrupt(initproj, cmd):
     except ImportError:
         current_process = None
 
-    # we wait until all environments are up and running
+    wait_for_env_startup(process)
+
+    all_children = []
+    if current_process is not None:
+        all_children = current_process.children(recursive=True)
+        assert all_children
+
+    end = datetime.now() - start
+    assert end
+    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+    out, _ = process.communicate()
+    assert "keyboard interrupt parallel - stopping children" in out, out
+    assert "\nERROR:   a: parallel child exit code " in out, out
+    assert "\nERROR:   b: parallel child exit code " in out, out
+
+    assert all(not children.is_running() for children in all_children)
+
+
+def wait_for_env_startup(process):
+    """the environments will write files once they are up"""
     signal_files = [Path() / "a", Path() / "b"]
     found = False
     while True:
@@ -45,22 +68,8 @@ def test_parallel_interrupt(initproj, cmd):
             break
         if process.poll() is not None:
             break
-    if not found:
-        out, _ = process.communicate()
-        out = out.encode("utf-8")
+    if not found or process.poll() is not None:
         missing = [f for f in signal_files if not f.exists()]
+        out, _ = process.communicate()
         assert len(missing), out
-
-    if current_process:
-        all_children = current_process.children(recursive=True)
-        assert all_children
-
-    end = datetime.now() - start
-    assert end
-    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
-    out, _ = process.communicate()
-    assert "\nERROR:   a: parallel child exit code " in out, out
-    assert "\nERROR:   b: parallel child exit code " in out, out
-
-    if current_process:
-        assert all(not children.is_running() for children in all_children)
+        assert False, out

@@ -1,8 +1,10 @@
 """A progress reporter inspired from the logging modules"""
 from __future__ import absolute_import, unicode_literals
 
+import os
 import time
 from contextlib import contextmanager
+from datetime import datetime
 
 import py
 
@@ -13,6 +15,11 @@ class Verbosity(object):
     DEFAULT = 0
     QUIET = -1
     EXTRA_QUIET = -2
+
+
+REPORTER_TIMESTAMP_ON_ENV = "TOX_REPORTER_TIMESTAMP"
+REPORTER_TIMESTAMP_ON = os.environ.get(REPORTER_TIMESTAMP_ON_ENV, False) == "1"
+START = datetime.now().timestamp()
 
 
 class Reporter(object):
@@ -67,7 +74,11 @@ class Reporter(object):
 
     def logline(self, of, msg, **opts):
         self.reported_lines.append((of, msg))
-        self.tw.write("{}\n".format(msg), **opts)
+        timestamp = ""
+        if REPORTER_TIMESTAMP_ON:
+            timestamp = "{} ".format(datetime.now().timestamp() - START)
+        line_msg = "{}{}\n".format(timestamp, msg)
+        self.tw.write(line_msg, **opts)
 
     def keyvalue(self, name, value):
         if name.endswith(":"):
