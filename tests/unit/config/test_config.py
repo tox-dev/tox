@@ -1,3 +1,4 @@
+import distutils
 import os
 import re
 import sys
@@ -5,6 +6,7 @@ from textwrap import dedent
 
 import py
 import pytest
+from pathlib2 import Path
 from pluggy import PluginManager
 
 import tox
@@ -3045,3 +3047,31 @@ def test_posargs_relative_changedir(newconfig, tmpdir):
             dir1.strpath,
             "dir3",
         ]
+
+
+def test_host_env(newconfig):
+    config = newconfig(
+        """
+        [tox]
+        [testenv:py]
+        host_env = True
+
+        skip_install = False
+        deps = a
+        basepython=whatever
+        """
+    )
+    py = config.envconfigs["py"]
+    assert py.host_env is True
+
+    assert py.deps == []
+    assert py.skip_install is True
+    assert py.basepython == sys.executable
+
+    assert py.envpython == str(
+        Path(sys.executable).parent / ("jython" if "jython" in sys.executable else "python")
+    )
+    assert py.get_envbindir() == str(Path(sys.executable).parent)
+
+    current_site_package = os.path.realpath(distutils.sysconfig.get_python_lib(prefix=sys.prefix))
+    assert py.get_envsitepackagesdir() == current_site_package

@@ -1,9 +1,11 @@
+import distutils
 import os
 import sys
 import textwrap
 from threading import Thread
 
 import pytest
+from pathlib2 import Path
 
 import tox
 from tox.exception import MissingDependency, MissingDirectory
@@ -355,3 +357,23 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
     have = result.out.replace(os.linesep, "\n")
     actual = have[len(have) - len(expected) :]
     assert actual == expected
+
+
+def test_no_venv(cmd, initproj):
+    initproj(
+        "pkg_command_test_123-0.7",
+        filedefs={
+            "tox.ini": """
+                    [tox]
+                    envlist = py
+
+                    [testenv]
+                    commands = python -c 'import sys; print(sys.executable);'
+                    host_env = True
+                """
+        },
+    )
+    result = cmd("-q", "-q")
+    assert result.outlines[0] == sys.executable
+    env_content = {i.name for i in list((Path() / ".tox" / "py").resolve().iterdir())}
+    assert env_content == {".tox-config1", "log", "tmp"}

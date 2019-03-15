@@ -23,6 +23,7 @@ from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
 from tox.reporter import update_default_reporter
 
+from .env import TestenvConfig
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
 from .reporter import add_verbosity_commands
@@ -132,6 +133,8 @@ class DepOption:
 
     def postprocess(self, testenv_config, value):
         deps = []
+        if testenv_config.host_env is True:
+            return deps
         config = testenv_config.config
         for depline in value:
             m = re.match(r":(\w+):\s*(\S+)", depline)
@@ -357,6 +360,11 @@ class SetenvDict(object):
 
 @tox.hookimpl
 def tox_addoption(parser):
+    add_cli_options(parser)
+    add_test_env_attributes(parser)
+
+
+def add_cli_options(parser):
     parser.add_argument(
         "--version",
         action="store_true",
@@ -412,6 +420,7 @@ def tox_addoption(parser):
         dest="sdistonly",
         help="only perform the sdist packaging activity.",
     )
+
     add_parallel_flags(parser)
     parser.add_argument(
         "--parallel--safe-build",
@@ -420,6 +429,7 @@ def tox_addoption(parser):
         help="(deprecated) ensure two tox builds can run in parallel "
         "(uses a lock file in the tox workdir with .lock extension)",
     )
+
     parser.add_argument(
         "--installpkg",
         action="store",
@@ -465,7 +475,6 @@ def tox_addoption(parser):
         help="write a json file with detailed information "
         "about all commands and results involved.",
     )
-
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument(
         "--hashseed",
@@ -494,7 +503,6 @@ def tox_addoption(parser):
     parser.add_argument(
         "--alwayscopy", action="store_true", help="override alwayscopy setting to True in all envs"
     )
-
     cli_skip_missing_interpreter(parser)
     parser.add_argument(
         "--workdir",
@@ -504,11 +512,18 @@ def tox_addoption(parser):
         default=None,
         help="tox working directory",
     )
-
     parser.add_argument(
         "args", nargs="*", help="additional arguments available to command positional substitution"
     )
 
+
+def add_test_env_attributes(parser):
+    parser.add_testenv_attribute(
+        name="host_env",
+        type="bool",
+        default=False,
+        help="use the host env instead of creating an argument",
+    )
     parser.add_testenv_attribute(
         name="envdir",
         type="path",
@@ -542,6 +557,9 @@ def tox_addoption(parser):
         python interpreter version match up; if they don't we warn, unless ignore base
         python conflict is set in which case the factor name implied version if forced
         """
+        if testenv_config.host_env is True:
+            return sys.executable
+
         for factor in testenv_config.factors:
             if factor in tox.PYTHON.DEFAULT_FACTORS:
                 implied_python = tox.PYTHON.DEFAULT_FACTORS[factor]
@@ -592,30 +610,30 @@ def tox_addoption(parser):
         postprocess=merge_description,
         help="short description of this environment",
     )
-
     parser.add_testenv_attribute(
         name="envtmpdir", type="path", default="{envdir}/tmp", help="venv temporary directory"
     )
-
     parser.add_testenv_attribute(
         name="envlogdir", type="path", default="{envdir}/log", help="venv log directory"
     )
-
     parser.add_testenv_attribute(
         name="downloadcache",
         type="string",
         default=None,
         help="(ignored) has no effect anymore, pip-8 uses local caching by default",
     )
-
     parser.add_testenv_attribute(
         name="changedir",
         type="path",
         default="{toxinidir}",
         help="directory to change to when running commands",
     )
-
     parser.add_testenv_attribute_obj(PosargsOption())
+
+    def skip_install(testenv_config, value):
+        if testenv_config.host_env is True:
+            return True
+        return value
 
     parser.add_testenv_attribute(
         name="skip_install",
@@ -623,8 +641,8 @@ def tox_addoption(parser):
         default=False,
         help="Do not install the current package. This can be used when you need the virtualenv "
         "management but do not want to install the current package",
+        postprocess=skip_install,
     )
-
     parser.add_testenv_attribute(
         name="ignore_errors",
         type="bool",
@@ -699,14 +717,12 @@ def tox_addoption(parser):
         "which are needed for basic functioning of the Python system. See --showconfig for the "
         "eventual passenv setting.",
     )
-
     parser.add_testenv_attribute(
         name="whitelist_externals",
         type="line-list",
         help="each lines specifies a path or basename for which tox will not warn "
         "about it coming from outside the test environment.",
     )
-
     parser.add_testenv_attribute(
         name="platform",
         type="string",
@@ -716,9 +732,13 @@ def tox_addoption(parser):
     )
 
     def sitepackages(testenv_config, value):
+        if testenv_config.host_env is True:
+            return False
         return testenv_config.config.option.sitepackages or value
 
     def alwayscopy(testenv_config, value):
+        if testenv_config.host_env is True:
+            return False
         return testenv_config.config.option.alwayscopy or value
 
     parser.add_testenv_attribute(
@@ -729,7 +749,6 @@ def tox_addoption(parser):
         help="Set to ``True`` if you want to create virtual environments that also "
         "have access to globally installed packages.",
     )
-
     parser.add_testenv_attribute(
         name="alwayscopy",
         type="bool",
@@ -751,6 +770,8 @@ def tox_addoption(parser):
     )
 
     def develop(testenv_config, value):
+        if testenv_config.host_env is True:
+            return False
         option = testenv_config.config.option
         return not option.installpkg and (value or option.develop)
 
@@ -761,39 +782,32 @@ def tox_addoption(parser):
         default=False,
         help="install package in develop/editable mode",
     )
-
     parser.add_testenv_attribute_obj(InstallcmdOption())
-
     parser.add_testenv_attribute(
         name="list_dependencies_command",
         type="argv",
         default="python -m pip freeze",
         help="list dependencies for a virtual environment",
     )
-
     parser.add_testenv_attribute_obj(DepOption())
-
     parser.add_testenv_attribute(
         name="commands",
         type="argvlist",
         default="",
         help="each line specifies a test command and can use substitution.",
     )
-
     parser.add_testenv_attribute(
         name="commands_pre",
         type="argvlist",
         default="",
         help="each line specifies a setup command action and can use substitution.",
     )
-
     parser.add_testenv_attribute(
         name="commands_post",
         type="argvlist",
         default="",
         help="each line specifies a teardown command and can use substitution.",
     )
-
     parser.add_testenv_attribute(
         "ignore_outcome",
         type="bool",
@@ -801,13 +815,11 @@ def tox_addoption(parser):
         help="if set to True a failing result of this testenv will not make "
         "tox fail, only a warning will be produced",
     )
-
     parser.add_testenv_attribute(
         "extras",
         type="line-list",
         help="list of extras to install with the source distribution or develop install",
     )
-
     add_parallel_config(parser)
 
 
@@ -852,81 +864,6 @@ class Config(object):
         if homedir is None:
             homedir = self.toxinidir  # FIXME XXX good idea?
         return homedir
-
-
-class TestenvConfig:
-    """Testenv Configuration object.
-
-    In addition to some core attributes/properties this config object holds all
-    per-testenv ini attributes as attributes, see "tox --help-ini" for an overview.
-    """
-
-    def __init__(self, envname, config, factors, reader):
-        #: test environment name
-        self.envname = envname
-        #: global tox config object
-        self.config = config
-        #: set of factors
-        self.factors = factors
-        self._reader = reader
-        self.missing_subs = []
-        """Holds substitutions that could not be resolved.
-
-        Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a
-        problem if the env is not part of the current testrun. So we need to remember this and
-        check later when the testenv is actually run and crash only then.
-        """
-
-    def get_envbindir(self):
-        """Path to directory where scripts/binaries reside."""
-        if tox.INFO.IS_WIN and "jython" not in self.basepython and "pypy" not in self.basepython:
-            return self.envdir.join("Scripts")
-        else:
-            return self.envdir.join("bin")
-
-    @property
-    def envbindir(self):
-        return self.get_envbindir()
-
-    @property
-    def envpython(self):
-        """Path to python executable."""
-        return self.get_envpython()
-
-    def get_envpython(self):
-        """ path to python/jython executable. """
-        if "jython" in str(self.basepython):
-            name = "jython"
-        else:
-            name = "python"
-        return self.envbindir.join(name)
-
-    def get_envsitepackagesdir(self):
-        """Return sitepackagesdir of the virtualenv environment.
-
-        NOTE: Only available during execution, not during parsing.
-        """
-        x = self.config.interpreters.get_sitepackagesdir(info=self.python_info, envdir=self.envdir)
-        return x
-
-    @property
-    def python_info(self):
-        """Return sitepackagesdir of the virtualenv environment."""
-        return self.config.interpreters.get_info(envconfig=self)
-
-    def getsupportedinterpreter(self):
-        if tox.INFO.IS_WIN and self.basepython and "jython" in self.basepython:
-            raise tox.exception.UnsupportedInterpreter(
-                "Jython/Windows does not support installing scripts"
-            )
-        info = self.config.interpreters.get_info(envconfig=self)
-        if not info.executable:
-            raise tox.exception.InterpreterNotFound(self.basepython)
-        if not info.version_info:
-            raise tox.exception.InvocationError(
-                "Failed to get version_info for {}: {}".format(info.name, info.err)
-            )
-        return info.executable
 
 
 testenvprefix = "testenv:"
@@ -1114,43 +1051,51 @@ class ParseIni(object):
     def make_envconfig(self, name, section, subs, config, replace=True):
         factors = set(name.split("-"))
         reader = SectionReader(section, self._cfg, fallbacksections=["testenv"], factors=factors)
-        tc = TestenvConfig(name, config, factors, reader)
+        env_config = TestenvConfig(name, config, factors, reader)
         reader.addsubstitutions(
             envname=name,
-            envbindir=tc.get_envbindir,
-            envsitepackagesdir=tc.get_envsitepackagesdir,
-            envpython=tc.get_envpython,
+            envbindir=env_config.get_envbindir,
+            envsitepackagesdir=env_config.get_envsitepackagesdir,
+            envpython=env_config.get_envpython,
             **subs
         )
         for env_attr in config._testenv_attr:
-            atype = env_attr.type
+            field_type = env_attr.type
             try:
-                if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
-                    meth = getattr(reader, "get{}".format(atype))
-                    res = meth(env_attr.name, env_attr.default, replace=replace)
-                elif atype == "basepython":
+                if field_type in (
+                    "bool",
+                    "path",
+                    "string",
+                    "dict",
+                    "dict_setenv",
+                    "argv",
+                    "argvlist",
+                ):
+                    func = getattr(reader, "get{}".format(field_type))
+                    res = func(env_attr.name, env_attr.default, replace=replace)
+                elif field_type == "basepython":
                     no_fallback = name in (config.provision_tox_env,)
                     res = reader.getstring(
                         env_attr.name, env_attr.default, replace=replace, no_fallback=no_fallback
                     )
-                elif atype == "space-separated-list":
+                elif field_type == "space-separated-list":
                     res = reader.getlist(env_attr.name, sep=" ")
-                elif atype == "line-list":
+                elif field_type == "line-list":
                     res = reader.getlist(env_attr.name, sep="\n")
-                elif atype == "env-list":
+                elif field_type == "env-list":
                     res = reader.getstring(env_attr.name, replace=False)
                     res = tuple(_split_env(res))
                 else:
-                    raise ValueError("unknown type {!r}".format(atype))
+                    raise ValueError("unknown type {!r}".format(field_type))
                 if env_attr.postprocess:
-                    res = env_attr.postprocess(testenv_config=tc, value=res)
+                    res = env_attr.postprocess(testenv_config=env_config, value=res)
             except tox.exception.MissingSubstitution as e:
-                tc.missing_subs.append(e.name)
+                env_config.missing_subs.append(e.name)
                 res = e.FLAG
-            setattr(tc, env_attr.name, res)
-            if atype in ("path", "string"):
+            setattr(env_config, env_attr.name, res)
+            if field_type in ("path", "string"):
                 reader.addsubstitutions(**{env_attr.name: res})
-        return tc
+        return env_config
 
     def _getallenvs(self, reader, extra_env_list=None):
         extra_env_list = extra_env_list or []

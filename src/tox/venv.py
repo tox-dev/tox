@@ -640,6 +640,8 @@ NO_DOWNLOAD = False
 
 @tox.hookimpl
 def tox_testenv_create(venv, action):
+    if venv.envconfig.host_env is True:
+        return True
     config_interpreter = venv.getsupportedinterpreter()
     args = [sys.executable, "-m", "virtualenv"]
     if venv.envconfig.sitepackages:

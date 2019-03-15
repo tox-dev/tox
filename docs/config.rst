@@ -218,6 +218,21 @@ Defaults for each setting in this section are looked up in the::
 
 Complete list of settings that you can put into ``testenv*`` sections:
 
+.. conf:: host_env ^ true|false ^ false
+
+    If ``true`` tox will not create a virtual environment to run your commands inside and instead use the hosts
+    tox environment (the python from where tox is running). Some options for such environments cannot be changed,
+    and setting these config values will be ignored:
+
+    - :conf:`skip_install` is always ``True``,
+    - :conf:`deps` is always empty (in essence no install operation allowed to not break the host tox),
+    - :conf:`basepython` will always be the full path of the host python interpreter.
+
+    If one does specify pip install via the :conf:`commands` we'll not stop it, however one should consider doing
+    so is a bad practice and unsupported (do it at your own peril). This mode is designed to be used when the host
+    tox already contains all the dependencies you want and one wants to run a few python commands within that
+    (mostly standard library only dependencies).
+
 .. conf:: basepython ^ NAME-OR-PATH
 
     Name or path to a Python interpreter which will be used for creating the virtual environment,
