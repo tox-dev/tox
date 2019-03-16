@@ -32,6 +32,7 @@ You will get some output similar to this::
                                            locationspaths to use
     tox-venv (0.2.0)                     - Use python3 venvs for python3 tox testenvs
     tox-cmake (0.1.1)                    - Build CMake projects using tox
+    tox-tags (0.2.0)                     - Allows running subsets of environments based on tags
     tox-travis (0.10)                    - Seamless integration of tox into Travis CI
     tox-py-backwards (0.1)               - tox plugin for py-backwards
     tox-pytest-summary (0.1.2)           - tox + Py.test summary
