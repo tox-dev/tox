@@ -17,12 +17,6 @@ def run_parallel(config, venv_dict):
         position = args.index("--")
     except ValueError:
         position = len(args)
-    try:
-        parallel_at = args[0:position].index("--parallel")
-        del args[parallel_at]
-        position -= 1
-    except ValueError:
-        pass
 
     max_parallel = config.option.parallel
     if max_parallel is None:
