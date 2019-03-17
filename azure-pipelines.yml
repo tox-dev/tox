@@ -23,7 +23,6 @@ trigger:
     - CONTRIBUTORS
     - CONTRIBUTING.rst
     - CODE_OF_CONDUCT.md
-    - .travis.yml
     - .gitignore
     - .github/*
     - tasks/*
