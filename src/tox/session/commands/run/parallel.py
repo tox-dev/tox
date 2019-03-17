@@ -17,12 +17,20 @@ def run_parallel(config, venv_dict):
         position = args.index("--")
     except ValueError:
         position = len(args)
-    try:
-        parallel_at = args[0:position].index("--parallel")
-        del args[parallel_at]
+
+    # Strip parallel flags from subprocesses (including duplicates)
+    parallel_flag_positions = []
+    for pos, arg in enumerate(args[0:position]):
+        if arg in ['--parallel', '-p']:  # Handle the '--parallel/-p VAL' form
+            parallel_flag_positions.append(pos)
+            parallel_flag_positions.append(pos + 1)
+        elif arg.startswith("--parallel=") or arg.startswith("-p="):  # Handle the '--parallel/-p=VAL' form
+            parallel_flag_positions.append(pos)
+    parallel_flag_positions.reverse()  # Reversing so we don't disturb indexing while deleting
+    for del_pos in parallel_flag_positions:
+        del args[del_pos]
         position -= 1
-    except ValueError:
-        pass
+
 
     max_parallel = config.option.parallel
     if max_parallel is None:
