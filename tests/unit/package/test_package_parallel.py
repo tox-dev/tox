@@ -7,7 +7,9 @@ import pytest
 from tox.session.commands.run import sequential
 
 
-@pytest.mark.skipif(platform.python_implementation() == "pypy", reason="this is flaky on pypy")
+@pytest.mark.skipif(
+    platform.python_implementation().lower() == "pypy", reason="this is flaky on pypy"
+)
 def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
     initproj(
         "env_var_test",

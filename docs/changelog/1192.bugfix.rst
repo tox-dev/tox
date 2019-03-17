@@ -1,1 +1,1 @@
-Fix for difference in output between ``--parallel`` and ``-p`` when using ``posargs`` - by :user:`timdaman`
+Removed code that sometimes caused a difference in results between ``--parallel`` and ``-p`` when using ``posargs`` - by :user:`timdaman`
