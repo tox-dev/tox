@@ -72,7 +72,7 @@ html_theme_options = {
     "description": "standardise testing in Python",
     "github_banner": "true",
     "github_type": "star",
-    "travis_button": "true",
+    "travis_button": "false",
     "badge_branch": "master",
     "fixed_sidebar": "false",
 }
