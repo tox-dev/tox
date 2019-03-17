@@ -1,0 +1,1 @@
+Fix for difference in output between ``--parallel`` and ``-p`` when using ``posargs`` - by :user:`timdaman`
