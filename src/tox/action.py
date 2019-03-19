@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import pipes
+import signal
 import subprocess
 import sys
 import time
@@ -78,6 +79,12 @@ class Action(object):
                     env=os.environ.copy() if env is None else env,
                     universal_newlines=True,
                     shell=False,
+                    creationflags=(
+                        subprocess.CREATE_NEW_PROCESS_GROUP
+                        if sys.platform == "win32"
+                        else 0
+                        # needed for Windows signal send ability (CTRL+C)
+                    ),
                 )
             except OSError as e:
                 reporter.error(
@@ -140,7 +147,12 @@ class Action(object):
             else:
                 out, err = process.communicate()
         except KeyboardInterrupt:
-            process.wait()
+            process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+            try:
+                process.wait(0.1)
+            except subprocess.TimeoutExpired:
+                process.terminate()
+                process.wait()
             raise
         return out
 

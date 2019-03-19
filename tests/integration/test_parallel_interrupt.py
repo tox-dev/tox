@@ -8,12 +8,10 @@ from datetime import datetime
 from pathlib2 import Path
 
 from tox import __main__ as main
-from tox import reporter
 
 
 def test_parallel_interrupt(initproj, cmd, monkeypatch):
-    monkeypatch.setenv(reporter.REPORTER_TIMESTAMP_ON_ENV, "1")
-    monkeypatch.setattr(reporter, "REPORTER_TIMESTAMP_ON", True)
+    monkeypatch.setenv(str("_TOX_SKIP_ENV_CREATION_TEST"), str("1"))
     start = datetime.now()
     initproj(
         "pkg123-0.7",
@@ -21,12 +19,16 @@ def test_parallel_interrupt(initproj, cmd, monkeypatch):
             "tox.ini": """
                     [tox]
                     envlist = a, b
-                    [testenv]
-                    host_env = True
-                    commands = python -c "open('{envname}', 'w').write('done'); \
-                     import time; time.sleep(3)"
 
-                """
+                    [testenv]
+                    skip_install = True
+                    commands = python -c "open('{{envname}}', 'w').write('done'); \
+                    import time; time.sleep(10)"
+                    whitelist_externals = {}
+
+                """.format(
+                sys.executable
+            )
         },
     )
     cmd = [sys.executable, main.__file__, "-v", "-v", "-p", "all", "-o"]
@@ -54,7 +56,6 @@ def test_parallel_interrupt(initproj, cmd, monkeypatch):
     assert "keyboard interrupt parallel - stopping children" in out, out
     assert "\nERROR:   a: parallel child exit code " in out, out
     assert "\nERROR:   b: parallel child exit code " in out, out
-
     assert all(not children.is_running() for children in all_children)
 
 

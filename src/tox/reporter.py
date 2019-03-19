@@ -17,9 +17,9 @@ class Verbosity(object):
     EXTRA_QUIET = -2
 
 
-REPORTER_TIMESTAMP_ON_ENV = "TOX_REPORTER_TIMESTAMP"
+REPORTER_TIMESTAMP_ON_ENV = str("TOX_REPORTER_TIMESTAMP")
 REPORTER_TIMESTAMP_ON = os.environ.get(REPORTER_TIMESTAMP_ON_ENV, False) == "1"
-START = datetime.now().timestamp()
+START = datetime.now()
 
 
 class Reporter(object):
@@ -76,7 +76,7 @@ class Reporter(object):
         self.reported_lines.append((of, msg))
         timestamp = ""
         if REPORTER_TIMESTAMP_ON:
-            timestamp = "{} ".format(datetime.now().timestamp() - START)
+            timestamp = "{} ".format(datetime.now() - START)
         line_msg = "{}{}\n".format(timestamp, msg)
         self.tw.write(line_msg, **opts)
 

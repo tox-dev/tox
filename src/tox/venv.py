@@ -636,10 +636,13 @@ def prepend_shebang_interpreter(args):
 
 
 NO_DOWNLOAD = False
+_SKIP_VENV_CREATION = os.environ.get("_TOX_SKIP_ENV_CREATION_TEST", False) == "1"
 
 
 @tox.hookimpl
 def tox_testenv_create(venv, action):
+    if _SKIP_VENV_CREATION is True:
+        return True
     config_interpreter = venv.getsupportedinterpreter()
     args = [sys.executable, "-m", "virtualenv"]
     if venv.envconfig.sitepackages:

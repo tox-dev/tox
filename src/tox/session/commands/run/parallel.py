@@ -128,7 +128,7 @@ def run_parallel(config, venv_dict):
                             )
                             reporter.verbosity2("send CTRL+C {}-{}".format(name, proc.pid))
                     if len(threads):
-                        threads[0].join(0.2)  # wait at most 200ms for all to finish
+                        threads[0].join(1.2)  # wait at most 200ms for all to finish
 
                     # now if being gentle did not work now be forceful
                     for name, proc in list(processes.items()):
