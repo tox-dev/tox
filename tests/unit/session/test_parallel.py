@@ -107,3 +107,22 @@ def test_parallel_error_report(cmd, initproj):
     assert len(summary_lines) == 1, msg
 
     assert result.outlines[summary_lines[0] + 1 :] == ["ERROR:   a: parallel child exit code 1"]
+
+
+def test_parallel_deadlock(cmd, initproj):
+    tox_ini = """\
+[tox]
+envlist = e1,e2
+skipsdist = true
+
+[testenv:e1]
+commands =
+    python -c '[print("hello world") for _ in range(5000)]'
+
+[testenv:e2]
+commands =
+    python -c '[print("hello world") for _ in range(5000)]'
+"""
+
+    initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
+    cmd("-p", "2")  # used to hang indefinitely
