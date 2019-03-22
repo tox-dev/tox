@@ -1,12 +1,22 @@
 import os
 import subprocess
 import sys
+import tempfile
 from collections import OrderedDict
 from threading import Event, Semaphore, Thread
 
 from tox import reporter
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.util.spinner import Spinner
+
+if sys.version_info >= (3, 7):
+    from contextlib import nullcontext
+else:
+    import contextlib
+
+    @contextlib.contextmanager
+    def nullcontext(enter_result=None):
+        yield enter_result
 
 
 def run_parallel(config, venv_dict):
@@ -23,10 +33,12 @@ def run_parallel(config, venv_dict):
         max_parallel = len(venv_dict)
     semaphore = Semaphore(max_parallel)
     finished = Event()
-    sink = None if live_out else subprocess.PIPE
+
+    ctx = nullcontext if live_out else tempfile.NamedTemporaryFile
+    stderr = None if live_out else subprocess.STDOUT
 
     show_progress = not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
-    with Spinner(enabled=show_progress) as spinner:
+    with Spinner(enabled=show_progress) as spinner, ctx() as sink:
 
         def run_in_thread(tox_env, os_env):
             res = None
@@ -41,7 +53,7 @@ def run_parallel(config, venv_dict):
                     args_sub,
                     env=os_env,
                     stdout=sink,
-                    stderr=sink,
+                    stderr=stderr,
                     stdin=None,
                     universal_newlines=True,
                 )
@@ -63,16 +75,15 @@ def run_parallel(config, venv_dict):
                 outcome(env_name)
 
             if not live_out:
-                out, err = process.communicate()
+                sink.seek(0)
+                out = sink.read().decode("UTF-8", errors="replace")
                 if res or tox_env.envconfig.parallel_show_output:
                     outcome = (
                         "Failed {} under process {}, stdout:\n".format(env_name, process.pid)
                         if res
                         else ""
                     )
-                    message = "{}{}{}".format(
-                        outcome, out, "\nstderr:\n{}".format(err) if err else ""
-                    ).rstrip()
+                    message = "{}{}".format(outcome, out).rstrip()
                     reporter.quiet(message)
 
         threads = []
