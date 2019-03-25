@@ -1,11 +1,11 @@
 import sys
-
-if sys.version_info >= (3, 7):
-    from contextlib import nullcontext
-else:
-    import contextlib
+import threading
 
 
-    @contextlib.contextmanager
-    def nullcontext(enter_result=None):
-        yield enter_result
+def is_main_thread():
+    cur_thread = threading.current_thread()
+    if sys.version_info >= (3, 4):
+        return cur_thread is threading.main_thread()
+    else:
+        # noinspection PyUnresolvedReferences
+        return isinstance(cur_thread, threading._MainThread)

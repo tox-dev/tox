@@ -518,7 +518,6 @@ class VirtualEnv(object):
                         break  # Don't process remaining commands
                 except KeyboardInterrupt:
                     self.status = "keyboardinterrupt"
-                    reporter.error(self.status)
                     raise
 
     def _pcall(

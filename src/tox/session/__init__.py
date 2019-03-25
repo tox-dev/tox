@@ -56,7 +56,6 @@ def main(args):
     setup_reporter(args)
     try:
         config = load_config(args)
-        reporter.using("tox.ini: {}".format(config.toxinipath))
         config.logdir.ensure(dir=1)
         ensure_empty_dir(config.logdir)
         with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
@@ -64,6 +63,8 @@ def main(args):
         if retcode is None:
             retcode = 0
         raise SystemExit(retcode)
+    except tox.exception.BadRequirement:
+        raise SystemExit(1)
     except KeyboardInterrupt:
         raise SystemExit(2)
 
@@ -166,7 +167,9 @@ class Session(object):
         )
 
     def runcommand(self):
-        reporter.using("tox-{} from {}".format(tox.__version__, tox.__file__))
+        reporter.using(
+            "tox-{} from {} (pid {})".format(tox.__version__, tox.__file__, os.getpid())
+        )
         show_description = reporter.has_level(reporter.Verbosity.DEFAULT)
         if self.config.run_provision:
             provision_tox_venv = self.getvenv(self.config.provision_tox_env)

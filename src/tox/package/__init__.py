@@ -2,7 +2,7 @@ import py
 
 import tox
 from tox.reporter import error, info, verbosity0, verbosity2, warning
-from tox.util.lock import get as hold_lock
+from tox.util.lock import hold_lock
 
 from .builder import build_package
 from .local import resolve_package

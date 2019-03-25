@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from contextlib import contextmanager
+from threading import Thread
 
 import py
 
@@ -14,6 +15,10 @@ from tox import reporter
 from tox.constants import INFO
 from tox.exception import InvocationError
 from tox.util.lock import get_unique_file
+from tox.util.stdlib import is_main_thread
+
+WAIT_INTERRUPT = 0.3
+WAIT_TERMINATE = 0.2
 
 
 class Action(object):
@@ -60,6 +65,7 @@ class Action(object):
         returnout=False,
         ignore_ret=False,
         capture_err=True,
+        callback=None,
     ):
         """this drives an interaction with a subprocess"""
         cmd_args = [str(x) for x in args]
@@ -69,8 +75,8 @@ class Action(object):
         )
         cwd = os.getcwd() if cwd is None else cwd
         with stream_getter as (fin, out_path, stderr, stdout):
+            args = self._rewrite_args(cwd, args)
             try:
-                args = self._rewrite_args(cwd, args)
                 process = self.via_popen(
                     args,
                     stdout=stdout,
@@ -93,9 +99,12 @@ class Action(object):
                     )
                 )
                 raise
-            reporter.log_popen(cwd, out_path, cmd_args_shell)
-            output = self.feed_stdin(fin, process, redirect)
-            exit_code = process.wait()
+            if callback is not None:
+                callback(process)
+            reporter.log_popen(cwd, out_path, cmd_args_shell, process.pid)
+
+            output = self.evaluate_cmd(fin, process, redirect)
+        exit_code = process.returncode
         if exit_code and not ignore_ret:
             invoked = " ".join(map(str, args))
             if out_path:
@@ -113,7 +122,7 @@ class Action(object):
         self.command_log.add_command(args, output, exit_code)
         return output
 
-    def feed_stdin(self, fin, process, redirect):
+    def evaluate_cmd(self, input_file_handler, process, redirect):
         try:
             if self.generate_tox_log and not redirect:
                 if process.stderr is not None:
@@ -126,7 +135,7 @@ class Action(object):
                 while True:
                     # we have to read one byte at a time, otherwise there
                     # might be no output for a long time with slow tests
-                    data = fin.read(1)
+                    data = input_file_handler.read(1)
                     if data:
                         buf.write(data)
                         if b"\n" in data or (time.time() - last_time) > 1:
@@ -142,48 +151,72 @@ class Action(object):
                     else:
                         time.sleep(0.1)
                         # the seek updates internal read buffers
-                        fin.seek(0, 1)
-                fin.close()
+                        input_file_handler.seek(0, 1)
+                input_file_handler.close()
+                process.wait()  # wait to finish
             else:
-                out, err = process.communicate()
-        except KeyboardInterrupt:
-            process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
-            try:
-                process.wait(0.1)
-            except subprocess.TimeoutExpired:
-                process.terminate()
-                process.wait()
-            raise
+                out, err = process.communicate()  # wait to finish
+        except KeyboardInterrupt as exception:
+            main_thread = is_main_thread()
+            while True:
+                try:
+                    if main_thread:
+                        # spin up a new thread to disable further interrupt on main thread
+                        stopper = Thread(target=self.handle_interrupt, args=(process,))
+                        stopper.start()
+                        stopper.join()
+                    else:
+                        self.handle_interrupt(process)
+                except KeyboardInterrupt:
+                    continue
+                break
+            raise exception
         return out
+
+    def handle_interrupt(self, process):
+        """A three level stop mechanism for children - INT -> TERM -> KILL"""
+        msg = "from {} {{}} pid {}".format(os.getpid(), process.pid)
+        self.info("KeyboardInterrupt", msg.format("SIGINT"))
+        process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+        try:
+            process.wait(WAIT_INTERRUPT)
+        except subprocess.TimeoutExpired:
+            self.info("KeyboardInterrupt", msg.format("SIGTERM"))
+            process.terminate()
+            try:
+                process.wait(WAIT_TERMINATE)
+            except subprocess.TimeoutExpired:
+                self.info("KeyboardInterrupt", msg.format("SIGKILL"))
+                process.kill()
+                process.wait()
 
     @contextmanager
     def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout):
-        stdout = out_path = fin = None
+        stdout = out_path = input_file_handler = None
         stderr = subprocess.STDOUT if capture_err else None
 
         if self.generate_tox_log or redirect:
             out_path = self.get_log_path(self.name)
-            with out_path.open("wt") as stdout, out_path.open("rb") as fin:
+            with out_path.open("wt") as stdout, out_path.open("rb") as input_file_handler:
                 stdout.write(
                     "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
                         self.name, self.msg, cmd_args_shell
                     )
                 )
                 stdout.flush()
-                fin.read()  # read the header, so it won't be written to stdout
+                input_file_handler.read()  # read the header, so it won't be written to stdout
 
-                yield fin, out_path, stderr, stdout
+                yield input_file_handler, out_path, stderr, stdout
                 return
 
         if returnout:
             stdout = subprocess.PIPE
 
-        yield fin, out_path, stderr, stdout
+        yield input_file_handler, out_path, stderr, stdout
 
     def get_log_path(self, actionid):
-        return get_unique_file(
-            self.log_dir, prefix=actionid, suffix=".logs", report=reporter.verbosity1
-        )
+        log_file = get_unique_file(self.log_dir, prefix=actionid, suffix=".log")
+        return log_file
 
     def _rewrite_args(self, cwd, args):
         new_args = []

@@ -102,6 +102,11 @@ def cmd(request, monkeypatch, capfd):
                 result.ret = exception.code
             except OSError as e:
                 result.ret = e.errno
+            except tox.exception.InvocationError as exception:
+                result.ret = exception.exit_code
+                if exception.out is not None:
+                    with open(exception.out, "rt") as file_handler:
+                        tox.reporter.verbosity0(file_handler.read())
         return result
 
     yield run
@@ -207,6 +212,8 @@ class pcallMock:
         self.stdout = stdout
         self.stderr = stderr
         self.shell = shell
+        self.pid = os.getpid()
+        self.returncode = 0
 
     @staticmethod
     def communicate():

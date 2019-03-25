@@ -1,20 +1,13 @@
-from collections import OrderedDict
-
-import inspect
 import os
-import signal
-import subprocess
 import sys
-import tempfile
+from collections import OrderedDict
 from threading import Event, Semaphore, Thread
 
-from tox import __main__ as main
 from tox import reporter
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from tox.exception import InvocationError
+from tox.util.main import MAIN_FILE
 from tox.util.spinner import Spinner
-from tox.util.stdlib import nullcontext
-
-MAIN_FILE = inspect.getsourcefile(main)
 
 
 def run_parallel(config, venv_dict):
@@ -32,59 +25,44 @@ def run_parallel(config, venv_dict):
     semaphore = Semaphore(max_parallel)
     finished = Event()
 
-    ctx = nullcontext if live_out else tempfile.NamedTemporaryFile
-    stderr = None if live_out else subprocess.STDOUT
-
     show_progress = not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
-    with Spinner(enabled=show_progress) as spinner, ctx() as sink:
+    with Spinner(enabled=show_progress) as spinner:
 
         def run_in_thread(tox_env, os_env, processes):
-            res = None
             env_name = tox_env.envconfig.envname
+            status = "skipped tests" if config.option.notest else None
             try:
                 os_env[str(PARALLEL_ENV_VAR_KEY)] = str(env_name)
                 args_sub = list(args)
                 if hasattr(tox_env, "package"):
                     args_sub.insert(position, str(tox_env.package))
                     args_sub.insert(position, "--installpkg")
-                process = subprocess.Popen(
-                    args_sub,
-                    env=os_env,
-                    stdout=sink,
-                    stderr=stderr,
-                    stdin=None,
-                    universal_newlines=True,
-                )
-                processes[env_name] = process
-                reporter.verbosity2("started {} with pid {}".format(env_name, process.pid))
-                res = process.wait()
+                with tox_env.new_action("parallel {}".format(tox_env.name)) as action:
+
+                    def collect_process(process):
+                        processes[tox_env] = (action, process)
+
+                    action.popen(
+                        args=args_sub,
+                        env=os_env,
+                        redirect=not live_out,
+                        capture_err=live_out,
+                        callback=collect_process,
+                    )
+
+            except InvocationError as err:
+                status = "parallel child exit code {}".format(err.exit_code)
             finally:
                 semaphore.release()
                 finished.set()
-                tox_env.status = (
-                    "skipped tests"
-                    if config.option.notest
-                    else ("parallel child exit code {}".format(res) if res else res)
-                )
+                tox_env.status = status
                 done.add(env_name)
                 outcome = spinner.succeed
                 if config.option.notest:
                     outcome = spinner.skip
-                elif res:
+                elif status is not None:
                     outcome = spinner.fail
                 outcome(env_name)
-
-            if not live_out:
-                sink.seek(0)
-                out = sink.read().decode("UTF-8", errors="replace")
-                if res or tox_env.envconfig.parallel_show_output:
-                    outcome = (
-                        "Failed {} under process {}, stdout:\n".format(env_name, process.pid)
-                        if res
-                        else ""
-                    )
-                    message = "{}{}".format(outcome, out).rstrip()
-                    reporter.quiet(message)
 
         threads = []
         processes = {}
@@ -111,32 +89,50 @@ def run_parallel(config, venv_dict):
                     # wait until someone finishes and retry queuing jobs
                     finished.wait()
                     finished.clear()
-            for thread in threads:
-                while thread.is_alive():
-                    thread.join(0.05)
-                    # join suspends signal handling (ctrl+c), periodically time-out to check for it
+
+            wait_parallel_children_finish(threads)
         except KeyboardInterrupt:
-            reporter.verbosity0("keyboard interrupt parallel - stopping children")
+            reporter.verbosity0(
+                "[{}] KeyboardInterrupt parallel - stopping children".format(os.getpid())
+            )
             while True:
                 # do not allow to interrupt until children interrupt
                 try:
-                    # first try to request a graceful shutdown
-                    for name, proc in list(processes.items()):
-                        if proc.returncode is None:
-                            proc.send_signal(
-                                signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
-                            )
-                            reporter.verbosity2("send CTRL+C {}-{}".format(name, proc.pid))
-                    if len(threads):
-                        threads[0].join(1.2)  # wait at most 200ms for all to finish
-
-                    # now if being gentle did not work now be forceful
-                    for name, proc in list(processes.items()):
-                        if proc.returncode is None:
-                            proc.terminate()
-                            reporter.verbosity2("terminate {}-{}".format(name, proc.pid))
-                    for thread in threads:
-                        thread.join()
+                    # putting it inside a thread so it's not interrupted
+                    stopper = Thread(target=_stop_child_processes, args=(processes, threads))
+                    stopper.start()
+                    stopper.join()
                 except KeyboardInterrupt:
                     continue
                 raise KeyboardInterrupt
+
+
+def wait_parallel_children_finish(threads):
+    signal_done = Event()
+
+    def wait_while_finish():
+        """wait on background thread to still allow signal handling"""
+        for thread_ in threads:
+            thread_.join()
+        signal_done.set()
+
+    wait_for_done = Thread(target=wait_while_finish)
+    wait_for_done.start()
+    signal_done.wait()
+
+
+def _stop_child_processes(processes, main_threads):
+    """A three level stop mechanism for children - INT (250ms) -> TERM (100ms) -> KILL"""
+    # first stop children
+    def shutdown(tox_env, action, process):
+        action.handle_interrupt(process)
+
+    threads = [Thread(target=shutdown, args=(n, a, p)) for n, (a, p) in processes.items()]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    # then its threads
+    for thread in main_threads:
+        thread.join()

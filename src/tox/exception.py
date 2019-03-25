@@ -86,3 +86,7 @@ class MissingRequirement(Error):
 
     def __str__(self):
         return " ".join(pipes.quote(i) for i in self.config.requires)
+
+
+class BadRequirement(Error):
+    """A requirement defined in :config:`require` cannot be parsed."""

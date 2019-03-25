@@ -41,9 +41,9 @@ class Reporter(object):
     def verbosity(self):
         return self.verbose_level - self.quiet_level
 
-    def log_popen(self, cwd, outpath, cmd_args_shell):
+    def log_popen(self, cwd, outpath, cmd_args_shell, pid):
         """ log information about the action.popen() created process. """
-        msg = "  {}$ {} ".format(cwd, cmd_args_shell)
+        msg = "[{}] {}$ {} ".format(pid, cwd, cmd_args_shell)
         if outpath:
             msg = "{} >{}".format(msg, outpath)
         self.verbosity1(msg, of="logpopen")

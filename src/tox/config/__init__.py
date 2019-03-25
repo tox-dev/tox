@@ -21,7 +21,13 @@ import toml
 import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
-from tox.reporter import REPORTER_TIMESTAMP_ON_ENV, update_default_reporter
+from tox.reporter import (
+    REPORTER_TIMESTAMP_ON_ENV,
+    error,
+    update_default_reporter,
+    using,
+    verbosity1,
+)
 
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
@@ -950,6 +956,7 @@ def make_hashseed():
 class ParseIni(object):
     def __init__(self, config, ini_path, ini_data):  # noqa
         config.toxinipath = ini_path
+        using("tox.ini: {} (pid {})".format(config.toxinipath, os.getpid()))
         config.toxinidir = config.toxinipath.dirpath()
 
         self._cfg = py.iniconfig.IniConfig(config.toxinipath, ini_data)
@@ -1081,14 +1088,19 @@ class ParseIni(object):
     def ensure_requires_satisfied(config, env_config):
         missing_requirements = []
         deps = env_config.deps
+        failed_to_parse = False
         for require in deps:
             # noinspection PyBroadException
             try:
                 pkg_resources.get_distribution(require.name)
-            except pkg_resources.RequirementParseError:
-                raise
-            except Exception:
+            except pkg_resources.RequirementParseError as exception:
+                failed_to_parse = True
+                error("failed to parse {!r}".format(exception))
+            except Exception as exception:
+                verbosity1("could not satisfy requires {!r}".format(exception))
                 missing_requirements.append(str(pkg_resources.Requirement(require.name)))
+        if failed_to_parse:
+            raise tox.exception.BadRequirement()
         config.run_provision = bool(missing_requirements)
         if missing_requirements:
             config.envconfigs[config.provision_tox_env] = env_config

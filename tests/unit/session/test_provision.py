@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from tox.exception import MissingRequirement
+from tox.exception import BadRequirement, MissingRequirement
 
 
 @pytest.fixture(scope="session")
@@ -80,3 +80,17 @@ def test_provision_basepython_local(newconfig, next_tox_major):
     config = context.value.config
     base_python = config.envconfigs[".tox"].basepython
     assert base_python == "what"
+
+
+def test_provision_bad_requires(newconfig, capsys, monkeypatch):
+    with pytest.raises(BadRequirement):
+        newconfig(
+            [],
+            """
+            [tox]
+            requires = sad >sds d ok
+        """,
+        )
+    out, err = capsys.readouterr()
+    assert "ERROR: failed to parse RequirementParseError" in out
+    assert not err
