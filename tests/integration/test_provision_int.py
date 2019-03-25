@@ -3,6 +3,7 @@ import subprocess
 import sys
 import time
 
+import pytest
 from pathlib2 import Path
 
 from tox.util.main import MAIN_FILE
@@ -28,7 +29,10 @@ def test_provision_missing(initproj, cmd):
     assert meta_python.exists()
 
 
-def test_provision_interrupt_child(initproj, capfd, monkeypatch):
+@pytest.mark.skipif(
+    "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
+)
+def test_provision_interrupt_child(initproj, monkeypatch, capfd):
     monkeypatch.setenv(str("TOX_REPORTER_TIMESTAMP"), str("1"))
     initproj(
         "pkg123-0.7",
@@ -69,8 +73,9 @@ def test_provision_interrupt_child(initproj, capfd, monkeypatch):
         out, err = process.communicate()
         assert False, out
 
-    all_process = [current_process]
+    all_process = []
     if current_process is not None:
+        all_process.append(current_process)
         all_process.extend(current_process.children(recursive=False))
         # 1 process for the host tox, 1 for the provisioned
         assert len(all_process) >= 2, all_process

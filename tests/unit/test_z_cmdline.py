@@ -672,7 +672,7 @@ def test_alwayscopy_default(initproj, cmd):
     assert "virtualenv --always-copy" not in result.out
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no echo on Windows")
 def test_empty_activity_ignored(initproj, cmd):
     initproj(
         "example123",
@@ -689,7 +689,7 @@ def test_empty_activity_ignored(initproj, cmd):
     assert "installed:" not in result.out
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no echo on Windows")
 def test_empty_activity_shown_verbose(initproj, cmd):
     initproj(
         "example123",
@@ -930,7 +930,7 @@ def test_exit_code(initproj, cmd, exit_code, mocker):
         assert call_error_name == "InvocationError"
         # quotes are removed in result.out
         # do not include "python" as it is changed to python.EXE by appveyor
-        expected_command_arg = " -c import sys; sys.exit({:d})".format(exit_code)
+        expected_command_arg = " -c 'import sys; sys.exit({:d})'".format(exit_code)
         assert expected_command_arg in call_command
         assert call_exit_code == exit_code
     else:

@@ -106,7 +106,6 @@ class Action(object):
             output = self.evaluate_cmd(fin, process, redirect)
         exit_code = process.returncode
         if exit_code and not ignore_ret:
-            invoked = " ".join(map(str, args))
             if out_path:
                 reporter.error(
                     "invocation failed (exit code {:d}), logfile: {}".format(exit_code, out_path)
@@ -114,9 +113,9 @@ class Action(object):
                 output = out_path.read()
                 reporter.error(output)
                 self.command_log.add_command(args, output, exit_code)
-                raise InvocationError(invoked, exit_code, out_path)
+                raise InvocationError(cmd_args_shell, exit_code, out_path)
             else:
-                raise InvocationError(invoked, exit_code)
+                raise InvocationError(cmd_args_shell, exit_code)
         if not output and out_path:
             output = out_path.read()
         self.command_log.add_command(args, output, exit_code)
@@ -130,7 +129,6 @@ class Action(object):
                     raise ValueError("stderr must not be piped here")
                 # we read binary from the process and must write using a binary stream
                 buf = getattr(sys.stdout, "buffer", sys.stdout)
-                out = None
                 last_time = time.time()
                 while True:
                     # we have to read one byte at a time, otherwise there
@@ -153,9 +151,7 @@ class Action(object):
                         # the seek updates internal read buffers
                         input_file_handler.seek(0, 1)
                 input_file_handler.close()
-                process.wait()  # wait to finish
-            else:
-                out, err = process.communicate()  # wait to finish
+            out, _ = process.communicate()  # wait to finish
         except KeyboardInterrupt as exception:
             main_thread = is_main_thread()
             while True:
@@ -176,19 +172,32 @@ class Action(object):
     def handle_interrupt(self, process):
         """A three level stop mechanism for children - INT -> TERM -> KILL"""
         msg = "from {} {{}} pid {}".format(os.getpid(), process.pid)
-        self.info("KeyboardInterrupt", msg.format("SIGINT"))
-        process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
-        try:
-            process.wait(WAIT_INTERRUPT)
-        except subprocess.TimeoutExpired:
-            self.info("KeyboardInterrupt", msg.format("SIGTERM"))
-            process.terminate()
+        if process.poll() is None:
+            self.info("KeyboardInterrupt", msg.format("SIGINT"))
+            process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+            if self._wait(process, WAIT_INTERRUPT) is None:
+                self.info("KeyboardInterrupt", msg.format("SIGTERM"))
+                process.terminate()
+                if self._wait(process, WAIT_TERMINATE) is None:
+                    self.info("KeyboardInterrupt", msg.format("SIGKILL"))
+                    process.kill()
+                    process.communicate()
+
+    @staticmethod
+    def _wait(process, timeout):
+        if sys.version_info >= (3, 3):
+            # python 3 has timeout feature built-in
             try:
-                process.wait(WAIT_TERMINATE)
+                process.communicate(timeout=WAIT_INTERRUPT)
             except subprocess.TimeoutExpired:
-                self.info("KeyboardInterrupt", msg.format("SIGKILL"))
-                process.kill()
-                process.wait()
+                pass
+        else:
+            # on Python 2 we need to simulate it
+            delay = 0.01
+            while process.poll() is None and timeout > 0:
+                time.sleep(delay)
+                timeout -= delay
+        return process.poll()
 
     @contextmanager
     def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout):
@@ -220,9 +229,10 @@ class Action(object):
 
     def _rewrite_args(self, cwd, args):
         new_args = []
+        cwd = py.path.local(cwd)
         for arg in args:
-            if not INFO.IS_WIN and isinstance(arg, py.path.local):
-                cwd = py.path.local(cwd)
+            arg_path = py.path.local(arg)
+            if arg_path.exists():
                 arg = cwd.bestrelpath(arg)
             new_args.append(str(arg))
         # subprocess does not always take kindly to .py scripts so adding the interpreter here

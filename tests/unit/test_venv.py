@@ -913,7 +913,7 @@ def test_tox_testenv_pre_post(newmocksession):
     assert log == ["started", "finished"]
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_empty_instance(tmpdir):
     testfile = tmpdir.join("check_shebang_empty_instance.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -924,7 +924,7 @@ def test_tox_testenv_interpret_shebang_empty_instance(tmpdir):
     assert args == base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_empty_interpreter(tmpdir):
     testfile = tmpdir.join("check_shebang_empty_interpreter.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -935,7 +935,7 @@ def test_tox_testenv_interpret_shebang_empty_interpreter(tmpdir):
     assert args == base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_empty_interpreter_ws(tmpdir):
     testfile = tmpdir.join("check_shebang_empty_interpreter_ws.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -946,7 +946,7 @@ def test_tox_testenv_interpret_shebang_empty_interpreter_ws(tmpdir):
     assert args == base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_non_utf8(tmpdir):
     testfile = tmpdir.join("check_non_utf8.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -956,7 +956,7 @@ def test_tox_testenv_interpret_shebang_non_utf8(tmpdir):
     assert args == base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_interpreter_simple(tmpdir):
     testfile = tmpdir.join("check_shebang_interpreter_simple.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -967,7 +967,7 @@ def test_tox_testenv_interpret_shebang_interpreter_simple(tmpdir):
     assert args == ["interpreter"] + base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_interpreter_ws(tmpdir):
     testfile = tmpdir.join("check_shebang_interpreter_ws.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -978,7 +978,7 @@ def test_tox_testenv_interpret_shebang_interpreter_ws(tmpdir):
     assert args == ["interpreter"] + base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_interpreter_arg(tmpdir):
     testfile = tmpdir.join("check_shebang_interpreter_arg.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -989,7 +989,7 @@ def test_tox_testenv_interpret_shebang_interpreter_arg(tmpdir):
     assert args == ["interpreter", "argx"] + base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_interpreter_args(tmpdir):
     testfile = tmpdir.join("check_shebang_interpreter_args.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -1000,7 +1000,7 @@ def test_tox_testenv_interpret_shebang_interpreter_args(tmpdir):
     assert args == ["interpreter", "argx argx-part2"] + base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_real(tmpdir):
     testfile = tmpdir.join("check_shebang_real.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]
@@ -1011,7 +1011,7 @@ def test_tox_testenv_interpret_shebang_real(tmpdir):
     assert args == ["/usr/bin/env", "python"] + base_args
 
 
-@pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
 def test_tox_testenv_interpret_shebang_long_example(tmpdir):
     testfile = tmpdir.join("check_shebang_long_example.py")
     base_args = [str(testfile), "arg1", "arg2", "arg3"]

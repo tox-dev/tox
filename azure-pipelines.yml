@@ -5,10 +5,9 @@ variables:
   CI_NAME: Azure Pipelines
   CI_BUILD_ID: $(Build.BuildId)
   CI_BUILD_URL: "https://toxdev.visualstudio.com/tox/_build/results?buildId=$(Build.BuildId)"
-  PYTEST_ADDOPTS: "-s -v -v -ra --showlocals"
+  PYTEST_ADDOPTS: "-v -v -ra --showlocals"
   GIT_BRANCH: $[ coalesce(variables['System.PullRequest.SourceBranch'], variables['Build.SourceBranchName'], 'not-found') ]
   GIT_COMMIT_SHA: $[ coalesce(variables['System.PullRequest.SourceCommitId'], variables['Build.SourceVersion'], 'not-found') ]
-  PYTEST_XDIST_PROC_NR: 0
 
 trigger:
   batch: true

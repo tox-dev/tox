@@ -136,7 +136,9 @@ class RunResult:
 
     @property
     def outlines(self):
-        return self.out.splitlines()
+        out = [] if self.out is None else self.out.splitlines()
+        err = [] if self.err is None else self.err.splitlines()
+        return err + out
 
     def __repr__(self):
         return "RunResult(ret={}, args={}, out=\n{}\n, err=\n{})".format(

@@ -1,4 +1,5 @@
 import os
+import pipes
 import sys
 import textwrap
 from threading import Thread
@@ -343,13 +344,13 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
     expected = textwrap.dedent(
         """
             py run-test-pre: commands[0] | python -c 'raise SystemExit(2)'
-            ERROR: InvocationError for command {} -c raise SystemExit(2) (exited with code 2)
+            ERROR: InvocationError for command {} -c 'raise SystemExit(2)' (exited with code 2)
             py run-test-post: commands[0] | python -c 'print("post")'
             post
             ___________________________________ summary ___________________________________{}
             ERROR:   py: commands failed
         """.format(
-            sys.executable, "_" if sys.platform != "win32" else ""
+            pipes.quote(sys.executable), "_" if sys.platform != "win32" else ""
         )
     )
     have = result.out.replace(os.linesep, "\n")

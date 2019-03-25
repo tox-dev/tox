@@ -106,8 +106,7 @@ def test_parallel_error_report(cmd, initproj, monkeypatch, live):
     assert "(exited with code 17)" in result.out, msg
     if not live:
         assert "ERROR: invocation failed (exit code 1), logfile:" in result.out, msg
-
-    assert any(line for line in result.outlines if line == "12345")
+    assert any(line for line in result.outlines if line == "12345"), result.out
 
     # single summary at end
     summary_lines = [j for j, l in enumerate(result.outlines) if " summary " in l]

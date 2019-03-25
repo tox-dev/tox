@@ -169,7 +169,9 @@ class VirtualEnv(object):
             path = self._normal_lookup(name)
 
         if path is None:
-            raise tox.exception.InvocationError("could not find executable {!r}".format(name))
+            raise tox.exception.InvocationError(
+                "could not find executable {}".format(pipes.quote(name))
+            )
 
         return str(path)  # will not be rewritten for reporting
 

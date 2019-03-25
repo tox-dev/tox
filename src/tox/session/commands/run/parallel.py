@@ -1,6 +1,6 @@
 import os
 import sys
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from threading import Event, Semaphore, Thread
 
 from tox import reporter
@@ -64,7 +64,7 @@ def run_parallel(config, venv_dict):
                     outcome = spinner.fail
                 outcome(env_name)
 
-        threads = []
+        threads = deque()
         processes = {}
         todo_keys = set(venv_dict.keys())
         todo = OrderedDict((n, todo_keys & set(v.envconfig.depends)) for n, v in venv_dict.items())
@@ -89,8 +89,10 @@ def run_parallel(config, venv_dict):
                     # wait until someone finishes and retry queuing jobs
                     finished.wait()
                     finished.clear()
-
-            wait_parallel_children_finish(threads)
+            while threads:
+                threads = [
+                    thread for thread in threads if not thread.join(0.1) and thread.is_alive()
+                ]
         except KeyboardInterrupt:
             reporter.verbosity0(
                 "[{}] KeyboardInterrupt parallel - stopping children".format(os.getpid())
@@ -107,22 +109,9 @@ def run_parallel(config, venv_dict):
                 raise KeyboardInterrupt
 
 
-def wait_parallel_children_finish(threads):
-    signal_done = Event()
-
-    def wait_while_finish():
-        """wait on background thread to still allow signal handling"""
-        for thread_ in threads:
-            thread_.join()
-        signal_done.set()
-
-    wait_for_done = Thread(target=wait_while_finish)
-    wait_for_done.start()
-    signal_done.wait()
-
-
 def _stop_child_processes(processes, main_threads):
     """A three level stop mechanism for children - INT (250ms) -> TERM (100ms) -> KILL"""
+
     # first stop children
     def shutdown(tox_env, action, process):
         action.handle_interrupt(process)
