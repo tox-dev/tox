@@ -26,6 +26,8 @@ def build(config, session):
 
     if package_venv.setupenv():
         package_venv.finishvenv()
+    if isinstance(package_venv.status, Exception):
+        raise package_venv.status
 
     build_requires = get_build_requires(build_info, package_venv, config.setupdir)
     # we need to filter out requirements already specified in pyproject.toml or user deps

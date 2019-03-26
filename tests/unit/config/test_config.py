@@ -2727,7 +2727,7 @@ class TestCmdInvocation:
     def test_no_tox_ini(self, cmd, initproj):
         initproj("noini-0.5")
         result = cmd()
-        assert result.ret
+        result.assert_fail()
         msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
         assert result.err == msg
         assert not result.out
@@ -2768,11 +2768,11 @@ class TestCmdInvocation:
             },
         )
         result = cmd("--showconfig")
-        assert result.ret == 0
+        result.assert_success()
         assert any(re.match(r".*deps.*dep1==2.3, dep2.*", l) for l in result.outlines)
         # override dep1 specific version, and force version for dep2
         result = cmd("--showconfig", "--force-dep=dep1", "--force-dep=dep2==5.0")
-        assert result.ret == 0
+        result.assert_success()
         assert any(re.match(r".*deps.*dep1, dep2==5.0.*", l) for l in result.outlines)
 
 
@@ -3018,7 +3018,7 @@ def test_config_current_py(newconfig, current_tox_py, cmd, tmpdir, monkeypatch):
     )
     assert config.envconfigs[current_tox_py]
     result = cmd()
-    assert result.ret == 0, result.out
+    result.assert_success()
 
 
 def test_posargs_relative_changedir(newconfig, tmpdir):

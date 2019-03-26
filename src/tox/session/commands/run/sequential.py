@@ -18,7 +18,8 @@ def run_sequential(config, venv_dict):
                     installpkg(venv, venv.package)
 
             runenvreport(venv, config)
-        runtestenv(venv, config)
+        if venv.status == 0:
+            runtestenv(venv, config)
 
 
 def develop_pkg(venv, setupdir):
@@ -54,10 +55,13 @@ def runenvreport(venv, config):
     Run an environment report to show which package
     versions are installed in the venv
     """
-    with venv.new_action("envreport") as action:
-        packages = config.pluginmanager.hook.tox_runenvreport(venv=venv, action=action)
-    action.setactivity("installed", ",".join(packages))
-    venv.env_log.set_installed(packages)
+    try:
+        with venv.new_action("envreport") as action:
+            packages = config.pluginmanager.hook.tox_runenvreport(venv=venv, action=action)
+        action.setactivity("installed", ",".join(packages))
+        venv.env_log.set_installed(packages)
+    except InvocationError as exception:
+        venv.status = exception
 
 
 def runtestenv(venv, config, redirect=False):

@@ -145,6 +145,12 @@ class RunResult:
             self.ret, " ".join(str(i) for i in self.args), self.out, self.err
         )
 
+    def assert_success(self):
+        assert self.ret == 0, "{}\n{}\n{}".format(self.ret, self.err, self.out)
+
+    def assert_fail(self):
+        assert self.ret, "{}\n{}\n{}".format(self.ret, self.err, self.out)
+
 
 class ReportExpectMock:
     def __init__(self):

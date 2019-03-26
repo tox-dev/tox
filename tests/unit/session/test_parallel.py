@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import os
 import sys
 
 import pytest
@@ -27,7 +26,7 @@ def test_parallel(cmd, initproj):
         },
     )
     result = cmd("--parallel", "all")
-    assert result.ret == 0, "{}{}{}".format(result.err, os.linesep, result.out)
+    result.assert_success()
 
 
 def test_parallel_live(cmd, initproj):
@@ -49,7 +48,7 @@ def test_parallel_live(cmd, initproj):
         },
     )
     result = cmd("--parallel", "all", "--parallel-live")
-    assert result.ret == 0, "{}{}{}".format(result.err, os.linesep, result.out)
+    result.assert_success()
 
 
 def test_parallel_circular(cmd, initproj):
@@ -73,7 +72,7 @@ def test_parallel_circular(cmd, initproj):
         },
     )
     result = cmd("--parallel", "1")
-    assert result.ret == 1, result.out
+    result.assert_fail()
     assert result.out == "ERROR: circular dependency detected: a | b\n"
 
 
@@ -99,9 +98,8 @@ def test_parallel_error_report(cmd, initproj, monkeypatch, live):
     )
     args = ["-o"] if live else []
     result = cmd("-p", "all", *args)
+    result.assert_fail()
     msg = result.out
-    assert result.ret == 1, msg
-
     # for live we print the failure logfile, otherwise just stream through (no logfile present)
     assert "(exited with code 17)" in result.out, msg
     if not live:

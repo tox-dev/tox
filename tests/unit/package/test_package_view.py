@@ -56,7 +56,7 @@ def test_separate_sdist(cmd, initproj, tmpdir):
     assert dist_share_files[0].check()
 
     result = cmd("-v", "--notest")
-    assert not result.ret, result.out
+    result.assert_success()
     msg = "python inst: {}".format(result.session.package)
     assert msg in result.out, result.out
     operation = "copied" if not hasattr(os, "link") else "links"

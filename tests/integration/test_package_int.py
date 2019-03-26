@@ -102,8 +102,7 @@ def test_package_poetry(initproj, cmd):
 
 def run(cmd, package):
     result = cmd("--sdistonly", "-e", "py", "-v", "-v")
-
-    assert result.ret == 0, result.out
+    result.assert_success()
     package_venv = (Path() / ".tox" / ".package").resolve()
     assert ".package create: {}".format(package_venv) in result.outlines, result.out
     assert "write config to {}".format(package_venv / ".tox-config1") in result.out, result.out

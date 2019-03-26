@@ -17,7 +17,7 @@ def test_install_via_installpkg(mock_venv, initproj, cmd):
     )
     fake_package = base.ensure(".tox", "dist", "pkg123-0.1.zip")
     result = cmd("-e", "py", "--notest", "--installpkg", str(fake_package.relto(base)))
-    assert result.ret == 0, result.out
+    result.assert_success()
 
 
 def test_installpkg(tmpdir, newconfig):

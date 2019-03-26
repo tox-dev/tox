@@ -59,7 +59,8 @@ def main(args):
         config.logdir.ensure(dir=1)
         ensure_empty_dir(config.logdir)
         with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
-            retcode = build_session(config).runcommand()
+            session = build_session(config)
+            retcode = session.runcommand()
         if retcode is None:
             retcode = 0
         raise SystemExit(retcode)

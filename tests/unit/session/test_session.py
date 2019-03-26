@@ -85,7 +85,7 @@ def test_skip_sdist(cmd, initproj):
         },
     )
     result = cmd()
-    assert result.ret == 0
+    result.assert_success()
 
 
 def test_skip_install_skip_package(cmd, initproj, mock_venv):
@@ -103,7 +103,7 @@ def test_skip_install_skip_package(cmd, initproj, mock_venv):
         },
     )
     result = cmd("--notest")
-    assert result.ret == 0
+    result.assert_success()
 
 
 @pytest.fixture()
@@ -124,7 +124,7 @@ def venv_filter_project(initproj, cmd):
             },
         )
         result = cmd(*args)
-        assert result.ret == 0
+        result.assert_success()
         active = [i.name for i in result.session.existing_venvs.values()]
         return active, result
 
@@ -303,7 +303,7 @@ def test_command_prev_post_ok(cmd, initproj, mock_venv):
         },
     )
     result = cmd()
-    assert result.ret == 0
+    result.assert_success()
     expected = textwrap.dedent(
         """
         py run-test-pre: commands[0] | python -c 'print("pre")'
