@@ -12,6 +12,7 @@ from pkg_resources import to_filename
 import tox
 from tox import reporter
 from tox.action import Action
+from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.package.local import resolve_package
 from tox.util.path import ensure_empty_dir
 
@@ -642,8 +643,6 @@ _SKIP_VENV_CREATION = os.environ.get("_TOX_SKIP_ENV_CREATION_TEST", False) == "1
 
 @tox.hookimpl
 def tox_testenv_create(venv, action):
-    if _SKIP_VENV_CREATION is True:
-        return True
     config_interpreter = venv.getsupportedinterpreter()
     args = [sys.executable, "-m", "virtualenv"]
     if venv.envconfig.sitepackages:
@@ -654,17 +653,28 @@ def tox_testenv_create(venv, action):
         args.append("--no-download")
     # add interpreter explicitly, to prevent using default (virtualenv.ini)
     args.extend(["--python", str(config_interpreter)])
-    ensure_empty_dir(venv.path)
+
+    within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+    if within_parallel:
+        if venv.path.exists():
+            # do not delete the log folder as that's used by parent
+            for content in venv.path.listdir():
+                if not content.basename == "log":
+                    content.remove(rec=1, ignore_errors=True)
+    else:
+        ensure_empty_dir(venv.path)
+
     basepath = venv.path.dirpath()
     basepath.ensure(dir=1)
     args.append(venv.path.basename)
-    venv._pcall(
-        args,
-        venv=False,
-        action=action,
-        cwd=basepath,
-        redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
-    )
+    if not _SKIP_VENV_CREATION:
+        venv._pcall(
+            args,
+            venv=False,
+            action=action,
+            cwd=basepath,
+            redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
+        )
     return True  # Return non-None to indicate plugin has completed
 
 

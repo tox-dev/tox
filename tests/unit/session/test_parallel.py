@@ -124,12 +124,6 @@ skipsdist = true
 
 [testenv]
 whitelist_externals = {}
-
-[testenv:e1]
-commands =
-    python -c '[print("hello world") for _ in range(5000)]'
-
-[testenv:e2]
 commands =
     python -c '[print("hello world") for _ in range(5000)]'
 """.format(
@@ -138,3 +132,31 @@ commands =
 
     initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
     cmd("-p", "2")  # used to hang indefinitely
+
+
+def test_parallel_recreate(cmd, initproj, monkeypatch):
+    monkeypatch.setenv(str("_TOX_SKIP_ENV_CREATION_TEST"), str("1"))
+    tox_ini = """\
+[tox]
+envlist = e1,e2
+skipsdist = true
+
+[testenv]
+whitelist_externals = {}
+commands =
+    python -c '[print("hello world") for _ in range(1)]'
+""".format(
+        sys.executable
+    )
+    cwd = initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
+    log_dir = cwd / ".tox" / "e1" / "log"
+    assert not log_dir.exists()
+    cmd("-p", "2")
+    after = log_dir.listdir()
+    assert len(after) >= 2
+
+    res = cmd("-p", "2", "-rv")
+    assert res
+    end = log_dir.listdir()
+    assert len(end) >= 3
+    assert not ({f.basename for f in after} - {f.basename for f in end})

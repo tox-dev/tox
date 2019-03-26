@@ -87,14 +87,14 @@ def test_notoxini_help_still_works(initproj, cmd):
     assert result.err == msg
     assert result.out.startswith("usage: ")
     assert any("--help" in l for l in result.outlines), result.outlines
-    assert not result.ret
+    assert not result.ret, result.out
 
 
 def test_notoxini_help_ini_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={"tests": {"test_hello.py": "def test_hello(): pass"}})
     result = cmd("--help-ini")
     assert any("setenv" in l for l in result.outlines), result.outlines
-    assert not result.ret
+    assert not result.ret, result.out
 
 
 def test_envdir_equals_toxini_errors_out(cmd, initproj):
@@ -190,7 +190,7 @@ def test_skip_platform_mismatch(cmd, initproj):
         },
     )
     result = cmd()
-    assert not result.ret
+    assert not result.ret, result.out
     assert any(
         "SKIPPED:  python: platform mismatch ({!r} does not match 'x123')".format(sys.platform)
         == l
@@ -212,7 +212,7 @@ def test_skip_unknown_interpreter(cmd, initproj):
         },
     )
     result = cmd("--skip-missing-interpreters")
-    assert not result.ret
+    assert not result.ret, result.out
     msg = "SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter"
     assert any(msg == l for l in result.outlines), result.outlines
 
@@ -232,7 +232,7 @@ def test_skip_unknown_interpreter_result_json(cmd, initproj, tmpdir):
         },
     )
     result = cmd("--skip-missing-interpreters", "--result-json", report_path)
-    assert not result.ret
+    assert not result.ret, result.out
     msg = "SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter"
     assert any(msg == l for l in result.outlines), result.outlines
     setup_result_from_json = json.load(report_path)["testenvs"]["python"]["setup"]
@@ -432,12 +432,12 @@ def example123(initproj):
 
 def test_toxuone_env(cmd, example123):
     result = cmd()
-    assert not result.ret
+    assert not result.ret, result.out
     assert re.match(
         r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL
     )
     result = cmd("-epython")
-    assert not result.ret
+    assert not result.ret, result.out
     assert re.match(
         r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
         result.out,
@@ -449,7 +449,7 @@ def test_different_config_cwd(cmd, example123):
     # see that things work with a different CWD
     with example123.dirpath().as_cwd():
         result = cmd("-c", "example123/tox.ini")
-    assert not result.ret
+    assert not result.ret, result.out
     assert re.match(
         r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
         result.out,
@@ -482,7 +482,7 @@ def test_developz(initproj, cmd):
         },
     )
     result = cmd("-vv", "--develop")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "sdist-make" not in result.out
 
 
@@ -497,7 +497,7 @@ def test_usedevelop(initproj, cmd):
         },
     )
     result = cmd("-vv")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "sdist-make" not in result.out
 
 
@@ -516,12 +516,12 @@ def test_usedevelop_mixed(initproj, cmd):
 
     # running only 'dev' should not do sdist
     result = cmd("-vv", "-e", "dev")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "sdist-make" not in result.out
 
     # running all envs should do sdist
     result = cmd("-vv")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "sdist-make" in result.out
 
 
@@ -554,13 +554,13 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
         },
     )
     result = cmd("-v")
-    assert not result.ret
+    assert not result.ret, result.out
     assert re.match(
         r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL
     )
     assert "sdist-make" not in result.out
     result = cmd("-epython")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "develop-inst-noop" in result.out
     assert re.match(
         r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
@@ -571,7 +571,7 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
     # see that things work with a different CWD
     with base.dirpath().as_cwd():
         result = cmd("-c", "{}/tox.ini".format(name))
-        assert not result.ret
+        assert not result.ret, result.out
         assert "develop-inst-noop" in result.out
         assert re.match(
             r".*\W+1\W+passed.*" r"summary.*" r"python:\W+commands\W+succeeded.*",
@@ -655,7 +655,7 @@ def test_alwayscopy(initproj, cmd):
         },
     )
     result = cmd("-vv")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "virtualenv --always-copy" in result.out
 
 
@@ -670,7 +670,7 @@ def test_alwayscopy_default(initproj, cmd):
         },
     )
     result = cmd("-vv")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "virtualenv --always-copy" not in result.out
 
 
@@ -687,7 +687,7 @@ def test_empty_activity_ignored(initproj, cmd):
         },
     )
     result = cmd()
-    assert not result.ret
+    assert not result.ret, result.out
     assert "installed:" not in result.out
 
 
@@ -704,7 +704,7 @@ def test_empty_activity_shown_verbose(initproj, cmd):
         },
     )
     result = cmd("-v")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "installed:" in result.out
 
 
@@ -720,7 +720,7 @@ def test_test_piphelp(initproj, cmd):
         },
     )
     result = cmd("-vv")
-    assert not result.ret, "{}\n{}".format(result.err, result.err)
+    assert not result.ret, result.out, "{}\n{}".format(result.err, result.err)
 
 
 def test_notest(initproj, cmd):
@@ -735,10 +735,10 @@ def test_notest(initproj, cmd):
         },
     )
     result = cmd("-v", "--notest")
-    assert not result.ret
+    assert not result.ret, result.out
     assert re.match(r".*summary.*" r"py26\W+skipped\W+tests.*", result.out, re.DOTALL)
     result = cmd("-v", "--notest", "-epy26")
-    assert not result.ret
+    assert not result.ret, result.out
     assert re.match(r".*py26\W+reusing.*", result.out, re.DOTALL)
 
 
@@ -762,7 +762,7 @@ def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={"tox.ini": ""})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", "1")
     result = cmd("-v", "--notest")
-    assert not result.ret
+    assert not result.ret, result.out
     assert "create" in result.out
 
 
@@ -770,7 +770,7 @@ def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={"tox.ini": ""})
     monkeypatch.setenv("VIRTUALENV_PYTHON", "/FOO")
     result = cmd("-v", "--notest")
-    assert not result.ret, result.outlines
+    assert not result.ret, result.out, result.outlines
     assert "create" in result.out
 
 
@@ -870,10 +870,10 @@ def test_envtmpdir(initproj, cmd):
     )
 
     result = cmd()
-    assert not result.ret
+    assert not result.ret, result.out
 
     result = cmd()
-    assert not result.ret
+    assert not result.ret, result.out
 
 
 def test_missing_env_fails(initproj, cmd):
