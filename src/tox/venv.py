@@ -658,7 +658,13 @@ def tox_testenv_create(venv, action):
     basepath = venv.path.dirpath()
     basepath.ensure(dir=1)
     args.append(venv.path.basename)
-    venv._pcall(args, venv=False, action=action, cwd=basepath)
+    venv._pcall(
+        args,
+        venv=False,
+        action=action,
+        cwd=basepath,
+        redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
+    )
     return True  # Return non-None to indicate plugin has completed
 
 

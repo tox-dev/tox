@@ -124,9 +124,11 @@ def test_run_custom_install_command_error(cmd, initproj):
         },
     )
     result = cmd()
-    assert re.match(
-        r"ERROR: invocation failed \(errno \d+\), args: .*[/\\]tox\.ini", result.outlines[-1]
+    msg = (
+        "ERROR: invocation failed (errno 2), args: tox.ini --exists-action w"
+        " .tox/.tmp/package/1/interp123-0.5.zip"
     )
+    assert msg in result.out, result.out
     assert result.ret, "{}\n{}".format(result.err, result.out)
 
 

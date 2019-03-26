@@ -207,11 +207,13 @@ class Session(object):
             return
 
         within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
-        if not within_parallel and self.config.option.parallel != PARALLEL_OFF:
-            run_parallel(self.config, self.venv_dict)
-        else:
-            run_sequential(self.config, self.venv_dict)
-        retcode = self._summary()
+        try:
+            if not within_parallel and self.config.option.parallel != PARALLEL_OFF:
+                run_parallel(self.config, self.venv_dict)
+            else:
+                run_sequential(self.config, self.venv_dict)
+        finally:
+            retcode = self._summary()
         return retcode
 
     def _summary(self):

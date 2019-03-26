@@ -43,8 +43,10 @@ class Reporter(object):
 
     def log_popen(self, cwd, outpath, cmd_args_shell, pid):
         """ log information about the action.popen() created process. """
-        msg = "[{}] {}$ {} ".format(pid, cwd, cmd_args_shell)
+        msg = "[{}] {}$ {}".format(pid, cwd, cmd_args_shell)
         if outpath:
+            if outpath.common(cwd) is not None:
+                outpath = cwd.bestrelpath(outpath)
             msg = "{} >{}".format(msg, outpath)
         self.verbosity1(msg, of="logpopen")
 

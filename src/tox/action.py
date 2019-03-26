@@ -68,14 +68,14 @@ class Action(object):
         callback=None,
     ):
         """this drives an interaction with a subprocess"""
+        args = self._rewrite_args(cwd, args)
         cmd_args = [str(x) for x in args]
         cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
         stream_getter = self._get_standard_streams(
             capture_err, cmd_args_shell, redirect, returnout
         )
-        cwd = os.getcwd() if cwd is None else cwd
+        cwd = py.path.local(os.getcwd()) if cwd is None else cwd
         with stream_getter as (fin, out_path, stderr, stdout):
-            args = self._rewrite_args(cwd, args)
             try:
                 process = self.via_popen(
                     args,
@@ -110,13 +110,13 @@ class Action(object):
                 reporter.error(
                     "invocation failed (exit code {:d}), logfile: {}".format(exit_code, out_path)
                 )
-                output = out_path.read()
+                output = out_path.read() if out_path.exists() else None
                 reporter.error(output)
                 self.command_log.add_command(args, output, exit_code)
                 raise InvocationError(cmd_args_shell, exit_code, out_path)
             else:
                 raise InvocationError(cmd_args_shell, exit_code)
-        if not output and out_path:
+        if not output and out_path is not None and out_path.exists():
             output = out_path.read()
         self.command_log.add_command(args, output, exit_code)
         return output
@@ -153,6 +153,7 @@ class Action(object):
                 input_file_handler.close()
             out, _ = process.communicate()  # wait to finish
         except KeyboardInterrupt as exception:
+            reporter.error("got KeyboardInterrupt signal")
             main_thread = is_main_thread()
             while True:
                 try:
@@ -208,7 +209,7 @@ class Action(object):
             out_path = self.get_log_path(self.name)
             with out_path.open("wt") as stdout, out_path.open("rb") as input_file_handler:
                 stdout.write(
-                    "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
+                    "action: {}\nmsg: {}\ncmd: {!r}\n\n".format(
                         self.name, self.msg, cmd_args_shell
                     )
                 )
@@ -231,9 +232,13 @@ class Action(object):
         new_args = []
         cwd = py.path.local(cwd)
         for arg in args:
-            arg_path = py.path.local(arg)
-            if arg_path.exists():
-                arg = cwd.bestrelpath(arg)
+            if arg and os.path.isabs(str(arg)):
+                arg_path = py.path.local(arg)
+                if arg_path.exists() and arg_path.common(cwd) is not None:
+                    potential_arg = cwd.bestrelpath(arg_path)
+                    if len(potential_arg.split("..")) < 2:
+                        # just one parent directory accepted
+                        arg = potential_arg
             new_args.append(str(arg))
         # subprocess does not always take kindly to .py scripts so adding the interpreter here
         if INFO.IS_WIN:

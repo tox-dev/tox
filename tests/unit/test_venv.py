@@ -774,7 +774,7 @@ def test_installpkg_upgrade(newmocksession, tmpdir):
     installpkg(venv, pkg)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
-    index = pcalls[0].args.index(str(pkg))
+    index = pcalls[0].args.index(pkg.basename)
     assert index >= 0
     assert "-U" in pcalls[0].args[:index]
     assert "--no-deps" in pcalls[0].args[:index]

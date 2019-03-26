@@ -1,5 +1,6 @@
 import inspect
+import os
 
-from tox import __main__
+import tox
 
-MAIN_FILE = inspect.getfile(__main__)
+MAIN_FILE = os.path.join(os.path.dirname(inspect.getfile(tox)), "__main__.py")

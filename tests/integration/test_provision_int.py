@@ -33,6 +33,7 @@ def test_provision_missing(initproj, cmd):
     "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
 )
 def test_provision_interrupt_child(initproj, monkeypatch, capfd):
+    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
     monkeypatch.setenv(str("TOX_REPORTER_TIMESTAMP"), str("1"))
     initproj(
         "pkg123-0.7",
@@ -42,6 +43,7 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd):
                     skipsdist=True
                     minversion = 3.7.0
                     requires = setuptools == 40.6.3
+                               tox == 3.7.0
                     [testenv:b]
                     commands=python -c "import time; open('a', 'w').write('content'); \
                      time.sleep(10)"
@@ -81,7 +83,7 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd):
         assert len(all_process) >= 2, all_process
 
     process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
-    process.wait()
+    process.communicate()
     out, err = capfd.readouterr()
     assert ".tox KeyboardInterrupt: from" in out, out
 
