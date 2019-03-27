@@ -1,2 +1,0 @@
-Setting the environment variable ``TOX_REPORTER_TIMESTAMP`` to ``1`` will enable showing for each output line its delta
-since the tox startup. This can be especially handy when debugging parallel runs.- by :user:`gaborbernat`

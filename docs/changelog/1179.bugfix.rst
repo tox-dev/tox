@@ -1,1 +1,0 @@
-Fix a ``ResourceWarning: unclosed file`` in ``Action`` - by :user:`BoboTiG`.

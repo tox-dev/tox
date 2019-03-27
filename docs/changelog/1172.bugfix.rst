@@ -1,3 +1,0 @@
-Interrupting a tox call (e.g. via CTRL+C) now will ensure that spawn child processes (test calls, interpreter discovery,
-parallel sub-instances, provisioned hosts) are correctly stopped before exiting (via the pattern of INTERRUPT - 300 ms,
-TERMINATE - 200 ms, KILL signals)  - by :user:`gaborbernat`
