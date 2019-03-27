@@ -1130,14 +1130,13 @@ class ParseIni(object):
         config.isolated_build_env = reader.getstring("isolated_build_env", ".package")
         if config.isolated_build is True:
             name = config.isolated_build_env
-            if name not in config.envconfigs:
-                section_name = "testenv:{}".format(name)
-                if name not in self._cfg.sections:
-                    self._cfg.sections[section_name] = {}
-                self._cfg.sections[section_name]["description"] = "isolated packaging environment"
-                config.envconfigs[name] = self.make_envconfig(
-                    name, "{}{}".format(testenvprefix, name), reader._subs, config
-                )
+            section_name = "testenv:{}".format(name)
+            if name not in self._cfg.sections:
+                self._cfg.sections[section_name] = {}
+            self._cfg.sections[section_name]["description"] = "isolated packaging environment"
+            config.envconfigs[name] = self.make_envconfig(
+                name, "{}{}".format(testenvprefix, name), reader._subs, config
+            )
 
     def _list_section_factors(self, section):
         factors = set()
