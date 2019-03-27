@@ -1,1 +1,0 @@
-Parallel children now save their output to a disk logfile  - by :user:`gaborbernat`

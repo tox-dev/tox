@@ -1,1 +1,0 @@
-Display pattern and ``sys.platform`` with platform mismatch - by :user:`blueyed`.

@@ -11,6 +11,65 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.8.0 (2019-03-27)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- In a posix shell, setting the PATH environment variable to an empty value is equivalent to not setting it at all;
+  therefore we no longer if the user sets PYTHONPATH an empty string on python 3.4 or later - by :user:`gaborbernat`.
+  `#1092 <https://github.com/tox-dev/tox/issues/1092>`_
+- Fixed bug of children process calls logs clashing (log already exists) - by :user:`gaborbernat`
+  `#1137 <https://github.com/tox-dev/tox/issues/1137>`_
+- Interpreter discovery and virtualenv creation process calls that failed will now print out on the screen their output
+  (via the logfile we automatically save) - by :user:`gaborbernat`
+  `#1150 <https://github.com/tox-dev/tox/issues/1150>`_
+- Using ``py2`` and ``py3`` with a specific ``basepython`` will no longer raise a warning unless the major version conflicts - by :user:`demosdemon`.
+  `#1153 <https://github.com/tox-dev/tox/issues/1153>`_
+- Fix missing error for ``tox -e unknown`` when tox.ini declares ``envlist``. - by :user:`medmunds`
+  `#1160 <https://github.com/tox-dev/tox/issues/1160>`_
+- Resolve symlinks with ``toxworkdir`` - by :user:`blueyed`.
+  `#1169 <https://github.com/tox-dev/tox/issues/1169>`_
+- Interrupting a tox call (e.g. via CTRL+C) now will ensure that spawn child processes (test calls, interpreter discovery,
+  parallel sub-instances, provisioned hosts) are correctly stopped before exiting (via the pattern of INTERRUPT - 300 ms,
+  TERMINATE - 200 ms, KILL signals)  - by :user:`gaborbernat`
+  `#1172 <https://github.com/tox-dev/tox/issues/1172>`_
+- Fix a ``ResourceWarning: unclosed file`` in ``Action`` - by :user:`BoboTiG`.
+  `#1179 <https://github.com/tox-dev/tox/issues/1179>`_
+- Fix deadlock when using ``--parallel`` and having environments with lots of output - by :user:`asottile`.
+  `#1183 <https://github.com/tox-dev/tox/issues/1183>`_
+- Removed code that sometimes caused a difference in results between ``--parallel`` and ``-p`` when using ``posargs`` - by :user:`timdaman`
+  `#1192 <https://github.com/tox-dev/tox/issues/1192>`_
+
+
+Features
+^^^^^^^^
+
+- tox now auto-provisions itself if needed (see :ref:`auto-provision`). Plugins or minimum version of tox no longer
+  need to be manually satisfied by the user, increasing their ease of use. - by :user:`gaborbernat`
+  `#998 <https://github.com/tox-dev/tox/issues/998>`_
+- tox will inject the ``TOX_PARALLEL_ENV`` environment variable, set to the current running tox environment name,
+  only when running in parallel mode. - by :user:`gaborbernat`
+  `#1139 <https://github.com/tox-dev/tox/issues/1139>`_
+- Parallel children now save their output to a disk logfile  - by :user:`gaborbernat`
+  `#1143 <https://github.com/tox-dev/tox/issues/1143>`_
+- Parallel children now are added to ``--result-json``  - by :user:`gaborbernat`
+  `#1159 <https://github.com/tox-dev/tox/issues/1159>`_
+- Display pattern and ``sys.platform`` with platform mismatch - by :user:`blueyed`.
+  `#1176 <https://github.com/tox-dev/tox/issues/1176>`_
+- Setting the environment variable ``TOX_REPORTER_TIMESTAMP`` to ``1`` will enable showing for each output line its delta
+  since the tox startup. This can be especially handy when debugging parallel runs.- by :user:`gaborbernat`
+  `#1203 <https://github.com/tox-dev/tox/issues/1203>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Add a ``poetry`` examples to packaging - by :user:`gaborbernat`
+  `#1163 <https://github.com/tox-dev/tox/issues/1163>`_
+
+
 v3.7.0 (2019-01-11)
 -------------------
 
