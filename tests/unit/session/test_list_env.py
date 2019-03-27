@@ -1,4 +1,5 @@
-def test_listenvs(cmd, initproj):
+def test_listenvs(cmd, initproj, monkeypatch):
+    monkeypatch.delenv(str("TOXENV"), raising=False)
     initproj(
         "listenvs",
         filedefs={

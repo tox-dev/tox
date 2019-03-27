@@ -16,8 +16,8 @@ def run_sequential(config, venv_dict):
                     venv.finishvenv()
                 else:
                     installpkg(venv, venv.package)
-
-            runenvreport(venv, config)
+            if venv.status == 0:
+                runenvreport(venv, config)
         if venv.status == 0:
             runtestenv(venv, config)
 

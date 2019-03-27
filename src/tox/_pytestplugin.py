@@ -15,6 +15,7 @@ import six
 import tox
 from tox import venv
 from tox.config import parseconfig
+from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.reporter import update_default_reporter
 from tox.session import Session, main, setup_reporter
 from tox.venv import CreationConfig, VirtualEnv, getdigest
@@ -56,6 +57,40 @@ def check_cwd_not_changed_by_test():
     new = os.getcwd()
     if old != new:
         pytest.fail("test changed cwd: {!r} => {!r}".format(old, new))
+
+
+@pytest.fixture(autouse=True)
+def check_os_environ_stable():
+    old = os.environ.copy()
+
+    to_clean = {
+        k: os.environ.pop(k, None)
+        for k in {PARALLEL_ENV_VAR_KEY, str("TOX_WORK_DIR"), str("PYTHONPATH")}
+    }
+
+    yield
+
+    for key, value in to_clean.items():
+        if value is not None:
+            os.environ[key] = value
+
+    new = os.environ
+    extra = {k: new[k] for k in set(new) - set(old)}
+    miss = {k: old[k] for k in set(old) - set(new)}
+    diff = {
+        "{} = {} vs {}".format(k, old[k], new[k])
+        for k in set(old) & set(new)
+        if old[k] != new[k] and not k.startswith("PYTEST_")
+    }
+    if extra or miss or diff:
+        msg = "test changed environ"
+        if extra:
+            msg += " extra {}".format(extra)
+        if miss:
+            msg += " miss {}".format(miss)
+        if diff:
+            msg += " diff {}".format(diff)
+        pytest.fail(msg)
 
 
 @pytest.fixture(name="newconfig")
@@ -145,11 +180,20 @@ class RunResult:
             self.ret, " ".join(str(i) for i in self.args), self.out, self.err
         )
 
-    def assert_success(self):
-        assert self.ret == 0, "{}\n{}\n{}".format(self.ret, self.err, self.out)
+    def output(self):
+        return "{}\n{}\n{}".format(self.ret, self.err, self.out)
 
-    def assert_fail(self):
-        assert self.ret, "{}\n{}\n{}".format(self.ret, self.err, self.out)
+    def assert_success(self, is_run_test_env=True):
+        msg = self.output()
+        assert self.ret == 0, msg
+        if is_run_test_env:
+            assert any("  congratulations :)" == l for l in reversed(self.outlines)), msg
+
+    def assert_fail(self, is_run_test_env=True):
+        msg = self.output()
+        assert self.ret, msg
+        if is_run_test_env:
+            assert not any("  congratulations :)" == l for l in reversed(self.outlines)), msg
 
 
 class ReportExpectMock:

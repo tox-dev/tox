@@ -124,7 +124,7 @@ def venv_filter_project(initproj, cmd):
             },
         )
         result = cmd(*args)
-        result.assert_success()
+        result.assert_success(is_run_test_env=False)
         active = [i.name for i in result.session.existing_venvs.values()]
         return active, result
 
@@ -279,7 +279,7 @@ def test_tox_env_var_flags_inserted_isolated(popen_env_test):
 
 
 def assert_popen_env(res):
-    assert res.result.ret == 0, res.result.out
+    res.result.assert_success()
     for tox_id, _, env, __, ___ in res.popens:
         assert env["TOX_WORK_DIR"] == os.path.join(res.cwd, ".tox")
         if tox_id != "GLOB":
@@ -340,7 +340,7 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
         },
     )
     result = cmd()
-    assert result.ret == 1
+    result.assert_fail()
     expected = textwrap.dedent(
         """
             py run-test-pre: commands[0] | python -c 'raise SystemExit(2)'

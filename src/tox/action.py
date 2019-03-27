@@ -14,6 +14,7 @@ import py
 from tox import reporter
 from tox.constants import INFO
 from tox.exception import InvocationError
+from tox.reporter import Verbosity
 from tox.util.lock import get_unique_file
 from tox.util.stdlib import is_main_thread
 
@@ -66,19 +67,20 @@ class Action(object):
         ignore_ret=False,
         capture_err=True,
         callback=None,
+        report_fail=True,
     ):
         """this drives an interaction with a subprocess"""
-        args = self._rewrite_args(cwd, args)
-        cmd_args = [str(x) for x in args]
+        cwd = py.path.local() if cwd is None else cwd
+        cmd_args = [str(x) for x in self._rewrite_args(cwd, args)]
         cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
         stream_getter = self._get_standard_streams(
-            capture_err, cmd_args_shell, redirect, returnout
+            capture_err, cmd_args_shell, redirect, returnout, cwd
         )
-        cwd = py.path.local(os.getcwd()) if cwd is None else cwd
+        exit_code, output = None, None
         with stream_getter as (fin, out_path, stderr, stdout):
             try:
                 process = self.via_popen(
-                    args,
+                    cmd_args,
                     stdout=stdout,
                     stderr=stderr,
                     cwd=str(cwd),
@@ -92,33 +94,33 @@ class Action(object):
                         # needed for Windows signal send ability (CTRL+C)
                     ),
                 )
-            except OSError as e:
-                reporter.error(
-                    "invocation failed (errno {:d}), args: {}, cwd: {}".format(
-                        e.errno, cmd_args_shell, cwd
-                    )
-                )
-                raise
-            if callback is not None:
-                callback(process)
-            reporter.log_popen(cwd, out_path, cmd_args_shell, process.pid)
-
-            output = self.evaluate_cmd(fin, process, redirect)
-        exit_code = process.returncode
-        if exit_code and not ignore_ret:
-            if out_path:
-                reporter.error(
-                    "invocation failed (exit code {:d}), logfile: {}".format(exit_code, out_path)
-                )
-                output = out_path.read() if out_path.exists() else None
-                reporter.error(output)
-                self.command_log.add_command(args, output, exit_code)
-                raise InvocationError(cmd_args_shell, exit_code, out_path)
+            except OSError as exception:
+                exit_code = exception.errno
             else:
-                raise InvocationError(cmd_args_shell, exit_code)
-        if not output and out_path is not None and out_path.exists():
-            output = out_path.read()
-        self.command_log.add_command(args, output, exit_code)
+                if callback is not None:
+                    callback(process)
+                reporter.log_popen(cwd, out_path, cmd_args_shell, process.pid)
+                output = self.evaluate_cmd(fin, process, redirect)
+                exit_code = process.returncode
+            finally:
+                if out_path is not None and out_path.exists():
+                    output = out_path.read()
+                try:
+                    if exit_code and not ignore_ret:
+                        if report_fail:
+                            msg = "invocation failed (exit code {:d})".format(exit_code)
+                            if out_path is not None:
+                                msg += ", logfile: {}".format(out_path)
+                                if not out_path.exists():
+                                    msg += " warning log file missing"
+                            reporter.error(msg)
+                            if out_path is not None and out_path.exists():
+                                reporter.separator("=", "log start", Verbosity.QUIET)
+                                reporter.quiet(output)
+                                reporter.separator("=", "log end", Verbosity.QUIET)
+                        raise InvocationError(cmd_args_shell, exit_code, output)
+                finally:
+                    self.command_log.add_command(cmd_args, output, exit_code)
         return output
 
     def evaluate_cmd(self, input_file_handler, process, redirect):
@@ -201,7 +203,7 @@ class Action(object):
         return process.poll()
 
     @contextmanager
-    def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout):
+    def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout, cwd):
         stdout = out_path = input_file_handler = None
         stderr = subprocess.STDOUT if capture_err else None
 
@@ -209,13 +211,12 @@ class Action(object):
             out_path = self.get_log_path(self.name)
             with out_path.open("wt") as stdout, out_path.open("rb") as input_file_handler:
                 stdout.write(
-                    "action: {}\nmsg: {}\ncmd: {!r}\n\n".format(
-                        self.name, self.msg, cmd_args_shell
+                    "action: {}, msg: {}\ncwd: {}\ncmd: {}\n".format(
+                        self.name, self.msg, cwd, cmd_args_shell
                     )
                 )
                 stdout.flush()
                 input_file_handler.read()  # read the header, so it won't be written to stdout
-
                 yield input_file_handler, out_path, stderr, stdout
                 return
 
@@ -229,20 +230,30 @@ class Action(object):
         return log_file
 
     def _rewrite_args(self, cwd, args):
-        new_args = []
-        cwd = py.path.local(cwd)
+
+        executable = None
+        if INFO.IS_WIN:
+            # shebang lines are not adhered on Windows so if it's a python script
+            # pre-pend the interpreter
+            ext = os.path.splitext(str(args[0]))[1].lower()
+            if ext == ".py":
+                executable = str(self.python)
+        if executable is None:
+            executable = args[0]
+            args = args[1:]
+
+        new_args = [executable]
+
+        # to make the command shorter try to use relative paths for all subsequent arguments
+        # note the executable cannot be relative as the Windows applies cwd after invocation
         for arg in args:
             if arg and os.path.isabs(str(arg)):
                 arg_path = py.path.local(arg)
                 if arg_path.exists() and arg_path.common(cwd) is not None:
                     potential_arg = cwd.bestrelpath(arg_path)
                     if len(potential_arg.split("..")) < 2:
-                        # just one parent directory accepted
+                        # just one parent directory accepted as relative path
                         arg = potential_arg
             new_args.append(str(arg))
-        # subprocess does not always take kindly to .py scripts so adding the interpreter here
-        if INFO.IS_WIN:
-            ext = os.path.splitext(str(new_args[0]))[1].lower()
-            if ext == ".py":
-                new_args = [str(self.python)] + new_args
+
         return new_args

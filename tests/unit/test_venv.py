@@ -623,13 +623,21 @@ class TestVenvTest:
             monkeypatch.setenv("PIP_RESPECT_VIRTUALENV", "1")
             monkeypatch.setenv("PIP_REQUIRE_VIRTUALENV", "1")
             monkeypatch.setenv("__PYVENV_LAUNCHER__", "1")
+
+            prev_pcall = venv._pcall
+
+            def collect(*args, **kwargs):
+                env = kwargs["env"]
+                assert "PIP_RESPECT_VIRTUALENV" not in env
+                assert "PIP_REQUIRE_VIRTUALENV" not in env
+                assert "__PYVENV_LAUNCHER__" not in env
+                assert env["PIP_USER"] == "0"
+                assert env["PIP_NO_DEPS"] == "0"
+                return prev_pcall(*args, **kwargs)
+
+            monkeypatch.setattr(venv, "_pcall", collect)
             with pytest.raises(ZeroDivisionError):
                 venv.run_install_command(["qwe"], action=action)
-            assert "PIP_RESPECT_VIRTUALENV" not in os.environ
-            assert "PIP_REQUIRE_VIRTUALENV" not in os.environ
-            assert "__PYVENV_LAUNCHER__" not in os.environ
-            assert os.environ["PIP_USER"] == "0"
-            assert os.environ["PIP_NO_DEPS"] == "0"
 
     def test_pythonpath_remove(self, newmocksession, monkeypatch, caplog):
         monkeypatch.setenv("PYTHONPATH", "/my/awesome/library")
@@ -643,7 +651,6 @@ class TestVenvTest:
         venv = mocksession.getvenv("python")
         with mocksession.newaction(venv.name, "getenv") as action:
             venv.run_install_command(["qwe"], action=action)
-        assert "PYTHONPATH" not in os.environ
         mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
 
         pcalls = mocksession._pcalls
@@ -683,7 +690,6 @@ class TestVenvTest:
         venv = mocksession.getvenv("python")
         with mocksession.newaction(venv.name, "getenv") as action:
             venv.run_install_command(["qwe"], action=action)
-        assert "PYTHONPATH" not in os.environ
         if sys.version_info < (3, 4):
             mocksession.report.expect("warning", "*Discarding $PYTHONPATH from environment*")
         else:

@@ -381,7 +381,8 @@ class VirtualEnv(object):
 
         cmd = list(chain.from_iterable(expand(val) for val in self.envconfig.install_command))
 
-        self.ensure_pip_os_environ_ok()
+        env = self._get_os_environ()
+        self.ensure_pip_os_environ_ok(env)
 
         old_stdout = sys.stdout
         sys.stdout = codecs.getwriter("utf8")(sys.stdout)
@@ -391,17 +392,18 @@ class VirtualEnv(object):
                 cwd=self.envconfig.config.toxinidir,
                 action=action,
                 redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
+                env=env,
             )
         finally:
             sys.stdout = old_stdout
 
-    def ensure_pip_os_environ_ok(self):
+    def ensure_pip_os_environ_ok(self, env):
         for key in ("PIP_RESPECT_VIRTUALENV", "PIP_REQUIRE_VIRTUALENV", "__PYVENV_LAUNCHER__"):
-            os.environ.pop(key, None)
-        if "PYTHONPATH" not in self.envconfig.passenv:
+            env.pop(key, None)
+        if all("PYTHONPATH" not in i for i in (self.envconfig.passenv, self.envconfig.setenv)):
             # If PYTHONPATH not explicitly asked for, remove it.
-            if "PYTHONPATH" in os.environ:
-                if sys.version_info < (3, 4) or bool(os.environ["PYTHONPATH"]):
+            if "PYTHONPATH" in env:
+                if sys.version_info < (3, 4) or bool(env["PYTHONPATH"]):
                     # https://docs.python.org/3/whatsnew/3.4.html#changes-in-python-command-behavior
                     # In a posix shell, setting the PATH environment variable to an empty value is
                     # equivalent to not setting it at all.
@@ -409,13 +411,13 @@ class VirtualEnv(object):
                         "Discarding $PYTHONPATH from environment, to override "
                         "specify PYTHONPATH in 'passenv' in your configuration."
                     )
-                os.environ.pop("PYTHONPATH")
+                env.pop("PYTHONPATH")
 
         # installing packages at user level may mean we're not installing inside the venv
-        os.environ["PIP_USER"] = "0"
+        env["PIP_USER"] = "0"
 
         # installing without dependencies may lead to broken packages
-        os.environ["PIP_NO_DEPS"] = "0"
+        env["PIP_NO_DEPS"] = "0"
 
     def _install(self, deps, extraopts=None, action=None):
         if not deps:
@@ -533,10 +535,13 @@ class VirtualEnv(object):
         redirect=True,
         ignore_ret=False,
         returnout=False,
+        env=None,
     ):
+        if env is None:
+            env = self._get_os_environ(is_test_command=is_test_command)
+
         # construct environment variables
-        os.environ.pop("VIRTUALENV_PYTHON", None)
-        env = self._get_os_environ(is_test_command=is_test_command)
+        env.pop("VIRTUALENV_PYTHON", None)
         bin_dir = str(self.envconfig.envbindir)
         env["PATH"] = os.pathsep.join([bin_dir, os.environ["PATH"]])
         reporter.verbosity2("setting PATH={}".format(env["PATH"]))
@@ -548,7 +553,13 @@ class VirtualEnv(object):
 
         cwd.ensure(dir=1)  # ensure the cwd exists
         return action.popen(
-            args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret, returnout=returnout
+            args,
+            cwd=cwd,
+            env=env,
+            redirect=redirect,
+            ignore_ret=ignore_ret,
+            returnout=returnout,
+            report_fail=not is_test_command,
         )
 
     def setupenv(self):

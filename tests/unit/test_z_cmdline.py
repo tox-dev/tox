@@ -87,14 +87,14 @@ def test_notoxini_help_still_works(initproj, cmd):
     assert result.err == msg
     assert result.out.startswith("usage: ")
     assert any("--help" in l for l in result.outlines), result.outlines
-    result.assert_success()
+    result.assert_success(is_run_test_env=False)
 
 
 def test_notoxini_help_ini_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={"tests": {"test_hello.py": "def test_hello(): pass"}})
     result = cmd("--help-ini")
     assert any("setenv" in l for l in result.outlines), result.outlines
-    result.assert_success()
+    result.assert_success(is_run_test_env=False)
 
 
 def test_envdir_equals_toxini_errors_out(cmd, initproj):
@@ -127,8 +127,10 @@ def test_run_custom_install_command_error(cmd, initproj):
     )
     result = cmd()
     result.assert_fail()
-    msg = "ERROR: invocation failed (errno 2), args: tox.ini --exists-action w"
-    assert msg in result.out, result.out
+    re.match(
+        r"ERROR:   python: InvocationError for command .* \(exited with code \d+\)",
+        result.outlines[-1],
+    ), result.out
 
 
 def test_unknown_interpreter_and_env(cmd, initproj):

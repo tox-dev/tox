@@ -2768,11 +2768,11 @@ class TestCmdInvocation:
             },
         )
         result = cmd("--showconfig")
-        result.assert_success()
+        result.assert_success(is_run_test_env=False)
         assert any(re.match(r".*deps.*dep1==2.3, dep2.*", l) for l in result.outlines)
         # override dep1 specific version, and force version for dep2
         result = cmd("--showconfig", "--force-dep=dep1", "--force-dep=dep2==5.0")
-        result.assert_success()
+        result.assert_success(is_run_test_env=False)
         assert any(re.match(r".*deps.*dep1, dep2==5.0.*", l) for l in result.outlines)
 
 

@@ -24,7 +24,7 @@ def test_provision_missing(initproj, cmd):
         },
     )
     result = cmd("-q", "-q")
-    assert result.ret == 1
+    result.assert_fail()
     meta_python = Path(result.out.strip())
     assert meta_python.exists()
 

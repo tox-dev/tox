@@ -1,3 +1,4 @@
+import os
 import platform
 import traceback
 
@@ -126,3 +127,5 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
     assert len(dist_after) == 1
     sdist = dist_after[0]
     assert t1_package != sdist
+    # our set_os_env_var is not thread-safe so clean-up TOX_WORK_DIR
+    os.environ.pop("TOX_WORK_DIR", None)
