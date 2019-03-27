@@ -2,17 +2,24 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import pipes
+import signal
 import subprocess
 import sys
 import time
 from contextlib import contextmanager
+from threading import Thread
 
 import py
 
 from tox import reporter
 from tox.constants import INFO
 from tox.exception import InvocationError
+from tox.reporter import Verbosity
 from tox.util.lock import get_unique_file
+from tox.util.stdlib import is_main_thread
+
+WAIT_INTERRUPT = 0.3
+WAIT_TERMINATE = 0.2
 
 
 class Action(object):
@@ -59,54 +66,64 @@ class Action(object):
         returnout=False,
         ignore_ret=False,
         capture_err=True,
+        callback=None,
+        report_fail=True,
     ):
         """this drives an interaction with a subprocess"""
-        cmd_args = [str(x) for x in args]
+        cwd = py.path.local() if cwd is None else cwd
+        cmd_args = [str(x) for x in self._rewrite_args(cwd, args)]
         cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
         stream_getter = self._get_standard_streams(
-            capture_err, cmd_args_shell, redirect, returnout
+            capture_err, cmd_args_shell, redirect, returnout, cwd
         )
-        cwd = os.getcwd() if cwd is None else cwd
+        exit_code, output = None, None
         with stream_getter as (fin, out_path, stderr, stdout):
             try:
-                args = self._rewrite_args(cwd, args)
                 process = self.via_popen(
-                    args,
+                    cmd_args,
                     stdout=stdout,
                     stderr=stderr,
                     cwd=str(cwd),
                     env=os.environ.copy() if env is None else env,
                     universal_newlines=True,
                     shell=False,
+                    creationflags=(
+                        subprocess.CREATE_NEW_PROCESS_GROUP
+                        if sys.platform == "win32"
+                        else 0
+                        # needed for Windows signal send ability (CTRL+C)
+                    ),
                 )
-            except OSError as e:
-                reporter.error(
-                    "invocation failed (errno {:d}), args: {}, cwd: {}".format(
-                        e.errno, cmd_args_shell, cwd
-                    )
-                )
-                raise
-            reporter.log_popen(cwd, out_path, cmd_args_shell)
-            output = self.feed_stdin(fin, process, redirect)
-            exit_code = process.wait()
-        if exit_code and not ignore_ret:
-            invoked = " ".join(map(str, args))
-            if out_path:
-                reporter.error(
-                    "invocation failed (exit code {:d}), logfile: {}".format(exit_code, out_path)
-                )
-                output = out_path.read()
-                reporter.error(output)
-                self.command_log.add_command(args, output, exit_code)
-                raise InvocationError(invoked, exit_code, out_path)
+            except OSError as exception:
+                exit_code = exception.errno
             else:
-                raise InvocationError(invoked, exit_code)
-        if not output and out_path:
-            output = out_path.read()
-        self.command_log.add_command(args, output, exit_code)
+                if callback is not None:
+                    callback(process)
+                reporter.log_popen(cwd, out_path, cmd_args_shell, process.pid)
+                output = self.evaluate_cmd(fin, process, redirect)
+                exit_code = process.returncode
+            finally:
+                if out_path is not None and out_path.exists():
+                    output = out_path.read()
+                try:
+                    if exit_code and not ignore_ret:
+                        if report_fail:
+                            msg = "invocation failed (exit code {:d})".format(exit_code)
+                            if out_path is not None:
+                                msg += ", logfile: {}".format(out_path)
+                                if not out_path.exists():
+                                    msg += " warning log file missing"
+                            reporter.error(msg)
+                            if out_path is not None and out_path.exists():
+                                reporter.separator("=", "log start", Verbosity.QUIET)
+                                reporter.quiet(output)
+                                reporter.separator("=", "log end", Verbosity.QUIET)
+                        raise InvocationError(cmd_args_shell, exit_code, output)
+                finally:
+                    self.command_log.add_command(cmd_args, output, exit_code)
         return output
 
-    def feed_stdin(self, fin, process, redirect):
+    def evaluate_cmd(self, input_file_handler, process, redirect):
         try:
             if self.generate_tox_log and not redirect:
                 if process.stderr is not None:
@@ -114,12 +131,11 @@ class Action(object):
                     raise ValueError("stderr must not be piped here")
                 # we read binary from the process and must write using a binary stream
                 buf = getattr(sys.stdout, "buffer", sys.stdout)
-                out = None
                 last_time = time.time()
                 while True:
                     # we have to read one byte at a time, otherwise there
                     # might be no output for a long time with slow tests
-                    data = fin.read(1)
+                    data = input_file_handler.read(1)
                     if data:
                         buf.write(data)
                         if b"\n" in data or (time.time() - last_time) > 1:
@@ -135,54 +151,109 @@ class Action(object):
                     else:
                         time.sleep(0.1)
                         # the seek updates internal read buffers
-                        fin.seek(0, 1)
-                fin.close()
-            else:
-                out, err = process.communicate()
-        except KeyboardInterrupt:
-            process.wait()
-            raise
+                        input_file_handler.seek(0, 1)
+                input_file_handler.close()
+            out, _ = process.communicate()  # wait to finish
+        except KeyboardInterrupt as exception:
+            reporter.error("got KeyboardInterrupt signal")
+            main_thread = is_main_thread()
+            while True:
+                try:
+                    if main_thread:
+                        # spin up a new thread to disable further interrupt on main thread
+                        stopper = Thread(target=self.handle_interrupt, args=(process,))
+                        stopper.start()
+                        stopper.join()
+                    else:
+                        self.handle_interrupt(process)
+                except KeyboardInterrupt:
+                    continue
+                break
+            raise exception
         return out
 
+    def handle_interrupt(self, process):
+        """A three level stop mechanism for children - INT -> TERM -> KILL"""
+        msg = "from {} {{}} pid {}".format(os.getpid(), process.pid)
+        if process.poll() is None:
+            self.info("KeyboardInterrupt", msg.format("SIGINT"))
+            process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+            if self._wait(process, WAIT_INTERRUPT) is None:
+                self.info("KeyboardInterrupt", msg.format("SIGTERM"))
+                process.terminate()
+                if self._wait(process, WAIT_TERMINATE) is None:
+                    self.info("KeyboardInterrupt", msg.format("SIGKILL"))
+                    process.kill()
+                    process.communicate()
+
+    @staticmethod
+    def _wait(process, timeout):
+        if sys.version_info >= (3, 3):
+            # python 3 has timeout feature built-in
+            try:
+                process.communicate(timeout=WAIT_INTERRUPT)
+            except subprocess.TimeoutExpired:
+                pass
+        else:
+            # on Python 2 we need to simulate it
+            delay = 0.01
+            while process.poll() is None and timeout > 0:
+                time.sleep(delay)
+                timeout -= delay
+        return process.poll()
+
     @contextmanager
-    def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout):
-        stdout = out_path = fin = None
+    def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout, cwd):
+        stdout = out_path = input_file_handler = None
         stderr = subprocess.STDOUT if capture_err else None
 
         if self.generate_tox_log or redirect:
             out_path = self.get_log_path(self.name)
-            with out_path.open("wt") as stdout, out_path.open("rb") as fin:
+            with out_path.open("wt") as stdout, out_path.open("rb") as input_file_handler:
                 stdout.write(
-                    "actionid: {}\nmsg: {}\ncmdargs: {!r}\n\n".format(
-                        self.name, self.msg, cmd_args_shell
+                    "action: {}, msg: {}\ncwd: {}\ncmd: {}\n".format(
+                        self.name, self.msg, cwd, cmd_args_shell
                     )
                 )
                 stdout.flush()
-                fin.read()  # read the header, so it won't be written to stdout
-
-                yield fin, out_path, stderr, stdout
+                input_file_handler.read()  # read the header, so it won't be written to stdout
+                yield input_file_handler, out_path, stderr, stdout
                 return
 
         if returnout:
             stdout = subprocess.PIPE
 
-        yield fin, out_path, stderr, stdout
+        yield input_file_handler, out_path, stderr, stdout
 
     def get_log_path(self, actionid):
-        return get_unique_file(
-            self.log_dir, prefix=actionid, suffix=".logs", report=reporter.verbosity1
-        )
+        log_file = get_unique_file(self.log_dir, prefix=actionid, suffix=".log")
+        return log_file
 
     def _rewrite_args(self, cwd, args):
-        new_args = []
-        for arg in args:
-            if not INFO.IS_WIN and isinstance(arg, py.path.local):
-                cwd = py.path.local(cwd)
-                arg = cwd.bestrelpath(arg)
-            new_args.append(str(arg))
-        # subprocess does not always take kindly to .py scripts so adding the interpreter here
+
+        executable = None
         if INFO.IS_WIN:
-            ext = os.path.splitext(str(new_args[0]))[1].lower()
+            # shebang lines are not adhered on Windows so if it's a python script
+            # pre-pend the interpreter
+            ext = os.path.splitext(str(args[0]))[1].lower()
             if ext == ".py":
-                new_args = [str(self.python)] + new_args
+                executable = str(self.python)
+        if executable is None:
+            executable = args[0]
+            args = args[1:]
+
+        new_args = [executable]
+
+        # to make the command shorter try to use relative paths for all subsequent arguments
+        # note the executable cannot be relative as the Windows applies cwd after invocation
+        for arg in args:
+            if arg and os.path.isabs(str(arg)):
+                arg_path = py.path.local(arg)
+                if arg_path.exists() and arg_path.common(cwd) is not None:
+                    potential_arg = cwd.bestrelpath(arg_path)
+                    if len(potential_arg.split("..")) < 2:
+                        # just one parent directory accepted as relative path
+                        arg = potential_arg
+            new_args.append(str(arg))
+
         return new_args

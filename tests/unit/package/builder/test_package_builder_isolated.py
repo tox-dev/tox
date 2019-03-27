@@ -22,7 +22,7 @@ def test_verbose_isolated_build(initproj, mock_venv, cmd):
                                 """,
         },
     )
-    result = cmd("--sdistonly", "-vvv")
+    result = cmd("--sdistonly", "-v", "-v", "-v", "-e", "py")
     assert "running sdist" in result.out, result.out
     assert "running egg_info" in result.out, result.out
     assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out
@@ -44,13 +44,13 @@ def test_dist_exists_version_change(mock_venv, initproj, cmd):
         },
     )
     result = cmd("-e", "py")
-    assert result.ret == 0, result.out
+    result.assert_success()
 
     new_code = base.join("setup.py").read_text("utf-8").replace("0.1", "0.2")
     base.join("setup.py").write_text(new_code, "utf-8")
 
     result = cmd("-e", "py")
-    assert result.ret == 0, result.out
+    result.assert_success()
 
 
 def test_package_isolated_no_pyproject_toml(initproj, cmd):
@@ -64,7 +64,7 @@ def test_package_isolated_no_pyproject_toml(initproj, cmd):
         },
     )
     result = cmd("--sdistonly", "-e", "py")
-    assert result.ret == 1
+    result.assert_fail()
     assert result.outlines == ["ERROR: missing {}".format(py.path.local().join("pyproject.toml"))]
 
 

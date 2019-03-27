@@ -1,0 +1,2 @@
+Interpreter discovery and virtualenv creation process calls that failed will now print out on the screen their output
+(via the logfile we automatically save) - by :user:`gaborbernat`

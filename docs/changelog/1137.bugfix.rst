@@ -1,0 +1,1 @@
+Fixed bug of children process calls logs clashing (log already exists) - by :user:`gaborbernat`

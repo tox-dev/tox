@@ -1,1 +1,2 @@
-tox will inject the ``TOX_PARALLEL_ENV`` environment variable, set to the current running tox environment name, only when running in parallel mode.
+tox will inject the ``TOX_PARALLEL_ENV`` environment variable, set to the current running tox environment name,
+only when running in parallel mode. - by :user:`gaborbernat`

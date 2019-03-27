@@ -16,4 +16,4 @@ def test_jython_create(initproj, cmd):
         },
     )
     result = cmd("--notest", "-vvv")
-    assert not result.ret, "{}\n{}".format(result.err, result.out)
+    result.assert_success()

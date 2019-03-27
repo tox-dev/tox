@@ -19,15 +19,34 @@ if os.name == "nt":
         _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
 
 
+def _file_support_encoding(chars, file):
+    encoding = getattr(file, "encoding", None)
+    if encoding is not None:
+        for char in chars:
+            try:
+                char.encode(encoding)
+            except UnicodeDecodeError:
+                break
+        else:
+            return True
+    return False
+
+
 class Spinner(object):
     CLEAR_LINE = "\033[K"
     max_width = 120
-    frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    UNICODE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    ASCII_FRAMES = ["|", "-", "+", "x", "*"]
 
     def __init__(self, enabled=True, refresh_rate=0.1):
         self.refresh_rate = refresh_rate
         self.enabled = enabled
         self._file = sys.stdout
+        self.frames = (
+            self.UNICODE_FRAMES
+            if _file_support_encoding(self.UNICODE_FRAMES, sys.stdout)
+            else self.ASCII_FRAMES
+        )
         self.stream = py.io.TerminalWriter(file=self._file)
         self._envs = OrderedDict()
         self._frame_index = 0

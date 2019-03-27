@@ -1,4 +1,5 @@
 import os
+import pipes
 import sys
 import textwrap
 from threading import Thread
@@ -84,7 +85,7 @@ def test_skip_sdist(cmd, initproj):
         },
     )
     result = cmd()
-    assert result.ret == 0
+    result.assert_success()
 
 
 def test_skip_install_skip_package(cmd, initproj, mock_venv):
@@ -102,7 +103,7 @@ def test_skip_install_skip_package(cmd, initproj, mock_venv):
         },
     )
     result = cmd("--notest")
-    assert result.ret == 0
+    result.assert_success()
 
 
 @pytest.fixture()
@@ -123,7 +124,7 @@ def venv_filter_project(initproj, cmd):
             },
         )
         result = cmd(*args)
-        assert result.ret == 0
+        result.assert_success(is_run_test_env=False)
         active = [i.name for i in result.session.existing_venvs.values()]
         return active, result
 
@@ -278,7 +279,7 @@ def test_tox_env_var_flags_inserted_isolated(popen_env_test):
 
 
 def assert_popen_env(res):
-    assert res.result.ret == 0, res.result.out
+    res.result.assert_success()
     for tox_id, _, env, __, ___ in res.popens:
         assert env["TOX_WORK_DIR"] == os.path.join(res.cwd, ".tox")
         if tox_id != "GLOB":
@@ -302,7 +303,7 @@ def test_command_prev_post_ok(cmd, initproj, mock_venv):
         },
     )
     result = cmd()
-    assert result.ret == 0
+    result.assert_success()
     expected = textwrap.dedent(
         """
         py run-test-pre: commands[0] | python -c 'print("pre")'
@@ -339,17 +340,17 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
         },
     )
     result = cmd()
-    assert result.ret == 1
+    result.assert_fail()
     expected = textwrap.dedent(
         """
             py run-test-pre: commands[0] | python -c 'raise SystemExit(2)'
-            ERROR: InvocationError for command {} -c raise SystemExit(2) (exited with code 2)
+            ERROR: InvocationError for command {} -c 'raise SystemExit(2)' (exited with code 2)
             py run-test-post: commands[0] | python -c 'print("post")'
             post
             ___________________________________ summary ___________________________________{}
             ERROR:   py: commands failed
         """.format(
-            sys.executable, "_" if sys.platform != "win32" else ""
+            pipes.quote(sys.executable), "_" if sys.platform != "win32" else ""
         )
     )
     have = result.out.replace(os.linesep, "\n")

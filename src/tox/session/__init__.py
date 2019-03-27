@@ -56,14 +56,16 @@ def main(args):
     setup_reporter(args)
     try:
         config = load_config(args)
-        reporter.using("tox.ini: {}".format(config.toxinipath))
         config.logdir.ensure(dir=1)
         ensure_empty_dir(config.logdir)
         with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
-            retcode = build_session(config).runcommand()
+            session = build_session(config)
+            retcode = session.runcommand()
         if retcode is None:
             retcode = 0
         raise SystemExit(retcode)
+    except tox.exception.BadRequirement:
+        raise SystemExit(1)
     except KeyboardInterrupt:
         raise SystemExit(2)
 
@@ -166,7 +168,9 @@ class Session(object):
         )
 
     def runcommand(self):
-        reporter.using("tox-{} from {}".format(tox.__version__, tox.__file__))
+        reporter.using(
+            "tox-{} from {} (pid {})".format(tox.__version__, tox.__file__, os.getpid())
+        )
         show_description = reporter.has_level(reporter.Verbosity.DEFAULT)
         if self.config.run_provision:
             provision_tox_venv = self.getvenv(self.config.provision_tox_env)
@@ -204,11 +208,13 @@ class Session(object):
             return
 
         within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
-        if not within_parallel and self.config.option.parallel != PARALLEL_OFF:
-            run_parallel(self.config, self.venv_dict)
-        else:
-            run_sequential(self.config, self.venv_dict)
-        retcode = self._summary()
+        try:
+            if not within_parallel and self.config.option.parallel != PARALLEL_OFF:
+                run_parallel(self.config, self.venv_dict)
+            else:
+                run_sequential(self.config, self.venv_dict)
+        finally:
+            retcode = self._summary()
         return retcode
 
     def _summary(self):
@@ -218,7 +224,7 @@ class Session(object):
         exit_code = 0
         for venv in self.venv_dict.values():
             report = reporter.good
-            status = venv.status
+            status = getattr(venv, "status", "undefined")
             if isinstance(status, tox.exception.InterpreterNotFound):
                 msg = " {}: {}".format(venv.envconfig.envname, str(status))
                 if self.config.option.skip_missing_interpreters == "true":

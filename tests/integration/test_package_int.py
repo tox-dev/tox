@@ -102,8 +102,7 @@ def test_package_poetry(initproj, cmd):
 
 def run(cmd, package):
     result = cmd("--sdistonly", "-e", "py", "-v", "-v")
-
-    assert result.ret == 0, result.out
+    result.assert_success(is_run_test_env=False)
     package_venv = (Path() / ".tox" / ".package").resolve()
     assert ".package create: {}".format(package_venv) in result.outlines, result.out
     assert "write config to {}".format(package_venv / ".tox-config1") in result.out, result.out
@@ -115,7 +114,7 @@ def run(cmd, package):
     # second call re-uses
     result2 = cmd("--sdistonly", "-e", "py", "-v", "-v")
 
-    assert result2.ret == 0, result2.out
+    result2.assert_success(is_run_test_env=False)
     assert (
         ".package reusing: {}".format(package_venv) in result2.outlines
     ), "Second call output:\n{}First call output:\n{}".format(result2.out, result.out)

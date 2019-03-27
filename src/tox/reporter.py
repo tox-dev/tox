@@ -1,8 +1,10 @@
 """A progress reporter inspired from the logging modules"""
 from __future__ import absolute_import, unicode_literals
 
+import os
 import time
 from contextlib import contextmanager
+from datetime import datetime
 
 import py
 
@@ -13,6 +15,11 @@ class Verbosity(object):
     DEFAULT = 0
     QUIET = -1
     EXTRA_QUIET = -2
+
+
+REPORTER_TIMESTAMP_ON_ENV = str("TOX_REPORTER_TIMESTAMP")
+REPORTER_TIMESTAMP_ON = os.environ.get(REPORTER_TIMESTAMP_ON_ENV, False) == "1"
+START = datetime.now()
 
 
 class Reporter(object):
@@ -34,10 +41,12 @@ class Reporter(object):
     def verbosity(self):
         return self.verbose_level - self.quiet_level
 
-    def log_popen(self, cwd, outpath, cmd_args_shell):
+    def log_popen(self, cwd, outpath, cmd_args_shell, pid):
         """ log information about the action.popen() created process. """
-        msg = "  {}$ {} ".format(cwd, cmd_args_shell)
+        msg = "[{}] {}$ {}".format(pid, cwd, cmd_args_shell)
         if outpath:
+            if outpath.common(cwd) is not None:
+                outpath = cwd.bestrelpath(outpath)
             msg = "{} >{}".format(msg, outpath)
         self.verbosity1(msg, of="logpopen")
 
@@ -67,7 +76,11 @@ class Reporter(object):
 
     def logline(self, of, msg, **opts):
         self.reported_lines.append((of, msg))
-        self.tw.line("{}".format(msg), **opts)
+        timestamp = ""
+        if REPORTER_TIMESTAMP_ON:
+            timestamp = "{} ".format(datetime.now() - START)
+        line_msg = "{}{}\n".format(timestamp, msg)
+        self.tw.write(line_msg, **opts)
 
     def keyvalue(self, name, value):
         if name.endswith(":"):

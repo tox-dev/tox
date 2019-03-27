@@ -21,7 +21,13 @@ import toml
 import tox
 from tox.constants import INFO
 from tox.interpreters import Interpreters, NoInterpreterInfo
-from tox.reporter import update_default_reporter
+from tox.reporter import (
+    REPORTER_TIMESTAMP_ON_ENV,
+    error,
+    update_default_reporter,
+    using,
+    verbosity1,
+)
 
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
@@ -657,6 +663,7 @@ def tox_addoption(parser):
             "LANGUAGE",
             "LD_LIBRARY_PATH",
             "TOX_WORK_DIR",
+            str(REPORTER_TIMESTAMP_ON_ENV),
             str(PARALLEL_ENV_VAR_KEY),
         }
 
@@ -949,9 +956,19 @@ def make_hashseed():
 class ParseIni(object):
     def __init__(self, config, ini_path, ini_data):  # noqa
         config.toxinipath = ini_path
+        using("tox.ini: {} (pid {})".format(config.toxinipath, os.getpid()))
         config.toxinidir = config.toxinipath.dirpath()
 
         self._cfg = py.iniconfig.IniConfig(config.toxinipath, ini_data)
+        previous_line_of = self._cfg.lineof
+
+        def line_of_default_to_zero(section, name=None):
+            at = previous_line_of(section, name=name)
+            if at is None:
+                at = 0
+            return at
+
+        self._cfg.lineof = line_of_default_to_zero
         config._cfg = self._cfg
         self.config = config
 
@@ -1068,30 +1085,45 @@ class ParseIni(object):
     def handle_provision(self, config, reader):
         requires_list = reader.getlist("requires")
         config.minversion = reader.getstring("minversion", None)
-        requires_list.append("tox >= {}".format(config.minversion or tox.__version__))
         config.provision_tox_env = name = reader.getstring("provision_tox_env", ".tox")
-        env_config = self.make_envconfig(
-            name, "{}{}".format(testenvprefix, name), reader._subs, config
-        )
-        env_config.deps = [DepConfig(r, None) for r in requires_list]
-        self.ensure_requires_satisfied(config, env_config)
-
-    @staticmethod
-    def ensure_requires_satisfied(config, env_config):
-        missing_requirements = []
-        deps = env_config.deps
-        for require in deps:
-            # noinspection PyBroadException
-            try:
-                pkg_resources.get_distribution(require.name)
-            except pkg_resources.RequirementParseError:
-                raise
-            except Exception:
-                missing_requirements.append(str(pkg_resources.Requirement(require.name)))
-        config.run_provision = bool(missing_requirements)
-        if missing_requirements:
+        min_version = "tox >= {}".format(config.minversion or tox.__version__)
+        deps = self.ensure_requires_satisfied(config, requires_list, min_version)
+        if config.run_provision:
+            section_name = "testenv:{}".format(name)
+            if section_name not in self._cfg.sections:
+                self._cfg.sections[section_name] = {}
+            self._cfg.sections[section_name]["description"] = "meta tox"
+            env_config = self.make_envconfig(
+                name, "{}{}".format(testenvprefix, name), reader._subs, config
+            )
+            env_config.deps = deps
             config.envconfigs[config.provision_tox_env] = env_config
             raise tox.exception.MissingRequirement(config)
+
+    @staticmethod
+    def ensure_requires_satisfied(config, requires, min_version):
+        missing_requirements = []
+        failed_to_parse = False
+        deps = []
+        exists = set()
+        for require in requires + [min_version]:
+            # noinspection PyBroadException
+            try:
+                package = pkg_resources.Requirement.parse(require)
+                if package.project_name not in exists:
+                    deps.append(DepConfig(require, None))
+                    exists.add(package.project_name)
+                    pkg_resources.get_distribution(package)
+            except pkg_resources.RequirementParseError as exception:
+                failed_to_parse = True
+                error("failed to parse {!r}".format(exception))
+            except Exception as exception:
+                verbosity1("could not satisfy requires {!r}".format(exception))
+                missing_requirements.append(str(pkg_resources.Requirement(require)))
+        if failed_to_parse:
+            raise tox.exception.BadRequirement()
+        config.run_provision = bool(len(missing_requirements))
+        return deps
 
     def parse_build_isolation(self, config, reader):
         config.isolated_build = reader.getbool("isolated_build", False)
@@ -1099,6 +1131,10 @@ class ParseIni(object):
         if config.isolated_build is True:
             name = config.isolated_build_env
             if name not in config.envconfigs:
+                section_name = "testenv:{}".format(name)
+                if name not in self._cfg.sections:
+                    self._cfg.sections[section_name] = {}
+                self._cfg.sections[section_name]["description"] = "isolated packaging environment"
                 config.envconfigs[name] = self.make_envconfig(
                     name, "{}{}".format(testenvprefix, name), reader._subs, config
                 )
@@ -1148,7 +1184,7 @@ class ParseIni(object):
                 tc.missing_subs.append(e.name)
                 res = e.FLAG
             setattr(tc, env_attr.name, res)
-            if atype in ("path", "string"):
+            if atype in ("path", "string", "basepython"):
                 reader.addsubstitutions(**{env_attr.name: res})
         return tc
 

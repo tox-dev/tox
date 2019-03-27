@@ -12,6 +12,7 @@ from pkg_resources import to_filename
 import tox
 from tox import reporter
 from tox.action import Action
+from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.package.local import resolve_package
 from tox.util.path import ensure_empty_dir
 
@@ -169,7 +170,9 @@ class VirtualEnv(object):
             path = self._normal_lookup(name)
 
         if path is None:
-            raise tox.exception.InvocationError("could not find executable {!r}".format(name))
+            raise tox.exception.InvocationError(
+                "could not find executable {}".format(pipes.quote(name))
+            )
 
         return str(path)  # will not be rewritten for reporting
 
@@ -378,7 +381,8 @@ class VirtualEnv(object):
 
         cmd = list(chain.from_iterable(expand(val) for val in self.envconfig.install_command))
 
-        self.ensure_pip_os_environ_ok()
+        env = self._get_os_environ()
+        self.ensure_pip_os_environ_ok(env)
 
         old_stdout = sys.stdout
         sys.stdout = codecs.getwriter("utf8")(sys.stdout)
@@ -388,17 +392,18 @@ class VirtualEnv(object):
                 cwd=self.envconfig.config.toxinidir,
                 action=action,
                 redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
+                env=env,
             )
         finally:
             sys.stdout = old_stdout
 
-    def ensure_pip_os_environ_ok(self):
+    def ensure_pip_os_environ_ok(self, env):
         for key in ("PIP_RESPECT_VIRTUALENV", "PIP_REQUIRE_VIRTUALENV", "__PYVENV_LAUNCHER__"):
-            os.environ.pop(key, None)
-        if "PYTHONPATH" not in self.envconfig.passenv:
+            env.pop(key, None)
+        if all("PYTHONPATH" not in i for i in (self.envconfig.passenv, self.envconfig.setenv)):
             # If PYTHONPATH not explicitly asked for, remove it.
-            if "PYTHONPATH" in os.environ:
-                if sys.version_info < (3, 4) or bool(os.environ["PYTHONPATH"]):
+            if "PYTHONPATH" in env:
+                if sys.version_info < (3, 4) or bool(env["PYTHONPATH"]):
                     # https://docs.python.org/3/whatsnew/3.4.html#changes-in-python-command-behavior
                     # In a posix shell, setting the PATH environment variable to an empty value is
                     # equivalent to not setting it at all.
@@ -406,13 +411,13 @@ class VirtualEnv(object):
                         "Discarding $PYTHONPATH from environment, to override "
                         "specify PYTHONPATH in 'passenv' in your configuration."
                     )
-                os.environ.pop("PYTHONPATH")
+                env.pop("PYTHONPATH")
 
         # installing packages at user level may mean we're not installing inside the venv
-        os.environ["PIP_USER"] = "0"
+        env["PIP_USER"] = "0"
 
         # installing without dependencies may lead to broken packages
-        os.environ["PIP_NO_DEPS"] = "0"
+        env["PIP_NO_DEPS"] = "0"
 
     def _install(self, deps, extraopts=None, action=None):
         if not deps:
@@ -518,7 +523,6 @@ class VirtualEnv(object):
                         break  # Don't process remaining commands
                 except KeyboardInterrupt:
                     self.status = "keyboardinterrupt"
-                    reporter.error(self.status)
                     raise
 
     def _pcall(
@@ -531,10 +535,13 @@ class VirtualEnv(object):
         redirect=True,
         ignore_ret=False,
         returnout=False,
+        env=None,
     ):
+        if env is None:
+            env = self._get_os_environ(is_test_command=is_test_command)
+
         # construct environment variables
-        os.environ.pop("VIRTUALENV_PYTHON", None)
-        env = self._get_os_environ(is_test_command=is_test_command)
+        env.pop("VIRTUALENV_PYTHON", None)
         bin_dir = str(self.envconfig.envbindir)
         env["PATH"] = os.pathsep.join([bin_dir, os.environ["PATH"]])
         reporter.verbosity2("setting PATH={}".format(env["PATH"]))
@@ -546,7 +553,13 @@ class VirtualEnv(object):
 
         cwd.ensure(dir=1)  # ensure the cwd exists
         return action.popen(
-            args, cwd=cwd, env=env, redirect=redirect, ignore_ret=ignore_ret, returnout=returnout
+            args,
+            cwd=cwd,
+            env=env,
+            redirect=redirect,
+            ignore_ret=ignore_ret,
+            returnout=returnout,
+            report_fail=not is_test_command,
         )
 
     def setupenv(self):
@@ -575,11 +588,7 @@ class VirtualEnv(object):
                     "not supported by virtualenv. Error details: {!r}".format(e)
                 )
             except tox.exception.InvocationError as e:
-                status = (
-                    "Error creating virtualenv. Note that some special characters (e.g. ':' and "
-                    "unicode symbols) in paths are not supported by virtualenv. Error details: "
-                    "{!r}".format(e)
-                )
+                status = e
             except tox.exception.InterpreterNotFound as e:
                 status = e
                 if self.envconfig.config.option.skip_missing_interpreters == "true":
@@ -636,6 +645,7 @@ def prepend_shebang_interpreter(args):
 
 
 NO_DOWNLOAD = False
+_SKIP_VENV_CREATION = os.environ.get("_TOX_SKIP_ENV_CREATION_TEST", False) == "1"
 
 
 @tox.hookimpl
@@ -650,11 +660,28 @@ def tox_testenv_create(venv, action):
         args.append("--no-download")
     # add interpreter explicitly, to prevent using default (virtualenv.ini)
     args.extend(["--python", str(config_interpreter)])
-    ensure_empty_dir(venv.path)
+
+    within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+    if within_parallel:
+        if venv.path.exists():
+            # do not delete the log folder as that's used by parent
+            for content in venv.path.listdir():
+                if not content.basename == "log":
+                    content.remove(rec=1, ignore_errors=True)
+    else:
+        ensure_empty_dir(venv.path)
+
     basepath = venv.path.dirpath()
     basepath.ensure(dir=1)
     args.append(venv.path.basename)
-    venv._pcall(args, venv=False, action=action, cwd=basepath)
+    if not _SKIP_VENV_CREATION:
+        venv._pcall(
+            args,
+            venv=False,
+            action=action,
+            cwd=basepath,
+            redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
+        )
     return True  # Return non-None to indicate plugin has completed
 
 

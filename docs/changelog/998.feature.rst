@@ -1,2 +1,2 @@
 tox now auto-provisions itself if needed (see :ref:`auto-provision`). Plugins or minimum version of tox no longer
-need to be manually satisfied by the user, increasing their ease of use.
+need to be manually satisfied by the user, increasing their ease of use. - by :user:`gaborbernat`
