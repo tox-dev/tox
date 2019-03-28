@@ -26,7 +26,9 @@ def run_parallel(config, venv_dict):
     semaphore = Semaphore(max_parallel)
     finished = Event()
 
-    show_progress = allow_spinner and not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
+    show_progress = (
+        allow_spinner and not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
+    )
     with Spinner(enabled=show_progress) as spinner:
 
         def run_in_thread(tox_env, os_env, processes):
