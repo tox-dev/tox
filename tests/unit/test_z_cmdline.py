@@ -467,8 +467,8 @@ def test_result_json(cmd, initproj, example123):
             deps = setuptools
             commands_pre = python -c 'print("START")'
             commands = python -c 'print("OK")'
-                       - python -c 'raise SystemExit(1)'
-                       python -c 'raise SystemExit(2)'
+                       - python -c 'print("1"); raise SystemExit(1)'
+                       python -c 'print("1"); raise SystemExit(2)'
                        python -c 'print("SHOULD NOT HAPPEN")'
             commands_post = python -c 'print("END")'
         """
@@ -730,6 +730,7 @@ def test_empty_activity_shown_verbose(initproj, cmd):
             [testenv]
             list_dependencies_command=echo
             commands={envpython} --version
+            whitelist_externals = echo
     """
         },
     )
