@@ -2930,6 +2930,22 @@ def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):
     assert not out
 
 
+def test_isolated_build_overrides(newconfig, capsys):
+    inisource = """
+            [tox]
+            isolated_build = True
+
+            [testenv]
+            deps = something crazy here
+
+            [testenv:.package]
+            deps =
+        """
+    config = newconfig([], inisource)
+    deps = config.envconfigs.get(".package").deps
+    assert deps == []
+
+
 def test_config_via_pyproject_legacy(initproj):
     initproj(
         "config_via_pyproject_legacy-0.5",
