@@ -33,10 +33,10 @@ jobs:
     displayName: show python information
 
   - script: "python -m pip install -U pip setuptools --user -v"
-    displayName: upgrade pip and setuptools
+    displayName: upgrade pip
 
-  - script: "python -m pip install -U tox --pre --user -v"
-    displayName: install tox
+  - script: "python -m pip install -U . --user -v"
+    displayName: install tox - eat our own dog food
 
   - script: ${{ format('python -m tox -e {0} --notest', parameters.tox) }}
     displayName: install test dependencies
