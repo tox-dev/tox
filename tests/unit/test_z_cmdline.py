@@ -458,20 +458,49 @@ def test_different_config_cwd(cmd, example123):
     )
 
 
-def test_json(cmd, example123):
-    # see that tests can also fail and retcode is correct
-    testfile = py.path.local("tests").join("test_hello.py")
-    assert testfile.check()
-    testfile.write("def test_fail(): assert 0")
-    jsonpath = example123.join("res.json")
-    result = cmd("--result-json", jsonpath)
-    result.assert_fail()
-    with jsonpath.open("r") as f:
-        data = json.load(f)
-    verify_json_report_format(data)
-    assert re.match(
-        r".*\W+1\W+failed.*" r"summary.*" r"python:\W+commands\W+failed.*", result.out, re.DOTALL
+def test_result_json(cmd, initproj, example123):
+    cwd = initproj(
+        "example123",
+        filedefs={
+            "tox.ini": """
+            [testenv]
+            deps = setuptools
+            commands_pre = python -c 'print("START")'
+            commands = python -c 'print("OK")'
+                       - python -c 'raise SystemExit(1)'
+                       python -c 'raise SystemExit(2)'
+                       python -c 'print("SHOULD NOT HAPPEN")'
+            commands_post = python -c 'print("END")'
+        """
+        },
     )
+    json_path = cwd / "res.json"
+    result = cmd("--result-json", json_path)
+    result.assert_fail()
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+
+    assert data["reportversion"] == "1"
+    assert data["toxversion"] == tox.__version__
+
+    for env_data in data["testenvs"].values():
+        for command_type in ("setup", "test"):
+            if command_type not in env_data:
+                assert False, "missing {}".format(command_type)
+            for command in env_data[command_type]:
+                assert isinstance(command["command"], list)
+                assert command["output"]
+                assert "retcode" in command
+                assert isinstance(command["retcode"], int)
+        # virtualenv, deps install, package install, freeze
+        assert len(env_data["setup"]) == 4
+        # 1 pre + 3 command + 1 post
+        assert len(env_data["test"]) == 5
+        assert isinstance(env_data["installed_packages"], list)
+        pyinfo = env_data["python"]
+        assert isinstance(pyinfo["version_info"], list)
+        assert pyinfo["version"]
+        assert pyinfo["executable"]
+    assert "wrote json report at: {}".format(json_path) == result.outlines[-1]
 
 
 def test_developz(initproj, cmd):
@@ -826,25 +855,6 @@ def test_verbosity(cmd, initproj, verbosity):
         assert any(needle in line for line in result.outlines), result.outlines
     else:
         assert all(needle not in line for line in result.outlines), result.outlines
-
-
-def verify_json_report_format(data, testenvs=True):
-    assert data["reportversion"] == "1"
-    assert data["toxversion"] == tox.__version__
-    if testenvs:
-        for envname, envdata in data["testenvs"].items():
-            for commandtype in ("setup", "test"):
-                if commandtype not in envdata:
-                    continue
-                for command in envdata[commandtype]:
-                    assert command["output"]
-                    assert command["retcode"]
-            if envname != "GLOB":
-                assert isinstance(envdata["installed_packages"], list)
-                pyinfo = envdata["python"]
-                assert isinstance(pyinfo["version_info"], list)
-                assert pyinfo["version"]
-                assert pyinfo["executable"]
 
 
 def test_envtmpdir(initproj, cmd):

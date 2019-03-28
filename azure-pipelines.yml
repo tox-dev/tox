@@ -121,7 +121,7 @@ jobs:
     displayName: move coverage files into .tox
 
   - script: "python -m pip install -U pip setuptools --user -v"
-      displayName: upgrade pip
+    displayName: upgrade pip
 
   - script: 'python -m pip install . -U --user'
     displayName: install tox - eat our own dog food
