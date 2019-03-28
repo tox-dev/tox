@@ -11,6 +11,26 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.8.1 (2019-03-28)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- The ``-eALL`` command line argument now expands the ``envlist`` key and includes all its environment.
+  `#1155 <https://github.com/tox-dev/tox/issues/1155>`_
+- Isolated build environment dependency overrides were not taken in consideration (and such it inherited the deps
+  from the testenv section) - by :user:`gaborbernat`
+  `#1207 <https://github.com/tox-dev/tox/issues/1207>`_
+- ``--result-json`` puts the command into setup section instead of test (pre and post commands are now also correctly
+  put into the commands section) - by :user:`gaborbernat`
+  `#1210 <https://github.com/tox-dev/tox/issues/1210>`_
+- Set ``setup.cfg`` encoding to UTF-8 as it contains Unicode characters.
+  `#1212 <https://github.com/tox-dev/tox/issues/1212>`_
+- Fix tox CI, better error reporting when locating via the py fails - by :user:`gaborbernat`
+  `#1215 <https://github.com/tox-dev/tox/issues/1215>`_
+
+
 v3.8.0 (2019-03-27)
 -------------------
 

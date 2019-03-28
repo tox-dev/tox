@@ -1,1 +1,0 @@
-Fix tox CI, better error reporting when locating via the py fails - by :user:`gaborbernat`

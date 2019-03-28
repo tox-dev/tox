@@ -1,1 +1,0 @@
-Set ``setup.cfg`` encoding to UTF-8 as it contains Unicode characters.

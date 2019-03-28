@@ -1,2 +1,0 @@
-Isolated build environment dependency overrides were not taken in consideration (and such it inherited the deps
-from the testenv section) - by :user:`gaborbernat`
