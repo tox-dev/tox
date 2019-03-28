@@ -9,6 +9,7 @@ import sys
 import py
 
 import tox
+from tox import reporter
 from tox.constants import SITE_PACKAGE_QUERY_SCRIPT, VERSION_QUERY_SCRIPT
 
 
@@ -162,13 +163,18 @@ else:
         ver = "-{}".format(".".join(parts))
         py_exe = distutils.spawn.find_executable("py")
         if py_exe:
+            cmd = py_exe, ver, VERSION_QUERY_SCRIPT
             proc = subprocess.Popen(
-                (py_exe, ver, VERSION_QUERY_SCRIPT),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
             )
-            out, _ = proc.communicate()
-            result = json.loads(out)
+            out, err = proc.communicate()
             if not proc.returncode:
-                return result["executable"]
+                try:
+                    result = json.loads(out)
+                except ValueError as exception:
+                    failure = exception
+                else:
+                    return result["executable"]
+            else:
+                failure = "exit code {}".format(proc.returncode)
+            reporter.info("{!r} cmd {!r} out {!r} err {!r} ".format(failure, cmd, out, err))

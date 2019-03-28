@@ -32,7 +32,7 @@ jobs:
   - script: "$(python) -c \"import sys; print(sys.version); print(sys.executable)\""
     displayName: show python information
 
-  - script: "python -m pip install -U pip --user -v"
+  - script: "python -m pip install -U pip setuptools --user -v"
     displayName: upgrade pip
 
   - script: "python -m pip install -U . --user -v"
