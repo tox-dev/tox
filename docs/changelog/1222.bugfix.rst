@@ -1,0 +1,2 @@
+Changes to the plugin tester module (cmd no longer sets ``PYTHONPATH``), and ``action.popen`` no longer returns the
+command identifier information from within the logs. No public facing changes.

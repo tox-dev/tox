@@ -104,7 +104,9 @@ class Action(object):
                 exit_code = process.returncode
             finally:
                 if out_path is not None and out_path.exists():
-                    output = out_path.read()
+                    lines = out_path.read().split("\n")
+                    # first three lines are the action, cwd, and cmd - remove it
+                    output = "\n".join(lines[3:])
                 try:
                     if exit_code and not ignore_ret:
                         if report_fail:
@@ -210,11 +212,13 @@ class Action(object):
         if self.generate_tox_log or redirect:
             out_path = self.get_log_path(self.name)
             with out_path.open("wt") as stdout, out_path.open("rb") as input_file_handler:
-                stdout.write(
-                    "action: {}, msg: {}\ncwd: {}\ncmd: {}\n".format(
-                        self.name, self.msg, cwd, cmd_args_shell
-                    )
+                msg = "action: {}, msg: {}\ncwd: {}\ncmd: {}\n".format(
+                    self.name.replace("\n", " "),
+                    self.msg.replace("\n", " "),
+                    str(cwd).replace("\n", " "),
+                    cmd_args_shell.replace("\n", " "),
                 )
+                stdout.write(msg)
                 stdout.flush()
                 input_file_handler.read()  # read the header, so it won't be written to stdout
                 yield input_file_handler, out_path, stderr, stdout
