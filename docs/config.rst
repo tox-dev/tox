@@ -292,14 +292,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionadded:: 2.0
 
+    If ``false``, a non-zero exit code from one command will abort execution of
+    commands for that environment.
     If ``true``, a non-zero exit code from one command will be ignored and
-    further commands will be executed (which was the default behavior in tox <
-    2.0).  If ``false``, then a non-zero exit code from one
-    command will abort execution of commands for that environment.
+    further commands will be executed.  The overall status will be
+    "commands failed", i.e. tox will exit non-zero in case any command failed.
 
-    It may be helpful to note that this setting is analogous to the ``-i`` or
-    ``ignore-errors`` option of GNU Make. A similar name was chosen to reflect
-    the similarity in function.
+    It may be helpful to note that this setting is analogous to the ``-k`` or
+    ``--keep-going`` option of GNU Make.
 
     Note that in tox 2.0, the default behavior of tox with respect to treating
     errors from commands changed. tox < 2.0 would ignore errors by default. tox
