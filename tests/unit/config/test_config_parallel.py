@@ -13,6 +13,11 @@ def test_parallel_live_on(newconfig):
     assert config.option.parallel_live is True
 
 
+def test_parallel_nospinner_on(newconfig):
+    config = newconfig(["--parallel-nospinner"], "")
+    assert config.option.parallel_nospinner is True
+
+
 def test_parallel_auto(newconfig):
     config = newconfig(["-p", "auto"], "")
     assert isinstance(config.option.parallel, int)
