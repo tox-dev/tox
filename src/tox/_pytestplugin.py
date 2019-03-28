@@ -13,11 +13,11 @@ import pytest
 import six
 
 import tox
+import tox.session
 from tox import venv
 from tox.config import parseconfig
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from tox.reporter import update_default_reporter
-from tox.session import Session, main, setup_reporter
 from tox.venv import CreationConfig, VirtualEnv, getdigest
 
 mark_dont_run_on_windows = pytest.mark.skipif(os.name == "nt", reason="non windows test")
@@ -102,7 +102,7 @@ def create_new_config_file(tmpdir):
         s = textwrap.dedent(source)
         p = tmpdir.join("tox.ini")
         p.write(s)
-        setup_reporter(args)
+        tox.session.setup_reporter(args)
         with tmpdir.as_cwd():
             return parseconfig(args, plugins=plugins)
 
@@ -117,21 +117,11 @@ def cmd(request, monkeypatch, capfd):
 
     def run(*argv):
         reset_report()
-        key = str("PYTHONPATH")
-        python_paths = (i for i in (os.getcwd(), os.getenv(key)) if i)
-        monkeypatch.setenv(key, os.pathsep.join(python_paths))
-
         with RunResult(argv, capfd) as result:
-            prev_run_command = Session.runcommand
-
-            def run_command(self):
-                result.session = self
-                return prev_run_command(self)
-
-            monkeypatch.setattr(Session, "runcommand", run_command)
+            _collect_session(result)
 
             try:
-                main([str(x) for x in argv])
+                tox.session.main([str(x) for x in argv])
                 assert False  # this should always exist with SystemExit
             except SystemExit as exception:
                 result.ret = exception.code
@@ -143,6 +133,15 @@ def cmd(request, monkeypatch, capfd):
                     with open(exception.out, "rt") as file_handler:
                         tox.reporter.verbosity0(file_handler.read())
         return result
+
+    def _collect_session(result):
+        prev_build = tox.session.build_session
+
+        def build_session(config):
+            result.session = prev_build(config)
+            return result.session
+
+        monkeypatch.setattr(tox.session, "build_session", build_session)
 
     yield run
 
@@ -279,7 +278,7 @@ class pcallMock:
 def create_mocksession(request):
     config = request.getfixturevalue("newconfig")([], "")
 
-    class MockSession(Session):
+    class MockSession(tox.session.Session):
         def __init__(self, config):
             self.logging_levels(config.option.quiet_level, config.option.verbose_level)
             super(MockSession, self).__init__(config, popen=self.popen)
@@ -561,7 +560,7 @@ def mock_venv(monkeypatch):
         return ret
 
     def build_session(config):
-        session = Session(config, popen=popen)
+        session = tox.session.Session(config, popen=popen)
         res[id(session)] = Result(session)
         return session
 
