@@ -239,7 +239,7 @@ def test_skip_unknown_interpreter_result_json(cmd, initproj, tmpdir):
     setup_result_from_json = json.load(report_path)["testenvs"]["python"]["setup"]
     for setup_step in setup_result_from_json:
         assert "InterpreterNotFound" in setup_step["output"]
-        assert setup_step["retcode"] == "0"
+        assert setup_step["retcode"] == 0
 
 
 def test_unknown_dep(cmd, initproj):

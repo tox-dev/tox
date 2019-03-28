@@ -308,7 +308,7 @@ def test_command_prev_post_ok(cmd, initproj, mock_venv):
         """
         py run-test-pre: commands[0] | python -c 'print("pre")'
         pre
-        py runtests: commands[0] | python -c 'print("command")'
+        py run-test: commands[0] | python -c 'print("command")'
         command
         py run-test-post: commands[0] | python -c 'print("post")'
         post

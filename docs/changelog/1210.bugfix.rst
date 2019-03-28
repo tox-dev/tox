@@ -1,2 +1,0 @@
-``--result-json`` puts the command into setup section instead of test (pre and post commands are now also correctly
-put into the commands section) - by :user:`gaborbernat`

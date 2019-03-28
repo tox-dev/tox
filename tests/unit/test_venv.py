@@ -362,7 +362,7 @@ def test_test_runtests_action_command_is_in_output(newmocksession):
     with mocksession.newaction(venv.name, "update") as action:
         venv.update(action)
     venv.test()
-    mocksession.report.expect("verbosity0", "*runtests*commands?0? | echo foo bar")
+    mocksession.report.expect("verbosity0", "*run-test:*commands?0? | echo foo bar")
 
 
 def test_install_error(newmocksession):

@@ -69,7 +69,7 @@ def test_get_commandlog(pkg):
     setuplog = envlog.get_commandlog("setup")
     envlog.set_header(installpkg=pkg)
     setuplog.add_command(["virtualenv", "..."], "venv created", 0)
-    expected = [{"command": ["virtualenv", "..."], "output": "venv created", "retcode": "0"}]
+    expected = [{"command": ["virtualenv", "..."], "output": "venv created", "retcode": 0}]
     assert setuplog.list == expected
     assert envlog.dict["setup"]
     setuplog2 = replog.get_envlog("py36").get_commandlog("setup")
