@@ -69,7 +69,7 @@ def test_parallel_nospinner(cmd, initproj):
                         """,
         },
     )
-    result = cmd("--parallel", "all", "--parallel-nopinner")
+    result = cmd("--parallel", "all", "--parallel-nospinner")
     result.assert_success()
 
 
