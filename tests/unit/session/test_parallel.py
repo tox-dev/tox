@@ -51,6 +51,28 @@ def test_parallel_live(cmd, initproj):
     result.assert_success()
 
 
+def test_parallel_nospinner(cmd, initproj):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tox.ini": """
+            [tox]
+            isolated_build = true
+            envlist = a, b
+            [testenv]
+            commands=python -c "import sys; print(sys.executable)"
+        """,
+            "pyproject.toml": """
+            [build-system]
+            requires = ["setuptools >= 35.0.2"]
+            build-backend = 'setuptools.build_meta'
+                        """,
+        },
+    )
+    result = cmd("--parallel", "all", "--parallel-nopinner")
+    result.assert_success()
+
+
 def test_parallel_circular(cmd, initproj):
     initproj(
         "pkg123-0.7",
