@@ -120,8 +120,8 @@ jobs:
           shutil.copy(str(coverage_file), str(destination))'
     displayName: move coverage files into .tox
 
-  - script: 'python -m pip install -U tox --pre'
-    displayName: install tox
+  - script: 'python -m pip install . -U --user'
+    displayName: install tox - eat our own dog food
 
   - script: 'python -m tox -e py --sdistonly'
     displayName: generate version.py
@@ -185,7 +185,7 @@ jobs:
     - task: TwineAuthenticate@0
       inputs:
         externalFeeds: 'toxdev'
-    - script: 'python3.7 -m pip install -U twine pip tox'
+    - script: 'python3.7 -m pip install -U twine pip . --user'
       displayName: "acquire build tools"
     - script: 'python3.7 -m pip wheel -w "$(System.DefaultWorkingDirectory)/w" --no-deps .'
       displayName: "build wheel"
