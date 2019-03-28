@@ -13,7 +13,7 @@ from tox.util.spinner import Spinner
 def run_parallel(config, venv_dict):
     """here we'll just start parallel sub-processes"""
     live_out = config.option.parallel_live
-    nospinner = config.option.parallel_nospinner
+    allow_spinner = not config.option.parallel_nospinner
     args = [sys.executable, MAIN_FILE] + config.args
     try:
         position = args.index("--")
