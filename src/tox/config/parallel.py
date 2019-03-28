@@ -53,13 +53,18 @@ def add_parallel_flags(parser):
         metavar="VAL",
     )
     parser.add_argument(
+        "--parallel-nospinner",
+        action="store_true",
+        dest="parallel_nospinner",
+        help="disable spinner",
+    )
+    parser.add_argument(
         "-o",
         "--parallel-live",
         action="store_true",
         dest="parallel_live",
         help="connect to stdout while running environments",
     )
-
 
 def add_parallel_config(parser):
     parser.add_testenv_attribute(
