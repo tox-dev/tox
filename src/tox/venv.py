@@ -116,7 +116,9 @@ class VirtualEnv(object):
 
     def new_action(self, msg, *args):
         config = self.envconfig.config
-        command_log = self.env_log.get_commandlog("test" if msg == "runtest" else "setup")
+        command_log = self.env_log.get_commandlog(
+            "test" if msg in ("run-test", "run-test-pre", "run-test-post") else "setup"
+        )
         return Action(
             self.name,
             msg,
@@ -465,7 +467,7 @@ class VirtualEnv(object):
     def test(
         self,
         redirect=False,
-        name="runtests",
+        name="run-test",
         commands=None,
         ignore_outcome=None,
         ignore_errors=None,
@@ -661,6 +663,23 @@ def tox_testenv_create(venv, action):
     # add interpreter explicitly, to prevent using default (virtualenv.ini)
     args.extend(["--python", str(config_interpreter)])
 
+    cleanup_for_venv(venv)
+
+    base_path = venv.path.dirpath()
+    base_path.ensure(dir=1)
+    args.append(venv.path.basename)
+    if not _SKIP_VENV_CREATION:
+        venv._pcall(
+            args,
+            venv=False,
+            action=action,
+            cwd=base_path,
+            redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
+        )
+    return True  # Return non-None to indicate plugin has completed
+
+
+def cleanup_for_venv(venv):
     within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
     if within_parallel:
         if venv.path.exists():
@@ -670,19 +689,6 @@ def tox_testenv_create(venv, action):
                     content.remove(rec=1, ignore_errors=True)
     else:
         ensure_empty_dir(venv.path)
-
-    basepath = venv.path.dirpath()
-    basepath.ensure(dir=1)
-    args.append(venv.path.basename)
-    if not _SKIP_VENV_CREATION:
-        venv._pcall(
-            args,
-            venv=False,
-            action=action,
-            cwd=basepath,
-            redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
-        )
-    return True  # Return non-None to indicate plugin has completed
 
 
 @tox.hookimpl

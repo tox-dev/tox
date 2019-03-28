@@ -9,6 +9,6 @@ class CommandLog(object):
         self.list = list
 
     def add_command(self, argv, output, retcode):
-        data = {"command": argv, "output": output, "retcode": str(retcode)}
+        data = {"command": argv, "output": output, "retcode": retcode}
         self.list.append(data)
         return data
