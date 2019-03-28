@@ -1,1 +1,1 @@
-New option `--parallel-nospinner` to disable the spinner in parallel mode.
+New option ``--parallel-nospinner`` to disable the spinner in parallel mode.
