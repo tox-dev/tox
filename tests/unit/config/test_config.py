@@ -3061,3 +3061,17 @@ def test_posargs_relative_changedir(newconfig, tmpdir):
             dir1.strpath,
             "dir3",
         ]
+
+
+def test_config_no_version_data_in__name(newconfig, capsys):
+    newconfig(
+        """
+        [tox]
+        envlist = py, pypy, jython
+        [testenv]
+        basepython = python
+        """
+    )
+    out, err = capsys.readouterr()
+    assert not out
+    assert not err
