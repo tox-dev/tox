@@ -1,0 +1,1 @@
+Do not print exception traceback when the provisioned tox fails - by :user:`gaborbernat`

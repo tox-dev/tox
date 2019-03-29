@@ -65,10 +65,10 @@ def main(args):
         ensure_empty_dir(config.logdir)
         with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
             session = build_session(config)
-            retcode = session.runcommand()
-        if retcode is None:
-            retcode = 0
-        raise SystemExit(retcode)
+            exit_code = session.runcommand()
+        if exit_code is None:
+            exit_code = 0
+        raise SystemExit(exit_code)
     except tox.exception.BadRequirement:
         raise SystemExit(1)
     except KeyboardInterrupt:
@@ -179,7 +179,7 @@ class Session(object):
         show_description = reporter.has_level(reporter.Verbosity.DEFAULT)
         if self.config.run_provision:
             provision_tox_venv = self.getvenv(self.config.provision_tox_env)
-            provision_tox(provision_tox_venv, self.config.args)
+            return provision_tox(provision_tox_venv, self.config.args)
         else:
             if self.config.option.showconfig:
                 self.showconfig()
