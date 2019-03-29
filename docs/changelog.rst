@@ -11,6 +11,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.8.3 (2019-03-29)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- don't crash when version information is not available for a proposed base python - by :user:`gaborbernat`
+  `#1227 <https://github.com/tox-dev/tox/issues/1227>`_
+- Do not print exception traceback when the provisioned tox fails - by :user:`gaborbernat`
+  `#1228 <https://github.com/tox-dev/tox/issues/1228>`_
+
+
 v3.8.2 (2019-03-29)
 -------------------
 

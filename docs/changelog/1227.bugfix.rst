@@ -1,1 +1,0 @@
-don't crash when version information is not available for a proposed base python - by :user:`gaborbernat`
