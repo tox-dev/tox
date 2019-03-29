@@ -11,6 +11,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.8.2 (2019-03-29)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- using -v and -e connected (as -ve) fails - by :user:`gaborbernat`
+  `#1218 <https://github.com/tox-dev/tox/issues/1218>`_
+- Changes to the plugin tester module (cmd no longer sets ``PYTHONPATH``), and ``action.popen`` no longer returns the
+  command identifier information from within the logs. No public facing changes.
+  `#1222 <https://github.com/tox-dev/tox/issues/1222>`_
+- Spinner fails in CI on ``UnicodeEncodeError`` - by :user:`gaborbernat`
+  `#1223 <https://github.com/tox-dev/tox/issues/1223>`_
+
+
 v3.8.1 (2019-03-28)
 -------------------
 
