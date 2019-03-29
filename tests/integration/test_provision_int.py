@@ -23,9 +23,16 @@ def test_provision_missing(initproj, cmd):
                 """
         },
     )
-    result = cmd("-q", "-q")
+    result = cmd("-e", "py")
     result.assert_fail()
-    meta_python = Path(result.out.strip())
+    assert "tox.exception.InvocationError" not in result.output()
+    assert not result.err
+    assert ".tox create: " in result.out
+    assert ".tox installdeps: " in result.out
+    assert "py create: " in result.out
+
+    at = next(at for at, l in enumerate(result.outlines) if l.startswith("py run-test: ")) + 1
+    meta_python = Path(result.outlines[at])
     assert meta_python.exists()
 
 

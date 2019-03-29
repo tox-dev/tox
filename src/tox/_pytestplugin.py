@@ -5,6 +5,7 @@ import subprocess
 import sys
 import textwrap
 import time
+import traceback
 from collections import OrderedDict
 from fnmatch import fnmatch
 
@@ -120,18 +121,18 @@ def cmd(request, monkeypatch, capfd):
         with RunResult(argv, capfd) as result:
             _collect_session(result)
 
+            # noinspection PyBroadException
             try:
                 tox.session.main([str(x) for x in argv])
                 assert False  # this should always exist with SystemExit
             except SystemExit as exception:
                 result.ret = exception.code
             except OSError as e:
+                traceback.print_exc()
                 result.ret = e.errno
-            except tox.exception.InvocationError as exception:
-                result.ret = exception.exit_code
-                if exception.out is not None:
-                    with open(exception.out, "rt") as file_handler:
-                        tox.reporter.verbosity0(file_handler.read())
+            except Exception:
+                traceback.print_exc()
+                result.ret = 1
         return result
 
     def _collect_session(result):
