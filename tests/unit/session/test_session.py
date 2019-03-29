@@ -356,3 +356,15 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
     have = result.out.replace(os.linesep, "\n")
     actual = have[len(have) - len(expected) :]
     assert actual == expected
+
+
+def test_help_compound_ve_works(cmd, initproj, monkeypatch):
+    initproj("test-0.1", {"tox.ini": ""})
+    result = cmd("-ve", "py", "-a")
+    result.assert_success(is_run_test_env=False)
+    assert not result.err
+    assert result.outlines[0].startswith("using")
+    assert result.outlines[1].startswith("using")
+    assert result.outlines[2] == "default environments:"
+    assert result.outlines[3] == "py -> [no description]"
+    assert len(result.outlines) == 4

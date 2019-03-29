@@ -25,6 +25,7 @@ from tox.reporter import update_default_reporter
 from tox.util import set_os_env_var
 from tox.util.graph import stable_topological_sort
 from tox.util.path import ensure_empty_dir
+from tox.util.stdlib import suppress_output
 from tox.venv import VirtualEnv
 
 from .commands.help import show_help
@@ -48,8 +49,12 @@ def setup_reporter(args):
 
     parser = ArgumentParser(add_help=False)
     add_verbosity_commands(parser)
-    options, _ = parser.parse_known_args(args)
-    update_default_reporter(options.quiet_level, options.verbose_level)
+    with suppress_output():
+        try:
+            options, _ = parser.parse_known_args(args)
+            update_default_reporter(options.quiet_level, options.verbose_level)
+        except SystemExit:
+            pass
 
 
 def main(args):
