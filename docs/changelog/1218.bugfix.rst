@@ -1,0 +1,1 @@
+using -v and -e connected (as -ve) fails - by :user:`gaborbernat`
