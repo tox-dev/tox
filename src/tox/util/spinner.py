@@ -25,7 +25,7 @@ def _file_support_encoding(chars, file):
         for char in chars:
             try:
                 char.encode(encoding)
-            except UnicodeDecodeError:
+            except UnicodeEncodeError:
                 break
         else:
             return True

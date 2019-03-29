@@ -96,3 +96,13 @@ def test_spinner_long_text(capfd, monkeypatch):
     lines = out.split("\n")
     del lines[0]
     assert lines == expected
+
+
+def test_spinner_stdout_not_unicode(capfd, monkeypatch):
+    monkeypatch.setattr(sys.stdout, "encoding", "ascii")
+    with spinner.Spinner(refresh_rate=100) as spin:
+        for _ in range(len(spin.frames)):
+            spin.render_frame()
+    out, err = capfd.readouterr()
+    assert not err
+    assert all(f in out for f in spin.frames)
