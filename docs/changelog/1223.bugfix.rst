@@ -1,1 +1,0 @@
-Spinner fails in CI on ``UnicodeDecodeError`` - by :user:`gaborbernat`

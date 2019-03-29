@@ -18,7 +18,7 @@ def is_main_thread():
 @contextmanager
 def suppress_output():
     """suppress both stdout and stderr outputs"""
-    if sys.version_info > (3, 4):
+    if sys.version_info >= (3, 5):
         from contextlib import redirect_stdout, redirect_stderr
     else:
 
