@@ -38,9 +38,9 @@ def build(config, session):
         if pkg_resources.Requirement(r).key not in base_build_deps
     ]
     if build_requires_dep:
-        with package_venv.newaction("build_requires", package_venv.envconfig.envdir) as action:
+        with package_venv.new_action("build_requires", package_venv.envconfig.envdir) as action:
             package_venv.run_install_command(packages=build_requires_dep, action=action)
-        package_venv.finishvenv(package_venv)
+        package_venv.finishvenv()
     return perform_isolated_build(build_info, package_venv, config.distdir, config.setupdir)
 
 

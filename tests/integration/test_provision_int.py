@@ -9,6 +9,10 @@ from pathlib2 import Path
 from tox.util.main import MAIN_FILE
 
 
+@pytest.mark.skipif(
+    "sys.platform == 'win32' and sys.version_info < (3,)",
+    reason="does not run on windows with py2",
+)
 def test_provision_missing(initproj, cmd):
     initproj(
         "pkg123-0.7",

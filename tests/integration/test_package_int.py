@@ -53,6 +53,9 @@ def test_package_flit(initproj, cmd):
                     author = "Happy Harry"
                     author-email = "happy@harry.com"
                     home-page = "https://github.com/happy-harry/is"
+                    requires = [
+                        "tox",
+                    ]
                     """,
             ".gitignore": ".tox",
         },

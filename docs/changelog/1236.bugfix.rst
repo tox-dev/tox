@@ -1,0 +1,1 @@
+fix typos in isolated.py that made it impossible to install package with requirements in pyproject.toml - by :user:`unmade`
