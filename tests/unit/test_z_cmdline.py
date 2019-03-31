@@ -805,6 +805,25 @@ def test_env_VIRTUALENV_PYTHON(initproj, cmd, monkeypatch):
     assert "create" in result.out
 
 
+def test_setup_prints_non_ascii(initproj, cmd):
+    initproj(
+        "example123",
+        filedefs={
+            "setup.py": """\
+import sys
+getattr(sys.stdout, 'buffer', sys.stdout).write(b'\\xe2\\x98\\x83\\n')
+
+import setuptools
+setuptools.setup(name='example123')
+""",
+            "tox.ini": "",
+        },
+    )
+    result = cmd("--notest")
+    result.assert_success()
+    assert "create" in result.out
+
+
 def test_envsitepackagesdir(cmd, initproj):
     initproj(
         "pkg512-0.0.5",

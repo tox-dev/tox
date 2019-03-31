@@ -104,7 +104,7 @@ class Action(object):
                 exit_code = process.returncode
             finally:
                 if out_path is not None and out_path.exists():
-                    lines = out_path.read().split("\n")
+                    lines = out_path.read_text("UTF-8").split("\n")
                     # first three lines are the action, cwd, and cmd - remove it
                     output = "\n".join(lines[3:])
                 try:
