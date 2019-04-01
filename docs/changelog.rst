@@ -11,6 +11,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.8.4 (2019-04-01)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix sdist creation on python2.x when there is non-ascii output.
+  `#1234 <https://github.com/tox-dev/tox/issues/1234>`_
+- fix typos in isolated.py that made it impossible to install package with requirements in pyproject.toml - by :user:`unmade`
+  `#1236 <https://github.com/tox-dev/tox/issues/1236>`_
+
+
 v3.8.3 (2019-03-29)
 -------------------
 

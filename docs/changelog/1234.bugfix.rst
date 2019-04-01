@@ -1,1 +1,0 @@
-Fix sdist creation on python2.x when there is non-ascii output.
