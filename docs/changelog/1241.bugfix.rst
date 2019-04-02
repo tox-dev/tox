@@ -1,0 +1,1 @@
+Do not print timings with more than 3 decimal digits on Python 3 - by :user:`mgedmin`.
