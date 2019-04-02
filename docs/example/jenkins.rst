@@ -6,7 +6,7 @@ Using Jenkins multi-configuration jobs
 
 The Jenkins_ continuous integration server allows to define "jobs" with
 "build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
-default Python installation on each Jenkins slave, you can easily create
+default Python installation on each Jenkins agent, you can easily create
 a Jenkins multi-configuration job that will drive your tox runs from the CI-server side,
 using these steps:
 
@@ -42,7 +42,7 @@ for example with ``pytest`` it is done like this:
 
 
 
-**zero-installation** for slaves
+**zero-installation** for agents
 -------------------------------------------------------------
 
 .. note::
@@ -51,7 +51,7 @@ for example with ``pytest`` it is done like this:
     has been removed.  Please file an issue if you'd like to
     see it back.
 
-If you manage many Jenkins slaves and want to use the latest officially
+If you manage many Jenkins agents and want to use the latest officially
 released tox (or latest development version) and want to skip manually
 installing ``tox`` then substitute the above **Python build step** code
 with this:

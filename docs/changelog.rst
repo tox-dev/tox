@@ -1399,7 +1399,7 @@ v1.0
   for test commands (thanks Chris Rose)
 - fix `#22 <https://github.com/tox-dev/tox/issues/22>`_: require virtualenv-1.6.1, obsoleting virtualenv5 (thanks Jannis Leidel)
   and making things work with pypy-1.5 and python3 more seamlessly
-- toxbootstrap.py (used by jenkins build slaves) now follows the latest release of virtualenv
+- toxbootstrap.py (used by jenkins build agents) now follows the latest release of virtualenv
 - fix `#20 <https://github.com/tox-dev/tox/issues/20>`_: document format of URLs for specifying dependencies
 - fix `#19 <https://github.com/tox-dev/tox/issues/19>`_: substitute Hudson for Jenkins everywhere following the renaming
   of the project.  NOTE: if you used the special [tox:hudson]
