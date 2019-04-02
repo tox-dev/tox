@@ -167,7 +167,7 @@ def td_human_readable(delta):
             period_value, seconds = divmod(seconds, period_seconds)
             if period_name == "second":
                 ms = delta.total_seconds() - int(delta.total_seconds())
-                period_value += round(ms, 3)
-            has_s = "s" if period_value > 1 else ""
+                period_value = round(period_value + ms, 3)
+            has_s = "s" if period_value != 1 else ""
             texts.append("{} {}{}".format(period_value, period_name, has_s))
     return ", ".join(texts)
