@@ -2946,6 +2946,27 @@ def test_isolated_build_overrides(newconfig, capsys):
     assert deps == []
 
 
+@pytest.mark.parametrize(
+    "key, set_value, default", [("deps", "crazy", []), ("sitepackages", "True", False)]
+)
+def test_isolated_build_ignores(newconfig, capsys, key, set_value, default):
+    config = newconfig(
+        [],
+        """
+            [tox]
+            isolated_build = True
+
+            [testenv]
+            {} = {}
+        """.format(
+            key, set_value
+        ),
+    )
+    package_env = config.envconfigs.get(".package")
+    value = getattr(package_env, key)
+    assert value == default
+
+
 def test_config_via_pyproject_legacy(initproj):
     initproj(
         "config_via_pyproject_legacy-0.5",
