@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import os
 import sys
 import time
-import datetime
 
 import pytest
 from freezegun import freeze_time
@@ -110,15 +110,18 @@ def test_spinner_stdout_not_unicode(capfd, monkeypatch):
     assert all(f in out for f in spin.frames)
 
 
-@pytest.mark.parametrize('seconds, expected', [
-    (0, '0.0 seconds'),
-    (1.0, '1.0 second'),
-    (4.0, '4.0 seconds'),
-    (4.130, '4.13 seconds'),
-    (4.137, '4.137 seconds'),
-    (42.12345, '42.123 seconds'),
-    (61, '1 minute, 1.0 second'),
-])
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (0, "0.0 seconds"),
+        (1.0, "1.0 second"),
+        (4.0, "4.0 seconds"),
+        (4.130, "4.13 seconds"),
+        (4.137, "4.137 seconds"),
+        (42.12345, "42.123 seconds"),
+        (61, "1 minute, 1.0 second"),
+    ],
+)
 def test_td_human_readable(seconds, expected):
     dt = datetime.timedelta(seconds=seconds)
     assert spinner.td_human_readable(dt) == expected
