@@ -49,7 +49,7 @@ def run_parallel(config, venv_dict):
                         args=args_sub,
                         env=os_env,
                         redirect=not live_out,
-                        capture_err=live_out,
+                        capture_err=print_out,
                         callback=collect_process,
                         returnout=print_out,
                     )

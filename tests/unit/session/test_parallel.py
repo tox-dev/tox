@@ -184,4 +184,9 @@ parallel_show_output = True
     result.assert_success()
     assert "stdout env" not in result.out, result.output()
     assert "stderr env" not in result.out, result.output()
-    assert "stdout always stderr always" in result.out, result.output()
+    msg = (
+        "stdout always stderr always"
+        if sys.version_info[0] == 3
+        else "stderr always stdout always"
+    )
+    assert msg in result.out, result.output()
