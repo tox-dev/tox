@@ -26,6 +26,7 @@ def run_parallel(config, venv_dict):
     finished = Event()
 
     show_progress = not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
+
     with Spinner(enabled=show_progress) as spinner:
 
         def run_in_thread(tox_env, os_env, processes):
@@ -42,13 +43,17 @@ def run_parallel(config, venv_dict):
                     def collect_process(process):
                         processes[tox_env] = (action, process)
 
-                    action.popen(
+                    print_out = not live_out and tox_env.envconfig.parallel_show_output
+                    output = action.popen(
                         args=args_sub,
                         env=os_env,
                         redirect=not live_out,
                         capture_err=live_out,
                         callback=collect_process,
+                        returnout=print_out,
                     )
+                    if print_out:
+                        reporter.verbosity0(output)
 
             except InvocationError as err:
                 status = "parallel child exit code {}".format(err.exit_code)

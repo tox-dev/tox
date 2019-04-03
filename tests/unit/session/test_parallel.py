@@ -158,3 +158,30 @@ commands =
     end = log_dir.listdir()
     assert len(end) >= 3
     assert not ({f.basename for f in after} - {f.basename for f in end})
+
+
+def test_parallel_show_output(cmd, initproj, monkeypatch):
+    monkeypatch.setenv(str("_TOX_SKIP_ENV_CREATION_TEST"), str("1"))
+    tox_ini = """\
+[tox]
+envlist = e1,e2,e3
+skipsdist = true
+
+[testenv]
+whitelist_externals = {}
+commands =
+    python -c 'import sys; sys.stderr.write("stderr env"); sys.stdout.write("stdout env")'
+
+[testenv:e3]
+commands =
+    python -c 'import sys; sys.stderr.write("stderr always "); sys.stdout.write("stdout always ")'
+parallel_show_output = True
+""".format(
+        sys.executable
+    )
+    initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
+    result = cmd("-p", "all")
+    result.assert_success()
+    assert "stdout env" not in result.out, result.output()
+    assert "stderr env" not in result.out, result.output()
+    assert "stdout always stderr always" in result.out, result.output()
