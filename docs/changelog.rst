@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.8.6 (2019-04-03)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- :conf:`parallel_show_output` does not work with tox 3.8
+  `#1245 <https://github.com/tox-dev/tox/issues/1245>`_
+
+
 v3.8.5 (2019-04-03)
 -------------------
 
