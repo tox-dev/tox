@@ -1,1 +1,0 @@
-:conf:`parallel_show_output` does not work with tox 3.8
