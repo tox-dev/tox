@@ -158,3 +158,29 @@ commands =
     end = log_dir.listdir()
     assert len(end) >= 3
     assert not ({f.basename for f in after} - {f.basename for f in end})
+
+
+def test_parallel_show_output(cmd, initproj, monkeypatch):
+    monkeypatch.setenv(str("_TOX_SKIP_ENV_CREATION_TEST"), str("1"))
+    tox_ini = """\
+[tox]
+envlist = e1,e2,e3
+skipsdist = true
+
+[testenv]
+whitelist_externals = {}
+commands =
+    python -c 'print("hello world inner")'
+
+[testenv:e3]
+commands =
+    python -c 'print("hello world always")'
+parallel_show_output = True
+""".format(
+        sys.executable
+    )
+    initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
+    result = cmd("-p", "all")
+    result.assert_success()
+    assert "hello world inner" not in result.out
+    assert "hello world always" in result.out
