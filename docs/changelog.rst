@@ -11,6 +11,19 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.8.5 (2019-04-03)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- the isolated build env now ignores :conf:`sitepackages`, :conf:`deps` and :conf:`description` as these do not make
+  sense - by :user:`gaborbernat`
+  `#1239 <https://github.com/tox-dev/tox/issues/1239>`_
+- Do not print timings with more than 3 decimal digits on Python 3 - by :user:`mgedmin`.
+  `#1241 <https://github.com/tox-dev/tox/issues/1241>`_
+
+
 v3.8.4 (2019-04-01)
 -------------------
 

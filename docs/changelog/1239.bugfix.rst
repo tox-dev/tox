@@ -1,2 +1,0 @@
-the isolated build env now ignores :conf:`sitepackages`, :conf:`deps` and :conf:`description` as these do not make
-sense - by :user:`gaborbernat`
