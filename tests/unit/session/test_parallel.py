@@ -170,11 +170,11 @@ skipsdist = true
 [testenv]
 whitelist_externals = {}
 commands =
-    python -c 'print("hello world inner")'
+    python -c 'import sys; sys.stderr.write("stderr env"); sys.stdout.write("stdout env")'
 
 [testenv:e3]
 commands =
-    python -c 'print("hello world always")'
+    python -c 'import sys; sys.stderr.write("stderr always "); sys.stdout.write("stdout always ")'
 parallel_show_output = True
 """.format(
         sys.executable
@@ -182,5 +182,6 @@ parallel_show_output = True
     initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
     result = cmd("-p", "all")
     result.assert_success()
-    assert "hello world inner" not in result.out
-    assert "hello world always" in result.out
+    assert "stdout env" not in result.out, result.output()
+    assert "stderr env" not in result.out, result.output()
+    assert "stdout always stderr always" in result.out, result.output()
