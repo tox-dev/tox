@@ -1,0 +1,1 @@
+Fix ``congratulations`` when using ``^C`` during virtualenv creation - by :user:`asottile`
