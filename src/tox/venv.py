@@ -669,13 +669,17 @@ def tox_testenv_create(venv, action):
     base_path.ensure(dir=1)
     args.append(venv.path.basename)
     if not _SKIP_VENV_CREATION:
-        venv._pcall(
-            args,
-            venv=False,
-            action=action,
-            cwd=base_path,
-            redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
-        )
+        try:
+            venv._pcall(
+                args,
+                venv=False,
+                action=action,
+                cwd=base_path,
+                redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
+            )
+        except KeyboardInterrupt:
+            venv.status = "keyboardinterrupt"
+            raise
     return True  # Return non-None to indicate plugin has completed
 
 
