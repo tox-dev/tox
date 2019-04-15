@@ -2,10 +2,10 @@ parameters:
   tox: ""
   python: ""
   os: "linux"
+  uniq: ''
 
 jobs:
-- job: ${{ format('{0}_{1}', parameters.os, parameters.tox) }}
-  dependsOn: notify_build_start
+- job: ${{ format('{0}_{1}_{2}', parameters.os, parameters.tox, parameters.uniq) }}
   pool:
     ${{ if eq(parameters.os, 'windows') }}:
       vmImage: "vs2017-win2016"
