@@ -8,11 +8,11 @@ jobs:
   dependsOn: notify_build_start
   pool:
     ${{ if eq(parameters.os, 'windows') }}:
-      vmImage: "vs2017-win2016"
+      vmImage: "windows-2019"
     ${{ if eq(parameters.os, 'macOs') }}:
-      vmImage: "macOS 10.13"
+      vmImage: "macOS-latest"
     ${{ if eq(parameters.os, 'linux') }}:
-      vmImage: "Ubuntu 16.04"
+      vmImage: "Ubuntu-16.04"
 
   variables:
     TMPDIR: $(Build.BinariesDirectory)
