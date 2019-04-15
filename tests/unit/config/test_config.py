@@ -142,6 +142,7 @@ class TestVenvConfig:
             [testenv]
             deps =
                 -r requirements.txt
+                yapf>=0.25.0,<0.27  # pyup: < 0.27 # disable updates
                 --index-url https://pypi.org/simple
                 -fhttps://pypi.org/packages
                 --global-option=foo
@@ -151,6 +152,7 @@ class TestVenvConfig:
         )  # note that those last two are invalid
         expected_deps = [
             "-rrequirements.txt",
+            "yapf>=0.25.0,<0.27",
             "--index-url=https://pypi.org/simple",
             "-fhttps://pypi.org/packages",
             "--global-option=foo",
