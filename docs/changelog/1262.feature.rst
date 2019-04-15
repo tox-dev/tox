@@ -1,0 +1,1 @@
+Allow having inline comments in dependency lists in ``tox.ini`` — by :user:`webknjaz`
