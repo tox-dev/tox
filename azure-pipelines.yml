@@ -8,6 +8,7 @@ variables:
   PYTEST_ADDOPTS: "-v -v -ra --showlocals"
   GIT_BRANCH: $[ coalesce(variables['System.PullRequest.SourceBranch'], variables['Build.SourceBranchName'], 'not-found') ]
   GIT_COMMIT_SHA: $[ coalesce(variables['System.PullRequest.SourceCommitId'], variables['Build.SourceVersion'], 'not-found') ]
+  PYTEST_XDIST_PROC_NR: 'auto'
 
 trigger:
   batch: true
@@ -73,7 +74,9 @@ jobs:
   parameters: {tox: py27, python: 2.7, os: linux}
 
 - template: azure-run-tox-env.yml
-  parameters: {tox: py36, python: 3.6, os: macOs}
+  parameters: {tox: py37, python: 3.7, os: macOs}
+- template: azure-run-tox-env.yml
+  parameters: {tox: py27, python: 2.7, os: macOs}
 
 - job: report_coverage
   pool: {vmImage: 'Ubuntu 16.04'}
@@ -91,7 +94,8 @@ jobs:
   - linux_py27
   - linux_pypy3
   - linux_pypy
-  - macOS_py36
+  - macOS_py37
+  - macOS_py27
   steps:
   - task: DownloadBuildArtifacts@0
     displayName: download coverage files for run
