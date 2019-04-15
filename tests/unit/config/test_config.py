@@ -144,6 +144,7 @@ class TestVenvConfig:
                 -r requirements.txt
                 yapf>=0.25.0,<0.27  # pyup: < 0.27 # disable updates
                 --index-url https://pypi.org/simple
+                pywin32 >=1.0 ; sys_platform == '#my-magic-platform' or sys_platform == 'your-#-platform' # so what now 
                 -fhttps://pypi.org/packages
                 --global-option=foo
                 -v dep1
@@ -154,6 +155,7 @@ class TestVenvConfig:
             "-rrequirements.txt",
             "yapf>=0.25.0,<0.27",
             "--index-url=https://pypi.org/simple",
+            "pywin32 >=1.0 ; sys_platform == '#my-magic-platform' or sys_platform == 'your-#-platform'",
             "-fhttps://pypi.org/packages",
             "--global-option=foo",
             "-v dep1",
