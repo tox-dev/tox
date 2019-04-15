@@ -158,6 +158,7 @@ class DepOption:
                     name_start = "{} ".format(option)
                     if name.startswith(name_start):
                         name = "{}={}".format(option, name[len(option) :].strip())
+            name = self._cut_off_dep_comment(name)
             name = self._replace_forced_dep(name, config)
             deps.append(DepConfig(name, ixserver))
         return deps
@@ -175,6 +176,10 @@ class DepOption:
             if self._is_same_dep(forced_dep, name):
                 return forced_dep
         return name
+
+    @staticmethod
+    def _cut_off_dep_comment(name):
+        return re.sub(r'\s+#.*', '', name).strip()
 
     @classmethod
     def _is_same_dep(cls, dep1, dep2):
