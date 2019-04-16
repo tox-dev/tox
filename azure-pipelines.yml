@@ -5,10 +5,10 @@ variables:
   CI_NAME: Azure Pipelines
   CI_BUILD_ID: $(Build.BuildId)
   CI_BUILD_URL: "https://toxdev.visualstudio.com/tox/_build/results?buildId=$(Build.BuildId)"
-  PYTEST_ADDOPTS: "-v -v -ra --showlocals"
+  PYTEST_ADDOPTS: "-v -v -ra --showlocals -k test_config"
   GIT_BRANCH: $[ coalesce(variables['System.PullRequest.SourceBranch'], variables['Build.SourceBranchName'], 'not-found') ]
-  GIT_COMMIT_SHA: $[ coalesce(variables['System.PullRequest.SourceCommitId'], variables['Build.SourceVersion'], 'not-found') ]
   PYTEST_XDIST_PROC_NR: 'auto'
+  GIT_COMMIT_SHA: $[ coalesce(variables['System.PullRequest.SourceCommitId'], variables['Build.SourceVersion'], 'not-found') ]
 
 trigger:
   batch: true
@@ -124,7 +124,7 @@ jobs:
           shutil.copy(str(coverage_file), str(destination))'
     displayName: move coverage files into .tox
 
-  - script: "python -m pip install -U pip setuptools --user -v"
+  - script: "python -m pip install -U pip setuptools --user"
     displayName: upgrade pip
 
   - script: 'python -m pip install . -U --user'
