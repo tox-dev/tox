@@ -4,11 +4,12 @@ project test suite, e.g. as shown by the code coverage report.
 
 """
 import os
+import sys
 
 import py.path
 import pytest
 
-from tox._pytestplugin import _filedefs_contains, _path_parts
+from tox._pytestplugin import RunResult, _filedefs_contains, _path_parts
 
 
 class TestInitProj:
@@ -111,3 +112,15 @@ class TestPathParts:
 )
 def test_filedefs_contains(base, filedefs, target, expected):
     assert bool(_filedefs_contains(base, filedefs, target)) == expected
+
+
+def test_run_result_repr(capfd):
+    with RunResult(["hello", "world"], capfd) as run_result:
+        # simulate tox writing some unicode output
+        stdout_buffer = getattr(sys.stdout, "buffer", sys.stdout)
+        stdout_buffer.write(u"\u2603".encode("UTF-8"))
+
+    # must not `UnicodeError` on repr(...)
+    ret = repr(run_result)
+    # must be native `str`, (bytes in py2, str in py3)
+    assert isinstance(ret, str)
