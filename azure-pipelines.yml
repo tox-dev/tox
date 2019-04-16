@@ -5,10 +5,12 @@ variables:
   CI_NAME: Azure Pipelines
   CI_BUILD_ID: $(Build.BuildId)
   CI_BUILD_URL: "https://toxdev.visualstudio.com/tox/_build/results?buildId=$(Build.BuildId)"
-  PYTEST_ADDOPTS: "-v -v -ra --showlocals -k test_config"
   GIT_BRANCH: $[ coalesce(variables['System.PullRequest.SourceBranch'], variables['Build.SourceBranchName'], 'not-found') ]
-  PYTEST_XDIST_PROC_NR: 'auto'
   GIT_COMMIT_SHA: $[ coalesce(variables['System.PullRequest.SourceCommitId'], variables['Build.SourceVersion'], 'not-found') ]
+  PIP_NO_WARN_SCRIPT_LOCATION: '0'
+  PYTEST_ADDOPTS: "-v -v -ra --showlocals"
+  PYTEST_XDIST_PROC_NR: 'auto'
+
 
 trigger:
   batch: true
@@ -30,7 +32,7 @@ trigger:
 
 jobs:
 - job: notify_build_start
-  pool: {vmImage: 'Ubuntu 16.04'}
+  pool: {vmImage: "Ubuntu-16.04"}
   steps:
   - script: |
       printenv && \
@@ -79,7 +81,7 @@ jobs:
   parameters: {tox: py27, python: 2.7, os: macOs}
 
 - job: report_coverage
-  pool: {vmImage: 'Ubuntu 16.04'}
+  pool: {vmImage: "Ubuntu-16.04"}
   condition: always()
   dependsOn:
   - windows_py37
@@ -139,9 +141,8 @@ jobs:
   - task: PublishCodeCoverageResults@1
     displayName: publish overall coverage report to Azure
     inputs:
-      codeCoverageTool: 'cobertura'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
+      codeCoverageTool: 'Cobertura'
+      summaryFileLocation: "$(System.DefaultWorkingDirectory)/.tox/coverage.xml"
       failIfCoverageEmpty: true
 
   - script: |
@@ -184,7 +185,7 @@ jobs:
     - linux_docs
     - linux_package_description
     condition: succeeded()
-    pool: {vmImage: 'Ubuntu 16.04'}
+    pool: {vmImage: "Ubuntu-16.04"}
     steps:
     - task: UsePythonVersion@0
       displayName: setup python3.7
