@@ -20,6 +20,8 @@ jobs:
       python: ${{ parameters.python }}
     ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
       python: "python"
+    ${{ if in(parameters.python, 'pypy', 'py27', 'py34') }}:
+      PYTHONWARNINGS: 'ignore:::pip._internal.cli.base_command'
 
   steps:
   # ensure the required Python versions are available
@@ -32,10 +34,10 @@ jobs:
   - script: "$(python) -c \"import sys; print(sys.version); print(sys.executable)\""
     displayName: show python information
 
-  - script: "python -m pip install -U pip setuptools --user -v"
+  - script: "python -m pip install -U pip setuptools --user"
     displayName: upgrade pip
 
-  - script: "python -m pip install -U . --user -v"
+  - script: "python -m pip install -U . --user"
     displayName: install tox - eat our own dog food
 
   - script: ${{ format('python -m tox -e {0} --notest', parameters.tox) }}
@@ -63,6 +65,7 @@ jobs:
       condition: succeededOrFailed()
 
   - ${{ if startsWith(parameters.tox, 'py') }}:
+
     - task: CopyFiles@2
       displayName: move coverage files into staging area
       condition: succeededOrFailed()
