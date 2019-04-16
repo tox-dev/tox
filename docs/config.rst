@@ -360,6 +360,20 @@ Complete list of settings that you can put into ``testenv*`` sections:
     (Experimentally introduced in 1.6.1) all installer commands are executed
     using the ``{toxinidir}`` as the current working directory.
 
+    .. note::
+
+        .. versionadded:: 3.9.0
+
+        As of tox v3.9.0 deps entries having inline comments are
+        supported. During post-processing stage, tox cuts off any
+        substring starting with any number of whitespaces followed by
+        a ``#`` character.
+
+        For example, if a dependency is ``octomachinery==0.0.13  # pyup:
+        < 0.1.0 # disable feature updates`` it will be turned into just
+        ``octomachinery==0.0.13`` which later will be used in the ``pip
+        install`` command.
+
 .. conf:: platform ^ REGEX
 
     .. versionadded:: 2.0
