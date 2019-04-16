@@ -176,9 +176,13 @@ class RunResult:
         return err + out
 
     def __repr__(self):
-        return "RunResult(ret={}, args={}, out=\n{}\n, err=\n{})".format(
-            self.ret, " ".join(str(i) for i in self.args), self.out, self.err
+        res = "RunResult(ret={}, args={!r}, out=\n{}\n, err=\n{})".format(
+            self.ret, self.args, self.out, self.err
         )
+        if six.PY2:
+            return res.encode("UTF-8")
+        else:
+            return res
 
     def output(self):
         return "{}\n{}\n{}".format(self.ret, self.err, self.out)
