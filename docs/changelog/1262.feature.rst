@@ -1,0 +1,1 @@
+Allow having inline comments in :conf:`deps` — by :user:`webknjaz`
