@@ -11,6 +11,23 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.9.0 (2019-04-17)
+-------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix ``congratulations`` when using ``^C`` during virtualenv creation - by :user:`asottile`
+  `#1257 <https://github.com/tox-dev/tox/issues/1257>`_
+
+
+Features
+^^^^^^^^
+
+- Allow having inline comments in :conf:`deps` — by :user:`webknjaz`
+  `#1262 <https://github.com/tox-dev/tox/issues/1262>`_
+
+
 v3.8.6 (2019-04-03)
 -------------------
 
