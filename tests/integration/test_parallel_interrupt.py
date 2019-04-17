@@ -6,11 +6,13 @@ import sys
 from datetime import datetime
 
 import pytest
+from flaky import flaky
 from pathlib2 import Path
 
 from tox.util.main import MAIN_FILE
 
 
+@flaky(max_runs=3)
 @pytest.mark.skipif(
     "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
 )

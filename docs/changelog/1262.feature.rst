@@ -1,1 +1,1 @@
-Allow having inline comments in dependency lists in ``tox.ini`` — by :user:`webknjaz`
+Allow having inline comments in :conf:`deps` — by :user:`webknjaz`

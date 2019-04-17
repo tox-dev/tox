@@ -179,7 +179,7 @@ class DepOption:
 
     @staticmethod
     def _cut_off_dep_comment(name):
-        return re.sub(r'\s+#.*', '', name).strip()
+        return re.sub(r"\s+#.*", "", name).strip()
 
     @classmethod
     def _is_same_dep(cls, dep1, dep2):

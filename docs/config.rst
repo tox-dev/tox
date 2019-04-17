@@ -21,9 +21,6 @@ the *ini-style* format under the ``tool.tox.legacy_tox_ini`` key as a multi-line
 Below you find the specification for the *ini-style* format, but you might want to skim some
 :doc:`examples` first and use this page as a reference.
 
-.. _ConfigParser: https://docs.python.org/3/library/configparser.html
-
-
 tox global settings
 -------------------
 
@@ -45,10 +42,10 @@ Global settings are defined under the ``tox`` section as:
     .. versionadded:: 3.2.0
 
     Specify python packages that need to exist alongside the tox installation for the tox build
-    to be able to start. Use this to specify plugin requirements (or the version of ``virtualenv`` -
-    determines the default ``pip``, ``setuptools``, and ``wheel`` versions the tox environments
-    start with). If these dependencies are not specified tox will create :conf:`provision_tox_env`
-    environment so that they are satisfied and delegate all calls to that.
+    to be able to start (must be PEP-508_ compliant). Use this to specify plugin requirements
+    (or the version of ``virtualenv`` - determines the default ``pip``, ``setuptools``, and ``wheel``
+    versions the tox environments start with). If these dependencies are not specified tox will create
+    :conf:`provision_tox_env` environment so that they are satisfied and delegate all calls to that.
 
     .. code-block:: ini
 
@@ -152,10 +149,8 @@ Global settings are defined under the ``tox`` section as:
 
     Activate isolated build environment. tox will use a virtual environment to build
     a source distribution from the source tree. For build tools and arguments use
-    the ``pyproject.toml`` file as specified in
-    `PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ and
-    `PEP-518 <https://www.python.org/dev/peps/pep-0518/>`_. To specify the virtual
-    environment Python version define use the :conf:`isolated_build_env` config
+    the ``pyproject.toml`` file as specified in `PEP-517`_ and `PEP-518`_. To specify the
+    virtual environment Python version define use the :conf:`isolated_build_env` config
     section.
 
 .. conf:: isolated_build_env ^ string ^ .package
@@ -339,40 +334,32 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: deps ^ MULTI-LINE-LIST
 
-    Test-specific dependencies - to be installed into the environment prior to project
-    package installation.  Each line defines a dependency, which will be
-    passed to the installer command for processing (see :conf:`indexserver`).
-    Each line specifies a file, a URL or a package name.  You can additionally specify
-    an :conf:`indexserver` to use for installing this dependency
-    but this functionality is deprecated since tox-2.3.
-    All derived dependencies (deps required by the dep) will then be
-    retrieved from the specified indexserver:
+    Environment dependencies - installed into the environment ((see :conf:`install_command`) prior
+    to project after environment creation. One dependency (a file, a URL or a package name) per
+    line. Must be PEP-508_ compliant. All installer commands are executed using the toxinidir_ as the
+    current working directory.
 
     .. code-block:: ini
 
-        [tox]
-        indexserver =
-            myindexserver = https://myindexserver.example.com/simple
-
         [testenv]
-        deps = :myindexserver:pkg
+        deps =
+            pytest
+            pytest-cov >= 3.5
+            pywin32 >=1.0 ; sys_platform == 'win32'
+            octomachinery==0.0.13  # pyup: < 0.1.0 # disable feature updates
 
-    (Experimentally introduced in 1.6.1) all installer commands are executed
-    using the ``{toxinidir}`` as the current working directory.
 
-    .. note::
+    .. versionchanged:: 2.3
 
-        .. versionadded:: 3.9.0
+    Support for index servers is now deprecated, and it's usage discouraged.
 
-        As of tox v3.9.0 deps entries having inline comments are
-        supported. During post-processing stage, tox cuts off any
-        substring starting with any number of whitespaces followed by
-        a ``#`` character.
+    .. versionchanged:: 3.9
 
-        For example, if a dependency is ``octomachinery==0.0.13  # pyup:
-        < 0.1.0 # disable feature updates`` it will be turned into just
-        ``octomachinery==0.0.13`` which later will be used in the ``pip
-        install`` command.
+    Comment support on the same line as the dependency. When feeding the content to the install
+    tool we'll strip off content (including) from the first comment marker (``#``)
+    preceded by one or more space. For example, if a dependency is
+    ``octomachinery==0.0.13  # pyup: < 0.1.0 # disable feature updates`` it will be turned into
+    just ``octomachinery==0.0.13``.
 
 .. conf:: platform ^ REGEX
 
@@ -573,8 +560,12 @@ having value magic).
 Globally available substitutions
 ++++++++++++++++++++++++++++++++
 
+.. _`toxinidir`:
+
 ``{toxinidir}``
-    the directory where tox.ini is located
+    the directory where ``tox.ini`` is located
+
+.. _`toxworkdir`:
 
 ``{toxworkdir}``
     the directory where virtual environments are created and sub directories
@@ -860,11 +851,11 @@ special case for a combination of factors. Here is how you do it:
 
     [testenv]
     deps =
-        py34-mysql: PyMySQL     ; use if both py34 and mysql are in the env name
-        py27,py36: urllib3      ; use if either py36 or py27 are in the env name
-        py{27,36}-sqlite: mock  ; mocking sqlite in python 2.x & 3.6
-        !py34-sqlite: mock      ; mocking sqlite, except in python 3.4
-        sqlite-!py34: mock      ; (same as the line above)
+        py34-mysql: PyMySQL     # use if both py34 and mysql are in the env name
+        py27,py36: urllib3      # use if either py36 or py27 are in the env name
+        py{27,36}-sqlite: mock  # mocking sqlite in python 2.x & 3.6
+        !py34-sqlite: mock      # mocking sqlite, except in python 3.4
+        sqlite-!py34: mock      # (same as the line above)
 
 Take a look at the first ``deps`` line. It shows how you can special case
 something for a combination of factors, by just hyphenating the combining

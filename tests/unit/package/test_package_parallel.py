@@ -1,16 +1,13 @@
 import os
-import platform
 import traceback
 
 import py
-import pytest
+from flaky import flaky
 
 from tox.session.commands.run import sequential
 
 
-@pytest.mark.skipif(
-    platform.python_implementation().lower() == "pypy", reason="this is flaky on pypy"
-)
+@flaky(max_runs=3)
 def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
     initproj(
         "env_var_test",
