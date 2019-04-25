@@ -28,6 +28,27 @@ def test_verbose_isolated_build(initproj, mock_venv, cmd):
     assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out
 
 
+def test_isolated_build_develop(initproj, cmd):
+    initproj(
+        "example123-0.5",
+        filedefs={
+            "tox.ini": """
+                    [tox]
+                    isolated_build = true
+                    [testenv]
+                    usedevelop = true
+                    """,
+            "pyproject.toml": """
+                    [build-system]
+                    requires = ["setuptools >= 41.0.0"]
+                    build-backend = 'setuptools.build_meta'
+                                """,
+        },
+    )
+    result = cmd("--notest", "-e", "py")
+    result.assert_success()
+
+
 def test_dist_exists_version_change(mock_venv, initproj, cmd):
     base = initproj(
         "package_toml-{}".format("0.1"),

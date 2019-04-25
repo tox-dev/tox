@@ -353,6 +353,8 @@ class VirtualEnv(object):
         target = [dir]
         if is_develop:
             target.insert(0, "-e")
+            target.insert(0, "--no-use-pep517")
+
         self._install(target, extraopts=pip_flags, action=action)
 
     def developpkg(self, setupdir, action):
