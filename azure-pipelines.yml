@@ -42,11 +42,11 @@ jobs:
     displayName: notify code climate of new build
 
 - template: azure-run-tox-env.yml
-  parameters: {tox: fix_lint, python: 3.7}
+  parameters: {tox: fix_lint, python: '3.7'}
 - template: azure-run-tox-env.yml
-  parameters: {tox: docs, python: 3.7}
+  parameters: {tox: docs, python: '3.7'}
 - template: azure-run-tox-env.yml
-  parameters: {tox: package_description, python: 3.7}
+  parameters: {tox: package_description, python: '3.7'}
 
 - template: azure-run-tox-env.yml
   parameters: {tox: pypy, python: pypy, os: linux}
@@ -54,31 +54,31 @@ jobs:
   parameters: {tox: pypy3, python: pypy3, os: linux}
 
 - template: azure-run-tox-env.yml
-  parameters: {tox: py37, python: 3.7, os: windows}
+  parameters: {tox: py37, python: '3.7', os: windows}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py36, python: 3.6, os: windows}
+  parameters: {tox: py36, python: '3.6', os: windows}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py35, python: 3.5, os: windows}
+  parameters: {tox: py35, python: '3.5', os: windows}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py34, python: 3.4, os: windows}
+  parameters: {tox: py34, python: '3.4', os: windows}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py27, python: 2.7, os: windows}
+  parameters: {tox: py27, python: '2.7', os: windows}
 
 - template: azure-run-tox-env.yml
-  parameters: {tox: py37, python: 3.7, os: linux}
+  parameters: {tox: py37, python: '3.7', os: linux}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py36, python: 3.6, os: linux}
+  parameters: {tox: py36, python: '3.6', os: linux}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py35, python: 3.5, os: linux}
+  parameters: {tox: py35, python: '3.5', os: linux}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py34, python: 3.4, os: linux}
+  parameters: {tox: py34, python: '3.4', os: linux}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py27, python: 2.7, os: linux}
+  parameters: {tox: py27, python: '2.7', os: linux}
 
 - template: azure-run-tox-env.yml
-  parameters: {tox: py37, python: 3.7, os: macOs}
+  parameters: {tox: py37, python: '3.7', os: macOs}
 - template: azure-run-tox-env.yml
-  parameters: {tox: py27, python: 2.7, os: macOs}
+  parameters: {tox: py27, python: '2.7', os: macOs}
 
 - job: report_coverage
   pool: {vmImage: "Ubuntu-16.04"}
