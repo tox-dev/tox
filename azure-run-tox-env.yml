@@ -18,18 +18,13 @@ jobs:
     TMPDIR: $(Build.BinariesDirectory)
     ${{ if in(parameters.tox, 'pypy', 'py27', 'py34') }}:
       PYTHONWARNINGS: 'ignore:::pip._internal.cli.base_command'
-    ${{ if in(parameters.python, 'pypy', 'pypy3') }}:
-      python: ${{ parameters.python }}
-    ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
-      python: "python"
 
   steps:
   # ensure the required Python versions are available
-  - ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
-    - task: UsePythonVersion@0
-      displayName: setup python
-      inputs:
-        versionSpec: ${{ parameters.python }}
+  - task: UsePythonVersion@0
+    displayName: setup python
+    inputs:
+      versionSpec: ${{ parameters.python }}
 
   - script: 'python -c "import sys; print(sys.version); print(sys.executable);"'
     displayName: show python information
