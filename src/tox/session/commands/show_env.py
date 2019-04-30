@@ -5,7 +5,7 @@ from tox import reporter as report
 
 def show_envs(config, all_envs=False, description=False):
     env_conf = config.envconfigs  # this contains all environments
-    default = config.envlist  # this only the defaults
+    default = config.envlist_default  # this only the defaults
     ignore = {config.isolated_build_env, config.provision_tox_env}.union(default)
     extra = [e for e in env_conf if e not in ignore] if all_envs else []
 

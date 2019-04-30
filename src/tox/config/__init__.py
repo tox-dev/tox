@@ -1058,7 +1058,7 @@ class ParseIni(object):
         self.handle_provision(config, reader)
 
         self.parse_build_isolation(config, reader)
-        config.envlist, all_envs = self._getenvdata(reader, config)
+        config.envlist, all_envs, config.envlist_default = self._getenvdata(reader, config)
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
@@ -1243,7 +1243,7 @@ class ParseIni(object):
         if config.isolated_build is True and package_env in env_list:
             msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
             raise tox.exception.ConfigError(msg)
-        return env_list, all_envs
+        return env_list, all_envs, _split_env(from_config)
 
 
 def _split_env(env):

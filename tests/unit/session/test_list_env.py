@@ -20,6 +20,18 @@ def test_listenvs(cmd, initproj, monkeypatch):
         """
         },
     )
+
+    result = cmd("-l")
+    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
+
+    result = cmd("-l", "-e", "py")
+    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
+
+    monkeypatch.setenv(str("TOXENV"), str("py"))
+    result = cmd("-l")
+    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
+
+    monkeypatch.setenv(str("TOXENV"), str("py36"))
     result = cmd("-l")
     assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
 
@@ -60,7 +72,7 @@ def test_listenvs_verbose_description(cmd, initproj):
     assert result.outlines[2:] == expected
 
 
-def test_listenvs_all(cmd, initproj):
+def test_listenvs_all(cmd, initproj, monkeypatch):
     initproj(
         "listenvs_all",
         filedefs={
@@ -79,6 +91,17 @@ def test_listenvs_all(cmd, initproj):
     result = cmd("-a")
     expected = ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
     assert result.outlines == expected
+
+    result = cmd("-a", "-e", "py")
+    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs", "py", "notincluded"]
+
+    monkeypatch.setenv(str("TOXENV"), str("py"))
+    result = cmd("-a")
+    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs", "py", "notincluded"]
+
+    monkeypatch.setenv(str("TOXENV"), str("py36"))
+    result = cmd("-a")
+    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
 
 
 def test_listenvs_all_verbose_description(cmd, initproj):
