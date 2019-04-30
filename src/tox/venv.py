@@ -646,7 +646,6 @@ def prepend_shebang_interpreter(args):
     return args
 
 
-NO_DOWNLOAD = False
 _SKIP_VENV_CREATION = os.environ.get("_TOX_SKIP_ENV_CREATION_TEST", False) == "1"
 
 
@@ -658,7 +657,7 @@ def tox_testenv_create(venv, action):
         args.append("--system-site-packages")
     if venv.envconfig.alwayscopy:
         args.append("--always-copy")
-    if NO_DOWNLOAD:
+    if not venv.envconfig.download:
         args.append("--no-download")
     # add interpreter explicitly, to prevent using default (virtualenv.ini)
     args.extend(["--python", str(config_interpreter)])

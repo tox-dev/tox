@@ -745,6 +745,14 @@ def tox_addoption(parser):
     )
 
     parser.add_testenv_attribute(
+        "download",
+        type="bool",
+        default=False,
+        help="download the latest pip, setuptools and wheel when creating the virtual"
+        "environment (default is to use the one bundled in virtualenv)",
+    )
+
+    parser.add_testenv_attribute(
         name="alwayscopy",
         type="bool",
         default=False,
