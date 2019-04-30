@@ -45,6 +45,8 @@ Instead create a hookimpl in your code with:
 default_factors = tox.PYTHON.DEFAULT_FACTORS
 """DEPRECATED MOVE - please update to new location."""
 
+WITHIN_PROVISION = os.environ.get(str("TOX_PROVISION")) == "1"
+
 
 def get_plugin_manager(plugins=()):
     # initialize plugin manager
@@ -114,8 +116,11 @@ class Parser:
         assert hasattr(obj, "postprocess")
         self._testenv_attr.append(obj)
 
-    def parse_cli(self, args):
-        return self.argparser.parse_args(args)
+    def parse_cli(self, args, strict=False):
+        if strict or WITHIN_PROVISION:
+            return self.argparser.parse_args(args)
+        else:
+            return self.argparser.parse_known_args(args)[0]
 
     def _format_help(self):
         return self.argparser.format_help()
@@ -1106,6 +1111,9 @@ class ParseIni(object):
             env_config.deps = deps
             config.envconfigs[config.provision_tox_env] = env_config
             raise tox.exception.MissingRequirement(config)
+        # if provisioning is not on, now we need do a strict argument evaluation
+        # raise on unknown args
+        self.config._parser.parse_cli(args=self.config.args, strict=True)
 
     @staticmethod
     def ensure_requires_satisfied(config, requires, min_version):

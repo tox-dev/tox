@@ -1,5 +1,8 @@
+import shutil
+import subprocess
 import sys
 
+import py
 import pytest
 
 from tox.exception import BadRequirement, MissingRequirement
@@ -94,3 +97,47 @@ def test_provision_bad_requires(newconfig, capsys, monkeypatch):
     out, err = capsys.readouterr()
     assert "ERROR: failed to parse RequirementParseError" in out
     assert not err
+
+
+@pytest.fixture()
+def plugin(monkeypatch, tmp_path):
+    dest = tmp_path / "a"
+    shutil.copytree(str(py.path.local(__file__).dirpath().join("plugin")), str(dest))
+    subprocess.check_output([sys.executable, "setup.py", "egg_info"], cwd=str(dest))
+    monkeypatch.setenv(str("PYTHONPATH"), str(dest))
+
+
+def test_provision_cli_args_ignore(cmd, initproj, monkeypatch, plugin):
+    import tox.config
+    import tox.session
+
+    prev_ensure = tox.config.ParseIni.ensure_requires_satisfied
+
+    @staticmethod
+    def ensure_requires_satisfied(config, requires, min_version):
+        result = prev_ensure(config, requires, min_version)
+        config.run_provision = True
+        return result
+
+    monkeypatch.setattr(
+        tox.config.ParseIni, "ensure_requires_satisfied", ensure_requires_satisfied
+    )
+    prev_get_venv = tox.session.Session.getvenv
+
+    def getvenv(self, name):
+        venv = prev_get_venv(self, name)
+        venv.envconfig.envdir = py.path.local(sys.executable).dirpath().dirpath()
+        venv.setupenv = lambda: True
+        venv.finishvenv = lambda: True
+        return venv
+
+    monkeypatch.setattr(tox.session.Session, "getvenv", getvenv)
+    initproj("test-0.1", {"tox.ini": "[tox]"})
+    result = cmd("-a", "--option", "b")
+    result.assert_success(is_run_test_env=False)
+
+
+def test_provision_cli_args_not_ignored_if_provision_false(cmd, initproj):
+    initproj("test-0.1", {"tox.ini": "[tox]"})
+    result = cmd("-a", "--option", "b")
+    result.assert_fail(is_run_test_env=False)
