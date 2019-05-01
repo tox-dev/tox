@@ -1,0 +1,3 @@
+Virtual environments created now no longer upgrade pip/wheel/setuptools to the latest version. Instead the start
+packages after virtualenv creation now is whatever virtualenv has bundled in. This allows faster virtualenv
+creation and builds that are easier to reproduce.

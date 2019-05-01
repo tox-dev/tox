@@ -1052,3 +1052,28 @@ def test_tox_testenv_interpret_shebang_long_example(tmpdir):
     ]
 
     assert args == expected + base_args
+
+
+@pytest.mark.parametrize("download", [True, False, None])
+def test_create_download(mocksession, newconfig, download):
+    config = newconfig(
+        [],
+        """\
+        [testenv:env]
+        {}
+        """.format(
+            "download={}".format(download) if download else ""
+        ),
+    )
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("env")
+    with mocksession.newaction(venv.name, "getenv") as action:
+        tox_testenv_create(action=action, venv=venv)
+    pcalls = mocksession._pcalls
+    assert len(pcalls) >= 1
+    args = pcalls[0].args
+    if download is True:
+        assert "--no-download" not in map(str, args)
+    else:
+        assert "--no-download" in map(str, args)
+    mocksession._clearmocks()
