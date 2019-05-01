@@ -117,10 +117,10 @@ class Parser:
         self._testenv_attr.append(obj)
 
     def parse_cli(self, args, strict=False):
-        if strict or WITHIN_PROVISION:
-            return self.argparser.parse_args(args)
-        else:
-            return self.argparser.parse_known_args(args)[0]
+        args, argv = self.argparser.parse_known_args(args)
+        if argv and (strict or WITHIN_PROVISION):
+            self.argparser.error("unrecognized arguments: %s".format(" ".join(argv)))
+        return args
 
     def _format_help(self):
         return self.argparser.format_help()

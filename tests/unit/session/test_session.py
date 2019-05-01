@@ -365,6 +365,6 @@ def test_help_compound_ve_works(cmd, initproj, monkeypatch):
     assert not result.err
     assert result.outlines[0].startswith("using")
     assert result.outlines[1].startswith("using")
-    assert result.outlines[2] == "default environments:"
+    assert result.outlines[2] == "additional environments:"
     assert result.outlines[3] == "py -> [no description]"
     assert len(result.outlines) == 4

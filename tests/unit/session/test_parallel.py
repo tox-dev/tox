@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import sys
 
 import pytest
+from flaky import flaky
 
 
 def test_parallel(cmd, initproj):
@@ -160,6 +161,7 @@ commands =
     assert not ({f.basename for f in after} - {f.basename for f in end})
 
 
+@flaky(max_runs=3)
 def test_parallel_show_output(cmd, initproj, monkeypatch):
     monkeypatch.setenv(str("_TOX_SKIP_ENV_CREATION_TEST"), str("1"))
     tox_ini = """\

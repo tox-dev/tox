@@ -9,9 +9,9 @@ def show_envs(config, all_envs=False, description=False):
     ignore = {config.isolated_build_env, config.provision_tox_env}.union(default)
     extra = [e for e in env_conf if e not in ignore] if all_envs else []
 
-    if description:
+    if description and default:
         report.line("default environments:")
-        max_length = max(len(env) for env in (default + extra))
+    max_length = max(len(env) for env in (default + extra))
 
     def report_env(e):
         if description:
@@ -25,7 +25,8 @@ def show_envs(config, all_envs=False, description=False):
         report_env(e)
     if all_envs and extra:
         if description:
-            report.line("")
+            if default:
+                report.line("")
             report.line("additional environments:")
         for e in extra:
             report_env(e)
