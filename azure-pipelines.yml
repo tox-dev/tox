@@ -1,5 +1,4 @@
 name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
-
 resources:
   repositories:
   - repository: tox
@@ -26,41 +25,31 @@ variables:
 jobs:
 - template: run-tox-env.yml@tox
   parameters:
+    tox_version: ''
     jobs:
-      check:
-        py: '3.7'
-        toxenvs:
-        - fix_lint
-        - docs
-        - package_description
-      windows:
-        coverage: 'coverage'
-        toxenvs:
-        - py37
-        - py36
-        - py35
-        - py34
-        - py27
-      linux:
-        coverage: 'coverage'
-        toxenvs:
-        - py38
-        - py37
-        - py36
-        - py35
-        - py34
-        - py27
-      macOs:
-        coverage: 'coverage'
-        toxenvs:
-        - py37
-        - py27
+      fix_lint: null
+      docs: null
+      package_description: null
+      dev: null
+      py37:
+        before:
+        - script: py.exe -0
+        image: [linux, windows, macOs]
+      py36:
+        image: [linux, windows, macOs]
+      py35:
+        image: [linux, windows, macOs]
+      py34:
+        image: [linux, windows, macOs]
+      py27:
+        image: [linux, windows, macOs]
+    env:
+    - key: [py27, py34, py35, py36, py37]
+      coverage: 'coverage'
+
 - template: merge-coverage.yml@tox
   parameters:
-    dependsOn:
-    - windows
-    - linux
-    - macOs
+    dependsOn: [py27, py34, py35, py36, py37]
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox

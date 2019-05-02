@@ -1,0 +1,1 @@
+Improve python discovery by also checking if the the ``python`` executable on PATH is correct version.

@@ -59,9 +59,9 @@ def test_locate_via_py(monkeypatch):
     monkeypatch.setattr(distutils.spawn, "find_executable", fake_find_exe)
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
     assert locate_via_py("3", "6") == sys.executable
-    assert fake_popen.last_call == ("py", "-3.6", inspect.getsourcefile(get_version))
+    assert fake_popen.last_call == ["py", "-3.6", inspect.getsourcefile(get_version)]
     assert locate_via_py("3") == sys.executable
-    assert fake_popen.last_call == ("py", "-3", inspect.getsourcefile(get_version))
+    assert fake_popen.last_call == ["py", "-3", inspect.getsourcefile(get_version)]
 
 
 def test_tox_get_python_executable():
@@ -97,7 +97,8 @@ def test_tox_get_python_executable():
     for major in (2, 3):
         name = "python{}".format(major)
         if tox.INFO.IS_WIN:
-            if subprocess.call(("py", "-{}".format(major), "-c", "")):
+            error_code = subprocess.call(("py", "-{}".format(major), "-c", ""))
+            if error_code:
                 continue
         elif not py.path.local.sysfind(name):
             continue

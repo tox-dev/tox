@@ -29,6 +29,7 @@ class Interpreters:
             return self.name2executable[envconfig.envname]
         except KeyError:
             exe = self.hook.tox_get_python_executable(envconfig=envconfig)
+            reporter.verbosity2("{} detected as {}".format(envconfig.envname, exe))
             self.name2executable[envconfig.envname] = exe
             return exe
 
@@ -124,57 +125,108 @@ if not tox.INFO.IS_WIN:
 
     @tox.hookimpl
     def tox_get_python_executable(envconfig):
-        if envconfig.basepython == "python{}.{}".format(*sys.version_info[0:2]):
-            return sys.executable
-        return py.path.local.sysfind(envconfig.basepython)
+        # first, check current
+        py_exe = get_from_current(envconfig)
+        if py_exe is not None:
+            return py_exe
+        # second, check on path
+        py_exe = py.path.local.sysfind(envconfig.basepython)
+        if py_exe is not None:
+            return py_exe
+        # third, check if python on path is good
+        py_exe = check_python_on_path(version_info(envconfig))
+        return py_exe
 
 
 else:
-
-    @tox.hookimpl
-    def tox_get_python_executable(envconfig):
-        if envconfig.basepython == "python{}.{}".format(*sys.version_info[0:2]):
-            return sys.executable
-        p = py.path.local.sysfind(envconfig.basepython)
-        if p:
-            return p
-
-        # Is this a standard PythonX.Y name?
-        m = re.match(r"python(\d)(?:\.(\d))?", envconfig.basepython)
-        groups = [g for g in m.groups() if g] if m else []
-        if m:
-            # The standard names are in predictable places.
-            actual = r"c:\python{}\python.exe".format("".join(groups))
-        else:
-
-            actual = win32map.get(envconfig.basepython, None)
-        if actual:
-            actual = py.path.local(actual)
-            if actual.check():
-                return actual
-        # Use py.exe to determine location - PEP-514 & PEP-397
-        if m:
-            return locate_via_py(*groups)
-
     # Exceptions to the usual windows mapping
     win32map = {"python": sys.executable, "jython": r"c:\jython2.5.1\jython.bat"}
 
+    @tox.hookimpl
+    def tox_get_python_executable(envconfig):
+        # first, check current
+        py_exe = get_from_current(envconfig)
+        if py_exe is not None:
+            return py_exe
+        # second, check standard location
+        version = version_info(envconfig)
+        if version:
+            # The standard names are in predictable places.
+            actual = r"c:\python{}\python.exe".format("".join(str(i) for i in version))
+        else:
+            actual = win32map.get(envconfig.basepython, None)
+        if actual and py.path.local(actual).check():
+            return actual
+
+        if version:
+            # third, check if the python on path is good
+            py_exe = check_python_on_path(version)
+            if py_exe is not None:
+                return py_exe
+
+            # fifth, use py to determine location - PEP-514 & PEP-397
+            py_exe = locate_via_py(*version)
+            if py_exe is None:
+                return py_exe
+        # sixth, try to use sys find
+        return py.path.local.sysfind(envconfig.basepython)
+
     def locate_via_py(*parts):
-        ver = "-{}".format(".".join(parts))
         py_exe = distutils.spawn.find_executable("py")
         if py_exe:
-            cmd = py_exe, ver, VERSION_QUERY_SCRIPT
-            proc = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
-            )
-            out, err = proc.communicate()
-            if not proc.returncode:
-                try:
-                    result = json.loads(out)
-                except ValueError as exception:
-                    failure = exception
-                else:
-                    return result["executable"]
-            else:
-                failure = "exit code {}".format(proc.returncode)
-            reporter.info("{!r} cmd {!r} out {!r} err {!r} ".format(failure, cmd, out, err))
+            ver = "-{}".format(".".join(str(i) for i in parts))
+            info = check_version([str(py_exe), ver])
+            if info is not None:
+                return info["executable"]
+
+
+def get_from_current(envconfig):
+    if (
+        envconfig.basepython == "python{}.{}".format(*sys.version_info[0:2])
+        or envconfig.basepython == "python{}".format(sys.version_info[0])
+        or envconfig.basepython == "python"
+    ):
+        return sys.executable
+
+
+def version_info(envconfig):
+    match = re.match(r"python(\d)(?:\.(\d))?", envconfig.basepython)
+    groups = [int(g) for g in match.groups() if g] if match else []
+    return groups
+
+
+_VALUE = {}
+
+
+def check_python_on_path(version):
+    if "data" not in _VALUE:
+        python_exe = py.path.local.sysfind("python")
+        found = None
+        if python_exe is not None:
+            info = check_version([str(python_exe)])
+            if info is not None:
+                found = info
+                reporter.verbosity2("python ({}) is {}".format(python_exe, info))
+        _VALUE["data"] = found
+    if _VALUE["data"] is not None and _VALUE["data"]["version_info"][0:2] == version:
+        return _VALUE["data"]["executable"]
+
+
+def check_version(cmd):
+    proc = subprocess.Popen(
+        cmd + [VERSION_QUERY_SCRIPT],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
+    out, err = proc.communicate()
+    if not proc.returncode:
+        try:
+            result = json.loads(out)
+        except ValueError as exception:
+            failure = exception
+        else:
+            return result
+    else:
+        failure = "exit code {}".format(proc.returncode)
+    reporter.info("{!r} cmd {!r} out {!r} err {!r} ".format(failure, cmd, out, err))
