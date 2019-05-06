@@ -1,1 +1,18 @@
-Improve python discovery by also checking if the the ``python`` executable on PATH is correct version.
+Improve python discovery and add architecture support:
+ - UNIX:
+
+   - First, check if the tox host Python matches.
+   - Second, check if the the canonical name (e.g. ``python3.7``, ``python3``) matches or the base python is an absolute path, use that.
+   - Third, check if the the canonical name without version matches (e.g. ``python``, ``pypy``) matches.
+
+ - Windows:
+
+   - First, check if the tox host Python matches.
+   - Second, use the ``py.exe`` to list registered interpreters and any of those match.
+   - Third, check if the the canonical name (e.g. ``python3.7``, ``python3``) matches or the base python is an absolute path, use that.
+   - Fourth, check if the the canonical name without version matches (e.g. ``python``, ``pypy``) matches.
+   - Finally, check for known locations (``c:\python{major}{minor}\python.exe``).
+
+
+tox environment configuration generation is now done in parallel (to alleviate the slowdown due to extra
+checks).

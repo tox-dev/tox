@@ -32,8 +32,6 @@ jobs:
       package_description: null
       dev: null
       py37:
-        before:
-        - script: py.exe -0
         image: [linux, windows, macOs]
       py36:
         image: [linux, windows, macOs]

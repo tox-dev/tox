@@ -46,6 +46,7 @@ class INFO:
     DEFAULT_CONFIG_NAME = "tox.ini"
     CONFIG_CANDIDATES = ("pyproject.toml", "tox.ini", "setup.cfg")
     IS_WIN = sys.platform == "win32"
+    IS_PYPY = hasattr(sys, "pypy_version_info")
 
 
 class PIP:

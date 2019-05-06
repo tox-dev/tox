@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
 
-import distutils.util
 import json
+import os
 import re
 import subprocess
 import sys
+from collections import defaultdict
+from threading import Lock
 
 import py
 
@@ -29,7 +31,7 @@ class Interpreters:
             return self.name2executable[envconfig.envname]
         except KeyError:
             exe = self.hook.tox_get_python_executable(envconfig=envconfig)
-            reporter.verbosity2("{} detected as {}".format(envconfig.envname, exe))
+            reporter.verbosity2("{} uses {}".format(envconfig.envname, exe))
             self.name2executable[envconfig.envname] = exe
             return exe
 
@@ -63,6 +65,7 @@ def run_and_get_interpreter_info(name, executable):
     try:
         result = exec_on_interpreter(str(executable), VERSION_QUERY_SCRIPT)
         result["version_info"] = tuple(result["version_info"])  # fix json dump transformation
+        del result["name"]
         del result["version"]
     except ExecFailed as e:
         return NoInterpreterInfo(name, executable=e.executable, out=e.out, err=e.err)
@@ -95,12 +98,12 @@ class ExecFailed(Exception):
 
 
 class InterpreterInfo:
-    def __init__(self, name, executable, version_info, sysplatform):
-        assert executable and version_info
+    def __init__(self, name, executable, version_info, sysplatform, is_64):
         self.name = name
         self.executable = executable
         self.version_info = version_info
         self.sysplatform = sysplatform
+        self.is_64 = is_64
 
     def __str__(self):
         return "<executable at {}, version_info {}>".format(self.executable, self.version_info)
@@ -121,98 +124,186 @@ class NoInterpreterInfo:
             return "<executable not found for: {}>".format(self.name)
 
 
+class PythonSpec(object):
+    def __init__(self, name, major, minor, architecture, path):
+        self.name = name
+        self.major = major
+        self.minor = minor
+        self.architecture = architecture
+        self.path = path
+
+    def satisfies(self, req):
+        if req.is_abs and self.is_abs and self.path != req.path:
+            return False
+        if req.name is not None and req.name != self.name:
+            return False
+        if req.architecture is not None and req.architecture != self.architecture:
+            return False
+        if req.major is not None and req.major != self.major:
+            return False
+        if req.minor is not None and req.minor != self.minor:
+            return False
+        if req.major is None and req.minor is not None:
+            return False
+        return True
+
+    @property
+    def is_abs(self):
+        return self.path is not None and os.path.isabs(self.path)
+
+    @classmethod
+    def from_name(cls, base_python):
+        name, major, minor, architecture, path = None, None, None, None, None
+        if os.path.isabs(base_python):
+            path = base_python
+        else:
+            match = re.match(r"(python|pypy|jython)(\d)?(?:\.(\d))?(-(32|64))?", base_python)
+            if match:
+                groups = match.groups()
+                name = groups[0]
+                major = int(groups[1]) if len(groups) >= 2 and groups[1] is not None else None
+                minor = int(groups[2]) if len(groups) >= 3 and groups[2] is not None else None
+                architecture = (
+                    int(groups[3]) if len(groups) >= 4 and groups[3] is not None else None
+                )
+            else:
+                path = base_python
+        return cls(name, major, minor, architecture, path)
+
+
+CURRENT = PythonSpec(
+    "pypy" if tox.constants.INFO.IS_PYPY else "python",
+    sys.version_info[0],
+    sys.version_info[1],
+    64 if sys.maxsize > 2 ** 32 else 32,
+    sys.executable,
+)
+
 if not tox.INFO.IS_WIN:
 
     @tox.hookimpl
     def tox_get_python_executable(envconfig):
+        base_python = envconfig.basepython
+        spec = PythonSpec.from_name(base_python)
         # first, check current
-        py_exe = get_from_current(envconfig)
-        if py_exe is not None:
-            return py_exe
-        # second, check on path
-        py_exe = py.path.local.sysfind(envconfig.basepython)
-        if py_exe is not None:
-            return py_exe
-        # third, check if python on path is good
-        py_exe = check_python_on_path(version_info(envconfig))
-        return py_exe
+        if spec.name is not None and CURRENT.satisfies(spec):
+            return CURRENT.path
+        # second check if the literal base python
+        candidates = [base_python]
+        # third check if the un-versioned name is good
+        if spec.name is not None and spec.name != base_python:
+            candidates.append(spec.name)
+        return check_with_path(candidates, spec)
 
 
 else:
-    # Exceptions to the usual windows mapping
-    win32map = {"python": sys.executable, "jython": r"c:\jython2.5.1\jython.bat"}
 
     @tox.hookimpl
     def tox_get_python_executable(envconfig):
+        base_python = envconfig.basepython
+        spec = PythonSpec.from_name(base_python)
         # first, check current
-        py_exe = get_from_current(envconfig)
+        if spec.name is not None and CURRENT.satisfies(spec):
+            return CURRENT.path
+
+        # second check if the py.exe has it
+        py_exe = locate_via_py(spec)
         if py_exe is not None:
             return py_exe
-        # second, check standard location
-        version = version_info(envconfig)
-        if version:
-            # The standard names are in predictable places.
-            actual = r"c:\python{}\python.exe".format("".join(str(i) for i in version))
-        else:
-            actual = win32map.get(envconfig.basepython, None)
-        if actual and py.path.local(actual).check():
-            return actual
 
-        if version:
-            # third, check if the python on path is good
-            py_exe = check_python_on_path(version)
-            if py_exe is not None:
-                return py_exe
+        # third check if the literal base python is on PATH
+        candidates = [envconfig.basepython]
+        # fourth check if the name is on PATH
+        if spec.name is not None and spec.name != base_python:
+            candidates.append(spec.name)
+        # or check known locations
+        if spec.major is not None and spec.minor is not None:
+            if spec.name == "python":
+                # The standard names are in predictable places.
+                candidates.append(r"c:\python{}{}\python.exe".format(spec.major, spec.minor))
+        return check_with_path(candidates, spec)
 
-            # fifth, use py to determine location - PEP-514 & PEP-397
-            py_exe = locate_via_py(*version)
-            if py_exe is None:
-                return py_exe
-        # sixth, try to use sys find
-        return py.path.local.sysfind(envconfig.basepython)
+    _PY_AVAILABLE = []
+    _PY_LOCK = Lock()
 
-    def locate_via_py(*parts):
-        py_exe = distutils.spawn.find_executable("py")
-        if py_exe:
-            ver = "-{}".format(".".join(str(i) for i in parts))
-            info = check_version([str(py_exe), ver])
-            if info is not None:
-                return info["executable"]
-
-
-def get_from_current(envconfig):
-    if (
-        envconfig.basepython == "python{}.{}".format(*sys.version_info[0:2])
-        or envconfig.basepython == "python{}".format(sys.version_info[0])
-        or envconfig.basepython == "python"
-    ):
-        return sys.executable
-
-
-def version_info(envconfig):
-    match = re.match(r"python(\d)(?:\.(\d))?", envconfig.basepython)
-    groups = [int(g) for g in match.groups() if g] if match else []
-    return groups
-
-
-_VALUE = {}
-
-
-def check_python_on_path(version):
-    if "data" not in _VALUE:
-        python_exe = py.path.local.sysfind("python")
-        found = None
-        if python_exe is not None:
-            info = check_version([str(python_exe)])
-            if info is not None:
-                found = info
-                reporter.verbosity2("python ({}) is {}".format(python_exe, info))
-        _VALUE["data"] = found
-    if _VALUE["data"] is not None and _VALUE["data"]["version_info"][0:2] == version:
-        return _VALUE["data"]["executable"]
+    def locate_via_py(spec):
+        with _PY_LOCK:
+            if not _PY_AVAILABLE:
+                py_exe = py.path.local.sysfind("py")
+                if py_exe:
+                    cmd = [str(py_exe), "-0p"]
+                    proc = subprocess.Popen(
+                        cmd,
+                        universal_newlines=True,
+                        stderr=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                    )
+                    out, err = proc.communicate()
+                    if not proc.returncode:
+                        elements = [
+                            tuple(j.strip() for j in i.split("\t"))
+                            for i in out.splitlines()
+                            if i.strip()
+                        ]
+                        if elements:
+                            for ver_arch, exe in elements:
+                                _, version, arch = ver_arch.split("-")
+                                major, minor = version.split(".")
+                                _PY_AVAILABLE.append(
+                                    PythonSpec("python", int(major), int(minor), int(arch), exe)
+                                )
+                    else:
+                        reporter.verbosity1(
+                            "failed {}, error {},\noutput\n:{}\nstderr:\n{}".format(
+                                cmd, proc.returncode, out, err
+                            )
+                        )
+                _PY_AVAILABLE.append(CURRENT)
+        for cur_spec in _PY_AVAILABLE:
+            if cur_spec.satisfies(spec):
+                return cur_spec.path
 
 
-def check_version(cmd):
+def check_with_path(candidates, spec):
+    for path in candidates:
+        base = path
+        if not os.path.isabs(path):
+            path = py.path.local.sysfind(path)
+        if path is not None:
+            if os.path.exists(str(path)):
+                cur_spec = exe_spec(path, base)
+                if cur_spec is not None and cur_spec.satisfies(spec):
+                    return cur_spec.path
+            else:
+                reporter.verbosity2("no such file {}".format(path))
+
+
+_SPECS = {}
+_SPECK_LOCK = defaultdict(Lock)
+
+
+def exe_spec(python_exe, base):
+    if not isinstance(python_exe, str):
+        python_exe = str(python_exe)
+    with _SPECK_LOCK[python_exe]:
+        if python_exe not in _SPECS:
+            found = None, python_exe
+            if python_exe is not None:
+                info = get_python_info([python_exe])
+                if info is not None:
+                    found = PythonSpec(
+                        info["name"],
+                        info["version_info"][0],
+                        info["version_info"][1],
+                        64 if info["is_64"] else 32,
+                        info["executable"],
+                    )
+                    reporter.verbosity2("{} ({}) is {}".format(base, python_exe, info))
+            _SPECS[python_exe] = found
+    return _SPECS[python_exe]
+
+
+def get_python_info(cmd):
     proc = subprocess.Popen(
         cmd + [VERSION_QUERY_SCRIPT],
         stdout=subprocess.PIPE,
@@ -229,4 +320,4 @@ def check_version(cmd):
             return result
     else:
         failure = "exit code {}".format(proc.returncode)
-    reporter.info("{!r} cmd {!r} out {!r} err {!r} ".format(failure, cmd, out, err))
+    reporter.verbosity1("{!r} cmd {!r} out {!r} err {!r} ".format(failure, cmd, out, err))

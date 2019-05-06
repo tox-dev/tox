@@ -107,19 +107,21 @@ def test_tox_get_python_executable():
         assert_version_in_output(exe, str(major))
 
 
-def test_find_executable_extra(monkeypatch):
-    @staticmethod
-    def sysfind(_):
-        return "hello"
-
-    monkeypatch.setattr(py.path.local, "sysfind", sysfind)
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="no symlink")
+def test_find_alias_on_path(monkeypatch, tmp_path):
+    magic = tmp_path / "magic"
+    os.symlink(sys.executable, str(magic))
+    monkeypatch.setenv(
+        str("PATH"),
+        os.pathsep.join(([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep))),
+    )
 
     class envconfig:
-        basepython = "1lk23j"
+        basepython = "magic"
         envname = "pyxx"
 
     t = tox_get_python_executable(envconfig)
-    assert t == "hello"
+    assert t == str(magic)
 
 
 def test_run_and_get_interpreter_info():
@@ -182,12 +184,7 @@ class TestInterpreterInfo:
         version_info="my-version-info",
         sysplatform="my-sys-platform",
     ):
-        return InterpreterInfo(name, executable, version_info, sysplatform)
-
-    @pytest.mark.parametrize("missing_arg", ("executable", "version_info"))
-    def test_assert_on_missing_args(self, missing_arg):
-        with pytest.raises(AssertionError):
-            self.info(**{missing_arg: None})
+        return InterpreterInfo(name, executable, version_info, sysplatform, True)
 
     def test_data(self):
         x = self.info("larry", "moe", "shemp", "curly")

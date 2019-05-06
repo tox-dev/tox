@@ -24,7 +24,6 @@ from tox.logs.result import ResultLog
 from tox.reporter import update_default_reporter
 from tox.util import set_os_env_var
 from tox.util.graph import stable_topological_sort
-from tox.util.path import ensure_empty_dir
 from tox.util.stdlib import suppress_output
 from tox.venv import VirtualEnv
 
@@ -62,7 +61,6 @@ def main(args):
     try:
         config = load_config(args)
         config.logdir.ensure(dir=1)
-        ensure_empty_dir(config.logdir)
         with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
             session = build_session(config)
             exit_code = session.runcommand()
