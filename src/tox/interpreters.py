@@ -226,6 +226,7 @@ else:
             if spec.name == "python":
                 # The standard names are in predictable places.
                 candidates.append(r"c:\python{}{}\python.exe".format(spec.major, spec.minor))
+        print('candidates', candidates)
         return check_with_path(candidates, spec)
 
     _PY_AVAILABLE = []

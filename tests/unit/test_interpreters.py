@@ -94,6 +94,9 @@ def test_find_alias_on_path(monkeypatch, tmp_path):
         basepython = "magic"
         envname = "pyxx"
 
+    detected = py.path.local.sysfind("magic")
+    assert detected
+
     t = tox_get_python_executable(envconfig).lower()
     assert t == str(magic).lower()
 
