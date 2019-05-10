@@ -1091,15 +1091,17 @@ class ParseIni(object):
 
         # configure testenvs
         to_do = []
-        failures = {}
+        failures = OrderedDict()
+        results = {}
         cur_self = self
 
         def run(name, section, subs, config):
             try:
-                config.envconfigs[name] = cur_self.make_envconfig(name, section, subs, config)
+                results[name] = cur_self.make_envconfig(name, section, subs, config)
             except Exception as exception:
                 failures[name] = (exception, traceback.format_exc())
 
+        order = []
         for name in all_envs:
             section = "{}{}".format(testenvprefix, name)
             factors = set(name.split("-"))
@@ -1110,6 +1112,7 @@ class ParseIni(object):
                     tox.PYTHON.PY_FACTORS_RE.match(factor) for factor in factors - known_factors
                 )
             ):
+                order.append(name)
                 thread = Thread(target=run, args=(name, section, reader._subs, config))
                 thread.daemon = True
                 thread.start()
@@ -1124,7 +1127,8 @@ class ParseIni(object):
                     for key, (exc, trace) in failures.items()
                 )
             )
-
+        for name in order:
+            config.envconfigs[name] = results[name]
         all_develop = all(
             name in config.envconfigs and config.envconfigs[name].usedevelop
             for name in config.envlist

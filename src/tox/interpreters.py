@@ -54,7 +54,7 @@ class Interpreters:
         try:
             res = exec_on_interpreter(str(info.executable), SITE_PACKAGE_QUERY_SCRIPT, str(envdir))
         except ExecFailed as e:
-            print("execution failed: {} -- {}".format(e.out, e.err))
+            reporter.verbosity1("execution failed: {} -- {}".format(e.out, e.err))
             return ""
         else:
             return res["dir"]
@@ -226,7 +226,6 @@ else:
             if spec.name == "python":
                 # The standard names are in predictable places.
                 candidates.append(r"c:\python{}{}\python.exe".format(spec.major, spec.minor))
-        print('candidates', candidates)
         return check_with_path(candidates, spec)
 
     _PY_AVAILABLE = []
@@ -273,6 +272,7 @@ def check_with_path(candidates, spec):
         base = path
         if not os.path.isabs(path):
             path = py.path.local.sysfind(path)
+            reporter.verbosity2(("path found", path))
         if path is not None:
             if os.path.exists(str(path)):
                 cur_spec = exe_spec(path, base)

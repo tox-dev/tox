@@ -6,6 +6,7 @@ import py
 import pytest
 
 import tox
+from tox import reporter
 from tox._pytestplugin import mark_dont_run_on_posix
 from tox.config import get_plugin_manager
 from tox.interpreters import (
@@ -16,6 +17,7 @@ from tox.interpreters import (
     run_and_get_interpreter_info,
     tox_get_python_executable,
 )
+from tox.reporter import Verbosity
 
 
 @pytest.fixture(name="interpreters")
@@ -81,8 +83,9 @@ def test_tox_get_python_executable():
         assert_version_in_output(exe, str(major))
 
 
-@pytest.mark.skipif(not hasattr(os, "symlink"), reason="no symlink")
+@pytest.mark.skipif("sys.platform == 'win32'", reason="symlink execution unreliable on Windows")
 def test_find_alias_on_path(monkeypatch, tmp_path):
+    reporter.update_default_reporter(Verbosity.DEFAULT, Verbosity.DEBUG)
     magic = tmp_path / "magic{}".format(os.path.splitext(sys.executable)[1])
     os.symlink(sys.executable, str(magic))
     monkeypatch.setenv(
