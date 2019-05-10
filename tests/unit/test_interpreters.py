@@ -83,23 +83,19 @@ def test_tox_get_python_executable():
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="no symlink")
 def test_find_alias_on_path(monkeypatch, tmp_path):
-    try:
-        magic = tmp_path / "magic"
-        os.symlink(sys.executable, str(magic))
-    except OSError:
-        pass
-    else:
-        monkeypatch.setenv(
-            str("PATH"),
-            os.pathsep.join(([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep))),
-        )
+    magic = tmp_path / "magic{}".format(os.path.splitext(sys.executable)[1])
+    os.symlink(sys.executable, str(magic))
+    monkeypatch.setenv(
+        str("PATH"),
+        os.pathsep.join(([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep))),
+    )
 
-        class envconfig:
-            basepython = "magic"
-            envname = "pyxx"
+    class envconfig:
+        basepython = "magic"
+        envname = "pyxx"
 
-        t = tox_get_python_executable(envconfig)
-        assert t == str(magic)
+    t = tox_get_python_executable(envconfig).lower()
+    assert t == str(magic).lower()
 
 
 def test_run_and_get_interpreter_info():
