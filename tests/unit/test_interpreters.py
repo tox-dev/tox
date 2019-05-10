@@ -1,5 +1,3 @@
-import distutils.spawn
-import inspect
 import os
 import subprocess
 import sys
@@ -8,6 +6,7 @@ import py
 import pytest
 
 import tox
+from tox import reporter
 from tox._pytestplugin import mark_dont_run_on_posix
 from tox.config import get_plugin_manager
 from tox.interpreters import (
@@ -18,6 +17,7 @@ from tox.interpreters import (
     run_and_get_interpreter_info,
     tox_get_python_executable,
 )
+from tox.reporter import Verbosity
 
 
 @pytest.fixture(name="interpreters")
@@ -28,40 +28,16 @@ def create_interpreters_instance():
 
 @mark_dont_run_on_posix
 def test_locate_via_py(monkeypatch):
-    from tox.interpreters import locate_via_py
+    import tox.interpreters
 
-    def fake_find_exe(exe):
-        assert exe == "py"
-        return "py"
+    spec = tox.interpreters.CURRENT
+    del tox.interpreters._PY_AVAILABLE[:]
+    exe = tox.interpreters.locate_via_py(spec)
+    assert exe
+    assert len(tox.interpreters._PY_AVAILABLE)
 
-    from tox.helper import get_version
-
-    def fake_popen(cmd, stdout, stderr, universal_newlines):
-        fake_popen.last_call = cmd[:3]
-
-        # need to pipe all stdout to collect the version information & need to
-        # do the same for stderr output to avoid it being forwarded as the
-        # current process's output, e.g. when the python launcher reports the
-        # requested Python interpreter not being installed on the system
-        assert stdout is subprocess.PIPE
-        assert stderr is subprocess.PIPE
-        assert universal_newlines is True
-
-        class proc:
-            returncode = 0
-
-            @staticmethod
-            def communicate():
-                return get_version.info_as_dump, None
-
-        return proc
-
-    monkeypatch.setattr(distutils.spawn, "find_executable", fake_find_exe)
-    monkeypatch.setattr(subprocess, "Popen", fake_popen)
-    assert locate_via_py("3", "6") == sys.executable
-    assert fake_popen.last_call == ("py", "-3.6", inspect.getsourcefile(get_version))
-    assert locate_via_py("3") == sys.executable
-    assert fake_popen.last_call == ("py", "-3", inspect.getsourcefile(get_version))
+    monkeypatch.setattr(tox.interpreters, "_call_py", None)
+    assert tox.interpreters.locate_via_py(spec)
 
 
 def test_tox_get_python_executable():
@@ -97,7 +73,8 @@ def test_tox_get_python_executable():
     for major in (2, 3):
         name = "python{}".format(major)
         if tox.INFO.IS_WIN:
-            if subprocess.call(("py", "-{}".format(major), "-c", "")):
+            error_code = subprocess.call(("py", "-{}".format(major), "-c", ""))
+            if error_code:
                 continue
         elif not py.path.local.sysfind(name):
             continue
@@ -106,19 +83,25 @@ def test_tox_get_python_executable():
         assert_version_in_output(exe, str(major))
 
 
-def test_find_executable_extra(monkeypatch):
-    @staticmethod
-    def sysfind(_):
-        return "hello"
-
-    monkeypatch.setattr(py.path.local, "sysfind", sysfind)
+@pytest.mark.skipif("sys.platform == 'win32'", reason="symlink execution unreliable on Windows")
+def test_find_alias_on_path(monkeypatch, tmp_path):
+    reporter.update_default_reporter(Verbosity.DEFAULT, Verbosity.DEBUG)
+    magic = tmp_path / "magic{}".format(os.path.splitext(sys.executable)[1])
+    os.symlink(sys.executable, str(magic))
+    monkeypatch.setenv(
+        str("PATH"),
+        os.pathsep.join(([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep))),
+    )
 
     class envconfig:
-        basepython = "1lk23j"
+        basepython = "magic"
         envname = "pyxx"
 
-    t = tox_get_python_executable(envconfig)
-    assert t == "hello"
+    detected = py.path.local.sysfind("magic")
+    assert detected
+
+    t = tox_get_python_executable(envconfig).lower()
+    assert t == str(magic).lower()
 
 
 def test_run_and_get_interpreter_info():
@@ -181,12 +164,7 @@ class TestInterpreterInfo:
         version_info="my-version-info",
         sysplatform="my-sys-platform",
     ):
-        return InterpreterInfo(name, executable, version_info, sysplatform)
-
-    @pytest.mark.parametrize("missing_arg", ("executable", "version_info"))
-    def test_assert_on_missing_args(self, missing_arg):
-        with pytest.raises(AssertionError):
-            self.info(**{missing_arg: None})
+        return InterpreterInfo(name, executable, version_info, sysplatform, True)
 
     def test_data(self):
         x = self.info("larry", "moe", "shemp", "curly")

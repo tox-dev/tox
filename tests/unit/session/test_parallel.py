@@ -30,6 +30,7 @@ def test_parallel(cmd, initproj):
     result.assert_success()
 
 
+@flaky(max_runs=3)
 def test_parallel_live(cmd, initproj):
     initproj(
         "pkg123-0.7",

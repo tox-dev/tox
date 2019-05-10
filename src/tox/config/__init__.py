@@ -8,10 +8,12 @@ import re
 import shlex
 import string
 import sys
+import traceback
 import warnings
 from collections import OrderedDict
 from fnmatch import fnmatchcase
 from subprocess import list2cmdline
+from threading import Thread
 
 import pkg_resources
 import pluggy
@@ -28,6 +30,7 @@ from tox.reporter import (
     using,
     verbosity1,
 )
+from tox.util.path import ensure_empty_dir
 
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
@@ -1036,6 +1039,9 @@ class ParseIni(object):
         config.sdistsrc = reader.getpath("sdistsrc", None)
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
+        within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+        if not within_parallel:
+            ensure_empty_dir(config.logdir)
 
         # determine indexserver dictionary
         config.indexserver = {"default": IndexServerConfig("default")}
@@ -1084,6 +1090,18 @@ class ParseIni(object):
                 known_factors.update(env.split("-"))
 
         # configure testenvs
+        to_do = []
+        failures = OrderedDict()
+        results = {}
+        cur_self = self
+
+        def run(name, section, subs, config):
+            try:
+                results[name] = cur_self.make_envconfig(name, section, subs, config)
+            except Exception as exception:
+                failures[name] = (exception, traceback.format_exc())
+
+        order = []
         for name in all_envs:
             section = "{}{}".format(testenvprefix, name)
             factors = set(name.split("-"))
@@ -1094,7 +1112,23 @@ class ParseIni(object):
                     tox.PYTHON.PY_FACTORS_RE.match(factor) for factor in factors - known_factors
                 )
             ):
-                config.envconfigs[name] = self.make_envconfig(name, section, reader._subs, config)
+                order.append(name)
+                thread = Thread(target=run, args=(name, section, reader._subs, config))
+                thread.daemon = True
+                thread.start()
+                to_do.append(thread)
+        for thread in to_do:
+            while thread.is_alive():
+                thread.join(timeout=20)
+        if failures:
+            raise tox.exception.ConfigError(
+                "\n".join(
+                    "{} failed with {} at {}".format(key, exc, trace)
+                    for key, (exc, trace) in failures.items()
+                )
+            )
+        for name in order:
+            config.envconfigs[name] = results[name]
         all_develop = all(
             name in config.envconfigs and config.envconfigs[name].usedevelop
             for name in config.envlist

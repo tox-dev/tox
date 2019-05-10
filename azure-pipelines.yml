@@ -1,5 +1,4 @@
 name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
-
 resources:
   repositories:
   - repository: tox
@@ -26,47 +25,29 @@ variables:
 jobs:
 - template: run-tox-env.yml@tox
   parameters:
+    tox_version: ''
     jobs:
-      check:
-        py: '3.7'
-        toxenvs:
-        - fix_lint
-        - docs
-        - package_description
-      windows:
-        coverage: 'coverage'
-        toxenvs:
-        - py37
-        - py36
-        - py35
-        - py34
-        - py27
-      linux:
-        coverage: 'coverage'
-        toxenvs:
-        - py38
-        - py37
-        - py36
-        - py35
-        - py34
-        - py27
-      macOs:
-        coverage: 'coverage'
-        toxenvs:
-        - py37
-        - py27
-- template: merge-coverage.yml@tox
-  parameters:
-    dependsOn:
-    - windows
-    - linux
-    - macOs
+      fix_lint: null
+      docs: null
+      py37:
+        image: [linux, windows, macOs]
+      py27:
+        image: [linux, windows, macOs]
+      py36:
+        image: [linux, windows, macOs]
+      py35:
+        image: [linux, windows, macOs]
+      py34:
+        image: [linux, windows, macOs]
+      dev: null
+      package_description: null
+    coverage:
+      with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
+      for_envs: [py37, py36, py35, py34, py27]
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox
     parameters:
     - external_feed: 'toxdev'
     - pypi_remote: 'pypi-toxdev'
-    - dependsOn:
-      - check
-      - report_coverage
+    - dependsOn: [fix_lint, docs, package_description, dev, report_coverage]

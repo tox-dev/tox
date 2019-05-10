@@ -1773,7 +1773,7 @@ class TestConfigTestEnv:
             deps=
                 {[testing:pytest]deps}
         """
-        with pytest.raises(ValueError):
+        with pytest.raises(tox.exception.ConfigError):
             newconfig([], inisource)
 
     def test_single_value_from_other_secton(self, newconfig, tmpdir):

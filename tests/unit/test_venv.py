@@ -42,7 +42,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
         venv.getsupportedinterpreter()
     monkeypatch.undo()
     monkeypatch.setattr(venv.envconfig, "envname", "py1")
-    monkeypatch.setattr(venv.envconfig, "basepython", "notexistingpython")
+    monkeypatch.setattr(venv.envconfig, "basepython", "notexisting")
     with pytest.raises(tox.exception.InterpreterNotFound):
         venv.getsupportedinterpreter()
     monkeypatch.undo()
