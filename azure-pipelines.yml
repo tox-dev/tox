@@ -29,9 +29,9 @@ jobs:
     jobs:
       fix_lint: null
       docs: null
-      package_description: null
-      dev: null
       py37:
+        image: [linux, windows, macOs]
+      py27:
         image: [linux, windows, macOs]
       py36:
         image: [linux, windows, macOs]
@@ -39,21 +39,15 @@ jobs:
         image: [linux, windows, macOs]
       py34:
         image: [linux, windows, macOs]
-      py27:
-        image: [linux, windows, macOs]
-    env:
-    - key: [py27, py34, py35, py36, py37]
-      coverage: 'coverage'
-
-- template: merge-coverage.yml@tox
-  parameters:
-    dependsOn: [py27, py34, py35, py36, py37]
+      dev: null
+      package_description: null 
+    coverage:
+      with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
+      for_envs: [py37, py36, py35, py34, py27]
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox
     parameters:
     - external_feed: 'toxdev'
     - pypi_remote: 'pypi-toxdev'
-    - dependsOn:
-      - check
-      - report_coverage
+    - dependsOn: [fix_lint, docs, package_description, dev, report_coverage]

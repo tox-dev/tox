@@ -1,5 +1,3 @@
-import distutils.spawn
-import inspect
 import os
 import subprocess
 import sys
@@ -28,40 +26,16 @@ def create_interpreters_instance():
 
 @mark_dont_run_on_posix
 def test_locate_via_py(monkeypatch):
-    from tox.interpreters import locate_via_py
+    import tox.interpreters
 
-    def fake_find_exe(exe):
-        assert exe == "py"
-        return "py"
+    spec = tox.interpreters.CURRENT
+    del tox.interpreters._PY_AVAILABLE[:]
+    exe = tox.interpreters.locate_via_py(spec)
+    assert exe
+    assert len(tox.interpreters._PY_AVAILABLE)
 
-    from tox.helper import get_version
-
-    def fake_popen(cmd, stdout, stderr, universal_newlines):
-        fake_popen.last_call = cmd[:3]
-
-        # need to pipe all stdout to collect the version information & need to
-        # do the same for stderr output to avoid it being forwarded as the
-        # current process's output, e.g. when the python launcher reports the
-        # requested Python interpreter not being installed on the system
-        assert stdout is subprocess.PIPE
-        assert stderr is subprocess.PIPE
-        assert universal_newlines is True
-
-        class proc:
-            returncode = 0
-
-            @staticmethod
-            def communicate():
-                return get_version.info_as_dump, None
-
-        return proc
-
-    monkeypatch.setattr(distutils.spawn, "find_executable", fake_find_exe)
-    monkeypatch.setattr(subprocess, "Popen", fake_popen)
-    assert locate_via_py("3", "6") == sys.executable
-    assert fake_popen.last_call == ["py", "-3.6", inspect.getsourcefile(get_version)]
-    assert locate_via_py("3") == sys.executable
-    assert fake_popen.last_call == ["py", "-3", inspect.getsourcefile(get_version)]
+    monkeypatch.setattr(tox.interpreters, "_call_py", None)
+    assert tox.interpreters.locate_via_py(spec)
 
 
 def test_tox_get_python_executable():
@@ -109,19 +83,23 @@ def test_tox_get_python_executable():
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="no symlink")
 def test_find_alias_on_path(monkeypatch, tmp_path):
-    magic = tmp_path / "magic"
-    os.symlink(sys.executable, str(magic))
-    monkeypatch.setenv(
-        str("PATH"),
-        os.pathsep.join(([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep))),
-    )
+    try:
+        magic = tmp_path / "magic"
+        os.symlink(sys.executable, str(magic))
+    except OSError:
+        pass
+    else:
+        monkeypatch.setenv(
+            str("PATH"),
+            os.pathsep.join(([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep))),
+        )
 
-    class envconfig:
-        basepython = "magic"
-        envname = "pyxx"
+        class envconfig:
+            basepython = "magic"
+            envname = "pyxx"
 
-    t = tox_get_python_executable(envconfig)
-    assert t == str(magic)
+        t = tox_get_python_executable(envconfig)
+        assert t == str(magic)
 
 
 def test_run_and_get_interpreter_info():

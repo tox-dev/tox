@@ -132,6 +132,10 @@ class PythonSpec(object):
         self.architecture = architecture
         self.path = path
 
+    def __repr__(self):
+        msg = "PythonSpec(name={}, major={}, minor={}, architecture={}, path={})"
+        return msg.format(self.name, self.major, self.minor, self.architecture, self.path)
+
     def satisfies(self, req):
         if req.is_abs and self.is_abs and self.path != req.path:
             return False
@@ -206,10 +210,11 @@ else:
         if spec.name is not None and CURRENT.satisfies(spec):
             return CURRENT.path
 
-        # second check if the py.exe has it
-        py_exe = locate_via_py(spec)
-        if py_exe is not None:
-            return py_exe
+        # second check if the py.exe has it (only for non path specs)
+        if spec.path is None:
+            py_exe = locate_via_py(spec)
+            if py_exe is not None:
+                return py_exe
 
         # third check if the literal base python is on PATH
         candidates = [envconfig.basepython]
@@ -229,39 +234,37 @@ else:
     def locate_via_py(spec):
         with _PY_LOCK:
             if not _PY_AVAILABLE:
-                py_exe = py.path.local.sysfind("py")
-                if py_exe:
-                    cmd = [str(py_exe), "-0p"]
-                    proc = subprocess.Popen(
-                        cmd,
-                        universal_newlines=True,
-                        stderr=subprocess.PIPE,
-                        stdout=subprocess.PIPE,
-                    )
-                    out, err = proc.communicate()
-                    if not proc.returncode:
-                        elements = [
-                            tuple(j.strip() for j in i.split("\t"))
-                            for i in out.splitlines()
-                            if i.strip()
-                        ]
-                        if elements:
-                            for ver_arch, exe in elements:
-                                _, version, arch = ver_arch.split("-")
-                                major, minor = version.split(".")
-                                _PY_AVAILABLE.append(
-                                    PythonSpec("python", int(major), int(minor), int(arch), exe)
-                                )
-                    else:
-                        reporter.verbosity1(
-                            "failed {}, error {},\noutput\n:{}\nstderr:\n{}".format(
-                                cmd, proc.returncode, out, err
-                            )
-                        )
+                _call_py()
                 _PY_AVAILABLE.append(CURRENT)
         for cur_spec in _PY_AVAILABLE:
             if cur_spec.satisfies(spec):
                 return cur_spec.path
+
+    def _call_py():
+        py_exe = py.path.local.sysfind("py")
+        if py_exe:
+            cmd = [str(py_exe), "-0p"]
+            proc = subprocess.Popen(
+                cmd, universal_newlines=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+            )
+            out, err = proc.communicate()
+            if not proc.returncode:
+                elements = [
+                    tuple(j.strip() for j in i.split("\t")) for i in out.splitlines() if i.strip()
+                ]
+                if elements:
+                    for ver_arch, exe in elements:
+                        _, version, arch = ver_arch.split("-")
+                        major, minor = version.split(".")
+                        _PY_AVAILABLE.append(
+                            PythonSpec("python", int(major), int(minor), int(arch), exe)
+                        )
+            else:
+                reporter.verbosity1(
+                    "failed {}, error {},\noutput\n:{}\nstderr:\n{}".format(
+                        cmd, proc.returncode, out, err
+                    )
+                )
 
 
 def check_with_path(candidates, spec):
@@ -287,18 +290,18 @@ def exe_spec(python_exe, base):
         python_exe = str(python_exe)
     with _SPECK_LOCK[python_exe]:
         if python_exe not in _SPECS:
-            found = None, python_exe
-            if python_exe is not None:
-                info = get_python_info([python_exe])
-                if info is not None:
-                    found = PythonSpec(
-                        info["name"],
-                        info["version_info"][0],
-                        info["version_info"][1],
-                        64 if info["is_64"] else 32,
-                        info["executable"],
-                    )
-                    reporter.verbosity2("{} ({}) is {}".format(base, python_exe, info))
+            info = get_python_info([python_exe])
+            if info is not None:
+                found = PythonSpec(
+                    info["name"],
+                    info["version_info"][0],
+                    info["version_info"][1],
+                    64 if info["is_64"] else 32,
+                    info["executable"],
+                )
+                reporter.verbosity2("{} ({}) is {}".format(base, python_exe, info))
+            else:
+                found = None
             _SPECS[python_exe] = found
     return _SPECS[python_exe]
 
