@@ -48,6 +48,6 @@ jobs:
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox
     parameters:
-    - external_feed: 'toxdev'
-    - pypi_remote: 'pypi-toxdev'
-    - dependsOn: [fix_lint, docs, package_description, dev, report_coverage]
+      external_feed: 'toxdev'
+      pypi_remote: 'pypi-toxdev'
+      dependsOn: [fix_lint, docs, package_description, dev, report_coverage]

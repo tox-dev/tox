@@ -1,2 +1,0 @@
-tox ignores unknown CLI arguments when provisioning is on and outside of the provisioned environment (allowing
-provisioning arguments to be forwarded freely) - by :user:`gaborbernat`

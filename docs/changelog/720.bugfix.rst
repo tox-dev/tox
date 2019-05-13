@@ -1,1 +1,0 @@
-fix for ``tox -l`` command: do not allow setting the ``TOXENV`` or the ``-e`` flag to override the listed default environment variables, they still show up under extra if non defined target - by :user:`gaborbernat`

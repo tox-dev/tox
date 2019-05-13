@@ -11,6 +11,47 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.10.0 (2019-05-13)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix for ``tox -l`` command: do not allow setting the ``TOXENV`` or the ``-e`` flag to override the listed default environment variables, they still show up under extra if non defined target - by :user:`gaborbernat`
+  `#720 <https://github.com/tox-dev/tox/issues/720>`_
+- tox ignores unknown CLI arguments when provisioning is on and outside of the provisioned environment (allowing
+  provisioning arguments to be forwarded freely) - by :user:`gaborbernat`
+  `#1270 <https://github.com/tox-dev/tox/issues/1270>`_
+
+
+Features
+^^^^^^^^
+
+- Virtual environments created now no longer upgrade pip/wheel/setuptools to the latest version. Instead the start
+  packages after virtualenv creation now is whatever virtualenv has bundled in. This allows faster virtualenv
+  creation and builds that are easier to reproduce.
+  `#448 <https://github.com/tox-dev/tox/issues/448>`_
+- Improve python discovery and add architecture support:
+   - UNIX:
+
+     - First, check if the tox host Python matches.
+     - Second, check if the the canonical name (e.g. ``python3.7``, ``python3``) matches or the base python is an absolute path, use that.
+     - Third, check if the the canonical name without version matches (e.g. ``python``, ``pypy``) matches.
+
+   - Windows:
+
+     - First, check if the tox host Python matches.
+     - Second, use the ``py.exe`` to list registered interpreters and any of those match.
+     - Third, check if the the canonical name (e.g. ``python3.7``, ``python3``) matches or the base python is an absolute path, use that.
+     - Fourth, check if the the canonical name without version matches (e.g. ``python``, ``pypy``) matches.
+     - Finally, check for known locations (``c:\python{major}{minor}\python.exe``).
+
+
+  tox environment configuration generation is now done in parallel (to alleviate the slowdown due to extra
+  checks).
+  `#1290 <https://github.com/tox-dev/tox/issues/1290>`_
+
+
 v3.9.0 (2019-04-17)
 -------------------
 
