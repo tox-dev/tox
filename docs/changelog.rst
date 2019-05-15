@@ -11,6 +11,26 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.11.0 (2019-05-15)
+--------------------
+
+Features
+^^^^^^^^
+
+- ``--showconfig`` overhaul:
+
+  - now fully generated via the config parser, so anyone can load it by using the built-in python config parser
+  - the ``tox`` section contains all configuration data from config
+  - the ``tox`` section contains a ``host_python`` key detailing the path of the host python
+  - the ``tox:version`` section contains the versions of all packages tox depends on with their version
+  - passing ``-l`` now allows only listing default target envs
+  - allows showing config for a given set of tox environments only via the ``-e`` cli flag or the ``TOXENV`` environment
+    variable, in this case the ``tox`` and ``tox:version`` section is only shown if at least one verbosity flag is passed
+
+  this should help inspecting the options.
+  `#1298 <https://github.com/tox-dev/tox/issues/1298>`_
+
+
 v3.10.0 (2019-05-13)
 --------------------
 
