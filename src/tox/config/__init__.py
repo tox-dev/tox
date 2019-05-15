@@ -392,7 +392,8 @@ def tox_addoption(parser):
     parser.add_argument(
         "--showconfig",
         action="store_true",
-        help="show configuration information for all environments. ",
+        help="show live configuration (by default all env, with -l only default targets,"
+        " specific via TOXENV/-e)",
     )
     parser.add_argument(
         "-l",
@@ -1077,7 +1078,8 @@ class ParseIni(object):
         self.handle_provision(config, reader)
 
         self.parse_build_isolation(config, reader)
-        config.envlist, all_envs, config.envlist_default = self._getenvdata(reader, config)
+        res = self._getenvdata(reader, config)
+        config.envlist, all_envs, config.envlist_default, config.envlist_explicit = res
 
         # factors used in config or predefined
         known_factors = self._list_section_factors("testenv")
@@ -1268,18 +1270,19 @@ class ParseIni(object):
         from_config = reader.getstring("envlist", replace=False)
 
         env_list = []
+        envlist_explicit = False
         if (from_option and "ALL" in from_option) or (
             not from_option and from_environ and "ALL" in from_environ.split(",")
         ):
             all_envs = self._getallenvs(reader)
         else:
             candidates = (
-                os.environ.get(PARALLEL_ENV_VAR_KEY),
-                from_option,
-                from_environ,
-                from_config,
+                (os.environ.get(PARALLEL_ENV_VAR_KEY), True),
+                (from_option, True),
+                (from_environ, True),
+                (from_config, False),
             )
-            env_str = next((i for i in candidates if i), [])
+            env_str, envlist_explicit = next(((i, e) for i, e in candidates if i), ([], False))
             env_list = _split_env(env_str)
             all_envs = self._getallenvs(reader, env_list)
 
@@ -1293,7 +1296,7 @@ class ParseIni(object):
         if config.isolated_build is True and package_env in env_list:
             msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
             raise tox.exception.ConfigError(msg)
-        return env_list, all_envs, _split_env(from_config)
+        return env_list, all_envs, _split_env(from_config), envlist_explicit
 
 
 def _split_env(env):
@@ -1353,20 +1356,21 @@ class DepConfig:
         self.name = name
         self.indexserver = indexserver
 
-    def __str__(self):
+    def __repr__(self):
         if self.indexserver:
             if self.indexserver.name == "default":
                 return self.name
             return ":{}:{}".format(self.indexserver.name, self.name)
         return str(self.name)
 
-    __repr__ = __str__
-
 
 class IndexServerConfig:
     def __init__(self, name, url=None):
         self.name = name
         self.url = url
+
+    def __repr__(self):
+        return "IndexServerConfig(name={}, url={})".format(self.name, self.url)
 
 
 is_section_substitution = re.compile(r"{\[[^{}\s]+\]\S+?}").match

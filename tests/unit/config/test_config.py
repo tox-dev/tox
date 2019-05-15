@@ -2722,12 +2722,6 @@ class TestCmdInvocation:
         assert "some-repr" in version_info
         assert "1.0" in version_info
 
-    def test_config_specific_ini(self, tmpdir, cmd):
-        ini = tmpdir.ensure("hello.ini")
-        result = cmd("-c", ini, "--showconfig")
-        assert not result.ret
-        assert result.outlines[1] == "config-file: {}".format(ini)
-
     def test_no_tox_ini(self, cmd, initproj):
         initproj("noini-0.5")
         result = cmd()
@@ -2735,49 +2729,6 @@ class TestCmdInvocation:
         msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
         assert result.err == msg
         assert not result.out
-
-    def test_override_workdir(self, cmd, initproj):
-        baddir = "badworkdir-123"
-        gooddir = "overridden-234"
-        initproj(
-            "overrideworkdir-0.5",
-            filedefs={
-                "tox.ini": """
-            [tox]
-            toxworkdir={}
-            """.format(
-                    baddir
-                )
-            },
-        )
-        result = cmd("--workdir", gooddir, "--showconfig")
-        assert not result.ret
-        assert gooddir in result.out
-        assert baddir not in result.out
-        assert py.path.local(gooddir).check()
-        assert not py.path.local(baddir).check()
-
-    def test_showconfig_with_force_dep_version(self, cmd, initproj):
-        initproj(
-            "force_dep_version",
-            filedefs={
-                "tox.ini": """
-            [tox]
-
-            [testenv]
-            deps=
-                dep1==2.3
-                dep2
-            """
-            },
-        )
-        result = cmd("--showconfig")
-        result.assert_success(is_run_test_env=False)
-        assert any(re.match(r".*deps.*dep1==2.3, dep2.*", l) for l in result.outlines)
-        # override dep1 specific version, and force version for dep2
-        result = cmd("--showconfig", "--force-dep=dep1", "--force-dep=dep2==5.0")
-        result.assert_success(is_run_test_env=False)
-        assert any(re.match(r".*deps.*dep1, dep2==5.0.*", l) for l in result.outlines)
 
 
 @pytest.mark.parametrize(
