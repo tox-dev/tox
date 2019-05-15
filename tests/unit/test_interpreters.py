@@ -1,4 +1,7 @@
+from __future__ import unicode_literals
+
 import os
+import stat
 import subprocess
 import sys
 
@@ -136,6 +139,34 @@ class TestInterpreters:
         assert info.name == "1lkj23"
         assert not info.executable
         assert isinstance(info, NoInterpreterInfo)
+
+    @pytest.mark.skipif("sys.platform == 'win32'", reason="Uses a unix only wrapper")
+    def test_get_info_uses_hook_path(self, tmp_path):
+        magic = tmp_path / "magic{}".format(os.path.splitext(sys.executable)[1])
+        wrapper = (
+            "#!{executable}\n"
+            "import subprocess\n"
+            "import sys\n"
+            "sys.exit(subprocess.call([\"{executable}\"] + sys.argv[1:]))\n"
+        ).format(executable=sys.executable)
+        magic.write_text(wrapper)
+        magic.chmod(magic.stat().st_mode | stat.S_IEXEC)
+
+        class MockHook:
+            def tox_get_python_executable(self, envconfig):
+                return str(magic)
+
+        class envconfig:
+            basepython = sys.executable
+            envname = "magicpy"
+
+        # Check that the wrapper is working first.
+        # If it isn't, the default is to return the passed path anyway.
+        subprocess.check_call([str(magic), "--help"])
+
+        interpreters = Interpreters(hook=MockHook())
+        info = interpreters.get_info(envconfig)
+        assert info.executable == str(magic)
 
     def test_get_sitepackagesdir_error(self, interpreters):
         class envconfig:
