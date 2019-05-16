@@ -67,6 +67,7 @@ def run_and_get_interpreter_info(name, executable):
         result["version_info"] = tuple(result["version_info"])  # fix json dump transformation
         del result["name"]
         del result["version"]
+        result["executable"] = str(executable)
     except ExecFailed as e:
         return NoInterpreterInfo(name, executable=e.executable, out=e.out, err=e.err)
     else:

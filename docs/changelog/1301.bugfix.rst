@@ -1,0 +1,1 @@
+When creating virtual environments we no longer ask the python to tell its path, but rather use the discovered path.
