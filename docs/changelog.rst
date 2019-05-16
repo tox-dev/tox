@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.11.1 (2019-05-16)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- When creating virtual environments we no longer ask the python to tell its path, but rather use the discovered path.
+  `#1301 <https://github.com/tox-dev/tox/issues/1301>`_
+
+
 v3.11.0 (2019-05-15)
 --------------------
 
