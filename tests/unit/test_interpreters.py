@@ -147,7 +147,7 @@ class TestInterpreters:
             "#!{executable}\n"
             "import subprocess\n"
             "import sys\n"
-            "sys.exit(subprocess.call([\"{executable}\"] + sys.argv[1:]))\n"
+            'sys.exit(subprocess.call(["{executable}"] + sys.argv[1:]))\n'
         ).format(executable=sys.executable)
         magic.write_text(wrapper)
         magic.chmod(magic.stat().st_mode | stat.S_IEXEC)
