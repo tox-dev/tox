@@ -13,6 +13,7 @@ from tox.util.spinner import Spinner
 def run_parallel(config, venv_dict):
     """here we'll just start parallel sub-processes"""
     live_out = config.option.parallel_live
+    disable_spinner = bool(os.environ.get("TOX_PARALLEL_NO_SPINNER") == "1")
     args = [sys.executable, MAIN_FILE] + config.args
     try:
         position = args.index("--")
@@ -25,7 +26,9 @@ def run_parallel(config, venv_dict):
     semaphore = Semaphore(max_parallel)
     finished = Event()
 
-    show_progress = not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
+    show_progress = (
+        not disable_spinner and not live_out and reporter.verbosity() > reporter.Verbosity.QUIET
+    )
 
     with Spinner(enabled=show_progress) as spinner:
 
