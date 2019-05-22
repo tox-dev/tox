@@ -20,6 +20,7 @@ from tox.interpreters import (
     run_and_get_interpreter_info,
     tox_get_python_executable,
 )
+from tox.pep514 import discover_pythons
 from tox.reporter import Verbosity
 
 
@@ -233,3 +234,7 @@ class TestNoInterpreterInfo:
     def test_str_with_executable(self):
         x = NoInterpreterInfo("coconut", executable="bang/em/together")
         assert str(x) == "<executable at bang/em/together, not runnable>"
+
+
+def test_discover_winreg():
+    list(discover_pythons())

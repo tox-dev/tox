@@ -126,16 +126,19 @@ class NoInterpreterInfo:
 
 
 class PythonSpec(object):
-    def __init__(self, name, major, minor, architecture, path):
+    def __init__(self, name, major, minor, architecture, path, args=None):
         self.name = name
         self.major = major
         self.minor = minor
         self.architecture = architecture
         self.path = path
+        self.args = args
 
     def __repr__(self):
-        msg = "PythonSpec(name={}, major={}, minor={}, architecture={}, path={})"
-        return msg.format(self.name, self.major, self.minor, self.architecture, self.path)
+        msg = "PythonSpec(name={}, major={}, minor={}, architecture={}, path={}, args={})"
+        return msg.format(
+            self.name, self.major, self.minor, self.architecture, self.path, self.args
+        )
 
     def satisfies(self, req):
         if req.is_abs and self.is_abs and self.path != req.path:
@@ -235,37 +238,13 @@ else:
     def locate_via_py(spec):
         with _PY_LOCK:
             if not _PY_AVAILABLE:
-                _call_py()
-                _PY_AVAILABLE.append(CURRENT)
+                from . import pep514
+
+                for spec in pep514.discover_pythons():
+                    _PY_AVAILABLE.append(spec)
         for cur_spec in _PY_AVAILABLE:
             if cur_spec.satisfies(spec):
                 return cur_spec.path
-
-    def _call_py():
-        py_exe = py.path.local.sysfind("py")
-        if py_exe:
-            cmd = [str(py_exe), "-0p"]
-            proc = subprocess.Popen(
-                cmd, universal_newlines=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE
-            )
-            out, err = proc.communicate()
-            if not proc.returncode:
-                elements = [
-                    tuple(j.strip() for j in i.split("\t")) for i in out.splitlines() if i.strip()
-                ]
-                if elements:
-                    for ver_arch, exe in elements:
-                        _, version, arch = ver_arch.split("-")
-                        major, minor = version.split(".")
-                        _PY_AVAILABLE.append(
-                            PythonSpec("python", int(major), int(minor), int(arch), exe)
-                        )
-            else:
-                reporter.verbosity1(
-                    "failed {}, error {},\noutput\n:{}\nstderr:\n{}".format(
-                        cmd, proc.returncode, out, err
-                    )
-                )
 
 
 def check_with_path(candidates, spec):
