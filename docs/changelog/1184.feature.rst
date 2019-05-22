@@ -1,0 +1,1 @@
+Adding ```TOX_PARALLEL_NO_SPINNER``` environment variable to disable the spinner in parallel mode for the purposes of clean output when using CI tools - by :user:`zeroshift`
