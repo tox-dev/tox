@@ -86,3 +86,5 @@ VERSION_QUERY_SCRIPT = os.path.join(_HELP_DIR, "get_version.py")
 SITE_PACKAGE_QUERY_SCRIPT = os.path.join(_HELP_DIR, "get_site_package_dir.py")
 BUILD_REQUIRE_SCRIPT = os.path.join(_HELP_DIR, "build_requires.py")
 BUILD_ISOLATED = os.path.join(_HELP_DIR, "build_isolated.py")
+PARALLEL_RESULT_JSON_PREFIX = ".tox-result"
+PARALLEL_RESULT_JSON_SUFFIX = ".json"

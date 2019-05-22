@@ -13,7 +13,9 @@ import tox
 from tox import reporter
 from tox.action import Action
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from tox.constants import PARALLEL_RESULT_JSON_PREFIX, PARALLEL_RESULT_JSON_SUFFIX
 from tox.package.local import resolve_package
+from tox.util.lock import get_unique_file
 from tox.util.path import ensure_empty_dir
 
 from .config import DepConfig
@@ -113,6 +115,7 @@ class VirtualEnv(object):
         self.popen = popen
         self._actions = []
         self.env_log = env_log
+        self._result_json_path = None
 
     def new_action(self, msg, *args):
         config = self.envconfig.config
@@ -129,6 +132,14 @@ class VirtualEnv(object):
             self.popen,
             self.envconfig.envpython,
         )
+
+    def get_result_json_path(self):
+        if self._result_json_path is None:
+            if self.envconfig.config.option.resultjson:
+                self._result_json_path = get_unique_file(
+                    self.path, PARALLEL_RESULT_JSON_PREFIX, PARALLEL_RESULT_JSON_SUFFIX
+                )
+        return self._result_json_path
 
     @property
     def hook(self):

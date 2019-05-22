@@ -1,6 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
+import os
 import sys
+import threading
 
 import pytest
 from flaky import flaky
@@ -191,26 +194,66 @@ parallel_show_output = True
     assert "stderr always" in result.out, result.output()
 
 
-def test_parallel_no_spinner(cmd, initproj, monkeypatch):
-    monkeypatch.setenv(str("TOX_PARALLEL_NO_SPINNER"), str("1"))
-    initproj(
+def test_parallel_result_json(cmd, result_json_project, tmp_path):
+    parallel_result_json = tmp_path / "parallel.json"
+    result = cmd("--parallel", "all", "--result-json", "{}".format(parallel_result_json))
+    ensure_result_json_ok(result, parallel_result_json)
+
+
+@pytest.fixture()
+def result_json_project(initproj):
+    return initproj(
         "pkg123-0.7",
         filedefs={
             "tox.ini": """
             [tox]
+            skipsdist = True
             envlist = a, b
-            isolated_build = true
             [testenv]
+            skip_install = True
             commands=python -c "import sys; print(sys.executable)"
-            [testenv:b]
-            depends = a
-        """,
-            "pyproject.toml": """
-            [build-system]
-            requires = ["setuptools >= 35.0.2"]
-            build-backend = 'setuptools.build_meta'
-                        """,
+        """
         },
     )
-    result = cmd("--parallel", "all")
+
+
+def ensure_result_json_ok(result, json_path):
     result.assert_success()
+    assert json_path.exists()
+    serial_data = json.loads(json_path.read_text())
+    ensure_key_in_env(serial_data)
+
+
+def ensure_key_in_env(serial_data):
+    for env in ("a", "b"):
+        for key in ("setup", "test"):
+            assert key in serial_data["testenvs"][env], json.dumps(
+                serial_data["testenvs"], indent=2
+            )
+
+
+def test_parallel_result_json_concurrent(cmd, result_json_project, tmp_path):
+    # first run to set up the environments (env creation is not thread safe)
+    result = cmd("-p", "all")
+    result.assert_success()
+
+    invoke_result = {}
+
+    def invoke_tox_in_thread(thread_name, result_json):
+        res = cmd("--parallel", "all", "--result-json", result_json)
+        invoke_result[thread_name] = res
+
+    # now concurrently
+    parallel1_result_json = tmp_path / "parallel1.json"
+    parallel2_result_json = tmp_path / "parallel2.json"
+    threads = [
+        threading.Thread(target=invoke_tox_in_thread, args=(k, p))
+        for k, p in (("t1", parallel1_result_json), ("t2", parallel2_result_json))
+    ]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+
+    ensure_result_json_ok(invoke_result["t1"], parallel1_result_json)
+    ensure_result_json_ok(invoke_result["t2"], parallel2_result_json)
+    # our set_os_env_var is not thread-safe so clean-up TOX_WORK_DIR
+    os.environ.pop("TOX_WORK_DIR", None)
