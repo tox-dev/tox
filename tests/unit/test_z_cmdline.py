@@ -500,7 +500,7 @@ def test_result_json(cmd, initproj, example123):
         assert isinstance(pyinfo["version_info"], list)
         assert pyinfo["version"]
         assert pyinfo["executable"]
-    assert "wrote json report at: {}".format(json_path) == result.outlines[-1]
+    assert "write json report at: {}".format(json_path) == result.outlines[-1]
 
 
 def test_developz(initproj, cmd):

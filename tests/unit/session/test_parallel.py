@@ -2,11 +2,14 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import os
+import subprocess
 import sys
 import threading
 
 import pytest
 from flaky import flaky
+
+from tox._pytestplugin import RunResult
 
 
 def test_parallel(cmd, initproj):
@@ -29,7 +32,7 @@ def test_parallel(cmd, initproj):
                         """,
         },
     )
-    result = cmd("--parallel", "all")
+    result = cmd("-p", "all")
     result.assert_success()
 
 
@@ -52,7 +55,7 @@ def test_parallel_live(cmd, initproj):
                         """,
         },
     )
-    result = cmd("--parallel", "all", "--parallel-live")
+    result = cmd("-p", "all", "-o")
     result.assert_success()
 
 
@@ -76,7 +79,7 @@ def test_parallel_circular(cmd, initproj):
                         """,
         },
     )
-    result = cmd("--parallel", "1")
+    result = cmd("-p", "1")
     result.assert_fail()
     assert result.out == "ERROR: circular dependency detected: a | b\n"
 
@@ -194,14 +197,8 @@ parallel_show_output = True
     assert "stderr always" in result.out, result.output()
 
 
-def test_parallel_result_json(cmd, result_json_project, tmp_path):
-    parallel_result_json = tmp_path / "parallel.json"
-    result = cmd("--parallel", "all", "--result-json", "{}".format(parallel_result_json))
-    ensure_result_json_ok(result, parallel_result_json)
-
-
 @pytest.fixture()
-def result_json_project(initproj):
+def parallel_project(initproj):
     return initproj(
         "pkg123-0.7",
         filedefs={
@@ -217,8 +214,38 @@ def result_json_project(initproj):
     )
 
 
-def ensure_result_json_ok(result, json_path):
+def test_parallel_no_spinner_on(cmd, parallel_project, monkeypatch):
+    monkeypatch.setenv(str("TOX_PARALLEL_NO_SPINNER"), str("1"))
+    result = cmd("-p", "all")
     result.assert_success()
+    assert "[2] a | b" not in result.out
+
+
+def test_parallel_no_spinner_off(cmd, parallel_project, monkeypatch):
+    monkeypatch.setenv(str("TOX_PARALLEL_NO_SPINNER"), str("0"))
+    result = cmd("-p", "all")
+    result.assert_success()
+    assert "[2] a | b" in result.out
+
+
+def test_parallel_no_spinner_not_set(cmd, parallel_project, monkeypatch):
+    monkeypatch.delenv(str("TOX_PARALLEL_NO_SPINNER"), raising=False)
+    result = cmd("-p", "all")
+    result.assert_success()
+    assert "[2] a | b" in result.out
+
+
+def test_parallel_result_json(cmd, parallel_project, tmp_path):
+    parallel_result_json = tmp_path / "parallel.json"
+    result = cmd("-p", "all", "--result-json", "{}".format(parallel_result_json))
+    ensure_result_json_ok(result, parallel_result_json)
+
+
+def ensure_result_json_ok(result, json_path):
+    if isinstance(result, RunResult):
+        result.assert_success()
+    else:
+        assert not isinstance(result, subprocess.CalledProcessError)
     assert json_path.exists()
     serial_data = json.loads(json_path.read_text())
     ensure_key_in_env(serial_data)
@@ -232,7 +259,7 @@ def ensure_key_in_env(serial_data):
             )
 
 
-def test_parallel_result_json_concurrent(cmd, result_json_project, tmp_path):
+def test_parallel_result_json_concurrent(cmd, parallel_project, tmp_path):
     # first run to set up the environments (env creation is not thread safe)
     result = cmd("-p", "all")
     result.assert_success()
@@ -240,8 +267,14 @@ def test_parallel_result_json_concurrent(cmd, result_json_project, tmp_path):
     invoke_result = {}
 
     def invoke_tox_in_thread(thread_name, result_json):
-        res = cmd("--parallel", "all", "--result-json", result_json)
-        invoke_result[thread_name] = res
+        try:
+            # needs to be process to have it's own stdout
+            invoke_result[thread_name] = subprocess.check_output(
+                [sys.executable, "-m", "tox", "-p", "all", "--result-json", str(result_json)],
+                universal_newlines=True,
+            )
+        except subprocess.CalledProcessError as exception:
+            invoke_result[thread_name] = exception
 
     # now concurrently
     parallel1_result_json = tmp_path / "parallel1.json"

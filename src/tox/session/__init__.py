@@ -4,6 +4,7 @@ Python2 and Python3 based virtual environments. Environments are
 setup by using virtualenv. Configuration is generally done through an
 INI-style "tox.ini" file.
 """
+from __future__ import absolute_import, unicode_literals
 
 import json
 import os
@@ -222,26 +223,22 @@ class Session(object):
         return retcode
 
     def _add_parallel_summaries(self):
-        if self.config.option.parallel == PARALLEL_OFF:
-            return
-        if "testenvs" not in self.resultlog.dict:
-            return
-        for venv in self.venv_dict.values():
-            testenvs = self.resultlog.dict["testenvs"]
-            if venv.name not in testenvs:
-                continue
-            result_json_path = venv.get_result_json_path()
-            if result_json_path and result_json_path.exists():
-                with result_json_path.open("rb") as f:
-                    data = json.loads(f.read().decode("utf-8"))
-                if not data:
-                    continue
-                if "testenvs" not in data:
-                    continue
-                if venv.name not in data["testenvs"]:
-                    continue
-                testenvs[venv.name] = data["testenvs"][venv.name]
-                result_json_path.remove()
+        if self.config.option.parallel != PARALLEL_OFF and "testenvs" in self.resultlog.dict:
+            result_log = self.resultlog.dict["testenvs"]
+            for tox_env in self.venv_dict.values():
+                data = self._load_parallel_env_report(tox_env)
+                if data and "testenvs" in data and tox_env.name in data["testenvs"]:
+                    result_log[tox_env.name] = data["testenvs"][tox_env.name]
+
+    @staticmethod
+    def _load_parallel_env_report(tox_env):
+        """Load report data into memory, remove disk file"""
+        result_json_path = tox_env.get_result_json_path()
+        if result_json_path and result_json_path.exists():
+            with result_json_path.open("r") as file_handler:
+                data = json.load(file_handler)
+            result_json_path.remove()
+            return data
 
     def _summary(self):
         is_parallel_child = PARALLEL_ENV_VAR_KEY in os.environ
@@ -282,8 +279,9 @@ class Session(object):
             if not is_parallel_child:
                 self._add_parallel_summaries()
             path = py.path.local(path)
-            path.write(self.resultlog.dumps_json())
-            reporter.line("wrote json report at: {}".format(path))
+            data = self.resultlog.dumps_json()
+            reporter.line("write json report at: {}".format(path))
+            path.write(data)
         return exit_code
 
     def showconfig(self):
