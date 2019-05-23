@@ -1,0 +1,1 @@
+When using ``--parallel`` with ``--result-json`` the test results are now included the same way as with serial runs - by :user:`fschulze`

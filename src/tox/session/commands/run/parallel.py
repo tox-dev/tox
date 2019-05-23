@@ -42,6 +42,9 @@ def run_parallel(config, venv_dict):
                 if hasattr(tox_env, "package"):
                     args_sub.insert(position, str(tox_env.package))
                     args_sub.insert(position, "--installpkg")
+                if tox_env.get_result_json_path():
+                    result_json_index = args_sub.index("--result-json")
+                    args_sub[result_json_index + 1] = "{}".format(tox_env.get_result_json_path())
                 with tox_env.new_action("parallel {}".format(tox_env.name)) as action:
 
                     def collect_process(process):
