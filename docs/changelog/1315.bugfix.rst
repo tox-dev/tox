@@ -1,1 +1,0 @@
-Fix import and usage of ``winreg`` for python2.7 on windows - by :user:`asottile`.

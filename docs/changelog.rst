@@ -11,6 +11,20 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.12.1 (2019-05-23)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Ensure ``TOX_WORK_DIR`` is a native string in ``os.environ`` - by :user:`asottile`.
+  `#1313 <https://github.com/tox-dev/tox/issues/1313>`_
+- Fix import and usage of ``winreg`` for python2.7 on windows - by :user:`asottile`.
+  `#1315 <https://github.com/tox-dev/tox/issues/1315>`_
+- Fix Windows selects incorrect spec on first discovery - by :user:`gaborbernat`
+  `#1317 <https://github.com/tox-dev/tox/issues/1317>`_
+
+
 v3.12.0 (2019-05-23)
 --------------------
 
