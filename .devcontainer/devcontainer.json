@@ -1,0 +1,17 @@
+// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+{
+    "name": "Python 3",
+    "context": "..",
+    "dockerFile": "Dockerfile",
+    "extensions": [
+        "ms-python.python",
+        "eamodio.gitlens",
+        "bungcip.better-toml"
+    ],
+
+    // Uncomment the next line if you want to publish any ports.
+    // "appPort": [],
+
+    // Create development environment and add flake8,black inside (not installed by default)
+    "postCreateCommand": "tox --workdir ~/.tox -e dev -v; ~/.tox/dev/bin/python -m pip install flake8 black"
+}
