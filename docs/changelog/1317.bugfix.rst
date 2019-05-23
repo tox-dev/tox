@@ -1,0 +1,1 @@
+Fix Windows selects incorrect spec on first discovery - by :user:`gaborbernat`
