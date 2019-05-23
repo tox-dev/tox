@@ -3,12 +3,10 @@
     "python.venvPath": "~/.tox",
     "python.jediEnabled": true,
     "python.formatting.provider": "black",
-    "editor.formatOnPaste": false,
+    "[python]": {
+        "editor.formatOnPaste": false
+    },
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": false,
-    "python.testing.pyTestEnabled": true,
-    "python.testing.autoTestDiscoverOnSaveEnabled": true,
-    "python.testing.pyTestArgs": ["-n", "auto"]
+    "python.testing.pyTestEnabled": true
 }
