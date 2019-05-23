@@ -1,6 +1,6 @@
 import py
 import pytest
-from six import StringIO
+from six import PY2, StringIO
 from six.moves import configparser
 
 
@@ -9,7 +9,7 @@ def load_config(args, cmd):
     result.assert_success(is_run_test_env=False)
     parser = configparser.ConfigParser()
     output = StringIO(result.out)
-    parser.readfp(output)
+    (parser.readfp if PY2 else parser.read_file)(output)
     return parser
 
 

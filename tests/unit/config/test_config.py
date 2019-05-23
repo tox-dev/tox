@@ -1993,7 +1993,6 @@ class TestConfigTestEnv:
         assert envconfig.basepython == "python2.7"
         assert len(record) == 0, "\n".join(repr(r.message) for r in record)
 
-    @pytest.mark.issue188
     def test_factors_in_boolean(self, newconfig):
         inisource = """
             [tox]
@@ -2007,7 +2006,6 @@ class TestConfigTestEnv:
         assert configs["py27"].recreate
         assert not configs["py36"].recreate
 
-    @pytest.mark.issue190
     def test_factors_in_setenv(self, newconfig):
         inisource = """
             [tox]
@@ -2021,7 +2019,6 @@ class TestConfigTestEnv:
         assert configs["py27"].setenv["X"] == "1"
         assert "X" not in configs["py36"].setenv
 
-    @pytest.mark.issue191
     def test_factor_use_not_checked(self, newconfig):
         inisource = """
             [tox]
@@ -2033,7 +2030,6 @@ class TestConfigTestEnv:
         configs = newconfig([], inisource).envconfigs
         assert set(configs.keys()) == {"py27-a", "py27-b"}
 
-    @pytest.mark.issue198
     def test_factors_groups_touch(self, newconfig):
         inisource = """
             [tox]
