@@ -11,6 +11,25 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.12.0 (2019-05-23)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- When using ``--parallel`` with ``--result-json`` the test results are now included the same way as with serial runs - by :user:`fschulze`
+  `#1295 <https://github.com/tox-dev/tox/issues/1295>`_
+- Turns out the output of the ``py -0p`` is not stable yet and varies depending on various edge cases. Instead now we read the interpreter values directly from registry via `PEP-514 <https://www.python.org/dev/peps/pep-0514>`_ - by :user:`gaborbernat`.
+  `#1306 <https://github.com/tox-dev/tox/issues/1306>`_
+
+
+Features
+^^^^^^^^
+
+- Adding ``TOX_PARALLEL_NO_SPINNER`` environment variable to disable the spinner in parallel mode for the purposes of clean output when using CI tools - by :user:`zeroshift`
+  `#1184 <https://github.com/tox-dev/tox/issues/1184>`_
+
+
 v3.11.1 (2019-05-16)
 --------------------
 
