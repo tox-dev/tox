@@ -1164,6 +1164,17 @@ class TestConfigTestEnv:
         assert "A1" in env.passenv
         assert "A2" in env.passenv
 
+    def test_no_spinner(self, newconfig, monkeypatch):
+        monkeypatch.setenv("TOX_PARALLEL_NO_SPINNER", "1")
+        config = newconfig(
+            """
+            [testenv]
+            passenv = TOX_PARALLEL_NO_SPINNER
+        """
+        )
+        env = config.envconfigs["python"]
+        assert "TOX_PARALLEL_NO_SPINNER" in env.passenv
+
     def test_changedir_override(self, newconfig):
         config = newconfig(
             """

@@ -11,3 +11,4 @@ def show_help(config):
         "passed into test command environments"
     )
     reporter.line("PY_COLORS: 0 disable colorized output, 1 enable (default)")
+    reporter.line("TOX_PARALLEL_NO_SPINNER: 1 disable spinner for CI, 0 enable (default)")

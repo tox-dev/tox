@@ -189,3 +189,28 @@ parallel_show_output = True
     assert "stderr env" not in result.out, result.output()
     assert "stdout always" in result.out, result.output()
     assert "stderr always" in result.out, result.output()
+
+
+def test_parallel_no_spinner(cmd, initproj, monkeypatch):
+    monkeypatch.setenv(str("TOX_PARALLEL_NO_SPINNER"), str("1"))
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tox.ini": """
+            [tox]
+            envlist = a, b
+            isolated_build = true
+            [testenv]
+            commands=python -c "import sys; print(sys.executable)"
+            [testenv:b]
+            depends = a
+        """,
+            "pyproject.toml": """
+            [build-system]
+            requires = ["setuptools >= 35.0.2"]
+            build-backend = 'setuptools.build_meta'
+                        """,
+        },
+    )
+    result = cmd("--parallel", "all")
+    result.assert_success()
