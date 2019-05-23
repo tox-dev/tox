@@ -13,5 +13,8 @@ def test_locate_via_pep514(monkeypatch):
 
     import tox.interpreters.windows.pep514
 
-    monkeypatch.setattr(tox.interpreters.windows.pep514, "discover_pythons", lambda: None)
+    def raise_on_call():
+        raise RuntimeError()
+
+    monkeypatch.setattr(tox.interpreters.windows.pep514, "discover_pythons", raise_on_call)
     assert tox.interpreters.windows.locate_via_pep514(CURRENT)

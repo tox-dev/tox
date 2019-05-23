@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from threading import Lock
 
 import tox
-
 from ..py_spec import CURRENT, PythonSpec
 from ..via_path import check_with_path
 
@@ -46,6 +45,7 @@ def locate_via_pep514(spec):
 
             for spec in pep514.discover_pythons():
                 _PY_AVAILABLE.append(spec)
+            _PY_AVAILABLE.append(CURRENT)
     for cur_spec in _PY_AVAILABLE:
         if cur_spec.satisfies(spec):
             return cur_spec.path
