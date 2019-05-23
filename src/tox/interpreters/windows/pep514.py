@@ -1,9 +1,11 @@
-"""Implement https://www.python.org/dev/peps/pep-0514/ to discover interpreters"""
+"""Implement https://www.python.org/dev/peps/pep-0514/ to discover interpreters - Windows only"""
+from __future__ import unicode_literals
+
 import os
 
 import winreg
 
-from tox.interpreters import PythonSpec
+from ..py_spec import PythonSpec
 
 
 def enum_keys(key):
@@ -72,4 +74,5 @@ def open_tag(arch, company, company_key, tag):
 
 
 if __name__ == "__main__":
-    print(list(discover_pythons()))
+    for spec in discover_pythons():
+        print(repr(spec))

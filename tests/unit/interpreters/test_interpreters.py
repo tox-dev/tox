@@ -10,7 +10,6 @@ import pytest
 
 import tox
 from tox import reporter
-from tox._pytestplugin import mark_dont_run_on_posix
 from tox.config import get_plugin_manager
 from tox.interpreters import (
     ExecFailed,
@@ -20,7 +19,6 @@ from tox.interpreters import (
     run_and_get_interpreter_info,
     tox_get_python_executable,
 )
-from tox.pep514 import discover_pythons
 from tox.reporter import Verbosity
 
 
@@ -28,20 +26,6 @@ from tox.reporter import Verbosity
 def create_interpreters_instance():
     pm = get_plugin_manager()
     return Interpreters(hook=pm.hook)
-
-
-@mark_dont_run_on_posix
-def test_locate_via_py(monkeypatch):
-    import tox.interpreters
-
-    spec = tox.interpreters.CURRENT
-    del tox.interpreters._PY_AVAILABLE[:]
-    exe = tox.interpreters.locate_via_py(spec)
-    assert exe
-    assert len(tox.interpreters._PY_AVAILABLE)
-
-    monkeypatch.setattr(tox.interpreters, "_call_py", None)
-    assert tox.interpreters.locate_via_py(spec)
 
 
 def test_tox_get_python_executable():
@@ -94,7 +78,7 @@ def test_find_alias_on_path(monkeypatch, tmp_path):
     os.symlink(sys.executable, str(magic))
     monkeypatch.setenv(
         str("PATH"),
-        os.pathsep.join(([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep))),
+        os.pathsep.join([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep)),
     )
 
     class envconfig:
@@ -234,7 +218,3 @@ class TestNoInterpreterInfo:
     def test_str_with_executable(self):
         x = NoInterpreterInfo("coconut", executable="bang/em/together")
         assert str(x) == "<executable at bang/em/together, not runnable>"
-
-
-def test_discover_winreg():
-    list(discover_pythons())
