@@ -44,8 +44,7 @@ def locate_via_pep514(spec):
         if not _PY_AVAILABLE:
             from . import pep514
 
-            for spec in pep514.discover_pythons():
-                _PY_AVAILABLE.append(spec)
+            _PY_AVAILABLE.extend(pep514.discover_pythons())
             _PY_AVAILABLE.append(CURRENT)
     for cur_spec in _PY_AVAILABLE:
         if cur_spec.satisfies(spec):
