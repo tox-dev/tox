@@ -63,7 +63,7 @@ def main(args):
     try:
         config = load_config(args)
         config.logdir.ensure(dir=1)
-        with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
+        with set_os_env_var(str("TOX_WORK_DIR"), config.toxworkdir):
             session = build_session(config)
             exit_code = session.runcommand()
         if exit_code is None:

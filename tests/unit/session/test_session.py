@@ -285,6 +285,10 @@ def assert_popen_env(res):
         if tox_id != "GLOB":
             assert env["TOX_ENV_NAME"] == tox_id
             assert env["TOX_ENV_DIR"] == os.path.join(res.cwd, ".tox", tox_id)
+        # ensure native strings for environ for windows
+        for k, v in env.items():
+            assert type(k) is str, (k, v, type(k))
+            assert type(v) is str, (k, v, type(v))
 
 
 def test_command_prev_post_ok(cmd, initproj, mock_venv):
