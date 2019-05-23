@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from threading import Lock
 
 import tox
+
 from ..py_spec import CURRENT, PythonSpec
 from ..via_path import check_with_path
 
