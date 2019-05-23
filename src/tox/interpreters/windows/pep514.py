@@ -5,7 +5,7 @@ import os
 import re
 
 import six
-import winreg
+from six.moves import winreg
 
 from tox import reporter
 from tox.interpreters.py_spec import PythonSpec
@@ -52,7 +52,7 @@ def discover_pythons():
 
 def process_set(hive, hive_name, key, flags, default_arch):
     try:
-        with winreg.OpenKeyEx(hive, key, access=winreg.KEY_READ | flags) as root_key:
+        with winreg.OpenKeyEx(hive, key, 0, winreg.KEY_READ | flags) as root_key:
             for company in enum_keys(root_key):
                 if company == "PyLauncher":  # reserved
                     continue
