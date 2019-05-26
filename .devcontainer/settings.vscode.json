@@ -4,11 +4,12 @@
     "python.venvPath": "~/.tox",
     "python.jediEnabled": true,
     "python.formatting.provider": "black",
-    "[python]": {
-        "editor.formatOnPaste": false
-    },
+    "python.testing.pyTestEnabled": true,
+    //IMPORTANT NOTE: To debug tests inside vscode comment the following line on Settings -> Command Palette -> Remote-Containers: Settings
+    // or comment it in this file and build container on Settings -> Command Palette -> Remote-Containers: Rebuild Container
+    "python.testing.pyTestArgs": ["-nauto"],
+    // To see coverage in source code uncomment following line and comment before following instructions above
+    //"python.testing.pyTestArgs": ["-nauto", "--cov", "tox", "--cov-config", "tox.ini", "--cov-report", "xml:cov.xml"],
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.testing.pyTestEnabled": true,
-    "python.testing.pyTestArgs": ["-nauto"] //remove parallel execution if you need to debug tests inside vscode
 }
