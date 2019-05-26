@@ -1,5 +1,4 @@
 {
-    "editor.renderWhitespace": "all",
     "python.pythonPath": "~/.tox/dev/bin/python",
     "python.venvPath": "~/.tox",
     "python.jediEnabled": true,
