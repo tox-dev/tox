@@ -1,6 +1,6 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
-    "name": "Python 3",
+    "name": "Tox dev",
     "context": "..",
     "dockerFile": "Dockerfile",
     "extensions": [

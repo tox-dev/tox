@@ -10,5 +10,5 @@
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
     "python.testing.pyTestEnabled": true,
-    "python.testing.pyTestArgs": []
+    "python.testing.pyTestArgs": ["-nauto"] //remove parallel execution if you need to debug tests inside vscode
 }
