@@ -1,4 +1,5 @@
 {
+    "editor.renderWhitespace": "all",
     "python.pythonPath": "~/.tox/dev/bin/python",
     "python.venvPath": "~/.tox",
     "python.jediEnabled": true,
@@ -8,5 +9,6 @@
     },
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.testing.pyTestEnabled": true
+    "python.testing.pyTestEnabled": true,
+    "python.testing.pyTestArgs": []
 }
