@@ -15,13 +15,16 @@ from fnmatch import fnmatchcase
 from subprocess import list2cmdline
 from threading import Thread
 
-import pkg_resources
+import importlib_metadata
 import pluggy
 import py
 import toml
+from packaging import requirements
+from packaging.utils import canonicalize_name
 
 import tox
 from tox.constants import INFO
+from tox.exception import MissingDependency
 from tox.interpreters import Interpreters, NoInterpreterInfo
 from tox.reporter import (
     REPORTER_TIMESTAMP_ON_ENV,
@@ -192,10 +195,10 @@ class DepOption:
     @classmethod
     def _is_same_dep(cls, dep1, dep2):
         """Definitions are the same if they refer to the same package, even if versions differ."""
-        dep1_name = pkg_resources.Requirement.parse(dep1).project_name
+        dep1_name = canonicalize_name(requirements.Requirement(dep1).name)
         try:
-            dep2_name = pkg_resources.Requirement.parse(dep2).project_name
-        except pkg_resources.RequirementParseError:
+            dep2_name = canonicalize_name(requirements.Requirement(dep2).name)
+        except requirements.InvalidRequirement:
             # we couldn't parse a version, probably a URL
             return False
         return dep1_name == dep2_name
@@ -1168,17 +1171,20 @@ class ParseIni(object):
         for require in requires + [min_version]:
             # noinspection PyBroadException
             try:
-                package = pkg_resources.Requirement.parse(require)
-                if package.project_name not in exists:
+                package = requirements.Requirement(require)
+                package_name = canonicalize_name(package.name)
+                if package_name not in exists:
                     deps.append(DepConfig(require, None))
-                    exists.add(package.project_name)
-                    pkg_resources.get_distribution(package)
-            except pkg_resources.RequirementParseError as exception:
+                    exists.add(package_name)
+                    dist = importlib_metadata.distribution(package_name)
+                    if not package.specifier.contains(dist.version, prereleases=True):
+                        raise MissingDependency(package)
+            except requirements.InvalidRequirement as exception:
                 failed_to_parse = True
                 error("failed to parse {!r}".format(exception))
             except Exception as exception:
                 verbosity1("could not satisfy requires {!r}".format(exception))
-                missing_requirements.append(str(pkg_resources.Requirement(require)))
+                missing_requirements.append(str(requirements.Requirement(require)))
         if failed_to_parse:
             raise tox.exception.BadRequirement()
         config.run_provision = bool(len(missing_requirements))

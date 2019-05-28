@@ -1,0 +1,1 @@
+Replace ``pkg_resources`` with ``importlib_metadata`` for speed - by :user:`asottile`.
