@@ -125,7 +125,7 @@ class Parser:
     def parse_cli(self, args, strict=False):
         args, argv = self.argparser.parse_known_args(args)
         if argv and (strict or WITHIN_PROVISION):
-            self.argparser.error("unrecognized arguments: %s".format(" ".join(argv)))
+            self.argparser.error("unrecognized arguments: {}".format(" ".join(argv)))
         return args
 
     def _format_help(self):
