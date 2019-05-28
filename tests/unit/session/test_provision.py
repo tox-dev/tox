@@ -95,7 +95,7 @@ def test_provision_bad_requires(newconfig, capsys, monkeypatch):
         """,
         )
     out, err = capsys.readouterr()
-    assert "ERROR: failed to parse RequirementParseError" in out
+    assert "ERROR: failed to parse InvalidRequirement" in out
     assert not err
 
 

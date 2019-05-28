@@ -1,7 +1,7 @@
 import os
 import re
 
-import pkg_resources
+import packaging.version
 import py
 
 import tox
@@ -58,7 +58,6 @@ def get_version_from_filename(basename):
         return None
     version = m.group(1)
     try:
-
-        return pkg_resources.packaging.version.Version(version)
-    except pkg_resources.packaging.version.InvalidVersion:
+        return packaging.version.Version(version)
+    except packaging.version.InvalidVersion:
         return None

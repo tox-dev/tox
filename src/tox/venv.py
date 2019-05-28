@@ -7,7 +7,6 @@ import sys
 from itertools import chain
 
 import py
-from pkg_resources import to_filename
 
 import tox
 from tox import reporter
@@ -324,7 +323,7 @@ class VirtualEnv(object):
             sys_path = json.loads(out)
         except ValueError:
             sys_path = []
-        egg_info_fname = ".".join((to_filename(name), "egg-info"))
+        egg_info_fname = ".".join((name.replace("-", "_"), "egg-info"))
         for d in reversed(sys_path):
             egg_info = py.path.local(d).join(egg_info_fname)
             if egg_info.check():

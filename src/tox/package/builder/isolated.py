@@ -3,8 +3,9 @@ from __future__ import unicode_literals
 import json
 from collections import namedtuple
 
-import pkg_resources
 import six
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
 
 from tox import reporter
 from tox.config import DepConfig, get_py_project_toml
@@ -31,11 +32,11 @@ def build(config, session):
 
     build_requires = get_build_requires(build_info, package_venv, config.setupdir)
     # we need to filter out requirements already specified in pyproject.toml or user deps
-    base_build_deps = {pkg_resources.Requirement(r.name).key for r in package_venv.envconfig.deps}
+    base_build_deps = {canonicalize_name(r.name) for r in package_venv.envconfig.deps}
     build_requires_dep = [
         DepConfig(r, None)
         for r in build_requires
-        if pkg_resources.Requirement(r).key not in base_build_deps
+        if canonicalize_name(Requirement(r).name) not in base_build_deps
     ]
     if build_requires_dep:
         with package_venv.new_action("build_requires", package_venv.envconfig.envdir) as action:
