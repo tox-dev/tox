@@ -415,6 +415,9 @@ def tox_addoption(parser):
         metavar="envlist",
         help="work against specified environments (ALL selects all).",
     )
+    parser.add_argument(
+        "--devenv", help="sets up a development environment based on the tox configuration."
+    )
     parser.add_argument("--notest", action="store_true", help="skip invoking test commands.")
     parser.add_argument(
         "--sdistonly", action="store_true", help="only perform the sdist packaging activity."
@@ -497,12 +500,19 @@ def tox_addoption(parser):
         "args", nargs="*", help="additional arguments available to command positional substitution"
     )
 
+    def _set_envdir_from_devenv(testenv_config, value):
+        if testenv_config.config.option.devenv:
+            return py.path.local(testenv_config.config.option.devenv)
+        else:
+            return value
+
     parser.add_testenv_attribute(
         name="envdir",
         type="path",
         default="{toxworkdir}/{envname}",
         help="set venv directory -- be very careful when changing this as tox "
         "will remove this directory when recreating an environment",
+        postprocess=_set_envdir_from_devenv,
     )
 
     # add various core venv interpreter attributes
@@ -751,7 +761,7 @@ def tox_addoption(parser):
 
     def develop(testenv_config, value):
         option = testenv_config.config.option
-        return not option.installpkg and (value or option.develop)
+        return not option.installpkg and (value or option.develop or bool(option.devenv))
 
     parser.add_testenv_attribute(
         name="usedevelop",
@@ -1106,6 +1116,12 @@ class ParseIni(object):
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
 
+        if config.option.devenv:
+            config.option.notest = True
+
+        if config.option.devenv and len(config.envlist) != 1:
+            feedback("--devenv requires only a single -e", sysexit=True)
+
     def handle_provision(self, config, reader):
         requires_list = reader.getlist("requires")
         config.minversion = reader.getstring("minversion", None)
@@ -1251,6 +1267,7 @@ class ParseIni(object):
                 (os.environ.get(PARALLEL_ENV_VAR_KEY), True),
                 (from_option, True),
                 (from_environ, True),
+                ("py" if self.config.option.devenv else None, False),
                 (from_config, False),
             )
             env_str, envlist_explicit = next(((i, e) for i, e in candidates if i), ([], False))
