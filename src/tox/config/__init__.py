@@ -377,14 +377,9 @@ class SetenvDict(object):
 @tox.hookimpl
 def tox_addoption(parser):
     parser.add_argument(
-        "--version",
-        action="store_true",
-        dest="version",
-        help="report version information to stdout.",
+        "--version", action="store_true", help="report version information to stdout."
     )
-    parser.add_argument(
-        "-h", "--help", action="store_true", dest="help", help="show help about options"
-    )
+    parser.add_argument("-h", "--help", action="store_true", help="show help about options")
     parser.add_argument(
         "--help-ini", "--hi", action="store_true", dest="helpini", help="show help about ini-names"
     )
@@ -399,22 +394,16 @@ def tox_addoption(parser):
         "-l",
         "--listenvs",
         action="store_true",
-        dest="listenvs",
         help="show list of test environments (with description if verbose)",
     )
     parser.add_argument(
         "-a",
         "--listenvs-all",
         action="store_true",
-        dest="listenvs_all",
         help="show list of all defined environments (with description if verbose)",
     )
     parser.add_argument(
-        "-c",
-        action="store",
-        default=None,
-        dest="configfile",
-        help="config file name or directory with 'tox.ini' file.",
+        "-c", dest="configfile", help="config file name or directory with 'tox.ini' file."
     )
     parser.add_argument(
         "-e",
@@ -423,14 +412,9 @@ def tox_addoption(parser):
         metavar="envlist",
         help="work against specified environments (ALL selects all).",
     )
+    parser.add_argument("--notest", action="store_true", help="skip invoking test commands.")
     parser.add_argument(
-        "--notest", action="store_true", dest="notest", help="skip invoking test commands."
-    )
-    parser.add_argument(
-        "--sdistonly",
-        action="store_true",
-        dest="sdistonly",
-        help="only perform the sdist packaging activity.",
+        "--sdistonly", action="store_true", help="only perform the sdist packaging activity."
     )
     add_parallel_flags(parser)
     parser.add_argument(
@@ -442,15 +426,12 @@ def tox_addoption(parser):
     )
     parser.add_argument(
         "--installpkg",
-        action="store",
-        default=None,
         metavar="PATH",
         help="use specified package for installation into venv, instead of creating an sdist.",
     )
     parser.add_argument(
         "--develop",
         action="store_true",
-        dest="develop",
         help="install package in the venv using 'setup.py develop' via 'pip -e .'",
     )
     parser.add_argument(
@@ -465,21 +446,15 @@ def tox_addoption(parser):
     parser.add_argument(
         "--pre",
         action="store_true",
-        dest="pre",
         help="install pre-releases and development versions of dependencies. "
         "This will pass the --pre option to install_command "
         "(pip by default).",
     )
     parser.add_argument(
-        "-r",
-        "--recreate",
-        action="store_true",
-        dest="recreate",
-        help="force recreation of virtual environments",
+        "-r", "--recreate", action="store_true", help="force recreation of virtual environments"
     )
     parser.add_argument(
         "--result-json",
-        action="store",
         dest="resultjson",
         metavar="PATH",
         help="write a json file with detailed information "
@@ -489,9 +464,7 @@ def tox_addoption(parser):
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument(
         "--hashseed",
-        action="store",
         metavar="SEED",
-        default=None,
         help="set PYTHONHASHSEED to SEED before running commands.  "
         "Defaults to a random integer in the range [1, 4294967295] "
         "([1, 1024] on Windows). "
@@ -501,7 +474,6 @@ def tox_addoption(parser):
         "--force-dep",
         action="append",
         metavar="REQ",
-        default=None,
         help="Forces a certain version of one of the dependencies "
         "when configuring the virtual environment. REQ Examples "
         "'pytest<2.7' or 'django>=1.6'.",
@@ -516,14 +488,7 @@ def tox_addoption(parser):
     )
 
     cli_skip_missing_interpreter(parser)
-    parser.add_argument(
-        "--workdir",
-        action="store",
-        dest="workdir",
-        metavar="PATH",
-        default=None,
-        help="tox working directory",
-    )
+    parser.add_argument("--workdir", metavar="PATH", help="tox working directory")
 
     parser.add_argument(
         "args", nargs="*", help="additional arguments available to command positional substitution"
