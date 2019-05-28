@@ -113,6 +113,10 @@ Global settings are defined under the ``tox`` section as:
         (e.g. ``py27.*`` means **don't** evaluate environments that start with the key ``py27``).
         Skipped environments will be logged at level two verbosity level.
 
+    ``envlist`` is also used to determine the preferrence list of python interpreters. For example
+    ``lint,py{37,36}`` will also tell tox to prefer using python3.7. So when available it will use
+    python3.7 for ``lint`` environment and fallback to python3.6 otherwise.
+
 .. conf:: skip_missing_interpreters ^ config|true|false ^ config
 
     .. versionadded:: 1.7.2
