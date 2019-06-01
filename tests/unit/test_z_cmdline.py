@@ -789,6 +789,52 @@ def test_notest_setup_py_error(initproj, cmd):
     assert re.search("ERROR:.*InvocationError", result.out)
 
 
+def test_devenv(initproj, cmd):
+    initproj(
+        "example123",
+        filedefs={
+            "setup.py": """\
+                from setuptools import setup
+                setup(name='x')
+            """,
+            "tox.ini": """\
+            [tox]
+            # envlist is ignored for --devenv
+            envlist = foo,bar,baz
+
+            [testenv]
+            # --devenv implies --notest
+            commands = python -c "exit(1)"
+            """,
+        },
+    )
+    result = cmd("--devenv", "venv")
+    result.assert_success()
+    # `--devenv` defaults to the `py` environment and a develop install
+    assert "py develop-inst:" in result.out
+    assert re.search("py create:.*venv", result.out)
+
+
+def test_devenv_does_not_allow_multiple_environments(initproj, cmd):
+    initproj(
+        "example123",
+        filedefs={
+            "setup.py": """\
+                from setuptools import setup
+                setup(name='x')
+            """,
+            "tox.ini": """\
+            [tox]
+            envlist=foo,bar,baz
+            """,
+        },
+    )
+
+    result = cmd("--devenv", "venv", "-e", "foo,bar")
+    result.assert_fail()
+    assert result.err == "ERROR: --devenv requires only a single -e\n"
+
+
 def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={"tox.ini": ""})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", "1")

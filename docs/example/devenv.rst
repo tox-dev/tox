@@ -10,16 +10,44 @@ environments. It can also be used for setting up normalized project development
 environments and thus help reduce the risk of different team members using
 mismatched development environments.
 
+
+Creating development environments using the ``--devenv`` option
+===============================================================
+
+The easiest way to set up a development environment is to use the ``--devenv``
+option along with your existing configured ``testenv``s.  The ``--devenv``
+option accepts a single argument, the location you want to create a development
+environment at.
+
+For example, if I wanted to replicate the ``py36`` environment, I could run::
+
+    $ tox --devenv venv-py36 -e py36
+    ...
+    $ source venv-py36/bin/activate
+    (venv-py36) $ python --version
+    Python 3.6.7
+
+The ``--devenv`` option skips the ``commands=`` section of that configured
+test environment and always sets ``usedevelop=true`` for the environment that
+is created.
+
+If you don't specify an environment with ``-e``, the devenv feature will
+default to ``-e py`` -- usually taking the interpreter you're running ``tox``
+with and the default ``[testenv]`` configuration.
+
+Creating development environments using configuration
+=====================================================
+
 Here are some examples illustrating how to set up a project's development
 environment using tox. For illustration purposes, let us call the development
 environment ``dev``.
 
 
 Example 1: Basic scenario
-=========================
+-------------------------
 
 Step 1 - Configure the development environment
-----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, we prepare the tox configuration for our development environment by
 defining a ``[testenv:dev]`` section in the project's ``tox.ini``
@@ -54,7 +82,7 @@ configuration:
 
 
 Step 2 - Create the development environment
--------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once the ``[testenv:dev]`` configuration section has been defined, we create
 the actual development environment by running the following:
@@ -68,7 +96,7 @@ This creates the environment at the path specified by the environment's
 
 
 Example 2: A more complex scenario
-==================================
+----------------------------------
 
 Let us say we want our project development environment to:
 
