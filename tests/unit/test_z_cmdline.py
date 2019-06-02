@@ -835,6 +835,27 @@ def test_devenv_does_not_allow_multiple_environments(initproj, cmd):
     assert result.err == "ERROR: --devenv requires only a single -e\n"
 
 
+def test_devenv_does_not_delete_project(initproj, cmd):
+    initproj(
+        "example123",
+        filedefs={
+            "setup.py": """\
+                from setuptools import setup
+                setup(name='x')
+            """,
+            "tox.ini": """\
+            [tox]
+            envlist=foo,bar,baz
+            """,
+        },
+    )
+
+    result = cmd("--devenv", "")
+    result.assert_fail()
+    assert "would delete project" in result.out
+    assert "ERROR: ConfigError: envdir must not equal toxinidir" in result.out
+
+
 def test_PYC(initproj, cmd, monkeypatch):
     initproj("example123", filedefs={"tox.ini": ""})
     monkeypatch.setenv("PYTHONDOWNWRITEBYTECODE", "1")

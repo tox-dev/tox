@@ -416,7 +416,12 @@ def tox_addoption(parser):
         help="work against specified environments (ALL selects all).",
     )
     parser.add_argument(
-        "--devenv", help="sets up a development environment based on the tox configuration."
+        "--devenv",
+        metavar="ENVDIR",
+        help=(
+            "sets up a development environment at ENVDIR based on the env's tox "
+            "configuration specified by `-e` (-e defaults to py)."
+        ),
     )
     parser.add_argument("--notest", action="store_true", help="skip invoking test commands.")
     parser.add_argument(
@@ -501,7 +506,7 @@ def tox_addoption(parser):
     )
 
     def _set_envdir_from_devenv(testenv_config, value):
-        if testenv_config.config.option.devenv:
+        if testenv_config.config.option.devenv is not None:
             return py.path.local(testenv_config.config.option.devenv)
         else:
             return value
@@ -761,7 +766,7 @@ def tox_addoption(parser):
 
     def develop(testenv_config, value):
         option = testenv_config.config.option
-        return not option.installpkg and (value or option.develop or bool(option.devenv))
+        return not option.installpkg and (value or option.develop or option.devenv is not None)
 
     parser.add_testenv_attribute(
         name="usedevelop",
@@ -1116,10 +1121,10 @@ class ParseIni(object):
 
         config.skipsdist = reader.getbool("skipsdist", all_develop)
 
-        if config.option.devenv:
+        if config.option.devenv is not None:
             config.option.notest = True
 
-        if config.option.devenv and len(config.envlist) != 1:
+        if config.option.devenv is not None and len(config.envlist) != 1:
             feedback("--devenv requires only a single -e", sysexit=True)
 
     def handle_provision(self, config, reader):
@@ -1267,7 +1272,7 @@ class ParseIni(object):
                 (os.environ.get(PARALLEL_ENV_VAR_KEY), True),
                 (from_option, True),
                 (from_environ, True),
-                ("py" if self.config.option.devenv else None, False),
+                ("py" if self.config.option.devenv is not None else None, False),
                 (from_config, False),
             )
             env_str, envlist_explicit = next(((i, e) for i, e in candidates if i), ([], False))
