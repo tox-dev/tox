@@ -15,11 +15,6 @@ from fnmatch import fnmatchcase
 from subprocess import list2cmdline
 from threading import Thread
 
-try:
-    from shlex import quote as shlex_quote
-except ImportError:
-    from pipes import quote as shlex_quote
-
 import importlib_metadata
 import pluggy
 import py
@@ -43,6 +38,12 @@ from tox.util.path import ensure_empty_dir
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
 from .reporter import add_verbosity_commands
+
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
 
 hookimpl = tox.hookimpl
 """DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
