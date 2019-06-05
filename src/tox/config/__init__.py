@@ -39,6 +39,12 @@ from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
 from .reporter import add_verbosity_commands
 
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
+
 hookimpl = tox.hookimpl
 """DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
 
@@ -1674,7 +1680,10 @@ class _ArgvlistReader:
     @classmethod
     def processcommand(cls, reader, command, replace=True):
         posargs = getattr(reader, "posargs", "")
-        posargs_string = list2cmdline([x for x in posargs if x])
+        if sys.platform.startswith("win"):
+            posargs_string = list2cmdline([x for x in posargs if x])
+        else:
+            posargs_string = " ".join([shlex_quote(x) for x in posargs if x])
 
         # Iterate through each word of the command substituting as
         # appropriate to construct the new command string. This

@@ -730,8 +730,18 @@ class TestIniParser:
                 cmd1 -f {posargs}
         """
         )
+        # The operating system APIs for launching processes differ between
+        # Windows and other OSs. On Windows, the command line is passed as a
+        # string (and not a list of strings). Python uses the MS C runtime
+        # rules for splitting this string into `sys.argv`, and those rules
+        # differ from POSIX shell rules in their treatment of quoted arguments.
+        if sys.platform.startswith("win"):
+            substitutions = ["foo", "'bar", "baz'"]
+        else:
+            substitutions = ["foo", "bar baz"]
+
         reader = SectionReader("section", config._cfg)
-        reader.addsubstitutions(["foo", "'bar", "baz'"])
+        reader.addsubstitutions(substitutions)
         assert reader.getargvlist("key1") == []
         x = reader.getargvlist("key2")
         assert x == [["cmd1", "-f", "foo", "bar baz"]]
