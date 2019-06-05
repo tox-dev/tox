@@ -556,7 +556,7 @@ class TestIniParser:
     def test_missing_env_sub_populates_missing_subs(self, newconfig):
         config = newconfig("[testenv:foo]\ncommands={env:VAR}")
         print(SectionReader("section", config._cfg).getstring("commands"))
-        assert config.envconfigs["foo"].missing_subs == ["VAR"]
+        assert config.envconfigs["foo"]._missing_subs == ["VAR"]
 
     def test_getstring_environment_substitution_with_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("KEY1", "hello")

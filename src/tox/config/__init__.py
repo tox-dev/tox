@@ -883,7 +883,7 @@ class TestenvConfig:
         #: set of factors
         self.factors = factors
         self._reader = reader
-        self.missing_subs = []
+        self._missing_subs = []
         """Holds substitutions that could not be resolved.
 
         Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a
@@ -1233,7 +1233,7 @@ class ParseIni(object):
                 if env_attr.postprocess:
                     res = env_attr.postprocess(testenv_config=tc, value=res)
             except tox.exception.MissingSubstitution as e:
-                tc.missing_subs.append(e.name)
+                tc._missing_subs.append(e.name)
                 res = e.FLAG
             setattr(tc, env_attr.name, res)
             if atype in ("path", "string", "basepython"):
