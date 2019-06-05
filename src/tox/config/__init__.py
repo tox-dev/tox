@@ -15,6 +15,11 @@ from fnmatch import fnmatchcase
 from subprocess import list2cmdline
 from threading import Thread
 
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
 import importlib_metadata
 import pluggy
 import py
@@ -1674,7 +1679,10 @@ class _ArgvlistReader:
     @classmethod
     def processcommand(cls, reader, command, replace=True):
         posargs = getattr(reader, "posargs", "")
-        posargs_string = list2cmdline([x for x in posargs if x])
+        if sys.platform.startswith("win"):
+            posargs_string = list2cmdline([x for x in posargs if x])
+        else:
+            posargs_string = " ".join([shlex_quote(x) for x in posargs if x])
 
         # Iterate through each word of the command substituting as
         # appropriate to construct the new command string. This
