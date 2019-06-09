@@ -12,7 +12,7 @@ import tox
 from tox import reporter
 from tox.action import Action
 from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
-from tox.constants import PARALLEL_RESULT_JSON_PREFIX, PARALLEL_RESULT_JSON_SUFFIX
+from tox.constants import INFO, PARALLEL_RESULT_JSON_PREFIX, PARALLEL_RESULT_JSON_SUFFIX
 from tox.package.local import resolve_package
 from tox.util.lock import get_unique_file
 from tox.util.path import ensure_empty_dir
@@ -694,6 +694,31 @@ def tox_testenv_create(venv, action):
 
 def cleanup_for_venv(venv):
     within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+    # if the directory exists and it doesn't look like a virtualenv, produce
+    # an error
+    if venv.path.exists():
+        dir_items = set(os.listdir(str(venv.path))) - {".lock", "log"}
+        dir_items = {p for p in dir_items if not p.startswith(".tox-")}
+    else:
+        dir_items = set()
+
+    if not (
+        # doesn't exist => OK
+        not venv.path.exists()
+        # does exist, but it's empty => OK
+        or not dir_items
+        # it exists and we're on windows with Lib and Scripts => OK
+        or (INFO.IS_WIN and dir_items > {"Scripts", "Lib"})
+        # non-windows, with lib and bin => OK
+        or dir_items > {"bin", "lib"}
+    ):
+        venv.status = "error"
+        reporter.error(
+            "cowardly refusing to delete `envdir` (it does not look like a virtualenv): "
+            "{}".format(venv.path)
+        )
+        raise SystemExit(2)
+
     if within_parallel:
         if venv.path.exists():
             # do not delete the log folder as that's used by parent

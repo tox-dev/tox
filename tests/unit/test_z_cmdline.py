@@ -115,6 +115,26 @@ def test_envdir_equals_toxini_errors_out(cmd, initproj):
     result.assert_fail()
 
 
+def test_envdir_would_delete_some_directory(cmd, initproj):
+    projdir = initproj(
+        "example-123",
+        filedefs={
+            "tox.ini": """\
+                [tox]
+
+                [testenv:venv]
+                envdir=example
+                commands=
+            """
+        },
+    )
+
+    result = cmd("-e", "venv")
+    assert projdir.join("example/__init__.py").exists()
+    result.assert_fail()
+    assert "cowardly refusing to delete `envdir`" in result.out
+
+
 def test_run_custom_install_command_error(cmd, initproj):
     initproj(
         "interp123-0.5",
