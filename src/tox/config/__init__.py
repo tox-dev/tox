@@ -46,12 +46,9 @@ except ImportError:
 
 
 hookimpl = tox.hookimpl
-"""DEPRECATED - REMOVE - this is left for compatibility with plugins importing this from here.
+"""DEPRECATED - REMOVE - left for compatibility with plugins importing from here.
 
-Instead create a hookimpl in your code with:
-
-    import pluggy
-    hookimpl = pluggy.HookimplMarker("tox")
+Import hookimpl directly from tox instead.
 """
 
 default_factors = tox.PYTHON.DEFAULT_FACTORS
