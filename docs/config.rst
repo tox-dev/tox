@@ -320,7 +320,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: whitelist_externals ^ MULTI-LINE-LIST
 
-    each line specifies a command name (in glob-style pattern format)
+    Each line specifies a command name (in glob-style pattern format)
     which can be used in the ``commands`` section without triggering
     a "not installed in virtualenv" warning.  Example: if you use the
     unix ``make`` for running tests you can list ``whitelist_externals=make``
@@ -330,7 +330,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: changedir ^ PATH ^ {toxinidir}
 
-    change to this working directory when executing the test command.
+    Change to this working directory when executing the test command.
+
+    .. note::
+
+        If the directory does not exist yet, it will be created.
 
 .. conf:: deps ^ MULTI-LINE-LIST
 
