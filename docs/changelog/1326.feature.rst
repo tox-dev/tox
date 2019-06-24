@@ -1,1 +1,0 @@
-Add the ``--devenv ENVDIR`` option for creating development environments from ``[testenv]`` configurations - by :user:`asottile`.

@@ -1,1 +1,0 @@
-Refuse to delete ``envdir`` if it doesn't look like a virtualenv - by :user:`asottile`.

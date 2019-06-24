@@ -11,6 +11,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.13.0 (2019-06-24)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- tox used Windows shell rules on non-Windows platforms when transforming
+  positional arguments to a string - by :user:`barneygale`.
+  `#1336 <https://github.com/tox-dev/tox/issues/1336>`_
+
+
+Features
+^^^^^^^^
+
+- Replace ``pkg_resources`` with ``importlib_metadata`` for speed - by :user:`asottile`.
+  `#1324 <https://github.com/tox-dev/tox/issues/1324>`_
+- Add the ``--devenv ENVDIR`` option for creating development environments from ``[testenv]`` configurations - by :user:`asottile`.
+  `#1326 <https://github.com/tox-dev/tox/issues/1326>`_
+- Refuse to delete ``envdir`` if it doesn't look like a virtualenv - by :user:`asottile`.
+  `#1340 <https://github.com/tox-dev/tox/issues/1340>`_
+
+
 v3.12.1 (2019-05-23)
 --------------------
 
