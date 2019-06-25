@@ -32,7 +32,9 @@ def build(config, session):
 
     build_requires = get_build_requires(build_info, package_venv, config.setupdir)
     # we need to filter out requirements already specified in pyproject.toml or user deps
-    base_build_deps = {canonicalize_name(r.name) for r in package_venv.envconfig.deps}
+    base_build_deps = {
+        canonicalize_name(Requirement(r.name).name) for r in package_venv.envconfig.deps
+    }
     build_requires_dep = [
         DepConfig(r, None)
         for r in build_requires
