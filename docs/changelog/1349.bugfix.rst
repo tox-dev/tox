@@ -1,1 +1,0 @@
-Fix isolated build double-requirement - by :user:`asottile`.

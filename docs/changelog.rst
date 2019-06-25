@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.13.1 (2019-06-25)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix isolated build double-requirement - by :user:`asottile`.
+  `#1349 <https://github.com/tox-dev/tox/issues/1349>`_
+
+
 v3.13.0 (2019-06-24)
 --------------------
 
