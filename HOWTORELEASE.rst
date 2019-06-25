@@ -31,9 +31,9 @@ Release
 -------
 Run the release command and make sure you pass in the desired release number:
 
-```bash
-tox -e release -- <version>
-```
+.. code-block:: bash
+
+    tox -e release -- <version>
 
 Create a pull request and wait until it the CI passes. Now make sure you merge the PR
 and delete the release branch. The CI will automatically pick the tag up and
@@ -47,8 +47,8 @@ Make sure to let the world know that a new version is out by whatever means you 
 As a minimum, send out a mail notification by triggering the notify tox environment:
 
 
-```bash
-TOX_DEV_GOOGLE_SECRET=our_secret tox -e notify
-```
+.. code-block:: bash
+
+    TOX_DEV_GOOGLE_SECRET=our_secret tox -e notify
 
 Note you'll need the ``TOX_DEV_GOOGLE_SECRET`` key, what you can acquire from other maintainers.
