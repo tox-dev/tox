@@ -711,6 +711,8 @@ def cleanup_for_venv(venv):
         or (INFO.IS_WIN and dir_items > {"Scripts", "Lib"})
         # non-windows, with lib and bin => OK
         or dir_items > {"bin", "lib"}
+        # pypy has a different lib folder => OK
+        or dir_items > {"bin", "lib_pypy"}
     ):
         venv.status = "error"
         reporter.error(
