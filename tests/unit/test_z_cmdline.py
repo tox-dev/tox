@@ -135,6 +135,12 @@ def test_envdir_would_delete_some_directory(cmd, initproj):
     assert "cowardly refusing to delete `envdir`" in result.out
 
 
+def test_recreate(cmd, initproj):
+    initproj("example-123", filedefs={"tox.ini": ""})
+    cmd("-e", "py", "--notest").assert_success()
+    cmd("-r", "-e", "py", "--notest").assert_success()
+
+
 def test_run_custom_install_command_error(cmd, initproj):
     initproj(
         "interp123-0.5",

@@ -1,0 +1,1 @@
+on venv cleanup: add explicit check for pypy venv to make it possible to recreate it - by :user:`obestwalter`
