@@ -1,0 +1,1 @@
+non canonical names within :conf:`requires` cause infinite provisioning loop - by :user:`gaborbernat`
