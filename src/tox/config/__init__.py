@@ -1027,7 +1027,7 @@ class ParseIni(object):
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
         within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
-        if not within_parallel:
+        if not within_parallel and not WITHIN_PROVISION:
             ensure_empty_dir(config.logdir)
 
         # determine indexserver dictionary
@@ -1165,7 +1165,7 @@ class ParseIni(object):
                 if package_name not in exists:
                     deps.append(DepConfig(require, None))
                     exists.add(package_name)
-                    dist = importlib_metadata.distribution(package_name)
+                    dist = importlib_metadata.distribution(package.name)
                     if not package.specifier.contains(dist.version, prereleases=True):
                         raise MissingDependency(package)
             except requirements.InvalidRequirement as exception:
@@ -1176,6 +1176,9 @@ class ParseIni(object):
                 missing_requirements.append(str(requirements.Requirement(require)))
         if failed_to_parse:
             raise tox.exception.BadRequirement()
+        if WITHIN_PROVISION and missing_requirements:
+            msg = "break infinite loop provisioning within {} missing {}"
+            raise tox.exception.Error(msg.format(sys.executable, missing_requirements))
         config.run_provision = bool(len(missing_requirements))
         return deps
 
