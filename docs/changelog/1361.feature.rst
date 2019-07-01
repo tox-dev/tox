@@ -1,0 +1,1 @@
+log environment variable changes when we're at two or more verbosity - by :user:`gaborbernat`

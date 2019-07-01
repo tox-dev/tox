@@ -8,6 +8,8 @@ from datetime import datetime
 
 import py
 
+from tox.util import env_diff
+
 
 class Verbosity(object):
     DEBUG = 2
@@ -41,13 +43,29 @@ class Reporter(object):
     def verbosity(self):
         return self.verbose_level - self.quiet_level
 
-    def log_popen(self, cwd, outpath, cmd_args_shell, pid):
+    def log_popen(self, cwd, outpath, cmd_args_shell, pid, env):
         """ log information about the action.popen() created process. """
         msg = "[{}] {}$ {}".format(pid, cwd, cmd_args_shell)
         if outpath:
             if outpath.common(cwd) is not None:
                 outpath = cwd.bestrelpath(outpath)
             msg = "{} >{}".format(msg, outpath)
+        if env is not None and self.verbosity > Verbosity.INFO:
+            add_, rm_, change_ = env_diff(env)
+            add = " | ".join("{}={}".format(k, v) for k, v in add_)
+            rm = " | ".join("{}={}".format(k, v) for k, v in rm_)
+            change = " | ".join("{}={}->{}".format(key, old, new) for key, old, new in change_)
+            if add or rm or change:
+                env_msg = ", ".join(
+                    i
+                    for i in [
+                        "add=[{}]".format(add) if add else None,
+                        "remove=[{}]".format(rm) if rm else None,
+                        "change=[{}]".format(change) if change else None,
+                    ]
+                    if i is not None
+                )
+                msg = "{} # env: {}".format(msg, env_msg)
         self.verbosity1(msg, of="logpopen")
 
     @property

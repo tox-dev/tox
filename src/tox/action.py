@@ -15,6 +15,7 @@ from tox import reporter
 from tox.constants import INFO
 from tox.exception import InvocationError
 from tox.reporter import Verbosity
+from tox.util import env_diff
 from tox.util.lock import get_unique_file
 from tox.util.stdlib import is_main_thread
 
@@ -74,10 +75,10 @@ class Action(object):
         cmd_args = [str(x) for x in self._rewrite_args(cwd, args)]
         cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
         stream_getter = self._get_standard_streams(
-            capture_err, cmd_args_shell, redirect, returnout, cwd
+            capture_err, cmd_args_shell, redirect, returnout, cwd, env
         )
         exit_code, output = None, None
-        with stream_getter as (fin, out_path, stderr, stdout):
+        with stream_getter as (fin, out_path, stderr, stdout, header_len):
             try:
                 process = self.via_popen(
                     cmd_args,
@@ -99,14 +100,14 @@ class Action(object):
             else:
                 if callback is not None:
                     callback(process)
-                reporter.log_popen(cwd, out_path, cmd_args_shell, process.pid)
+                reporter.log_popen(cwd, out_path, cmd_args_shell, process.pid, env)
                 output = self.evaluate_cmd(fin, process, redirect)
                 exit_code = process.returncode
             finally:
                 if out_path is not None and out_path.exists():
                     lines = out_path.read_text("UTF-8").split("\n")
                     # first three lines are the action, cwd, and cmd - remove it
-                    output = "\n".join(lines[3:])
+                    output = "\n".join(lines[header_len:])
                 try:
                     if exit_code and not ignore_ret:
                         if report_fail:
@@ -205,29 +206,42 @@ class Action(object):
         return process.poll()
 
     @contextmanager
-    def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout, cwd):
+    def _get_standard_streams(self, capture_err, cmd_args_shell, redirect, returnout, cwd, env):
         stdout = out_path = input_file_handler = None
         stderr = subprocess.STDOUT if capture_err else None
 
         if self.generate_tox_log or redirect:
             out_path = self.get_log_path(self.name)
             with out_path.open("wt") as stdout, out_path.open("rb") as input_file_handler:
-                msg = "action: {}, msg: {}\ncwd: {}\ncmd: {}\n".format(
-                    self.name.replace("\n", " "),
-                    self.msg.replace("\n", " "),
-                    str(cwd).replace("\n", " "),
-                    cmd_args_shell.replace("\n", " "),
-                )
+                add_, rm_, change_ = env_diff(env)
+                add = (["env add:"] + ["{}={}".format(k, v) for k, v in add_]) if add_ else []
+                rm = (["env rm:"] + ["{}={}".format(k, v) for k, v in rm_]) if rm_ else []
+                if change_:
+                    change = []
+                else:
+                    change = ["env change:"] + [
+                        "{}={} ({})".format(k, old, new) for k, old, new in change_
+                    ]
+                content = [
+                    "action: {}, msg: {}".format(self.name, self.msg),
+                    "args: {}".format(cmd_args_shell),
+                    "cwd: {}".format(str(cwd)),
+                ]
+                content.extend(add)
+                content.extend(rm)
+                content.extend(change)
+                content.extend(["output:", "", ""])
+                msg = "\n".join(content)
                 stdout.write(msg)
                 stdout.flush()
                 input_file_handler.read()  # read the header, so it won't be written to stdout
-                yield input_file_handler, out_path, stderr, stdout
+                yield input_file_handler, out_path, stderr, stdout, len(content)
                 return
 
         if returnout:
             stdout = subprocess.PIPE
 
-        yield input_file_handler, out_path, stderr, stdout
+        yield input_file_handler, out_path, stderr, stdout, 0
 
     def get_log_path(self, actionid):
         log_file = get_unique_file(self.log_dir, prefix=actionid, suffix=".log")
