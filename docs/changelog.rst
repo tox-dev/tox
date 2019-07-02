@@ -11,6 +11,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.13.2 (2019-07-01)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- on venv cleanup: add explicit check for pypy venv to make it possible to recreate it - by :user:`obestwalter`
+  `#1355 <https://github.com/tox-dev/tox/issues/1355>`_
+- non canonical names within :conf:`requires` cause infinite provisioning loop - by :user:`gaborbernat`
+  `#1359 <https://github.com/tox-dev/tox/issues/1359>`_
+
+
 v3.13.1 (2019-06-25)
 --------------------
 
