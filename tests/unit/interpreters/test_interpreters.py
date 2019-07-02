@@ -57,10 +57,10 @@ def test_tox_get_python_executable():
                 continue
         exe = get_exe(name)
         assert_version_in_output(exe, "{}.{}".format(major, minor))
-
+    has_py_exe = py.path.local.sysfind("py") is not None
     for major in (2, 3):
         name = "python{}".format(major)
-        if tox.INFO.IS_WIN:
+        if has_py_exe:
             error_code = subprocess.call(("py", "-{}".format(major), "-c", ""))
             if error_code:
                 continue
