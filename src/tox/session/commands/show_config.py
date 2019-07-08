@@ -1,13 +1,13 @@
 import sys
 from collections import OrderedDict
 
-import importlib_metadata
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 from six import StringIO
 from six.moves import configparser
 
 from tox import reporter
+from tox.util.stdlib import importlib_metadata
 
 DO_NOT_SHOW_CONFIG_ATTRIBUTES = (
     "interpreters",

@@ -3,6 +3,11 @@ import threading
 from contextlib import contextmanager
 from tempfile import TemporaryFile
 
+if sys.version_info >= (3, 8):
+    from importlib import metadata as importlib_metadata  # noqa
+else:
+    import importlib_metadata  # noqa
+
 
 def is_main_thread():
     """returns true if we are within the main thread"""
