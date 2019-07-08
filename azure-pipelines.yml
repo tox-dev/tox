@@ -29,6 +29,8 @@ jobs:
     jobs:
       fix_lint: null
       docs: null
+      py38:
+        image: [linux]
       py37:
         image: [linux, windows, macOs]
       py27:
