@@ -15,7 +15,6 @@ from fnmatch import fnmatchcase
 from subprocess import list2cmdline
 from threading import Thread
 
-import importlib_metadata
 import pluggy
 import py
 import toml
@@ -34,6 +33,7 @@ from tox.reporter import (
     verbosity1,
 )
 from tox.util.path import ensure_empty_dir
+from tox.util.stdlib import importlib_metadata
 
 from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
 from .parallel import add_parallel_config, add_parallel_flags
