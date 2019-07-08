@@ -160,25 +160,6 @@ Global settings are defined under the ``tox`` section as:
     Name of the virtual environment used to create a source distribution from the
     source tree.
 
-.. conf:: parallel_show_output ^ bool ^ false
-
-    .. versionadded:: 3.7.0
-
-    If set to True the content of the output will always be shown when running in parallel mode.
-
-.. conf:: depends ^ comma separated values
-
-    .. versionadded:: 3.7.0
-
-    tox environments this depends on. tox will try to run all dependent environments before running this
-    environment. Format is same as :conf:`envlist` (allows factor usage).
-
-    .. warning::
-
-       ``depends`` does not pull in dependencies into the run target, for example if you select ``py27,py36,coverage``
-       via the ``-e`` tox will only run those three (even if ``coverage`` may specify as ``depends`` other targets too -
-       such as ``py27, py35, py36, py37``).
-
 
 Jenkins override
 ++++++++++++++++
@@ -542,6 +523,25 @@ Complete list of settings that you can put into ``testenv*`` sections:
     A short description of the environment, this will be used to explain
     the environment to the user upon listing environments for the command
     line with any level of verbosity higher than zero.
+
+.. conf:: parallel_show_output ^ bool ^ false
+
+    .. versionadded:: 3.7.0
+
+    If set to True the content of the output will always be shown when running in parallel mode.
+
+.. conf:: depends ^ comma separated values
+
+    .. versionadded:: 3.7.0
+
+    tox environments this depends on. tox will try to run all dependent environments before running this
+    environment. Format is same as :conf:`envlist` (allows factor usage).
+
+    .. warning::
+
+       ``depends`` does not pull in dependencies into the run target, for example if you select ``py27,py36,coverage``
+       via the ``-e`` tox will only run those three (even if ``coverage`` may specify as ``depends`` other targets too -
+       such as ``py27, py35, py36, py37``).
 
 Substitutions
 -------------
