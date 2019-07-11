@@ -8,8 +8,6 @@ import threading
 from collections import OrderedDict
 from datetime import datetime
 
-import py
-
 threads = []
 
 if os.name == "nt":
@@ -32,7 +30,7 @@ def _file_support_encoding(chars, file):
     return False
 
 
-class Spinner(object):
+class Spinner:
     CLEAR_LINE = "\033[K"
     max_width = 120
     UNICODE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
@@ -47,7 +45,7 @@ class Spinner(object):
             if _file_support_encoding(self.UNICODE_FRAMES, sys.stdout)
             else self.ASCII_FRAMES
         )
-        self.stream = py.io.TerminalWriter(file=self._file)
+        self.stream = sys.stderr
         self._envs = OrderedDict()
         self._frame_index = 0
 

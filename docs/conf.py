@@ -47,14 +47,14 @@ def generate_draft_news():
 
 generate_draft_news()
 
-project = u"tox"
+project = "tox"
 _full_version = tox.__version__
 release = _full_version.split("+", 1)[0]
 version = ".".join(release.split(".")[:2])
 
 author = "holger krekel and others"
 year = date.today().year
-copyright = u"2010-{}, {}".format(year, author)
+copyright = "2010-{}, {}".format(year, author)
 
 master_doc = "index"
 source_suffix = ".rst"
@@ -82,8 +82,8 @@ html_sidebars = {
 html_show_sourcelink = False
 html_static_path = ["_static"]
 htmlhelp_basename = "{}doc".format(project)
-latex_documents = [("index", "tox.tex", u"{} Documentation".format(project), author, "manual")]
-man_pages = [("index", project, u"{} Documentation".format(project), [author], 1)]
+latex_documents = [("index", "tox.tex", "{} Documentation".format(project), author, "manual")]
+man_pages = [("index", project, "{} Documentation".format(project), [author], 1)]
 epub_title = project
 epub_author = author
 epub_publisher = author

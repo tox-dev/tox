@@ -28,3 +28,4 @@ __pycache__
 credentials.json
 
 pip-wheel-metadata
+.DS_Store
