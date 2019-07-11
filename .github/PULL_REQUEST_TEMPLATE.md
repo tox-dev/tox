@@ -18,5 +18,5 @@ much about the checklist - we will help you get started.
   * if PR has no issue: consider creating one first or change it to the PR number after creating the PR
   * "sign" fragment with "by :user:`<your username>`"
   * please use full sentences with correct case and punctuation, for example: "Fix issue with non-ascii contents in doctest text files - by :user:`superuser`."
-  * also see [examples](../tree/master/docs/changelog/examples.rst)
+  * also see [examples](../tree/master/docs/changelog)
 - [ ] added yourself to `CONTRIBUTORS` (preserving alphabetical order)
