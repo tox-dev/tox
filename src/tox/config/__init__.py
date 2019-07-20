@@ -1432,6 +1432,8 @@ class SectionReader:
         for line in value.split(sep):
             if line.strip():
                 name, rest = line.split("=", 1)
+                # Turn escaped newlines into real newlines.
+                rest = rest.strip().replace("\\n", "\n")
                 d[name.strip()] = rest.strip()
 
         return d
