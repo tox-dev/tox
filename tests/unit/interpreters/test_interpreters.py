@@ -46,7 +46,7 @@ def test_tox_get_python_executable():
 
     p = tox_get_python_executable(envconfig)
     assert p == py.path.local(sys.executable)
-    for major, minor in tox.PYTHON.CPYTHON_VERSION_TUPLES:
+    for major, minor in [(2, 7), (3, 5), (3, 6), (3, 7), (3, 8)]:
         name = "python{}.{}".format(major, minor)
         if tox.INFO.IS_WIN:
             pydir = "python{}{}".format(major, minor)

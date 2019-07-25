@@ -2194,26 +2194,24 @@ class TestGlobalOptions:
         assert "typo-factor" not in config.envconfigs
 
     def test_correct_basepython_chosen_from_default_factors(self, newconfig):
-        envlist = list(tox.PYTHON.DEFAULT_FACTORS.keys())
-        config = newconfig([], "[tox]\nenvlist={}".format(", ".join(envlist)))
-        assert config.envlist == envlist
+        envs = {
+            "py": sys.executable,
+            "py2": "python2",
+            "py3": "python3",
+            "py27": "python2.7",
+            "py36": "python3.6",
+            "py310": "python3.10",
+            "pypy": "pypy",
+            "pypy2": "pypy2",
+            "pypy3": "pypy3",
+            "pypy36": "pypy3.6",
+            "jython": "jython",
+        }
+        config = newconfig([], "[tox]\nenvlist={}".format(", ".join(envs)))
+        assert set(config.envlist) == set(envs)
         for name in config.envlist:
             basepython = config.envconfigs[name].basepython
-            if name == "jython":
-                assert basepython == "jython"
-            elif name in ("pypy2", "pypy3"):
-                assert basepython == "pypy" + name[-1]
-            elif name in ("py2", "py3"):
-                assert basepython == "python" + name[-1]
-            elif name == "pypy":
-                assert basepython == name
-            elif name == "py":
-                assert "python" in basepython or "pypy" in basepython
-            elif "pypy" in name:
-                assert basepython == "pypy{}.{}".format(name[-2], name[-1])
-            else:
-                assert name.startswith("py")
-                assert basepython == "python{}.{}".format(name[2], name[3])
+            assert basepython == envs[name]
 
     def test_envlist_expansion(self, newconfig):
         inisource = """

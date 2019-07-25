@@ -51,9 +51,6 @@ hookimpl = tox.hookimpl
 Import hookimpl directly from tox instead.
 """
 
-default_factors = tox.PYTHON.DEFAULT_FACTORS
-"""DEPRECATED MOVE - please update to new location."""
-
 WITHIN_PROVISION = os.environ.get(str("TOX_PROVISION")) == "1"
 
 
@@ -549,11 +546,21 @@ def tox_addoption(parser):
         python conflict is set in which case the factor name implied version if forced
         """
         for factor in testenv_config.factors:
-            if factor in tox.PYTHON.DEFAULT_FACTORS:
-                implied_python = tox.PYTHON.DEFAULT_FACTORS[factor]
+            match = tox.PYTHON.PY_FACTORS_RE.match(factor)
+            if match:
+                base_exe = {"py": "python"}.get(match.group(1), match.group(1))
+                version_s = match.group(2)
+                if not version_s:
+                    version_info = ()
+                elif len(version_s) == 1:
+                    version_info = (version_s,)
+                else:
+                    version_info = (version_s[0], version_s[1:])
+                implied_version = ".".join(version_info)
+                implied_python = "{}{}".format(base_exe, implied_version)
                 break
         else:
-            implied_python, factor = None, None
+            implied_python, version_info, implied_version = None, (), ""
 
         if testenv_config.config.ignore_basepython_conflict and implied_python is not None:
             return implied_python
@@ -561,23 +568,20 @@ def tox_addoption(parser):
         proposed_python = (implied_python or sys.executable) if value is None else str(value)
         if implied_python is not None and implied_python != proposed_python:
             testenv_config.basepython = proposed_python
-            match = tox.PYTHON.PY_FACTORS_RE.match(factor)
-            implied_version = match.group(2) if match else None
-            if implied_version is not None:
-                python_info_for_proposed = testenv_config.python_info
-                if not isinstance(python_info_for_proposed, NoInterpreterInfo):
-                    proposed_version = "".join(
-                        str(i) for i in python_info_for_proposed.version_info[0:2]
-                    )
-                    # '27'.startswith('2') or '27'.startswith('27')
-                    if not proposed_version.startswith(implied_version):
-                        # TODO(stephenfin): Raise an exception here in tox 4.0
-                        warnings.warn(
-                            "conflicting basepython version (set {}, should be {}) for env '{}';"
-                            "resolve conflict or set ignore_basepython_conflict".format(
-                                proposed_version, implied_version, testenv_config.envname
-                            )
+            python_info_for_proposed = testenv_config.python_info
+            if not isinstance(python_info_for_proposed, NoInterpreterInfo):
+                proposed_version = ".".join(
+                    str(x) for x in python_info_for_proposed.version_info[: len(version_info)]
+                )
+                if proposed_version != implied_version:
+                    # TODO(stephenfin): Raise an exception here in tox 4.0
+                    warnings.warn(
+                        "conflicting basepython version (set {}, should be {}) for env '{}';"
+                        "resolve conflict or set ignore_basepython_conflict".format(
+                            proposed_version, implied_version, testenv_config.envname
                         )
+                    )
+
         return proposed_python
 
     parser.add_testenv_attribute(
