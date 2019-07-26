@@ -28,6 +28,7 @@ def create_interpreters_instance():
     return Interpreters(hook=pm.hook)
 
 
+@pytest.mark.skipif(tox.INFO.IS_PYPY, reason="testing cpython interpreter discovery")
 def test_tox_get_python_executable():
     class envconfig:
         basepython = sys.executable

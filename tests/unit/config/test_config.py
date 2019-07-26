@@ -1909,17 +1909,21 @@ class TestConfigTestEnv:
 
     def test_default_factors_conflict(self, newconfig, capsys):
         with pytest.warns(UserWarning, match=r"conflicting basepython .*"):
+            exe = "pypy3" if tox.INFO.IS_PYPY else "python3"
+            env = "pypy27" if tox.INFO.IS_PYPY else "py27"
             config = newconfig(
-                """
+                """\
                 [testenv]
-                basepython=python3
-                [testenv:py27]
+                basepython={}
+                [testenv:{}]
                 commands = python --version
-            """
+                """.format(
+                    exe, env
+                )
             )
         assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs["py27"]
-        assert envconfig.basepython == "python3"
+        envconfig = config.envconfigs[env]
+        assert envconfig.basepython == exe
 
     def test_default_factors_conflict_lying_name(
         self, newconfig, capsys, tmpdir, recwarn, monkeypatch

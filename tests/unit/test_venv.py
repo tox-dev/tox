@@ -446,8 +446,8 @@ def test_install_command_not_installed_bash(newmocksession):
 
 
 def test_install_python3(newmocksession):
-    if not py.path.local.sysfind("python3"):
-        pytest.skip("needs python3")
+    if not py.path.local.sysfind("python3") or tox.INFO.IS_PYPY:
+        pytest.skip("needs cpython3")
     mocksession = newmocksession(
         [],
         """\

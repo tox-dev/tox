@@ -14,17 +14,19 @@ def test_package_setuptools(initproj, cmd):
     initproj(
         "magic-0.1",
         filedefs={
-            "tox.ini": """
-                    [tox]
-                    isolated_build = true
-                    [testenv:.package]
-                    basepython = python
-                """,
-            "pyproject.toml": """
-                    [build-system]
-                    requires = ["setuptools >= 35.0.2", "setuptools_scm >= 2.0.0, <3"]
-                    build-backend = "setuptools.build_meta"
-                    """,
+            "tox.ini": """\
+                [tox]
+                isolated_build = true
+                [testenv:.package]
+                basepython = {}
+            """.format(
+                sys.executable
+            ),
+            "pyproject.toml": """\
+                [build-system]
+                requires = ["setuptools >= 35.0.2", "setuptools_scm >= 2.0.0, <3"]
+                build-backend = "setuptools.build_meta"
+            """,
         },
     )
     run(cmd, "magic-0.1.tar.gz")
@@ -37,26 +39,28 @@ def test_package_flit(initproj, cmd):
     initproj(
         "magic-0.1",
         filedefs={
-            "tox.ini": """
-                    [tox]
-                    isolated_build = true
-                    [testenv:.package]
-                    basepython = python
-                """,
-            "pyproject.toml": """
-                    [build-system]
-                    requires = ["flit"]
-                    build-backend = "flit.buildapi"
+            "tox.ini": """\
+                [tox]
+                isolated_build = true
+                [testenv:.package]
+                basepython = {}
+            """.format(
+                sys.executable
+            ),
+            "pyproject.toml": """\
+                [build-system]
+                requires = ["flit"]
+                build-backend = "flit.buildapi"
 
-                    [tool.flit.metadata]
-                    module = "magic"
-                    author = "Happy Harry"
-                    author-email = "happy@harry.com"
-                    home-page = "https://github.com/happy-harry/is"
-                    requires = [
-                        "tox",
-                    ]
-                    """,
+                [tool.flit.metadata]
+                module = "magic"
+                author = "Happy Harry"
+                author-email = "happy@harry.com"
+                home-page = "https://github.com/happy-harry/is"
+                requires = [
+                    "tox",
+                ]
+            """,
             ".gitignore": ".tox",
         },
         add_missing_setup_py=False,
@@ -78,24 +82,25 @@ def test_package_poetry(initproj, cmd):
     initproj(
         "magic-0.1",
         filedefs={
-            "tox.ini": """
-                    [tox]
-                    isolated_build = true
-                    [testenv:.package]
-                    basepython = python
-                """,
-            "pyproject.toml": """
-                    [build-system]
-                    requires = ["poetry>=0.12"]
-                    build-backend = "poetry.masonry.api"
+            "tox.ini": """\
+                [tox]
+                isolated_build = true
+                [testenv:.package]
+                basepython = {}
+            """.format(
+                sys.executable
+            ),
+            "pyproject.toml": """\
+                [build-system]
+                requires = ["poetry>=0.12"]
+                build-backend = "poetry.masonry.api"
 
-                    [tool.poetry]
-                    name = "magic"
-                    version = "0.1.0"
-                    description = ""
-                    authors = ["Name <email@email.com>"]
-
-                    """,
+                [tool.poetry]
+                name = "magic"
+                version = "0.1.0"
+                description = ""
+                authors = ["Name <email@email.com>"]
+            """,
             ".gitignore": ".tox",
         },
         add_missing_setup_py=False,
