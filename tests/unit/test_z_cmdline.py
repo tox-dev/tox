@@ -784,11 +784,13 @@ def test_notest(initproj, cmd):
     initproj(
         "example123",
         filedefs={
-            "tox.ini": """
-        # content of: tox.ini
-        [testenv:py26]
-        basepython=python
-    """
+            "tox.ini": """\
+            # content of: tox.ini
+            [testenv:py26]
+            basepython={}
+            """.format(
+                sys.executable
+            )
         },
     )
     result = cmd("-v", "--notest")

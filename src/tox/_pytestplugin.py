@@ -577,7 +577,7 @@ def mock_venv(monkeypatch):
 def current_tox_py():
     """generate the current (test runners) python versions key
     e.g. py37 when running under Python 3.7"""
-    return "py{}".format("".join(str(i) for i in sys.version_info[0:2]))
+    return "{}{}{}".format("pypy" if tox.INFO.IS_PYPY else "py", *sys.version_info)
 
 
 def pytest_runtest_setup(item):

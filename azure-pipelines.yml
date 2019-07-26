@@ -35,6 +35,10 @@ jobs:
         image: [linux, windows, macOs]
       py27:
         image: [linux, windows, macOs]
+      pypy:
+        image: [linux]
+      pypy3:
+        image: [linux]
       py36:
         image: [linux, windows, macOs]
       py35:
