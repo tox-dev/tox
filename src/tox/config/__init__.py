@@ -1165,6 +1165,9 @@ class ParseIni(object):
             # noinspection PyBroadException
             try:
                 package = requirements.Requirement(require)
+                # check if the package even applies
+                if package.marker and not package.marker.evaluate({"extra": ""}):
+                    continue
                 package_name = canonicalize_name(package.name)
                 if package_name not in exists:
                     deps.append(DepConfig(require, None))
