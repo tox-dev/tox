@@ -24,10 +24,10 @@ def test_provision_min_version_is_requires(newconfig, next_tox_major):
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
-            """
+            """\
             [tox]
             minversion = {}
-        """.format(
+            """.format(
                 next_tox_major
             ),
         )
@@ -45,10 +45,10 @@ def test_provision_min_version_is_requires(newconfig, next_tox_major):
 def test_provision_tox_change_name(newconfig):
     config = newconfig(
         [],
-        """
+        """\
         [tox]
         provision_tox_env = magic
-    """,
+        """,
     )
     assert config.provision_tox_env == "magic"
 
@@ -58,12 +58,12 @@ def test_provision_basepython_global_only(newconfig, next_tox_major):
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
-            """
+            """\
             [tox]
             minversion = {}
             [testenv]
             basepython = what
-        """.format(
+            """.format(
                 next_tox_major
             ),
         )
@@ -77,12 +77,12 @@ def test_provision_basepython_local(newconfig, next_tox_major):
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
-            """
+            """\
             [tox]
             minversion = {}
             [testenv:.tox]
             basepython = what
-        """.format(
+            """.format(
                 next_tox_major
             ),
         )
@@ -95,10 +95,10 @@ def test_provision_bad_requires(newconfig, capsys, monkeypatch):
     with pytest.raises(BadRequirement):
         newconfig(
             [],
-            """
+            """\
             [tox]
             requires = sad >sds d ok
-        """,
+            """,
         )
     out, err = capsys.readouterr()
     assert "ERROR: failed to parse InvalidRequirement" in out
@@ -208,7 +208,7 @@ def test_provision_non_canonical_dep(
     initproj(
         "w-0.1",
         {
-            "tox.ini": """
+            "tox.ini": """\
             [tox]
             envlist = py
             requires =
@@ -228,6 +228,21 @@ def test_provision_non_canonical_dep(
     monkeypatch.setenv(str("PIP_FIND_LINKS"), str(find_links))
 
     result = cmd("-a", "-v", "-v")
+    result.assert_success(is_run_test_env=False)
+
+
+def test_provision_requirement_with_environment_marker(cmd, initproj):
+    initproj(
+        "proj",
+        {
+            "tox.ini": """\
+            [tox]
+            requires =
+                package-that-does-not-exist;python_version=="1.0"
+            """
+        },
+    )
+    result = cmd("-e", "py", "-vv")
     result.assert_success(is_run_test_env=False)
 
 
