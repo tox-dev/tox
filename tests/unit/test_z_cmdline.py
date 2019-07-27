@@ -164,24 +164,29 @@ def test_unknown_interpreter_and_env(cmd, initproj):
         "interp123-0.5",
         filedefs={
             "tests": {"test_hello.py": "def test_hello(): pass"},
-            "tox.ini": """
-            [testenv:python]
-            basepython=xyz_unknown_interpreter
-            [testenv]
-            changedir=tests
-            skip_install = true
-        """,
+            "tox.ini": """\
+                [testenv:python]
+                basepython=xyz_unknown_interpreter
+                [testenv]
+                changedir=tests
+                skip_install = true
+            """,
         },
     )
     result = cmd()
     result.assert_fail()
-    assert any(
-        "ERROR: InterpreterNotFound: xyz_unknown_interpreter" == l for l in result.outlines
-    ), result.outlines
+    assert "ERROR: InterpreterNotFound: xyz_unknown_interpreter" in result.outlines
 
     result = cmd("-exyz")
     result.assert_fail()
     assert result.out == "ERROR: unknown environment 'xyz'\n"
+
+
+def test_unknown_interpreter_factor(cmd, initproj):
+    initproj("py21", filedefs={"tox.ini": "[testenv]\nskip_install=true"})
+    result = cmd("-e", "py21")
+    result.assert_fail()
+    assert "ERROR: InterpreterNotFound: python2.1" in result.outlines
 
 
 def test_unknown_interpreter(cmd, initproj):
