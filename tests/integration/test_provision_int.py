@@ -17,14 +17,16 @@ def test_provision_missing(initproj, cmd):
     initproj(
         "pkg123-0.7",
         filedefs={
-            "tox.ini": """
-                    [tox]
-                    skipsdist=True
-                    minversion = 3.7.0
-                    requires = setuptools == 40.6.3
-                    [testenv]
-                    commands=python -c "import sys; print(sys.executable); raise SystemExit(1)"
-                """
+            "tox.ini": """\
+                [tox]
+                skipsdist=True
+                minversion = 3.7.0
+                requires =
+                    setuptools == 40.6.3
+                    pyparsing!=2.4.1,!=2.4.1.1;python_version=="3.4"
+                [testenv]
+                commands=python -c "import sys; print(sys.executable); raise SystemExit(1)"
+            """
         },
     )
     result = cmd("-e", "py")
