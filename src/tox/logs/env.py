@@ -36,7 +36,6 @@ class EnvLog(object):
         :param py.path.local installpkg: Path ot the package.
         """
         self.dict["installpkg"] = {
-            "md5": installpkg.computehash("md5"),
             "sha256": installpkg.computehash("sha256"),
             "basename": installpkg.basename,
         }

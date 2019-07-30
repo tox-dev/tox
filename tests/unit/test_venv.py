@@ -548,9 +548,9 @@ class TestCreationConfig:
         mocksession.new_config(config)
         venv = mocksession.getvenv("python")
         cconfig = venv._getliveconfig()
-        md5, path = cconfig.deps[0]
+        sha256, path = cconfig.deps[0]
         assert path == xyz2
-        assert md5 == path.computehash()
+        assert sha256 == path.computehash("sha256")
 
     def test_python_recreation(self, tmpdir, newconfig, mocksession):
         pkg = tmpdir.ensure("package.tar.gz")
