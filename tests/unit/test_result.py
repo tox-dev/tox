@@ -38,11 +38,7 @@ def test_set_header(pkg):
     assert replog.dict["toxversion"] == tox.__version__
     assert replog.dict["platform"] == sys.platform
     assert replog.dict["host"] == socket.getfqdn()
-    expected = {
-        "basename": "hello-1.0.tar.gz",
-        "md5": pkg.computehash("md5"),
-        "sha256": pkg.computehash("sha256"),
-    }
+    expected = {"basename": "hello-1.0.tar.gz", "sha256": pkg.computehash("sha256")}
     env_log = replog.get_envlog("a")
     env_log.set_header(installpkg=pkg)
     assert env_log.dict["installpkg"] == expected

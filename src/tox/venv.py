@@ -23,7 +23,7 @@ from .config import DepConfig
 class CreationConfig:
     def __init__(
         self,
-        base_resolved_python_md5,
+        base_resolved_python_sha256,
         base_resolved_python_path,
         tox_version,
         sitepackages,
@@ -31,7 +31,7 @@ class CreationConfig:
         deps,
         alwayscopy,
     ):
-        self.base_resolved_python_md5 = base_resolved_python_md5
+        self.base_resolved_python_sha256 = base_resolved_python_sha256
         self.base_resolved_python_path = base_resolved_python_path
         self.tox_version = tox_version
         self.sitepackages = sitepackages
@@ -41,7 +41,7 @@ class CreationConfig:
 
     def writeconfig(self, path):
         lines = [
-            "{} {}".format(self.base_resolved_python_md5, self.base_resolved_python_path),
+            "{} {}".format(self.base_resolved_python_sha256, self.base_resolved_python_path),
             "{} {:d} {:d} {:d}".format(
                 self.tox_version, self.sitepackages, self.usedevelop, self.alwayscopy
             ),
@@ -64,11 +64,11 @@ class CreationConfig:
             alwayscopy = bool(int(alwayscopy))
             deps = []
             for line in lines:
-                base_resolved_python_md5, depstring = line.split(None, 1)
-                deps.append((base_resolved_python_md5, depstring))
-            base_resolved_python_md5, base_resolved_python_path = base_resolved_python_info
+                base_resolved_python_sha256, depstring = line.split(None, 1)
+                deps.append((base_resolved_python_sha256, depstring))
+            base_resolved_python_sha256, base_resolved_python_path = base_resolved_python_info
             return CreationConfig(
-                base_resolved_python_md5,
+                base_resolved_python_sha256,
                 base_resolved_python_path,
                 tox_version,
                 sitepackages,
@@ -81,7 +81,7 @@ class CreationConfig:
 
     def matches_with_reason(self, other, deps_matches_subset=False):
         for attr in (
-            "base_resolved_python_md5",
+            "base_resolved_python_sha256",
             "base_resolved_python_path",
             "tox_version",
             "sitepackages",
@@ -266,11 +266,11 @@ class VirtualEnv(object):
         alwayscopy = self.envconfig.alwayscopy
         deps = []
         for dep in self.get_resolved_dependencies():
-            dep_name_md5 = getdigest(dep.name)
-            deps.append((dep_name_md5, dep.name))
-        base_resolved_python_md5 = getdigest(base_resolved_python_path)
+            dep_name_sha256 = getdigest(dep.name)
+            deps.append((dep_name_sha256, dep.name))
+        base_resolved_python_sha256 = getdigest(base_resolved_python_path)
         return CreationConfig(
-            base_resolved_python_md5,
+            base_resolved_python_sha256,
             base_resolved_python_path,
             version,
             sitepackages,
@@ -629,7 +629,7 @@ def getdigest(path):
     path = py.path.local(path)
     if not path.check(file=1):
         return "0" * 32
-    return path.computehash()
+    return path.computehash("sha256")
 
 
 def prepend_shebang_interpreter(args):

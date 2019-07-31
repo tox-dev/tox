@@ -503,7 +503,7 @@ def mock_venv(monkeypatch):
         def readconfig(cls, path):
             if path.dirname.endswith("{}py".format(os.sep)):
                 return CreationConfig(
-                    base_resolved_python_md5=getdigest(sys.executable),
+                    base_resolved_python_sha256=getdigest(sys.executable),
                     base_resolved_python_path=sys.executable,
                     tox_version=tox.__version__,
                     sitepackages=False,
@@ -513,7 +513,7 @@ def mock_venv(monkeypatch):
                 )
             elif path.dirname.endswith("{}.package".format(os.sep)):
                 return CreationConfig(
-                    base_resolved_python_md5=getdigest(sys.executable),
+                    base_resolved_python_sha256=getdigest(sys.executable),
                     base_resolved_python_path=sys.executable,
                     tox_version=tox.__version__,
                     sitepackages=False,

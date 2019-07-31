@@ -40,8 +40,7 @@ This will create a json-formatted result file using this schema:
       "platform": "linux2",
       "installpkg": {
         "basename": "tox-1.6.0.dev1.zip",
-        "sha256": "b6982dde5789a167c4c35af0d34ef72176d0575955f5331ad04aee9f23af4326",
-        "md5": "27ead99fd7fa39ee7614cede6bf175a6"
+        "sha256": "b6982dde5789a167c4c35af0d34ef72176d0575955f5331ad04aee9f23af4326"
       },
       "toxversion": "1.6.0.dev1",
       "reportversion": "1"
