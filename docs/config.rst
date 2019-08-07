@@ -336,7 +336,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionchanged:: 2.3
 
-    Support for index servers is now deprecated, and it's usage discouraged.
+    Support for index servers is now deprecated, and its usage discouraged.
 
     .. versionchanged:: 3.9
 
