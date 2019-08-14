@@ -53,7 +53,7 @@ class PythonSpec(object):
         if os.path.isabs(base_python):
             path = base_python
         else:
-            match = re.match(r"(python|pypy|jython)(\d)?(?:\.(\d))?(-(32|64))?", base_python)
+            match = re.match(r"(python|pypy|jython)(\d)?(?:\.(\d+))?(-(32|64))?", base_python)
             if match:
                 groups = match.groups()
                 name = groups[0]
