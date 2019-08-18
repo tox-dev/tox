@@ -406,6 +406,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 .. conf:: recreate ^ true|false ^ false
 
     Always recreate virtual environment if this option is true.
+    If this option is false, ``tox``'s resolution mechanism will be used to
+    determine whether to recreate the environment.
 
 .. conf:: downloadcache ^ PATH
 
