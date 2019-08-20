@@ -17,18 +17,24 @@ def exit_code_str(exception_name, command, exit_code):
     """
     str_ = "{} for command {}".format(exception_name, command)
     if exit_code is not None:
-        str_ += " (exited with code {:d})".format(exit_code)
-        if (os.name == "posix") and (exit_code > 128):
+        if (exit_code < 0 or (os.name == "posix" and exit_code > 128)):
             signals = {
                 number: name for name, number in vars(signal).items() if name.startswith("SIG")
             }
-            number = exit_code - 128
-            name = signals.get(number)
-            if name:
-                str_ += (
-                    "\nNote: this might indicate a fatal error signal "
-                    "({:d} - 128 = {:d}: {})".format(number + 128, number, name)
-                )
+            if exit_code < 0:
+                # Signal reported via subprocess.Popen.
+                sig_name = signals.get(-exit_code)
+                str_ += " (exited with code {:d} ({}))".format(exit_code, sig_name)
+            else:
+                str_ += " (exited with code {:d})".format(exit_code)
+                number = exit_code - 128
+                name = signals.get(number)
+                if name:
+                    str_ += (
+                        ")\nNote: this might indicate a fatal error signal "
+                        "({:d} - 128 = {:d}: {})".format(exit_code, number, name)
+                    )
+        str_ += " (exited with code {:d})".format(exit_code)
     return str_
 
 

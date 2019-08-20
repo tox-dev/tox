@@ -72,7 +72,7 @@ def test_get_commandlog(pkg):
     assert setuplog2.list == setuplog.list
 
 
-@pytest.mark.parametrize("exit_code", [None, 0, 5, 128 + signal.SIGTERM, 1234])
+@pytest.mark.parametrize("exit_code", [None, 0, 5, 128 + signal.SIGTERM, 1234, -15])
 @pytest.mark.parametrize("os_name", ["posix", "nt"])
 def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     monkeypatch.setattr(os, "name", value=os_name)
@@ -85,6 +85,8 @@ def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     assert call_args == mocker.call("InvocationError", "<command>", exit_code)
     if exit_code is None:
         assert "(exited with code" not in result
+    elif exit_code is -15:
+        assert "(exited with code -15 (SIGTERM))" in result
     else:
         assert "(exited with code %d)" % exit_code in result
         note = "Note: this might indicate a fatal error signal"
