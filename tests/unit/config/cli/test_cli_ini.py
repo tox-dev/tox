@@ -18,7 +18,7 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
         verbose = 5
         quiet = 1
         command = run-parallel
-        env_list = py37, py36
+        env = py37, py36
         default_runner = magic
         recreate = true
         no_test = true
@@ -51,7 +51,7 @@ def test_ini_empty(empty_ini, core_handlers):
         "verbose": 2,
         "quiet": 0,
         "command": "run",
-        "env_list": None,
+        "env": None,
         "default_runner": "virtualenv",
         "recreate": False,
         "no_test": False,
@@ -67,7 +67,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini, core_handlers):
         "verbose": 5,
         "quiet": 1,
         "command": "run-parallel",
-        "env_list": ["py37", "py36"],
+        "env": ["py37", "py36"],
         "default_runner": "magic",
         "recreate": True,
         "no_test": True,
@@ -101,14 +101,14 @@ def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
         "verbose": 2,
         "quiet": 0,
         "command": "run",
-        "env_list": None,
+        "env": None,
         "default_runner": "virtualenv",
         "recreate": False,
         "no_test": False,
     }
 
 
-def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
+def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog, value_error):
     caplog.set_level(logging.WARNING)
     to = tmp_path / "tox.ini"
     to.write_text(
@@ -123,14 +123,15 @@ def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
     parsed, _, __ = get_options()
     assert caplog.messages == [
-        "{} key verbose as type <class 'int'> failed with "
-        "ValueError(\"invalid literal for int() with base 10: 'what'\")".format(to)
+        "{} key verbose as type <class 'int'> failed with {}".format(
+            to, value_error("invalid literal for int() with base 10: 'what'")
+        )
     ]
     assert vars(parsed) == {
         "verbose": 2,
         "quiet": 0,
         "command": "run",
-        "env_list": None,
+        "env": None,
         "default_runner": "virtualenv",
         "recreate": False,
         "no_test": False,

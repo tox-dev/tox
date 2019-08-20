@@ -176,9 +176,9 @@ def test_command_keyboard_interrupt(tmp_path):
     process = subprocess.Popen(
         [
             sys.executable,
-            Path(__file__).parent / "local_subprocess_sigint.py",
-            tmp_path / "idle",
-            send_signal,
+            str(Path(__file__).parent / "local_subprocess_sigint.py"),
+            str(tmp_path / "idle"),
+            str(send_signal),
         ],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,

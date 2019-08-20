@@ -2,11 +2,12 @@
 import logging
 import os
 import select
+import shutil
 import signal
 import subprocess
 import sys
 from threading import Event, Thread
-from typing import Tuple, Type
+from typing import List, Optional, Sequence, Tuple, Type
 
 from .api import ContentHandler, Execute, ExecuteInstance, ExecuteRequest, Outcome
 
@@ -27,17 +28,28 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     ) -> None:
         super().__init__(request, out_handler, err_handler)
         self.process = None
+        self._cmd = []  # type: Optional[List[str]]
+
+    @property
+    def cmd(self) -> Sequence[str]:
+        if not len(self._cmd):
+            executable = shutil.which(self.request.cmd[0], path=self.request.env["PATH"])
+            if executable is None:
+                self._cmd = self.request.cmd  # if failed to find leave as it is
+            else:
+                # else use expanded format
+                self._cmd = [executable, *self.request.cmd[1:]]
+        return self._cmd
 
     def run(self) -> int:
         try:
             self.process = process = subprocess.Popen(
-                self.request.cmd,
+                self.cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=None if self.request.allow_stdin else subprocess.PIPE,
                 cwd=str(self.request.cwd),
                 env=self.request.env,
-                shell=False,
                 creationflags=(
                     subprocess.CREATE_NEW_PROCESS_GROUP
                     if sys.platform == "win32"

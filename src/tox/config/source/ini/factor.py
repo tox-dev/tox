@@ -46,7 +46,7 @@ def explode_factor(group):
 
 def expand_factors(value):
     for line in value.split("\n"):
-        match = re.match(r"^((?P<factor_expr>[\w{}.!,-]+)\:\s+)?(?P<content>.*?)$", line)
+        match = re.match(r"^((?P<factor_expr>[\w{}.!,-]+):\s+)?(?P<content>.*?)$", line)
         groups = match.groupdict()
         factor_expr, content = groups["factor_expr"], groups["content"]
         if factor_expr is not None:
@@ -76,7 +76,7 @@ def expand_env_with_negation(value):
     for key, group in itertools.groupby(re.split(r"((?:{[^}]+\})+)|,", value), key=bool):
         if key:
             group_str = "".join(group).strip()
-            elements = re.split(r"\{([^}]+)\}", group_str)
+            elements = re.split(r"{([^}]+)\}", group_str)
             parts = [re.sub(r"\s+", "", elem).split(",") for elem in elements]
             for variant in itertools.product(*parts):
                 variant_str = "".join(variant)

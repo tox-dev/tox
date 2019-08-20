@@ -11,14 +11,14 @@ def tox_add_option(parser: ToxParser):
 
 
 def display_config(state: State):
-    if not state.options.env_list:
+    if not state.options.env:
         for key in state.conf.core:
             print("{} = {}".format(key, state.conf.core[key]))
         print(",".join(state.conf.core.unused()))
     for name in state.tox_envs:
         tox_env = state.tox_envs[name]
         print()
-        print(f"[{name}]")
+        print("[{}]".format(name))
         print("type = {}".format(type(tox_env).__name__))
         for key in tox_env.conf:
             print("{} = {}".format(key, tox_env.conf[key]))

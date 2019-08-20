@@ -13,7 +13,7 @@ from .package import PackageToxEnv
 class RunToxEnv(ToxEnv, ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options, execute: Execute):
         super().__init__(conf, core, options, execute)
-        self.package_env: Optional[PackageToxEnv] = None
+        self.package_env = None  # type: Optional[PackageToxEnv]
 
     def register_config(self):
         super().register_config()

@@ -5,11 +5,11 @@ import threading
 from abc import ABC, abstractmethod
 from functools import partial
 from timeit import default_timer as timer
-from typing import Callable, Type
+from typing import Callable, Sequence, Type
 
 from colorama import Fore
 
-from .request import ExecuteRequest
+from .request import ExecuteRequest, shell_cmd
 from .stream import CollectWrite
 
 ContentHandler = Callable[[bytes], None]
@@ -39,6 +39,11 @@ class ExecuteInstance:
     def interrupt(self) -> int:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def cmd(self) -> Sequence[str]:
+        raise NotImplementedError
+
 
 class Outcome:
     OK = 0
@@ -52,17 +57,16 @@ class Outcome:
         err: str,
         start: float,
         end: float,
+        cmd: Sequence[str],
     ):
         self.request = request
-
         self.show_on_standard = show_on_standard
-
         self.exit_code = exit_code
         self.out = out
         self.err = err
-
         self.start = start
         self.end = end
+        self.cmd = cmd
 
     def __bool__(self):
         return self.exit_code == self.OK
@@ -83,7 +87,7 @@ class Outcome:
             "exit code %d for %s: %s in %s",
             self.exit_code,
             self.request.cwd,
-            self.request.shell_cmd,
+            self.shell_cmd,
             self.elapsed,
         )
         raise SystemExit(self.exit_code)
@@ -91,6 +95,10 @@ class Outcome:
     @property
     def elapsed(self):
         return self.end - self.start
+
+    @property
+    def shell_cmd(self):
+        return shell_cmd(self.cmd)
 
 
 class ToxKeyboardInterrupt(KeyboardInterrupt):
@@ -107,7 +115,7 @@ class Execute(ABC):
         try:
             with CollectWrite(sys.stdout if show_on_standard else None) as out:
                 with CollectWrite(sys.stderr if show_on_standard else None, Fore.RED) as err:
-                    instance = executor(request, out.collect, err.collect)
+                    instance = executor(request, out.collect, err.collect)  # type: ExecuteInstance
                     try:
                         exit_code = instance.run()
                     except KeyboardInterrupt as exception:
@@ -129,7 +137,9 @@ class Execute(ABC):
                                         signal.signal(signal.SIGINT, signal.default_int_handler)
         finally:
             end = timer()
-        result = Outcome(request, show_on_standard, exit_code, out.text, err.text, start, end)
+        result = Outcome(
+            request, show_on_standard, exit_code, out.text, err.text, start, end, instance.cmd
+        )
         if interrupt is not None:
             raise ToxKeyboardInterrupt(result, interrupt)
         return result

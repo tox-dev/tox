@@ -14,8 +14,8 @@ def env_list_flag(parser: ToxParser):
 
     parser.add_argument(
         "-e",
-        dest="env_list",
-        help="tox environments to run",
+        dest="env",
+        help="tox environment(s) to run",
         action=ToxEnvList,
         default=None,
         of_type=Optional[List[str]],

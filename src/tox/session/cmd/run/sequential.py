@@ -19,16 +19,16 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def run_sequential(state: State) -> int:
-    status_codes: Dict[str, int] = {}
+    status_codes = {}  # type:Dict[str, int]
     for name in state.env_list:
         tox_env = state.tox_envs[name]
         status_codes[name] = run_one(tox_env, state.options.recreate, state.options.no_test)
     return report(status_codes, state.tox_envs)
 
 
+# noinspection PyUnusedLocal
 def report(status_dict: Dict[str, int], tox_envs: Dict[str, ToxEnv]) -> int:
     for name, status in status_dict.items():
-        msg = ""
         if status == Outcome.OK:
             msg = "OK  "
         else:

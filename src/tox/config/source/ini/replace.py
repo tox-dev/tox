@@ -19,6 +19,7 @@ RE_ITEM_REF = re.compile(
 
 
 def substitute_once(val, conf, name):
+    # noinspection PyTypeChecker
     return RE_ITEM_REF.sub(partial(_replace_match, conf, name), val)
 
 

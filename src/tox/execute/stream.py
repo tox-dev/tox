@@ -12,14 +12,13 @@ class CollectWrite:
 
     def __init__(self, target: Optional[IO[bytes]], color: Optional[str] = None) -> None:
         self._content = bytearray()
-        self._print_to: Optional[IO[bytes]] = None if target is None else target.buffer
-        self._do_print: bool = target is not None
-        self._keep_printing: Event = Event()
-        self._content_lock: Lock = Lock()
-        self._print_lock: Lock = Lock()
-        self._at: int = 0
-        self._color = color
-        self._timer = None
+        self._print_to = None if target is None else target.buffer  # type:Optional[IO[bytes]]
+        self._do_print = target is not None  # type: bool
+        self._keep_printing = Event()  # type: Event
+        self._content_lock = Lock()  # type: Lock
+        self._print_lock = Lock()  # type: Lock
+        self._at = 0  # type: int
+        self._color = color  # type: Optional[str]
 
     def __enter__(self):
         if self._do_print:

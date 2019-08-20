@@ -73,6 +73,7 @@ def process_company(hive_name, company, root_key, default_arch):
 
 def process_tag(hive_name, company, company_key, tag, default_arch):
     with winreg.OpenKeyEx(company_key, tag) as tag_key:
+        # noinspection PyTupleAssignmentBalance
         major, minor = load_version_data(hive_name, company, tag, tag_key)
         if major is None:
             return

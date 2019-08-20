@@ -70,7 +70,7 @@ class Spinner:
     def frame(self):
         frame = self.frames[self._frame_index]
         self._frame_index += 1
-        self._frame_index = self._frame_index % len(self.frames)
+        self._frame_index %= len(self.frames)
         text_frame = "[{}] {}".format(len(self._envs), " | ".join(self._envs))
         if len(text_frame) > self.max_width - 1:
             text_frame = "{}...".format(text_frame[: self.max_width - 1 - 3])

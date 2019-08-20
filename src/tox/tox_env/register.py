@@ -6,13 +6,13 @@ from .runner import RunToxEnv
 
 class ToxEnvRegister:
     def __init__(self):
-        self._run_envs: Dict[str, Type[RunToxEnv]] = {}
-        self._package_envs: Dict[str, Type[PackageToxEnv]] = {}
-        self._default_run_env: str = ""
+        self._run_envs = {}  # type:Dict[str, Type[RunToxEnv]]
+        self._package_envs = {}  # type:Dict[str, Type[PackageToxEnv]]
+        self._default_run_env = ""  # type:str
 
     def populate(self, manager):
         manager.tox_register_tox_env(register=self)
-        self._default_run_env: str = next(iter(self._run_envs.keys()))
+        self._default_run_env = next(iter(self._run_envs.keys()))  # type:str
 
     def add_run_env(self, of_type: Type[RunToxEnv]):
         self._run_envs[of_type.id()] = of_type

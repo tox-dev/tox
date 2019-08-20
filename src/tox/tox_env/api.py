@@ -4,7 +4,7 @@ import os
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Set, cast
+from typing import Dict, List, Optional, Sequence, Set, Union, cast
 
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute
@@ -15,13 +15,13 @@ from .cache import Cache
 
 class ToxEnv(ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options, executor: Execute):
-        self.conf: ConfigSet = conf
-        self.core: ConfigSet = core
+        self.conf = conf  # type: ConfigSet
+        self.core = core  # type:ConfigSet
         self.options = options
         self._executor = executor
         self.register_config()
         self._cache = Cache(self.conf["env_dir"] / ".tox-cache")
-        self._paths: List[Path] = []
+        self._paths = []  # type:List[Path]
         self.logger = logging.getLogger(self.conf["env_name"])
 
     def register_config(self):
@@ -74,9 +74,9 @@ class ToxEnv(ABC):
 
     @property
     def environment_variables(self) -> Dict[str, str]:
-        result: Dict[str, str] = {}
-        pass_env: Set[str] = self.conf["pass_env"]
-        set_env: Dict[str, str] = self.conf["set_env"]
+        result = {}  # type:Dict[str, str]
+        pass_env = self.conf["pass_env"]  # type:Set[str]
+        set_env = self.conf["set_env"]  # type:Dict[str, str]
         for key, value in os.environ.items():
             if key in pass_env:
                 result[key] = value
@@ -90,7 +90,7 @@ class ToxEnv(ABC):
 
     def execute(
         self,
-        cmd: Sequence[str],
+        cmd: Sequence[Union[Path, str]],
         allow_stdin: bool,
         show_on_standard: Optional[bool] = None,
         cwd: Optional[Path] = None,
@@ -102,7 +102,9 @@ class ToxEnv(ABC):
         request = ExecuteRequest(cmd, cwd, self.environment_variables, allow_stdin)
         self.logger.warning("run => %s$ %s", request.cwd, request.shell_cmd)
         outcome = self._executor(request=request, show_on_standard=show_on_standard)
-        self.logger.info("exit code %d in %s", outcome.exit_code, outcome.elapsed)
+        self.logger.info(
+            "done => code %d in %s for  %s", outcome.exit_code, outcome.elapsed, outcome.shell_cmd
+        )
         return outcome
 
     @staticmethod

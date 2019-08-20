@@ -73,7 +73,7 @@ def empty_project(tox_project, monkeypatch):
 
 class ToxProject:
     def __init__(self, files: Dict[str, Any], path: Path, capsys, monkeypatch):
-        self.path: Path = path
+        self.path = path  # type: Path
         self._capsys = capsys
         self.monkeypatch = monkeypatch
 
@@ -98,10 +98,11 @@ class ToxProject:
     @property
     def structure(self):
         result = {}
-        for dir_name, _, files in os.walk(str(self.path), topdown=True):
+        for dir_name, _, files in os.walk(str(self.path)):
             dir_path = Path(dir_name)
             into = result
-            for elem in dir_path.relative_to(self.path).parts:
+            relative = dir_path.relative_to(str(self.path))
+            for elem in relative.parts:
                 into = into.setdefault(elem, {})
             for file_name in files:
                 into[file_name] = (dir_path / file_name).read_text()
@@ -119,9 +120,9 @@ class ToxProject:
             code = None
             state = None
 
-            def our_setup_state(args):
+            def our_setup_state(value):
                 nonlocal state
-                state = previous_setup_state(args)
+                state = previous_setup_state(value)
                 return state
 
             with self.monkeypatch.context() as m:
@@ -148,12 +149,12 @@ class ToxRunOutcome:
     ) -> None:
         extended_cmd = [sys.executable, "-m", "tox"]
         extended_cmd.extend(cmd)
-        self.cmd: List[str] = extended_cmd
-        self.cwd = cwd
-        self.code: int = code
-        self.out: str = out
-        self.err: str = err
-        self.state: Optional[State] = state
+        self.cmd = extended_cmd  # type: List[str]
+        self.cwd = cwd  # type: Path
+        self.code = code  # type:int
+        self.out = out  # type:str
+        self.err = err  # type: str
+        self.state = state  # type:Optional[State]
 
     @property
     def success(self) -> bool:

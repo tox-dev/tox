@@ -53,7 +53,7 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
 
     def default_universal_wheel(self):
         parser = ConfigParser()
-        success = parser.read(filenames=[self.core["tox_root"] / "setup.cfg"])
+        success = parser.read(filenames=[str(self.core["tox_root"] / "setup.cfg")])
         universal = False
         if success:
             try:

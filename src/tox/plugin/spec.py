@@ -13,16 +13,19 @@ from .util import NAME
 hook_spec = pluggy.HookspecMarker(NAME)
 
 
+# noinspection PyUnusedLocal
 @hook_spec
 def tox_add_option(parser: ArgumentParser) -> None:
     """add cli flags"""
 
 
+# noinspection PyUnusedLocal
 @hook_spec
 def tox_add_core_config(core: ConfigSet) -> None:
     """add options to the core section of the tox"""
 
 
+# noinspection PyUnusedLocal
 @hook_spec
 def tox_register_tox_env(register: ToxEnvRegister) -> Type[ToxEnv]:
     """register new tox environment types that can have their own argument"""

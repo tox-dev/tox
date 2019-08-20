@@ -41,8 +41,8 @@ class Pep517VirtualEnvPackageArtifact(Pep517VirtualEnvPackage, ABC):
                 cmd.append(self.build_backend_obj)
             result = self.execute(cmd=cmd, allow_stdin=False, cwd=self.core["tox_root"])
             result.assert_success(self.logger)
-            with open(out_file) as file_handler:
-                base_name: str = json.load(file_handler)
+            with open(str(out_file)) as file_handler:
+                base_name = json.load(file_handler)  # type:str
         return [dest / base_name]
 
     def perform_packaging(self) -> List[Path]:

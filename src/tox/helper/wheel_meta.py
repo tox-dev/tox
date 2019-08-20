@@ -8,6 +8,7 @@ extra = json.loads(sys.argv[2])
 backend_spec = sys.argv[3]
 backend_obj = sys.argv[4] if len(sys.argv) >= 5 else None
 
+# noinspection PyTypeChecker
 backend = __import__(backend_spec, fromlist=[None])
 if backend_obj:
     backend = getattr(backend, backend_obj)

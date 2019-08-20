@@ -77,11 +77,16 @@ class ConfigDynamicDefinition(ConfigDefinition):
         return self._cache
 
     def __deepcopy__(self, memo):
-        result = type(self)(None, None, None, None, None)
-        orig_value = self._cache
-        result.__dict__ = deepcopy(self.__dict__)
-        if orig_value is _PLACE_HOLDER:
-            result._cache = _PLACE_HOLDER
+        # we should not copy the place holder as our checks would break
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k != "_cache" and v is _PLACE_HOLDER:
+                value = deepcopy(v, memo=memo)
+            else:
+                value = v
+            setattr(result, k, value)
         return result
 
     def __repr__(self):
@@ -98,7 +103,7 @@ class ConfigDynamicDefinition(ConfigDefinition):
 class ConfigSet:
     def __init__(self, raw: Loader, conf: "Config"):
         self._raw = raw
-        self._defined: Dict[str, ConfigDefinition] = {}
+        self._defined = {}  # type:Dict[str, ConfigDefinition]
         self._conf = conf
         self._keys = OrderedDict()
         self._raw.setup_with_conf(self)

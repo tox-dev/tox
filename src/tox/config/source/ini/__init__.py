@@ -1,4 +1,5 @@
 from configparser import ConfigParser, SectionProxy
+from copy import deepcopy
 from itertools import chain
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -29,7 +30,19 @@ class Ini(Source):
             default_base=EnvList([]),
         )
         super().__init__(core)
-        self._envs: Dict[str, IniLoader] = {}
+        self._envs = {}  # type: Dict[str, IniLoader]
+
+    def __deepcopy__(self, memo):
+        # python < 3.7 cannot copy config parser
+        result = self.__class__.__new__(self.__class__)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k != "_parser":
+                value = deepcopy(v, memo=memo)
+            else:
+                value = v
+            setattr(result, k, value)
+        return result
 
     def _get_section(self, key):
         if self._parser.has_section(key):
@@ -94,13 +107,26 @@ class IniLoader(Loader, StrConvert):
         self, section: Optional[SectionProxy], src: Ini, name: Optional[str], default_base: EnvList
     ) -> None:
         super().__init__(name)
-        self._section: Optional[SectionProxy] = section
-        self._src: Ini = src
-        self._default_base: EnvList = default_base
-        self._base: List[IniLoader] = []
+        self._section = section  # type:Optional[SectionProxy]
+        self._src = src  # type: Ini
+        self._default_base = default_base  # type:EnvList
+        self._base = []  # type:List[IniLoader]
+
+    def __deepcopy__(self, memo):
+        # python < 3.7 cannot copy config parser
+        result = self.__class__.__new__(self.__class__)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k != "_section":
+                value = deepcopy(v, memo=memo)
+            else:
+                value = v
+            setattr(result, k, value)
+        return result
 
     def setup_with_conf(self, conf: ConfigSet):
-        def load_bases(values, conf):
+        # noinspection PyUnusedLocal
+        def load_bases(values, conf_):
             result = []
             for value in values:
                 name = value.lstrip(TEST_ENV_PREFIX)

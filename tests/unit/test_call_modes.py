@@ -8,4 +8,4 @@ def test_call_as_module(empty_project):
 
 
 def test_call_as_exe(empty_project):
-    subprocess.check_output([Path(sys.executable).parent / "tox", "-h"])
+    subprocess.check_output([str(Path(sys.executable).parent / "tox"), "-h"])

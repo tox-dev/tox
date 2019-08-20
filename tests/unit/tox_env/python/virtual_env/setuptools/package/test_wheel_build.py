@@ -32,7 +32,9 @@ def use_host_virtualenv(monkeypatch):
 
     # return hots path
     def create_python_env(self, python: PythonInfo):
-        return Outcome(ExecuteRequest([], Path(), {}, False), False, Outcome.OK, "", "", 0, 1.0)
+        return Outcome(
+            ExecuteRequest(["a"], Path(), {}, False), False, Outcome.OK, "", "", 0, 1.0, ["a"]
+        )
 
     monkeypatch.setattr(VirtualEnv, "create_python_env", create_python_env)
 

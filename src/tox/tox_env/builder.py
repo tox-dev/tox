@@ -18,9 +18,9 @@ def build_tox_envs(config: Config, options, args):
 
 class Builder:
     def __init__(self, options: str, config: Config):
-        self.tox_env_to_runner: Dict[str, RunToxEnv] = {}
-        self._tox_env_to_runner_type: Dict[str, str] = {}
-        self._pkg_envs: Dict[str, PackageToxEnv] = {}
+        self.tox_env_to_runner = {}  # type:Dict[str, RunToxEnv]
+        self._tox_env_to_runner_type = {}  # type:Dict[str, str]
+        self._pkg_envs = {}  # type:Dict[str, PackageToxEnv]
         self.options = options
         self._config = config
         self._run()
@@ -29,7 +29,7 @@ class Builder:
         for name in self._config:
             if name in self._pkg_envs:
                 continue
-            env_conf: ConfigSet = copy.deepcopy(self._config[name])
+            env_conf = copy.deepcopy(self._config[name])
             tox_env = self._build_run_env(env_conf, name)
             self.tox_env_to_runner[name] = tox_env
         for key, tox_env in self.tox_env_to_runner.items():
@@ -50,7 +50,7 @@ class Builder:
         runner = cast(str, env_conf["runner"])
         from .register import REGISTER
 
-        env: RunToxEnv = REGISTER.runner(runner)(env_conf, self._config.core, self.options)
+        env = REGISTER.runner(runner)(env_conf, self._config.core, self.options)  # type: RunToxEnv
         self._tox_env_to_runner_type[env_name] = runner
         self._build_package_env(env)
         return env
@@ -70,7 +70,7 @@ class Builder:
 
     def _get_package_env(self, packager, pkg_name):
         if pkg_name in self._pkg_envs:
-            package_tox_env: PackageToxEnv = self._pkg_envs[pkg_name]
+            package_tox_env = self._pkg_envs[pkg_name]  # type:PackageToxEnv
         else:
             if pkg_name in self.tox_env_to_runner:  # if already detected as runner remove
                 del self.tox_env_to_runner[pkg_name]

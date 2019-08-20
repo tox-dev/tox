@@ -19,7 +19,7 @@ CACHE_DIR = Path(user_cache_dir(appname="tox", appauthor="tox-dev")) / "virtuale
 
 def copy_overwrite(src: Path, dest: Path):
     if dest.exists():
-        shutil.rmtree(dest)
+        shutil.rmtree(str(dest))
     if src.is_dir():
         if not dest.is_dir():
             dest.mkdir(parents=True)
@@ -74,7 +74,7 @@ class VirtualEnv(Python, ABC):
         target_folder = self.get_bin(env_dir)
         for binary in [b for b in self.get_bin(CACHE_DIR).iterdir() if "pip" in b.name]:
             target_file = target_folder / binary.name
-            shutil.copyfile(str(binary), target_file)
+            shutil.copyfile(str(binary), str(target_file))
             content = binary.read_text()
             content.replace(str(CACHE_DIR), str(env_dir))
             target_file.write_text(content)

@@ -8,7 +8,7 @@ _NO_MAPPING = object()
 
 class Command:
     def __init__(self, args):
-        self.args: List[str] = args
+        self.args = args  # type:List[str]
 
     def __repr__(self):
         return "{}(args={!r})".format(type(self).__name__, self.args)
@@ -50,12 +50,12 @@ class Convert(ABC):
     def _to_typing(self, raw, of_type):
         origin = getattr(of_type, "__origin__", None)
         if origin is not None:
-            result: Any = _NO_MAPPING
-            if origin == list:
+            result = _NO_MAPPING  # type: Any
+            if origin in (list, List):
                 result = [self.to(i, of_type.__args__[0]) for i in self.to_list(raw)]
-            elif origin == set:
+            elif origin in (set, Set):
                 result = {self.to(i, of_type.__args__[0]) for i in self.to_set(raw)}
-            elif origin == dict:
+            elif origin in (dict, Dict):
                 result = OrderedDict(
                     (self.to(k, of_type.__args__[0]), self.to(v, of_type.__args__[1]))
                     for k, v in self.to_dict(raw)
@@ -69,7 +69,7 @@ class Convert(ABC):
                         result = self._to_typing(raw, new_type)
             if result is not _NO_MAPPING:
                 return result
-        raise TypeError("{} cannot cast to {}".format(raw, of_type))
+        raise TypeError("{} cannot cast to {!r}".format(raw, of_type))
 
     @staticmethod
     def to_str(value):
@@ -140,8 +140,8 @@ class Loader(Convert, ABC):
 
 class Source(ABC):
     def __init__(self, core: Loader) -> None:
-        self.core: Loader = core
-        self._envs: Dict[str, Loader] = {}
+        self.core = core  # type: Loader
+        self._envs = {}  # type: Dict[str, Loader]
 
     @abstractmethod
     def envs(self, core_conf):

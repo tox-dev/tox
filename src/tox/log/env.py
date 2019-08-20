@@ -20,8 +20,7 @@ class EnvLog:
 
     def get_commandlog(self, name):
         """get the command log for a given group name"""
-        data = self.content.setdefault(name, [])
-        return CommandLog(self, data)
+        return CommandLog(self)
 
     def set_installed(self, packages):
         self.content["installed_packages"] = packages

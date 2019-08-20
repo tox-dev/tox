@@ -13,7 +13,8 @@ def run(args: Optional[Sequence[str]] = None) -> None:
     try:
         state = setup_state(args)
         command = state.options.command
-        result = state.handlers[command](state)
+        handler = state.handlers[command]
+        result = handler(state)
         if result is None:
             result = 0
         raise SystemExit(result)

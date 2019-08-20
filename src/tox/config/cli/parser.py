@@ -2,7 +2,7 @@ import argparse
 import logging
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from itertools import chain
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar
 
 from tox.plugin.util import NAME
 from tox.session.state import State
@@ -34,6 +34,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 outcome = self.file_config.get(key, of_type=of_type)
             if outcome is not None:
                 action.default, action.default_source = outcome
+        # noinspection PyProtectedMember
         if isinstance(action, argparse._SubParsersAction):
             for values in action.choices.values():
                 values.fix_defaults()
@@ -42,6 +43,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     def get_type(action):
         of_type = getattr(action, "of_type", None)
         if of_type is None:
+            # noinspection PyProtectedMember
             if action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:
@@ -56,6 +58,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         super(HelpFormatter, self).__init__(prog, max_help_position=42, width=240)
 
     def _get_help_string(self, action: Action) -> str:
+        # noinspection PyProtectedMember
         text = super()._get_help_string(action)
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
@@ -85,11 +88,12 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         super().__init__(*args, **kwargs)
         if root is True:
             self._add_base_options()
-        self.handlers: Dict[str, Tuple[Any, Handler]] = {}
+        self.handlers = {}  # type:Dict[str, Tuple[Any, Handler]]
         if add_cmd is True:
             self._cmd = self.add_subparsers(
-                title="command", help="tox command to execute", dest="command", required=False
+                title="command", help="tox command to execute", dest="command"
             )
+            self._cmd.required = False
             self._cmd.default = "run"
 
         else:
@@ -140,22 +144,44 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self.fix_defaults()
 
     def parse(self, args: Sequence[str]) -> Tuple[Parsed, List[str]]:
-        arg_set = set(args)
-        if (
-            "-h" not in arg_set
-            and "--help" not in arg_set
-            and self._cmd is not None
-            and not (arg_set & set(self.handlers.keys()))
-        ):
-            global_args = set(
-                chain.from_iterable(
-                    i.option_strings for i in self._actions if hasattr(i, "option_strings")
-                )
+        args = self._inject_default_cmd(args)
+        result = Parsed()
+        _, unknown = super().parse_known_args(args, namespace=result)
+        return result, unknown
+
+    def _inject_default_cmd(self, args):
+        # we need to inject the command if not present and reorganize args left of the command
+        if self._cmd is None:  # no commands yet so must be all global, nothing to fix
+            return args
+        _global = {
+            k: v
+            for k, v in chain.from_iterable(
+                ((j, isinstance(i, argparse._StoreAction)) for j in i.option_strings)
+                for i in self._actions
+                if hasattr(i, "option_strings")
             )
-            first_differ = next((i for i, j in enumerate(args) if j not in global_args), 0)
-            new_args = list(args[:first_differ])
-            new_args.append(self._cmd.default or "run")
-            new_args.extend(args[first_differ:])
-            args = new_args
-        parsed, unknown = super().parse_known_args(args, namespace=Parsed())
-        return cast(Parsed, parsed), unknown
+        }
+        _global_single = {i[1:] for i in _global if len(i) == 2 and i.startswith("-")}
+        cmd_at = next((j for j, i in enumerate(args) if i in self._cmd.choices), None)
+        global_args, command_args = [], []
+        reorganize_to = cmd_at if cmd_at is not None else len(args)
+        at = 0
+        while at < reorganize_to:
+            arg = args[at]
+            needs_extra = False
+            is_global = False
+            if arg in _global:
+                needs_extra = _global[arg]
+                is_global = True
+            elif arg.startswith("-") and not (set(arg[1:]) - _global_single):
+                is_global = True
+            (global_args if is_global else command_args).append(arg)
+            at += 1
+            if needs_extra:
+                global_args.append(args[at])
+                at += 1
+        new_args = global_args
+        new_args.append(self._cmd.default if cmd_at is None else args[cmd_at])
+        new_args.extend(command_args)
+        new_args.extend(args[reorganize_to + 1 :])
+        return new_args

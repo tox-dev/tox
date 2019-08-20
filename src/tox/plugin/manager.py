@@ -6,7 +6,7 @@ from tox import provision
 from tox.config import core as core_config
 from tox.config.cli.parser import ToxParser
 from tox.config.sets import ConfigSet
-from tox.session.cmd import list_env, show_config
+from tox.session.cmd import list_env, show_config, version_flag
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import builder
 from tox.tox_env.api import ToxEnv
@@ -21,7 +21,7 @@ from .util import NAME
 
 class Plugin:
     def __init__(self) -> None:
-        self.manager: pluggy.PluginManager = pluggy.PluginManager(NAME)
+        self.manager = pluggy.PluginManager(NAME)  # type:pluggy.PluginManager
         self.manager.add_hookspecs(spec)
 
         internal_plugins = (
@@ -34,6 +34,7 @@ class Plugin:
             parallel,
             sequential,
             list_env,
+            version_flag,
             show_config,
         )
 

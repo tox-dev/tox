@@ -99,7 +99,7 @@ def test_config_some_envs(tox_project: ToxProjectCreator):
     config_set.add_config(keys="crazy", of_type=TypeVar, default="1", desc="crazy")
     with pytest.raises(TypeError) as context:
         assert config_set["crazy"]
-    assert str(context.value) == "something-bad cannot cast to <class 'typing.TypeVar'>"
+    assert str(context.value) == "something-bad cannot cast to {!r}".format(TypeVar)
 
     config_set.add_config(keys="bad_dict", of_type=Dict[str, str], default={}, desc="bad_dict")
     with pytest.raises(TypeError) as context:

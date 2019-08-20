@@ -82,7 +82,7 @@ def run_parallel(state: State):
 
     with Spinner(enabled=show_progress) as spinner:
 
-        def run_in_thread(tox_env, os_env, processes):
+        def run_in_thread(tox_env, os_env, process_dict):
             output = None
             env_name = tox_env.envconfig.envname
             status = "skipped tests" if state.options.no_test else None
@@ -98,7 +98,7 @@ def run_parallel(state: State):
                 with tox_env.new_action("parallel {}".format(tox_env.name)) as action:
 
                     def collect_process(process):
-                        processes[tox_env] = (action, process)
+                        process_dict[tox_env] = (action, process)
 
                     print_out = not live_out and tox_env.envconfig.parallel_show_output
                     output = action.popen(
@@ -141,7 +141,7 @@ def run_parallel(state: State):
                         continue
                     del todo[name]
                     venv = state.tox_envs[name]
-                    semaphore.acquire(blocking=True)
+                    semaphore.acquire()
                     spinner.add(name)
                     thread = Thread(
                         target=run_in_thread, args=(venv, os.environ.copy(), processes)
@@ -175,6 +175,7 @@ def _stop_child_processes(processes, main_threads):
     """A three level stop mechanism for children - INT (250ms) -> TERM (100ms) -> KILL"""
 
     # first stop children
+    # noinspection PyUnusedLocal
     def shutdown(tox_env, action, process):
         action.handle_interrupt(process)
 
