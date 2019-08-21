@@ -106,8 +106,8 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
             if key == "Requires-Dist":
                 req = Requirement(v)
                 markers = getattr(req.marker, "_markers", tuple()) or tuple()
-                for _at, (m_key, op, m_val) in enumerate(
-                    i for i in markers if isinstance(i, tuple) and len(i) == 3
+                for _at, (m_key, op, m_val) in (
+                    (j, i) for j, i in enumerate(markers) if isinstance(i, tuple) and len(i) == 3
                 ):
                     if m_key.value == "extra" and op.value == "==":
                         extra = m_val.value
@@ -117,15 +117,19 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
                 if extra is None or extra in extras:
                     if _at is not None:
                         # noinspection PyProtectedMember
-                        del req.marker._markers[_at]
+                        del markers[_at]
+                        _at -= 1
+                        if _at > 0 and markers[_at] in ("and", "or"):
+                            del markers[_at]
                         # noinspection PyProtectedMember
-                        if len(req.marker._markers) == 0:
+                        if len(markers) == 0:
                             req.marker = None
                     result.append(req)
         return result
 
     def _ensure_meta_present(self):
         if self._distribution_meta is None:
+            self.ensure_setup()
             self.meta_folder.mkdir(exist_ok=True)
             cmd = [
                 "python",

@@ -48,5 +48,6 @@ class Pep517VirtualEnvPackageArtifact(Pep517VirtualEnvPackage, ABC):
     def perform_packaging(self) -> List[Path]:
         """build_wheel/build_sdist"""
         if self._package is None:
+            self.ensure_setup()
             self._package = self._build_artifact()
         return self._package

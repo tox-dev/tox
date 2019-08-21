@@ -3,7 +3,7 @@ from typing import List, Set
 
 from packaging.requirements import Requirement
 
-from tox.tox_env.errors import Recreate, Skip
+from tox.tox_env.errors import Skip
 
 from ..runner import RunToxEnv
 from .api import NoInterpreter, Python
@@ -49,12 +49,6 @@ class PythonRun(Python, RunToxEnv, ABC):
         self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
 
         if self.package_env is not None:
-            try:
-                self.package_env.setup()
-            except Recreate:
-                self.package_env.clean()
-                self.package_env.setup()
-
             package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
             self.cached_install(package_deps, PythonRun.__name__, "package_deps")
             self.install_package()

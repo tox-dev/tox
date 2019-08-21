@@ -22,12 +22,17 @@ def _get_base(args):
 
 
 def _get_core(args):
+    tox_parser = _get_core_parser()
+    parsed, unknown = tox_parser.parse(args)
+    handlers = {k: p for k, (_, p) in tox_parser.handlers.items()}
+    return handlers, parsed, unknown
+
+
+def _get_core_parser():
     tox_parser = ToxParser.core()
     # noinspection PyUnresolvedReferences
     from tox.plugin.manager import MANAGER
 
     MANAGER.tox_add_option(tox_parser)
     tox_parser.fix_defaults()
-    parsed, unknown = tox_parser.parse(args)
-    handlers = {k: p for k, (_, p) in tox_parser.handlers.items()}
-    return handlers, parsed, unknown
+    return tox_parser

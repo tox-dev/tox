@@ -57,6 +57,20 @@ class VirtualEnv(Python, ABC):
         return core_cmd
 
     def _bootstrap_pip(self, core_cmd, env_dir):
+        # TODO: make it link based for further speedup
+        # @ zooba
+        # The pip speedup idea was to extract wheels directly into their target location.
+        # Currently they get extracted into a temporary location, then copied, then deleted
+        # The additional copy is very slow, as is the deletion, because they do each file independently
+        # And metadata and permissions as separate copies, None of which is necessary if you just start in the right
+        # place. That'll do each file independently, but only once. And permissions will be inherited properly for free
+        # on copy vs link
+        # If you get to choose between them, on the same machine, go with a directory link
+        # On Windows you'd probably have to use CreateJunction if os.symlink fails#
+        # Is create junction a private API thing?
+        # The one in _winapi is, but it's "public" in ctypes
+        # to defend against modifying the core files Mark them all read only?
+        # It'll break some workflows, for sure, but most of the time nobody will notice
         self._get_cached_pip(core_cmd)
         self._install_pip_from_cache(env_dir)
 

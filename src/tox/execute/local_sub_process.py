@@ -120,10 +120,27 @@ class ReadViaThread:
     def _read_stream(self):
         file_no = self.stream.fileno()
         while not (self.stream.closed or self.stop.is_set()):
-            read_available_list, _, __ = select.select([self.stream], [], [], 0.01)
-            if len(read_available_list):
+            # we need to drain the stream, but periodically give chance for the thread to break if the stop event has
+            # been set (this is so that an interrupt can be handled)
+            if self.stream_has_data():
                 data = os.read(file_no, 1)
                 self.handler(data)
+
+    def stream_has_data(self):
+        # TODO: select is UNIX only supported, for WINDOWS
+        # @zooba
+        # You need to use overlapped IO, which is all exposed in CPython through some internal modules
+        # (_winapi and _overlapped). The basic idea (and I haven't written this using those modules before) is that
+        # you provide a structure that includes a thread event and Windows will trigger that event when it's done
+        # But what you want may be more easily done by waiting on the file handle. I *think* that will work
+        # normally for streams that don't have any data available
+        # multiprocessing has some code using _overlapped to set up an overlapped pipe
+        # asyncio also uses it for its subprocess support, I believe
+        # Obviously since these are internal modules there's no documentation on them ;) But they do reflect the
+        # Windows API calls pretty closely, so if you look up the functions on http://docs.microsoft.com
+        # then you'll get all the details.
+        read_available_list, _, __ = select.select([self.stream], [], [], 0.01)
+        return len(read_available_list)
 
     def __enter__(self):
         self.thread.start()

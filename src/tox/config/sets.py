@@ -117,6 +117,17 @@ class ConfigSet:
         post_process=None,
         overwrite=False,
     ):
+        """
+        Add configuration.
+
+        :param keys:
+        :param of_type:
+        :param default:
+        :param desc:
+        :param post_process:
+        :param overwrite:
+        :return:
+        """
         keys_ = self._make_keys(keys)
         for key in keys_:
             if key in self._defined and overwrite is False:

@@ -24,7 +24,7 @@ def list_env(state: State):
 
     if not option.list_quiet and default:
         print("default environments:")
-    max_length = max(len(env) for env in (default + extra))
+    max_length = max(len(env) for env in (default.envs + extra))
 
     def report_env(name: str):
         if not option.list_quiet:

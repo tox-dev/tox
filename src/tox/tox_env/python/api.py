@@ -93,7 +93,8 @@ class Python(ToxEnv, ABC):
             if missing:  # no way yet to know what to uninstall here (transitive dependencies?)
                 # bail out and force recreate
                 raise Recreate()
-            new_deps = [Requirement(i) for i in (set(conf_deps) - set(old))]
+            new_deps_str = set(conf_deps) - set(old)
+            new_deps = [Requirement(i) for i in new_deps_str]
             self.install_python_packages(packages=new_deps)
 
     @abstractmethod

@@ -967,7 +967,4 @@ Other Rules and notes
 cli
 ===
 
-.. autoprogram:: tox.cli:cli
-   :prog: tox
-
 .. include:: links.rst

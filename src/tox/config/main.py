@@ -38,3 +38,6 @@ class Config:
 
     def __repr__(self):
         return "{}(config_source={!r})".format(type(self).__name__, self._src)
+
+    def __contains__(self, item):
+        return item in self._envs

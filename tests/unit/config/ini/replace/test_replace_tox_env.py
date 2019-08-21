@@ -54,3 +54,11 @@ def test_replace_within_tox_env_missing_default_env_only(example):
     env_config.add_config(keys="o", of_type=str, default="o", desc="o")
     result = env_config["o"]
     assert result == "one"
+
+
+def test_replace_within_tox_env_from_base(example):
+    env_config = example("p = one\n[testenv:a]\no = {[testenv]p}")
+    env_config.add_config(keys="p", of_type=str, default="p", desc="p")
+    env_config.add_config(keys="o", of_type=str, default="o", desc="o")
+    result = env_config["o"]
+    assert result == "one"

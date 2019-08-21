@@ -9,9 +9,8 @@ from tox.config.sets import ConfigSet
 from ..api import EnvList, Loader, Source
 from .convert import StrConvert
 from .factor import filter_for_env, find_envs
-from .replace import replace
+from .replace import BASE_TEST_ENV, replace
 
-BASE_TEST_ENV = "testenv"
 TEST_ENV_PREFIX = "{}:".format(BASE_TEST_ENV)
 
 
@@ -28,6 +27,7 @@ class Ini(Source):
             src=self,
             name=None,
             default_base=EnvList([]),
+            section_loader=self._get_section,
         )
         super().__init__(core)
         self._envs = {}  # type: Dict[str, IniLoader]
@@ -70,7 +70,9 @@ class Ini(Source):
         try:
             return self._envs[item]
         except KeyError:
-            loader = IniLoader(self._get_section(item), self, name, self.BASE_ENV_LIST)
+            loader = IniLoader(
+                self._get_section(item), self, name, self.BASE_ENV_LIST, self._get_section
+            )
             self._envs[item] = loader
             return loader
 
@@ -104,13 +106,19 @@ class IniLoader(Loader, StrConvert):
     """Load from a ini section"""
 
     def __init__(
-        self, section: Optional[SectionProxy], src: Ini, name: Optional[str], default_base: EnvList
+        self,
+        section: Optional[SectionProxy],
+        src: Ini,
+        name: Optional[str],
+        default_base: EnvList,
+        section_loader,
     ) -> None:
         super().__init__(name)
         self._section = section  # type:Optional[SectionProxy]
         self._src = src  # type: Ini
         self._default_base = default_base  # type:EnvList
         self._base = []  # type:List[IniLoader]
+        self._section_loader = section_loader
 
     def __deepcopy__(self, memo):
         # python < 3.7 cannot copy config parser
@@ -127,10 +135,11 @@ class IniLoader(Loader, StrConvert):
     def setup_with_conf(self, conf: ConfigSet):
         # noinspection PyUnusedLocal
         def load_bases(values, conf_):
-            result = []
+            result = []  # type: List[IniLoader]
             for value in values:
                 name = value.lstrip(TEST_ENV_PREFIX)
-                result.append(self._src.get_section(value, name))
+                ini_loader = self._src.get_section(value, name)  # type: IniLoader
+                result.append(ini_loader)
             return result
 
         conf.add_config(
@@ -169,10 +178,15 @@ class IniLoader(Loader, StrConvert):
             raise KeyError(key)
         value = self._section[key]
         collapsed_newlines = value.replace("\\\n", "")  # collapse explicit line splits
-        replace_executed = replace(collapsed_newlines, conf, as_name)  # do replacements
+        replace_executed = replace(
+            collapsed_newlines, conf, as_name, self._section_loader
+        )  # do replacements
         factor_selected = filter_for_env(replace_executed, as_name)  # select matching factors
         # extend factors
         return factor_selected
+
+    def get_value(self, section, key):
+        return self._section_loader(section)[key]
 
     @property
     def loaders(self):

@@ -187,22 +187,11 @@ You can and publish it like:
 Hook specifications and related API
 -----------------------------------
 
-.. automodule:: tox.hookspecs
+.. automodule:: tox.plugin.spec
     :members:
 
-.. autoclass:: tox.config.Parser()
+.. autoclass:: tox.config.sets.ConfigSet
     :members:
 
-.. autoclass:: tox.config.Config()
-    :members:
-
-.. autoclass:: tox.config.TestenvConfig()
-    :members:
-
-.. autoclass:: tox.venv.VirtualEnv()
-    :members:
-
-.. autoclass:: tox.session.Session()
-    :members:
 
 .. include:: links.rst

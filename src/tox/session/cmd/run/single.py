@@ -13,7 +13,7 @@ def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> int:
     try:
         tox_env.setup()
     except Recreate:
-        tox_env.clean(package_env=recreate)
+        tox_env.clean(package_env=False)  # restart creation once, no package please
         tox_env.setup()
 
     code = run_commands(tox_env, no_test)
