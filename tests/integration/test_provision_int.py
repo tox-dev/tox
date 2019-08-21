@@ -23,8 +23,6 @@ def test_provision_missing(initproj, cmd):
                 minversion = 3.7.0
                 requires =
                     setuptools == 40.6.3
-                    # remove when 2.4.2 is released or python3.4 is dropped
-                    pyparsing!=2.4.1,!=2.4.1.1
                 [testenv]
                 commands=python -c "import sys; print(sys.executable); raise SystemExit(1)"
             """
