@@ -210,7 +210,7 @@ class ReportExpectMock:
 
     def clear(self):
         self._index = -1
-        if six.PY3:
+        if not six.PY2:
             self.instance.reported_lines.clear()
         else:
             del self.instance.reported_lines[:]
@@ -291,7 +291,7 @@ def create_mocksession(request):
             self.report = ReportExpectMock()
 
         def _clearmocks(self):
-            if six.PY3:
+            if not six.PY2:
                 self._pcalls.clear()
             else:
                 del self._pcalls[:]

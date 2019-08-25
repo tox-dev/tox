@@ -26,7 +26,7 @@ class PythonSpec(object):
 
     def __str__(self):
         msg = repr(self)
-        return msg if six.PY3 else msg.encode("utf-8")
+        return msg.encode("utf-8") if six.PY2 else msg
 
     def satisfies(self, req):
         if req.is_abs and self.is_abs and self.path != req.path:
