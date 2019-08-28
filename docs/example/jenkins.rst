@@ -4,7 +4,7 @@ Using tox with the Jenkins Integration Server
 Using Jenkins multi-configuration jobs
 -------------------------------------------
 
-The Jenkins_ continuous integration server allows to define "jobs" with
+The Jenkins_ continuous integration server allows you to define "jobs" with
 "build steps" which can be test invocations.  If you :doc:`install <../install>` ``tox`` on your
 default Python installation on each Jenkins agent, you can easily create
 a Jenkins multi-configuration job that will drive your tox runs from the CI-server side,

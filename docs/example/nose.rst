@@ -21,7 +21,7 @@ and the following ``tox.ini`` content:
 
     [testenv]
     deps = nose
-    # ``{posargs}`` will be substituted with positional arguments from comand line
+    # ``{posargs}`` will be substituted with positional arguments from command line
     commands = nosetests {posargs}
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.

@@ -70,7 +70,7 @@ one to one relationship from environment to directory
 
 ## Proposal
 
-This feature shall allow to specify how plugins can specify new types of package formats and environments to run test
+This feature shall allow one to specify how plugins can specify new types of package formats and environments to run test
 commands in.
 
 Such plugins would take care of setting up the environment, create packages and run test commands using hooks provided
