@@ -476,7 +476,7 @@ Features
 ^^^^^^^^
 
 - add ``commands_pre`` and ``commands_post`` that run before and after running
-  the ``commands`` (setup runs always, commands only if setup suceeds, teardown always - all
+  the ``commands`` (setup runs always, commands only if setup succeeds, teardown always - all
   run until the first failing command)  - by :user:`gaborbernat` (`#167 <https://github.com/tox-dev/tox/issues/167>`_)
 - ``pyproject.toml`` config support initially by just inline the tox.ini under ``tool.tox.legacy_tox_ini`` key; config source priority order is ``pyproject.toml``, ``tox.ini`` and then ``setup.cfg`` - by :user:`gaborbernat` (`#814 <https://github.com/tox-dev/tox/issues/814>`_)
 - use the os environment variable ``TOX_SKIP_ENV`` to filter out tox environment names from the run list (set by ``envlist``)  - by :user:`gaborbernat` (`#824 <https://github.com/tox-dev/tox/issues/824>`_)
@@ -543,7 +543,7 @@ Features
 - Switch pip invocations to use the module ``-m pip`` instead of direct invocation. This could help
   avoid some of the shebang limitations.  - by :user:`gaborbernat` (`#935 <https://github.com/tox-dev/tox/issues/935>`_)
 - Ability to specify package requirements for the tox run via the ``tox.ini`` (``tox`` section under key ``requires`` - PEP-508 style): can be used to specify both plugin requirements or build dependencies. - by :user:`gaborbernat` (`#783 <https://github.com/tox-dev/tox/issues/783>`_)
-- Allow to run multiple tox instances in parallel by providing the
+- Allow one to run multiple tox instances in parallel by providing the
   ``--parallel--safe-build`` flag. - by :user:`gaborbernat` (`#849 <https://github.com/tox-dev/tox/issues/849>`_)
 
 
@@ -616,7 +616,7 @@ Features
 ^^^^^^^^
 
 - Add support for multiple PyPy versions using default factors. This allows you
-  to use, for example, ``pypy27`` knowing that the correct intepreter will be
+  to use, for example, ``pypy27`` knowing that the correct interpreter will be
   used by default - by :user:`stephenfin` (`#19 <https://github.com/tox-dev/tox/issues/19>`_)
 - Add support to explicitly invoke interpreter directives for environments with
   long path lengths. In the event that ``tox`` cannot invoke scripts with a
@@ -1106,7 +1106,7 @@ v2.1.0 (2015-06-19)
   hackily implemented (if people want home-directory isolation we should
   figure out a better way to do it, possibly through a plugin)
 
-- fix `#259 <https://github.com/tox-dev/tox/issues/259>`_: passenv is now a line-list which allows to intersperse
+- fix `#259 <https://github.com/tox-dev/tox/issues/259>`_: passenv is now a line-list which allows interspersing
   comments.  Thanks stefano-m.
 
 - allow envlist to be a multi-line list, to intersperse comments
@@ -1148,7 +1148,7 @@ v2.0.0 (2015-05-12)
   their defaults.
 
 - (new) introduce a way to specify on which platform a testenvironment is to
-  execute: the new per-venv "platform" setting allows to specify
+  execute: the new per-venv "platform" setting allows one to specify
   a regular expression which is matched against sys.platform.
   If platform is set and doesn't match the platform spec in the test
   environment the test environment is ignored, no setup or tests are attempted.
@@ -1173,7 +1173,7 @@ v2.0.0 (2015-05-12)
 
 - tox has now somewhat pep8 clean code, thanks to Volodymyr Vitvitski.
 
-- fix `#240 <https://github.com/tox-dev/tox/issues/240>`_: allow to specify empty argument list without it being
+- fix `#240 <https://github.com/tox-dev/tox/issues/240>`_: allow one to specify empty argument list without it being
   rewritten to ".".  Thanks Daniel Hahler.
 
 - introduce experimental (not much documented yet) plugin system
@@ -1310,7 +1310,7 @@ v1.7.0 (2014-01-29)
   support for creating python2.5 based environments anymore
   and all internal special-handling has been removed.
 
-- merged PR81: new option --force-dep which allows to
+- merged PR81: new option --force-dep which allows one to
   override tox.ini specified dependencies in setuptools-style.
   For example "--force-dep 'django<1.6'" will make sure
   that any environment using "django" as a dependency will
@@ -1381,7 +1381,7 @@ v1.6.1 (2013-09-04)
   to install ssl and/or use PIP_INSECURE=1 through ``setenv``. section.
 
 - fix `#102 <https://github.com/tox-dev/tox/issues/102>`_: change to {toxinidir} when installing dependencies.
-  this allows to use relative path like in "-rrequirements.txt".
+  This allows one to use relative path like in "-rrequirements.txt".
 
 v1.6.0 (2013-08-15)
 -------------------
@@ -1537,7 +1537,7 @@ v1.4 (2012-06-13)
 v1.3 2011-12-21
 ---------------
 
-- fix: allow to specify wildcard filesystem paths when
+- fix: allow one to specify wildcard filesystem paths when
   specifying dependencies such that tox searches for
   the highest version
 

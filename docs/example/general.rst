@@ -125,7 +125,7 @@ Access package artifacts between multiple tox-runs
 If you have multiple projects using tox you can make use of
 a ``distshare`` directory where ``tox`` will copy in sdist-packages so
 that another tox run can find the "latest" dependency.  This feature
-allows to test a package against an unreleased development version
+allows you to test a package against an unreleased development version
 or even an uncommitted version on your own machine.
 
 By default, ``{homedir}/.tox/distshare`` will be used for
