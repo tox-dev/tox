@@ -1,0 +1,46 @@
+name: Code quality
+
+on:
+  push:
+  pull_request:
+  schedule:
+  # Run every Friday at 18:02 UTC
+  # https://crontab.guru/#2_18_*_*_5
+  - cron: 2 18 * * 5
+
+jobs:
+  linters:
+    name: 🤖
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # max-parallel: 5
+      matrix:
+        os:
+        - ubuntu-18.04
+        python-version:
+        - 3.7
+        env:
+        - TOXENV: fix_lint
+        - TOXENV: docs
+        - TOXENV: dev
+        - TOXENV: package_description
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        version: ${{ matrix.python-version }}
+    - name: Install tox
+      run: |
+        python -m pip install --upgrade tox
+    - name: 'Initialize tox envs: ${{ matrix.env.TOXENV }}'
+      run: >-
+        python
+        -m tox
+        --notest
+        --skip-missing-interpreters false
+      env: ${{ matrix.env }}
+    - name: Test with tox
+      run: >-
+        python -m tox
+      env: ${{ matrix.env }}
