@@ -1,1 +1,0 @@
-Fix ``current_tox_py`` for ``pypy`` / ``pypy3`` - by :user:`asottile`

@@ -1,1 +1,0 @@
-improve recreate check by allowing directories containing ``.tox-config1`` (the marker file created by tox) - by :user:`asottile`

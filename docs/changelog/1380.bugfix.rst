@@ -1,1 +1,0 @@
-Honor environment markers in ``requires`` list - by :user:`asottile`

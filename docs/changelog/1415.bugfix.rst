@@ -1,1 +1,0 @@
-Recognize correctly interpreters that have suffixes (like python3.7-dbg).
