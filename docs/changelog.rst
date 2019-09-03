@@ -11,6 +11,54 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.14.0 (2019-09-03)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix ``PythonSpec`` detection of ``python3.10`` - by :user:`asottile`
+  `#1374 <https://github.com/tox-dev/tox/issues/1374>`_
+- Fix regression failing to detect future and past ``py##`` factors  - by :user:`asottile`
+  `#1377 <https://github.com/tox-dev/tox/issues/1377>`_
+- Fix ``current_tox_py`` for ``pypy`` / ``pypy3`` - by :user:`asottile`
+  `#1378 <https://github.com/tox-dev/tox/issues/1378>`_
+- Honor environment markers in ``requires`` list - by :user:`asottile`
+  `#1380 <https://github.com/tox-dev/tox/issues/1380>`_
+- improve recreate check by allowing directories containing ``.tox-config1`` (the marker file created by tox) - by :user:`asottile`
+  `#1383 <https://github.com/tox-dev/tox/issues/1383>`_
+- Recognize correctly interpreters that have suffixes (like python3.7-dbg).
+  `#1415 <https://github.com/tox-dev/tox/issues/1415>`_
+
+
+Features
+^^^^^^^^
+
+- Add support for minor versions with multiple digits ``tox -e py310`` works for ``python3.10`` - by :user:`asottile`
+  `#1374 <https://github.com/tox-dev/tox/issues/1374>`_
+- Remove dependence on ``md5`` hashing algorithm - by :user:`asottile`
+  `#1384 <https://github.com/tox-dev/tox/issues/1384>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- clarify behaviour if recreate is set to false - by :user:`PJCampi`
+  `#1399 <https://github.com/tox-dev/tox/issues/1399>`_
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- ￼Fix relative URLs to files in the repo in ``.github/PULL_REQUEST_TEMPLATE.md`` — by :user:`webknjaz`
+  `#1363 <https://github.com/tox-dev/tox/issues/1363>`_
+- Replace ``importlib_metadata`` backport with ``importlib.metadata``
+  from the standard library on Python ``3.8+`` - by :user:`hroncok`
+  `#1367 <https://github.com/tox-dev/tox/issues/1367>`_
+- Render the change fragment help on the ``docs/changelog/`` directory view on GitHub — by :user:`webknjaz`
+  `#1370 <https://github.com/tox-dev/tox/issues/1370>`_
+
+
 v3.13.2 (2019-07-01)
 --------------------
 

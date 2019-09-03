@@ -1,1 +1,0 @@
-Add support for minor versions with multiple digits ``tox -e py310`` works for ``python3.10`` - by :user:`asottile`
