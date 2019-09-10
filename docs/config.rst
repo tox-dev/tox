@@ -829,7 +829,7 @@ Reading it line by line:
 - ``Django>=1.5,<1.6`` will be included for environments containing
   ``django15`` factor,
 - ``Django>=1.6,<1.7`` similarly depends on ``django16`` factor,
-- ``unittest`` will be loaded for Python 3.6 environments.
+- ``unittest2`` will be loaded for Python 3.6 environments.
 
 tox provides a number of default factors corresponding to Python interpreter
 versions. The conditional setting above will lead to either ``python3.6`` or
