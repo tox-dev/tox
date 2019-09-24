@@ -566,6 +566,13 @@ def tox_addoption(parser):
             return implied_python
 
         proposed_python = (implied_python or sys.executable) if value is None else str(value)
+
+        # Don't raise a warning if this isn't amongst the targeted environments.
+        target_envlist = testenv_config.config.option.env
+        current_env = testenv_config.envname
+        if target_envlist and current_env not in target_envlist:
+            return proposed_python
+
         if implied_python is not None and implied_python != proposed_python:
             testenv_config.basepython = proposed_python
             python_info_for_proposed = testenv_config.python_info
