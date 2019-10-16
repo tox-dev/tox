@@ -8,6 +8,7 @@ status](https://dev.azure.com/toxdev/tox/_apis/build/status/tox%20ci?branchName=
 status](https://readthedocs.org/projects/tox/badge/?version=latest&style=flat-square)](https://tox.readthedocs.io/en/latest/?badge=latest)
 [![Code style:
 black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Downloads](https://pepy.tech/badge/tox/month)](https://pepy.tech/project/tox/month)
 
 <a href="https://tox.readthedocs.io">
     <img src="https://raw.githubusercontent.com/tox-dev/tox/master/docs/_static/img/tox.png"
