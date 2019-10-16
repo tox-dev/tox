@@ -663,11 +663,14 @@ def tox_addoption(parser):
         value = list(itertools.chain.from_iterable([x.split(" ") for x in value]))
 
         passenv = {
-            "PATH",
-            "PIP_INDEX_URL",
+            "CURL_CA_BUNDLE",
             "LANG",
             "LANGUAGE",
             "LD_LIBRARY_PATH",
+            "PATH",
+            "PIP_INDEX_URL",
+            "REQUESTS_CA_BUNDLE",
+            "SSL_CERT_FILE",
             "TOX_WORK_DIR",
             str(REPORTER_TIMESTAMP_ON_ENV),
             str(PARALLEL_ENV_VAR_KEY),
