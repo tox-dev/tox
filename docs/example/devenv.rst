@@ -15,7 +15,7 @@ Creating development environments using the ``--devenv`` option
 ===============================================================
 
 The easiest way to set up a development environment is to use the ``--devenv``
-option along with your existing configured ``testenv``s.  The ``--devenv``
+option along with your existing configured ``testenv``\ s.  The ``--devenv``
 option accepts a single argument, the location you want to create a development
 environment at.
 
