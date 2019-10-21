@@ -2,7 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 from argparse import ArgumentTypeError
 
-ENV_VAR_KEY = "TOX_PARALLEL_ENV"
+ENV_VAR_KEY_PUBLIC = "TOX_PARALLEL_ENV"
+ENV_VAR_KEY_PRIVATE = "_TOX_PARALLEL_ENV"
 OFF_VALUE = 0
 DEFAULT_PARALLEL = OFF_VALUE
 

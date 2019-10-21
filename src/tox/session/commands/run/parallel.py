@@ -4,7 +4,8 @@ from collections import OrderedDict, deque
 from threading import Event, Semaphore, Thread
 
 from tox import reporter
-from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from tox.config.parallel import ENV_VAR_KEY_PRIVATE as PARALLEL_ENV_VAR_KEY_PRIVATE
+from tox.config.parallel import ENV_VAR_KEY_PUBLIC as PARALLEL_ENV_VAR_KEY_PUBLIC
 from tox.exception import InvocationError
 from tox.util.main import MAIN_FILE
 from tox.util.spinner import Spinner
@@ -37,7 +38,8 @@ def run_parallel(config, venv_dict):
             env_name = tox_env.envconfig.envname
             status = "skipped tests" if config.option.notest else None
             try:
-                os_env[str(PARALLEL_ENV_VAR_KEY)] = str(env_name)
+                os_env[str(PARALLEL_ENV_VAR_KEY_PRIVATE)] = str(env_name)
+                os_env[str(PARALLEL_ENV_VAR_KEY_PUBLIC)] = str(env_name)
                 args_sub = list(args)
                 if hasattr(tox_env, "package"):
                     args_sub.insert(position, str(tox_env.package))

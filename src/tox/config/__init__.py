@@ -35,7 +35,8 @@ from tox.reporter import (
 from tox.util.path import ensure_empty_dir
 from tox.util.stdlib import importlib_metadata
 
-from .parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from .parallel import ENV_VAR_KEY_PRIVATE as PARALLEL_ENV_VAR_KEY_PRIVATE
+from .parallel import ENV_VAR_KEY_PUBLIC as PARALLEL_ENV_VAR_KEY_PUBLIC
 from .parallel import add_parallel_config, add_parallel_flags
 from .reporter import add_verbosity_commands
 
@@ -670,7 +671,7 @@ def tox_addoption(parser):
             "LD_LIBRARY_PATH",
             "TOX_WORK_DIR",
             str(REPORTER_TIMESTAMP_ON_ENV),
-            str(PARALLEL_ENV_VAR_KEY),
+            str(PARALLEL_ENV_VAR_KEY_PUBLIC),
         }
 
         # read in global passenv settings
@@ -1030,7 +1031,7 @@ class ParseIni(object):
         config.sdistsrc = reader.getpath("sdistsrc", None)
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
-        within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+        within_parallel = PARALLEL_ENV_VAR_KEY_PRIVATE in os.environ
         if not within_parallel and not WITHIN_PROVISION:
             ensure_empty_dir(config.logdir)
 
@@ -1282,7 +1283,7 @@ class ParseIni(object):
             all_envs = self._getallenvs(reader)
         else:
             candidates = (
-                (os.environ.get(PARALLEL_ENV_VAR_KEY), True),
+                (os.environ.get(PARALLEL_ENV_VAR_KEY_PRIVATE), True),
                 (from_option, True),
                 (from_environ, True),
                 ("py" if self.config.option.devenv is not None else None, False),
