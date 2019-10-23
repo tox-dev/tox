@@ -20,7 +20,7 @@ pr:
 
 variables:
   PYTEST_ADDOPTS: "-v -v -ra --showlocals"
-  PYTEST_XDIST_PROC_NR: 'auto'
+  PYTEST_XDIST_PROC_NR: '0'
 
 jobs:
 - template: run-tox-env.yml@tox
