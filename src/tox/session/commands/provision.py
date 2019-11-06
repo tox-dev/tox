@@ -13,6 +13,7 @@ def provision_tox(provision_venv, args):
         try:
             env = os.environ.copy()
             env[str("TOX_PROVISION")] = str("1")
+            env.pop('__PYVENV_LAUNCHER__', None)
             action.popen(provision_args, redirect=False, report_fail=False, env=env)
             return 0
         except InvocationError as exception:
