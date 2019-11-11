@@ -11,7 +11,7 @@ import py
 import tox
 from tox import reporter
 from tox.action import Action
-from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from tox.config.parallel import ENV_VAR_KEY_PRIVATE as PARALLEL_ENV_VAR_KEY_PRIVATE
 from tox.constants import INFO, PARALLEL_RESULT_JSON_PREFIX, PARALLEL_RESULT_JSON_SUFFIX
 from tox.package.local import resolve_package
 from tox.util.lock import get_unique_file
@@ -693,7 +693,7 @@ def tox_testenv_create(venv, action):
 
 
 def cleanup_for_venv(venv):
-    within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+    within_parallel = PARALLEL_ENV_VAR_KEY_PRIVATE in os.environ
     # if the directory exists and it doesn't look like a virtualenv, produce
     # an error
     if venv.path.exists():

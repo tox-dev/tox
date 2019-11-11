@@ -20,7 +20,7 @@ import tox
 from tox import reporter
 from tox.action import Action
 from tox.config import parseconfig
-from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from tox.config.parallel import ENV_VAR_KEY_PRIVATE as PARALLEL_ENV_VAR_KEY_PRIVATE
 from tox.config.parallel import OFF_VALUE as PARALLEL_OFF
 from tox.logs.result import ResultLog
 from tox.reporter import update_default_reporter
@@ -212,7 +212,7 @@ class Session(object):
         if self.config.option.sdistonly:
             return
 
-        within_parallel = PARALLEL_ENV_VAR_KEY in os.environ
+        within_parallel = PARALLEL_ENV_VAR_KEY_PRIVATE in os.environ
         try:
             if not within_parallel and self.config.option.parallel != PARALLEL_OFF:
                 run_parallel(self.config, self.venv_dict)
@@ -241,7 +241,7 @@ class Session(object):
             return data
 
     def _summary(self):
-        is_parallel_child = PARALLEL_ENV_VAR_KEY in os.environ
+        is_parallel_child = PARALLEL_ENV_VAR_KEY_PRIVATE in os.environ
         if not is_parallel_child:
             reporter.separator("_", "summary", reporter.Verbosity.QUIET)
         exit_code = 0

@@ -17,7 +17,8 @@ import tox
 import tox.session
 from tox import venv
 from tox.config import parseconfig
-from tox.config.parallel import ENV_VAR_KEY as PARALLEL_ENV_VAR_KEY
+from tox.config.parallel import ENV_VAR_KEY_PRIVATE as PARALLEL_ENV_VAR_KEY_PRIVATE
+from tox.config.parallel import ENV_VAR_KEY_PUBLIC as PARALLEL_ENV_VAR_KEY_PUBLIC
 from tox.reporter import update_default_reporter
 from tox.venv import CreationConfig, VirtualEnv, getdigest
 
@@ -66,7 +67,12 @@ def check_os_environ_stable():
 
     to_clean = {
         k: os.environ.pop(k, None)
-        for k in {PARALLEL_ENV_VAR_KEY, str("TOX_WORK_DIR"), str("PYTHONPATH")}
+        for k in {
+            PARALLEL_ENV_VAR_KEY_PRIVATE,
+            PARALLEL_ENV_VAR_KEY_PUBLIC,
+            str("TOX_WORK_DIR"),
+            str("PYTHONPATH"),
+        }
     }
 
     yield
