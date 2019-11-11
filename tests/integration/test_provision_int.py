@@ -41,6 +41,7 @@ def test_provision_missing(initproj, cmd):
     assert meta_python.exists()
 
 
+@pytest.mark.skipif("sys.platform == 'win32'", reason="pyenv does not exists on Windows")
 def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
     initproj(
         "pkg123-0.7",
@@ -59,7 +60,8 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
     monkeypatch.setenv(str("__PYVENV_LAUNCHER__"), sys.executable)
     result = cmd("-e", "py", "-vv")
     result.assert_fail()
-    assert '.tox/.tox/bin/python -m virtualenv' in result.out
+    assert ".tox/.tox/bin/python -m virtualenv" in result.out
+
 
 @pytest.mark.skipif(
     "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
