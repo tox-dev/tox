@@ -1069,8 +1069,11 @@ class TestConfigTestEnv:
             assert "MSYSTEM" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
+        assert "CURL_CA_BUNDLE" in envconfig.passenv
         assert "PATH" in envconfig.passenv
         assert "PIP_INDEX_URL" in envconfig.passenv
+        assert "REQUESTS_CA_BUNDLE" in envconfig.passenv
+        assert "SSL_CERT_FILE" in envconfig.passenv
         assert "LANG" in envconfig.passenv
         assert "LANGUAGE" in envconfig.passenv
         assert "LD_LIBRARY_PATH" in envconfig.passenv
