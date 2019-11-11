@@ -41,6 +41,26 @@ def test_provision_missing(initproj, cmd):
     assert meta_python.exists()
 
 
+def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tox.ini": """\
+                [tox]
+                skipsdist=True
+                minversion = 3.7.0
+                requires =
+                    setuptools == 40.6.3
+                [testenv]
+                commands=python -c "import sys; print(sys.executable); raise SystemExit(1)"
+            """
+        },
+    )
+    monkeypatch.setenv(str("__PYVENV_LAUNCHER__"), sys.executable)
+    result = cmd("-e", "py", "-vv")
+    result.assert_fail()
+    assert '.tox/.tox/bin/python -m virtualenv' in result.out
+
 @pytest.mark.skipif(
     "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
 )
