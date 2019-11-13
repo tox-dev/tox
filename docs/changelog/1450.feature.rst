@@ -1,0 +1,1 @@
+Durations of actions are displayed with verbosity 1 already - by :user:`blueyed`.

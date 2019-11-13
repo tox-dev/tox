@@ -60,7 +60,7 @@ class Reporter(object):
         start = time.time()
         yield
         duration = time.time() - start
-        self.verbosity2(
+        self.verbosity1(
             "{} finish: {} after {:.2f} seconds".format(name, msg, duration), bold=True
         )
 
