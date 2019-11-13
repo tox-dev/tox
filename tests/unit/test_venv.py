@@ -92,9 +92,9 @@ def test_create_KeyboardInterrupt(mocksession, newconfig, mocker):
     )
     mocksession.new_config(config)
     venv = mocksession.getvenv("py123")
-    with mocker.patch.object(venv, "_pcall", side_effect=KeyboardInterrupt):
-        with pytest.raises(KeyboardInterrupt):
-            venv.setupenv()
+    mocker.patch.object(venv, "_pcall", side_effect=KeyboardInterrupt)
+    with pytest.raises(KeyboardInterrupt):
+        venv.setupenv()
 
     assert venv.status == "keyboardinterrupt"
 

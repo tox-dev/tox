@@ -9,10 +9,12 @@ import pytest
 from flaky import flaky
 from pathlib2 import Path
 
+from tox.constants import INFO
 from tox.util.main import MAIN_FILE
 
 
 @flaky(max_runs=3)
+@pytest.mark.skipif(INFO.IS_PYPY, reason="TODO: process numbers work differently on pypy")
 @pytest.mark.skipif(
     "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
 )

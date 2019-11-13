@@ -837,7 +837,7 @@ class TestIniParser:
             reader.getbool("key3")
         with pytest.raises(tox.exception.ConfigError) as excinfo:
             reader.getbool("key5")
-        msg, = excinfo.value.args
+        (msg,) = excinfo.value.args
         assert msg == "key5: boolean value 'yes' needs to be 'True' or 'False'"
 
 

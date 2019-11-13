@@ -17,7 +17,7 @@ def exit_code_str(exception_name, command, exit_code):
     """
     str_ = "{} for command {}".format(exception_name, command)
     if exit_code is not None:
-        if (exit_code < 0 or (os.name == "posix" and exit_code > 128)):
+        if exit_code < 0 or (os.name == "posix" and exit_code > 128):
             signals = {
                 number: name for name, number in vars(signal).items() if name.startswith("SIG")
             }
