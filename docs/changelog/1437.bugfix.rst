@@ -1,1 +1,0 @@
-Adds ``CURL_CA_BUNDLE``, ``REQUESTS_CA_BUNDLE``, ``SSL_CERT_FILE`` to the default passenv values. - by :user:`ssbarnea`

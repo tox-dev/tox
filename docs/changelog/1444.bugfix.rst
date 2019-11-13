@@ -1,5 +1,0 @@
-Fix nested tox execution in the parallel mode by separating the environment
-variable that let's tox know it is invoked in the parallel mode
-(``_TOX_PARALLEL_ENV``) from the variable that informs the tests that tox is
-running in parallel mode (``TOX_PARALLEL_ENV``).
-— by :user:`hroncok`

@@ -11,6 +11,36 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.14.1 (2019-11-13)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix reporting of exiting due to (real) signals - by :user:`blueyed`
+  `#1401 <https://github.com/tox-dev/tox/issues/1401>`_
+- Bump minimal virtualenv to 16.0.0 to improve own transitive
+  deps handling in some ancient envs. — by :user:`webknjaz`
+  `#1429 <https://github.com/tox-dev/tox/issues/1429>`_
+- Adds ``CURL_CA_BUNDLE``, ``REQUESTS_CA_BUNDLE``, ``SSL_CERT_FILE`` to the default passenv values. - by :user:`ssbarnea`
+  `#1437 <https://github.com/tox-dev/tox/issues/1437>`_
+- Fix nested tox execution in the parallel mode by separating the environment
+  variable that let's tox know it is invoked in the parallel mode
+  (``_TOX_PARALLEL_ENV``) from the variable that informs the tests that tox is
+  running in parallel mode (``TOX_PARALLEL_ENV``).
+  — by :user:`hroncok`
+  `#1444 <https://github.com/tox-dev/tox/issues/1444>`_
+- Fix provisioning from a pyvenv interpreter. — by :user:`kentzo`
+  `#1452 <https://github.com/tox-dev/tox/issues/1452>`_
+
+
+Deprecations (removal in next major release)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Python ``3.4`` is no longer supported. — by :user:`gaborbernat`
+  `#1456 <https://github.com/tox-dev/tox/issues/1456>`_
+
+
 v3.14.0 (2019-09-03)
 --------------------
 
