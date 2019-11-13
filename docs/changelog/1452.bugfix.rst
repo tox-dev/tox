@@ -1,1 +1,0 @@
-Fix provisioning from a pyvenv interpreter. — by :user:`kentzo`

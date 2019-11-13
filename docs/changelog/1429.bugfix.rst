@@ -1,2 +1,0 @@
-Bump minimal virtualenv to 16.0.0 to improve own transitive
-deps handling in some ancient envs. — by :user:`webknjaz`
