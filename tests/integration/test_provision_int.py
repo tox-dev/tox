@@ -6,6 +6,7 @@ import time
 import pytest
 from pathlib2 import Path
 
+from tox.constants import INFO
 from tox.util.main import MAIN_FILE
 
 
@@ -63,6 +64,7 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
     assert ".tox/.tox/bin/python -m virtualenv" in result.out
 
 
+@pytest.mark.skipif(INFO.IS_PYPY, reason="TODO: process numbers work differently on pypy")
 @pytest.mark.skipif(
     "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
 )
