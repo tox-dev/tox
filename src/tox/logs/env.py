@@ -1,9 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-import json
-import subprocess
-
-from tox.constants import VERSION_QUERY_SCRIPT
+from tox.interpreters.via_path import get_python_info
 
 from .command import CommandLog
 
@@ -17,9 +14,7 @@ class EnvLog(object):
         self.dict = dict
 
     def set_python_info(self, python_executable):
-        cmd = [str(python_executable), VERSION_QUERY_SCRIPT]
-        result = subprocess.check_output(cmd, universal_newlines=True)
-        answer = json.loads(result)
+        answer = get_python_info(str(python_executable))
         answer["executable"] = python_executable
         self.dict["python"] = answer
 
