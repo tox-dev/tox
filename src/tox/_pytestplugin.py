@@ -102,12 +102,12 @@ def check_os_environ_stable():
 
 @pytest.fixture(name="newconfig")
 def create_new_config_file(tmpdir):
-    def create_new_config_file_(args, source=None, plugins=()):
+    def create_new_config_file_(args, source=None, plugins=(), filename="tox.ini"):
         if source is None:
             source = args
             args = []
         s = textwrap.dedent(source)
-        p = tmpdir.join("tox.ini")
+        p = tmpdir.join(filename)
         p.write(s)
         tox.session.setup_reporter(args)
         with tmpdir.as_cwd():

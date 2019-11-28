@@ -1,0 +1,1 @@
+Fix fallback to global configuration when running in Jenkins. - by :user:`daneah`
