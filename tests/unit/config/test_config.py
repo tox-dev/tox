@@ -2104,6 +2104,17 @@ class TestGlobalOptions:
         config = newconfig(args, "")
         assert config.option.quiet_level == expected
 
+    def test_substitution_jenkins_global(self, monkeypatch, newconfig):
+        monkeypatch.setenv("HUDSON_URL", "xyz")
+        config = newconfig(
+            """
+            [tox:tox]
+            envlist = py37
+        """,
+            filename="setup.cfg",
+        )
+        assert "py37" in config.envconfigs
+
     def test_substitution_jenkins_default(self, monkeypatch, newconfig):
         monkeypatch.setenv("HUDSON_URL", "xyz")
         config = newconfig(

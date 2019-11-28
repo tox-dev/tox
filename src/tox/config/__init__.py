@@ -991,11 +991,12 @@ class ParseIni(object):
         self.config = config
 
         prefix = "tox" if ini_path.basename == "setup.cfg" else None
+        fallbacksection = "tox:tox" if ini_path.basename == "setup.cfg" else "tox"
 
         context_name = getcontextname()
         if context_name == "jenkins":
             reader = SectionReader(
-                "tox:jenkins", self._cfg, prefix=prefix, fallbacksections=["tox"]
+                "tox:jenkins", self._cfg, prefix=prefix, fallbacksections=[fallbacksection]
             )
             dist_share_default = "{toxworkdir}/distshare"
         elif not context_name:
