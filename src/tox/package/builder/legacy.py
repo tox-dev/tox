@@ -14,10 +14,10 @@ def make_sdist(config, session):
             "  {}\n"
             "You can\n"
             "  1. Create one:\n"
-            "     https://packaging.python.org/tutorials/distributing-packages/#setup-py\n"
+            "     https://tox.readthedocs.io/en/latest/example/package.html\n"
             "  2. Configure tox to avoid running sdist:\n"
-            "     https://tox.readthedocs.io/en/latest/example/general.html"
-            "#avoiding-expensive-sdist".format(setup)
+            "     https://tox.readthedocs.io/en/latest/example/general.html\n"
+            "  3. Configure tox to use an isolated_build".format(setup)
         )
         raise SystemExit(1)
     with session.newaction("GLOB", "packaging") as action:
