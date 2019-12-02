@@ -1,1 +1,0 @@
-improve performance with internal lookup of Python version information - by :user:`blueyed`

@@ -1,1 +1,0 @@
-Mark poetry related tests as xfail since its dependency pyrsistent won't install in ci due to missing wheels/build deps. - by :user:`RonnyPfannschmidt`
