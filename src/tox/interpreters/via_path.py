@@ -35,7 +35,7 @@ def exe_spec(python_exe, base):
         python_exe = str(python_exe)
     with _SPECK_LOCK[python_exe]:
         if python_exe not in _SPECS:
-            info = get_python_info([python_exe])
+            info = get_python_info(python_exe)
             if info is not None:
                 found = PythonSpec(
                     info["name"],
@@ -51,9 +51,16 @@ def exe_spec(python_exe, base):
     return _SPECS[python_exe]
 
 
+_python_info_cache = {}
+
+
 def get_python_info(cmd):
+    try:
+        return _python_info_cache[cmd].copy()
+    except KeyError:
+        pass
     proc = subprocess.Popen(
-        cmd + [VERSION_QUERY_SCRIPT],
+        [cmd] + [VERSION_QUERY_SCRIPT],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
@@ -65,7 +72,8 @@ def get_python_info(cmd):
         except ValueError as exception:
             failure = exception
         else:
-            return result
+            _python_info_cache[cmd] = result
+            return result.copy()
     else:
         failure = "exit code {}".format(proc.returncode)
     reporter.verbosity1("{!r} cmd {!r} out {!r} err {!r} ".format(failure, cmd, out, err))

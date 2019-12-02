@@ -5,7 +5,8 @@ import sys
 
 import tox
 from tox import reporter
-from tox.constants import SITE_PACKAGE_QUERY_SCRIPT, VERSION_QUERY_SCRIPT
+from tox.constants import SITE_PACKAGE_QUERY_SCRIPT
+from tox.interpreters.via_path import get_python_info
 
 
 class Interpreters:
@@ -56,7 +57,7 @@ class Interpreters:
 def run_and_get_interpreter_info(name, executable):
     assert executable
     try:
-        result = exec_on_interpreter(str(executable), VERSION_QUERY_SCRIPT)
+        result = get_python_info(str(executable))
         result["version_info"] = tuple(result["version_info"])  # fix json dump transformation
         del result["name"]
         del result["version"]
