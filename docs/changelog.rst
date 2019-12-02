@@ -11,6 +11,29 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.14.2 (2019-12-02)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix fallback to global configuration when running in Jenkins. - by :user:`daneah`
+  `#1428 <https://github.com/tox-dev/tox/issues/1428>`_
+- Fix colouring on windows: colorama is a dep. - by :user:`1138-4EB`
+  `#1471 <https://github.com/tox-dev/tox/issues/1471>`_
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- improve performance with internal lookup of Python version information - by :user:`blueyed`
+  `#1462 <https://github.com/tox-dev/tox/issues/1462>`_
+- Use latest version of importlib_metadata package - by :user:`kammala`
+  `#1472 <https://github.com/tox-dev/tox/issues/1472>`_
+- Mark poetry related tests as xfail since its dependency pyrsistent won't install in ci due to missing wheels/build deps. - by :user:`RonnyPfannschmidt`
+  `#1474 <https://github.com/tox-dev/tox/issues/1474>`_
+
+
 v3.14.1 (2019-11-13)
 --------------------
 
