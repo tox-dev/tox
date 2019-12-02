@@ -78,6 +78,10 @@ def test_package_flit(initproj, cmd):
 
 @pytest.mark.network
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="poetry is Python 3 only")
+@pytest.mark.xfail(
+    os.name == "nt",
+    reason="https://github.com/tobgu/pyrsistent/issues/88 breaks easy poetry install",
+)
 def test_package_poetry(initproj, cmd):
     initproj(
         "magic-0.1",
