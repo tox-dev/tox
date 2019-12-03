@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 
+import pathlib2
 import py
 import pytest
 
@@ -411,7 +412,31 @@ def test_no_setup_py_exits(cmd, initproj):
     result = cmd()
     result.assert_fail()
     assert any(
-        re.match(r".*ERROR.*No setup.py file found.*", l) for l in result.outlines
+        re.match(r".*ERROR.*No pyproject.toml or setup.py file found.*", l)
+        for l in result.outlines
+    ), result.outlines
+
+
+def test_no_setup_py_exits_but_pyproject_toml_does(cmd, initproj):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tox.ini": """
+            [testenv]
+            commands=python -c "2 + 2"
+        """
+        },
+    )
+    os.remove("setup.py")
+    pathlib2.Path("pyproject.toml").touch()
+    result = cmd()
+    result.assert_fail()
+    assert any(
+        re.match(r".*ERROR.*pyproject.toml file found.*", l) for l in result.outlines
+    ), result.outlines
+    assert any(
+        re.match(r".*To use a PEP 517 build-backend you are required to*", l)
+        for l in result.outlines
     ), result.outlines
 
 

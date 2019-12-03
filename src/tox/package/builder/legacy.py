@@ -8,16 +8,26 @@ from tox.util.path import ensure_empty_dir
 
 def make_sdist(config, session):
     setup = config.setupdir.join("setup.py")
-    if not setup.check():
+    pyproject = config.setupdir.join("pyproject.toml")
+    setup_check = setup.check()
+    if not setup_check and not pyproject.check():
         reporter.error(
-            "No setup.py file found. The expected location is:\n"
-            "  {}\n"
+            "No pyproject.toml or setup.py file found. The expected locations are:\n"
+            "  {pyproject} or {setup}\n"
             "You can\n"
             "  1. Create one:\n"
             "     https://tox.readthedocs.io/en/latest/example/package.html\n"
             "  2. Configure tox to avoid running sdist:\n"
             "     https://tox.readthedocs.io/en/latest/example/general.html\n"
-            "  3. Configure tox to use an isolated_build".format(setup)
+            "  3. Configure tox to use an isolated_build".format(pyproject=pyproject, setup=setup)
+        )
+        raise SystemExit(1)
+    if not setup_check:
+        reporter.error(
+            "pyproject.toml file found.\n"
+            "To use a PEP 517 build-backend you are required to "
+            "configure tox to use an isolated_build:\n"
+            "https://tox.readthedocs.io/en/latest/example/package.html\n"
         )
         raise SystemExit(1)
     with session.newaction("GLOB", "packaging") as action:
