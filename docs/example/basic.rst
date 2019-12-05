@@ -399,7 +399,7 @@ Parallel mode
   - ``auto`` to limit it to CPU count,
   - or pass an integer to set that limit.
 - Parallel mode displays a progress spinner while running tox environments in parallel, and reports outcome of
-  these as soon as completed with a human readable duration timing attached. This spinner can be disabled by 
+  these as soon as completed with a human readable duration timing attached. This spinner can be disabled by
   setting the environment variable ``TOX_PARALLEL_NO_SPINNER`` to the value ``1``.
 - Parallel mode by default shows output only of failed environments and ones marked as :conf:`parallel_show_output`
   ``=True``.
