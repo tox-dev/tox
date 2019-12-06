@@ -1,0 +1,1 @@
+Clarify legacy setup.py error message: python projects should commit to a strong consistency of message regarding packaging. We no-longer tell people to add a setup.py to their already configured pep-517 project, otherwise it could imply that pyproject.toml isn't as well supported and recommended as it truly is - by :user:graingert
