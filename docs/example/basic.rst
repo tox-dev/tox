@@ -63,18 +63,14 @@ The environment ``py`` uses the version of Python used to invoke tox.
 However, you can also create your own test environment names,
 see some of the examples in :doc:`examples <../examples>`.
 
-pyproject.toml tox legacy ini
+pyproject.toml legacy tox ini
 -----------------------------
 
-The tox configuration can also be in ``pyproject.toml`` (if you want to avoid an extra file).
+The tox configuration can also be in ``pyproject.toml`` (the `Python's standard`_ configuration file for software packages).
 
 Currently only the old format is supported via ``legacy_tox_ini``, a native implementation is planned though.
 
 .. code-block:: toml
-
-   [build-system]
-   requires = [ "setuptools >= 35.0.2", "wheel >= 0.29.0"]
-   build-backend = "setuptools.build_meta"
 
    [tool.tox]
    legacy_tox_ini = """
@@ -86,7 +82,8 @@ Currently only the old format is supported via ``legacy_tox_ini``, a native impl
    commands = pytest
    """
 
-Note that when you define a ``pyproject.toml`` you must define the ``build-requires`` section per PEP-518.
+.. _Python's standard:
+   https://www.python.org/dev/peps/pep-0518
 
 specifying a platform
 -----------------------------------------------
