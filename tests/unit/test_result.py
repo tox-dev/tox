@@ -85,7 +85,7 @@ def test_invocation_error(exit_code, os_name, mocker, monkeypatch):
     assert call_args == mocker.call("InvocationError", "<command>", exit_code)
     if exit_code is None:
         assert "(exited with code" not in result
-    elif exit_code is -15:
+    elif exit_code == -15:
         assert "(exited with code -15 (SIGTERM))" in result
     else:
         assert "(exited with code %d)" % exit_code in result

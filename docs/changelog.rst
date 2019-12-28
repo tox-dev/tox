@@ -11,6 +11,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.14.3 (2019-12-27)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Relax importlib requirement to allow either version 0 or 1 - by :user:`chyzzqo2`
+  `#1476 <https://github.com/tox-dev/tox/issues/1476>`_
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- Clarify legacy setup.py error message: python projects should commit to a strong consistency of message regarding packaging. We no-longer tell people to add a setup.py to their already configured pep-517 project, otherwise it could imply that pyproject.toml isn't as well supported and recommended as it truly is - by :user:`graingert`
+  `#1478 <https://github.com/tox-dev/tox/issues/1478>`_
+
 v3.14.2 (2019-12-02)
 --------------------
 
