@@ -160,6 +160,21 @@ Global settings are defined under the ``tox`` section as:
     Name of the virtual environment used to create a source distribution from the
     source tree.
 
+.. conf:: interrupt_timeout ^ float ^ 0.3
+
+    .. versionadded:: 3.15.0
+
+    When tox is interrupted, it propagates the signal to the child process,
+    wait :conf:``interrupt_timeout`` seconds, and sends it a SIGTERM if it haven't
+    exited.
+
+.. conf:: terminate_timeout ^ float ^ 0.2
+
+    .. versionadded:: 3.15.0
+
+    When tox is interrupted, it propagates the signal to the child process,
+    wait :conf:``interrupt_timeout`` seconds, sends it a SIGTERM, wait
+    :conf:``terminate_timeout`` seconds, and sends it a SIGKILL if it haven't exited.
 
 Jenkins override
 ++++++++++++++++

@@ -1,0 +1,1 @@
+Add ``interrupt_timeout`` and ``terminate_timeout`` that configure delay between SIGINT, SIGTERM and SIGKILL when tox is interrupted. - by :user:`sileht`

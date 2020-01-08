@@ -130,6 +130,8 @@ class VirtualEnv(object):
             command_log,
             self.popen,
             self.envconfig.envpython,
+            self.envconfig.interrupt_timeout,
+            self.envconfig.terminate_timeout,
         )
 
     def get_result_json_path(self):

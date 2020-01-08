@@ -18,14 +18,23 @@ from tox.reporter import Verbosity
 from tox.util.lock import get_unique_file
 from tox.util.stdlib import is_main_thread
 
-WAIT_INTERRUPT = 0.3
-WAIT_TERMINATE = 0.2
-
 
 class Action(object):
     """Action is an effort to group operations with the same goal (within reporting)"""
 
-    def __init__(self, name, msg, args, log_dir, generate_tox_log, command_log, popen, python):
+    def __init__(
+        self,
+        name,
+        msg,
+        args,
+        log_dir,
+        generate_tox_log,
+        command_log,
+        popen,
+        python,
+        interrupt_timeout,
+        terminate_timeout,
+    ):
         self.name = name
         self.args = args
         self.msg = msg
@@ -36,6 +45,8 @@ class Action(object):
         self.command_log = command_log
         self._timed_report = None
         self.python = python
+        self.interrupt_timeout = interrupt_timeout
+        self.terminate_timeout = terminate_timeout
 
     def __enter__(self):
         msg = "{} {}".format(self.msg, " ".join(map(str, self.args)))
@@ -180,10 +191,10 @@ class Action(object):
         if process.poll() is None:
             self.info("KeyboardInterrupt", msg.format("SIGINT"))
             process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
-            if self._wait(process, WAIT_INTERRUPT) is None:
+            if self._wait(process, self.interrupt_timeout) is None:
                 self.info("KeyboardInterrupt", msg.format("SIGTERM"))
                 process.terminate()
-                if self._wait(process, WAIT_TERMINATE) is None:
+                if self._wait(process, self.terminate_timeout) is None:
                     self.info("KeyboardInterrupt", msg.format("SIGKILL"))
                     process.kill()
                     process.communicate()
@@ -193,7 +204,7 @@ class Action(object):
         if sys.version_info >= (3, 3):
             # python 3 has timeout feature built-in
             try:
-                process.communicate(timeout=WAIT_INTERRUPT)
+                process.communicate(timeout=timeout)
             except subprocess.TimeoutExpired:
                 pass
         else:
