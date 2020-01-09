@@ -54,6 +54,9 @@ Import hookimpl directly from tox instead.
 
 WITHIN_PROVISION = os.environ.get(str("TOX_PROVISION")) == "1"
 
+INTERRUPT_TIMEOUT = 0.3
+TERMINATE_TIMEOUT = 0.2
+
 
 def get_plugin_manager(plugins=()):
     # initialize plugin manager
@@ -799,6 +802,20 @@ def tox_addoption(parser):
     parser.add_testenv_attribute_obj(DepOption())
 
     parser.add_testenv_attribute(
+        name="interrupt_timeout",
+        type="float",
+        default=INTERRUPT_TIMEOUT,
+        help="timeout before sending SIGTERM after SIGINT",
+    )
+
+    parser.add_testenv_attribute(
+        name="terminate_timeout",
+        type="float",
+        default=TERMINATE_TIMEOUT,
+        help="timeout before sending SIGKILL after SIGTERM",
+    )
+
+    parser.add_testenv_attribute(
         name="commands",
         type="argvlist",
         default="",
@@ -1231,7 +1248,16 @@ class ParseIni(object):
         for env_attr in config._testenv_attr:
             atype = env_attr.type
             try:
-                if atype in ("bool", "path", "string", "dict", "dict_setenv", "argv", "argvlist"):
+                if atype in (
+                    "bool",
+                    "float",
+                    "path",
+                    "string",
+                    "dict",
+                    "dict_setenv",
+                    "argv",
+                    "argvlist",
+                ):
                     meth = getattr(reader, "get{}".format(atype))
                     res = meth(env_attr.name, env_attr.default, replace=replace)
                 elif atype == "basepython":
@@ -1447,6 +1473,20 @@ class SectionReader:
                 d[name.strip()] = rest.strip()
 
         return d
+
+    def getfloat(self, name, default=None, replace=True):
+        s = self.getstring(name, default, replace=replace)
+        if not s or not replace:
+            s = default
+        if s is None:
+            raise KeyError("no config value [{}] {} found".format(self.section_name, name))
+
+        if not isinstance(s, float):
+            try:
+                s = float(s)
+            except ValueError:
+                raise tox.exception.ConfigError("{}: invalid float {!r}".format(name, s))
+        return s
 
     def getbool(self, name, default=None, replace=True):
         s = self.getstring(name, default, replace=replace)
