@@ -1,0 +1,1 @@
+Add ``HTTP_PROXY``, ``HTTPS_PROXY`` and ``NO_PROXY`` to default passenv. - by :user:`pfmoore`

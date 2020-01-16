@@ -1096,6 +1096,9 @@ class TestConfigTestEnv:
         assert "LANG" in envconfig.passenv
         assert "LANGUAGE" in envconfig.passenv
         assert "LD_LIBRARY_PATH" in envconfig.passenv
+        assert "HTTP_PROXY" in envconfig.passenv
+        assert "HTTPS_PROXY" in envconfig.passenv
+        assert "NO_PROXY" in envconfig.passenv
         assert PARALLEL_ENV_VAR_KEY_PUBLIC in envconfig.passenv
         assert PARALLEL_ENV_VAR_KEY_PRIVATE not in envconfig.passenv
         assert "A123A" in envconfig.passenv
