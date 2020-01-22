@@ -676,6 +676,9 @@ def tox_addoption(parser):
             "REQUESTS_CA_BUNDLE",
             "SSL_CERT_FILE",
             "TOX_WORK_DIR",
+            "HTTP_PROXY",
+            "HTTPS_PROXY",
+            "NO_PROXY",
             str(REPORTER_TIMESTAMP_ON_ENV),
             str(PARALLEL_ENV_VAR_KEY_PUBLIC),
         }
