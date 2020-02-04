@@ -400,11 +400,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Some variables are always passed through to ensure the basic functionality
     of standard library functions or tooling like pip:
 
-    * passed through on all platforms: ``CURL_CA_BUNDLE`, ``PATH``,
+    * passed through on all platforms: ``CURL_CA_BUNDLE``, ``PATH``,
       ``LANG``, ``LANGUAGE``,
       ``LD_LIBRARY_PATH``, ``PIP_INDEX_URL``,
       ``REQUESTS_CA_BUNDLE``, ``SSL_CERT_FILE``,
-      ``HTTP_PROXY``, ``HTTPS_PROXY``,``NO_PROXY``
+      ``HTTP_PROXY``, ``HTTPS_PROXY``, ``NO_PROXY``
     * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
        ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``
     * Others (e.g. UNIX, macOS): ``TMPDIR``
