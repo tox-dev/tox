@@ -181,7 +181,9 @@ class Session(object):
         reporter.using(
             "tox-{} from {} (pid {})".format(tox.__version__, tox.__file__, os.getpid()),
         )
-        show_description = reporter.has_level(reporter.Verbosity.DEFAULT)
+        # We display description if verbosity was increase but ignoring value
+        # of quiet_level. Needed in order to produce machine readable output.
+        show_description = self.config.option.verbose_level > 0
         if self.config.run_provision:
             provision_tox_venv = self.getvenv(self.config.provision_tox_env)
             return provision_tox(provision_tox_venv, self.config.args)

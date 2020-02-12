@@ -446,19 +446,21 @@ def tox_addoption(parser):
         "--showconfig",
         action="store_true",
         help="show live configuration (by default all env, with -l only default targets,"
-        " specific via TOXENV/-e)",
+        " specific via TOXENV/-e). Add -qq to ensure is machine-readable",
     )
     parser.add_argument(
         "-l",
         "--listenvs",
         action="store_true",
-        help="show list of test environments (with description if verbose)",
+        help="show list of test environments (with description if verbose),"
+        " combine with -qq to ensure output is machine-readable",
     )
     parser.add_argument(
         "-a",
         "--listenvs-all",
         action="store_true",
-        help="show list of all defined environments (with description if verbose)",
+        help="show list of all defined environments (with description if verbose),"
+        " combine with -qq to ensure output is machine-readable",
     )
     parser.add_argument(
         "-c",

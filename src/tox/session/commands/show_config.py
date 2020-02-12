@@ -29,7 +29,10 @@ def show_config(config):
     content = StringIO()
     parser.write(content)
     value = content.getvalue().rstrip()
-    reporter.verbosity0(value)
+    # We are not using the reporter because showconfig result should not be
+    # affected by logging level as its stdout output *is* expected to
+    # be machine parseable.
+    print(value)
 
 
 def tox_envs_info(config, parser):

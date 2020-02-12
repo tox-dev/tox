@@ -1,0 +1,3 @@
+``tox --showconfig``, ``-a`` and ``-l`` primary output is no longer affected
+by the logging level. Allows users to add ``-qq`` to make output machine
+parseable output (no pollution from the logging). - by :user:`ssbarnea`
