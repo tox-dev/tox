@@ -1,2 +1,0 @@
-Bump minimal six version needed to avoid using one incompatible with newer
-virtualenv. - by :user:`ssbarnea`

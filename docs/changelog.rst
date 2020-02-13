@@ -11,6 +11,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.14.4 (2020-02-13)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Bump minimal six version needed to avoid using one incompatible with newer
+  virtualenv. - by :user:`ssbarnea`
+  `#1519 <https://github.com/tox-dev/tox/issues/1519>`_
+- Avoid pypy test failure due to undefined printout var. - by :user:`ssbarnea`
+  `#1521 <https://github.com/tox-dev/tox/issues/1521>`_
+
+
+Features
+^^^^^^^^
+
+- Add ``interrupt_timeout`` and ``terminate_timeout`` that configure delay between SIGINT, SIGTERM and SIGKILL when tox is interrupted. - by :user:`sileht`
+  `#1493 <https://github.com/tox-dev/tox/issues/1493>`_
+- Add ``HTTP_PROXY``, ``HTTPS_PROXY`` and ``NO_PROXY`` to default passenv. - by :user:`pfmoore`
+  `#1498 <https://github.com/tox-dev/tox/issues/1498>`_
+
+
 v3.14.3 (2019-12-27)
 --------------------
 
