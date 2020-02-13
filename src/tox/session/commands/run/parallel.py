@@ -35,6 +35,7 @@ def run_parallel(config, venv_dict):
 
         def run_in_thread(tox_env, os_env, processes):
             output = None
+            print_out = None
             env_name = tox_env.envconfig.envname
             status = "skipped tests" if config.option.notest else None
             try:
