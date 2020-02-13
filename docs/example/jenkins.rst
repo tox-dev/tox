@@ -105,7 +105,6 @@ Here is an example:
 
   .. code-block:: python
 
-    import pytest
     import subprocess
 
 
