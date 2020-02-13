@@ -98,14 +98,13 @@ Here is an example:
       # change to ``doc`` dir if that is where your sphinx-docs live
       changedir = doc
       deps = sphinx
-             py
+             pytest
       commands = pytest --tb=line -v --junitxml=junit-{envname}.xml check_sphinx.py
 
 2. create a ``doc/check_sphinx.py`` file like this:
 
   .. code-block:: python
 
-    import py
     import subprocess
 
 
