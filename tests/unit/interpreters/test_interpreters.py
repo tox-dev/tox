@@ -29,10 +29,12 @@ def create_interpreters_instance():
 
 
 @pytest.mark.skipif(tox.INFO.IS_PYPY, reason="testing cpython interpreter discovery")
-def test_tox_get_python_executable():
+def test_tox_get_python_executable(mocker):
     class envconfig:
         basepython = sys.executable
         envname = "pyxx"
+        config = mocker.MagicMock()
+        config.return_value.option.return_value.discover = []
 
     def get_exe(name):
         envconfig.basepython = name
@@ -73,7 +75,7 @@ def test_tox_get_python_executable():
 
 
 @pytest.mark.skipif("sys.platform == 'win32'", reason="symlink execution unreliable on Windows")
-def test_find_alias_on_path(monkeypatch, tmp_path):
+def test_find_alias_on_path(monkeypatch, tmp_path, mocker):
     reporter.update_default_reporter(Verbosity.DEFAULT, Verbosity.DEBUG)
     magic = tmp_path / "magic{}".format(os.path.splitext(sys.executable)[1])
     os.symlink(sys.executable, str(magic))
@@ -85,6 +87,8 @@ def test_find_alias_on_path(monkeypatch, tmp_path):
     class envconfig:
         basepython = "magic"
         envname = "pyxx"
+        config = mocker.MagicMock()
+        config.return_value.option.return_value.discover = []
 
     detected = py.path.local.sysfind("magic")
     assert detected
@@ -102,10 +106,12 @@ def test_run_and_get_interpreter_info():
 
 
 class TestInterpreters:
-    def test_get_executable(self, interpreters):
+    def test_get_executable(self, interpreters, mocker):
         class envconfig:
             basepython = sys.executable
             envname = "pyxx"
+            config = mocker.MagicMock()
+            config.return_value.option.return_value.discover = []
 
         x = interpreters.get_executable(envconfig)
         assert x == sys.executable
@@ -114,10 +120,12 @@ class TestInterpreters:
         assert info.executable == sys.executable
         assert isinstance(info, InterpreterInfo)
 
-    def test_get_executable_no_exist(self, interpreters):
+    def test_get_executable_no_exist(self, interpreters, mocker):
         class envconfig:
             basepython = "1lkj23"
             envname = "pyxx"
+            config = mocker.MagicMock()
+            config.return_value.option.return_value.discover = []
 
         assert not interpreters.get_executable(envconfig)
         info = interpreters.get_info(envconfig)
@@ -154,10 +162,12 @@ class TestInterpreters:
         info = interpreters.get_info(envconfig)
         assert info.executable == str(magic)
 
-    def test_get_sitepackagesdir_error(self, interpreters):
+    def test_get_sitepackagesdir_error(self, interpreters, mocker):
         class envconfig:
             basepython = sys.executable
             envname = "123"
+            config = mocker.MagicMock()
+            config.return_value.option.return_value.discover = []
 
         info = interpreters.get_info(envconfig)
         s = interpreters.get_sitepackagesdir(info, "")

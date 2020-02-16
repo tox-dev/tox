@@ -475,6 +475,14 @@ def tox_addoption(parser):
         help="write a json file with detailed information "
         "about all commands and results involved.",
     )
+    parser.add_argument(
+        "--discover",
+        dest="discover",
+        nargs="+",
+        metavar="PATH",
+        help="for python discovery first try the python executables under these paths",
+        default=[],
+    )
 
     # We choose 1 to 4294967295 because it is the range of PYTHONHASHSEED.
     parser.add_argument(

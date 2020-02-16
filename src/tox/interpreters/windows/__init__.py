@@ -4,18 +4,16 @@ from threading import Lock
 
 import tox
 
-from ..py_spec import CURRENT, PythonSpec
+from ..common import base_discover
+from ..py_spec import CURRENT
 from ..via_path import check_with_path
 
 
 @tox.hookimpl
 def tox_get_python_executable(envconfig):
-    base_python = envconfig.basepython
-    spec = PythonSpec.from_name(base_python)
-    # first, check current
-    if spec.name is not None and CURRENT.satisfies(spec):
-        return CURRENT.path
-
+    spec, path = base_discover(envconfig)
+    if path is not None:
+        return path
     # second check if the py.exe has it (only for non path specs)
     if spec.path is None:
         py_exe = locate_via_pep514(spec)
@@ -25,7 +23,7 @@ def tox_get_python_executable(envconfig):
     # third check if the literal base python is on PATH
     candidates = [envconfig.basepython]
     # fourth check if the name is on PATH
-    if spec.name is not None and spec.name != base_python:
+    if spec.name is not None and spec.name != envconfig.basepython:
         candidates.append(spec.name)
     # or check known locations
     if spec.major is not None and spec.minor is not None:
