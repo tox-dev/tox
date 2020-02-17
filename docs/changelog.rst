@@ -11,6 +11,17 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.14.5 (2020-02-16)
+--------------------
+
+Features
+^^^^^^^^
+
+- Add ``--discover`` (fallback to ``TOX_DISCOVER`` environment variable via path separator) to inject python executables
+  to try as first step of a discovery - note the executable still needs to match the environment by :user:`gaborbernat`.
+  `#1526 <https://github.com/tox-dev/tox/issues/1526>`_
+
+
 v3.14.4 (2020-02-13)
 --------------------
 

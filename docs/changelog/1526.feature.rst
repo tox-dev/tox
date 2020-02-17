@@ -1,2 +1,0 @@
-Add ``--discover`` (fallback to ``TOX_DISCOVER`` environment variable via path separator) to inject python executables
-to try as first step of a discovery - note the executable still needs to match the environment by :user:`gaborbernat`.
