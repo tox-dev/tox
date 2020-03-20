@@ -1,0 +1,1 @@
+Fix ``tox -h`` and ``tox --hi`` shows an error when run outside a directory with tox support files by :user:`nkpro2000sr`.
