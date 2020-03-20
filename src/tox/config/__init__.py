@@ -270,6 +270,8 @@ def parseconfig(args, plugins=()):
         pm.hook.tox_configure(config=config)  # post process config object
         break
     else:
+        if option.help or option.helpini:
+            return config
         msg = "tox config file (either {}) not found"
         candidates = ", ".join(INFO.CONFIG_CANDIDATES)
         feedback(msg.format(candidates), sysexit=not (option.help or option.helpini))
