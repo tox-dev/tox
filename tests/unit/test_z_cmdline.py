@@ -84,11 +84,16 @@ class TestSession:
 def test_notoxini_help_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={"tests": {"test_hello.py": "def test_hello(): pass"}})
     result = cmd("-h")
-    msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
-    assert result.err == msg
     assert result.out.startswith("usage: ")
     assert any("--help" in l for l in result.outlines), result.outlines
     result.assert_success(is_run_test_env=False)
+
+
+def test_notoxini_noerror_in_help(initproj, cmd):
+    initproj("examplepro", filedefs={})
+    result = cmd("-h")
+    msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
+    assert result.err != msg
 
 
 def test_notoxini_help_ini_still_works(initproj, cmd):
@@ -96,6 +101,13 @@ def test_notoxini_help_ini_still_works(initproj, cmd):
     result = cmd("--help-ini")
     assert any("setenv" in l for l in result.outlines), result.outlines
     result.assert_success(is_run_test_env=False)
+
+
+def test_notoxini_noerror_in_help_ini(initproj, cmd):
+    initproj("examplepro", filedefs={})
+    result = cmd("--help-ini")
+    msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
+    assert result.err != msg
 
 
 def test_envdir_equals_toxini_errors_out(cmd, initproj):
