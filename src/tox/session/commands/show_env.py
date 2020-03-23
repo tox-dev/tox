@@ -11,7 +11,7 @@ def show_envs(config, all_envs=False, description=False):
 
     if description and default:
         report.line("default environments:")
-    max_length = max(len(env) for env in (default + extra))
+    max_length = max(len(env) for env in (default + extra) or [""])
 
     def report_env(e):
         if description:
