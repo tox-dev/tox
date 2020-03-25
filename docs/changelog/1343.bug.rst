@@ -1,1 +1,0 @@
-Fix ValueError on ``tox -l`` for a ``tox.ini`` file that does not contain an ``envlist`` definition. - by :user:`jquast`

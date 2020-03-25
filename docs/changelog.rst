@@ -22,6 +22,9 @@ Bugfixes
   `#1537 <https://github.com/tox-dev/tox/issues/1537>`_
 - Fix ``tox -h`` and ``tox --hi`` shows an error when run outside a directory with tox support files by :user:`nkpro2000sr`.
   `#1539 <https://github.com/tox-dev/tox/issues/1539>`_
+- Fix ValueError on ``tox -l`` for a ``tox.ini`` file that does not contain an
+  ``envlist`` definition. - by :user:`jquast`.
+  `#1343 <https://github.com/tox-dev/tox/issues/1343>`_
 
 
 v3.14.5 (2020-02-16)
