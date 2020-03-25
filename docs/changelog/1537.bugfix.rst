@@ -1,2 +1,0 @@
-Exclude virtualenv depencency versions with known
-regressions (20.0.[0-7]) - by :user:`webknjaz`.

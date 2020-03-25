@@ -11,6 +11,19 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.14.6 (2020-03-25)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Exclude virtualenv depencency versions with known
+  regressions (20.0.[0-7]) - by :user:`webknjaz`.
+  `#1537 <https://github.com/tox-dev/tox/issues/1537>`_
+- Fix ``tox -h`` and ``tox --hi`` shows an error when run outside a directory with tox support files by :user:`nkpro2000sr`.
+  `#1539 <https://github.com/tox-dev/tox/issues/1539>`_
+
+
 v3.14.5 (2020-02-16)
 --------------------
 
