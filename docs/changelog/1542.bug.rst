@@ -1,0 +1,1 @@
+Fix parsing of architecture in python interpreter name. - by :user:`bruchar1`
