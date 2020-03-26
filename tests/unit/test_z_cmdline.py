@@ -110,6 +110,25 @@ def test_notoxini_noerror_in_help_ini(initproj, cmd):
     assert result.err != msg
 
 
+def test_unrecognized_arguments_error(initproj, cmd):
+    initproj(
+        "examplepro1",
+        filedefs={
+            "tests": {"test_hello.py": "def test_hello(): pass"},
+            "tox.ini": """
+        [testenv:hello]
+        [testenv:world]
+        """,
+        },
+    )
+    result1 = cmd("--invalid-argument")
+    withtoxini = result1.err
+    initproj("examplepro2", filedefs={})
+    result2 = cmd("--invalid-argument")
+    notoxini = result2.err
+    assert withtoxini == notoxini
+
+
 def test_envdir_equals_toxini_errors_out(cmd, initproj):
     initproj(
         "interp123-0.7",
