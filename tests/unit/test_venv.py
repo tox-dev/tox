@@ -355,6 +355,25 @@ def test_env_variables_added_to_needs_reinstall(tmpdir, mocksession, newconfig, 
     assert env["TEMP_NOPASS_VAR"] == "456"
 
 
+def test_test_empty_commands(newmocksession):
+    mocksession = newmocksession(
+        [],
+        """\
+        [testenv]
+        commands =
+            {posargs}
+            echo foo bar
+        """,
+    )
+    venv = mocksession.getvenv("python")
+    with mocksession.newaction(venv.name, "update") as action:
+        venv.update(action)
+    venv.test()
+    # The first command is empty. It should be skipped.
+    # Therefore, echo foo bar has index 0.
+    mocksession.report.expect("verbosity0", "*run-test:*commands?0? | echo foo bar")
+
+
 def test_test_hashseed_is_in_output(newmocksession, monkeypatch):
     seed = "123456789"
     monkeypatch.setattr("tox.config.make_hashseed", lambda: seed)
