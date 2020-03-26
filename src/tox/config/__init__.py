@@ -1010,6 +1010,8 @@ class ParseIni(object):
         self._cfg = py.iniconfig.IniConfig(config.toxinipath, ini_data)
         previous_line_of = self._cfg.lineof
 
+        self.expand_section_names(self._cfg)
+
         def line_of_default_to_zero(section, name=None):
             at = previous_line_of(section, name=name)
             if at is None:
@@ -1347,6 +1349,27 @@ class ParseIni(object):
             msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
             raise tox.exception.ConfigError(msg)
         return env_list, all_envs, _split_env(from_config), envlist_explicit
+
+    @staticmethod
+    def expand_section_names(config):
+        """Generative section names.
+
+        Allow writing section as [testenv:py{36,37}-cov]
+        The parser will see it as two different sections: [testenv:py36-cov], [testenv:py37-cov]
+
+        """
+        factor_re = re.compile(r"\{([\w,]+)\}")
+        to_remove = set()
+        for section in list(config.sections):
+            split_section = factor_re.split(section)
+            for parts in itertools.product(*map(lambda g: g.split(","), split_section)):
+                section_name = "".join(parts)
+                if section_name not in config.sections:
+                    config.sections[section_name] = config.sections[section]
+                    to_remove.add(section)
+
+        for section in to_remove:
+            del config.sections[section]
 
 
 def _split_env(env):
