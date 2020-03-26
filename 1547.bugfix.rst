@@ -1,0 +1,2 @@
+Fix irrelevant Error message for invalid argument when running outside a directory with tox support files by :user:`nkpro2000sr`.
+
