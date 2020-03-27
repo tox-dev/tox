@@ -270,6 +270,11 @@ def parseconfig(args, plugins=()):
         pm.hook.tox_configure(config=config)  # post process config object
         break
     else:
+        parser = Parser()
+        pm.hook.tox_addoption(parser=parser)
+        # if no tox config file, now we need do a strict argument evaluation
+        # raise on unknown args
+        parser.parse_cli(args, strict=True)
         if option.help or option.helpini:
             return config
         msg = "tox config file (either {}) not found"
