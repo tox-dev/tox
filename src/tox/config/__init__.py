@@ -1358,11 +1358,12 @@ class ParseIni(object):
         The parser will see it as two different sections: [testenv:py36-cov], [testenv:py37-cov]
 
         """
-        factor_re = re.compile(r"\{([\w,]+)\}")
+        factor_re = re.compile(r"\{\s*([\w\s,]+)\s*\}")
+        split_re = re.compile(r"\s*,\s*")
         to_remove = set()
         for section in list(config.sections):
             split_section = factor_re.split(section)
-            for parts in itertools.product(*map(lambda g: g.split(","), split_section)):
+            for parts in itertools.product(*map(split_re.split, split_section)):
                 section_name = "".join(parts)
                 if section_name not in config.sections:
                     config.sections[section_name] = config.sections[section]
