@@ -497,7 +497,7 @@ class VirtualEnv(object):
                 env = self._get_os_environ(is_test_command=True)
                 # Display PYTHONHASHSEED to assist with reproducibility.
                 action.setactivity(name, "PYTHONHASHSEED={!r}".format(env.get("PYTHONHASHSEED")))
-            for i, argv in enumerate(commands):
+            for i, argv in enumerate(filter(bool, commands)):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
                 message = "commands[{}] | {}".format(
