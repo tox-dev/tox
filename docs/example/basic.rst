@@ -372,6 +372,29 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
         # mocking sqlite on 2.7 and 3.6 if factor "sqlite" is present
         py{27,36}-sqlite: mock
 
+
+Using generative section names
+------------------------------
+
+Suppose you have some binary packages, and need to run tests both in 32 and 64 bits.
+You also want an environment to create your virtual env for the developers.
+
+.. code-block:: ini
+
+    [testenv]
+    basepython =
+        py38-x86: python3.8-32
+        py38-x64: python3.8-64
+    commands = pytest
+
+    [testenv:py38-{x86,x64}-venv]
+    usedevelop = true
+    envdir =
+        x86: .venv-x86
+        x64: .venv-x64
+    commands =
+
+
 Prevent symbolic links in virtualenv
 ------------------------------------
 By default virtualenv will use symlinks to point to the system's python files, modules, etc.

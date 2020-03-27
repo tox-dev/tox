@@ -830,6 +830,27 @@ are stripped, so the following line defines the same environment names::
         flake
 
 
+.. _generative-sections:
+
+Generative section names
+++++++++++++++++++++++++
+
+.. versionadded:: 3.15
+
+Using similar syntax, it is possible to generate sections::
+
+    [testenv:py{27,36}-flake]
+
+This is equivalent to defining distinct sections::
+
+    $ tox -a
+    py27-flake
+    py36-flake
+
+It is useful when you need an environment different from the default one,
+but still want to take advantage of factor-conditional settings.
+
+
 .. _factors:
 
 Factors and factor-conditional settings
