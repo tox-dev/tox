@@ -12,15 +12,16 @@ trigger:
   branches:
     include:
     - master
+    - rewrite
     - refs/tags/*
 pr:
   branches:
     include:
     - master
+    - rewrite
 
 variables:
   PYTEST_ADDOPTS: "-v -v -ra --showlocals"
-  PYTEST_XDIST_PROC_NR: 'auto'
 
 jobs:
 - template: run-tox-env.yml@tox
@@ -34,16 +35,16 @@ jobs:
       py37:
         image: [linux, windows, macOs]
       pypy3:
-        image: [linux]
+        image: [linux, windows, macOs]
       py36:
         image: [linux, windows, macOs]
       py35:
         image: [linux, windows, macOs]
       dev: null
-      package_description: null
-    coverage:
+      pkg_meta: null
+    cov:
       with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
-      for_envs: [py38, py37, py36, py35]
+      for_envs: [py38, py37, py36, py35, pypy3]
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox

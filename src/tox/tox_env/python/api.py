@@ -47,7 +47,7 @@ class Python(ToxEnv, ABC):
         """
         python = self._find_base_python()
         site_at = next(Path(p) for p in reversed(python.path) if p.startswith(python.prefix)).relative_to(
-            Path(python.prefix)
+            Path(python.prefix),
         )
         return self.conf["env_dir"] / site_at.parent / "site-packages"
 

@@ -17,8 +17,8 @@ def test_commands(tox_project: ToxProjectCreator):
             pip list
         commands_post =
             python -c 'import sys; print("end", sys.executable)'
-        """
-        }
+        """,
+        },
     )
     outcome = project.run("c")
     outcome.assert_success()

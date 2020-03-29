@@ -1,18 +1,9 @@
-# -*- coding: utf-8 -*-
-import textwrap
+from setuptools import __version__, setup
 
-from setuptools import setup
+if int(__version__.split(".")[0]) < 41:
+    raise RuntimeError("setuptools >= 41 required to build")
 
 setup(
-    use_scm_version={
-        "write_to": "src/tox/version.py",
-        "write_to_template": textwrap.dedent(
-            """
-             # coding: utf-8
-             from __future__ import unicode_literals
-
-             __version__ = {version!r}
-             """
-        ).lstrip(),
-    }
+    use_scm_version={"write_to": "src/tox/version.py", "write_to_template": '__version__ = "{version}"'},
+    setup_requires=["setuptools_scm >= 2"],
 )

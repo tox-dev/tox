@@ -8,7 +8,7 @@ def test_init_base(tox_project):
             [tox]
             """,
             "src": {"__init__.py": "pass", "a": "out", "b": {"c": "out"}, "e": {"f": ""}},
-        }
+        },
     )
     assert str(project.path) in repr(project)
     assert project.path.exists()

@@ -24,8 +24,8 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
         no_test = true
         parallel = 3
         parallel_live = True
-        """
-        )
+        """,
+        ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
     return to
@@ -38,8 +38,8 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
         textwrap.dedent(
             """
         [tox]
-        """
-        )
+        """,
+        ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
     return to
@@ -93,7 +93,7 @@ def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
     parsed, _, __ = get_options()
     assert caplog.messages == [
-        "failed to read config file {} because IsADirectoryError(21, 'Is a directory')".format(tmp_path)
+        "failed to read config file {} because IsADirectoryError(21, 'Is a directory')".format(tmp_path),
     ]
     assert vars(parsed) == {
         "verbose": 2,
@@ -115,15 +115,15 @@ def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog, va
         [tox]
         verbose = what
 
-        """
-        )
+        """,
+        ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
     parsed, _, __ = get_options()
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
-            to, value_error("invalid literal for int() with base 10: 'what'")
-        )
+            to, value_error("invalid literal for int() with base 10: 'what'"),
+        ),
     ]
     assert vars(parsed) == {
         "verbose": 2,

@@ -89,7 +89,7 @@ class ToxEnv(ABC):
                 result[key] = value
         result.update(set_env)
         result["PATH"] = os.pathsep.join(
-            itertools.chain((str(i) for i in self._paths), os.environ.get("PATH", "").split(os.pathsep))
+            itertools.chain((str(i) for i in self._paths), os.environ.get("PATH", "").split(os.pathsep)),
         )
         return result
 

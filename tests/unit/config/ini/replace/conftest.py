@@ -19,9 +19,9 @@ def replace_one(tox_project: ToxProjectCreator):
 
 
             """.format(
-                    conf
-                )
-            }
+                    conf,
+                ),
+            },
         )
 
         class Result:

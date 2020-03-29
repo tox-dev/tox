@@ -39,7 +39,7 @@ def test_setuptools_package_py_project(tox_project: ToxProjectCreator):
                 build-backend = 'setuptools.build_meta'
              """,
             "src": {"magic": {"__init__.py": """__version__ = "1.2.3" """}},
-        }
+        },
     )
     outcome = project.run("-vv", "r", "-e", "py")
     outcome.assert_success()

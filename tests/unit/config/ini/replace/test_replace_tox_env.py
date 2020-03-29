@@ -16,9 +16,9 @@ def example(tox_project: ToxProjectCreator):
                         env_list = a
                         [testenv]
                         {}
-                        """
-                ).format(conf)
-            }
+                        """,
+                ).format(conf),
+            },
         )
         config = project.config()
         env_config = config["a"]

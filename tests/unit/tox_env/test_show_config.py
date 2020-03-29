@@ -8,8 +8,8 @@ def test_build_env_basic(tox_project: ToxProjectCreator):
             "tox.ini": """
     [tox]
     env_list = py38, py38
-    """
-        }
+    """,
+        },
     )
     result = project.run("c")
     state = result.state

@@ -17,8 +17,8 @@ def test_setuptools_project_no_package(tox_project: ToxProjectCreator):
             python -c 'import sys; print("do", sys.executable)'
         commands_post =
             python -c 'import sys; print("end", sys.executable)'
-        """
-        }
+        """,
+        },
     )
     outcome = project.run("-e", "py")
     outcome.assert_success()

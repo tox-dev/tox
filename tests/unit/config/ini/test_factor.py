@@ -17,7 +17,7 @@ def complex_example():
     {py,!pi}-{a,b}{,-dev},c: complex
     extra: extra
     more-default
-    """
+    """,
     )
 
 
@@ -67,8 +67,8 @@ def test_factor_env_list(tox_project: ToxProjectCreator):
             "tox.ini": """
         [tox]
         env_list = {py27,py36}-django{ 15, 16 }{,-dev}, docs, flake
-        """
-        }
+        """,
+        },
     )
     config = project.config()
     result = list(config)
@@ -92,8 +92,8 @@ def test_simple_env_list(tox_project: ToxProjectCreator):
             "tox.ini": """
         [tox]
         env_list = docs, flake8
-        """
-        }
+        """,
+        },
     )
     config = project.config()
     assert list(config) == ["docs", "flake8"]
@@ -111,8 +111,8 @@ def test_factor_config(tox_project: ToxProjectCreator):
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
             py36: unittest2
-        """
-        }
+        """,
+        },
     )
     config = project.config()
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
@@ -142,8 +142,8 @@ def test_factor_config_no_env_list_creates_env(tox_project: ToxProjectCreator):
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
             py36: unittest2
-        """
-        }
+        """,
+        },
     )
     config = project.config()
     assert list(config) == ["py37-django15", "py37-django16", "py36"]

@@ -68,10 +68,10 @@ def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_
                     ]
                     build-backend = 'setuptools.build_meta'
                  """.format(
-                setuptools.__version__, wheel.__version__
+                setuptools.__version__, wheel.__version__,
             ),
             "src": {"magic": {"__init__.py": """__version__ = "1.2.3" """}},
-        }
+        },
     )
     outcome = project.run("r")
     tox_env = outcome.state.tox_envs["py"]
