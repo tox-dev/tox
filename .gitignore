@@ -1,0 +1,31 @@
+# python
+*.pyc
+*.pyo
+*.swp
+__pycache__
+
+
+# packaging folders
+/src/tox/version.py
+/build/
+/dist/
+/src/tox.egg-info
+
+# tox working folder
+/.tox
+
+# IDEs
+/.idea
+/.vscode
+
+# tools
+/.*_cache
+
+# documentation
+/docs/_draft.rst
+
+# release
+credentials.json
+
+pip-wheel-metadata
+.DS_Store
