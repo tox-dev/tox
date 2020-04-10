@@ -1,11 +1,13 @@
 import sys
 from abc import ABC, abstractmethod
+from argparse import Namespace
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, List, Union, cast
 
 from packaging.requirements import Requirement
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_spec import PythonSpec
+from virtualenv.run import AppDataAction, CreatorSelector
 
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute
@@ -18,6 +20,12 @@ class Python(ToxEnv, ABC):
         super().__init__(conf, core, options, executor)
         self._python = None
         self._python_search_done = False
+
+    @property
+    def py_info(self):
+        if self._python is None:
+            self._find_base_python()
+        return self._python
 
     def register_config(self):
         super().register_config()
@@ -45,21 +53,16 @@ class Python(ToxEnv, ABC):
         If we have the python we just need to look at the last path under prefix.
         Debian derivatives change the site-packages to dist-packages, so we need to fix it for site-packages.
         """
-        python = self._find_base_python()
-        site_at = next(Path(p) for p in reversed(python.path) if p.startswith(python.prefix)).relative_to(
-            Path(python.prefix),
-        )
-        return self.conf["env_dir"] / site_at.parent / "site-packages"
+        return self.py_info.purelib
 
     def setup(self) -> None:
         """setup a virtual python environment"""
         super().setup()
-        python = self._find_base_python()
-        conf = self.python_cache(python)
+        conf = self.python_cache()
         with self._cache.compare(conf, Python.__name__) as (eq, old):
             if eq is False:
-                self.create_python_env(python)
-            self._paths = self.paths(python)
+                self.create_python_env()
+            self._paths = self.paths()
 
     def _find_base_python(self):
         base_pythons = self.conf["base_python"]
@@ -68,7 +71,23 @@ class Python(ToxEnv, ABC):
             for base_python in base_pythons:
                 python = self.get_python(base_python)
                 if python is not None:
-                    self._python = python
+                    env_dir = cast(Path, self.conf["env_dir"])
+                    selector = CreatorSelector.for_interpreter(python)
+                    info = selector.describe(
+                        Namespace(
+                            dest=env_dir,
+                            clear=False,
+                            system_site=False,
+                            app_data=AppDataAction.default(),
+                            meta=selector.key_to_meta[
+                                next(
+                                    name for name, value in selector.key_to_class.items() if value == selector.describe
+                                )
+                            ],
+                        ),
+                        python,
+                    )
+                    self._python = info
                     break
         if self._python is None:
             raise NoInterpreter(base_pythons)
@@ -95,15 +114,15 @@ class Python(ToxEnv, ABC):
         return False
 
     @abstractmethod
-    def python_cache(self, python) -> Any:
+    def python_cache(self) -> Any:
         raise NotImplementedError
 
     @abstractmethod
-    def create_python_env(self, python) -> List[Path]:
+    def create_python_env(self) -> List[Path]:
         raise NotImplementedError
 
     @abstractmethod
-    def paths(self, python) -> List[Path]:
+    def paths(self) -> List[Path]:
         raise NotImplementedError
 
     @abstractmethod

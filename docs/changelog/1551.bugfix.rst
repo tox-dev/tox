@@ -1,0 +1,1 @@
+Fix coverage generation in CI - by :user:`gaborbernat`.

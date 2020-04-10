@@ -1,12 +1,3 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: bug
-assignees: ''
-
----
-
 **Issue**
 
 Describe what's the expected behaviour and what you're observing.

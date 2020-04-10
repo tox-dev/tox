@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools >= 41.0.0",
+    "setuptools >= 45.0.0",
     "wheel >= 0.30.0",
     "setuptools_scm >= 3, <4",
 ]
@@ -8,3 +8,13 @@ build-backend = 'setuptools.build_meta'
 
 [tool.black]
 line-length = 120
+
+[tool.towncrier]
+    package = "tox"
+    package_dir = ""  # we purposfully do not set this as src, forcing import from site-package that has version.py
+    filename = "docs/changelog.rst"
+    directory = "docs/changelog"
+    title_format = false
+    issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
+    template = "docs/changelog/template.jinja2"
+    # possible types, all default: feature, bugfix, doc, removal, misc

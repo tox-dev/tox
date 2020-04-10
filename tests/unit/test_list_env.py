@@ -12,15 +12,15 @@ def test_list_empty(tox_project):
     expected = textwrap.dedent(
         """
         [tox]
-        base = 
+        base =
         tox_root = {0}
         work_dir = {0}{1}.tox
         temp_dir = {0}{1}.temp
-        env_list = 
+        env_list =
         skip_missing_interpreters = True
         min_version = {2}
         provision_tox_env = .tox
-        requires = 
+        requires =
           tox>={2}
         no_package = False
         """.format(

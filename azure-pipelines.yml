@@ -26,29 +26,41 @@ variables:
 jobs:
 - template: run-tox-env.yml@tox
   parameters:
-    tox_version: ''
     jobs:
       fix_lint: null
       docs: null
-      py38:
+      dev: null
+      pkg_meta: null
+      py39:
         image: [linux]
-      py37:
+      py38:
         image: [linux, windows, macOs]
-      pypy3:
+      py37:
         image: [linux, windows, macOs]
       py36:
         image: [linux, windows, macOs]
       py35:
         image: [linux, windows, macOs]
-      dev: null
-      pkg_meta: null
-    cov:
-      with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
-      for_envs: [py38, py37, py36, py35, pypy3]
+      pypy3:
+        image: [linux, windows, macOs]
+    coverage:
+      with_toxenv: 'cov' # generate .tox/.coverage, .tox/coverage.xml after test run
+      for_envs:
+      - py39
+      - py38
+      - py37
+      - py36
+      - py35
+      - pypy3
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox
     parameters:
       external_feed: 'toxdev'
       pypi_remote: 'pypi-toxdev'
-      dependsOn: [fix_lint, docs, package_description, dev, report_coverage]
+      dependsOn:
+      - fix_lint
+      - docs
+      - dev
+      - pkg_meta
+      - report_coverage

@@ -1,0 +1,26 @@
+[coverage:report]
+skip_covered = True
+show_missing = True
+exclude_lines =
+    \#\s*pragma: no cover
+    ^\s*raise AssertionError\b
+    ^\s*raise NotImplementedError\b
+    ^\s*raise$
+    ^if __name__ == ['"]__main__['"]:$
+omit =
+
+[coverage:paths]
+source =
+    src
+    .tox/*/lib/python*/site-packages
+    .tox/pypy*/site-packages
+    .tox\*\Lib\site-packages\
+    */src
+    *\src
+
+[coverage:run]
+branch = false
+parallel = true
+source =
+    ${_COVERAGE_SRC}
+    tests
