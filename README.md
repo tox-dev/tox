@@ -21,7 +21,7 @@ black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://gith
 
 **Command line driven CI frontend and development task automation tool**
 
-At its core tox povides a convenient way to run arbitrary commands in
+At its core tox provides a convenient way to run arbitrary commands in
 isolated environments to serve as a single entry point for build, test
 and release activities.
 
