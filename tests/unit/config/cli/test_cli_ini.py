@@ -1,4 +1,5 @@
 import logging
+import sys
 import textwrap
 from pathlib import Path
 
@@ -92,9 +93,12 @@ def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
     parsed, _, __ = get_options()
-    assert caplog.messages == [
-        "failed to read config file {} because IsADirectoryError(21, 'Is a directory')".format(tmp_path),
-    ]
+    msg = (
+        "PermissionError(13, 'Permission denied')"
+        if sys.platform == "win32"
+        else "IsADirectoryError(21, 'Is a directory')"
+    )
+    assert caplog.messages == ["failed to read config file {} because {}".format(tmp_path, msg)]
     assert vars(parsed) == {
         "verbose": 2,
         "quiet": 0,
