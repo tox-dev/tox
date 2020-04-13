@@ -8,30 +8,32 @@ from .read_via_thread import ReadViaThread
 class ReadViaThreadWindows(ReadViaThread):
     def __init__(self, stream, handler):
         super().__init__(stream, handler)
+        self.closed = False
         assert isinstance(stream, PipeHandle)
-        self._io_cp = _overlapped.CreateIoCompletionPort(self.stream.handle, 0, 0, 1)
-        self._ov = _overlapped.Overlapped(0)
 
-    @property
-    def closed(self):
-        """check if the stream is closed or not"""
-        return self.stream.handle is None
+    def _read_stream(self):
+        ov = None
+        while not self.stop.is_set():
+            if ov is None:
+                ov = _overlapped.Overlapped(0)
+                try:
+                    ov.ReadFile(self.stream.handle, 1)
+                except BrokenPipeError:
+                    self.closed = True
+                    return
+            data = ov.getresult(10)  # wait for 10ms
+            ov = None
+            self.handler(data)
 
-    def has_bytes(self):
-        """check weather the stream has any bytes ready to read"""
-        result = _overlapped.GetQueuedCompletionStatus(self._io_cp, 10)  # 10 ms to wait
-        return result
-
-    def _read_bytes(self):
-        """read all available (non-blocking) bytes from an overlapped opened file handler"""
-        try:
-            res = bytearray(BUFSIZE)
-            self._ov.ReadFileInto(self.stream.handle, res)
+    def _drain_stream(self):
+        length, result = 0 if self.closed else 1, b""
+        while 0 < length <= BUFSIZE:
+            ov = _overlapped.Overlapped(0)
+            buffer = bytes(BUFSIZE)
             try:
-                length = res.index(b"\x00")
-            except ValueError:
-                length = len(res)
-            data = res[:length]
-            return data
-        except BrokenPipeError:
-            return None
+                ov.ReadFileInto(self.stream.handle, buffer)
+                length = ov.getresult()
+                result += buffer[:length]
+            except BrokenPipeError:
+                break
+        return result

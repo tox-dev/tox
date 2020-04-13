@@ -2,20 +2,25 @@
 import logging
 import os
 import shutil
-import signal
 import sys
-from subprocess import CREATE_NEW_PROCESS_GROUP, PIPE, TimeoutExpired
+from subprocess import PIPE, TimeoutExpired
 from typing import List, Optional, Sequence, Tuple, Type
 
-from ..api import ContentHandler, Execute, ExecuteInstance, ExecuteRequest, Outcome
+from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, ExecuteRequest, Outcome
 from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":
-    from asyncio.windows_utils import Popen
+    from asyncio.windows_utils import Popen  # noqa # needs stdin/stdout handlers backed by overlapped IO
     from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
+    from subprocess import CREATE_NEW_PROCESS_GROUP
+
+    CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP  # custom flag needed for Windows signal send ability (CTRL+C)
+
 else:
     from subprocess import Popen
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
+
+    CREATION_FLAGS = 0
 
 
 WAIT_INTERRUPT = 0.3
@@ -54,12 +59,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                 stdin=None if self.request.allow_stdin else PIPE,
                 cwd=str(self.request.cwd),
                 env=self.request.env,
-                creationflags=(
-                    CREATE_NEW_PROCESS_GROUP
-                    if sys.platform == "win32"
-                    else 0
-                    # custom flag needed for Windows signal send ability (CTRL+C)
-                ),
+                creationflags=CREATION_FLAGS,
             )
         except OSError as exception:
             exit_code = exception.errno
@@ -97,7 +97,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         msg = "from {} {{}} pid {}".format(os.getpid(), proc.pid)
         if proc.poll() is None:  # still alive, first INT
             logging.warning("KeyboardInterrupt %s", msg.format("SIGINT"))
-            proc.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+            proc.send_signal(SIGINT)
             try:
                 out, err = proc.communicate(timeout=WAIT_INTERRUPT)
             except TimeoutExpired:  # if INT times out TERM

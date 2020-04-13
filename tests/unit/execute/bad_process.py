@@ -1,3 +1,4 @@
+"""This is a non compliant process that does not listens to signals"""
 import signal
 import sys
 import time
@@ -21,6 +22,7 @@ while True:
     try:
         if not start_file.exists():
             start_file.write_text("")
+            print("created {}".format(start_file))
         time.sleep(100)
     except KeyboardInterrupt:
         print("how about no KeyboardInterrupt", file=sys.stderr)

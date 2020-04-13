@@ -1,11 +1,13 @@
 import logging
 import os
+import signal
 import sys
 from pathlib import Path
 
 from tox.execute import local_sub_process
-from tox.execute.api import ToxKeyboardInterrupt
+from tox.execute.api import SIGINT, ToxKeyboardInterrupt
 
+signal.signal(SIGINT, signal.default_int_handler)
 logging.basicConfig(level=logging.NOTSET)
 bad_process = Path(__file__).parent / "bad_process.py"
 

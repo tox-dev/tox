@@ -9,8 +9,8 @@ import psutil
 import pytest
 from colorama import Fore
 
-from tox.execute.api import Outcome
-from tox.execute.local_sub_process import LocalSubProcessExecutor
+from tox.execute.api import SIGINT, Outcome
+from tox.execute.local_sub_process import CREATION_FLAGS, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest
 
 
@@ -77,17 +77,19 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(capsys, caplog)
 
 
 def test_local_execute_write_a_lot(capsys, caplog):
-    count = 8192
+    count = 10000
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[
             sys.executable,
             "-c",
             (
-                "import sys; import time;"
-                "print('e' * {0}, file=sys.stderr, end=''); print('o' * {0}, file=sys.stdout, end='');"
+                "import sys; import time; from datetime import datetime; import os;"
+                "print('e' * {0}, file=sys.stderr);"
+                "print('o' * {0}, file=sys.stdout);"
                 "time.sleep(0.5);"
-                "print('e' * {0}, file=sys.stderr, end=''); print('o' * {0}, file=sys.stdout, end='');"
+                "print('a' * {0}, file=sys.stderr);"
+                "print('b' * {0}, file=sys.stdout);"
             ).format(count),
         ],
         cwd=Path(),
@@ -96,8 +98,10 @@ def test_local_execute_write_a_lot(capsys, caplog):
     )
     outcome = executor.__call__(request, show_on_standard=False)
     assert bool(outcome)
-    assert outcome.out == "o" * (count * 2)
-    assert outcome.err == "e" * (count * 2)
+    expected_out = "{}{}{}{}".format("o" * count, os.linesep, "b" * count, os.linesep)
+    assert outcome.out == expected_out
+    expected_err = "{}{}{}{}".format("e" * count, os.linesep, "a" * count, os.linesep)
+    assert outcome.err == expected_err
 
 
 def test_local_execute_basic_fail(caplog, capsys):
@@ -178,14 +182,20 @@ def test_command_keyboard_interrupt(tmp_path):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         universal_newlines=True,
+        creationflags=CREATION_FLAGS,
     )
     while not send_signal.exists():
         assert process.poll() is None
 
     root = process.pid
     child = next(iter(psutil.Process(pid=root).children())).pid
-    process.send_signal(signal.SIGINT)
-    out, err = process.communicate()
+    process.send_signal(SIGINT)
+    try:
+        out, err = process.communicate(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        assert False, "{}\n{}".format(out, err)
 
     assert "ERROR:root:got KeyboardInterrupt signal" in err, err
     assert "WARNING:root:KeyboardInterrupt from {} SIGINT pid {}".format(root, child) in err, err

@@ -32,7 +32,7 @@ class ReadViaThread(ABC):
                     break  # pragma: no cover
         if exc_val is None:  # drain what remains if we were not interrupted
             try:
-                data = self._read_bytes()
+                data = self._drain_stream()
             except ValueError:  # pragma: no cover
                 pass  # pragma: no cover
             else:
@@ -45,23 +45,10 @@ class ReadViaThread(ABC):
                 if thrown is not None:
                     raise thrown  # pragma: no cover
 
+    @abstractmethod
     def _read_stream(self):
-        while not (self.closed or self.stop.is_set()):
-            # we need to drain the stream, but periodically give chance for the thread to break if the stop event has
-            # been set (this is so that an interrupt can be handled)
-            if self.has_bytes():
-                data = self._read_bytes()
-                self.handler(data)
-
-    @property
-    @abstractmethod
-    def closed(self):
         raise NotImplementedError
 
     @abstractmethod
-    def has_bytes(self):
-        raise NotImplementedError
-
-    @abstractmethod
-    def _read_bytes(self) -> bytes:
+    def _drain_stream(self):
         raise NotImplementedError

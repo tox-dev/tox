@@ -9,13 +9,17 @@ class ReadViaThreadUnix(ReadViaThread):
         super().__init__(stream, handler)
         self.file_no = self.stream.fileno()
 
-    @property
-    def closed(self):
-        return self.stream.closed
+    def _read_stream(self):
+        while not (self.stream.closed or self.stop.is_set()):
+            # we need to drain the stream, but periodically give chance for the thread to break if the stop event has
+            # been set (this is so that an interrupt can be handled)
+            if self.has_bytes():
+                data = os.read(self.file_no, 1)
+                self.handler(data)
 
     def has_bytes(self):
         read_available_list, _, __ = select.select([self.stream], [], [], 0.01)
         return len(read_available_list)
 
-    def _read_bytes(self):
-        return os.read(self.file_no, 1)
+    def _drain_stream(self):
+        return self.stream.read()
