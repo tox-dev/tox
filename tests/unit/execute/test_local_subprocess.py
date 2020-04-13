@@ -69,20 +69,26 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(capsys, caplog)
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
     assert not outcome.err
-    assert outcome.out == "out\nyay\n"
+    assert outcome.out == "out{0}yay{0}".format(os.linesep)
     out, err = capsys.readouterr()
-    assert out == "out\nyay\n"
+    assert out == "out{0}yay{0}".format(os.linesep)
     assert not err
     assert not caplog.records
 
 
 def test_local_execute_write_a_lot(capsys, caplog):
+    count = 8192
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[
             sys.executable,
             "-c",
-            "import sys; print('e' * 4096, file=sys.stderr, end=''); print('o' * 4096, file=sys.stdout, end='')",
+            (
+                "import sys; import time;"
+                "print('e' * {0}, file=sys.stderr, end=''); print('o' * {0}, file=sys.stdout, end='');"
+                "time.sleep(0.5);"
+                "print('e' * {0}, file=sys.stderr, end=''); print('o' * {0}, file=sys.stdout, end='');"
+            ).format(count),
         ],
         cwd=Path(),
         env=os.environ,
@@ -90,8 +96,8 @@ def test_local_execute_write_a_lot(capsys, caplog):
     )
     outcome = executor.__call__(request, show_on_standard=False)
     assert bool(outcome)
-    assert outcome.out == "o" * 4096
-    assert outcome.err == "e" * 4096
+    assert outcome.out == "o" * (count * 2)
+    assert outcome.err == "e" * (count * 2)
 
 
 def test_local_execute_basic_fail(caplog, capsys):
