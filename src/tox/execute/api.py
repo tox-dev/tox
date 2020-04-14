@@ -14,7 +14,7 @@ from .stream import CollectWrite
 
 ContentHandler = Callable[[bytes], None]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
-SIGINT = signal.CTRL_BREAK_EVENT if sys.platform == "win32" else signal.SIGINT
+SIGINT = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
 
 
 class ExecuteInstance:
