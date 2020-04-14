@@ -1,4 +1,3 @@
-import os
 from typing import Any, List, Union
 
 from tox.config.cli.parser import ToxParser

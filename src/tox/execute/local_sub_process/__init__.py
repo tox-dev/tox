@@ -64,8 +64,11 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         except OSError as exception:
             exit_code = exception.errno
         else:
-            with ReadViaThread(process.stderr, self.err_handler):
-                with ReadViaThread(process.stdout, self.out_handler):
+            with ReadViaThread(process.stderr, self.err_handler) as read_stderr:
+                with ReadViaThread(process.stdout, self.out_handler) as read_stdout:
+                    if sys.platform == "win32":
+                        process.stderr.read = read_stderr._drain_stream
+                        process.stdout.read = read_stdout._drain_stream
                     # wait it out with interruptions to allow KeyboardInterrupt on Windows
                     while process.poll() is None:
                         try:
@@ -110,5 +113,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                     proc.kill()
                     out, err = proc.communicate()
         else:
-            out, err = proc.communicate()  # just drain # pragma: no cover
+            try:
+                out, err = proc.communicate()  # just drain # pragma: no cover
+            except IndexError:
+                out, err = b"", b""
         return out, err

@@ -4,7 +4,7 @@ import os
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Set, Union, cast
+from typing import Dict, List, Optional, Sequence, Union, cast
 
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute
@@ -82,8 +82,9 @@ class ToxEnv(ABC):
     @property
     def environment_variables(self) -> Dict[str, str]:
         result = {}  # type:Dict[str, str]
-        pass_env = self.conf["pass_env"]  # type:Set[str]
-        set_env = self.conf["set_env"]  # type:Dict[str, str]
+        pass_env = self.conf["pass_env"]  # type: List[str]
+        pass_env.append("SYSTEMROOT")
+        set_env = self.conf["set_env"]  # type: Dict[str, str]
         for key, value in os.environ.items():
             if key in pass_env:
                 result[key] = value
