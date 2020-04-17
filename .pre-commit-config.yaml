@@ -44,5 +44,13 @@ repos:
         name: changelog filenames
         language: fail
         entry: 'changelog files must be named ####.(bugfix|feature|deprecation|breaking|doc|misc).rst'
-        exclude: ^docs/changelog/(\d+\.(bugfix|feature|deprecation|breaking|doc|misc).rst|README.rst|template.jinja2)
+        exclude: ^docs/changelog/(\d+\.(bugfix|feature|deprecation|breaking|doc|misc).rst|examples.rst|template.jinja2)
         files: ^docs/changelog/
+-   repo: https://github.com/asottile/setup-cfg-fmt
+    rev: v1.8.2
+    hooks:
+    -   id: setup-cfg-fmt
+-   repo: https://github.com/asottile/add-trailing-comma
+    rev: v2.0.1
+    hooks:
+    -   id: add-trailing-comma

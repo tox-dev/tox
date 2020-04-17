@@ -1,4 +1,3 @@
-import os
 from typing import Any, List, Union
 
 from tox.config.cli.parser import ToxParser
@@ -38,8 +37,8 @@ def print_conf(conf: ConfigSet) -> None:
         value = conf[key]
         result = str_conf_value(value)
         if isinstance(result, list):
-            result = "{}{}".format(os.linesep, os.linesep.join("  {}".format(i) for i in result))
-        print("{} = {}".format(key, result))
+            result = "{}{}".format("\n", "\n".join("  {}".format(i) for i in result))
+        print("{} ={}{}".format(key, " " if result != "" and not result.startswith("\n") else "", result))
     unused = conf.unused()
     if unused:
         print("!!! unused: {}".format(",".join(unused)))

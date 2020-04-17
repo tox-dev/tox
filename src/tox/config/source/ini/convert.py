@@ -60,5 +60,5 @@ class StrConvert(Convert):
             return False
         else:
             raise TypeError(
-                "value {} cannot be transformed to bool, valid: {}".format(value, ", ".join(StrConvert.VALID_BOOL))
+                "value {} cannot be transformed to bool, valid: {}".format(value, ", ".join(StrConvert.VALID_BOOL)),
             )

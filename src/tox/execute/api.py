@@ -14,6 +14,7 @@ from .stream import CollectWrite
 
 ContentHandler = Callable[[bytes], None]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
+SIGINT = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
 
 
 class ExecuteInstance:
@@ -119,7 +120,8 @@ class Execute(ABC):
                                 is_main = threading.current_thread() == threading.main_thread()
                                 if is_main:
                                     # disable further interrupts until we finish this, main thread only
-                                    signal.signal(signal.SIGINT, signal.SIG_IGN)
+                                    if sys.platform != "win32":
+                                        signal.signal(SIGINT, signal.SIG_IGN)
                             except KeyboardInterrupt:  # pragma: no cover
                                 continue  # pragma: no cover
                             else:
@@ -127,8 +129,8 @@ class Execute(ABC):
                                     exit_code = instance.interrupt()
                                     break
                                 finally:
-                                    if is_main:  # restore signal handler on main thread
-                                        signal.signal(signal.SIGINT, signal.default_int_handler)
+                                    if is_main and sys.platform != "win32":  # restore signal handler on main thread
+                                        signal.signal(SIGINT, signal.default_int_handler)
         finally:
             end = timer()
         result = Outcome(request, show_on_standard, exit_code, out.text, err.text, start, end, instance.cmd)

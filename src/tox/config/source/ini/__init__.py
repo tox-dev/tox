@@ -150,7 +150,7 @@ class IniLoader(Loader, StrConvert):
 
     def __repr__(self):
         return "{}(section={}, src={!r})".format(
-            type(self).__name__, self._section.name if self._section else self.name, self._src
+            type(self).__name__, self._section.name if self._section else self.name, self._src,
         )
 
     def _load_raw(self, key, conf, as_name=None):
@@ -193,4 +193,6 @@ class IniLoader(Loader, StrConvert):
 
     @property
     def section_name(self):
+        if self._section is None:
+            return None
         return self._section.name

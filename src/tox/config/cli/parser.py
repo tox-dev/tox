@@ -19,7 +19,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.file_config = IniConfig()
         kwargs["epilog"] = self.file_config.epilog
-        super(ArgumentParserWithEnvAndConfig, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def fix_defaults(self) -> None:
         for action in self._actions:
@@ -55,7 +55,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog: str) -> None:
-        super(HelpFormatter, self).__init__(prog, max_help_position=42, width=240)
+        super().__init__(prog, max_help_position=42, width=240)
 
     def _get_help_string(self, action: Action) -> str:
         # noinspection PyProtectedMember
@@ -120,14 +120,14 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
         level_map = "|".join("{} - {}".format(c, logging.getLevelName(l)) for c, l in sorted(list(LEVELS.items())))
         verbosity_group = self.add_argument_group(
-            "verbosity=verbose-quiet, default {}, map {}".format(logging.getLevelName(LEVELS[3]), level_map)
+            "verbosity=verbose-quiet, default {}, map {}".format(logging.getLevelName(LEVELS[3]), level_map),
         )
         verbosity_exclusive = verbosity_group.add_mutually_exclusive_group()
         verbosity_exclusive.add_argument(
-            "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2
+            "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2,
         )
         verbosity_exclusive.add_argument(
-            "-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0
+            "-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0,
         )
         self.fix_defaults()
 

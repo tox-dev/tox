@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
 from pathlib import Path
@@ -12,7 +10,7 @@ from tox.config.source.ini import Ini, IniLoader
 DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
 
 
-class IniConfig(object):
+class IniConfig:
     TOX_CONFIG_FILE_ENV_VAR = "TOX_CONFIG_FILE"
     STATE = {None: "failed to parse", True: "active", False: "missing"}
 

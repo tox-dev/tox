@@ -12,7 +12,7 @@ from .env import EnvLog
 class ResultLog:
     """The result of a tox session"""
 
-    def __init__(self,):
+    def __init__(self):
         command_log = []
         self.command_log = CommandLog(command_log)
         self.content = {

@@ -2,15 +2,33 @@ import itertools
 import logging
 import os
 import shutil
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Set, Union, cast
+from typing import Dict, List, Optional, Sequence, Union, cast
 
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute
 from tox.execute.request import ExecuteRequest
 
 from .cache import Cache
+
+if sys.platform == "win32":
+    PASS_ENV_ALWAYS = [
+        "SYSTEMDRIVE",  # needed for pip6
+        "SYSTEMROOT",  # needed for python's crypto module
+        "PATHEXT",  # needed for discovering executables
+        "COMSPEC",  # needed for distutils cygwin compiler
+        "PROCESSOR_ARCHITECTURE",  # platform.machine()
+        "USERPROFILE",  # needed for `os.path.expanduser()`
+        "MSYSTEM",  # controls paths printed format
+        "TEMP",
+        "TMP",
+    ]
+else:
+    PASS_ENV_ALWAYS = [
+        "TMPDIR",
+    ]
 
 
 class ToxEnv(ABC):
@@ -82,14 +100,16 @@ class ToxEnv(ABC):
     @property
     def environment_variables(self) -> Dict[str, str]:
         result = {}  # type:Dict[str, str]
-        pass_env = self.conf["pass_env"]  # type:Set[str]
-        set_env = self.conf["set_env"]  # type:Dict[str, str]
+        pass_env = self.conf["pass_env"]  # type: List[str]
+        pass_env.extend(PASS_ENV_ALWAYS)
+
+        set_env = self.conf["set_env"]  # type: Dict[str, str]
         for key, value in os.environ.items():
             if key in pass_env:
                 result[key] = value
         result.update(set_env)
         result["PATH"] = os.pathsep.join(
-            itertools.chain((str(i) for i in self._paths), os.environ.get("PATH", "").split(os.pathsep))
+            itertools.chain((str(i) for i in self._paths), os.environ.get("PATH", "").split(os.pathsep)),
         )
         return result
 

@@ -5,7 +5,6 @@ from typing import List, Sequence
 import pytest
 import setuptools
 import wheel
-from virtualenv.discovery.py_info import PythonInfo
 
 from tox.execute.api import Outcome
 from tox.execute.request import ExecuteRequest
@@ -25,13 +24,13 @@ def use_host_virtualenv(monkeypatch):
     monkeypatch.setattr(VirtualEnv, "perform_install", perform_install)
 
     # return hots path
-    def paths(self, python: PythonInfo) -> List[Path]:
+    def paths(self) -> List[Path]:
         return [Path(sys.executable).parent]
 
     monkeypatch.setattr(VirtualEnv, "paths", paths)
 
     # return hots path
-    def create_python_env(self, python: PythonInfo):
+    def create_python_env(self):
         return Outcome(ExecuteRequest(["a"], Path(), {}, False), False, Outcome.OK, "", "", 0, 1.0, ["a"])
 
     monkeypatch.setattr(VirtualEnv, "create_python_env", create_python_env)
@@ -68,10 +67,10 @@ def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_
                     ]
                     build-backend = 'setuptools.build_meta'
                  """.format(
-                setuptools.__version__, wheel.__version__
+                setuptools.__version__, wheel.__version__,
             ),
             "src": {"magic": {"__init__.py": """__version__ = "1.2.3" """}},
-        }
+        },
     )
     outcome = project.run("r")
     tox_env = outcome.state.tox_envs["py"]

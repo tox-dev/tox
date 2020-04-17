@@ -1,5 +1,3 @@
 chronographer:
   enforce_name:
     suffix: .rst
-rtd:
-  project: tox

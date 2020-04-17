@@ -1,10 +1,30 @@
 ---
 name: Bug report
-about: Something that does not works as expected
-title: ""
-labels: bug:normal
+about: Create a report to help us improve
+title: ''
+labels: bug
 assignees: ''
 
 ---
 
-When submitting a bug make sure you can reproduce it via ``tox -rvv`` and attach the output of that to the bug. Ideally, you should also submit a project that allows easily reproducing the bug. Thanks!
+**Issue**
+
+Describe what's the expected behaviour and what you're observing.
+
+**Environment**
+
+Provide at least:
+- OS:
+- ``pip list`` of the host python where ``virtualenv`` is installed:
+
+  ```console
+
+  ```
+
+**Output of the virtual environment creation**
+
+Make sure to run the creation with `-vvv --with-traceback`:
+
+```console
+
+```

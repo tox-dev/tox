@@ -3,6 +3,7 @@
 *.pyo
 *.swp
 __pycache__
+.eggs
 
 
 # packaging folders
@@ -29,3 +30,4 @@ credentials.json
 
 pip-wheel-metadata
 .DS_Store
+.coverage.*

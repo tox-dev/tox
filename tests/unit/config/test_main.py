@@ -64,8 +64,8 @@ def test_config_some_envs(tox_project: ToxProjectCreator):
     bad_bool = whatever
     crazy = something-bad
     [testenv:magic]
-    """
-        }
+    """,
+        },
     )
     config = project.config()
     tox_env_keys = list(config)

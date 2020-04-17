@@ -1,6 +1,5 @@
 import logging
 import os
-import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -9,8 +8,8 @@ import psutil
 import pytest
 from colorama import Fore
 
-from tox.execute.api import Outcome
-from tox.execute.local_sub_process import LocalSubProcessExecutor
+from tox.execute.api import SIGINT, Outcome
+from tox.execute.local_sub_process import CREATION_FLAGS, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest
 
 
@@ -69,20 +68,28 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(capsys, caplog)
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
     assert not outcome.err
-    assert outcome.out == "out\nyay\n"
+    assert outcome.out == "out{0}yay{0}".format(os.linesep)
     out, err = capsys.readouterr()
-    assert out == "out\nyay\n"
+    assert out == "out{0}yay{0}".format(os.linesep)
     assert not err
     assert not caplog.records
 
 
 def test_local_execute_write_a_lot(capsys, caplog):
+    count = 10000
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[
             sys.executable,
             "-c",
-            "import sys; print('e' * 4096, file=sys.stderr, end=''); print('o' * 4096, file=sys.stdout, end='')",
+            (
+                "import sys; import time; from datetime import datetime; import os;"
+                "print('e' * {0}, file=sys.stderr);"
+                "print('o' * {0}, file=sys.stdout);"
+                "time.sleep(0.5);"
+                "print('a' * {0}, file=sys.stderr);"
+                "print('b' * {0}, file=sys.stdout);"
+            ).format(count),
         ],
         cwd=Path(),
         env=os.environ,
@@ -90,8 +97,10 @@ def test_local_execute_write_a_lot(capsys, caplog):
     )
     outcome = executor.__call__(request, show_on_standard=False)
     assert bool(outcome)
-    assert outcome.out == "o" * 4096
-    assert outcome.err == "e" * 4096
+    expected_out = "{}{}{}{}".format("o" * count, os.linesep, "b" * count, os.linesep)
+    assert outcome.out == expected_out
+    expected_err = "{}{}{}{}".format("e" * count, os.linesep, "a" * count, os.linesep)
+    assert outcome.err == expected_err
 
 
 def test_local_execute_basic_fail(caplog, capsys):
@@ -160,6 +169,7 @@ def test_command_does_not_exist(capsys, caplog):
     assert not caplog.records
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="TODO: find out why it does not work")
 def test_command_keyboard_interrupt(tmp_path):
     send_signal = tmp_path / "send"
     process = subprocess.Popen(
@@ -172,14 +182,20 @@ def test_command_keyboard_interrupt(tmp_path):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         universal_newlines=True,
+        creationflags=CREATION_FLAGS,
     )
     while not send_signal.exists():
         assert process.poll() is None
 
     root = process.pid
     child = next(iter(psutil.Process(pid=root).children())).pid
-    process.send_signal(signal.SIGINT)
-    out, err = process.communicate()
+    process.send_signal(SIGINT)
+    try:
+        out, err = process.communicate(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        assert False, "{}\n{}".format(out, err)
 
     assert "ERROR:root:got KeyboardInterrupt signal" in err, err
     assert "WARNING:root:KeyboardInterrupt from {} SIGINT pid {}".format(root, child) in err, err

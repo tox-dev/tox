@@ -35,6 +35,7 @@ def check_os_environ():
 
     new = os.environ
     extra = {k: new[k] for k in set(new) - set(old)}
+    extra.pop("PLAT", None)
     miss = {k: old[k] for k in set(old) - set(new)}
     diff = {
         "{} = {} vs {}".format(k, old[k], new[k])
@@ -76,22 +77,22 @@ class ToxProject:
         self.path = path  # type: Path
         self._capsys = capsys
         self.monkeypatch = monkeypatch
+        self._setup_files(self.path, files)
 
-        def _handle_level(of_path: Path, content: Dict[str, Any]) -> None:
-            for key, value in content.items():
-                if not isinstance(key, str):
-                    raise TypeError("{!r} at {}".format(key, of_path))  # pragma: no cover
-                at_path = of_path / key
-                if isinstance(value, dict):
-                    at_path.mkdir(exist_ok=True)
-                    _handle_level(at_path, value)
-                elif isinstance(value, str):
-                    at_path.write_text(textwrap.dedent(value))
-                else:
-                    msg = "could not handle {} with content {!r}".format(at_path / key, value)  # pragma: no cover
-                    raise TypeError(msg)  # pragma: no cover
-
-        _handle_level(self.path, files)
+    @staticmethod
+    def _setup_files(dest: Path, content: Dict[str, Any]) -> None:
+        for key, value in content.items():
+            if not isinstance(key, str):
+                raise TypeError("{!r} at {}".format(key, dest))  # pragma: no cover
+            at_path = dest / key
+            if isinstance(value, dict):
+                at_path.mkdir(exist_ok=True)
+                ToxProject._setup_files(at_path, value)
+            elif isinstance(value, str):
+                at_path.write_text(textwrap.dedent(value))
+            else:
+                msg = "could not handle {} with content {!r}".format(at_path / key, value)  # pragma: no cover
+                raise TypeError(msg)  # pragma: no cover
 
     @property
     def structure(self):
