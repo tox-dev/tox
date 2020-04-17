@@ -859,6 +859,15 @@ class TestIniParser:
         (msg,) = excinfo.value.args
         assert msg == "key5: boolean value 'yes' needs to be 'True' or 'False'"
 
+    def test_expand_section_name(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:custom-{one,two,three}-{four,five}-six]
+        """
+        )
+        assert "testenv:custom-one-five-six" in config._cfg.sections
+        assert "testenv:custom-{one,two,three}-{four,five}-six" not in config._cfg.sections
+
 
 class TestIniParserPrefix:
     def test_basic_section_access(self, newconfig):
