@@ -688,6 +688,7 @@ def tox_addoption(parser):
             "LD_LIBRARY_PATH",
             "PATH",
             "PIP_INDEX_URL",
+            "PIP_EXTRA_INDEX_URL",
             "REQUESTS_CA_BUNDLE",
             "SSL_CERT_FILE",
             "TOX_WORK_DIR",
