@@ -31,6 +31,7 @@ from tox.reporter import (
     update_default_reporter,
     using,
     verbosity1,
+    warning,
 )
 from tox.util.path import ensure_empty_dir
 from tox.util.stdlib import importlib_metadata
@@ -541,6 +542,13 @@ def tox_addoption(parser):
 
     # add various core venv interpreter attributes
     def setenv(testenv_config, value):
+        path = value.definitions.pop("PATH", None)
+        if path:
+            warning(
+                "Setting 'PATH' will be ignored as it can break tox internals. "
+                "Use 'prependpath' or 'appendpath' instead."
+            )
+
         setenv = value
         config = testenv_config.config
         if "PYTHONHASHSEED" not in setenv and config.hashseed is not None:
@@ -555,6 +563,24 @@ def tox_addoption(parser):
         type="dict_setenv",
         postprocess=setenv,
         help="list of X=Y lines with environment variable settings",
+    )
+
+    # make sure the path is a list without empty element (in case of accidental ':' on start/end)
+    def split_path(testenv_config, value):
+        return tuple(filter(None, value.split(os.pathsep))) if value else []
+
+    parser.add_testenv_attribute(
+        name="prependpath",
+        type="string",
+        help="path to be added before PATH",
+        postprocess=split_path,
+    )
+
+    parser.add_testenv_attribute(
+        name="appendpath",
+        type="string",
+        help="path to be added after PATH",
+        postprocess=split_path,
     )
 
     def basepython_default(testenv_config, value):

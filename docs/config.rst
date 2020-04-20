@@ -386,6 +386,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
         setenv   =
             PYTHONPATH = {env:PYTHONPATH}{:}{toxinidir}
 
+    .. warning:: Setting ``PATH`` variable will be ignored to avoid breaking tox internals,
+        use ``prependpath`` or ``appendpath`` to manipulate it.
+
 .. conf:: passenv ^ SPACE-SEPARATED-GLOBNAMES
 
     .. versionadded:: 2.0
@@ -420,6 +423,29 @@ Complete list of settings that you can put into ``testenv*`` sections:
         ``PYTHONPATH`` will be passed down if explicitly defined. If
         ``PYTHONPATH`` exists in the host environment but is **not** declared
         in ``passenv`` a warning will be emitted.
+
+.. conf:: prependpath ^ string
+
+    .. versionadded:: 3.14.8
+
+    Add path fragments **before** ``PATH`` variable.
+
+    .. code-block:: ini
+
+        [testenv]
+        prependpath = {toxinidir}/bin/
+
+.. conf:: appendpath ^ string
+
+    .. versionadded:: 3.14.8
+
+    Add path fragments **after** ``PATH`` variable.
+
+    .. code-block:: ini
+
+        [testenv]
+        appendpath = {toxinidir}/bin/
+
 
 .. conf:: recreate ^ true|false ^ false
 

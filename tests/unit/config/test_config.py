@@ -449,6 +449,36 @@ class TestIniParserAgainstCommandsKey:
         envconfig = config.envconfigs["python"]
         assert envconfig.commands == [["echo", "bar"]]
 
+    def test_prepend_append_path(self, newconfig):
+        """Make sure that `prependpath` and `appendpath` are parsed correctly"""
+        config = newconfig(
+            """
+            [testenv]
+            setenv = FOO = bar
+            prependpath = {:}{env:FOO}{:}/bin/prepend
+            appendpath = /bin/append{:}{env:FOO}{:}
+        """
+        )
+        envconfig = config.envconfigs["python"]
+        assert envconfig.appendpath == ("/bin/append", "bar")
+        assert envconfig.prependpath == ("bar", "/bin/prepend")
+
+    def test_path_warning(self, newconfig, capsys):
+        """Ensure that setting `PATH` is ignored and raises a warning"""
+        config = newconfig(
+            """
+            [testenv]
+            setenv = PATH = /bin/new
+        """
+        )
+        envconfig = config.envconfigs["python"]
+        out, _ = capsys.readouterr()
+        assert (
+            "WARNING: Setting 'PATH' will be ignored as it can break tox internals. "
+            "Use 'prependpath' or 'appendpath' instead.\n" in out
+        )
+        assert envconfig.setenv["PATH"] == os.environ["PATH"]
+
     def test_regression_issue595(self, newconfig):
         config = newconfig(
             """
@@ -2697,11 +2727,11 @@ class TestConfigConstSubstitutions:
             """
         [testenv]
         setenv =
-            PATH = dira{:}dirb{:}dirc
+            PYTHONPATH = dira{:}dirb{:}dirc
         """
         )
         envconfig = config.envconfigs["python"]
-        assert envconfig.setenv["PATH"] == pathsep.join(["dira", "dirb", "dirc"])
+        assert envconfig.setenv["PYTHONPATH"] == pathsep.join(["dira", "dirb", "dirc"])
 
     def test_pathsep_regex(self):
         """Sanity check for regex behavior for empty colon."""

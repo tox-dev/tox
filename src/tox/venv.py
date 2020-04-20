@@ -557,7 +557,9 @@ class VirtualEnv(object):
         # construct environment variables
         env.pop("VIRTUALENV_PYTHON", None)
         bin_dir = str(self.envconfig.envbindir)
-        env["PATH"] = os.pathsep.join([bin_dir, os.environ["PATH"]])
+        env["PATH"] = os.pathsep.join(
+            [*self.envconfig.prependpath, bin_dir, os.environ["PATH"], *self.envconfig.appendpath]
+        )
         reporter.verbosity2("setting PATH={}".format(env["PATH"]))
 
         # get command

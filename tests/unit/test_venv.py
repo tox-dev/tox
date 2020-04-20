@@ -1096,3 +1096,28 @@ def test_create_download(mocksession, newconfig, download):
     else:
         assert "--no-download" in map(str, args)
     mocksession._clearmocks()
+
+
+def test_path_append_prepend(tmpdir, mocksession, newconfig, monkeypatch):
+    config = newconfig(
+        [],
+        """\
+        [testenv:python]
+        commands=python -V
+        appendpath = /bin/append{:}
+        prependpath = /bin/prepend{:}/bin/prepend-2
+        """,
+    )
+    pkg = tmpdir.ensure("package.tar.gz")
+    mocksession._clearmocks()
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("python")
+    installpkg(venv, pkg)
+    venv.test()
+
+    pcalls = mocksession._pcalls
+    assert len(pcalls) == 2
+    for x in pcalls:
+        path = x.env["PATH"]
+        assert path.startswith(os.pathsep.join(("/bin/prepend", "/bin/prepend-2")))
+        assert path.endswith("/bin/append")
