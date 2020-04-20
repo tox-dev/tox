@@ -45,9 +45,11 @@ def add_parallel_flags(parser):
     parser.add_argument(
         "-p",
         "--parallel",
+        nargs="?",
+        const="auto",
         dest="parallel",
         help="run tox environments in parallel, the argument controls limit: all,"
-        " auto - cpu count, some positive number, zero is turn off",
+        " auto or missing argument - cpu count, some positive number, 0 to turn off",
         action="store",
         type=parse_num_processes,
         default=DEFAULT_PARALLEL,
