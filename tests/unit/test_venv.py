@@ -1096,3 +1096,26 @@ def test_create_download(mocksession, newconfig, download):
     else:
         assert "--no-download" in map(str, args)
     mocksession._clearmocks()
+
+
+def test_path_change(tmpdir, mocksession, newconfig, monkeypatch):
+    config = newconfig(
+        [],
+        """\
+        [testenv:python]
+        setenv =
+            PATH = {env:PATH}{:}{toxinidir}/bin
+        """,
+    )
+    pkg = tmpdir.ensure("package.tar.gz")
+    mocksession._clearmocks()
+    mocksession.new_config(config)
+    venv = mocksession.getvenv("python")
+    installpkg(venv, pkg)
+    venv.test()
+
+    pcalls = mocksession._pcalls
+    for x in pcalls:
+        path = x.env["PATH"]
+        assert os.environ["PATH"] in path
+        assert path.endswith(str(venv.envconfig.config.toxinidir) + "/bin")
