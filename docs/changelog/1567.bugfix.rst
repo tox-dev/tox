@@ -1,1 +1,1 @@
-Fix exception when specifying factor for skipsdist - by :user:`altendky`
+Fix exception when specifying factor for skipsdist - by :user:`altendky`.
