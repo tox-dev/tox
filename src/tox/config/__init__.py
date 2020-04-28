@@ -1461,12 +1461,12 @@ E.g. {[base]commands}
 
 class SectionReader:
     def __init__(self, section_name, cfgparser, fallbacksections=None, factors=None, prefix=None):
+        if factors is None:
+            factors = set()
         if prefix is None:
             self.section_name = section_name
         else:
             self.section_name = "{}:{}".format(prefix, section_name)
-        if factors is None:
-            factors = set()
         self._cfg = cfgparser
         self.fallbacksections = fallbacksections or []
         self.factors = factors
