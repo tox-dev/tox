@@ -356,7 +356,18 @@ class TestIniParserAgainstCommandsKey:
         x = reader.getargvlist("commands")
         assert x == [["echo", "whatever"]]
 
-    def test_skipsdist_factor_with_no_factor(self, newconfig):
+    @pytest.mark.parametrize(
+        ('section_reader_kwargs', 'expected_outcome'),
+        (
+            ({}, 'false'),
+            ({'factors': {'factor'}}, 'true'),
+        ),
+        ids=('factor missing', 'factor present'),
+    )
+    def test_skipsdist_factor(
+            self, newconfig,
+            section_reader_kwargs, expected_outcome,
+    ):
         config = newconfig(
             """
             [tox]
@@ -366,23 +377,9 @@ class TestIniParserAgainstCommandsKey:
                 echo {[tox]skipsdist}
             """
         )
-        reader = SectionReader("testenv", config._cfg)
+        reader = SectionReader("testenv", config._cfg, **section_reader_kwargs)
         x = reader.getargvlist("commands")
-        assert x == [["echo", "false"]]
-
-    def test_skipsdist_factor_with_factor(self, newconfig):
-        config = newconfig(
-            """
-            [tox]
-            skipsdist = factor: true
-            [testenv]
-            commands =
-                echo {[tox]skipsdist}
-            """
-        )
-        reader = SectionReader("testenv", config._cfg, factors={'factor'})
-        x = reader.getargvlist("commands")
-        assert x == [["echo", "true"]]
+        assert x == [["echo", expected_outcome]]
 
     def test_command_substitution_from_other_section_multiline(self, newconfig):
         """Ensure referenced multiline commands form from other section injected
