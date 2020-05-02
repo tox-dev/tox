@@ -11,6 +11,40 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.15.0 (2020-05-02)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Respect attempts to change ``PATH`` via ``setenv`` - by :user:`aklajnert`.
+  `#1423 <https://github.com/tox-dev/tox/issues/1423>`_
+- Fix parsing of architecture in python interpreter name. - by :user:`bruchar1`
+  `#1542 <https://github.com/tox-dev/tox/issues/1542>`_
+- Prevent exception when command is empty. - by :user:`bruchar1`
+  `#1544 <https://github.com/tox-dev/tox/issues/1544>`_
+- Fix irrelevant Error message for invalid argument when running outside a directory with tox support files by :user:`nkpro2000sr`.
+  `#1547 <https://github.com/tox-dev/tox/issues/1547>`_
+
+
+Features
+^^^^^^^^
+
+- Allow parallel mode without arguments. - by :user:`ssbarnea`
+  `#1418 <https://github.com/tox-dev/tox/issues/1418>`_
+- Allow generative section name expansion. - by :user:`bruchar1`
+  `#1545 <https://github.com/tox-dev/tox/issues/1545>`_
+- default to passing the env var PIP_EXTRA_INDEX_URL by :user:`georgealton`.
+  `#1561 <https://github.com/tox-dev/tox/issues/1561>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Improve documentation about config by adding tox environment description at start - by :user:`stephenfin`.
+  `#1573 <https://github.com/tox-dev/tox/issues/1573>`_
+
+
 v3.14.6 (2020-03-25)
 --------------------
 

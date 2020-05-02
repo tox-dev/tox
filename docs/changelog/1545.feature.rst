@@ -1,1 +1,0 @@
-Allow generative section name expansion. - by :user:`bruchar1`

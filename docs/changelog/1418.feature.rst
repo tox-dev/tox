@@ -1,1 +1,0 @@
-Allow parallel mode without arguments. - by :user:`ssbarnea`

@@ -1,1 +1,0 @@
-default to passing the env var PIP_EXTRA_INDEX_URL by :user:`georgealton`.
