@@ -429,7 +429,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     * passed through on all platforms: ``CURL_CA_BUNDLE``, ``PATH``,
       ``LANG``, ``LANGUAGE``,
-      ``LD_LIBRARY_PATH``, ``PIP_INDEX_URL``,
+      ``LD_LIBRARY_PATH``, ``PIP_INDEX_URL``, ``PIP_EXTRA_INDEX_URL``,
       ``REQUESTS_CA_BUNDLE``, ``SSL_CERT_FILE``,
       ``HTTP_PROXY``, ``HTTPS_PROXY``, ``NO_PROXY``
     * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``

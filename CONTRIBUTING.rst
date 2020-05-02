@@ -168,7 +168,7 @@ Here is a simple overview, with tox-specific bits:
 
     $ tox -e dev
 
-   To get information about all environements, type:
+   To get information about all environments, type:
 
    $ tox -av
 
