@@ -1,3 +1,7 @@
+---
+default_language_version:
+  # force all unspecified python hooks to run python3
+  python: python3
 repos:
 -   repo: https://github.com/psf/black
     rev: 19.10b0
@@ -6,13 +10,13 @@ repos:
         args: [--safe]
         language_version: python3.8
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v1.3.0
+    rev: v1.6.0
     hooks:
     -   id: blacken-docs
-        additional_dependencies: [black==19.3b0]
+        additional_dependencies: [black==19.10b0]
         language_version: python3.8
 -   repo: https://github.com/asottile/seed-isort-config
-    rev: v1.9.3
+    rev: v2.1.1
     hooks:
     -   id: seed-isort-config
         args: [--application-directories, "src:."]
@@ -21,21 +25,21 @@ repos:
     hooks:
     -   id: isort
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v2.5.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-yaml
     -   id: debug-statements
     -   id: flake8
-        additional_dependencies: ["flake8-bugbear == 19.8.0"]
+        additional_dependencies: ["flake8-bugbear == 20.1.4"]
         language_version: python3.8
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v1.25.1
+    rev: v2.3.0
     hooks:
     -   id: pyupgrade
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.4.2
+    rev: v1.5.1
     hooks:
     -   id: rst-backticks
 -   repo: local

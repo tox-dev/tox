@@ -189,23 +189,50 @@ by using the ``tox:jenkins`` section:
     commands = ...  # override settings for the jenkins context
 
 
-tox environment settings
-------------------------
+tox environments
+----------------
 
-Test environments are defined by a:
+Test environments are defined under the ``testenv`` section and individual
+``testenv:NAME`` sections, where ``NAME`` is the name of a specific
+environment.
 
 .. code-block:: ini
-
-    [testenv:NAME]
-    commands = ...
-
-section.  The ``NAME`` will be the name of the virtual environment.
-Defaults for each setting in this section are looked up in the::
 
     [testenv]
     commands = ...
 
-``testenv`` default section.
+    [testenv:NAME]
+    commands = ...
+
+Settings defined in the top-level ``testenv`` section are automatically
+inherited by individual environments unless overridden. Test environment names
+can consist of alphanumeric characters and dashes; for example:
+``py38-django30``. The name will be split on dashes into multiple factors,
+meaning ``py38-django30`` will be split into two factors: ``py38`` and
+``django30``. *tox* defines a number of default factors, which correspond to
+various versions and implementations of Python and provide default values for
+:conf:`basepython`:
+
+- ``pyNM``: configures ``basepython = pythonN.M``
+- ``pyN``: configures ``basepython = pythonN``
+- ``py``: configures ``basepython = python``
+- ``pypyN``: configures ``basepython = pypyN``
+- ``pypy``: configures ``basepython = pypy``
+- ``jythonN``: configures ``basepython = jythonN``
+- ``jython``: configures ``basepython = jython``
+
+It is also possible to define what's know as *generative names*, where an
+individual section maps to multiple environments; for example:
+``py{37,38}-django{30,31}``, which would generate four environments, each
+consisting of two factors a piece: ``py37-django30`` (``py37``, ``django30``),
+``py37-django31`` (``py37``, ``django31``), ``py38-django30`` (``py38``,
+``django30``), and ``py38-django31`` (``py38``, ``django31``).  Combined, these
+features provide the ability to write very concise ``tox.ini`` files and is
+discussed further `below <generating-environments>`__.
+
+
+tox environment settings
+------------------------
 
 Complete list of settings that you can put into ``testenv*`` sections:
 
@@ -755,6 +782,8 @@ You can put default values in one section and reference them in others to avoid 
         {[base]deps}
 
 
+.. _generating-environments:
+
 Generating environments, conditional settings
 ---------------------------------------------
 
@@ -793,7 +822,7 @@ Let's go through this step by step.
 .. _generative-envlist:
 
 Generative envlist
-+++++++++++++++++++++++
+++++++++++++++++++
 
 ::
 
@@ -856,9 +885,10 @@ but still want to take advantage of factor-conditional settings.
 Factors and factor-conditional settings
 ++++++++++++++++++++++++++++++++++++++++
 
-Parts of an environment name delimited by hyphens are called factors and can
-be used to set values conditionally. In list settings such as ``deps`` or
-``commands`` you can freely intermix optional lines with unconditional ones:
+As discussed previously, parts of an environment name delimited by hyphens are
+called factors and can be used to set values conditionally. In list settings
+such as ``deps`` or ``commands`` you can freely intermix optional lines with
+unconditional ones:
 
 .. code-block:: ini
 
@@ -908,6 +938,7 @@ special case for a combination of factors. Here is how you do it:
         py{27,36}-sqlite: mock  # mocking sqlite in python 2.x & 3.6
         !py34-sqlite: mock      # mocking sqlite, except in python 3.4
         sqlite-!py34: mock      # (same as the line above)
+        !py34,!py36: enum34     # use if neither py34 nor py36 are in the env name
 
 Take a look at the first ``deps`` line. It shows how you can special case
 something for a combination of factors, by just hyphenating the combining
