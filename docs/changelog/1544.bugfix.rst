@@ -1,1 +1,0 @@
-Prevent exception when command is empty. - by :user:`bruchar1`
