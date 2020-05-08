@@ -228,7 +228,7 @@ consisting of two factors a piece: ``py37-django30`` (``py37``, ``django30``),
 ``py37-django31`` (``py37``, ``django31``), ``py38-django30`` (``py38``,
 ``django30``), and ``py38-django31`` (``py38``, ``django31``).  Combined, these
 features provide the ability to write very concise ``tox.ini`` files and is
-discussed further `below <generating-environments>`__.
+discussed further :ref:`below <generating-environments>`.
 
 
 tox environment settings
