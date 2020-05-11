@@ -19,7 +19,7 @@ def make_sdist(config, session):
             "     https://tox.readthedocs.io/en/latest/example/package.html\n"
             "  2. Configure tox to avoid running sdist:\n"
             "     https://tox.readthedocs.io/en/latest/example/general.html\n"
-            "  3. Configure tox to use an isolated_build".format(pyproject=pyproject, setup=setup)
+            "  3. Configure tox to use an isolated_build".format(pyproject=pyproject, setup=setup),
         )
         raise SystemExit(1)
     if not setup_check:
@@ -27,7 +27,7 @@ def make_sdist(config, session):
             "pyproject.toml file found.\n"
             "To use a PEP 517 build-backend you are required to "
             "configure tox to use an isolated_build:\n"
-            "https://tox.readthedocs.io/en/latest/example/package.html\n"
+            "https://tox.readthedocs.io/en/latest/example/package.html\n",
         )
         raise SystemExit(1)
     with session.newaction("GLOB", "packaging") as action:
@@ -54,6 +54,6 @@ def make_sdist(config, session):
                 raise SystemExit(1)
             reporter.error(
                 "No dist directory found. Please check setup.py, e.g with:\n"
-                "     python setup.py sdist"
+                "     python setup.py sdist",
             )
             raise SystemExit(1)

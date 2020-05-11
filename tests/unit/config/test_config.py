@@ -52,7 +52,7 @@ class TestVenvConfig:
                 world1
                 :xyz:http://hello/world
         """.format(
-                tmpdir
+                tmpdir,
             ),
         )
         assert config.toxworkdir == tmpdir
@@ -107,11 +107,11 @@ class TestVenvConfig:
                 dep2>=2.0
                 dep3
                 dep4==4.0
-            """
+            """,
             },
         )
         config = parseconfig(
-            ["--force-dep=dep1==1.5", "--force-dep=dep2==2.1", "--force-dep=dep3==3.0"]
+            ["--force-dep=dep1==1.5", "--force-dep=dep2==2.1", "--force-dep=dep3==3.0"],
         )
         assert config.option.force_dep == ["dep1==1.5", "dep2==2.1", "dep3==3.0"]
         expected_deps = ["dep1==1.5", "dep2==2.1", "dep3==3.0", "dep4==4.0"]
@@ -128,7 +128,7 @@ class TestVenvConfig:
             deps=
                 dep1==1.0
                 https://pypi.org/xyz/pkg1.tar.gz
-            """
+            """,
             },
         )
         config = parseconfig(["--force-dep=dep1==1.5"])
@@ -271,8 +271,8 @@ class TestConfigPackage:
             [tox]
             toxworkdir={}
         """.format(
-                tmpdir
-            )
+                tmpdir,
+            ),
         )
         assert config.toxworkdir == tmpdir
 
@@ -350,7 +350,7 @@ class TestIniParserAgainstCommandsKey:
             [testenv]
             commands =
                 echo {[section]key}
-            """
+            """,
         )
         reader = SectionReader("testenv", config._cfg)
         x = reader.getargvlist("commands")
@@ -377,7 +377,7 @@ class TestIniParserAgainstCommandsKey:
                 {[section]commands}
                 # comment is omitted
                 echo {[base]commands}
-            """
+            """,
         )
         reader = SectionReader("testenv", config._cfg)
         x = reader.getargvlist("commands")
@@ -399,7 +399,7 @@ class TestIniParserAgainstCommandsKey:
             [testenv]
             commands =
                 {[section]key}
-            """
+            """,
         )
         reader = SectionReader("testenv", config._cfg)
         reader.addsubstitutions([r"argpos"])
@@ -415,7 +415,7 @@ class TestIniParserAgainstCommandsKey:
             [testenv]
             commands =
                 {[section]key} {posargs} endarg
-            """
+            """,
         )
         reader = SectionReader("testenv", config._cfg)
         reader.addsubstitutions([r"argpos"])
@@ -431,7 +431,7 @@ class TestIniParserAgainstCommandsKey:
              TEST=testvalue
            commands =
              ls {env:TEST}
-        """
+        """,
         )
         envconfig = config.envconfigs["py27"]
         assert envconfig.commands == [["ls", "testvalue"]]
@@ -444,7 +444,7 @@ class TestIniParserAgainstCommandsKey:
             [testenv]
             setenv = FOO = bar
             commands = echo {env:FOO}
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.commands == [["echo", "bar"]]
@@ -460,7 +460,7 @@ class TestIniParserAgainstCommandsKey:
             setenv = {[testenv]setenv}
             [testenv:baz]
             setenv =
-        """
+        """,
         )
         assert config.envconfigs["foo"].setenv["VAR"] == "x"
         assert config.envconfigs["bar"].setenv["VAR"] == "x"
@@ -473,7 +473,7 @@ class TestIniParser:
             """
             [section]
             key=value
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         x = reader.getstring("key")
@@ -487,7 +487,7 @@ class TestIniParser:
             """
             [mydefault]
             key2={xyz}
-        """
+        """,
         )
         reader = SectionReader("mydefault", config._cfg, fallbacksections=["mydefault"])
         assert reader is not None
@@ -501,7 +501,7 @@ class TestIniParser:
             key2=value2
             [section]
             key=value
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg, fallbacksections=["mydefault"])
         x = reader.getstring("key2")
@@ -518,7 +518,7 @@ class TestIniParser:
             key2={value2}
             [section]
             key={value}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg, fallbacksections=["mydefault"])
         reader.addsubstitutions(value="newvalue", value2="newvalue2")
@@ -536,7 +536,7 @@ class TestIniParser:
             key2=
                 item1
                 {item2}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="not", item2="grr")
@@ -550,7 +550,7 @@ class TestIniParser:
             key2=
                 key1=item1
                 key2={item2}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="not", item2="grr")
@@ -586,7 +586,7 @@ class TestIniParser:
             key1={env:KEY1:DEFAULT_VALUE}
             key2={env:KEY2:DEFAULT_VALUE}
             key3={env:KEY3:}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         x = reader.getstring("key1")
@@ -611,7 +611,7 @@ class TestIniParser:
             key = rue
             [testenv]
             key = t{[section]key}
-            """
+            """,
         )
         reader = SectionReader("testenv", config._cfg)
         x = reader.getstring("key")
@@ -624,7 +624,7 @@ class TestIniParser:
             key2=
                 cmd1 {item1} {item2}
                 cmd2 {item2}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
@@ -637,7 +637,7 @@ class TestIniParser:
             """
             [section]
             comm = pytest {posargs}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions([r"hello\this"])
@@ -651,7 +651,7 @@ class TestIniParser:
             key2=
                 cmd1 {item1} \
                      {item2}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(item1="with space", item2="grr")
@@ -666,7 +666,7 @@ class TestIniParser:
             key1=
                 cmd1 'part one' \
                      'part two'
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         x = reader.getargvlist("key1")
@@ -678,7 +678,7 @@ class TestIniParser:
             [section]
             key1=
                 cmd1 --flag  # run the flag on the command
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         x = reader.getargvlist("key1")
@@ -690,7 +690,7 @@ class TestIniParser:
             [section]
             key1=
                 cmd1 --re  "use the # symbol for an arg"
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         x = reader.getargvlist("key1")
@@ -704,7 +704,7 @@ class TestIniParser:
                 cmd1 []
                 cmd2 {posargs:{item2} \
                      other}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         posargs = ["hello", "world"]
@@ -729,7 +729,7 @@ class TestIniParser:
                 cmd1 --foo-args='{posargs}'
                 cmd2 -f '{posargs}'
                 cmd3 -f {posargs}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(["foo", "bar"])
@@ -748,7 +748,7 @@ class TestIniParser:
             [section]
             key2=
                 cmd1 -f {posargs}
-        """
+        """,
         )
         # The operating system APIs for launching processes differ between
         # Windows and other OSs. On Windows, the command line is passed as a
@@ -775,7 +775,7 @@ class TestIniParser:
                 cmd1 -m '[abc]'
                 cmd2 -m '\'something\'' []
                 cmd3 something[]else
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         posargs = ["hello", "world"]
@@ -792,7 +792,7 @@ class TestIniParser:
             """
             [section]
             key= cmd0 {posargs}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         posargs = ["hello world", "--x==y z", "--format=%(code)s: %(text)s"]
@@ -818,7 +818,7 @@ class TestIniParser:
             """
             [section]
             key=some command "with quoting"
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         expected = ["some", "command", "with quoting"]
@@ -829,7 +829,7 @@ class TestIniParser:
             """
             [section]
             path1={HELLO}
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         reader.addsubstitutions(toxinidir=tmpdir, HELLO="mypath")
@@ -845,7 +845,7 @@ class TestIniParser:
             key1a=true
             key2a=falsE
             key5=yes
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg)
         assert reader.getbool("key1") is True
@@ -863,7 +863,7 @@ class TestIniParser:
         config = newconfig(
             """
             [testenv:custom-{one,two,three}-{four,five}-six]
-        """
+        """,
         )
         assert "testenv:custom-one-five-six" in config._cfg.sections
         assert "testenv:custom-{one,two,three}-{four,five}-six" not in config._cfg.sections
@@ -875,7 +875,7 @@ class TestIniParserPrefix:
             """
             [p:section]
             key=value
-        """
+        """,
         )
         reader = SectionReader("section", config._cfg, prefix="p")
         x = reader.getstring("key")
@@ -891,10 +891,10 @@ class TestIniParserPrefix:
             key2=value2
             [p:section]
             key=value
-        """
+        """,
         )
         reader = SectionReader(
-            "section", config._cfg, prefix="p", fallbacksections=["p:mydefault"]
+            "section", config._cfg, prefix="p", fallbacksections=["p:mydefault"],
         )
         x = reader.getstring("key2")
         assert x == "value2"
@@ -918,7 +918,7 @@ class TestIniParserPrefix:
             key = rue
             [p:testenv]
             key = t{[p:section]key}
-            """
+            """,
         )
         reader = SectionReader("testenv", config._cfg, prefix="p")
         x = reader.getstring("key")
@@ -933,7 +933,7 @@ class TestConfigTestEnv:
             deps = http://abc#123
             commands=
                 python -c "x ; y"
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.deps[0].name == "http://abc#123"
@@ -945,7 +945,7 @@ class TestConfigTestEnv:
             [testenv]
             commands=
                 xyz --abc
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -990,7 +990,7 @@ class TestConfigTestEnv:
             commands=xyz
             [testenv:py]
             commands=abc
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["py"]
@@ -1007,7 +1007,7 @@ class TestConfigTestEnv:
             [testenv:py]
             whitelist_externals = xyz2
             commands=abc
-        """
+        """,
         )
         assert len(config.envconfigs) == 2
         envconfig = config.envconfigs["py"]
@@ -1021,7 +1021,7 @@ class TestConfigTestEnv:
             """
             [testenv]
             changedir=xyz
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1033,7 +1033,7 @@ class TestConfigTestEnv:
             """
             [testenv]
             ignore_errors=True
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1044,7 +1044,7 @@ class TestConfigTestEnv:
             """
             [testenv]
             basepython=python
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1057,8 +1057,8 @@ class TestConfigTestEnv:
             [testenv]
             basepython={}
         """.format(
-                bp
-            )
+                bp,
+            ),
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1080,7 +1080,7 @@ class TestConfigTestEnv:
                       A123*
                       # isolated comment
                       B?23
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1126,7 +1126,7 @@ class TestConfigTestEnv:
             passenv =
                       # comment
                       A123*  B?23
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1164,7 +1164,7 @@ class TestConfigTestEnv:
                 # passed to both environments
                 A123C
                 x2: A123B A123D
-        """
+        """,
         )
         assert len(config.envconfigs) == 2
 
@@ -1192,7 +1192,7 @@ class TestConfigTestEnv:
             """
             [testenv]
             passenv = A2
-        """
+        """,
         )
         env = config.envconfigs["python"]
         assert "A1" in env.passenv
@@ -1205,7 +1205,7 @@ class TestConfigTestEnv:
         config = newconfig(
             """
             [testenv]
-        """
+        """,
         )
         env = config.envconfigs["python"]
         assert "A1" in env.passenv
@@ -1217,7 +1217,7 @@ class TestConfigTestEnv:
             """
             [testenv]
             passenv = TOX_PARALLEL_NO_SPINNER
-        """
+        """,
         )
         env = config.envconfigs["python"]
         assert "TOX_PARALLEL_NO_SPINNER" in env.passenv
@@ -1230,7 +1230,7 @@ class TestConfigTestEnv:
             [testenv:python]
             changedir=abc
             basepython=python3.6
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -1242,7 +1242,7 @@ class TestConfigTestEnv:
             """
             [testenv]
             install_command=some_install {packages}
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.install_command == ["some_install", "{packages}"]
@@ -1257,7 +1257,7 @@ class TestConfigTestEnv:
             [testenv]
             install_command=some_install --arg={toxinidir}/foo \
                 {envname} {opts} {packages}
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         expected_deps = [
@@ -1274,7 +1274,7 @@ class TestConfigTestEnv:
             """
             [testenv]
             pip_pre=true
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.pip_pre
@@ -1297,7 +1297,7 @@ class TestConfigTestEnv:
             basepython=python3.6
             [testenv:py27]
             basepython=python2.7
-        """
+        """,
         )
         assert len(config.envconfigs) == 2
         assert "py36" in config.envconfigs
@@ -1321,7 +1321,7 @@ class TestConfigTestEnv:
                 {homedir}
                 {distshare}
                 {envlogdir}
-        """
+        """,
         )
         conf = config.envconfigs["py27"]
         argv = conf.commands
@@ -1342,7 +1342,7 @@ class TestConfigTestEnv:
             setenv =
                 FOO={envbindir}
                 BAR={envsitepackagesdir}
-        """
+        """,
         )
         conf = config.envconfigs["py27"]
         env = conf.setenv
@@ -1364,7 +1364,7 @@ class TestConfigTestEnv:
                 NAME
             commands =
                 python -c 'print("Hello, {env:NAME}!")'
-        """
+        """,
         )
         conf = config.envconfigs["standard-greeting"]
         assert conf.commands == [["python", "-c", 'print("Hello, world!")']]
@@ -1388,7 +1388,7 @@ class TestConfigTestEnv:
                 USE_DYNAMIC_DEFAULT={env:USE_DYNAMIC_DEFAULT:{env:OTHER_VAR}+default}
                 IGNORE_OTHER_DEFAULT={env:OTHER_VAR:{env:OTHER_VAR}+default}
                 USE_OTHER_DEFAULT={env:NON_EXISTENT_VAR:{env:OTHER_VAR}+default}
-        """
+        """,
         )
         conf = config.envconfigs["py27"]
         env = conf.setenv
@@ -1516,7 +1516,7 @@ class TestConfigTestEnv:
                 fun
                 frob{{env:ENV_VAR:>1.0,<2.0}}
         """.format(
-            envlist=",".join(envlist), deps="\n" + "\n".join([" " * 17 + d for d in deps])
+            envlist=",".join(envlist), deps="\n" + "\n".join([" " * 17 + d for d in deps]),
         )
         conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
@@ -1537,7 +1537,7 @@ class TestConfigTestEnv:
                 {{[testenv]deps}}
                 fun
         """.format(
-            envlist=",".join(envlist)
+            envlist=",".join(envlist),
         )
         conf = newconfig([], inisource).envconfigs["coverage"]
         packages = [dep.name for dep in conf.deps]
@@ -1955,15 +1955,15 @@ class TestConfigTestEnv:
                 [testenv:{}]
                 commands = python --version
                 """.format(
-                    exe, env
-                )
+                    exe, env,
+                ),
             )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs[env]
         assert envconfig.basepython == exe
 
     def test_default_factors_conflict_lying_name(
-        self, newconfig, capsys, tmpdir, recwarn, monkeypatch
+        self, newconfig, capsys, tmpdir, recwarn, monkeypatch,
     ):
         # we first need to create a lying Python here, let's mock out here
         from tox.interpreters import Interpreters
@@ -1980,8 +1980,8 @@ class TestConfigTestEnv:
             basepython=python{0}.{2}
             commands = python --version
         """.format(
-                major, minor, minor - 1
-            )
+                major, minor, minor - 1,
+            ),
         )
         env_config = config.envconfigs["py{}{}".format(major, minor)]
         assert env_config.basepython == "python{}.{}".format(major, minor - 1)
@@ -2004,8 +2004,8 @@ class TestConfigTestEnv:
                 basepython=python{0}.{1}
                 commands = python --version
                 """.format(
-                    major, minor - 1
-                )
+                    major, minor - 1,
+                ),
             )
 
         env_config = config.envconfigs["py{}".format(major)]
@@ -2019,8 +2019,8 @@ class TestConfigTestEnv:
                 basepython=python{0}.{1}
                 commands = python --version
                 """.format(
-                    major, minor
-                )
+                    major, minor,
+                ),
             )
 
         env_config = config.envconfigs["py{}".format(major)]
@@ -2037,7 +2037,7 @@ class TestConfigTestEnv:
                 basepython=python3
                 [testenv:py27]
                 commands = python --version
-            """
+            """,
             )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["py27"]
@@ -2154,7 +2154,7 @@ class TestGlobalOptions:
             [testenv:py27]
             commands =
                 {distshare}
-        """
+        """,
         )
         conf = config.envconfigs["py27"]
         argv = conf.commands
@@ -2171,7 +2171,7 @@ class TestGlobalOptions:
             [testenv:py27]
             commands =
                 {distshare}
-        """
+        """,
         )
         conf = config.envconfigs["py27"]
         argv = conf.commands
@@ -2183,7 +2183,7 @@ class TestGlobalOptions:
             """
             [tox]
             sdistsrc = {distshare}/xyz.zip
-        """
+        """,
         )
         assert config.sdistsrc == config.distshare.join("xyz.zip")
         config = newconfig([], "")
@@ -2476,7 +2476,7 @@ class TestSetenv:
             key0 =
                 key1 = {env:X}
                 key2 = {env:Y:1}
-        """
+        """,
         )
         envconfig = config.envconfigs["X"]
         val = envconfig._reader.getdict_setenv("key0")
@@ -2491,7 +2491,7 @@ class TestSetenv:
             key0 =
                 key1 = {env:X}
                 key2 = {env:Y:1}
-        """
+        """,
         )
         envconfig = config.envconfigs["X"]
         val = envconfig._reader.getdict_setenv("key0")
@@ -2506,7 +2506,7 @@ class TestSetenv:
             [testenv:env1]
             setenv =
                 X = {env:X}
-        """
+        """,
         )
         assert config.envconfigs["env1"].setenv["X"] == "1"
 
@@ -2517,7 +2517,7 @@ class TestSetenv:
             [testenv:env1]
             setenv =
                 X = {env:X:2}
-        """
+        """,
         )
         assert config.envconfigs["env1"].setenv["X"] == "2"
 
@@ -2528,7 +2528,7 @@ class TestSetenv:
             setenv =
                 Y = 5
                 X = {env:Y}
-        """
+        """,
         )
         assert config.envconfigs["env1"].setenv["X"] == "5"
 
@@ -2538,7 +2538,7 @@ class TestSetenv:
             [testenv:env1]
             setenv =
                 X = {env:X:3}
-        """
+        """,
         )
         assert config.envconfigs["env1"].setenv["X"] == "3"
 
@@ -2549,7 +2549,7 @@ class TestSetenv:
             setenv =
                 PYTHONPATH = something
                 ANOTHER_VAL=else
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -2565,7 +2565,7 @@ class TestSetenv:
             setenv =
                 VAL = {envdir}
             basepython = {env:VAL}
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -2580,7 +2580,7 @@ class TestSetenv:
             setenv=
                 VAL={envdir}
             commands=echo {env:VAL}
-        """
+        """,
         )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
@@ -2599,7 +2599,7 @@ class TestSetenv:
 
             [testenv]
             setenv = {[section]x}
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
@@ -2616,7 +2616,7 @@ class TestSetenv:
 
             [testenv]
             setenv = {[section1]y}
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
@@ -2632,7 +2632,7 @@ class TestSetenv:
             [testenv]
             setenv = {[section]x}
                      y = 7
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
@@ -2647,7 +2647,7 @@ class TestIndexServer:
             indexserver =
                 name1 = XYZ
                 name2 = ABC
-        """
+        """,
         )
         assert config.indexserver["default"].url is None
         assert config.indexserver["name1"].url == "XYZ"
@@ -2699,7 +2699,7 @@ class TestConfigConstSubstitutions:
         [testenv]
         setenv =
             PATH = dira{:}dirb{:}dirc
-        """
+        """,
         )
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["PATH"] == pathsep.join(["dira", "dirb", "dirc"])
@@ -2817,7 +2817,7 @@ def test_env_spec(initproj, cli_args, run_envlist):
 
                 [testenv]
                 commands = python -c ""
-                """
+                """,
         },
     )
     args = cli_args.split()
@@ -2896,7 +2896,7 @@ class TestCommandParser:
     def test_command_with_split_line_in_subst_arguments(self):
         cmd = dedent(
             """ cmd2 {posargs:{item2}
-                         other}"""
+                         other}""",
         )
         p = CommandParser(cmd)
         parsed = list(p.words())
@@ -2943,7 +2943,7 @@ def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):
             isolated_build_env = package
         """
     with pytest.raises(
-        tox.exception.ConfigError, match="isolated_build_env package cannot be part of envlist"
+        tox.exception.ConfigError, match="isolated_build_env package cannot be part of envlist",
     ):
         newconfig([], inisource)
 
@@ -2969,7 +2969,7 @@ def test_isolated_build_overrides(newconfig, capsys):
 
 
 @pytest.mark.parametrize(
-    "key, set_value, default", [("deps", "crazy", []), ("sitepackages", "True", False)]
+    "key, set_value, default", [("deps", "crazy", []), ("sitepackages", "True", False)],
 )
 def test_isolated_build_ignores(newconfig, capsys, key, set_value, default):
     config = newconfig(
@@ -2981,7 +2981,7 @@ def test_isolated_build_ignores(newconfig, capsys, key, set_value, default):
             [testenv]
             {} = {}
         """.format(
-            key, set_value
+            key, set_value,
         ),
     )
     package_env = config.envconfigs.get(".package")
@@ -2999,7 +2999,7 @@ def test_config_via_pyproject_legacy(initproj):
                 [tox]
                 envlist = py27
                 """
-        '''
+        ''',
         },
     )
     config = parseconfig([])
@@ -3041,7 +3041,7 @@ def test_interactive_na(newconfig, monkeypatch):
         """
         [testenv:py]
         setenv = A = {tty:X:Y}
-        """
+        """,
     )
     assert config.envconfigs["py"].setenv["A"] == "Y"
 
@@ -3052,7 +3052,7 @@ def test_interactive_available(newconfig, monkeypatch):
         """
         [testenv:py]
         setenv = A = {tty:X:Y}
-        """
+        """,
     )
     assert config.envconfigs["py"].setenv["A"] == "X"
 
@@ -3072,8 +3072,8 @@ def test_config_current_py(newconfig, current_tox_py, cmd, tmpdir, monkeypatch):
         [testenv:{0}]
         commands = python -c "print('all')"
         """.format(
-            current_tox_py
-        )
+            current_tox_py,
+        ),
     )
     assert config.envconfigs[current_tox_py]
     result = cmd()
@@ -3091,7 +3091,7 @@ def test_posargs_relative_changedir(newconfig, tmpdir):
             changedir = dir2
             commands =
                 echo {posargs}
-            """
+            """,
         )
         config.option.args = ["dir1", dir1.strpath, "dir3"]
         testenv = config.envconfigs["python"]
@@ -3113,7 +3113,7 @@ def test_config_no_version_data_in__name(newconfig, capsys):
         envlist = py, pypy, jython
         [testenv]
         basepython = python
-        """
+        """,
     )
     out, err = capsys.readouterr()
     assert not out

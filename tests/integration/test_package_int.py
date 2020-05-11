@@ -20,7 +20,7 @@ def test_package_setuptools(initproj, cmd):
                 [testenv:.package]
                 basepython = {}
             """.format(
-                sys.executable
+                sys.executable,
             ),
             "pyproject.toml": """\
                 [build-system]
@@ -45,7 +45,7 @@ def test_package_flit(initproj, cmd):
                 [testenv:.package]
                 basepython = {}
             """.format(
-                sys.executable
+                sys.executable,
             ),
             "pyproject.toml": """\
                 [build-system]
@@ -88,7 +88,7 @@ def test_package_poetry(initproj, cmd):
                 [testenv:.package]
                 basepython = {}
             """.format(
-                sys.executable
+                sys.executable,
             ),
             "pyproject.toml": """\
                 [build-system]

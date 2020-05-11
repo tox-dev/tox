@@ -17,7 +17,7 @@ def test_listenvs(cmd, initproj, monkeypatch):
 
         [testenv:docs]
         changedir = docs
-        """
+        """,
         },
     )
 
@@ -57,7 +57,7 @@ def test_listenvs_verbose_description(cmd, initproj):
         [testenv:docs]
         changedir = docs
         description = let me overwrite that
-        """
+        """,
         },
     )
     result = cmd("-lv")
@@ -85,7 +85,7 @@ def test_listenvs_all(cmd, initproj, monkeypatch):
 
         [testenv:docs]
         changedir = docs
-        """
+        """,
         },
     )
     result = cmd("-a")
@@ -121,7 +121,7 @@ def test_listenvs_all_verbose_description(cmd, initproj):
 
         [testenv:docs]
         changedir = docs
-        """
+        """,
         },
     )
     result = cmd("-av")
@@ -145,7 +145,7 @@ def test_listenvs_all_verbose_description_no_additional_environments(cmd, initpr
             "tox.ini": """
         [tox]
         envlist=py27,py36
-        """
+        """,
         },
     )
     result = cmd("-av")
@@ -168,7 +168,7 @@ def test_listenvs_packaging_excluded(cmd, initproj):
 
         [testenv:docs]
         changedir = docs
-        """
+        """,
         },
     )
     result = cmd("-a")
@@ -189,7 +189,7 @@ def test_listenvs_all_extra_definition_order_decreasing(cmd, initproj):
 
         [testenv:a]
         changedir = docs
-        """
+        """,
         },
     )
     result = cmd("-a")
@@ -210,7 +210,7 @@ def test_listenvs_all_extra_definition_order_increasing(cmd, initproj):
 
         [testenv:b]
         changedir = docs
-        """
+        """,
         },
     )
     result = cmd("-a")

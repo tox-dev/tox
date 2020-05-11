@@ -60,7 +60,7 @@ def test_package_isolated_no_pyproject_toml(initproj, cmd):
             "tox.ini": """
                 [tox]
                 isolated_build = true
-            """
+            """,
         },
     )
     result = cmd("--sdistonly", "-e", "py")

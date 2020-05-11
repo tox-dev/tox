@@ -54,7 +54,7 @@ def get_message_body(release_version: Version, prev_version: Version) -> str:
 
         Happy toxing,
         the tox-dev team
-        """  # noqa
+        """,  # noqa
         )
     else:
         return textwrap.dedent(
@@ -69,7 +69,7 @@ def get_message_body(release_version: Version, prev_version: Version) -> str:
 
                 Happy toxing,
                 the tox-dev team
-                """  # noqa
+                """,  # noqa
         )
 
 
@@ -85,7 +85,7 @@ def get_last_release_versions(repo: Repo) -> Tuple[Version, Version]:
     print("get latest release version")
     commit_to_tag = {tag.commit.hexsha: tag for tag in repo.tags}
     _, release_tag = sorted(
-        [(tag.commit.committed_datetime, tag) for tag in repo.tags], reverse=True
+        [(tag.commit.committed_datetime, tag) for tag in repo.tags], reverse=True,
     )[0]
     for commit in release_tag.commit.iter_parents():
         if commit.hexsha in commit_to_tag:
@@ -96,7 +96,7 @@ def get_last_release_versions(repo: Repo) -> Tuple[Version, Version]:
                     prev_version.is_devrelease,
                     prev_version.is_prerelease,
                     prev_version.is_postrelease,
-                )
+                ),
             ):
                 break
     else:
@@ -123,7 +123,7 @@ def send_mail_message(subject, content):
             json.dump(client_secret_json, temp_filename)
             temp_filename.flush()
             flow = client.flow_from_clientsecrets(
-                filename=temp_filename.name, scope="https://www.googleapis.com/auth/gmail.send"
+                filename=temp_filename.name, scope="https://www.googleapis.com/auth/gmail.send",
             )
             credentials = tools.run_flow(flow, store)
     service = discovery.build("gmail", "v1", http=credentials.authorize(httplib2.Http()))

@@ -15,8 +15,8 @@ def test_topological_order_specified_only():
 def test_topological_order():
     graph = OrderedDict()
     graph["A"] = "B", "C"
-    graph["B"] = tuple()
-    graph["C"] = tuple()
+    graph["B"] = ()
+    graph["C"] = ()
     result = stable_topological_sort(graph)
     assert result == ["B", "C", "A"]
 
@@ -34,19 +34,19 @@ def test_topological_complex():
     graph["A"] = "B", "C"
     graph["B"] = "C", "D"
     graph["C"] = ("D",)
-    graph["D"] = tuple()
+    graph["D"] = ()
     result = stable_topological_sort(graph)
     assert result == ["D", "C", "B", "A"]
 
 
 def test_two_sub_graph():
     graph = OrderedDict()
-    graph["F"] = tuple()
-    graph["E"] = tuple()
+    graph["F"] = ()
+    graph["E"] = ()
     graph["D"] = "E", "F"
     graph["A"] = "B", "C"
-    graph["B"] = tuple()
-    graph["C"] = tuple()
+    graph["B"] = ()
+    graph["C"] = ()
 
     result = stable_topological_sort(graph)
     assert result == ["F", "E", "D", "B", "C", "A"]
@@ -54,11 +54,11 @@ def test_two_sub_graph():
 
 def test_two_sub_graph_circle():
     graph = OrderedDict()
-    graph["F"] = tuple()
-    graph["E"] = tuple()
+    graph["F"] = ()
+    graph["E"] = ()
     graph["D"] = "E", "F"
     graph["A"] = "B", "C"
     graph["B"] = ("A",)
-    graph["C"] = tuple()
+    graph["C"] = ()
     with pytest.raises(ValueError, match="A | B"):
         stable_topological_sort(graph)

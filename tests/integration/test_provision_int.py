@@ -26,7 +26,7 @@ def test_provision_missing(initproj, cmd):
                     setuptools == 40.6.3
                 [testenv]
                 commands=python -c "import sys; print(sys.executable); raise SystemExit(1)"
-            """
+            """,
         },
     )
     result = cmd("-e", "py")
@@ -55,7 +55,7 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
                     setuptools == 40.6.3
                 [testenv]
                 commands=python -c "import sys; print(sys.executable); raise SystemExit(1)"
-            """
+            """,
         },
     )
     monkeypatch.setenv(str("__PYVENV_LAUNCHER__"), sys.executable)
@@ -66,7 +66,7 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
 
 @pytest.mark.skipif(INFO.IS_PYPY, reason="TODO: process numbers work differently on pypy")
 @pytest.mark.skipif(
-    "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard"
+    "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard",
 )
 def test_provision_interrupt_child(initproj, monkeypatch, capfd):
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
@@ -84,7 +84,7 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd):
                     commands=python -c "import time; open('a', 'w').write('content'); \
                      time.sleep(10)"
                     basepython = python
-                """
+                """,
         },
     )
     cmd = [sys.executable, MAIN_FILE, "-v", "-v", "-e", "b"]
@@ -125,5 +125,5 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd):
 
     for process in all_process:
         assert not process.is_running(), "{}{}".format(
-            out, "\n".join(repr(i) for i in all_process)
+            out, "\n".join(repr(i) for i in all_process),
         )

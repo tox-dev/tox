@@ -24,7 +24,7 @@ def test_showconfig_with_force_dep_version(cmd, initproj):
         deps=
             dep1==2.3
             dep2
-        """
+        """,
         },
     )
     parser = load_config(("--showconfig",), cmd)
@@ -48,7 +48,7 @@ def setup_mixed_conf(initproj):
 
             [testenv:docs]
             changedir = docs
-            """
+            """,
         },
     )
 
@@ -120,8 +120,8 @@ def test_override_workdir(cmd, initproj):
         [tox]
         toxworkdir={}
         """.format(
-                baddir
-            )
+                baddir,
+            ),
         },
     )
     result = cmd("--workdir", gooddir, "--showconfig")

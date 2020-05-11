@@ -12,7 +12,7 @@ def test_jython_create(initproj, cmd):
                         skipsdist = true
                         envlist = jython
                         commands = python -c 'import sys; print(sys.executable)'
-                    """
+                    """,
         },
     )
     result = cmd("--notest", "-vvv")

@@ -8,7 +8,7 @@ def test_verbose_legacy_build(initproj, mock_venv, cmd):
             "tox.ini": """
                     [tox]
                     isolated_build = false
-                    """
+                    """,
         },
     )
     result = cmd("--sdistonly", "-vvv", "-e", "py")

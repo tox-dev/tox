@@ -77,10 +77,10 @@ def nonempty(x):
     return x
 
 
-def choice(*l):
+def choice(*line):
     def val(x):
-        if x not in l:
-            raise ValidationError("Please enter one of {}.".format(", ".join(l)))
+        if x not in line:
+            raise ValidationError("Please enter one of {}.".format(", ".join(line)))
         return x
 
     return val
@@ -120,7 +120,7 @@ def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=Non
                 else:
                     print(
                         "* Note: non-ASCII characters entered but terminal encoding unknown"
-                        " -> assuming UTF-8 or Latin-1."
+                        " -> assuming UTF-8 or Latin-1.",
                     )
                     try:
                         answer = answer.decode("utf-8")
@@ -143,7 +143,7 @@ def ask_user(map_):
         "This utility will ask you a few questions and then generate a simple configuration "
         "file to help get you started using tox.\n"
         "Please enter values for the following settings (just press Enter to accept a "
-        "default value, if one is given in brackets).\n"
+        "default value, if one is given in brackets).\n",
     )
     print(
         textwrap.dedent(
@@ -151,12 +151,12 @@ def ask_user(map_):
             [1] {}
             [2] py27, {}
             [3] (All versions) {}
-            [4] Choose each one-by-one"""
+            [4] Choose each one-by-one""",
         ).format(
             tox.PYTHON.CURRENT_RELEASE_ENV,
             tox.PYTHON.CURRENT_RELEASE_ENV,
             ", ".join(tox.PYTHON.QUICKSTART_PY_ENVS),
-        )
+        ),
     )
     do_prompt(
         map_,
@@ -189,8 +189,8 @@ def ask_user(map_):
             - pytest\n"
             - python -m unittest discover
             - python setup.py test
-            - trial package.module"""
-        )
+            - trial package.module""",
+        ),
     )
     do_prompt(
         map_,
@@ -242,7 +242,7 @@ def generate(map_):
         print(
             "Finished: {} has been created. For information on this file, "
             "see https://tox.readthedocs.io/en/latest/config.html\n"
-            "Execute `tox` to test your project.".format(targetpath)
+            "Execute `tox` to test your project.".format(targetpath),
         )
 
 
@@ -252,7 +252,7 @@ def prepare_content(content):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Command-line script to quickly tox config file for a Python project."
+        description="Command-line script to quickly tox config file for a Python project.",
     )
     parser.add_argument(
         "root",
@@ -262,7 +262,7 @@ def parse_args():
         help="Custom root directory to write config to. Defaults to current directory.",
     )
     parser.add_argument(
-        "--version", action="version", version="%(prog)s {}".format(tox.__version__)
+        "--version", action="version", version="%(prog)s {}".format(tox.__version__),
     )
     return parser.parse_args()
 

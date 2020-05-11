@@ -44,7 +44,7 @@ def test_depends(newconfig, capsys):
         [tox]
         [testenv:py]
         depends = py37, py36
-        """
+        """,
     )
     assert config.envconfigs["py"].depends == ("py37", "py36")
 
@@ -56,7 +56,7 @@ def test_depends_multi_row_facotr(newconfig, capsys):
         [testenv:py]
         depends = py37,
                   {py36}-{a,b}
-        """
+        """,
     )
     assert config.envconfigs["py"].depends == ("py37", "py36-a", "py36-b")
 
@@ -67,6 +67,6 @@ def test_depends_factor(newconfig, capsys):
         [tox]
         [testenv:py]
         depends = {py37, py36}-{cov,no}
-        """
+        """,
     )
     assert config.envconfigs["py"].depends == ("py37-cov", "py37-no", "py36-cov", "py36-no")
