@@ -36,7 +36,7 @@ the specified command in each of them.  With:
 
     tox -e py36
 
-you can run restrict the test run to the python3.6 environment.
+you can restrict the test run to the python3.6 environment.
 
 Available "default" test environments names are:
 
