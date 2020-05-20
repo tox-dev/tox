@@ -89,6 +89,21 @@ def test_showconfig(cmd, setup_mixed_conf, args, expected):
     assert found_sections == expected
 
 
+def test_showconfig_interpolation(cmd, initproj):
+    initproj(
+        "no_interpolation",
+        filedefs={
+            "tox.ini": """
+        [tox]
+        envlist = %s
+        [testenv:%s]
+        commands = python -c "print('works')"
+        """
+        },
+    )
+    load_config(("--showconfig",), cmd)
+
+
 def test_config_specific_ini(tmpdir, cmd):
     ini = tmpdir.ensure("hello.ini")
     output = load_config(("-c", ini, "--showconfig"), cmd)
