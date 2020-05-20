@@ -183,7 +183,7 @@ class RunResult:
 
     def __repr__(self):
         res = "RunResult(ret={}, args={!r}, out=\n{}\n, err=\n{})".format(
-            self.ret, self.args, self.out, self.err
+            self.ret, self.args, self.out, self.err,
         )
         if six.PY2:
             return res.encode("UTF-8")
@@ -197,13 +197,13 @@ class RunResult:
         msg = self.output()
         assert self.ret == 0, msg
         if is_run_test_env:
-            assert any("  congratulations :)" == l for l in reversed(self.outlines)), msg
+            assert any("  congratulations :)" == line for line in reversed(self.outlines)), msg
 
     def assert_fail(self, is_run_test_env=True):
         msg = self.output()
         assert self.ret, msg
         if is_run_test_env:
-            assert not any("  congratulations :)" == l for l in reversed(self.outlines)), msg
+            assert not any("  congratulations :)" == line for line in reversed(self.outlines)), msg
 
 
 class ReportExpectMock:
@@ -233,8 +233,8 @@ class ReportExpectMock:
             newindex += 1
         raise LookupError(
             "looking for {!r}, no reports found at >={:d} in {!r}".format(
-                cat, self._index + 1, self.instance.reported_lines
-            )
+                cat, self._index + 1, self.instance.reported_lines,
+            ),
         )
 
     def expect(self, cat, messagepattern="*", invert=False):
@@ -251,14 +251,14 @@ class ReportExpectMock:
                 if fnmatch(lmsg, messagepattern):
                     if invert:
                         raise AssertionError(
-                            "found {}({!r}), didn't expect it".format(cat, messagepattern)
+                            "found {}({!r}), didn't expect it".format(cat, messagepattern),
                         )
                     return
         if not invert:
             raise AssertionError(
                 "looking for {}({!r}), no reports found at >={:d} in {!r}".format(
-                    cat, messagepattern, self._index + 1, self.instance.reported_lines
-                )
+                    cat, messagepattern, self._index + 1, self.instance.reported_lines,
+                ),
             )
 
     def not_expect(self, cat, messagepattern="*"):
@@ -381,7 +381,7 @@ def initproj(tmpdir):
         base = tmpdir.join(name)
         src_root_path = _path_join(base, src_root)
         assert base == src_root_path or src_root_path.relto(
-            base
+            base,
         ), "`src_root` must be the constructed project folder or its direct or indirect subfolder"
 
         base.ensure(dir=1)
@@ -403,7 +403,7 @@ def initproj(tmpdir):
                 )
             """.format(
                         **locals()
-                    )
+                    ),
                 },
             )
         if not _filedefs_contains(base, filedefs, src_root_path.join(name)):
@@ -414,11 +414,11 @@ def initproj(tmpdir):
                         "__init__.py": textwrap.dedent(
                             '''
                 """ module {} """
-                __version__ = {!r}'''
+                __version__ = {!r}''',
                         )
                         .strip()
-                        .format(name, version)
-                    }
+                        .format(name, version),
+                    },
                 },
             )
         manifestlines = [

@@ -22,7 +22,7 @@ def test_parallel_inception(initproj, cmd):
                 [testenv]
                 commands =
                     python -c 'pass'
-                """
+                """,
             },
             # the outer test runs the inner tox and asserts all 3 envs were run
             "runner.py": """

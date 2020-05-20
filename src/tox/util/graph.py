@@ -10,7 +10,7 @@ def stable_topological_sort(graph):
     for values in list(graph.values()):
         for value in values:
             if value not in graph:
-                graph[value] = tuple()
+                graph[value] = ()
 
     inverse_graph = defaultdict(set)
     for key, depends in graph.items():

@@ -22,7 +22,7 @@ SIGNS_OF_SANITY = (
     "deps =",
     "commands =",
 )
-"""A bunch of elements to be expected in the generated config as marker for basic sanity"""
+# A bunch of elements to be expected in the generated config as marker for basic sanity
 
 
 class _answers:

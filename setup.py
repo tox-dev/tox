@@ -12,7 +12,7 @@ setup(
              from __future__ import unicode_literals
 
              __version__ = {version!r}
-             """
+             """,
         ).lstrip(),
     },
     package_dir={"": "src"},

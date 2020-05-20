@@ -15,7 +15,7 @@ def test_make_sdist_distshare(tmpdir, initproj):
         [tox]
         distshare={}
         """.format(
-                distshare
+                distshare,
             ),
         },
     )
@@ -45,8 +45,8 @@ def test_separate_sdist(cmd, initproj, tmpdir):
             distshare={}
             sdistsrc={{distshare}}/pkg123-0.7.zip
         """.format(
-                distshare
-            )
+                distshare,
+            ),
         },
     )
     result = cmd("--sdistonly", "-e", "py")

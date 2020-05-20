@@ -95,7 +95,7 @@ def run_parallel(config, venv_dict):
                     semaphore.acquire(blocking=True)
                     spinner.add(name)
                     thread = Thread(
-                        target=run_in_thread, args=(venv, os.environ.copy(), processes)
+                        target=run_in_thread, args=(venv, os.environ.copy(), processes),
                     )
                     thread.daemon = True
                     thread.start()
@@ -110,7 +110,7 @@ def run_parallel(config, venv_dict):
                 ]
         except KeyboardInterrupt:
             reporter.verbosity0(
-                "[{}] KeyboardInterrupt parallel - stopping children".format(os.getpid())
+                "[{}] KeyboardInterrupt parallel - stopping children".format(os.getpid()),
             )
             while True:
                 # do not allow to interrupt until children interrupt

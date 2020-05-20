@@ -120,7 +120,7 @@ class Spinner(object):
             self.clear()
         self.stream.write(
             "{} {} in {}{}".format(
-                status, key, td_human_readable(datetime.now() - start_at), os.linesep
+                status, key, td_human_readable(datetime.now() - start_at), os.linesep,
             ),
             **kwargs
         )

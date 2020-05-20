@@ -28,7 +28,7 @@ def test_provision_min_version_is_requires(newconfig, next_tox_major):
             [tox]
             minversion = {}
             """.format(
-                next_tox_major
+                next_tox_major,
             ),
         )
     config = context.value.config
@@ -64,7 +64,7 @@ def test_provision_basepython_global_only(newconfig, next_tox_major):
             [testenv]
             basepython = what
             """.format(
-                next_tox_major
+                next_tox_major,
             ),
         )
     config = context.value.config
@@ -83,7 +83,7 @@ def test_provision_basepython_local(newconfig, next_tox_major):
             [testenv:.tox]
             basepython = what
             """.format(
-                next_tox_major
+                next_tox_major,
             ),
         )
     config = context.value.config
@@ -126,7 +126,7 @@ def test_provision_cli_args_ignore(cmd, initproj, monkeypatch, plugin):
         return result
 
     monkeypatch.setattr(
-        tox.config.ParseIni, "ensure_requires_satisfied", ensure_requires_satisfied
+        tox.config.ParseIni, "ensure_requires_satisfied", ensure_requires_satisfied,
     )
     prev_get_venv = tox.session.Session.getvenv
 
@@ -197,13 +197,13 @@ def tox_wheel(wheel):
 def magic_non_canonical_wheel(wheel, tmp_path_factory):
     magic_proj = tmp_path_factory.mktemp("magic")
     (magic_proj / "setup.py").write_text(
-        "from setuptools import setup\nsetup(name='com.magic.this-is-fun')"
+        "from setuptools import setup\nsetup(name='com.magic.this-is-fun')",
     )
     return wheel(magic_proj)
 
 
 def test_provision_non_canonical_dep(
-    cmd, initproj, monkeypatch, tox_wheel, magic_non_canonical_wheel
+    cmd, initproj, monkeypatch, tox_wheel, magic_non_canonical_wheel,
 ):
     initproj(
         "w-0.1",
@@ -217,8 +217,8 @@ def test_provision_non_canonical_dep(
             [testenv:.tox]
             passenv = *
             """.format(
-                tox_wheel.name.split("-")[1]
-            )
+                tox_wheel.name.split("-")[1],
+            ),
         },
     )
     find_links = " ".join(
@@ -239,7 +239,7 @@ def test_provision_requirement_with_environment_marker(cmd, initproj):
             [tox]
             requires =
                 package-that-does-not-exist;python_version=="1.0"
-            """
+            """,
         },
     )
     result = cmd("-e", "py", "-vv")

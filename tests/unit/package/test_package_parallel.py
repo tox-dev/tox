@@ -18,7 +18,7 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
                   install_cmd = python -m -c 'print("ok")' -- {opts} {packages}'
                   [testenv]
                   commands = python -c 'import sys; print(sys.version)'
-                      """
+                      """,
         },
     )
     # we try to recreate the following situation

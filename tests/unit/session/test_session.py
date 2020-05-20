@@ -120,7 +120,7 @@ def venv_filter_project(initproj, cmd):
                     [testenv]
                     skip_install = true
                     commands = python -c 'print("{envname}")'
-                """
+                """,
             },
         )
         result = cmd(*args)
@@ -186,8 +186,8 @@ def popen_env_test(initproj, cmd, monkeypatch):
                [testenv:{}]
                commands = python -c "print('ok')"
                """.format(
-                "True" if isolated_build else "False", tox_env
-            )
+                "True" if isolated_build else "False", tox_env,
+            ),
         }
         if isolated_build:
             files[
@@ -232,7 +232,7 @@ def popen_env_test(initproj, cmd, monkeypatch):
                         ret = exception
                     finally:
                         res.popens.append(
-                            (activity_id, activity_name, kwargs.get("env"), ret, cmd)
+                            (activity_id, activity_name, kwargs.get("env"), ret, cmd),
                         )
                     return ret
 
@@ -303,7 +303,7 @@ def test_command_prev_post_ok(cmd, initproj, mock_venv):
             commands_pre = python -c 'print("pre")'
             commands = python -c 'print("command")'
             commands_post = python -c 'print("post")'
-        """
+        """,
         },
     )
     result = cmd()
@@ -320,8 +320,8 @@ def test_command_prev_post_ok(cmd, initproj, mock_venv):
           py: commands succeeded
           congratulations :)
     """.format(
-            "_" if sys.platform != "win32" else ""
-        )
+            "_" if sys.platform != "win32" else "",
+        ),
     ).lstrip()
     have = result.out.replace(os.linesep, "\n")
     actual = have[len(have) - len(expected) :]
@@ -340,7 +340,7 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
                 commands_pre = python -c 'raise SystemExit(2)'
                 commands = python -c 'print("command")'
                 commands_post = python -c 'print("post")'
-            """
+            """,
         },
     )
     result = cmd()
@@ -354,8 +354,8 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
             ___________________________________ summary ___________________________________{}
             ERROR:   py: commands failed
         """.format(
-            pipes.quote(sys.executable), "_" if sys.platform != "win32" else ""
-        )
+            pipes.quote(sys.executable), "_" if sys.platform != "win32" else "",
+        ),
     )
     have = result.out.replace(os.linesep, "\n")
     actual = have[len(have) - len(expected) :]

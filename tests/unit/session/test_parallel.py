@@ -100,8 +100,8 @@ def test_parallel_error_report(cmd, initproj, monkeypatch, live):
              raise SystemExit(17)"
             whitelist_externals = {}
         """.format(
-                sys.executable
-            )
+                sys.executable,
+            ),
         },
     )
     args = ["-o"] if live else []
@@ -133,7 +133,7 @@ whitelist_externals = {}
 commands =
     python -c '[print("hello world") for _ in range(5000)]'
 """.format(
-        sys.executable
+        sys.executable,
     )
 
     initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
@@ -152,7 +152,7 @@ whitelist_externals = {}
 commands =
     python -c '[print("hello world") for _ in range(1)]'
 """.format(
-        sys.executable
+        sys.executable,
     )
     cwd = initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
     log_dir = cwd / ".tox" / "e1" / "log"
@@ -186,7 +186,7 @@ commands =
     python -c 'import sys; sys.stderr.write("stderr always "); sys.stdout.write("stdout always ")'
 parallel_show_output = True
 """.format(
-        sys.executable
+        sys.executable,
     )
     initproj("pkg123-0.7", filedefs={"tox.ini": tox_ini})
     result = cmd("-p", "all")
@@ -209,7 +209,7 @@ def parallel_project(initproj):
             [testenv]
             skip_install = True
             commands=python -c "import sys; print(sys.executable)"
-        """
+        """,
         },
     )
 
@@ -255,7 +255,7 @@ def ensure_key_in_env(serial_data):
     for env in ("a", "b"):
         for key in ("setup", "test"):
             assert key in serial_data["testenvs"][env], json.dumps(
-                serial_data["testenvs"], indent=2
+                serial_data["testenvs"], indent=2,
             )
 
 

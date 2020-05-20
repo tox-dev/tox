@@ -28,7 +28,7 @@ def test_getsupportedinterpreter(monkeypatch, newconfig, mocksession):
         [testenv:python]
         basepython={}
         """.format(
-            sys.executable
+            sys.executable,
         ),
     )
     mocksession.new_config(config)
@@ -1061,13 +1061,13 @@ def test_tox_testenv_interpret_shebang_long_example(tmpdir):
     testfile.write(
         "#!this-is-an-example-of-a-very-long-interpret-directive-what-should-"
         "be-directly-invoked-when-tox-needs-to-invoked-the-provided-script-"
-        "name-in-the-argument-list"
+        "name-in-the-argument-list",
     )
     args = prepend_shebang_interpreter(base_args)
     expected = [
         "this-is-an-example-of-a-very-long-interpret-directive-what-should-be-"
         "directly-invoked-when-tox-needs-to-invoked-the-provided-script-name-"
-        "in-the-argument-list"
+        "in-the-argument-list",
     ]
 
     assert args == expected + base_args
@@ -1081,7 +1081,7 @@ def test_create_download(mocksession, newconfig, download):
         [testenv:env]
         {}
         """.format(
-            "download={}".format(download) if download else ""
+            "download={}".format(download) if download else "",
         ),
     )
     mocksession.new_config(config)

@@ -27,7 +27,7 @@ class TestSession:
             action.popen(["echo"])
             match = mocksession.report.getnext("logpopen")
             log_name = py.path.local(match[1].split(">")[-1].strip()).relto(
-                mocksession.config.logdir
+                mocksession.config.logdir,
             )
             assert log_name == "what-0.log"
 
@@ -85,7 +85,7 @@ def test_notoxini_help_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={"tests": {"test_hello.py": "def test_hello(): pass"}})
     result = cmd("-h")
     assert result.out.startswith("usage: ")
-    assert any("--help" in l for l in result.outlines), result.outlines
+    assert any("--help" in line for line in result.outlines), result.outlines
     result.assert_success(is_run_test_env=False)
 
 
@@ -99,7 +99,7 @@ def test_notoxini_noerror_in_help(initproj, cmd):
 def test_notoxini_help_ini_still_works(initproj, cmd):
     initproj("example123-0.5", filedefs={"tests": {"test_hello.py": "def test_hello(): pass"}})
     result = cmd("--help-ini")
-    assert any("setenv" in l for l in result.outlines), result.outlines
+    assert any("setenv" in line for line in result.outlines), result.outlines
     result.assert_success(is_run_test_env=False)
 
 
@@ -136,13 +136,13 @@ def test_envdir_equals_toxini_errors_out(cmd, initproj):
             "tox.ini": """
             [testenv]
             envdir={toxinidir}
-        """
+        """,
         },
     )
     result = cmd()
     assert result.outlines[1] == "ERROR: ConfigError: envdir must not equal toxinidir"
     assert re.match(
-        r"ERROR: venv \'python\' in .* would delete project", result.outlines[0]
+        r"ERROR: venv \'python\' in .* would delete project", result.outlines[0],
     ), result.outlines[0]
     result.assert_fail()
 
@@ -157,7 +157,7 @@ def test_envdir_would_delete_some_directory(cmd, initproj):
                 [testenv:venv]
                 envdir=example
                 commands=
-            """
+            """,
         },
     )
 
@@ -180,7 +180,7 @@ def test_run_custom_install_command_error(cmd, initproj):
             "tox.ini": """
             [testenv]
             install_command=./tox.ini {opts} {packages}
-        """
+        """,
         },
     )
     result = cmd()
@@ -237,7 +237,7 @@ def test_unknown_interpreter(cmd, initproj):
     result = cmd()
     result.assert_fail()
     assert any(
-        "ERROR: InterpreterNotFound: xyz_unknown_interpreter" == l for l in result.outlines
+        "ERROR: InterpreterNotFound: xyz_unknown_interpreter" == line for line in result.outlines
     ), result.outlines
 
 
@@ -257,8 +257,8 @@ def test_skip_platform_mismatch(cmd, initproj):
     result.assert_success()
     assert any(
         "SKIPPED:  python: platform mismatch ({!r} does not match 'x123')".format(sys.platform)
-        == l
-        for l in result.outlines
+        == line
+        for line in result.outlines
     ), result.outlines
 
 
@@ -278,7 +278,7 @@ def test_skip_unknown_interpreter(cmd, initproj):
     result = cmd("--skip-missing-interpreters")
     result.assert_success()
     msg = "SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter"
-    assert any(msg == l for l in result.outlines), result.outlines
+    assert any(msg == line for line in result.outlines), result.outlines
 
 
 def test_skip_unknown_interpreter_result_json(cmd, initproj, tmpdir):
@@ -298,7 +298,7 @@ def test_skip_unknown_interpreter_result_json(cmd, initproj, tmpdir):
     result = cmd("--skip-missing-interpreters", "--result-json", report_path)
     result.assert_success()
     msg = "SKIPPED:  python: InterpreterNotFound: xyz_unknown_interpreter"
-    assert any(msg == l for l in result.outlines), result.outlines
+    assert any(msg == line for line in result.outlines), result.outlines
     setup_result_from_json = json.load(report_path)["testenvs"]["python"]["setup"]
     for setup_step in setup_result_from_json:
         assert "InterpreterNotFound" in setup_step["output"]
@@ -355,7 +355,7 @@ def test_unknown_environment_with_envlist(cmd, initproj):
             "tox.ini": """
             [tox]
             envlist = py{36,37}-django{20,21}
-        """
+        """,
         },
     )
     result = cmd("-e", "py36-djagno21")
@@ -408,7 +408,9 @@ def test_minimal_setup_py_non_functional(cmd, initproj):
     )
     result = cmd()
     result.assert_fail()
-    assert any(re.match(r".*ERROR.*check setup.py.*", l) for l in result.outlines), result.outlines
+    assert any(
+        re.match(r".*ERROR.*check setup.py.*", line) for line in result.outlines
+    ), result.outlines
 
 
 def test_sdist_fails(cmd, initproj):
@@ -425,7 +427,7 @@ def test_sdist_fails(cmd, initproj):
     result = cmd()
     result.assert_fail()
     assert any(
-        re.match(r".*FAIL.*could not package project.*", l) for l in result.outlines
+        re.match(r".*FAIL.*could not package project.*", line) for line in result.outlines
     ), result.outlines
 
 
@@ -436,15 +438,15 @@ def test_no_setup_py_exits(cmd, initproj):
             "tox.ini": """
             [testenv]
             commands=python -c "2 + 2"
-        """
+        """,
         },
     )
     os.remove("setup.py")
     result = cmd()
     result.assert_fail()
     assert any(
-        re.match(r".*ERROR.*No pyproject.toml or setup.py file found.*", l)
-        for l in result.outlines
+        re.match(r".*ERROR.*No pyproject.toml or setup.py file found.*", line)
+        for line in result.outlines
     ), result.outlines
 
 
@@ -455,7 +457,7 @@ def test_no_setup_py_exits_but_pyproject_toml_does(cmd, initproj):
             "tox.ini": """
             [testenv]
             commands=python -c "2 + 2"
-        """
+        """,
         },
     )
     os.remove("setup.py")
@@ -463,11 +465,11 @@ def test_no_setup_py_exits_but_pyproject_toml_does(cmd, initproj):
     result = cmd()
     result.assert_fail()
     assert any(
-        re.match(r".*ERROR.*pyproject.toml file found.*", l) for l in result.outlines
+        re.match(r".*ERROR.*pyproject.toml file found.*", line) for line in result.outlines
     ), result.outlines
     assert any(
-        re.match(r".*To use a PEP 517 build-backend you are required to*", l)
-        for l in result.outlines
+        re.match(r".*To use a PEP 517 build-backend you are required to*", line)
+        for line in result.outlines
     ), result.outlines
 
 
@@ -505,7 +507,7 @@ def example123(initproj):
                 "test_hello.py": """
                 def test_hello(pytestconfig):
                     pass
-            """
+            """,
             },
             "tox.ini": """
             [testenv]
@@ -522,7 +524,7 @@ def test_toxuone_env(cmd, example123):
     result = cmd()
     result.assert_success()
     assert re.match(
-        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL
+        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL,
     )
     result = cmd("-epython")
     result.assert_success()
@@ -558,7 +560,7 @@ def test_result_json(cmd, initproj, example123):
                        python -c 'print("1"); raise SystemExit(2)'
                        python -c 'print("SHOULD NOT HAPPEN")'
             commands_post = python -c 'print("END")'
-        """
+        """,
         },
     )
     json_path = cwd / "res.json"
@@ -595,7 +597,7 @@ def test_developz(initproj, cmd):
         "example123",
         filedefs={
             "tox.ini": """
-    """
+    """,
         },
     )
     result = cmd("-vv", "--develop")
@@ -610,7 +612,7 @@ def test_usedevelop(initproj, cmd):
             "tox.ini": """
             [testenv]
             usedevelop=True
-    """
+    """,
         },
     )
     result = cmd("-vv")
@@ -627,7 +629,7 @@ def test_usedevelop_mixed(initproj, cmd):
             usedevelop=True
             [testenv:nondev]
             usedevelop=False
-    """
+    """,
         },
     )
 
@@ -654,7 +656,7 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
                 "test_hello.py": """
                 def test_hello(pytestconfig):
                     pass
-            """
+            """,
             },
             "tox.ini": """
             [testenv]
@@ -666,14 +668,14 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
             + """
             skipsdist={}
         """.format(
-                skipsdist
+                skipsdist,
             ),
         },
     )
     result = cmd("-v")
     result.assert_success()
     assert re.match(
-        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL
+        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL,
     )
     assert "sdist-make" not in result.out
     result = cmd("-epython")
@@ -704,7 +706,7 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
     result.assert_fail()
     assert "develop-inst-noop" in result.out
     assert re.match(
-        r".*\W+1\W+failed.*" r"summary.*" r"python:\W+commands\W+failed.*", result.out, re.DOTALL
+        r".*\W+1\W+failed.*" r"summary.*" r"python:\W+commands\W+failed.*", result.out, re.DOTALL,
     )
 
     # test develop is called if setup.py changes
@@ -747,7 +749,9 @@ def _alwayscopy_not_supported():
     try:
         with open(os.devnull) as fp:
             subprocess.check_call(
-                [sys.executable, "-m", "virtualenv", "--always-copy", tmpdir], stdout=fp, stderr=fp
+                [sys.executable, "-m", "virtualenv", "--always-copy", tmpdir],
+                stdout=fp,
+                stderr=fp,
             )
     except subprocess.CalledProcessError:
         supported = False
@@ -768,7 +772,7 @@ def test_alwayscopy(initproj, cmd):
             [testenv]
             commands={envpython} --version
             alwayscopy=True
-    """
+    """,
         },
     )
     result = cmd("-vv")
@@ -783,7 +787,7 @@ def test_alwayscopy_default(initproj, cmd):
             "tox.ini": """
             [testenv]
             commands={envpython} --version
-    """
+    """,
         },
     )
     result = cmd("-vv")
@@ -800,7 +804,7 @@ def test_empty_activity_ignored(initproj, cmd):
             [testenv]
             list_dependencies_command=echo
             commands={envpython} --version
-    """
+    """,
         },
     )
     result = cmd()
@@ -818,7 +822,7 @@ def test_empty_activity_shown_verbose(initproj, cmd):
             list_dependencies_command=echo
             commands={envpython} --version
             whitelist_externals = echo
-    """
+    """,
         },
     )
     result = cmd("-v")
@@ -834,7 +838,7 @@ def test_test_piphelp(initproj, cmd):
             # content of: tox.ini
             [testenv]
             commands=pip -h
-    """
+    """,
         },
     )
     result = cmd("-vv")
@@ -850,8 +854,8 @@ def test_notest(initproj, cmd):
             [testenv:py26]
             basepython={}
             """.format(
-                sys.executable
-            )
+                sys.executable,
+            ),
         },
     )
     result = cmd("-v", "--notest")
@@ -988,7 +992,7 @@ def test_envsitepackagesdir(cmd, initproj):
         [testenv]
         commands=
             python -c "print(r'X:{envsitepackagesdir}')"
-    """
+    """,
         },
     )
     result = cmd()
@@ -1005,7 +1009,7 @@ def test_envsitepackagesdir_skip_missing_issue280(cmd, initproj):
         basepython=/usr/bin/qwelkjqwle
         commands=
             {envsitepackagesdir}
-    """
+    """,
         },
     )
     result = cmd("--skip-missing-interpreters")
@@ -1020,7 +1024,7 @@ def test_verbosity(cmd, initproj, verbosity):
         filedefs={
             "tox.ini": """
         [testenv]
-    """
+    """,
         },
     )
     result = cmd(verbosity)
@@ -1069,7 +1073,7 @@ def test_missing_env_fails(initproj, cmd):
     result.assert_fail()
     assert result.out.endswith(
         "foo: unresolvable substitution(s): 'VAR'."
-        " Environment variables are missing or defined recursively.\n"
+        " Environment variables are missing or defined recursively.\n",
     )
 
 
@@ -1106,7 +1110,7 @@ def test_exit_code(initproj, cmd, exit_code, mocker):
 
     mocker.spy(tox.exception, "exit_code_str")
     tox_ini_content = "[testenv:foo]\ncommands=python -c 'import sys; sys.exit({:d})'".format(
-        exit_code
+        exit_code,
     )
     initproj("foo", filedefs={"tox.ini": tox_ini_content})
     cmd()

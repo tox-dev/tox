@@ -32,10 +32,10 @@ def generate_draft_news():
             path.write_text(re.sub(pattern, replacement, path.read_text()))
     env = os.environ.copy()
     env["PATH"] += os.pathsep.join(
-        [os.path.dirname(sys.executable)] + env["PATH"].split(os.pathsep)
+        [os.path.dirname(sys.executable)] + env["PATH"].split(os.pathsep),
     )
     changelog = subprocess.check_output(
-        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR), env=env
+        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR), env=env,
     ).decode("utf-8")
     if "No significant changes" in changelog:
         content = ""
@@ -77,7 +77,7 @@ html_theme_options = {
     "fixed_sidebar": "false",
 }
 html_sidebars = {
-    "**": ["about.html", "localtoc.html", "relations.html", "searchbox.html", "donate.html"]
+    "**": ["about.html", "localtoc.html", "relations.html", "searchbox.html", "donate.html"],
 }
 html_show_sourcelink = False
 html_static_path = ["_static"]

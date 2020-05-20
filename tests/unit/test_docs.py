@@ -52,5 +52,5 @@ def test_all_rst_ini_blocks_parse(filename, tmpdir):
                     lineno=contents[: match.start()].count("\n") + 1,
                     code="\t" + code.replace("\n", "\n\t").strip(),
                     error=e,
-                )
+                ),
             )
