@@ -88,6 +88,7 @@ def test_showconfig(cmd, setup_mixed_conf, args, expected):
     found_sections = parser.sections()
     assert found_sections == expected
 
+
 def test_showconfig_interpolation(cmd, initproj):
     initproj(
         "no_interpolation",
@@ -100,7 +101,7 @@ def test_showconfig_interpolation(cmd, initproj):
         """
         },
     )
-    parser = load_config(("--showconfig",), cmd)
+    load_config(("--showconfig",), cmd)
 
 
 def test_config_specific_ini(tmpdir, cmd):
