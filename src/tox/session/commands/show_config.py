@@ -19,7 +19,7 @@ DO_NOT_SHOW_CONFIG_ATTRIBUTES = (
 
 
 def show_config(config):
-    parser = configparser.ConfigParser()
+    parser = configparser.RawConfigParser()
 
     if not config.envlist_explicit or reporter.verbosity() >= reporter.Verbosity.INFO:
         tox_info(config, parser)

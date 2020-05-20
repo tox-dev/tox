@@ -1,0 +1,1 @@
+``tox --showconfig`` no longer tries to interpolate '%' signs.
