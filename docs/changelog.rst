@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.15.1 (2020-05-20)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- ``tox --showconfig`` no longer tries to interpolate '%' signs.
+  `#1585 <https://github.com/tox-dev/tox/issues/1585>`_
+
+
 v3.15.0 (2020-05-02)
 --------------------
 
