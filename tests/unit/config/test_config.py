@@ -175,11 +175,12 @@ class TestVenvConfig:
         assert DepOption._is_same_dep("pkg_hello-world3==1.0", "pkg_hello-world3<=2.0")
         assert not DepOption._is_same_dep("pkg_hello-world3==1.0", "otherpkg>=2.0")
 
-    def test_interrupt_terminate_timeout_set_manually(self, newconfig):
+    def test_suicide_interrupt_terminate_timeout_set_manually(self, newconfig):
         config = newconfig(
             [],
             """
             [testenv:dev]
+            suicide_timeout = 30.0
             interrupt_timeout = 5.0
             terminate_timeout = 10.0
 
@@ -187,10 +188,12 @@ class TestVenvConfig:
         """,
         )
         envconfig = config.envconfigs["other"]
+        assert 0.0 == envconfig.suicide_timeout
         assert 0.3 == envconfig.interrupt_timeout
         assert 0.2 == envconfig.terminate_timeout
 
         envconfig = config.envconfigs["dev"]
+        assert 30.0 == envconfig.suicide_timeout
         assert 5.0 == envconfig.interrupt_timeout
         assert 10.0 == envconfig.terminate_timeout
 

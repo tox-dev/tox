@@ -53,6 +53,7 @@ hookimpl = tox.hookimpl
 
 WITHIN_PROVISION = os.environ.get(str("TOX_PROVISION")) == "1"
 
+SUICIDE_TIMEOUT = 0.0
 INTERRUPT_TIMEOUT = 0.3
 TERMINATE_TIMEOUT = 0.2
 
@@ -826,6 +827,13 @@ def tox_addoption(parser):
     )
 
     parser.add_testenv_attribute_obj(DepOption())
+
+    parser.add_testenv_attribute(
+        name="suicide_timeout",
+        type="float",
+        default=SUICIDE_TIMEOUT,
+        help="timeout to allow process to exit before sending SIGINT",
+    )
 
     parser.add_testenv_attribute(
         name="interrupt_timeout",
