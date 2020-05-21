@@ -160,22 +160,6 @@ Global settings are defined under the ``tox`` section as:
     Name of the virtual environment used to create a source distribution from the
     source tree.
 
-.. conf:: interrupt_timeout ^ float ^ 0.3
-
-    .. versionadded:: 3.15.0
-
-    When tox is interrupted, it propagates the signal to the child process,
-    waits :conf:``interrupt_timeout`` seconds, and sends it a SIGTERM if it hasn't
-    exited.
-
-.. conf:: terminate_timeout ^ float ^ 0.2
-
-    .. versionadded:: 3.15.0
-
-    When tox is interrupted, it propagates the signal to the child process,
-    waits :conf:``interrupt_timeout`` seconds, sends it a SIGTERM, waits
-    :conf:``terminate_timeout`` seconds, and sends it a SIGKILL if it hasn't exited.
-
 Jenkins override
 ++++++++++++++++
 
@@ -596,6 +580,22 @@ Complete list of settings that you can put into ``testenv*`` sections:
        ``depends`` does not pull in dependencies into the run target, for example if you select ``py27,py36,coverage``
        via the ``-e`` tox will only run those three (even if ``coverage`` may specify as ``depends`` other targets too -
        such as ``py27, py35, py36, py37``).
+
+.. conf:: interrupt_timeout ^ float ^ 0.3
+
+    .. versionadded:: 3.15.0
+
+    When tox is interrupted, it propagates the signal to the child process,
+    waits :conf:``interrupt_timeout`` seconds, and sends it a SIGTERM if it hasn't
+    exited.
+
+.. conf:: terminate_timeout ^ float ^ 0.2
+
+    .. versionadded:: 3.15.0
+
+    When tox is interrupted, it propagates the signal to the child process,
+    waits :conf:``interrupt_timeout`` seconds, sends it a SIGTERM, waits
+    :conf:``terminate_timeout`` seconds, and sends it a SIGKILL if it hasn't exited.
 
 Substitutions
 -------------
