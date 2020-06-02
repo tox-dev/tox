@@ -1,0 +1,1 @@
+Allow to run the tests with pip 19.3.1 once again while preserving the ability to use pip 20.1 - by :user:`hroncok`

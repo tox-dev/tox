@@ -337,7 +337,7 @@ def test_venv_special_chars_issue252(cmd, initproj):
     )
     result = cmd()
     result.assert_success()
-    pattern = re.compile("special&&1 installed: .*pkg123 @ .*-0.7.zip.*")
+    pattern = re.compile(r"special&&1 installed: .*pkg123( @ .*-|==)0\.7(\.zip)?.*")
     assert any(pattern.match(line) for line in result.outlines), "\n".join(result.outlines)
 
 
