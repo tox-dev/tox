@@ -19,7 +19,7 @@ import py
 import tox
 from tox import reporter
 from tox.action import Action
-from tox.config import INTERRUPT_TIMEOUT, TERMINATE_TIMEOUT, parseconfig
+from tox.config import INTERRUPT_TIMEOUT, SUICIDE_TIMEOUT, TERMINATE_TIMEOUT, parseconfig
 from tox.config.parallel import ENV_VAR_KEY_PRIVATE as PARALLEL_ENV_VAR_KEY_PRIVATE
 from tox.config.parallel import OFF_VALUE as PARALLEL_OFF
 from tox.logs.result import ResultLog
@@ -170,6 +170,7 @@ class Session(object):
             self.resultlog.command_log,
             self.popen,
             sys.executable,
+            SUICIDE_TIMEOUT,
             INTERRUPT_TIMEOUT,
             TERMINATE_TIMEOUT,
         )

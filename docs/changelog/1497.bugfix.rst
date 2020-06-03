@@ -1,0 +1,1 @@
+Add an option to allow a process to suicide before sending the SIGTERM. - by :user:`jhesketh`

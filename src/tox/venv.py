@@ -130,6 +130,7 @@ class VirtualEnv(object):
             command_log,
             self.popen,
             self.envconfig.envpython,
+            self.envconfig.suicide_timeout,
             self.envconfig.interrupt_timeout,
             self.envconfig.terminate_timeout,
         )
