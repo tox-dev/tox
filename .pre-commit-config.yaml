@@ -13,10 +13,6 @@ repos:
   - id: debug-statements
   - id: end-of-file-fixer
   - id: trailing-whitespace
-- repo: https://github.com/asottile/add-trailing-comma
-  rev: v2.0.1
-  hooks:
-  - id: add-trailing-comma
 - repo: https://github.com/asottile/pyupgrade
   rev: v2.4.3
   hooks:
@@ -46,6 +42,10 @@ repos:
     additional_dependencies:
     - black==19.10b0
     language_version: python3.8
+- repo: https://github.com/asottile/add-trailing-comma
+  rev: v2.0.1
+  hooks:
+  - id: add-trailing-comma
 - repo: https://github.com/pre-commit/pygrep-hooks
   rev: v1.5.1
   hooks:

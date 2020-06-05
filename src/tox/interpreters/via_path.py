@@ -38,7 +38,7 @@ def exe_spec(python_exe, base):
             info = get_python_info(python_exe)
             if info is not None:
                 found = PythonSpec(
-                    info["name"],
+                    "pypy" if info["implementation"] == "PyPy" else "python",
                     info["version_info"][0],
                     info["version_info"][1],
                     64 if info["is_64"] else 32,

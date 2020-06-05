@@ -1,0 +1,1 @@
+PyPy 7.3.1 on Windows uses the ``Script`` folder instead of ``bin``. - by :user:`gaborbernat`

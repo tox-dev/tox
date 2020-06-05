@@ -955,10 +955,17 @@ class TestenvConfig:
 
     def get_envbindir(self):
         """Path to directory where scripts/binaries reside."""
-        if tox.INFO.IS_WIN and "jython" not in self.basepython and "pypy" not in self.basepython:
-            return self.envdir.join("Scripts")
-        else:
-            return self.envdir.join("bin")
+        is_bin = (
+            isinstance(self.python_info, NoInterpreterInfo)
+            or tox.INFO.IS_WIN is False
+            or self.python_info.implementation == "Jython"
+            or (
+                tox.INFO.IS_WIN
+                and self.python_info.implementation == "PyPy"
+                and self.python_info.extra_version_info < (7, 3, 1)
+            )
+        )
+        return self.envdir.join("bin" if is_bin else "Scripts")
 
     @property
     def envbindir(self):

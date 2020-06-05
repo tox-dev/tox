@@ -59,13 +59,16 @@ def run_and_get_interpreter_info(name, executable):
     try:
         result = get_python_info(str(executable))
         result["version_info"] = tuple(result["version_info"])  # fix json dump transformation
-        del result["name"]
+        if result["extra_version_info"] is not None:
+            result["extra_version_info"] = tuple(
+                result["extra_version_info"],
+            )  # fix json dump transformation
         del result["version"]
         result["executable"] = str(executable)
     except ExecFailed as e:
         return NoInterpreterInfo(name, executable=e.executable, out=e.out, err=e.err)
     else:
-        return InterpreterInfo(name, **result)
+        return InterpreterInfo(**result)
 
 
 def exec_on_interpreter(*args):
@@ -93,12 +96,16 @@ class ExecFailed(Exception):
 
 
 class InterpreterInfo:
-    def __init__(self, name, executable, version_info, sysplatform, is_64):
-        self.name = name
+    def __init__(
+        self, implementation, executable, version_info, sysplatform, is_64, extra_version_info,
+    ):
+        self.implementation = implementation
         self.executable = executable
+
         self.version_info = version_info
         self.sysplatform = sysplatform
         self.is_64 = is_64
+        self.extra_version_info = extra_version_info
 
     def __str__(self):
         return "<executable at {}, version_info {}>".format(self.executable, self.version_info)

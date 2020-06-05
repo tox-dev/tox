@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import os
+import platform
 import stat
 import subprocess
 import sys
@@ -101,7 +102,7 @@ def test_run_and_get_interpreter_info():
     name = os.path.basename(sys.executable)
     info = run_and_get_interpreter_info(name, sys.executable)
     assert info.version_info == tuple(sys.version_info)
-    assert info.name == name
+    assert info.implementation == platform.python_implementation()
     assert info.executable == sys.executable
 
 
@@ -186,16 +187,16 @@ def test_exec_failed():
 class TestInterpreterInfo:
     @staticmethod
     def info(
-        name="my-name",
+        implementation="CPython",
         executable="my-executable",
         version_info="my-version-info",
         sysplatform="my-sys-platform",
     ):
-        return InterpreterInfo(name, executable, version_info, sysplatform, True)
+        return InterpreterInfo(implementation, executable, version_info, sysplatform, True, None)
 
     def test_data(self):
         x = self.info("larry", "moe", "shemp", "curly")
-        assert x.name == "larry"
+        assert x.implementation == "larry"
         assert x.executable == "moe"
         assert x.version_info == "shemp"
         assert x.sysplatform == "curly"
