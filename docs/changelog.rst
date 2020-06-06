@@ -11,6 +11,25 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.15.2 (2020-06-06)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Add an option to allow a process to suicide before sending the SIGTERM. - by :user:`jhesketh`
+  `#1497 <https://github.com/tox-dev/tox/issues/1497>`_
+- PyPy 7.3.1 on Windows uses the ``Script`` folder instead of ``bin``. - by :user:`gaborbernat`
+  `#1597 <https://github.com/tox-dev/tox/issues/1597>`_
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- Allow to run the tests with pip 19.3.1 once again while preserving the ability to use pip 20.1 - by :user:`hroncok`
+  `#1594 <https://github.com/tox-dev/tox/issues/1594>`_
+
+
 v3.15.1 (2020-05-20)
 --------------------
 
