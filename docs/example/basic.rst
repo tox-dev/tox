@@ -104,21 +104,21 @@ runs on you can set a platform regular expression like this:
 If the expression does not match against ``sys.platform``
 the test environment will be skipped.
 
-whitelisting non-virtualenv commands
+allowing non-virtualenv commands
 -----------------------------------------------
 
 .. versionadded:: 1.5
 
 Sometimes you may want to use tools not contained in your
 virtualenv such as ``make``, ``bash`` or others. To avoid
-warnings you can use the ``whitelist_externals`` testenv
+warnings you can use the ``allowlist_externals`` testenv
 configuration:
 
 .. code-block:: ini
 
     # content of tox.ini
     [testenv]
-    whitelist_externals = make
+    allowlist_externals = make
                           /bin/bash
 
 

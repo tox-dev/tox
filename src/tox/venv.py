@@ -169,7 +169,7 @@ class VirtualEnv(object):
 
         - If it's a local path we will rewrite it as as a relative path.
         - If venv is True we will check if the command is coming from the venv
-          or is whitelisted to come from external.
+          or is allowed to come from external.
         """
         name = str(name)
         if os.path.isabs(name):
@@ -180,7 +180,7 @@ class VirtualEnv(object):
                 return str(path)
 
         if venv:
-            path = self._venv_lookup_and_check_external_whitelist(name)
+            path = self._venv_lookup_and_check_external_allowlist(name)
         else:
             path = self._normal_lookup(name)
 
@@ -191,7 +191,7 @@ class VirtualEnv(object):
 
         return str(path)  # will not be rewritten for reporting
 
-    def _venv_lookup_and_check_external_whitelist(self, name):
+    def _venv_lookup_and_check_external_allowlist(self, name):
         path = self._venv_lookup(name)
         if path is None:
             path = self._normal_lookup(name)
@@ -212,7 +212,7 @@ class VirtualEnv(object):
                 "  cmd: {}\n"
                 "  env: {}\n"
                 "Maybe you forgot to specify a dependency? "
-                "See also the whitelist_externals envconfig setting.\n\n"
+                "See also the allowlist_externals envconfig setting.\n\n"
                 "DEPRECATION WARNING: this will be an error in tox 4 and above!".format(
                     path, self.envconfig.envdir,
                 ),
@@ -223,7 +223,16 @@ class VirtualEnv(object):
         if tox.INFO.IS_WIN:
             tryadd += [os.path.normcase(x) for x in os.environ["PATHEXT"].split(os.pathsep)]
             p = py.path.local(os.path.normcase(str(p)))
-        for x in self.envconfig.whitelist_externals:
+
+        if self.envconfig.allowlist_externals and self.envconfig.whitelist_externals:
+            raise tox.exception.ConfigError(
+                "Either whitelist_externals or allowlist_externals might be specified, not both",
+            )
+
+        allowed_externals = (
+            self.envconfig.whitelist_externals or self.envconfig.allowlist_externals
+        )
+        for x in allowed_externals:
             for add in tryadd:
                 if p.fnmatch(x + add):
                     return True

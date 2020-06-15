@@ -119,7 +119,7 @@ tox will take care of environment isolation for you: it will strip away all oper
 environment variables not specified via :conf:`passenv`. Furthermore, it will also alter the
 ``PATH`` variable so that your commands resolve first and foremost within the current active
 tox environment. In general all executables in the path are available in ``commands``, but tox will
-emit a warning if it was not explicitly allowed via :conf:`whitelist_externals`.
+emit a warning if it was not explicitly allowed via :conf:`allowlist_externals`.
 
 Current features
 -------------------

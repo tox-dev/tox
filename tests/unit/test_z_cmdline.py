@@ -821,7 +821,7 @@ def test_empty_activity_shown_verbose(initproj, cmd):
             [testenv]
             list_dependencies_command=echo
             commands={envpython} --version
-            whitelist_externals = echo
+            allowlist_externals = echo
     """,
         },
     )
