@@ -57,6 +57,11 @@ SUICIDE_TIMEOUT = 0.0
 INTERRUPT_TIMEOUT = 0.3
 TERMINATE_TIMEOUT = 0.2
 
+_FACTOR_LINE_PATTERN = re.compile(r"^([\w{}\.!,-]+)\:\s+(.+)")
+_ENVSTR_SPLIT_PATTERN = re.compile(r"((?:\{[^}]+\})+)|,")
+_ENVSTR_EXPAND_PATTERN = re.compile(r"\{([^}]+)\}")
+_WHITESPACE_PATTERN = re.compile(r"\s+")
+
 
 def get_plugin_manager(plugins=()):
     # initialize plugin manager
@@ -1438,12 +1443,12 @@ def _split_factor_expr_all(expr):
 
 def _expand_envstr(envstr):
     # split by commas not in groups
-    tokens = re.split(r"((?:\{[^}]+\})+)|,", envstr)
+    tokens = _ENVSTR_SPLIT_PATTERN.split(envstr)
     envlist = ["".join(g).strip() for k, g in itertools.groupby(tokens, key=bool) if k]
 
     def expand(env):
-        tokens = re.split(r"\{([^}]+)\}", env)
-        parts = [re.sub(r"\s+", "", token).split(",") for token in tokens]
+        tokens = _ENVSTR_EXPAND_PATTERN.split(env)
+        parts = [_WHITESPACE_PATTERN.sub("", token).split(",") for token in tokens]
         return ["".join(variant) for variant in itertools.product(*parts)]
 
     return mapcat(expand, envlist)
@@ -1607,7 +1612,7 @@ class SectionReader:
 
     def _apply_factors(self, s):
         def factor_line(line):
-            m = re.search(r"^([\w{}\.!,-]+)\:\s+(.+)", line)
+            m = _FACTOR_LINE_PATTERN.search(line)
             if not m:
                 return line
 
