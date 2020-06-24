@@ -1,0 +1,1 @@
+Remove threading from config parsing for performance improvements - by :user:`brettlangdon`
