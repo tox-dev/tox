@@ -13,7 +13,6 @@ import warnings
 from collections import OrderedDict
 from fnmatch import fnmatchcase
 from subprocess import list2cmdline
-from threading import Thread
 
 import pluggy
 import py
@@ -1147,16 +1146,8 @@ class ParseIni(object):
                 known_factors.update(env.split("-"))
 
         # configure testenvs
-        to_do = []
         failures = OrderedDict()
         results = {}
-        cur_self = self
-
-        def run(name, section, subs, config):
-            try:
-                results[name] = cur_self.make_envconfig(name, section, subs, config)
-            except Exception as exception:
-                failures[name] = (exception, traceback.format_exc())
 
         order = []
         for name in all_envs:
@@ -1170,13 +1161,11 @@ class ParseIni(object):
                 )
             ):
                 order.append(name)
-                thread = Thread(target=run, args=(name, section, reader._subs, config))
-                thread.daemon = True
-                thread.start()
-                to_do.append(thread)
-        for thread in to_do:
-            while thread.is_alive():
-                thread.join(timeout=20)
+                try:
+                    results[name] = self.make_envconfig(name, section, reader._subs, config)
+                except Exception as exception:
+                    failures[name] = (exception, traceback.format_exc())
+
         if failures:
             raise tox.exception.ConfigError(
                 "\n".join(
