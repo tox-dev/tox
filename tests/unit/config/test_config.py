@@ -3121,3 +3121,19 @@ def test_config_no_version_data_in__name(newconfig, capsys):
     out, err = capsys.readouterr()
     assert not out
     assert not err
+
+
+def test_overwrite_skip_install_override(newconfig):
+    source = """
+        [tox]
+        envlist = py, skip
+        [testenv:skip]
+        skip_install = True
+        """
+    config = newconfig(args=[], source=source)
+    assert config.envconfigs["py"].skip_install is False  # by default do not skip
+    assert config.envconfigs["skip"].skip_install is True
+
+    config = newconfig(args=["--skip-pkg-install"], source=source)
+    assert config.envconfigs["py"].skip_install is True  # skip if the flag is passed
+    assert config.envconfigs["skip"].skip_install is True
