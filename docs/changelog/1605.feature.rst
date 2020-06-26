@@ -1,0 +1,8 @@
+Allow skipping the package and installation step when passing the ``--skip-pkg-install``. This should be used in pair with the ``--notest``, so you can separate environment setup and test run:
+
+ .. code-block:: console
+
+    tox -e py --notest
+    tox -e py --skip-pkg-install
+
+by :user:`gaborbernat`.

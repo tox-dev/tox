@@ -447,6 +447,9 @@ def tox_addoption(parser):
     parser.add_argument(
         "--sdistonly", action="store_true", help="only perform the sdist packaging activity.",
     )
+    parser.add_argument(
+        "--skip-pkg-install", action="store_true", help="skip package installation for this run",
+    )
     add_parallel_flags(parser)
     parser.add_argument(
         "--parallel--safe-build",
@@ -661,10 +664,14 @@ def tox_addoption(parser):
 
     parser.add_testenv_attribute_obj(PosargsOption())
 
+    def skip_install_default(testenv_config, value):
+        return value is True or testenv_config.config.option.skip_pkg_install is True
+
     parser.add_testenv_attribute(
         name="skip_install",
         type="bool",
         default=False,
+        postprocess=skip_install_default,
         help="Do not install the current package. This can be used when you need the virtualenv "
         "management but do not want to install the current package",
     )
