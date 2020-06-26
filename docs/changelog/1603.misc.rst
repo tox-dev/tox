@@ -1,1 +1,0 @@
-Improve config parsing performance by precompiling commonly used regular expressions - by :user:`brettlangdon`
