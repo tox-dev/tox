@@ -1102,8 +1102,9 @@ class ParseIni(object):
 
         reader.addsubstitutions(distdir=config.distdir)
         config.distshare = reader.getpath("distshare", dist_share_default)
-        config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}/.tmp")
         reader.addsubstitutions(distshare=config.distshare)
+        config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}/.tmp")
+        reader.addsubstitutions(temp_dir=config.temp_dir)
         config.sdistsrc = reader.getpath("sdistsrc", None)
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
