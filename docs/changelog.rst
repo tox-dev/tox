@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.16.1 (2020-06-29)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fixed the support for using ``{temp_dir}`` in ``tox.ini`` - by :user:`webknjaz`
+  `#1609 <https://github.com/tox-dev/tox/issues/1609>`_
+
+
 v3.16.0 (2020-06-26)
 --------------------
 
