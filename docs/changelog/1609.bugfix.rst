@@ -1,1 +1,0 @@
-Fixed the support for using ``{temp_dir}`` in ``tox.ini`` - by :user:`webknjaz`
