@@ -1,0 +1,1 @@
+The long arguments ``--verbose`` and ``--quiet`` (rather than only their short forms, ``-v`` and ``-q``) are now accepted.

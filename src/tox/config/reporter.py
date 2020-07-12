@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals
 def add_verbosity_commands(parser):
     parser.add_argument(
         "-v",
+        "--verbose",
         action="count",
         dest="verbose_level",
         default=0,
@@ -13,6 +14,7 @@ def add_verbosity_commands(parser):
     )
     parser.add_argument(
         "-q",
+        "--quiet",
         action="count",
         dest="quiet_level",
         default=0,
