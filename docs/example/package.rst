@@ -43,8 +43,8 @@ file as that information is also added to the ``pyproject.toml`` file.
 .. code-block:: toml
 
     [build-system]
-    requires = ["flit >= 1.1"]
-    build-backend = "flit.buildapi"
+    requires = ["flit_core >=2,<4"]
+    build-backend = "flit_core.buildapi"
 
     [tool.flit.metadata]
     module = "package_toml_flit"
@@ -57,13 +57,6 @@ file as that information is also added to the ``pyproject.toml`` file.
    # tox.ini
    [tox]
    isolated_build = True
-
-   [tox:.package]
-   # note tox will use the same python version as under what tox is installed to package
-   # so unless this is python 3 you can require a given python version for the packaging
-   # environment via the basepython key
-   basepython = python3
-
 
 poetry
 ------
