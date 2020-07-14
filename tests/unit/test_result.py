@@ -17,7 +17,23 @@ def create_fake_pkg(tmpdir):
     return pkg
 
 
-def test_pre_set_header():
+@pytest.fixture()
+def no_hostname_envvar():
+    hostname = os.getenv("HOSTNAME")
+    if hostname:
+        del os.environ["HOSTNAME"]
+    try:
+        yield
+    finally:
+        try:
+            del os.environ["HOSTNAME"]
+        except KeyError:
+            pass
+        if hostname:
+            os.environ["HOSTNAME"] = hostname
+
+
+def test_pre_set_header(no_hostname_envvar):
     replog = ResultLog()
     d = replog.dict
     assert replog.dict == d
@@ -30,7 +46,7 @@ def test_pre_set_header():
     assert replog2.dict == replog.dict
 
 
-def test_set_header(pkg):
+def test_set_header(pkg, no_hostname_envvar):
     replog = ResultLog()
     d = replog.dict
     assert replog.dict == d
@@ -46,6 +62,12 @@ def test_set_header(pkg):
     data = replog.dumps_json()
     replog2 = ResultLog.from_json(data)
     assert replog2.dict == replog.dict
+
+
+def test_hosname_via_envvar(no_hostname_envvar):
+    os.environ["HOSTNAME"] = "toxicity"
+    replog = ResultLog()
+    assert replog.dict["host"] == "toxicity"
 
 
 def test_addenv_setpython(pkg):

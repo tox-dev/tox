@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+import os
 import socket
 import sys
 
@@ -21,7 +22,7 @@ class ResultLog(object):
             "reportversion": "1",
             "toxversion": __version__,
             "platform": sys.platform,
-            "host": socket.getfqdn(),
+            "host": os.getenv(str("HOSTNAME")) or socket.getfqdn(),
             "commands": command_log,
         }
 
