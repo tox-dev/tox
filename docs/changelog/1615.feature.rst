@@ -1,3 +1,0 @@
-The ``ResultLog`` now prefers ``HOSTNAME`` environment variable value (if set) over the full qualified domain name of localhost.
-This makes it possible to disable an undesired DNS lookup,
-which happened on all ``tox`` invocations, including trivial ones - by :user:`hroncok`
