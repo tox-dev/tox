@@ -1,1 +1,0 @@
-Fix tests when the ``HOSTNAME`` environment variable is set, but empty string - by :user:`hroncok`

@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.17.1 (2020-07-15)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix tests when the ``HOSTNAME`` environment variable is set, but empty string - by :user:`hroncok`
+  `#1616 <https://github.com/tox-dev/tox/issues/1616>`_
+
+
 v3.17.0 (2020-07-14)
 --------------------
 
