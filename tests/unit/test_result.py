@@ -1,3 +1,4 @@
+import functools
 import os
 import signal
 import socket
@@ -18,22 +19,12 @@ def create_fake_pkg(tmpdir):
 
 
 @pytest.fixture()
-def no_hostname_envvar():
-    hostname = os.getenv("HOSTNAME")
-    if hostname:
-        del os.environ["HOSTNAME"]
-    try:
-        yield
-    finally:
-        try:
-            del os.environ["HOSTNAME"]
-        except KeyError:
-            pass
-        if hostname:
-            os.environ["HOSTNAME"] = hostname
+def clean_hostname_envvar(monkeypatch):
+    monkeypatch.delenv("HOSTNAME", raising=False)
+    return functools.partial(monkeypatch.setenv, "HOSTNAME")
 
 
-def test_pre_set_header(no_hostname_envvar):
+def test_pre_set_header(clean_hostname_envvar):
     replog = ResultLog()
     d = replog.dict
     assert replog.dict == d
@@ -46,7 +37,7 @@ def test_pre_set_header(no_hostname_envvar):
     assert replog2.dict == replog.dict
 
 
-def test_set_header(pkg, no_hostname_envvar):
+def test_set_header(pkg, clean_hostname_envvar):
     replog = ResultLog()
     d = replog.dict
     assert replog.dict == d
@@ -64,8 +55,8 @@ def test_set_header(pkg, no_hostname_envvar):
     assert replog2.dict == replog.dict
 
 
-def test_hosname_via_envvar(no_hostname_envvar):
-    os.environ["HOSTNAME"] = "toxicity"
+def test_hosname_via_envvar(clean_hostname_envvar):
+    clean_hostname_envvar("toxicity")
     replog = ResultLog()
     assert replog.dict["host"] == "toxicity"
 
