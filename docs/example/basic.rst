@@ -416,7 +416,7 @@ Parallel mode
 - Invoke by using the ``--parallel`` or ``-p`` flag. After the packaging phase completes tox will run in parallel
   processes tox environments (spins a new instance of the tox interpreter, but passes through all host flags and
   environment variables).
-- ``-p`` takes an argument specifying the degree of parallelization:
+- ``-p`` takes an argument specifying the degree of parallelization, defaulting to ``auto``:
 
   - ``all`` to run all invoked environments in parallel,
   - ``auto`` to limit it to CPU count,
