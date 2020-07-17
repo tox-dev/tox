@@ -125,5 +125,5 @@ linkcheck_ignore = [r"https://holgerkrekel.net"]
 extlinks = {
     "issue": ("https://github.com/tox-dev/tox/issues/%s", "#"),
     "pull": ("https://github.com/tox-dev/tox/pull/%s", "p"),
-    "user": ("https://github.com/%s", "@"),
+    "user": ("https://github.com/sponsors/%s", "@"),
 }
