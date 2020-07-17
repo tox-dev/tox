@@ -719,7 +719,7 @@ the above example is roughly equivalent to
 interactive shell substitution
 ++++++++++++++++++++++++++++++
 
-It's possible to inject a config value only when tox is running in interactive shell (standard input):
+It's possible to inject a config value only when tox is running in interactive shell (standard input)::
 
     {tty:ON_VALUE:OFF_VALUE}
 
