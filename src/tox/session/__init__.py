@@ -46,6 +46,7 @@ def cmdline(args=None):
 
 def setup_reporter(args):
     from argparse import ArgumentParser
+
     from tox.config.reporter import add_verbosity_commands
 
     parser = ArgumentParser(add_help=False)

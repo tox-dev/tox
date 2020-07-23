@@ -72,7 +72,7 @@ def run_and_get_interpreter_info(name, executable):
 
 
 def exec_on_interpreter(*args):
-    from subprocess import Popen, PIPE
+    from subprocess import PIPE, Popen
 
     popen = Popen(args, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     out, err = popen.communicate()

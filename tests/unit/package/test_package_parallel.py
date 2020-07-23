@@ -28,8 +28,9 @@ def test_tox_parallel_build_safe(initproj, cmd, mock_venv, monkeypatch):
     # t1 is artificially blocked to run test command until t2 finishes build
     #  (parallel build package present)
     # t2 package build finishes both t1 and t2 can now finish and clean up their build packages
-    import tox.package
     import threading
+
+    import tox.package
 
     t1_build_started = threading.Event()
     t1_build_blocker = threading.Event()
