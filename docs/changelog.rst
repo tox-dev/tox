@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.18.0 (2020-07-23)
+--------------------
+
+Deprecations (removal in next major release)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Add allowlist_externals alias to whitelist_externals (whitelist_externals is now deprecated). - by :user:`dajose`
+  `#1491 <https://github.com/tox-dev/tox/issues/1491>`_
+
+
 v3.17.1 (2020-07-15)
 --------------------
 
