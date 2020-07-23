@@ -999,25 +999,25 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs["py"]
         assert envconfig.commands == [["abc"]]
 
-    def test_whitelist_externals(self, newconfig):
+    def test_allowlist_externals(self, newconfig):
         config = newconfig(
             """
             [testenv]
-            whitelist_externals = xyz
+            allowlist_externals = xyz
             commands=xyz
             [testenv:x]
 
             [testenv:py]
-            whitelist_externals = xyz2
+            allowlist_externals = xyz2
             commands=abc
         """,
         )
         assert len(config.envconfigs) == 2
         envconfig = config.envconfigs["py"]
         assert envconfig.commands == [["abc"]]
-        assert envconfig.whitelist_externals == ["xyz2"]
+        assert envconfig.allowlist_externals == ["xyz2"]
         envconfig = config.envconfigs["x"]
-        assert envconfig.whitelist_externals == ["xyz"]
+        assert envconfig.allowlist_externals == ["xyz"]
 
     def test_changedir(self, newconfig):
         config = newconfig(

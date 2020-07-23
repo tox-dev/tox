@@ -760,7 +760,11 @@ def tox_addoption(parser):
     )
 
     parser.add_testenv_attribute(
-        name="whitelist_externals",
+        name="whitelist_externals", type="line-list", help="DEPRECATED: use allowlist_externals",
+    )
+
+    parser.add_testenv_attribute(
+        name="allowlist_externals",
         type="line-list",
         help="each lines specifies a path or basename for which tox will not warn "
         "about it coming from outside the test environment.",

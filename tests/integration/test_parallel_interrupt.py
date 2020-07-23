@@ -33,7 +33,7 @@ def test_parallel_interrupt(initproj, monkeypatch, capfd):
                     skip_install = True
                     commands = python -c "open('{{envname}}', 'w').write('done'); \
                     import time; time.sleep(100)"
-                    whitelist_externals = {}
+                    allowlist_externals = {}
 
                 """.format(
                 sys.executable,

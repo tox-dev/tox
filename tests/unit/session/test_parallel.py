@@ -98,7 +98,7 @@ def test_parallel_error_report(cmd, initproj, monkeypatch, live):
             skip_install = true
             commands=python -c "import sys, os; sys.stderr.write(str(12345) + os.linesep);\
              raise SystemExit(17)"
-            whitelist_externals = {}
+            allowlist_externals = {}
         """.format(
                 sys.executable,
             ),
@@ -129,7 +129,7 @@ envlist = e1,e2
 skipsdist = true
 
 [testenv]
-whitelist_externals = {}
+allowlist_externals = {}
 commands =
     python -c '[print("hello world") for _ in range(5000)]'
 """.format(
@@ -148,7 +148,7 @@ envlist = e1,e2
 skipsdist = true
 
 [testenv]
-whitelist_externals = {}
+allowlist_externals = {}
 commands =
     python -c '[print("hello world") for _ in range(1)]'
 """.format(
@@ -177,7 +177,7 @@ envlist = e1,e2,e3
 skipsdist = true
 
 [testenv]
-whitelist_externals = {}
+allowlist_externals = {}
 commands =
     python -c 'import sys; sys.stderr.write("stderr env"); sys.stdout.write("stdout env")'
 

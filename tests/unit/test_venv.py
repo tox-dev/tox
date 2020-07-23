@@ -450,6 +450,41 @@ def test_install_command_whitelisted(newmocksession):
     assert venv.status == "commands failed"
 
 
+def test_install_command_allowlisted(newmocksession):
+    mocksession = newmocksession(
+        ["--recreate"],
+        """\
+        [testenv]
+        allowlist_externals = pytest
+                              xy*
+        commands=
+            pytest
+            xyz
+        """,
+    )
+    venv = mocksession.getvenv("python")
+    venv.test()
+    mocksession.report.expect("warning", "*test command found but not*", invert=True)
+    assert venv.status == "commands failed"
+
+
+def test_install_command_allowlisted_exclusive(newmocksession):
+    mocksession = newmocksession(
+        ["--recreate"],
+        """\
+        [testenv]
+        allowlist_externals = pytest
+        whitelist_externals = xy*
+        commands=
+            pytest
+            xyz
+        """,
+    )
+    venv = mocksession.getvenv("python")
+    with pytest.raises(tox.exception.ConfigError):
+        venv.test()
+
+
 def test_install_command_not_installed_bash(newmocksession):
     mocksession = newmocksession(
         ["--recreate"],

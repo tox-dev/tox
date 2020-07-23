@@ -325,15 +325,20 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     Don't set this option if your :conf:`install_command` does not use pip.
 
-.. conf:: whitelist_externals ^ MULTI-LINE-LIST
+.. conf:: allowlist_externals ^ MULTI-LINE-LIST
 
     Each line specifies a command name (in glob-style pattern format)
     which can be used in the ``commands`` section without triggering
     a "not installed in virtualenv" warning.  Example: if you use the
-    unix ``make`` for running tests you can list ``whitelist_externals=make``
-    or ``whitelist_externals=/usr/bin/make`` if you want more precision.
+    unix ``make`` for running tests you can list ``allowlist_externals=make``
+    or ``allowlist_externals=/usr/bin/make`` if you want more precision.
     If you don't want tox to issue a warning in any case, just use
-    ``whitelist_externals=*`` which will match all commands (not recommended).
+    ``allowlist_externals=*`` which will match all commands (not recommended).
+
+    .. note::
+
+        ``whitelist_externals`` has the same meaning and usage as ``allowlist_externals``
+        but it is now deprecated.
 
 .. conf:: changedir ^ PATH ^ {toxinidir}
 
@@ -461,7 +466,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
         WARNING: test command found but not installed in testenv
             cmd: /path/to/parent/interpreter/bin/<some command>
             env: /foo/bar/.tox/python
-        Maybe you forgot to specify a dependency? See also the whitelist_externals envconfig setting.
+        Maybe you forgot to specify a dependency? See also the allowlist_externals envconfig setting.
 
 
 .. conf:: alwayscopy ^ true|false ^ false
