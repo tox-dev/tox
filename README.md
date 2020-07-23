@@ -29,7 +29,7 @@ tox is highly
 [configurable](https://tox.readthedocs.io/en/latest/config.html) and
 [pluggable](https://tox.readthedocs.io/en/latest/plugins.html).
 
-## Example: run tests with Python 2.7 and Python 3.7
+## Example: run tests with Python 3.7 and Python 3.8
 
 tox is mainly used as a command line tool and needs a `tox.ini` or a
 `tool.tox` section in `pyproject.toml` containing the configuration.
@@ -39,7 +39,7 @@ a `tox.ini` in the root of the project:
 
 ``` {.sourceCode .ini}
 [tox]
-envlist = py27,py37
+envlist = py37,py38
 
 [testenv]
 deps = pytest
@@ -53,13 +53,13 @@ $ tox
 [lots of output from commands that were run]
 
 __________________ summary _________________
-  py27: commands succeeded
   py37: commands succeeded
+  py38: commands succeeded
   congratulations :)
 ```
 
-tox created two ``testenvs`` - one based on Python2.7 and one based on
-Python3.7, it installed pytest in them and ran the tests. The report at
+tox created two ``testenvs`` - one based on Python3.7 and one based on
+Python3.8, it installed pytest in them and ran the tests. The report at
 the end summarizes which ``testenvs`` have failed and which have
 succeeded.
 
