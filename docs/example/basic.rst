@@ -359,18 +359,18 @@ use :ref:`generative-envlist` and :ref:`conditional settings <factors>` to expre
 .. code-block:: ini
 
     [tox]
-    envlist = py{27,34,36}-django{15,16}-{sqlite,mysql}
+    envlist = py{36,37,38}-django{22,30}-{sqlite,mysql}
 
     [testenv]
     deps =
-        django15: Django>=1.5,<1.6
-        django16: Django>=1.6,<1.7
-        # use PyMySQL if factors "py34" and "mysql" are present in env name
-        py34-mysql: PyMySQL
-        # use urllib3 if any of "py36" or "py27" are present in env name
-        py27,py36: urllib3
-        # mocking sqlite on 2.7 and 3.6 if factor "sqlite" is present
-        py{27,36}-sqlite: mock
+        django22: Django>=2.2,<2.3
+        django30: Django>=3.0,<3.1
+        # use PyMySQL if factors "py37" and "mysql" are present in env name
+        py38-mysql: PyMySQL
+        # use urllib3 if any of "py36" or "py37" are present in env name
+        py36,py37: urllib3
+        # mocking sqlite on 3.6 and 3.7 if factor "sqlite" is present
+        py{36,37}-sqlite: mock
 
 
 Using generative section names

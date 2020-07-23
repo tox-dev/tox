@@ -5,9 +5,9 @@ def test_listenvs(cmd, initproj, monkeypatch):
         filedefs={
             "tox.ini": """
         [tox]
-        envlist=py36,py27,py34,pypi,docs
+        envlist=py36,py27,py37,pypi,docs
         description= py27: run pytest on Python 2.7
-                     py34: run pytest on Python 3.6
+                     py37: run pytest on Python 3.6
                      pypi: publish to PyPI
                      docs: document stuff
                      notincluded: random extra
@@ -22,18 +22,18 @@ def test_listenvs(cmd, initproj, monkeypatch):
     )
 
     result = cmd("-l")
-    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
+    assert result.outlines == ["py36", "py27", "py37", "pypi", "docs"]
 
     result = cmd("-l", "-e", "py")
-    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
+    assert result.outlines == ["py36", "py27", "py37", "pypi", "docs"]
 
     monkeypatch.setenv(str("TOXENV"), str("py"))
     result = cmd("-l")
-    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
+    assert result.outlines == ["py36", "py27", "py37", "pypi", "docs"]
 
     monkeypatch.setenv(str("TOXENV"), str("py36"))
     result = cmd("-l")
-    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs"]
+    assert result.outlines == ["py36", "py27", "py37", "pypi", "docs"]
 
 
 def test_listenvs_verbose_description(cmd, initproj):
@@ -42,11 +42,11 @@ def test_listenvs_verbose_description(cmd, initproj):
         filedefs={
             "tox.ini": """
         [tox]
-        envlist=py36,py27,py34,pypi,docs
+        envlist=py36,py27,py37,pypi,docs
         [testenv]
         description= py36: run pytest on Python 3.6
                      py27: run pytest on Python 2.7
-                     py34: run pytest on Python 3.4
+                     py37: run pytest on Python 3.7
                      pypi: publish to PyPI
                      docs: document stuff
                      notincluded: random extra
@@ -65,7 +65,7 @@ def test_listenvs_verbose_description(cmd, initproj):
         "default environments:",
         "py36 -> run pytest on Python 3.6",
         "py27 -> run pytest on Python 2.7",
-        "py34 -> run pytest on Python 3.4",
+        "py37 -> run pytest on Python 3.7",
         "pypi -> publish to PyPI",
         "docs -> let me overwrite that",
     ]
@@ -78,7 +78,7 @@ def test_listenvs_all(cmd, initproj, monkeypatch):
         filedefs={
             "tox.ini": """
         [tox]
-        envlist=py36,py27,py34,pypi,docs
+        envlist=py36,py27,py37,pypi,docs
 
         [testenv:notincluded]
         changedir = whatever
@@ -89,19 +89,19 @@ def test_listenvs_all(cmd, initproj, monkeypatch):
         },
     )
     result = cmd("-a")
-    expected = ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
+    expected = ["py36", "py27", "py37", "pypi", "docs", "notincluded"]
     assert result.outlines == expected
 
     result = cmd("-a", "-e", "py")
-    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs", "py", "notincluded"]
+    assert result.outlines == ["py36", "py27", "py37", "pypi", "docs", "py", "notincluded"]
 
     monkeypatch.setenv(str("TOXENV"), str("py"))
     result = cmd("-a")
-    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs", "py", "notincluded"]
+    assert result.outlines == ["py36", "py27", "py37", "pypi", "docs", "py", "notincluded"]
 
     monkeypatch.setenv(str("TOXENV"), str("py36"))
     result = cmd("-a")
-    assert result.outlines == ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
+    assert result.outlines == ["py36", "py27", "py37", "pypi", "docs", "notincluded"]
 
 
 def test_listenvs_all_verbose_description(cmd, initproj):
@@ -160,7 +160,7 @@ def test_listenvs_packaging_excluded(cmd, initproj):
         filedefs={
             "tox.ini": """
         [tox]
-        envlist = py36,py27,py34,pypi,docs
+        envlist = py36,py27,py37,pypi,docs
         isolated_build = True
 
         [testenv:notincluded]
@@ -172,7 +172,7 @@ def test_listenvs_packaging_excluded(cmd, initproj):
         },
     )
     result = cmd("-a")
-    expected = ["py36", "py27", "py34", "pypi", "docs", "notincluded"]
+    expected = ["py36", "py27", "py37", "pypi", "docs", "notincluded"]
     assert result.outlines == expected, result.outlines
 
 
