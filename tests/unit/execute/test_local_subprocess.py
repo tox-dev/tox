@@ -50,7 +50,7 @@ def test_local_execute_basic_pass_show_on_standard(capsys, caplog):
     assert outcome.out == "out"
     out, err = capsys.readouterr()
     assert out == "out"
-    expected = "{}err{}".format(Fore.RED, Fore.RESET)
+    expected = f"{Fore.RED}err{Fore.RESET}"
     assert err == expected
     assert not caplog.records
 
@@ -139,7 +139,7 @@ def test_local_execute_basic_fail(caplog, capsys):
 
     out, err = capsys.readouterr()
     assert out == "out\n"
-    expected = "{}err{}\n".format(Fore.RED, Fore.RESET)
+    expected = f"{Fore.RED}err{Fore.RESET}\n"
     assert err == expected
 
     assert len(caplog.records) == 1
@@ -157,9 +157,7 @@ def test_local_execute_basic_fail(caplog, capsys):
 def test_command_does_not_exist(capsys, caplog):
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
-    request = ExecuteRequest(
-        cmd=["sys-must-be-missing".format(sys.executable)], cwd=Path().absolute(), env=os.environ, allow_stdin=False,
-    )
+    request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os.environ, allow_stdin=False)
     outcome = executor.__call__(request, show_on_standard=False)
 
     assert bool(outcome) is False
@@ -195,12 +193,12 @@ def test_command_keyboard_interrupt(tmp_path):
     except subprocess.TimeoutExpired:
         process.kill()
         out, err = process.communicate()
-        assert False, "{}\n{}".format(out, err)
+        assert False, f"{out}\n{err}"
 
     assert "ERROR:root:got KeyboardInterrupt signal" in err, err
-    assert "WARNING:root:KeyboardInterrupt from {} SIGINT pid {}".format(root, child) in err, err
-    assert "WARNING:root:KeyboardInterrupt from {} SIGTERM pid {}".format(root, child) in err, err
-    assert "INFO:root:KeyboardInterrupt from {} SIGKILL pid {}".format(root, child) in err, err
+    assert f"WARNING:root:KeyboardInterrupt from {root} SIGINT pid {child}" in err, err
+    assert f"WARNING:root:KeyboardInterrupt from {root} SIGTERM pid {child}" in err, err
+    assert f"INFO:root:KeyboardInterrupt from {root} SIGKILL pid {child}" in err, err
 
     outs = out.split("\n")
 

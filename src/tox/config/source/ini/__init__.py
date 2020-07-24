@@ -11,7 +11,7 @@ from .convert import StrConvert
 from .factor import filter_for_env, find_envs
 from .replace import BASE_TEST_ENV, replace
 
-TEST_ENV_PREFIX = "{}:".format(BASE_TEST_ENV)
+TEST_ENV_PREFIX = f"{BASE_TEST_ENV}:"
 
 
 class Ini(Source):
@@ -38,7 +38,7 @@ class Ini(Source):
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             if k != "_parser":
-                value = deepcopy(v, memo=memo)
+                value = deepcopy(v, memo=memo)  # noqa
             else:
                 value = v
             setattr(result, k, value)
@@ -63,7 +63,7 @@ class Ini(Source):
     BASE_ENV_LIST = EnvList([BASE_TEST_ENV])
 
     def __getitem__(self, item):
-        key = "{}{}".format(TEST_ENV_PREFIX, item)
+        key = f"{TEST_ENV_PREFIX}{item}"
         return self.get_section(key, item)
 
     def get_section(self, item, name):
@@ -100,8 +100,8 @@ class Ini(Source):
         return "{}(path={})".format(type(self).__name__, self._path)
 
 
-class IniLoader(Loader, StrConvert):
-    """Load from a ini section"""
+class IniLoader(StrConvert, Loader):
+    """Load from ini section"""
 
     def __init__(
         self, section: Optional[SectionProxy], src: Ini, name: Optional[str], default_base: EnvList, section_loader,
@@ -119,7 +119,7 @@ class IniLoader(Loader, StrConvert):
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             if k != "_section":
-                value = deepcopy(v, memo=memo)
+                value = deepcopy(v, memo=memo)  # noqa
             else:
                 value = v
             setattr(result, k, value)

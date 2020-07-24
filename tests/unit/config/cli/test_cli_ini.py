@@ -86,7 +86,7 @@ def test_ini_help(exhaustive_ini, capsys):
     assert context.value.code == 0
     out, err = capsys.readouterr()
     assert not err
-    assert "config file '{}' active (changed via env var TOX_CONFIG_FILE)".format(exhaustive_ini)
+    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_CONFIG_FILE)"
 
 
 def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
@@ -98,7 +98,7 @@ def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
         if sys.platform == "win32"
         else "IsADirectoryError(21, 'Is a directory')"
     )
-    assert caplog.messages == ["failed to read config file {} because {}".format(tmp_path, msg)]
+    assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
     assert vars(parsed) == {
         "verbose": 2,
         "quiet": 0,

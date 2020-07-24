@@ -1,5 +1,6 @@
 # External facing
-0. ``Python 3.5+`` only.
+
+0. `Python 3.5+` only.
 1. Lazy configuration - everything is materialized only when needed (don't ever generate data that will not be used - general speed improvement)
 2. built-in wheel build support - no longer generates sdist only
 3. library dependency changes are now detected (no longer need to recreate tox-env when adding a new dependency to your library) - use PEP-517 meta data generation to acquire these
@@ -11,11 +12,12 @@
    - the run parallel has migrated to `run-parallel` sub-command form `-p` (`p` shortcut)
    - the run sequential has migrated to `run` sub-command form non other commands (`r` shortcut)
 7. while executing subprocess calls the standard error no longer gets forwarded to the standard output but correctly to the standard error (previously this was only true for
-non captured commands)
-8. ``basepython`` is now a list, the first successfully detected python will be used to generate python environment
+   non captured commands)
+8. `basepython` is now a list, the first successfully detected python will be used to generate python environment
 
 # Internal
-0. ``Python 3.5+`` only with type annotated code.
+
+0. `Python 3.5+` only with type annotated code.
 1. Separate core configuration concepts from the ini system (to allow introduction of new configuration)
 2. so long `py` my good old friend, use `pathlib` always
 3. Introduce the executor concept - replaces action, generalize to avoid ease of replacement with
@@ -86,16 +88,18 @@ non captured commands)
 ```
 
 # TODO
-* index url support for python pip
-* introduce the run log concept
-* handle provisioning
-* make it parallel safe (packaging + logs)
-* Make sure we're config compliant with tox 3 (excluding deprecated features) - CLI compliant is best effort
-* Allow plugins generating new tox-environments (this will probably require a in-memory config)
-* Rewrite documentation (generate configuration from code)
+
+- index url support for python pip
+- introduce the run log concept
+- handle provisioning
+- make it parallel safe (packaging + logs)
+- Make sure we're config compliant with tox 3 (excluding deprecated features) - CLI compliant is best effort
+- Allow plugins generating new tox-environments (this will probably require a in-memory config)
+- Rewrite documentation (generate configuration from code)
 
 ## Validate rewrite
-* provide a pre-commit env generator plugin
-* provide a sphinx doc env generator plugin
-* Provide a tox environment that uses Docker images instead of virtual environments (this will validate the internal refactor)
-* migrate some popular tox plugins to the new system (`tox-travis` + `tox-pipenv` + `tox-conda` + `tox-pyenv` + `tox-current-env`)
+
+- provide a pre-commit env generator plugin
+- provide a sphinx doc env generator plugin
+- Provide a tox environment that uses Docker images instead of virtual environments (this will validate the internal refactor)
+- migrate some popular tox plugins to the new system (`tox-travis` + `tox-pipenv` + `tox-conda` + `tox-pyenv` + `tox-current-env`)

@@ -34,9 +34,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 outcome = self.file_config.get(key, of_type=of_type)
             if outcome is not None:
                 action.default, action.default_source = outcome
-        # noinspection PyProtectedMember
-        if isinstance(action, argparse._SubParsersAction):
-            for values in action.choices.values():
+        if isinstance(action, argparse._SubParsersAction):  # noqa
+            for values in action.choices.values():  # noqa
                 values.fix_defaults()
 
     @staticmethod
@@ -46,7 +45,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
             # noinspection PyProtectedMember
             if action.default is not None:
                 of_type = type(action.default)
-            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:
+            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa
                 of_type = type(action.const)
             else:  # pragma: no cover
                 raise TypeError(action)  # pragma: no cover
@@ -144,7 +143,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         _global = {
             k: v
             for k, v in chain.from_iterable(
-                ((j, isinstance(i, argparse._StoreAction)) for j in i.option_strings)
+                ((j, isinstance(i, argparse._StoreAction)) for j in i.option_strings)  # noqa
                 for i in self._actions
                 if hasattr(i, "option_strings")
             )

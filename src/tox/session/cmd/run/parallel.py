@@ -94,8 +94,8 @@ def run_parallel(state: State):
                     args_sub.insert(position, "--installpkg")
                 if tox_env.get_result_json_path():
                     result_json_index = args_sub.index("--result-json")
-                    args_sub[result_json_index + 1] = "{}".format(tox_env.get_result_json_path())
-                with tox_env.new_action("parallel {}".format(tox_env.name)) as action:
+                    args_sub[result_json_index + 1] = f"{tox_env.get_result_json_path()}"
+                with tox_env.new_action(f"parallel {tox_env.name}") as action:
 
                     def collect_process(process):
                         process_dict[tox_env] = (action, process)
@@ -111,7 +111,7 @@ def run_parallel(state: State):
                     )
 
             except Exception as err:
-                status = "parallel child exit code {}".format(err.exit_code)
+                status = f"parallel child exit {err!r}"
             finally:
                 semaphore.release()
                 finished.set()
@@ -129,7 +129,7 @@ def run_parallel(state: State):
         threads = deque()
         processes = {}
         todo_keys = set(state.env_list)
-        todo = OrderedDict((n, todo_keys & set(v.envconfig.depends)) for n, v in state.tox_envs.items())
+        todo = OrderedDict((n, todo_keys & set(v.conf["depends"])) for n, v in state.tox_envs.items())
         done = set()
         try:
             while todo:
@@ -152,11 +152,11 @@ def run_parallel(state: State):
             while threads:
                 threads = [thread for thread in threads if not thread.join(0.1) and thread.is_alive()]
         except KeyboardInterrupt:
-            logger.error("[{}] KeyboardInterrupt parallel - stopping children".format(os.getpid()))
+            logger.error(f"[{os.getpid()}] KeyboardInterrupt parallel - stopping children")
             while True:
-                # do not allow to interrupt until children interrupt
+                # do not allow interrupting until children interrupt
                 try:
-                    # putting it inside a thread so it's not interrupted
+                    # putting it inside a thread to guarantee it's not interrupted
                     stopper = Thread(target=_stop_child_processes, args=(processes, threads))
                     stopper.start()
                     stopper.join()

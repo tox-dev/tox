@@ -25,10 +25,10 @@ class ToxHandler(logging.StreamHandler):
 
     @staticmethod
     def _get_formatter(level):
-        msg_format = "{}{}%(name)s: {}%(message)s{}".format(Style.BRIGHT, Fore.WHITE, Fore.CYAN, Style.RESET_ALL)
+        msg_format = f"{Style.BRIGHT}{Fore.WHITE}%(name)s: {Fore.CYAN}%(message)s{Style.RESET_ALL}"
         if level <= logging.DEBUG:
             locate = "pathname" if level > logging.DEBUG else "module"
-            msg_format += "{} [%(asctime)s] [%({})s:%(lineno)d]{}".format(Style.DIM, locate, Style.RESET_ALL)
+            msg_format += f"{Style.DIM} [%(asctime)s] [%({locate})s:%(lineno)d]{Style.RESET_ALL}"
         formatter = logging.Formatter(msg_format)
         return formatter
 

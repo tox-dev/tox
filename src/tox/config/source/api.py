@@ -74,7 +74,7 @@ class Convert(ABC):
                         result = self._to_typing(raw, new_type)
             if result is not _NO_MAPPING:
                 return result
-        raise TypeError("{} cannot cast to {!r}".format(raw, of_type))
+        raise TypeError(f"{raw} cannot cast to {of_type!r}")
 
     @staticmethod
     def to_str(value):

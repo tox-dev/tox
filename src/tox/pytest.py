@@ -45,11 +45,11 @@ def check_os_environ():
     if extra or miss or diff:
         msg = "test changed environ"
         if extra:
-            msg += " extra {}".format(extra)
+            msg += f" extra {extra}"
         if miss:
-            msg += " miss {}".format(miss)
+            msg += f" miss {miss}"
         if diff:
-            msg += " diff {}".format(diff)
+            msg += f" diff {diff}"
         pytest.fail(msg)
 
 
@@ -83,7 +83,7 @@ class ToxProject:
     def _setup_files(dest: Path, content: Dict[str, Any]) -> None:
         for key, value in content.items():
             if not isinstance(key, str):
-                raise TypeError("{!r} at {}".format(key, dest))  # pragma: no cover
+                raise TypeError(f"{key!r} at {dest}")  # pragma: no cover
             at_path = dest / key
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)

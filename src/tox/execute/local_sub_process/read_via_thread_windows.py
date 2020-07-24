@@ -1,6 +1,6 @@
 from asyncio.windows_utils import BUFSIZE, PipeHandle
 
-import _overlapped
+import _overlapped  # noqa
 
 from .read_via_thread import ReadViaThread
 

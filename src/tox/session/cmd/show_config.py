@@ -27,7 +27,7 @@ def display_config(state: State) -> None:
         if not first:
             print()
         first = False
-        print("[testenv:{}]".format(name))
+        print(f"[testenv:{name}]")
         print("type = {}".format(type(tox_env).__name__))
         print_conf(tox_env.conf)
 
@@ -37,7 +37,7 @@ def print_conf(conf: ConfigSet) -> None:
         value = conf[key]
         result = str_conf_value(value)
         if isinstance(result, list):
-            result = "{}{}".format("\n", "\n".join("  {}".format(i) for i in result))
+            result = "{}{}".format("\n", "\n".join(f"  {i}" for i in result))
         print("{} ={}{}".format(key, " " if result != "" and not result.startswith("\n") else "", result))
     unused = conf.unused()
     if unused:
@@ -48,7 +48,7 @@ def str_conf_value(value: Any) -> Union[List[str], str]:
     if isinstance(value, dict):
         if not value:
             return ""
-        return ["{}={}".format(k, v) for k, v in value.items()]
+        return [f"{k}={v}" for k, v in value.items()]
     elif isinstance(value, (list, set)):
         if not value:
             return ""

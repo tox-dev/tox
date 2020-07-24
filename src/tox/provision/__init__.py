@@ -14,12 +14,12 @@ from tox.version import __version__ as current_version
 if sys.version_info >= (3, 8):
     from importlib.metadata import distribution
 else:
-    from importlib_metadata import distribution
+    from importlib_metadata import distribution  # noqa
 
 
 def add_tox_requires_min_version(requires, conf):
     min_version = conf.core["min_version"]
-    requires.append(Requirement("tox >= {}".format(min_version)))
+    requires.append(Requirement(f"tox >= {min_version}"))
     return requires
 
 

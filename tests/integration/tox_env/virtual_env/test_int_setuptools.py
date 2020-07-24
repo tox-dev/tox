@@ -1,3 +1,5 @@
+import os
+
 from tox.pytest import ToxProjectCreator
 
 
@@ -43,4 +45,4 @@ def test_setuptools_package_py_project(tox_project: ToxProjectCreator):
     )
     outcome = project.run("-vv", "r", "-e", "py")
     outcome.assert_success()
-    assert "\n1.2.3\n" in outcome.out
+    assert "\n1.2.3{}".format(os.linesep) in outcome.out

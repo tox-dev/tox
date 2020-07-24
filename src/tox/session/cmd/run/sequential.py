@@ -32,8 +32,8 @@ def report(status_dict: Dict[str, int], tox_envs: Dict[str, ToxEnv]) -> int:
         if status == Outcome.OK:
             msg = "OK  "
         else:
-            msg = "FAIL code {}".format(status)
-        print("  {}: {}".format(name, msg))
+            msg = f"FAIL code {status}"
+        print(f"  {name}: {msg}")
     if all(value == Outcome.OK for name, value in status_dict.items()):
         print("  congratulations :)")
         return Outcome.OK

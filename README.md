@@ -36,7 +36,7 @@ tox is mainly used as a command line tool and needs a `tox.ini` or a
 To test a simple project that has some tests, here is an example with
 a `tox.ini` in the root of the project:
 
-``` {.sourceCode .ini}
+```{.sourceCode .ini}
 [tox]
 envlist = py27,py37
 
@@ -45,7 +45,7 @@ deps = pytest
 commands = pytest
 ```
 
-``` {.sourceCode .console}
+```{.sourceCode .console}
 $ tox
 
 [lots of output from what tox does]
@@ -57,9 +57,9 @@ __________________ summary _________________
   congratulations :)
 ```
 
-tox created two ``testenvs`` - one based on Python2.7 and one based on
+tox created two `testenvs` - one based on Python2.7 and one based on
 Python3.7, it installed pytest in them and ran the tests. The report at
-the end summarizes which ``testenvs`` have failed and which have
+the end summarizes which `testenvs` have failed and which have
 succeeded.
 
 **Note:** To learn more about what you can do with tox, have a look at
@@ -71,7 +71,7 @@ tox](https://github.com/search?l=INI&q=tox.ini+in%3Apath&type=Code).
 ### How it works
 
 tox creates virtual environments for all configured so called
-``testenvs``, it then installs the project and other necessary
+`testenvs`, it then installs the project and other necessary
 dependencies and runs the configured set of commands. See [system
 overview](https://tox.readthedocs.io/en/latest/#system-overview) for
 more details.
@@ -85,16 +85,16 @@ more details.
 
 ### tox can be used for ...
 
--   creating development environments
--   running static code analysis and test tools
--   automating package builds
--   running tests against the package build by tox
--   checking that packages install correctly with different Python
-    versions/interpreters
--   unifying Continuous Integration and command line based testing
--   building and deploying project documentation
--   releasing a package to PyPI or any other platform
--   limit: your imagination
+- creating development environments
+- running static code analysis and test tools
+- automating package builds
+- running tests against the package build by tox
+- checking that packages install correctly with different Python
+  versions/interpreters
+- unifying Continuous Integration and command line based testing
+- building and deploying project documentation
+- releasing a package to PyPI or any other platform
+- limit: your imagination
 
 ### Documentation
 

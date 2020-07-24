@@ -1,0 +1,7 @@
+Fix the CI failures:
+
+- drop Python 3.5 support as it's not expected to get to a release before EOL,
+- fix test using ``\n`` instead of ``os.linesep``,
+- Windows Python 3.6 does not contain ``_overlapped.ReadFileInto``
+
+- by :user:`gaborbernat`.

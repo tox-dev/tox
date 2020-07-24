@@ -1,4 +1,4 @@
-"""Hook specifications for tox - see https://pluggy.readthedocs.io/"""
+"""Hook specifications for the tox project - see https://pluggy.readthedocs.io/"""
 from argparse import ArgumentParser
 from typing import Type
 

@@ -15,7 +15,7 @@ def hold_lock(lock_file):
         try:
             lock.acquire(0.0001)
         except Timeout:
-            logging.warning("lock file {} present, will block until released".format(lock_file))
+            logging.warning(f"lock file {lock_file} present, will block until released")
             lock.acquire()
         yield
     finally:
@@ -25,10 +25,10 @@ def hold_lock(lock_file):
 def get_unique_file(path, prefix, suffix):
     """get a unique file in a folder having a given prefix and suffix, with unique number in between"""
     lock_file = path.join(".lock")
-    prefix = "{}-".format(prefix)
+    prefix = f"{prefix}-"
     with hold_lock(lock_file):
         max_value = -1
-        for candidate in path.listdir("{}*{}".format(prefix, suffix)):
+        for candidate in path.listdir(f"{prefix}*{suffix}"):
             try:
                 max_value = max(max_value, int(candidate.basename[len(prefix) : -len(suffix)]))
             except ValueError:
