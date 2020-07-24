@@ -26,14 +26,15 @@ class ReadViaThreadWindows(ReadViaThread):
             self.handler(data)
 
     def _drain_stream(self):
-        length, result = 0 if self.closed else 1, b""
-        while 0 < length <= BUFSIZE:
+        length, result = 1 if self.closed else 1, b""
+        while length:
             ov = _overlapped.Overlapped(0)
-            buffer = bytes(BUFSIZE)
             try:
-                ov.ReadFileInto(self.stream.handle, buffer)
-                length = ov.getresult()
-                result += buffer[:length]
+                ov.ReadFile(self.stream.handle, BUFSIZE)
+                data = ov.getresult()
             except BrokenPipeError:
-                break
+                length = 0
+            else:
+                result += data
+                length = len(data)
         return result
