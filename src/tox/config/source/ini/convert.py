@@ -30,7 +30,7 @@ class StrConvert(Convert):
                 try:
                     at = row.index("=")
                 except ValueError:
-                    raise TypeError("dictionary lines must be of form key=value, found {}".format(row))
+                    raise TypeError(f"dictionary lines must be of form key=value, found {row}")
                 else:
                     key = row[:at].strip()
                     value = row[at + 1 :].strip()
@@ -59,6 +59,4 @@ class StrConvert(Convert):
         elif norm in StrConvert.FALSY_VALUES:
             return False
         else:
-            raise TypeError(
-                "value {} cannot be transformed to bool, valid: {}".format(value, ", ".join(StrConvert.VALID_BOOL)),
-            )
+            raise TypeError(f"value {value} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}")

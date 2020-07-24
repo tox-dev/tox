@@ -17,7 +17,7 @@ from ..api import VirtualEnv
 try:
     import importlib.metadata as imp_meta
 except ImportError:
-    import importlib_metadata as imp_meta
+    import importlib_metadata as imp_meta  # noqa
 
 
 TOX_PACKAGE_ENV_ID = "virtualenv-pep-517"
@@ -102,7 +102,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
         requires = self._distribution_meta.requires or []
         for v in requires:
             req = Requirement(v)
-            markers = getattr(req.marker, "_markers", tuple()) or tuple()
+            markers = getattr(req.marker, "_markers", ()) or ()
             for _at, (m_key, op, m_val) in (
                 (j, i) for j, i in enumerate(markers) if isinstance(i, tuple) and len(i) == 3
             ):

@@ -10,7 +10,7 @@ RE_ITEM_REF = re.compile(
     r"""
     (?<!\\)[{]
     (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
-    (?P<substitution_value>(?:\[(?P<section>[^,{}]*)\])?(?P<key>[^:,{}]*))  # substitution key
+    (?P<substitution_value>(?:\[(?P<section>[^,{}]*)])?(?P<key>[^:,{}]*))  # substitution key
     (?::(?P<default_value>[^{}]*))?   # default value
     [}]
     """,
@@ -61,7 +61,7 @@ def _replace_match(conf: Config, name, section_loader, match):
             env_conf = conf[section]
         try:
             replace_value = env_conf[value]
-        except Exception:
+        except Exception:  # noqa
             # noinspection PyBroadException
             try:
                 try:

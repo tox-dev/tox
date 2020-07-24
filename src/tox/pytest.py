@@ -38,18 +38,16 @@ def check_os_environ():
     extra.pop("PLAT", None)
     miss = {k: old[k] for k in set(old) - set(new)}
     diff = {
-        "{} = {} vs {}".format(k, old[k], new[k])
-        for k in set(old) & set(new)
-        if old[k] != new[k] and not k.startswith("PYTEST_")
+        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
     }
     if extra or miss or diff:
         msg = "test changed environ"
         if extra:
-            msg += " extra {}".format(extra)
+            msg += f" extra {extra}"
         if miss:
-            msg += " miss {}".format(miss)
+            msg += f" miss {miss}"
         if diff:
-            msg += " diff {}".format(diff)
+            msg += f" diff {diff}"
         pytest.fail(msg)
 
 
@@ -83,7 +81,7 @@ class ToxProject:
     def _setup_files(dest: Path, content: Dict[str, Any]) -> None:
         for key, value in content.items():
             if not isinstance(key, str):
-                raise TypeError("{!r} at {}".format(key, dest))  # pragma: no cover
+                raise TypeError(f"{key!r} at {dest}")  # pragma: no cover
             at_path = dest / key
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
@@ -136,7 +134,7 @@ class ToxProject:
             os.chdir(cur_dir)
 
     def __repr__(self):
-        return "{}(path={}) at {}".format(type(self).__name__, self.path, id(self))
+        return f"{type(self).__name__}(path={self.path}) at {id(self)}"
 
 
 ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]

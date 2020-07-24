@@ -1,4 +1,4 @@
-"""A execute that runs on local file system via subprocess-es"""
+"""Execute that runs on local file system via subprocess-es"""
 import logging
 import os
 import shutil
@@ -10,14 +10,17 @@ from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, ExecuteReque
 from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":
-    from asyncio.windows_utils import Popen  # noqa # needs stdin/stdout handlers backed by overlapped IO
-    from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
+    # needs stdin/stdout handlers backed by overlapped IO
+    from asyncio.windows_utils import Popen  # noqa
     from subprocess import CREATE_NEW_PROCESS_GROUP
 
-    CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP  # custom flag needed for Windows signal send ability (CTRL+C)
+    from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
+
+    CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP  # a custom flag needed for Windows signal send ability (CTRL+C)
 
 else:
     from subprocess import Popen
+
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
 
     CREATION_FLAGS = 0
@@ -67,8 +70,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             with ReadViaThread(process.stderr, self.err_handler) as read_stderr:
                 with ReadViaThread(process.stdout, self.out_handler) as read_stdout:
                     if sys.platform == "win32":
-                        process.stderr.read = read_stderr._drain_stream
-                        process.stdout.read = read_stdout._drain_stream
+                        process.stderr.read = read_stderr._drain_stream  # noqa
+                        process.stdout.read = read_stdout._drain_stream  # noqa
                     # wait it out with interruptions to allow KeyboardInterrupt on Windows
                     while process.poll() is None:
                         try:
@@ -97,7 +100,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         # communicate will wait for the app to stop, and then drain the standard streams and close them
         proc = self.process
         logging.error("got KeyboardInterrupt signal")
-        msg = "from {} {{}} pid {}".format(os.getpid(), proc.pid)
+        msg = f"from {os.getpid()} {{}} pid {proc.pid}"
         if proc.poll() is None:  # still alive, first INT
             logging.warning("KeyboardInterrupt %s", msg.format("SIGINT"))
             proc.send_signal(SIGINT)

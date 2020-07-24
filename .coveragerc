@@ -19,8 +19,12 @@ source =
     *\src
 
 [coverage:run]
-branch = false
+branch = true
 parallel = true
+dynamic_context = test_function
 source =
     ${_COVERAGE_SRC}
     tests
+
+[coverage:html]
+show_contexts = true

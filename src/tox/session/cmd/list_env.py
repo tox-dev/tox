@@ -28,7 +28,7 @@ def list_env(state: State):
             if text is None:
                 text = "[no description]"
             text = text.replace("\n", " ")
-            msg = "{} -> {}".format(e.ljust(max_length), text).strip()
+            msg = f"{e.ljust(max_length)} -> {text}".strip()
         else:
             msg = e
         print(msg)

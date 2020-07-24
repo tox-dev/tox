@@ -16,7 +16,7 @@ class EnvLog:
         answer["executable"] = python_info.executable
         self.content["python"] = answer
 
-    def get_commandlog(self, name):
+    def get_commandlog(self, name):  # noqa
         """get the command log for a given group name"""
         return CommandLog(self)
 
@@ -25,9 +25,9 @@ class EnvLog:
 
     def set_header(self, installpkg):
         """
-        :param py.path.local installpkg: Path ot the package.
+        :param py.path.local installpkg: Path ot the package
         """
-        self.dict["installpkg"] = {
+        self.content["installpkg"] = {
             "sha256": installpkg.computehash("sha256"),
             "basename": installpkg.basename,
         }

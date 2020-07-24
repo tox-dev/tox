@@ -20,7 +20,7 @@ def get_env_var(key, of_type):
             value = os.environ[environ_key]
             # noinspection PyBroadException
             try:
-                source = "env var {}".format(environ_key)
+                source = f"env var {environ_key}"
                 of_type = CONVERT.to(raw=value, of_type=of_type)
                 return of_type, source
             except Exception as exception:

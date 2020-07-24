@@ -61,13 +61,13 @@ class Spinner:
     def render_frame(self):
         if self.enabled:
             self.clear()
-            self.stream.write("\r{}".format(self.frame()))
+            self.stream.write(f"\r{self.frame()}")
 
     def frame(self):
         frame = self.frames[self._frame_index]
         self._frame_index += 1
         self._frame_index %= len(self.frames)
-        text_frame = "[{}] {}".format(len(self._envs), " | ".join(self._envs))
+        text_frame = f"[{len(self._envs)}] {' | '.join(self._envs)}"
         if len(text_frame) > self.max_width - 1:
             text_frame = "{}...".format(text_frame[: self.max_width - 1 - 3])
         return "{} {}".format(*[(frame, text_frame)][0])
@@ -113,7 +113,7 @@ class Spinner:
         if self.enabled:
             self.clear()
         self.stream.write(
-            "{} {} in {}{}".format(status, key, td_human_readable(datetime.now() - start_at), os.linesep), **kwargs
+            f"{status} {key} in {td_human_readable(datetime.now() - start_at)}{os.linesep}", **kwargs  # noqa
         )
         if not self._envs:
             self.__exit__(None, None, None)
@@ -160,5 +160,5 @@ def td_human_readable(delta):
                 ms = delta.total_seconds() - int(delta.total_seconds())
                 period_value = round(period_value + ms, 3)
             has_s = "s" if period_value != 1 else ""
-            texts.append("{} {}{}".format(period_value, period_name, has_s))
+            texts.append(f"{period_value} {period_name}{has_s}")
     return ", ".join(texts)

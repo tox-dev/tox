@@ -72,7 +72,7 @@ class ConfigDynamicDefinition(ConfigDefinition):
             else:
                 value = self.default(conf, src.name) if callable(self.default) else self.default
             if self.post_process is not None:
-                value = self.post_process(value, conf)
+                value = self.post_process(value, conf)  # noqa
             self._cache = value
         return self._cache
 
@@ -83,15 +83,16 @@ class ConfigDynamicDefinition(ConfigDefinition):
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             if k != "_cache" and v is _PLACE_HOLDER:
-                value = deepcopy(v, memo=memo)
+                value = deepcopy(v, memo=memo)  # noqa
             else:
                 value = v
             setattr(result, k, value)
         return result
 
     def __repr__(self):
-        return "{}(keys={!r}, of_type={!r}, default={!r}, desc={!r}, post_process={!r})".format(
-            type(self).__name__, self.keys, self.of_type, self.default, self.desc, self.post_process,
+        return (
+            f"{type(self).__name__}(keys={self.keys!r}, of_type={self.of_type!r}, default={self.default!r},"
+            f" desc={self.desc!r}, post_process={self.post_process!r})"
         )
 
 
@@ -113,7 +114,7 @@ class ConfigSet:
         overwrite=False,
     ):
         """
-        Add configuration.
+        Add configuration value.
 
         :param keys:
         :param of_type:

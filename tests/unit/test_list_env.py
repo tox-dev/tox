@@ -10,21 +10,19 @@ def test_list_empty(tox_project):
     outcome.assert_success()
 
     expected = textwrap.dedent(
-        """
+        f"""
         [tox]
         base =
-        tox_root = {0}
-        work_dir = {0}{1}.tox
-        temp_dir = {0}{1}.temp
+        tox_root = {project.path}
+        work_dir = {project.path}{os.sep}.tox
+        temp_dir = {project.path}{os.sep}.temp
         env_list =
         skip_missing_interpreters = True
-        min_version = {2}
+        min_version = {__version__}
         provision_tox_env = .tox
         requires =
-          tox>={2}
+          tox>={__version__}
         no_package = False
-        """.format(
-            project.path, os.sep, __version__,
-        ),
+        """,
     ).lstrip()
     assert outcome.out == expected

@@ -75,7 +75,7 @@ class ToxEnv(ABC):
     def setup(self) -> None:
         """
         1. env dir exists
-        2. contains a runner with the same type
+        2. contains a runner with the same type.
         """
         env_tmp_dir = cast(Path, self.conf["env_tmp_dir"])
         if env_tmp_dir.exists():

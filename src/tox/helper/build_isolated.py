@@ -13,7 +13,7 @@ backend = __import__(backend_spec, fromlist=[None])
 if backend_obj:
     backend = getattr(backend, backend_obj)
 
-builder = getattr(backend, "build_{}".format(build_type))
+builder = getattr(backend, f"build_{build_type}")
 basename = builder(dist_folder, **extra)
 
 with open(into, "w") as file_handler:

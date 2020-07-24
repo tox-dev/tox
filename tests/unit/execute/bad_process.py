@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def handler(signum, frame):
-    print("how about no signal {}".format(signum), file=sys.stdout)
+    print(f"how about no signal {signum}", file=sys.stdout)
     sys.stdout.flush()  # force output now before we get killed
 
 
@@ -22,7 +22,7 @@ while True:
     try:
         if not start_file.exists():
             start_file.write_text("")
-            print("created {}".format(start_file))
+            print(f"created {start_file}")
         time.sleep(100)
     except KeyboardInterrupt:
         print("how about no KeyboardInterrupt", file=sys.stderr)

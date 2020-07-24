@@ -73,10 +73,10 @@ def find_factor_groups(value):
 
 def expand_env_with_negation(value):
     """transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']"""
-    for key, group in itertools.groupby(re.split(r"((?:{[^}]+\})+)|,", value), key=bool):
+    for key, group in itertools.groupby(re.split(r"((?:{[^}]+})+)|,", value), key=bool):
         if key:
             group_str = "".join(group).strip()
-            elements = re.split(r"{([^}]+)\}", group_str)
+            elements = re.split(r"{([^}]+)}", group_str)
             parts = [re.sub(r"\s+", "", elem).split(",") for elem in elements]
             for variant in itertools.product(*parts):
                 variant_str = "".join(variant)

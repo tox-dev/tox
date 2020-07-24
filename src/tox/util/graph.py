@@ -8,7 +8,7 @@ def stable_topological_sort(graph):
     for values in list(graph.values()):
         for value in values:
             if value not in graph:
-                graph[value] = tuple()
+                graph[value] = ()
 
     inverse_graph = defaultdict(set)
     for key, depends in graph.items():
@@ -63,4 +63,4 @@ def identify_cycle(graph):
     for node in graph:
         result = visit(node)
         if result is not None:
-            raise ValueError("{}".format(" | ".join(result.keys())))
+            raise ValueError(f"{' | '.join(result.keys())}")

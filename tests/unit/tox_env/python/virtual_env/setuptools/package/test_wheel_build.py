@@ -59,16 +59,14 @@ def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_
                     [bdist_wheel]
                     universal = 1
                 """,
-            "pyproject.toml": """
+            "pyproject.toml": f"""
                     [build-system]
                     requires = [
-                        "setuptools >= {}",
-                        "wheel >= {}",
+                        "setuptools >= {setuptools.__version__}",
+                        "wheel >= {wheel.__version__}",
                     ]
                     build-backend = 'setuptools.build_meta'
-                 """.format(
-                setuptools.__version__, wheel.__version__,
-            ),
+                 """,
             "src": {"magic": {"__init__.py": """__version__ = "1.2.3" """}},
         },
     )

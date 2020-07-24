@@ -1,13 +1,11 @@
 import sys
 from abc import ABC, abstractmethod
-from argparse import Namespace
 from pathlib import Path
 from typing import Any, List, Union, cast
 
 from packaging.requirements import Requirement
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_spec import PythonSpec
-from virtualenv.run import AppDataAction, CreatorSelector
 
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute
@@ -51,7 +49,7 @@ class Python(ToxEnv, ABC):
     def env_site_package_dir(self):
         """
         If we have the python we just need to look at the last path under prefix.
-        Debian derivatives change the site-packages to dist-packages, so we need to fix it for site-packages.
+        E.g., Debian derivatives change the site-packages to dist-packages, so we need to fix it for site-packages.
         """
         return self.py_info.purelib
 
@@ -71,23 +69,13 @@ class Python(ToxEnv, ABC):
             for base_python in base_pythons:
                 python = self.get_python(base_python)
                 if python is not None:
+                    from virtualenv.run import session_via_cli
+
                     env_dir = cast(Path, self.conf["env_dir"])
-                    selector = CreatorSelector.for_interpreter(python)
-                    info = selector.describe(
-                        Namespace(
-                            dest=env_dir,
-                            clear=False,
-                            system_site=False,
-                            app_data=AppDataAction.default(),
-                            meta=selector.key_to_meta[
-                                next(
-                                    name for name, value in selector.key_to_class.items() if value == selector.describe
-                                )
-                            ],
-                        ),
-                        python,
+                    session = session_via_cli(
+                        [str(env_dir), "--activators", "", "--no-seed", "-p", python.executable], setup_logging=False,
                     )
-                    self._python = info
+                    self._python = session.creator
                     break
         if self._python is None:
             raise NoInterpreter(base_pythons)
