@@ -38,9 +38,7 @@ def check_os_environ():
     extra.pop("PLAT", None)
     miss = {k: old[k] for k in set(old) - set(new)}
     diff = {
-        "{} = {} vs {}".format(k, old[k], new[k])
-        for k in set(old) & set(new)
-        if old[k] != new[k] and not k.startswith("PYTEST_")
+        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
     }
     if extra or miss or diff:
         msg = "test changed environ"
@@ -136,7 +134,7 @@ class ToxProject:
             os.chdir(cur_dir)
 
     def __repr__(self):
-        return "{}(path={}) at {}".format(type(self).__name__, self.path, id(self))
+        return f"{type(self).__name__}(path={self.path}) at {id(self)}"
 
 
 ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]

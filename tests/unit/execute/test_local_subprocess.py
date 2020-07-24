@@ -68,9 +68,9 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(capsys, caplog)
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
     assert not outcome.err
-    assert outcome.out == "out{0}yay{0}".format(os.linesep)
+    assert outcome.out == f"out{os.linesep}yay{os.linesep}"
     out, err = capsys.readouterr()
-    assert out == "out{0}yay{0}".format(os.linesep)
+    assert out == f"out{os.linesep}yay{os.linesep}"
     assert not err
     assert not caplog.records
 
@@ -97,9 +97,9 @@ def test_local_execute_write_a_lot(capsys, caplog):
     )
     outcome = executor.__call__(request, show_on_standard=False)
     assert bool(outcome)
-    expected_out = "{}{}{}{}".format("o" * count, os.linesep, "b" * count, os.linesep)
+    expected_out = f"{'o' * count}{os.linesep}{'b' * count}{os.linesep}"
     assert outcome.out == expected_out
-    expected_err = "{}{}{}{}".format("e" * count, os.linesep, "a" * count, os.linesep)
+    expected_err = f"{'e' * count}{os.linesep}{'a' * count}{os.linesep}"
     assert outcome.err == expected_err
 
 

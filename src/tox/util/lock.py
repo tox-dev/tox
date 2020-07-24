@@ -33,6 +33,6 @@ def get_unique_file(path, prefix, suffix):
                 max_value = max(max_value, int(candidate.basename[len(prefix) : -len(suffix)]))
             except ValueError:
                 continue
-        winner = path.join("{}{}{}".format(prefix, max_value + 1, suffix))
+        winner = path.join(f"{prefix}{max_value + 1}{suffix}")
         winner.ensure(dir=0)
         return winner

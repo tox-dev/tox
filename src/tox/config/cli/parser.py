@@ -62,7 +62,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
             if text.endswith(default):
-                text = "{} (default: %(default)s -> from %(default_source)s)".format(text[: -len(default)])
+                text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
         return text
 
 
@@ -119,7 +119,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
         level_map = "|".join("{} - {}".format(c, logging.getLevelName(l)) for c, l in sorted(list(LEVELS.items())))
         verbosity_group = self.add_argument_group(
-            "verbosity=verbose-quiet, default {}, map {}".format(logging.getLevelName(LEVELS[3]), level_map),
+            f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}",
         )
         verbosity_exclusive = verbosity_group.add_mutually_exclusive_group()
         verbosity_exclusive.add_argument(

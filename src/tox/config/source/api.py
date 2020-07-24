@@ -13,7 +13,7 @@ class Command:
         self.args = args  # type:List[str]
 
     def __repr__(self):
-        return "{}(args={!r})".format(type(self).__name__, self.args)
+        return f"{type(self).__name__}(args={self.args!r})"
 
     def __eq__(self, other):
         return type(self) == type(other) and self.args == other.args

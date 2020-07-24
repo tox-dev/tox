@@ -63,4 +63,4 @@ def identify_cycle(graph):
     for node in graph:
         result = visit(node)
         if result is not None:
-            raise ValueError("{}".format(" | ".join(result.keys())))
+            raise ValueError(f"{' | '.join(result.keys())}")

@@ -37,7 +37,7 @@ class Config:
         return iter(self._env_names)
 
     def __repr__(self):
-        return "{}(config_source={!r})".format(type(self).__name__, self._src)
+        return f"{type(self).__name__}(config_source={self._src!r})"
 
     def __contains__(self, item):
         return item in self._envs

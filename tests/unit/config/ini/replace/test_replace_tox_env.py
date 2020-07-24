@@ -11,13 +11,13 @@ def example(tox_project: ToxProjectCreator):
         project = tox_project(
             {
                 "tox.ini": dedent(
-                    """
+                    f"""
                         [tox]
                         env_list = a
                         [testenv]
-                        {}
+                        {conf}
                         """,
-                ).format(conf),
+                ),
             },
         )
         config = project.config()

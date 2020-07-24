@@ -24,7 +24,7 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
             keys="package",
             of_type=str,
             default=PackageType.sdist.name,
-            desc="package installation mode - {} ".format(" | ".join(i.name for i in PackageType)),
+            desc=f"package installation mode - {' | '.join(i.name for i in PackageType)} ",
             post_process=lambda key, conf: PackageType[key],
         )
         if self.conf["package"] == PackageType.skip:

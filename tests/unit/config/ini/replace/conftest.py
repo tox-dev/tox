@@ -11,16 +11,14 @@ def replace_one(tox_project: ToxProjectCreator):
     def example(conf):
         project = tox_project(
             {
-                "tox.ini": """
+                "tox.ini": f"""
             [tox]
             env_list = a
             [testenv]
-            env = {}
+            env = {conf}
 
 
-            """.format(
-                    conf,
-                ),
+            """,
             },
         )
 

@@ -97,7 +97,7 @@ class Ini(Source):
                         yield env
 
     def __repr__(self):
-        return "{}(path={})".format(type(self).__name__, self._path)
+        return f"{type(self).__name__}(path={self._path})"
 
 
 class IniLoader(StrConvert, Loader):

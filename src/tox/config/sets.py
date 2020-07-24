@@ -90,8 +90,9 @@ class ConfigDynamicDefinition(ConfigDefinition):
         return result
 
     def __repr__(self):
-        return "{}(keys={!r}, of_type={!r}, default={!r}, desc={!r}, post_process={!r})".format(
-            type(self).__name__, self.keys, self.of_type, self.default, self.desc, self.post_process,
+        return (
+            f"{type(self).__name__}(keys={self.keys!r}, of_type={self.of_type!r}, default={self.default!r},"
+            f" desc={self.desc!r}, post_process={self.post_process!r})"
         )
 
 
