@@ -22,7 +22,7 @@ def test_local_execute_basic_pass(capsys, caplog):
         env=os.environ,
         allow_stdin=False,
     )
-    outcome = executor.__call__(request, show_on_standard=False)
+    outcome = executor.__call__(request, show_on_standard=False, colored=False)
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
     assert outcome.err == "err"
@@ -43,7 +43,7 @@ def test_local_execute_basic_pass_show_on_standard(capsys, caplog):
         env=os.environ,
         allow_stdin=False,
     )
-    outcome = executor.__call__(request, show_on_standard=True)
+    outcome = executor.__call__(request, show_on_standard=True, colored=True)
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
     assert outcome.err == "err"
@@ -64,7 +64,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(capsys, caplog)
         env=os.environ,
         allow_stdin=False,
     )
-    outcome = executor.__call__(request, show_on_standard=True)
+    outcome = executor.__call__(request, show_on_standard=True, colored=False)
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
     assert not outcome.err
@@ -95,7 +95,7 @@ def test_local_execute_write_a_lot(capsys, caplog):
         env=os.environ,
         allow_stdin=False,
     )
-    outcome = executor.__call__(request, show_on_standard=False)
+    outcome = executor.__call__(request, show_on_standard=False, colored=False)
     assert bool(outcome)
     expected_out = f"{'o' * count}{os.linesep}{'b' * count}{os.linesep}"
     assert outcome.out == expected_out
@@ -115,7 +115,7 @@ def test_local_execute_basic_fail(caplog, capsys):
     request = ExecuteRequest(cmd=cmd, cwd=cwd, env=os.environ, allow_stdin=False)
 
     # run test
-    outcome = executor.__call__(request, show_on_standard=False)
+    outcome = executor.__call__(request, show_on_standard=False, colored=False)
 
     # assert no output, no logs
     out, err = capsys.readouterr()
@@ -158,7 +158,7 @@ def test_command_does_not_exist(capsys, caplog):
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os.environ, allow_stdin=False)
-    outcome = executor.__call__(request, show_on_standard=False)
+    outcome = executor.__call__(request, show_on_standard=False, colored=False)
 
     assert bool(outcome) is False
     assert outcome.exit_code != Outcome.OK

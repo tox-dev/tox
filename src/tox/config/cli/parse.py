@@ -9,7 +9,7 @@ def get_options(*args) -> Tuple[Parsed, List[str], Dict[str, Handler]]:
     guess_verbosity = _get_base(args)
     handlers, parsed, unknown = _get_core(args)
     if guess_verbosity != parsed.verbosity:
-        setup_report(parsed.verbosity)  # pragma: no cover
+        setup_report(parsed.verbosity, parsed.is_colored)  # pragma: no cover
     return parsed, unknown, handlers
 
 
@@ -17,7 +17,7 @@ def _get_base(args):
     tox_parser = ToxParser.base()
     parsed, unknown = tox_parser.parse(args)
     guess_verbosity = parsed.verbosity
-    setup_report(guess_verbosity)
+    setup_report(guess_verbosity, parsed.is_colored)
     return guess_verbosity
 
 

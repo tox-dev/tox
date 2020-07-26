@@ -103,13 +103,13 @@ class ToxKeyboardInterrupt(KeyboardInterrupt):
 
 
 class Execute(ABC):
-    def __call__(self, request: ExecuteRequest, show_on_standard: bool) -> Outcome:
+    def __call__(self, request: ExecuteRequest, show_on_standard: bool, colored: bool) -> Outcome:
         start = timer()
         executor = self.executor()
         interrupt = None
         try:
             with CollectWrite(sys.stdout if show_on_standard else None) as out:
-                with CollectWrite(sys.stderr if show_on_standard else None, Fore.RED) as err:
+                with CollectWrite(sys.stderr if show_on_standard else None, Fore.RED if colored else None) as err:
                     instance = executor(request, out.collect, err.collect)  # type: ExecuteInstance
                     try:
                         exit_code = instance.run()

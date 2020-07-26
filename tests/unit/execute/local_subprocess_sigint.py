@@ -20,7 +20,7 @@ request = local_sub_process.ExecuteRequest(
 
 
 try:
-    executor(request, show_on_standard=False)
+    executor(request, show_on_standard=False, colored=False)
 except ToxKeyboardInterrupt as exception:
     outcome = exception.outcome
     print(outcome.exit_code)

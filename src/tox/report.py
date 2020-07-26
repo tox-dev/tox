@@ -33,7 +33,7 @@ class ToxHandler(logging.StreamHandler):
         return formatter
 
 
-def setup_report(verbosity):
+def setup_report(verbosity, is_colored):
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
@@ -42,7 +42,8 @@ def setup_report(verbosity):
     LOGGER.addHandler(handler)
 
     logging.debug("setup logging to %s", logging.getLevelName(level))
-    init()
+    if is_colored:
+        init()
 
 
 def _get_level(verbosity):

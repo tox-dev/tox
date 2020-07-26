@@ -16,6 +16,7 @@ def test_verbose_compound(monkeypatch):
 def test_verbose_no_test_skip_missing(monkeypatch):
     parsed, _, __ = get_options("--notest", "-vv", "--skip-missing-interpreters", "false", "--runner", "virtualenv")
     assert vars(parsed) == {
+        "colored": "no",
         "verbose": 4,
         "quiet": 0,
         "command": "run",
@@ -39,11 +40,12 @@ def test_env_var_exhaustive_parallel_values(monkeypatch, core_handlers):
 
     parsed, unknown, handlers = get_options()
     assert vars(parsed) == {
+        "colored": "no",
         "verbose": 5,
         "quiet": 1,
         "command": "run-parallel",
         "env": ["py37", "py36"],
-        "default_runner": "magic",
+        "default_runner": "virtualenv",
         "recreate": True,
         "no_test": True,
         "parallel": 3,
