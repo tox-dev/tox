@@ -19,24 +19,21 @@ def test_init_base(tox_project):
 
 
 def test_env_var(monkeypatch):
-    monkeypatch.setenv("MORE", "B")
-    monkeypatch.setenv("EXTRA", "1")
-    monkeypatch.setenv("PYTHONPATH", "yes")
-    gen = check_os_environ()
-    next(gen)
-    monkeypatch.setenv("MAGIC", "A")
-    monkeypatch.setenv("MORE", "D")
-    monkeypatch.delenv("EXTRA")
+    with monkeypatch.context() as m:
+        m.setenv("MORE", "B")
+        m.setenv("EXTRA", "1")
+        m.setenv("PYTHONPATH", "yes")
 
-    from tox.pytest import pytest as tox_pytest
+        with check_os_environ():
+            m.setenv("MAGIC", "A")
+            m.setenv("MORE", "D")
+            m.delenv("EXTRA")
 
-    exp = "test changed environ extra {'MAGIC': 'A'} miss {'EXTRA': '1'} diff {'MORE = B vs D'}"
+            from tox.pytest import pytest as tox_pytest
 
-    def fail(msg):
-        assert msg == exp
+            exp = "test changed environ extra {'MAGIC': 'A'} miss {'EXTRA': '1'} diff {'MORE = B vs D'}"
 
-    monkeypatch.setattr(tox_pytest, "fail", fail)
-    try:
-        gen.send(None)
-    except StopIteration:
-        pass
+            def fail(msg):
+                assert msg == exp
+
+            m.setattr(tox_pytest, "fail", fail)

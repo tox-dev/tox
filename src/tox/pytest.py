@@ -1,6 +1,7 @@
 import os
 import sys
 import textwrap
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
@@ -23,6 +24,7 @@ def ensure_logging_framework_not_altered():
     LOGGER.handlers = before_handlers
 
 
+@contextmanager
 def check_os_environ():
     old = os.environ.copy()
     to_clean = {k: os.environ.pop(k, None) for k in {ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH"}}
@@ -51,7 +53,16 @@ def check_os_environ():
         pytest.fail(msg)
 
 
-check_os_environ_stable = pytest.fixture(autouse=True)(check_os_environ)
+@pytest.fixture(autouse=True)
+def check_os_environ_stable(monkeypatch):
+    with check_os_environ():
+        yield
+        monkeypatch.undo()
+
+
+@pytest.fixture(autouse=True)
+def no_color(monkeypatch, check_os_environ_stable):
+    monkeypatch.setenv("NO_COLOR", "yes")
 
 
 @pytest.fixture(name="tox_project")

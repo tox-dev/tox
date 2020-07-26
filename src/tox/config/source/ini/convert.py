@@ -13,6 +13,7 @@ class StrConvert(Convert):
     @staticmethod
     def to_list(value):
         splitter = "\n" if "\n" in value else ","
+        splitter = splitter.replace("\r", "")
         for token in value.split(splitter):
             value = token.strip()
             if value:
