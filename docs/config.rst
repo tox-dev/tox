@@ -484,7 +484,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Set to ``true`` if you want virtualenv to upgrade pip/wheel/setuptools to
     the latest version.
 
-.. conf:: args_are_paths ^ true|false ^ false
+.. conf:: args_are_paths ^ true|false ^ true
 
     Treat positional arguments passed to ``tox`` as file system paths
     and - if they exist on the filesystem - rewrite them according
