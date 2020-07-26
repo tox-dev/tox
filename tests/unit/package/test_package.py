@@ -1,4 +1,5 @@
 import re
+import sys
 
 from tox.config import parseconfig
 from tox.package import get_package
@@ -104,6 +105,48 @@ def test_make_sdist(initproj):
     _, sdist_new = get_package(Session(config))
     assert sdist_new == sdist
     assert sdist_new.stat().size > 10
+
+
+def test_build_backend_without_submodule(initproj, cmd):
+    # The important part of this test is that the build backend
+    # "inline_backend" is just a base package without a submodule.
+    # (Regression test for #1344)
+    initproj(
+        "magic-0.1",
+        filedefs={
+            "tox.ini": """\
+                [tox]
+                isolated_build = true
+                [testenv:.package]
+                basepython = {}
+                [testenv]
+                setenv = PYTHONPATH = {{toxinidir}}
+            """.format(
+                sys.executable,
+            ),
+            "pyproject.toml": """\
+                [build-system]
+                requires = []
+                build-backend = "inline_backend"
+            """,
+            # To trigger original bug, must be package with __init__.py
+            "inline_backend": {
+                "__init__.py": """\
+                    def get_requires_for_build_sdist(*args, **kwargs):
+                        return ["pathlib2"]
+
+                    def build_sdist(sdist_directory, config_settings=None):
+                        import pathlib2
+                        (pathlib2.Path(sdist_directory) / "magic-0.1.0.tar.gz").touch()
+                        return "magic-0.1.0.tar.gz"
+                """,
+            },
+            ".gitignore": ".tox",
+        },
+        add_missing_setup_py=False,
+    )
+    result = cmd("--sdistonly", "-e", "py", "-v", "-v")
+    result.assert_success(is_run_test_env=False)
 
 
 def test_package_inject(initproj, cmd, monkeypatch, tmp_path):
