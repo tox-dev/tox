@@ -163,7 +163,7 @@ Global settings are defined under the ``tox`` section as:
 Jenkins override
 ++++++++++++++++
 
-It is possible to override global settings inside a Jenkins_ instance (detection 
+It is possible to override global settings inside a Jenkins_ instance (detection
 is done by checking for existence of the ``JENKINS_URL`` environment variable)
 by using the ``tox:jenkins`` section:
 
