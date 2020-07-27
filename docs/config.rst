@@ -163,8 +163,8 @@ Global settings are defined under the ``tox`` section as:
 Jenkins override
 ++++++++++++++++
 
-It is possible to override global settings inside a Jenkins_ instance (
-detection is by checking for existence of the ``JENKINS_URL`` environment variable)
+It is possible to override global settings inside a Jenkins_ instance (detection 
+is done by checking for existence of the ``JENKINS_URL`` environment variable)
 by using the ``tox:jenkins`` section:
 
 .. code-block:: ini
@@ -190,9 +190,9 @@ environment.
 
 Settings defined in the top-level ``testenv`` section are automatically
 inherited by individual environments unless overridden. Test environment names
-can consist of alphanumeric characters and dashes; for example:
-``py38-django30``. The name will be split on dashes into multiple factors,
-meaning ``py38-django30`` will be split into two factors: ``py38`` and
+can consist of alphanumeric characters and dashes, for example
+``py38-django30``. The name will be split by dashes into multiple factors,
+meaning ``py38-django30`` will be split into two factors, ``py38`` and
 ``django30``. *tox* defines a number of default factors, which correspond to
 various versions and implementations of Python and provide default values for
 :conf:`basepython`:
@@ -206,13 +206,13 @@ various versions and implementations of Python and provide default values for
 - ``jython``: configures ``basepython = jython``
 
 It is also possible to define what's know as *generative names*, where an
-individual section maps to multiple environments; for example:
-``py{37,38}-django{30,31}``, which would generate four environments, each
-consisting of two factors a piece: ``py37-django30`` (``py37``, ``django30``),
+individual section maps to multiple environments. For example,
+``py{37,38}-django{30,31}``  would generate four environments, each
+consisting of two factors: ``py37-django30`` (``py37``, ``django30``),
 ``py37-django31`` (``py37``, ``django31``), ``py38-django30`` (``py38``,
 ``django30``), and ``py38-django31`` (``py38``, ``django31``).  Combined, these
-features provide the ability to write very concise ``tox.ini`` files and is
-discussed further :ref:`below <generating-environments>`.
+features provide the ability to write very concise ``tox.ini`` files. This is
+discussed further in :ref:`below <generating-environments>`.
 
 
 tox environment settings
