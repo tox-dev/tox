@@ -109,7 +109,7 @@ def test_config_some_envs(tox_project: ToxProjectCreator):
     config_set.add_config(keys="bad_bool", of_type=bool, default=False, desc="bad_bool")
     with pytest.raises(TypeError) as context:
         assert config_set["bad_bool"]
-    error = "value whatever cannot be transformed to bool, valid: 0, 1, false, no, off, on, true, yes"
+    error = "value whatever cannot be transformed to bool, valid: , 0, 1, false, no, off, on, true, yes"
     assert str(context.value) == error
 
     config_set.add_constant(keys="a", value=1, desc="ok")

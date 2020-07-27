@@ -1,9 +1,12 @@
 import argparse
 import logging
+import os
+import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar
 
+from tox.config.source.ini import StrConvert
 from tox.plugin.util import NAME
 from tox.session.state import State
 
@@ -42,8 +45,16 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     def get_type(action):
         of_type = getattr(action, "of_type", None)
         if of_type is None:
-            # noinspection PyProtectedMember
-            if action.default is not None:
+            if isinstance(action, argparse._StoreAction) and action.choices:  # noqa
+                loc = locals()
+                if sys.version_info >= (3, 8):
+                    from typing import Literal  # noqa
+                else:
+                    from typing_extensions import Literal  # noqa
+                loc["Literal"] = Literal
+                as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
+                of_type = eval(as_literal, globals(), loc)
+            elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa
                 of_type = type(action.const)
@@ -70,6 +81,10 @@ class Parsed(Namespace):
     @property
     def verbosity(self) -> int:
         return max(self.verbose - self.quiet, 0)
+
+    @property
+    def is_colored(self) -> True:
+        return self.colored == "yes"
 
 
 Handler = Callable[[State], Optional[int]]
@@ -121,12 +136,20 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         verbosity_group = self.add_argument_group(
             f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}",
         )
-        verbosity_exclusive = verbosity_group.add_mutually_exclusive_group()
-        verbosity_exclusive.add_argument(
-            "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2,
-        )
-        verbosity_exclusive.add_argument(
-            "-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0,
+        verbosity = verbosity_group.add_mutually_exclusive_group()
+        verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
+        verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
+
+        converter = StrConvert()
+        if converter.to_bool(os.environ.get("NO_COLOR", "")):
+            color = "no"
+        elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
+            color = "yes"
+        else:
+            color = "yes" if sys.stdout.isatty() else "no"
+
+        verbosity_group.add_argument(
+            "--colored", default=color, choices=["yes", "no"], help="should output be enriched with colors",
         )
         self.fix_defaults()
 

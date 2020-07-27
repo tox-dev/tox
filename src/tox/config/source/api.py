@@ -1,9 +1,15 @@
+import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Sequence, Set, Union
 
 from tox.execute.request import shell_cmd
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 _NO_MAPPING = object()
 
@@ -39,7 +45,8 @@ class EnvList:
 
 class Convert(ABC):
     def to(self, raw, of_type):
-        if getattr(of_type, "__module__", None) == "typing":
+        from_module = getattr(of_type, "__module__", None)
+        if from_module in ("typing", "typing_extensions"):
             return self._to_typing(raw, of_type)
         elif issubclass(of_type, Path):
             return self.to_path(raw)
@@ -54,7 +61,7 @@ class Convert(ABC):
         return of_type(raw)
 
     def _to_typing(self, raw, of_type):
-        origin = getattr(of_type, "__origin__", None)
+        origin = getattr(of_type, "__origin__", getattr(of_type, "__class__", None))
         if origin is not None:
             result = _NO_MAPPING  # type: Any
             if origin in (list, List):
@@ -72,6 +79,14 @@ class Convert(ABC):
                     else:
                         new_type = next(i for i in of_type.__args__ if i != type(None))  # noqa
                         result = self._to_typing(raw, new_type)
+            elif origin == Literal or origin == type(Literal):
+                if sys.version_info >= (3, 7):
+                    choice = of_type.__args__
+                else:
+                    choice = of_type.__values__
+                if raw not in choice:
+                    raise ValueError(f"{raw} must be one of {choice}")
+                result = raw
             if result is not _NO_MAPPING:
                 return result
         raise TypeError(f"{raw} cannot cast to {of_type!r}")

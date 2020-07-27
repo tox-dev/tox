@@ -40,12 +40,11 @@ class Builder:
             )
 
     def _build_run_env(self, env_conf: ConfigSet, env_name):
-        # noinspection PyUnresolvedReferences
         env_conf.add_config(
             keys="runner",
             desc="the tox execute used to evaluate this environment",
             of_type=str,
-            default=self.options.default_runner,
+            default=self.options.default_runner,  # noqa
         )
         runner = cast(str, env_conf["runner"])
         from .register import REGISTER

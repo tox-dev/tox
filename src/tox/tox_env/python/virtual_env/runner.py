@@ -78,9 +78,8 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
 
     def install_package(self):
         package = self.package_env.perform_packaging()
-        self.install_python_packages(
-            package, no_deps=True, develop=self.conf["package"] is PackageType.dev, force_reinstall=True,
-        )
+        develop = self.conf["package"] is PackageType.dev
+        self.install_python_packages(package, no_deps=True, develop=develop, force_reinstall=True)
 
 
 @impl

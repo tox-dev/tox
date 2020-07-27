@@ -170,7 +170,7 @@ class IniLoader(StrConvert, Loader):
         if self._section is None:
             raise KeyError(key)
         value = self._section[key]
-        collapsed_newlines = value.replace("\\\n", "")  # collapse explicit line splits
+        collapsed_newlines = value.replace("\\\r", "").replace("\\\n", "")  # collapse explicit line splits
         replace_executed = replace(collapsed_newlines, conf, as_name, self._section_loader)  # do replacements
         factor_selected = filter_for_env(replace_executed, as_name)  # select matching factors
         # extend factors

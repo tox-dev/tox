@@ -13,6 +13,7 @@ class StrConvert(Convert):
     @staticmethod
     def to_list(value):
         splitter = "\n" if "\n" in value else ","
+        splitter = splitter.replace("\r", "")
         for token in value.split(splitter):
             value = token.strip()
             if value:
@@ -48,7 +49,7 @@ class StrConvert(Convert):
         return EnvList(elements)
 
     TRUTHFUL_VALUES = {"true", "1", "yes", "on"}
-    FALSY_VALUES = {"false", "0", "no", "off"}
+    FALSY_VALUES = {"false", "0", "no", "off", ""}
     VALID_BOOL = list(sorted(TRUTHFUL_VALUES | FALSY_VALUES))
 
     @staticmethod

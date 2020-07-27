@@ -16,11 +16,12 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
         textwrap.dedent(
             """
         [tox]
+        colored = yes
         verbose = 5
         quiet = 1
         command = run-parallel
         env = py37, py36
-        default_runner = magic
+        default_runner = virtualenv
         recreate = true
         no_test = true
         parallel = 3
@@ -49,6 +50,7 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
 def test_ini_empty(empty_ini, core_handlers):
     parsed, unknown, handlers = get_options()
     assert vars(parsed) == {
+        "colored": "no",
         "verbose": 2,
         "quiet": 0,
         "command": "run",
@@ -65,11 +67,12 @@ def test_ini_empty(empty_ini, core_handlers):
 def test_ini_exhaustive_parallel_values(exhaustive_ini, core_handlers):
     parsed, unknown, handlers = get_options()
     assert vars(parsed) == {
+        "colored": "yes",
         "verbose": 5,
         "quiet": 1,
         "command": "run-parallel",
         "env": ["py37", "py36"],
-        "default_runner": "magic",
+        "default_runner": "virtualenv",
         "recreate": True,
         "no_test": True,
         "parallel": 3,
@@ -100,6 +103,7 @@ def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
     )
     assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
     assert vars(parsed) == {
+        "colored": "no",
         "verbose": 2,
         "quiet": 0,
         "command": "run",
@@ -130,6 +134,7 @@ def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog, va
         ),
     ]
     assert vars(parsed) == {
+        "colored": "no",
         "verbose": 2,
         "quiet": 0,
         "command": "run",

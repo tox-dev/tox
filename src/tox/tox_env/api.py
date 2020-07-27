@@ -126,7 +126,7 @@ class ToxEnv(ABC):
             show_on_standard = self.options.verbosity > 3
         request = ExecuteRequest(cmd, cwd, self.environment_variables, allow_stdin)
         self.logger.warning("run => %s$ %s", request.cwd, request.shell_cmd)
-        outcome = self._executor(request=request, show_on_standard=show_on_standard)
+        outcome = self._executor(request=request, show_on_standard=show_on_standard, colored=self.options.colored)
         self.logger.info("done => code %d in %s for  %s", outcome.exit_code, outcome.elapsed, outcome.shell_cmd)
         return outcome
 
