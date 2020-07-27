@@ -50,17 +50,6 @@ def build(config, session):
     return perform_isolated_build(build_info, package_venv, config.distdir, config.setupdir)
 
 
-def _ensure_importable_in_path(python_path, importable):
-    """Figure out if the importable exists in the given path."""
-    mod_chunks = importable.split(".")
-    pkg_path = python_path.join(*mod_chunks[:-1])
-    if not pkg_path.exists():
-        return False
-    if pkg_path.join(mod_chunks[-1], "__init__.py").exists():
-        return True
-    return pkg_path.join(mod_chunks[-1] + ".py").exists()
-
-
 def get_build_info(folder):
     toml_file = folder.join("pyproject.toml")
 
@@ -102,9 +91,6 @@ def get_build_info(folder):
     if not isinstance(backend_paths, list):
         abort("backend-path key at build-system section must be a list, if specified")
     backend_paths = [folder.join(p) for p in backend_paths]
-
-    if backend_paths and not any(_ensure_importable_in_path(p, module) for p in backend_paths):
-        abort("build-backend must exist in one of the paths specified by backend-path")
 
     return BuildInfo(requires, module, obj, backend_paths)
 
