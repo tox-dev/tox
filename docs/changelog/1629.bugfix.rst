@@ -1,1 +1,0 @@
-Fix ``TypeError`` when using isolated_build with backends that are not submodules (e.g. ``maturin``)
