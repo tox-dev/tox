@@ -4,7 +4,7 @@ import sys
 backend_spec = sys.argv[1]
 backend_obj = sys.argv[2] if len(sys.argv) >= 3 else None
 
-backend = __import__(backend_spec, fromlist=[None])
+backend = __import__(backend_spec, fromlist=["_trash"])
 if backend_obj:
     backend = getattr(backend, backend_obj)
 
