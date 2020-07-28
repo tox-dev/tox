@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.18.1 (2020-07-28)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix ``TypeError`` when using isolated_build with backends that are not submodules (e.g. ``maturin``)
+  `#1629 <https://github.com/tox-dev/tox/issues/1629>`_
+
+
 v3.18.0 (2020-07-23)
 --------------------
 
