@@ -138,3 +138,18 @@ def test_package_isolated_toml_bad_backend(initproj):
     build-backend = []
     """,
     )
+
+
+def test_package_isolated_toml_bad_backend_path(initproj):
+    """Verify that a non-list 'backend-path' is forbidden."""
+    toml_file_check(
+        initproj,
+        6,
+        "backend-path key at build-system section must be a list, if specified",
+        """
+    [build-system]
+    requires = []
+    build-backend = 'setuptools.build_meta'
+    backend-path = 42
+    """,
+    )
