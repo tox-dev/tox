@@ -190,9 +190,9 @@ environment.
 
 Settings defined in the top-level ``testenv`` section are automatically
 inherited by individual environments unless overridden. Test environment names
-can consist of alphanumeric characters and dashes, for example
-``py38-django30``. The name will be split by dashes into multiple factors,
-meaning ``py38-django30`` will be split into two factors, ``py38`` and
+can consist of alphanumeric characters and dashes; for example:
+``py38-django30``. The name will be split on dashes into multiple factors,
+meaning ``py38-django30`` will be split into two factors: ``py38`` and
 ``django30``. *tox* defines a number of default factors, which correspond to
 various versions and implementations of Python and provide default values for
 :conf:`basepython`:
