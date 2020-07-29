@@ -207,7 +207,7 @@ various versions and implementations of Python and provide default values for
 
 It is also possible to define what's know as *generative names*, where an
 individual section maps to multiple environments. For example,
-``py{37,38}-django{30,31}``  would generate four environments, each
+``py{37,38}-django{30,31}`` would generate four environments, each
 consisting of two factors: ``py37-django30`` (``py37``, ``django30``),
 ``py37-django31`` (``py37``, ``django31``), ``py38-django30`` (``py38``,
 ``django30``), and ``py38-django31`` (``py38``, ``django31``).  Combined, these
