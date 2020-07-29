@@ -51,7 +51,7 @@ You will get some output similar to this::
 
 
 There might also be some plugins not (yet) available from PyPI that could be installed directly
-fom source hosters like Github or Bitbucket (or from a local clone). See the associated `pip documentation <https://pip.pypa.io/en/stable/reference/pip_install/#vcs-support>`_.
+from source hosters like Github or Bitbucket (or from a local clone). See the associated `pip documentation <https://pip.pypa.io/en/stable/reference/pip_install/#vcs-support>`_.
 
 To see what is installed you can call ``tox --version`` to get the version of the host and names
 and locations of all installed plugins::
