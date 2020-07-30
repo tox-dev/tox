@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import os
 from collections import namedtuple
 
 import six
@@ -11,7 +12,9 @@ from tox import reporter
 from tox.config import DepConfig, get_py_project_toml
 from tox.constants import BUILD_ISOLATED, BUILD_REQUIRE_SCRIPT
 
-BuildInfo = namedtuple("BuildInfo", ["requires", "backend_module", "backend_object"])
+BuildInfo = namedtuple(
+    "BuildInfo", ["requires", "backend_module", "backend_object", "backend_paths"],
+)
 
 
 def build(config, session):
@@ -84,7 +87,12 @@ def get_build_info(folder):
     module = args[0]
     obj = args[1] if len(args) > 1 else ""
 
-    return BuildInfo(requires, module, obj)
+    backend_paths = build_system.get("backend-path", [])
+    if not isinstance(backend_paths, list):
+        abort("backend-path key at build-system section must be a list, if specified")
+    backend_paths = [folder.join(p) for p in backend_paths]
+
+    return BuildInfo(requires, module, obj, backend_paths)
 
 
 def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
@@ -103,6 +111,7 @@ def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
                 str(dist_dir),
                 build_info.backend_module,
                 build_info.backend_object,
+                os.path.pathsep.join(str(p) for p in build_info.backend_paths),
             ],
             returnout=True,
             action=action,
