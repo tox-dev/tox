@@ -22,7 +22,7 @@ e.g.:
     $ pip install tox-travis
 
 You can search for available plugins on PyPI by typing ``pip search tox`` and filter for
-packages that are prefixed ``tox-`` or contain the "plugin" in the description.
+packages that are prefixed ``tox-`` or contain the word "plugin" in the description.
 You will get some output similar to this::
 
     tox-pipenv (1.4.1)                   - A pipenv plugin for tox
@@ -51,7 +51,7 @@ You will get some output similar to this::
 
 
 There might also be some plugins not (yet) available from PyPI that could be installed directly
-fom source hosters like Github or Bitbucket (or from a local clone). See the
+from source hosters like Github or Bitbucket (or from a local clone). See the associated `pip documentation <https://pip.pypa.io/en/stable/reference/pip_install/#vcs-support>`_.
 
 To see what is installed you can call ``tox --version`` to get the version of the host and names
 and locations of all installed plugins::
@@ -90,7 +90,7 @@ Let us consider you want to extend tox behaviour by displaying fireworks at the 
 successful tox run (we won't go into the details of how to display fireworks though).
 
 To create a working plugin you need at least a python project with a tox entry point and a python
-module implementing one or more of the pluggy based hooks tox specifies (using the
+module implementing one or more of the pluggy-based hooks tox specifies (using the
 ``@tox.hookimpl`` decorator as marker).
 
 minimal structure:
@@ -157,7 +157,7 @@ install it with ``-e`` or ``--editable``, so that changes to the code are immedi
 Publish your plugin to PyPI
 ---------------------------
 
-If you think the rest of the world could profit using your plugin you can publish it to PyPI.
+If you think the rest of the world could profit using your plugin, you can publish it to PyPI.
 
 You need to add some more meta data to ``setup.py`` (see `cookiecutter-tox-plugin`_ for a complete
 example or consult the `setup.py docs <https://docs.python.org/3/distutils/setupscript.html>`_).
@@ -183,6 +183,7 @@ You can and publish it like:
     `Python Packaging Guide`_.
 
 .. _toxHookSpecsApi:
+
 
 Hook specifications and related API
 -----------------------------------

@@ -163,8 +163,8 @@ Global settings are defined under the ``tox`` section as:
 Jenkins override
 ++++++++++++++++
 
-It is possible to override global settings inside a Jenkins_ instance (
-detection is by checking for existence of the ``JENKINS_URL`` environment variable)
+It is possible to override global settings inside a Jenkins_ instance (detection
+is done by checking for existence of the ``JENKINS_URL`` environment variable)
 by using the ``tox:jenkins`` section:
 
 .. code-block:: ini
@@ -206,13 +206,13 @@ various versions and implementations of Python and provide default values for
 - ``jython``: configures ``basepython = jython``
 
 It is also possible to define what's know as *generative names*, where an
-individual section maps to multiple environments; for example:
-``py{37,38}-django{30,31}``, which would generate four environments, each
-consisting of two factors a piece: ``py37-django30`` (``py37``, ``django30``),
+individual section maps to multiple environments. For example,
+``py{37,38}-django{30,31}`` would generate four environments, each
+consisting of two factors: ``py37-django30`` (``py37``, ``django30``),
 ``py37-django31`` (``py37``, ``django31``), ``py38-django30`` (``py38``,
 ``django30``), and ``py38-django31`` (``py38``, ``django31``).  Combined, these
-features provide the ability to write very concise ``tox.ini`` files and is
-discussed further :ref:`below <generating-environments>`.
+features provide the ability to write very concise ``tox.ini`` files. This is
+discussed further in :ref:`below <generating-environments>`.
 
 
 tox environment settings

@@ -100,14 +100,17 @@ def test_spinner_long_text(capfd, monkeypatch):
     assert lines == expected
 
 
-def test_spinner_stdout_not_unicode(capfd, monkeypatch):
-    monkeypatch.setattr(sys.stdout, "encoding", "ascii")
+def test_spinner_stdout_not_unicode(mocker, capfd):
+    stdout = mocker.patch("tox.util.spinner.sys.stdout")
+    stdout.encoding = "ascii"
     with spinner.Spinner(refresh_rate=100) as spin:
         for _ in range(len(spin.frames)):
             spin.render_frame()
     out, err = capfd.readouterr()
     assert not err
-    assert all(f in out for f in spin.frames)
+    assert not out
+    written = "".join({i[0][0] for i in stdout.write.call_args_list})
+    assert all(f in written for f in spin.frames)
 
 
 @pytest.mark.parametrize(
