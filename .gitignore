@@ -21,9 +21,6 @@ __pycache__
 # tools
 /.*_cache
 
-# documentation
-/docs/_draft.rst
-
 # release
 credentials.json
 

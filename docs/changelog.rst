@@ -7,7 +7,7 @@ Versions follow `Semantic Versioning <https://semver.org/>`_ (``<major>.<minor>.
 Backward incompatible (breaking) changes will only be introduced in major versions
 with advance notice in the **Deprecations** section of releases.
 
-.. include:: _draft.rst
+.. towncrier-draft-entries:: DRAFT
 
 .. towncrier release notes start
 
