@@ -1,1 +1,0 @@
-Don't require a tox config file for ``tox --devenv`` - by :user:`hroncok`

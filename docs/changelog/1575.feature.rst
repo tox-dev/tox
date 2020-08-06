@@ -1,3 +1,0 @@
-Implement support for building projects
-having :pep:`517#in-tree-build-backends` ``backend-path`` setting -
-by :user:`webknjaz`
