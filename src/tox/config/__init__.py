@@ -285,6 +285,11 @@ def parseconfig(args, plugins=()):
         parser.parse_cli(args, strict=True)
         if option.help or option.helpini:
             return config
+        if option.devenv:
+            # To load defaults, we parse an empty config
+            ParseIni(config, py.path.local(), "")
+            pm.hook.tox_configure(config=config)
+            return config
         msg = "tox config file (either {}) not found"
         candidates = ", ".join(INFO.CONFIG_CANDIDATES)
         feedback(msg.format(candidates), sysexit=not (option.help or option.helpini))
@@ -1056,7 +1061,7 @@ class ParseIni(object):
     def __init__(self, config, ini_path, ini_data):  # noqa
         config.toxinipath = ini_path
         using("tox.ini: {} (pid {})".format(config.toxinipath, os.getpid()))
-        config.toxinidir = config.toxinipath.dirpath()
+        config.toxinidir = config.toxinipath.dirpath() if ini_path.check(file=True) else ini_path
 
         self._cfg = py.iniconfig.IniConfig(config.toxinipath, ini_data)
 
