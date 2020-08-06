@@ -35,6 +35,9 @@ If you don't specify an environment with ``-e``, the devenv feature will
 default to ``-e py`` -- usually taking the interpreter you're running ``tox``
 with and the default ``[testenv]`` configuration.
 
+It is possible to use the ``--devenv`` option without a tox configuration file,
+however the configuration file is respected if present.
+
 Creating development environments using configuration
 =====================================================
 

@@ -882,15 +882,18 @@ def test_notest_setup_py_error(initproj, cmd):
     assert re.search("ERROR:.*InvocationError", result.out)
 
 
-def test_devenv(initproj, cmd):
-    initproj(
-        "example123",
-        filedefs={
-            "setup.py": """\
-                from setuptools import setup
-                setup(name='x')
-            """,
-            "tox.ini": """\
+@pytest.mark.parametrize("has_config", [True, False])
+def test_devenv(initproj, cmd, has_config):
+    filedefs = {
+        "setup.py": """\
+            from setuptools import setup
+            setup(name='x')
+        """,
+    }
+    if has_config:
+        filedefs[
+            "tox.ini"
+        ] = """\
             [tox]
             # envlist is ignored for --devenv
             envlist = foo,bar,baz
@@ -898,8 +901,9 @@ def test_devenv(initproj, cmd):
             [testenv]
             # --devenv implies --notest
             commands = python -c "exit(1)"
-            """,
-        },
+            """
+    initproj(
+        "example123", filedefs=filedefs,
     )
     result = cmd("--devenv", "venv")
     result.assert_success()

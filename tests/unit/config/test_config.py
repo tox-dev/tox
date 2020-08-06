@@ -3038,6 +3038,17 @@ def test_config_setup_cfg_no_tox_section(initproj, capsys):
     assert "ERROR:" not in out
 
 
+def test_config_file_not_required_with_devenv(initproj, capsys):
+    initproj("no_tox_config-0.7")
+    config = parseconfig(["--devenv", "myenv"])
+
+    out, err = capsys.readouterr()
+    assert "ERROR:" not in err
+    assert "ERROR:" not in out
+    assert config.option.devenv == "myenv"
+    assert config.option.notest is True
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="no named pipes on Windows")
 def test_config_bad_config_type_specified(monkeypatch, tmpdir, capsys):
     monkeypatch.chdir(tmpdir)
