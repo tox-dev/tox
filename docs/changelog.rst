@@ -11,6 +11,34 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.19.0 (2020-08-06)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- skip ``setup.cfg`` if it has no ``tox:tox`` namespace - by :user:`hroncok`
+  `#1045 <https://github.com/tox-dev/tox/issues/1045>`_
+
+
+Features
+^^^^^^^^
+
+- Implement support for building projects
+  having :pep:`517#in-tree-build-backends` ``backend-path`` setting -
+  by :user:`webknjaz`
+  `#1575 <https://github.com/tox-dev/tox/issues/1575>`_
+- Don't require a tox config file for ``tox --devenv`` - by :user:`hroncok`
+  `#1643 <https://github.com/tox-dev/tox/issues/1643>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Fixed grammar in top-level documentation - by :user:`tfurf`
+  `#1631 <https://github.com/tox-dev/tox/issues/1631>`_
+
+
 v3.18.1 (2020-07-28)
 --------------------
 
