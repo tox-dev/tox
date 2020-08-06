@@ -271,7 +271,10 @@ def parseconfig(args, plugins=()):
                 content = toml_content["tool"]["tox"]["legacy_tox_ini"]
             except KeyError:
                 continue
-        ParseIni(config, config_file, content)
+        try:
+            ParseIni(config, config_file, content)
+        except SkipThisIni:
+            continue
         pm.hook.tox_configure(config=config)  # post process config object
         break
     else:
@@ -1045,6 +1048,10 @@ def make_hashseed():
     return str(random.randint(1, max_seed))
 
 
+class SkipThisIni(Exception):
+    """Internal exception to indicate the parsed ini file should be skipped"""
+
+
 class ParseIni(object):
     def __init__(self, config, ini_path, ini_data):  # noqa
         config.toxinipath = ini_path
@@ -1052,6 +1059,11 @@ class ParseIni(object):
         config.toxinidir = config.toxinipath.dirpath()
 
         self._cfg = py.iniconfig.IniConfig(config.toxinipath, ini_data)
+
+        if ini_path.basename == "setup.cfg" and "tox:tox" not in self._cfg:
+            verbosity1("Found no [tox:tox] section in setup.cfg, skipping.")
+            raise SkipThisIni()
+
         previous_line_of = self._cfg.lineof
 
         self.expand_section_names(self._cfg)

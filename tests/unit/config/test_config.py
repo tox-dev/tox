@@ -3023,6 +3023,21 @@ def test_config_bad_pyproject_specified(initproj, capsys):
     assert "ERROR:" not in out
 
 
+def test_config_setup_cfg_no_tox_section(initproj, capsys):
+    setup_cfg = """
+        [nope:nope]
+        envlist = py37
+    """
+    initproj("setup_cfg_no_tox-0.1", filedefs={"setup.cfg": setup_cfg})
+    with pytest.raises(SystemExit):
+        parseconfig([])
+
+    out, err = capsys.readouterr()
+    msg = "ERROR: tox config file (either pyproject.toml, tox.ini, setup.cfg) not found\n"
+    assert err == msg
+    assert "ERROR:" not in out
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="no named pipes on Windows")
 def test_config_bad_config_type_specified(monkeypatch, tmpdir, capsys):
     monkeypatch.chdir(tmpdir)

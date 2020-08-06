@@ -1,0 +1,1 @@
+skip ``setup.cfg`` if it has no ``tox:tox`` namespace - by :user:`hroncok`
