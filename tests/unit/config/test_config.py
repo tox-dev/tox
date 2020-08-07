@@ -865,10 +865,11 @@ class TestIniParser:
     def test_expand_section_name(self, newconfig):
         config = newconfig(
             """
-            [testenv:custom-{one,two,three}-{four,five}-six]
+            [testenv:custom{,-one,-two,-three}-{four,five}-six]
         """,
         )
         assert "testenv:custom-one-five-six" in config._cfg.sections
+        assert "testenv:custom-four-six" in config._cfg.sections
         assert "testenv:custom-{one,two,three}-{four,five}-six" not in config._cfg.sections
 
 

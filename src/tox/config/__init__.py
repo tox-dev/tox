@@ -1420,7 +1420,7 @@ class ParseIni(object):
         The parser will see it as two different sections: [testenv:py36-cov], [testenv:py37-cov]
 
         """
-        factor_re = re.compile(r"\{\s*([\w\s,]+)\s*\}")
+        factor_re = re.compile(r"\{\s*([\w\s,-]+)\s*\}")
         split_re = re.compile(r"\s*,\s*")
         to_remove = set()
         for section in list(config.sections):

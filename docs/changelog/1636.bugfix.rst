@@ -1,0 +1,1 @@
+Allow hyphens and empty factors in generative section name. - by :user:`tyagdit`
