@@ -1109,7 +1109,8 @@ class ParseIni(object):
         reader.addsubstitutions(toxinidir=config.toxinidir, homedir=config.homedir)
 
         if config.option.workdir is None:
-            config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+            default = os.environ.get('TOX_WORK_DIR', "{toxinidir}/.tox")
+            config.toxworkdir = reader.getpath("toxworkdir", default)
         else:
             config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
 
