@@ -92,6 +92,15 @@ def get_build_info(folder):
         abort("backend-path key at build-system section must be a list, if specified")
     backend_paths = [folder.join(p) for p in backend_paths]
 
+    normalized_folder = os.path.normcase(str(folder.realpath()))
+    normalized_paths = (os.path.normcase(str(path.realpath())) for path in backend_paths)
+
+    if not all(
+        os.path.commonprefix((normalized_folder, path)) == normalized_folder
+        for path in normalized_paths
+    ):
+        abort("backend-path must exist in the project root")
+
     return BuildInfo(requires, module, obj, backend_paths)
 
 
@@ -129,6 +138,7 @@ def get_build_requires(build_info, package_venv, setup_dir):
                 BUILD_REQUIRE_SCRIPT,
                 build_info.backend_module,
                 build_info.backend_object,
+                os.path.pathsep.join(str(p) for p in build_info.backend_paths),
             ],
             returnout=True,
             action=action,
