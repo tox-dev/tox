@@ -153,3 +153,43 @@ def test_package_isolated_toml_bad_backend_path(initproj):
     backend-path = 42
     """,
     )
+
+
+def test_package_isolated_toml_backend_path_outside_root(initproj):
+    """Verify that a 'backend-path' outside the project root is forbidden."""
+    toml_file_check(
+        initproj,
+        6,
+        "backend-path must exist in the project root",
+        """
+    [build-system]
+    requires = []
+    build-backend = 'setuptools.build_meta'
+    backend-path = ['..']
+    """,
+    )
+
+
+def test_verbose_isolated_build_in_tree(initproj, mock_venv, cmd):
+    initproj(
+        "example123-0.5",
+        filedefs={
+            "tox.ini": """
+                    [tox]
+                    isolated_build = true
+                    """,
+            "build.py": """
+                    from setuptools.build_meta import *
+                    """,
+            "pyproject.toml": """
+                    [build-system]
+                    requires = ["setuptools >= 35.0.2"]
+                    build-backend = 'build'
+                    backend-path = ['.']
+                                """,
+        },
+    )
+    result = cmd("--sdistonly", "-v", "-v", "-v", "-e", "py")
+    assert "running sdist" in result.out, result.out
+    assert "running egg_info" in result.out, result.out
+    assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out
