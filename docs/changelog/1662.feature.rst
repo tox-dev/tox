@@ -1,1 +1,1 @@
-Support for ``{binfoldername}`` global substitution variable, which will substitue into ``Scripts`` on Windows and ``bin`` on *nix. - by :user:`fredrikaverpil`
+Support for ``{binfoldername}`` global substitution variable, which will substitue into ``Scripts`` on Windows and ``bin`` on \*nix. - by :user:`fredrikaverpil`
