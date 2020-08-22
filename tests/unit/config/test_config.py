@@ -2736,6 +2736,7 @@ class TestConfigConstSubstitutions:
         else:
             assert envconfig.setenv["PATH"] == "venv/bin/executable"
 
+
 class TestParseEnv:
     def test_parse_recreate(self, newconfig):
         inisource = ""
