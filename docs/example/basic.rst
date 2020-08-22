@@ -319,13 +319,9 @@ Integration with "setup.py test" command
 
 .. warning::
 
-  Integrating tox with ``setup.py test`` is as of October 2016 discouraged as
-  it breaks packaging/testing approaches used by downstream distributions
-  which expect ``setup.py test`` to run tests with the invocation interpreter
-  rather than setting up many virtualenvs and installing packages.
-  As the python eco-system rather moves away from using ``setup.py`` as a tool entry
-  point it's maybe best to not go for any ``setup.py test`` integration.
-
+  ``setup.py test`` is `deprecated
+  <https://setuptools.readthedocs.io/en/latest/setuptools.html#test-build-package-and-run-a-unittest-suite>`_
+  and will be removed in a future version.
 
 .. _`ignoring exit code`:
 
