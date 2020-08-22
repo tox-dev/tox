@@ -2732,9 +2732,9 @@ class TestConfigConstSubstitutions:
         )
         envconfig = config.envconfigs["python"]
         if sys.platform == "win32":
-            assert envconfig.setenv["PATH"] == f"venv/Scripts/executable"
+            assert envconfig.setenv["PATH"] == "venv/Scripts/executable"
         else:
-            assert envconfig.setenv["PATH"] == f"venv/bin/executable"
+            assert envconfig.setenv["PATH"] == "venv/bin/executable"
 
 class TestParseEnv:
     def test_parse_recreate(self, newconfig):
