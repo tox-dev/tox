@@ -659,6 +659,9 @@ Globally available substitutions
     OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in ``setenv``,
     when target variable is path variable (e.g. PATH or PYTHONPATH).
 
+``{envbintype}``
+    OS-specific binaries folder name (``bin`` os \*nix family, ``Scripts`` on Windows).
+
 substitutions for virtualenv-related sections
 +++++++++++++++++++++++++++++++++++++++++++++
 

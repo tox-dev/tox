@@ -2720,6 +2720,21 @@ class TestConfigConstSubstitutions:
         assert mdict["substitution_value"] == ""
         assert mdict["default_value"] == ""
 
+    @pytest.mark.parametrize("platform", ["win32", "linux", "darwin"])
+    def test_binfoldername(self, monkeypatch, newconfig, platform):
+        monkeypatch.setattr("sys.platform", platform)
+        config = newconfig(
+            """
+        [testenv]
+        setenv =
+            PATH = venv/{binfoldername}/executable
+        """,
+        )
+        envconfig = config.envconfigs["python"]
+        if sys.platform == "win32":
+            assert envconfig.setenv["PATH"] == f"venv/Scripts/executable"
+        else:
+            assert envconfig.setenv["PATH"] == f"venv/bin/executable"
 
 class TestParseEnv:
     def test_parse_recreate(self, newconfig):

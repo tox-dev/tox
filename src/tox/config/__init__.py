@@ -1133,6 +1133,12 @@ class ParseIni(object):
         if not within_parallel and not WITHIN_PROVISION:
             ensure_empty_dir(config.logdir)
 
+        if sys.platform == "win32":
+            config.binfoldername = "Scripts"
+        else:
+            config.binfoldername = "bin"
+        reader.addsubstitutions(envbintype=config.binfoldername)
+
         # determine indexserver dictionary
         config.indexserver = {"default": IndexServerConfig("default")}
         prefix = "indexserver"
