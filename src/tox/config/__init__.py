@@ -1137,7 +1137,7 @@ class ParseIni(object):
             config.binfoldername = "Scripts"
         else:
             config.binfoldername = "bin"
-        reader.addsubstitutions(envbintype=config.binfoldername)
+        reader.addsubstitutions(binfoldername=config.binfoldername)
 
         # determine indexserver dictionary
         config.indexserver = {"default": IndexServerConfig("default")}
