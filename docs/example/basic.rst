@@ -321,10 +321,7 @@ Integration with "setup.py test" command
 
   ``setup.py test`` is `deprecated
   <https://setuptools.readthedocs.io/en/latest/setuptools.html#test-build-package-and-run-a-unittest-suite>`_
-  and will be removed in a future version. It breaks packaging/testing approaches
-  used by downstream distributions which expect ``setup.py test`` to run tests
-  with the invocation interpreter rather than setting up many virtualenvs and
-  installing packages.
+  and will be removed in a future version.
 
 .. _`ignoring exit code`:
 
