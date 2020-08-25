@@ -327,6 +327,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: allowlist_externals ^ MULTI-LINE-LIST
 
+    .. versionadded:: 3.18
+
     Each line specifies a command name (in glob-style pattern format)
     which can be used in the ``commands`` section without triggering
     a "not installed in virtualenv" warning.  Example: if you use the
