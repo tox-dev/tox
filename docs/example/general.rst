@@ -45,7 +45,7 @@ syntax:
 Dependency changes and tracking
 -------------------------------
 
-Creating virtual environments and installing dependencies is a expensive operation.
+Creating virtual environments and installing dependencies is an expensive operation.
 Therefore tox tries to avoid it whenever possible, meaning it will never perform this
 unless it detects with absolute certainty that it needs to perform an update. A tox
 environment creation is made up of:

@@ -34,7 +34,7 @@ class ResultLog(object):
         return result
 
     def get_envlog(self, name):
-        """Return the env log of a environment (create on first call)"""
+        """Return the env log of an environment (create on first call)"""
         test_envs = self.dict.setdefault("testenvs", {})
         env_data = test_envs.setdefault(name, {})
         return EnvLog(self, name, env_data)
