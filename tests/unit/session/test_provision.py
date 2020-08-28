@@ -73,7 +73,7 @@ def test_provision_basepython_global_only(newconfig, next_tox_major):
 
 
 def test_provision_basepython_local(newconfig, next_tox_major):
-    """however adhere to basepython when explicilty set"""
+    """however adhere to basepython when explicitly set"""
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
