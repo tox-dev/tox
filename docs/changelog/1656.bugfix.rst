@@ -1,0 +1,1 @@
+Allow escaping curly braces in setenv. - by :user:`mkenigs`

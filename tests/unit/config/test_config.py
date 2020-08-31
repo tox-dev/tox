@@ -2074,6 +2074,15 @@ class TestConfigTestEnv:
         assert configs["py27"].setenv["X"] == "1"
         assert "X" not in configs["py36"].setenv
 
+    def test_curly_braces_in_setenv(self, newconfig):
+        inisource = r"""
+            [testenv]
+            setenv =
+                VAR = \{val\}
+        """
+        configs = newconfig([], inisource).envconfigs
+        assert configs["python"].setenv["VAR"] == "{val}"
+
     def test_factor_use_not_checked(self, newconfig):
         inisource = """
             [tox]
