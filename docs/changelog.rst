@@ -11,6 +11,27 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.20.0 (2020-09-01)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Allow hyphens and empty factors in generative section name. - by :user:`tyagdit`
+  `#1636 <https://github.com/tox-dev/tox/issues/1636>`_
+- Support for PEP517 in-tree build backend-path key in ``get-build-requires``. - by :user:`nizox`
+  `#1654 <https://github.com/tox-dev/tox/issues/1654>`_
+- Allow escaping curly braces in setenv. - by :user:`mkenigs`
+  `#1656 <https://github.com/tox-dev/tox/issues/1656>`_
+
+
+Features
+^^^^^^^^
+
+- Support for comments within ``setenv`` and environment files via the ``files|`` prefix. - by :user:`gaborbernat`
+  `#1667 <https://github.com/tox-dev/tox/issues/1667>`_
+
+
 v3.19.0 (2020-08-06)
 --------------------
 
