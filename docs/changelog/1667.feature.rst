@@ -1,1 +1,0 @@
-Support for comments within ``setenv`` and environment files via the ``files|`` prefix. - by :user:`gaborbernat`
