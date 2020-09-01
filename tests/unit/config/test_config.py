@@ -6,6 +6,7 @@ from textwrap import dedent
 import py
 import pytest
 from pluggy import PluginManager
+from six import PY2
 
 import tox
 from tox.config import (
@@ -2667,6 +2668,49 @@ class TestSetenv:
         envconfig = config.envconfigs["python"]
         assert envconfig.setenv["NOT_TEST"] == "defaultvalue"
         assert envconfig.setenv["y"] == "7"
+
+    def test_setenv_comment(self, newconfig):
+        """Check that setenv ignores comments."""
+        envconfig = newconfig(
+            """
+            [testenv]
+            setenv =
+                # MAGIC = yes
+        """,
+        ).envconfigs["python"]
+        assert "MAGIC" not in envconfig.setenv
+
+    @pytest.mark.parametrize(
+        "content, has_magic",
+        [
+            (None, False),
+            ("\n", False),
+            ("#MAGIC = yes", False),
+            ("MAGIC=yes", True),
+            ("\nMAGIC = yes", True),
+        ],
+    )
+    def test_setenv_env_file(self, newconfig, content, has_magic, tmp_path):
+        """Check that setenv handles env files."""
+        env_path = tmp_path / ".env" if content else None
+        if content:
+            env_path.write_text(content.decode() if PY2 else content)
+        env_config = newconfig(
+            """
+            [testenv]
+            setenv =
+                ALPHA = 1
+                file| {}
+        """.format(
+                env_path,
+            ),
+        ).envconfigs["python"]
+        envs = env_config.setenv.definitions
+        assert envs["ALPHA"] == "1"
+        if has_magic:
+            assert envs["MAGIC"] == "yes"
+        else:
+            assert "MAGIC" not in envs
 
 
 class TestIndexServer:

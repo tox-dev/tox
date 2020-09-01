@@ -1606,13 +1606,21 @@ class SectionReader:
         if value is None or not replace:
             return default or {}
 
-        d = {}
+        env_values = {}
         for line in value.split(sep):
             if line.strip():
-                name, rest = line.split("=", 1)
-                d[name.strip()] = rest.strip()
-
-        return d
+                if line.startswith("#"):  # comment lines are ignored
+                    pass
+                elif line.startswith("file|"):  # file markers contain paths to env files
+                    file_path = line[5:].strip()
+                    if os.path.exists(file_path):
+                        with open(file_path, "rt") as file_handler:
+                            content = file_handler.read()
+                        env_values.update(self._getdict(content, "", sep, replace))
+                else:
+                    name, value = line.split("=", 1)
+                    env_values[name.strip()] = value.strip()
+        return env_values
 
     def getfloat(self, name, default=None, replace=True):
         s = self.getstring(name, default, replace=replace)

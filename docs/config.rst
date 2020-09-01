@@ -404,6 +404,14 @@ Complete list of settings that you can put into ``testenv*`` sections:
         setenv   =
             PYTHONPATH = {env:PYTHONPATH}{:}{toxinidir}
 
+    .. versionadded:: 3.20
+
+    Support for comments. Lines starting with ``#`` are ignored.
+
+    Support for environment files. Lines starting with the ``file|`` contain path to a environment
+    file to load. Rules within the environment file are the same as within the ``setenv``
+    (same replacement and comment support).
+
 .. conf:: passenv ^ SPACE-SEPARATED-GLOBNAMES
 
     .. versionadded:: 2.0
