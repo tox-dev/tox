@@ -142,7 +142,8 @@ def test_envdir_equals_toxini_errors_out(cmd, initproj):
     result = cmd()
     assert result.outlines[1] == "ERROR: ConfigError: envdir must not equal toxinidir"
     assert re.match(
-        r"ERROR: venv \'python\' in .* would delete project", result.outlines[0],
+        r"ERROR: venv \'python\' in .* would delete project",
+        result.outlines[0],
     ), result.outlines[0]
     result.assert_fail()
 
@@ -524,7 +525,9 @@ def test_toxuone_env(cmd, example123):
     result = cmd()
     result.assert_success()
     assert re.match(
-        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL,
+        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*",
+        result.out,
+        re.DOTALL,
     )
     result = cmd("-epython")
     result.assert_success()
@@ -675,7 +678,9 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
     result = cmd("-v")
     result.assert_success()
     assert re.match(
-        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*", result.out, re.DOTALL,
+        r".*generated\W+xml\W+file.*junit-python\.xml" r".*\W+1\W+passed.*",
+        result.out,
+        re.DOTALL,
     )
     assert "sdist-make" not in result.out
     result = cmd("-epython")
@@ -706,7 +711,9 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
     result.assert_fail()
     assert "develop-inst-noop" in result.out
     assert re.match(
-        r".*\W+1\W+failed.*" r"summary.*" r"python:\W+commands\W+failed.*", result.out, re.DOTALL,
+        r".*\W+1\W+failed.*" r"summary.*" r"python:\W+commands\W+failed.*",
+        result.out,
+        re.DOTALL,
     )
 
     # test develop is called if setup.py changes
@@ -903,7 +910,8 @@ def test_devenv(initproj, cmd, has_config):
             commands = python -c "exit(1)"
             """
     initproj(
-        "example123", filedefs=filedefs,
+        "example123",
+        filedefs=filedefs,
     )
     result = cmd("--devenv", "venv")
     result.assert_success()
@@ -1108,8 +1116,8 @@ def test_tox_cmdline_args(initproj):
 
 @pytest.mark.parametrize("exit_code", [0, 6])
 def test_exit_code(initproj, cmd, exit_code, mocker):
-    """ Check for correct InvocationError, with exit code,
-        except for zero exit code """
+    """Check for correct InvocationError, with exit code,
+    except for zero exit code"""
     import tox.exception
 
     mocker.spy(tox.exception, "exit_code_str")

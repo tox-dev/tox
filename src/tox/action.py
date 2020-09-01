@@ -87,7 +87,11 @@ class Action(object):
         cmd_args = [str(x) for x in self._rewrite_args(cwd, args)]
         cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
         stream_getter = self._get_standard_streams(
-            capture_err, cmd_args_shell, redirect, returnout, cwd,
+            capture_err,
+            cmd_args_shell,
+            redirect,
+            returnout,
+            cwd,
         )
         exit_code, output = None, None
         with stream_getter as (fin, out_path, stderr, stdout):

@@ -16,7 +16,7 @@ class Interpreters:
         self.hook = hook
 
     def get_executable(self, envconfig):
-        """ return path object to the executable for the given
+        """return path object to the executable for the given
         name (e.g. python2.7, python3.6, python etc.)
         if name is already an existing path, return name.
         If an interpreter cannot be found, return None.
@@ -97,7 +97,13 @@ class ExecFailed(Exception):
 
 class InterpreterInfo:
     def __init__(
-        self, implementation, executable, version_info, sysplatform, is_64, extra_version_info,
+        self,
+        implementation,
+        executable,
+        version_info,
+        sysplatform,
+        is_64,
+        extra_version_info,
     ):
         self.implementation = implementation
         self.executable = executable

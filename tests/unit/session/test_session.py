@@ -186,7 +186,8 @@ def popen_env_test(initproj, cmd, monkeypatch):
                [testenv:{}]
                commands = python -c "print('ok')"
                """.format(
-                "True" if isolated_build else "False", tox_env,
+                "True" if isolated_build else "False",
+                tox_env,
             ),
         }
         if isolated_build:
@@ -208,8 +209,8 @@ def popen_env_test(initproj, cmd, monkeypatch):
 
         class EnvironmentTestRun(Thread):
             """we wrap this invocation into a thread to avoid modifying in any way the
-             current threads environment variable (e.g. on failure of this test incorrect teardown)
-             """
+            current threads environment variable (e.g. on failure of this test incorrect teardown)
+            """
 
             def run(self):
                 prev_build = tox.session.build_session
@@ -354,7 +355,8 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
             ___________________________________ summary ___________________________________{}
             ERROR:   py: commands failed
         """.format(
-            pipes.quote(sys.executable), "_" if sys.platform != "win32" else "",
+            pipes.quote(sys.executable),
+            "_" if sys.platform != "win32" else "",
         ),
     )
     have = result.out.replace(os.linesep, "\n")

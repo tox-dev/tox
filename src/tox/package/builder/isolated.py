@@ -13,7 +13,8 @@ from tox.config import DepConfig, get_py_project_toml
 from tox.constants import BUILD_ISOLATED, BUILD_REQUIRE_SCRIPT
 
 BuildInfo = namedtuple(
-    "BuildInfo", ["requires", "backend_module", "backend_object", "backend_paths"],
+    "BuildInfo",
+    ["requires", "backend_module", "backend_object", "backend_paths"],
 )
 
 
@@ -106,7 +107,8 @@ def get_build_info(folder):
 
 def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
     with package_venv.new_action(
-        "perform-isolated-build", package_venv.envconfig.envdir,
+        "perform-isolated-build",
+        package_venv.envconfig.envdir,
     ) as action:
         # need to start with an empty (but existing) source distribution folder
         if dist_dir.exists():

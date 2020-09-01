@@ -898,7 +898,10 @@ class TestIniParserPrefix:
         """,
         )
         reader = SectionReader(
-            "section", config._cfg, prefix="p", fallbacksections=["p:mydefault"],
+            "section",
+            config._cfg,
+            prefix="p",
+            fallbacksections=["p:mydefault"],
         )
         x = reader.getstring("key2")
         assert x == "value2"
@@ -1520,7 +1523,8 @@ class TestConfigTestEnv:
                 fun
                 frob{{env:ENV_VAR:>1.0,<2.0}}
         """.format(
-            envlist=",".join(envlist), deps="\n" + "\n".join([" " * 17 + d for d in deps]),
+            envlist=",".join(envlist),
+            deps="\n" + "\n".join([" " * 17 + d for d in deps]),
         )
         conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
@@ -1959,7 +1963,8 @@ class TestConfigTestEnv:
                 [testenv:{}]
                 commands = python --version
                 """.format(
-                    exe, env,
+                    exe,
+                    env,
                 ),
             )
         assert len(config.envconfigs) == 1
@@ -1967,7 +1972,12 @@ class TestConfigTestEnv:
         assert envconfig.basepython == exe
 
     def test_default_factors_conflict_lying_name(
-        self, newconfig, capsys, tmpdir, recwarn, monkeypatch,
+        self,
+        newconfig,
+        capsys,
+        tmpdir,
+        recwarn,
+        monkeypatch,
     ):
         # we first need to create a lying Python here, let's mock out here
         from tox.interpreters import Interpreters
@@ -1984,7 +1994,9 @@ class TestConfigTestEnv:
             basepython=python{0}.{2}
             commands = python --version
         """.format(
-                major, minor, minor - 1,
+                major,
+                minor,
+                minor - 1,
             ),
         )
         env_config = config.envconfigs["py{}{}".format(major, minor)]
@@ -2008,7 +2020,8 @@ class TestConfigTestEnv:
                 basepython=python{0}.{1}
                 commands = python --version
                 """.format(
-                    major, minor - 1,
+                    major,
+                    minor - 1,
                 ),
             )
 
@@ -2023,7 +2036,8 @@ class TestConfigTestEnv:
                 basepython=python{0}.{1}
                 commands = python --version
                 """.format(
-                    major, minor,
+                    major,
+                    minor,
                 ),
             )
 
@@ -2959,7 +2973,8 @@ def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):
             isolated_build_env = package
         """
     with pytest.raises(
-        tox.exception.ConfigError, match="isolated_build_env package cannot be part of envlist",
+        tox.exception.ConfigError,
+        match="isolated_build_env package cannot be part of envlist",
     ):
         newconfig([], inisource)
 
@@ -2985,7 +3000,8 @@ def test_isolated_build_overrides(newconfig, capsys):
 
 
 @pytest.mark.parametrize(
-    "key, set_value, default", [("deps", "crazy", []), ("sitepackages", "True", False)],
+    "key, set_value, default",
+    [("deps", "crazy", []), ("sitepackages", "True", False)],
 )
 def test_isolated_build_ignores(newconfig, capsys, key, set_value, default):
     config = newconfig(
@@ -2997,7 +3013,8 @@ def test_isolated_build_ignores(newconfig, capsys, key, set_value, default):
             [testenv]
             {} = {}
         """.format(
-            key, set_value,
+            key,
+            set_value,
         ),
     )
     package_env = config.envconfigs.get(".package")

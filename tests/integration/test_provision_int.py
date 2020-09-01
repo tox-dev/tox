@@ -66,7 +66,8 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
 
 @pytest.mark.skipif(INFO.IS_PYPY, reason="TODO: process numbers work differently on pypy")
 @pytest.mark.skipif(
-    "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard",
+    "sys.platform == 'win32'",
+    reason="triggering SIGINT reliably on Windows is hard",
 )
 def test_provision_interrupt_child(initproj, monkeypatch, capfd):
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
@@ -125,5 +126,6 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd):
 
     for process in all_process:
         assert not process.is_running(), "{}{}".format(
-            out, "\n".join(repr(i) for i in all_process),
+            out,
+            "\n".join(repr(i) for i in all_process),
         )

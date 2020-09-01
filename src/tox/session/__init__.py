@@ -151,7 +151,8 @@ class Session(object):
             visited.add(name)
             if tox_env_filter_re is not None and tox_env_filter_re.match(name):
                 msg = "skip environment {}, matches filter {!r}".format(
-                    name, tox_env_filter_re.pattern,
+                    name,
+                    tox_env_filter_re.pattern,
                 )
                 reporter.verbosity1(msg)
                 continue
@@ -261,7 +262,10 @@ class Session(object):
                     report = reporter.error
             elif status == "platform mismatch":
                 msg = " {}: {} ({!r} does not match {!r})".format(
-                    venv.envconfig.envname, str(status), sys.platform, venv.envconfig.platform,
+                    venv.envconfig.envname,
+                    str(status),
+                    sys.platform,
+                    venv.envconfig.platform,
                 )
                 report = reporter.skip
             elif status and status == "ignored failed command":

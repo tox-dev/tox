@@ -92,18 +92,21 @@ class Parser:
                 super(HelpFormatter, self).__init__(prog, max_help_position=35, width=190)
 
         self.argparser = argparse.ArgumentParser(
-            description="tox options", add_help=False, prog="tox", formatter_class=HelpFormatter,
+            description="tox options",
+            add_help=False,
+            prog="tox",
+            formatter_class=HelpFormatter,
         )
         self._testenv_attr = []
 
     def add_argument(self, *args, **kwargs):
-        """ add argument to command line parser.  This takes the
+        """add argument to command line parser.  This takes the
         same arguments that ``argparse.ArgumentParser.add_argument``.
         """
         return self.argparser.add_argument(*args, **kwargs)
 
     def add_testenv_attribute(self, name, type, help, default=None, postprocess=None):
-        """ add an ini-file variable for "testenv" section.
+        """add an ini-file variable for "testenv" section.
 
         Types are specified as strings like "bool", "line-list", "string", "argv", "path",
         "argvlist".
@@ -120,7 +123,7 @@ class Parser:
         self._testenv_attr.append(VenvAttribute(name, type, default, help, postprocess))
 
     def add_testenv_attribute_obj(self, obj):
-        """ add an ini-file variable as an object.
+        """add an ini-file variable as an object.
 
         This works as the ``add_testenv_attribute`` function but expects
         "name", "type", "help", and "postprocess" attributes on the object.
@@ -312,7 +315,8 @@ def propose_configs(cli_config_file):
             from_folder = py.path.local(cli_config_file)
         else:
             print(
-                "ERROR: {} is neither file or directory".format(cli_config_file), file=sys.stderr,
+                "ERROR: {} is neither file or directory".format(cli_config_file),
+                file=sys.stderr,
             )
             return
     for basename in INFO.CONFIG_CANDIDATES:
@@ -333,7 +337,11 @@ def parse_cli(args, pm):
         raise SystemExit(0)
     interpreters = Interpreters(hook=pm.hook)
     config = Config(
-        pluginmanager=pm, option=option, interpreters=interpreters, parser=parser, args=args,
+        pluginmanager=pm,
+        option=option,
+        interpreters=interpreters,
+        parser=parser,
+        args=args,
     )
     return config, option
 
@@ -406,7 +414,9 @@ class SetenvDict(object):
 @tox.hookimpl
 def tox_addoption(parser):
     parser.add_argument(
-        "--version", action="store_true", help="report version information to stdout.",
+        "--version",
+        action="store_true",
+        help="report version information to stdout.",
     )
     parser.add_argument("-h", "--help", action="store_true", help="show help about options")
     parser.add_argument(
@@ -436,7 +446,9 @@ def tox_addoption(parser):
         help="show list of all defined environments (with description if verbose)",
     )
     parser.add_argument(
-        "-c", dest="configfile", help="config file name or directory with 'tox.ini' file.",
+        "-c",
+        dest="configfile",
+        help="config file name or directory with 'tox.ini' file.",
     )
     parser.add_argument(
         "-e",
@@ -455,10 +467,14 @@ def tox_addoption(parser):
     )
     parser.add_argument("--notest", action="store_true", help="skip invoking test commands.")
     parser.add_argument(
-        "--sdistonly", action="store_true", help="only perform the sdist packaging activity.",
+        "--sdistonly",
+        action="store_true",
+        help="only perform the sdist packaging activity.",
     )
     parser.add_argument(
-        "--skip-pkg-install", action="store_true", help="skip package installation for this run",
+        "--skip-pkg-install",
+        action="store_true",
+        help="skip package installation for this run",
     )
     add_parallel_flags(parser)
     parser.add_argument(
@@ -495,7 +511,10 @@ def tox_addoption(parser):
         "(pip by default).",
     )
     parser.add_argument(
-        "-r", "--recreate", action="store_true", help="force recreation of virtual environments",
+        "-r",
+        "--recreate",
+        action="store_true",
+        help="force recreation of virtual environments",
     )
     parser.add_argument(
         "--result-json",
@@ -623,7 +642,9 @@ def tox_addoption(parser):
                     warnings.warn(
                         "conflicting basepython version (set {}, should be {}) for env '{}';"
                         "resolve conflict or set ignore_basepython_conflict".format(
-                            proposed_version, implied_version, testenv_config.envname,
+                            proposed_version,
+                            implied_version,
+                            testenv_config.envname,
                         ),
                     )
 
@@ -639,7 +660,7 @@ def tox_addoption(parser):
 
     def merge_description(testenv_config, value):
         """the reader by default joins generated description with new line,
-         replace new line with space"""
+        replace new line with space"""
         return value.replace("\n", " ")
 
     parser.add_testenv_attribute(
@@ -651,11 +672,17 @@ def tox_addoption(parser):
     )
 
     parser.add_testenv_attribute(
-        name="envtmpdir", type="path", default="{envdir}/tmp", help="venv temporary directory",
+        name="envtmpdir",
+        type="path",
+        default="{envdir}/tmp",
+        help="venv temporary directory",
     )
 
     parser.add_testenv_attribute(
-        name="envlogdir", type="path", default="{envdir}/log", help="venv log directory",
+        name="envlogdir",
+        type="path",
+        default="{envdir}/log",
+        help="venv log directory",
     )
 
     parser.add_testenv_attribute(
@@ -770,7 +797,9 @@ def tox_addoption(parser):
     )
 
     parser.add_testenv_attribute(
-        name="whitelist_externals", type="line-list", help="DEPRECATED: use allowlist_externals",
+        name="whitelist_externals",
+        type="line-list",
+        help="DEPRECATED: use allowlist_externals",
     )
 
     parser.add_testenv_attribute(
@@ -1091,7 +1120,10 @@ class ParseIni(object):
         context_name = getcontextname()
         if context_name == "jenkins":
             reader = SectionReader(
-                "tox:jenkins", self._cfg, prefix=prefix, fallbacksections=[fallbacksection],
+                "tox:jenkins",
+                self._cfg,
+                prefix=prefix,
+                fallbacksections=[fallbacksection],
             )
             dist_share_default = "{toxworkdir}/distshare"
         elif not context_name:
@@ -1247,7 +1279,10 @@ class ParseIni(object):
                 self._cfg.sections[section_name] = {}
             self._cfg.sections[section_name]["description"] = "meta tox"
             env_config = self.make_envconfig(
-                name, "{}{}".format(testenvprefix, name), reader._subs, config,
+                name,
+                "{}{}".format(testenvprefix, name),
+                reader._subs,
+                config,
             )
             env_config.deps = deps
             config.envconfigs[config.provision_tox_env] = env_config
@@ -1302,7 +1337,10 @@ class ParseIni(object):
             self._cfg.sections[section_name]["sitepackages"] = "False"
             self._cfg.sections[section_name]["description"] = "isolated packaging environment"
             config.envconfigs[name] = self.make_envconfig(
-                name, "{}{}".format(testenvprefix, name), reader._subs, config,
+                name,
+                "{}{}".format(testenvprefix, name),
+                reader._subs,
+                config,
             )
 
     def _list_section_factors(self, section):
@@ -1342,7 +1380,10 @@ class ParseIni(object):
                 elif atype == "basepython":
                     no_fallback = name in (config.provision_tox_env,)
                     res = reader.getstring(
-                        env_attr.name, env_attr.default, replace=replace, no_fallback=no_fallback,
+                        env_attr.name,
+                        env_attr.default,
+                        replace=replace,
+                        no_fallback=no_fallback,
                     )
                 elif atype == "space-separated-list":
                     res = reader.getlist(env_attr.name, sep=" ")
@@ -1771,7 +1812,10 @@ class Replacer:
                     )
                 x = str(cfg[section][item])
                 return self.reader._replace(
-                    x, name=item, section_name=section, crossonly=self.crossonly,
+                    x,
+                    name=item,
+                    section_name=section,
+                    crossonly=self.crossonly,
                 )
 
         raise tox.exception.ConfigError("substitution key {!r} not found".format(key))
@@ -1823,7 +1867,8 @@ class _ArgvlistReader:
             if current_command:
                 raise tox.exception.ConfigError(
                     "line-continuation ends nowhere while resolving for [{}] {}".format(
-                        reader.section_name, "commands",
+                        reader.section_name,
+                        "commands",
                     ),
                 )
         return commands

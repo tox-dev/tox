@@ -16,7 +16,8 @@ from tox.util.main import MAIN_FILE
 @flaky(max_runs=3)
 @pytest.mark.skipif(INFO.IS_PYPY, reason="TODO: process numbers work differently on pypy")
 @pytest.mark.skipif(
-    "sys.platform == 'win32'", reason="triggering SIGINT reliably on Windows is hard",
+    "sys.platform == 'win32'",
+    reason="triggering SIGINT reliably on Windows is hard",
 )
 def test_parallel_interrupt(initproj, monkeypatch, capfd):
     monkeypatch.setenv(str("_TOX_SKIP_ENV_CREATION_TEST"), str("1"))

@@ -255,7 +255,8 @@ def ensure_key_in_env(serial_data):
     for env in ("a", "b"):
         for key in ("setup", "test"):
             assert key in serial_data["testenvs"][env], json.dumps(
-                serial_data["testenvs"], indent=2,
+                serial_data["testenvs"],
+                indent=2,
             )
 
 

@@ -95,7 +95,8 @@ def run_parallel(config, venv_dict):
                     semaphore.acquire(blocking=True)
                     spinner.add(name)
                     thread = Thread(
-                        target=run_in_thread, args=(venv, os.environ.copy(), processes),
+                        target=run_in_thread,
+                        args=(venv, os.environ.copy(), processes),
                     )
                     thread.daemon = True
                     thread.start()

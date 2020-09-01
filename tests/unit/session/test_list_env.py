@@ -221,7 +221,8 @@ def test_listenvs_all_extra_definition_order_increasing(cmd, initproj):
 def test_listenvs_without_default_envs(cmd, initproj):
     """When running tox -l without any default envirinments, nothing happens."""
     initproj(
-        "logsnada", filedefs={"tox.ini": ""},
+        "logsnada",
+        filedefs={"tox.ini": ""},
     )
     result = cmd("-l")
     assert result.ret == 0

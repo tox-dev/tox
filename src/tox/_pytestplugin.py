@@ -183,7 +183,10 @@ class RunResult:
 
     def __repr__(self):
         res = "RunResult(ret={}, args={!r}, out=\n{}\n, err=\n{})".format(
-            self.ret, self.args, self.out, self.err,
+            self.ret,
+            self.args,
+            self.out,
+            self.err,
         )
         if six.PY2:
             return res.encode("UTF-8")
@@ -233,7 +236,9 @@ class ReportExpectMock:
             newindex += 1
         raise LookupError(
             "looking for {!r}, no reports found at >={:d} in {!r}".format(
-                cat, self._index + 1, self.instance.reported_lines,
+                cat,
+                self._index + 1,
+                self.instance.reported_lines,
             ),
         )
 
@@ -257,7 +262,10 @@ class ReportExpectMock:
         if not invert:
             raise AssertionError(
                 "looking for {}({!r}), no reports found at >={:d} in {!r}".format(
-                    cat, messagepattern, self._index + 1, self.instance.reported_lines,
+                    cat,
+                    messagepattern,
+                    self._index + 1,
+                    self.instance.reported_lines,
                 ),
             )
 
@@ -490,7 +498,7 @@ def create_files(base, filedefs):
 def mock_venv(monkeypatch):
     """This creates a mock virtual environment (e.g. will inherit the current interpreter).
     Note: because we inherit, to keep things sane you must call the py environment and only that;
-    and cannot install any packages. """
+    and cannot install any packages."""
 
     # first ensure we have a clean python path
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)

@@ -35,7 +35,9 @@ def generate_draft_news():
         [os.path.dirname(sys.executable)] + env["PATH"].split(os.pathsep),
     )
     changelog = subprocess.check_output(
-        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR), env=env,
+        ["towncrier", "--draft", "--version", "DRAFT"],
+        cwd=str(ROOT_SRC_TREE_DIR),
+        env=env,
     ).decode("utf-8")
     if "No significant changes" in changelog:
         content = ""

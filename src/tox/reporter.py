@@ -61,7 +61,8 @@ class Reporter(object):
         yield
         duration = time.time() - start
         self.verbosity2(
-            "{} finish: {} after {:.2f} seconds".format(name, msg, duration), bold=True,
+            "{} finish: {} after {:.2f} seconds".format(name, msg, duration),
+            bold=True,
         )
 
     def separator(self, of, msg, level):

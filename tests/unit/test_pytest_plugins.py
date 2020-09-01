@@ -14,7 +14,8 @@ from tox._pytestplugin import RunResult, _filedefs_contains, _path_parts
 
 class TestInitProj:
     @pytest.mark.parametrize(
-        "kwargs", ({}, {"src_root": None}, {"src_root": ""}, {"src_root": "."}),
+        "kwargs",
+        ({}, {"src_root": None}, {"src_root": ""}, {"src_root": "."}),
     )
     def test_no_src_root(self, kwargs, tmpdir, initproj):
         initproj("black_knight-42", **kwargs)

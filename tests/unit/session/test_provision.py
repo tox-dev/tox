@@ -126,7 +126,9 @@ def test_provision_cli_args_ignore(cmd, initproj, monkeypatch, plugin):
         return result
 
     monkeypatch.setattr(
-        tox.config.ParseIni, "ensure_requires_satisfied", ensure_requires_satisfied,
+        tox.config.ParseIni,
+        "ensure_requires_satisfied",
+        ensure_requires_satisfied,
     )
     prev_get_venv = tox.session.Session.getvenv
 
@@ -203,7 +205,11 @@ def magic_non_canonical_wheel(wheel, tmp_path_factory):
 
 
 def test_provision_non_canonical_dep(
-    cmd, initproj, monkeypatch, tox_wheel, magic_non_canonical_wheel,
+    cmd,
+    initproj,
+    monkeypatch,
+    tox_wheel,
+    magic_non_canonical_wheel,
 ):
     initproj(
         "w-0.1",

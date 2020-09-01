@@ -43,7 +43,10 @@ class CreationConfig:
         lines = [
             "{} {}".format(self.base_resolved_python_sha256, self.base_resolved_python_path),
             "{} {:d} {:d} {:d}".format(
-                self.tox_version, self.sitepackages, self.usedevelop, self.alwayscopy,
+                self.tox_version,
+                self.sitepackages,
+                self.usedevelop,
+                self.alwayscopy,
             ),
         ]
         for dep in self.deps:
@@ -139,7 +142,9 @@ class VirtualEnv(object):
         if self._result_json_path is None:
             if self.envconfig.config.option.resultjson:
                 self._result_json_path = get_unique_file(
-                    self.path, PARALLEL_RESULT_JSON_PREFIX, PARALLEL_RESULT_JSON_SUFFIX,
+                    self.path,
+                    PARALLEL_RESULT_JSON_PREFIX,
+                    PARALLEL_RESULT_JSON_SUFFIX,
                 )
         return self._result_json_path
 
@@ -165,7 +170,7 @@ class VirtualEnv(object):
         return "<VirtualEnv at {!r}>".format(self.path)
 
     def getcommandpath(self, name, venv=True, cwd=None):
-        """ Return absolute path (str or localpath) for specified command name.
+        """Return absolute path (str or localpath) for specified command name.
 
         - If it's a local path we will rewrite it as as a relative path.
         - If venv is True we will check if the command is coming from the venv
@@ -214,7 +219,8 @@ class VirtualEnv(object):
                 "Maybe you forgot to specify a dependency? "
                 "See also the allowlist_externals envconfig setting.\n\n"
                 "DEPRECATION WARNING: this will be an error in tox 4 and above!".format(
-                    path, self.envconfig.envdir,
+                    path,
+                    self.envconfig.envdir,
                 ),
             )
 
@@ -239,8 +245,8 @@ class VirtualEnv(object):
         return False
 
     def update(self, action):
-        """ return status string for updating actual venv to match configuration.
-            if status string is empty, all is ok.
+        """return status string for updating actual venv to match configuration.
+        if status string is empty, all is ok.
         """
         rconfig = CreationConfig.readconfig(self.path_config)
         if self.envconfig.recreate:
@@ -320,10 +326,16 @@ class VirtualEnv(object):
         args = [self.envconfig.envpython, str(setup_py), "--name"]
         env = self._get_os_environ()
         output = action.popen(
-            args, cwd=setupdir, redirect=False, returnout=True, env=env, capture_err=False,
+            args,
+            cwd=setupdir,
+            redirect=False,
+            returnout=True,
+            env=env,
+            capture_err=False,
         )
         name = next(
-            (i for i in output.split("\n") if i and not i.startswith("pydev debugger:")), "",
+            (i for i in output.split("\n") if i and not i.startswith("pydev debugger:")),
+            "",
         )
         args = [
             self.envconfig.envpython,
@@ -511,7 +523,8 @@ class VirtualEnv(object):
                 # have to make strings as _pcall changes argv[0] to a local()
                 # happens if the same environment is invoked twice
                 message = "commands[{}] | {}".format(
-                    i, " ".join([pipes.quote(str(x)) for x in argv]),
+                    i,
+                    " ".join([pipes.quote(str(x)) for x in argv]),
                 )
                 action.setactivity(name, message)
                 # check to see if we need to ignore the return code

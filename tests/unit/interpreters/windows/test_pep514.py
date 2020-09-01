@@ -20,6 +20,7 @@ def test_run_pep514_main_no_warnings():
     import tox.interpreters.windows.pep514 as pep514
 
     out = subprocess.check_output(
-        [sys.executable, inspect.getsourcefile(pep514)], universal_newlines=True,
+        [sys.executable, inspect.getsourcefile(pep514)],
+        universal_newlines=True,
     )
     assert "PEP-514 violation in Windows Registry " not in out, out

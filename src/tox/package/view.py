@@ -41,7 +41,10 @@ def create_session_view(package, temp_dir):
     common = session_package.common(package)
     verbosity1(
         "package {} {} to {} ({})".format(
-            common.bestrelpath(session_package), operation, common.bestrelpath(package), common,
+            common.bestrelpath(session_package),
+            operation,
+            common.bestrelpath(package),
+            common,
         ),
     )
     return session_package
