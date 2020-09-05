@@ -33,9 +33,9 @@ Global settings are defined under the ``tox`` section as:
 
 .. conf:: minversion
 
-   Define the minimal tox version required to run; if the host tox is less than this
-   the tool with create an environment and provision it with a tox that satisfies it
-   under :conf:`provision_tox_env`.
+   Define the minimal tox version required to run; if the host's tox version is less
+   than this the tool will create an environment and provision it with a version of
+   tox that satisfies this under :conf:`provision_tox_env`.
 
 .. conf:: requires ^ LIST of PEP-508
 
@@ -108,7 +108,7 @@ Global settings are defined under the ``tox`` section as:
 
     .. versionadded:: 3.4.0
 
-        What tox environments are ran during the tox invocation can be further filtered
+        Which tox environments are run during the tox invocation can be further filtered
         via the operating system environment variable ``TOX_SKIP_ENV`` regular expression
         (e.g. ``py27.*`` means **don't** evaluate environments that start with the key ``py27``).
         Skipped environments will be logged at level two verbosity level.
@@ -117,9 +117,9 @@ Global settings are defined under the ``tox`` section as:
 
     .. versionadded:: 1.7.2
 
-    When skip missing interpreters is ``true`` will force ``tox`` to return success even
+    Setting this to ``true`` will force ``tox`` to return success even
     if some of the specified environments were missing. This is useful for some CI
-    systems or running on a developer box, where you might only have a subset of
+    systems or when running on a developer box, where you might only have a subset of
     all your supported interpreters installed but don't want to mark the build as
     failed because of it. As expected, the command line switch always overrides
     this setting if passed on the invocation. Setting it to ``config``
