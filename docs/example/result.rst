@@ -1,4 +1,4 @@
-Writing a json result file
+Writing a JSON result file
 --------------------------------------------------------
 
 .. versionadded: 1.6

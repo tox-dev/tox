@@ -1,7 +1,7 @@
 Basic usage
 =============================================
 
-a simple tox.ini / default environments
+A simple tox.ini / default environments
 -----------------------------------------------
 
 Put basic information about your project and the test environments you
@@ -88,7 +88,7 @@ Currently only the old format is supported via ``legacy_tox_ini``, a native impl
 
 Note that when you define a ``pyproject.toml`` you must define the ``build-requires`` section per PEP-518.
 
-specifying a platform
+Specifying a platform
 -----------------------------------------------
 
 .. versionadded:: 2.0
@@ -104,7 +104,7 @@ runs on you can set a platform regular expression like this:
 If the expression does not match against ``sys.platform``
 the test environment will be skipped.
 
-allowing non-virtualenv commands
+Allowing non-virtualenv commands
 -----------------------------------------------
 
 .. versionadded:: 1.5
@@ -126,7 +126,7 @@ configuration:
 
 .. _multiindex:
 
-depending on requirements.txt or defining constraints
+Depending on requirements.txt or defining constraints
 -----------------------------------------------------
 
 .. versionadded:: 1.6.1
@@ -164,7 +164,7 @@ For more details on ``requirements.txt`` files or ``constraints.txt`` files plea
 * https://pip.pypa.io/en/stable/user_guide/#requirements-files
 * https://pip.pypa.io/en/stable/user_guide/#constraints-files
 
-using a different default PyPI url
+Using a different default PyPI url
 -----------------------------------------------
 
 .. versionadded:: 0.9
@@ -187,7 +187,7 @@ You can cause the same effect by this ``tox.ini`` content:
     indexserver =
         default = https://pypi.my-alternative-index.org
 
-installing dependencies from multiple PyPI servers
+Installing dependencies from multiple PyPI servers
 ---------------------------------------------------
 
 .. versionadded:: 0.9
@@ -219,7 +219,7 @@ like this:
     tox -i DEV=https://pypi.org/simple  # changes :DEV: package URLs
     tox -i https://pypi.org/simple      # changes default
 
-further customizing installation
+Further customizing installation
 ---------------------------------
 
 .. versionadded:: 1.6
@@ -238,7 +238,7 @@ an alternative source for your dependencies:
 
 .. _pip: https://pip.pypa.io/en/stable/
 
-forcing re-creation of virtual environments
+Forcing re-creation of virtual environments
 -----------------------------------------------
 
 .. versionadded:: 0.9
@@ -270,7 +270,7 @@ variables you can use the ``passenv`` option:
 When your test commands execute they will execute with
 the same LANG setting as the one with which tox was invoked.
 
-setting environment variables
+Setting environment variables
 -------------------------------------------
 
 .. versionadded:: 1.0
@@ -288,7 +288,7 @@ a PYTHONPATH setting that will lead Python to also import
 from the ``subdir`` below the directory where your ``tox.ini``
 file resides.
 
-special handling of PYTHONHASHSEED
+Special handling of PYTHONHASHSEED
 -------------------------------------------
 
 .. versionadded:: 1.6.2

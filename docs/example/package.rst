@@ -1,4 +1,4 @@
-packaging
+Packaging
 =========
 
 Although one can use tox to develop and test applications one of its most popular

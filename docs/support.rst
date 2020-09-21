@@ -1,6 +1,6 @@
 .. _support:
 
-support and contact channels
+Support and contact channels
 =====================================
 
 Getting in contact:
@@ -10,7 +10,7 @@ Getting in contact:
 * hang out on the irc.freenode.net #pylib channel
 * `fork the github repository`_ and submit merge/pull requests (see the developers help page -- :ref:`developers`)
 
-paid professional support
+Paid professional support
 ----------------------------
 
 contact holger at `merlinux.eu`_, an association of
