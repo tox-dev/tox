@@ -13,7 +13,7 @@ Getting in contact:
 Paid professional support
 ----------------------------
 
-contact holger at `merlinux.eu`_, an association of
+Contact holger at `merlinux.eu`_, an association of
 experienced well-known Python developers.
 
 .. _`Testing In Python (TIP) mailing list`: http://lists.idyll.org/listinfo/testing-in-python
