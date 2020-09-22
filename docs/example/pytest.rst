@@ -82,7 +82,7 @@ to make ``tox`` use this feature:
 
 .. _`listed as a known issue`:
 
-Known Issues and limitations
+Known issues and limitations
 -----------------------------
 
 **Too long filenames**. you may encounter "too long filenames" for temporarily

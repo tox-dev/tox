@@ -3,7 +3,7 @@
 tox configuration specification
 ===============================
 
-configuration discovery
+Configuration discovery
 -----------------------
 
 At the moment tox supports three configuration locations prioritized in the following order:
@@ -669,7 +669,7 @@ Globally available substitutions
     OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in ``setenv``,
     when target variable is path variable (e.g. PATH or PYTHONPATH).
 
-substitutions for virtualenv-related sections
+Substitutions for virtualenv-related sections
 +++++++++++++++++++++++++++++++++++++++++++++
 
 ``{envname}``
@@ -689,7 +689,7 @@ substitutions for virtualenv-related sections
     the environment log directory
 
 
-environment variable substitutions
+Environment variable substitutions
 ++++++++++++++++++++++++++++++++++
 
 If you specify a substitution string like this::
@@ -701,7 +701,7 @@ and raise an Error if the environment variable
 does not exist.
 
 
-environment variable substitutions with default values
+Environment variable substitutions with default values
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 If you specify a substitution string like this::
@@ -731,7 +731,7 @@ the above example is roughly equivalent to
 .. _`command positional substitution`:
 .. _`positional substitution`:
 
-interactive shell substitution
+Interactive shell substitution
 ++++++++++++++++++++++++++++++
 
 It's possible to inject a config value only when tox is running in interactive shell (standard input)::
@@ -742,7 +742,7 @@ The first value is the value to inject when the interactive terminal is availabl
 the second value is the value to use when it's not. The later on is optional. A good use case
 for this is e.g. passing in the ``--pdb`` flag for pytest.
 
-substitutions for positional arguments in commands
+Substitutions for positional arguments in commands
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. versionadded:: 1.0

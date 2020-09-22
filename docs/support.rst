@@ -1,19 +1,19 @@
 .. _support:
 
-support and contact channels
+Support and contact channels
 =====================================
 
 Getting in contact:
 
-* join the `tox-dev mailing list`_ for tox related questions and development discussions.
+* join the `tox-dev mailing list`_ for tox related questions and development discussions
 * file a `report on the issue tracker`_
 * hang out on the irc.freenode.net #pylib channel
 * `fork the github repository`_ and submit merge/pull requests (see the developers help page -- :ref:`developers`)
 
-paid professional support
+Paid professional support
 ----------------------------
 
-contact holger at `merlinux.eu`_, an association of
+Contact holger at `merlinux.eu`_, an association of
 experienced well-known Python developers.
 
 .. _`Testing In Python (TIP) mailing list`: http://lists.idyll.org/listinfo/testing-in-python

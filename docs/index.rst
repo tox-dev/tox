@@ -1,7 +1,7 @@
 Welcome to the tox automation project
 ===============================================
 
-vision: standardize testing in Python
+Vision: standardize testing in Python
 ---------------------------------------------
 
 ``tox`` aims to automate and standardize testing in Python.  It is part
