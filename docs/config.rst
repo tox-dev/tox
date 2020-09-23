@@ -1067,7 +1067,7 @@ Other Rules and notes
   it will be considered as relative to the ``toxinidir``, the directory
   where the configuration file resides.
 
-cli
+CLI
 ===
 
 .. autoprogram:: tox.cli:cli
