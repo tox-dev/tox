@@ -252,7 +252,7 @@ To force tox to recreate a (particular) virtual environment:
 would trigger a complete reinstallation of the existing py27 environment
 (or create it afresh if it doesn't exist).
 
-passing down environment variables
+Passing down environment variables
 -------------------------------------------
 
 .. versionadded:: 2.0
