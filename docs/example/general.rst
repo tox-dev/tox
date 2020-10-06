@@ -160,7 +160,7 @@ will be searched in your system ``PATH``. Similarly, for ``jython`` and
 ``pypy`` the respective ``jython`` and ``pypy-c`` names will be looked for.
 The executable must exist in order to successfully create *virtualenv*
 environments. On Windows a ``pythonX.Y`` named executable will be searched in
-typical default locations using the ``C:\PythonX.Y\python.exe`` pattern.
+typical default locations using the ``C:\PythonXY\python.exe`` pattern.
 
 All other targets will use the system ``python`` instead. You can override any
 of the default settings by defining the :conf:`basepython` variable in a
@@ -169,7 +169,7 @@ specific test environment section, for example:
 .. code-block:: ini
 
     [testenv:docs]
-    basepython = python2.7
+    basepython = python2.7  # or C:\mypath\pythons\3.9\python.exe
 
 Avoiding expensive sdist
 ------------------------
