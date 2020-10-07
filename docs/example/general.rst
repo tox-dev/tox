@@ -169,7 +169,7 @@ specific test environment section, for example:
 .. code-block:: ini
 
     [testenv:docs]
-    basepython = python2.7  # or C:\mypath\pythons\3.9\python.exe
+    basepython = python2.7
 
 Avoiding expensive sdist
 ------------------------
