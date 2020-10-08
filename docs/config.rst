@@ -964,7 +964,7 @@ special case for a combination of factors. Here is how you do it:
         py{27,36}-sqlite: mock  # mocking sqlite in python 2.x & 3.6
         !py34-sqlite: mock      # mocking sqlite, except in python 3.4
         sqlite-!py34: mock      # (same as the line above)
-        !py34,!py36: enum34     # use if neither py34 nor py36 are in the env name
+        !py34-!py36: enum34     # use if neither py34 nor py36 are in the env name
 
 Take a look at the first ``deps`` line. It shows how you can special case
 something for a combination of factors, by just hyphenating the combining
