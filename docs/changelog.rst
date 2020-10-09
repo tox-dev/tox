@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.20.1 (2020-10-09)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Relax importlib requirement to allow version<3 - by :user:`usamasadiq`
+  `#1682 <https://github.com/tox-dev/tox/issues/1682>`_
+
+
 v3.20.0 (2020-09-01)
 --------------------
 
