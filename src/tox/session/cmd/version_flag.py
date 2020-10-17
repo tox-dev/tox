@@ -10,5 +10,7 @@ def tox_add_option(parser: ToxParser):
     from tox.version import __version__
 
     parser.add_argument(
-        "--version", action="version", version=f"{__version__} from {Path(tox.__file__).absolute()}",
+        "--version",
+        action="version",
+        version=f"{__version__} from {Path(tox.__file__).absolute()}",
     )

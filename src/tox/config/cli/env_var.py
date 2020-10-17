@@ -25,7 +25,11 @@ def get_env_var(key, of_type):
                 return of_type, source
             except Exception as exception:
                 logging.warning(
-                    "env var %s=%r cannot be transformed to %r because %r", environ_key, value, of_type, exception,
+                    "env var %s=%r cannot be transformed to %r because %r",
+                    environ_key,
+                    value,
+                    of_type,
+                    exception,
                 )
 
 

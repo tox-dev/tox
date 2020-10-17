@@ -19,14 +19,20 @@ class PythonRun(Python, RunToxEnv, ABC):
             desc="Name of the python dependencies as specified by PEP-440",
         )
         self.core.add_config(
-            keys=["skip_missing_interpreters"], default=True, of_type=bool, desc="skip running missing interpreters",
+            keys=["skip_missing_interpreters"],
+            default=True,
+            of_type=bool,
+            desc="skip running missing interpreters",
         )
         self.add_package_conf()
 
     def add_package_conf(self):
         if self.core["no_package"] is False:
             self.conf.add_config(
-                keys=["extras"], of_type=Set[str], default=[], desc="extras to install of the target package",
+                keys=["extras"],
+                of_type=Set[str],
+                default=[],
+                desc="extras to install of the target package",
             )
 
     def _find_base_python(self):

@@ -104,7 +104,12 @@ class IniLoader(StrConvert, Loader):
     """Load from ini section"""
 
     def __init__(
-        self, section: Optional[SectionProxy], src: Ini, name: Optional[str], default_base: EnvList, section_loader,
+        self,
+        section: Optional[SectionProxy],
+        src: Ini,
+        name: Optional[str],
+        default_base: EnvList,
+        section_loader,
     ) -> None:
         super().__init__(name)
         self._section = section  # type:Optional[SectionProxy]
@@ -150,7 +155,9 @@ class IniLoader(StrConvert, Loader):
 
     def __repr__(self):
         return "{}(section={}, src={!r})".format(
-            type(self).__name__, self._section.name if self._section else self.name, self._src,
+            type(self).__name__,
+            self._section.name if self._section else self.name,
+            self._src,
         )
 
     def _load_raw(self, key, conf, as_name=None):

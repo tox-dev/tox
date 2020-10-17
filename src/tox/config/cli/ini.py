@@ -47,7 +47,11 @@ class IniConfig:
                 result = None
             except Exception as exception:
                 logging.warning(
-                    "%s key %s as type %r failed with %r", self.config_file, key, of_type, exception,
+                    "%s key %s as type %r failed with %r",
+                    self.config_file,
+                    key,
+                    of_type,
+                    exception,
                 )
                 result = None
         self._cache[cache_key] = result

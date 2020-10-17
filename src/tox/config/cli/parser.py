@@ -149,7 +149,10 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             color = "yes" if sys.stdout.isatty() else "no"
 
         verbosity_group.add_argument(
-            "--colored", default=color, choices=["yes", "no"], help="should output be enriched with colors",
+            "--colored",
+            default=color,
+            choices=["yes", "no"],
+            help="should output be enriched with colors",
         )
         self.fix_defaults()
 

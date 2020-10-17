@@ -44,7 +44,11 @@ class VirtualEnv(Python, ABC):
         return {"version_info": list(base_python.version_info), "executable": base_python.executable}
 
     def install_python_packages(
-        self, packages: List[Union[Requirement, Path]], no_deps: bool = False, develop=False, force_reinstall=False,
+        self,
+        packages: List[Union[Requirement, Path]],
+        no_deps: bool = False,
+        develop=False,
+        force_reinstall=False,
     ) -> None:
         if packages:
             install_command = self.install_command(develop, force_reinstall, no_deps, packages)

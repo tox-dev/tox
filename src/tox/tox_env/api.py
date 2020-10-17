@@ -44,7 +44,9 @@ class ToxEnv(ABC):
 
     def register_config(self):
         self.conf.add_constant(
-            keys=["env_name", "envname"], desc="the name of the tox environment", value=self.conf.name,
+            keys=["env_name", "envname"],
+            desc="the name of the tox environment",
+            value=self.conf.name,
         )
         self.conf.add_config(
             keys=["set_env", "setenv"],

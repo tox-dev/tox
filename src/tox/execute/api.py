@@ -83,7 +83,11 @@ class Outcome:
                 print(self.err, file=sys.stderr, end="")
                 print(Fore.RESET, file=sys.stderr)
         logger.critical(
-            "exit code %d for %s: %s in %s", self.exit_code, self.request.cwd, self.shell_cmd, self.elapsed,
+            "exit code %d for %s: %s in %s",
+            self.exit_code,
+            self.request.cwd,
+            self.shell_cmd,
+            self.elapsed,
         )
         raise SystemExit(self.exit_code)
 

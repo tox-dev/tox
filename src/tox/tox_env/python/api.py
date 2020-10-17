@@ -73,7 +73,8 @@ class Python(ToxEnv, ABC):
 
                     env_dir = cast(Path, self.conf["env_dir"])
                     session = session_via_cli(
-                        [str(env_dir), "--activators", "", "--no-seed", "-p", python.executable], setup_logging=False,
+                        [str(env_dir), "--activators", "", "--no-seed", "-p", python.executable],
+                        setup_logging=False,
                     )
                     self._python = session.creator
                     break

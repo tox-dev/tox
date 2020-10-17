@@ -18,16 +18,28 @@ class RunToxEnv(ToxEnv, ABC):
     def register_config(self):
         super().register_config()
         self.conf.add_config(
-            keys=["description"], of_type=str, default=None, desc="description attached to the tox environment",
+            keys=["description"],
+            of_type=str,
+            default=None,
+            desc="description attached to the tox environment",
         )
         self.conf.add_config(
-            keys=["commands"], of_type=List[Command], default=[], desc="the commands to be called for testing",
+            keys=["commands"],
+            of_type=List[Command],
+            default=[],
+            desc="the commands to be called for testing",
         )
         self.conf.add_config(
-            keys=["commands_pre"], of_type=List[Command], default=[], desc="the commands to be called before testing",
+            keys=["commands_pre"],
+            of_type=List[Command],
+            default=[],
+            desc="the commands to be called before testing",
         )
         self.conf.add_config(
-            keys=["commands_post"], of_type=List[Command], default=[], desc="the commands to be called after testing",
+            keys=["commands_post"],
+            of_type=List[Command],
+            default=[],
+            desc="the commands to be called after testing",
         )
         self.conf.add_config(
             keys=["change_dir", "changedir"],

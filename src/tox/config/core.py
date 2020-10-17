@@ -20,8 +20,14 @@ def tox_add_core_config(core: ConfigSet):
         desc="temporary directory cleaned at start",
     )
     core.add_config(
-        keys=["env_list", "envlist"], of_type=EnvList, default=[], desc="define environments to automatically run",
+        keys=["env_list", "envlist"],
+        of_type=EnvList,
+        default=[],
+        desc="define environments to automatically run",
     )
     core.add_config(
-        keys=["skip_missing_interpreters"], of_type=bool, default=True, desc="skip missing interpreters",
+        keys=["skip_missing_interpreters"],
+        of_type=bool,
+        default=True,
+        desc="skip missing interpreters",
     )

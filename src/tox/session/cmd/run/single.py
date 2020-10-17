@@ -27,7 +27,10 @@ def run_commands(tox_env: ToxEnv, no_test: bool) -> int:
         for key in keys:
             for cmd in cast(List[Command], tox_env.conf[key]):
                 current_status = tox_env.execute(
-                    cmd.args, cwd=tox_env.conf["change_dir"], allow_stdin=True, show_on_standard=True,
+                    cmd.args,
+                    cwd=tox_env.conf["change_dir"],
+                    allow_stdin=True,
+                    show_on_standard=True,
                 )
                 if current_status.exit_code != Outcome.OK:
                     return status

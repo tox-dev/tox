@@ -130,7 +130,8 @@ def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog, va
     parsed, _, __ = get_options()
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
-            to, value_error("invalid literal for int() with base 10: 'what'"),
+            to,
+            value_error("invalid literal for int() with base 10: 'what'"),
         ),
     ]
     assert vars(parsed) == {
