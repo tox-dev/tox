@@ -390,9 +390,7 @@ class SetenvDict(object):
                 return os.environ.get(name, default)
             self._lookupstack.append(name)
             try:
-                res = self.reader._replace(val)
-                res = res.replace("\\{", "{").replace("\\}", "}")
-                self.resolved[name] = res
+                self.resolved[name] = res = self.reader._replace(val)
             finally:
                 self._lookupstack.pop()
             return res
