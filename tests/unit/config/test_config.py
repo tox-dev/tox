@@ -2120,9 +2120,12 @@ class TestConfigTestEnv:
             [testenv]
             setenv =
                 VAR = \{val\}
+            commands =
+                {env:VAR}
         """
         configs = newconfig([], inisource).envconfigs
-        assert configs["python"].setenv["VAR"] == "{val}"
+        assert configs["python"].setenv["VAR"] == r"\{val\}"
+        assert configs["python"].commands[0] == ["{val}"]
 
     def test_factor_use_not_checked(self, newconfig):
         inisource = """
