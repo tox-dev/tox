@@ -240,8 +240,8 @@ class PosargsOption:
 
 class InstallcmdOption:
     name = "install_command"
-    type = "argv"
-    default = "python -m pip install {opts} {packages}"
+    type = "argv_install_command"
+    default = r"python -m pip install \{opts\} \{packages\}"
     help = "install command for dependencies and package under test."
 
     def postprocess(self, testenv_config, value):
@@ -1374,6 +1374,7 @@ class ParseIni(object):
                     "dict_setenv",
                     "argv",
                     "argvlist",
+                    "argv_install_command",
                 ):
                     meth = getattr(reader, "get{}".format(atype))
                     res = meth(env_attr.name, env_attr.default, replace=replace)
@@ -1661,6 +1662,15 @@ class SectionReader:
     def getargv(self, name, default="", replace=True):
         return self.getargvlist(name, default, replace=replace)[0]
 
+    def getargv_install_command(self, name, default="", replace=True):
+        s = self.getstring(name, default, replace=False)
+        if "{packages}" in s:
+            s = s.replace("{packages}", r"\{packages\}")
+        if "{opts}" in s:
+            s = s.replace("{opts}", r"\{opts\}")
+
+        return _ArgvlistReader.getargvlist(self, s, replace=replace)[0]
+
     def getstring(self, name, default=None, replace=True, crossonly=False, no_fallback=False):
         x = None
         sections = [self.section_name] + ([] if no_fallback else self.fallbacksections)
@@ -1770,12 +1780,6 @@ class Replacer:
         # special case: all empty values means ":" which is os.pathsep
         if not any(g.values()):
             return os.pathsep
-
-        # special case: opts and packages. Leave {opts} and
-        # {packages} intact, they are replaced manually in
-        # _venv.VirtualEnv.run_install_command.
-        if sub_value in ("opts", "packages"):
-            return "{{{}}}".format(sub_value)
 
         try:
             sub_type = g["sub_type"]
