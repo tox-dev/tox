@@ -1559,7 +1559,15 @@ is_section_substitution = re.compile(r"{\[[^{}\s]+\]\S+?}").match
 
 
 class SectionReader:
-    def __init__(self, section_name, cfgparser, fallbacksections=None, factors=(), prefix=None):
+    def __init__(
+        self,
+        section_name,
+        cfgparser,
+        fallbacksections=None,
+        factors=(),
+        prefix=None,
+        posargs="",
+    ):
         if prefix is None:
             self.section_name = section_name
         else:
@@ -1570,6 +1578,7 @@ class SectionReader:
         self._subs = {}
         self._subststack = []
         self._setenv = None
+        self.posargs = posargs
 
     def get_environ_value(self, name):
         if self._setenv is None:
@@ -1695,6 +1704,17 @@ class SectionReader:
         x = self._replace_if_needed(x, name, replace, crossonly)
         return x
 
+    def getposargs(self, default=None):
+        if self.posargs:
+            posargs = self.posargs
+            if sys.platform.startswith("win"):
+                posargs_string = list2cmdline([x for x in posargs if x])
+            else:
+                posargs_string = " ".join([shlex_quote(x) for x in posargs if x])
+            return posargs_string
+        else:
+            return default or ""
+
     def _replace_if_needed(self, x, name, replace, crossonly):
         if replace and x and hasattr(x, "replace"):
             x = self._replace(x, name=name, crossonly=crossonly)
@@ -1781,6 +1801,9 @@ class Replacer:
         if not any(g.values()):
             return os.pathsep
 
+        if sub_value == "posargs":
+            return self.reader.getposargs(match.group("default_value"))
+
         try:
             sub_type = g["sub_type"]
         except KeyError:
@@ -1794,6 +1817,8 @@ class Replacer:
             if is_interactive():
                 return match.group("substitution_value")
             return match.group("default_value")
+        if sub_type == "posargs":
+            return self.reader.getposargs(match.group("substitution_value"))
         if sub_type is not None:
             raise tox.exception.ConfigError(
                 "No support for the {} substitution type".format(sub_type),
@@ -1887,12 +1912,6 @@ class _ArgvlistReader:
 
     @classmethod
     def processcommand(cls, reader, command, replace=True):
-        posargs = getattr(reader, "posargs", "")
-        if sys.platform.startswith("win"):
-            posargs_string = list2cmdline([x for x in posargs if x])
-        else:
-            posargs_string = " ".join([shlex_quote(x) for x in posargs if x])
-
         # Iterate through each word of the command substituting as
         # appropriate to construct the new command string. This
         # string is then broken up into exec argv components using
@@ -1900,15 +1919,10 @@ class _ArgvlistReader:
         if replace:
             newcommand = ""
             for word in CommandParser(command).words():
-                if word == "{posargs}" or word == "[]":
-                    newcommand += posargs_string
+                if word == "[]":
+                    newcommand += reader.getposargs()
                     continue
-                elif word.startswith("{posargs:") and word.endswith("}"):
-                    if posargs:
-                        newcommand += posargs_string
-                        continue
-                    else:
-                        word = word[9:-1]
+
                 new_arg = ""
                 new_word = reader._replace(word)
                 new_word = reader._replace(new_word)
