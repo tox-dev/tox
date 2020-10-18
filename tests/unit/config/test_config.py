@@ -441,6 +441,21 @@ class TestIniParserAgainstCommandsKey:
         assert envconfig.commands == [["ls", "testvalue"]]
         assert envconfig.setenv["TEST"] == "testvalue"
 
+    def test_command_env_substitution_posargs(self, newconfig):
+        """Ensure {posargs} values are substituted correctly."""
+        config = newconfig(
+            """
+           [testenv:py27]
+           setenv =
+             TEST={posargs:default}
+           commands =
+             ls {env:TEST}
+        """,
+        )
+        envconfig = config.envconfigs["py27"]
+        assert envconfig.commands == [["ls", "default"]]
+        assert envconfig.setenv["TEST"] == "default"
+
     def test_command_env_substitution_global(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""
         config = newconfig(
