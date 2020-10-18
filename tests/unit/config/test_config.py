@@ -453,6 +453,17 @@ class TestIniParserAgainstCommandsKey:
         envconfig = config.envconfigs["python"]
         assert envconfig.commands == [["echo", "bar"]]
 
+    def test_command_env_substitution_default_escape(self, newconfig):
+        """Ensure literal { and } in default of {env:key:default} values."""
+        config = newconfig(
+            r"""
+            [testenv]
+            commands = echo {env:FOO:\{bar\}}
+        """,
+        )
+        envconfig = config.envconfigs["python"]
+        assert envconfig.commands == [["echo", "{bar}"]]
+
     def test_regression_issue595(self, newconfig):
         config = newconfig(
             """

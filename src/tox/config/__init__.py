@@ -1731,7 +1731,7 @@ class Replacer:
         (?<!\\)[{]
         (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
         (?P<substitution_value>(?:\[[^,{}]*\])?[^:,{}]*)  # substitution key
-        (?::(?P<default_value>[^{}]*))?   # default value
+        (?::(?P<default_value>([^{}]|\\{|\\})*))?   # default value
         [}]
         """,
         re.VERBOSE,
