@@ -91,6 +91,28 @@ class TestVenvConfig:
         envconfig = config.envconfigs["dev"]
         assert envconfig.envdir == config.toxworkdir.join("foobar")
 
+    def test_envdir_set_manually_with_pound(self, newconfig):
+        config = newconfig(
+            [],
+            """
+            [testenv:dev]
+            envdir = {toxworkdir}/foo#bar
+        """,
+        )
+        envconfig = config.envconfigs["dev"]
+        assert envconfig.envdir == config.toxworkdir.join("foo#bar")
+
+    def test_envdir_set_manually_with_whitespace(self, newconfig):
+        config = newconfig(
+            [],
+            """
+            [testenv:dev]
+            envdir = {toxworkdir}/foo bar
+        """,
+        )
+        envconfig = config.envconfigs["dev"]
+        assert envconfig.envdir == config.toxworkdir.join("foo bar")
+
     def test_force_dep_version(self, initproj):
         """
         Make sure we can override dependencies configured in tox.ini when using the command line
@@ -495,6 +517,58 @@ class TestIniParserAgainstCommandsKey:
         assert config.envconfigs["foo"].setenv["VAR"] == "x"
         assert config.envconfigs["bar"].setenv["VAR"] == "x"
         assert "VAR" not in config.envconfigs["baz"].setenv
+
+    def test_command_substitution_pound(self, tmpdir, newconfig):
+        """Ensure pound in path is kept in commands."""
+        config = newconfig(
+            """
+            [tox]
+            toxworkdir = {toxinidir}/.tox#dir
+
+            [testenv:py27]
+            commands = {envpython} {toxworkdir}
+        """,
+        )
+
+        assert config.toxworkdir.realpath() == tmpdir.join(".tox#dir").realpath()
+
+        envconfig = config.envconfigs["py27"]
+
+        assert envconfig.envbindir.realpath() in [
+            tmpdir.join(".tox#dir", "py27", "bin").realpath(),
+            tmpdir.join(".tox#dir", "py27", "Scripts").realpath(),
+        ]
+
+        assert envconfig.commands[0] == [
+            str(envconfig.envbindir.join("python")),
+            str(config.toxworkdir.realpath()),
+        ]
+
+    def test_command_substitution_whitespace(self, tmpdir, newconfig):
+        """Ensure spaces in path is kept in commands."""
+        config = newconfig(
+            """
+            [tox]
+            toxworkdir = {toxinidir}/.tox dir
+
+            [testenv:py27]
+            commands = {envpython} {toxworkdir}
+        """,
+        )
+
+        assert config.toxworkdir.realpath() == tmpdir.join(".tox dir").realpath()
+
+        envconfig = config.envconfigs["py27"]
+
+        assert envconfig.envbindir.realpath() in [
+            tmpdir.join(".tox dir", "py27", "bin").realpath(),
+            tmpdir.join(".tox dir", "py27", "Scripts").realpath(),
+        ]
+
+        assert envconfig.commands[0] == [
+            str(envconfig.envbindir.join("python")),
+            str(config.toxworkdir.realpath()),
+        ]
 
 
 class TestIniParser:
@@ -1084,6 +1158,46 @@ class TestConfigTestEnv:
         envconfig = config.envconfigs["python"]
         assert envconfig.envpython == envconfig.envbindir.join("python")
 
+    def test_envbindir_with_pound(self, newconfig):
+        config = newconfig(
+            """
+            [tox]
+            toxworkdir = {toxinidir}/.tox#dir
+            [testenv]
+            basepython=python
+        """,
+        )
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs["python"]
+
+        assert ".tox#dir" in str(envconfig.envbindir)
+        assert ".tox#dir" in str(envconfig.envpython)
+
+        assert "'" not in str(envconfig.envbindir)
+        assert "'" not in str(envconfig.envpython)
+
+        assert envconfig.envpython == envconfig.envbindir.join("python")
+
+    def test_envbindir_with_whitespace(self, newconfig):
+        config = newconfig(
+            """
+            [tox]
+            toxworkdir = {toxinidir}/.tox dir
+            [testenv]
+            basepython=python
+        """,
+        )
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs["python"]
+
+        assert ".tox dir" in str(envconfig.envbindir)
+        assert ".tox dir" in str(envconfig.envpython)
+
+        assert "'" not in str(envconfig.envbindir)
+        assert "'" not in str(envconfig.envpython)
+
+        assert envconfig.envpython == envconfig.envbindir.join("python")
+
     @pytest.mark.parametrize("bp", ["jython", "pypy", "pypy3"])
     def test_envbindir_jython(self, newconfig, bp):
         config = newconfig(
@@ -1511,7 +1625,7 @@ class TestConfigTestEnv:
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 
-    def test_rewrite_simple_posargs(self, tmpdir, newconfig):
+    def test_rewrite_posargs_simple(self, tmpdir, newconfig):
         inisource = """
             [testenv:py27]
             args_are_paths = True
@@ -1528,6 +1642,47 @@ class TestConfigTestEnv:
 
         tmpdir.ensure("tests", "hello")
         conf = newconfig(["tests/hello"], inisource).envconfigs["py27"]
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello"]
+
+    def test_rewrite_posargs_pound(self, tmpdir, newconfig):
+        inisource = """
+            [testenv:py27]
+            args_are_paths = True
+            changedir = test#dir
+            commands = cmd1 {posargs:hello}
+        """
+        conf = newconfig([], inisource).envconfigs["py27"]
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello"]
+
+        if sys.platform != "win32":
+            conf = newconfig(["test#dir/hello"], inisource).envconfigs["py27"]
+            argv = conf.commands
+            assert argv[0] == ["cmd1", "test#dir/hello"]
+
+        tmpdir.ensure("test#dir", "hello")
+        conf = newconfig(["test#dir/hello"], inisource).envconfigs["py27"]
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello"]
+
+    def test_rewrite_posargs_whitespace(self, tmpdir, newconfig):
+        inisource = """
+            [testenv:py27]
+            args_are_paths = True
+            changedir = test dir
+            commands = cmd1 {posargs:hello}
+        """
+        conf = newconfig([], inisource).envconfigs["py27"]
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "hello"]
+
+        conf = newconfig(["test dir/hello"], inisource).envconfigs["py27"]
+        argv = conf.commands
+        assert argv[0] == ["cmd1", "test dir/hello"]
+
+        tmpdir.ensure("test dir", "hello")
+        conf = newconfig(["test dir/hello"], inisource).envconfigs["py27"]
         argv = conf.commands
         assert argv[0] == ["cmd1", "hello"]
 

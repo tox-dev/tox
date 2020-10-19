@@ -20,6 +20,7 @@ import py
 import toml
 from packaging import requirements
 from packaging.utils import canonicalize_name
+from py._path.common import PathBase
 
 import tox
 from tox.constants import INFO
@@ -390,7 +391,7 @@ class SetenvDict(object):
                 return os.environ.get(name, default)
             self._lookupstack.append(name)
             try:
-                res = self.reader._replace(val)
+                res = self.reader._replace(val, unquote_path=True)
                 res = res.replace("\\{", "{").replace("\\}", "}")
                 self.resolved[name] = res
             finally:
@@ -1591,7 +1592,7 @@ class SectionReader:
             self.posargs = _posargs
 
     def getpath(self, name, defaultpath, replace=True):
-        path = self.getstring(name, defaultpath, replace=replace)
+        path = self.getstring(name, defaultpath, replace=replace, unquote_path=True)
         if path is not None:
             toxinidir = self._subs["toxinidir"]
             return toxinidir.join(path, abs=True)
@@ -1680,7 +1681,15 @@ class SectionReader:
 
         return _ArgvlistReader.getargvlist(self, s, replace=replace)[0]
 
-    def getstring(self, name, default=None, replace=True, crossonly=False, no_fallback=False):
+    def getstring(
+        self,
+        name,
+        default=None,
+        replace=True,
+        crossonly=False,
+        no_fallback=False,
+        unquote_path=False,
+    ):
         x = None
         sections = [self.section_name] + ([] if no_fallback else self.fallbacksections)
         for s in sections:
@@ -1698,10 +1707,10 @@ class SectionReader:
             # process. Once they are unwrapped, we call apply factors
             # again for those new dependencies.
             x = self._apply_factors(x)
-            x = self._replace_if_needed(x, name, replace, crossonly)
+            x = self._replace_if_needed(x, name, replace, crossonly, unquote_path=unquote_path)
             x = self._apply_factors(x)
 
-        x = self._replace_if_needed(x, name, replace, crossonly)
+        x = self._replace_if_needed(x, name, replace, crossonly, unquote_path=unquote_path)
         return x
 
     def getposargs(self, default=None):
@@ -1715,9 +1724,9 @@ class SectionReader:
         else:
             return default or ""
 
-    def _replace_if_needed(self, x, name, replace, crossonly):
+    def _replace_if_needed(self, x, name, replace, crossonly, unquote_path=False):
         if replace and x and hasattr(x, "replace"):
-            x = self._replace(x, name=name, crossonly=crossonly)
+            x = self._replace(x, name=name, crossonly=crossonly, unquote_path=unquote_path)
         return x
 
     def _apply_factors(self, s):
@@ -1736,14 +1745,17 @@ class SectionReader:
         lines = s.strip().splitlines()
         return "\n".join(filter(None, map(factor_line, lines)))
 
-    def _replace(self, value, name=None, section_name=None, crossonly=False):
+    def _replace(self, value, name=None, section_name=None, crossonly=False, unquote_path=False):
         if "{" not in value:
             return value
 
         section_name = section_name if section_name else self.section_name
         self._subststack.append((section_name, name))
         try:
-            replaced = Replacer(self, crossonly=crossonly).do_replace(value)
+            replacer = Replacer(self, crossonly=crossonly)
+            replaced = replacer.do_replace(value)
+            if unquote_path and replacer._path_quoted:
+                replaced = replaced.replace("'", "")
             assert self._subststack.pop() == (section_name, name)
         except tox.exception.MissingSubstitution:
             if not section_name.startswith(testenvprefix):
@@ -1770,6 +1782,7 @@ class Replacer:
     def __init__(self, reader, crossonly=False):
         self.reader = reader
         self.crossonly = crossonly
+        self._path_quoted = False
 
     def do_replace(self, value):
         """
@@ -1855,6 +1868,7 @@ class Replacer:
                     name=item,
                     section_name=section,
                     crossonly=self.crossonly,
+                    unquote_path=False,
                 )
 
         raise tox.exception.ConfigError("substitution key {!r} not found".format(key))
@@ -1866,6 +1880,12 @@ class Replacer:
             val = self._substitute_from_other_section(sub_key)
         if callable(val):
             val = val()
+        if isinstance(val, PathBase):
+            val = str(val)
+            # XXX handle ' and " in paths
+            if "'" not in val and ("#" in val or " " in val):
+                val = "'{}'".format(val)
+                self._path_quoted = True
         return str(val)
 
 
@@ -1897,7 +1917,7 @@ class _ArgvlistReader:
             current_command += line
 
             if is_section_substitution(current_command):
-                replaced = reader._replace(current_command, crossonly=True)
+                replaced = reader._replace(current_command, crossonly=True, unquote_path=False)
                 commands.extend(cls.getargvlist(reader, replaced))
             else:
                 commands.append(cls.processcommand(reader, current_command, replace))
@@ -1926,8 +1946,8 @@ class _ArgvlistReader:
                     continue
 
                 new_arg = ""
-                new_word = reader._replace(word)
-                new_word = reader._replace(new_word)
+                new_word = reader._replace(word, unquote_path=False)
+                new_word = reader._replace(new_word, unquote_path=False)
                 new_word = new_word.replace("\\{", "{").replace("\\}", "}")
                 new_arg += new_word
                 newcommand += new_arg

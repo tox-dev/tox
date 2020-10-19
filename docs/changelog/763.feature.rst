@@ -1,0 +1,1 @@
+Quote paths in settings containing `` `` or ``#``. - by :user:`jayvdb`
