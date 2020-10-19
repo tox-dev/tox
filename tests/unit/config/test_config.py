@@ -526,7 +526,7 @@ class TestIniParserAgainstCommandsKey:
             toxworkdir = {toxinidir}/.tox#dir
 
             [testenv:py27]
-            commands = {envpython} {toxworkdir}
+            commands = '{envpython}' '{toxworkdir}'{/}'foo#bar'
         """,
         )
 
@@ -541,7 +541,7 @@ class TestIniParserAgainstCommandsKey:
 
         assert envconfig.commands[0] == [
             str(envconfig.envbindir.join("python")),
-            str(config.toxworkdir.realpath()),
+            str(config.toxworkdir.join("foo#bar")),
         ]
 
     def test_command_substitution_whitespace(self, tmpdir, newconfig):
@@ -552,7 +552,7 @@ class TestIniParserAgainstCommandsKey:
             toxworkdir = {toxinidir}/.tox dir
 
             [testenv:py27]
-            commands = {envpython} {toxworkdir}
+            commands = '{envpython}' '{toxworkdir}'{/}'foo bar'
         """,
         )
 
@@ -567,7 +567,61 @@ class TestIniParserAgainstCommandsKey:
 
         assert envconfig.commands[0] == [
             str(envconfig.envbindir.join("python")),
-            str(config.toxworkdir.realpath()),
+            str(config.toxworkdir.join("foo bar").realpath()),
+        ]
+
+    def test_command_env_substitution_pound(self, tmpdir, newconfig):
+        """Ensure pound in path is kept in commands using setenv."""
+        config = newconfig(
+            """
+            [tox]
+            toxworkdir = {toxinidir}/.tox#dir
+
+            [testenv:py27]
+            setenv = VAR = '{toxworkdir}'{/}'foo#bar'
+            commands = '{envpython}' '{env:VAR}'
+        """,
+        )
+
+        assert config.toxworkdir.realpath() == tmpdir.join(".tox#dir").realpath()
+
+        envconfig = config.envconfigs["py27"]
+
+        assert envconfig.envbindir.realpath() in [
+            tmpdir.join(".tox#dir", "py27", "bin").realpath(),
+            tmpdir.join(".tox#dir", "py27", "Scripts").realpath(),
+        ]
+
+        assert envconfig.commands[0] == [
+            str(envconfig.envbindir.join("python")),
+            str(config.toxworkdir.join("foo#bar").realpath()),
+        ]
+
+    def test_command_env_substitution_whitespace(self, tmpdir, newconfig):
+        """Ensure spaces in path is kept in commands using setenv."""
+        config = newconfig(
+            """
+            [tox]
+            toxworkdir = {toxinidir}/.tox dir
+
+            [testenv:py27]
+            setenv = VAR = '{toxworkdir}'{/}'foo bar'
+            commands = '{envpython}' '{env:VAR}'
+        """,
+        )
+
+        assert config.toxworkdir.realpath() == tmpdir.join(".tox dir").realpath()
+
+        envconfig = config.envconfigs["py27"]
+
+        assert envconfig.envbindir.realpath() in [
+            tmpdir.join(".tox dir", "py27", "bin").realpath(),
+            tmpdir.join(".tox dir", "py27", "Scripts").realpath(),
+        ]
+
+        assert envconfig.commands[0] == [
+            str(envconfig.envbindir.join("python")),
+            str(config.toxworkdir.join("foo bar").realpath()),
         ]
 
 

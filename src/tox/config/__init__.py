@@ -62,6 +62,7 @@ _FACTOR_LINE_PATTERN = re.compile(r"^([\w{}\.!,-]+)\:\s+(.+)")
 _ENVSTR_SPLIT_PATTERN = re.compile(r"((?:\{[^}]+\})+)|,")
 _ENVSTR_EXPAND_PATTERN = re.compile(r"\{([^}]+)\}")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
+_UNESCAPED_DOUBLEQUOTE = re.compile(r"((?<!\{1})'){2}")
 
 
 def get_plugin_manager(plugins=()):
@@ -1946,8 +1947,11 @@ class _ArgvlistReader:
                     continue
 
                 new_arg = ""
+                had_dual_quote = re.search(_UNESCAPED_DOUBLEQUOTE, word)
                 new_word = reader._replace(word, unquote_path=False)
                 new_word = reader._replace(new_word, unquote_path=False)
+                if not had_dual_quote:
+                    new_word = re.sub(_UNESCAPED_DOUBLEQUOTE, "'", new_word)
                 new_word = new_word.replace("\\{", "{").replace("\\}", "}")
                 new_arg += new_word
                 newcommand += new_arg
@@ -1982,8 +1986,14 @@ class CommandParser(object):
                     and ps.word
                     and ps.word[-1] not in string.whitespace
                 )
-                or (cur_char == "{" and ps.depth == 0 and not ps.word.endswith("\\"))
-                or (ps.depth == 0 and ps.word and ps.word[-1] == "}")
+                or (
+                    cur_char == "{"
+                    and ps.depth == 0
+                    and not ps.word.endswith("\\")
+                    and ps.word != "'"
+                )
+                or (ps.depth == 0 and ps.word and ps.word[-1] == "}" and peek() != "'")
+                or (ps.depth == 0 and ps.word and ps.word[-2:] == "}'")
                 or (cur_char not in string.whitespace and ps.word and ps.word.strip() == "")
             )
 
@@ -1997,6 +2007,12 @@ class CommandParser(object):
             if word_has_ended():
                 yield_this_word()
 
+        def peek():
+            try:
+                return self.command[_i + 1]
+            except IndexError:
+                return ""
+
         def accumulate():
             ps.word += cur_char
 
@@ -2006,7 +2022,7 @@ class CommandParser(object):
         def pop_substitution():
             ps.depth -= 1
 
-        for cur_char in self.command:
+        for _i, cur_char in enumerate(self.command):
             if cur_char in string.whitespace:
                 if ps.depth == 0:
                     yield_if_word_ended()
@@ -2018,6 +2034,12 @@ class CommandParser(object):
             elif cur_char == "}":
                 accumulate()
                 pop_substitution()
+            elif cur_char == "'":
+                if ps.depth == 0 and ps.word[:2] == "'{" and ps.word[-1] == "}":
+                    accumulate()
+                else:
+                    yield_if_word_ended()
+                    accumulate()
             else:
                 yield_if_word_ended()
                 accumulate()
