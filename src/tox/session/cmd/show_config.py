@@ -1,3 +1,6 @@
+"""
+Show materialized configuration of tox environments.
+"""
 from typing import Any, List, Union
 
 from tox.config.cli.parser import ToxParser

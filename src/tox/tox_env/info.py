@@ -1,11 +1,15 @@
+"""
+Declare and handle the tox env info file (a file at the root of every tox environment that contains information about
+the status of the tox environment - python version of the environment, installed packages, etc.).
+"""
 import json
 from contextlib import contextmanager
 from pathlib import Path
 
 
-class Cache:
+class Info:
     def __init__(self, path: Path) -> None:
-        self._path = path
+        self._path = path / ".tox-info.json"
         try:
             value = json.loads(self._path.read_text())
         except (ValueError, OSError):

@@ -1,3 +1,4 @@
+"""Load """
 from configparser import ConfigParser, SectionProxy
 from copy import deepcopy
 from itertools import chain
@@ -15,6 +16,8 @@ TEST_ENV_PREFIX = f"{BASE_TEST_ENV}:"
 
 
 class Ini(Source):
+    """Configuration sourced from a ini file (such as tox.ini)"""
+
     CORE_PREFIX = "tox"
 
     def __init__(self, path: Path) -> None:
@@ -30,7 +33,7 @@ class Ini(Source):
             section_loader=self._get_section,
         )
         super().__init__(core)
-        self._envs = {}  # type: Dict[str, IniLoader]
+        self._envs: Dict[str, IniLoader] = {}
 
     def __deepcopy__(self, memo):
         # python < 3.7 cannot copy config parser
@@ -101,7 +104,7 @@ class Ini(Source):
 
 
 class IniLoader(StrConvert, Loader):
-    """Load from ini section"""
+    """Load configuration from an ini section (ini file is a string to string dictionary)"""
 
     def __init__(
         self,
@@ -112,10 +115,10 @@ class IniLoader(StrConvert, Loader):
         section_loader,
     ) -> None:
         super().__init__(name)
-        self._section = section  # type:Optional[SectionProxy]
-        self._src = src  # type: Ini
-        self._default_base = default_base  # type:EnvList
-        self._base = []  # type:List[IniLoader]
+        self._section: Optional[SectionProxy] = section
+        self._src: Ini = src
+        self._default_base: EnvList = default_base
+        self._base: List[IniLoader] = []
         self._section_loader = section_loader
 
     def __deepcopy__(self, memo):
@@ -131,15 +134,15 @@ class IniLoader(StrConvert, Loader):
         return result
 
     def setup_with_conf(self, conf: ConfigSet):
-        # noinspection PyUnusedLocal
-        def load_bases(values, conf_):
-            result = []  # type: List[IniLoader]
+        def load_bases(values, conf_):  # noqa
+            result: List[IniLoader] = []
             for value in values:
                 name = value.lstrip(TEST_ENV_PREFIX)
-                ini_loader = self._src.get_section(value, name)  # type: IniLoader
+                ini_loader: IniLoader = self._src.get_section(value, name)
                 result.append(ini_loader)
             return result
 
+        # allow environment inheritance
         conf.add_config(
             keys="base",
             of_type=EnvList,

@@ -1,3 +1,6 @@
+"""
+Provides configuration values from the the environment variables.
+"""
 import logging
 import os
 
@@ -18,12 +21,11 @@ def get_env_var(key, of_type):
         environ_key = fmt.format(key_upper)
         if environ_key in os.environ:
             value = os.environ[environ_key]
-            # noinspection PyBroadException
             try:
                 source = f"env var {environ_key}"
                 of_type = CONVERT.to(raw=value, of_type=of_type)
                 return of_type, source
-            except Exception as exception:
+            except Exception as exception:  # noqa
                 logging.warning(
                     "env var %s=%r cannot be transformed to %r because %r",
                     environ_key,

@@ -1,3 +1,6 @@
+"""
+A tox build environment that handles Python packages.
+"""
 import sys
 from abc import ABC, abstractmethod
 from typing import List

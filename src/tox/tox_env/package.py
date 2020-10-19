@@ -1,3 +1,6 @@
+"""
+A tox environment that can build packages.
+"""
 from abc import ABC, abstractmethod
 from typing import Any, List
 

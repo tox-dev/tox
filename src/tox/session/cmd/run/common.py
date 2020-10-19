@@ -1,3 +1,4 @@
+"""Common functionality shared across multiple type of runs"""
 from tox.config.cli.parser import ToxParser
 
 

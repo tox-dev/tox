@@ -1,3 +1,6 @@
+"""
+Declare the abstract base class for tox environments that handle the Python language.
+"""
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -82,8 +85,7 @@ class Python(ToxEnv, ABC):
             raise NoInterpreter(base_pythons)
         return self._python
 
-    # noinspection PyMethodMayBeStatic
-    def get_python(self, base):
+    def get_python(self, base):  # noqa
         return get_interpreter(base)
 
     def cached_install(self, deps, section, of_type):

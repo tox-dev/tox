@@ -1,3 +1,6 @@
+"""
+Get projects metadata per PEP-517.
+"""
 import json
 import sys
 
@@ -6,8 +9,8 @@ extra = json.loads(sys.argv[2])
 backend_spec = sys.argv[3]
 backend_obj = sys.argv[4] if len(sys.argv) >= 5 else None
 
-# noinspection PyTypeChecker
-backend = __import__(backend_spec, fromlist=[None])
+
+backend = __import__(backend_spec, fromlist=[None])  # noqa
 if backend_obj:
     backend = getattr(backend, backend_obj)
 

@@ -1,3 +1,6 @@
+"""
+Run tox environments in parallel.
+"""
 import inspect
 import logging
 import os
@@ -22,7 +25,7 @@ logger = logging.getLogger(__name__)
 ENV_VAR_KEY = "TOX_PARALLEL_ENV"
 OFF_VALUE = 0
 DEFAULT_PARALLEL = OFF_VALUE
-MAIN_FILE = Path(inspect.getsourcefile(tox)) / "__main__.py"
+MAIN_FILE = Path(inspect.getsourcefile(tox)).parent / "__main__.py"
 
 
 @impl
@@ -169,8 +172,7 @@ def _stop_child_processes(processes, main_threads):
     """A three level stop mechanism for children - INT (250ms) -> TERM (100ms) -> KILL"""
 
     # first stop children
-    # noinspection PyUnusedLocal
-    def shutdown(tox_env, action, process):
+    def shutdown(tox_env, action, process):  # noqa
         action.handle_interrupt(process)
 
     threads = [Thread(target=shutdown, args=(n, a, p)) for n, (a, p) in processes.items()]

@@ -39,12 +39,12 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options) -> None:
         super().__init__(conf, core, options)
         backend_module, backend_object, requires = self.load_builder_and_requires()
-        self._requires = requires  # type: List[Requirement]
-        self.build_backend_module = backend_module  # type:str
-        self.build_backend_obj = backend_object  # type: Optional[str]
-        self._distribution_meta = None  # type:Optional[imp_meta.PathDistribution]
-        self._build_requires = None  # type:Optional[List[Requirement]]
-        self._package = None  # type:Optional[Requirement]
+        self._requires: List[Requirement] = requires
+        self.build_backend_module: str = backend_module
+        self.build_backend_obj: Optional[str] = backend_object
+        self._distribution_meta: Optional[imp_meta.PathDistribution] = None
+        self._build_requires: Optional[List[Requirement]] = None
+        self._package: Optional[Requirement] = None
 
     def load_builder_and_requires(self) -> Tuple[str, Optional[str], List[Requirement]]:
         py_project_toml = cast(Path, self.core["tox_root"]) / "pyproject.toml"
@@ -113,12 +113,10 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
                 extra, _at = None, None
             if extra is None or extra in extras:
                 if _at is not None:
-                    # noinspection PyProtectedMember
                     del markers[_at]
                     _at -= 1
                     if _at > 0 and markers[_at] in ("and", "or"):
                         del markers[_at]
-                    # noinspection PyProtectedMember
                     if len(markers) == 0:
                         req.marker = None
                 result.append(req)

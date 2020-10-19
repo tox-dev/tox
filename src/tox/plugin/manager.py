@@ -1,3 +1,4 @@
+"""Contains the plugin manager object"""
 from typing import List, Type
 
 import pluggy
@@ -15,13 +16,12 @@ from tox.tox_env.python.virtual_env.package import dev
 from tox.tox_env.python.virtual_env.package.artifact import sdist, wheel
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
-from . import spec
-from .util import NAME
+from . import NAME, spec
 
 
 class Plugin:
     def __init__(self) -> None:
-        self.manager = pluggy.PluginManager(NAME)  # type:pluggy.PluginManager
+        self.manager: pluggy.PluginManager = pluggy.PluginManager(NAME)
         self.manager.add_hookspecs(spec)
 
         internal_plugins = (

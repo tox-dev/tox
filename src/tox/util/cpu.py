@@ -1,3 +1,4 @@
+"""Helper methods related to the CPU"""
 import os
 
 

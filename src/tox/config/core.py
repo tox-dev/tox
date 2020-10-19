@@ -1,3 +1,4 @@
+"""Define configuration options that are part of the core tox configurations"""
 from pathlib import Path
 
 from tox.config.sets import ConfigSet

@@ -1,3 +1,6 @@
+"""
+This package handles provisioning an appropriate tox version per requirements.
+"""
 import sys
 from typing import List
 
@@ -65,13 +68,12 @@ def tox_add_core_config(core: ConfigSet):
         post_process=add_tox_requires_min_version,
     )
     core.add_config(
-        keys=["no_package", "app", "skip_sdist"],
+        keys=["no_package", "skipsdist"],
         of_type=bool,
         default=False,
         desc="Is there any packaging involved in this project.",
     )
 
 
-# noinspection PyUnusedLocal
-def run_provision(deps: List[Requirement], tox_env: ToxEnv):
+def run_provision(deps: List[Requirement], tox_env: ToxEnv):  # noqa
     """"""

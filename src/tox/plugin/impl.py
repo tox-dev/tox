@@ -1,5 +1,5 @@
 import pluggy
 
-from .util import NAME
+from . import NAME
 
 impl = pluggy.HookimplMarker(NAME)

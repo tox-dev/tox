@@ -1,3 +1,6 @@
+"""
+Defines how to run a single tox environment.
+"""
 from typing import List, cast
 
 from tox.config.source.api import Command

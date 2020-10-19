@@ -1,3 +1,6 @@
+"""
+Provides configuration values from tox.ini files.
+"""
 import logging
 import os
 from pathlib import Path
@@ -27,14 +30,12 @@ class IniConfig:
             self.config_file = self.config_file.absolute()
             try:
                 self.ini = Ini(self.config_file)
-                # noinspection PyProtectedMember
-                self.has_tox_section = cast(IniLoader, self.ini.core)._section is not None
+                self.has_tox_section = cast(IniLoader, self.ini.core)._section is not None  # noqa
             except Exception as exception:
                 logging.error("failed to read config file %s because %r", config_file, exception)
                 self.has_config_file = None
 
     def get(self, key, of_type):
-        # noinspection PyBroadException
         cache_key = key, of_type
         if cache_key in self._cache:
             result = self._cache[cache_key]
@@ -45,14 +46,8 @@ class IniConfig:
                 result = value, source
             except KeyError:  # just not found
                 result = None
-            except Exception as exception:
-                logging.warning(
-                    "%s key %s as type %r failed with %r",
-                    self.config_file,
-                    key,
-                    of_type,
-                    exception,
-                )
+            except Exception as exception:  # noqa
+                logging.warning("%s key %s as type %r failed with %r", self.config_file, key, of_type, exception)
                 result = None
         self._cache[cache_key] = result
         return result
@@ -62,6 +57,7 @@ class IniConfig:
 
     @property
     def epilog(self):
+        # text to show within the parsers epilog
         return (
             f"{os.linesep}config file {str(self.config_file)!r} {self.STATE[self.has_config_file]} "
             f"(change{'d' if self.is_env_var else ''} via env var {self.TOX_CONFIG_FILE_ENV_VAR})"

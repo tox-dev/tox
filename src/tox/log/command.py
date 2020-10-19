@@ -1,3 +1,6 @@
+"""Record commands executed by tox"""
+
+
 class CommandLog:
     """Report commands interacting with third party tools"""
 

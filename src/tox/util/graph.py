@@ -1,3 +1,4 @@
+"""Helper methods related to graph theory."""
 from collections import OrderedDict, defaultdict
 
 

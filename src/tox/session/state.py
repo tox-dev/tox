@@ -6,8 +6,8 @@ from tox.tox_env.runner import RunToxEnv
 
 class State:
     def __init__(self, conf, tox_envs, opt_parse, args):
-        self.conf = conf  # type:Config
-        self.tox_envs = tox_envs  # type:Dict[str, RunToxEnv]
+        self.conf: Config = conf
+        self.tox_envs: Dict[str, RunToxEnv] = tox_envs
         options, unknown, handlers = opt_parse
         self.options = options
         self.unknown_options = unknown

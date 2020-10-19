@@ -1,3 +1,4 @@
+"""Convert string configuration values to tox python configuration objects."""
 import shlex
 from itertools import chain
 from pathlib import Path

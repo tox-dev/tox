@@ -1,3 +1,6 @@
+"""
+Apply value substitution (replacement) on tox strings.
+"""
 import os
 import re
 import sys
@@ -20,8 +23,7 @@ BASE_TEST_ENV = "testenv"
 
 
 def substitute_once(val, conf, name, section_loader):
-    # noinspection PyTypeChecker
-    return RE_ITEM_REF.sub(partial(_replace_match, conf, name, section_loader), val)
+    return RE_ITEM_REF.sub(partial(_replace_match, conf, name, section_loader), val)  # noqa
 
 
 def replace(value, conf, name, section_loader):
@@ -54,7 +56,6 @@ def _replace_match(conf: Config, name, section_loader, match):
         else:
             value = groups["key"]
         section = groups["section"] or name
-        # noinspection PyBroadException
         if section not in conf:
             env_conf = section_loader(section)
         else:
@@ -62,7 +63,6 @@ def _replace_match(conf: Config, name, section_loader, match):
         try:
             replace_value = env_conf[value]
         except Exception:  # noqa
-            # noinspection PyBroadException
             try:
                 try:
                     if groups["section"] is None:
@@ -73,7 +73,7 @@ def _replace_match(conf: Config, name, section_loader, match):
                     if key_missing_value is None:
                         raise
                     replace_value = key_missing_value
-            except Exception:
+            except Exception:  # noqa
                 start, end = match.span()
                 replace_value = match.string[start:end]
     if replace_value is None:

@@ -10,7 +10,9 @@ from tox.execute.api import Outcome
 from tox.execute.request import ExecuteRequest
 from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.virtual_env.api import VirtualEnv
-from tox.tox_env.python.virtual_env.package.artifact.wheel import Pep517VirtualEnvPackageWheel
+from tox.tox_env.python.virtual_env.package.artifact.wheel import (
+    Pep517VirtualEnvPackageWheel,
+)
 
 
 @pytest.fixture()

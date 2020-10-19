@@ -9,14 +9,14 @@ from tox.execute.request import shell_cmd
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # noqa
 
 _NO_MAPPING = object()
 
 
 class Command:
     def __init__(self, args):
-        self.args = args  # type:List[str]
+        self.args: List[str] = args
 
     def __repr__(self):
         return f"{type(self).__name__}(args={self.args!r})"
@@ -44,6 +44,8 @@ class EnvList:
 
 
 class Convert(ABC):
+    """Base abstract class that defines transformation of a value to a tox configuration"""
+
     def to(self, raw, of_type):
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
@@ -63,7 +65,7 @@ class Convert(ABC):
     def _to_typing(self, raw, of_type):
         origin = getattr(of_type, "__origin__", getattr(of_type, "__class__", None))
         if origin is not None:
-            result = _NO_MAPPING  # type: Any
+            result: Any = _NO_MAPPING
             if origin in (list, List):
                 result = [self.to(i, of_type.__args__[0]) for i in self.to_list(raw)]
             elif origin in (set, Set):
@@ -159,9 +161,11 @@ class Loader(Convert, ABC):
 
 
 class Source(ABC):
+    """An abstract configuration source. Has a core and per tox environment configuration loader."""
+
     def __init__(self, core: Loader) -> None:
-        self.core = core  # type: Loader
-        self._envs = {}  # type: Dict[str, Loader]
+        self.core: Loader = core
+        self._envs: Dict[str, Loader] = {}
 
     @abstractmethod
     def envs(self, core_conf):

@@ -1,10 +1,13 @@
-class Recreate(Exception):
+"""Defines tox error types"""
+
+
+class Recreate(RuntimeError):
     """Recreate the tox environment"""
 
 
-class Skip(Exception):
+class Skip(RuntimeError):
     """Skip this tox environment"""
 
 
-class Fail(Exception):
+class Fail(RuntimeError):
     """Failed creating env"""

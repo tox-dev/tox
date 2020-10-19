@@ -1,3 +1,6 @@
+"""
+Declare the abstract base class for tox environments that handle the Python language via the virtualenv project.
+"""
 import sys
 from abc import ABC
 from pathlib import Path
@@ -58,8 +61,7 @@ class VirtualEnv(Python, ABC):
     def perform_install(self, install_command: Sequence[str]) -> Outcome:
         return self.execute(cmd=install_command, allow_stdin=False)
 
-    # noinspection PyMethodMayBeStatic
-    def install_command(self, develop, force_reinstall, no_deps, packages):
+    def install_command(self, develop, force_reinstall, no_deps, packages):  # noqa
         install_command = ["python", "-m", "pip", "--disable-pip-version-check", "install"]
         if develop is True:
             install_command.append("-e")

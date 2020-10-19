@@ -1,3 +1,6 @@
+"""
+Display the version information about tox.
+"""
 from pathlib import Path
 
 from tox.config.cli.parser import ToxParser

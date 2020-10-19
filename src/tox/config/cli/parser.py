@@ -1,22 +1,37 @@
+"""
+Customize argparse logic for tox (also contains the base options).
+"""
+
 import argparse
 import logging
 import os
 import sys
-from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
+from argparse import (
+    SUPPRESS,
+    Action,
+    ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+    Namespace,
+)
 from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar
 
 from tox.config.source.ini import StrConvert
-from tox.plugin.util import NAME
+from tox.plugin import NAME
 from tox.session.state import State
 
 from .env_var import get_env_var
 from .ini import IniConfig
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal  # noqa
+
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
     """
-    Custom option parser which updates its defaults by checking the configuration files and environmental variables
+    Argument parser which updates its defaults by checking the configuration files and environmental variables.
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -47,10 +62,6 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         if of_type is None:
             if isinstance(action, argparse._StoreAction) and action.choices:  # noqa
                 loc = locals()
-                if sys.version_info >= (3, 8):
-                    from typing import Literal  # noqa
-                else:
-                    from typing_extensions import Literal  # noqa
                 loc["Literal"] = Literal
                 as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
                 of_type = eval(as_literal, globals(), loc)
@@ -64,17 +75,27 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
+    """
+    A help formatter that provides the default value and the source it comes from.
+    """
+
     def __init__(self, prog: str) -> None:
         super().__init__(prog, max_help_position=42, width=240)
 
     def _get_help_string(self, action: Action) -> str:
-        # noinspection PyProtectedMember
-        text = super()._get_help_string(action)
+
+        text = super()._get_help_string(action)  # noqa
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
             if text.endswith(default):
                 text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
         return text
+
+
+Handler = Callable[[State], Optional[int]]
+
+
+ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
 
 
 class Parsed(Namespace):
@@ -87,18 +108,14 @@ class Parsed(Namespace):
         return self.colored == "yes"
 
 
-Handler = Callable[[State], Optional[int]]
-
-
-ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
-
-
 class ToxParser(ArgumentParserWithEnvAndConfig):
+    """Argument parser for tox."""
+
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if root is True:
             self._add_base_options()
-        self.handlers = {}  # type:Dict[str, Tuple[Any, Handler]]
+        self.handlers: Dict[str, Tuple[Any, Handler]] = {}
         if add_cmd is True:
             self._cmd = self.add_subparsers(title="command", help="tox command to execute", dest="command")
             self._cmd.required = False
@@ -130,6 +147,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return cls(prog=NAME, formatter_class=HelpFormatter, add_cmd=True, root=True)
 
     def _add_base_options(self) -> None:
+        """Argument options that always make sense."""
         from tox.report import LEVELS
 
         level_map = "|".join("{} - {}".format(c, logging.getLevelName(l)) for c, l in sorted(list(LEVELS.items())))
@@ -163,7 +181,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return result, unknown
 
     def _inject_default_cmd(self, args):
-        # we need to inject the command if not present and reorganize args left of the command
+        # if the users specifies no command we imply he wants run, however for this to work we need to inject it onto
+        # the argument parsers left side
         if self._cmd is None:  # no commands yet so must be all global, nothing to fix
             return args
         _global = {

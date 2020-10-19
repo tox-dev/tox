@@ -1,13 +1,16 @@
+"""Module declaring a command execution request."""
 import sys
 from pathlib import Path
 from typing import Dict, List, Sequence, Union
 
 
 class ExecuteRequest:
+    """Defines a commands execution request"""
+
     def __init__(self, cmd: Sequence[Union[str, Path]], cwd: Path, env: Dict[str, str], allow_stdin: bool):
         if len(cmd) == 0:
             raise ValueError("cannot execute an empty command")
-        self.cmd = [str(i) for i in cmd]  # type: List[str]
+        self.cmd: List[str] = [str(i) for i in cmd]
         self.cwd = cwd
         self.env = env
         self.allow_stdin = allow_stdin

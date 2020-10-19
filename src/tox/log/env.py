@@ -1,3 +1,5 @@
+"""Record information about tox environments"""
+
 from copy import copy
 
 from .command import CommandLog

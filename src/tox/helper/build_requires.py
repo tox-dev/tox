@@ -1,3 +1,7 @@
+"""
+Get environment requires per PEP-517.
+"""
+
 import json
 import sys
 
@@ -5,8 +9,8 @@ into = sys.argv[1]
 backend_spec = sys.argv[2]
 backend_obj = sys.argv[3] if len(sys.argv) >= 4 else None
 
-# noinspection PyTypeChecker
-backend = __import__(backend_spec, fromlist=[None])
+
+backend = __import__(backend_spec, fromlist=[None])  # noqa
 if backend_obj:
     backend = getattr(backend, backend_obj)
 

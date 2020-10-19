@@ -1,3 +1,6 @@
+"""
+Expand tox factor expressions to tox environment list.
+"""
 import itertools
 import re
 
@@ -83,4 +86,9 @@ def expand_env_with_negation(value):
                 yield variant_str
 
 
-__all__ = ("filter_for_env", "find_envs", "expand_factors", "extend_factors")
+__all__ = (
+    "filter_for_env",
+    "find_envs",
+    "expand_factors",
+    "extend_factors",
+)

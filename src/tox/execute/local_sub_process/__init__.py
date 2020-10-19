@@ -6,7 +6,14 @@ import sys
 from subprocess import PIPE, TimeoutExpired
 from typing import List, Optional, Sequence, Tuple, Type
 
-from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, ExecuteRequest, Outcome
+from ..api import (
+    SIGINT,
+    ContentHandler,
+    Execute,
+    ExecuteInstance,
+    ExecuteRequest,
+    Outcome,
+)
 from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":
@@ -40,7 +47,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     def __init__(self, request: ExecuteRequest, out_handler: ContentHandler, err_handler: ContentHandler) -> None:
         super().__init__(request, out_handler, err_handler)
         self.process = None
-        self._cmd = []  # type: Optional[List[str]]
+        self._cmd: Optional[List[str]] = []
 
     @property
     def cmd(self) -> Sequence[str]:

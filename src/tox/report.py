@@ -1,3 +1,4 @@
+"""Handle reporting from within tox"""
 import logging
 import sys
 

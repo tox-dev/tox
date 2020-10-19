@@ -1,3 +1,6 @@
+"""
+Defines the abstract base traits of a tox environment.
+"""
 import itertools
 import logging
 import os
@@ -11,7 +14,7 @@ from tox.config.sets import ConfigSet
 from tox.execute.api import Execute
 from tox.execute.request import ExecuteRequest
 
-from .cache import Cache
+from .info import Info
 
 if sys.platform == "win32":
     PASS_ENV_ALWAYS = [
@@ -33,13 +36,13 @@ else:
 
 class ToxEnv(ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options, executor: Execute):
-        self.conf = conf  # type: ConfigSet
-        self.core = core  # type:ConfigSet
+        self.conf: ConfigSet = conf
+        self.core: ConfigSet = core
         self.options = options
         self._executor = executor
         self.register_config()
-        self._cache = Cache(self.conf["env_dir"] / ".tox-cache")
-        self._paths = []  # type:List[Path]
+        self._cache = Info(self.conf["env_dir"])
+        self._paths: List[Path] = []
         self.logger = logging.getLogger(self.conf["env_name"])
 
     def register_config(self):
@@ -101,11 +104,11 @@ class ToxEnv(ABC):
 
     @property
     def environment_variables(self) -> Dict[str, str]:
-        result = {}  # type:Dict[str, str]
-        pass_env = self.conf["pass_env"]  # type: List[str]
+        result: Dict[str, str] = {}
+        pass_env: List[str] = self.conf["pass_env"]
         pass_env.extend(PASS_ENV_ALWAYS)
 
-        set_env = self.conf["set_env"]  # type: Dict[str, str]
+        set_env: Dict[str, str] = self.conf["set_env"]
         for key, value in os.environ.items():
             if key in pass_env:
                 result[key] = value

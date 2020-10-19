@@ -1,3 +1,6 @@
+"""
+Group together configuration values that belong together (such as base tox configuration, tox environment configs)
+"""
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
@@ -21,6 +24,8 @@ if TYPE_CHECKING:
 
 
 class ConfigDefinition(ABC):
+    """Abstract base class for configuration definitions"""
+
     def __init__(self, keys: Iterable[str], desc: str) -> None:
         self.keys = keys
         self.desc = desc
@@ -31,6 +36,8 @@ class ConfigDefinition(ABC):
 
 
 class ConfigConstantDefinition(ConfigDefinition):
+    """A configuration definition whose value is defined upfront (such as the tox environment name)"""
+
     def __init__(self, keys: Iterable[str], desc: str, value: Any) -> None:
         super().__init__(keys, desc)
         self.value = value
@@ -47,6 +54,8 @@ _PLACE_HOLDER = object()
 
 
 class ConfigDynamicDefinition(ConfigDefinition):
+    """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.)"""
+
     def __init__(
         self,
         keys: Iterable[str],
@@ -97,9 +106,11 @@ class ConfigDynamicDefinition(ConfigDefinition):
 
 
 class ConfigSet:
+    """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
+
     def __init__(self, raw: Loader, conf: "Config"):
         self._raw = raw
-        self._defined = {}  # type:Dict[str, ConfigDefinition]
+        self._defined: Dict[str, ConfigDefinition] = {}
         self._conf = conf
         self._keys = OrderedDict()
         self._raw.setup_with_conf(self)
@@ -115,14 +126,6 @@ class ConfigSet:
     ):
         """
         Add configuration value.
-
-        :param keys:
-        :param of_type:
-        :param default:
-        :param desc:
-        :param post_process:
-        :param overwrite:
-        :return:
         """
         keys_ = self._make_keys(keys)
         for key in keys_:
@@ -163,4 +166,5 @@ class ConfigSet:
         return iter(self._keys.keys())
 
     def unused(self) -> Set[str]:
+        """Return a list of keys present in the config source but not used"""
         return self._raw.found_keys() - set(self._defined.keys())

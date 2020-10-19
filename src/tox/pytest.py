@@ -1,3 +1,7 @@
+"""
+A pytest plugin useful to test tox itself (and its plugins).
+"""
+
 import os
 import sys
 import textwrap
@@ -83,7 +87,7 @@ def empty_project(tox_project, monkeypatch):
 
 class ToxProject:
     def __init__(self, files: Dict[str, Any], path: Path, capsys, monkeypatch):
-        self.path = path  # type: Path
+        self.path: Path = path
         self._capsys = capsys
         self.monkeypatch = monkeypatch
         self._setup_files(self.path, files)
@@ -155,12 +159,12 @@ class ToxRunOutcome:
     def __init__(self, cmd: Sequence[str], cwd: Path, code: int, out: str, err: str, state: Optional[State]) -> None:
         extended_cmd = [sys.executable, "-m", "tox"]
         extended_cmd.extend(cmd)
-        self.cmd = extended_cmd  # type: List[str]
-        self.cwd = cwd  # type: Path
-        self.code = code  # type:int
-        self.out = out  # type:str
-        self.err = err  # type: str
-        self.state = state  # type:Optional[State]
+        self.cmd: List[str] = extended_cmd
+        self.cwd: Path = cwd
+        self.code: int = code
+        self.out: str = out
+        self.err: str = err
+        self.state: Optional[State] = state
 
     @property
     def success(self) -> bool:

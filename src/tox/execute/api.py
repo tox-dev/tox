@@ -1,3 +1,6 @@
+"""
+Abstract base API for executing commands within tox environments.
+"""
 import logging
 import signal
 import sys
@@ -17,13 +20,58 @@ Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
 SIGINT = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
 
 
+class Execute(ABC):
+    """Abstract API for execution of a tox environment"""
+
+    def __call__(self, request: ExecuteRequest, show_on_standard: bool, colored: bool) -> "Outcome":
+        start = timer()
+        executor = self.executor()
+        interrupt = None
+        try:
+            with CollectWrite(sys.stdout if show_on_standard else None) as out:
+                with CollectWrite(sys.stderr if show_on_standard else None, Fore.RED if colored else None) as err:
+                    instance: ExecuteInstance = executor(request, out.collect, err.collect)
+                    try:
+                        exit_code = instance.run()
+                    except KeyboardInterrupt as exception:
+                        interrupt = exception
+                        while True:
+                            try:
+                                is_main = threading.current_thread() == threading.main_thread()
+                                if is_main:
+                                    # disable further interrupts until we finish this, main thread only
+                                    if sys.platform != "win32":
+                                        signal.signal(SIGINT, signal.SIG_IGN)
+                            except KeyboardInterrupt:  # pragma: no cover
+                                continue  # pragma: no cover
+                            else:
+                                try:
+                                    exit_code = instance.interrupt()
+                                    break
+                                finally:
+                                    if is_main and sys.platform != "win32":  # restore signal handler on main thread
+                                        signal.signal(SIGINT, signal.default_int_handler)
+        finally:
+            end = timer()
+        result = Outcome(request, show_on_standard, exit_code, out.text, err.text, start, end, instance.cmd)
+        if interrupt is not None:
+            raise ToxKeyboardInterrupt(result, interrupt)
+        return result
+
+    @staticmethod
+    @abstractmethod
+    def executor() -> Type["ExecuteInstance"]:
+        raise NotImplementedError
+
+
 class ExecuteInstance:
+    """An instance of a command execution"""
+
     def __init__(self, request: ExecuteRequest, out_handler: ContentHandler, err_handler: ContentHandler) -> None:
         def _safe_handler(handler, data):
-            # noinspection PyBroadException
             try:
                 handler(data)
-            except Exception:  # pragma: no cover
+            except Exception:  # noqa # pragma: no cover
                 pass  # pragma: no cover
 
         self.request = request
@@ -45,6 +93,8 @@ class ExecuteInstance:
 
 
 class Outcome:
+    """Result of a command execution"""
+
     OK = 0
 
     def __init__(
@@ -82,13 +132,7 @@ class Outcome:
                 print(Fore.RED, file=sys.stderr, end="")
                 print(self.err, file=sys.stderr, end="")
                 print(Fore.RESET, file=sys.stderr)
-        logger.critical(
-            "exit code %d for %s: %s in %s",
-            self.exit_code,
-            self.request.cwd,
-            self.shell_cmd,
-            self.elapsed,
-        )
+        logger.critical("exit code %d for %s: %s in %s", self.exit_code, self.request.cwd, self.shell_cmd, self.elapsed)
         raise SystemExit(self.exit_code)
 
     @property
@@ -104,45 +148,3 @@ class ToxKeyboardInterrupt(KeyboardInterrupt):
     def __init__(self, outcome: Outcome, exc: KeyboardInterrupt):
         self.outcome = outcome
         self.exc = exc
-
-
-class Execute(ABC):
-    def __call__(self, request: ExecuteRequest, show_on_standard: bool, colored: bool) -> Outcome:
-        start = timer()
-        executor = self.executor()
-        interrupt = None
-        try:
-            with CollectWrite(sys.stdout if show_on_standard else None) as out:
-                with CollectWrite(sys.stderr if show_on_standard else None, Fore.RED if colored else None) as err:
-                    instance = executor(request, out.collect, err.collect)  # type: ExecuteInstance
-                    try:
-                        exit_code = instance.run()
-                    except KeyboardInterrupt as exception:
-                        interrupt = exception
-                        while True:
-                            try:
-                                is_main = threading.current_thread() == threading.main_thread()
-                                if is_main:
-                                    # disable further interrupts until we finish this, main thread only
-                                    if sys.platform != "win32":
-                                        signal.signal(SIGINT, signal.SIG_IGN)
-                            except KeyboardInterrupt:  # pragma: no cover
-                                continue  # pragma: no cover
-                            else:
-                                try:
-                                    exit_code = instance.interrupt()
-                                    break
-                                finally:
-                                    if is_main and sys.platform != "win32":  # restore signal handler on main thread
-                                        signal.signal(SIGINT, signal.default_int_handler)
-        finally:
-            end = timer()
-        result = Outcome(request, show_on_standard, exit_code, out.text, err.text, start, end, instance.cmd)
-        if interrupt is not None:
-            raise ToxKeyboardInterrupt(result, interrupt)
-        return result
-
-    @staticmethod
-    @abstractmethod
-    def executor() -> Type[ExecuteInstance]:
-        raise NotImplementedError

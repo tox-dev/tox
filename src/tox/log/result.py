@@ -1,4 +1,4 @@
-"""Generate json report of a run"""
+"""Generate json report of a tox run"""
 import json
 import socket
 import sys
