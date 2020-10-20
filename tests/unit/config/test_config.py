@@ -2792,7 +2792,8 @@ class TestIndexServer:
 
 class TestConfigConstSubstitutions:
     @pytest.mark.parametrize("pathsep", [":", ";"])
-    def test_replace_pathsep_unix(self, monkeypatch, newconfig, pathsep):
+    def test_replace_pathsep(self, monkeypatch, newconfig, pathsep):
+        """Replace {:} with OS path separator."""
         monkeypatch.setattr("os.pathsep", pathsep)
         config = newconfig(
             """
@@ -2812,6 +2813,29 @@ class TestConfigConstSubstitutions:
         assert mdict["sub_type"] is None
         assert mdict["substitution_value"] == ""
         assert mdict["default_value"] == ""
+
+    @pytest.mark.parametrize("dirsep", ["\\", "\\\\"])
+    def test_dirsep_replace(self, monkeypatch, newconfig, dirsep):
+        """Replace {/} with OS directory separator."""
+        monkeypatch.setattr("os.sep", dirsep)
+        config = newconfig(
+            """
+        [testenv]
+        setenv =
+            VAR = dira{/}subdirb{/}subdirc
+        """,
+        )
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["VAR"] == dirsep.join(["dira", "subdirb", "subdirc"])
+
+    def test_dirsep_regex(self):
+        """Sanity check for regex behavior for directory separator."""
+        regex = tox.config.Replacer.RE_ITEM_REF
+        match = next(regex.finditer("{/}"))
+        mdict = match.groupdict()
+        assert mdict["sub_type"] is None
+        assert mdict["substitution_value"] == "/"
+        assert mdict["default_value"] is None
 
 
 class TestParseEnv:
