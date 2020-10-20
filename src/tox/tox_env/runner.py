@@ -1,21 +1,23 @@
 from abc import ABC
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, Generator, List, Optional, Tuple
 
 from tox.config.sets import ConfigSet
 from tox.config.source.api import Command, EnvList
-from tox.execute.api import Execute
 
 from .api import ToxEnv
 from .package import PackageToxEnv
 
+if TYPE_CHECKING:
+    from tox.config.cli.parser import Parsed
+
 
 class RunToxEnv(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options, execute: Execute):
-        super().__init__(conf, core, options, execute)
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed") -> None:
+        super().__init__(conf, core, options)
         self.package_env: Optional[PackageToxEnv] = None
 
-    def register_config(self):
+    def register_config(self) -> None:
         super().register_config()
         self.conf.add_config(
             keys=["description"],
@@ -60,7 +62,7 @@ class RunToxEnv(ToxEnv, ABC):
             desc="if set to True the content of the output will always be shown  when running in parallel mode",
         )
 
-    def set_package_env(self):
+    def set_package_env(self) -> Generator[Tuple[str, str], PackageToxEnv, None]:
         if self.core["no_package"]:
             return
         res = self.package_env_name_type()
@@ -68,13 +70,13 @@ class RunToxEnv(ToxEnv, ABC):
             package_tox_env = yield res
             self.package_env = package_tox_env
 
-    def package_env_name_type(self):
+    def package_env_name_type(self) -> Optional[Tuple[str, str]]:
         raise NotImplementedError
 
-    def has_package(self):
+    def has_package(self) -> bool:
         return self.package_env_name_type() is not None
 
-    def clean(self, package_env=True):
+    def clean(self, package_env: bool = True) -> None:
         super().clean()
         if self.package_env:
             self.package_env.clean()

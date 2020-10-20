@@ -60,7 +60,7 @@ def str_conf_value(value: Any) -> Union[List[str], str]:
             if isinstance(entry, Command):
                 as_str = entry.shell
             elif isinstance(entry, IniLoader):
-                as_str = entry.section_name
+                as_str = entry.section_name or ""
             else:
                 as_str = str(entry)
             result.append(as_str)

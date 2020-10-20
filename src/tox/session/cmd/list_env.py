@@ -7,13 +7,13 @@ from tox.session.state import State
 
 
 @impl
-def tox_add_option(parser: ToxParser):
+def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("list", ["l"], "list environments", list_env)
     our.add_argument("-d", action="store_true", help="list just default envs", dest="list_default_only")
     our.add_argument("-q", action="store_true", help="do not show description", dest="list_quiet")
 
 
-def list_env(state: State):
+def list_env(state: State) -> int:
     core = state.conf.core
     option = state.options
 
@@ -25,7 +25,7 @@ def list_env(state: State):
         print("default environments:")
     max_length = max(len(env) for env in (default.envs + extra))
 
-    def report_env(name: str):
+    def report_env(name: str) -> None:
         if not option.list_quiet:
             text = state.tox_envs[name].conf["description"]
             if text is None:
@@ -45,3 +45,4 @@ def list_env(state: State):
             print("additional environments:")
         for e in extra:
             report_env(e)
+    return 0

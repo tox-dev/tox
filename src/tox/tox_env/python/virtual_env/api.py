@@ -1,68 +1,73 @@
 """
 Declare the abstract base class for tox environments that handle the Python language via the virtualenv project.
 """
-import sys
 from abc import ABC
 from pathlib import Path
-from typing import List, Sequence, Union, cast
+from typing import List, Optional, Sequence, cast
 
-from packaging.requirements import Requirement
+from virtualenv import session_via_cli
+from virtualenv.create.creator import Creator
+from virtualenv.discovery.builtin import get_interpreter
+from virtualenv.run.session import Session
 
+from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
-from tox.execute.api import Outcome
+from tox.execute.api import Execute, Outcome
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 
-from ..api import Python
+from ..api import Deps, Python, PythonInfo
 
 
 class VirtualEnv(Python, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options):
-        super().__init__(conf, core, options, LocalSubProcessExecutor())
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed):
+        super().__init__(conf, core, options)
+        self._virtualenv_session: Optional[Session] = None
 
-    def create_python_env(self):
-        core_cmd = self.core_cmd()
-        env_dir = cast(Path, self.conf["env_dir"])
-        cmd = core_cmd + ("--clear", env_dir)
-        result = self.execute(cmd=cmd, allow_stdin=False)
-        result.assert_success(self.logger)
+    def executor(self) -> Execute:
+        return LocalSubProcessExecutor()
 
-    def core_cmd(self):
-        core_cmd = (
-            sys.executable,
-            "-m",
-            "virtualenv",
-            "--no-download",
-            "--python",
-            self.py_info.interpreter.system_executable,
-        )
-        return core_cmd
+    @property
+    def session(self) -> Session:
+        if self._virtualenv_session is None:
+            args = [
+                "--no-periodic-update",
+                "-p",
+                self.base_python.executable,
+                "--clear",
+                str(cast(Path, self.conf["env_dir"])),
+            ]
+            self._virtualenv_session = session_via_cli(args, setup_logging=False)
+        return self._virtualenv_session
+
+    @property
+    def creator(self) -> Creator:
+        return self.session.creator
+
+    def create_python_env(self) -> None:
+        self.session.run()
+
+    def _get_python(self, base_python: str) -> PythonInfo:
+        info = get_interpreter(base_python)
+        return PythonInfo(info.version_info, info.system_executable)
 
     def paths(self) -> List[Path]:
         """Paths to add to the executable"""
         # we use the original executable as shims may be somewhere else
-        return list({self.py_info.bin_dir, self.py_info.script_dir})
+        return list({self.creator.bin_dir, self.creator.script_dir})
 
-    def python_cache(self):
-        base_python = self.py_info.interpreter
-        return {"version_info": list(base_python.version_info), "executable": base_python.executable}
+    def env_site_package_dir(self) -> Path:
+        return cast(Path, self.creator.purelib)
 
     def install_python_packages(
         self,
-        packages: List[Union[Requirement, Path]],
+        packages: Deps,
         no_deps: bool = False,
-        develop=False,
-        force_reinstall=False,
+        develop: bool = False,
+        force_reinstall: bool = False,
     ) -> None:
-        if packages:
-            install_command = self.install_command(develop, force_reinstall, no_deps, packages)
-            result = self.perform_install(install_command)
-            result.assert_success(self.logger)
-
-    def perform_install(self, install_command: Sequence[str]) -> Outcome:
-        return self.execute(cmd=install_command, allow_stdin=False)
-
-    def install_command(self, develop, force_reinstall, no_deps, packages):  # noqa
-        install_command = ["python", "-m", "pip", "--disable-pip-version-check", "install"]
+        if not packages:
+            return
+        install_command = [self.creator.exe, "-m", "pip", "--disable-pip-version-check", "install"]
         if develop is True:
             install_command.append("-e")
         if no_deps:
@@ -70,4 +75,8 @@ class VirtualEnv(Python, ABC):
         if force_reinstall:
             install_command.append("--force-reinstall")
         install_command.extend(str(i) for i in packages)
-        return install_command
+        result = self.perform_install(install_command)
+        result.assert_success(self.logger)
+
+    def perform_install(self, install_command: Sequence[str]) -> Outcome:
+        return self.execute(cmd=install_command, allow_stdin=False)

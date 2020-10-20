@@ -8,13 +8,16 @@ import shutil
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Union, cast
 
 from tox.config.sets import ConfigSet
-from tox.execute.api import Execute
+from tox.execute.api import Execute, Outcome
 from tox.execute.request import ExecuteRequest
 
 from .info import Info
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import Parsed
 
 if sys.platform == "win32":
     PASS_ENV_ALWAYS = [
@@ -35,17 +38,24 @@ else:
 
 
 class ToxEnv(ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options, executor: Execute):
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed"):
         self.conf: ConfigSet = conf
         self.core: ConfigSet = core
         self.options = options
-        self._executor = executor
+        self._executor = self.executor()
         self.register_config()
         self._cache = Info(self.conf["env_dir"])
         self._paths: List[Path] = []
         self.logger = logging.getLogger(self.conf["env_name"])
 
-    def register_config(self):
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name={self.conf['env_name']})"
+
+    @abstractmethod
+    def executor(self) -> Execute:
+        raise NotImplementedError
+
+    def register_config(self) -> None:
         self.conf.add_constant(
             keys=["env_name", "envname"],
             desc="the name of the tox environment",
@@ -60,9 +70,8 @@ class ToxEnv(ABC):
         self.conf.add_config(
             keys=["pass_env", "passenv"],
             of_type=List[str],
-            default={},
+            default=[],
             desc="environment variables to pass on to the tox environment",
-            post_process=lambda v, _: list(itertools.chain.from_iterable(i.split(" ") for i in v)),
         )
         self.conf.add_config(
             keys=["env_dir", "envdir"],
@@ -96,7 +105,7 @@ class ToxEnv(ABC):
             finally:
                 env_dir.mkdir(exist_ok=True, parents=True)
 
-    def clean(self):
+    def clean(self) -> None:
         env_dir = self.conf["env_dir"]
         if env_dir.exists():
             logging.info("removing %s", env_dir)
@@ -124,13 +133,13 @@ class ToxEnv(ABC):
         allow_stdin: bool,
         show_on_standard: Optional[bool] = None,
         cwd: Optional[Path] = None,
-    ):
+    ) -> Outcome:
         if cwd is None:
             cwd = self.core["tox_root"]
         if show_on_standard is None:
             show_on_standard = self.options.verbosity > 3
         request = ExecuteRequest(cmd, cwd, self.environment_variables, allow_stdin)
-        self.logger.warning("run => %s$ %s", request.cwd, request.shell_cmd)
+        self.logger.warning("%s run => %s$ %s", self.conf["env_name"], request.cwd, request.shell_cmd)
         outcome = self._executor(request=request, show_on_standard=show_on_standard, colored=self.options.colored)
         self.logger.info("done => code %d in %s for  %s", outcome.exit_code, outcome.elapsed, outcome.shell_cmd)
         return outcome

@@ -8,7 +8,7 @@ from tox.execute.api import Outcome
 from tox.plugin.impl import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
-from tox.tox_env.api import ToxEnv
+from tox.tox_env.runner import RunToxEnv
 
 from .common import env_run_create_flags
 from .single import run_one
@@ -29,7 +29,7 @@ def run_sequential(state: State) -> int:
     return report(status_codes, state.tox_envs)
 
 
-def report(status_dict: Dict[str, int], tox_envs: Dict[str, ToxEnv]) -> int:  # noqa
+def report(status_dict: Dict[str, int], tox_envs: Dict[str, RunToxEnv]) -> int:  # noqa
     for name, status in status_dict.items():
         if status == Outcome.OK:
             msg = "OK  "

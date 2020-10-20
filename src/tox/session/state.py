@@ -1,13 +1,22 @@
-from typing import Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, cast
 
 from tox.config.main import Config
 from tox.tox_env.runner import RunToxEnv
 
+if TYPE_CHECKING:
+    from tox.config.cli.parse import ParsedOptions
+
 
 class State:
-    def __init__(self, conf, tox_envs, opt_parse, args):
-        self.conf: Config = conf
-        self.tox_envs: Dict[str, RunToxEnv] = tox_envs
+    def __init__(
+        self,
+        conf: Config,
+        tox_envs: Dict[str, RunToxEnv],
+        opt_parse: "ParsedOptions",
+        args: Sequence[str],
+    ) -> None:
+        self.conf = conf
+        self.tox_envs = tox_envs
         options, unknown, handlers = opt_parse
         self.options = options
         self.unknown_options = unknown

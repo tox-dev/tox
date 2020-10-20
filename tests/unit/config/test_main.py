@@ -27,7 +27,7 @@ def test_empty_config_root(emtpy_config, emtpy_project):
 def test_empty_config_repr(emtpy_config, emtpy_project):
     text = repr(emtpy_config)
     assert str(emtpy_project.path) in text
-    assert "config_source=Ini" in text
+    assert "config_source=ToxIni" in text
 
 
 def test_empty_conf_tox_envs(emtpy_config):

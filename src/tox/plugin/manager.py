@@ -1,10 +1,11 @@
 """Contains the plugin manager object"""
-from typing import List, Type
+from typing import List, Type, cast
 
 import pluggy
 
 from tox import provision
 from tox.config import core as core_config
+from tox.config import main as main_config
 from tox.config.cli.parser import ToxParser
 from tox.config.sets import ConfigSet
 from tox.session.cmd import list_env, show_config, version_flag
@@ -25,6 +26,7 @@ class Plugin:
         self.manager.add_hookspecs(spec)
 
         internal_plugins = (
+            main_config,
             provision,
             core_config,
             runner,
@@ -53,7 +55,12 @@ class Plugin:
         self.manager.hook.tox_add_core_config(core=core)
 
     def tox_register_tox_env(self, register: "ToxEnvRegister") -> List[Type[ToxEnv]]:
-        return self.manager.hook.tox_register_tox_env(register=register)
+        return cast(List[Type[ToxEnv]], self.manager.hook.tox_register_tox_env(register=register))
 
 
 MANAGER = Plugin()
+
+__all__ = (
+    "MANAGER",
+    "Plugin",
+)

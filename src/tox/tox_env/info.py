@@ -5,6 +5,7 @@ the status of the tox environment - python version of the environment, installed
 import json
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any, Iterator, Optional, Tuple
 
 
 class Info:
@@ -17,7 +18,9 @@ class Info:
         self._content = value
 
     @contextmanager
-    def compare(self, value, section, sub_section=None):
+    def compare(
+        self, value: Any, section: str, sub_section: Optional[str] = None
+    ) -> Iterator[Tuple[bool, Optional[Any]]]:
         old = self._content.get(section)
         if sub_section is not None and old is not None:
             old = old.get(sub_section)
@@ -36,8 +39,11 @@ class Info:
                     self._content[section][sub_section] = value
             self._write()
 
-    def update(self, section, value):
+    def update(self, section: str, value: str) -> None:
         self._content[section] = value
 
-    def _write(self):
+    def _write(self) -> None:
         self._path.write_text(json.dumps(self._content, indent=2))
+
+
+__all__ = ("Info",)

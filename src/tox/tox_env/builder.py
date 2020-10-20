@@ -2,9 +2,10 @@
 Build the state of a tox run (creates tox run and build environments).
 """
 import copy
-from typing import Dict, cast
+from typing import Dict, Sequence, cast
 
-from tox.config.cli.parser import ToxParser
+from tox.config.cli.parse import ParsedOptions
+from tox.config.cli.parser import Parsed, ToxParser
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.plugin.impl import impl
@@ -14,13 +15,17 @@ from .package import PackageToxEnv
 from .runner import RunToxEnv
 
 
-def build_tox_envs(config: Config, options, args):
+def build_tox_envs(
+    config: Config,
+    options: ParsedOptions,
+    args: Sequence[str],
+) -> State:
     builder = Builder(options[0], config)
     return State(config, builder.tox_env_to_runner, options, args)
 
 
 class Builder:
-    def __init__(self, options: str, config: Config):
+    def __init__(self, options: Parsed, config: Config) -> None:
         self.tox_env_to_runner: Dict[str, RunToxEnv] = {}
         self._tox_env_to_runner_type: Dict[str, str] = {}
         self._pkg_envs: Dict[str, PackageToxEnv] = {}
@@ -42,7 +47,7 @@ class Builder:
                 value=self._tox_env_to_runner_type[key],
             )
 
-    def _build_run_env(self, env_conf: ConfigSet, env_name):
+    def _build_run_env(self, env_conf: ConfigSet, env_name: str) -> RunToxEnv:
         env_conf.add_config(
             keys="runner",
             desc="the tox execute used to evaluate this environment",
@@ -52,7 +57,8 @@ class Builder:
         runner = cast(str, env_conf["runner"])
         from .register import REGISTER
 
-        env: RunToxEnv = REGISTER.runner(runner)(env_conf, self._config.core, self.options)
+        builder = REGISTER.runner(runner)
+        env: RunToxEnv = builder(env_conf, self._config.core, self.options)
         self._tox_env_to_runner_type[env_name] = runner
         self._build_package_env(env)
         return env
@@ -70,7 +76,7 @@ class Builder:
             except StopIteration:
                 pass
 
-    def _get_package_env(self, packager, pkg_name):
+    def _get_package_env(self, packager: str, pkg_name: str) -> PackageToxEnv:
         if pkg_name in self._pkg_envs:
             package_tox_env: PackageToxEnv = self._pkg_envs[pkg_name]
         else:
@@ -87,7 +93,7 @@ class Builder:
 
 
 @impl
-def tox_add_option(parser: ToxParser):
+def tox_add_option(parser: ToxParser) -> None:
     from .register import REGISTER
 
     parser.add_argument(

@@ -103,7 +103,7 @@ Current features
     - test-tool agnostic: runs pytest, nose or unittests in a uniform manner
 
 * ``plugin system`` to modify tox execution with simple hooks.
-* uses :pypi:`pip` and :pypi:`setuptools` by default.  Support for configuring the installer command through
+* uses :pypi:`pip` and :pypi:`setuptools` by default. Support for configuring the installer command through
   ``install_command``.
 * **cross-Python compatible**: CPython-3.5 and higher, pypy 3.6+ and higher.
 * **cross-platform**: Windows and Unix style environments

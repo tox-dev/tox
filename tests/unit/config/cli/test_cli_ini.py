@@ -7,6 +7,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from tox.config.cli.parse import get_options
+from tox.config.override import Override
 
 
 @pytest.fixture()
@@ -26,6 +27,9 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
         no_test = true
         parallel = 3
         parallel_live = True
+        override =
+            a=b
+            c=d
         """,
         ),
     )
@@ -58,6 +62,7 @@ def test_ini_empty(empty_ini, core_handlers):
         "default_runner": "virtualenv",
         "recreate": False,
         "no_test": False,
+        "override": [],
     }
     assert parsed.verbosity == 2
     assert unknown == []
@@ -77,6 +82,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini, core_handlers):
         "no_test": True,
         "parallel": 3,
         "parallel_live": True,
+        "override": [Override("a=b"), Override("c=d")],
     }
     assert parsed.verbosity == 4
     assert unknown == []
@@ -107,6 +113,7 @@ def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
         "verbose": 2,
         "quiet": 0,
         "command": "run",
+        "override": [],
         "env": None,
         "default_runner": "virtualenv",
         "recreate": False,
@@ -139,6 +146,7 @@ def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog, va
         "verbose": 2,
         "quiet": 0,
         "command": "run",
+        "override": [],
         "env": None,
         "default_runner": "virtualenv",
         "recreate": False,

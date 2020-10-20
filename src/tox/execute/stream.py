@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from threading import Event, Lock, Timer
-from typing import IO, Optional
+from types import TracebackType
+from typing import IO, Iterator, Optional, Type
 
 from colorama import Fore
 
@@ -12,7 +13,7 @@ class CollectWrite:
 
     def __init__(self, target: Optional[IO[bytes]], color: Optional[str] = None) -> None:
         self._content = bytearray()
-        self._print_to: Optional[IO[bytes]] = None if target is None else target.buffer
+        self._print_to: Optional[IO[bytes]] = None if target is None else target
         self._do_print: bool = target is not None
         self._keep_printing: Event = Event()
         self._content_lock: Lock = Lock()
@@ -20,24 +21,26 @@ class CollectWrite:
         self._at: int = 0
         self._color: Optional[str] = color
 
-    def __enter__(self):
+    def __enter__(self) -> "CollectWrite":
         if self._do_print:
             self._start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+    ) -> None:
         if self._do_print:
             self._cancel()
             self._print(len(self._content))
 
-    def _start(self):
+    def _start(self) -> None:
         self.timer = Timer(self.REFRESH_RATE, self._trigger_timer)
         self.timer.start()
 
-    def _cancel(self):
+    def _cancel(self) -> None:
         self.timer.cancel()
 
-    def collect(self, content: bytes):
+    def collect(self, content: bytes) -> None:
         with self._content_lock:
             self._content.extend(content)
             if self._do_print is False:
@@ -52,12 +55,14 @@ class CollectWrite:
             finally:
                 self._start()
 
-    def _trigger_timer(self):
+    def _trigger_timer(self) -> None:
         with self._content_lock:
             at = len(self._content)
         self._print(at)
 
-    def _print(self, at):
+    def _print(self, at: int) -> None:
+        if self._print_to is None:
+            return
         with self._print_lock:
             if at > self._at:
                 try:
@@ -68,8 +73,8 @@ class CollectWrite:
                     self._at = at
 
     @contextmanager
-    def colored(self):
-        if self._color is None:
+    def colored(self) -> Iterator[None]:
+        if self._color is None or self._print_to is None:
             yield
         else:
             self._print_to.write(self._color.encode("utf-8"))
@@ -79,6 +84,6 @@ class CollectWrite:
                 self._print_to.write(Fore.RESET.encode("utf-8"))
 
     @property
-    def text(self):
+    def text(self) -> str:
         with self._content_lock:
             return self._content.decode("utf-8")

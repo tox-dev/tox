@@ -1,5 +1,3 @@
-from textwrap import dedent
-
 import pytest
 
 from tox.pytest import ToxProjectCreator
@@ -8,18 +6,7 @@ from tox.pytest import ToxProjectCreator
 @pytest.fixture()
 def example(tox_project: ToxProjectCreator):
     def func(conf):
-        project = tox_project(
-            {
-                "tox.ini": dedent(
-                    f"""
-                        [tox]
-                        env_list = a
-                        [testenv]
-                        {conf}
-                        """,
-                ),
-            },
-        )
+        project = tox_project({"tox.ini": f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n"""})
         config = project.config()
         env_config = config["a"]
         return env_config

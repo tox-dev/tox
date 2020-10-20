@@ -2,18 +2,19 @@
 import json
 import socket
 import sys
+from typing import List, cast
 
 from tox.version import __version__
 
-from .command import CommandLog
+from .command import CommandDict, CommandLog
 from .env import EnvLog
 
 
 class ResultLog:
     """The result of a tox session"""
 
-    def __init__(self):
-        command_log = []
+    def __init__(self) -> None:
+        command_log: List[CommandDict] = []
         self.command_log = CommandLog(command_log)
         self.content = {
             "reportversion": "1",
@@ -24,18 +25,16 @@ class ResultLog:
         }
 
     @classmethod
-    def from_json(cls, data):
+    def from_json(cls, data: str) -> "ResultLog":
         result = cls()
         result.content = json.loads(data)
-        result.command_log = CommandLog(result.content["commands"])
+        result.command_log = CommandLog(cast(List[CommandDict], result.content["commands"]))
         return result
 
-    def get_envlog(self, name):
+    def get_envlog(self, name: str) -> EnvLog:
         """Return the env log of an environment (create on first call)"""
-        test_envs = self.content.setdefault("testenvs", {})
-        env_data = test_envs.setdefault(name, {})
-        return EnvLog(self, name, env_data)
+        return EnvLog(name, {})
 
-    def dumps_json(self):
+    def dumps_json(self) -> str:
         """Return the json dump of the current state, indented"""
         return json.dumps(self.content, indent=2)

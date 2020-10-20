@@ -12,7 +12,6 @@ def test_list_empty(tox_project):
     expected = textwrap.dedent(
         f"""
         [tox]
-        base =
         tox_root = {project.path}
         work_dir = {project.path}{os.sep}.tox
         temp_dir = {project.path}{os.sep}.temp

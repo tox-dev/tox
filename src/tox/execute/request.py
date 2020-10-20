@@ -16,7 +16,7 @@ class ExecuteRequest:
         self.allow_stdin = allow_stdin
 
     @property
-    def shell_cmd(self):
+    def shell_cmd(self) -> str:
         return shell_cmd(self.cmd)
 
 
@@ -29,3 +29,9 @@ def shell_cmd(cmd: Sequence[str]) -> str:
         from shlex import quote as shlex_quote
 
         return " ".join(shlex_quote(str(x)) for x in cmd)
+
+
+__all__ = (
+    "ExecuteRequest",
+    "shell_cmd",
+)

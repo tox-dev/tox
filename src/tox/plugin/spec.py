@@ -1,6 +1,6 @@
 """Hook specifications for the tox project - see https://pluggy.readthedocs.io/"""
 from argparse import ArgumentParser
-from typing import Type
+from typing import Any, Callable, Type, TypeVar, cast
 
 import pluggy
 
@@ -10,7 +10,12 @@ from tox.tox_env.register import ToxEnvRegister
 
 from . import NAME
 
-hook_spec = pluggy.HookspecMarker(NAME)
+F = TypeVar("F", bound=Callable[..., Any])
+_hook_spec = pluggy.HookspecMarker(NAME)
+
+
+def hook_spec(func: F) -> F:
+    return cast(F, _hook_spec(func))
 
 
 @hook_spec

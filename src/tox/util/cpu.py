@@ -1,14 +1,14 @@
 """Helper methods related to the CPU"""
-import os
+import multiprocessing
+from typing import Optional
 
 
-def cpu_count():
-    return len(os.sched_getaffinity(0))
-
-
-def auto_detect_cpus():
+def auto_detect_cpus() -> int:
     try:
-        n = cpu_count()
+        n: Optional[int] = multiprocessing.cpu_count()
     except NotImplementedError:  # pragma: no cov
         n = None  # pragma: no cov
     return n if n else 1
+
+
+__all__ = ("auto_detect_cpus",)

@@ -1,8 +1,9 @@
 """Helper methods related to graph theory."""
 from collections import OrderedDict, defaultdict
+from typing import Dict, List, Optional, Tuple
 
 
-def stable_topological_sort(graph):
+def stable_topological_sort(graph: Dict[str, Tuple[str, ...]]) -> List[str]:
     to_order = set(graph.keys())  # keep a log of what  we need to order
 
     # normalize graph - fill missing nodes (assume no dependency)
@@ -46,11 +47,11 @@ def stable_topological_sort(graph):
     return result
 
 
-def identify_cycle(graph):
-    path = OrderedDict()
+def identify_cycle(graph: Dict[str, Tuple[str, ...]]) -> None:
+    path: Dict[str, None] = OrderedDict()
     visited = set()
 
-    def visit(vertex):
+    def visit(vertex: str) -> Optional[Dict[str, None]]:
         if vertex in visited:
             return None
         visited.add(vertex)

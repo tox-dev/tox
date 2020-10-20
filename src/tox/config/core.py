@@ -7,7 +7,7 @@ from tox.plugin.impl import impl
 
 
 @impl
-def tox_add_core_config(core: ConfigSet):
+def tox_add_core_config(core: ConfigSet) -> None:
     core.add_config(
         keys=["work_dir", "toxworkdir"],
         of_type=Path,

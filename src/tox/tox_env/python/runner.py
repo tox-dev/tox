@@ -2,7 +2,7 @@
 A tox run environment that handles the Python language.
 """
 from abc import ABC
-from typing import List, Set
+from typing import List, NoReturn, Set
 
 from packaging.requirements import Requirement
 
@@ -13,7 +13,7 @@ from .api import NoInterpreter, Python
 
 
 class PythonRun(Python, RunToxEnv, ABC):
-    def register_config(self):
+    def register_config(self) -> None:
         super().register_config()
         self.conf.add_config(
             keys="deps",
@@ -29,7 +29,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         )
         self.add_package_conf()
 
-    def add_package_conf(self):
+    def add_package_conf(self) -> None:
         if self.core["no_package"] is False:
             self.conf.add_config(
                 keys=["extras"],
@@ -38,13 +38,10 @@ class PythonRun(Python, RunToxEnv, ABC):
                 desc="extras to install of the target package",
             )
 
-    def _find_base_python(self):
-        try:
-            return super()._find_base_python()
-        except NoInterpreter:
-            if self.core["skip_missing_interpreters"]:
-                raise Skip
-            raise
+    def no_base_python_found(self, base_pythons: List[str]) -> NoReturn:
+        if self.core["skip_missing_interpreters"]:
+            raise Skip
+        raise NoInterpreter(base_pythons)
 
     def setup(self) -> None:
         """setup the tox environment"""
@@ -56,6 +53,8 @@ class PythonRun(Python, RunToxEnv, ABC):
             self.cached_install(package_deps, PythonRun.__name__, "package_deps")
             self.install_package()
 
-    def install_package(self):
-        package = self.package_env.perform_packaging()
-        self.install_python_packages(package)
+    def install_package(self) -> None:
+        if self.package_env is not None:
+            package = self.package_env.perform_packaging()
+            if package:
+                self.install_python_packages(package)

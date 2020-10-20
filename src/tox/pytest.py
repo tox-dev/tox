@@ -7,11 +7,14 @@ import sys
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
 
 import pytest
+from _pytest.capture import CaptureFixture
+from _pytest.monkeypatch import MonkeyPatch
 
 import tox.run
+from tox.config.main import Config
 from tox.execute.api import Outcome
 from tox.execute.request import shell_cmd
 from tox.report import LOGGER
@@ -22,14 +25,14 @@ from tox.session.state import State
 
 
 @pytest.fixture(autouse=True)
-def ensure_logging_framework_not_altered():
+def ensure_logging_framework_not_altered() -> Iterator[None]:
     before_handlers = list(LOGGER.handlers)
     yield
     LOGGER.handlers = before_handlers
 
 
 @contextmanager
-def check_os_environ():
+def check_os_environ() -> Iterator[None]:
     old = os.environ.copy()
     to_clean = {k: os.environ.pop(k, None) for k in {ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH"}}
 
@@ -58,36 +61,26 @@ def check_os_environ():
 
 
 @pytest.fixture(autouse=True)
-def check_os_environ_stable(monkeypatch):
+def check_os_environ_stable(monkeypatch: MonkeyPatch) -> Iterator[None]:
     with check_os_environ():
         yield
         monkeypatch.undo()
 
 
 @pytest.fixture(autouse=True)
-def no_color(monkeypatch, check_os_environ_stable):
+def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
-@pytest.fixture(name="tox_project")
-def init_fixture(tmp_path, capsys, monkeypatch):
-    def _init(files: Dict[str, Any]):
-        """create tox  projects"""
-        return ToxProject(files, tmp_path, capsys, monkeypatch)
-
-    return _init
-
-
-@pytest.fixture()
-def empty_project(tox_project, monkeypatch):
-    project = tox_project({"tox.ini": ""})
-    monkeypatch.chdir(project.path)
-    return project
-
-
 class ToxProject:
-    def __init__(self, files: Dict[str, Any], path: Path, capsys, monkeypatch):
-        self.path: Path = path
+    def __init__(
+        self,
+        files: Dict[str, Any],
+        path: Path,
+        capsys: CaptureFixture[str],
+        monkeypatch: MonkeyPatch,
+    ) -> None:
+        self.path = path
         self._capsys = capsys
         self.monkeypatch = monkeypatch
         self._setup_files(self.path, files)
@@ -108,8 +101,8 @@ class ToxProject:
                 raise TypeError(msg)  # pragma: no cover
 
     @property
-    def structure(self):
-        result = {}
+    def structure(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {}
         for dir_name, _, files in os.walk(str(self.path)):
             dir_path = Path(dir_name)
             into = result
@@ -120,10 +113,10 @@ class ToxProject:
                 into[file_name] = (dir_path / file_name).read_text()
         return result
 
-    def config(self):
-        return tox.run.make_config(self.path)
+    def config(self) -> Config:
+        return tox.run.make_config(self.path, [])
 
-    def run(self, *args) -> "ToxRunOutcome":
+    def run(self, *args: str) -> "ToxRunOutcome":
         cur_dir = os.getcwd()
         state = None
         os.chdir(str(self.path))
@@ -132,7 +125,7 @@ class ToxProject:
             code = None
             state = None
 
-            def our_setup_state(value):
+            def our_setup_state(value: Sequence[str]) -> State:
                 nonlocal state
                 state = previous_setup_state(value)
                 return state
@@ -143,16 +136,15 @@ class ToxProject:
                     tox_run(args)
                 except SystemExit as exception:
                     code = exception.code
+                if code is None:
+                    raise RuntimeError("exit code not set")
             out, err = self._capsys.readouterr()
             return ToxRunOutcome(args, self.path, code, out, err, state)
         finally:
             os.chdir(cur_dir)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
-
-
-ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]
 
 
 class ToxRunOutcome:
@@ -174,7 +166,7 @@ class ToxRunOutcome:
         if not self.success:
             assert repr(self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "\n".join(
             "{}{}{}".format(k, "\n" if "\n" in v else ": ", v)
             for k, v in (
@@ -188,5 +180,24 @@ class ToxRunOutcome:
         )
 
     @property
-    def shell_cmd(self):
+    def shell_cmd(self) -> str:
         return shell_cmd(self.cmd)
+
+
+ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]
+
+
+@pytest.fixture(name="tox_project")
+def init_fixture(tmp_path: Path, capsys: CaptureFixture[str], monkeypatch: MonkeyPatch) -> ToxProjectCreator:
+    def _init(files: Dict[str, Any]) -> ToxProject:
+        """create tox  projects"""
+        return ToxProject(files, tmp_path, capsys, monkeypatch)
+
+    return _init
+
+
+@pytest.fixture()
+def empty_project(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> ToxProject:
+    project = tox_project({"tox.ini": ""})
+    monkeypatch.chdir(project.path)
+    return project

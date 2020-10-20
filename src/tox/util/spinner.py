@@ -4,18 +4,18 @@ import os
 import sys
 import threading
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
+from types import TracebackType
+from typing import IO, Any, Dict, Optional, Sequence, Type
 
-threads = []
-
-if os.name == "nt":
+if sys.platform == "win32":
     import ctypes
 
     class _CursorInfo(ctypes.Structure):
         _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
 
 
-def _file_support_encoding(chars, file):
+def _file_support_encoding(chars: Sequence[str], file: IO[Any]) -> bool:
     encoding = getattr(file, "encoding", None)
     if encoding is not None:
         for char in chars:
@@ -34,7 +34,7 @@ class Spinner:
     UNICODE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     ASCII_FRAMES = ["|", "-", "+", "x", "*"]
 
-    def __init__(self, enabled=True, refresh_rate=0.1):
+    def __init__(self, enabled: bool = True, refresh_rate: float = 0.1) -> None:
         self.refresh_rate = refresh_rate
         self.enabled = enabled
         self._file = sys.stdout
@@ -42,15 +42,15 @@ class Spinner:
             self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, sys.stdout) else self.ASCII_FRAMES
         )
         self.stream = sys.stderr
-        self._envs = OrderedDict()
+        self._envs: Dict[str, datetime] = OrderedDict()
         self._frame_index = 0
 
-    def clear(self):
+    def clear(self) -> None:
         if self.enabled:
             self.stream.write("\r")
             self.stream.write(self.CLEAR_LINE)
 
-    def render(self):
+    def render(self) -> "Spinner":
         while True:
             self._stop_spinner.wait(self.refresh_rate)
             if self._stop_spinner.is_set():
@@ -58,12 +58,12 @@ class Spinner:
             self.render_frame()
         return self
 
-    def render_frame(self):
+    def render_frame(self) -> None:
         if self.enabled:
             self.clear()
             self.stream.write(f"\r{self.frame()}")
 
-    def frame(self):
+    def frame(self) -> str:
         frame = self.frames[self._frame_index]
         self._frame_index += 1
         self._frame_index %= len(self.frames)
@@ -72,7 +72,7 @@ class Spinner:
             text_frame = "{}...".format(text_frame[: self.max_width - 1 - 3])
         return "{} {}".format(*[(frame, text_frame)][0])
 
-    def __enter__(self):
+    def __enter__(self) -> "Spinner":
         if self.enabled:
             self.disable_cursor()
         self.render_frame()
@@ -82,7 +82,12 @@ class Spinner:
         self._spinner_thread.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         if not self._stop_spinner.is_set():
             if self._spinner_thread:
                 self._stop_spinner.set()
@@ -93,55 +98,53 @@ class Spinner:
                 self.clear()
                 self.enable_cursor()
 
-        return self
-
-    def add(self, name):
+    def add(self, name: str) -> None:
         self._envs[name] = datetime.now()
 
-    def succeed(self, key):
+    def succeed(self, key: str) -> None:
         self.finalize(key, "✔ OK", green=True)
 
-    def fail(self, key):
+    def fail(self, key: str) -> None:
         self.finalize(key, "✖ FAIL", red=True)
 
-    def skip(self, key):
+    def skip(self, key: str) -> None:
         self.finalize(key, "⚠ SKIP", white=True)
 
-    def finalize(self, key, status, **kwargs):
+    def finalize(self, key: str, status: str, **kwargs: Any) -> None:
         start_at = self._envs[key]
         del self._envs[key]
         if self.enabled:
             self.clear()
-        self.stream.write(
+        self.stream.write(  # type: ignore
             f"{status} {key} in {td_human_readable(datetime.now() - start_at)}{os.linesep}", **kwargs  # noqa
         )
         if not self._envs:
             self.__exit__(None, None, None)
 
-    def disable_cursor(self):
+    def disable_cursor(self) -> None:
         if self._file.isatty():
-            if os.name == "nt":
+            if sys.platform == "win32":
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
                 ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
                 ci.visible = False
                 ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
-            elif os.name == "posix":
+            else:
                 self.stream.write("\033[?25l")
 
-    def enable_cursor(self):
+    def enable_cursor(self) -> None:
         if self._file.isatty():
-            if os.name == "nt":
+            if sys.platform == "win32":
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
                 ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
                 ci.visible = True
                 ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
-            elif os.name == "posix":
+            else:
                 self.stream.write("\033[?25h")
 
 
-def td_human_readable(delta):
+def td_human_readable(delta: timedelta) -> str:
     seconds = int(delta.total_seconds())
     periods = [
         ("year", 60 * 60 * 24 * 365),
@@ -158,7 +161,7 @@ def td_human_readable(delta):
             period_value, seconds = divmod(seconds, period_seconds)
             if period_name == "second":
                 ms = delta.total_seconds() - int(delta.total_seconds())
-                period_value = round(period_value + ms, 3)
+                period_value = round(period_value + ms, 3)  # type: ignore
             has_s = "s" if period_value != 1 else ""
             texts.append(f"{period_value} {period_name}{has_s}")
     return ", ".join(texts)

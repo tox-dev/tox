@@ -1,14 +1,19 @@
-import argparse
-from typing import List, Optional
+from argparse import Action, ArgumentParser, Namespace
+from typing import Any, List, Optional, Sequence, Union, cast
 
-from tox.config.cli.parser import ToxParser
-from tox.config.source.ini import StrConvert
+from tox.config.source.ini.convert import StrConvert
 
 
-def env_list_flag(parser: ToxParser):
-    class ToxEnvList(argparse.Action):
-        def __call__(self, parser, args, values, option_string=None):  # noqa
-            list_envs = StrConvert().to(values, of_type=List[str])
+def env_list_flag(parser: ArgumentParser) -> None:
+    class ToxEnvList(Action):
+        def __call__(
+            self,
+            parser: ArgumentParser,  # noqa
+            args: Namespace,
+            values: Union[str, Sequence[Any], None],
+            option_string: Optional[str] = None,
+        ) -> None:
+            list_envs = StrConvert().to(cast(str, values), of_type=List[str])
             setattr(args, self.dest, list_envs)
 
     parser.add_argument(

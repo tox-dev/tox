@@ -1,6 +1,7 @@
 import pytest
 
 from tox.config.cli.parse import get_options
+from tox.config.override import Override
 
 
 def test_verbose(monkeypatch):
@@ -21,6 +22,7 @@ def test_verbose_no_test_skip_missing(monkeypatch):
         "quiet": 0,
         "command": "run",
         "default_runner": "virtualenv",
+        "override": [],
         "env": None,
         "recreate": False,
         "no_test": True,
@@ -37,6 +39,7 @@ def test_env_var_exhaustive_parallel_values(monkeypatch, core_handlers):
     monkeypatch.setenv("TOX_NO_TEST", "yes")
     monkeypatch.setenv("TOX_PARALLEL", "3")
     monkeypatch.setenv("TOX_PARALLEL_LIVE", "no")
+    monkeypatch.setenv("TOX_OVERRIDE", "a=b\nc=d")
 
     parsed, unknown, handlers = get_options()
     assert vars(parsed) == {
@@ -50,6 +53,7 @@ def test_env_var_exhaustive_parallel_values(monkeypatch, core_handlers):
         "no_test": True,
         "parallel": 3,
         "parallel_live": False,
+        "override": [Override("a=b"), Override("c=d")],
     }
     assert parsed.verbosity == 4
     assert unknown == []

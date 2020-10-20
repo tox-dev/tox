@@ -1,21 +1,25 @@
 from abc import ABC, abstractmethod
 from threading import Event, Thread
+from types import TracebackType
+from typing import IO, Callable, Optional, Type
 
 WAIT_GENERAL = 0.1
 
 
 class ReadViaThread(ABC):
-    def __init__(self, stream, handler):
+    def __init__(self, stream: IO[bytes], handler: Callable[[bytes], None]) -> None:
         self.stream = stream
         self.stop = Event()
         self.thread = Thread(target=self._read_stream)
         self.handler = handler
 
-    def __enter__(self):
+    def __enter__(self) -> "ReadViaThread":
         self.thread.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+    ) -> None:
         thrown = None
         while True:
             try:
@@ -46,9 +50,9 @@ class ReadViaThread(ABC):
                     raise thrown  # pragma: no cover
 
     @abstractmethod
-    def _read_stream(self):
+    def _read_stream(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def _drain_stream(self):
+    def _drain_stream(self) -> bytes:
         raise NotImplementedError

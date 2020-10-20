@@ -1,7 +1,7 @@
 """
 A tox python environment runner that uses the virtualenv project.
 """
-from configparser import ConfigParser, NoSectionError
+from typing import Optional, Tuple
 
 from tox.plugin.impl import impl
 from tox.tox_env.python.virtual_env.package.artifact.wheel import (
@@ -22,15 +22,14 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     def id() -> str:
         return "virtualenv"
 
-    def add_package_conf(self):
+    def add_package_conf(self) -> None:
         if self.core["no_package"] is True:
             return
         self.conf.add_config(
             keys="package",
-            of_type=str,
-            default=PackageType.sdist.name,
+            of_type=PackageType,
+            default=PackageType.sdist,
             desc=f"package installation mode - {' | '.join(i.name for i in PackageType)} ",
-            post_process=lambda key, conf: PackageType[key],
         )
         if self.conf["package"] == PackageType.skip:
             return
@@ -56,37 +55,29 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
                 desc="tox package type used to package",
             )
 
-    def default_universal_wheel(self):
-        parser = ConfigParser()
-        success = parser.read(filenames=[str(self.core["tox_root"] / "setup.cfg")])
-        universal = False
-        if success:
-            try:
-                universal = parser.get("bdist_wheel", "universal") == "1"
-            except NoSectionError:
-                pass
-        return universal
-
-    def has_package(self):
+    def has_package(self) -> bool:
         return self.core["no_package"] or self.conf["package"] is not PackageType.skip
 
-    def package_env_name_type(self):
-        if self.has_package():
-            package = self.conf["package"]
-            package_env_type = self.conf["package_tox_env_type"]
-            name = self.core["package_env"]
-            # we can get away with a single common package if: sdist, dev, universal wheel
-            if package is PackageType.wheel and self.conf["universal_wheel"] is False:
-                # if version specific wheel one per env
-                name = "{}-{}".format(name, self.conf["env_name"])
-            return name, package_env_type
+    def package_env_name_type(self) -> Optional[Tuple[str, str]]:
+        if not self.has_package():
+            return None
+        package = self.conf["package"]
+        package_env_type = self.conf["package_tox_env_type"]
+        name = self.core["package_env"]
+        # we can get away with a single common package if: sdist, dev, universal wheel
+        if package is PackageType.wheel and self.conf["universal_wheel"] is False:
+            # if version specific wheel one per env
+            name = "{}-{}".format(name, self.conf["env_name"])
+        return name, package_env_type
 
-    def install_package(self):
-        package = self.package_env.perform_packaging()
-        develop = self.conf["package"] is PackageType.dev
-        self.install_python_packages(package, no_deps=True, develop=develop, force_reinstall=True)
+    def install_package(self) -> None:
+        if self.package_env is not None:
+            package = self.package_env.perform_packaging()
+            if package:
+                develop = self.conf["package"] is PackageType.dev
+                self.install_python_packages(package, no_deps=True, develop=develop, force_reinstall=True)
 
 
 @impl
-def tox_register_tox_env(register: ToxEnvRegister):
+def tox_register_tox_env(register: ToxEnvRegister) -> None:
     register.add_run_env(VirtualEnvRunner)

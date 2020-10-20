@@ -4,7 +4,7 @@ from .artifact.wheel import Pep517VirtualEnvPackageWheel
 from .dev import Pep517VirtualEnvPackageDev
 
 
-def virtual_env_package_id(of_type) -> str:
+def virtual_env_package_id(of_type: PackageType) -> str:
     if of_type is PackageType.sdist:
         return Pep517VirtualEnvPackageSdist.id()
     elif of_type is PackageType.wheel:

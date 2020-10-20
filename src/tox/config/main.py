@@ -1,23 +1,44 @@
 from collections import OrderedDict
 from pathlib import Path
+from typing import TYPE_CHECKING, Dict, Iterator, List
 
+from tox.plugin.impl import impl
+
+from .override import Override
 from .sets import ConfigSet
 from .source.api import Source
 
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+
+
+@impl
+def tox_add_option(parser: "ToxParser") -> None:
+    parser.add_argument(
+        "-o",
+        "--override",
+        action="append",
+        type=Override,
+        default=[],
+        dest="override",
+        help="list of configuration override(s)",
+    )
+
 
 class Config:
-    def __init__(self, config_source: Source) -> None:
+    def __init__(self, config_source: Source, overrides: List[Override]) -> None:
+        self.overrides = overrides
         self._src = config_source
-        self.core = self._setup_core(self._src)
+        self.core = self._setup_core()
         self._env_names = list(self._src.envs(self.core))
-        self._envs = OrderedDict()
+        self._envs: Dict[str, ConfigSet] = OrderedDict()
 
-    def _setup_core(self, config_source):
-        core = ConfigSet(config_source.core, self)
+    def _setup_core(self) -> ConfigSet:
+        core = ConfigSet(self._src.core, self)
         core.add_config(
             keys=["tox_root", "toxinidir"],
             of_type=Path,
-            default=config_source.tox_root,
+            default=self._src.tox_root,
             desc="the root directory (where the configuration file is found)",
         )
         from tox.plugin.manager import MANAGER
@@ -25,7 +46,7 @@ class Config:
         MANAGER.tox_add_core_config(core)
         return core
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> ConfigSet:
         try:
             return self._envs[item]
         except KeyError:
@@ -33,11 +54,11 @@ class Config:
             self._envs[item] = env
             return env
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._env_names)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}(config_source={self._src!r})"
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return item in self._envs

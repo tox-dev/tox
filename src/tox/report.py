@@ -18,14 +18,14 @@ LOGGER = logging.getLogger()
 
 
 class ToxHandler(logging.StreamHandler):
-    def __init__(self, level):
+    def __init__(self, level: int) -> None:
         super().__init__(stream=sys.stdout)
         self.setLevel(level)
         formatter = self._get_formatter(level)
         self.setFormatter(formatter)
 
     @staticmethod
-    def _get_formatter(level):
+    def _get_formatter(level: int) -> logging.Formatter:
         msg_format = f"{Style.BRIGHT}{Fore.WHITE}%(name)s: {Fore.CYAN}%(message)s{Style.RESET_ALL}"
         if level <= logging.DEBUG:
             locate = "pathname" if level > logging.DEBUG else "module"
@@ -34,7 +34,7 @@ class ToxHandler(logging.StreamHandler):
         return formatter
 
 
-def setup_report(verbosity, is_colored):
+def setup_report(verbosity: int, is_colored: bool) -> None:
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
@@ -47,13 +47,13 @@ def setup_report(verbosity, is_colored):
         init()
 
 
-def _get_level(verbosity):
+def _get_level(verbosity: int) -> int:
     if verbosity > MAX_LEVEL:
         verbosity = MAX_LEVEL
     level = LEVELS[verbosity]
     return level
 
 
-def _clean_handlers(log):
+def _clean_handlers(log: logging.Logger) -> None:
     for log_handler in list(log.handlers):  # remove handlers of libraries
         log.removeHandler(log_handler)

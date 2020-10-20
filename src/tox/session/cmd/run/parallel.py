@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 Run tox environments in parallel.
 """
@@ -9,6 +10,7 @@ from argparse import ArgumentTypeError
 from collections import OrderedDict, deque
 from pathlib import Path
 from threading import Event, Semaphore, Thread
+from typing import cast
 
 import tox
 from tox.config.cli.parser import ToxParser
@@ -25,11 +27,11 @@ logger = logging.getLogger(__name__)
 ENV_VAR_KEY = "TOX_PARALLEL_ENV"
 OFF_VALUE = 0
 DEFAULT_PARALLEL = OFF_VALUE
-MAIN_FILE = Path(inspect.getsourcefile(tox)).parent / "__main__.py"
+MAIN_FILE = Path(cast(str, inspect.getsourcefile(tox))).parent / "__main__.py"
 
 
 @impl
-def tox_add_option(parser: ToxParser):
+def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     env_list_flag(our)
     env_run_create_flags(our)
@@ -65,7 +67,7 @@ def tox_add_option(parser: ToxParser):
     )
 
 
-def run_parallel(state: State):
+def run_parallel(state: State) -> int:
     """here we'll just start parallel sub-processes"""
     live_out = state.options.parallel_live
     disable_spinner = bool(os.environ.get("TOX_PARALLEL_NO_SPINNER") == "1")
@@ -166,6 +168,7 @@ def run_parallel(state: State):
                 except KeyboardInterrupt:
                     continue
                 raise KeyboardInterrupt
+    return 0
 
 
 def _stop_child_processes(processes, main_threads):

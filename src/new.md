@@ -1,18 +1,21 @@
 # External facing
 
 0. `Python 3.5+` only.
-1. Lazy configuration - everything is materialized only when needed (don't ever generate data that will not be used - general speed improvement)
+1. Lazy configuration - everything is materialized only when needed (don't ever generate data that will not be used -
+   general speed improvement)
 2. built-in wheel build support - no longer generates sdist only
-3. library dependency changes are now detected (no longer need to recreate tox-env when adding a new dependency to your library) - use PEP-517 meta data generation to acquire these
+3. library dependency changes are now detected (no longer need to recreate tox-env when adding a new dependency to your
+   library) - use PEP-517 meta data generation to acquire these
 4. CLI arguments rewrite - all defaults now are override-able either via global ini, or env var
 5. allow overriding all configuration values from the cli
-6. tox now supports sub-commands - still defaults to run sequential the envs (we plan to add additional commands later - e.g. configuration validation):
+6. tox now supports sub-commands - still defaults to run sequential the envs (we plan to add additional commands later -
+   e.g. configuration validation):
    - the list envs has migrated to the `list` sub-command from -a (`l` shortcut)
    - the show config has migrated to the `config` sub-command form `--showconfig` (`c` shortcut)
    - the run parallel has migrated to `run-parallel` sub-command form `-p` (`p` shortcut)
    - the run sequential has migrated to `run` sub-command form non other commands (`r` shortcut)
-7. while executing subprocess calls the standard error no longer gets forwarded to the standard output but correctly to the standard error (previously this was only true for
-   non captured commands)
+7. while executing subprocess calls the standard error no longer gets forwarded to the standard output but correctly to
+   the standard error (previously this was only true for non captured commands)
 8. `basepython` is now a list, the first successfully detected python will be used to generate python environment
 
 # Internal
@@ -23,9 +26,11 @@
 3. Introduce the executor concept - replaces action, generalize to avoid ease of replacement with
 4. Generalize tox environment concept to make it python agnostic
 5. Separate the packaging environments versus run environments
-6. Package environments are tied directly to run environments (multiple run environments may share the same packaging environment)
+6. Package environments are tied directly to run environments (multiple run environments may share the same packaging
+   environment)
 7. Use the logging framework to log - drop our custom reporter - default log level is `INFO`
-8. Python discovery delegated to virtualenv - due to exposing that in virtualenv is WIP, and dependent on our release we vendor it for now
+8. Python discovery delegated to virtualenv - due to exposing that in virtualenv is WIP, and dependent on our release we
+   vendor it for now
 9. rewrite the internal cache log (log more, structured, phased)
 
 ```json
@@ -101,5 +106,7 @@
 
 - provide a pre-commit env generator plugin
 - provide a sphinx doc env generator plugin
-- Provide a tox environment that uses Docker images instead of virtual environments (this will validate the internal refactor)
-- migrate some popular tox plugins to the new system (`tox-travis` + `tox-pipenv` + `tox-conda` + `tox-pyenv` + `tox-current-env`)
+- Provide a tox environment that uses Docker images instead of virtual environments (this will validate the internal
+  refactor)
+- migrate some popular tox plugins to the new system (`tox-travis` + `tox-pipenv` + `tox-conda` + `tox-pyenv` +
+  `tox-current-env`)

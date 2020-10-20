@@ -8,7 +8,7 @@ import threading
 from abc import ABC, abstractmethod
 from functools import partial
 from timeit import default_timer as timer
-from typing import Callable, Sequence, Type
+from typing import Callable, NoReturn, Sequence, Type
 
 from colorama import Fore
 
@@ -17,7 +17,10 @@ from .stream import CollectWrite
 
 ContentHandler = Callable[[bytes], None]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
-SIGINT = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
+if sys.platform == "win32":
+    SIGINT = signal.CTRL_C_EVENT
+else:
+    SIGINT = signal.SIGINT
 
 
 class Execute(ABC):
@@ -27,9 +30,11 @@ class Execute(ABC):
         start = timer()
         executor = self.executor()
         interrupt = None
+
         try:
-            with CollectWrite(sys.stdout if show_on_standard else None) as out:
-                with CollectWrite(sys.stderr if show_on_standard else None, Fore.RED if colored else None) as err:
+            with CollectWrite(sys.stdout.buffer if show_on_standard else None) as out:
+                error_color = Fore.RED if colored else None
+                with CollectWrite(sys.stderr.buffer if show_on_standard else None, error_color) as err:
                     instance: ExecuteInstance = executor(request, out.collect, err.collect)
                     try:
                         exit_code = instance.run()
@@ -68,7 +73,7 @@ class ExecuteInstance:
     """An instance of a command execution"""
 
     def __init__(self, request: ExecuteRequest, out_handler: ContentHandler, err_handler: ContentHandler) -> None:
-        def _safe_handler(handler, data):
+        def _safe_handler(handler: Callable[[bytes], None], data: bytes) -> None:
             try:
                 handler(data)
             except Exception:  # noqa # pragma: no cover
@@ -117,14 +122,14 @@ class Outcome:
         self.end = end
         self.cmd = cmd
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self.exit_code == self.OK
 
-    def assert_success(self, logger):
+    def assert_success(self, logger: logging.Logger) -> None:
         if self.exit_code != self.OK:
             self._assert_fail(logger)
 
-    def _assert_fail(self, logger: logging.Logger):
+    def _assert_fail(self, logger: logging.Logger) -> NoReturn:
         if self.show_on_standard is False:
             if self.out:
                 print(self.out, file=sys.stdout)
@@ -136,11 +141,11 @@ class Outcome:
         raise SystemExit(self.exit_code)
 
     @property
-    def elapsed(self):
+    def elapsed(self) -> float:
         return self.end - self.start
 
     @property
-    def shell_cmd(self):
+    def shell_cmd(self) -> str:
         return shell_cmd(self.cmd)
 
 
@@ -148,3 +153,13 @@ class ToxKeyboardInterrupt(KeyboardInterrupt):
     def __init__(self, outcome: Outcome, exc: KeyboardInterrupt):
         self.outcome = outcome
         self.exc = exc
+
+
+__all__ = (
+    "ContentHandler",
+    "SIGINT",
+    "Outcome",
+    "ToxKeyboardInterrupt",
+    "Execute",
+    "ExecuteInstance",
+)

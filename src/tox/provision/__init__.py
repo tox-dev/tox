@@ -8,6 +8,7 @@ from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 from packaging.version import Version
 
+from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.plugin.impl import impl
 from tox.session.state import State
@@ -20,13 +21,13 @@ else:
     from importlib_metadata import distribution  # noqa
 
 
-def add_tox_requires_min_version(requires, conf):
+def add_tox_requires_min_version(requires: List[Requirement], conf: Config) -> List[Requirement]:
     min_version = conf.core["min_version"]
     requires.append(Requirement(f"tox >= {min_version}"))
     return requires
 
 
-def provision(state: State):
+def provision(state: State) -> None:
     core = state.conf.core
     provision_tox_env = core["provision_tox_env"]
     requires = core["requires"]
@@ -47,7 +48,7 @@ def provision(state: State):
 
 
 @impl
-def tox_add_core_config(core: ConfigSet):
+def tox_add_core_config(core: ConfigSet) -> None:
     core.add_config(
         keys=["min_version", "minversion"],
         of_type=Version,
@@ -75,5 +76,5 @@ def tox_add_core_config(core: ConfigSet):
     )
 
 
-def run_provision(deps: List[Requirement], tox_env: ToxEnv):  # noqa
+def run_provision(deps: List[Requirement], tox_env: ToxEnv) -> None:  # noqa
     """"""

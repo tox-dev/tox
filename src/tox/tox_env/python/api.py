@@ -4,31 +4,51 @@ Declare the abstract base class for tox environments that handle the Python lang
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    NamedTuple,
+    NoReturn,
+    Optional,
+    Sequence,
+    Union,
+    cast,
+)
 
 from packaging.requirements import Requirement
-from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_spec import PythonSpec
 
+from tox.config.cli.parser import Parsed
+from tox.config.main import Config
 from tox.config.sets import ConfigSet
-from tox.execute.api import Execute
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail, Recreate
 
 
+class VersionInfo(NamedTuple):
+    major: int
+    minor: int
+    micro: int
+    releaselevel: str
+    serial: int
+
+
+class PythonInfo(NamedTuple):
+    version_info: VersionInfo
+    executable: Path
+
+
+Deps = Sequence[Union[Path, Requirement]]
+
+
 class Python(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options, executor: Execute):
-        super().__init__(conf, core, options, executor)
-        self._python = None
-        self._python_search_done = False
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed) -> None:
+        super(Python, self).__init__(conf, core, options)
+        self._base_python: Optional[PythonInfo] = None
+        self._base_python_searched: bool = False
 
-    @property
-    def py_info(self):
-        if self._python is None:
-            self._find_base_python()
-        return self._python
-
-    def register_config(self):
+    def register_config(self) -> None:
         super().register_config()
         self.conf.add_config(
             keys=["base_python", "basepython"],
@@ -42,19 +62,20 @@ class Python(ToxEnv, ABC):
             value=lambda: self.env_site_package_dir(),
         )
 
-    def default_base_python(self, conf, env_name):
+    def default_base_python(self, conf: "Config", env_name: str) -> List[str]:
         spec = PythonSpec.from_string_spec(env_name)
         if spec.implementation is not None:
             if spec.implementation.lower() in ("cpython", "pypy"):
                 return [env_name]
         return [sys.executable]
 
-    def env_site_package_dir(self):
+    @abstractmethod
+    def env_site_package_dir(self) -> Path:
         """
         If we have the python we just need to look at the last path under prefix.
         E.g., Debian derivatives change the site-packages to dist-packages, so we need to fix it for site-packages.
         """
-        return self.py_info.purelib
+        raise NotImplementedError
 
     def setup(self) -> None:
         """setup a virtual python environment"""
@@ -65,30 +86,34 @@ class Python(ToxEnv, ABC):
                 self.create_python_env()
             self._paths = self.paths()
 
-    def _find_base_python(self):
-        base_pythons = self.conf["base_python"]
-        if self._python_search_done is False:
-            self._python_search_done = True
+    def python_cache(self) -> Dict[str, Any]:
+        return {
+            "version_info": list(self.base_python.version_info),
+            "executable": self.base_python.executable,
+        }
+
+    @property
+    def base_python(self) -> PythonInfo:
+        """Resolve base python"""
+        if self._base_python_searched is False:
+            base_pythons = self.conf["base_python"]
+            self._base_python_searched = True
             for base_python in base_pythons:
-                python = self.get_python(base_python)
-                if python is not None:
-                    from virtualenv.run import session_via_cli
+                self._base_python = self._get_python(base_python)
+                break
+            if self._base_python is None:
+                self.no_base_python_found(base_pythons)
+        return cast(PythonInfo, self._base_python)
 
-                    env_dir = cast(Path, self.conf["env_dir"])
-                    session = session_via_cli(
-                        [str(env_dir), "--activators", "", "--no-seed", "-p", python.executable],
-                        setup_logging=False,
-                    )
-                    self._python = session.creator
-                    break
-        if self._python is None:
-            raise NoInterpreter(base_pythons)
-        return self._python
+    @abstractmethod
+    def no_base_python_found(self, base_pythons: List[str]) -> NoReturn:
+        raise NotImplementedError
 
-    def get_python(self, base):  # noqa
-        return get_interpreter(base)
+    @abstractmethod
+    def _get_python(self, base_python: str) -> PythonInfo:
+        raise NotImplementedError
 
-    def cached_install(self, deps, section, of_type):
+    def cached_install(self, deps: Deps, section: str, of_type: str) -> bool:
         conf_deps = [str(i) for i in deps]
         with self._cache.compare(conf_deps, section, of_type) as (eq, old):
             if eq is True:
@@ -105,11 +130,7 @@ class Python(ToxEnv, ABC):
         return False
 
     @abstractmethod
-    def python_cache(self) -> Any:
-        raise NotImplementedError
-
-    @abstractmethod
-    def create_python_env(self) -> List[Path]:
+    def create_python_env(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -117,12 +138,12 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def install_python_packages(self, packages: List[Union[Path, Requirement]], no_deps: bool = False) -> None:
+    def install_python_packages(self, packages: Deps, no_deps: bool = False) -> None:
         raise NotImplementedError
 
 
 class NoInterpreter(Fail):
     """could not find interpreter"""
 
-    def __init__(self, base_pythons):
+    def __init__(self, base_pythons: List[str]) -> None:
         self.python = base_pythons

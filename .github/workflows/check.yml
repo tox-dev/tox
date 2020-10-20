@@ -3,15 +3,15 @@ on:
   push:
   pull_request:
   schedule:
-  - cron:  '0 8 * * *'
+    - cron: "0 8 * * *"
 
 jobs:
   pre_commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: pre-commit/action@v2.0.0
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.0
 
   test:
     name: test ${{ matrix.py }} - ${{ matrix.os }}
@@ -20,49 +20,51 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - Ubuntu
-        - Windows
-        - MacOs
+          - Ubuntu
+          - Windows
+          - MacOs
         py:
-        - 3.8
-        - 3.7
-        - 3.6
-        - pypy3
+          - 3.9
+          - 3.8
+          - 3.7
+          - 3.6
+          - pypy3
     steps:
-    - name: setup python for tox
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: install tox
-      run: python -m pip install tox
-    - uses: actions/checkout@v2
-    - name: setup python for test ${{ matrix.py }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.py }}
-    - name: pick environment to run
-      run: |
-        import subprocess; import json
-        major, minor, impl = json.loads(subprocess.check_output(["python", "-c", "import json; import sys; import platform; print(json.dumps([sys.version_info[0], sys.version_info[1], platform.python_implementation()]));"], universal_newlines=True))
-        print('::set-env name=TOXENV::' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else ("3" if major == 3 else "")))
-      shell: python
-    - name: setup test suite
-      run: tox -vv --notest
-    - name: run test suite
-      run: tox --skip-pkg-install
-      env:
-        PYTEST_ADDOPTS: "-vv --durations=20"
-        CI_RUN: 'yes'
-        DIFF_AGAINST: HEAD
-    - name: rename coverage report file
-      run: |
-        import os; os.rename('.tox/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox/coverage.xml')
-      shell: python
-    - uses: codecov/codecov-action@v1
-      with:
-        file: ./.tox/coverage.xml
-        flags: tests
-        name: ${{ matrix.py }} - ${{ matrix.os }}
+      - name: setup python for tox
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: install tox
+        run: python -m pip install tox
+      - uses: actions/checkout@v2
+      - name: setup python for test ${{ matrix.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+      - name: pick environment to run
+        run: |
+          import subprocess; import json; import os
+          major, minor, impl = json.loads(subprocess.check_output(["python", "-c", "import json; import sys; import platform; print(json.dumps([sys.version_info[0], sys.version_info[1], platform.python_implementation()]));"], universal_newlines=True))
+          with open(os.environ['GITHUB_ENV'], 'a') as file_handler:
+                file_handler.write('TOXENV=' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else "3") + "\n")
+        shell: python
+      - name: setup test suite
+        run: tox -vv --notest
+      - name: run test suite
+        run: tox --skip-pkg-install
+        env:
+          PYTEST_ADDOPTS: "-vv --durations=20"
+          CI_RUN: "yes"
+          DIFF_AGAINST: HEAD
+      - name: rename coverage report file
+        run: |
+          import os; os.rename('.tox/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox/coverage.xml')
+        shell: python
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./.tox/coverage.xml
+          flags: tests
+          name: ${{ matrix.py }} - ${{ matrix.os }}
 
   check:
     name: check ${{ matrix.tox_env }} - ${{ matrix.os }}
@@ -71,41 +73,45 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - Windows
+          - Windows
+          - Ubuntu
         tox_env:
-        - dev
-        - docs
-        - pkg_meta
+          - type
+          - dev
+          - docs
+          - pkg_meta
+        exclude:
+          - { os: windows, tox_env: pkg_meta }
     steps:
-    - uses: actions/checkout@v2
-    - name: setup Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: install tox
-      run: python -m pip install tox
-    - name: run check for ${{ matrix.tox_env }}
-      run: python -m tox -e ${{ matrix.tox_env }}
-      env:
-        UPGRADE_ADVISORY: 'yes'
+      - uses: actions/checkout@v2
+      - name: setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: install tox
+        run: python -m pip install tox
+      - name: run check for ${{ matrix.tox_env }}
+        run: python -m tox -e ${{ matrix.tox_env }}
+        env:
+          UPGRADE_ADVISORY: "yes"
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     needs: [check, test, pre_commit]
     runs-on: ubuntu-latest
     steps:
-    - name: setup python to build package
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: install pep517
-      run: python -m pip install pep517
-    - uses: actions/checkout@v2
-    - name: build package
-      run: python -m pep517.build -s -b . -o dist
-    - name: publish to PyPi
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        skip_existing: true
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+      - name: setup python to build package
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: install pep517
+        run: python -m pip install pep517
+      - uses: actions/checkout@v2
+      - name: build package
+        run: python -m pep517.build -s -b . -o dist
+      - name: publish to PyPi
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          skip_existing: true
+          user: __token__
+          password: ${{ secrets.pypi_password }}

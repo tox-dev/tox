@@ -4,16 +4,10 @@ import os
 import shutil
 import sys
 from subprocess import PIPE, TimeoutExpired
-from typing import List, Optional, Sequence, Tuple, Type
+from typing import IO, List, Optional, Sequence, Tuple, Type, cast
 
-from ..api import (
-    SIGINT,
-    ContentHandler,
-    Execute,
-    ExecuteInstance,
-    ExecuteRequest,
-    Outcome,
-)
+from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, Outcome
+from ..request import ExecuteRequest
 from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":
@@ -46,8 +40,8 @@ class LocalSubProcessExecutor(Execute):
 class LocalSubProcessExecuteInstance(ExecuteInstance):
     def __init__(self, request: ExecuteRequest, out_handler: ContentHandler, err_handler: ContentHandler) -> None:
         super().__init__(request, out_handler, err_handler)
-        self.process = None
-        self._cmd: Optional[List[str]] = []
+        self.process: Optional[Popen[bytes]] = None
+        self._cmd: List[str] = []
 
     @property
     def cmd(self) -> Sequence[str]:
@@ -74,8 +68,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         except OSError as exception:
             exit_code = exception.errno
         else:
-            with ReadViaThread(process.stderr, self.err_handler) as read_stderr:
-                with ReadViaThread(process.stdout, self.out_handler) as read_stdout:
+            with ReadViaThread(cast(IO[bytes], process.stderr), self.err_handler) as read_stderr:
+                with ReadViaThread(cast(IO[bytes], process.stdout), self.out_handler) as read_stdout:
                     if sys.platform == "win32":
                         process.stderr.read = read_stderr._drain_stream  # noqa
                         process.stdout.read = read_stdout._drain_stream  # noqa
@@ -94,37 +88,40 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         if self.process is not None:
             out, err = self._handle_interrupt()  # stop it and drain it
             self._finalize_output(err, self.err_handler, out, self.out_handler)
-            return self.process.returncode
+            return int(self.process.returncode)
         return Outcome.OK  # pragma: no cover
 
     @staticmethod
-    def _finalize_output(err, err_handler, out, out_handler):
+    def _finalize_output(err: bytes, err_handler: ContentHandler, out: bytes, out_handler: ContentHandler) -> None:
         out_handler(out)
         err_handler(err)
 
     def _handle_interrupt(self) -> Tuple[bytes, bytes]:
         """A three level stop mechanism for children - INT -> TERM -> KILL"""
         # communicate will wait for the app to stop, and then drain the standard streams and close them
-        proc = self.process
-        logging.error("got KeyboardInterrupt signal")
-        msg = f"from {os.getpid()} {{}} pid {proc.pid}"
-        if proc.poll() is None:  # still alive, first INT
-            logging.warning("KeyboardInterrupt %s", msg.format("SIGINT"))
-            proc.send_signal(SIGINT)
-            try:
-                out, err = proc.communicate(timeout=WAIT_INTERRUPT)
-            except TimeoutExpired:  # if INT times out TERM
-                logging.warning("KeyboardInterrupt %s", msg.format("SIGTERM"))
-                proc.terminate()
+        if self.process is None:
+            out, err = b"", b""
+        else:
+            proc = self.process
+            logging.error("got KeyboardInterrupt signal")
+            msg = f"from {os.getpid()} {{}} pid {proc.pid}"
+            if proc.poll() is None:  # still alive, first INT
+                logging.warning("KeyboardInterrupt %s", msg.format("SIGINT"))
+                proc.send_signal(SIGINT)
                 try:
                     out, err = proc.communicate(timeout=WAIT_INTERRUPT)
-                except TimeoutExpired:  # if TERM times out KILL
-                    logging.info("KeyboardInterrupt %s", msg.format("SIGKILL"))
-                    proc.kill()
-                    out, err = proc.communicate()
-        else:
-            try:
-                out, err = proc.communicate()  # just drain # pragma: no cover
-            except IndexError:
-                out, err = b"", b""
+                except TimeoutExpired:  # if INT times out TERM
+                    logging.warning("KeyboardInterrupt %s", msg.format("SIGTERM"))
+                    proc.terminate()
+                    try:
+                        out, err = proc.communicate(timeout=WAIT_INTERRUPT)
+                    except TimeoutExpired:  # if TERM times out KILL
+                        logging.info("KeyboardInterrupt %s", msg.format("SIGKILL"))
+                        proc.kill()
+                        out, err = proc.communicate()
+            else:
+                try:
+                    out, err = proc.communicate()  # just drain # pragma: no cover
+                except IndexError:
+                    out, err = b"", b""
         return out, err

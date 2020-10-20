@@ -3,13 +3,14 @@ Provides configuration values from the the environment variables.
 """
 import logging
 import os
+from typing import Any, Optional, Tuple, Type
 
-from tox.config.source.ini import StrConvert
+from tox.config.source.ini.convert import StrConvert
 
 CONVERT = StrConvert()
 
 
-def get_env_var(key, of_type):
+def get_env_var(key: str, of_type: Type[Any]) -> Optional[Tuple[Any, str]]:
     """Get the environment variable option.
 
     :param key: the config key requested
@@ -23,8 +24,8 @@ def get_env_var(key, of_type):
             value = os.environ[environ_key]
             try:
                 source = f"env var {environ_key}"
-                of_type = CONVERT.to(raw=value, of_type=of_type)
-                return of_type, source
+                result = CONVERT.to(raw=value, of_type=of_type)
+                return result, source
             except Exception as exception:  # noqa
                 logging.warning(
                     "env var %s=%r cannot be transformed to %r because %r",
@@ -33,6 +34,7 @@ def get_env_var(key, of_type):
                     of_type,
                     exception,
                 )
+    return None
 
 
 __all__ = ("get_env_var",)

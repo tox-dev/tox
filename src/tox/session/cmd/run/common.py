@@ -1,8 +1,8 @@
 """Common functionality shared across multiple type of runs"""
-from tox.config.cli.parser import ToxParser
+from argparse import ArgumentParser
 
 
-def env_run_create_flags(parser: ToxParser):
+def env_run_create_flags(parser: ArgumentParser) -> None:
     parser.add_argument(
         "-r",
         "--recreate",

@@ -8,7 +8,7 @@ from tox.plugin.impl import impl
 
 
 @impl
-def tox_add_option(parser: ToxParser):
+def tox_add_option(parser: ToxParser) -> None:
     import tox
     from tox.version import __version__
 

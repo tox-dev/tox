@@ -3,21 +3,23 @@ from abc import ABC
 from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 import toml
+from packaging.markers import Variable
 from packaging.requirements import Requirement
 
 from tox import helper
+from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
 from tox.tox_env.python.package import PythonPackage
 
 from ..api import VirtualEnv
 
 try:
-    import importlib.metadata as imp_meta
+    from importlib.metadata import Distribution, PathDistribution  # type: ignore
 except ImportError:
-    import importlib_metadata as imp_meta  # noqa
+    from importlib_metadata import Distribution, PathDistribution  # noqa
 
 
 TOX_PACKAGE_ENV_ID = "virtualenv-pep-517"
@@ -36,15 +38,14 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
     LEGACY_BUILD_BACKEND = "setuptools.build_meta:__legacy__"
     LEGACY_REQUIRES = ["setuptools >= 40.8.0", "wheel"]
 
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options) -> None:
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed) -> None:
         super().__init__(conf, core, options)
         backend_module, backend_object, requires = self.load_builder_and_requires()
         self._requires: List[Requirement] = requires
         self.build_backend_module: str = backend_module
         self.build_backend_obj: Optional[str] = backend_object
-        self._distribution_meta: Optional[imp_meta.PathDistribution] = None
+        self._distribution_meta: Optional[PathDistribution] = None
         self._build_requires: Optional[List[Requirement]] = None
-        self._package: Optional[Requirement] = None
 
     def load_builder_and_requires(self) -> Tuple[str, Optional[str], List[Requirement]]:
         py_project_toml = cast(Path, self.core["tox_root"]) / "pyproject.toml"
@@ -61,7 +62,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
         backend_obj = build_backend_info[1] if len(build_backend_info) > 1 else None
         return backend_module, backend_obj, req_as_req
 
-    def register_config(self):
+    def register_config(self) -> None:
         super().register_config()
         self.conf.add_config(
             keys=["meta_dir"],
@@ -85,7 +86,12 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
 
             with TemporaryDirectory() as path:
                 requires_file = Path(path) / "out.json"
-                cmd = ["python", helper.build_requires(), requires_file, self.build_backend_module]
+                cmd: List[Union[str, Path]] = [
+                    "python",
+                    helper.build_requires(),
+                    requires_file,
+                    self.build_backend_module,
+                ]
                 if self.build_backend_obj:
                     cmd.append(self.build_backend_obj)
                 result = self.execute(cmd=cmd, allow_stdin=False)
@@ -94,39 +100,41 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
                     self._build_requires = json.load(file_handler)
         return self._build_requires
 
-    def get_package_dependencies(self, extras=None) -> List[Requirement]:
+    def get_package_dependencies(self, extras: Optional[Set[str]] = None) -> List[Requirement]:
         self._ensure_meta_present()
         if extras is None:
             extras = set()
         result = []
+        if self._distribution_meta is None:
+            raise RuntimeError
         requires = self._distribution_meta.requires or []
         for v in requires:
             req = Requirement(v)
-            markers = getattr(req.marker, "_markers", ()) or ()
+            markers: List[Union[str, Tuple[Variable, Variable, Variable]]] = getattr(req.marker, "_markers", []) or []
+            extra: Optional[str] = None
+            _at: Optional[int] = None
             for _at, (m_key, op, m_val) in (
                 (j, i) for j, i in enumerate(markers) if isinstance(i, tuple) and len(i) == 3
             ):
                 if m_key.value == "extra" and op.value == "==":
                     extra = m_val.value
                     break
-            else:
-                extra, _at = None, None
             if extra is None or extra in extras:
                 if _at is not None:
                     del markers[_at]
                     _at -= 1
-                    if _at > 0 and markers[_at] in ("and", "or"):
+                    if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
                         del markers[_at]
                     if len(markers) == 0:
                         req.marker = None
                 result.append(req)
         return result
 
-    def _ensure_meta_present(self):
+    def _ensure_meta_present(self) -> None:
         if self._distribution_meta is None:
             self.ensure_setup()
             self.meta_folder.mkdir(exist_ok=True)
-            cmd = [
+            cmd: List[Union[Path, str]] = [
                 "python",
                 helper.wheel_meta(),
                 self.meta_folder,
@@ -138,12 +146,12 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
             result = self.execute(cmd=cmd, allow_stdin=False)
             result.assert_success(self.logger)
             dist_info = next(self.meta_folder.iterdir())
-            self._distribution_meta = imp_meta.Distribution.at(dist_info)
+            self._distribution_meta = Distribution.at(dist_info)
 
     @property
     def meta_folder(self) -> Path:
         return cast(Path, self.conf["meta_dir"])
 
     @property
-    def meta_flags(self):
+    def meta_flags(self) -> Dict[str, Any]:
         return {"config_settings": None}
