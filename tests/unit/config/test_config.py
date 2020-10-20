@@ -346,6 +346,49 @@ class TestGetcontextname:
 class TestIniParserAgainstCommandsKey:
     """Test parsing commands with substitutions"""
 
+    def test_command_substitution_from_same_section(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:py]
+            key = whatever
+            commands =
+                echo {[]key}
+            """,
+        )
+        reader = SectionReader("testenv:py", config._cfg)
+        x = reader.getargvlist("commands")
+        assert x == [["echo", "whatever"]]
+
+    def test_command_substitution_from_same_section_indirect(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:base]
+            deps = distro
+            commands = pip install {[]deps}
+
+            [testenv:other]
+            deps = foobar
+            commands = {[testenv:base]commands}
+            """,
+        )
+        reader = SectionReader("testenv:other", config._cfg)
+        x = reader.getargvlist("commands")
+        assert x == [["pip", "install", "foobar"]]
+
+    def test_command_substitution_from_same_section_inherit(self, newconfig):
+        config = newconfig(
+            """
+            [testenv]
+            deps = foobar
+
+            [testenv:other]
+            commands = pip install {[]deps}
+            """,
+        )
+        reader = SectionReader("testenv:other", config._cfg, fallbacksections=["testenv"])
+        x = reader.getargvlist("commands")
+        assert x == [["pip", "install", "foobar"]]
+
     def test_command_substitution_from_other_section(self, newconfig):
         config = newconfig(
             """

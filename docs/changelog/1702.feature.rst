@@ -1,0 +1,1 @@
+Allow {[]key_name} to refer to current section. - by :user:`jayvdb`

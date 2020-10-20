@@ -1841,6 +1841,12 @@ class Replacer:
         if key.startswith("[") and "]" in key:
             i = key.find("]")
             section, item = key[1:i], key[i + 1 :]
+            if section == "":
+                return self.reader.getstring(
+                    name=item,
+                    replace=True,
+                    crossonly=self.crossonly,
+                )
             cfg = self.reader._cfg
             if section in cfg and item in cfg[section]:
                 if (section, item) in self.reader._subststack:
