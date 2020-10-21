@@ -1,0 +1,1 @@
+Fix ``platform`` support for ``install_command``. - by :user:`jayvdb`
