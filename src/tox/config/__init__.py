@@ -390,9 +390,7 @@ class SetenvDict(object):
                 return os.environ.get(name, default)
             self._lookupstack.append(name)
             try:
-                res = self.reader._replace(val)
-                res = res.replace("\\{", "{").replace("\\}", "}")
-                self.resolved[name] = res
+                self.resolved[name] = res = self.reader._replace(val)
             finally:
                 self._lookupstack.pop()
             return res
@@ -409,6 +407,19 @@ class SetenvDict(object):
     def __setitem__(self, name, value):
         self.definitions[name] = value
         self.resolved[name] = value
+
+    def items(self):
+        return ((name, self[name]) for name in self.definitions)
+
+    def export(self):
+        # post-process items to avoid internal syntax/semantics
+        # such as {} being escaped using \{\}, suitable for use with
+        # os.environ .
+        return {
+            name: Replacer._unescape(value)
+            for name, value in self.items()
+            if value is not self._DUMMY
+        }
 
 
 @tox.hookimpl
@@ -1787,6 +1798,10 @@ class Replacer:
 
         return expanded
 
+    @staticmethod
+    def _unescape(s):
+        return s.replace("\\{", "{").replace("\\}", "}")
+
     def _replace_match(self, match):
         g = match.groupdict()
         sub_value = g["substitution_value"]
@@ -1926,7 +1941,7 @@ class _ArgvlistReader:
                 new_arg = ""
                 new_word = reader._replace(word)
                 new_word = reader._replace(new_word)
-                new_word = new_word.replace("\\{", "{").replace("\\}", "}")
+                new_word = Replacer._unescape(new_word)
                 new_arg += new_word
                 newcommand += new_arg
         else:

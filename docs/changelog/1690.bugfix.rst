@@ -1,0 +1,2 @@
+Fixed regression in v3.20.0 that caused escaped curly braces in setenv
+to break usage of the variable elsewhere in tox.ini. - by :user:`jayvdb`
