@@ -61,6 +61,8 @@ _FACTOR_LINE_PATTERN = re.compile(r"^([\w{}\.!,-]+)\:\s+(.+)")
 _ENVSTR_SPLIT_PATTERN = re.compile(r"((?:\{[^}]+\})+)|,")
 _ENVSTR_EXPAND_PATTERN = re.compile(r"\{([^}]+)\}")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
+_UNESCAPED_CURLY_BRACKET = re.compile(r"(?<!\\)\\([{}])")
+_UNESCAPED_BRACKET = re.compile(r"(?<!\\)\\\\")
 
 
 def get_plugin_manager(plugins=()):
@@ -1800,7 +1802,9 @@ class Replacer:
 
     @staticmethod
     def _unescape(s):
-        return s.replace("\\{", "{").replace("\\}", "}")
+        s = Replacer._prefixed_sub(_UNESCAPED_CURLY_BRACKET, r"\1", s)
+        s = Replacer._prefixed_sub(_UNESCAPED_BRACKET, r"\\", s)
+        return s
 
     @staticmethod
     def _prefixed_sub(pattern, replacement, s):
