@@ -3,6 +3,7 @@ import sys
 
 import py
 import pytest
+from six import PY2
 
 import tox
 from tox.interpreters import NoInterpreterInfo
@@ -770,21 +771,36 @@ class TestVenvTest:
         assert "PYTHONPATH" not in pcalls[0].env
 
 
-def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch):
+def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatch, tmp_path):
     monkeypatch.delenv("PYTHONPATH", raising=False)
     pkg = tmpdir.ensure("package.tar.gz")
     monkeypatch.setenv("X123", "123")
     monkeypatch.setenv("YY", "456")
+    env_path = tmp_path / ".env"
+    env_file_content = "ENV_FILE_VAR = file_value"
+    env_path.write_text(env_file_content.decode() if PY2 else env_file_content)
+
     config = newconfig(
         [],
-        """\
+        r"""
+        [base]
+        base_var = base_value
+
         [testenv:python]
         commands=python -V
         passenv = x123
         setenv =
             ENV_VAR = value
+            ESCAPED_VAR = \{value\}
+            ESCAPED_VAR2 = \\{value\\}
+            BASE_VAR = {[base]base_var}
             PYTHONPATH = value
-        """,
+            TTY_VAR = {tty:ON_VALUE:OFF_VALUE}
+            COLON = {:}
+            REUSED_FILE_VAR = reused {env:ENV_FILE_VAR}
+            file| %s
+        """
+        % env_path,
     )
     mocksession._clearmocks()
     mocksession.new_config(config)
@@ -799,10 +815,18 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         assert env is not None
         assert "ENV_VAR" in env
         assert env["ENV_VAR"] == "value"
+        assert env["ESCAPED_VAR"] == "{value}"
+        assert env["ESCAPED_VAR2"] == r"\{value\}"
+        assert env["COLON"] == ";" if sys.platform == "win32" else ":"
+        assert env["TTY_VAR"] == "OFF_VALUE"
+        assert env["ENV_FILE_VAR"] == "file_value"
+        assert env["REUSED_FILE_VAR"] == "reused file_value"
+        assert env["BASE_VAR"] == "base_value"
         assert env["VIRTUAL_ENV"] == str(venv.path)
         assert env["X123"] == "123"
         assert "PYTHONPATH" in env
         assert env["PYTHONPATH"] == "value"
+
     # all env variables are passed for installation
     assert pcalls[0].env["YY"] == "456"
     assert "YY" not in pcalls[1].env
