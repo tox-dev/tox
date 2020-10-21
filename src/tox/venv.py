@@ -493,7 +493,7 @@ class VirtualEnv(object):
             env = os.environ.copy()
 
         # in any case we honor per-testenv setenv configuration
-        env.update(self.envconfig.setenv)
+        env.update(self.envconfig.setenv.export())
 
         env["VIRTUAL_ENV"] = str(self.path)
         return env

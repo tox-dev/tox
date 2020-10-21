@@ -2120,9 +2120,12 @@ class TestConfigTestEnv:
             [testenv]
             setenv =
                 VAR = \{val\}
+            commands =
+                {env:VAR}
         """
         configs = newconfig([], inisource).envconfigs
-        assert configs["python"].setenv["VAR"] == "{val}"
+        assert configs["python"].setenv["VAR"] == r"\{val\}"
+        assert configs["python"].commands[0] == ["{val}"]
 
     def test_factor_use_not_checked(self, newconfig):
         inisource = """
@@ -2731,12 +2734,21 @@ class TestSetenv:
                 env_path,
             ),
         ).envconfigs["python"]
+
         envs = env_config.setenv.definitions
+
         assert envs["ALPHA"] == "1"
         if has_magic:
             assert envs["MAGIC"] == "yes"
         else:
             assert "MAGIC" not in envs
+
+        expected_vars = ["ALPHA", "PYTHONHASHSEED", "TOX_ENV_DIR", "TOX_ENV_NAME"]
+        if has_magic:
+            expected_vars = sorted(expected_vars + ["MAGIC"])
+
+        exported = env_config.setenv.export()
+        assert sorted(exported) == expected_vars
 
 
 class TestIndexServer:
