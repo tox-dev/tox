@@ -669,6 +669,12 @@ Globally available substitutions
     OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in ``setenv``,
     when target variable is path variable (e.g. PATH or PYTHONPATH).
 
+``{/}``
+    OS-specific directory separator (``/`` os \*nix family, ``\\`` on Windows).
+    Useful for deriving filenames from preset paths, as arguments for commands
+    that requires ``\\`` on Windows. e.g. ``{distdir}{/}file.txt``.
+    It is not usually needed when using commands written in Python.
+
 Substitutions for virtualenv-related sections
 +++++++++++++++++++++++++++++++++++++++++++++
 
