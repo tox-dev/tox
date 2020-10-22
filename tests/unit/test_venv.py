@@ -793,6 +793,8 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
             ENV_VAR = value
             ESCAPED_VAR = \{value\}
             ESCAPED_VAR2 = \\{value\\}
+            ESCAPED_VAR3 = \\{value\}
+            ESCAPED_VAR4 = \{value\\}
             BASE_VAR = {[base]base_var}
             PYTHONPATH = value
             TTY_VAR = {tty:ON_VALUE:OFF_VALUE}
@@ -817,6 +819,9 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
         assert env["ENV_VAR"] == "value"
         assert env["ESCAPED_VAR"] == "{value}"
         assert env["ESCAPED_VAR2"] == r"\{value\}"
+        assert env["ESCAPED_VAR2"] == r"\{value\}"
+        assert env["ESCAPED_VAR3"] == r"\{value}"
+        assert env["ESCAPED_VAR4"] == r"{value\}"
         assert env["COLON"] == ";" if sys.platform == "win32" else ":"
         assert env["TTY_VAR"] == "OFF_VALUE"
         assert env["ENV_FILE_VAR"] == "file_value"
