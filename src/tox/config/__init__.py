@@ -1770,9 +1770,11 @@ class Replacer:
     RE_ITEM_REF = re.compile(
         r"""
         (?<!\\)[{]
+        ((?P<bracket>[{}])|
         (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
         (?P<substitution_value>(?:\[[^,{}]*\])?[^:,{}]*)  # substitution key
         (?::(?P<default_value>([^{}]|\\{|\\})*))?   # default value
+        )
         [}]
         """,
         re.VERBOSE,
@@ -1805,7 +1807,8 @@ class Replacer:
     def _replace_match(self, match):
         g = match.groupdict()
         sub_value = g["substitution_value"]
-        if self.crossonly:
+        bracket = g["bracket"]
+        if not bracket and self.crossonly:
             if sub_value.startswith("["):
                 return self._substitute_from_other_section(sub_value)
             # in crossonly we return all other hits verbatim
@@ -1831,6 +1834,9 @@ class Replacer:
                 return "\\"
             if sub_value == "/":
                 return os.sep
+
+            if bracket and not sub_value:
+                return bracket
 
         if sub_type == "env":
             return self._replace_env(match)

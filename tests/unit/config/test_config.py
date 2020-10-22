@@ -2817,6 +2817,34 @@ class TestConfigConstSubstitutions:
         assert envconfig.commands[0] == ["echo", "a\\b", "c\\d"]
         assert envconfig.setenv["FOO"] == "a\\b"
 
+    def test_replace_bracket(self, newconfig):
+        """Replace {{} and {}} with literal { and }."""
+        config = newconfig(
+            """
+            [testenv]
+            setenv =
+                FOO = a{{}b
+            commands = echo {env:FOO} c{}}d
+        """,
+        )
+        envconfig = config.envconfigs["python"]
+        assert envconfig.setenv["FOO"] == "a{b"
+        assert envconfig.commands[0] == ["echo", "a{b", "c}d"]
+
+    def test_replace_bracket_broken(self, newconfig):
+        """Replace {{} and {}} with literal { and } but it fails."""
+        config = newconfig(
+            """
+            [testenv]
+            setenv =
+                FOO = a{{}b c{}}d
+            """,
+        )
+        envconfig = config.envconfigs["python"]
+        assert envconfig
+        # This fails: ConfigError: substitution key 'b c' not found
+        # assert envconfig.setenv["FOO"] == "a{b c}d"
+
     @pytest.mark.parametrize("pathsep", [":", ";"])
     def test_replace_pathsep(self, monkeypatch, newconfig, pathsep):
         """Replace {:} with OS path separator."""
