@@ -1769,11 +1769,11 @@ class SectionReader:
 class Replacer:
     RE_ITEM_REF = re.compile(
         r"""
-        (?<!\\)[{]
+        (?<![^\\]\\)[{]
         (?:(?P<sub_type>[^[:{}]+):)?    # optional sub_type for special rules
         (?P<substitution_value>(?:\[[^,{}]*\])?[^:,{}]*)  # substitution key
         (?::(?P<default_value>([^{}]|\\{|\\})*))?   # default value
-        [}]
+        (?<!\\)[}]
         """,
         re.VERBOSE,
     )
@@ -1788,7 +1788,7 @@ class Replacer:
         """
 
         def substitute_once(x):
-            return self.RE_ITEM_REF.sub(self._replace_match, x)
+            return Replacer._prefixed_sub(Replacer.RE_ITEM_REF, self._replace_match, x)
 
         expanded = substitute_once(value)
 
@@ -1801,6 +1801,16 @@ class Replacer:
     @staticmethod
     def _unescape(s):
         return s.replace("\\{", "{").replace("\\}", "}")
+
+    @staticmethod
+    def _prefixed_sub(pattern, replacement, s):
+        if not s:
+            return s
+        s = "\x00" + s
+        rv = pattern.sub(replacement, s)
+        assert rv[0] == "\x00"
+        rv = rv[1:]
+        return rv
 
     def _replace_match(self, match):
         g = match.groupdict()
