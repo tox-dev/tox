@@ -1,4 +1,3 @@
-include CONTRIBUTORS
 include LICENSE
 include setup.py
 include tox.ini

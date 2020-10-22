@@ -21,17 +21,33 @@ class ToxHandler(logging.StreamHandler):
     def __init__(self, level: int) -> None:
         super().__init__(stream=sys.stdout)
         self.setLevel(level)
-        formatter = self._get_formatter(level)
-        self.setFormatter(formatter)
+        self.error_formatter = self._get_formatter(logging.ERROR, level)
+        self.warning_formatter = self._get_formatter(logging.WARNING, level)
+        self.remaining_formatter = self._get_formatter(logging.INFO, level)
 
     @staticmethod
-    def _get_formatter(level: int) -> logging.Formatter:
-        msg_format = f"{Style.BRIGHT}{Fore.WHITE}%(name)s: {Fore.CYAN}%(message)s{Style.RESET_ALL}"
-        if level <= logging.DEBUG:
-            locate = "pathname" if level > logging.DEBUG else "module"
-            msg_format += f"{Style.DIM} [%(asctime)s] [%({locate})s:%(lineno)d]{Style.RESET_ALL}"
-        formatter = logging.Formatter(msg_format)
+    def _get_formatter(level: int, enabled_level: int) -> logging.Formatter:
+        if level >= logging.ERROR:
+            color = Fore.RED
+        elif level >= logging.WARNING:
+            color = Fore.CYAN
+        elif level >= logging.INFO:
+            color = Fore.WHITE
+        else:
+            color = Fore.GREEN
+        fmt = f"{Style.BRIGHT}{Fore.MAGENTA}%(name)s: {color}%(message)s{Style.RESET_ALL}"
+        if enabled_level <= logging.DEBUG:
+            locate = "pathname" if enabled_level > logging.DEBUG else "module"
+            fmt = f"%(levelname)s {fmt}{Style.DIM} [%(asctime)s] [%({locate})s:%(lineno)d]{Style.RESET_ALL}"
+        formatter = logging.Formatter(fmt)
         return formatter
+
+    def format(self, record: logging.LogRecord) -> str:
+        if record.levelno >= logging.ERROR:
+            return self.error_formatter.format(record)
+        if record.levelno >= logging.WARNING:
+            return self.warning_formatter.format(record)
+        return self.remaining_formatter.format(record)
 
 
 def setup_report(verbosity: int, is_colored: bool) -> None:
