@@ -1829,8 +1829,9 @@ class Replacer:
 
             return os.pathsep
 
+        default_value = g["default_value"]
         if sub_value == "posargs":
-            return self.reader.getposargs(match.group("default_value"))
+            return self.reader.getposargs(default_value)
 
         sub_type = g["sub_type"]
         if not sub_type and not sub_value:
@@ -1839,27 +1840,26 @@ class Replacer:
                 "If you were using `{}` for `os.pathsep`, please use `{:}`.",
             )
 
-        if not sub_type and not g["default_value"] and sub_value == "/":
+        if not sub_type and not default_value and sub_value == "/":
             return os.sep
+
         if sub_type == "env":
-            return self._replace_env(match)
+            return self._replace_env(sub_value, default_value)
         if sub_type == "tty":
             if is_interactive():
                 return match.group("substitution_value")
             return match.group("default_value")
         if sub_type == "posargs":
-            return self.reader.getposargs(match.group("substitution_value"))
+            return self.reader.getposargs(sub_value)
         if sub_type is not None:
             raise tox.exception.ConfigError(
                 "No support for the {} substitution type".format(sub_type),
             )
-        return self._replace_substitution(match)
+        return self._replace_substitution(sub_value)
 
-    def _replace_env(self, match):
-        key = match.group("substitution_value")
+    def _replace_env(self, key, default):
         if not key:
             raise tox.exception.ConfigError("env: requires an environment variable name")
-        default = match.group("default_value")
         value = self.reader.get_environ_value(key)
         if value is not None:
             return value
@@ -1887,8 +1887,7 @@ class Replacer:
 
         raise tox.exception.ConfigError("substitution key {!r} not found".format(key))
 
-    def _replace_substitution(self, match):
-        sub_key = match.group("substitution_value")
+    def _replace_substitution(self, sub_key):
         val = self.reader._subs.get(sub_key, None)
         if val is None:
             val = self._substitute_from_other_section(sub_key)
