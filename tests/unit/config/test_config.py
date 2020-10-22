@@ -2803,6 +2803,20 @@ class TestIndexServer:
 
 
 class TestConfigConstSubstitutions:
+    def test_replace_backslash(self, newconfig):
+        r"""Replace {\} with literal \."""
+        config = newconfig(
+            r"""
+            [testenv]
+            setenv =
+                FOO = a{\}b
+            commands = echo {env:FOO} c{\}d
+            """,
+        )
+        envconfig = config.envconfigs["python"]
+        assert envconfig.commands[0] == ["echo", "a\\b", "c\\d"]
+        assert envconfig.setenv["FOO"] == "a\\b"
+
     @pytest.mark.parametrize("pathsep", [":", ";"])
     def test_replace_pathsep(self, monkeypatch, newconfig, pathsep):
         """Replace {:} with OS path separator."""

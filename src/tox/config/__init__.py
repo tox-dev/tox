@@ -1826,8 +1826,12 @@ class Replacer:
                 "Malformed substitution; no substitution type provided",
             )
 
-        if not sub_type and not g["default_value"] and sub_value == "/":
-            return os.sep
+        if not sub_type and not g["default_value"]:
+            if sub_value == "\\":
+                return "\\"
+            if sub_value == "/":
+                return os.sep
+
         if sub_type == "env":
             return self._replace_env(match)
         if sub_type == "tty":
