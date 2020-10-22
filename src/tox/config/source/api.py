@@ -81,38 +81,38 @@ class Convert(ABC, Generic[T]):
         if from_module in ("typing", "typing_extensions"):
             return self._to_typing(raw, of_type)
         elif issubclass(of_type, Path):
-            return self.to_path(raw)  # type: ignore
+            return self.to_path(raw)  # type: ignore[return-value]
         elif issubclass(of_type, bool):
-            return self.to_bool(raw)  # type: ignore
+            return self.to_bool(raw)  # type: ignore[return-value]
         elif issubclass(of_type, Command):
-            return self.to_command(raw)  # type: ignore
+            return self.to_command(raw)  # type: ignore[return-value]
         elif issubclass(of_type, EnvList):
-            return self.to_env_list(raw)  # type: ignore
+            return self.to_env_list(raw)  # type: ignore[return-value]
         elif issubclass(of_type, str):
-            return self.to_str(raw)  # type: ignore
+            return self.to_str(raw)  # type: ignore[return-value]
         elif issubclass(of_type, Enum):
             return cast(V, getattr(of_type, str(raw)))
-        return of_type(raw)  # type: ignore
+        return of_type(raw)  # type: ignore[call-arg]
 
     def _to_typing(self, raw: T, of_type: Type[V]) -> V:
         origin = getattr(of_type, "__origin__", getattr(of_type, "__class__", None))
         if origin is not None:
             result: Any = _NO_MAPPING
             if origin in (list, List):
-                entry_type = of_type.__args__[0]  # type: ignore
+                entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
                 result = [self.to(i, entry_type) for i in self.to_list(raw)]
             elif origin in (set, Set):
-                entry_type = of_type.__args__[0]  # type: ignore
+                entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
                 result = {self.to(i, entry_type) for i in self.to_set(raw)}
             elif origin in (dict, Dict):
-                key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore
+                key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
                 result = OrderedDict((self.to(k, key_type), self.to(v, value_type)) for k, v in self.to_dict(raw))
             elif origin == Union:  # handle Optional values
-                args: List[Type[Any]] = of_type.__args__  # type: ignore
+                args: List[Type[Any]] = of_type.__args__  # type: ignore[attr-defined]
                 none = type(None)
                 if len(args) == 2 and none in args:
                     if isinstance(raw, str):
-                        raw = raw.strip()  # type: ignore
+                        raw = raw.strip()  # type: ignore[assignment]
                     if not raw:
                         result = None
                     else:
@@ -122,7 +122,7 @@ class Convert(ABC, Generic[T]):
                 if sys.version_info >= (3, 7):
                     choice = of_type.__args__
                 else:
-                    choice = of_type.__values__  # type: ignore
+                    choice = of_type.__values__  # type: ignore[attr-defined]
                 if raw not in choice:
                     raise ValueError(f"{raw} must be one of {choice}")
                 result = raw

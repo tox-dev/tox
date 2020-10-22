@@ -1,7 +1,7 @@
 from asyncio.windows_utils import BUFSIZE, PipeHandle
 from typing import IO, Callable
 
-import _overlapped  # type: ignore # noqa
+import _overlapped  # type: ignore[import]
 
 from .read_via_thread import ReadViaThread
 
@@ -18,7 +18,7 @@ class ReadViaThreadWindows(ReadViaThread):
             if ov is None:
                 ov = _overlapped.Overlapped(0)
                 try:
-                    ov.ReadFile(self.stream.handle, 1)  # type: ignore
+                    ov.ReadFile(self.stream.handle, 1)  # type: ignore[attr-defined]
                 except BrokenPipeError:
                     self.closed = True
                     return
@@ -31,7 +31,7 @@ class ReadViaThreadWindows(ReadViaThread):
         while length:
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.stream.handle, BUFSIZE)  # type: ignore
+                ov.ReadFile(self.stream.handle, BUFSIZE)  # type: ignore[attr-defined]
                 data = ov.getresult()
             except BrokenPipeError:
                 length = 0

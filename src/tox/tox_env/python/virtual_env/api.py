@@ -21,13 +21,13 @@ from ..api import Deps, Python, PythonInfo
 class VirtualEnv(Python, ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed):
         super().__init__(conf, core, options)
-        self._virtualenv_session: Optional[Session] = None
+        self._virtualenv_session: Optional[Session] = None  # type: ignore[no-any-unimported]
 
     def executor(self) -> Execute:
         return LocalSubProcessExecutor()
 
     @property
-    def session(self) -> Session:
+    def session(self) -> Session:  # type: ignore[no-any-unimported]
         if self._virtualenv_session is None:
             args = [
                 "--no-periodic-update",
@@ -40,7 +40,7 @@ class VirtualEnv(Python, ABC):
         return self._virtualenv_session
 
     @property
-    def creator(self) -> Creator:
+    def creator(self) -> Creator:  # type: ignore[no-any-unimported]
         return self.session.creator
 
     def create_python_env(self) -> None:

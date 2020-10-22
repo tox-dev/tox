@@ -6,7 +6,7 @@ import threading
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from types import TracebackType
-from typing import IO, Any, Dict, Optional, Sequence, Type
+from typing import IO, Any, Dict, Optional, Sequence, Tuple, Type
 
 if sys.platform == "win32":
     import ctypes
@@ -115,7 +115,7 @@ class Spinner:
         del self._envs[key]
         if self.enabled:
             self.clear()
-        self.stream.write(  # type: ignore
+        self.stream.write(  # type: ignore[call-arg]
             f"{status} {key} in {td_human_readable(datetime.now() - start_at)}{os.linesep}", **kwargs  # noqa
         )
         if not self._envs:
@@ -158,10 +158,10 @@ def td_human_readable(delta: timedelta) -> str:
     texts = []
     for period_name, period_seconds in periods:
         if seconds > period_seconds or period_seconds == 1:
-            period_value, seconds = divmod(seconds, period_seconds)
+            period_value, _ = divmod(seconds, period_seconds)  # type: Tuple[float, float]
             if period_name == "second":
                 ms = delta.total_seconds() - int(delta.total_seconds())
-                period_value = round(period_value + ms, 3)  # type: ignore
+                period_value = round(period_value + ms, 3)
             has_s = "s" if period_value != 1 else ""
             texts.append(f"{period_value} {period_name}{has_s}")
     return ", ".join(texts)

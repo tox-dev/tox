@@ -64,7 +64,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 outcome = self.file_config.get(key, of_type=of_type)
             if outcome is not None:
                 action.default, default_value = outcome
-                action.default_source = default_value  # type: ignore
+                action.default_source = default_value  # type: ignore[attr-defined]
         if isinstance(action, argparse._SubParsersAction):  # noqa
             for values in action.choices.values():  # noqa
                 if isinstance(values, ToxParser):
@@ -75,7 +75,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         of_type: Optional[Type[Any]] = getattr(action, "of_type", None)
         if of_type is None:
             if isinstance(action, argparse._AppendAction):  # noqa
-                of_type = List[action.type]  # type: ignore
+                of_type = List[action.type]  # type: ignore[name-defined]
             elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa
                 loc = locals()
                 loc["Literal"] = Literal
@@ -157,7 +157,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
     def add_argument(self, *args: str, of_type: Optional[Type[Any]] = None, **kwargs: Any) -> Action:
         result = super().add_argument(*args, **kwargs)
         if of_type is not None:
-            result.of_type = of_type  # type: ignore
+            result.of_type = of_type  # type: ignore[attr-defined]
         return result
 
     @classmethod

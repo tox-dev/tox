@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 from subprocess import PIPE, TimeoutExpired
-from typing import IO, List, Optional, Sequence, Tuple, Type, cast
+from typing import IO, TYPE_CHECKING, List, Optional, Sequence, Tuple, Type, cast
 
 from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, Outcome
 from ..request import ExecuteRequest
@@ -12,7 +12,10 @@ from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":
     # needs stdin/stdout handlers backed by overlapped IO
-    from asyncio.windows_utils import Popen  # noqa
+    if TYPE_CHECKING:  # the typeshed libraries don't contain this, so replace it with normal one
+        from subprocess import Popen
+    else:
+        from asyncio.windows_utils import Popen
     from subprocess import CREATE_NEW_PROCESS_GROUP
 
     from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
@@ -71,8 +74,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             with ReadViaThread(cast(IO[bytes], process.stderr), self.err_handler) as read_stderr:
                 with ReadViaThread(cast(IO[bytes], process.stdout), self.out_handler) as read_stdout:
                     if sys.platform == "win32":
-                        process.stderr.read = read_stderr._drain_stream  # noqa
-                        process.stdout.read = read_stdout._drain_stream  # noqa
+                        process.stderr.read = read_stderr._drain_stream  # type: ignore[assignment,union-attr]
+                        process.stdout.read = read_stdout._drain_stream  # type: ignore[assignment,union-attr]
                     # wait it out with interruptions to allow KeyboardInterrupt on Windows
                     while process.poll() is None:
                         try:

@@ -1,9 +1,8 @@
+[!![check](https://github.com/tox-dev/tox/workflows/check/badge.svg)](https://github.com/tox-dev/tox/actions?query=workflow%3Acheck)
 [![Latest version on
 PyPi](https://badge.fury.io/py/tox.svg)](https://badge.fury.io/py/tox)
 [![Supported Python
 versions](https://img.shields.io/pypi/pyversions/tox.svg)](https://pypi.org/project/tox/)
-[![Azure Pipelines build
-status](https://dev.azure.com/toxdev/tox/_apis/build/status/tox%20ci?branchName=master)](https://dev.azure.com/toxdev/tox/_build/latest?definitionId=9&branchName=master)
 [![Documentation
 status](https://readthedocs.org/projects/tox/badge/?version=latest&style=flat-square)](https://tox.readthedocs.io/en/latest/?badge=latest)
 [![Code style:

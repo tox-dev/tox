@@ -17,7 +17,10 @@ from tox.tox_env.python.package import PythonPackage
 from ..api import VirtualEnv
 
 try:
-    from importlib.metadata import Distribution, PathDistribution  # type: ignore
+    from importlib.metadata import (  # type: ignore[attr-defined]
+        Distribution,
+        PathDistribution,
+    )
 except ImportError:
     from importlib_metadata import Distribution, PathDistribution  # noqa
 
@@ -44,7 +47,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
         self._requires: List[Requirement] = requires
         self.build_backend_module: str = backend_module
         self.build_backend_obj: Optional[str] = backend_object
-        self._distribution_meta: Optional[PathDistribution] = None
+        self._distribution_meta: Optional[PathDistribution] = None  # type: ignore[no-any-unimported]
         self._build_requires: Optional[List[Requirement]] = None
 
     def load_builder_and_requires(self) -> Tuple[str, Optional[str], List[Requirement]]:
