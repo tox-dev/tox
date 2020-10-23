@@ -1,0 +1,1 @@
+Preserve paths through the substitution engine. Adds global setting ``literal_paths`` to disable new behaviour. - by :user:`jayvdb`

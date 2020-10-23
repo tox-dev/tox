@@ -143,6 +143,19 @@ Global settings are defined under the ``tox`` section as:
     configure :conf:`basepython` in the global testenv without affecting environments
     that have implied base python versions.
 
+.. conf:: literal_paths ^ true|false ^ true
+
+    .. versionadded:: 3.21.0
+
+    tox defaults to interpretting values commencing with a path as a literal path, with
+    only segments inside ``{..}`` being substituted, without any need for quoting.
+
+    Disabling this setting to use shell-like syntax for all values, except settings of
+    type ``path``.
+
+    For settings of type ``path``, shell-like syntax can be activate by commencing the
+    value with a quotation mark.
+
 .. conf:: isolated_build ^ true|false ^ false
 
     .. versionadded:: 3.3.0

@@ -20,6 +20,7 @@ import py
 import toml
 from packaging import requirements
 from packaging.utils import canonicalize_name
+from py._path.common import PathBase
 
 import tox
 from tox.constants import INFO
@@ -163,6 +164,8 @@ class DepOption:
         deps = []
         config = testenv_config.config
         for depline in value:
+            if isinstance(depline, PathBase):
+                depline = str(depline)
             m = re.match(r":(\w+):\s*(\S+)", depline)
             if m:
                 iname, name = m.groups()
@@ -416,7 +419,7 @@ class SetenvDict(object):
         # such as {} being escaped using \{\}, suitable for use with
         # os.environ .
         return {
-            name: Replacer._unescape(value)
+            name: str(value) if isinstance(value, PathBase) else Replacer._unescape(value)
             for name, value in self.items()
             if value is not self._DUMMY
         }
@@ -1151,6 +1154,8 @@ class ParseIni(object):
             hash_seed = config.option.hashseed
         config.hashseed = hash_seed
 
+        config.literal_paths = reader.getbool("literal_paths", True)
+
         reader.addsubstitutions(toxinidir=config.toxinidir, homedir=config.homedir)
 
         if config.option.workdir is None:
@@ -1364,7 +1369,13 @@ class ParseIni(object):
 
     def make_envconfig(self, name, section, subs, config, replace=True):
         factors = set(name.split("-"))
-        reader = SectionReader(section, self._cfg, fallbacksections=["testenv"], factors=factors)
+        reader = SectionReader(
+            section,
+            self._cfg,
+            fallbacksections=["testenv"],
+            factors=factors,
+            literal_paths=config.literal_paths,
+        )
         tc = TestenvConfig(name, config, factors, reader)
         reader.addsubstitutions(
             envname=name,
@@ -1578,6 +1589,7 @@ class SectionReader:
         factors=(),
         prefix=None,
         posargs="",
+        literal_paths=True,
     ):
         if prefix is None:
             self.section_name = section_name
@@ -1590,6 +1602,7 @@ class SectionReader:
         self._subststack = []
         self._setenv = None
         self.posargs = posargs
+        self.literal_paths = literal_paths
 
     def get_environ_value(self, name):
         if self._setenv is None:
@@ -1602,7 +1615,7 @@ class SectionReader:
             self.posargs = _posargs
 
     def getpath(self, name, defaultpath, replace=True):
-        path = self.getstring(name, defaultpath, replace=replace)
+        path = self.getstring(name, defaultpath, replace=replace, is_path=True)
         if path is not None:
             toxinidir = self._subs["toxinidir"]
             return toxinidir.join(path, abs=True)
@@ -1611,6 +1624,8 @@ class SectionReader:
         s = self.getstring(name, None)
         if s is None:
             return []
+        if isinstance(s, PathBase):
+            return [s]
         return [x.strip() for x in s.split(sep) if x.strip()]
 
     def getdict(self, name, default=None, sep="\n", replace=True):
@@ -1698,7 +1713,15 @@ class SectionReader:
 
         return _ArgvlistReader.getargvlist(self, s, replace=replace)[0]
 
-    def getstring(self, name, default=None, replace=True, crossonly=False, no_fallback=False):
+    def getstring(
+        self,
+        name,
+        default=None,
+        replace=True,
+        crossonly=False,
+        no_fallback=False,
+        is_path=False,
+    ):
         x = None
         sections = [self.section_name] + ([] if no_fallback else self.fallbacksections)
         for s in sections:
@@ -1716,10 +1739,16 @@ class SectionReader:
             # process. Once they are unwrapped, we call apply factors
             # again for those new dependencies.
             x = self._apply_factors(x)
-            x = self._replace_if_needed(x, name, replace, crossonly)
+            x = self._replace_if_needed(x, name, replace, crossonly, is_path=is_path)
+            if isinstance(x, PathBase):
+                return x
             x = self._apply_factors(x)
 
-        x = self._replace_if_needed(x, name, replace, crossonly)
+        if isinstance(x, PathBase):
+            raise RuntimeError(name)
+            return x
+
+        x = self._replace_if_needed(x, name, replace, crossonly, is_path=is_path)
         return x
 
     def getposargs(self, default=None):
@@ -1733,9 +1762,9 @@ class SectionReader:
         else:
             return default or ""
 
-    def _replace_if_needed(self, x, name, replace, crossonly):
+    def _replace_if_needed(self, x, name, replace, crossonly, is_path=False):
         if replace and x and hasattr(x, "replace"):
-            x = self._replace(x, name=name, crossonly=crossonly)
+            x = self._replace(x, name=name, crossonly=crossonly, is_path=is_path)
         return x
 
     def _apply_factors(self, s):
@@ -1754,14 +1783,18 @@ class SectionReader:
         lines = s.strip().splitlines()
         return "\n".join(filter(None, map(factor_line, lines)))
 
-    def _replace(self, value, name=None, section_name=None, crossonly=False):
+    def _replace(self, value, name=None, section_name=None, crossonly=False, is_path=False):
         if "{" not in value:
             return value
 
         section_name = section_name if section_name else self.section_name
         self._subststack.append((section_name, name))
         try:
-            replaced = Replacer(self, crossonly=crossonly).do_replace(value)
+            replaced = Replacer(self, crossonly=crossonly).do_replace(
+                value,
+                is_path=is_path,
+                literal_paths=self.literal_paths,
+            )
             assert self._subststack.pop() == (section_name, name)
         except tox.exception.MissingSubstitution:
             if not section_name.startswith(testenvprefix):
@@ -1789,19 +1822,41 @@ class Replacer:
         self.reader = reader
         self.crossonly = crossonly
 
-    def do_replace(self, value):
+    def do_replace(self, value, is_path=False, literal_paths=True):
         """
         Recursively expand substitutions starting from the innermost expression
         """
 
-        def substitute_once(x):
-            return self.RE_ITEM_REF.sub(self._replace_match, x)
+        def substitute_each(s):
+            parts = []
+            pos = 0
+            for match in self.RE_ITEM_REF.finditer(s):
+                start = match.start()
+                if start:
+                    parts.append(s[pos:start])
+                parts.append(self._replace_match(match))
+                pos = match.end()
 
-        expanded = substitute_once(value)
+            tail = s[pos:]
+            if tail:
+                parts.append(tail)
+
+            if not parts:
+                return ""
+            if (literal_paths or is_path) and isinstance(parts[0], PathBase):
+                if len(parts) == 1:
+                    return parts[0]
+                return parts[0].join(*parts[1:])
+
+            return "".join(str(part) for part in parts)
+
+        expanded = substitute_each(value)
+        if isinstance(expanded, PathBase):
+            return expanded
 
         while expanded != value:  # substitution found
             value = expanded
-            expanded = substitute_once(value)
+            expanded = substitute_each(value)
 
         return expanded
 
@@ -1888,6 +1943,8 @@ class Replacer:
             val = self._substitute_from_other_section(sub_key)
         if callable(val):
             val = val()
+        if isinstance(val, PathBase):
+            return val
         return str(val)
 
 
@@ -1949,8 +2006,12 @@ class _ArgvlistReader:
 
                 new_arg = ""
                 new_word = reader._replace(word)
-                new_word = reader._replace(new_word)
-                new_word = Replacer._unescape(new_word)
+                if not isinstance(new_word, PathBase):
+                    new_word = reader._replace(new_word)
+                    if not isinstance(new_word, PathBase):
+                        new_word = Replacer._unescape(new_word)
+                if isinstance(new_word, PathBase):
+                    new_word = str(new_word)
                 new_arg += new_word
                 newcommand += new_arg
         else:
