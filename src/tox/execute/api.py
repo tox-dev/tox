@@ -125,6 +125,9 @@ class Outcome:
     def __bool__(self) -> bool:
         return self.exit_code == self.OK
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}: exit {self.exit_code} in {self.elapsed:.2f}ms for {self.shell_cmd}"
+
     def assert_success(self, logger: logging.Logger) -> None:
         if self.exit_code != self.OK:
             self._assert_fail(logger)

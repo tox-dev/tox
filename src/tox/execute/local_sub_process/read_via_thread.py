@@ -1,14 +1,17 @@
+"""
+A reader that drain a stream via its file no on a background thread.
+"""
 from abc import ABC, abstractmethod
 from threading import Event, Thread
 from types import TracebackType
-from typing import IO, Callable, Optional, Type
+from typing import Callable, Optional, Type
 
 WAIT_GENERAL = 0.1
 
 
 class ReadViaThread(ABC):
-    def __init__(self, stream: IO[bytes], handler: Callable[[bytes], None]) -> None:
-        self.stream = stream
+    def __init__(self, file_no: int, handler: Callable[[bytes], None]) -> None:
+        self.file_no = file_no
         self.stop = Event()
         self.thread = Thread(target=self._read_stream)
         self.handler = handler

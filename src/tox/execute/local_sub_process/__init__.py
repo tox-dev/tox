@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 from subprocess import PIPE, TimeoutExpired
-from typing import IO, TYPE_CHECKING, List, Optional, Sequence, Tuple, Type, cast
+from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple, Type
 
 from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, Outcome
 from ..request import ExecuteRequest
@@ -58,21 +58,22 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         return self._cmd
 
     def run(self) -> int:
+        stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         try:
             self.process = process = Popen(
                 self.cmd,
-                stdout=PIPE,
-                stderr=PIPE,
+                stdout=next(stdout),
+                stderr=next(stderr),
                 stdin=None if self.request.allow_stdin else PIPE,
                 cwd=str(self.request.cwd),
-                env=self.request.env,
+                env=self.env,
                 creationflags=CREATION_FLAGS,
             )
         except OSError as exception:
             exit_code = exception.errno
         else:
-            with ReadViaThread(cast(IO[bytes], process.stderr), self.err_handler) as read_stderr:
-                with ReadViaThread(cast(IO[bytes], process.stdout), self.out_handler) as read_stdout:
+            with ReadViaThread(stderr.send(process), self.err_handler) as read_stderr:
+                with ReadViaThread(stdout.send(process), self.out_handler) as read_stdout:
                     if sys.platform == "win32":
                         process.stderr.read = read_stderr._drain_stream  # type: ignore[assignment,union-attr]
                         process.stdout.read = read_stdout._drain_stream  # type: ignore[assignment,union-attr]
@@ -86,6 +87,35 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                             continue
             exit_code = process.returncode
         return exit_code
+
+    @staticmethod
+    def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
+        if sys.platform != "win32" and getattr(sys, key).isatty():
+            # on UNIX if tty is set let's forward it via a pseudo terminal
+            import pty
+
+            main, child = pty.openpty()
+            yield child
+            os.close(child)
+            yield main
+        else:
+            process = yield PIPE
+            stream = getattr(process, key)
+            if sys.platform == "win32":
+                yield stream.handle
+            else:
+                yield stream.name
+
+    @property
+    def env(self) -> Dict[str, str]:
+        # terminal size don't pass through nicely, if set , use the environment variables per shutil.get_terminal_size
+        env = self.request.env.copy()
+        columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
+        if columns != -1:
+            env["COLUMNS"] = str(columns)
+        if columns != 1:
+            env["LINES"] = str(lines)
+        return env
 
     def interrupt(self) -> int:
         if self.process is not None:

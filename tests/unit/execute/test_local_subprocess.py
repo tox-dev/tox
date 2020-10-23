@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import subprocess
@@ -207,3 +208,27 @@ def test_command_keyboard_interrupt(tmp_path):
     assert float(outs[3]) > 0  # duration
     assert "how about no signal 15" in outs[1], outs[1]  # stdout
     assert "how about no KeyboardInterrupt" in outs[2], outs[2]  # stderr
+
+
+@pytest.mark.parametrize("tty_mode", ["on", "off"])
+def test_local_subprocess__tty(monkeypatch, mocker, tty_mode):
+    monkeypatch.setenv("COLUMNS", "100")
+    monkeypatch.setenv("LINES", "100")
+    tty = tty_mode == "on"
+    mocker.patch("sys.stdout.isatty", return_value=tty)
+    mocker.patch("sys.stderr.isatty", return_value=tty)
+
+    executor = LocalSubProcessExecutor()
+    cmd = [sys.executable, Path(__file__).parent / "tty_check.py"]
+    request = ExecuteRequest(cmd=cmd, allow_stdin=True, cwd=Path.cwd(), env=dict(os.environ))
+    outcome = executor.__call__(request, show_on_standard=False, colored=False)
+
+    assert outcome
+    info = json.loads(outcome.out)
+
+    assert info == {
+        "stdout": tty,
+        "stderr": tty,
+        "stdin": False,
+        "terminal": [100, 100],
+    }

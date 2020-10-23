@@ -1,5 +1,8 @@
-from asyncio.windows_utils import BUFSIZE, PipeHandle
-from typing import IO, Callable
+"""
+On Windows we use overlapped mechanism, borrowing it from asyncio (but without the event loop).
+"""
+from asyncio.windows_utils import BUFSIZE
+from typing import Callable
 
 import _overlapped  # type: ignore[import]
 
@@ -7,10 +10,9 @@ from .read_via_thread import ReadViaThread
 
 
 class ReadViaThreadWindows(ReadViaThread):
-    def __init__(self, stream: IO[bytes], handler: Callable[[bytes], None]) -> None:
-        super().__init__(stream, handler)
+    def __init__(self, file_no: int, handler: Callable[[bytes], None]) -> None:
+        super().__init__(file_no, handler)
         self.closed = False
-        assert isinstance(stream, PipeHandle)
 
     def _read_stream(self) -> None:
         ov = None
@@ -18,7 +20,7 @@ class ReadViaThreadWindows(ReadViaThread):
             if ov is None:
                 ov = _overlapped.Overlapped(0)
                 try:
-                    ov.ReadFile(self.stream.handle, 1)  # type: ignore[attr-defined]
+                    ov.ReadFile(self.file_no, 1)  # type: ignore[attr-defined]
                 except BrokenPipeError:
                     self.closed = True
                     return
@@ -31,7 +33,7 @@ class ReadViaThreadWindows(ReadViaThread):
         while length:
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.stream.handle, BUFSIZE)  # type: ignore[attr-defined]
+                ov.ReadFile(self.file_no, BUFSIZE)  # type: ignore[attr-defined]
                 data = ov.getresult()
             except BrokenPipeError:
                 length = 0
