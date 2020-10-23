@@ -248,6 +248,97 @@ class TestConfigPlatform:
         expected = {"win": "win32", "lin": "linux2", "osx": ""}.get(plat)
         assert platform == expected
 
+    def test_platform_install_command(self, newconfig, mocksession, monkeypatch):
+        # Expanded from docs/example/platform.html
+        config = newconfig(
+            [],
+            """
+            [tox]
+            envlist = py{27,36}-{mylinux,mymacos,mywindows}
+
+            [testenv]
+            platform =
+              mylinux: linux
+              mymacos: darwin
+              mywindows: win32
+
+            deps =
+              mylinux,mymacos: py==1.4.32
+              mywindows: py==1.4.30
+
+            install_command =
+              mylinux: python -m pip install {packages} distro
+              mywindows: python -m pip install {packages} pywin32
+
+            commands=
+              mylinux: echo Linus
+              mymacos: echo Steve
+              mywindows: echo Bill
+        """,
+        )
+        mocksession.config = config
+        assert len(config.envconfigs) == 6
+
+        monkeypatch.setattr(sys, "platform", "linux")
+
+        venv = mocksession.getvenv("py27-mylinux")
+        assert venv.envconfig._reader.factors == {"py27", "mylinux"}
+        assert venv.matching_platform()
+        assert str(venv.envconfig.deps[0]) == "py==1.4.32"
+        assert venv.envconfig.install_command == [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "{packages}",
+            "distro",
+        ]
+        assert venv.envconfig.commands[0] == ["echo", "Linus"]
+
+        venv = mocksession.getvenv("py27-mymacos")
+        assert venv.envconfig._reader.factors == {"py27", "mymacos"}
+        assert not venv.matching_platform()
+        assert str(venv.envconfig.deps[0]) == "py==1.4.32"
+        assert venv.envconfig.install_command == [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "{opts}",
+            "{packages}",
+        ]
+        assert venv.envconfig.commands[0] == ["echo", "Steve"]
+
+        venv = mocksession.getvenv("py27-mywindows")
+        assert venv.envconfig._reader.factors == {"py27", "mywindows"}
+        assert not venv.matching_platform()
+        assert str(venv.envconfig.deps[0]) == "py==1.4.30"
+        assert venv.envconfig.install_command == [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "{packages}",
+            "pywin32",
+        ]
+        assert venv.envconfig.commands[0] == ["echo", "Bill"]
+
+        monkeypatch.undo()
+
+        monkeypatch.setattr(sys, "platform", "darwin")
+
+        venv = mocksession.getvenv("py27-mymacos")
+        assert venv.envconfig.install_command == [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "{opts}",
+            "{packages}",
+        ]
+
+        monkeypatch.undo()
+
 
 class TestConfigPackage:
     def test_defaults(self, tmpdir, newconfig):
