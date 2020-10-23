@@ -47,6 +47,7 @@ class ToxEnv(ABC):
         self._cache = Info(self.conf["env_dir"])
         self._paths: List[Path] = []
         self.logger = logging.getLogger(self.conf["env_name"])
+        self._env_vars: Dict[str, str] = {}
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
@@ -113,19 +114,20 @@ class ToxEnv(ABC):
 
     @property
     def environment_variables(self) -> Dict[str, str]:
-        result: Dict[str, str] = {}
+        if self._env_vars:
+            return self._env_vars
         pass_env: List[str] = self.conf["pass_env"]
         pass_env.extend(PASS_ENV_ALWAYS)
 
         set_env: Dict[str, str] = self.conf["set_env"]
         for key, value in os.environ.items():
             if key in pass_env:
-                result[key] = value
-        result.update(set_env)
-        result["PATH"] = os.pathsep.join(
-            itertools.chain((str(i) for i in self._paths), os.environ.get("PATH", "").split(os.pathsep)),
+                set_env[key] = value
+        self._env_vars.update(set_env)
+        self._env_vars["PATH"] = os.pathsep.join(
+            itertools.chain((str(i) for i in self._paths), os.environ.get("PATH", "").split(os.pathsep))
         )
-        return result
+        return self._env_vars
 
     def execute(
         self,

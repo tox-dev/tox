@@ -10,7 +10,7 @@ from tox.config.sets import ConfigSet
 from tox.config.source.api import Loader, Source
 from tox.config.source.ini.convert import StrConvert
 from tox.config.source.ini.factor import filter_for_env, find_envs
-from tox.config.source.ini.replace import BASE_TEST_ENV, replace
+from tox.config.source.ini.replace import BASE_TEST_ENV, CORE_PREFIX, replace
 
 TEST_ENV_PREFIX = f"{BASE_TEST_ENV}:"
 
@@ -127,8 +127,6 @@ class IniLoader(StrConvert, Loader[str]):
 class ToxIni(Source):
     """Configuration sourced from a ini file (such as tox.ini)"""
 
-    CORE_PREFIX = "tox"
-
     def __init__(self, path: Path) -> None:
         self._path = path
 
@@ -136,12 +134,12 @@ class ToxIni(Source):
         with self._path.open() as file_handler:
             self._parser.read_file(file_handler)
         core = IniLoader(
-            section=self._get_section(self.CORE_PREFIX),
+            section=self._get_section(CORE_PREFIX),
             src=self,
             name=None,
             default_base=[],
             section_loader=self._get_section,
-            namespace=self.CORE_PREFIX,
+            namespace=CORE_PREFIX,
         )
         super().__init__(core=core)
         self._envs: Dict[str, IniLoader] = {}

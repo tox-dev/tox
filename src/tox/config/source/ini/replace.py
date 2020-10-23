@@ -5,12 +5,13 @@ import os
 import re
 import sys
 from configparser import SectionProxy
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
 
+CORE_PREFIX = "tox"
 BASE_TEST_ENV = "testenv"
 
 ARGS_GROUP = re.compile(r"(?<!\\):")
@@ -52,7 +53,7 @@ def _find_replace_part(value: str) -> Tuple[int, int, bool]:
 
 def _replace_match(
     conf: Optional[Config],
-    name: Optional[str],
+    current_env: Optional[str],
     section_loader: Callable[[str], Optional[SectionProxy]],
     value: str,
 ) -> str:
@@ -62,15 +63,15 @@ def _replace_match(
     elif of_type == "posargs":
         replace_value = replace_posarg(args)
     else:
-        replace_value = replace_reference(conf, name, section_loader, value)
+        replace_value = replace_reference(conf, current_env, section_loader, value)
     if replace_value is None:
         return ""
     return str(replace_value)
 
 
 _REPLACE_REF = re.compile(
-    r"""
-    (\[(testenv(:(?P<env>[^]]+))?|(?P<section>\w+))\])? # env/section
+    rf"""
+    (\[({BASE_TEST_ENV}(:(?P<env>[^]]+))?|(?P<section>\w+))\])? # env/section
     (?P<key>[a-zA-Z0-9_]+) # key
     (:(?P<default>.*))? # default value
 """,
@@ -80,30 +81,60 @@ _REPLACE_REF = re.compile(
 
 def replace_reference(
     conf: Optional[Config],
-    name: Optional[str],
+    current_env: Optional[str],
     section_loader: Callable[[str], Optional[SectionProxy]],
     value: str,
-) -> str:
+) -> Any:
     match = _REPLACE_REF.match(value)
     if match:
         settings = match.groupdict()
-        section = settings["env"] or settings["section"] or name
-        if section is not None:
-            if conf is not None and section in conf:
-                section_conf: Union[None, ConfigSet, SectionProxy] = conf[section]
-            elif conf is not None and section == "tox":
-                section_conf = conf.core
-            else:
-                section_conf = section_loader(section)
-            if section_conf is not None:
-                key = settings["key"]
+        # if env set try only there, if section set try only there
+        # otherwise try first in core, then in current env
+        try:
+            key = settings["key"]
+            for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, section_loader):
                 try:
-                    return str(section_conf[key])
-                except Exception:  # noqa
-                    default = settings["default"]
-                    if default is not None:
-                        return default
+                    return src[key]
+                except KeyError:  # if this is missing maybe another src has it
+                    continue
+            default = settings["default"]
+            if default is not None:
+                return default
+        except Exception:  # noqa # ignore errors - but don't replace them
+            pass
     return f"{{{value}}}"
+
+
+def _config_value_sources(
+    env: Optional[str],
+    section: Optional[str],
+    current_env: Optional[str],
+    conf: Optional[Config],
+    section_loader: Callable[[str], Optional[SectionProxy]],
+) -> Iterator[Union[SectionProxy, ConfigSet]]:
+    # if we have an env name specified take only from there
+    if env is not None:
+        if conf is not None and env in conf:
+            yield conf[env]
+        return
+
+    # if we have a section name specified take only from there
+    if section is not None:
+        # special handle the core section under name tox
+        if section == CORE_PREFIX:
+            if conf is not None:
+                yield conf.core
+            return
+        value = section_loader(section)
+        if value is not None:
+            yield value
+        return
+
+    # otherwise try first from core conf, and fallback to our own environment
+    if conf is not None:
+        yield conf.core
+        if current_env is not None:
+            yield conf[current_env]
 
 
 def replace_posarg(args: List[str]) -> str:
@@ -118,3 +149,10 @@ def replace_env(args: List[str]) -> str:
     key = args[0]
     default = "" if len(args) == 1 else args[1]
     return os.environ.get(key, default)
+
+
+__all__ = (
+    "CORE_PREFIX",
+    "BASE_TEST_ENV",
+    "replace",
+)
