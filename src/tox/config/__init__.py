@@ -1819,18 +1819,24 @@ class Replacer:
             start, end = match.span()
             return match.string[start:end]
 
-        # special case: all empty values means ":" which is os.pathsep
-        if not any(g.values()):
+        full_match = match.group(0)
+        # ":" is swallowed by the regex, so the raw matched string is checked
+        if full_match.startswith("{:"):
+            if full_match != "{:}":
+                raise tox.exception.ConfigError(
+                    "Malformed substitution with prefix ':': {}".format(full_match),
+                )
+
             return os.pathsep
 
         if sub_value == "posargs":
             return self.reader.getposargs(match.group("default_value"))
 
-        try:
-            sub_type = g["sub_type"]
-        except KeyError:
+        sub_type = g["sub_type"]
+        if not sub_type and not sub_value:
             raise tox.exception.ConfigError(
-                "Malformed substitution; no substitution type provided",
+                "Malformed substitution; no substitution type provided. "
+                "If you were using `{}` for `os.pathsep`, please use `{:}`.",
             )
 
         if not sub_type and not g["default_value"] and sub_value == "/":

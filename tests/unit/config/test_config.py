@@ -603,6 +603,33 @@ class TestIniParser:
         x = reader.getstring("hello", "world")
         assert x == "world"
 
+    def test_substitution_empty(self, newconfig):
+        config = newconfig(
+            """
+            [mydefault]
+            key2={}
+        """,
+        )
+        reader = SectionReader("mydefault", config._cfg, fallbacksections=["mydefault"])
+        assert reader is not None
+        with pytest.raises(tox.exception.ConfigError, match="no substitution type provided"):
+            reader.getstring("key2")
+
+    def test_substitution_colon_prefix(self, newconfig):
+        config = newconfig(
+            """
+            [mydefault]
+            key2={:abc}
+        """,
+        )
+        reader = SectionReader("mydefault", config._cfg, fallbacksections=["mydefault"])
+        assert reader is not None
+        with pytest.raises(
+            tox.exception.ConfigError,
+            match="Malformed substitution with prefix ':'",
+        ):
+            reader.getstring("key2")
+
     def test_missing_substitution(self, newconfig):
         config = newconfig(
             """
@@ -612,7 +639,7 @@ class TestIniParser:
         )
         reader = SectionReader("mydefault", config._cfg, fallbacksections=["mydefault"])
         assert reader is not None
-        with pytest.raises(tox.exception.ConfigError):
+        with pytest.raises(tox.exception.ConfigError, match="substitution key '.*' not found"):
             reader.getstring("key2")
 
     def test_getstring_fallback_sections(self, newconfig):
