@@ -391,7 +391,7 @@ class SetenvDict(object):
                 return os.environ.get(name, default)
             self._lookupstack.append(name)
             try:
-                self.resolved[name] = res = self.reader._replace(val)
+                self.resolved[name] = res = self.reader._replace(val, name="setenv")
             finally:
                 self._lookupstack.pop()
             return res
@@ -1693,7 +1693,7 @@ class SectionReader:
 
     def getargvlist(self, name, default="", replace=True):
         s = self.getstring(name, default, replace=False)
-        return _ArgvlistReader.getargvlist(self, s, replace=replace)
+        return _ArgvlistReader.getargvlist(self, s, replace=replace, name=name)
 
     def getargv(self, name, default="", replace=True):
         return self.getargvlist(name, default, replace=replace)[0]
@@ -1712,7 +1712,7 @@ class SectionReader:
         if "{opts}" in s:
             s = s.replace("{opts}", r"\{opts\}")
 
-        return _ArgvlistReader.getargvlist(self, s, replace=replace)[0]
+        return _ArgvlistReader.getargvlist(self, s, replace=replace, name=name)[0]
 
     def getstring(self, name, default=None, replace=True, crossonly=False, no_fallback=False):
         x = None
@@ -1775,6 +1775,7 @@ class SectionReader:
             return value
 
         section_name = section_name if section_name else self.section_name
+        assert name
         self._subststack.append((section_name, name))
         try:
             replaced = Replacer(self, crossonly=crossonly).do_replace(value)
@@ -1890,7 +1891,7 @@ class Replacer:
             cfg = self.reader._cfg
             if section in cfg and item in cfg[section]:
                 if (section, item) in self.reader._subststack:
-                    raise ValueError(
+                    raise tox.exception.SubstitutionStackError(
                         "{} already in {}".format((section, item), self.reader._subststack),
                     )
                 x = str(cfg[section][item])
@@ -1918,7 +1919,7 @@ def is_interactive():
 
 class _ArgvlistReader:
     @classmethod
-    def getargvlist(cls, reader, value, replace=True):
+    def getargvlist(cls, reader, value, replace=True, name=None):
         """Parse ``commands`` argvlist multiline string.
 
         :param SectionReader reader: reader to be used.
@@ -1940,10 +1941,10 @@ class _ArgvlistReader:
             current_command += line
 
             if is_section_substitution(current_command):
-                replaced = reader._replace(current_command, crossonly=True)
-                commands.extend(cls.getargvlist(reader, replaced))
+                replaced = reader._replace(current_command, crossonly=True, name=name)
+                commands.extend(cls.getargvlist(reader, replaced, name=name))
             else:
-                commands.append(cls.processcommand(reader, current_command, replace))
+                commands.append(cls.processcommand(reader, current_command, replace, name=name))
             current_command = ""
         else:
             if current_command:
@@ -1956,7 +1957,7 @@ class _ArgvlistReader:
         return commands
 
     @classmethod
-    def processcommand(cls, reader, command, replace=True):
+    def processcommand(cls, reader, command, replace=True, name=None):
         # Iterate through each word of the command substituting as
         # appropriate to construct the new command string. This
         # string is then broken up into exec argv components using
@@ -1969,8 +1970,8 @@ class _ArgvlistReader:
                     continue
 
                 new_arg = ""
-                new_word = reader._replace(word)
-                new_word = reader._replace(new_word)
+                new_word = reader._replace(word, name=name)
+                new_word = reader._replace(new_word, name=name)
                 new_word = Replacer._unescape(new_word)
                 new_arg += new_word
                 newcommand += new_arg

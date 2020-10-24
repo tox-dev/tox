@@ -438,10 +438,7 @@ class TestIniParserAgainstCommandsKey:
     """Test parsing commands with substitutions"""
 
     def test_command_substitution_recursion_error_same_section(self, newconfig):
-        expected = (
-            r"\('testenv:a', 'commands'\) already in "
-            r"\[\('testenv:a', None\), \('testenv:a', 'commands'\)\]"
-        )
+        expected = r"\('testenv:a', 'commands'\) already in \[\('testenv:a', 'commands'\)\]"
         with pytest.raises(tox.exception.ConfigError, match=expected):
             newconfig(
                 """
@@ -452,9 +449,9 @@ class TestIniParserAgainstCommandsKey:
 
     def test_command_substitution_recursion_error_other_section(self, newconfig):
         expected = (
-            r"\('testenv:base', 'foo'\) already in "
-            r"\[\('testenv:py27', None\), \('testenv:base', 'foo'\), "
-            r"\('testenv:py27', 'commands'\)\]"
+            r"\('testenv:py27', 'commands'\) already in "
+            r"\[\('testenv:py27', 'commands'\), "
+            r"\('testenv:base', 'foo'\)\]"
         )
         with pytest.raises(tox.exception.ConfigError, match=expected):
             newconfig(
@@ -472,7 +469,7 @@ class TestIniParserAgainstCommandsKey:
         # could be optimised away, or emit a warning, or give a custom error
         expected = (
             r"\('testenv:base', 'foo'\) already in "
-            r"\[\('testenv:py27', None\), \('testenv:base', 'foo'\)\]"
+            r"\[\('testenv:py27', 'commands'\), \('testenv:base', 'foo'\)\]"
         )
         with pytest.raises(tox.exception.ConfigError, match=expected):
             newconfig(
