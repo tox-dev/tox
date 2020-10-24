@@ -1,5 +1,6 @@
 """Handle reporting from within tox"""
 import logging
+import os
 import sys
 
 from colorama import Fore, Style, init
@@ -37,12 +38,16 @@ class ToxHandler(logging.StreamHandler):
             color = Fore.GREEN
         fmt = f"{Style.BRIGHT}{Fore.MAGENTA}%(name)s: {color}%(message)s{Style.RESET_ALL}"
         if enabled_level <= logging.DEBUG:
-            locate = "pathname" if enabled_level > logging.DEBUG else "module"
-            fmt = f"%(levelname)s {fmt}{Style.DIM} [%(asctime)s] [%({locate})s:%(lineno)d]{Style.RESET_ALL}"
+            fmt = f"%(relativeCreated)d %(levelname)s {fmt}{Style.DIM} [%(pathname)s:%(lineno)d]{Style.RESET_ALL}"
         formatter = logging.Formatter(fmt)
         return formatter
 
     def format(self, record: logging.LogRecord) -> str:
+        # shorten the pathname to start from within the site-packages folder
+        basename = os.path.dirname(record.pathname)
+        sys_path_match = sorted([p for p in sys.path if basename.startswith(p)], key=len, reverse=True)
+        record.pathname = record.pathname[len(sys_path_match[0]) + 1 :]
+
         if record.levelno >= logging.ERROR:
             return self.error_formatter.format(record)
         if record.levelno >= logging.WARNING:
@@ -73,3 +78,7 @@ def _get_level(verbosity: int) -> int:
 def _clean_handlers(log: logging.Logger) -> None:
     for log_handler in list(log.handlers):  # remove handlers of libraries
         log.removeHandler(log_handler)
+
+
+class HandledError(RuntimeError):
+    """Error that has been handled so no need for stack trace"""

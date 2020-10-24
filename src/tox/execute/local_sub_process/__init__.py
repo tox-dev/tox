@@ -89,7 +89,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         return exit_code
 
     @staticmethod
-    def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
+    def get_stream_file_no(key: str) -> Generator[int, 'Popen[bytes]', None]:
         if sys.platform != "win32" and getattr(sys, key).isatty():
             # on UNIX if tty is set let's forward it via a pseudo terminal
             import pty

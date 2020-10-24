@@ -8,6 +8,7 @@ from tox.config.cli.parse import get_options
 from tox.config.main import Config
 from tox.config.override import Override
 from tox.config.source.ini import ToxIni
+from tox.report import HandledError
 from tox.session.state import State
 from tox.tox_env.builder import build_tox_envs
 
@@ -16,8 +17,11 @@ def run(args: Optional[Sequence[str]] = None) -> None:
     try:
         result = main(sys.argv[1:] if args is None else args)
     except Exception as exception:
-        logging.error("%s| %s", type(exception).__name__, str(exception))
-        result = -2
+        if isinstance(exception, HandledError):
+            logging.error("%s| %s", type(exception).__name__, str(exception))
+            result = -2
+        else:
+            raise
     except KeyboardInterrupt:
         result = -2
     raise SystemExit(result)

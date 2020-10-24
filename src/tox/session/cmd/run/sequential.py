@@ -3,6 +3,8 @@ Run tox environments in sequential order.
 """
 from typing import Dict
 
+from colorama import Fore
+
 from tox.config.cli.parser import ToxParser
 from tox.execute.api import Outcome
 from tox.plugin.impl import impl
@@ -26,19 +28,22 @@ def run_sequential(state: State) -> int:
     for name in state.env_list:
         tox_env = state.tox_envs[name]
         status_codes[name] = run_one(tox_env, state.options.recreate, state.options.no_test)
-    return report(status_codes, state.tox_envs)
+    return report(status_codes, state.tox_envs, state.options.is_colored)
 
 
-def report(status_dict: Dict[str, int], tox_envs: Dict[str, RunToxEnv]) -> int:  # noqa
+def report(status_dict: Dict[str, int], tox_envs: Dict[str, RunToxEnv], is_colored: bool) -> int:  # noqa
+    def _print(color: int, msg: str) -> None:
+        print(f"{color if is_colored else ''}{msg}{Fore.RESET if is_colored else ''}")
+
+    all_ok = True
     for name, status in status_dict.items():
-        if status == Outcome.OK:
-            msg = "OK  "
-        else:
-            msg = f"FAIL code {status}"
-        print(f"  {name}: {msg}")
-    if all(value == Outcome.OK for name, value in status_dict.items()):
-        print("  congratulations :)")
+        ok = status == Outcome.OK
+        msg = "OK  " if ok else f"FAIL code {status}"
+        _print(Fore.GREEN if ok else Fore.RED, f"  {name}: {msg}")
+        all_ok = ok and all_ok
+    if all_ok:
+        _print(Fore.GREEN, "  congratulations :)")
         return Outcome.OK
     else:
-        print("  evaluation failed :(")
+        _print(Fore.RED, "  evaluation failed :(")
         return -1

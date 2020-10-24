@@ -3,11 +3,10 @@ Declare the abstract base class for tox environments that handle the Python lang
 """
 from abc import ABC
 from pathlib import Path
-from typing import List, Optional, Sequence, cast
+from typing import Dict, List, Optional, Sequence, cast
 
 from virtualenv import session_via_cli
 from virtualenv.create.creator import Creator
-from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.run.session import Session
 
 from tox.config.cli.parser import Parsed
@@ -19,9 +18,23 @@ from ..api import Deps, Python, PythonInfo
 
 
 class VirtualEnv(Python, ABC):
+    """A python executor that uses the virtualenv project with pip"""
+
     def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed):
         super().__init__(conf, core, options)
         self._virtualenv_session: Optional[Session] = None  # type: ignore[no-any-unimported]
+
+    def default_pass_env(self) -> List[str]:
+        env = super().default_pass_env()
+        env.append("PIP_*")  # we use pip as installer
+        env.append("VIRTUALENV_*")  # we use virtualenv as isolation creator
+        return env
+
+    def default_set_env(self) -> Dict[str, str]:
+        env = super().default_set_env()
+        env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+        env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "1"
+        return env
 
     def executor(self) -> Execute:
         return LocalSubProcessExecutor()
@@ -30,12 +43,12 @@ class VirtualEnv(Python, ABC):
     def session(self) -> Session:  # type: ignore[no-any-unimported]
         if self._virtualenv_session is None:
             args = [
-                "--no-periodic-update",
-                "-p",
-                self.base_python.executable,
                 "--clear",
                 str(cast(Path, self.conf["env_dir"])),
             ]
+            base_python: List[str] = self.conf["base_python"]
+            for base in base_python:
+                args.extend(["-p", base])
             self._virtualenv_session = session_via_cli(args, setup_logging=False)
         return self._virtualenv_session
 
@@ -46,9 +59,12 @@ class VirtualEnv(Python, ABC):
     def create_python_env(self) -> None:
         self.session.run()
 
-    def _get_python(self, base_python: str) -> PythonInfo:
-        info = get_interpreter(base_python)
-        return PythonInfo(info.version_info, info.system_executable)
+    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
+        try:
+            return PythonInfo(self.creator.interpreter.version_info, self.creator.interpreter.system_executable)
+        except RuntimeError:
+            pass
+        return None
 
     def paths(self) -> List[Path]:
         """Paths to add to the executable"""

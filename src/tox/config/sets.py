@@ -97,7 +97,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
                 else:
                     value = self.default(conf, src.name) if callable(self.default) else self.default
             if self.post_process is not None:
-                self.post_process(value, conf)  # noqa
+                value = self.post_process(value, conf)  # noqa
             self._cache = value
         return cast(T, self._cache)
 

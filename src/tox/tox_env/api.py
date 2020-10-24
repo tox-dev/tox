@@ -1,15 +1,16 @@
 """
 Defines the abstract base traits of a tox environment.
 """
-import itertools
 import logging
 import os
+import re
 import shutil
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Union, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Union
 
+from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute, Outcome
 from tox.execute.request import ExecuteRequest
@@ -18,23 +19,6 @@ from .info import Info
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
-
-if sys.platform == "win32":
-    PASS_ENV_ALWAYS = [
-        "SYSTEMDRIVE",  # needed for pip6
-        "SYSTEMROOT",  # needed for python's crypto module
-        "PATHEXT",  # needed for discovering executables
-        "COMSPEC",  # needed for distutils cygwin compiler
-        "PROCESSOR_ARCHITECTURE",  # platform.machine()
-        "USERPROFILE",  # needed for `os.path.expanduser()`
-        "MSYSTEM",  # controls paths printed format
-        "TEMP",
-        "TMP",
-    ]
-else:
-    PASS_ENV_ALWAYS = [
-        "TMPDIR",
-    ]
 
 
 class ToxEnv(ABC):
@@ -47,7 +31,7 @@ class ToxEnv(ABC):
         self._cache = Info(self.conf["env_dir"])
         self._paths: List[Path] = []
         self.logger = logging.getLogger(self.conf["env_name"])
-        self._env_vars: Dict[str, str] = {}
+        self._env_vars: Optional[Dict[str, str]] = None
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
@@ -63,18 +47,6 @@ class ToxEnv(ABC):
             value=self.conf.name,
         )
         self.conf.add_config(
-            keys=["set_env", "setenv"],
-            of_type=Dict[str, str],
-            default={},
-            desc="environment variables to set when running commands in the tox environment",
-        )
-        self.conf.add_config(
-            keys=["pass_env", "passenv"],
-            of_type=List[str],
-            default=[],
-            desc="environment variables to pass on to the tox environment",
-        )
-        self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
             default=lambda conf, name: conf.core["work_dir"] / conf[name]["env_name"],
@@ -87,47 +59,106 @@ class ToxEnv(ABC):
             desc="a folder that is always reset at the start of the run",
         )
 
+        def set_env_post_process(values: Dict[str, str], config: Config) -> Dict[str, str]:
+            env = self.default_set_env()
+            env.update(values)
+            return env
+
+        self.conf.add_config(
+            keys=["set_env", "setenv"],
+            of_type=Dict[str, str],
+            default={},
+            desc="environment variables to set when running commands in the tox environment",
+            post_process=set_env_post_process,
+        )
+
+        def pass_env_post_process(values: List[str], config: Config) -> List[str]:
+            values.extend(self.default_pass_env())
+            return sorted(list({k: None for k in values}.keys()))
+
+        self.conf.add_config(
+            keys=["pass_env", "passenv"],
+            of_type=List[str],
+            default=[],
+            desc="environment variables to pass on to the tox environment",
+            post_process=pass_env_post_process,
+        )
+
+    def default_set_env(self) -> Dict[str, str]:
+        return {}
+
+    def default_pass_env(self) -> List[str]:
+        env = [
+            "https_proxy",
+            "http_proxy",
+            "no_proxy",
+        ]
+        if sys.platform == "win32":
+            env.extend(
+                [
+                    "TEMP",
+                    "TMP",
+                ]
+            )
+        else:
+            env.append("TMPDIR")
+        return env
+
     def setup(self) -> None:
         """
         1. env dir exists
         2. contains a runner with the same type.
         """
-        env_tmp_dir = cast(Path, self.conf["env_tmp_dir"])
-        if env_tmp_dir.exists():
-            shutil.rmtree(str(env_tmp_dir), ignore_errors=True)
-        env_dir = cast(Path, self.conf["env_dir"])
+        env_dir: Path = self.conf["env_dir"]
         conf = {"name": self.conf.name, "type": type(self).__name__}
-        with self._cache.compare(conf, ToxEnv.__name__) as (eq, old):
-            try:
-                if eq is True:
-                    return
-                # if either the name or type changed and already exists start over
-                self.clean()
-            finally:
-                env_dir.mkdir(exist_ok=True, parents=True)
+        try:
+            with self._cache.compare(conf, ToxEnv.__name__) as (eq, old):
+                try:
+                    if eq is True:
+                        return
+                    # if either the name or type changed and already exists start over
+                    self.clean()
+                finally:
+                    env_dir.mkdir(exist_ok=True, parents=True)
+        finally:
+            self._handle_env_tmp_dir()
+
+    def _handle_env_tmp_dir(self) -> None:
+        """Ensure exists and empty"""
+        env_tmp_dir: Path = self.conf["env_tmp_dir"]
+        if env_tmp_dir.exists():
+            logging.debug("removing %s", env_tmp_dir)
+            shutil.rmtree(env_tmp_dir, ignore_errors=True)
+        env_tmp_dir.mkdir(parents=True)
 
     def clean(self) -> None:
-        env_dir = self.conf["env_dir"]
+        env_dir: Path = self.conf["env_dir"]
         if env_dir.exists():
-            logging.info("removing %s", env_dir)
-            shutil.rmtree(cast(Path, env_dir))
+            logging.info("remove tox env folder %s", env_dir)
+            shutil.rmtree(env_dir)
+        self._cache.reset()
 
     @property
     def environment_variables(self) -> Dict[str, str]:
-        if self._env_vars:
+        if self._env_vars is not None:
             return self._env_vars
-        pass_env: List[str] = self.conf["pass_env"]
-        pass_env.extend(PASS_ENV_ALWAYS)
+        result: Dict[str, str] = {}
 
+        pass_env: List[str] = self.conf["pass_env"]
+        glob_pass_env = [re.compile(e.replace("*", ".*")) for e in pass_env if "*" in e]
+        literal_pass_env = [e for e in pass_env if "*" not in e]
+        for env in literal_pass_env:
+            if env in os.environ:
+                result[env] = os.environ[env]
+        if glob_pass_env:
+            for env, value in os.environ.items():
+                if any(g.match(env) is not None for g in glob_pass_env):
+                    result[env] = value
         set_env: Dict[str, str] = self.conf["set_env"]
-        for key, value in os.environ.items():
-            if key in pass_env:
-                set_env[key] = value
-        self._env_vars.update(set_env)
-        self._env_vars["PATH"] = os.pathsep.join(
-            itertools.chain((str(i) for i in self._paths), os.environ.get("PATH", "").split(os.pathsep))
-        )
-        return self._env_vars
+        result.update(set_env)
+        result["PATH"] = os.pathsep.join([str(i) for i in self._paths] + os.environ.get("PATH", "").split(os.pathsep))
+        self._env_vars = result
+        return result
 
     def execute(
         self,
@@ -143,7 +174,6 @@ class ToxEnv(ABC):
         request = ExecuteRequest(cmd, cwd, self.environment_variables, allow_stdin)
         self.logger.warning("%s run => %s$ %s", self.conf["env_name"], request.cwd, request.shell_cmd)
         outcome = self._executor(request=request, show_on_standard=show_on_standard, colored=self.options.colored)
-        self.logger.info("done => code %d in %s for  %s", outcome.exit_code, outcome.elapsed, outcome.shell_cmd)
         return outcome
 
     @staticmethod

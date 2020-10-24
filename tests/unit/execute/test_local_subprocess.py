@@ -146,8 +146,8 @@ def test_local_execute_basic_fail(caplog, capsys):
     assert len(caplog.records) == 1
     record = caplog.records[0]
     assert record.levelno == logging.CRITICAL
-    assert record.msg == "exit code %d for %s: %s in %s"
-    _code, _cwd, _cmd, _duration = record.args
+    assert record.msg == "exit %d (%.2fs) cwd %s: %s"
+    _code, _duration, _cwd, _cmd = record.args
     assert _code == 3
     assert _cwd == cwd
     assert _cmd == request.shell_cmd

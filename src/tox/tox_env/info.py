@@ -17,10 +17,14 @@ class Info:
             value = {}
         self._content = value
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(path={self._path})"
+
     @contextmanager
     def compare(
         self, value: Any, section: str, sub_section: Optional[str] = None
     ) -> Iterator[Tuple[bool, Optional[Any]]]:
+        """Cache"""
         old = self._content.get(section)
         if sub_section is not None and old is not None:
             old = old.get(sub_section)
@@ -39,8 +43,8 @@ class Info:
                     self._content[section][sub_section] = value
             self._write()
 
-    def update(self, section: str, value: str) -> None:
-        self._content[section] = value
+    def reset(self) -> None:
+        self._content = {}
 
     def _write(self) -> None:
         self._path.write_text(json.dumps(self._content, indent=2))

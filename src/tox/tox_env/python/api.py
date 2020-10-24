@@ -62,6 +62,21 @@ class Python(ToxEnv, ABC):
             value=lambda: self.env_site_package_dir(),
         )
 
+    def default_pass_env(self) -> List[str]:
+        env = super().default_pass_env()
+        if sys.platform == "win32":
+            env.extend(
+                [
+                    "SYSTEMROOT",  # needed for python's crypto module
+                    "PATHEXT",  # needed for discovering executables
+                    "COMSPEC",  # needed for distutils cygwin compiler
+                    "PROCESSOR_ARCHITECTURE",  # platform.machine()
+                    "USERPROFILE",  # needed for `os.path.expanduser()`
+                    "MSYSTEM",  # controls paths printed format
+                ]
+            )
+        return env
+
     def default_base_python(self, conf: "Config", env_name: str) -> List[str]:
         spec = PythonSpec.from_string_spec(env_name)
         if spec.implementation is not None:
@@ -98,9 +113,7 @@ class Python(ToxEnv, ABC):
         if self._base_python_searched is False:
             base_pythons = self.conf["base_python"]
             self._base_python_searched = True
-            for base_python in base_pythons:
-                self._base_python = self._get_python(base_python)
-                break
+            self._base_python = self._get_python(base_pythons)
             if self._base_python is None:
                 self.no_base_python_found(base_pythons)
         return cast(PythonInfo, self._base_python)
@@ -110,7 +123,7 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _get_python(self, base_python: str) -> PythonInfo:
+    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
         raise NotImplementedError
 
     def cached_install(self, deps: Deps, section: str, of_type: str) -> bool:
