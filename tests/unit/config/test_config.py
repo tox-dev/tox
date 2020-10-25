@@ -437,6 +437,179 @@ class TestGetcontextname:
 class TestIniParserAgainstCommandsKey:
     """Test parsing commands with substitutions"""
 
+    def test_command_substitution_recursion_error_same_section(self, newconfig):
+        expected = (
+            r"\('testenv:a', 'commands'\) already in "
+            r"\[\('testenv:a', None\), \('testenv:a', 'commands'\)\]"
+        )
+        with pytest.raises(tox.exception.ConfigError, match=expected):
+            newconfig(
+                """
+                [testenv:a]
+                commands = {[testenv:a]commands}
+                """,
+            )
+
+    def test_command_substitution_recursion_error_other_section(self, newconfig):
+        expected = (
+            r"\('testenv:base', 'foo'\) already in "
+            r"\[\('testenv:py27', None\), \('testenv:base', 'foo'\), "
+            r"\('testenv:py27', 'commands'\)\]"
+        )
+        with pytest.raises(tox.exception.ConfigError, match=expected):
+            newconfig(
+                """
+                [testenv:base]
+                foo = {[testenv:py27]commands}
+
+                [testenv:py27]
+                commands = {[testenv:base]foo}
+                """,
+            )
+
+    def test_command_substitution_recursion_error_unnecessary(self, newconfig):
+        # TODO: There is no reason for this recursion error to occur, so it
+        # could be optimised away, or emit a warning, or give a custom error
+        expected = (
+            r"\('testenv:base', 'foo'\) already in "
+            r"\[\('testenv:py27', None\), \('testenv:base', 'foo'\)\]"
+        )
+        with pytest.raises(tox.exception.ConfigError, match=expected):
+            newconfig(
+                """
+                [testenv:base]
+                foo = {[testenv:base]foo}
+
+                [testenv:py27]
+                bar = {[testenv:base]foo}
+                setenv =
+                    FOO = foo
+                commands = {env:FOO:{[testenv:base]foo}}
+                """,
+            )
+
+    def test_command_missing_substitution_simple(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:py27]
+            commands = {env:{env:FOO}}
+            """,
+        )
+        envconfig = config.envconfigs["py27"]
+
+        expected = "MissingSubstitution: FOO"
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.commands
+
+    def test_command_missing_substitution_setenv(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:py27]
+            setenv =
+                FOO = {env:{env:FOO}}
+            commands = {env:FOO}
+            """,
+        )
+        envconfig = config.envconfigs["py27"]
+
+        expected = "MissingSubstitution: FOO"
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.setenv["FOO"]
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.commands
+
+    def test_command_missing_substitution_inherit(self, newconfig):
+        config = newconfig(
+            """
+            [testenv]
+            setenv =
+                FOO = {[testenv:py27]commands}
+
+            [testenv:py27]
+            commands = {env:FOO}
+            """,
+        )
+        envconfig = config.envconfigs["py27"]
+
+        expected = "MissingSubstitution: FOO"
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.commands
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.setenv["FOO"]
+
+    def test_command_missing_substitution_other_section(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:base]
+            bar = {[testenv:py27]foo}
+
+            [testenv:py27]
+            foo = {env:FOO}
+            setenv =
+                FOO = {[testenv:base]bar}
+            commands = {env:FOO}
+            """,
+        )
+        envconfig = config.envconfigs["py27"]
+
+        expected = "MissingSubstitution: FOO"
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.commands
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.setenv["FOO"]
+
+    def test_command_missing_substitution_multi_env(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:py27]
+            setenv =
+                FOO = {env:BAR}
+                BAR = {env:FOO}
+            commands = {env:BAR}
+            """,
+        )
+        envconfig = config.envconfigs["py27"]
+
+        expected = "MissingSubstitution: BAR"
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.commands
+
+        expected = "MissingSubstitution: FOO"
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.setenv["FOO"]
+
+    def test_command_missing_substitution_complex(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:base]
+            bar = {env:BAR}
+            setenv =
+                BAR = {[testenv:py27]foo}
+
+            [testenv:py27]
+            foo = {env:FOO}
+            setenv =
+                FOO = {[testenv:base]bar}
+            commands = {env:FOO}
+            """,
+        )
+        envconfig = config.envconfigs["py27"]
+
+        expected = "MissingSubstitution: BAR"
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.setenv["FOO"]
+
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            envconfig.commands
+
     def test_command_substitution_from_other_section(self, newconfig):
         config = newconfig(
             """
@@ -516,6 +689,21 @@ class TestIniParserAgainstCommandsKey:
         reader.addsubstitutions([r"argpos"])
         x = reader.getargvlist("commands")
         assert x == [["thing", "arg1", "argpos", "endarg"]]
+
+    def test_command_missing_substitution(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:a]
+            setenv =
+              FOO = foo
+            commands = {env:FOO}
+            """,
+        )
+        reader = SectionReader("testenv:a", config._cfg)
+
+        expected = "MissingSubstitution: FOO"
+        with pytest.raises(tox.exception.MissingSubstitution, match=expected):
+            reader.getargvlist("commands")
 
     def test_command_env_substitution(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""
@@ -2713,7 +2901,7 @@ class TestSetenv:
         )
         assert config.envconfigs["env1"].setenv["X"] == "5"
 
-    def test_setenv_recursive_direct(self, newconfig):
+    def test_setenv_recursive_direct_with_default(self, newconfig):
         config = newconfig(
             """
             [testenv:env1]
@@ -2722,6 +2910,27 @@ class TestSetenv:
         """,
         )
         assert config.envconfigs["env1"].setenv["X"] == "3"
+
+    def test_setenv_recursive_direct_with_default_nested(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:env1]
+            setenv =
+                X = {env:X:{env:X:3}}
+        """,
+        )
+        assert config.envconfigs["env1"].setenv["X"] == "3"
+
+    def test_setenv_recursive_direct_without_default(self, newconfig):
+        config = newconfig(
+            """
+            [testenv:env1]
+            setenv =
+                X = {env:X}
+        """,
+        )
+        with pytest.raises(tox.exception.MissingSubstitution):
+            config.envconfigs["env1"].setenv["X"]
 
     def test_setenv_overrides(self, newconfig):
         config = newconfig(
