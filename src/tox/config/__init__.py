@@ -793,7 +793,7 @@ def tox_addoption(parser):
             passenv.add("TMPDIR")
         for spec in value:
             for name in os.environ:
-                if fnmatchcase(name.upper(), spec.upper()):
+                if fnmatchcase(name, spec):
                     passenv.add(name)
         return passenv
 

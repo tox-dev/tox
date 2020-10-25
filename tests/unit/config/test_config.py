@@ -1350,6 +1350,21 @@ class TestConfigTestEnv:
         assert "A1" in env.passenv
         assert "A2" in env.passenv
 
+    def test_passenv_is_case_sensitive(self, newconfig, monkeypatch):
+        monkeypatch.setenv("FOO", "upper case foo")
+        monkeypatch.setenv("fOo", "mixed case foo")
+        monkeypatch.setenv("foo", "lower case foo")
+        config = newconfig(
+            """
+            [testenv]
+            passenv=FOO
+        """,
+        )
+        env = config.envconfigs["python"]
+        assert "FOO" in env.passenv
+        assert "fOo" not in env.passenv
+        assert "foo" not in env.passenv
+
     def test_passenv_glob_from_global_env(self, newconfig, monkeypatch):
         monkeypatch.setenv("A1", "a1")
         monkeypatch.setenv("A2", "a2")

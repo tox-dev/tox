@@ -788,7 +788,7 @@ def test_env_variables_added_to_pcall(tmpdir, mocksession, newconfig, monkeypatc
 
         [testenv:python]
         commands=python -V
-        passenv = x123
+        passenv = X123
         setenv =
             ENV_VAR = value
             ESCAPED_VAR = \{value\}
