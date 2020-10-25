@@ -603,9 +603,14 @@ class VirtualEnv(object):
     def setupenv(self):
         if self.envconfig._missing_subs:
             self.status = (
-                "unresolvable substitution(s): {}. "
+                "unresolvable substitution(s):\n    {}\n"
                 "Environment variables are missing or defined recursively.".format(
-                    ",".join(["'{}'".format(m) for m in self.envconfig._missing_subs]),
+                    "\n    ".join(
+                        [
+                            "{}: '{}'".format(section_key, exc.name)
+                            for section_key, exc in sorted(self.envconfig._missing_subs.items())
+                        ],
+                    ),
                 )
             )
             return

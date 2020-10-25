@@ -17,6 +17,7 @@ from threading import Thread
 
 import pluggy
 import py
+import six
 import toml
 from packaging import requirements
 from packaging.utils import canonicalize_name
@@ -1011,13 +1012,27 @@ class TestenvConfig:
         #: set of factors
         self.factors = factors
         self._reader = reader
-        self._missing_subs = []
+        self._missing_subs = {}
         """Holds substitutions that could not be resolved.
 
         Pre 2.8.1 missing substitutions crashed with a ConfigError although this would not be a
         problem if the env is not part of the current testrun. So we need to remember this and
         check later when the testenv is actually run and crash only then.
         """
+
+    # Python 3 only, as __getattribute__ is ignored for old-style types on Python 2
+    def __getattribute__(self, name):
+        rv = object.__getattribute__(self, name)
+        if isinstance(rv, Exception):
+            raise rv
+        return rv
+
+    if six.PY2:
+
+        def __getattr__(self, name):
+            if name in self._missing_subs:
+                raise self._missing_subs[name]
+            raise AttributeError(name)
 
     def get_envbindir(self):
         """Path to directory where scripts/binaries reside."""
@@ -1409,9 +1424,10 @@ class ParseIni(object):
                 if env_attr.postprocess:
                     res = env_attr.postprocess(testenv_config=tc, value=res)
             except tox.exception.MissingSubstitution as e:
-                tc._missing_subs.append(e.name)
-                res = e.FLAG
-            setattr(tc, env_attr.name, res)
+                tc._missing_subs[env_attr.name] = res = e
+            # On Python 2, exceptions are handled in __getattr__
+            if not six.PY2 or not isinstance(res, Exception):
+                setattr(tc, env_attr.name, res)
             if atype in ("path", "string", "basepython"):
                 reader.addsubstitutions(**{env_attr.name: res})
         return tc
