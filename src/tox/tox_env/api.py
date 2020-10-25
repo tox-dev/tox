@@ -8,7 +8,7 @@ import shutil
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Union, cast
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
@@ -49,13 +49,13 @@ class ToxEnv(ABC):
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: conf.core["work_dir"] / conf[name]["env_name"],
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / cast(str, self.conf["env_name"]),
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: conf.core["work_dir"] / conf[name]["env_name"] / "tmp",
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / cast(str, self.conf["env_name"]) / "tmp",
             desc="a folder that is always reset at the start of the run",
         )
 

@@ -52,7 +52,7 @@ def tox_add_core_config(core: ConfigSet) -> None:
     core.add_config(
         keys=["min_version", "minversion"],
         of_type=Version,
-        default=current_version,
+        default=Version(current_version),
         desc="Define the minimal tox version required to run",
     )
     core.add_config(

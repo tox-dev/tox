@@ -47,6 +47,7 @@ def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_
 
                     [testenv]
                     package = wheel
+                    package_env = .package
                     """,
             "setup.cfg": """
                     [metadata]
@@ -58,8 +59,6 @@ def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_
                         =src
                     [options.packages.find]
                     where = src
-                    [bdist_wheel]
-                    universal = 1
                 """,
             "pyproject.toml": f"""
                     [build-system]
@@ -79,7 +78,7 @@ def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_
     packages = package_env.perform_packaging()
     assert len(packages) == 1
     package = packages[0]
-    assert package.name == "magic-1.2.3-py2.py3-none-any.whl"
+    assert package.name == "magic-1.2.3-py3-none-any.whl"
 
     result = outcome.out.split("\n")
     py_messages = [i for i in result if "py: " in i]

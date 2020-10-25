@@ -1,7 +1,5 @@
-from configparser import ConfigParser, NoSectionError
 from typing import Any, Dict
 
-from tox.config.sets import ConfigSet
 from tox.plugin.impl import impl
 from tox.tox_env.register import ToxEnvRegister
 
@@ -9,18 +7,6 @@ from .api import Pep517VirtualEnvPackageArtifact
 
 
 class Pep517VirtualEnvPackageWheel(Pep517VirtualEnvPackageArtifact):
-    @staticmethod
-    def default_universal_wheel(core: ConfigSet) -> bool:
-        parser = ConfigParser()
-        success = parser.read(filenames=[str(core["tox_root"] / "setup.cfg")])
-        universal = False
-        if success:
-            try:
-                universal = parser.get("bdist_wheel", "universal") == "1"
-            except NoSectionError:
-                pass
-        return universal
-
     @property
     def build_type(self) -> str:
         return "wheel"

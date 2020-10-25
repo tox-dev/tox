@@ -24,7 +24,8 @@ def replace(
         start, end, match = _find_replace_part(value)
         if not match:
             break
-        replaced = _replace_match(conf, name, section_loader, value[start + 1 : end])
+        to_replace = value[start + 1 : end]
+        replaced = _replace_match(conf, name, section_loader, to_replace)
         new_value = value[:start] + replaced + value[end + 1 :]
         if new_value == value:  # if we're not making progress stop (circular reference?)
             break
@@ -39,6 +40,7 @@ def _find_replace_part(value: str) -> Tuple[int, int, bool]:
         if end == -1:
             continue
         if end > 1 and value[end - 1] == "\\":  # ignore escaped
+            end += 1
             continue
         while start != -1:
             start = value.rfind("{", 0, end)
@@ -71,7 +73,7 @@ def _replace_match(
 
 _REPLACE_REF = re.compile(
     rf"""
-    (\[({BASE_TEST_ENV}(:(?P<env>[^]]+))?|(?P<section>\w+))\])? # env/section
+    (\[(?P<full_env>{BASE_TEST_ENV}(:(?P<env>[^]]+))?|(?P<section>\w+))\])? # env/section
     (?P<key>[a-zA-Z0-9_]+) # key
     (:(?P<default>.*))? # default value
 """,
@@ -92,6 +94,8 @@ def replace_reference(
         # otherwise try first in core, then in current env
         try:
             key = settings["key"]
+            if settings["section"] is None and settings["full_env"] == BASE_TEST_ENV:
+                settings["section"] = BASE_TEST_ENV
             for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, section_loader):
                 try:
                     return src[key]

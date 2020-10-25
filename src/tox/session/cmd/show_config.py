@@ -40,11 +40,11 @@ def print_conf(conf: ConfigSet) -> None:
         value = conf[key]
         result = str_conf_value(value)
         if isinstance(result, list):
-            result = "{}{}".format("\n", "\n".join(f"  {i}" for i in result))
+            result = "{}{}".format("\n", "\n".join(f"  {i}" for i in result)) if result else ""
         print("{} ={}{}".format(key, " " if result != "" and not result.startswith("\n") else "", result))
     unused = conf.unused()
     if unused:
-        print(f"!!! unused: {','.join(unused)}")
+        print(f"# !!! unused: {', '.join(unused)}")
 
 
 def str_conf_value(value: Any) -> Union[List[str], str]:

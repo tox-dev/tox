@@ -21,8 +21,8 @@ class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip"""
 
     def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed):
-        super().__init__(conf, core, options)
         self._virtualenv_session: Optional[Session] = None  # type: ignore[no-any-unimported]
+        super().__init__(conf, core, options)
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()

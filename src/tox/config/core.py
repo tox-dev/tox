@@ -1,5 +1,6 @@
 """Define configuration options that are part of the core tox configurations"""
 from pathlib import Path
+from typing import cast
 
 from tox.config.sets import ConfigSet
 from tox.config.source.api import EnvList
@@ -11,19 +12,19 @@ def tox_add_core_config(core: ConfigSet) -> None:
     core.add_config(
         keys=["work_dir", "toxworkdir"],
         of_type=Path,
-        default=lambda conf, _: conf.core["tox_root"] / ".tox",
+        default=lambda conf, _: cast(Path, conf.core["tox_root"]) / ".tox",
         desc="working directory",
     )
     core.add_config(
         keys=["temp_dir"],
         of_type=Path,
-        default=lambda conf, _: conf.core["tox_root"] / ".temp",
+        default=lambda conf, _: cast(Path, conf.core["tox_root"]) / ".temp",
         desc="temporary directory cleaned at start",
     )
     core.add_config(
         keys=["env_list", "envlist"],
         of_type=EnvList,
-        default=[],
+        default=EnvList([]),
         desc="define environments to automatically run",
     )
     core.add_config(

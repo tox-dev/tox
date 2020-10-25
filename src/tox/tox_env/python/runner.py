@@ -2,7 +2,7 @@
 A tox run environment that handles the Python language.
 """
 from abc import ABC
-from typing import List, NoReturn, Set
+from typing import List, NoReturn
 
 from packaging.requirements import Requirement
 
@@ -28,15 +28,6 @@ class PythonRun(Python, RunToxEnv, ABC):
             desc="skip running missing interpreters",
         )
         self.add_package_conf()
-
-    def add_package_conf(self) -> None:
-        if self.core["no_package"] is False:
-            self.conf.add_config(
-                keys=["extras"],
-                of_type=Set[str],
-                default=[],
-                desc="extras to install of the target package",
-            )
 
     def no_base_python_found(self, base_pythons: List[str]) -> NoReturn:
         if self.core["skip_missing_interpreters"]:

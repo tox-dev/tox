@@ -70,13 +70,13 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
         self.conf.add_config(
             keys=["meta_dir"],
             of_type=Path,
-            default=lambda conf, name: conf[name]["env_dir"] / ".meta",
+            default=lambda conf, name: cast(Path, self.conf["env_dir"]) / ".meta",
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["pkg_dir"],
             of_type=Path,
-            default=lambda conf, name: conf[name]["env_dir"] / "dist",
+            default=lambda conf, name: cast(Path, self.conf["env_dir"]) / "dist",
             desc="directory assigned to the tox environment",
         )
 

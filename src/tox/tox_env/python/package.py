@@ -3,7 +3,7 @@ A tox build environment that handles Python packages.
 """
 import sys
 from abc import ABC, abstractmethod
-from typing import List, NoReturn, Union
+from typing import List, NoReturn, Optional, Union
 
 from packaging.requirements import Requirement
 
@@ -37,5 +37,5 @@ class PythonPackage(Python, PackageToxEnv, ABC):
     def build_requires(self) -> List[Requirement]:
         raise NotImplementedError
 
-    def default_base_python(self, conf: Config, env_name: str) -> List[str]:
+    def default_base_python(self, conf: Config, env_name: Optional[str]) -> List[str]:
         return [sys.executable]

@@ -3,7 +3,7 @@ from configparser import ConfigParser, SectionProxy
 from copy import deepcopy
 from itertools import chain
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Type, TypeVar
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
@@ -14,9 +14,16 @@ from tox.config.source.ini.replace import BASE_TEST_ENV, CORE_PREFIX, replace
 
 TEST_ENV_PREFIX = f"{BASE_TEST_ENV}:"
 
+V = TypeVar("V")
+
 
 class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary)"""
+
+    def to(self, raw: str, of_type: Type[V]) -> V:
+        if of_type == IniLoader:
+            return self._src[raw]  # type: ignore[return-value]
+        return super(IniLoader, self).to(raw, of_type)
 
     def __init__(
         self,
@@ -49,19 +56,13 @@ class IniLoader(StrConvert, Loader[str]):
     def setup_with_conf(self, conf: ConfigSet) -> None:
         if self.name is None:
             return  # no inheritance for the base tox environment
-        src = self._src
-
-        class IniLoaderFromKey(IniLoader):
-            def __init__(self, key: str) -> None:  # noqa
-                loader = src[key]
-                self.__dict__ = loader.__dict__
-
         # allow environment inheritance
         conf.add_config(
             keys="base",
-            of_type=List[IniLoaderFromKey],
+            of_type=List[IniLoader],
             default=self._default_base,
             desc="inherit missing keys from these sections",
+            # builder=lambda raw: self._src[raw],
         )
         self._base = conf["base"]
 

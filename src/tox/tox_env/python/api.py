@@ -44,9 +44,9 @@ Deps = Sequence[Union[Path, Requirement]]
 
 class Python(ToxEnv, ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed) -> None:
-        super(Python, self).__init__(conf, core, options)
         self._base_python: Optional[PythonInfo] = None
         self._base_python_searched: bool = False
+        super(Python, self).__init__(conf, core, options)
 
     def register_config(self) -> None:
         super().register_config()
@@ -77,10 +77,10 @@ class Python(ToxEnv, ABC):
             )
         return env
 
-    def default_base_python(self, conf: "Config", env_name: str) -> List[str]:
+    def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:
         spec = PythonSpec.from_string_spec(env_name)
         if spec.implementation is not None:
-            if spec.implementation.lower() in ("cpython", "pypy"):
+            if spec.implementation.lower() in ("cpython", "pypy") and env_name is not None:
                 return [env_name]
         return [sys.executable]
 

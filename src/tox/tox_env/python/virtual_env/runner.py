@@ -1,12 +1,10 @@
 """
 A tox python environment runner that uses the virtualenv project.
 """
-from typing import Optional, Tuple
+from typing import Optional, Set
 
+from tox.config.main import Config
 from tox.plugin.impl import impl
-from tox.tox_env.python.virtual_env.package.artifact.wheel import (
-    Pep517VirtualEnvPackageWheel,
-)
 from tox.tox_env.register import ToxEnvRegister
 
 from ..runner import PythonRun
@@ -22,53 +20,52 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     def id() -> str:
         return "virtualenv"
 
-    def add_package_conf(self) -> None:
-        if self.core["no_package"] is True:
-            return
+    def add_package_conf(self) -> bool:
+        if super().add_package_conf() is False:
+            return False
         self.conf.add_config(
             keys="package",
             of_type=PackageType,
             default=PackageType.sdist,
             desc=f"package installation mode - {' | '.join(i.name for i in PackageType)} ",
         )
-        if self.conf["package"] == PackageType.skip:
-            return
-        super().add_package_conf()
-        self.core.add_config(
+        pkg_type: PackageType = self.conf["package"]
+        if pkg_type == PackageType.skip:
+            return False
+        self.conf.add_constant(
+            keys=["package_tox_env_type"],
+            desc="tox package type used to package",
+            value=virtual_env_package_id(pkg_type),
+        )
+
+        def default_package_name(conf: Config, name: Optional[str]) -> str:
+            result = ".package"
+
+            # when building wheels we need to ensure that the built package is compatible with the target environment
+            # compatibility is documented within https://www.python.org/dev/peps/pep-0427/#file-name-convention
+            # a wheel tag looks like: {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
+            # python only code are often compatible at major level (unless universal wheel in which case both 2 and 3)
+            # c-extension codes are trickier, but as of today both poetry/setuptools uses pypa/wheels logic
+            # https://github.com/pypa/wheel/blob/master/src/wheel/bdist_wheel.py#L234-L280
+            # technically, the build tags can be passed in as CLI args to the build backend, but for now it's easier
+            # to just create a new build env for every target env
+            if pkg_type is PackageType.wheel:
+                result = f"{result}-{self.conf['env_name']}"
+            return result
+
+        self.conf.add_config(
             keys=["package_env", "isolated_build_env"],
             of_type=str,
-            default=".package",
+            default=default_package_name,
             desc="tox environment used to package",
         )
-        package = self.conf["package"]
         self.conf.add_config(
-            keys="package_tox_env_type",
-            of_type=str,
-            default=virtual_env_package_id(package),
-            desc="tox package type used to package",
+            keys=["extras"],
+            of_type=Set[str],
+            default=set(),
+            desc="extras to install of the target package",
         )
-        if self.conf["package"] is PackageType.wheel:
-            self.conf.add_config(
-                keys="universal_wheel",
-                of_type=bool,
-                default=Pep517VirtualEnvPackageWheel.default_universal_wheel(self.core),
-                desc="tox package type used to package",
-            )
-
-    def has_package(self) -> bool:
-        return self.core["no_package"] or self.conf["package"] is not PackageType.skip
-
-    def package_env_name_type(self) -> Optional[Tuple[str, str]]:
-        if not self.has_package():
-            return None
-        package = self.conf["package"]
-        package_env_type = self.conf["package_tox_env_type"]
-        name = self.core["package_env"]
-        # we can get away with a single common package if: sdist, dev, universal wheel
-        if package is PackageType.wheel and self.conf["universal_wheel"] is False:
-            # if version specific wheel one per env
-            name = "{}-{}".format(name, self.conf["env_name"])
-        return name, package_env_type
+        return True
 
     def install_package(self) -> None:
         if self.package_env is not None:
