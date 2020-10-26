@@ -131,7 +131,7 @@ class Outcome:
     def assert_success(self, logger: logging.Logger) -> None:
         if self.exit_code != self.OK:
             self._assert_fail(logger)
-        self._log_run(logging.INFO, logger)
+        self.log_run_done(logging.INFO, logger)
 
     def _assert_fail(self, logger: logging.Logger) -> NoReturn:
         if self.show_on_standard is False:
@@ -141,11 +141,11 @@ class Outcome:
                 print(Fore.RED, file=sys.stderr, end="")
                 print(self.err, file=sys.stderr, end="")
                 print(Fore.RESET, file=sys.stderr)
-        self._log_run(logging.CRITICAL, logger)
+        self.log_run_done(logging.CRITICAL, logger)
         raise SystemExit(self.exit_code)
 
-    def _log_run(self, lvl: int, logger: logging.Logger) -> None:
-        logger.log(lvl, "exit %d (%.2fs) cwd %s: %s", self.exit_code, self.elapsed, self.request.cwd, self.shell_cmd)
+    def log_run_done(self, lvl: int, logger: logging.Logger) -> None:
+        logger.log(lvl, "exit %d (%.2fs) %s> %s", self.exit_code, self.elapsed, self.request.cwd, self.shell_cmd)
 
     @property
     def elapsed(self) -> float:

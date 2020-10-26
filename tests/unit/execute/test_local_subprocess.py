@@ -151,7 +151,7 @@ def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixt
     assert len(caplog.records) == 1
     record = caplog.records[0]
     assert record.levelno == logging.CRITICAL
-    assert record.msg == "exit %d (%.2fs) cwd %s: %s"
+    assert record.msg == "exit %d (%.2fs) %s> %s"
     _code, _duration, _cwd, _cmd = record.args
     assert _code == 3
     assert _cwd == cwd

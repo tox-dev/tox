@@ -28,15 +28,18 @@ def run_commands(tox_env: ToxEnv, no_test: bool) -> int:
     if no_test is False:
         keys = ("commands_pre", "commands", "commands_post")
         for key in keys:
-            for cmd in cast(List[Command], tox_env.conf[key]):
+            for at, cmd in enumerate(cast(List[Command], tox_env.conf[key])):
                 current_status = tox_env.execute(
                     cmd.args,
                     cwd=tox_env.conf["change_dir"],
                     allow_stdin=True,
                     show_on_standard=True,
+                    run_id=f"{key}[{at}]",
                 )
-                if current_status.exit_code != Outcome.OK:
-                    return status
+                try:
+                    current_status.assert_success(tox_env.logger)
+                except SystemExit as exception:
+                    return exception.code
     return status
 
 

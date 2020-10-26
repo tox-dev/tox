@@ -98,4 +98,4 @@ class VirtualEnv(Python, ABC):
         result.assert_success(self.logger)
 
     def perform_install(self, install_command: Sequence[str]) -> Outcome:
-        return self.execute(cmd=install_command, allow_stdin=False)
+        return self.execute(cmd=install_command, allow_stdin=False, run_id="install")

@@ -94,7 +94,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
                 ]
                 if self.build_backend_obj:
                     cmd.append(self.build_backend_obj)
-                result = self.execute(cmd=cmd, allow_stdin=False)
+                result = self.execute(cmd=cmd, allow_stdin=False, run_id="build requires")
                 result.assert_success(self.logger)
                 with open(str(requires_file)) as file_handler:
                     self._build_requires = json.load(file_handler)
@@ -143,7 +143,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
             ]
             if self.build_backend_obj:
                 cmd.append(self.build_backend_obj)
-            result = self.execute(cmd=cmd, allow_stdin=False)
+            result = self.execute(cmd=cmd, allow_stdin=False, run_id="package meta")
             result.assert_success(self.logger)
             dist_info = next(self.meta_folder.iterdir())
             self._distribution_meta = Distribution.at(dist_info)

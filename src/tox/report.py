@@ -55,11 +55,23 @@ class ToxHandler(logging.StreamHandler):
         return self.remaining_formatter.format(record)
 
 
+class LowerInfoLevel(logging.Filter):
+    MAP = {"INFO": "DEBUG", "DEBUG": "TRACE", "TRACE": "TRACE"}
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelname in LowerInfoLevel.MAP:
+            record.levelno = max(record.levelno - 10, 0)
+            record.levelname = LowerInfoLevel.MAP[record.levelname]
+        return True
+
+
 def setup_report(verbosity: int, is_colored: bool) -> None:
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
-
+    lower_info_level = LowerInfoLevel()
+    logging.getLogger("distlib.util").addFilter(lower_info_level)
+    logging.getLogger("filelock").addFilter(lower_info_level)
     handler = ToxHandler(level)
     LOGGER.addHandler(handler)
 

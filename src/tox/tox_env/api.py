@@ -166,13 +166,21 @@ class ToxEnv(ABC):
         allow_stdin: bool,
         show_on_standard: Optional[bool] = None,
         cwd: Optional[Path] = None,
+        run_id: str = "",
     ) -> Outcome:
         if cwd is None:
             cwd = self.core["tox_root"]
         if show_on_standard is None:
             show_on_standard = self.options.verbosity > 3
         request = ExecuteRequest(cmd, cwd, self.environment_variables, allow_stdin)
-        self.logger.warning("%s run => %s$ %s", self.conf["env_name"], request.cwd, request.shell_cmd)
+        if _CWD == request.cwd:
+            repr_cwd = ""
+        else:
+            try:
+                repr_cwd = f" {_CWD.relative_to(cwd)}"
+            except ValueError:
+                repr_cwd = str(cwd)
+        self.logger.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd)
         outcome = self._executor(request=request, show_on_standard=show_on_standard, colored=self.options.colored)
         return outcome
 
@@ -180,3 +188,6 @@ class ToxEnv(ABC):
     @abstractmethod
     def id() -> str:
         raise NotImplementedError
+
+
+_CWD = Path.cwd()
