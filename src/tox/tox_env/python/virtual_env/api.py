@@ -74,6 +74,9 @@ class VirtualEnv(Python, ABC):
     def env_site_package_dir(self) -> Path:
         return cast(Path, self.creator.purelib)
 
+    def env_python(self) -> Path:
+        return cast(Path, self.creator.exe)
+
     def install_python_packages(
         self,
         packages: Deps,
@@ -84,12 +87,12 @@ class VirtualEnv(Python, ABC):
         if not packages:
             return
         install_command = [self.creator.exe, "-m", "pip", "--disable-pip-version-check", "install"]
-        if develop is True:
-            install_command.append("-e")
         if no_deps:
             install_command.append("--no-deps")
         if force_reinstall:
             install_command.append("--force-reinstall")
+        if develop is True:
+            install_command.append("-e")
         install_command.extend(str(i) for i in packages)
         result = self.perform_install(install_command)
         result.assert_success(self.logger)

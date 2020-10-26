@@ -35,8 +35,10 @@ class Builder:
 
     def _run(self) -> None:
         for name in self._config:
+            if self.options.env is not None and name not in self.options.env:
+                continue  # do not build environments we'll not use
             if name in self._pkg_envs:
-                continue
+                continue  # do not build here packaging environments, they are built later
             env_conf = copy.deepcopy(self._config[name])
             tox_env = self._build_run_env(env_conf, name)
             self.tox_env_to_runner[name] = tox_env

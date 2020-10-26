@@ -1,8 +1,9 @@
 """
 A tox run environment that handles the Python language.
 """
-from abc import ABC
-from typing import List, NoReturn
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any, Dict, List, NoReturn, cast
 
 from packaging.requirements import Requirement
 
@@ -37,15 +38,28 @@ class PythonRun(Python, RunToxEnv, ABC):
     def setup(self) -> None:
         """setup the tox environment"""
         super().setup()
-        self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
+        self.install_deps()
 
         if self.package_env is not None:
             package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
             self.cached_install(package_deps, PythonRun.__name__, "package_deps")
-            self.install_package()
+        self.install_package()
+
+    def install_deps(self) -> None:
+        self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
 
     def install_package(self) -> None:
         if self.package_env is not None:
-            package = self.package_env.perform_packaging()
-            if package:
-                self.install_python_packages(package)
+            package: List[Path] = self.package_env.perform_packaging()
+        else:
+            package = self.get_pkg_no_env() if self.has_package else []
+        if package:
+            self.install_python_packages(package, **self.install_package_args())  # type: ignore[no-untyped-call]
+
+    def get_pkg_no_env(self) -> List[Path]:
+        # by default in Python just forward the root folder to the installer
+        return [cast(Path, self.core["tox_root"])]
+
+    @abstractmethod
+    def install_package_args(self) -> Dict[str, Any]:
+        raise NotImplementedError

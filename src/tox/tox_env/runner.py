@@ -62,8 +62,7 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="if set to True the content of the output will always be shown  when running in parallel mode",
         )
-        if self.add_package_conf() is True:
-            self.has_package = True
+        self.has_package = self.add_package_conf()
 
     def add_package_conf(self) -> bool:
         """If this returns True package_env and package_tox_env_type configurations must be defined"""
@@ -82,10 +81,10 @@ class RunToxEnv(ToxEnv, ABC):
         return True
 
     def set_package_env(self) -> Generator[Tuple[str, str], PackageToxEnv, None]:
-        if self.has_package is False:
+        if not self.has_package:
             return
-        name = self.conf["package_env"]
         of_type = self.conf["package_tox_env_type"]
+        name = self.conf["package_env"]
         package_tox_env = yield name, of_type
         self.package_env = package_tox_env
 

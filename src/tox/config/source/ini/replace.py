@@ -106,6 +106,8 @@ def replace_reference(
                 return default
         except Exception:  # noqa # ignore errors - but don't replace them
             pass
+    # we should raise here - but need to implement escaping factor conditionals
+    # raise ValueError(f"could not replace {value} from {current_env}")
     return f"{{{value}}}"
 
 

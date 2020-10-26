@@ -4,6 +4,7 @@ Group together configuration values that belong together (such as base tox confi
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -86,6 +87,13 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
                     from tox.config.source.ini.convert import StrConvert
 
                     value = StrConvert().to(override.value, self.of_type)
+
+                    # relative override paths are relative to tox root unless the tox root itself, which is cwd
+                    if isinstance(value, Path) and not value.is_absolute():
+                        if key in ["tox_root", "toxinidir"]:
+                            value = value.absolute()  # type: ignore[assignment]
+                        else:
+                            value = cast(Path, conf.core["tox_root"]) / value  # type: ignore[assignment]
                     break
             else:
                 for key in self.keys:

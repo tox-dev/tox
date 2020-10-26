@@ -51,6 +51,11 @@ class Python(ToxEnv, ABC):
             desc="the python environments site package",
             value=lambda: self.env_site_package_dir(),
         )
+        self.conf.add_constant(
+            ["env_python", "envpython"],
+            desc="python executable from within the tox environment",
+            value=lambda: self.env_python(),
+        )
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()
@@ -80,6 +85,11 @@ class Python(ToxEnv, ABC):
         If we have the python we just need to look at the last path under prefix.
         E.g., Debian derivatives change the site-packages to dist-packages, so we need to fix it for site-packages.
         """
+        raise NotImplementedError
+
+    @abstractmethod
+    def env_python(self) -> Path:
+        """The python executable within the tox environment"""
         raise NotImplementedError
 
     def setup(self) -> None:

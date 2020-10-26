@@ -1,7 +1,7 @@
 from .api import PackageType
+from .artifact.dev import LegacyDevVirtualEnvPackage
 from .artifact.sdist import Pep517VirtualEnvPackageSdist
 from .artifact.wheel import Pep517VirtualEnvPackageWheel
-from .dev import Pep517VirtualEnvPackageDev
 
 
 def virtual_env_package_id(of_type: PackageType) -> str:
@@ -10,5 +10,5 @@ def virtual_env_package_id(of_type: PackageType) -> str:
     elif of_type is PackageType.wheel:
         return Pep517VirtualEnvPackageWheel.id()
     elif of_type is PackageType.dev:
-        return Pep517VirtualEnvPackageDev.id()
+        return LegacyDevVirtualEnvPackage.id()
     raise KeyError(PackageType.name)

@@ -14,6 +14,7 @@ from .api import ToxEnv
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
+    from tox.tox_env.python.api import Deps
 
 
 class PackageToxEnv(ToxEnv, ABC):
@@ -46,3 +47,6 @@ class PackageToxEnv(ToxEnv, ABC):
             except Recreate:
                 self.clean()
                 self.setup()
+
+    def package_deps(self) -> "Deps":
+        return []
