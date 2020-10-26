@@ -1,0 +1,1 @@
+Raise ``MissingSubstitution`` on access of broken ini setting. - by :user:`jayvdb`

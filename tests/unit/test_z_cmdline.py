@@ -1080,12 +1080,19 @@ def test_envtmpdir(initproj, cmd):
 
 
 def test_missing_env_fails(initproj, cmd):
-    initproj("foo", filedefs={"tox.ini": "[testenv:foo]\ncommands={env:VAR}"})
+    ini = """
+    [testenv:foo]
+    install_command={env:FOO}
+    commands={env:VAR}
+    """
+    initproj("foo", filedefs={"tox.ini": ini})
     result = cmd()
     result.assert_fail()
     assert result.out.endswith(
-        "foo: unresolvable substitution(s): 'VAR'."
-        " Environment variables are missing or defined recursively.\n",
+        "foo: unresolvable substitution(s):\n"
+        "    commands: 'VAR'\n"
+        "    install_command: 'FOO'\n"
+        "Environment variables are missing or defined recursively.\n",
     )
 
 
