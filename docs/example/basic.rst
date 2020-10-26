@@ -86,7 +86,7 @@ Currently only the old format is supported via ``legacy_tox_ini``, a native impl
    commands = pytest
    """
 
-Note that when you define a ``pyproject.toml`` you must define the ``build-requires`` section per PEP-518.
+Note that when you define a ``pyproject.toml`` you must define the ``build-system`` section per PEP-518.
 
 Specifying a platform
 -----------------------------------------------
