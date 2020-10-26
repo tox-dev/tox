@@ -1,7 +1,7 @@
-from tox.pytest import check_os_environ
+from tox.pytest import MonkeyPatch, ToxProjectCreator, check_os_environ
 
 
-def test_init_base(tox_project):
+def test_init_base(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """
@@ -18,7 +18,7 @@ def test_init_base(tox_project):
     }
 
 
-def test_env_var(monkeypatch):
+def test_env_var(monkeypatch: MonkeyPatch) -> None:
     with monkeypatch.context() as m:
         m.setenv("MORE", "B")
         m.setenv("EXTRA", "1")
@@ -29,11 +29,11 @@ def test_env_var(monkeypatch):
             m.setenv("MORE", "D")
             m.delenv("EXTRA")
 
-            from tox.pytest import pytest as tox_pytest
+            from tox.pytest import pytest as tox_pytest  # type: ignore[attr-defined]
 
             exp = "test changed environ extra {'MAGIC': 'A'} miss {'EXTRA': '1'} diff {'MORE = B vs D'}"
 
-            def fail(msg):
+            def fail(msg: str) -> None:
                 assert msg == exp
 
             m.setattr(tox_pytest, "fail", fail)

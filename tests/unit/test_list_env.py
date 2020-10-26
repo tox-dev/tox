@@ -1,10 +1,11 @@
 import os
 import textwrap
 
+from tox.pytest import ToxProjectCreator
 from tox.version import __version__
 
 
-def test_list_empty(tox_project):
+def test_list_empty(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": ""})
     outcome = project.run("c")
     outcome.assert_success()

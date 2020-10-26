@@ -3,7 +3,7 @@ import os
 from tox.pytest import ToxProjectCreator
 
 
-def test_setuptools_package_py_project(tox_project: ToxProjectCreator):
+def test_setuptools_package_py_project(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """

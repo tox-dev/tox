@@ -3,9 +3,10 @@ import signal
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 
-def handler(signum, frame):
+def handler(signum: int, frame: Any) -> None:
     print(f"how about no signal {signum}", file=sys.stdout)
     sys.stdout.flush()  # force output now before we get killed
 

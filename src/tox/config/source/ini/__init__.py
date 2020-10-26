@@ -222,4 +222,6 @@ class ToxIni(Source):
 __all__ = (
     "ToxIni",
     "IniLoader",
+    "filter_for_env",
+    "find_envs",
 )

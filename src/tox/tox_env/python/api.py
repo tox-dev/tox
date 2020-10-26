@@ -4,17 +4,7 @@ Declare the abstract base class for tox environments that handle the Python lang
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import (
-    Any,
-    Dict,
-    List,
-    NamedTuple,
-    NoReturn,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from typing import Any, Dict, List, NamedTuple, NoReturn, Optional, Sequence, Union, cast
 
 from packaging.requirements import Requirement
 from virtualenv.discovery.py_spec import PythonSpec

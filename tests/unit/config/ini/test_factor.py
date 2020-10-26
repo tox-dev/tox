@@ -7,7 +7,7 @@ from tox.config.source.ini import filter_for_env, find_envs
 from tox.pytest import ToxProjectCreator
 
 
-def complex_example():
+def complex_example() -> str:
     return dedent(
         """
     default
@@ -21,7 +21,7 @@ def complex_example():
     )
 
 
-def test_factor_env_discover():
+def test_factor_env_discover() -> None:
     result = list(find_envs(complex_example()))
     assert result == [
         "py",
@@ -39,7 +39,7 @@ def test_factor_env_discover():
 
 
 @pytest.mark.parametrize("env", list(find_envs(complex_example())))
-def test_factor_env_filter(env):
+def test_factor_env_filter(env: str) -> None:
     text = complex_example()
     result = filter_for_env(text, name=env)
     assert "default" in result
@@ -61,7 +61,7 @@ def test_factor_env_filter(env):
         assert "complex" not in result
 
 
-def test_factor_env_list(tox_project: ToxProjectCreator):
+def test_factor_env_list(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """
@@ -86,7 +86,7 @@ def test_factor_env_list(tox_project: ToxProjectCreator):
     ]
 
 
-def test_simple_env_list(tox_project: ToxProjectCreator):
+def test_simple_env_list(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """
@@ -99,7 +99,7 @@ def test_simple_env_list(tox_project: ToxProjectCreator):
     assert list(config) == ["docs", "flake8"]
 
 
-def test_factor_config(tox_project: ToxProjectCreator):
+def test_factor_config(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """
@@ -129,7 +129,7 @@ def test_factor_config(tox_project: ToxProjectCreator):
             assert "Django>=1.6,<1.7" in deps
 
 
-def test_factor_config_no_env_list_creates_env(tox_project: ToxProjectCreator):
+def test_factor_config_no_env_list_creates_env(tox_project: ToxProjectCreator) -> None:
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
     project = tox_project(
         {

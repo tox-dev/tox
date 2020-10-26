@@ -2,16 +2,18 @@ import logging
 import sys
 import textwrap
 from pathlib import Path
+from typing import Callable, Dict
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 
 from tox.config.cli.parse import get_options
 from tox.config.override import Override
+from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+from tox.session.state import State
 
 
 @pytest.fixture()
-def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
+def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
     to = tmp_path / "tox.ini"
     to.write_text(
         textwrap.dedent(
@@ -38,7 +40,7 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
 
 
 @pytest.fixture()
-def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
+def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
     to = tmp_path / "tox.ini"
     to.write_text(
         textwrap.dedent(
@@ -51,7 +53,7 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch):
     return to
 
 
-def test_ini_empty(empty_ini, core_handlers):
+def test_ini_empty(empty_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
     parsed, unknown, handlers = get_options()
     assert vars(parsed) == {
         "colored": "no",
@@ -69,7 +71,7 @@ def test_ini_empty(empty_ini, core_handlers):
     assert handlers == core_handlers
 
 
-def test_ini_exhaustive_parallel_values(exhaustive_ini, core_handlers):
+def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
     parsed, unknown, handlers = get_options()
     assert vars(parsed) == {
         "colored": "yes",
@@ -89,7 +91,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini, core_handlers):
     assert handlers == core_handlers
 
 
-def test_ini_help(exhaustive_ini, capsys):
+def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
     with pytest.raises(SystemExit) as context:
         get_options("-h")
     assert context.value.code == 0
@@ -98,7 +100,7 @@ def test_ini_help(exhaustive_ini, capsys):
     assert f"config file '{exhaustive_ini}' active (changed via env var TOX_CONFIG_FILE)"
 
 
-def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
+def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
     parsed, _, __ = get_options()
@@ -121,7 +123,9 @@ def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog):
     }
 
 
-def test_bad_option_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog, value_error):
+def test_bad_option_cli_ini(
+    tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture, value_error: Callable[[str], str]
+) -> None:
     caplog.set_level(logging.WARNING)
     to = tmp_path / "tox.ini"
     to.write_text(

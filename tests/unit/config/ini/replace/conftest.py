@@ -1,14 +1,25 @@
 from contextlib import contextmanager
+from typing import Callable, ContextManager, Iterator, Optional
 
 import pytest
 
+from tox.config.main import Config
 from tox.pytest import ToxProjectCreator
 
 
+class Result:
+    def __init__(self) -> None:
+        self.config: Optional[Config] = None
+        self.val: Optional[str] = None
+
+
+ReplaceOne = Callable[[str], ContextManager[Result]]
+
+
 @pytest.fixture
-def replace_one(tox_project: ToxProjectCreator):
+def replace_one(tox_project: ToxProjectCreator) -> ReplaceOne:
     @contextmanager
-    def example(conf):
+    def example(conf: str) -> Iterator[Result]:
         project = tox_project(
             {
                 "tox.ini": f"""
@@ -21,11 +32,6 @@ def replace_one(tox_project: ToxProjectCreator):
             """,
             },
         )
-
-        class Result:
-            def __init__(self):
-                self.config = None
-                self.val = None
 
         result = Result()
         yield result

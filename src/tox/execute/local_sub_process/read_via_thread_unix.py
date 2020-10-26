@@ -27,7 +27,10 @@ class ReadViaThreadUnix(ReadViaThread):
     def _drain_stream(self) -> bytes:
         result = bytearray()  # on closed file read returns empty
         while True:
-            last_result = os.read(self.file_no, 1)
+            try:
+                last_result = os.read(self.file_no, 1)
+            except OSError:  # ignore failing to read the pipe - already closed
+                break
             if last_result:
                 result.append(last_result[0])
             else:

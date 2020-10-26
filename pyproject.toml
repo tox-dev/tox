@@ -6,8 +6,9 @@ build-backend = "setuptools.build_meta"
 line-length = 120
 
 [tool.isort]
+line_length = 120
 profile = "black"
-known_first_party = ["tox_ini_fmt"]
+known_first_party = ["tox", "tests"]
 
 [tool.setuptools_scm]
 write_to = "src/tox/version.py"

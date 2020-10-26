@@ -137,22 +137,26 @@ class ConfigSet:
         desc: str,
         post_process: Optional[Callable[[V, "Config"], V]] = None,
         overwrite: bool = False,
-    ) -> None:
+    ) -> ConfigDynamicDefinition[V]:
         """
         Add configuration value.
         """
         keys_ = self._make_keys(keys)
         for key in keys_:
             if key in self._defined and overwrite is False:
-                # already added
-                return
+                defined = self._defined[key]
+                if isinstance(defined, ConfigDynamicDefinition):
+                    return defined
+                raise TypeError(f"{keys} already defined with differing type {type(defined).__name__}")
         definition = ConfigDynamicDefinition(keys_, of_type, default, desc, post_process)
         self._add_conf(keys_, definition)
+        return definition
 
-    def add_constant(self, keys: Sequence[str], desc: str, value: V) -> None:
+    def add_constant(self, keys: Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
         keys_ = self._make_keys(keys)
         definition = ConfigConstantDefinition(keys_, desc, value)
         self._add_conf(keys, definition)
+        return definition
 
     def make_package_conf(self) -> None:
         self._raw.make_package_conf()

@@ -1,7 +1,7 @@
 from tox.pytest import ToxProjectCreator
 
 
-def test_setuptools_project_no_package(tox_project: ToxProjectCreator):
+def test_setuptools_project_no_package(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """

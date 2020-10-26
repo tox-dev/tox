@@ -8,17 +8,15 @@ import wheel
 
 from tox.execute.api import Outcome
 from tox.execute.request import ExecuteRequest
-from tox.pytest import ToxProjectCreator
+from tox.pytest import MonkeyPatch, ToxProjectCreator
 from tox.tox_env.python.virtual_env.api import VirtualEnv
-from tox.tox_env.python.virtual_env.package.artifact.wheel import (
-    Pep517VirtualEnvPackageWheel,
-)
+from tox.tox_env.python.virtual_env.package.artifact.wheel import Pep517VirtualEnvPackageWheel
 
 
 @pytest.fixture()
-def use_host_virtualenv(monkeypatch):
+def use_host_virtualenv(monkeypatch: MonkeyPatch) -> None:
     # disable install
-    def perform_install(self, install_command: Sequence[str]) -> Outcome:
+    def perform_install(self: VirtualEnv, install_command: Sequence[str]) -> Outcome:
         install_command = ("python", "-c", "import sys; print(sys.argv)") + tuple(install_command)
         return old_cmd(self, install_command)
 
@@ -26,19 +24,19 @@ def use_host_virtualenv(monkeypatch):
     monkeypatch.setattr(VirtualEnv, "perform_install", perform_install)
 
     # return hots path
-    def paths(self) -> List[Path]:
+    def paths(self: VirtualEnv) -> List[Path]:
         return [Path(sys.executable).parent]
 
     monkeypatch.setattr(VirtualEnv, "paths", paths)
 
     # return hots path
-    def create_python_env(self):
+    def create_python_env(self: VirtualEnv) -> Outcome:
         return Outcome(ExecuteRequest(["a"], Path(), {}, False), False, Outcome.OK, "", "", 0, 1.0, ["a"])
 
     monkeypatch.setattr(VirtualEnv, "create_python_env", create_python_env)
 
 
-def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_host_virtualenv):
+def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_host_virtualenv: None) -> None:
     project = tox_project(
         {
             "tox.ini": """

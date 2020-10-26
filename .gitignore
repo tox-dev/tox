@@ -33,3 +33,4 @@ credentials.json
 pip-wheel-metadata
 .DS_Store
 .coverage.*
+Dockerfile

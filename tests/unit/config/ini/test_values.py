@@ -2,7 +2,7 @@ from tox.config.source.api import Command
 from tox.pytest import ToxProjectCreator
 
 
-def test_commands(tox_project: ToxProjectCreator):
+def test_commands(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """

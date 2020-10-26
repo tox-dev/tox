@@ -1,0 +1,6 @@
+.tox*
+.*_cache
+*.egg-info
+Dockerfile
+build
+dist

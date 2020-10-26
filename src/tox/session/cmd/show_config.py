@@ -19,7 +19,7 @@ def tox_add_option(parser: ToxParser) -> None:
     env_list_flag(our)
 
 
-def display_config(state: State) -> None:
+def display_config(state: State) -> int:
     first = True
     if not state.options.env:
         print("[tox]")
@@ -33,6 +33,7 @@ def display_config(state: State) -> None:
         print(f"[testenv:{name}]")
         print(f"type = {type(tox_env).__name__}")
         print_conf(tox_env.conf)
+    return 0
 
 
 def print_conf(conf: ConfigSet) -> None:

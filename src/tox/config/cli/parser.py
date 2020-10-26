@@ -6,27 +6,9 @@ import argparse
 import logging
 import os
 import sys
-from argparse import (
-    SUPPRESS,
-    Action,
-    ArgumentDefaultsHelpFormatter,
-    ArgumentParser,
-    Namespace,
-    _SubParsersAction,
-)
+from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace, _SubParsersAction
 from itertools import chain
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, cast
 
 from tox.config.source.ini.convert import StrConvert
 from tox.plugin import NAME

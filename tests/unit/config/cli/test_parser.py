@@ -1,9 +1,13 @@
+from typing import Optional
+
 import pytest
+from pytest_mock import MockerFixture
 
 from tox.config.cli.parser import Parsed, ToxParser
+from tox.pytest import MonkeyPatch
 
 
-def test_parser_const_with_default_none(monkeypatch):
+def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("TOX_ALPHA", "2")
     parser = ToxParser.base()
     parser.add_argument(
@@ -24,7 +28,14 @@ def test_parser_const_with_default_none(monkeypatch):
 @pytest.mark.parametrize("no_color", [None, "0", "1"])
 @pytest.mark.parametrize("force_color", [None, "0", "1"])
 @pytest.mark.parametrize("tox_color", [None, "bad", "no", "yes"])
-def test_parser_color(monkeypatch, mocker, no_color, force_color, tox_color, is_atty):
+def test_parser_color(
+    monkeypatch: MonkeyPatch,
+    mocker: MockerFixture,
+    no_color: Optional[str],
+    force_color: Optional[str],
+    tox_color: Optional[str],
+    is_atty: bool,
+) -> None:
     for key, value in {"NO_COLOR": no_color, "TOX_COLORED": tox_color, "FORCE_COLOR": force_color}.items():
         if value is None:
             monkeypatch.delenv(key, raising=False)

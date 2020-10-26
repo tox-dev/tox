@@ -1,20 +1,24 @@
+from typing import Callable, Dict
+
 import pytest
 
 from tox.config.cli.parse import get_options
 from tox.config.override import Override
+from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+from tox.session.state import State
 
 
-def test_verbose(monkeypatch):
+def test_verbose(monkeypatch: MonkeyPatch) -> None:
     parsed, _, __ = get_options("-v", "-v")
     assert parsed.verbosity == 4
 
 
-def test_verbose_compound(monkeypatch):
+def test_verbose_compound(monkeypatch: MonkeyPatch) -> None:
     parsed, _, __ = get_options("-vv")
     assert parsed.verbosity == 4
 
 
-def test_verbose_no_test_skip_missing(monkeypatch):
+def test_verbose_no_test_skip_missing(monkeypatch: MonkeyPatch) -> None:
     parsed, _, __ = get_options("--notest", "-vv", "--skip-missing-interpreters", "false", "--runner", "virtualenv")
     assert vars(parsed) == {
         "colored": "no",
@@ -29,7 +33,9 @@ def test_verbose_no_test_skip_missing(monkeypatch):
     }
 
 
-def test_env_var_exhaustive_parallel_values(monkeypatch, core_handlers):
+def test_env_var_exhaustive_parallel_values(
+    monkeypatch: MonkeyPatch, core_handlers: Dict[str, Callable[[State], int]]
+) -> None:
     monkeypatch.setenv("TOX_COMMAND", "run-parallel")
     monkeypatch.setenv("TOX_VERBOSE", "5")
     monkeypatch.setenv("TOX_QUIET", "1")
@@ -60,7 +66,7 @@ def test_env_var_exhaustive_parallel_values(monkeypatch, core_handlers):
     assert handlers == core_handlers
 
 
-def test_ini_help(monkeypatch, capsys):
+def test_ini_help(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
     monkeypatch.setenv("TOX_VERBOSE", "5")
     monkeypatch.setenv("TOX_QUIET", "1")
     with pytest.raises(SystemExit) as context:
@@ -72,7 +78,9 @@ def test_ini_help(monkeypatch, capsys):
     assert "from env var TOX_QUIET" in out
 
 
-def test_bad_env_var(monkeypatch, capsys, caplog, value_error):
+def test_bad_env_var(
+    monkeypatch: MonkeyPatch, capsys: CaptureFixture, caplog: LogCaptureFixture, value_error: Callable[[str], str]
+) -> None:
     monkeypatch.setenv("TOX_VERBOSE", "should-be-number")
     monkeypatch.setenv("TOX_QUIET", "1.00")
     parsed, _, __ = get_options()

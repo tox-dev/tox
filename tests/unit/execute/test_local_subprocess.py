@@ -4,23 +4,26 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import List
 
 import psutil
 import pytest
 from colorama import Fore
+from pytest_mock import MockerFixture
 
 from tox.execute.api import SIGINT, Outcome
 from tox.execute.local_sub_process import CREATION_FLAGS, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest
+from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 
 
-def test_local_execute_basic_pass(capsys, caplog):
+def test_local_execute_basic_pass(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[sys.executable, "-c", "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"],
         cwd=Path(),
-        env=os.environ,
+        env=os.environ.copy(),
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
@@ -35,13 +38,13 @@ def test_local_execute_basic_pass(capsys, caplog):
     assert not caplog.records
 
 
-def test_local_execute_basic_pass_show_on_standard(capsys, caplog):
+def test_local_execute_basic_pass_show_on_standard(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[sys.executable, "-c", "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"],
         cwd=Path(),
-        env=os.environ,
+        env=os.environ.copy(),
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=True, colored=True)
@@ -56,13 +59,15 @@ def test_local_execute_basic_pass_show_on_standard(capsys, caplog):
     assert not caplog.records
 
 
-def test_local_execute_basic_pass_show_on_standard_newline_flush(capsys, caplog):
+def test_local_execute_basic_pass_show_on_standard_newline_flush(
+    capsys: CaptureFixture, caplog: LogCaptureFixture
+) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[sys.executable, "-c", "import sys; print('out'); print('yay')"],
         cwd=Path(),
-        env=os.environ,
+        env=os.environ.copy(),
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=True, colored=False)
@@ -76,7 +81,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(capsys, caplog)
     assert not caplog.records
 
 
-def test_local_execute_write_a_lot(capsys, caplog):
+def test_local_execute_write_a_lot(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
     count = 10000
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
@@ -93,7 +98,7 @@ def test_local_execute_write_a_lot(capsys, caplog):
             ).format(count),
         ],
         cwd=Path(),
-        env=os.environ,
+        env=os.environ.copy(),
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
@@ -104,7 +109,7 @@ def test_local_execute_write_a_lot(capsys, caplog):
     assert outcome.err == expected_err
 
 
-def test_local_execute_basic_fail(caplog, capsys):
+def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     cwd = Path().absolute()
@@ -113,7 +118,7 @@ def test_local_execute_basic_fail(caplog, capsys):
         "-c",
         "import sys; print('out', end=''); print('err', file=sys.stderr, end=''); sys.exit(3)",
     ]
-    request = ExecuteRequest(cmd=cmd, cwd=cwd, env=os.environ, allow_stdin=False)
+    request = ExecuteRequest(cmd=cmd, cwd=cwd, env=os.environ.copy(), allow_stdin=False)
 
     # run test
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
@@ -155,10 +160,12 @@ def test_local_execute_basic_fail(caplog, capsys):
     assert _duration > 0
 
 
-def test_command_does_not_exist(capsys, caplog):
+def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
-    request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os.environ, allow_stdin=False)
+    request = ExecuteRequest(
+        cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os.environ.copy(), allow_stdin=False
+    )
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
 
     assert bool(outcome) is False
@@ -169,7 +176,7 @@ def test_command_does_not_exist(capsys, caplog):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="TODO: find out why it does not work")
-def test_command_keyboard_interrupt(tmp_path):
+def test_command_keyboard_interrupt(tmp_path: Path) -> None:
     send_signal = tmp_path / "send"
     process = subprocess.Popen(
         [
@@ -211,7 +218,8 @@ def test_command_keyboard_interrupt(tmp_path):
 
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])
-def test_local_subprocess__tty(monkeypatch, mocker, tty_mode):
+def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, tty_mode: str) -> None:
+    is_windows = sys.platform == "win32"
     monkeypatch.setenv("COLUMNS", "100")
     monkeypatch.setenv("LINES", "100")
     tty = tty_mode == "on"
@@ -219,16 +227,15 @@ def test_local_subprocess__tty(monkeypatch, mocker, tty_mode):
     mocker.patch("sys.stderr.isatty", return_value=tty)
 
     executor = LocalSubProcessExecutor()
-    cmd = [sys.executable, Path(__file__).parent / "tty_check.py"]
+    cmd: List[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, allow_stdin=True, cwd=Path.cwd(), env=dict(os.environ))
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
 
     assert outcome
     info = json.loads(outcome.out)
-
     assert info == {
-        "stdout": tty,
-        "stderr": tty,
-        "stdin": False,
+        "stdout": False if is_windows else tty,
+        "stderr": False if is_windows else tty,
+        "stdin": True if is_windows else False,
         "terminal": [100, 100],
     }

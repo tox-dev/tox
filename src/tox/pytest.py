@@ -7,10 +7,11 @@ import sys
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence
 
 import pytest
-from _pytest.capture import CaptureFixture
+from _pytest.capture import CaptureFixture as _CaptureFixture
+from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
 
 import tox.run
@@ -22,6 +23,11 @@ from tox.run import run as tox_run
 from tox.run import setup_state as previous_setup_state
 from tox.session.cmd.run.parallel import ENV_VAR_KEY
 from tox.session.state import State
+
+if TYPE_CHECKING:
+    CaptureFixture = _CaptureFixture[str]
+else:
+    CaptureFixture = _CaptureFixture
 
 
 @pytest.fixture(autouse=True)
@@ -77,7 +83,7 @@ class ToxProject:
         self,
         files: Dict[str, Any],
         path: Path,
-        capsys: CaptureFixture[str],
+        capsys: CaptureFixture,
         monkeypatch: MonkeyPatch,
     ) -> None:
         self.path = path
@@ -156,7 +162,13 @@ class ToxRunOutcome:
         self.code: int = code
         self.out: str = out
         self.err: str = err
-        self.state: Optional[State] = state
+        self._state: Optional[State] = state
+
+    @property
+    def state(self) -> State:
+        if self._state is None:
+            raise RuntimeError("no state")
+        return self._state
 
     @property
     def success(self) -> bool:
@@ -188,7 +200,7 @@ ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]
 
 
 @pytest.fixture(name="tox_project")
-def init_fixture(tmp_path: Path, capsys: CaptureFixture[str], monkeypatch: MonkeyPatch) -> ToxProjectCreator:
+def init_fixture(tmp_path: Path, capsys: CaptureFixture, monkeypatch: MonkeyPatch) -> ToxProjectCreator:
     def _init(files: Dict[str, Any]) -> ToxProject:
         """create tox  projects"""
         return ToxProject(files, tmp_path, capsys, monkeypatch)
@@ -201,3 +213,14 @@ def empty_project(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> T
     project = tox_project({"tox.ini": ""})
     monkeypatch.chdir(project.path)
     return project
+
+
+__all__ = (
+    "CaptureFixture",
+    "LogCaptureFixture",
+    "MonkeyPatch",
+    "ToxRunOutcome",
+    "ToxProject",
+    "ToxProjectCreator",
+    "check_os_environ",
+)

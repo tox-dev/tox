@@ -1,3 +1,4 @@
+# type: ignore
 import logging
 import os
 import sys
@@ -14,7 +15,7 @@ local_sub_process.WAIT_GENERAL = 0.05
 request = local_sub_process.ExecuteRequest(
     cmd=[sys.executable, bad_process, sys.argv[1], sys.argv[2], str(local_sub_process.WAIT_GENERAL * 3)],
     cwd=Path().absolute(),
-    env=os.environ,
+    env=os.environ.copy(),
     allow_stdin=False,
 )
 

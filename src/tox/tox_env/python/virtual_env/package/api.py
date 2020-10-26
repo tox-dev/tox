@@ -17,10 +17,7 @@ from tox.tox_env.python.package import PythonPackage
 from ..api import VirtualEnv
 
 try:
-    from importlib.metadata import (  # type: ignore[attr-defined]
-        Distribution,
-        PathDistribution,
-    )
+    from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
 except ImportError:
     from importlib_metadata import Distribution, PathDistribution  # noqa
 
