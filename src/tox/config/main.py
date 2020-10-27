@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List
 
 from tox.plugin.impl import impl
 
@@ -32,6 +32,7 @@ class Config:
         self.core = self._setup_core()
         self._env_names = list(self._src.envs(self.core))
         self._envs: Dict[str, ConfigSet] = OrderedDict()
+        self.register_config_set: Callable[[str], Any] = lambda x: None
 
     def _setup_core(self) -> ConfigSet:
         core = ConfigSet(self._src.core, self)
@@ -52,6 +53,9 @@ class Config:
         except KeyError:
             env = ConfigSet(self._src[item], self)
             self._envs[item] = env
+            # whenever we load a new configuration we need build a tox environment which process defines the valid
+            # configuration values
+            self.register_config_set(item)
             return env
 
     def __iter__(self) -> Iterator[str]:
@@ -61,4 +65,4 @@ class Config:
         return f"{type(self).__name__}(config_source={self._src!r})"
 
     def __contains__(self, item: str) -> bool:
-        return item in self._envs
+        return item in self._env_names

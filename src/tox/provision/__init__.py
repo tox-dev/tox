@@ -44,7 +44,7 @@ def provision(state: State) -> None:
     if missing:
         for package in missing:
             print(package)
-        run_provision(requires, state.tox_envs[provision_tox_env])
+        run_provision(requires, state.tox_env(provision_tox_env))
 
 
 @impl

@@ -70,7 +70,7 @@ def test_setuptools_package_wheel_universal(tox_project: ToxProjectCreator, use_
         },
     )
     outcome = project.run("r")
-    tox_env = outcome.state.tox_envs["py"]
+    tox_env = outcome.state.tox_env("py")
     package_env = tox_env.package_env
     assert isinstance(package_env, Pep517VirtualEnvPackageWheel)
     packages = package_env.perform_packaging()

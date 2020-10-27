@@ -1,8 +1,11 @@
 import os
 
+import pytest
+
 from tox.pytest import ToxProjectCreator
 
 
+@pytest.mark.integration
 def test_setuptools_package_py_project(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {

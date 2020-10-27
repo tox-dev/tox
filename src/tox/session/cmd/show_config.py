@@ -1,12 +1,12 @@
 """
 Show materialized configuration of tox environments.
 """
-from typing import Any, List, Union
+
+from textwrap import indent
 
 from tox.config.cli.parser import ToxParser
 from tox.config.sets import ConfigSet
-from tox.config.source.api import Command, EnvList
-from tox.config.source.ini import IniLoader
+from tox.config.source.ini.stringify import stringify
 from tox.plugin.impl import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
@@ -25,8 +25,8 @@ def display_config(state: State) -> int:
         print("[tox]")
         print_conf(state.conf.core)
         first = False
-    for name in state.env_list:
-        tox_env = state.tox_envs[name]
+    for name in state.env_list(everything=False):
+        tox_env = state.tox_env(name)
         if not first:
             print()
         first = False
@@ -39,33 +39,11 @@ def display_config(state: State) -> int:
 def print_conf(conf: ConfigSet) -> None:
     for key in conf:
         value = conf[key]
-        result = str_conf_value(value)
-        if isinstance(result, list):
-            result = "{}{}".format("\n", "\n".join(f"  {i}" for i in result)) if result else ""
-        print("{} ={}{}".format(key, " " if result != "" and not result.startswith("\n") else "", result))
+        as_str, multi_line = stringify(value)
+        if multi_line and as_str.strip():
+            print(f"{key} =\n{indent(as_str, prefix='  ')}")
+        else:
+            print(f"{key} ={' ' if as_str else ''}{as_str}")
     unused = conf.unused()
     if unused:
         print(f"# !!! unused: {', '.join(unused)}")
-
-
-def str_conf_value(value: Any) -> Union[List[str], str]:
-    if isinstance(value, dict):
-        if not value:
-            return ""
-        return [f"{k}={v}" for k, v in value.items()]
-    elif isinstance(value, (list, set)):
-        if not value:
-            return ""
-        result = []
-        for entry in value:
-            if isinstance(entry, Command):
-                as_str = entry.shell
-            elif isinstance(entry, IniLoader):
-                as_str = entry.section_name or ""
-            else:
-                as_str = str(entry)
-            result.append(as_str)
-        return result
-    elif isinstance(value, EnvList):
-        return value.envs
-    return str(value)

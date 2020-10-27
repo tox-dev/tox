@@ -8,9 +8,9 @@ from tox.config import core as core_config
 from tox.config import main as main_config
 from tox.config.cli.parser import ToxParser
 from tox.config.sets import ConfigSet
+from tox.session import state
 from tox.session.cmd import list_env, show_config, version_flag
 from tox.session.cmd.run import parallel, sequential
-from tox.tox_env import builder
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.python.virtual_env import runner
 from tox.tox_env.python.virtual_env.package.artifact import dev, sdist, wheel
@@ -42,7 +42,7 @@ class Plugin:
         for plugin in internal_plugins:
             self.manager.register(plugin)
         self.manager.load_setuptools_entrypoints(NAME)
-        self.manager.register(builder)
+        self.manager.register(state)
 
         REGISTER.populate(self)
         self.manager.check_pending()

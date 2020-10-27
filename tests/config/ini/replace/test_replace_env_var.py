@@ -1,4 +1,4 @@
-from tests.unit.config.ini.replace.conftest import ReplaceOne
+from tests.config.ini.replace.conftest import ReplaceOne
 from tox.pytest import MonkeyPatch
 
 

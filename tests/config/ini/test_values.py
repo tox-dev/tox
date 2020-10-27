@@ -22,7 +22,7 @@ def test_commands(tox_project: ToxProjectCreator) -> None:
     )
     outcome = project.run("c")
     outcome.assert_success()
-    env_config = outcome.state.tox_envs["py"].conf
+    env_config = outcome.state.tox_env("py").conf
     assert env_config["commands_pre"] == [Command(args=["python", "-c", 'import sys; print("start", sys.executable)'])]
     assert env_config["commands"] == [
         Command(args=["pip", "config", "list"]),

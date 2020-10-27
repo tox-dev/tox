@@ -25,8 +25,8 @@ def tox_add_option(parser: ToxParser) -> None:
 
 def run_sequential(state: State) -> int:
     status_codes: Dict[str, Tuple[int, float]] = {}
-    for name in state.env_list:
-        tox_env = state.tox_envs[name]
+    for name in state.env_list(everything=False):
+        tox_env = state.tox_env(name)
         start_one = datetime.now()
         outcome = run_one(tox_env, state.options.recreate, state.options.no_test)
         duration = (datetime.now() - start_one).total_seconds()

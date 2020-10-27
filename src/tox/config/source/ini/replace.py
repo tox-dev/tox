@@ -5,11 +5,16 @@ import os
 import re
 import sys
 from configparser import SectionProxy
-from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterator, List, Optional, Tuple, Union
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
+
+from .stringify import stringify
+
+if TYPE_CHECKING:
+    from tox.config.source.ini import IniLoader
 
 CORE_PREFIX = "tox"
 BASE_TEST_ENV = "testenv"
@@ -17,16 +22,14 @@ BASE_TEST_ENV = "testenv"
 ARGS_GROUP = re.compile(r"(?<!\\):")
 
 
-def replace(
-    value: str, conf: Optional[Config], name: Optional[str], section_loader: Callable[[str], Optional[SectionProxy]]
-) -> str:
+def replace(value: str, conf: Optional[Config], name: Optional[str], loader: "IniLoader") -> str:
     # perform all non-escaped replaces
     while True:
         start, end, match = _find_replace_part(value)
         if not match:
             break
         to_replace = value[start + 1 : end]
-        replaced = _replace_match(conf, name, section_loader, to_replace)
+        replaced = _replace_match(conf, name, loader, to_replace)
         new_value = value[:start] + replaced + value[end + 1 :]
         if new_value == value:  # if we're not making progress stop (circular reference?)
             break
@@ -60,19 +63,21 @@ def _find_replace_part(value: str) -> Tuple[int, int, bool]:
 def _replace_match(
     conf: Optional[Config],
     current_env: Optional[str],
-    section_loader: Callable[[str], Optional[SectionProxy]],
+    loader: "IniLoader",
     value: str,
 ) -> str:
     of_type, *args = ARGS_GROUP.split(value)
     if of_type == "env":
-        replace_value = replace_env(args)
+        replace_value: Optional[str] = replace_env(args)
     elif of_type == "posargs":
         replace_value = replace_posarg(args)
     else:
-        replace_value = replace_reference(conf, current_env, section_loader, value)
+        replace_value = replace_reference(conf, current_env, loader, value)
     if replace_value is None:
         return ""
-    return str(replace_value)
+    if not isinstance(replace_value, str):
+        raise TypeError(f"could not replace {replace_value!r}")
+    return replace_value
 
 
 _REPLACE_REF = re.compile(
@@ -88,9 +93,9 @@ _REPLACE_REF = re.compile(
 def replace_reference(
     conf: Optional[Config],
     current_env: Optional[str],
-    section_loader: Callable[[str], Optional[SectionProxy]],
+    loader: "IniLoader",
     value: str,
-) -> Any:
+) -> Optional[str]:
     match = _REPLACE_REF.match(value)
     if match:
         settings = match.groupdict()
@@ -100,9 +105,13 @@ def replace_reference(
             key = settings["key"]
             if settings["section"] is None and settings["full_env"] == BASE_TEST_ENV:
                 settings["section"] = BASE_TEST_ENV
-            for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, section_loader):
+            for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, loader):
                 try:
-                    return src[key]
+                    if isinstance(src, SectionProxy):
+                        return src[key]
+                    value = src[key]
+                    as_str, _ = stringify(value)
+                    return as_str
                 except KeyError:  # if this is missing maybe another src has it
                     continue
             default = settings["default"]
@@ -120,7 +129,7 @@ def _config_value_sources(
     section: Optional[str],
     current_env: Optional[str],
     conf: Optional[Config],
-    section_loader: Callable[[str], Optional[SectionProxy]],
+    loader: "IniLoader",
 ) -> Iterator[Union[SectionProxy, ConfigSet]]:
     # if we have an env name specified take only from there
     if env is not None:
@@ -135,7 +144,7 @@ def _config_value_sources(
             if conf is not None:
                 yield conf.core
             return
-        value = section_loader(section)
+        value = loader.section_loader(section)
         if value is not None:
             yield value
         return

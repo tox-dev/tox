@@ -11,7 +11,6 @@ from tox.config.override import Override
 from tox.config.source.ini import ToxIni
 from tox.report import HandledError
 from tox.session.state import State
-from tox.tox_env.builder import build_tox_envs
 
 
 def run(args: Optional[Sequence[str]] = None) -> None:
@@ -47,7 +46,7 @@ def setup_state(args: Sequence[str]) -> State:
     # parse configuration file
     config = make_config(Path().cwd().absolute(), options[0].override)
     # build tox environment config objects
-    state = build_tox_envs(config, options, args)
+    state = State(config, options, args)
     return state
 
 

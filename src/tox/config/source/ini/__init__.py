@@ -39,7 +39,7 @@ class IniLoader(StrConvert, Loader[str]):
         self._src: ToxIni = src
         self._default_base = default_base
         self._base: List[IniLoader] = []
-        self._section_loader = section_loader
+        self.section_loader = section_loader
 
     def __deepcopy__(self, memo: Any) -> "IniLoader":
         # python < 3.7 cannot copy config parser
@@ -95,13 +95,13 @@ class IniLoader(StrConvert, Loader[str]):
             raise KeyError(key)
         value = self._section[key]
         collapsed_newlines = value.replace("\\\r", "").replace("\\\n", "")  # collapse explicit line splits
-        replace_executed = replace(collapsed_newlines, conf, as_name, self._section_loader)  # do replacements
+        replace_executed = replace(collapsed_newlines, conf, as_name, self)  # do replacements
         factor_selected = filter_for_env(replace_executed, as_name)  # select matching factors
         # extend factors
         return factor_selected
 
     def get_value(self, section: str, key: str) -> str:
-        section_proxy = self._section_loader(section)
+        section_proxy = self.section_loader(section)
         if section_proxy is None:
             raise KeyError(section)
         return section_proxy[key]

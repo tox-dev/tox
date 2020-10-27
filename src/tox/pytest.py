@@ -11,8 +11,11 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional,
 
 import pytest
 from _pytest.capture import CaptureFixture as _CaptureFixture
+from _pytest.config import Config as PyTestConfig
+from _pytest.config.argparsing import Parser
 from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.python import Function
 
 import tox.run
 from tox.config.main import Config
@@ -221,6 +224,32 @@ def empty_project(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> T
     project = tox_project({"tox.ini": ""})
     monkeypatch.chdir(project.path)
     return project
+
+
+def pytest_addoption(parser: Parser) -> None:
+    parser.addoption("--run-integration", action="store_true", help="run the integration tests")
+
+
+def pytest_configure(config: PyTestConfig) -> None:
+    config.addinivalue_line("markers", "integration")
+
+
+def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -> None:
+    if len(items) == 1:  # do not require flags if called directly
+        return
+
+    skip_int = pytest.mark.skip(reason="integration tests not run (no --run-int flag)")
+
+    def is_integration(test_item: Function) -> bool:
+        return test_item.get_closest_marker("integration") is not None
+
+    integration_enabled = config.getoption("--run-integration")
+    if not integration_enabled:
+        for item in items:
+            if is_integration(item):
+                item.add_marker(skip_int)
+    # run integration tests after unit tests
+    items.sort(key=lambda i: 1 if is_integration(i) else 0)
 
 
 __all__ = (
