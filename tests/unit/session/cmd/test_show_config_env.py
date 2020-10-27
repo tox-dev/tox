@@ -14,7 +14,7 @@ def test_list_empty(tox_project: ToxProjectCreator) -> None:
         f"""
         [tox]
         tox_root = {project.path}
-        work_dir = {project.path}{os.sep}.tox
+        work_dir = {project.path}{os.sep}.tox4
         temp_dir = {project.path}{os.sep}.temp
         env_list =
         skip_missing_interpreters = True

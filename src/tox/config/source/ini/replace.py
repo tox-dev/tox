@@ -20,6 +20,7 @@ ARGS_GROUP = re.compile(r"(?<!\\):")
 def replace(
     value: str, conf: Optional[Config], name: Optional[str], section_loader: Callable[[str], Optional[SectionProxy]]
 ) -> str:
+    # perform all non-escaped replaces
     while True:
         start, end, match = _find_replace_part(value)
         if not match:
@@ -30,6 +31,9 @@ def replace(
         if new_value == value:  # if we're not making progress stop (circular reference?)
             break
         value = new_value
+    # remove escape sequences
+    value = value.replace("\\{", "{")
+    value = value.replace("\\}", "}")
     return value
 
 

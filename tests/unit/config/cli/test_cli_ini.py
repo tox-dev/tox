@@ -54,7 +54,7 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 def test_ini_empty(empty_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, unknown, handlers = get_options()
+    parsed, handlers = get_options()
     assert vars(parsed) == {
         "colored": "no",
         "verbose": 2,
@@ -67,12 +67,11 @@ def test_ini_empty(empty_ini: Path, core_handlers: Dict[str, Callable[[State], i
         "override": [],
     }
     assert parsed.verbosity == 2
-    assert unknown == []
     assert handlers == core_handlers
 
 
 def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, unknown, handlers = get_options()
+    parsed, handlers = get_options()
     assert vars(parsed) == {
         "colored": "yes",
         "verbose": 5,
@@ -87,7 +86,6 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dic
         "override": [Override("a=b"), Override("c=d")],
     }
     assert parsed.verbosity == 4
-    assert unknown == []
     assert handlers == core_handlers
 
 
@@ -103,7 +101,7 @@ def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
 def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
-    parsed, _, __ = get_options()
+    parsed, _ = get_options()
     msg = (
         "PermissionError(13, 'Permission denied')"
         if sys.platform == "win32"
@@ -138,7 +136,7 @@ def test_bad_option_cli_ini(
         ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
-    parsed, _, __ = get_options()
+    parsed, _ = get_options()
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
             to,

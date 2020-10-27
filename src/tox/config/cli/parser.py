@@ -178,11 +178,13 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         )
         self.fix_defaults()
 
-    def parse(self, args: Sequence[str]) -> Tuple[Parsed, List[str]]:
-        args = self._inject_default_cmd(args)
-        result = Parsed()
-        _, unknown = super().parse_known_args(args, namespace=result)
-        return result, unknown
+    def parse_known_args(  # type: ignore[override]
+        self, args: Optional[Sequence[str]], namespace: Optional[Parsed] = None
+    ) -> Tuple[Parsed, List[str]]:
+        result = Parsed() if namespace is None else namespace
+        args = self._inject_default_cmd([] if args is None else args)
+        _, args = super(ToxParser, self).parse_known_args(args, namespace=result)
+        return result, args
 
     def _inject_default_cmd(self, args: Sequence[str]) -> Sequence[str]:
         # if the users specifies no command we imply he wants run, however for this to work we need to inject it onto

@@ -17,9 +17,8 @@ class State:
     ) -> None:
         self.conf = conf
         self.tox_envs = tox_envs
-        options, unknown, handlers = opt_parse
+        options, handlers = opt_parse
         self.options = options
-        self.unknown_options = unknown
         self.handlers = handlers
         self.args = args
 

@@ -2,28 +2,28 @@
 This module pulls together this package: create and parse CLI arguments for tox.
 """
 
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, Sequence, Tuple, cast
 
 from tox.report import setup_report
 
 from .parser import Handler, Parsed, ToxParser
 
 Handlers = Dict[str, Handler]
-ParsedOptions = Tuple[Parsed, List[str], Handlers]
+ParsedOptions = Tuple[Parsed, Handlers]
 
 
 def get_options(*args: str) -> ParsedOptions:
     guess_verbosity = _get_base(args)
-    parsed, unknown, handlers = _get_all(args)
+    parsed, handlers = _get_all(args)
     if guess_verbosity != parsed.verbosity:
         setup_report(parsed.verbosity, parsed.is_colored)  # pragma: no cover
-    return parsed, unknown, handlers
+    return parsed, handlers
 
 
 def _get_base(args: Sequence[str]) -> int:
     """First just load the base options (verbosity+color) to setup the logging framework."""
     tox_parser = ToxParser.base()
-    parsed, unknown = tox_parser.parse(args)
+    parsed, _ = tox_parser.parse_known_args(args)
     guess_verbosity = parsed.verbosity
     setup_report(guess_verbosity, parsed.is_colored)
     return guess_verbosity
@@ -32,9 +32,9 @@ def _get_base(args: Sequence[str]) -> int:
 def _get_all(args: Sequence[str]) -> ParsedOptions:
     """Parse all the options."""
     tox_parser = _get_parser()
-    parsed, unknown = tox_parser.parse(args)
+    parsed = cast(Parsed, tox_parser.parse_args(args))
     handlers = {k: p for k, (_, p) in tox_parser.handlers.items()}
-    return parsed, unknown, handlers
+    return parsed, handlers
 
 
 def _get_parser() -> ToxParser:

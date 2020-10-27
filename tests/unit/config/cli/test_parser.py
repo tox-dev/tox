@@ -20,7 +20,7 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
     )
     parser.fix_defaults()
 
-    result, _ = parser.parse([])
+    result = parser.parse_args([])
     assert result.alpha == 2
 
 

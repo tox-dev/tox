@@ -93,6 +93,8 @@ class ToxEnv(ABC):
             "http_proxy",
             "no_proxy",
         ]
+        if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
+            env.append("TERM")
         if sys.platform == "win32":
             env.extend(
                 [

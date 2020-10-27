@@ -9,17 +9,17 @@ from tox.session.state import State
 
 
 def test_verbose(monkeypatch: MonkeyPatch) -> None:
-    parsed, _, __ = get_options("-v", "-v")
+    parsed, _ = get_options("-v", "-v")
     assert parsed.verbosity == 4
 
 
 def test_verbose_compound(monkeypatch: MonkeyPatch) -> None:
-    parsed, _, __ = get_options("-vv")
+    parsed, _ = get_options("-vv")
     assert parsed.verbosity == 4
 
 
-def test_verbose_no_test_skip_missing(monkeypatch: MonkeyPatch) -> None:
-    parsed, _, __ = get_options("--notest", "-vv", "--skip-missing-interpreters", "false", "--runner", "virtualenv")
+def test_verbose_no_test(monkeypatch: MonkeyPatch) -> None:
+    parsed, _ = get_options("--notest", "-vv", "--runner", "virtualenv")
     assert vars(parsed) == {
         "colored": "no",
         "verbose": 4,
@@ -47,7 +47,7 @@ def test_env_var_exhaustive_parallel_values(
     monkeypatch.setenv("TOX_PARALLEL_LIVE", "no")
     monkeypatch.setenv("TOX_OVERRIDE", "a=b\nc=d")
 
-    parsed, unknown, handlers = get_options()
+    parsed, handlers = get_options()
     assert vars(parsed) == {
         "colored": "no",
         "verbose": 5,
@@ -62,7 +62,6 @@ def test_env_var_exhaustive_parallel_values(
         "override": [Override("a=b"), Override("c=d")],
     }
     assert parsed.verbosity == 4
-    assert unknown == []
     assert handlers == core_handlers
 
 
@@ -83,7 +82,7 @@ def test_bad_env_var(
 ) -> None:
     monkeypatch.setenv("TOX_VERBOSE", "should-be-number")
     monkeypatch.setenv("TOX_QUIET", "1.00")
-    parsed, _, __ = get_options()
+    parsed, _ = get_options()
     assert parsed.verbose == 2
     assert parsed.quiet == 0
     assert parsed.verbosity == 2

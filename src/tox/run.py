@@ -1,6 +1,7 @@
 """Main entry point for tox."""
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Sequence, cast
 
@@ -39,8 +40,10 @@ def main(args: Sequence[str]) -> int:
 
 def setup_state(args: Sequence[str]) -> State:
     """Setup the state object of this run."""
+    start = datetime.now()
     # parse CLI arguments
     options = get_options(*args)
+    options[0].start = start
     # parse configuration file
     config = make_config(Path().cwd().absolute(), options[0].override)
     # build tox environment config objects
