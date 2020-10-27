@@ -56,6 +56,10 @@ class ConfigError(Error):
     """Error in tox configuration."""
 
 
+class SubstitutionStackError(ConfigError, ValueError):
+    """Error in tox configuration recursive substitution."""
+
+
 class UnsupportedInterpreter(Error):
     """Signals an unsupported Interpreter."""
 
