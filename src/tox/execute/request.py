@@ -17,7 +17,13 @@ class ExecuteRequest:
 
     @property
     def shell_cmd(self) -> str:
-        return shell_cmd(self.cmd)
+        try:
+            exe = str(Path(self.cmd[0]).relative_to(self.cwd))
+        except ValueError:
+            exe = self.cmd[0]
+        _cmd = [exe]
+        _cmd.extend(self.cmd[1:])
+        return shell_cmd(_cmd)
 
 
 def shell_cmd(cmd: Sequence[str]) -> str:

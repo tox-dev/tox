@@ -2,7 +2,7 @@
 Build the state of a tox run (creates tox run and build environments).
 """
 import copy
-from typing import Dict, Sequence, cast
+from typing import Dict, List, Optional, Sequence, cast
 
 from tox.config.cli.parse import ParsedOptions
 from tox.config.cli.parser import Parsed, ToxParser
@@ -35,7 +35,8 @@ class Builder:
 
     def _run(self) -> None:
         for name in self._config:
-            if self.options.env is not None and name not in self.options.env:
+            opt_env_list: Optional[List[str]] = getattr(self.options, "env", None)
+            if opt_env_list is not None and name not in opt_env_list:
                 continue  # do not build environments we'll not use
             if name in self._pkg_envs:
                 continue  # do not build here packaging environments, they are built later

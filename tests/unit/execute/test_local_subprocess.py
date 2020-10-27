@@ -109,7 +109,8 @@ def test_local_execute_write_a_lot(capsys: CaptureFixture, caplog: LogCaptureFix
     assert outcome.err == expected_err
 
 
-def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixture) -> None:
+def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.chdir(Path(__file__).parents[3])
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     cwd = Path().absolute()

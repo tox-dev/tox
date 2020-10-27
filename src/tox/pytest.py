@@ -195,6 +195,14 @@ class ToxRunOutcome:
     def shell_cmd(self) -> str:
         return shell_cmd(self.cmd)
 
+    def assert_out_err(self, out: str, err: str, *, dedent: bool = True) -> None:
+        if out is not None and dedent:
+            out = textwrap.dedent(out).lstrip()
+        assert self.out == out
+        if err is not None and dedent:
+            err = textwrap.dedent(err).lstrip()
+        assert self.err == err
+
 
 ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]
 
