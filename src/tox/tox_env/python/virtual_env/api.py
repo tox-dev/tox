@@ -9,7 +9,7 @@ from virtualenv import session_via_cli
 from virtualenv.create.creator import Creator
 from virtualenv.run.session import Session
 
-from tox.config.cli.parser import Parsed
+from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute, Outcome
 from tox.execute.local_sub_process import LocalSubProcessExecutor
@@ -98,4 +98,9 @@ class VirtualEnv(Python, ABC):
         result.assert_success(self.logger)
 
     def perform_install(self, install_command: Sequence[str]) -> Outcome:
-        return self.execute(cmd=install_command, allow_stdin=False, run_id="install")
+        return self.execute(
+            cmd=install_command,
+            allow_stdin=False,
+            run_id="install",
+            show_on_standard=self.options.verbosity > DEFAULT_VERBOSITY,
+        )

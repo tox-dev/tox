@@ -95,6 +95,7 @@ Handler = Callable[[State], Optional[int]]
 
 
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
+DEFAULT_VERBOSITY = 2
 
 
 class Parsed(Namespace):
@@ -159,7 +160,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}",
         )
         verbosity = verbosity_group.add_mutually_exclusive_group()
-        verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
+        verbosity.add_argument(
+            "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=DEFAULT_VERBOSITY
+        )
         verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
 
         converter = StrConvert()
@@ -224,3 +227,10 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         new_args.extend(command_args)
         new_args.extend(args[reorganize_to + 1 :])
         return new_args
+
+
+__all__ = (
+    "DEFAULT_VERBOSITY",
+    "Parsed",
+    "ToxParser",
+)
