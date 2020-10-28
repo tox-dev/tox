@@ -13,6 +13,11 @@ ParsedOptions = Tuple[Parsed, Handlers]
 
 
 def get_options(*args: str) -> ParsedOptions:
+    try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
+        args = args[: args.index("--")]
+    except ValueError:
+        pass
+
     guess_verbosity = _get_base(args)
     parsed, handlers = _get_all(args)
     if guess_verbosity != parsed.verbosity:

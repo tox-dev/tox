@@ -143,6 +143,7 @@ class ToxProject:
 
             with self.monkeypatch.context() as m:
                 m.setattr(tox.run, "setup_state", our_setup_state)
+                m.setattr(sys, "argv", list(args))
                 try:
                     tox_run(args)
                 except SystemExit as exception:

@@ -10,10 +10,10 @@ from tox.pytest import ToxProjectCreator
 def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
     py_ver = sys.version_info[0:2]
     name = "py{}{}".format(*py_ver) if platform.python_implementation() == "CPython" else "pypy3"
-    project = tox_project({"tox.ini": f"[tox]\nenv_list = {name}"})
-    result = project.run("c")
+    project = tox_project({"tox.ini": f"[tox]\nenv_list = {name}\n[testenv:{name}]\ncommands={{posargs}}"})
+    result = project.run("c", "--", "magic")
     state = result.state
-    assert state.args == ("c",)
+    assert state.args == ("c", "--", "magic")
     outcome = list(state.env_list(everything=True))
     assert outcome == [name]
 
@@ -53,6 +53,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
       no_proxy
     description =
     commands =
+      magic
     commands_pre =
     commands_post =
     change_dir = {path}
