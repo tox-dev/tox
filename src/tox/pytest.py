@@ -181,8 +181,7 @@ class ToxRunOutcome:
         return self.code == Outcome.OK
 
     def assert_success(self) -> None:
-        if not self.success:
-            assert repr(self)
+        assert self.success, repr(self)
 
     def __repr__(self) -> str:
         return "\n".join(

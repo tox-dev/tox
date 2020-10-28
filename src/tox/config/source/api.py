@@ -35,7 +35,8 @@ _NO_MAPPING = object()
 
 class Command:
     def __init__(self, args: List[str]) -> None:
-        self.args = args
+        self.ignore_exit_code = args[0] == "-"
+        self.args = args[1:] if self.ignore_exit_code else args
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(args={self.args!r})"

@@ -36,6 +36,8 @@ def run_commands(tox_env: ToxEnv, no_test: bool) -> int:
                     show_on_standard=True,
                     run_id=f"{key}[{at}]",
                 )
+                if cmd.ignore_exit_code:
+                    continue
                 try:
                     current_status.assert_success(tox_env.logger)
                 except SystemExit as exception:
