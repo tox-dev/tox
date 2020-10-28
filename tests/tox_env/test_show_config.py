@@ -4,10 +4,10 @@ import re
 import sys
 
 from tox import __version__
-from tox.pytest import ToxProjectCreator
+from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
-def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
+def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     py_ver = sys.version_info[0:2]
     name = "py{}{}".format(*py_ver) if platform.python_implementation() == "CPython" else "pypy3"
     project = tox_project({"tox.ini": f"[tox]\nenv_list = {name}\n[testenv:{name}]\ncommands={{posargs}}"})
@@ -20,6 +20,15 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
     path = re.escape(str(project.path))
     sep = re.escape(str(os.sep))
     version = re.escape(__version__)
+
+    monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
+    if sys.platform == "win32":
+        p_env = ["COMSPEC", "MSYSTEM", "PATHEXT", "PROCESSOR_ARCHITECTURE", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE"]
+    else:
+        p_env = ["TMPDIR"]
+    p_env.extend(["PIP_*", "VIRTUALENV_*", "http_proxy", "https_proxy", "no_proxy"])
+    pass_env_str = "\n".join(f"      {re.escape(p)}" for p in sorted(p_env))[4:]
+
     expected = rf"""
     \[tox\]
     tox_root = {path}
@@ -45,12 +54,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
       PIP_DISABLE_PIP_VERSION_CHECK=1
       VIRTUALENV_NO_PERIODIC_UPDATE=1
     pass_env =
-      PIP_\*
-      TMPDIR
-      VIRTUALENV_\*
-      http_proxy
-      https_proxy
-      no_proxy
+    {pass_env_str}
     description =
     commands =
       magic
