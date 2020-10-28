@@ -418,7 +418,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     A list of wildcard environment variable names which
     shall be copied from the tox invocation environment to the test
-    environment when executing test commands. If a specified environment
+    environment when executing test commands.  If a specified environment
     variable doesn't exist in the tox invocation environment it is ignored.
     You can use ``*`` and ``?`` to match multiple environment variables with
     one name. The list of environment variable names is not case sensitive, and
