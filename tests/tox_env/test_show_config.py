@@ -26,7 +26,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
     work_dir = {path}{sep}\.tox4
     temp_dir = {path}{sep}\.temp
     env_list =
-      py39
+      {name}
     skip_missing_interpreters = True
     min_version = {version}
     provision_tox_env = \.tox
@@ -34,13 +34,13 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
       tox>={version}
     no_package = False
 
-    \[testenv:py39\]
+    \[testenv:{name}\]
     type = VirtualEnvRunner
     base =
     runner = virtualenv
-    env_name = py39
-    env_dir = {path}{sep}\.tox4{sep}py39
-    env_tmp_dir = {path}{sep}\.tox4{sep}py39{sep}tmp
+    env_name = {name}
+    env_dir = {path}{sep}\.tox4{sep}{name}
+    env_tmp_dir = {path}{sep}\.tox4{sep}{name}{sep}tmp
     set_env =
       PIP_DISABLE_PIP_VERSION_CHECK=1
       VIRTUALENV_NO_PERIODIC_UPDATE=1
@@ -65,9 +65,9 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator) -> None:
     package_env = \.package
     extras =
     base_python =
-      py39
-    env_site_packages_dir = {path}{sep}\.tox4{sep}py39{sep}.*
-    env_python = {path}{sep}\.tox4{sep}py39{sep}.*
+      {name}
+    env_site_packages_dir = {path}{sep}\.tox4{sep}{name}{sep}.*
+    env_python = {path}{sep}\.tox4{sep}{name}{sep}.*
     deps =
     """
     result.assert_out_err(expected, "", regex=True)

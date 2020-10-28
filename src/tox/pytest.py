@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import textwrap
+import warnings
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence
@@ -203,15 +204,27 @@ class ToxRunOutcome:
         if out is not None and dedent:
             out = textwrap.dedent(out).lstrip()
         if regex:
-            assert re.match(out, self.out, re.MULTILINE)
+            self.matches(out, self.out, re.MULTILINE)
         else:
             assert self.out == out
         if err is not None and dedent:
             err = textwrap.dedent(err).lstrip()
         if regex:
-            assert re.match(err, self.err, re.MULTILINE)
+            self.matches(err, self.err, re.MULTILINE)
         else:
             assert self.err == err
+
+    @staticmethod
+    def matches(pattern: str, text: str, flags: int = 0) -> None:
+        try:
+            from re_assert import Matches
+        except ImportError:
+            match = re.match(pattern, text, flags)
+            if match is None:
+                warnings.warn("install the re-assert PyPi package for bette error message", UserWarning)
+            assert match
+        else:
+            assert Matches(pattern, flags=flags) == text
 
 
 ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]
