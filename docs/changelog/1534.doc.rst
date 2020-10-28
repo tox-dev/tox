@@ -1,0 +1,1 @@
+Document that the ``passenv`` environment setting is case insensitive. - by :user:`gnikonorov`
