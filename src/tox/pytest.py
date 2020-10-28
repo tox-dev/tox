@@ -3,6 +3,7 @@ A pytest plugin useful to test tox itself (and its plugins).
 """
 
 import os
+import re
 import sys
 import textwrap
 from contextlib import contextmanager
@@ -89,9 +90,9 @@ class ToxProject:
         capsys: CaptureFixture,
         monkeypatch: MonkeyPatch,
     ) -> None:
-        self.path = path
+        self.path: Path = path
+        self.monkeypatch: MonkeyPatch = monkeypatch
         self._capsys = capsys
-        self.monkeypatch = monkeypatch
         self._setup_files(self.path, files)
 
     @staticmethod
@@ -198,13 +199,19 @@ class ToxRunOutcome:
     def shell_cmd(self) -> str:
         return shell_cmd(self.cmd)
 
-    def assert_out_err(self, out: str, err: str, *, dedent: bool = True) -> None:
+    def assert_out_err(self, out: str, err: str, *, dedent: bool = True, regex: bool = False) -> None:
         if out is not None and dedent:
             out = textwrap.dedent(out).lstrip()
-        assert self.out == out
+        if regex:
+            assert re.match(out, self.out, re.MULTILINE)
+        else:
+            assert self.out == out
         if err is not None and dedent:
             err = textwrap.dedent(err).lstrip()
-        assert self.err == err
+        if regex:
+            assert re.match(err, self.err, re.MULTILINE)
+        else:
+            assert self.err == err
 
 
 ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]
