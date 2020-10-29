@@ -19,6 +19,5 @@ from tests.config.ini.replace.conftest import ReplaceOne
 )
 def test_do_not_replace(replace_one: ReplaceOne, start: str, end: str) -> None:
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
-    with replace_one(start) as result:
-        pass
-    assert result.val == end
+    value = replace_one(start)
+    assert value == end

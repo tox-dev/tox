@@ -6,7 +6,6 @@ import pytest
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
-from tox.config.source.ini import IniLoader
 from tox.pytest import ToxProject, ToxProjectCreator
 
 
@@ -31,11 +30,10 @@ def test_empty_conf_tox_envs(empty_config: Config) -> None:
 
 
 def test_empty_conf_get(empty_config: Config) -> None:
-    result = empty_config["magic"]
+    result = empty_config.get_env("magic")
     assert isinstance(result, ConfigSet)
     loaders = result["base"]
-    assert len(loaders) == 1
-    assert isinstance(loaders[0], IniLoader)
+    assert loaders == ["testenv"]
 
 
 def test_config_some_envs(tox_project: ToxProjectCreator) -> None:
@@ -51,7 +49,7 @@ def test_config_some_envs(tox_project: ToxProjectCreator) -> None:
     tox_env_keys = list(config)
     assert tox_env_keys == ["py38", "py37", "other", "magic"]
 
-    config_set = config["py38"]
+    config_set = config.get_env("py38")
     assert repr(config_set)
     assert isinstance(config_set, ConfigSet)
     assert list(config_set) == ["base"]
@@ -63,7 +61,7 @@ ConfBuilder = Callable[[str], ConfigSet]
 @pytest.fixture(name="conf_builder")
 def _conf_builder(tox_project: ToxProjectCreator) -> ConfBuilder:
     def _make(conf_str: str) -> ConfigSet:
-        return tox_project({"tox.ini": f"[tox]\nenvlist=py39\n[testenv]\n{conf_str}"}).config()["py39"]
+        return tox_project({"tox.ini": f"[tox]\nenvlist=py39\n[testenv]\n{conf_str}"}).config().get_env("py39")
 
     return _make
 

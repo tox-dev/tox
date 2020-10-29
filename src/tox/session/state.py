@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Sequence, Set, cast
+from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Sequence, Set, Tuple, cast
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
@@ -8,15 +8,16 @@ from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.runner import RunToxEnv
 
 if TYPE_CHECKING:
-    from tox.config.cli.parse import ParsedOptions
-    from tox.config.cli.parser import ToxParser
+
+    from tox.config.cli.parse import Handlers
+    from tox.config.cli.parser import Parsed, ToxParser
 
 
 class State:
     def __init__(
         self,
         conf: Config,
-        opt_parse: "ParsedOptions",
+        opt_parse: Tuple["Parsed", "Handlers"],
         args: Sequence[str],
     ) -> None:
         self.conf = conf
@@ -45,7 +46,7 @@ class State:
         tox_env = self._run_env.get(name)
         if tox_env is not None:
             return tox_env
-        env_conf = self.conf[name]
+        env_conf = self.conf.get_env(name)
         tox_env = self._build_run_env(env_conf, name)
         self._run_env[name] = tox_env
         return tox_env
@@ -99,8 +100,7 @@ class State:
 
             package_type = REGISTER.package(packager)
             self._pkg_env_discovered.add(name)
-            pkg_conf = self.conf[name]
-            pkg_conf.make_package_conf()
+            pkg_conf = self.conf.get_env(name, package=True)
             pkg_tox_env = package_type(pkg_conf, self.conf.core, self.options)
             self._pkg_env[name] = pkg_tox_env
         return pkg_tox_env

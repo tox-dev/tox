@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import List, Optional, Sequence, cast
 
 from tox.config.cli.parse import get_options
+from tox.config.loader.api import Override
 from tox.config.main import Config
-from tox.config.override import Override
-from tox.config.source.ini import ToxIni
+from tox.config.source.tox_ini import ToxIni
 from tox.report import HandledError
 from tox.session.state import State
 
@@ -41,16 +41,16 @@ def setup_state(args: Sequence[str]) -> State:
     """Setup the state object of this run."""
     start = datetime.now()
     # parse CLI arguments
-    options = get_options(*args)
-    options[0].start = start
+    parsed, handlers, pos_args = get_options(*args)
+    parsed.start = start
     # parse configuration file
-    config = make_config(Path().cwd().absolute(), options[0].override)
+    config = make_config(Path().cwd().absolute(), parsed.override, pos_args)
     # build tox environment config objects
-    state = State(config, options, args)
+    state = State(config, (parsed, handlers), args)
     return state
 
 
-def make_config(path: Path, overrides: List[Override]) -> Config:
+def make_config(path: Path, overrides: List[Override], pos_args: Sequence[str]) -> Config:
     """Make a tox configuration object."""
     # for now only tox.ini supported
     folder = path
@@ -58,7 +58,7 @@ def make_config(path: Path, overrides: List[Override]) -> Config:
         tox_ini = folder / "tox.ini"
         if tox_ini.exists() and tox_ini.is_file():
             ini_loader = ToxIni(tox_ini)
-            return Config(ini_loader, overrides)
+            return Config(ini_loader, overrides, tox_ini.parent, pos_args)
         if folder.parent == folder:
             break
         folder = folder.parent

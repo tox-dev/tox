@@ -3,23 +3,23 @@ from typing import Callable, Dict
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.config.override import Override
+from tox.config.loader.api import Override
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.state import State
 
 
 def test_verbose(monkeypatch: MonkeyPatch) -> None:
-    parsed, _ = get_options("-v", "-v")
+    parsed, _, __ = get_options("-v", "-v")
     assert parsed.verbosity == 4
 
 
 def test_verbose_compound(monkeypatch: MonkeyPatch) -> None:
-    parsed, _ = get_options("-vv")
+    parsed, _, __ = get_options("-vv")
     assert parsed.verbosity == 4
 
 
 def test_verbose_no_test(monkeypatch: MonkeyPatch) -> None:
-    parsed, _ = get_options("--notest", "-vv", "--runner", "virtualenv")
+    parsed, _, __ = get_options("--notest", "-vv", "--runner", "virtualenv")
     assert vars(parsed) == {
         "colored": "no",
         "verbose": 4,
@@ -47,7 +47,7 @@ def test_env_var_exhaustive_parallel_values(
     monkeypatch.setenv("TOX_PARALLEL_LIVE", "no")
     monkeypatch.setenv("TOX_OVERRIDE", "a=b\nc=d")
 
-    parsed, handlers = get_options()
+    parsed, handlers, _ = get_options()
     assert vars(parsed) == {
         "colored": "no",
         "verbose": 5,
@@ -82,7 +82,7 @@ def test_bad_env_var(
 ) -> None:
     monkeypatch.setenv("TOX_VERBOSE", "should-be-number")
     monkeypatch.setenv("TOX_QUIET", "1.00")
-    parsed, _ = get_options()
+    parsed, _, __ = get_options()
     assert parsed.verbose == 2
     assert parsed.quiet == 0
     assert parsed.verbosity == 2

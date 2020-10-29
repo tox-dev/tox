@@ -20,6 +20,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
 
 import tox.run
+from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.execute.api import Outcome
 from tox.execute.request import shell_cmd
@@ -124,8 +125,16 @@ class ToxProject:
                 into[file_name] = (dir_path / file_name).read_text()
         return result
 
-    def config(self) -> Config:
-        return tox.run.make_config(self.path, [])
+    def config(
+        self,
+        overrides: Optional[List[Override]] = None,
+        pos_args: Optional[Sequence[str]] = None,
+    ) -> Config:
+        return tox.run.make_config(
+            path=self.path,
+            overrides=[] if overrides is None else overrides,
+            pos_args=[] if pos_args is None else pos_args,
+        )
 
     def run(self, *args: str) -> "ToxRunOutcome":
         cur_dir = os.getcwd()

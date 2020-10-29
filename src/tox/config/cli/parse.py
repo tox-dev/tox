@@ -9,12 +9,14 @@ from tox.report import setup_report
 from .parser import Handler, Parsed, ToxParser
 
 Handlers = Dict[str, Handler]
-ParsedOptions = Tuple[Parsed, Handlers]
 
 
-def get_options(*args: str) -> ParsedOptions:
+def get_options(*args: str) -> Tuple[Parsed, Handlers, Sequence[str]]:
+    pos_args: Tuple[str, ...] = ()
     try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
-        args = args[: args.index("--")]
+        pos_arg_at = args.index("--")
+        pos_args = tuple(args[pos_arg_at + 1 :])
+        args = args[:pos_arg_at]
     except ValueError:
         pass
 
@@ -22,7 +24,7 @@ def get_options(*args: str) -> ParsedOptions:
     parsed, handlers = _get_all(args)
     if guess_verbosity != parsed.verbosity:
         setup_report(parsed.verbosity, parsed.is_colored)  # pragma: no cover
-    return parsed, handlers
+    return parsed, handlers, pos_args
 
 
 def _get_base(args: Sequence[str]) -> int:
@@ -34,7 +36,7 @@ def _get_base(args: Sequence[str]) -> int:
     return guess_verbosity
 
 
-def _get_all(args: Sequence[str]) -> ParsedOptions:
+def _get_all(args: Sequence[str]) -> Tuple[Parsed, Handlers]:
     """Parse all the options."""
     tox_parser = _get_parser()
     parsed = cast(Parsed, tox_parser.parse_args(args))
@@ -54,5 +56,5 @@ def _get_parser() -> ToxParser:
 
 __all__ = (
     "get_options",
-    "ParsedOptions",
+    "Handlers",
 )

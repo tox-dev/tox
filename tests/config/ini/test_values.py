@@ -1,4 +1,4 @@
-from tox.config.source.api import Command
+from tox.config.types import Command
 from tox.pytest import ToxProjectCreator
 
 

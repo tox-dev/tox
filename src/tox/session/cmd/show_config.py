@@ -5,8 +5,8 @@ Show materialized configuration of tox environments.
 from textwrap import indent
 
 from tox.config.cli.parser import ToxParser
+from tox.config.loader.stringify import stringify
 from tox.config.sets import ConfigSet
-from tox.config.source.ini.stringify import stringify
 from tox.plugin.impl import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
@@ -40,6 +40,8 @@ def print_conf(conf: ConfigSet) -> None:
     for key in conf:
         value = conf[key]
         as_str, multi_line = stringify(value)
+        if multi_line and "\n" not in as_str:
+            multi_line = False
         if multi_line and as_str.strip():
             print(f"{key} =\n{indent(as_str, prefix='  ')}")
         else:

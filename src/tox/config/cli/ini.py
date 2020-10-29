@@ -3,12 +3,13 @@ Provides configuration values from tox.ini files.
 """
 import logging
 import os
+from configparser import ConfigParser
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type, cast
+from typing import Any, Dict, Optional, Tuple, Type
 
 from appdirs import user_config_dir
 
-from tox.config.source.ini import IniLoader, ToxIni
+from tox.config.loader.ini import IniLoader
 
 DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
 
@@ -29,8 +30,12 @@ class IniConfig:
         if self.has_config_file:
             self.config_file = self.config_file.absolute()
             try:
-                self.ini = ToxIni(self.config_file)
-                self.has_tox_section = cast(IniLoader, self.ini.core)._section is not None  # noqa
+
+                parser = ConfigParser()
+                with self.config_file.open() as file_handler:
+                    parser.read_file(file_handler)
+                self.has_tox_section = parser.has_section("tox")
+                self.ini: Optional[IniLoader] = IniLoader("tox", parser, overrides=[]) if self.has_tox_section else None
             except Exception as exception:
                 logging.error("failed to read config file %s because %r", config_file, exception)
                 self.has_config_file = None
@@ -41,9 +46,12 @@ class IniConfig:
             result = self._cache[cache_key]
         else:
             try:
-                source = "file"
-                value = self.ini.core.load(key, of_type=of_type, conf=None)
-                result = value, source
+                if self.ini is None:
+                    result = None
+                else:
+                    source = "file"
+                    value = self.ini.load(key, of_type=of_type, conf=None, env_name="tox")
+                    result = value, source
             except KeyError:  # just not found
                 result = None
             except Exception as exception:  # noqa

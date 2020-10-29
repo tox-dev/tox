@@ -10,7 +10,7 @@ from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentPa
 from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, cast
 
-from tox.config.source.ini.convert import StrConvert
+from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
 from tox.session.state import State
 
@@ -233,4 +233,5 @@ __all__ = (
     "DEFAULT_VERBOSITY",
     "Parsed",
     "ToxParser",
+    "Handler",
 )

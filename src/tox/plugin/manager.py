@@ -4,9 +4,8 @@ from typing import List, Type, cast
 import pluggy
 
 from tox import provision
-from tox.config import core as core_config
-from tox.config import main as main_config
 from tox.config.cli.parser import ToxParser
+from tox.config.loader import api as loader_api
 from tox.config.sets import ConfigSet
 from tox.session import state
 from tox.session.cmd import list_env, show_config, version_flag
@@ -25,9 +24,8 @@ class Plugin:
         self.manager.add_hookspecs(spec)
 
         internal_plugins = (
-            main_config,
+            loader_api,
             provision,
-            core_config,
             runner,
             dev,
             sdist,

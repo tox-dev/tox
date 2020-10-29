@@ -3,18 +3,16 @@ Apply value substitution (replacement) on tox strings.
 """
 import os
 import re
-import sys
 from configparser import SectionProxy
-from typing import TYPE_CHECKING, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple, Union
 
+from tox.config.loader.stringify import stringify
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
 
-from .stringify import stringify
-
 if TYPE_CHECKING:
-    from tox.config.source.ini import IniLoader
+    from tox.config.loader.ini import IniLoader
 
 CORE_PREFIX = "tox"
 BASE_TEST_ENV = "testenv"
@@ -70,7 +68,9 @@ def _replace_match(
     if of_type == "env":
         replace_value: Optional[str] = replace_env(args)
     elif of_type == "posargs":
-        replace_value = replace_posarg(args)
+        if conf is None:
+            raise RuntimeError("no configuration yet")
+        replace_value = replace_posargs(args, conf.pos_args)
     else:
         replace_value = replace_reference(conf, current_env, loader, value)
     if replace_value is None:
@@ -117,7 +117,7 @@ def replace_reference(
             default = settings["default"]
             if default is not None:
                 return default
-        except Exception:  # noqa # ignore errors - but don't replace them
+        except Exception as exc:  # noqa # ignore errors - but don't replace them
             pass
     # we should raise here - but need to implement escaping factor conditionals
     # raise ValueError(f"could not replace {value} from {current_env}")
@@ -134,7 +134,7 @@ def _config_value_sources(
     # if we have an env name specified take only from there
     if env is not None:
         if conf is not None and env in conf:
-            yield conf[env]
+            yield conf.get_env(env)
         return
 
     # if we have a section name specified take only from there
@@ -144,7 +144,7 @@ def _config_value_sources(
             if conf is not None:
                 yield conf.core
             return
-        value = loader.section_loader(section)
+        value = loader.get_section(section)
         if value is not None:
             yield value
         return
@@ -153,12 +153,12 @@ def _config_value_sources(
     if conf is not None:
         yield conf.core
         if current_env is not None:
-            yield conf[current_env]
+            yield conf.get_env(current_env)
 
 
-def replace_posarg(args: List[str]) -> str:
+def replace_posargs(args: List[str], pos_args: Sequence[str]) -> str:
     try:
-        replace_value = shell_cmd(sys.argv[sys.argv.index("--") + 1 :])
+        replace_value = shell_cmd(pos_args)
     except ValueError:
         replace_value = args[0] if args else ""
     return replace_value

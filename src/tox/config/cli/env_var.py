@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Any, Optional, Tuple, Type
 
-from tox.config.source.ini.convert import StrConvert
+from tox.config.loader.str_convert import StrConvert
 
 CONVERT = StrConvert()
 

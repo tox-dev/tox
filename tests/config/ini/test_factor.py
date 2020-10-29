@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from tox.config.source.ini import filter_for_env, find_envs
+from tox.config.loader.ini.factor import filter_for_env, find_envs
 from tox.pytest import ToxProjectCreator
 
 
@@ -117,7 +117,7 @@ def test_factor_config(tox_project: ToxProjectCreator) -> None:
     config = project.config()
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
     for env in config.core["env_list"]:
-        env_config = config[env]
+        env_config = config.get_env(env)
         env_config.add_config(keys="deps", of_type=List[str], default=[], desc="deps", overwrite=True)
         deps = env_config["deps"]
         assert "pytest" in deps

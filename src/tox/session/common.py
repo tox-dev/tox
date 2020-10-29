@@ -1,7 +1,7 @@
 from argparse import Action, ArgumentParser, Namespace
 from typing import Any, List, Optional, Sequence, Union, cast
 
-from tox.config.source.ini.convert import StrConvert
+from tox.config.loader.str_convert import StrConvert
 
 
 def env_list_flag(parser: ArgumentParser) -> None:

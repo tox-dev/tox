@@ -20,8 +20,7 @@ def test_list_empty(tox_project: ToxProjectCreator) -> None:
         skip_missing_interpreters = True
         min_version = {__version__}
         provision_tox_env = .tox
-        requires =
-          tox>={__version__}
+        requires = tox>={__version__}
         no_package = False
         """,
     ).lstrip()

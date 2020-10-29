@@ -34,18 +34,16 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     tox_root = {path}
     work_dir = {path}{sep}\.tox4
     temp_dir = {path}{sep}\.temp
-    env_list =
-      {name}
+    env_list = {name}
     skip_missing_interpreters = True
     min_version = {version}
     provision_tox_env = \.tox
-    requires =
-      tox>={version}
+    requires = tox>={version}
     no_package = False
 
     \[testenv:{name}\]
     type = VirtualEnvRunner
-    base =
+    base = testenv
     runner = virtualenv
     env_name = {name}
     env_dir = {path}{sep}\.tox4{sep}{name}
@@ -56,8 +54,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     pass_env =
     {pass_env_str}
     description =
-    commands =
-      magic
+    commands = magic
     commands_pre =
     commands_post =
     change_dir = {path}
@@ -69,8 +66,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     package_tox_env_type = virtualenv-pep-517-sdist
     package_env = \.package
     extras =
-    base_python =
-      {name}
+    base_python = {name}
     env_site_packages_dir = {path}{sep}\.tox4{sep}{name}{sep}.*
     env_python = {path}{sep}\.tox4{sep}{name}{sep}.*
     deps =

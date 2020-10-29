@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Generator, List, Optional, Tuple, cast
 
 from tox.config.sets import ConfigSet
-from tox.config.source.api import Command, EnvList
+from tox.config.types import Command, EnvList
 
 from .api import ToxEnv
 from .package import PackageToxEnv

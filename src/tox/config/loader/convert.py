@@ -3,72 +3,16 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Generic,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
-
-from tox.execute.request import shell_cmd
+from typing import Any, Dict, Generic, Iterator, List, Set, Tuple, Type, TypeVar, Union, cast
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
-    from typing_extensions import Literal  # noqa
+    from typing_extensions import Literal
 
-if TYPE_CHECKING:
-    from tox.config.main import Config
-    from tox.config.sets import ConfigSet
+from ..types import Command, EnvList
+
 _NO_MAPPING = object()
-
-
-class Command:
-    def __init__(self, args: List[str]) -> None:
-        self.ignore_exit_code = args[0] == "-"
-        self.args = args[1:] if self.ignore_exit_code else args
-
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(args={self.args!r})"
-
-    def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and self.args == other.args
-
-    def __ne__(self, other: Any) -> bool:
-        return not (self == other)
-
-    @property
-    def shell(self) -> str:
-        return shell_cmd(self.args)
-
-
-class EnvList:
-    def __init__(self, envs: Sequence[str]) -> None:
-        self.envs = list(OrderedDict((e, None) for e in envs).keys())
-
-    def __repr__(self) -> str:
-        return "{}(envs={!r})".format(type(self).__name__, ",".join(self.envs))
-
-    def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and self.envs == other.envs
-
-    def __ne__(self, other: Any) -> bool:
-        return not (self == other)
-
-    def __iter__(self) -> Iterator[str]:
-        return iter(self.envs)
-
-
 T = TypeVar("T")
 V = TypeVar("V")
 
@@ -80,7 +24,7 @@ class Convert(ABC, Generic[T]):
 
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
-            return self._to_typing(raw, of_type)
+            return self._to_typing(raw, of_type)  # type: ignore[return-value]
         elif issubclass(of_type, Path):
             return self.to_path(raw)  # type: ignore[return-value]
         elif issubclass(of_type, bool):
@@ -169,76 +113,4 @@ class Convert(ABC, Generic[T]):
     @staticmethod
     @abstractmethod
     def to_bool(value: T) -> bool:
-        raise NotImplementedError
-
-
-class Loader(Convert[T]):
-    """Loader loads a configuration value and converts it."""
-
-    def __init__(self, name: Optional[str], namespace: str) -> None:
-        """
-        Create a loader.
-
-        :param name: name of this loader: ``None`` for core, otherwise the tox environment name
-        :param name: the namespace under the name exists within the config
-        """
-        self.name = name
-        self.namespace = namespace
-
-    def load(self, key: str, of_type: Type[V], conf: Optional["Config"]) -> V:
-        """
-        Load a value.
-
-        :param key: the key under it lives
-        :param of_type: the type to convert to
-        :param conf: the configuration object of this tox session (needed to manifest the value)
-        :return: the converted type
-        """
-        raw = self._load_raw(key, conf)
-        converted = self.to(raw, of_type)
-        return converted
-
-    @abstractmethod
-    def setup_with_conf(self, conf: "ConfigSet") -> None:
-        """Notifies the loader when the global configuration object has been constructed"""
-        raise NotImplementedError
-
-    def make_package_conf(self) -> None:
-        """Notifies the loader that this is a package configuration."""
-
-    @abstractmethod
-    def _load_raw(self, key: str, conf: Optional["Config"]) -> T:
-        """
-        Load the raw object from the config store.
-
-        :param key: the key under what we want the configuration
-        :param conf: the global config object
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def found_keys(self) -> Set[str]:
-        """A list of configuration keys found within the configuration."""
-        raise NotImplementedError
-
-
-class Source(ABC):
-    """
-    Source is able to return a configuration value (for either the core or per environment source).
-    """
-
-    def __init__(self, core: Loader[Any]) -> None:
-        self.core = core
-
-    @abstractmethod
-    def envs(self, core_conf: "ConfigSet") -> Iterator[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def __getitem__(self, item: str) -> Loader[Any]:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def tox_root(self) -> Path:
         raise NotImplementedError

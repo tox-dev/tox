@@ -1,18 +1,12 @@
-"""
-Group together configuration values that belong together (such as base tox configuration, tox environment configs)
-"""
-from abc import ABC, abstractmethod
 from collections import OrderedDict
-from copy import deepcopy
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
-    Generic,
-    Iterable,
     Iterator,
+    List,
     Optional,
     Sequence,
     Set,
@@ -22,120 +16,28 @@ from typing import (
     cast,
 )
 
-from tox.config.source.api import Loader
+from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition
+from .types import EnvList
 
 if TYPE_CHECKING:
-    from tox.config.main import Config  # pragma: no cover
+    from tox.config.loader.api import Loader
+    from tox.config.main import Config
 
-
-T = TypeVar("T")
 V = TypeVar("V")
-
-
-class ConfigDefinition(ABC, Generic[T]):
-    """Abstract base class for configuration definitions"""
-
-    def __init__(self, keys: Iterable[str], desc: str) -> None:
-        self.keys = keys
-        self.desc = desc
-
-    @abstractmethod
-    def __call__(self, src: Loader[T], conf: "Config") -> T:
-        raise NotImplementedError
-
-
-class ConfigConstantDefinition(ConfigDefinition[T]):
-    """A configuration definition whose value is defined upfront (such as the tox environment name)"""
-
-    def __init__(self, keys: Iterable[str], desc: str, value: Union[Callable[[], T], T]) -> None:
-        super().__init__(keys, desc)
-        self.value = value
-
-    def __call__(self, src: Loader[T], conf: "Config") -> T:
-        if callable(self.value):
-            value = self.value()
-        else:
-            value = self.value
-        return value
-
-
-_PLACE_HOLDER = object()
-
-
-class ConfigDynamicDefinition(ConfigDefinition[T]):
-    """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.)"""
-
-    def __init__(
-        self,
-        keys: Iterable[str],
-        of_type: Type[T],
-        default: Union[Callable[["Config", Optional[str]], T], T],
-        desc: str,
-        post_process: Optional[Callable[[T, "Config"], T]] = None,
-    ) -> None:
-        super().__init__(keys, desc)
-        self.of_type = of_type
-        self.default = default
-        self.post_process = post_process
-        self._cache: Union[object, T] = _PLACE_HOLDER
-
-    def __call__(self, src: Loader[T], conf: "Config") -> T:
-        if self._cache is _PLACE_HOLDER:
-            for key in self.keys:
-                override = next((o for o in conf.overrides if o.namespace == src.namespace and o.key == key), None)
-                if override is not None:
-                    from tox.config.source.ini.convert import StrConvert
-
-                    value = StrConvert().to(override.value, self.of_type)
-
-                    # relative override paths are relative to tox root unless the tox root itself, which is cwd
-                    if isinstance(value, Path) and not value.is_absolute():
-                        if key in ["tox_root", "toxinidir"]:
-                            value = value.absolute()  # type: ignore[assignment]
-                        else:
-                            value = cast(Path, conf.core["tox_root"]) / value  # type: ignore[assignment]
-                    break
-            else:
-                for key in self.keys:
-                    try:
-                        value = src.load(key, self.of_type, conf)
-                    except KeyError:
-                        continue
-                    break
-                else:
-                    value = self.default(conf, src.name) if callable(self.default) else self.default
-            if self.post_process is not None:
-                value = self.post_process(value, conf)  # noqa
-            self._cache = value
-        return cast(T, self._cache)
-
-    def __deepcopy__(self, memo: Dict[int, "ConfigDynamicDefinition[T]"]) -> "ConfigDynamicDefinition[T]":
-        # we should not copy the place holder as our checks would break
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            if k != "_cache" and v is _PLACE_HOLDER:
-                value = deepcopy(v, memo=memo)  # noqa
-            else:
-                value = v
-            setattr(result, k, value)
-        return cast(ConfigDynamicDefinition[T], result)
-
-    def __repr__(self) -> str:
-        values = ((k, v) for k, v in vars(self).items() if k != "post_process" and v is not None)
-        return f"{type(self).__name__}({', '.join('{}={}'.format(k, v) for k,v in values)})"
 
 
 class ConfigSet:
     """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
 
-    def __init__(self, raw: Loader[Any], conf: "Config"):
-        self._raw = raw
-        self._defined: Dict[str, ConfigDefinition[Any]] = {}
+    def __init__(self, conf: "Config", name: Optional[str]):
+        self.name = name
         self._conf = conf
+        self._loaders: List[Loader[Any]] = []
+        self._defined: Dict[str, ConfigDefinition[Any]] = {}
         self._keys: Dict[str, None] = OrderedDict()
-        self._raw.setup_with_conf(self)
+
+    def add_loader(self, loader: "Loader[Any]") -> None:
+        self._loaders.append(loader)
 
     def add_config(
         self,
@@ -156,18 +58,15 @@ class ConfigSet:
                 if isinstance(defined, ConfigDynamicDefinition):
                     return defined
                 raise TypeError(f"{keys} already defined with differing type {type(defined).__name__}")
-        definition = ConfigDynamicDefinition(keys_, of_type, default, desc, post_process)
+        definition = ConfigDynamicDefinition(keys_, desc, self.name, of_type, default, post_process)
         self._add_conf(keys_, definition)
         return definition
 
     def add_constant(self, keys: Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
         keys_ = self._make_keys(keys)
-        definition = ConfigConstantDefinition(keys_, desc, value)
+        definition = ConfigConstantDefinition(keys_, desc, self.name, value)
         self._add_conf(keys, definition)
         return definition
-
-    def make_package_conf(self) -> None:
-        self._raw.make_package_conf()
 
     @staticmethod
     def _make_keys(keys: Union[str, Sequence[str]]) -> Sequence[str]:
@@ -178,20 +77,56 @@ class ConfigSet:
         for key in keys:
             self._defined[key] = definition
 
-    @property
-    def name(self) -> Optional[str]:
-        return self._raw.name
-
     def __getitem__(self, item: str) -> Any:
         config_definition = self._defined[item]
-        return config_definition(self._raw, self._conf)
+        return config_definition(self._conf, item, self._loaders)
 
     def __repr__(self) -> str:
-        return "{}(raw={!r}, conf={!r})".format(type(self).__name__, self._raw, self._conf)
+        values = (v for v in (f"name={self.name!r}" if self.name else "", f"loaders={self._loaders!r}") if v)
+        return f"{self.__class__.__name__}({', '.join(values)})"
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._keys.keys())
 
     def unused(self) -> Set[str]:
         """Return a list of keys present in the config source but not used"""
-        return self._raw.found_keys() - set(self._defined.keys())
+        found = set()
+        for loader in self._loaders:
+            found.update(loader.found_keys())
+        return found - set(self._defined.keys())
+
+
+class CoreConfigSet(ConfigSet):
+    def __init__(self, conf: "Config", root: Path) -> None:
+        super().__init__(conf, name=None)
+        self.add_config(
+            keys=["tox_root", "toxinidir"],
+            of_type=Path,
+            default=root,
+            desc="the root directory (where the configuration file is found)",
+        )
+        self.add_config(
+            keys=["work_dir", "toxworkdir"],
+            of_type=Path,
+            # here we pin to .tox4 to be able to use in parallel with v3 until final release
+            default=lambda conf, _: cast(Path, self["tox_root"]) / ".tox4",
+            desc="working directory",
+        )
+        self.add_config(
+            keys=["temp_dir"],
+            of_type=Path,
+            default=lambda conf, _: cast(Path, self["tox_root"]) / ".temp",
+            desc="temporary directory cleaned at start",
+        )
+        self.add_config(
+            keys=["env_list", "envlist"],
+            of_type=EnvList,
+            default=EnvList([]),
+            desc="define environments to automatically run",
+        )
+        self.add_config(
+            keys=["skip_missing_interpreters"],
+            of_type=bool,
+            default=True,
+            desc="skip missing interpreters",
+        )

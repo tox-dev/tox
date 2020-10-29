@@ -4,7 +4,8 @@ from itertools import chain
 from pathlib import Path
 from typing import Iterator, Tuple
 
-from tox.config.source.api import Command, Convert, EnvList
+from tox.config.loader.convert import Convert
+from tox.config.types import Command, EnvList
 
 
 class StrConvert(Convert[str]):
@@ -52,7 +53,7 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_env_list(value: str) -> EnvList:
-        from tox.config.source.ini.factor import extend_factors
+        from tox.config.loader.ini.factor import extend_factors
 
         elements = list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n")))
         return EnvList(elements)

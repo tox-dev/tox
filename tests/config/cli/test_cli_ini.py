@@ -7,7 +7,7 @@ from typing import Callable, Dict
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.config.override import Override
+from tox.config.loader.api import Override
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.state import State
 
@@ -54,7 +54,7 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 def test_ini_empty(empty_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, handlers = get_options()
+    parsed, handlers, _ = get_options()
     assert vars(parsed) == {
         "colored": "no",
         "verbose": 2,
@@ -71,7 +71,7 @@ def test_ini_empty(empty_ini: Path, core_handlers: Dict[str, Callable[[State], i
 
 
 def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, handlers = get_options()
+    parsed, handlers, _ = get_options()
     assert vars(parsed) == {
         "colored": "yes",
         "verbose": 5,
@@ -101,7 +101,7 @@ def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
 def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
-    parsed, _ = get_options()
+    parsed, __, _ = get_options()
     msg = (
         "PermissionError(13, 'Permission denied')"
         if sys.platform == "win32"
@@ -136,7 +136,7 @@ def test_bad_option_cli_ini(
         ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
-    parsed, _ = get_options()
+    parsed, _, __ = get_options()
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
             to,

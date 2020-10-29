@@ -3,7 +3,7 @@ Defines how to run a single tox environment.
 """
 from typing import List, cast
 
-from tox.config.source.api import Command
+from tox.config.types import Command
 from tox.execute.api import Outcome
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Recreate

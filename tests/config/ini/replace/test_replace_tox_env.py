@@ -13,7 +13,7 @@ def example(tox_project: ToxProjectCreator) -> EnvConfigCreator:
     def func(conf: str) -> ConfigSet:
         project = tox_project({"tox.ini": f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n"""})
         config = project.config()
-        env_config = config["a"]
+        env_config = config.get_env("a")
         return env_config
 
     return func
