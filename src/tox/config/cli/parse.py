@@ -2,7 +2,7 @@
 This module pulls together this package: create and parse CLI arguments for tox.
 """
 
-from typing import Dict, Sequence, Tuple, cast
+from typing import Dict, Optional, Sequence, Tuple, cast
 
 from tox.report import setup_report
 
@@ -11,8 +11,8 @@ from .parser import Handler, Parsed, ToxParser
 Handlers = Dict[str, Handler]
 
 
-def get_options(*args: str) -> Tuple[Parsed, Handlers, Sequence[str]]:
-    pos_args: Tuple[str, ...] = ()
+def get_options(*args: str) -> Tuple[Parsed, Handlers, Optional[Sequence[str]]]:
+    pos_args: Optional[Tuple[str, ...]] = None
     try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
         pos_arg_at = args.index("--")
         pos_args = tuple(args[pos_arg_at + 1 :])

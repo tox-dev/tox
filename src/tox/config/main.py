@@ -14,7 +14,7 @@ class Config:
         config_source: Source,
         overrides: List[Override],
         root: Path,
-        pos_args: Sequence[str],
+        pos_args: Optional[Sequence[str]],
     ) -> None:
         self.pos_args = pos_args
         self._root = root

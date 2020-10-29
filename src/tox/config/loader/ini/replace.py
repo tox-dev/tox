@@ -156,11 +156,11 @@ def _config_value_sources(
             yield conf.get_env(current_env)
 
 
-def replace_posargs(args: List[str], pos_args: Sequence[str]) -> str:
-    try:
-        replace_value = shell_cmd(pos_args)
-    except ValueError:
+def replace_posargs(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
+    if pos_args is None:
         replace_value = args[0] if args else ""
+    else:
+        replace_value = shell_cmd(pos_args)
     return replace_value
 
 

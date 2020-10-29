@@ -50,7 +50,7 @@ def setup_state(args: Sequence[str]) -> State:
     return state
 
 
-def make_config(path: Path, overrides: List[Override], pos_args: Sequence[str]) -> Config:
+def make_config(path: Path, overrides: List[Override], pos_args: Optional[Sequence[str]]) -> Config:
     """Make a tox configuration object."""
     # for now only tox.ini supported
     folder = path
