@@ -430,6 +430,9 @@ class VirtualEnv(object):
                 redirect=reporter.verbosity() < reporter.Verbosity.DEBUG,
                 env=env,
             )
+        except KeyboardInterrupt:
+            self.status = "keyboardinterrupt"
+            raise
         finally:
             sys.stdout = old_stdout
 
@@ -636,6 +639,9 @@ class VirtualEnv(object):
                 status = e
                 if self.envconfig.config.option.skip_missing_interpreters == "true":
                     default_ret_code = 0
+            except KeyboardInterrupt:
+                self.status = "keyboardinterrupt"
+                raise
             if status:
                 str_status = str(status)
                 command_log = envlog.get_commandlog("setup")
