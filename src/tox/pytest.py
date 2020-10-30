@@ -20,6 +20,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
 
 import tox.run
+from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.execute.api import Outcome
@@ -127,13 +128,15 @@ class ToxProject:
 
     def config(
         self,
-        overrides: Optional[List[Override]] = None,
+        override: Optional[List[Override]] = None,
         pos_args: Optional[Sequence[str]] = None,
     ) -> Config:
         return tox.run.make_config(
-            path=self.path,
-            overrides=[] if overrides is None else overrides,
-            pos_args=[] if pos_args is None else pos_args,
+            parsed=Parsed(
+                override=[] if override is None else override,
+                work_dir=self.path,
+            ),
+            pos_args=pos_args,
         )
 
     def run(self, *args: str) -> "ToxRunOutcome":

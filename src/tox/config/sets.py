@@ -32,12 +32,9 @@ class ConfigSet:
     def __init__(self, conf: "Config", name: Optional[str]):
         self.name = name
         self._conf = conf
-        self._loaders: List[Loader[Any]] = []
+        self.loaders: List[Loader[Any]] = []
         self._defined: Dict[str, ConfigDefinition[Any]] = {}
         self._keys: Dict[str, None] = OrderedDict()
-
-    def add_loader(self, loader: "Loader[Any]") -> None:
-        self._loaders.append(loader)
 
     def add_config(
         self,
@@ -79,10 +76,10 @@ class ConfigSet:
 
     def __getitem__(self, item: str) -> Any:
         config_definition = self._defined[item]
-        return config_definition(self._conf, item, self._loaders)
+        return config_definition(self._conf, item, self.loaders)
 
     def __repr__(self) -> str:
-        values = (v for v in (f"name={self.name!r}" if self.name else "", f"loaders={self._loaders!r}") if v)
+        values = (v for v in (f"name={self.name!r}" if self.name else "", f"loaders={self.loaders!r}") if v)
         return f"{self.__class__.__name__}({', '.join(values)})"
 
     def __iter__(self) -> Iterator[str]:
@@ -91,7 +88,7 @@ class ConfigSet:
     def unused(self) -> Set[str]:
         """Return a list of keys present in the config source but not used"""
         found = set()
-        for loader in self._loaders:
+        for loader in self.loaders:
             found.update(loader.found_keys())
         return found - set(self._defined.keys())
 
@@ -105,11 +102,14 @@ class CoreConfigSet(ConfigSet):
             default=root,
             desc="the root directory (where the configuration file is found)",
         )
+        work_dir_builder = (
+            lambda conf, _: (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox4"
+        )
         self.add_config(
             keys=["work_dir", "toxworkdir"],
             of_type=Path,
             # here we pin to .tox4 to be able to use in parallel with v3 until final release
-            default=lambda conf, _: cast(Path, self["tox_root"]) / ".tox4",
+            default=work_dir_builder,
             desc="working directory",
         )
         self.add_config(

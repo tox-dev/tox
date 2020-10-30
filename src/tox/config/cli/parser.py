@@ -6,8 +6,8 @@ import argparse
 import logging
 import os
 import sys
-from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace, _SubParsersAction
-from itertools import chain
+from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, cast
 
 from tox.config.loader.str_convert import StrConvert
@@ -78,7 +78,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
     """
 
     def __init__(self, prog: str) -> None:
-        super().__init__(prog, max_help_position=42, width=240)
+        super().__init__(prog, max_help_position=30, width=240)
 
     def _get_help_string(self, action: Action) -> Optional[str]:
 
@@ -109,36 +109,78 @@ class Parsed(Namespace):
         return cast(bool, self.colored == "yes")
 
 
+ArgumentArgs = Tuple[Tuple[str, ...], Optional[Type[Any]], Dict[str, Any]]
+
+
 class ToxParser(ArgumentParserWithEnvAndConfig):
     """Argument parser for tox."""
 
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
+        self.of_cmd: Optional[str] = None
+        self.handlers: Dict[str, Tuple[Any, Handler]] = {}
+        self._arguments: List[ArgumentArgs] = []
+        self._groups: List[Tuple[Any, Dict[str, Any], List[Tuple[Dict[str, Any], List[ArgumentArgs]]]]] = []
         super().__init__(*args, **kwargs)
         if root is True:
             self._add_base_options()
-        self.handlers: Dict[str, Tuple[Any, Handler]] = {}
         if add_cmd is True:
-            self._cmd: Optional[_SubParsersAction] = self.add_subparsers(
-                title="command", help="tox command to execute", dest="command"
-            )
+            msg = "tox command to execute (default to legacy if not specified)"
+            self._cmd: Optional[Any] = self.add_subparsers(title="command", help=msg, dest="command")
             self._cmd.required = False
-            self._cmd.default = "run"
-
+            self._cmd.default = "legacy"
         else:
             self._cmd = None
 
     def add_command(self, cmd: str, aliases: Sequence[str], help_msg: str, handler: Handler) -> "ArgumentParser":
         if self._cmd is None:
             raise RuntimeError("no sub-command group allowed")
-        sub_parser = self._cmd.add_parser(cmd, help=help_msg, aliases=aliases, formatter_class=HelpFormatter)
+        sub_parser: ToxParser = self._cmd.add_parser(cmd, help=help_msg, aliases=aliases, formatter_class=HelpFormatter)
+        sub_parser.of_cmd = cmd  # mark it as parser for a sub-command
         content = sub_parser, handler
         self.handlers[cmd] = content
         for alias in aliases:
             self.handlers[alias] = content
-        return cast(ToxParser, sub_parser)
+        for (args, of_type, kwargs) in self._arguments:
+            sub_parser.add_argument(*args, of_type=of_type, **kwargs)
+        for (args, kwargs, excl) in self._groups:
+            group = sub_parser.add_argument_group(*args, **kwargs)
+            for (e_kwargs, arguments) in excl:
+                excl_group = group.add_mutually_exclusive_group(**e_kwargs)
+                for (a_args, _, a_kwargs) in arguments:
+                    excl_group.add_argument(*a_args, **a_kwargs)
+        return sub_parser
+
+    def add_argument_group(self, *args: Any, **kwargs: Any) -> Any:
+        result = super().add_argument_group(*args, **kwargs)
+        if self.of_cmd is None:
+            if args not in (("positional arguments",), ("optional arguments",)):
+
+                def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
+                    def add_argument(*a_args: str, of_type: Optional[Type[Any]] = None, **a_kwargs: Any) -> Action:
+                        res_args: Action = prev_add_arg(*a_args, **a_kwargs)  # type: ignore[has-type]
+                        arguments.append((a_args, of_type, a_kwargs))
+                        return res_args
+
+                    arguments: List[ArgumentArgs] = []
+                    excl.append((e_kwargs, arguments))
+                    res_excl = prev_excl(**kwargs)
+                    prev_add_arg = res_excl.add_argument
+                    res_excl.add_argument = add_argument  # type: ignore[assignment]
+                    return res_excl
+
+                prev_excl = result.add_mutually_exclusive_group
+                result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[assignment]
+                excl: List[Tuple[Dict[str, Any], List[ArgumentArgs]]] = []
+                self._groups.append((args, kwargs, excl))
+        return result
 
     def add_argument(self, *args: str, of_type: Optional[Type[Any]] = None, **kwargs: Any) -> Action:
         result = super().add_argument(*args, **kwargs)
+        if self.of_cmd is None and (result.dest not in ("help",)):
+            self._arguments.append((args, of_type, kwargs))
+            if hasattr(self, "_cmd") and self._cmd is not None and hasattr(self._cmd, "choices"):
+                for parser in {id(v): v for k, v in self._cmd.choices.items()}.values():
+                    parser.add_argument(*args, of_type=of_type, **kwargs)
         if of_type is not None:
             result.of_type = of_type  # type: ignore[attr-defined]
         return result
@@ -153,80 +195,69 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def _add_base_options(self) -> None:
         """Argument options that always make sense."""
-        from tox.report import LEVELS
-
-        level_map = "|".join("{} - {}".format(c, logging.getLevelName(l)) for c, l in sorted(list(LEVELS.items())))
-        verbosity_group = self.add_argument_group(
-            f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}",
-        )
-        verbosity = verbosity_group.add_mutually_exclusive_group()
-        verbosity.add_argument(
-            "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=DEFAULT_VERBOSITY
-        )
-        verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
-
-        converter = StrConvert()
-        if converter.to_bool(os.environ.get("NO_COLOR", "")):
-            color = "no"
-        elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
-            color = "yes"
-        else:
-            color = "yes" if sys.stdout.isatty() else "no"
-
-        verbosity_group.add_argument(
-            "--colored",
-            default=color,
-            choices=["yes", "no"],
-            help="should output be enriched with colors",
-        )
+        add_core_arguments(self)
         self.fix_defaults()
 
     def parse_known_args(  # type: ignore[override]
         self, args: Optional[Sequence[str]], namespace: Optional[Parsed] = None
     ) -> Tuple[Parsed, List[str]]:
+        if args is None:
+            args = sys.argv
+        cmd_at: Optional[int] = None
+        if self._cmd is not None and args:
+            for at, arg in enumerate(args):
+                if arg in self._cmd.choices:
+                    cmd_at = at
+                    break
+            else:
+                cmd_at = None
+        if cmd_at is not None:  # if we found a command move it to the start
+            args = args[cmd_at], *args[:cmd_at], *args[cmd_at + 1 :]
+        elif args not in (("--help",), ("-h",)) and (self._cmd is not None and "legacy" in self._cmd.choices):
+            # on help no mangling needed, and we also want to insert once we have legacy to insert
+            args = "legacy", *args
         result = Parsed() if namespace is None else namespace
-        args = self._inject_default_cmd([] if args is None else args)
         _, args = super(ToxParser, self).parse_known_args(args, namespace=result)
         return result, args
 
-    def _inject_default_cmd(self, args: Sequence[str]) -> Sequence[str]:
-        # if the users specifies no command we imply he wants run, however for this to work we need to inject it onto
-        # the argument parsers left side
-        if self._cmd is None:  # no commands yet so must be all global, nothing to fix
-            return args
-        _global = {
-            k: v
-            for k, v in chain.from_iterable(
-                ((j, isinstance(i, (argparse._StoreAction, argparse._AppendAction))) for j in i.option_strings)  # noqa
-                for i in self._actions
-                if hasattr(i, "option_strings")
-            )
-        }
-        _global_single = {i[1:] for i in _global if len(i) == 2 and i.startswith("-")}
-        cmd_at = next((j for j, i in enumerate(args) if i in self._cmd.choices), None)
-        global_args: List[str] = []
-        command_args: List[str] = []
-        reorganize_to = cmd_at if cmd_at is not None else len(args)
-        at = 0
-        while at < reorganize_to:
-            arg = args[at]
-            needs_extra = False
-            is_global = False
-            if arg in _global:
-                needs_extra = _global[arg]
-                is_global = True
-            elif arg.startswith("-") and not (set(arg[1:]) - _global_single):
-                is_global = True
-            (global_args if is_global else command_args).append(arg)
-            at += 1
-            if needs_extra:
-                global_args.append(args[at])
-                at += 1
-        new_args = global_args
-        new_args.append(self._cmd.default if cmd_at is None else args[cmd_at])
-        new_args.extend(command_args)
-        new_args.extend(args[reorganize_to + 1 :])
-        return new_args
+
+def add_verbosity_flags(parser: ArgumentParser) -> None:
+    from tox.report import LEVELS
+
+    level_map = "|".join("{} - {}".format(c, logging.getLevelName(l)) for c, l in sorted(list(LEVELS.items())))
+    verbosity_group = parser.add_argument_group(
+        f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}",
+    )
+    verbosity = verbosity_group.add_mutually_exclusive_group()
+    verbosity.add_argument(
+        "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=DEFAULT_VERBOSITY
+    )
+    verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
+
+
+def add_color_flags(parser: ArgumentParser) -> None:
+    converter = StrConvert()
+    if converter.to_bool(os.environ.get("NO_COLOR", "")):
+        color = "no"
+    elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
+        color = "yes"
+    else:
+        color = "yes" if sys.stdout.isatty() else "no"
+
+    parser.add_argument(
+        "--colored",
+        default=color,
+        choices=["yes", "no"],
+        help="should output be enriched with colors",
+    )
+
+
+def add_core_arguments(parser: ArgumentParser) -> None:
+    add_color_flags(parser)
+    add_verbosity_flags(parser)
+    parser.add_argument(
+        "--workdir", dest="work_dir", metavar="dir", default=Path().absolute(), help="tox working directory"
+    )
 
 
 __all__ = (

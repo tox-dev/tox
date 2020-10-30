@@ -86,13 +86,13 @@ class Loader(Convert[T]):
 @impl
 def tox_add_option(parser: "ToxParser") -> None:
     parser.add_argument(
-        "-o",
+        "-x",
         "--override",
         action="append",
         type=Override,
         default=[],
         dest="override",
-        help="list of configuration override(s)",
+        help="configuration override(s)",
     )
 
 

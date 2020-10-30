@@ -2,11 +2,10 @@
 import logging
 import sys
 from datetime import datetime
-from pathlib import Path
-from typing import List, Optional, Sequence, cast
+from typing import Optional, Sequence, cast
 
 from tox.config.cli.parse import get_options
-from tox.config.loader.api import Override
+from tox.config.cli.parser import Parsed
 from tox.config.main import Config
 from tox.config.source.tox_ini import ToxIni
 from tox.report import HandledError
@@ -44,22 +43,22 @@ def setup_state(args: Sequence[str]) -> State:
     parsed, handlers, pos_args = get_options(*args)
     parsed.start = start
     # parse configuration file
-    config = make_config(Path().cwd().absolute(), parsed.override, pos_args)
+    config = make_config(parsed, pos_args)
     # build tox environment config objects
     state = State(config, (parsed, handlers), args)
     return state
 
 
-def make_config(path: Path, overrides: List[Override], pos_args: Optional[Sequence[str]]) -> Config:
+def make_config(parsed: Parsed, pos_args: Optional[Sequence[str]]) -> Config:
     """Make a tox configuration object."""
     # for now only tox.ini supported
-    folder = path
+    folder = parsed.work_dir
     while True:
         tox_ini = folder / "tox.ini"
         if tox_ini.exists() and tox_ini.is_file():
             ini_loader = ToxIni(tox_ini)
-            return Config(ini_loader, overrides, tox_ini.parent, pos_args)
+            return Config(ini_loader, parsed.override, tox_ini.parent, pos_args, parsed.work_dir)
         if folder.parent == folder:
             break
         folder = folder.parent
-    raise RuntimeError(f"could not find tox.ini in folder (or any of its parents) {path}")
+    raise RuntimeError(f"could not find tox.ini in folder (or any of its parents) {parsed.work_dir}")

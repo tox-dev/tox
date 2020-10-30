@@ -6,7 +6,7 @@ import inspect
 import logging
 import os
 import sys
-from argparse import ArgumentTypeError
+from argparse import ArgumentParser, ArgumentTypeError
 from collections import OrderedDict, deque
 from pathlib import Path
 from threading import Event, Semaphore, Thread
@@ -35,18 +35,22 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     env_list_flag(our)
     env_run_create_flags(our)
+    parallel_flags(our)
 
-    def parse_num_processes(str_value):
-        if str_value == "all":
-            return None
-        if str_value == "auto":
-            return auto_detect_cpus()
-        else:
-            value = int(str_value)
-            if value < 0:
-                raise ArgumentTypeError("value must be positive")
-            return value
 
+def parse_num_processes(str_value):
+    if str_value == "all":
+        return None
+    if str_value == "auto":
+        return auto_detect_cpus()
+    else:
+        value = int(str_value)
+        if value < 0:
+            raise ArgumentTypeError("value must be positive")
+        return value
+
+
+def parallel_flags(our: ArgumentParser) -> None:
     our.add_argument(
         "-p",
         "--parallel",

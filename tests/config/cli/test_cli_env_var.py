@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Dict
 
 import pytest
@@ -5,6 +6,7 @@ import pytest
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+from tox.session.common import CliEnv
 from tox.session.state import State
 
 
@@ -21,15 +23,35 @@ def test_verbose_compound(monkeypatch: MonkeyPatch) -> None:
 def test_verbose_no_test(monkeypatch: MonkeyPatch) -> None:
     parsed, _, __ = get_options("--notest", "-vv", "--runner", "virtualenv")
     assert vars(parsed) == {
-        "colored": "no",
         "verbose": 4,
         "quiet": 0,
-        "command": "run",
+        "colored": "no",
+        "work_dir": Path.cwd().absolute(),
+        "resultjson": None,
+        "command": "legacy",
         "default_runner": "virtualenv",
+        "force_dep": [],
+        "sitepackages": False,
+        "alwayscopy": False,
         "override": [],
-        "env": None,
+        "show_config": False,
+        "list_envs_all": False,
+        "list_envs": False,
+        "devenv_path": None,
+        "config_file": "",
+        "env": CliEnv(),
+        "skip_missing_interpreters": "config",
         "recreate": False,
         "no_test": True,
+        "package_only": False,
+        "installpkg": None,
+        "develop": False,
+        "hashseed": "noset",
+        "discover": [],
+        "parallel": 0,
+        "parallel_live": False,
+        "pre": False,
+        "index_url": [],
     }
 
 
@@ -49,17 +71,35 @@ def test_env_var_exhaustive_parallel_values(
 
     parsed, handlers, _ = get_options()
     assert vars(parsed) == {
+        "alwayscopy": False,
         "colored": "no",
-        "verbose": 5,
-        "quiet": 1,
-        "command": "run-parallel",
-        "env": ["py37", "py36"],
+        "command": "legacy",
+        "config_file": "",
         "default_runner": "virtualenv",
-        "recreate": True,
+        "develop": False,
+        "devenv_path": None,
+        "discover": [],
+        "env": CliEnv(["py37", "py36"]),
+        "force_dep": [],
+        "hashseed": "noset",
+        "index_url": [],
+        "installpkg": None,
+        "list_envs": False,
+        "list_envs_all": False,
         "no_test": True,
+        "override": [Override("a=b"), Override("c=d")],
+        "package_only": False,
         "parallel": 3,
         "parallel_live": False,
-        "override": [Override("a=b"), Override("c=d")],
+        "pre": False,
+        "quiet": 1,
+        "recreate": True,
+        "resultjson": None,
+        "show_config": False,
+        "sitepackages": False,
+        "skip_missing_interpreters": "config",
+        "verbose": 5,
+        "work_dir": Path.cwd().absolute(),
     }
     assert parsed.verbosity == 4
     assert handlers == core_handlers

@@ -1,9 +1,10 @@
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Sequence, Set, Tuple, cast
+from typing import TYPE_CHECKING, Dict, Iterator, Optional, Sequence, Set, Tuple, cast
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.plugin.impl import impl
 from tox.report import HandledError
+from tox.session.common import CliEnv
 from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.runner import RunToxEnv
 
@@ -35,10 +36,11 @@ class State:
         if everything:
             yield from self.conf
             return
-        use_env_list: Optional[List[str]] = getattr(self.options, "env", None)
-        if use_env_list is None:
+        use_env_list: Optional[CliEnv] = getattr(self.options, "env", None)
+        if use_env_list is None or use_env_list.all:
             use_env_list = self.conf.core["env_list"]
-        yield from use_env_list
+        if use_env_list is not None:
+            yield from use_env_list
 
     def tox_env(self, name: str) -> RunToxEnv:
         if name in self._pkg_env_discovered:

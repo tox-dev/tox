@@ -14,14 +14,17 @@ from tox.session.state import State
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    our = parser.add_command("config", ["c"], "show tox configuration", display_config)
+    our = parser.add_command("config", ["c"], "show tox configuration", show_config)
     our.add_argument("-d", action="store_true", help="list just default envs", dest="list_default_only")
+    our.add_argument(
+        "--core", action="store_true", help="show core options too when selecting an env with -e", dest="show_core"
+    )
     env_list_flag(our)
 
 
-def display_config(state: State) -> int:
+def show_config(state: State) -> int:
     first = True
-    if not state.options.env:
+    if state.options.env.all or state.options.show_core:
         print("[tox]")
         print_conf(state.conf.core)
         first = False

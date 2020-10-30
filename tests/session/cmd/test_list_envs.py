@@ -49,7 +49,7 @@ def test_list_env_default(project: ToxProject) -> None:
 
 
 def test_list_env_quiet(project: ToxProject) -> None:
-    outcome = project.run("l", "-q")
+    outcome = project.run("l", "--no-desc")
 
     outcome.assert_success()
     expected = """
@@ -62,7 +62,7 @@ def test_list_env_quiet(project: ToxProject) -> None:
 
 
 def test_list_env_quiet_default(project: ToxProject) -> None:
-    outcome = project.run("l", "-q", "-d")
+    outcome = project.run("l", "--no-desc", "-d")
 
     outcome.assert_success()
     expected = """
