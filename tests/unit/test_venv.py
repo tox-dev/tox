@@ -84,16 +84,18 @@ def test_create(mocksession, newconfig):
     assert venv.path_config.check(exists=False)
 
 
-def test_create_KeyboardInterrupt(mocksession, newconfig, mocker):
+@pytest.mark.parametrize("patched_venv_methodname", ["_pcall", "update"])
+def test_create_KeyboardInterrupt(mocksession, newconfig, mocker, patched_venv_methodname):
     config = newconfig(
         [],
         """\
         [testenv:py123]
+        deps = pip >= 19.3.1
         """,
     )
     mocksession.new_config(config)
     venv = mocksession.getvenv("py123")
-    mocker.patch.object(venv, "_pcall", side_effect=KeyboardInterrupt)
+    mocker.patch.object(venv, patched_venv_methodname, side_effect=KeyboardInterrupt)
     with pytest.raises(KeyboardInterrupt):
         venv.setupenv()
 
@@ -914,6 +916,20 @@ def test_run_custom_install_command(newmocksession):
     assert len(pcalls) == 1
     assert "easy_install" in pcalls[0].args[0]
     assert pcalls[0].args[1:] == ["whatever"]
+
+
+def test_run_install_command_handles_KeyboardInterrupt(newmocksession, mocker):
+    mocksession = newmocksession([], "")
+    venv = mocksession.getvenv("python")
+    venv.just_created = True
+    venv.envconfig.envdir.ensure(dir=1)
+
+    mocker.patch.object(venv, "_pcall", side_effect=KeyboardInterrupt)
+    with mocksession.newaction(venv.name, "hello") as action:
+        with pytest.raises(KeyboardInterrupt):
+            venv.run_install_command(packages=["whatever"], action=action)
+
+    assert venv.status == "keyboardinterrupt"
 
 
 def test_command_relative_issue36(newmocksession, tmpdir, monkeypatch):

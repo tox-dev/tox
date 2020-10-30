@@ -1,0 +1,1 @@
+Fix the false ``congratulations`` message that appears when a ``KeyboardInterrupt`` occurs during package installation. - by :user:`gnikonorov`
