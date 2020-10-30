@@ -126,7 +126,10 @@ class Outcome:
         return self.exit_code == self.OK
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}: exit {self.exit_code} in {self.elapsed:.2f}ms for {self.request.shell_cmd}"
+        return (
+            f"{self.__class__.__name__}: exit {self.exit_code} in {self.elapsed:.2f} seconds"
+            f" for {self.request.shell_cmd}"
+        )
 
     def assert_success(self, logger: logging.Logger) -> None:
         if self.exit_code != self.OK:
@@ -146,7 +149,7 @@ class Outcome:
 
     def log_run_done(self, lvl: int, logger: logging.Logger) -> None:
         req = self.request
-        logger.log(lvl, "exit %d (%.2fs) %s> %s", self.exit_code, self.elapsed, req.cwd, req.shell_cmd)
+        logger.log(lvl, "exit %d (%.2f seconds) %s> %s", self.exit_code, self.elapsed, req.cwd, req.shell_cmd)
 
     @property
     def elapsed(self) -> float:

@@ -2,7 +2,7 @@
 Run tox environments in sequential order.
 """
 from datetime import datetime
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from colorama import Fore
 
@@ -24,31 +24,34 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def run_sequential(state: State) -> int:
-    status_codes: Dict[str, Tuple[int, float]] = {}
+    status_codes: Dict[str, Tuple[int, float, List[float]]] = {}
     for name in state.env_list(everything=False):
         tox_env = state.tox_env(name)
         start_one = datetime.now()
-        outcome = run_one(tox_env, state.options.recreate, state.options.no_test)
+        code, outcomes = run_one(tox_env, state.options.recreate, state.options.no_test)
         duration = (datetime.now() - start_one).total_seconds()
-        status_codes[name] = outcome, duration
+        status_codes[name] = code, duration, [o.elapsed for o in outcomes]
     return report(state.options.start, status_codes, state.options.is_colored)
 
 
-def report(start: datetime, status_dict: Dict[str, Tuple[int, float]], is_colored: bool) -> int:
+def report(start: datetime, status_dict: Dict[str, Tuple[int, float, List[float]]], is_colored: bool) -> int:
     def _print(color: int, message: str) -> None:
         print(f"{color if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
     end = datetime.now()
     all_ok = True
-    for name, (status, duration_one) in status_dict.items():
+    for name, (status, duration_one, duration_individual) in status_dict.items():
         ok = status == Outcome.OK
         msg = "OK " if ok else f"FAIL code {status}"
-        _print(Fore.GREEN if ok else Fore.RED, f"  {name}: {msg}({duration_one:.2f}s)")
+        extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if len(duration_individual) else ""
+        setup = duration_one - sum(duration_individual)
+        out = f"  {name}: {msg}({duration_one:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
+        _print(Fore.GREEN if ok else Fore.RED, out)
         all_ok = ok and all_ok
     duration = (end - start).total_seconds()
     if all_ok:
-        _print(Fore.GREEN, f"  congratulations :) ({duration:.2f}s)")
+        _print(Fore.GREEN, f"  congratulations :) ({duration:.2f} seconds)")
         return Outcome.OK
     else:
-        _print(Fore.RED, f"  evaluation failed :( ({duration:.2f}s)")
+        _print(Fore.RED, f"  evaluation failed :( ({duration:.2f} seconds)")
         return -1

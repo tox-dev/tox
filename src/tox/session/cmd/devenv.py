@@ -3,8 +3,9 @@ from pathlib import Path
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.memory import MemoryLoader
 from tox.plugin.impl import impl
+from tox.report import HandledError
 from tox.session.cmd.run.common import env_run_create_flags
-from tox.session.cmd.run.single import run_one
+from tox.session.cmd.run.sequential import run_sequential
 from tox.session.common import CliEnv, env_list_flag
 from tox.session.state import State
 
@@ -23,14 +24,16 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def devenv(state: State) -> int:
+    env_list = list(state.env_list(everything=False))
+    if len(env_list) != 1:
+        raise HandledError(f"exactly one target environment allowed in devenv mode, found {', '.join(env_list)}")
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         # dev environments must be of type dev
         usedevelop=True,
         # move it in source
         env_dir=state.options.devenv_path,
     )
-    env = state.options.env[0]
-    state.conf.get_env(env, loaders=[loader])
 
-    tox_env = state.tox_env(name=env)
-    return run_one(tox_env, state.options.recreate, True)
+    state.options.no_test = True  # do not run the test phase
+    state.conf.get_env(env_list[0], loaders=[loader])
+    return run_sequential(state)
