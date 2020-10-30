@@ -266,6 +266,7 @@ def pytest_configure(config: PyTestConfig) -> None:
     config.addinivalue_line("markers", "integration")
 
 
+@pytest.mark.trylast
 def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -> None:
     if len(items) == 1:  # do not require flags if called directly
         return
