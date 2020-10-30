@@ -1,1 +1,0 @@
-Support parsing [tox:testenv*] sections in setup.cfg. - by :user:`mauvilsa`
