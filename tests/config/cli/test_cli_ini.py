@@ -2,7 +2,7 @@ import logging
 import sys
 import textwrap
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Any, Callable, Dict
 
 import pytest
 
@@ -54,72 +54,64 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
     return to
 
 
-def test_ini_empty(empty_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, handlers, _ = get_options()
-    assert vars(parsed) == {
-        "alwayscopy": False,
+def test_ini_empty(
+    empty_ini: Path,
+    core_handlers: Dict[str, Callable[[State], int]],
+    monkeypatch: MonkeyPatch,
+    default_options: Dict[str, Any],
+) -> None:
+    parsed, handlers, _ = get_options("r")
+    assert vars(parsed) == default_options
+    assert parsed.verbosity == 2
+    assert handlers == core_handlers
+
+    empty_ini.unlink()
+    missing_parsed, _, __ = get_options("r")
+    assert vars(missing_parsed) == vars(parsed)
+
+
+@pytest.fixture
+def default_options() -> Dict[str, Any]:
+    return {
         "colored": "no",
-        "command": "legacy",
-        "config_file": str(empty_ini),
+        "command": "r",
         "default_runner": "virtualenv",
         "develop": False,
-        "devenv_path": None,
         "discover": [],
         "env": CliEnv(),
-        "force_dep": [],
         "hashseed": "noset",
-        "index_url": [],
         "installpkg": None,
-        "list_envs": False,
-        "list_envs_all": False,
         "no_test": False,
         "override": [],
         "package_only": False,
-        "parallel": 0,
-        "parallel_live": False,
-        "pre": False,
         "quiet": 0,
         "recreate": False,
         "resultjson": None,
-        "show_config": False,
-        "sitepackages": False,
         "skip_missing_interpreters": "config",
         "verbose": 2,
         "work_dir": Path.cwd().absolute(),
     }
-    assert parsed.verbosity == 2
-    assert handlers == core_handlers
 
 
 def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, handlers, _ = get_options()
+    parsed, handlers, _ = get_options("p")
     assert vars(parsed) == {
-        "alwayscopy": False,
         "colored": "yes",
-        "command": "legacy",
-        "config_file": str(exhaustive_ini),
+        "command": "p",
         "default_runner": "virtualenv",
         "develop": False,
-        "devenv_path": None,
         "discover": [],
         "env": CliEnv(["py37", "py36"]),
-        "force_dep": [],
         "hashseed": "noset",
-        "index_url": [],
         "installpkg": None,
-        "list_envs": False,
-        "list_envs_all": False,
         "no_test": True,
         "override": [Override("a=b"), Override("c=d")],
         "package_only": False,
         "parallel": 3,
         "parallel_live": True,
-        "pre": False,
         "quiet": 1,
         "recreate": True,
         "resultjson": None,
-        "show_config": False,
-        "sitepackages": False,
         "skip_missing_interpreters": "config",
         "verbose": 5,
         "work_dir": Path.cwd().absolute(),
@@ -137,51 +129,27 @@ def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
     assert f"config file '{exhaustive_ini}' active (changed via env var TOX_CONFIG_FILE)"
 
 
-def test_bad_cli_ini(tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture) -> None:
+def test_bad_cli_ini(
+    tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture, default_options: Dict[str, Any]
+) -> None:
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
-    parsed, __, _ = get_options()
+    parsed, __, _ = get_options("r")
     msg = (
         "PermissionError(13, 'Permission denied')"
         if sys.platform == "win32"
         else "IsADirectoryError(21, 'Is a directory')"
     )
     assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
-    assert vars(parsed) == {
-        "alwayscopy": False,
-        "colored": "no",
-        "command": "legacy",
-        "config_file": str(tmp_path),
-        "default_runner": "virtualenv",
-        "develop": False,
-        "devenv_path": None,
-        "discover": [],
-        "env": CliEnv(),
-        "force_dep": [],
-        "hashseed": "noset",
-        "index_url": [],
-        "installpkg": None,
-        "list_envs": False,
-        "list_envs_all": False,
-        "no_test": False,
-        "override": [],
-        "package_only": False,
-        "parallel": 0,
-        "parallel_live": False,
-        "pre": False,
-        "quiet": 0,
-        "recreate": False,
-        "resultjson": None,
-        "show_config": False,
-        "sitepackages": False,
-        "skip_missing_interpreters": "config",
-        "verbose": 2,
-        "work_dir": Path.cwd().absolute(),
-    }
+    assert vars(parsed) == default_options
 
 
 def test_bad_option_cli_ini(
-    tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture, value_error: Callable[[str], str]
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
+    value_error: Callable[[str], str],
+    default_options: Dict[str, Any],
 ) -> None:
     caplog.set_level(logging.WARNING)
     to = tmp_path / "tox.ini"
@@ -195,41 +163,11 @@ def test_bad_option_cli_ini(
         ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
-    parsed, _, __ = get_options()
+    parsed, _, __ = get_options("r")
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
             to,
             value_error("invalid literal for int() with base 10: 'what'"),
         ),
     ]
-    assert vars(parsed) == {
-        "alwayscopy": False,
-        "colored": "no",
-        "command": "legacy",
-        "config_file": str(tmp_path / "tox.ini"),
-        "default_runner": "virtualenv",
-        "develop": False,
-        "devenv_path": None,
-        "discover": [],
-        "env": CliEnv(),
-        "force_dep": [],
-        "hashseed": "noset",
-        "index_url": [],
-        "installpkg": None,
-        "list_envs": False,
-        "list_envs_all": False,
-        "no_test": False,
-        "override": [],
-        "package_only": False,
-        "parallel": 0,
-        "parallel_live": False,
-        "pre": False,
-        "quiet": 0,
-        "recreate": False,
-        "resultjson": None,
-        "show_config": False,
-        "sitepackages": False,
-        "skip_missing_interpreters": "config",
-        "verbose": 2,
-        "work_dir": Path.cwd().absolute(),
-    }
+    assert vars(parsed) == default_options
