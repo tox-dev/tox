@@ -70,7 +70,7 @@ def _replace_match(
     elif of_type == "posargs":
         if conf is None:
             raise RuntimeError("no configuration yet")
-        replace_value = replace_posargs(args, conf.pos_args)
+        replace_value = replace_pos_args(args, conf.pos_args)
     else:
         replace_value = replace_reference(conf, current_env, loader, value)
     if replace_value is None:
@@ -156,9 +156,12 @@ def _config_value_sources(
             yield conf.get_env(current_env)
 
 
-def replace_posargs(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
+def replace_pos_args(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
     if pos_args is None:
-        replace_value = args[0] if args else ""
+        if args:
+            replace_value = ":".join(args)  # if we use the defaults join back remaining args
+        else:
+            replace_value = ""
     else:
         replace_value = shell_cmd(pos_args)
     return replace_value
