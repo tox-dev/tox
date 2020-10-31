@@ -1,6 +1,5 @@
 from configparser import ConfigParser, SectionProxy
-from copy import deepcopy
-from typing import Any, List, Optional, Set, TypeVar
+from typing import List, Optional, Set, TypeVar
 
 from tox.config.loader.api import Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
@@ -40,18 +39,6 @@ class IniLoader(StrConvert, Loader[str]):
         if self._parser.has_section(name):
             return self._parser[name]
         return None
-
-    def __deepcopy__(self, memo: Any) -> "IniLoader":
-        # python < 3.7 cannot copy config parser
-        result: IniLoader = self.__class__.__new__(self.__class__)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            if k != "_section":
-                value = deepcopy(v, memo=memo)  # noqa
-            else:
-                value = v
-            setattr(result, k, value)
-        return result
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(section={self._section}, overrides={self.overrides!r})"

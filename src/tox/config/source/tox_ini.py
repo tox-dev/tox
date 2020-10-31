@@ -1,9 +1,8 @@
 """Load """
 from configparser import ConfigParser, SectionProxy
-from copy import deepcopy
 from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Set
+from typing import Dict, Iterator, List, Optional, Set
 
 from tox.config.loader.ini.factor import find_envs
 
@@ -93,18 +92,6 @@ class ToxIni(Source):
         if self._parser.has_section(key):
             return self._parser[key]
         return None
-
-    def __deepcopy__(self, memo: Dict[int, Any]) -> "ToxIni":
-        # python < 3.7 cannot copy config parser
-        result: ToxIni = self.__class__.__new__(self.__class__)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            if k != "_parser":
-                value = deepcopy(v, memo=memo)  # noqa
-            else:
-                value = v
-            setattr(result, k, value)
-        return result
 
     def _discover_tox_envs(self, core_config: ConfigSet) -> Iterator[str]:
         explicit = list(core_config["env_list"])
