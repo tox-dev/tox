@@ -1,6 +1,6 @@
 import pytest
 
-from tests.config.ini.replace.conftest import ReplaceOne
+from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
 @pytest.mark.parametrize(

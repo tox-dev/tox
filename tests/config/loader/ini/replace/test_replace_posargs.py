@@ -1,6 +1,6 @@
 import sys
 
-from tests.config.ini.replace.conftest import ReplaceOne
+from tests.config.loader.ini.replace.conftest import ReplaceOne
 from tox.pytest import MonkeyPatch
 
 

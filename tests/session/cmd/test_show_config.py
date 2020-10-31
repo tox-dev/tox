@@ -2,9 +2,32 @@ import os
 import platform
 import re
 import sys
+import textwrap
 
-from tox import __version__
 from tox.pytest import MonkeyPatch, ToxProjectCreator
+from tox.version import __version__
+
+
+def test_list_empty(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": ""})
+    outcome = project.run("c")
+    outcome.assert_success()
+
+    expected = textwrap.dedent(
+        f"""
+        [tox]
+        tox_root = {project.path}
+        work_dir = {project.path}{os.sep}.tox4
+        temp_dir = {project.path}{os.sep}.temp
+        env_list =
+        skip_missing_interpreters = True
+        min_version = {__version__}
+        provision_tox_env = .tox
+        requires = tox>={__version__}
+        no_package = False
+        """,
+    ).lstrip()
+    assert outcome.out == expected
 
 
 def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
