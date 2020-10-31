@@ -1,4 +1,5 @@
 """This is a non compliant process that does not listens to signals"""
+# pragma: no cover
 import signal
 import sys
 import time

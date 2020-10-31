@@ -22,9 +22,9 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     version = re.escape(__version__)
 
     monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
-    if sys.platform == "win32":
+    if sys.platform == "win32":  # pragma: win32 cover
         p_env = ["COMSPEC", "MSYSTEM", "PATHEXT", "PROCESSOR_ARCHITECTURE", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE"]
-    else:
+    else:  # pragma: win32 no cover
         p_env = ["TMPDIR"]
     p_env.extend(["PIP_*", "VIRTUALENV_*", "http_proxy", "https_proxy", "no_proxy"])
     pass_env_str = "\n".join(f"      {re.escape(p)}" for p in sorted(p_env))[4:]

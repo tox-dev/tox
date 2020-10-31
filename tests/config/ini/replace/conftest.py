@@ -5,9 +5,9 @@ import pytest
 
 from tox.pytest import ToxProjectCreator
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
-else:
+else:  # pragma: no cover (<py38)
     from typing_extensions import Protocol
 
 

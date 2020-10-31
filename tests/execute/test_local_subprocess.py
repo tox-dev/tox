@@ -199,7 +199,7 @@ def test_command_keyboard_interrupt(tmp_path: Path) -> None:
     process.send_signal(SIGINT)
     try:
         out, err = process.communicate(timeout=5)
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired:  # pragma: no cover
         process.kill()
         out, err = process.communicate()
         assert False, f"{out}\n{err}"
