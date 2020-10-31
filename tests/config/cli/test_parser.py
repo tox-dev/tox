@@ -1,3 +1,5 @@
+import sys
+from argparse import Action
 from typing import Optional
 
 import pytest
@@ -55,3 +57,26 @@ def test_parser_color(
 
     is_colored = ToxParser.base().parse_args([], Parsed()).is_colored
     assert is_colored is expected
+
+
+def test_parser_unsupported_type() -> None:
+    parser = ToxParser.base()
+    parser.add_argument("--magic", action="store", default=None)
+    with pytest.raises(TypeError) as context:
+        parser.fix_defaults()
+    action = context.value.args[0]
+    assert isinstance(action, Action)
+    assert action.dest == "magic"
+
+
+def test_sub_sub_command() -> None:
+    parser = ToxParser.base()
+    with pytest.raises(RuntimeError, match="no sub-command group allowed"):
+        parser.add_command("c", [], "help", lambda s: None)
+
+
+def test_parse_known_args_not_set(mocker: MockerFixture) -> None:
+    mocker.patch.object(sys, "argv", ["a", "--help"])
+    parser = ToxParser.base()
+    _, unknown = parser.parse_known_args(None)
+    assert unknown == ["--help"]

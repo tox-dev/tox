@@ -17,10 +17,10 @@ from tox.session.state import State
 from .env_var import get_env_var
 from .ini import IniConfig
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
-else:
-    from typing_extensions import Literal  # noqa
+else:  # pragma: no cover (py38+)
+    from typing_extensions import Literal
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
@@ -50,8 +50,9 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 action.default_source = default_value  # type: ignore[attr-defined]
         if isinstance(action, argparse._SubParsersAction):  # noqa
             for values in action.choices.values():  # noqa
-                if isinstance(values, ToxParser):
-                    values.fix_defaults()
+                if not isinstance(values, ToxParser):  # pragma: no cover
+                    raise RuntimeError("detected sub-parser added without using our own add command")
+                values.fix_defaults()
 
     @staticmethod
     def get_type(action: Action) -> Type[Any]:
@@ -68,8 +69,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa
                 of_type = type(action.const)
-            else:  # pragma: no cover
-                raise TypeError(action)  # pragma: no cover
+            else:
+                raise TypeError(action)
         return of_type
 
 
@@ -83,12 +84,11 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
     def _get_help_string(self, action: Action) -> Optional[str]:
 
-        text = super()._get_help_string(action)  # noqa
-        if text is not None:
-            if hasattr(action, "default_source"):
-                default = " (default: %(default)s)"
-                if text.endswith(default):
-                    text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
+        text: str = super()._get_help_string(action) or ""  # noqa
+        if hasattr(action, "default_source"):
+            default = " (default: %(default)s)"
+            if text.endswith(default):
+                text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
         return text
 
 
@@ -205,7 +205,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self, args: Optional[Sequence[str]], namespace: Optional[Parsed] = None
     ) -> Tuple[Parsed, List[str]]:
         if args is None:
-            args = sys.argv
+            args = sys.argv[1:]
         cmd_at: Optional[int] = None
         if self._cmd is not None and args:
             for at, arg in enumerate(args):
