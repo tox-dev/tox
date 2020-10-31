@@ -25,8 +25,9 @@ class IniConfig:
         self.is_env_var = config_file is not None
         self.config_file = Path(config_file if config_file is not None else DEFAULT_CONFIG_FILE)
         self._cache: Dict[Tuple[str, Type[Any]], Any] = {}
-
         self.has_config_file: Optional[bool] = self.config_file.exists()
+        self.ini: Optional[IniLoader] = None
+
         if self.has_config_file:
             self.config_file = self.config_file.absolute()
             try:
@@ -35,7 +36,7 @@ class IniConfig:
                 with self.config_file.open() as file_handler:
                     parser.read_file(file_handler)
                 self.has_tox_section = parser.has_section("tox")
-                self.ini: Optional[IniLoader] = IniLoader("tox", parser, overrides=[]) if self.has_tox_section else None
+                self.ini = IniLoader("tox", parser, overrides=[]) if self.has_tox_section else None
             except Exception as exception:
                 logging.error("failed to read config file %s because %r", config_file, exception)
                 self.has_config_file = None
@@ -46,7 +47,7 @@ class IniConfig:
             result = self._cache[cache_key]
         else:
             try:
-                if self.ini is None:
+                if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ firsts
                     result = None
                 else:
                     source = "file"

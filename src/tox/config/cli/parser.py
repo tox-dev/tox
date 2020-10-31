@@ -29,7 +29,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.file_config = IniConfig()
+        # sub-parsers also construct an instance of the parser, but they don't get their own file config, but inherit
+        self.file_config = kwargs.pop("file_config") if "file_config" in kwargs else IniConfig()
         kwargs["epilog"] = self.file_config.epilog
         super().__init__(*args, **kwargs)
 
@@ -134,7 +135,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
     def add_command(self, cmd: str, aliases: Sequence[str], help_msg: str, handler: Handler) -> "ArgumentParser":
         if self._cmd is None:
             raise RuntimeError("no sub-command group allowed")
-        sub_parser: ToxParser = self._cmd.add_parser(cmd, help=help_msg, aliases=aliases, formatter_class=HelpFormatter)
+        sub_parser: ToxParser = self._cmd.add_parser(
+            cmd, help=help_msg, aliases=aliases, formatter_class=HelpFormatter, file_config=self.file_config
+        )
         sub_parser.of_cmd = cmd  # mark it as parser for a sub-command
         content = sub_parser, handler
         self.handlers[cmd] = content
