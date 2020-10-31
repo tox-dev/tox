@@ -33,11 +33,11 @@ class MemoryLoader(Loader[Any]):
 
     @staticmethod
     def to_set(value: Any) -> Iterator[T]:
-        return value  # type: ignore[no-any-return]
+        return iter(value)  # type: ignore[no-any-return]
 
     @staticmethod
     def to_dict(value: Any) -> Iterator[Tuple[T, T]]:
-        return value  # type: ignore[no-any-return]
+        return value.items()  # type: ignore[no-any-return]
 
     @staticmethod
     def to_path(value: Any) -> Path:

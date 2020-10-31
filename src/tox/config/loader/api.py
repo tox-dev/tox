@@ -19,7 +19,7 @@ class Override:
             raise ArgumentTypeError(f"override {value} has no = sign in it")
         key = value[:split_at]
         ns_at = key.find(".")
-        self.namespace = key[:ns_at]
+        self.namespace = "" if ns_at == -1 else key[:ns_at]
         self.key = key[ns_at + 1 :]
         self.value = value[split_at + 1 :]
 
