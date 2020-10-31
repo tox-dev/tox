@@ -1246,9 +1246,15 @@ class ParseIni(object):
         results = {}
         cur_self = self
 
-        def run(name, section, subs, config, prefix):
+        def run(name, section, subs, config, fallbacksections):
             try:
-                results[name] = cur_self.make_envconfig(name, section, subs, config, prefix=prefix)
+                results[name] = cur_self.make_envconfig(
+                    name,
+                    section,
+                    subs,
+                    config,
+                    fallbacksections=fallbacksections,
+                )
             except Exception as exception:
                 failures[name] = (exception, traceback.format_exc())
 
@@ -1265,7 +1271,13 @@ class ParseIni(object):
                 )
             ):
                 order.append(name)
-                thread = Thread(target=run, args=(name, section, reader._subs, config, prefix))
+                fallbacksections = ["testenv"]
+                if prefix != "":
+                    fallbacksections = [testenvprefix + name, prefix + "testenv", "testenv"]
+                thread = Thread(
+                    target=run,
+                    args=(name, section, reader._subs, config, fallbacksections),
+                )
                 thread.daemon = True
                 thread.start()
                 to_do.append(thread)
@@ -1378,12 +1390,22 @@ class ParseIni(object):
                 factors.update(*mapcat(_split_factor_expr_all, exprs))
         return factors
 
-    def make_envconfig(self, name, section, subs, config, replace=True, prefix=""):
+    def make_envconfig(
+        self,
+        name,
+        section,
+        subs,
+        config,
+        replace=True,
+        fallbacksections=None,
+    ):
         factors = set(name.split("-"))
+        if fallbacksections is None:
+            fallbacksections = ["testenv"]
         reader = SectionReader(
             section,
             self._cfg,
-            fallbacksections=[prefix + "testenv"],
+            fallbacksections=fallbacksections,
             factors=factors,
         )
         tc = TestenvConfig(name, config, factors, reader)
