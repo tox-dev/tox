@@ -3,6 +3,7 @@ Show materialized configuration of tox environments.
 """
 
 from textwrap import indent
+from typing import Iterable, List
 
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.stringify import stringify
@@ -17,16 +18,20 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("config", ["c"], "show tox configuration", show_config)
     our.add_argument("-d", action="store_true", help="list just default envs", dest="list_default_only")
     our.add_argument(
+        "-k", nargs="+", help="list just configuration keys specified", dest="list_keys_only", default=[], metavar="key"
+    )
+    our.add_argument(
         "--core", action="store_true", help="show core options too when selecting an env with -e", dest="show_core"
     )
     env_list_flag(our)
 
 
 def show_config(state: State) -> int:
+    keys: List[str] = state.options.list_keys_only
     first = True
     if state.options.env.all or state.options.show_core:
         print("[tox]")
-        print_conf(state.conf.core)
+        print_conf(state.conf.core, keys)
         first = False
     for name in state.env_list(everything=False):
         tox_env = state.tox_env(name)
@@ -34,13 +39,17 @@ def show_config(state: State) -> int:
             print()
         first = False
         print(f"[testenv:{name}]")
-        print(f"type = {type(tox_env).__name__}")
-        print_conf(tox_env.conf)
+        if not keys:
+            print(f"type = {type(tox_env).__name__}")
+        print_conf(tox_env.conf, keys)
     return 0
 
 
-def print_conf(conf: ConfigSet) -> None:
-    for key in conf:
+def print_conf(conf: ConfigSet, keys: Iterable[str]) -> None:
+    keys = keys if keys else conf
+    for key in keys:
+        if key not in conf:
+            continue
         value = conf[key]
         as_str, multi_line = stringify(value)
         if multi_line and "\n" not in as_str:
@@ -50,5 +59,5 @@ def print_conf(conf: ConfigSet) -> None:
         else:
             print(f"{key} ={' ' if as_str else ''}{as_str}")
     unused = conf.unused()
-    if unused:
+    if unused and not keys:
         print(f"# !!! unused: {', '.join(unused)}")

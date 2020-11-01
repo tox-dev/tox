@@ -10,6 +10,7 @@ from tox.config.loader.stringify import stringify
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
+from tox.report import HandledError
 
 if TYPE_CHECKING:
     from tox.config.loader.ini import IniLoader
@@ -22,13 +23,21 @@ ARGS_GROUP = re.compile(r"(?<!\\):")
 
 def replace(value: str, conf: Optional[Config], name: Optional[str], loader: "IniLoader") -> str:
     # perform all non-escaped replaces
+    start, end = 0, 0
     while True:
-        start, end, match = _find_replace_part(value)
+        start, end, match = _find_replace_part(value, start, end)
         if not match:
             break
         to_replace = value[start + 1 : end]
         replaced = _replace_match(conf, name, loader, to_replace)
+        if replaced is None:
+            # if we cannot replace, keep what was there, and continue looking for additional replaces following
+            # note, here we cannot raise because the content may be a factorial expression, and in those case we don't
+            # want to enforce escaping curly braces, e.g. it should work to write: env_list = {py39,py38}-{,dep}
+            start = end = end + 1
+            continue
         new_value = value[:start] + replaced + value[end + 1 :]
+        start, end = 0, 0  # if we performed a replace start over
         if new_value == value:  # if we're not making progress stop (circular reference?)
             break
         value = new_value
@@ -38,22 +47,24 @@ def replace(value: str, conf: Optional[Config], name: Optional[str], loader: "In
     return value
 
 
-def _find_replace_part(value: str) -> Tuple[int, int, bool]:
-    start, end, match = 0, 0, False
+def _find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool]:
+    match = False
     while end != -1:
         end = value.find("}", end)
         if end == -1:
             continue
-        if end > 1 and value[end - 1] == "\\":  # ignore escaped
+        if end >= 1 and value[end - 1] == "\\":  # ignore escaped
             end += 1
             continue
+        before = end
         while start != -1:
-            start = value.rfind("{", 0, end)
-            if start > 1 and value[start - 1] == "\\":  # ignore escaped
+            start = value.rfind("{", 0, before)
+            if start >= 1 and value[start - 1] == "\\":  # ignore escaped
+                before = start - 1
                 continue
-            match = True
+            match = start != -1
             break
-        if match:
+        if match or start == -1:  # if we matched or could not find matching opening
             break
     return start, end, match
 
@@ -63,20 +74,16 @@ def _replace_match(
     current_env: Optional[str],
     loader: "IniLoader",
     value: str,
-) -> str:
+) -> Optional[str]:
     of_type, *args = ARGS_GROUP.split(value)
     if of_type == "env":
         replace_value: Optional[str] = replace_env(args)
     elif of_type == "posargs":
-        if conf is None:
-            raise RuntimeError("no configuration yet")
+        if conf is None:  # pragma: no cover # could only happen if someone uses this directly
+            raise HandledError("INTERNAL ERROR - no configuration yet for posargs")
         replace_value = replace_pos_args(args, conf.pos_args)
     else:
         replace_value = replace_reference(conf, current_env, loader, value)
-    if replace_value is None:
-        return ""
-    if not isinstance(replace_value, str):
-        raise TypeError(f"could not replace {replace_value!r}")
     return replace_value
 
 
@@ -96,6 +103,7 @@ def replace_reference(
     loader: "IniLoader",
     value: str,
 ) -> Optional[str]:
+    # a return value of None indicates could not replace
     match = _REPLACE_REF.match(value)
     if match:
         settings = match.groupdict()
@@ -119,9 +127,7 @@ def replace_reference(
                 return default
         except Exception as exc:  # noqa # ignore errors - but don't replace them
             pass
-    # we should raise here - but need to implement escaping factor conditionals
-    # raise ValueError(f"could not replace {value} from {current_env}")
-    return f"{{{value}}}"
+    return None
 
 
 def _config_value_sources(

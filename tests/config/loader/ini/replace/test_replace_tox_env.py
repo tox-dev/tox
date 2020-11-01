@@ -27,11 +27,10 @@ def test_replace_within_tox_env(example: EnvConfigCreator) -> None:
     assert result == "1"
 
 
-def test_replace_within_tox_env_missing_no_default_leaves(example: EnvConfigCreator) -> None:
+def test_replace_within_tox_env_missing_raises(example: EnvConfigCreator) -> None:
     env_config = example("o = {p}")
     env_config.add_config(keys="o", of_type=str, default="o", desc="o")
-    result = env_config["o"]
-    assert result == "{p}"
+    assert env_config["o"] == "{p}"
 
 
 def test_replace_within_tox_env_missing_default(example: EnvConfigCreator) -> None:

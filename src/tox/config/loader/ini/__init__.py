@@ -26,10 +26,10 @@ class IniLoader(StrConvert, Loader[str]):
     def load_raw(self, key: str, conf: Optional[Config], env_name: Optional[str]) -> str:
         value = self._section[key]
         collapsed_newlines = value.replace("\\\r\n", "").replace("\\\n", "")  # collapse explicit new-line escape
-        replace_executed = replace(collapsed_newlines, conf, env_name, self)  # do replacements
-        factor_selected = filter_for_env(replace_executed, env_name)  # select matching factors
+        factor_selected = filter_for_env(collapsed_newlines, env_name)  # select matching factors
+        replace_executed = replace(factor_selected, conf, env_name, self)  # do replacements
         # extend factors
-        return factor_selected
+        return replace_executed
 
     def found_keys(self) -> Set[str]:
         return set(self._section.keys())

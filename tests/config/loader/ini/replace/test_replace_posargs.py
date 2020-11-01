@@ -33,9 +33,24 @@ def test_replace_pos_args(replace_one: ReplaceOne) -> None:
         ("magic:colon", "magic:colon"),
         ("magic\n b:c", "magic\nb:c"),  # unescaped newline keeps the newline
         ("magi\\\n c:d", "magic:d"),  # escaped newline merges the lines
+        ("\\{a\\}", "{a}"),  # escaped curly braces
     ],
 )
 def test_replace_pos_args_default(replace_one: ReplaceOne, value: str, result: str) -> None:
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
     outcome = replace_one(f"{{posargs:{value}}}", None)
+    assert result == outcome
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "\\{posargs}",
+        "{posargs\\}",
+        "\\{posargs\\}",
+    ],
+)
+def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
+    result = replace_one(value, None)
+    outcome = value.replace("\\{", "{").replace("\\}", "}")
     assert result == outcome
