@@ -106,12 +106,13 @@ def replace_reference(
     match = _REPLACE_REF.match(value)
     if match:
         settings = match.groupdict()
-        # if env set try only there, if section set try only there
-        # otherwise try first in core, then in current env
+
+        key = settings["key"]
+        if settings["section"] is None and settings["full_env"] == BASE_TEST_ENV:
+            settings["section"] = BASE_TEST_ENV
+
+        exception: Optional[Exception] = None
         try:
-            key = settings["key"]
-            if settings["section"] is None and settings["full_env"] == BASE_TEST_ENV:
-                settings["section"] = BASE_TEST_ENV
             for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, loader):
                 try:
                     if isinstance(src, SectionProxy):
@@ -119,13 +120,18 @@ def replace_reference(
                     value = src[key]
                     as_str, _ = stringify(value)
                     return as_str
-                except KeyError:  # if this is missing maybe another src has it
-                    continue
-            default = settings["default"]
-            if default is not None:
-                return default
-        except Exception as exc:  # noqa # ignore errors - but don't replace them
-            pass
+                except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
+                    exception = exc
+        except Exception as exc:
+            exception = exc
+        if exception is not None:
+            if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
+                default = settings["default"]
+                if default is not None:
+                    return default
+                # we cannot raise here as that would mean users could not write factorials: depends = {py39,py38}-{,b}
+            else:
+                raise exception
     return None
 
 
@@ -140,7 +146,8 @@ def _config_value_sources(
     if env is not None:
         if conf is not None and env in conf:
             yield conf.get_env(env)
-        return
+        else:
+            raise KeyError(f"missing tox environment with name {env}")
 
     # if we have a section name specified take only from there
     if section is not None:

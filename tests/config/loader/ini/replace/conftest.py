@@ -5,8 +5,8 @@ from typing import Callable, List, Optional
 
 import pytest
 
-from tox.config.loader.ini import IniLoader
 from tox.config.main import Config
+from tox.config.source.tox_ini import ToxIni
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
@@ -22,9 +22,11 @@ class ReplaceOne(Protocol):
 @pytest.fixture
 def replace_one(mk_ini_conf: Callable[[str], ConfigParser], tmp_path: Path) -> ReplaceOne:
     def example(conf: str, pos_args: Optional[List[str]] = None) -> str:
-        parser = mk_ini_conf(f"[testenv]\nenv={conf}\n")
-        loader = IniLoader("testenv", parser, [])
-        config = Config(None, overrides=[], root=tmp_path, pos_args=pos_args, work_dir=tmp_path)  # type: ignore
+        tox_ini_file = tmp_path / "tox.ini"
+        tox_ini_file.write_text(f"[testenv:py]\nenv={conf}\n")
+        tox_ini = ToxIni(tox_ini_file)
+        config = Config(tox_ini, overrides=[], root=tmp_path, pos_args=pos_args, work_dir=tmp_path)
+        loader = config.get_env("py").loaders[0]
         return loader.load(key="env", of_type=str, conf=config, env_name="a")
 
     return example  # noqa

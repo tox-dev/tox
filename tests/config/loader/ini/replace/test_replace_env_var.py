@@ -6,7 +6,6 @@ def test_replace_env_set(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> N
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
     monkeypatch.setenv("MAGIC", "something good")
     result = replace_one("{env:MAGIC}")
-
     assert result == "something good"
 
 

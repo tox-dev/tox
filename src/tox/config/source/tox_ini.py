@@ -1,5 +1,5 @@
 """Load """
-from configparser import ConfigParser, SectionProxy
+from configparser import ConfigParser
 from itertools import chain
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Set
