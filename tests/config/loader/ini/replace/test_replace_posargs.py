@@ -1,26 +1,41 @@
 import sys
 
+import pytest
+
 from tests.config.loader.ini.replace.conftest import ReplaceOne
-from tox.pytest import MonkeyPatch
 
 
-def test_replace_pos_args_empty_sys_argv(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
-    monkeypatch.setattr(sys, "argv", [])
-    result = replace_one("{posargs}", [])
+def test_replace_pos_args_none_sys_argv(replace_one: ReplaceOne) -> None:
+    result = replace_one("{posargs}", None)
     assert result == ""
 
 
-def test_replace_pos_args_extra_sys_argv(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
-    monkeypatch.setattr(sys, "argv", [sys.executable, "magic"])
-    result = replace_one("{posargs}", [])
-
+def test_replace_pos_args_empty_sys_argv(replace_one: ReplaceOne) -> None:
+    result = replace_one("{posargs}", None)
     assert result == ""
 
 
-def test_replace_pos_args(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+def test_replace_pos_args_extra_sys_argv(replace_one: ReplaceOne) -> None:
+    result = replace_one("{posargs}", [sys.executable, "magic"])
+    assert result == f"{sys.executable} magic"
+
+
+def test_replace_pos_args(replace_one: ReplaceOne) -> None:
     result = replace_one("{posargs}", ["ok", "what", " yes "])
     quote = '"' if sys.platform == "win32" else "'"
     assert result == f"ok what {quote} yes {quote}"
+
+
+@pytest.mark.parametrize(
+    ["value", "result"],
+    [
+        ("magic", "magic"),
+        ("magic:colon", "magic:colon"),
+        ("magic\n b:c", "magic\nb:c"),  # unescaped newline keeps the newline
+        ("magi\\\n c:d", "magic:d"),  # escaped newline merges the lines
+    ],
+)
+def test_replace_pos_args_default(replace_one: ReplaceOne, value: str, result: str) -> None:
+    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    outcome = replace_one(f"{{posargs:{value}}}", None)
+    assert result == outcome
