@@ -7,6 +7,12 @@ from tox.config.loader.ini.factor import filter_for_env, find_envs
 from tox.pytest import ToxProjectCreator
 
 
+def test_factor_env_discover_empty() -> None:
+    result = list(find_envs("\n\n"))
+    assert result == []
+
+
+@pytest.fixture(scope="session")
 def complex_example() -> str:
     return dedent(
         """
@@ -21,8 +27,8 @@ def complex_example() -> str:
     )
 
 
-def test_factor_env_discover() -> None:
-    result = list(find_envs(complex_example()))
+def test_factor_env_discover(complex_example: str) -> None:
+    result = list(find_envs(complex_example))
     assert result == [
         "py",
         "py-a",
@@ -38,10 +44,24 @@ def test_factor_env_discover() -> None:
     ]
 
 
-@pytest.mark.parametrize("env", list(find_envs(complex_example())))
-def test_factor_env_filter(env: str) -> None:
-    text = complex_example()
-    result = filter_for_env(text, name=env)
+@pytest.mark.parametrize(
+    "env",
+    [
+        "py",
+        "py-a",
+        "py-a-dev",
+        "py-b",
+        "py-b-dev",
+        "pi-a",
+        "pi-a-dev",
+        "pi-b",
+        "pi-b-dev",
+        "c",
+        "extra",
+    ],
+)
+def test_factor_env_filter(env: str, complex_example: str) -> None:
+    result = filter_for_env(complex_example, name=env)
     assert "default" in result
     assert "lines" in result
     assert "more-default" in result

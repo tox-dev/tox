@@ -51,14 +51,15 @@ def explode_factor(group: List[Tuple[str, bool]]) -> str:
 def expand_factors(value: str) -> Iterator[Tuple[Optional[Iterator[List[Tuple[str, bool]]]], str]]:
     for line in value.split("\n"):
         match = re.match(r"^((?P<factor_expr>[\w{}.!,-]+):\s+)?(?P<content>.*?)$", line)
-        if match:
-            groups = match.groupdict()
-            factor_expr, content = groups["factor_expr"], groups["content"]
-            if factor_expr is not None:
-                factors = find_factor_groups(factor_expr)
-                yield factors, content
-            else:
-                yield None, content
+        if match is None:  # pragma: no cover
+            raise RuntimeError("for a valid factor regex this cannot happen")
+        groups = match.groupdict()
+        factor_expr, content = groups["factor_expr"], groups["content"]
+        if factor_expr is not None:
+            factors = find_factor_groups(factor_expr)
+            yield factors, content
+        else:
+            yield None, content
 
 
 def find_factor_groups(value: str) -> Iterator[List[Tuple[str, bool]]]:
