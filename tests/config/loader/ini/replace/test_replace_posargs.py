@@ -48,6 +48,8 @@ def test_replace_pos_args_default(replace_one: ReplaceOne, value: str, result: s
         "\\{posargs}",
         "{posargs\\}",
         "\\{posargs\\}",
+        "{\\{posargs}",
+        "{\\{posargs}{}",
     ],
 )
 def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:

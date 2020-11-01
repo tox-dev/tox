@@ -88,11 +88,6 @@ class ToxIni(Source):
                 seen.add(name)
                 yield name
 
-    def _get_section(self, key: str) -> Optional[SectionProxy]:
-        if self._parser.has_section(key):
-            return self._parser[key]
-        return None
-
     def _discover_tox_envs(self, core_config: ConfigSet) -> Iterator[str]:
         explicit = list(core_config["env_list"])
         yield from explicit

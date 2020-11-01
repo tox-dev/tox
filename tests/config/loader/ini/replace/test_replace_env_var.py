@@ -30,3 +30,10 @@ def test_replace_env_missing_default_from_env(replace_one: ReplaceOne, monkeypat
     monkeypatch.setenv("MAGIC_DEFAULT", "yes")
     result = replace_one("{env:MAGIC:{env:MAGIC_DEFAULT}}")
     assert result == "yes"
+
+
+def test_replace_env_var_circular(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    monkeypatch.setenv("MAGIC", "{env:MAGIC}")
+    result = replace_one("{env:MAGIC}")
+    assert result == "{env:MAGIC}"

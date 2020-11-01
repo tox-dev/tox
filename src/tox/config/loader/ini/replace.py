@@ -57,15 +57,14 @@ def _find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool
             end += 1
             continue
         before = end
-        while start != -1:
+        while True:
             start = value.rfind("{", 0, before)
             if start >= 1 and value[start - 1] == "\\":  # ignore escaped
                 before = start - 1
                 continue
             match = start != -1
             break
-        if match or start == -1:  # if we matched or could not find matching opening
-            break
+        break
     return start, end, match
 
 
