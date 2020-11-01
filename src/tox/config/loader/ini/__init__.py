@@ -25,7 +25,7 @@ class IniLoader(StrConvert, Loader[str]):
 
     def load_raw(self, key: str, conf: Optional[Config], env_name: Optional[str]) -> str:
         value = self._section[key]
-        collapsed_newlines = value.replace("\\\r", "").replace("\\\n", "")  # collapse explicit line splits
+        collapsed_newlines = value.replace("\\\r\n", "").replace("\\\n", "")  # collapse explicit new-line escape
         replace_executed = replace(collapsed_newlines, conf, env_name, self)  # do replacements
         factor_selected = filter_for_env(replace_executed, env_name)  # select matching factors
         # extend factors
