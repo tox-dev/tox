@@ -28,7 +28,6 @@ jobs:
           - 3.8
           - 3.7
           - 3.6
-          - pypy3
     steps:
       - name: setup python for tox
         uses: actions/setup-python@v2
