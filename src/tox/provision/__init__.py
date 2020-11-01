@@ -15,9 +15,9 @@ from tox.session.state import State
 from tox.tox_env.api import ToxEnv
 from tox.version import __version__ as current_version
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import distribution
-else:
+else:  # pragma: no cover (py38+)
     from importlib_metadata import distribution  # noqa
 
 

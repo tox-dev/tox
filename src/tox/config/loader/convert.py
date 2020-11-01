@@ -5,9 +5,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Generic, Iterator, List, Set, Tuple, Type, TypeVar, Union, cast
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
-else:
+else:  # pragma: no cover (py38+)
     from typing_extensions import Literal
 
 from ..types import Command, EnvList
@@ -64,9 +64,9 @@ class Convert(ABC, Generic[T]):
                         new_type = next(i for i in args if i != none)  # noqa
                         result = self._to_typing(raw, new_type)
             elif origin == Literal or origin == type(Literal):
-                if sys.version_info >= (3, 7):
+                if sys.version_info >= (3, 7):  # pragma: no cover (py37+)
                     choice = of_type.__args__
-                else:
+                else:  # pragma: no cover (py38+)
                     choice = of_type.__values__  # type: ignore[attr-defined]
                 if raw not in choice:
                     raise ValueError(f"{raw} must be one of {choice}")
