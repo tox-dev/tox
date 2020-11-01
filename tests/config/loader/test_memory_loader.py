@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Set, Type
+from typing import Any, Dict, List, Optional, Set, Type
 
 import pytest
 
@@ -32,6 +32,8 @@ def test_memory_loader_override() -> None:
         (Path.cwd(), Path),
         (Command(["a"]), Command),
         (EnvList("a,b"), EnvList),
+        (1, Optional[int]),
+        ("1", Optional[str]),
     ],
 )
 def test_memory_loader(value: Any, of_type: Type[Any]) -> None:

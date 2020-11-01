@@ -8,7 +8,7 @@ from typing import Any, Dict, Generic, Iterator, List, Set, Tuple, Type, TypeVar
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
 else:  # pragma: no cover (py38+)
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # noqa
 
 from ..types import Command, EnvList
 
@@ -40,39 +40,38 @@ class Convert(ABC, Generic[T]):
         return of_type(raw)  # type: ignore[call-arg]
 
     def _to_typing(self, raw: T, of_type: Type[V]) -> V:
-        origin = getattr(of_type, "__origin__", getattr(of_type, "__class__", None))
-        if origin is not None:
-            result: Any = _NO_MAPPING
-            if origin in (list, List):
-                entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-                result = [self.to(i, entry_type) for i in self.to_list(raw)]
-            elif origin in (set, Set):
-                entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-                result = {self.to(i, entry_type) for i in self.to_set(raw)}
-            elif origin in (dict, Dict):
-                key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
-                result = OrderedDict((self.to(k, key_type), self.to(v, value_type)) for k, v in self.to_dict(raw))
-            elif origin == Union:  # handle Optional values
-                args: List[Type[Any]] = of_type.__args__  # type: ignore[attr-defined]
-                none = type(None)
-                if len(args) == 2 and none in args:
-                    if isinstance(raw, str):
-                        raw = raw.strip()  # type: ignore[assignment]
-                    if not raw:
-                        result = None
-                    else:
-                        new_type = next(i for i in args if i != none)  # noqa
-                        result = self._to_typing(raw, new_type)
-            elif origin == Literal or origin == type(Literal):
-                if sys.version_info >= (3, 7):  # pragma: no cover (py37+)
-                    choice = of_type.__args__
-                else:  # pragma: no cover (py38+)
-                    choice = of_type.__values__  # type: ignore[attr-defined]
-                if raw not in choice:
-                    raise ValueError(f"{raw} must be one of {choice}")
-                result = raw
-            if result is not _NO_MAPPING:
-                return cast(V, result)
+        origin = getattr(of_type, "__origin__", of_type.__class__)
+        result: Any = _NO_MAPPING
+        if origin in (list, List):
+            entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
+            result = [self.to(i, entry_type) for i in self.to_list(raw)]
+        elif origin in (set, Set):
+            entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
+            result = {self.to(i, entry_type) for i in self.to_set(raw)}
+        elif origin in (dict, Dict):
+            key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
+            result = OrderedDict((self.to(k, key_type), self.to(v, value_type)) for k, v in self.to_dict(raw))
+        elif origin == Union:  # handle Optional values
+            args: List[Type[Any]] = of_type.__args__  # type: ignore[attr-defined]
+            none = type(None)
+            if len(args) == 2 and none in args:
+                if isinstance(raw, str):
+                    raw = raw.strip()  # type: ignore[assignment]
+                if not raw:
+                    result = None
+                else:
+                    new_type = next(i for i in args if i != none)  # pragma: no cover # this will always find a element
+                    result = self.to(raw, new_type)
+        elif origin == Literal or origin == type(Literal):
+            if sys.version_info >= (3, 7):  # pragma: no cover (py37+)
+                choice = of_type.__args__
+            else:  # pragma: no cover (py38+)
+                choice = of_type.__values__  # type: ignore[attr-defined]
+            if raw not in choice:
+                raise ValueError(f"{raw} must be one of {choice}")
+            result = raw
+        if result is not _NO_MAPPING:
+            return cast(V, result)
         raise TypeError(f"{raw} cannot cast to {of_type!r}")
 
     @staticmethod
