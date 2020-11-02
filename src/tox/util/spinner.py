@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from types import TracebackType
 from typing import IO, Any, Dict, Optional, Sequence, Tuple, Type
 
-if sys.platform == "win32":
+if sys.platform == "win32":  # pragma: win32 cover
     import ctypes
 
     class _CursorInfo(ctypes.Structure):
@@ -123,7 +123,7 @@ class Spinner:
 
     def disable_cursor(self) -> None:
         if self._file.isatty():
-            if sys.platform == "win32":
+            if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
                 ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
@@ -134,7 +134,7 @@ class Spinner:
 
     def enable_cursor(self) -> None:
         if self._file.isatty():
-            if sys.platform == "win32":
+            if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
                 ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))

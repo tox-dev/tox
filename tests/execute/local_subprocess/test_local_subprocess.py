@@ -71,6 +71,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=True, colored=False)
+    assert repr(outcome)
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
     assert not outcome.err
@@ -123,6 +124,8 @@ def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixt
 
     # run test
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
+
+    assert repr(outcome)
 
     # assert no output, no logs
     out, err = capsys.readouterr()

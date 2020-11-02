@@ -59,7 +59,7 @@ class Python(ToxEnv, ABC):
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()
-        if sys.platform == "win32":
+        if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [
                     "SYSTEMROOT",  # needed for python's crypto module

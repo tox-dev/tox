@@ -95,14 +95,14 @@ class ToxEnv(ABC):
         ]
         if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
             env.append("TERM")
-        if sys.platform == "win32":
+        if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [
                     "TEMP",
                     "TMP",
                 ]
             )
-        else:
+        else:  # pragma: win32 no cover
             env.append("TMPDIR")
         return env
 

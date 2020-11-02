@@ -27,11 +27,11 @@ class ExecuteRequest:
 
 
 def shell_cmd(cmd: Sequence[str]) -> str:
-    if sys.platform.startswith("win"):
+    if sys.platform == "win32":  # pragma: win32 cover
         from subprocess import list2cmdline
 
         return list2cmdline(tuple(str(x) for x in cmd))
-    else:
+    else:  # pragma: win32 no cover
         from shlex import quote as shlex_quote
 
         return " ".join(shlex_quote(str(x)) for x in cmd)

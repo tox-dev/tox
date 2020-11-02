@@ -10,7 +10,7 @@ from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, Outcome
 from ..request import ExecuteRequest
 from .read_via_thread import WAIT_GENERAL
 
-if sys.platform == "win32":
+if sys.platform == "win32":  # pragma: win32 cover
     # needs stdin/stdout handlers backed by overlapped IO
     if TYPE_CHECKING:  # the typeshed libraries don't contain this, so replace it with normal one
         from subprocess import Popen
@@ -22,7 +22,7 @@ if sys.platform == "win32":
 
     CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP  # a custom flag needed for Windows signal send ability (CTRL+C)
 
-else:
+else:  # pragma: win32 no cover
     from subprocess import Popen
 
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
@@ -74,7 +74,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         else:
             with ReadViaThread(stderr.send(process), self.err_handler) as read_stderr:
                 with ReadViaThread(stdout.send(process), self.out_handler) as read_stdout:
-                    if sys.platform == "win32":
+                    if sys.platform == "win32":  # pragma: win32 cover
                         process.stderr.read = read_stderr._drain_stream  # type: ignore[assignment,union-attr]
                         process.stdout.read = read_stdout._drain_stream  # type: ignore[assignment,union-attr]
                     # wait it out with interruptions to allow KeyboardInterrupt on Windows
@@ -90,7 +90,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
     @staticmethod
     def get_stream_file_no(key: str) -> Generator[int, "Popen[bytes]", None]:
-        if sys.platform != "win32" and getattr(sys, key).isatty():
+        if sys.platform != "win32" and getattr(sys, key).isatty():  # pragma: win32 no cover
             # on UNIX if tty is set let's forward it via a pseudo terminal
             import pty
 
@@ -101,7 +101,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         else:
             process = yield PIPE
             stream = getattr(process, key)
-            if sys.platform == "win32":
+            if sys.platform == "win32":  # pragma: win32 cover
                 yield stream.handle
             else:
                 yield stream.name
