@@ -27,13 +27,16 @@ class IniLoader(StrConvert, Loader[str]):
     def load_raw(self, key: str, conf: Optional[Config], env_name: Optional[str]) -> str:
         value = self._section[key]
         collapsed_newlines = value.replace("\\\r\n", "").replace("\\\n", "")  # collapse explicit new-line escape
-        factor_selected = filter_for_env(collapsed_newlines, env_name)  # select matching factors
-        try:
-            replace_executed = replace(factor_selected, conf, env_name, self)  # do replacements
-        except Exception as exception:
-            raise HandledError(f"replace failed in {'tox' if env_name is None else env_name}.{key} with {exception!r}")
-        # extend factors
-        return replace_executed
+        if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
+            replaced = collapsed_newlines  # we don't support factor and replace functionality there
+        else:
+            factor_selected = filter_for_env(collapsed_newlines, env_name)  # select matching factors
+            try:
+                replaced = replace(factor_selected, conf, env_name, self)  # do replacements
+            except Exception as exception:
+                msg = f"replace failed in {'tox' if env_name is None else env_name}.{key} with {exception!r}"
+                raise HandledError(msg)
+        return replaced
 
     def found_keys(self) -> Set[str]:
         return set(self._section.keys())

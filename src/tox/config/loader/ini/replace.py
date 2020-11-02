@@ -10,7 +10,6 @@ from tox.config.loader.stringify import stringify
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
-from tox.report import HandledError
 
 if TYPE_CHECKING:
     from tox.config.loader.ini import IniLoader
@@ -21,7 +20,7 @@ BASE_TEST_ENV = "testenv"
 ARGS_GROUP = re.compile(r"(?<!\\):")
 
 
-def replace(value: str, conf: Optional[Config], name: Optional[str], loader: "IniLoader") -> str:
+def replace(value: str, conf: Config, name: Optional[str], loader: "IniLoader") -> str:
     # perform all non-escaped replaces
     start, end = 0, 0
     while True:
@@ -64,22 +63,15 @@ def _find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool
                 continue
             match = start != -1
             break
-        break
+        break  # pragma: no cover # for some odd reason this line is not reported by coverage, though is needed
     return start, end, match
 
 
-def _replace_match(
-    conf: Optional[Config],
-    current_env: Optional[str],
-    loader: "IniLoader",
-    value: str,
-) -> Optional[str]:
+def _replace_match(conf: Config, current_env: Optional[str], loader: "IniLoader", value: str) -> Optional[str]:
     of_type, *args = ARGS_GROUP.split(value)
     if of_type == "env":
         replace_value: Optional[str] = replace_env(args)
     elif of_type == "posargs":
-        if conf is None:  # pragma: no cover # could only happen if someone uses this directly
-            raise HandledError("INTERNAL ERROR - no configuration yet for posargs")
         replace_value = replace_pos_args(args, conf.pos_args)
     else:
         replace_value = replace_reference(conf, current_env, loader, value)
@@ -97,7 +89,7 @@ _REPLACE_REF = re.compile(
 
 
 def replace_reference(
-    conf: Optional[Config],
+    conf: Config,
     current_env: Optional[str],
     loader: "IniLoader",
     value: str,
@@ -139,12 +131,13 @@ def _config_value_sources(
     env: Optional[str],
     section: Optional[str],
     current_env: Optional[str],
-    conf: Optional[Config],
+    conf: Config,
     loader: "IniLoader",
 ) -> Iterator[Union[SectionProxy, ConfigSet]]:
     # if we have an env name specified take only from there
+    # config is None only when loading the global tox config file for the CLI arguments, in this case no replace works
     if env is not None:
-        if conf is not None and env in conf:
+        if env in conf:
             yield conf.get_env(env)
         else:
             raise KeyError(f"missing tox environment with name {env}")
@@ -153,19 +146,16 @@ def _config_value_sources(
     if section is not None:
         # special handle the core section under name tox
         if section == CORE_PREFIX:
-            if conf is not None:
-                yield conf.core
-            return
-        value = loader.get_section(section)
+            yield conf.core  # try via registered configs
+        value = loader.get_section(section)  # fallback to section
         if value is not None:
             yield value
         return
 
     # otherwise try first from core conf, and fallback to our own environment
-    if conf is not None:
-        yield conf.core
-        if current_env is not None:
-            yield conf.get_env(current_env)
+    yield conf.core
+    if current_env is not None:
+        yield conf.get_env(current_env)
 
 
 def replace_pos_args(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
