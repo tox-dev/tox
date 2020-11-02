@@ -10,10 +10,10 @@ class Command:
         self.args = args[1:] if self.ignore_exit_code else args
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(args={self.args!r})"
+        return f"{type(self).__name__}(args={(['-'] if self.ignore_exit_code else [])+ self.args!r})"
 
     def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and self.args == other.args
+        return type(self) == type(other) and (self.args, self.ignore_exit_code) == (other.args, other.ignore_exit_code)
 
     def __ne__(self, other: Any) -> bool:
         return not (self == other)
@@ -28,7 +28,7 @@ class EnvList:
         self.envs = list(OrderedDict((e, None) for e in envs).keys())
 
     def __repr__(self) -> str:
-        return "{}(envs={!r})".format(type(self).__name__, ",".join(self.envs))
+        return f"{type(self).__name__}({self.envs!r})"
 
     def __eq__(self, other: Any) -> bool:
         return type(self) == type(other) and self.envs == other.envs
