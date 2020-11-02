@@ -103,12 +103,10 @@ class ToxIni(Source):
                 yield from self._discover_from_section(section, known_factors)
 
     def _discover_from_section(self, section: str, known_factors: Set[str]) -> Iterator[str]:
-        for key in self._parser[section]:
-            value = self._parser[section].get(key)
-            if value:
-                for env in find_envs(value):
-                    if env not in known_factors:
-                        yield env
+        for value in self._parser[section].values():
+            for env in find_envs(value):
+                if env not in known_factors:
+                    yield env
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(path={self._path})"

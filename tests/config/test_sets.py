@@ -110,18 +110,16 @@ def test_config_dynamic_repr(conf_builder: ConfBuilder) -> None:
 
 def test_config_redefine_constant_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
-    config_set.add_config(keys="path", of_type=str, default="default", desc="path")
-    with pytest.raises(ValueError, match="config path already defined"):
-        config_set.add_config(keys="path", of_type=str, default="default", desc="path")
+    config_set.add_constant(keys="path", desc="desc", value="value")
     with pytest.raises(ValueError, match="config path already defined"):
         config_set.add_constant(keys="path", desc="desc", value="value")
 
 
 def test_config_redefine_dynamic_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
-    config_set.add_config(keys="path", of_type=Path, default=Path(), desc="path")
+    config_set.add_config(keys="path", of_type=str, default="default", desc="path")
     with pytest.raises(ValueError, match="config path already defined"):
-        config_set.add_config(keys="path", of_type=str, default="default", desc="path desc")
+        config_set.add_config(keys="path", of_type=str, default="default", desc="path")
 
 
 def test_config_dynamic_not_equal(conf_builder: ConfBuilder) -> None:
