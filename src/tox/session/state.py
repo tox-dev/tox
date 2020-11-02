@@ -48,21 +48,20 @@ class State:
         tox_env = self._run_env.get(name)
         if tox_env is not None:
             return tox_env
-        env_conf = self.conf.get_env(name)
-        tox_env = self._build_run_env(env_conf, name)
-        self._run_env[name] = tox_env
-        return tox_env
+        self.conf.get_env(name)  # the lookup here will trigger register_config_set, which will build it
+        return self._run_env[name]
 
-    def register_config_set(self, name: str) -> None:
+    def register_config_set(self, name: str, config_set: ConfigSet) -> None:
         """Ensure the config set with the given name has been registered with configuration values"""
         # during the creation of hte tox environment we automatically register configurations, so to ensure
         # config sets have a set of defined values in it we have to ensure the tox environment is created
         if name in self._pkg_env_discovered:
             return  # packaging environments are created explicitly, nothing to do here
         if name not in self._run_env:
-            self.tox_env(name)  # runtime environments are created upon lookup via the tox_env method, call it
+            # runtime environments are created upon lookup via the tox_env method, call it
+            self._run_env[name] = self._build_run_env(config_set)
 
-    def _build_run_env(self, env_conf: ConfigSet, env_name: str) -> RunToxEnv:
+    def _build_run_env(self, env_conf: ConfigSet) -> RunToxEnv:
         env_conf.add_config(
             keys="runner",
             desc="the tox execute used to evaluate this environment",

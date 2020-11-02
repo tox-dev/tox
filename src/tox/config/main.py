@@ -28,7 +28,7 @@ class Config:
         self._src = config_source
         self._env_to_set: Dict[str, ConfigSet] = OrderedDict()
         self._core_set: Optional[CoreConfigSet] = None
-        self.register_config_set: Callable[[str], Any] = lambda x: None
+        self.register_config_set: Callable[[str, ConfigSet], Any] = lambda n, e: None
 
     @property
     def core(self) -> CoreConfigSet:
@@ -56,7 +56,7 @@ class Config:
                 env.loaders.append(loader)
             # whenever we load a new configuration we need build a tox environment which process defines the valid
             # configuration values
-            self.register_config_set(item)
+            self.register_config_set(item, env)
             return env
 
     def __iter__(self) -> Iterator[str]:

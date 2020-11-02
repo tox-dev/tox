@@ -2,7 +2,7 @@
 Group together configuration values that belong together (such as base tox configuration, tox environment configs)
 """
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Callable, Generic, Iterable, List, Optional, Type, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, List, Optional, Type, TypeVar, Union, cast
 
 from tox.config.loader.api import Loader
 
@@ -26,6 +26,12 @@ class ConfigDefinition(ABC, Generic[T]):
     def __call__(self, conf: "Config", key: Optional[str], loaders: List[Loader[T]]) -> T:
         raise NotImplementedError
 
+    def __eq__(self, o: Any) -> bool:
+        return type(self) == type(o) and (self.keys, self.desc, self.env_name) == (o.keys, o.desc, o.env_name)
+
+    def __ne__(self, o: Any) -> bool:
+        return not (self == o)
+
 
 class ConfigConstantDefinition(ConfigDefinition[T]):
     """A configuration definition whose value is defined upfront (such as the tox environment name)"""
@@ -46,6 +52,9 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
         else:
             value = self.value
         return value
+
+    def __eq__(self, o: Any) -> bool:
+        return type(self) == type(o) and super().__eq__(o) and self.value == o.value
 
 
 _PLACE_HOLDER = object()
@@ -92,3 +101,10 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
     def __repr__(self) -> str:
         values = ((k, v) for k, v in vars(self).items() if k != "post_process" and v is not None)
         return f"{type(self).__name__}({', '.join('{}={}'.format(k, v) for k,v in values)})"
+
+    def __eq__(self, o: Any) -> bool:
+        return (
+            type(self) == type(o)
+            and super().__eq__(o)
+            and (self.of_type, self.default, self.post_process) == (o.of_type, o.default, o.post_process)
+        )

@@ -21,7 +21,6 @@ def test_list_empty(tox_project: ToxProjectCreator) -> None:
         work_dir = {project.path}{os.sep}.tox4
         temp_dir = {project.path}{os.sep}.temp
         env_list =
-        skip_missing_interpreters = True
         min_version = {__version__}
         provision_tox_env = .tox
         requires = tox>={__version__}
@@ -54,17 +53,6 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     pass_env_str = "\n".join(f"      {re.escape(p)}" for p in sorted(p_env))[4:]
 
     expected = rf"""
-    \[tox\]
-    tox_root = {path}
-    work_dir = {path}{sep}\.tox4
-    temp_dir = {path}{sep}\.temp
-    env_list = {name}
-    skip_missing_interpreters = True
-    min_version = {version}
-    provision_tox_env = \.tox
-    requires = tox>={version}
-    no_package = False
-
     \[testenv:{name}\]
     type = VirtualEnvRunner
     base = testenv
@@ -93,7 +81,18 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     base_python = {name}
     env_site_packages_dir = {path}{sep}\.tox4{sep}{name}{sep}.*
     env_python = {path}{sep}\.tox4{sep}{name}{sep}.*
-    deps =
+    deps =\
+
+    \[tox\]
+    tox_root = {path}
+    work_dir = {path}{sep}\.tox4
+    temp_dir = {path}{sep}\.temp
+    env_list = {name}
+    min_version = {version}
+    provision_tox_env = \.tox
+    requires = tox>={version}
+    no_package = False\
+    skip_missing_interpreters = True
     """
     result.assert_out_err(expected, "", regex=True)
 

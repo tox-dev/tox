@@ -49,30 +49,34 @@ class ConfigSet:
         Add configuration value.
         """
         keys_ = self._make_keys(keys)
-        for key in keys_:
-            if key in self._defined and overwrite is False:
-                defined = self._defined[key]
-                if isinstance(defined, ConfigDynamicDefinition):
-                    return defined
-                raise TypeError(f"{keys} already defined with differing type {type(defined).__name__}")
         definition = ConfigDynamicDefinition(keys_, desc, self.name, of_type, default, post_process)
-        self._add_conf(keys_, definition)
-        return definition
+        result = self._add_conf(keys_, definition)
+        return cast(ConfigDynamicDefinition[V], result)
 
-    def add_constant(self, keys: Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
+    def add_constant(self, keys: Union[str, Sequence[str]], desc: str, value: V) -> ConfigConstantDefinition[V]:
         keys_ = self._make_keys(keys)
         definition = ConfigConstantDefinition(keys_, desc, self.name, value)
-        self._add_conf(keys, definition)
-        return definition
+        result = self._add_conf(keys_, definition)
+        return cast(ConfigConstantDefinition[V], result)
 
     @staticmethod
     def _make_keys(keys: Union[str, Sequence[str]]) -> Sequence[str]:
         return (keys,) if isinstance(keys, str) else keys
 
-    def _add_conf(self, keys: Union[str, Sequence[str]], definition: ConfigDefinition[V]) -> None:
-        self._keys[keys[0]] = None
-        for key in keys:
-            self._defined[key] = definition
+    def _add_conf(self, keys: Sequence[str], definition: ConfigDefinition[V]) -> ConfigDefinition[V]:
+        key = keys[0]
+        if key in self._defined:
+            earlier = self._defined[key]
+            # core definitions may be defined multiple times as long as all their options match, first defined wins
+            if self.name is None and definition == earlier:
+                definition = earlier
+            else:
+                raise ValueError(f"config {key} already defined")
+        else:
+            self._keys[key] = None
+            for key in keys:
+                self._defined[key] = definition
+        return definition
 
     def __getitem__(self, item: str) -> Any:
         config_definition = self._defined[item]
@@ -123,10 +127,4 @@ class CoreConfigSet(ConfigSet):
             of_type=EnvList,
             default=EnvList([]),
             desc="define environments to automatically run",
-        )
-        self.add_config(
-            keys=["skip_missing_interpreters"],
-            of_type=bool,
-            default=True,
-            desc="skip missing interpreters",
         )

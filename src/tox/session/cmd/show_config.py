@@ -29,19 +29,20 @@ def tox_add_option(parser: ToxParser) -> None:
 def show_config(state: State) -> int:
     keys: List[str] = state.options.list_keys_only
     first = True
-    if state.options.env.all or state.options.show_core:
-        print("[tox]")
-        print_conf(state.conf.core, keys)
-        first = False
+    # environments may define core configuration flags, so we must exhaust first the environments to tell the core part
     for name in state.env_list(everything=False):
         tox_env = state.tox_env(name)
-        if not first:
-            print()
-        first = False
         print(f"[testenv:{name}]")
+        first = False
         if not keys:
             print(f"type = {type(tox_env).__name__}")
         print_conf(tox_env.conf, keys)
+    # no print core
+    if state.options.env.all or state.options.show_core:
+        if not first:
+            print()
+        print("[tox]")
+        print_conf(state.conf.core, keys)
     return 0
 
 

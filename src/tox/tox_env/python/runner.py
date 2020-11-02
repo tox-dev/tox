@@ -28,7 +28,6 @@ class PythonRun(Python, RunToxEnv, ABC):
             of_type=bool,
             desc="skip running missing interpreters",
         )
-        self.add_package_conf()
 
     def no_base_python_found(self, base_pythons: List[str]) -> NoReturn:
         if self.core["skip_missing_interpreters"]:
