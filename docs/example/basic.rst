@@ -164,10 +164,8 @@ For more details on ``requirements.txt`` files or ``constraints.txt`` files plea
 * https://pip.pypa.io/en/stable/user_guide/#requirements-files
 * https://pip.pypa.io/en/stable/user_guide/#constraints-files
 
-Using a different default PyPI url
------------------------------------------------
-
-.. versionadded:: 0.9
+Using a different default PyPI URL
+----------------------------------
 
 To install dependencies and packages from a different
 default PyPI server you can type interactively:
@@ -177,47 +175,47 @@ default PyPI server you can type interactively:
     tox -i https://pypi.my-alternative-index.org
 
 This causes tox to install dependencies and the sdist install step
-to use the specified url as the index server.
+to use the specified URL as the index server.
 
-You can cause the same effect by this ``tox.ini`` content:
+You can cause the same effect by using a ``PIP_INDEX_URL`` environment variable.
+This variable can be also set in ``tox.ini``:
 
 .. code-block:: ini
 
     [tox]
-    indexserver =
-        default = https://pypi.my-alternative-index.org
+    setenv =
+        PIP_INDEX_URL = https://pypi.my-alternative-index.org
+
+Alternatively, a configuration where ``PIP_INDEX_URL`` could be overriden from environment:
+
+.. code-block:: ini
+
+    [tox]
+    setenv =
+        PIP_INDEX_URL = {env:PIP_INDEX_URL:https://pypi.my-alternative-index.org}
 
 Installing dependencies from multiple PyPI servers
----------------------------------------------------
-
-.. versionadded:: 0.9
+--------------------------------------------------
 
 You can instrument tox to install dependencies from
-different PyPI servers, example:
+multiple PyPI servers, using ``PIP_EXTRA_INDEX_URL`` environment variable:
 
 .. code-block:: ini
 
     [tox]
-    indexserver =
-        DEV = https://mypypiserver.org
+    setenv =
+        PIP_EXTRA_INDEX_URL = https://mypypiserver.org
 
     [testenv]
     deps =
         # docutils will be installed directly from PyPI
         docutils
-        # mypackage will be installed from custom "DEV" PyPI url
-        :DEV:mypackage
+        # mypackage missing at PyPI will be installed from custom PyPI URL
+        mypackage
 
 This configuration will install ``docutils`` from the default
 Python PYPI server and will install the ``mypackage`` from
-our ``DEV`` indexserver, and the respective ``https://mypypiserver.org``
-url.  You can override config file settings from the command line
-like this:
-
-.. code-block:: shell
-
-    tox -i DEV=https://pypi.org/simple  # changes :DEV: package URLs
-    tox -i https://pypi.org/simple      # changes default
+our index server at ``https://mypypiserver.org`` URL.
 
 Further customizing installation
 ---------------------------------
