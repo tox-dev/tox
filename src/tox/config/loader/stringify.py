@@ -26,9 +26,7 @@ def stringify(value: Any) -> Tuple[str, bool]:
         return "\n".join(e for e in value.envs), True
     if isinstance(value, Command):
         return value.shell, True
-    if value.__repr__ != value.__str__:  # use the value
-        return str(value), False
-    raise TypeError(f"type {type(value).__name__} with value {value!r}")
+    return str(value), False
 
 
 __all__ = ("stringify",)
