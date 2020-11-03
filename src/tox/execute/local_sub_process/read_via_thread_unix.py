@@ -1,16 +1,16 @@
 """
 On UNIX we use select.select to ensure we drain in a non-blocking fashion.
 """
-import os
-import select
-from typing import Callable
+import os  # pragma: win32 no cover
+import select  # pragma: win32 no cover
+from typing import Callable  # pragma: win32 no cover
 
-from .read_via_thread import ReadViaThread
+from .read_via_thread import ReadViaThread  # pragma: win32 no cover
 
-STOP_EVENT_CHECK_PERIODICITY_IN_MS = 0.01
+STOP_EVENT_CHECK_PERIODICITY_IN_MS = 0.01  # pragma: win32 no cover
 
 
-class ReadViaThreadUnix(ReadViaThread):
+class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
     def __init__(self, file_no: int, handler: Callable[[bytes], None]) -> None:
         super().__init__(file_no, handler)
 

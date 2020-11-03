@@ -1,15 +1,15 @@
 """
 On Windows we use overlapped mechanism, borrowing it from asyncio (but without the event loop).
 """
-from asyncio.windows_utils import BUFSIZE
-from typing import Callable
+from asyncio.windows_utils import BUFSIZE  # pragma: win32 cover
+from typing import Callable  # pragma: win32 cover
 
-import _overlapped  # type: ignore[import]
+import _overlapped  # type: ignore[import]  # pragma: win32 cover
 
-from .read_via_thread import ReadViaThread
+from .read_via_thread import ReadViaThread  # pragma: win32 cover
 
 
-class ReadViaThreadWindows(ReadViaThread):
+class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
     def __init__(self, file_no: int, handler: Callable[[bytes], None]) -> None:
         super().__init__(file_no, handler)
         self.closed = False
