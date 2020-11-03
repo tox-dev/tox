@@ -1246,22 +1246,15 @@ class ParseIni(object):
         results = {}
         cur_self = self
 
-        def run(name, section, subs, config, fallbacksections):
+        def run(name, section, subs, config):
             try:
-                results[name] = cur_self.make_envconfig(
-                    name,
-                    section,
-                    subs,
-                    config,
-                    fallbacksections=fallbacksections,
-                )
+                results[name] = cur_self.make_envconfig(name, section, subs, config)
             except Exception as exception:
                 failures[name] = (exception, traceback.format_exc())
 
         order = []
-        prefix = "tox:" if ini_path.basename == "setup.cfg" else ""
         for name in all_envs:
-            section = "{}{}".format(prefix + testenvprefix, name)
+            section = "{}{}".format(testenvprefix, name)
             factors = set(name.split("-"))
             if (
                 section in self._cfg
@@ -1271,13 +1264,7 @@ class ParseIni(object):
                 )
             ):
                 order.append(name)
-                fallbacksections = ["testenv"]
-                if prefix != "":
-                    fallbacksections = [testenvprefix + name, prefix + "testenv", "testenv"]
-                thread = Thread(
-                    target=run,
-                    args=(name, section, reader._subs, config, fallbacksections),
-                )
+                thread = Thread(target=run, args=(name, section, reader._subs, config))
                 thread.daemon = True
                 thread.start()
                 to_do.append(thread)
@@ -1390,24 +1377,9 @@ class ParseIni(object):
                 factors.update(*mapcat(_split_factor_expr_all, exprs))
         return factors
 
-    def make_envconfig(
-        self,
-        name,
-        section,
-        subs,
-        config,
-        replace=True,
-        fallbacksections=None,
-    ):
+    def make_envconfig(self, name, section, subs, config, replace=True):
         factors = set(name.split("-"))
-        if fallbacksections is None:
-            fallbacksections = ["testenv"]
-        reader = SectionReader(
-            section,
-            self._cfg,
-            fallbacksections=fallbacksections,
-            factors=factors,
-        )
+        reader = SectionReader(section, self._cfg, fallbacksections=["testenv"], factors=factors)
         tc = TestenvConfig(name, config, factors, reader)
         reader.addsubstitutions(
             envname=name,

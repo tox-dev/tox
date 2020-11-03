@@ -91,7 +91,7 @@ class TestVenvConfig:
         envconfig = config.envconfigs["dev"]
         assert envconfig.envdir == config.toxworkdir.join("foobar")
 
-    def test_envdir_set_manually_setup_cfg_old(self, tmpdir, newconfig):
+    def test_envdir_set_manually_setup_cfg(self, tmpdir, newconfig):
         config = newconfig(
             [],
             """
@@ -100,24 +100,6 @@ class TestVenvConfig:
             [testenv]
             envdir = dev
             [testenv:py36]
-            envdir = dev36
-        """,
-            filename="setup.cfg",
-        )
-        envconfig = config.envconfigs["py36"]
-        assert envconfig.envdir == tmpdir.join("dev36")
-        envconfig = config.envconfigs["py37"]
-        assert envconfig.envdir == tmpdir.join("dev")
-
-    def test_envdir_set_manually_setup_cfg_new(self, tmpdir, newconfig):
-        config = newconfig(
-            [],
-            """
-            [tox:tox]
-            envlist = py36,py37
-            [tox:testenv]
-            envdir = dev
-            [tox:testenv:py36]
             envdir = dev36
         """,
             filename="setup.cfg",
