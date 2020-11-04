@@ -4,16 +4,16 @@ from typing import Callable, Dict, Optional, Set, TypeVar
 
 import pytest
 
+from tests.conftest import ToxIniCreator
 from tox.config.sets import ConfigSet
-from tox.pytest import ToxProjectCreator
 
 ConfBuilder = Callable[[str], ConfigSet]
 
 
 @pytest.fixture(name="conf_builder")
-def _conf_builder(tox_project: ToxProjectCreator) -> ConfBuilder:
+def _conf_builder(tox_ini_conf: ToxIniCreator) -> ConfBuilder:
     def _make(conf_str: str) -> ConfigSet:
-        return tox_project({"tox.ini": f"[tox]\nenvlist=py39\n[testenv]\n{conf_str}"}).config().get_env("py39")
+        return tox_ini_conf(f"[tox]\nenvlist=py39\n[testenv]\n{conf_str}").get_env("py39")
 
     return _make
 

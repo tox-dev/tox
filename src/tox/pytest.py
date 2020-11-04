@@ -20,8 +20,6 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
 
 import tox.run
-from tox.config.loader.api import Override
-from tox.config.main import Config
 from tox.execute.api import Outcome
 from tox.execute.request import shell_cmd
 from tox.report import LOGGER
@@ -133,14 +131,6 @@ class ToxProject:
             yield
         finally:
             os.chdir(cur_dir)
-
-    def config(self, override: Optional[List[Override]] = None) -> Config:
-        args = []
-        for ov in override or []:
-            args.extend(["-x", str(ov)])
-        with self.chdir():
-            state = tox.run.setup_state(args)
-        return state.conf
 
     def run(self, *args: str) -> "ToxRunOutcome":
         with self.chdir():

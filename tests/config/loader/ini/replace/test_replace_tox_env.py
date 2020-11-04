@@ -4,18 +4,17 @@ from typing import Callable
 import pytest
 
 from tests.config.loader.ini.replace.conftest import ReplaceOne
+from tests.conftest import ToxIniCreator
 from tox.config.sets import ConfigSet
-from tox.pytest import ToxProjectCreator
 from tox.report import HandledError
 
 EnvConfigCreator = Callable[[str], ConfigSet]
 
 
 @pytest.fixture()
-def example(tox_project: ToxProjectCreator) -> EnvConfigCreator:
+def example(tox_ini_conf: ToxIniCreator) -> EnvConfigCreator:
     def func(conf: str) -> ConfigSet:
-        project = tox_project({"tox.ini": f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n"""})
-        config = project.config()
+        config = tox_ini_conf(f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n""")
         env_config = config.get_env("a")
         return env_config
 
@@ -65,9 +64,8 @@ def test_replace_within_tox_env_from_base(example: EnvConfigCreator) -> None:
     assert result == "one"
 
 
-def test_replace_ref_bad_type(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv:a]\nx = {[testenv:b]v}\n[testenv:b]\nv=1"})
-    config = project.config()
+def test_replace_ref_bad_type(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[testenv:a]\nx = {[testenv:b]v}\n[testenv:b]\nv=1")
 
     class BadType:
         def __init__(self, value: str) -> None:
@@ -109,37 +107,32 @@ def test_do_not_replace(replace_one: ReplaceOne, start: str, end: str) -> None:
     assert value == end
 
 
-def test_replace_from_tox_section_non_registered(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\na=1\n[testenv:a]\nx = {[tox]a}"})
-    conf_a = project.config().get_env("a")
+def test_replace_from_tox_section_non_registered(tox_ini_conf: ToxIniCreator) -> None:
+    conf_a = tox_ini_conf("[tox]\na=1\n[testenv:a]\nx = {[tox]a}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
     assert conf_a["x"] == "1"
 
 
-def test_replace_from_tox_section_missing_section(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv:a]\nx = {[magic]a}"})
-    conf_a = project.config().get_env("a")
+def test_replace_from_tox_section_missing_section(tox_ini_conf: ToxIniCreator) -> None:
+    conf_a = tox_ini_conf("[testenv:a]\nx = {[magic]a}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
     assert conf_a["x"] == "{[magic]a}"
 
 
-def test_replace_from_tox_section_missing_value(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv:e]\nx = {[m]a}\n[m]"})
-    conf_a = project.config().get_env("e")
+def test_replace_from_tox_section_missing_value(tox_ini_conf: ToxIniCreator) -> None:
+    conf_a = tox_ini_conf("[testenv:e]\nx = {[m]a}\n[m]").get_env("e")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="d")
     assert conf_a["x"] == "{[m]a}"
 
 
-def test_replace_from_section_bad_type(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv:e]\nx = {[m]a}\n[m]\na=w\n"})
-    conf_a = project.config().get_env("e")
+def test_replace_from_section_bad_type(tox_ini_conf: ToxIniCreator) -> None:
+    conf_a = tox_ini_conf("[testenv:e]\nx = {[m]a}\n[m]\na=w\n").get_env("e")
     conf_a.add_config(keys="x", of_type=int, default=1, desc="d")
     with pytest.raises(ValueError, match="invalid literal.*w.*"):
         assert conf_a["x"]
 
 
-def test_replace_from_tox_section_registered(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv:a]\nx = {[tox]tox_root}"})
-    conf_a = project.config().get_env("a")
+def test_replace_from_tox_section_registered(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+    conf_a = tox_ini_conf("[testenv:a]\nx = {[tox]tox_root}").get_env("a")
     conf_a.add_config(keys="x", of_type=Path, default=Path.cwd() / "magic", desc="d")
-    assert conf_a["x"] == project.path
+    assert conf_a["x"] == tmp_path

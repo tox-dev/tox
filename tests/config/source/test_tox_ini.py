@@ -1,9 +1,8 @@
-from tox.pytest import ToxProjectCreator
+from tests.conftest import ToxIniCreator
 
 
-def test_tox_ini_core(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]"})
-    config = project.config()
+def test_tox_ini_core(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[tox]")
     core_loader_1 = list(config._src.get_core({}))
     assert len(core_loader_1) == 1
 

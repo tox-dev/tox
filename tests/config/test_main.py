@@ -1,15 +1,16 @@
 import pytest
 
+from tests.conftest import ToxIniCreator
 from tox.config.loader.api import Override
 from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
-from tox.pytest import ToxProject, ToxProjectCreator
+from tox.pytest import ToxProject
 
 
 @pytest.fixture
-def empty_config(empty_project: ToxProject) -> Config:
-    return empty_project.config()
+def empty_config(tox_ini_conf: ToxIniCreator) -> Config:
+    return tox_ini_conf("")
 
 
 def test_empty_config_root(empty_config: Config, empty_project: ToxProject) -> None:
@@ -34,7 +35,7 @@ def test_empty_conf_get(empty_config: Config) -> None:
     assert loaders == ["testenv"]
 
 
-def test_config_some_envs(tox_project: ToxProjectCreator) -> None:
+def test_config_some_envs(tox_ini_conf: ToxIniCreator) -> None:
     example = """
     [tox]
     env_list = py38, py37
@@ -43,7 +44,7 @@ def test_config_some_envs(tox_project: ToxProjectCreator) -> None:
         other: 2
     [testenv:magic]
     """
-    config = tox_project({"tox.ini": example}).config()
+    config = tox_ini_conf(example)
     tox_env_keys = list(config)
     assert tox_env_keys == ["py38", "py37", "other", "magic"]
 
@@ -53,14 +54,14 @@ def test_config_some_envs(tox_project: ToxProjectCreator) -> None:
     assert list(config_set)
 
 
-def test_config_overrides(tox_project: ToxProjectCreator) -> None:
-    conf = tox_project({"tox.ini": "[testenv]"}).config(override=[Override("testenv.c=ok")]).get_env("py")
+def test_config_overrides(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]", override=[Override("testenv.c=ok")]).get_env("py")
     conf.add_config("c", of_type=str, default="d", desc="desc")
     assert conf["c"] == "ok"
 
 
-def test_config_new_source(tox_project: ToxProjectCreator) -> None:
-    main_conf = tox_project({"tox.ini": "[testenv]"}).config(override=[Override("testenv.c=ok")])
+def test_config_new_source(tox_ini_conf: ToxIniCreator) -> None:
+    main_conf = tox_ini_conf("[testenv]", override=[Override("testenv.c=ok")])
     conf = main_conf.get_env("py", loaders=[MemoryLoader(c="something_else")])
     conf.add_config("c", of_type=str, default="d", desc="desc")
     assert conf["c"] == "something_else"

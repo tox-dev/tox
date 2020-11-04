@@ -3,8 +3,8 @@ from typing import List
 
 import pytest
 
+from tests.conftest import ToxIniCreator
 from tox.config.loader.ini.factor import filter_for_env, find_envs
-from tox.pytest import ToxProjectCreator
 
 
 def test_factor_env_discover_empty() -> None:
@@ -81,16 +81,8 @@ def test_factor_env_filter(env: str, complex_example: str) -> None:
         assert "complex" not in result
 
 
-def test_factor_env_list(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.ini": """
-        [tox]
-        env_list = {py27,py36}-django{ 15, 16 }{,-dev}, docs, flake
-        """,
-        },
-    )
-    config = project.config()
+def test_factor_env_list(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[tox]\nenv_list = {py27,py36}-django{ 15, 16 }{,-dev}, docs, flake")
     result = list(config)
     assert result == [
         "py27-django15",
@@ -106,23 +98,14 @@ def test_factor_env_list(tox_project: ToxProjectCreator) -> None:
     ]
 
 
-def test_simple_env_list(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.ini": """
-        [tox]
-        env_list = docs, flake8
-        """,
-        },
-    )
-    config = project.config()
+def test_simple_env_list(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[tox]\nenv_list = docs, flake8")
     assert list(config) == ["docs", "flake8"]
 
 
-def test_factor_config(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.ini": """
+def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
         [tox]
         env_list = {py36,py37}-{django15,django16}
         [testenv]
@@ -131,10 +114,8 @@ def test_factor_config(tox_project: ToxProjectCreator) -> None:
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
             py36: unittest2
-        """,
-        },
+        """
     )
-    config = project.config()
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
     for env in config.core["env_list"]:
         env_config = config.get_env(env)
@@ -149,11 +130,10 @@ def test_factor_config(tox_project: ToxProjectCreator) -> None:
             assert "Django>=1.6,<1.7" in deps
 
 
-def test_factor_config_no_env_list_creates_env(tox_project: ToxProjectCreator) -> None:
+def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> None:
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
-    project = tox_project(
-        {
-            "tox.ini": """
+    config = tox_ini_conf(
+        """
         [tox]
         env_list = py37-{django15,django16}
         [testenv]
@@ -162,8 +142,7 @@ def test_factor_config_no_env_list_creates_env(tox_project: ToxProjectCreator) -
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
             py36: unittest2
-        """,
-        },
+        """
     )
-    config = project.config()
+
     assert list(config) == ["py37-django15", "py37-django16", "py36"]
