@@ -62,7 +62,7 @@ def identify_cycle(graph: Dict[str, Tuple[str, ...]]) -> None:
         del path[vertex]
         return None
 
-    for node in graph:
+    for node in graph:  # pragma: no branch # we never get here if the graph is empty
         result = visit(node)
         if result is not None:
             raise ValueError(f"{' | '.join(result.keys())}")

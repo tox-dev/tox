@@ -1,12 +1,13 @@
 """A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
-
 import os
 import sys
 import threading
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from types import TracebackType
-from typing import IO, Any, Dict, Optional, Sequence, Tuple, Type
+from typing import IO, Any, Dict, Optional, Sequence, Type
+
+from colorama import Fore
 
 if sys.platform == "win32":  # pragma: win32 cover
     import ctypes
@@ -17,7 +18,7 @@ if sys.platform == "win32":  # pragma: win32 cover
 
 def _file_support_encoding(chars: Sequence[str], file: IO[Any]) -> bool:
     encoding = getattr(file, "encoding", None)
-    if encoding is not None:
+    if encoding is not None:  # pragma: no branch  # this should be always set, unless someone passes in something bad
         for char in chars:
             try:
                 char.encode(encoding)
@@ -37,11 +38,10 @@ class Spinner:
     def __init__(self, enabled: bool = True, refresh_rate: float = 0.1) -> None:
         self.refresh_rate = refresh_rate
         self.enabled = enabled
-        self._file = sys.stdout
         self.frames = (
             self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, sys.stdout) else self.ASCII_FRAMES
         )
-        self.stream = sys.stderr
+        self.stream = sys.stdout
         self._envs: Dict[str, datetime] = OrderedDict()
         self._frame_index = 0
 
@@ -89,7 +89,7 @@ class Spinner:
         exc_tb: Optional[TracebackType],
     ) -> None:
         if not self._stop_spinner.is_set():
-            if self._spinner_thread:
+            if self._spinner_thread:  # pragma: no branch # hard to test
                 self._stop_spinner.set()
                 self._spinner_thread.join()
 
@@ -102,27 +102,26 @@ class Spinner:
         self._envs[name] = datetime.now()
 
     def succeed(self, key: str) -> None:
-        self.finalize(key, "✔ OK", green=True)
+        self.finalize(key, "✔ OK", Fore.GREEN)
 
     def fail(self, key: str) -> None:
-        self.finalize(key, "✖ FAIL", red=True)
+        self.finalize(key, "✖ FAIL", Fore.RED)
 
     def skip(self, key: str) -> None:
-        self.finalize(key, "⚠ SKIP", white=True)
+        self.finalize(key, "⚠ SKIP", Fore.WHITE)
 
-    def finalize(self, key: str, status: str, **kwargs: Any) -> None:
+    def finalize(self, key: str, status: str, color: int) -> None:
         start_at = self._envs[key]
         del self._envs[key]
         if self.enabled:
             self.clear()
-        self.stream.write(  # type: ignore[call-arg]
-            f"{status} {key} in {td_human_readable(datetime.now() - start_at)}{os.linesep}", **kwargs  # noqa
-        )
+        msg = f"{color}{status} {key} in {td_human_readable(datetime.now() - start_at)}{Fore.RESET}{os.linesep}"
+        self.stream.write(msg)
         if not self._envs:
             self.__exit__(None, None, None)
 
     def disable_cursor(self) -> None:
-        if self._file.isatty():
+        if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
@@ -133,7 +132,7 @@ class Spinner:
                 self.stream.write("\033[?25l")
 
     def enable_cursor(self) -> None:
-        if self._file.isatty():
+        if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
                 handle = ctypes.windll.kernel32.GetStdHandle(-11)
@@ -144,24 +143,25 @@ class Spinner:
                 self.stream.write("\033[?25h")
 
 
-def td_human_readable(delta: timedelta) -> str:
-    seconds = int(delta.total_seconds())
-    periods = [
-        ("year", 60 * 60 * 24 * 365),
-        ("month", 60 * 60 * 24 * 30),
-        ("day", 60 * 60 * 24),
-        ("hour", 60 * 60),
-        ("minute", 60),
-        ("second", 1),
-    ]
+_PERIODS = [
+    ("day", 60 * 60 * 24),
+    ("hour", 60 * 60),
+    ("minute", 60),
+    ("second", 1),
+]
 
+
+def td_human_readable(delta: timedelta) -> str:
+    seconds: float = delta.total_seconds()
     texts = []
-    for period_name, period_seconds in periods:
+    for period_name, period_seconds in _PERIODS:
         if seconds > period_seconds or period_seconds == 1:
-            period_value, _ = divmod(seconds, period_seconds)  # type: Tuple[float, float]
+            period_value = int(seconds) // period_seconds
+            seconds %= period_seconds
             if period_name == "second":
-                ms = delta.total_seconds() - int(delta.total_seconds())
-                period_value = round(period_value + ms, 3)
-            has_s = "s" if period_value != 1 else ""
-            texts.append(f"{period_value} {period_name}{has_s}")
-    return ", ".join(texts)
+                ms = period_value + delta.total_seconds() - int(delta.total_seconds())
+                period_str = f"{ms:.2f}".rstrip("0").rstrip(".")
+            else:
+                period_str = str(period_value)
+            texts.append(f"{period_str} {period_name}{'' if period_str == '1' else 's'}")
+    return " ".join(texts)

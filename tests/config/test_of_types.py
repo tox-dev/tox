@@ -10,7 +10,7 @@ def test_config_constant_eq() -> None:
 
 def test_config_dynamic_eq() -> None:
     def func(name: str, _: Config) -> str:
-        return name
+        return name  # pragma: no cover
 
     val_1 = ConfigDynamicDefinition(("key",), "description", "env", str, "default", post_process=func)
     val_2 = ConfigDynamicDefinition(("key",), "description", "env", str, "default", post_process=func)
