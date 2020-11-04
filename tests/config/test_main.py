@@ -50,7 +50,7 @@ def test_config_some_envs(tox_project: ToxProjectCreator) -> None:
     config_set = config.get_env("py38")
     assert repr(config_set)
     assert isinstance(config_set, ConfigSet)
-    assert list(config_set) == ["base"]
+    assert list(config_set)
 
 
 def test_config_overrides(tox_project: ToxProjectCreator) -> None:

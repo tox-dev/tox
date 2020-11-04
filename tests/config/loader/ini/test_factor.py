@@ -126,7 +126,7 @@ def test_factor_config(tox_project: ToxProjectCreator) -> None:
         [tox]
         env_list = {py36,py37}-{django15,django16}
         [testenv]
-        deps =
+        deps-x =
             pytest
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
@@ -138,8 +138,8 @@ def test_factor_config(tox_project: ToxProjectCreator) -> None:
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
     for env in config.core["env_list"]:
         env_config = config.get_env(env)
-        env_config.add_config(keys="deps", of_type=List[str], default=[], desc="deps", overwrite=True)
-        deps = env_config["deps"]
+        env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps", overwrite=True)
+        deps = env_config["deps-x"]
         assert "pytest" in deps
         if "py36" in env:
             assert "unittest2" in deps

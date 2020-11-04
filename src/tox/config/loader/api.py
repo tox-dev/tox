@@ -24,7 +24,10 @@ class Override:
         self.value = value[split_at + 1 :]
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}('{self.namespace}{'.' if self.namespace else ''}{self.key}={self.value}')"
+        return f"{self.__class__.__name__}('{self}')"
+
+    def __str__(self) -> str:
+        return f"{self.namespace}{'.' if self.namespace else ''}{self.key}={self.value}"
 
     def __eq__(self, other: Any) -> bool:
         if type(self) != type(other):

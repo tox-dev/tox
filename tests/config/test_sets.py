@@ -19,9 +19,9 @@ def _conf_builder(tox_project: ToxProjectCreator) -> ConfBuilder:
 
 
 def test_config_str(conf_builder: ConfBuilder) -> None:
-    config_set = conf_builder("deps = 1\n    other: 2")
-    config_set.add_config(keys="deps", of_type=str, default="", desc="ok")
-    result = config_set["deps"]
+    config_set = conf_builder("deps-x = 1\n    other: 2")
+    config_set.add_config(keys="deps-x", of_type=str, default="", desc="ok")
+    result = config_set["deps-x"]
     assert result == "1"
 
 

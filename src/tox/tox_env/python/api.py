@@ -29,7 +29,25 @@ class PythonInfo(NamedTuple):
     executable: Path
 
 
-Deps = Sequence[Union[Path, Requirement]]
+class Dep:
+    def __init__(self, value: Union[Path, Requirement]) -> None:
+        self._value = value
+
+    @property
+    def value(self) -> Union[Path, Requirement]:
+        return self._value
+
+    def __str__(self) -> str:
+        return str(self._value)
+
+    def __eq__(self, other: Any) -> bool:
+        return type(self) == type(other) and str(self) == str(other)
+
+    def __ne__(self, other: Any) -> bool:
+        return not (self == other)
+
+
+Deps = Sequence[Dep]
 
 
 class Python(ToxEnv, ABC):
@@ -127,18 +145,18 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     def cached_install(self, deps: Deps, section: str, of_type: str) -> bool:
-        conf_deps = [str(i) for i in deps]
+        conf_deps: List[str] = [str(i) for i in deps]
         with self._cache.compare(conf_deps, section, of_type) as (eq, old):
             if eq is True:
                 return True
             if old is None:
                 old = []
-            missing = [Requirement(i) for i in (set(old) - set(conf_deps))]
+            missing = [Dep(Requirement(i)) for i in (set(old) - set(conf_deps))]
             if missing:  # no way yet to know what to uninstall here (transitive dependencies?)
                 # bail out and force recreate
                 raise Recreate()
             new_deps_str = set(conf_deps) - set(old)
-            new_deps = [Requirement(i) for i in new_deps_str]
+            new_deps = [Dep(Requirement(i)) for i in new_deps_str]
             self.install_python_packages(packages=new_deps)
         return False
 

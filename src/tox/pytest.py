@@ -20,7 +20,6 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
 
 import tox.run
-from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.execute.api import Outcome
@@ -47,7 +46,7 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:
 @contextmanager
 def check_os_environ() -> Iterator[None]:
     old = os.environ.copy()
-    to_clean = {k: os.environ.pop(k, None) for k in {ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH"}}
+    to_clean = {k: os.environ.pop(k, None) for k in {ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT"}}
 
     yield
 
@@ -126,24 +125,26 @@ class ToxProject:
                 into[file_name] = (dir_path / file_name).read_text()
         return result
 
-    def config(
-        self,
-        override: Optional[List[Override]] = None,
-        pos_args: Optional[Sequence[str]] = None,
-    ) -> Config:
-        return tox.run.make_config(
-            parsed=Parsed(
-                override=[] if override is None else override,
-                work_dir=self.path,
-            ),
-            pos_args=pos_args,
-        )
-
-    def run(self, *args: str) -> "ToxRunOutcome":
+    @contextmanager
+    def chdir(self) -> Iterator[None]:
         cur_dir = os.getcwd()
-        state = None
         os.chdir(str(self.path))
         try:
+            yield
+        finally:
+            os.chdir(cur_dir)
+
+    def config(self, override: Optional[List[Override]] = None) -> Config:
+        args = []
+        for ov in override or []:
+            args.extend(["-x", str(ov)])
+        with self.chdir():
+            state = tox.run.setup_state(args)
+        return state.conf
+
+    def run(self, *args: str) -> "ToxRunOutcome":
+        with self.chdir():
+            state = None
             self._capsys.readouterr()  # start with a clean state - drain
             code = None
             state = None
@@ -164,8 +165,6 @@ class ToxProject:
                     raise RuntimeError("exit code not set")
             out, err = self._capsys.readouterr()
             return ToxRunOutcome(args, self.path, code, out, err, state)
-        finally:
-            os.chdir(cur_dir)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"

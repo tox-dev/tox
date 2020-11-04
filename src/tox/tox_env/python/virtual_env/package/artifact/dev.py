@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, cast
 
 from tox.plugin.impl import impl
-from tox.tox_env.python.api import Deps
+from tox.tox_env.python.api import Dep, Deps
 from tox.tox_env.register import ToxEnvRegister
 
 from ..api import Pep517VirtualEnvPackage
@@ -21,7 +21,7 @@ class LegacyDevVirtualEnvPackage(Pep517VirtualEnvPackage):
 
     def package_deps(self) -> Deps:
         """Install requirement from pyproject.toml table"""
-        return self._requires
+        return [Dep(i) for i in self._requires]
 
 
 @impl

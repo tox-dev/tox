@@ -55,7 +55,7 @@ class Execute(ABC):
                                     break
                                 finally:
                                     # restore signal handler on main thread
-                                    if is_main and sys.platform != "win32":  # pragma: win32 no cover
+                                    if is_main and sys.platform != "win32":  # pragma: no cover
                                         signal.signal(SIGINT, signal.default_int_handler)
         finally:
             end = timer()
