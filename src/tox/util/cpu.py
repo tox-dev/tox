@@ -6,8 +6,8 @@ from typing import Optional
 def auto_detect_cpus() -> int:
     try:
         n: Optional[int] = multiprocessing.cpu_count()
-    except NotImplementedError:  # pragma: no cov
-        n = None  # pragma: no cov
+    except NotImplementedError:
+        n = None
     return n if n else 1
 
 
