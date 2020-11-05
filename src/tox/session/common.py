@@ -16,7 +16,7 @@ class CliEnv(object):
             yield from self._names
 
     def __str__(self) -> str:
-        return "ALL" if self.all or self._names is None else ",".join(self._names)
+        return "ALL" if self.all or self._names is None else ",".join(self)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({'' if self.all else repr(self._names)})"
