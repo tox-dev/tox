@@ -1,4 +1,5 @@
 import json
+import sys
 from abc import ABC
 from enum import Enum
 from pathlib import Path
@@ -16,9 +17,9 @@ from tox.tox_env.python.package import PythonPackage
 
 from ..api import VirtualEnv
 
-try:
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
-except ImportError:
+else:  # pragma: no cover (<py38)
     from importlib_metadata import Distribution, PathDistribution  # noqa
 
 
