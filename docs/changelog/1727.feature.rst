@@ -1,0 +1,1 @@
+Make parsing [testenv] sections in setup.cfg official. - by :user:`mauvilsa`
