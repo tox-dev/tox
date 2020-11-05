@@ -202,13 +202,13 @@ class ToxRunOutcome:
         return shell_cmd(self.cmd)
 
     def assert_out_err(self, out: str, err: str, *, dedent: bool = True, regex: bool = False) -> None:
-        if out is not None and dedent:
+        if dedent:
             out = textwrap.dedent(out).lstrip()
         if regex:
             self.matches(out, self.out, re.MULTILINE)
         else:
             assert self.out == out
-        if err is not None and dedent:
+        if dedent:
             err = textwrap.dedent(err).lstrip()
         if regex:
             self.matches(err, self.err, re.MULTILINE)
@@ -219,7 +219,7 @@ class ToxRunOutcome:
     def matches(pattern: str, text: str, flags: int = 0) -> None:
         try:
             from re_assert import Matches
-        except ImportError:
+        except ImportError:  # pragma: no cover # hard to test
             match = re.match(pattern, text, flags)
             if match is None:
                 warnings.warn("install the re-assert PyPi package for bette error message", UserWarning)
@@ -257,7 +257,8 @@ def pytest_configure(config: PyTestConfig) -> None:
 
 @pytest.mark.trylast
 def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -> None:
-    if len(items) == 1:  # do not require flags if called directly
+    # do not require flags if called directly
+    if len(items) == 1:  # pragma: no cover # hard to test
         return
 
     skip_int = pytest.mark.skip(reason="integration tests not run (no --run-int flag)")
@@ -266,7 +267,7 @@ def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -
         return test_item.get_closest_marker("integration") is not None
 
     integration_enabled = config.getoption("--run-integration")
-    if not integration_enabled:
+    if not integration_enabled:  # pragma: no cover # hard to test
         for item in items:
             if is_integration(item):
                 item.add_marker(skip_int)

@@ -2,7 +2,7 @@
 import logging
 import sys
 from datetime import datetime
-from typing import Optional, Sequence, cast
+from typing import Optional, Sequence
 
 from tox.config.cli.parse import get_options
 from tox.config.cli.parser import Parsed
@@ -30,9 +30,7 @@ def main(args: Sequence[str]) -> int:
     state = setup_state(args)
     command = state.options.command
     handler = state.handlers[command]
-    result = cast(int, handler(state))
-    if result is None:
-        result = 0
+    result = handler(state)
     return result
 
 

@@ -92,7 +92,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         return text
 
 
-Handler = Callable[[State], Optional[int]]
+Handler = Callable[[State], int]
 
 
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
