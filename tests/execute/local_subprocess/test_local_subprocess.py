@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 import psutil
 import pytest
@@ -17,13 +17,13 @@ from tox.execute.request import ExecuteRequest
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 
 
-def test_local_execute_basic_pass(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
+def test_local_execute_basic_pass(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[sys.executable, "-c", "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"],
         cwd=Path(),
-        env=os.environ.copy(),
+        env=os_env,
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
@@ -38,13 +38,15 @@ def test_local_execute_basic_pass(capsys: CaptureFixture, caplog: LogCaptureFixt
     assert not caplog.records
 
 
-def test_local_execute_basic_pass_show_on_standard(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
+def test_local_execute_basic_pass_show_on_standard(
+    capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]
+) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
         cmd=[sys.executable, "-c", "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"],
         cwd=Path(),
-        env=os.environ.copy(),
+        env=os_env,
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=True, colored=True)
@@ -82,7 +84,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(
     assert not caplog.records
 
 
-def test_local_execute_write_a_lot(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
+def test_local_execute_write_a_lot(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
     count = 10000
     executor = LocalSubProcessExecutor()
     request = ExecuteRequest(
@@ -99,7 +101,7 @@ def test_local_execute_write_a_lot(capsys: CaptureFixture, caplog: LogCaptureFix
             ).format(count),
         ],
         cwd=Path(),
-        env=os.environ.copy(),
+        env=os_env,
         allow_stdin=False,
     )
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
@@ -164,12 +166,10 @@ def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixt
     assert _duration > 0
 
 
-def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixture) -> None:
+def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
-    request = ExecuteRequest(
-        cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os.environ.copy(), allow_stdin=False
-    )
+    request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, allow_stdin=False)
     outcome = executor.__call__(request, show_on_standard=False, colored=False)
 
     assert bool(outcome) is False
