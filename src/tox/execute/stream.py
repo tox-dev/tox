@@ -61,8 +61,7 @@ class CollectWrite:
         self._print(at)
 
     def _print(self, at: int) -> None:
-        if self._print_to is None:
-            return
+        assert self._print_to is not None  # because _do_print is guarding the call of this method
         with self._print_lock:
             if at > self._at:
                 try:

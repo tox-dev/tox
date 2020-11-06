@@ -17,47 +17,37 @@ from tox.execute.request import ExecuteRequest
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 
 
-def test_local_execute_basic_pass(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
-    caplog.set_level(logging.NOTSET)
-    executor = LocalSubProcessExecutor()
-    request = ExecuteRequest(
-        cmd=[sys.executable, "-c", "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"],
-        cwd=Path(),
-        env=os_env,
-        allow_stdin=False,
-    )
-    outcome = executor.__call__(request, show_on_standard=False, colored=False)
-    assert bool(outcome) is True
-    assert outcome.exit_code == Outcome.OK
-    assert outcome.err == "err"
-    assert outcome.out == "out"
-    assert outcome.request == request
-    out, err = capsys.readouterr()
-    assert not out
-    assert not err
-    assert not caplog.records
-
-
-def test_local_execute_basic_pass_show_on_standard(
-    capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]
+@pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
+@pytest.mark.parametrize(["out", "err"], [("out", "err"), ("", "")], ids=["simple", "nothing"])
+@pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
+def test_local_execute_basic_pass(
+    capsys: CaptureFixture,
+    caplog: LogCaptureFixture,
+    os_env: Dict[str, str],
+    out: str,
+    err: str,
+    show: bool,
+    color: bool,
 ) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor()
-    request = ExecuteRequest(
-        cmd=[sys.executable, "-c", "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"],
-        cwd=Path(),
-        env=os_env,
-        allow_stdin=False,
-    )
-    outcome = executor.__call__(request, show_on_standard=True, colored=True)
+    code = f"import sys; print({repr(out)}, end=''); print({repr(err)}, end='', file=sys.stderr)"
+    request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, allow_stdin=False)
+    outcome = executor.__call__(request, show_on_standard=show, colored=color)
+
     assert bool(outcome) is True
     assert outcome.exit_code == Outcome.OK
-    assert outcome.err == "err"
-    assert outcome.out == "out"
-    out, err = capsys.readouterr()
-    assert out == "out"
-    expected = f"{Fore.RED}err{Fore.RESET}"
-    assert err == expected
+    assert outcome.err == err
+    assert outcome.out == out
+    assert outcome.request == request
+    out_got, err_got = capsys.readouterr()
+    if show:
+        assert out_got == out
+        expected = (f"{Fore.RED}{err}{Fore.RESET}" if color else err) if err else ""
+        assert err_got == expected
+    else:
+        assert not out_got
+        assert not err_got
     assert not caplog.records
 
 

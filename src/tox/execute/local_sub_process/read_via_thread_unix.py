@@ -29,10 +29,10 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         while True:
             try:
                 last_result = os.read(self.file_no, 1)
-            except OSError:  # ignore failing to read the pipe - already closed
+            except OSError:  # pragma: no cover # ignore failing to read the pipe - already closed
                 break
             if last_result:
                 result.append(last_result[0])
             else:
-                break
+                break  # pragma: no cover # somehow python optimizes away this line, but break is hit to stop in tests
         return bytes(result)
