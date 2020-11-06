@@ -14,7 +14,7 @@ class SkipMissingInterpreterAction(Action):
     ) -> None:
         value = "true" if values is None else values
         if value not in ("config", "true", "false"):
-            raise ArgumentTypeError("value must be config, true or false")
+            raise ArgumentTypeError(f"value must be 'config', 'true', or 'false' (got {repr(value)})")
         setattr(args, self.dest, value)
 
 
