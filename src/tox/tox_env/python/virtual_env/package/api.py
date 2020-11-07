@@ -10,9 +10,9 @@ import toml
 from packaging.markers import Variable
 from packaging.requirements import Requirement
 
-from tox import helper
 from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
+from tox.tox_env.python import helper
 from tox.tox_env.python.package import PythonPackage
 
 from ..api import VirtualEnv

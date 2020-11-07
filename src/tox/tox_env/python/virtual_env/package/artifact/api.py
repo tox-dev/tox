@@ -5,9 +5,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Union, cast
 
-from tox import helper
 from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
+from tox.tox_env.python import helper
 
 from ..api import Pep517VirtualEnvPackage
 

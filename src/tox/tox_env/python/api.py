@@ -54,7 +54,7 @@ class Python(ToxEnv, ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed) -> None:
         self._base_python: Optional[PythonInfo] = None
         self._base_python_searched: bool = False
-        super(Python, self).__init__(conf, core, options)
+        super().__init__(conf, core, options)
 
     def register_config(self) -> None:
         super().register_config()

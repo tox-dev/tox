@@ -220,7 +220,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             # on help no mangling needed, and we also want to insert once we have legacy to insert
             args = "legacy", *args
         result = Parsed() if namespace is None else namespace
-        _, args = super(ToxParser, self).parse_known_args(args, namespace=result)
+        _, args = super().parse_known_args(args, namespace=result)
         return result, args
 
 
