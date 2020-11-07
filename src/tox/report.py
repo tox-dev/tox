@@ -2,8 +2,9 @@
 import logging
 import os
 import sys
+from typing import Union
 
-from colorama import Fore, Style, init
+from colorama import Fore, Style, deinit, init
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -19,26 +20,35 @@ LOGGER = logging.getLogger()
 
 
 class ToxHandler(logging.StreamHandler):
-    def __init__(self, level: int) -> None:
+    def __init__(self, level: int, is_colored: bool) -> None:
         super().__init__(stream=sys.stdout)
         self.setLevel(level)
-        self.error_formatter = self._get_formatter(logging.ERROR, level)
-        self.warning_formatter = self._get_formatter(logging.WARNING, level)
-        self.remaining_formatter = self._get_formatter(logging.INFO, level)
+        if is_colored:
+            deinit()
+            init()
+        self.error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
+        self.warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
+        self.remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
 
     @staticmethod
-    def _get_formatter(level: int, enabled_level: int) -> logging.Formatter:
-        if level >= logging.ERROR:
-            color = Fore.RED
-        elif level >= logging.WARNING:
-            color = Fore.CYAN
-        elif level >= logging.INFO:
-            color = Fore.WHITE
-        else:
-            color = Fore.GREEN
-        fmt = f"{Style.BRIGHT}{Fore.MAGENTA}%(name)s: {color}%(message)s{Style.RESET_ALL}"
+    def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:
+        color: Union[int, str] = ""
+        if is_colored:
+            if level >= logging.ERROR:
+                color = Fore.RED
+            elif level >= logging.WARNING:
+                color = Fore.CYAN
+            else:
+                color = Fore.WHITE
+        fmt = (
+            f"{Style.BRIGHT if color else ''}{Fore.MAGENTA if color else ''}"
+            f"%(name)s: {color}%(message)s{Style.RESET_ALL if color else ''}"
+        )
         if enabled_level <= logging.DEBUG:
-            fmt = f"%(relativeCreated)d %(levelname)s {fmt}{Style.DIM} [%(pathname)s:%(lineno)d]{Style.RESET_ALL}"
+            fmt = (
+                f"%(relativeCreated)d %(levelname)s {fmt}{Style.DIM if color else ''}"
+                f" [%(pathname)s:%(lineno)d]{Style.RESET_ALL if color else ''}"
+            )
         formatter = logging.Formatter(fmt)
         return formatter
 
@@ -56,28 +66,30 @@ class ToxHandler(logging.StreamHandler):
 
 
 class LowerInfoLevel(logging.Filter):
-    MAP = {"INFO": "DEBUG", "DEBUG": "TRACE", "TRACE": "TRACE"}
+    def __init__(self, level: int) -> None:
+        super().__init__()
+        self.level = level
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if record.levelname in LowerInfoLevel.MAP:
-            record.levelno = max(record.levelno - 10, 0)
-            record.levelname = LowerInfoLevel.MAP[record.levelname]
-        return True
+        if record.levelname in "INFO":
+            record.levelno = logging.DEBUG
+            record.levelname = "DEBUG"
+        return record.levelno >= self.level
 
 
 def setup_report(verbosity: int, is_colored: bool) -> None:
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
-    lower_info_level = LowerInfoLevel()
-    logging.getLogger("distlib.util").addFilter(lower_info_level)
-    logging.getLogger("filelock").addFilter(lower_info_level)
-    handler = ToxHandler(level)
+    lower_info_level = LowerInfoLevel(level)
+    for name in ("distlib.util", "filelock"):
+        logger = logging.getLogger(name)
+        logger.filters.clear()
+        logger.addFilter(lower_info_level)
+    handler = ToxHandler(level, is_colored)
     LOGGER.addHandler(handler)
 
     logging.debug("setup logging to %s", logging.getLevelName(level))
-    if is_colored:
-        init()
 
 
 def _get_level(verbosity: int) -> int:
