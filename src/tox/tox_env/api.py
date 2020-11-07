@@ -14,6 +14,7 @@ from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute, Outcome
 from tox.execute.request import ExecuteRequest
+from tox.journal import EnvJournal
 
 from .info import Info
 
@@ -22,7 +23,8 @@ if TYPE_CHECKING:
 
 
 class ToxEnv(ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed"):
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
+        self.journal = journal
         self.conf: ConfigSet = conf
         self.core: ConfigSet = core
         self.options = options

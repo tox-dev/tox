@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 CommandDict = Dict[str, Union[int, str, List[str]]]
 
 
-class CommandLog:
+class CommandJournal:
     """Report commands interacting with third party tools"""
 
     def __init__(self, container: List[CommandDict]):
@@ -17,6 +17,6 @@ class CommandLog:
 
 
 __all__ = (
-    "CommandLog",
+    "CommandJournal",
     "CommandDict",
 )

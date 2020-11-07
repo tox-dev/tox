@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Generator, List, Optional, Tuple, cast
 
 from tox.config.sets import ConfigSet
 from tox.config.types import Command, EnvList
+from tox.journal import EnvJournal
 
 from .api import ToxEnv
 from .package import PackageToxEnv
@@ -13,10 +14,10 @@ if TYPE_CHECKING:
 
 
 class RunToxEnv(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed") -> None:
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
         self.has_package = False
         self.package_env: Optional[PackageToxEnv] = None
-        super().__init__(conf, core, options)
+        super().__init__(conf, core, options, journal)
 
     def register_config(self) -> None:
         super().register_config()

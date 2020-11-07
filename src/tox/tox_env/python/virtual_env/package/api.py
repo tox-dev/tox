@@ -12,6 +12,7 @@ from packaging.requirements import Requirement
 
 from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
+from tox.journal import EnvJournal
 from tox.tox_env.python import helper
 from tox.tox_env.python.package import PythonPackage
 
@@ -39,8 +40,8 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
     LEGACY_BUILD_BACKEND = "setuptools.build_meta:__legacy__"
     LEGACY_REQUIRES = ["setuptools >= 40.8.0", "wheel"]
 
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed) -> None:
-        super().__init__(conf, core, options)
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal) -> None:
+        super().__init__(conf, core, options, journal)
         backend_module, backend_object, requires = self.load_builder_and_requires()
         self._requires: List[Requirement] = requires
         self.build_backend_module: str = backend_module

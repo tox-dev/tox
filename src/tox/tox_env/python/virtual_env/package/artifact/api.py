@@ -7,14 +7,15 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
+from tox.journal import EnvJournal
 from tox.tox_env.python import helper
 
 from ..api import Pep517VirtualEnvPackage
 
 
 class Pep517VirtualEnvPackageArtifact(Pep517VirtualEnvPackage, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed) -> None:
-        super().__init__(conf, core, options)
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal) -> None:
+        super().__init__(conf, core, options, journal)
         self._package: Optional[Path] = None
 
     @property

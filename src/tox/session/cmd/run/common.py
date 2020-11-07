@@ -21,7 +21,7 @@ class SkipMissingInterpreterAction(Action):
 def env_run_create_flags(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--result-json",
-        dest="resultjson",
+        dest="result_json",
         metavar="path",
         of_type=Path,
         default=None,

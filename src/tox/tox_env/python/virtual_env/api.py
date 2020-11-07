@@ -13,6 +13,7 @@ from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed
 from tox.config.sets import ConfigSet
 from tox.execute.api import Execute, Outcome
 from tox.execute.local_sub_process import LocalSubProcessExecutor
+from tox.journal import EnvJournal
 
 from ..api import Deps, Python, PythonInfo
 
@@ -20,9 +21,9 @@ from ..api import Deps, Python, PythonInfo
 class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip"""
 
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed):
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal) -> None:
         self._virtualenv_session: Optional[Session] = None  # type: ignore[no-any-unimported]
-        super().__init__(conf, core, options)
+        super().__init__(conf, core, options, journal)
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()
@@ -60,8 +61,17 @@ class VirtualEnv(Python, ABC):
         self.session.run()
 
     def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
+        interpreter = self.creator.interpreter
         try:
-            return PythonInfo(self.creator.interpreter.version_info, self.creator.interpreter.system_executable)
+            return PythonInfo(
+                executable=Path(interpreter.system_executable),
+                implementation=interpreter.implementation,
+                version_info=interpreter.version_info,
+                version=interpreter.version,
+                is_64=(interpreter.architecture == 64),
+                platform=interpreter.platform,
+                extra_version_info=None,
+            )
         except RuntimeError:
             pass
         return None

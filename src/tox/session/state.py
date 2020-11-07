@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Dict, Iterator, Optional, Sequence, Set, Tuple
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
+from tox.journal import Journal
 from tox.plugin.impl import impl
 from tox.report import HandledError
 from tox.session.common import CliEnv
@@ -31,6 +32,8 @@ class State:
         self._run_env: Dict[str, RunToxEnv] = {}
         self._pkg_env: Dict[str, PackageToxEnv] = {}
         self._pkg_env_discovered: Set[str] = set()
+
+        self.journal: Journal = Journal(getattr(options, "result_json", None) is not None)
 
     def env_list(self, everything: bool = False) -> Iterator[str]:
         if everything:
@@ -72,7 +75,8 @@ class State:
         from tox.tox_env.register import REGISTER
 
         builder = REGISTER.runner(runner)
-        env: RunToxEnv = builder(env_conf, self.conf.core, self.options)
+        journal = self.journal.get_env_journal(cast(str, env_conf.name))
+        env: RunToxEnv = builder(env_conf, self.conf.core, self.options, journal)
         self._build_package_env(env)
         return env
 
@@ -102,7 +106,8 @@ class State:
             package_type = REGISTER.package(packager)
             self._pkg_env_discovered.add(name)
             pkg_conf = self.conf.get_env(name, package=True)
-            pkg_tox_env = package_type(pkg_conf, self.conf.core, self.options)
+            journal = self.journal.get_env_journal(name)
+            pkg_tox_env = package_type(pkg_conf, self.conf.core, self.options, journal)
             self._pkg_env[name] = pkg_tox_env
         return pkg_tox_env
 

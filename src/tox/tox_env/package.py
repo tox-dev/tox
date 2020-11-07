@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, List, Optional, Set
 from packaging.requirements import Requirement
 
 from tox.config.sets import ConfigSet
+from tox.journal import EnvJournal
 from tox.tox_env.errors import Recreate
 
 from .api import ToxEnv
@@ -18,8 +19,8 @@ if TYPE_CHECKING:
 
 
 class PackageToxEnv(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed") -> None:
-        super().__init__(conf, core, options)
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
+        super().__init__(conf, core, options, journal)
         self._cleaned = False
         self._setup_done = False
 

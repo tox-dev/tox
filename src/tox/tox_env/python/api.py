@@ -12,6 +12,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 from tox.config.cli.parser import Parsed
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
+from tox.journal import EnvJournal
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail, Recreate
 
@@ -25,8 +26,13 @@ class VersionInfo(NamedTuple):
 
 
 class PythonInfo(NamedTuple):
-    version_info: VersionInfo
     executable: Path
+    implementation: str
+    version_info: VersionInfo
+    version: str
+    is_64: bool
+    platform: str
+    extra_version_info: Optional[str]
 
 
 class Dep:
@@ -51,10 +57,10 @@ Deps = Sequence[Dep]
 
 
 class Python(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed) -> None:
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal) -> None:
         self._base_python: Optional[PythonInfo] = None
         self._base_python_searched: bool = False
-        super().__init__(conf, core, options)
+        super().__init__(conf, core, options, journal)
 
     def register_config(self) -> None:
         super().register_config()
@@ -122,7 +128,7 @@ class Python(ToxEnv, ABC):
     def python_cache(self) -> Dict[str, Any]:
         return {
             "version_info": list(self.base_python.version_info),
-            "executable": self.base_python.executable,
+            "executable": str(self.base_python.executable),
         }
 
     @property
@@ -134,6 +140,17 @@ class Python(ToxEnv, ABC):
             self._base_python = self._get_python(base_pythons)
             if self._base_python is None:
                 self.no_base_python_found(base_pythons)
+            if self.journal:
+                value = {
+                    "executable": str(self._base_python.executable),
+                    "implementation": self._base_python.implementation,
+                    "version_info": tuple(self.base_python.version_info),
+                    "version": self._base_python.version,
+                    "is_64": self._base_python.is_64,
+                    "sysplatform": self._base_python.platform,
+                    "extra_version_info": None,
+                }
+                self.journal["python"] = value
         return cast(PythonInfo, self._base_python)
 
     @abstractmethod
