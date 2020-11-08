@@ -125,6 +125,17 @@ class Python(ToxEnv, ABC):
                 self.create_python_env()
             self._paths = self.paths()
 
+    def setup_done(self) -> None:
+        """called when setup is done"""
+        super().setup_done()
+        if self.journal:
+            outcome = self.get_installed_packages()
+            self.journal["installed_packages"] = outcome
+
+    @abstractmethod
+    def get_installed_packages(self) -> List[str]:
+        raise NotImplementedError
+
     def python_cache(self) -> Dict[str, Any]:
         return {
             "version_info": list(self.base_python.version_info),

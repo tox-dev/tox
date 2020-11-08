@@ -2,11 +2,13 @@
 A tox run environment that handles the Python language.
 """
 from abc import ABC, abstractmethod
+from hashlib import sha256
 from pathlib import Path
 from typing import Any, Dict, List, NoReturn, Union, cast
 
 from packaging.requirements import Requirement
 
+from tox.journal import EnvJournal
 from tox.tox_env.errors import Skip
 
 from ..runner import RunToxEnv
@@ -65,6 +67,23 @@ class PythonRun(Python, RunToxEnv, ABC):
             package = [Dep(d) for d in self.get_pkg_no_env()] if self.has_package else []
         if package:
             self.install_python_packages(package, **self.install_package_args())  # type: ignore[no-untyped-call]
+            self.handle_journal_package(self.journal, package)
+
+    @staticmethod
+    def handle_journal_package(journal: EnvJournal, package: List[Dep]) -> None:
+        if not journal:
+            return
+        installed_meta = []
+        for dep in package:
+            if isinstance(dep.value, Path):
+                pkg = dep.value
+                of_type = "file" if pkg.is_file() else ("dir" if pkg.is_dir() else "N/A")
+                meta = {"basename": pkg.name, "type": of_type}
+                if of_type == "file":
+                    meta["sha256"] = sha256(pkg.read_bytes()).hexdigest()
+                installed_meta.append(meta)
+        if installed_meta:
+            journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
     def get_pkg_no_env(self) -> List[Path]:
         # by default in Python just forward the root folder to the installer

@@ -127,6 +127,9 @@ class ToxEnv(ABC):
         finally:
             self._handle_env_tmp_dir()
 
+    def setup_done(self) -> None:
+        """called when setup is done"""
+
     def _handle_env_tmp_dir(self) -> None:
         """Ensure exists and empty"""
         env_tmp_dir: Path = self.conf["env_tmp_dir"]
@@ -186,6 +189,8 @@ class ToxEnv(ABC):
                 repr_cwd = str(cwd)
         self.logger.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd)
         outcome = self._executor(request=request, show_on_standard=show_on_standard, colored=self.options.colored)
+        if self.journal:
+            self.journal.add_execute(outcome, run_id)
         return outcome
 
     @staticmethod

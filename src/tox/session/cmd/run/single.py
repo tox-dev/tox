@@ -18,6 +18,7 @@ def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> Tuple[int, Lis
     except Recreate:
         tox_env.clean(package_env=False)  # restart creation once, no package please
         tox_env.setup()
+    tox_env.setup_done()
 
     code, outcomes = run_commands(tox_env, no_test)
     return code, outcomes

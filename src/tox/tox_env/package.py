@@ -48,6 +48,8 @@ class PackageToxEnv(ToxEnv, ABC):
             except Recreate:
                 self.clean()
                 self.setup()
+            self.setup_done()
+        self._setup_done = True
 
     def package_deps(self) -> "Deps":
         return []

@@ -114,3 +114,14 @@ class VirtualEnv(Python, ABC):
             run_id="install",
             show_on_standard=self.options.verbosity > DEFAULT_VERBOSITY,
         )
+
+    def get_installed_packages(self) -> List[str]:
+        list_command = [self.creator.exe, "-m", "pip", "freeze", "--all"]
+        result = self.execute(
+            cmd=list_command,
+            allow_stdin=False,
+            run_id="freeze",
+            show_on_standard=self.options.verbosity > DEFAULT_VERBOSITY,
+        )
+        result.assert_success(self.logger)
+        return result.out.splitlines()
