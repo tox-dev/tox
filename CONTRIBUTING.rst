@@ -31,12 +31,12 @@ If you are reporting a bug, please include:
 * Any details about your local setup that might be helpful in troubleshooting,
   specifically the Python interpreter version, installed libraries, and tox
   version.
-* Detailed steps to reproduce the bug, or - even better, a n xfaling test reproduces the bug
+* Detailed steps to reproduce the bug, or - even better, an xfailing test reproduces the bug
 
 If you can write a demonstration test that currently fails but should pass
 (xfail), that is a very useful commit to make as well, even if you cannot
 fix the bug itself (e.g. something like this in
-`test_config <https://github.com/tox-dev/tox/blob/2.8.2/tests/test_config.py#L2206>)`_
+`test_config <https://github.com/tox-dev/tox/blob/2.8.2/tests/test_config.py#L2206>`_).
 
 .. _fixbugs:
 
