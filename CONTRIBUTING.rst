@@ -31,7 +31,7 @@ If you are reporting a bug, please include:
 * Any details about your local setup that might be helpful in troubleshooting,
   specifically the Python interpreter version, installed libraries, and tox
   version.
-* Detailed steps to reproduce the bug, or - even better, a n xfaling test reproduces the bug
+* Detailed steps to reproduce the bug, or - even better, an xfailing test reproduces the bug
 
 If you can write a demonstration test that currently fails but should pass
 (xfail), that is a very useful commit to make as well, even if you cannot
