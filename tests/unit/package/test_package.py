@@ -132,12 +132,17 @@ def test_build_backend_without_submodule(initproj, cmd):
             # To trigger original bug, must be package with __init__.py
             "inline_backend": {
                 "__init__.py": """\
+                    import sys
                     def get_requires_for_build_sdist(*args, **kwargs):
-                        return ["pathlib2"]
+                        return ["pathlib2;python_version<'3.4'"]
 
                     def build_sdist(sdist_directory, config_settings=None):
-                        import pathlib2
-                        (pathlib2.Path(sdist_directory) / "magic-0.1.0.tar.gz").touch()
+                        if sys.version_info[:2] >= (3, 4):
+                            import pathlib
+                        else:
+                            import pathlib2 as pathlib
+
+                        (pathlib.Path(sdist_directory) / "magic-0.1.0.tar.gz").touch()
                         return "magic-0.1.0.tar.gz"
                 """,
             },

@@ -6,7 +6,10 @@ import subprocess
 import sys
 import tempfile
 
-import pathlib2
+if sys.version_info[:2] >= (3, 4):
+    import pathlib
+else:
+    import pathlib2 as pathlib
 import py
 import pytest
 
@@ -462,7 +465,7 @@ def test_no_setup_py_exits_but_pyproject_toml_does(cmd, initproj):
         },
     )
     os.remove("setup.py")
-    pathlib2.Path("pyproject.toml").touch()
+    pathlib.Path("pyproject.toml").touch()
     result = cmd()
     result.assert_fail()
     assert any(

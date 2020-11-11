@@ -4,7 +4,11 @@ import sys
 import time
 
 import pytest
-from pathlib2 import Path
+
+if sys.version_info[:2] >= (3, 4):
+    from pathlib import Path
+else:
+    from pathlib2 import Path
 
 from tox.constants import INFO
 from tox.util.main import MAIN_FILE
