@@ -1187,6 +1187,7 @@ class ParseIni(object):
         config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}/.tmp")
         reader.addsubstitutions(temp_dir=config.temp_dir)
         config.sdistsrc = reader.getpath("sdistsrc", None)
+        config.sdist_formats = reader.getstring("sdist_formats", "zip")
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
         config.logdir = config.toxworkdir.join("log")
         within_parallel = PARALLEL_ENV_VAR_KEY_PRIVATE in os.environ
