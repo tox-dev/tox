@@ -34,7 +34,14 @@ def make_sdist(config, session):
         action.setactivity("sdist-make", setup)
         ensure_empty_dir(config.distdir)
         build_log = action.popen(
-            [sys.executable, setup, "sdist", "--formats={}".format(config.sdist_formats), "--dist-dir", config.distdir],
+            [
+                sys.executable,
+                setup,
+                "sdist",
+                "--formats={}".format(config.sdist_formats),
+                "--dist-dir",
+                config.distdir,
+            ],
             cwd=config.setupdir,
             returnout=True,
         )
