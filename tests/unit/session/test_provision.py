@@ -7,7 +7,12 @@ import sys
 
 import py
 import pytest
-from pathlib2 import Path
+
+if sys.version_info[:2] >= (3, 4):
+    from pathlib import Path
+else:
+    from pathlib2 import Path
+
 from six.moves.urllib.parse import urljoin
 from six.moves.urllib.request import pathname2url
 

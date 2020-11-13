@@ -4,7 +4,11 @@ import subprocess
 import sys
 
 import pytest
-from pathlib2 import Path
+
+if sys.version_info[:2] >= (3, 4):
+    from pathlib import Path
+else:
+    from pathlib2 import Path
 
 from tests.lib import need_git
 
