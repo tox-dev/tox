@@ -96,7 +96,7 @@ class VirtualEnv(Python, ABC):
     ) -> None:
         if not packages:
             return
-        install_command = [self.creator.exe, "-m", "pip", "--disable-pip-version-check", "install"]
+        install_command = [self.creator.exe, "-I", "-m", "pip", "--disable-pip-version-check", "install"]
         if no_deps:
             install_command.append("--no-deps")
         if force_reinstall:
@@ -116,7 +116,7 @@ class VirtualEnv(Python, ABC):
         )
 
     def get_installed_packages(self) -> List[str]:
-        list_command = [self.creator.exe, "-m", "pip", "freeze", "--all"]
+        list_command = [self.creator.exe, "-I", "-m", "pip", "freeze", "--all"]
         result = self.execute(
             cmd=list_command,
             allow_stdin=False,

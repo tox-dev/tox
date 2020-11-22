@@ -147,6 +147,8 @@ class ToxProject:
             with self.monkeypatch.context() as m:
                 m.setattr(tox.run, "setup_state", our_setup_state)
                 m.setattr(sys, "argv", [sys.executable, "-m", "tox"] + list(args))
+                m.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")
+                m.setenv("VIRTUALENV_SYMLINKS", "1")
                 try:
                     tox_run(args)
                 except SystemExit as exception:

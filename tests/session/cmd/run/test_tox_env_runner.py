@@ -31,7 +31,7 @@ def test_result_json_run_one(tox_project: ToxProjectCreator) -> None:
     ]
     project = tox_project(
         {
-            "tox.ini": f"[tox]\nenvlist=py\nnpackage=wheel\n[testenv]\ncommands={cmd[0]}\n {cmd[1]}",
+            "tox.ini": f"[tox]\nenvlist=py\n[testenv]\npackage=wheel\ncommands={cmd[0]}\n {cmd[1]}",
             "setup.py": "from setuptools import setup\nsetup(name='a', version='1.0', py_modules=['run'],"
             "install_requires=['setuptools>44'])",
             "run.py": "print('run')",
@@ -39,8 +39,7 @@ def test_result_json_run_one(tox_project: ToxProjectCreator) -> None:
         }
     )
     log = project.path / "log.json"
-    outcome = project.run("r", "-e", "py", "--result-json", str(log))
-
+    outcome = project.run("r", "-vv", "-e", "py", "--result-json", str(log))
     outcome.assert_success()
     with log.open("rt") as file_handler:
         log_report = json.load(file_handler)
@@ -55,12 +54,11 @@ def test_result_json_run_one(tox_project: ToxProjectCreator) -> None:
         "version": py_info.version,
         "version_info": list(py_info.version_info),
     }
-
-    packaging_setup = get_cmd_exit_run_id(log_report, ".package", "setup")
+    packaging_setup = get_cmd_exit_run_id(log_report, ".package-py", "setup")
     assert packaging_setup == [(0, "install"), (0, "build requires"), (0, "freeze"), (0, "package meta")]
-    packaging_test = get_cmd_exit_run_id(log_report, ".package", "test")
+    packaging_test = get_cmd_exit_run_id(log_report, ".package-py", "test")
     assert packaging_test == [(0, "build")]
-    packaging_installed = log_report["testenvs"][".package"].pop("installed_packages")
+    packaging_installed = log_report["testenvs"][".package-py"].pop("installed_packages")
     assert {i[: i.find("==")] for i in packaging_installed} == {"pip", "setuptools", "wheel"}
 
     py_setup = get_cmd_exit_run_id(log_report, "py", "setup")
@@ -72,7 +70,7 @@ def test_result_json_run_one(tox_project: ToxProjectCreator) -> None:
     assert {i[: i.find("==")] if "@" not in i else "a" for i in packaging_installed} == expected_pkg
     install_package = log_report["testenvs"]["py"].pop("installpkg")
     assert re.match("^[a-fA-F0-9]{64}$", install_package.pop("sha256"))
-    assert install_package == {"basename": "a-1.0.tar.gz", "type": "file"}
+    assert install_package == {"basename": "a-1.0-py3-none-any.whl", "type": "file"}
 
     expected = {
         "reportversion": "1",
@@ -80,7 +78,7 @@ def test_result_json_run_one(tox_project: ToxProjectCreator) -> None:
         "platform": sys.platform,
         "testenvs": {
             "py": {"python": host_python},
-            ".package": {"python": host_python},
+            ".package-py": {"python": host_python},
         },
     }
     assert "host" in log_report
