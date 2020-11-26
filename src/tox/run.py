@@ -8,6 +8,7 @@ from tox.config.cli.parse import get_options
 from tox.config.cli.parser import Parsed
 from tox.config.main import Config
 from tox.config.source.tox_ini import ToxIni
+from tox.provision import provision
 from tox.report import HandledError
 from tox.session.state import State
 
@@ -28,6 +29,9 @@ def run(args: Optional[Sequence[str]] = None) -> None:
 
 def main(args: Sequence[str]) -> int:
     state = setup_state(args)
+    result = provision(state)
+    if result is not False:
+        return result
     command = state.options.command
     handler = state.handlers[command]
     result = handler(state)

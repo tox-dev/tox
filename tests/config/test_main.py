@@ -5,7 +5,6 @@ from tox.config.loader.api import Override
 from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
-from tox.pytest import ToxProject
 
 
 @pytest.fixture
@@ -13,13 +12,9 @@ def empty_config(tox_ini_conf: ToxIniCreator) -> Config:
     return tox_ini_conf("")
 
 
-def test_empty_config_root(empty_config: Config, empty_project: ToxProject) -> None:
-    assert empty_config.core["tox_root"] == empty_project.path
-
-
-def test_empty_config_repr(empty_config: Config, empty_project: ToxProject) -> None:
+def test_empty_config_repr(empty_config: Config) -> None:
     text = repr(empty_config)
-    assert str(empty_project.path) in text
+    assert str(empty_config.core["tox_root"]) in text
     assert "config_source=ToxIni" in text
 
 

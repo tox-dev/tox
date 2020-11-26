@@ -3,13 +3,20 @@ A pytest plugin useful to test tox itself (and its plugins).
 """
 
 import os
+import random
 import re
+import shutil
+import socket
+import string
 import sys
 import textwrap
 import warnings
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence
+from subprocess import PIPE, Popen, check_call
+from threading import Thread
+from types import TracebackType
+from typing import IO, TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Sequence, Tuple, Type, cast
 
 import pytest
 from _pytest.capture import CaptureFixture as _CaptureFixture
@@ -18,6 +25,9 @@ from _pytest.config.argparsing import Parser
 from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
+from _pytest.tmpdir import TempPathFactory
+from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.info import IS_WIN
 
 import tox.run
 from tox.execute.api import Outcome
@@ -28,10 +38,19 @@ from tox.run import setup_state as previous_setup_state
 from tox.session.cmd.run.parallel import ENV_VAR_KEY
 from tox.session.state import State
 
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
+    from typing import Protocol
+else:  # pragma: no cover (<py38)
+    from typing_extensions import Protocol  # noqa
+
 if TYPE_CHECKING:
     CaptureFixture = _CaptureFixture[str]
 else:
     CaptureFixture = _CaptureFixture
+
+os.environ["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+os.environ["PIP_NO_PYTHON_VERSION_WARNING"] = "1"
+os.environ["PIP_USE_FEATURE"] = "2020-resolver"
 
 
 @pytest.fixture(autouse=True)
@@ -86,6 +105,7 @@ class ToxProject:
     def __init__(
         self,
         files: Dict[str, Any],
+        base: Optional[Path],
         path: Path,
         capsys: CaptureFixture,
         monkeypatch: MonkeyPatch,
@@ -93,17 +113,20 @@ class ToxProject:
         self.path: Path = path
         self.monkeypatch: MonkeyPatch = monkeypatch
         self._capsys = capsys
-        self._setup_files(self.path, files)
+        self._setup_files(self.path, base, files)
 
     @staticmethod
-    def _setup_files(dest: Path, content: Dict[str, Any]) -> None:
+    def _setup_files(dest: Path, base: Optional[Path], content: Dict[str, Any]) -> None:
+        if base is not None:
+            shutil.copytree(str(base), str(dest))
+        dest.mkdir(exist_ok=True)
         for key, value in content.items():
             if not isinstance(key, str):
                 raise TypeError(f"{key!r} at {dest}")  # pragma: no cover
             at_path = dest / key
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
-                ToxProject._setup_files(at_path, value)
+                ToxProject._setup_files(at_path, None, value)
             elif isinstance(value, str):
                 at_path.write_text(textwrap.dedent(value))
             else:
@@ -149,6 +172,9 @@ class ToxProject:
                 m.setattr(sys, "argv", [sys.executable, "-m", "tox"] + list(args))
                 m.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")
                 m.setenv("VIRTUALENV_SYMLINKS", "1")
+                m.setenv("VIRTUALENV_PIP", "embed")
+                m.setenv("VIRTUALENV_WHEEL", "embed")
+                m.setenv("VIRTUALENV_SETUPTOOLS", "embed")
                 try:
                     tox_run(args)
                 except SystemExit as exception:
@@ -185,6 +211,9 @@ class ToxRunOutcome:
 
     def assert_success(self) -> None:
         assert self.success, repr(self)
+
+    def assert_failed(self) -> None:
+        assert not self.success, repr(self)
 
     def __repr__(self) -> str:
         return "\n".join(
@@ -230,16 +259,18 @@ class ToxRunOutcome:
             assert Matches(pattern, flags=flags) == text
 
 
-ToxProjectCreator = Callable[[Dict[str, Any]], ToxProject]
+class ToxProjectCreator(Protocol):
+    def __call__(self, files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:
+        ...
 
 
 @pytest.fixture(name="tox_project")
 def init_fixture(tmp_path: Path, capsys: CaptureFixture, monkeypatch: MonkeyPatch) -> ToxProjectCreator:
-    def _init(files: Dict[str, Any]) -> ToxProject:
+    def _init(files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:
         """create tox  projects"""
-        return ToxProject(files, tmp_path, capsys, monkeypatch)
+        return ToxProject(files, base, tmp_path / "p", capsys, monkeypatch)
 
-    return _init
+    return _init  # noqa
 
 
 @pytest.fixture()
@@ -277,12 +308,178 @@ def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -
     items.sort(key=lambda i: 1 if is_integration(i) else 0)
 
 
+class Index:
+    def __init__(self, base_url: str, name: str, client_cmd_base: List[str]) -> None:
+        self._client_cmd_base = client_cmd_base
+        self._server_url = base_url
+        self.name = name
+
+    @property
+    def url(self) -> str:
+        return f"{self._server_url}/{self.name}/+simple"
+
+    def upload(self, files: Sequence[Path]) -> None:
+        check_call(self._client_cmd_base + ["upload", "--index", self.name] + [str(i) for i in files])
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(url={self.url})"  # pragma: no cover
+
+    def use(self, monkeypatch: MonkeyPatch) -> None:
+        enable_pypi_server(monkeypatch, self.url)
+
+
+def enable_pypi_server(monkeypatch: MonkeyPatch, url: Optional[str]) -> None:
+    if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
+        monkeypatch.delenv("PIP_INDEX_URL", raising=False)
+    else:  # pragma: no cover
+        monkeypatch.setenv("PIP_INDEX_URL", url)
+    monkeypatch.setenv("PIP_RETRIES", str(5))
+    monkeypatch.setenv("PIP_TIMEOUT", str(2))
+
+
+def _find_free_port() -> int:
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as socket_handler:
+        socket_handler.bind(("", 0))
+        return cast(int, socket_handler.getsockname()[1])
+
+
+class IndexServer:
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+        self.host, self.port = "localhost", _find_free_port()
+        self._passwd = "".join(random.choice(string.ascii_letters) for _ in range(8))
+
+        def _exe(name: str) -> str:
+            return str(Path(scripts_dir) / f"{name}{'.exe' if IS_WIN else ''}")
+
+        scripts_dir = PythonInfo.current().sysconfig_path("scripts")
+        self._init: str = _exe("devpi-init")
+        self._server: str = _exe("devpi-server")
+        self._client: str = _exe("devpi")
+
+        self._server_dir = self.path / "server"
+        self._client_dir = self.path / "client"
+        self._indexes: Dict[str, Index] = {}
+        self._process: Optional["Popen[str]"] = None
+        self._has_use = False
+        self._stdout_drain: Optional[Thread] = None
+
+    def __enter__(self) -> "IndexServer":
+        self._create_and_start_server()
+        self._setup_client()
+        return self
+
+    def _create_and_start_server(self) -> None:
+        self._server_dir.mkdir(exist_ok=True)
+        server_at = str(self._server_dir)
+        # 1. create the server
+        cmd = [self._init, "--serverdir", server_at]
+        cmd.extend(("--no-root-pypi", "--role", "standalone", "--root-passwd", self._passwd))
+        check_call(cmd, stdout=PIPE, stderr=PIPE)
+        # 2. start the server
+        cmd = [self._server, "--serverdir", server_at, "--port", str(self.port), "--offline-mode"]
+        self._process = Popen(cmd, stdout=PIPE, universal_newlines=True)
+        stdout = self._drain_stdout()
+        for line in stdout:  # pragma: no branch # will always loop at least once
+            if "serving at url" in line:
+
+                def _keep_draining() -> None:
+                    for _ in stdout:
+                        pass
+
+                # important to keep draining the stdout, otherwise once the buffer is full Windows blocks the processg s
+                self._stdout_drain = Thread(target=_keep_draining)
+                self._stdout_drain.start()
+                break
+
+    def _drain_stdout(self) -> Iterator[str]:
+        process = cast("Popen[str]", self._process)
+        stdout = cast(IO[str], process.stdout)
+        while True:
+            if process.poll() is not None:  # pragma: no cover
+                raise RuntimeError(f"devpi server with pid {process.pid} at {self._server_dir} died")
+            yield stdout.readline()
+
+    def _setup_client(self) -> None:
+        """create a user on the server and authenticate it"""
+        self._client_dir.mkdir(exist_ok=True)
+        base = ["--clientdir", str(self._client_dir)]
+        check_call([self._client, "use"] + base + [self.url], stdout=PIPE, stderr=PIPE)
+        check_call([self._client, "login"] + base + ["root", "--password", self._passwd], stdout=PIPE, stderr=PIPE)
+
+    def create_index(self, name: str, *args: str) -> Index:
+        if name in self._indexes:  # pragma: no cover
+            raise ValueError(f"index {name} already exists")
+        base = [self._client, "--clientdir", str(self._client_dir)]
+        check_call(base + ["index", "-c", name, *args], stdout=PIPE, stderr=PIPE)
+        index = Index(f"{self.url}/root", name, base)
+        if not self._has_use:
+            self._has_use = True
+            check_call(base + ["use", f"root/{name}"], stdout=PIPE, stderr=PIPE)
+        self._indexes[name] = index
+        return index
+
+    def __exit__(
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+    ) -> None:
+        if self._process is not None:  # pragma: no cover # defend against devpi startup fail
+            self._process.terminate()
+        if self._stdout_drain is not None and self._stdout_drain.is_alive():  # pragma: no cover # devpi startup fail
+            self._stdout_drain.join()
+
+    @property
+    def url(self) -> str:
+        return f"http://{self.host}:{self.port}"
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(url={self.url}, indexes={list(self._indexes)})"  # pragma: no cover
+
+
+@pytest.fixture(scope="session")
+def pypi_server(tmp_path_factory: TempPathFactory) -> Iterator[IndexServer]:
+    # takes around 2.5s
+    path = tmp_path_factory.mktemp("pypi")
+    with IndexServer(path) as server:
+        server.create_index("empty", "volatile=False")
+        yield server
+
+
+@pytest.fixture(scope="session")
+def _invalid_index_fake_port() -> int:
+    return _find_free_port()
+
+
+@pytest.fixture(autouse=True)
+def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPatch) -> Tuple[str, Optional[str]]:
+    """set a fake pip index url, tests that want to use a pypi server should create and overwrite this"""
+    previous_url = os.environ.get("PIP_INDEX_URL")
+    new_url = f"http://localhost:{_invalid_index_fake_port}/bad-pypi-server"
+    monkeypatch.setenv("PIP_INDEX_URL", new_url)
+    monkeypatch.setenv("PIP_RETRIES", str(0))
+    monkeypatch.setenv("PIP_TIMEOUT", str(0.001))
+    return new_url, previous_url
+
+
+@pytest.fixture(name="enable_pip_pypi_access")
+def enable_pip_pypi_access_fixture(
+    disable_pip_pypi_access: Tuple[str, Optional[str]], monkeypatch: MonkeyPatch
+) -> Optional[str]:
+    """set a fake pip index url, tests that want to use a pypi server should create and overwrite this"""
+    _, previous_url = disable_pip_pypi_access
+    enable_pypi_server(monkeypatch, previous_url)
+    return previous_url
+
+
 __all__ = (
     "CaptureFixture",
     "LogCaptureFixture",
+    "TempPathFactory",
     "MonkeyPatch",
     "ToxRunOutcome",
     "ToxProject",
     "ToxProjectCreator",
     "check_os_environ",
+    "IndexServer",
+    "Index",
 )

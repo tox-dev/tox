@@ -35,7 +35,7 @@ class PythonInfo(NamedTuple):
     extra_version_info: Optional[str]
 
 
-class Dep:
+class PythonDep:
     def __init__(self, value: Union[Path, Requirement]) -> None:
         self._value = value
 
@@ -53,7 +53,7 @@ class Dep:
         return not (self == other)
 
 
-Deps = Sequence[Dep]
+PythonDeps = Sequence[PythonDep]
 
 
 class Python(ToxEnv, ABC):
@@ -125,9 +125,9 @@ class Python(ToxEnv, ABC):
                 self.create_python_env()
             self._paths = self.paths()
 
-    def setup_done(self) -> None:
+    def setup_has_been_done(self) -> None:
         """called when setup is done"""
-        super().setup_done()
+        super().setup_has_been_done()
         if self.journal:
             outcome = self.get_installed_packages()
             self.journal["installed_packages"] = outcome
@@ -172,19 +172,19 @@ class Python(ToxEnv, ABC):
     def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
         raise NotImplementedError
 
-    def cached_install(self, deps: Deps, section: str, of_type: str) -> bool:
+    def cached_install(self, deps: PythonDeps, section: str, of_type: str) -> bool:
         conf_deps: List[str] = [str(i) for i in deps]
         with self._cache.compare(conf_deps, section, of_type) as (eq, old):
             if eq is True:
                 return True
             if old is None:
                 old = []
-            missing = [Dep(Requirement(i)) for i in (set(old) - set(conf_deps))]
+            missing = [PythonDep(Requirement(i)) for i in (set(old) - set(conf_deps))]
             if missing:  # no way yet to know what to uninstall here (transitive dependencies?)
                 # bail out and force recreate
                 raise Recreate()
             new_deps_str = set(conf_deps) - set(old)
-            new_deps = [Dep(Requirement(i)) for i in new_deps_str]
+            new_deps = [PythonDep(Requirement(i)) for i in new_deps_str]
             self.install_python_packages(packages=new_deps)
         return False
 
@@ -197,7 +197,7 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def install_python_packages(self, packages: Deps, no_deps: bool = False) -> None:
+    def install_python_packages(self, packages: PythonDeps, no_deps: bool = False) -> None:
         raise NotImplementedError
 
 

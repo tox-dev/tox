@@ -87,6 +87,8 @@ def tox_add_option(parser: ToxParser) -> None:
 def legacy(state: State) -> int:
     option = state.options
     if option.show_config:
+        state.options.list_keys_only = []
+        state.options.show_core = True
         return show_config(state)
     if option.list_envs or option.list_envs_all:
         option.list_no_description = option.verbosity <= DEFAULT_VERBOSITY

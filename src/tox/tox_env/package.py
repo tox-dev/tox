@@ -2,6 +2,7 @@
 A tox environment that can build packages.
 """
 from abc import ABC, abstractmethod
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
 
@@ -9,23 +10,19 @@ from packaging.requirements import Requirement
 
 from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
-from tox.tox_env.errors import Recreate
+from tox.plugin.impl import impl
 
 from .api import ToxEnv
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
-    from tox.tox_env.python.api import Deps
+    from tox.tox_env.python.api import PythonDeps
 
 
 class PackageToxEnv(ToxEnv, ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
         super().__init__(conf, core, options, journal)
-        self._cleaned = False
-        self._setup_done = False
-
-    def register_config(self) -> None:
-        super().register_config()
+        self.recreate_package = options.no_recreate_pkg is False if options.recreate else False
 
     @abstractmethod
     def get_package_dependencies(self, extras: Optional[Set[str]] = None) -> List[Requirement]:
@@ -35,21 +32,19 @@ class PackageToxEnv(ToxEnv, ABC):
     def perform_packaging(self) -> List[Path]:
         raise NotImplementedError
 
+    def package_deps(self) -> "PythonDeps":
+        return []
+
     def clean(self) -> None:
-        # package environments may be shared clean only once
-        if self._cleaned is False:
-            self._cleaned = True
+        if self.recreate_package:  # only recreate if user did not opt out
             super().clean()
 
-    def ensure_setup(self) -> None:
-        if self._setup_done is False:
-            try:
-                self.setup()
-            except Recreate:
-                self.clean()
-                self.setup()
-            self.setup_done()
-        self._setup_done = True
 
-    def package_deps(self) -> "Deps":
-        return []
+@impl
+def tox_add_option(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--no-recreate-pkg",
+        dest="no_recreate_pkg",
+        help="if recreate is set do not recreate packaging tox environment(s)",
+        action="store_true",
+    )

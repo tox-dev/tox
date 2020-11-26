@@ -2,7 +2,7 @@
 import shlex
 from itertools import chain
 from pathlib import Path
-from typing import Iterator, Tuple
+from typing import Any, Iterator, Tuple, Type
 
 from tox.config.loader.convert import Convert
 from tox.config.types import Command, EnvList
@@ -20,8 +20,8 @@ class StrConvert(Convert[str]):
         return Path(value)
 
     @staticmethod
-    def to_list(value: str) -> Iterator[str]:
-        splitter = "\n" if "\n" in value else ","
+    def to_list(value: str, of_type: Type[Any]) -> Iterator[str]:
+        splitter = "\n" if issubclass(of_type, Command) or "\n" in value else ","
         splitter = splitter.replace("\r", "")
         for token in value.split(splitter):
             value = token.strip()
@@ -29,12 +29,12 @@ class StrConvert(Convert[str]):
                 yield value
 
     @staticmethod
-    def to_set(value: str) -> Iterator[str]:
-        for value in StrConvert.to_list(value):
+    def to_set(value: str, of_type: Type[Any]) -> Iterator[str]:
+        for value in StrConvert.to_list(value, of_type):
             yield value
 
     @staticmethod
-    def to_dict(value: str) -> Iterator[Tuple[str, str]]:
+    def to_dict(value: str, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[str, str]]:
         for row in value.split("\n"):
             row = row.strip()
             if row:
@@ -49,7 +49,8 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_command(value: str) -> Command:
-        return Command(shlex.split(value))
+        args = shlex.split(value, comments=True)
+        return Command(args)
 
     @staticmethod
     def to_env_list(value: str) -> EnvList:

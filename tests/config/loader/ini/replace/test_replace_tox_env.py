@@ -135,4 +135,4 @@ def test_replace_from_section_bad_type(tox_ini_conf: ToxIniCreator) -> None:
 def test_replace_from_tox_section_registered(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
     conf_a = tox_ini_conf("[testenv:a]\nx = {[tox]tox_root}").get_env("a")
     conf_a.add_config(keys="x", of_type=Path, default=Path.cwd() / "magic", desc="d")
-    assert conf_a["x"] == tmp_path
+    assert conf_a["x"] == (tmp_path / "c")

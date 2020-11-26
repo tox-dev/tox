@@ -21,7 +21,6 @@ class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type"""
 
     def to(self, raw: T, of_type: Type[V]) -> V:
-
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
             return self._to_typing(raw, of_type)  # type: ignore[return-value]
@@ -35,6 +34,8 @@ class Convert(ABC, Generic[T]):
             return self.to_env_list(raw)  # type: ignore[return-value]
         elif issubclass(of_type, str):
             return self.to_str(raw)  # type: ignore[return-value]
+        elif isinstance(raw, of_type):
+            return raw
         elif issubclass(of_type, Enum):
             return cast(V, getattr(of_type, str(raw)))
         return of_type(raw)  # type: ignore[call-arg]
@@ -44,13 +45,15 @@ class Convert(ABC, Generic[T]):
         result: Any = _NO_MAPPING
         if origin in (list, List):
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-            result = [self.to(i, entry_type) for i in self.to_list(raw)]
+            result = [self.to(i, entry_type) for i in self.to_list(raw, entry_type)]
         elif origin in (set, Set):
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-            result = {self.to(i, entry_type) for i in self.to_set(raw)}
+            result = {self.to(i, entry_type) for i in self.to_set(raw, entry_type)}
         elif origin in (dict, Dict):
             key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
-            result = OrderedDict((self.to(k, key_type), self.to(v, value_type)) for k, v in self.to_dict(raw))
+            result = OrderedDict(
+                (self.to(k, key_type), self.to(v, value_type)) for k, v in self.to_dict(raw, (key_type, value_type))
+            )
         elif origin == Union:  # handle Optional values
             args: List[Type[Any]] = of_type.__args__  # type: ignore[attr-defined]
             none = type(None)
@@ -81,17 +84,17 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_list(value: T) -> Iterator[T]:
+    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_set(value: T) -> Iterator[T]:
+    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_dict(value: T) -> Iterator[Tuple[T, T]]:
+    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:
         raise NotImplementedError
 
     @staticmethod

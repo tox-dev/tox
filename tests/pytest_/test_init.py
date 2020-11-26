@@ -1,6 +1,7 @@
 import os
 import sys
 from itertools import chain, combinations
+from pathlib import Path
 from textwrap import dedent
 from typing import List, Sequence
 
@@ -12,7 +13,7 @@ from tox.pytest import MonkeyPatch, ToxProjectCreator, check_os_environ
 from tox.report import HandledError
 
 
-def test_init_base(tox_project: ToxProjectCreator) -> None:
+def test_tox_project_no_base(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": "[tox]",
@@ -25,6 +26,14 @@ def test_init_base(tox_project: ToxProjectCreator) -> None:
         "tox.ini": "[tox]",
         "src": {"__init__.py": "pass", "a": "out", "e": {"f": ""}, "b": {"c": "out"}},
     }
+
+
+def test_tox_project_base(tmp_path: Path, tox_project: ToxProjectCreator) -> None:
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / "out").write_text("a")
+    project = tox_project({"tox.ini": "[tox]"}, base=base)
+    assert project.structure
 
 
 COMB = list(chain.from_iterable(combinations(["DIFF", "MISS", "EXTRA"], i) for i in range(4)))
@@ -98,7 +107,6 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
     min_version = {__version__}
     provision_tox_env = .tox
     requires = tox>={__version__}
-    no_package = False
     """
     ).lstrip()
     assert repr(outcome) == exp

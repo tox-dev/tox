@@ -15,7 +15,7 @@ from tox.execute.api import Execute, Outcome
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.journal import EnvJournal
 
-from ..api import Deps, Python, PythonInfo
+from ..api import Python, PythonDeps, PythonInfo
 
 
 class VirtualEnv(Python, ABC):
@@ -89,7 +89,7 @@ class VirtualEnv(Python, ABC):
 
     def install_python_packages(
         self,
-        packages: Deps,
+        packages: PythonDeps,
         no_deps: bool = False,
         develop: bool = False,
         force_reinstall: bool = False,

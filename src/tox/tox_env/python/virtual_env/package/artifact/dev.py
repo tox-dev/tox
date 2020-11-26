@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, cast
 
 from tox.plugin.impl import impl
-from tox.tox_env.python.api import Dep, Deps
+from tox.tox_env.python.api import PythonDep, PythonDeps
 from tox.tox_env.register import ToxEnvRegister
 
 from ..api import Pep517VirtualEnvPackage
@@ -19,9 +19,9 @@ class LegacyDevVirtualEnvPackage(Pep517VirtualEnvPackage):
         """The root folder itself is the package to install"""
         return [cast(Path, self.core["tox_root"])]
 
-    def package_deps(self) -> Deps:
+    def package_deps(self) -> PythonDeps:
         """Install requirement from pyproject.toml table"""
-        return [Dep(i) for i in self._requires]
+        return [PythonDep(i) for i in self._requires]
 
 
 @impl

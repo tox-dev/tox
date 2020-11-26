@@ -15,6 +15,7 @@ from tox.config.sets import ConfigSet
 from tox.execute.api import Execute, Outcome
 from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
+from tox.tox_env.errors import Recreate
 
 from .info import Info
 
@@ -34,6 +35,8 @@ class ToxEnv(ABC):
         self._paths: List[Path] = []
         self.logger = logging.getLogger(self.conf["env_name"])
         self._env_vars: Optional[Dict[str, str]] = None
+        self.setup_done = False
+        self.clean_done = False
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
@@ -126,8 +129,22 @@ class ToxEnv(ABC):
                     env_dir.mkdir(exist_ok=True, parents=True)
         finally:
             self._handle_env_tmp_dir()
+        self.setup_done, self.clean_done = True, False
 
-    def setup_done(self) -> None:
+    def ensure_setup(self, recreate: bool = False) -> None:
+        if self.setup_done is True:
+            return
+        if recreate:
+            self.clean()
+        try:
+            self.setup()
+        except Recreate:
+            if not recreate:
+                self.clean()
+                self.setup()
+        self.setup_has_been_done()
+
+    def setup_has_been_done(self) -> None:
         """called when setup is done"""
 
     def _handle_env_tmp_dir(self) -> None:
@@ -139,11 +156,14 @@ class ToxEnv(ABC):
         env_tmp_dir.mkdir(parents=True)
 
     def clean(self) -> None:
+        if self.clean_done is True:
+            return
         env_dir: Path = self.conf["env_dir"]
         if env_dir.exists():
             logging.info("remove tox env folder %s", env_dir)
             shutil.rmtree(env_dir)
         self._cache.reset()
+        self.setup_done, self.clean_done = False, True
 
     @property
     def environment_variables(self) -> Dict[str, str]:

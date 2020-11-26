@@ -89,6 +89,7 @@ def default_options() -> Dict[str, Any]:
         "result_json": None,
         "skip_missing_interpreters": "config",
         "verbose": 2,
+        "no_recreate_pkg": False,
         "work_dir": Path.cwd().absolute(),
     }
 
@@ -107,6 +108,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dic
         "no_test": True,
         "override": [Override("a=b"), Override("c=d")],
         "package_only": False,
+        "no_recreate_pkg": False,
         "parallel": 3,
         "parallel_live": True,
         "quiet": 1,

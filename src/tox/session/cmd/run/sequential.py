@@ -1,7 +1,6 @@
 """
 Run tox environments in sequential order.
 """
-import json
 from datetime import datetime
 from typing import Dict, List, Tuple
 
@@ -9,6 +8,7 @@ from colorama import Fore
 
 from tox.config.cli.parser import ToxParser
 from tox.execute.api import Outcome
+from tox.journal import write_journal
 from tox.plugin.impl import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
@@ -32,10 +32,7 @@ def run_sequential(state: State) -> int:
         code, outcomes = run_one(tox_env, state.options.recreate, state.options.no_test)
         duration = (datetime.now() - start_one).total_seconds()
         status_codes[name] = code, duration, [o.elapsed for o in outcomes]
-    result_json = getattr(state.options, "result_json", None)
-    if result_json is not None:
-        with open(result_json, "wt") as file_handler:
-            json.dump(state.journal.content, file_handler, indent=2, ensure_ascii=False)
+    write_journal(getattr(state.options, "result_json", None), state.journal)
     return report(state.options.start, status_codes, state.options.is_colored)
 
 

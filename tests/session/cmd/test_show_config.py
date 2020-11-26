@@ -24,7 +24,6 @@ def test_list_empty(tox_project: ToxProjectCreator) -> None:
         min_version = {__version__}
         provision_tox_env = .tox
         requires = tox>={__version__}
-        no_package = False
         """,
     ).lstrip()
     assert outcome.out == expected

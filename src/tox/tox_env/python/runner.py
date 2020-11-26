@@ -8,30 +8,40 @@ from typing import Any, Dict, List, NoReturn, Union, cast
 
 from packaging.requirements import Requirement
 
+from tox.config.cli.parser import Parsed
+from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
 from tox.tox_env.errors import Skip
 
 from ..runner import RunToxEnv
-from .api import Dep, NoInterpreter, Python
+from .api import NoInterpreter, Python, PythonDep
 
 
 class PythonRun(Python, RunToxEnv, ABC):
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal):
+        super().__init__(conf, core, options, journal)
+        self._packages: List[PythonDep] = []
+
     def register_config(self) -> None:
         super().register_config()
         outer_self = self
 
-        class _Dep(Dep):
-            def __init__(self, raw: Any) -> None:
-                if not raw.startswith("-r"):
-                    val: Union[Path, Requirement] = Requirement(raw)
+        class _PythonDep(PythonDep):
+            def __init__(self, raw: Union[PythonDep, str]) -> None:
+                if isinstance(raw, str):
+                    if raw.startswith("-r"):
+                        val: Union[Path, Requirement] = Path(raw[2:])
+                        if not cast(Path, val).is_absolute():
+                            val = outer_self.core["toxinidir"] / val
+                    else:
+                        val = Requirement(raw)
                 else:
-                    path = Path(raw[2:])
-                    val = path if path.is_absolute() else cast(Path, outer_self.core["toxinidir"]) / path
+                    val = raw.value
                 super().__init__(val)
 
         self.conf.add_config(
             keys="deps",
-            of_type=List[_Dep],
+            of_type=List[_PythonDep],
             default=[],
             desc="Name of the python dependencies as specified by PEP-440",
         )
@@ -51,26 +61,38 @@ class PythonRun(Python, RunToxEnv, ABC):
         """setup the tox environment"""
         super().setup()
         self.install_deps()
-
         if self.package_env is not None:
             package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
-            self.cached_install([Dep(p) for p in package_deps], PythonRun.__name__, "package_deps")
+            self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
         self.install_package()
 
     def install_deps(self) -> None:
         self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
 
     def install_package(self) -> None:
-        if self.package_env is not None:
-            package: List[Dep] = [Dep(p) for p in self.package_env.perform_packaging()]
-        else:
-            package = [Dep(d) for d in self.get_pkg_no_env()] if self.has_package else []
+        package = self.get_package()
         if package:
             self.install_python_packages(package, **self.install_package_args())  # type: ignore[no-untyped-call]
             self.handle_journal_package(self.journal, package)
 
+    def get_package(self) -> List[PythonDep]:
+        if self.package_env is not None:
+            package: List[PythonDep] = [PythonDep(p) for p in self.package_env.perform_packaging()]
+        else:
+            package = [PythonDep(d) for d in self.get_pkg_no_env()] if self.has_package else []
+        self._packages = package
+        return package
+
+    @abstractmethod
+    def install_package_args(self) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    @property
+    def packages(self) -> List[str]:
+        return [str(d.value) for d in self._packages]
+
     @staticmethod
-    def handle_journal_package(journal: EnvJournal, package: List[Dep]) -> None:
+    def handle_journal_package(journal: EnvJournal, package: List[PythonDep]) -> None:
         if not journal:
             return
         installed_meta = []
@@ -88,7 +110,3 @@ class PythonRun(Python, RunToxEnv, ABC):
     def get_pkg_no_env(self) -> List[Path]:
         # by default in Python just forward the root folder to the installer
         return [cast(Path, self.core["tox_root"])]
-
-    @abstractmethod
-    def install_package_args(self) -> Dict[str, Any]:
-        raise NotImplementedError

@@ -1,6 +1,7 @@
-from abc import ABC
+import os
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator, List, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Tuple, cast
 
 from tox.config.sets import ConfigSet
 from tox.config.types import Command, EnvList
@@ -67,6 +68,12 @@ class RunToxEnv(ToxEnv, ABC):
 
     def add_package_conf(self) -> bool:
         """If this returns True package_env and package_tox_env_type configurations must be defined"""
+        self.core.add_config(
+            keys=["no_package", "skipsdist"],
+            of_type=bool,
+            default=False,
+            desc="Is there any packaging involved in this project.",
+        )
         core_no_package: bool = self.core["no_package"]
         if core_no_package is True:
             return False
@@ -93,3 +100,18 @@ class RunToxEnv(ToxEnv, ABC):
         super().clean()
         if self.package_env:
             self.package_env.clean()
+
+    @property
+    def environment_variables(self) -> Dict[str, str]:
+        environment_variables = super().environment_variables
+        if self.has_package:  # if package(s) have been built insert them as environment variable
+            packages = self.packages
+            if packages:
+                environment_variables["TOX_PACKAGE"] = os.pathsep.join(packages)
+        return environment_variables
+
+    @property
+    @abstractmethod
+    def packages(self) -> List[str]:
+        """:returns: a list of packages installed in the environment"""
+        raise NotImplementedError

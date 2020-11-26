@@ -6,20 +6,11 @@ from typing import List, Tuple, cast
 from tox.config.types import Command
 from tox.execute.api import Outcome
 from tox.tox_env.api import ToxEnv
-from tox.tox_env.errors import Recreate
 from tox.tox_env.runner import RunToxEnv
 
 
 def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> Tuple[int, List[Outcome]]:
-    if recreate:
-        tox_env.clean(package_env=recreate)
-    try:
-        tox_env.setup()
-    except Recreate:
-        tox_env.clean(package_env=False)  # restart creation once, no package please
-        tox_env.setup()
-    tox_env.setup_done()
-
+    tox_env.ensure_setup(recreate=recreate)
     code, outcomes = run_commands(tox_env, no_test)
     return code, outcomes
 

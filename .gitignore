@@ -1,36 +1,16 @@
-# python
 *.pyc
 *.pyo
 *.swp
 __pycache__
 .eggs
-
-
-# packaging folders
 /src/tox/version.py
-/build/
-/dist/
-/src/tox.egg-info
-
-# tox working folder
-/.tox
-/.tox4
-
-# IDEs
-/.idea
-/.vscode
-
-# tools
+build
+dist
+*.egg-info
+.tox
+.tox4
 /.*_cache
 .dmypy.json
-
-# documentation
 /docs/_draft.rst
-
-# release
-credentials.json
-
 pip-wheel-metadata
-.DS_Store
-.coverage.*
 Dockerfile
