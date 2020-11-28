@@ -36,12 +36,19 @@ class State:
         self.journal: Journal = Journal(getattr(options, "result_json", None) is not None)
 
     def env_list(self, everything: bool = False) -> Iterator[str]:
+        fallback_env = "py"
         if everything:
-            yield from self.conf
+            _at = 0
+            for _at, env in enumerate(self.conf, start=1):
+                yield env
+            if _at == 0:  # if we discovered no other env, inject the default
+                yield fallback_env
             return
         use_env_list: Optional[CliEnv] = getattr(self.options, "env", None)
         if use_env_list is None or use_env_list.all:
             use_env_list = self.conf.core["env_list"]
+        if not use_env_list:
+            use_env_list = CliEnv([fallback_env])
         if use_env_list is not None:
             yield from use_env_list
 

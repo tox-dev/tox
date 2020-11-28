@@ -21,8 +21,9 @@ class ToxIni(Source):
     def __init__(self, path: Path) -> None:
         self._path = path
         self._parser = ConfigParser()
-        with self._path.open() as file_handler:
-            self._parser.read_file(file_handler)
+        if self._path.exists():  # if does not exist keep it empty
+            with self._path.open() as file_handler:
+                self._parser.read_file(file_handler)
 
         super().__init__()
         self._envs: Dict[Optional[str], List[IniLoader]] = {}

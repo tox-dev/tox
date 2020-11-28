@@ -8,7 +8,6 @@ from typing import List, Sequence
 import pytest
 from pytest_mock import MockerFixture
 
-from tox import __version__
 from tox.pytest import MonkeyPatch, ToxProjectCreator, check_os_environ
 from tox.report import HandledError
 
@@ -92,25 +91,19 @@ def test_tox_run_fails_before_state_setup(tox_project: ToxProjectCreator, mocker
 
 def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": ""})
-    outcome = project.run("c")
-    exp = dedent(
+    outcome = project.run("l")
+    msg = dedent(
         f"""
     code: 0
-    cmd: {sys.executable} -m tox c
+    cmd: {sys.executable} -m tox l
     cwd: {project.path}
     standard output
-    [tox]
-    tox_root = {project.path}
-    work_dir = {project.path / '.tox4'}
-    temp_dir = {project.path / '.temp'}
-    env_list =
-    min_version = {__version__}
-    provision_tox_env = .tox
-    requires = tox>={__version__}
+    additional environments:
+    py ->
     """
     ).lstrip()
-    assert repr(outcome) == exp
-    assert outcome.shell_cmd == f"{sys.executable} -m tox c"
+    assert repr(outcome) == msg
+    assert outcome.shell_cmd == f"{sys.executable} -m tox l"
 
 
 def test_tox_run_assert_out_err_no_dedent(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:

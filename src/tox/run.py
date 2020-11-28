@@ -2,6 +2,8 @@
 import logging
 import sys
 from datetime import datetime
+from itertools import chain
+from pathlib import Path
 from typing import Optional, Sequence
 
 from tox.config.cli.parse import get_options
@@ -53,14 +55,19 @@ def setup_state(args: Sequence[str]) -> State:
 
 def make_config(parsed: Parsed, pos_args: Optional[Sequence[str]]) -> Config:
     """Make a tox configuration object."""
-    # for now only tox.ini supported
+    # for now only tox.ini supported, assume empty tox.ini where pyproject.toml or in cwd
     folder = parsed.work_dir
-    while True:
-        tox_ini = folder / "tox.ini"
-        if tox_ini.exists() and tox_ini.is_file():
-            ini_loader = ToxIni(tox_ini)
-            return Config(ini_loader, parsed.override, tox_ini.parent, pos_args, parsed.work_dir)
-        if folder.parent == folder:
+    tox_ini: Optional[Path] = None
+    candidate_names = "tox.ini", "pyproject.toml"
+    for name in candidate_names:
+        for base in chain([folder], folder.parents):
+            candidate: Path = base / name
+            if candidate.exists() and candidate.is_file():
+                tox_ini = candidate
+        if tox_ini is not None:
             break
-        folder = folder.parent
-    raise RuntimeError(f"could not find tox.ini in folder (or any of its parents) {parsed.work_dir}")
+    else:
+        tox_ini = folder / "tox.ini"
+        logging.warning(f"No {' or '.join(candidate_names)} found, assuming empty tox.ini at {tox_ini}")
+    ini_loader = ToxIni(tox_ini)
+    return Config(ini_loader, parsed.override, tox_ini.parent, pos_args, parsed.work_dir)

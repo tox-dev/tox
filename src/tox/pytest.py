@@ -27,7 +27,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
 from _pytest.tmpdir import TempPathFactory
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_WIN
+from virtualenv.info import IS_WIN, fs_supports_symlink
 
 import tox.run
 from tox.execute.api import Outcome
@@ -51,6 +51,10 @@ else:
 os.environ["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
 os.environ["PIP_NO_PYTHON_VERSION_WARNING"] = "1"
 os.environ["PIP_USE_FEATURE"] = "2020-resolver"
+
+if fs_supports_symlink():  # pragma: no cover # used to speed up test suite run time where possible
+    os.environ["VIRTUALENV_SYMLINK_APP_DATA"] = "1"
+    os.environ["VIRTUALENV_SYMLINKS"] = "1"
 
 
 @pytest.fixture(autouse=True)

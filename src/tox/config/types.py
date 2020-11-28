@@ -39,6 +39,9 @@ class EnvList:
     def __iter__(self) -> Iterator[str]:
         return iter(self.envs)
 
+    def __bool__(self):
+        return bool(self.envs)
+
 
 __all__ = (
     "Command",

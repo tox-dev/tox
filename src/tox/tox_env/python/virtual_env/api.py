@@ -102,7 +102,7 @@ class VirtualEnv(Python, ABC):
         if force_reinstall:
             install_command.append("--force-reinstall")
         if develop is True:
-            install_command.append("-e")
+            install_command.extend(("--no-build-isolation", "-e"))
         install_command.extend(str(i) for i in packages)
         result = self.perform_install(install_command)
         result.assert_success(self.logger)

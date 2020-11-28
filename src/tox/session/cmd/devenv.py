@@ -26,12 +26,12 @@ def tox_add_option(parser: ToxParser) -> None:
 def devenv(state: State) -> int:
     env_list = list(state.env_list(everything=False))
     if len(env_list) != 1:
-        raise HandledError(f"exactly one target environment allowed in devenv mode, found {', '.join(env_list)}")
+        raise HandledError(f"exactly one target environment allowed in devenv mode but found {', '.join(env_list)}")
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         # dev environments must be of type dev
         usedevelop=True,
         # move it in source
-        env_dir=state.options.devenv_path,
+        env_dir=Path(state.options.devenv_path),
     )
 
     state.options.no_test = True  # do not run the test phase
