@@ -669,11 +669,11 @@ Globally available substitutions
     they may be accessed by other processes or tox runs.
 
 ``{:}``
-    OS-specific path separator (``:`` os \*nix family, ``;`` on Windows). May be used in ``setenv``,
+    OS-specific path separator (``:`` on \*nix family, ``;`` on Windows). May be used in ``setenv``,
     when target variable is path variable (e.g. PATH or PYTHONPATH).
 
 ``{/}``
-    OS-specific directory separator (``/`` os \*nix family, ``\\`` on Windows).
+    OS-specific directory separator (``/`` on \*nix family, ``\\`` on Windows).
     Useful for deriving filenames from preset paths, as arguments for commands
     that requires ``\\`` on Windows. e.g. ``{distdir}{/}file.txt``.
     It is not usually needed when using commands written in Python.
