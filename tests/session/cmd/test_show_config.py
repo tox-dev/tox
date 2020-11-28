@@ -77,7 +77,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     result.assert_out_err(expected, "", regex=True)
 
 
-def test_commands(tox_project: ToxProjectCreator) -> None:
+def test_show_config_commands(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
             "tox.ini": """
