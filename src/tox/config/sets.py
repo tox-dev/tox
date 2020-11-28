@@ -89,12 +89,13 @@ class ConfigSet:
     def __iter__(self) -> Iterator[str]:
         return iter(self._keys.keys())
 
-    def unused(self) -> Set[str]:
+    def unused(self) -> List[str]:
         """Return a list of keys present in the config source but not used"""
-        found = set()
+        found: Set[str] = set()
         for loader in self.loaders:
             found.update(loader.found_keys())
-        return found - set(self._defined.keys())
+        found -= self._defined.keys()
+        return list(sorted(found))
 
 
 class CoreConfigSet(ConfigSet):

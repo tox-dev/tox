@@ -104,3 +104,16 @@ def test_show_config_commands(tox_project: ToxProjectCreator) -> None:
         Command(args=["pip", "list"]),
     ]
     assert env_config["commands_post"] == [Command(args=["python", "-c", 'import sys; print("end", sys.executable)'])]
+
+
+def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\nmagic=yes"})
+    outcome = project.run("c", "-e", "py", "-k", "no_package", "env_name", "--core")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py]\nenv_name = py\n\n[tox]\nno_package = False\n", "")
+
+
+def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": "[testenv:py]\nmagical=yes\nmagic=yes"}).run("c", "-e", "py")
+    outcome.assert_success()
+    assert "\n# !!! unused: magic, magical\n" in outcome.out
