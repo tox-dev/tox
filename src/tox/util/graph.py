@@ -1,16 +1,16 @@
 """Helper methods related to graph theory."""
 from collections import OrderedDict, defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set
 
 
-def stable_topological_sort(graph: Dict[str, Tuple[str, ...]]) -> List[str]:
+def stable_topological_sort(graph: Dict[str, Set[str]]) -> List[str]:
     to_order = set(graph.keys())  # keep a log of what  we need to order
 
     # normalize graph - fill missing nodes (assume no dependency)
     for values in list(graph.values()):
         for value in values:
             if value not in graph:
-                graph[value] = ()
+                graph[value] = set()
 
     inverse_graph = defaultdict(set)
     for key, depends in graph.items():
@@ -47,7 +47,7 @@ def stable_topological_sort(graph: Dict[str, Tuple[str, ...]]) -> List[str]:
     return result
 
 
-def identify_cycle(graph: Dict[str, Tuple[str, ...]]) -> None:
+def identify_cycle(graph: Dict[str, Set[str]]) -> None:
     path: Dict[str, None] = OrderedDict()
     visited = set()
 

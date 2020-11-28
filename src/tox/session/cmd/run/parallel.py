@@ -2,32 +2,30 @@
 """
 Run tox environments in parallel.
 """
-import inspect
 import logging
 import os
-import sys
 from argparse import ArgumentParser, ArgumentTypeError
-from collections import OrderedDict, deque
-from pathlib import Path
-from threading import Event, Semaphore, Thread
-from typing import cast
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from typing import Callable, Dict, Iterator, List, Set, Tuple, cast
 
-import tox
 from tox.config.cli.parser import ToxParser
+from tox.config.types import EnvList
+from tox.execute import Outcome
 from tox.plugin.impl import impl
+from tox.session.cmd.run.single import run_one
 from tox.session.common import env_list_flag
 from tox.session.state import State
 from tox.util.cpu import auto_detect_cpus
+from tox.util.graph import stable_topological_sort
 from tox.util.spinner import Spinner
 
-from .common import env_run_create_flags
+from .common import env_run_create_flags, run_and_report
 
 logger = logging.getLogger(__name__)
 
 ENV_VAR_KEY = "TOX_PARALLEL_ENV"
 OFF_VALUE = 0
 DEFAULT_PARALLEL = OFF_VALUE
-MAIN_FILE = Path(cast(str, inspect.getsourcefile(tox))).parent / "__main__.py"
 
 
 @impl
@@ -35,7 +33,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     env_list_flag(our)
     env_run_create_flags(our)
-    parallel_flags(our)
+    parallel_flags(our, default_parallel=auto_detect_cpus())
 
 
 def parse_num_processes(str_value):
@@ -43,14 +41,13 @@ def parse_num_processes(str_value):
         return None
     if str_value == "auto":
         return auto_detect_cpus()
-    else:
-        value = int(str_value)
-        if value < 0:
-            raise ArgumentTypeError("value must be positive")
-        return value
+    value = int(str_value)
+    if value < 0:
+        raise ArgumentTypeError("value must be positive")
+    return value
 
 
-def parallel_flags(our: ArgumentParser) -> None:
+def parallel_flags(our: ArgumentParser, default_parallel: int) -> None:
     our.add_argument(
         "-p",
         "--parallel",
@@ -59,7 +56,7 @@ def parallel_flags(our: ArgumentParser) -> None:
         " auto - cpu count, some positive number, zero is turn off",
         action="store",
         type=parse_num_processes,
-        default=DEFAULT_PARALLEL,
+        default=default_parallel,
         metavar="VAL",
     )
     our.add_argument(
@@ -69,125 +66,70 @@ def parallel_flags(our: ArgumentParser) -> None:
         dest="parallel_live",
         help="connect to stdout while running environments",
     )
+    our.add_argument(
+        "--parallel-no-spinner",
+        action="store_true",
+        dest="parallel_no_spinner",
+        help="do not show the spinner",
+    )
 
 
 def run_parallel(state: State) -> int:
     """here we'll just start parallel sub-processes"""
-    live_out = state.options.parallel_live
-    disable_spinner = bool(os.environ.get("TOX_PARALLEL_NO_SPINNER") == "1")
-    args = [sys.executable, MAIN_FILE] + state.args
-    try:
-        position = args.index("--")
-    except ValueError:
-        position = len(args)
+    return run_and_report(state, _execute_parallel(state))
 
-    max_parallel = state.options.parallel
-    if max_parallel is None:
-        max_parallel = len(state.tox_envs)
-    semaphore = Semaphore(max_parallel)
-    finished = Event()
 
-    show_progress = not disable_spinner and not live_out and state.options.verbosity > 2
-
-    with Spinner(enabled=show_progress) as spinner:
-
-        def run_in_thread(tox_env, os_env, process_dict):
-            output = None
-            env_name = tox_env.envconfig.envname
-            status = "skipped tests" if state.options.no_test else None
-            try:
-                os_env[str(ENV_VAR_KEY)] = str(env_name)
-                args_sub = list(args)
-                if hasattr(tox_env, "package"):
-                    args_sub.insert(position, str(tox_env.perform_packaging))
-                    args_sub.insert(position, "--installpkg")
-                if tox_env.get_result_json_path():
-                    result_json_index = args_sub.index("--result-json")
-                    args_sub[result_json_index + 1] = f"{tox_env.get_result_json_path()}"
-                with tox_env.new_action(f"parallel {tox_env.name}") as action:
-
-                    def collect_process(process):
-                        process_dict[tox_env] = (action, process)
-
-                    print_out = not live_out and tox_env.envconfig.parallel_show_output
-                    output = action.popen(
-                        args=args_sub,
-                        env=os_env,
-                        redirect=not live_out,
-                        capture_err=print_out,
-                        callback=collect_process,
-                        returnout=print_out,
-                    )
-
-            except Exception as err:
-                status = f"parallel child exit {err!r}"
-            finally:
-                semaphore.release()
-                finished.set()
-                tox_env.status = status
-                done.add(env_name)
-                outcome = spinner.succeed
-                if state.options.notest:
-                    outcome = spinner.skip
-                elif status is not None:
-                    outcome = spinner.fail
-                outcome(env_name)
-                if print_out and output is not None:
-                    logger.warning(output)
-
-        threads = deque()
-        processes = {}
-        todo_keys = set(state.env_list)
-        todo = OrderedDict((n, todo_keys & set(v.conf["depends"])) for n, v in state.tox_envs.items())
-        done = set()
+def _execute_parallel(state: State) -> Iterator[Tuple[str, Tuple[int, List[Outcome], float]]]:
+    options = state.options
+    live_out = options.parallel_live
+    show_progress = not options.parallel_no_spinner and not live_out and options.verbosity > 2
+    with Spinner(enabled=show_progress, colored=state.options.is_colored) as spinner:
+        spinner_name_done: Callable[[str], None] = spinner.skip if options.no_test else spinner.succeed
+        to_run_list = list(state.env_list())
+        max_parallel = options.parallel
+        executor = ThreadPoolExecutor(len(to_run_list) if max_parallel is None else max_parallel, "tox-parallel")
         try:
-            while todo:
-                for name, depends in list(todo.items()):
-                    if depends - done:
-                        # skip if has unfinished dependencies
-                        continue
-                    del todo[name]
-                    venv = state.tox_envs[name]
-                    semaphore.acquire()
-                    spinner.add(name)
-                    thread = Thread(target=run_in_thread, args=(venv, os.environ.copy(), processes))
-                    thread.daemon = True
-                    thread.start()
-                    threads.append(thread)
-                if todo:
-                    # wait until someone finishes and retry queuing jobs
-                    finished.wait()
-                    finished.clear()
-            while threads:
-                threads = [thread for thread in threads if not thread.join(0.1) and thread.is_alive()]
+            future_to_name: Dict[Future, str] = {}
+            completed: Set[str] = set()
+            envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
+            while True:
+                env_list = next(envs_to_run_generator, [])
+                if not env_list and not future_to_name:
+                    break
+                for env in env_list:  # queue all available
+                    spinner.add(env)
+                    tox_env = state.tox_env(env)
+                    if live_out is False:
+                        tox_env.hide_display()
+                    future = executor.submit(run_one, tox_env, options.recreate, options.no_test)
+                    future_to_name[future] = env
+
+                future = next(as_completed(future_to_name))
+                name = future_to_name.pop(future)
+                code, outcomes, duration = future.result()
+                completed.add(name)
+                if live_out is False:
+                    state.tox_env(env).resume_display()
+                (spinner_name_done if code == Outcome.OK else spinner.fail)(name)
+
+                yield name, (code, outcomes, duration)
         except KeyboardInterrupt:
             logger.error(f"[{os.getpid()}] KeyboardInterrupt parallel - stopping children")
-            while True:
-                # do not allow interrupting until children interrupt
-                try:
-                    # putting it inside a thread to guarantee it's not interrupted
-                    stopper = Thread(target=_stop_child_processes, args=(processes, threads))
-                    stopper.start()
-                    stopper.join()
-                except KeyboardInterrupt:
-                    continue
-                raise KeyboardInterrupt
-    return 0
+        executor.shutdown(wait=False)
 
 
-def _stop_child_processes(processes, main_threads):
-    """A three level stop mechanism for children - INT (250ms) -> TERM (100ms) -> KILL"""
-
-    # first stop children
-    def shutdown(tox_env, action, process):  # noqa
-        action.handle_interrupt(process)
-
-    threads = [Thread(target=shutdown, args=(n, a, p)) for n, (a, p) in processes.items()]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-
-    # then its threads
-    for thread in main_threads:
-        thread.join()
+def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]):
+    """Generate tox environments ready to run"""
+    to_run_set = set(to_run)
+    todo: Dict[str, Set[str]] = {
+        env: (to_run_set & set(cast(EnvList, state.tox_env(env).conf["depends"]).envs)) for env in to_run
+    }
+    order, at = stable_topological_sort(todo), 0
+    while at != len(order):
+        ready_to_run = []
+        for env in order[at:]:  # collect next batch of ready to run
+            if todo[env] - completed:
+                break  # if not all dependencies completed, stop, topological order guarantees we're done
+            ready_to_run.append(env)
+            at += 1
+        yield ready_to_run

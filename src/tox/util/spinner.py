@@ -2,8 +2,8 @@
 import os
 import sys
 import threading
+import time
 from collections import OrderedDict
-from datetime import datetime, timedelta
 from types import TracebackType
 from typing import IO, Any, Dict, Optional, Sequence, Type
 
@@ -35,14 +35,15 @@ class Spinner:
     UNICODE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     ASCII_FRAMES = ["|", "-", "+", "x", "*"]
 
-    def __init__(self, enabled: bool = True, refresh_rate: float = 0.1) -> None:
+    def __init__(self, enabled: bool = True, refresh_rate: float = 0.1, colored: bool = True) -> None:
+        self.is_colored = colored
         self.refresh_rate = refresh_rate
         self.enabled = enabled
         self.frames = (
             self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, sys.stdout) else self.ASCII_FRAMES
         )
         self.stream = sys.stdout
-        self._envs: Dict[str, datetime] = OrderedDict()
+        self._envs: Dict[str, float] = OrderedDict()
         self._frame_index = 0
 
     def clear(self) -> None:
@@ -99,26 +100,26 @@ class Spinner:
                 self.enable_cursor()
 
     def add(self, name: str) -> None:
-        self._envs[name] = datetime.now()
+        self._envs[name] = time.monotonic()
 
     def succeed(self, key: str) -> None:
-        self.finalize(key, "✔ OK", Fore.GREEN)
+        self.finalize(key, "OK ✔", Fore.GREEN)
 
     def fail(self, key: str) -> None:
-        self.finalize(key, "✖ FAIL", Fore.RED)
+        self.finalize(key, "FAIL ✖", Fore.RED)
 
     def skip(self, key: str) -> None:
-        self.finalize(key, "⚠ SKIP", Fore.WHITE)
+        self.finalize(key, "SKIP ⚠", Fore.WHITE)
 
     def finalize(self, key: str, status: str, color: int) -> None:
         start_at = self._envs[key]
         del self._envs[key]
         if self.enabled:
             self.clear()
-        msg = f"{color}{status} {key} in {td_human_readable(datetime.now() - start_at)}{Fore.RESET}{os.linesep}"
-        self.stream.write(msg)
-        if not self._envs:
-            self.__exit__(None, None, None)
+        base = f"{key}: {status} in {td_human_readable(time.monotonic() - start_at)}"
+        if self.is_colored:
+            base = f"{color}{base}{Fore.RESET}{os.linesep}"
+        self.stream.write(base)
 
     def disable_cursor(self) -> None:
         if self.stream.isatty():
@@ -151,15 +152,15 @@ _PERIODS = [
 ]
 
 
-def td_human_readable(delta: timedelta) -> str:
-    seconds: float = delta.total_seconds()
+def td_human_readable(seconds: float) -> str:
     texts = []
+    total_seconds = seconds
     for period_name, period_seconds in _PERIODS:
         if seconds > period_seconds or period_seconds == 1:
             period_value = int(seconds) // period_seconds
             seconds %= period_seconds
             if period_name == "second":
-                ms = period_value + delta.total_seconds() - int(delta.total_seconds())
+                ms = period_value + total_seconds - int(total_seconds)
                 period_str = f"{ms:.2f}".rstrip("0").rstrip(".")
             else:
                 period_str = str(period_value)

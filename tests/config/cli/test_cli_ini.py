@@ -111,6 +111,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dic
         "no_recreate_pkg": False,
         "parallel": 3,
         "parallel_live": True,
+        "parallel_no_spinner": False,
         "quiet": 1,
         "recreate": True,
         "result_json": None,

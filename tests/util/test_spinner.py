@@ -38,7 +38,7 @@ def test_spinner_disabled(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> No
         spin.finalize("x", "done", Fore.GREEN)
         spin.clear()
     out, err = capfd.readouterr()
-    assert out == f"{Fore.GREEN}done x in 0 seconds{Fore.RESET}{os.linesep}"
+    assert out == f"{Fore.GREEN}x: done in 0 seconds{Fore.RESET}{os.linesep}", out
     assert err == ""
 
 
@@ -85,9 +85,9 @@ def test_spinner_report(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None
     lines = out.split(os.linesep)
     del lines[0]
     expected = [
-        f"\r{spin.CLEAR_LINE}{Fore.GREEN}✔ OK ok in 0 seconds{Fore.RESET}",
-        f"\r{spin.CLEAR_LINE}{Fore.RED}✖ FAIL fail in 0 seconds{Fore.RESET}",
-        f"\r{spin.CLEAR_LINE}{Fore.WHITE}⚠ SKIP skip in 0 seconds{Fore.RESET}",
+        f"\r{spin.CLEAR_LINE}{Fore.GREEN}ok: OK ✔ in 0 seconds{Fore.RESET}",
+        f"\r{spin.CLEAR_LINE}{Fore.RED}fail: FAIL ✖ in 0 seconds{Fore.RESET}",
+        f"\r{spin.CLEAR_LINE}{Fore.WHITE}skip: SKIP ⚠ in 0 seconds{Fore.RESET}",
         f"\r{spin.CLEAR_LINE}",
     ]
     assert lines == expected
@@ -141,4 +141,4 @@ def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture
 )
 def test_td_human_readable(seconds: float, expected: str) -> None:
     dt = timedelta(seconds=seconds)
-    assert spinner.td_human_readable(dt) == expected
+    assert spinner.td_human_readable(dt.total_seconds()) == expected

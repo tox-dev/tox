@@ -51,6 +51,7 @@ def test_verbose_no_test(monkeypatch: MonkeyPatch) -> None:
         "discover": [],
         "parallel": 0,
         "parallel_live": False,
+        "parallel_no_spinner": False,
         "pre": False,
         "index_url": [],
     }
@@ -93,6 +94,7 @@ def test_env_var_exhaustive_parallel_values(
         "package_only": False,
         "parallel": 3,
         "parallel_live": False,
+        "parallel_no_spinner": False,
         "pre": False,
         "quiet": 1,
         "recreate": True,

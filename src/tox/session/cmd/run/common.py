@@ -1,7 +1,14 @@
 """Common functionality shared across multiple type of runs"""
+import time
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
 from pathlib import Path
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+
+from colorama import Fore
+
+from tox.execute import Outcome
+from tox.journal import write_journal
+from tox.session.state import State
 
 
 class SkipMissingInterpreterAction(Action):
@@ -86,3 +93,34 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
         help="for python discovery first try the python executables under these paths",
         default=[],
     )
+
+
+def run_and_report(state: State, result: Iterator[Tuple[str, Tuple[int, List[Outcome], float]]]) -> int:
+    status_codes: Dict[str, Tuple[int, float, List[float]]] = {}
+    for name, (code, outcomes, duration) in result:
+        status_codes[name] = code, duration, [o.elapsed for o in outcomes]
+    write_journal(getattr(state.options, "result_json", None), state.journal)
+    return report(state.options.start, status_codes, state.options.is_colored)
+
+
+def report(start: float, status_dict: Dict[str, Tuple[int, float, List[float]]], is_colored: bool) -> int:
+    def _print(color: int, message: str) -> None:
+        print(f"{color if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
+
+    end = time.monotonic()
+    all_ok = True
+    for name, (status, duration_one, duration_individual) in status_dict.items():
+        ok = status == Outcome.OK
+        msg = "OK " if ok else f"FAIL code {status}"
+        extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if len(duration_individual) else ""
+        setup = duration_one - sum(duration_individual)
+        out = f"  {name}: {msg}({duration_one:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
+        _print(Fore.GREEN if ok else Fore.RED, out)
+        all_ok = ok and all_ok
+    duration = end - start
+    if all_ok:
+        _print(Fore.GREEN, f"  congratulations :) ({duration:.2f} seconds)")
+        return Outcome.OK
+    else:
+        _print(Fore.RED, f"  evaluation failed :( ({duration:.2f} seconds)")
+        return -1

@@ -218,5 +218,13 @@ class ToxEnv(ABC):
     def id() -> str:
         raise NotImplementedError
 
+    def hide_display(self) -> None:
+        """No longer show"""
+        assert self.logger.name
+
+    def resume_display(self) -> None:
+        """No longer show"""
+        assert self.logger.name
+
 
 _CWD = Path.cwd()

@@ -3,7 +3,7 @@ from pathlib import Path
 from tox.config.cli.parser import DEFAULT_VERBOSITY, ToxParser
 from tox.plugin.impl import impl
 from tox.session.cmd.run.common import env_run_create_flags
-from tox.session.cmd.run.parallel import parallel_flags, run_parallel
+from tox.session.cmd.run.parallel import OFF_VALUE, parallel_flags, run_parallel
 from tox.session.cmd.run.sequential import run_sequential
 from tox.session.common import env_list_flag
 from tox.session.state import State
@@ -49,7 +49,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our.add_argument("-c", metavar="CONFIGFILE", help="show live configuration", dest="config_file", default="")
     env_list_flag(our)
     env_run_create_flags(our)
-    parallel_flags(our)
+    parallel_flags(our, default_parallel=OFF_VALUE)
     our.add_argument(
         "--pre",
         action="store_true",

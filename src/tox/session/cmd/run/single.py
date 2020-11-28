@@ -1,6 +1,7 @@
 """
 Defines how to run a single tox environment.
 """
+from datetime import datetime
 from typing import List, Tuple, cast
 
 from tox.config.types import Command
@@ -9,10 +10,14 @@ from tox.tox_env.api import ToxEnv
 from tox.tox_env.runner import RunToxEnv
 
 
-def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> Tuple[int, List[Outcome]]:
-    tox_env.ensure_setup(recreate=recreate)
-    code, outcomes = run_commands(tox_env, no_test)
-    return code, outcomes
+def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> Tuple[int, List[Outcome], float]:
+    start_one = datetime.now()
+    try:
+        tox_env.ensure_setup(recreate=recreate)
+        code, outcomes = run_commands(tox_env, no_test)
+    finally:
+        duration = (datetime.now() - start_one).total_seconds()
+    return code, outcomes, duration
 
 
 def run_commands(tox_env: ToxEnv, no_test: bool) -> Tuple[int, List[Outcome]]:
