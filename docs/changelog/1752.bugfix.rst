@@ -1,0 +1,1 @@
+Use "{/}" instead of "/" in creating paths, as in {envdir}, {envtmpdir}, {envlogdir}, {toxworkdir}, {temp_dir}, {distdir}, {distshare}. - by :user:`xuhdev`

@@ -61,11 +61,11 @@ Global settings are defined under the ``tox`` section as:
     Name of the virtual environment used to provision a tox having all dependencies specified
     inside :conf:`requires` and :conf:`minversion`.
 
-.. conf:: toxworkdir ^ PATH ^ {toxinidir}/.tox
+.. conf:: toxworkdir ^ PATH ^ {toxinidir}{/}.tox
 
    Directory for tox to generate its environments into, will be created if it does not exist.
 
-.. conf:: temp_dir ^ PATH ^ {toxworkdir}/.tmp
+.. conf:: temp_dir ^ PATH ^ {toxworkdir}{/}.tmp
 
    Directory where to put tox temporary files. For example: we create a hard link (if possible,
    otherwise new copy) in this directory for the project package. This ensures tox works correctly
@@ -82,21 +82,21 @@ Global settings are defined under the ``tox`` section as:
    Indicates where the packaging root file exists (historically the ``setup.py`` for ``setuptools``).
    This will be the working directory when performing the packaging.
 
-.. conf:: distdir ^ PATH ^ {toxworkdir}/dist
+.. conf:: distdir ^ PATH ^ {toxworkdir}{/}dist
 
    Directory where the packaged source distribution should be put. Note this is cleaned at the start of
    every packaging invocation.
 
-.. conf:: sdistsrc ^ PATH ^ {toxworkdir}/dist
+.. conf:: sdistsrc ^ PATH ^ None
 
    Do not build the package, but instead use the latest package available under this path.
    You can override it via the command line flag ``--installpkg``.
 
-.. conf:: distshare ^ PATH ^ {homedir}/.tox/distshare
+.. conf:: distshare ^ PATH ^ {homedir}{/}.tox{/}distshare
 
    Folder where the packaged source distribution will be moved, this is not cleaned between packaging
    invocations. On Jenkins (exists ``JENKINS_URL`` or ``HUDSON_URL`` environment variable)
-   the default path is ``{toxworkdir}/distshare``.
+   the default path is ``{toxworkdir}{/}distshare``.
 
 .. conf:: envlist ^ comma separated values
 
@@ -504,12 +504,12 @@ Complete list of settings that you can put into ``testenv*`` sections:
     to the ``changedir``. Default is true due to the exists-on-filesystem check it's
     usually safe to try rewriting.
 
-.. conf:: envtmpdir ^ PATH ^ {envdir}/tmp
+.. conf:: envtmpdir ^ PATH ^ {envdir}{/}tmp
 
     Defines a temporary directory for the virtualenv which will be cleared
     each time before the group of test commands is invoked.
 
-.. conf:: envlogdir ^ PATH ^ {envdir}/log
+.. conf:: envlogdir ^ PATH ^ {envdir}{/}log
 
     Defines a directory for logging where tox will put logs of tool
     invocation.
@@ -534,7 +534,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     will make tox install all dependencies from this PyPI index server
     (including when installing the project sdist package).
 
-.. conf:: envdir ^ PATH ^ {toxworkdir}/{envname}
+.. conf:: envdir ^ PATH ^ {toxworkdir}{/}{envname}
 
     .. versionadded:: 1.5
 

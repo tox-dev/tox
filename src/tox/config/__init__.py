@@ -590,7 +590,7 @@ def tox_addoption(parser):
     parser.add_testenv_attribute(
         name="envdir",
         type="path",
-        default="{toxworkdir}/{envname}",
+        default="{toxworkdir}{/}{envname}",
         help="set venv directory -- be very careful when changing this as tox "
         "will remove this directory when recreating an environment",
         postprocess=_set_envdir_from_devenv,
@@ -686,14 +686,14 @@ def tox_addoption(parser):
     parser.add_testenv_attribute(
         name="envtmpdir",
         type="path",
-        default="{envdir}/tmp",
+        default="{envdir}{/}tmp",
         help="venv temporary directory",
     )
 
     parser.add_testenv_attribute(
         name="envlogdir",
         type="path",
-        default="{envdir}/log",
+        default="{envdir}{/}log",
         help="venv log directory",
     )
 
@@ -1151,10 +1151,10 @@ class ParseIni(object):
                 prefix=prefix,
                 fallbacksections=[fallbacksection],
             )
-            dist_share_default = "{toxworkdir}/distshare"
+            dist_share_default = "{toxworkdir}{/}distshare"
         elif not context_name:
             reader = SectionReader("tox", self._cfg, prefix=prefix)
-            dist_share_default = "{homedir}/.tox/distshare"
+            dist_share_default = "{homedir}{/}.tox{/}distshare"
         else:
             raise ValueError("invalid context")
 
@@ -1169,7 +1169,7 @@ class ParseIni(object):
         reader.addsubstitutions(toxinidir=config.toxinidir, homedir=config.homedir)
 
         if config.option.workdir is None:
-            config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}/.tox")
+            config.toxworkdir = reader.getpath("toxworkdir", "{toxinidir}{/}.tox")
         else:
             config.toxworkdir = config.toxinidir.join(config.option.workdir, abs=True)
 
@@ -1179,12 +1179,12 @@ class ParseIni(object):
         reader.addsubstitutions(toxworkdir=config.toxworkdir)
         config.ignore_basepython_conflict = reader.getbool("ignore_basepython_conflict", False)
 
-        config.distdir = reader.getpath("distdir", "{toxworkdir}/dist")
+        config.distdir = reader.getpath("distdir", "{toxworkdir}{/}dist")
 
         reader.addsubstitutions(distdir=config.distdir)
         config.distshare = reader.getpath("distshare", dist_share_default)
         reader.addsubstitutions(distshare=config.distshare)
-        config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}/.tmp")
+        config.temp_dir = reader.getpath("temp_dir", "{toxworkdir}{/}.tmp")
         reader.addsubstitutions(temp_dir=config.temp_dir)
         config.sdistsrc = reader.getpath("sdistsrc", None)
         config.setupdir = reader.getpath("setupdir", "{toxinidir}")
