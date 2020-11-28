@@ -66,7 +66,7 @@ def make_config(parsed: Parsed, pos_args: Optional[Sequence[str]]) -> Config:
                 tox_ini = candidate
         if tox_ini is not None:
             break
-    else:
+    if tox_ini is None:
         tox_ini = folder / "tox.ini"
         logging.warning(f"No {' or '.join(candidate_names)} found, assuming empty tox.ini at {tox_ini}")
     ini_loader = ToxIni(tox_ini)

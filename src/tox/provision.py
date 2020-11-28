@@ -41,7 +41,8 @@ def tox_add_core_config(core: ConfigSet) -> None:
     core.add_config(
         keys=["min_version", "minversion"],
         of_type=Version,
-        default=Version(current_version),
+        # do not include local version specifier (because it's not allowed in version spec per PEP-440)
+        default=Version(current_version.split("+")[0]),
         desc="Define the minimal tox version required to run",
     )
     core.add_config(
@@ -53,7 +54,7 @@ def tox_add_core_config(core: ConfigSet) -> None:
 
     def add_tox_requires_min_version(requires: List[Requirement], conf: Config) -> List[Requirement]:
         min_version: Version = conf.core["min_version"]
-        requires.append(Requirement(f"tox >= {min_version}"))
+        requires.append(Requirement(f"tox >= {min_version.public}"))
         return requires
 
     core.add_config(

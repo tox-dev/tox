@@ -96,8 +96,8 @@ def legacy(state: State) -> int:
         option.show_core = False
         return list_env(state)
     if option.devenv_path:
-        option.devenv_path = Path(option.devenv)
+        option.devenv_path = Path(option.devenv_path)
         return devenv(state)
-    if option.parallel:
+    if option.parallel != 0:  # only 0 means sequential
         return run_parallel(state)
     return run_sequential(state)

@@ -29,7 +29,7 @@ def list_env(state: State) -> int:
     def report_env(name: str) -> None:
         if not option.list_no_description:
             text = state.tox_env(name).conf["description"]
-            if text is None:
+            if not text.strip():
                 text = "[no description]"
             text = text.replace("\n", " ")
             msg = f"{e.ljust(max_length)} -> {text}".strip()

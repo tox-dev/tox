@@ -3,6 +3,8 @@ import platform
 import re
 import sys
 
+from packaging.version import Version
+
 from tox.config.types import Command
 from tox.pytest import MonkeyPatch, ToxProjectCreator
 from tox.version import __version__
@@ -20,7 +22,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
 
     path = re.escape(str(project.path))
     sep = re.escape(str(os.sep))
-    version = re.escape(__version__)
+    version = re.escape(Version(__version__).public)
 
     monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
     if sys.platform == "win32":  # pragma: win32 cover

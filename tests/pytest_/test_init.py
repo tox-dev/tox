@@ -99,7 +99,7 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
     cwd: {project.path}
     standard output
     additional environments:
-    py ->
+    py -> [no description]
     """
     ).lstrip()
     assert repr(outcome) == msg

@@ -39,7 +39,7 @@ class EnvList:
     def __iter__(self) -> Iterator[str]:
         return iter(self.envs)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.envs)
 
 
