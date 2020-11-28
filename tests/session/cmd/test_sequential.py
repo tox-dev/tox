@@ -4,27 +4,42 @@ import sys
 from typing import Any, Dict, List, Tuple
 
 import pytest
+from re_assert import Matches
 from virtualenv.discovery.py_info import PythonInfo
 
 from tox import __version__
 from tox.pytest import ToxProjectCreator
 
 
-def test_ignore_cmd(tox_project: ToxProjectCreator) -> None:
+def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
         "python -c 'import sys; print(\"magic pass\"); sys.exit(0)'",
     ]
-    project = tox_project({"tox.ini": f"[tox]\nenvlist=py\nno_package=true\n[testenv]\ncommands={cmd[0]}\n {cmd[1]}"})
+    project = tox_project({"tox.ini": f"[tox]\nno_package=true\n[testenv]\ncommands={cmd[0]}\n {cmd[1]}"})
     outcome = project.run("r", "-e", "py")
     outcome.assert_success()
     assert "magic pass" in outcome.out
     assert "magic fail" in outcome.err
 
 
+def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
+    def _cmd(value: int) -> str:
+        return f"python -c 'import sys; print(\"exit {value}\"); sys.exit({value})'"
+
+    ini = f"[tox]\nenv_list=a,b\nno_package=true\n[testenv:a]\ncommands={_cmd(1)}\n[testenv:b]\ncommands={_cmd(0)}"
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("r", "-e", "a,b")
+    outcome.assert_failed()
+    reports = outcome.out.splitlines()[-3:]
+    assert Matches(r"  evaluation failed :\( \(.* seconds\)") == reports[-1]
+    assert Matches(r"  b: OK \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-2]
+    assert Matches(r"  a: FAIL code 1\(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-3]
+
+
 @pytest.mark.timeout(60)
 @pytest.mark.integration
-def test_result_json_run_one(tox_project: ToxProjectCreator) -> None:
+def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
         "python -c 'import sys; print(\"magic pass\"); sys.exit(0)'",
