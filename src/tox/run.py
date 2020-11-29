@@ -1,7 +1,7 @@
 """Main entry point for tox."""
 import logging
 import sys
-from datetime import datetime
+import time
 from itertools import chain
 from pathlib import Path
 from typing import Optional, Sequence
@@ -42,7 +42,7 @@ def main(args: Sequence[str]) -> int:
 
 def setup_state(args: Sequence[str]) -> State:
     """Setup the state object of this run."""
-    start = datetime.now()
+    start = time.monotonic()
     # parse CLI arguments
     parsed, handlers, pos_args = get_options(*args)
     parsed.start = start
