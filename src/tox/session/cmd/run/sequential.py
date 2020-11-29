@@ -1,7 +1,7 @@
 """
 Run tox environments in sequential order.
 """
-from datetime import datetime
+import time
 from typing import Dict, List, Tuple
 
 from colorama import Fore
@@ -28,19 +28,19 @@ def run_sequential(state: State) -> int:
     status_codes: Dict[str, Tuple[int, float, List[float]]] = {}
     for name in state.env_list(everything=False):
         tox_env = state.tox_env(name)
-        start_one = datetime.now()
+        start_one = time.monotonic()
         code, outcomes = run_one(tox_env, state.options.recreate, state.options.no_test)
-        duration = (datetime.now() - start_one).total_seconds()
+        duration = time.monotonic() - start_one
         status_codes[name] = code, duration, [o.elapsed for o in outcomes]
     write_journal(getattr(state.options, "result_json", None), state.journal)
     return report(state.options.start, status_codes, state.options.is_colored)
 
 
-def report(start: datetime, status_dict: Dict[str, Tuple[int, float, List[float]]], is_colored: bool) -> int:
+def report(start: float, status_dict: Dict[str, Tuple[int, float, List[float]]], is_colored: bool) -> int:
     def _print(color: int, message: str) -> None:
         print(f"{color if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
-    end = datetime.now()
+    end = time.monotonic()
     all_ok = True
     for name, (status, duration_one, duration_individual) in status_dict.items():
         ok = status == Outcome.OK
@@ -50,7 +50,7 @@ def report(start: datetime, status_dict: Dict[str, Tuple[int, float, List[float]
         out = f"  {name}: {msg}({duration_one:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
         _print(Fore.GREEN if ok else Fore.RED, out)
         all_ok = ok and all_ok
-    duration = (end - start).total_seconds()
+    duration = end - start
     if all_ok:
         _print(Fore.GREEN, f"  congratulations :) ({duration:.2f} seconds)")
         return Outcome.OK
