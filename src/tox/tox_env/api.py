@@ -23,6 +23,29 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
 
 
+class EnvLogger(logging.Logger):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.enabled = True
+        self._collected: List[logging.LogRecord] = []
+
+    def handle(self, record: logging.LogRecord) -> None:
+        if self.enabled:
+            super().handle(record)
+        else:
+            self._collected.append(record)
+
+    def drain_collected(self, backfill: bool) -> None:
+        self.enabled = True
+        if backfill:
+            for record in self._collected:
+                self.handle(record)
+        self._collected.clear()
+
+
+logging.setLoggerClass(EnvLogger)
+
+
 class ToxEnv(ABC):
     def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
         self.journal = journal
@@ -33,7 +56,10 @@ class ToxEnv(ABC):
         self.register_config()
         self._cache = Info(self.conf["env_dir"])
         self._paths: List[Path] = []
-        self.logger = logging.getLogger(self.conf["env_name"])
+
+        self.logger: EnvLogger = cast(EnvLogger, logging.getLogger(self.conf["env_name"]))
+        self._hidden_outcomes: List[Outcome] = []
+
         self._env_vars: Optional[Dict[str, str]] = None
         self.setup_done = False
         self.clean_done = False
@@ -87,6 +113,13 @@ class ToxEnv(ABC):
             default=[],
             desc="environment variables to pass on to the tox environment",
             post_process=pass_env_post_process,
+        )
+
+        self.conf.add_config(
+            "parallel_show_output",
+            of_type=bool,
+            default=False,
+            desc="if set to True the content of the output will always be shown  when running in parallel mode",
         )
 
     def default_set_env(self) -> Dict[str, str]:
@@ -151,7 +184,7 @@ class ToxEnv(ABC):
         """Ensure exists and empty"""
         env_tmp_dir: Path = self.conf["env_tmp_dir"]
         if env_tmp_dir.exists():
-            logging.debug("removing %s", env_tmp_dir)
+            self.logger.debug("removing %s", env_tmp_dir)
             shutil.rmtree(env_tmp_dir, ignore_errors=True)
         env_tmp_dir.mkdir(parents=True)
 
@@ -160,7 +193,7 @@ class ToxEnv(ABC):
             return
         env_dir: Path = self.conf["env_dir"]
         if env_dir.exists():
-            logging.info("remove tox env folder %s", env_dir)
+            self.logger.info("remove tox env folder %s", env_dir)
             shutil.rmtree(env_dir)
         self._cache.reset()
         self.setup_done, self.clean_done = False, True
@@ -208,7 +241,13 @@ class ToxEnv(ABC):
             except ValueError:
                 repr_cwd = str(cwd)
         self.logger.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd)
-        outcome = self._executor(request=request, show_on_standard=show_on_standard, colored=self.options.colored)
+        outcome = self._executor(
+            request=request,
+            show_on_standard=show_on_standard and self.logger.enabled,
+            colored=self.options.colored,
+        )
+        if self.logger.enabled is False and show_on_standard:
+            self._hidden_outcomes.append(outcome)
         if self.journal:
             self.journal.add_execute(outcome, run_id)
         return outcome
@@ -219,12 +258,20 @@ class ToxEnv(ABC):
         raise NotImplementedError
 
     def hide_display(self) -> None:
-        """No longer show"""
-        assert self.logger.name
+        """No longer show output on the standard output, but still collect"""
+        # first let's collect the log records
+        # and the
+        self.logger.enabled = False
 
-    def resume_display(self) -> None:
+    def resume_display(self, backfill: bool) -> None:
         """No longer show"""
-        assert self.logger.name
+        show_output: bool = self.conf["parallel_show_output"] or backfill
+        self.logger.drain_collected(show_output)
+        if show_output:
+            for outcome in self._hidden_outcomes:
+                sys.stdout.write(outcome.out)
+                sys.stderr.write(outcome.err)
+        self._hidden_outcomes.clear()
 
 
 _CWD = Path.cwd()

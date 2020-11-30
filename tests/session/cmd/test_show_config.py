@@ -44,14 +44,14 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
       PIP_DISABLE_PIP_VERSION_CHECK=1
       VIRTUALENV_NO_PERIODIC_UPDATE=1
     pass_env =
-    {pass_env_str}
+    {pass_env_str}\
+    parallel_show_output = False
     description =
     commands = magic
     commands_pre =
     commands_post =
     change_dir = {path}
     depends =
-    parallel_show_output = False
     skip_install = False
     usedevelop = False
     package = sdist

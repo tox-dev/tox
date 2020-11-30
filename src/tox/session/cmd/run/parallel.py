@@ -108,9 +108,10 @@ def _execute_parallel(state: State) -> Iterator[Tuple[str, Tuple[int, List[Outco
                 name = future_to_name.pop(future)
                 code, outcomes, duration = future.result()
                 completed.add(name)
+                success = code == Outcome.OK
                 if live_out is False:
-                    state.tox_env(env).resume_display()
-                (spinner_name_done if code == Outcome.OK else spinner.fail)(name)
+                    state.tox_env(env).resume_display(backfill=not success)
+                (spinner_name_done if outcomes else spinner.fail)(name)
 
                 yield name, (code, outcomes, duration)
         except KeyboardInterrupt:

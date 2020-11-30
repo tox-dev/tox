@@ -58,12 +58,6 @@ class RunToxEnv(ToxEnv, ABC):
             desc="tox environments that this environment depends on (must be run after those)",
             default=EnvList([]),
         )
-        self.conf.add_config(
-            "parallel_show_output",
-            of_type=bool,
-            default=False,
-            desc="if set to True the content of the output will always be shown  when running in parallel mode",
-        )
         self.has_package = self.add_package_conf()
 
     def add_package_conf(self) -> bool:
