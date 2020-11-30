@@ -17,11 +17,11 @@ repos:
     rev: v2.7.4
     hooks:
       - id: pyupgrade
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.6.4
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.6.4
     hooks:
       - id: isort
-  - repo: https://github.com/ambv/black
+  - repo: https://github.com/psf/black
     rev: 20.8b1
     hooks:
       - id: black
