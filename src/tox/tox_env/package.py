@@ -11,6 +11,7 @@ from packaging.requirements import Requirement
 from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
 from tox.plugin.impl import impl
+from tox.report import ToxHandler
 
 from .api import ToxEnv
 
@@ -20,8 +21,10 @@ if TYPE_CHECKING:
 
 
 class PackageToxEnv(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
-        super().__init__(conf, core, options, journal)
+    def __init__(
+        self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
+    ) -> None:
+        super().__init__(conf, core, options, journal, log_handler)
         self.recreate_package = options.no_recreate_pkg is False if options.recreate else False
 
     @abstractmethod

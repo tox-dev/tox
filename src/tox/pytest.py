@@ -111,12 +111,12 @@ class ToxProject:
         files: Dict[str, Any],
         base: Optional[Path],
         path: Path,
-        capsys: CaptureFixture,
+        capfd: CaptureFixture,
         monkeypatch: MonkeyPatch,
     ) -> None:
         self.path: Path = path
         self.monkeypatch: MonkeyPatch = monkeypatch
-        self._capsys = capsys
+        self._capfd = capfd
         self._setup_files(self.path, base, files)
 
     @staticmethod
@@ -162,7 +162,7 @@ class ToxProject:
     def run(self, *args: str) -> "ToxRunOutcome":
         with self.chdir():
             state = None
-            self._capsys.readouterr()  # start with a clean state - drain
+            self._capfd.readouterr()  # start with a clean state - drain
             code = None
             state = None
 
@@ -185,7 +185,7 @@ class ToxProject:
                     code = exception.code
                 if code is None:
                     raise RuntimeError("exit code not set")
-            out, err = self._capsys.readouterr()
+            out, err = self._capfd.readouterr()
             return ToxRunOutcome(args, self.path, code, out, err, state)
 
     def __repr__(self) -> str:
@@ -269,10 +269,10 @@ class ToxProjectCreator(Protocol):
 
 
 @pytest.fixture(name="tox_project")
-def init_fixture(tmp_path: Path, capsys: CaptureFixture, monkeypatch: MonkeyPatch) -> ToxProjectCreator:
+def init_fixture(tmp_path: Path, capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> ToxProjectCreator:
     def _init(files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:
         """create tox  projects"""
-        return ToxProject(files, base, tmp_path / "p", capsys, monkeypatch)
+        return ToxProject(files, base, tmp_path / "p", capfd, monkeypatch)
 
     return _init  # noqa
 
@@ -393,7 +393,7 @@ class IndexServer:
                         pass
 
                 # important to keep draining the stdout, otherwise once the buffer is full Windows blocks the processg s
-                self._stdout_drain = Thread(target=_keep_draining)
+                self._stdout_drain = Thread(target=_keep_draining, name="tox-test-stdout-drain")
                 self._stdout_drain.start()
                 break
 

@@ -2,12 +2,13 @@
 import time
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterator, List, Optional, Sequence, Union
 
 from colorama import Fore
 
 from tox.execute import Outcome
 from tox.journal import write_journal
+from tox.session.cmd.run.single import ToxEnvRunResult
 from tox.session.state import State
 
 
@@ -95,27 +96,30 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
     )
 
 
-def run_and_report(state: State, result: Iterator[Tuple[str, Tuple[int, List[Outcome], float]]]) -> int:
-    status_codes: Dict[str, Tuple[int, float, List[float]]] = {}
-    for name, (code, outcomes, duration) in result:
-        status_codes[name] = code, duration, [o.elapsed for o in outcomes]
+def run_and_report(state: State, result: Iterator[ToxEnvRunResult]) -> int:
+    # manifest the results
+    name_to_run = {r.name: r for r in result}
+    runs = [name_to_run[n] for n in list(state.env_list(everything=False))]
+    # write the journal
     write_journal(getattr(state.options, "result_json", None), state.journal)
-    return report(state.options.start, status_codes, state.options.is_colored)
+    # report the outcome
+    return report(state.options.start, runs, state.options.is_colored)
 
 
-def report(start: float, status_dict: Dict[str, Tuple[int, float, List[float]]], is_colored: bool) -> int:
+def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
     def _print(color: int, message: str) -> None:
         print(f"{color if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
     end = time.monotonic()
     all_ok = True
-    for name, (status, duration_one, duration_individual) in status_dict.items():
-        ok = status == Outcome.OK
-        msg = "OK " if ok else f"FAIL code {status}"
+    for run in runs:
+        ok = run.code == Outcome.OK
+        msg = ("SKIP" if run.skipped else "OK") if ok else f"FAIL code {run.code}"
+        duration_individual = [o.elapsed for o in run.outcomes]
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if len(duration_individual) else ""
-        setup = duration_one - sum(duration_individual)
-        out = f"  {name}: {msg}({duration_one:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
-        _print(Fore.GREEN if ok else Fore.RED, out)
+        setup = run.duration - sum(duration_individual)
+        out = f"  {run.name}: {msg} ({run.duration:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
+        _print((Fore.YELLOW if run.skipped else Fore.GREEN) if ok else Fore.RED, out)
         all_ok = ok and all_ok
     duration = end - start
     if all_ok:

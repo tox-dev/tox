@@ -6,13 +6,13 @@ import logging
 import os
 from argparse import ArgumentParser, ArgumentTypeError
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from typing import Callable, Dict, Iterator, List, Set, Tuple, cast
+from typing import Dict, Iterator, List, Optional, Set, cast
 
 from tox.config.cli.parser import ToxParser
 from tox.config.types import EnvList
 from tox.execute import Outcome
 from tox.plugin.impl import impl
-from tox.session.cmd.run.single import run_one
+from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.session.common import env_list_flag
 from tox.session.state import State
 from tox.util.cpu import auto_detect_cpus
@@ -36,14 +36,17 @@ def tox_add_option(parser: ToxParser) -> None:
     parallel_flags(our, default_parallel=auto_detect_cpus())
 
 
-def parse_num_processes(str_value):
+def parse_num_processes(str_value: str) -> Optional[int]:
     if str_value == "all":
         return None
     if str_value == "auto":
         return auto_detect_cpus()
-    value = int(str_value)
+    try:
+        value = int(str_value)
+    except ValueError:
+        raise ArgumentTypeError(f"value must be a positive number, is {str_value}")
     if value < 0:
-        raise ArgumentTypeError("value must be positive")
+        raise ArgumentTypeError(f"value must be positive, is {value}")
     return value
 
 
@@ -79,19 +82,21 @@ def run_parallel(state: State) -> int:
     return run_and_report(state, _execute_parallel(state))
 
 
-def _execute_parallel(state: State) -> Iterator[Tuple[str, Tuple[int, List[Outcome], float]]]:
+def _execute_parallel(state: State) -> Iterator[ToxEnvRunResult]:
     options = state.options
-    live_out = options.parallel_live
-    show_progress = not options.parallel_no_spinner and not live_out and options.verbosity > 2
-    with Spinner(enabled=show_progress, colored=state.options.is_colored) as spinner:
-        spinner_name_done: Callable[[str], None] = spinner.skip if options.no_test else spinner.succeed
+    show_progress = not options.parallel_no_spinner and not options.parallel_live and options.verbosity > 2
+    with Spinner(enabled=show_progress, colored=state.options.is_colored, stream=state.log_handler.stdout) as spinner:
         to_run_list = list(state.env_list())
         max_parallel = options.parallel
-        executor = ThreadPoolExecutor(len(to_run_list) if max_parallel is None else max_parallel, "tox-parallel")
+        executor = ThreadPoolExecutor(
+            max_workers=len(to_run_list) if max_parallel is None else max_parallel,
+            thread_name_prefix="tox-parallel",
+        )
         try:
             future_to_name: Dict[Future, str] = {}
             completed: Set[str] = set()
             envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
+            suspend = state.options.parallel_live is False
             while True:
                 env_list = next(envs_to_run_generator, [])
                 if not env_list and not future_to_name:
@@ -99,21 +104,35 @@ def _execute_parallel(state: State) -> Iterator[Tuple[str, Tuple[int, List[Outco
                 for env in env_list:  # queue all available
                     spinner.add(env)
                     tox_env = state.tox_env(env)
-                    if live_out is False:
-                        tox_env.hide_display()
-                    future = executor.submit(run_one, tox_env, options.recreate, options.no_test)
+                    future = executor.submit(run_one, tox_env, options.recreate, options.no_test, suspend)
                     future_to_name[future] = env
 
                 future = next(as_completed(future_to_name))
-                name = future_to_name.pop(future)
-                code, outcomes, duration = future.result()
-                completed.add(name)
-                success = code == Outcome.OK
-                if live_out is False:
-                    state.tox_env(env).resume_display(backfill=not success)
-                (spinner_name_done if outcomes else spinner.fail)(name)
+                future_to_name.pop(future)
+                result: ToxEnvRunResult = future.result()
+                completed.add(result.name)
 
-                yield name, (code, outcomes, duration)
+                success = result.code == Outcome.OK
+                if success:
+                    if result.skipped:
+                        done = spinner.skip
+                    else:
+                        done = spinner.succeed
+                else:
+                    done = spinner.fail
+                done(result.name)
+
+                if options.parallel_live is False:  # only if not already synced
+                    tox_env = state.tox_env(result.name)
+                    out_err = tox_env.close_and_read_out_err()  # sync writes from buffer to stdout/stderr
+                    has_package = tox_env.package_env is not None
+                    pkg_out_err = tox_env.package_env.close_and_read_out_err() if has_package else None
+                    if not success or tox_env.conf["parallel_show_output"]:
+                        if pkg_out_err is not None:  # first show package build
+                            state.log_handler.write_out_err(pkg_out_err)
+                        if out_err is not None:  # first show package build
+                            state.log_handler.write_out_err(out_err)
+                yield result
         except KeyboardInterrupt:
             logger.error(f"[{os.getpid()}] KeyboardInterrupt parallel - stopping children")
         executor.shutdown(wait=False)

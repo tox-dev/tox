@@ -46,7 +46,6 @@ def tox_add_option(parser: ToxParser) -> None:
         default=None,
         of_type=Path,
     )
-    our.add_argument("-c", metavar="CONFIGFILE", help="show live configuration", dest="config_file", default="")
     env_list_flag(our)
     env_run_create_flags(our)
     parallel_flags(our, default_parallel=OFF_VALUE)

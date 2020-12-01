@@ -4,22 +4,22 @@ A tox run environment that handles the Python language.
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Dict, List, NoReturn, Union, cast
+from typing import Any, Dict, List, Union, cast
 
 from packaging.requirements import Requirement
 
 from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
-from tox.tox_env.errors import Skip
+from tox.report import ToxHandler
 
 from ..runner import RunToxEnv
-from .api import NoInterpreter, Python, PythonDep
+from .api import Python, PythonDep
 
 
 class PythonRun(Python, RunToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal):
-        super().__init__(conf, core, options, journal)
+    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler):
+        super().__init__(conf, core, options, journal, log_handler)
         self._packages: List[PythonDep] = []
 
     def register_config(self) -> None:
@@ -52,19 +52,19 @@ class PythonRun(Python, RunToxEnv, ABC):
             desc="skip running missing interpreters",
         )
 
-    def no_base_python_found(self, base_pythons: List[str]) -> NoReturn:
-        if self.core["skip_missing_interpreters"]:
-            raise Skip
-        raise NoInterpreter(base_pythons)
-
     def setup(self) -> None:
         """setup the tox environment"""
         super().setup()
         self.install_deps()
         if self.package_env is not None:
-            package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
+            with self.package_env.display_context(suspend=self.has_display_suspended):
+                package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
             self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
         self.install_package()
+
+    @property
+    def has_display_suspended(self) -> bool:
+        return self._suspended_out_err is not None
 
     def install_deps(self) -> None:
         self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
@@ -77,7 +77,8 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def get_package(self) -> List[PythonDep]:
         if self.package_env is not None:
-            package: List[PythonDep] = [PythonDep(p) for p in self.package_env.perform_packaging()]
+            with self.package_env.display_context(suspend=self.has_display_suspended):
+                package: List[PythonDep] = [PythonDep(p) for p in self.package_env.perform_packaging()]
         else:
             package = [PythonDep(d) for d in self.get_pkg_no_env()] if self.has_package else []
         self._packages = package

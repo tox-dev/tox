@@ -1,16 +1,15 @@
 """
 Run tox environments in sequential order.
 """
-from typing import Iterator, List, Tuple
+from typing import Iterator
 
 from tox.config.cli.parser import ToxParser
-from tox.execute import Outcome
 from tox.plugin.impl import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
 
 from .common import env_run_create_flags, run_and_report
-from .single import run_one
+from .single import ToxEnvRunResult, run_one
 
 
 @impl
@@ -24,6 +23,11 @@ def run_sequential(state: State) -> int:
     return run_and_report(state, _execute_sequential(state))
 
 
-def _execute_sequential(state: State) -> Iterator[Tuple[str, Tuple[int, List[Outcome], float]]]:
+def _execute_sequential(state: State) -> Iterator[ToxEnvRunResult]:
     for name in state.env_list(everything=False):
-        yield name, run_one(state.tox_env(name), state.options.recreate, state.options.no_test)
+        yield run_one(
+            tox_env=state.tox_env(name),
+            recreate=state.options.recreate,
+            no_test=state.options.no_test,
+            suspend_display=False,
+        )

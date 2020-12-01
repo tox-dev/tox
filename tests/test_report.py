@@ -49,7 +49,7 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
 
     if is_debug_or_more and lines:  # assert we start with relative created, contain path
         line = lines[0]
-        int(line[: line.find(" ")])  # first element is an int number
+        int(line.split(" ")[1])  # first element is an int number
         assert f"[tox{os.sep}report.py" in line  # relative file location
 
     if color:

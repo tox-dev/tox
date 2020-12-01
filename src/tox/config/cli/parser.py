@@ -94,7 +94,6 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
 Handler = Callable[[State], int]
 
-
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
 DEFAULT_VERBOSITY = 2
 
@@ -259,7 +258,23 @@ def add_core_arguments(parser: ArgumentParser) -> None:
     add_color_flags(parser)
     add_verbosity_flags(parser)
     parser.add_argument(
-        "--workdir", dest="work_dir", metavar="dir", default=Path().absolute(), help="tox working directory"
+        "-c",
+        "--conf",
+        dest="config_file",
+        metavar="file",
+        default=None,
+        type=Path,
+        of_type=Optional[Path],
+        help="configuration file for tox (if not specified will discover one)",
+    )
+    parser.add_argument(
+        "--workdir",
+        dest="work_dir",
+        metavar="dir",
+        default=None,
+        type=Path,
+        of_type=Optional[Path],
+        help="tox working directory (if not specified will be the folder of the config file)",
     )
 
 

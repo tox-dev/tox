@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Tuple, cast
 from tox.config.sets import ConfigSet
 from tox.config.types import Command, EnvList
 from tox.journal import EnvJournal
+from tox.report import ToxHandler
 
 from .api import ToxEnv
 from .package import PackageToxEnv
@@ -15,10 +16,12 @@ if TYPE_CHECKING:
 
 
 class RunToxEnv(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
+    def __init__(
+        self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
+    ) -> None:
         self.has_package = False
         self.package_env: Optional[PackageToxEnv] = None
-        super().__init__(conf, core, options, journal)
+        super().__init__(conf, core, options, journal, log_handler)
 
     def register_config(self) -> None:
         super().register_config()
@@ -109,3 +112,8 @@ class RunToxEnv(ToxEnv, ABC):
     def packages(self) -> List[str]:
         """:returns: a list of packages installed in the environment"""
         raise NotImplementedError
+
+    def teardown(self) -> None:
+        super().teardown()
+        if self.package_env is not None:
+            self.package_env.teardown()

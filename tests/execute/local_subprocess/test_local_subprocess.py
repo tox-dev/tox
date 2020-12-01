@@ -3,8 +3,9 @@ import logging
 import os
 import subprocess
 import sys
+from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import psutil
 import pytest
@@ -13,15 +14,25 @@ from pytest_mock import MockerFixture
 
 from tox.execute.api import SIGINT, Outcome
 from tox.execute.local_sub_process import CREATION_FLAGS, LocalSubProcessExecutor
-from tox.execute.request import ExecuteRequest
+from tox.execute.request import ExecuteRequest, StdinSource
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+from tox.report import NamedBytesIO
+
+
+class FakeOutErr:
+    def __init__(self) -> None:
+        self.out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
+
+    def read_out_err(self) -> Tuple[str, str]:
+        out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)  # type: ignore[attr-defined]
+        err_got = self.out_err[1].buffer.getvalue().decode(self.out_err[1].encoding)  # type: ignore[attr-defined]
+        return out_got, err_got
 
 
 @pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
 @pytest.mark.parametrize(["out", "err"], [("out", "err"), ("", "")], ids=["simple", "nothing"])
 @pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
 def test_local_execute_basic_pass(
-    capsys: CaptureFixture,
     caplog: LogCaptureFixture,
     os_env: Dict[str, str],
     out: str,
@@ -30,17 +41,21 @@ def test_local_execute_basic_pass(
     color: bool,
 ) -> None:
     caplog.set_level(logging.NOTSET)
-    executor = LocalSubProcessExecutor()
+    executor = LocalSubProcessExecutor(colored=color)
     code = f"import sys; print({repr(out)}, end=''); print({repr(err)}, end='', file=sys.stderr)"
-    request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, allow_stdin=False)
-    outcome = executor.__call__(request, show_on_standard=show, colored=color)
-
-    assert bool(outcome) is True
+    request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF)
+    out_err = FakeOutErr()
+    with executor.call(request, show=show, out_err=out_err.out_err) as status:
+        pass
+    outcome = status.outcome
+    assert outcome is not None
+    assert bool(outcome) is True, outcome
     assert outcome.exit_code == Outcome.OK
     assert outcome.err == err
     assert outcome.out == out
     assert outcome.request == request
-    out_got, err_got = capsys.readouterr()
+
+    out_got, err_got = out_err.read_out_err()
     if show:
         assert out_got == out
         expected = (f"{Fore.RED}{err}{Fore.RESET}" if color else err) if err else ""
@@ -51,32 +66,34 @@ def test_local_execute_basic_pass(
     assert not caplog.records
 
 
-def test_local_execute_basic_pass_show_on_standard_newline_flush(
-    capsys: CaptureFixture, caplog: LogCaptureFixture
-) -> None:
+def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
-    executor = LocalSubProcessExecutor()
+    executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(
         cmd=[sys.executable, "-c", "import sys; print('out'); print('yay')"],
         cwd=Path(),
         env=os.environ.copy(),
-        allow_stdin=False,
+        stdin=StdinSource.OFF,
     )
-    outcome = executor.__call__(request, show_on_standard=True, colored=False)
+    out_err = FakeOutErr()
+    with executor.call(request, show=True, out_err=out_err.out_err) as status:
+        pass
+    outcome = status.outcome
+    assert outcome is not None
     assert repr(outcome)
-    assert bool(outcome) is True
+    assert bool(outcome) is True, outcome
     assert outcome.exit_code == Outcome.OK
     assert not outcome.err
     assert outcome.out == f"out{os.linesep}yay{os.linesep}"
-    out, err = capsys.readouterr()
+    out, err = out_err.read_out_err()
     assert out == f"out{os.linesep}yay{os.linesep}"
     assert not err
     assert not caplog.records
 
 
-def test_local_execute_write_a_lot(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
+def test_local_execute_write_a_lot(caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
     count = 10000
-    executor = LocalSubProcessExecutor()
+    executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(
         cmd=[
             sys.executable,
@@ -92,50 +109,57 @@ def test_local_execute_write_a_lot(capsys: CaptureFixture, caplog: LogCaptureFix
         ],
         cwd=Path(),
         env=os_env,
-        allow_stdin=False,
+        stdin=StdinSource.OFF,
     )
-    outcome = executor.__call__(request, show_on_standard=False, colored=False)
-    assert bool(outcome)
+    out_err = FakeOutErr()
+    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+        pass
+    outcome = status.outcome
+    assert outcome is not None
+    assert bool(outcome), outcome
     expected_out = f"{'o' * count}{os.linesep}{'b' * count}{os.linesep}"
     assert outcome.out == expected_out
     expected_err = f"{'e' * count}{os.linesep}{'a' * count}{os.linesep}"
     assert outcome.err == expected_err
 
 
-def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
+def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.chdir(Path(__file__).parents[3])
     caplog.set_level(logging.NOTSET)
-    executor = LocalSubProcessExecutor()
+    executor = LocalSubProcessExecutor(colored=False)
     cwd = Path().absolute()
     cmd = [
         sys.executable,
         "-c",
         "import sys; print('out', end=''); print('err', file=sys.stderr, end=''); sys.exit(3)",
     ]
-    request = ExecuteRequest(cmd=cmd, cwd=cwd, env=os.environ.copy(), allow_stdin=False)
+    request = ExecuteRequest(cmd=cmd, cwd=cwd, env=os.environ.copy(), stdin=StdinSource.OFF)
 
     # run test
-    outcome = executor.__call__(request, show_on_standard=False, colored=False)
+    out_err = FakeOutErr()
+    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+        pass
+    outcome = status.outcome
+    assert outcome is not None
 
     assert repr(outcome)
 
     # assert no output, no logs
-    out, err = capsys.readouterr()
+    out, err = out_err.read_out_err()
     assert not out
     assert not err
     assert not caplog.records
 
     # assert return object
-    assert bool(outcome) is False
+    assert bool(outcome) is False, outcome
     assert outcome.exit_code == 3
     assert outcome.err == "err"
     assert outcome.out == "out"
     assert outcome.request == request
 
     # asset fail
-    logger = logging.getLogger(__name__)
     with pytest.raises(SystemExit) as context:
-        outcome.assert_success(logger)
+        outcome.assert_success()
     # asset fail
     assert context.value.code == 3
 
@@ -147,7 +171,7 @@ def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixt
     assert len(caplog.records) == 1
     record = caplog.records[0]
     assert record.levelno == logging.CRITICAL
-    assert record.msg == "exit %d (%.2f seconds) %s> %s"
+    assert record.msg == "exit %s (%.2f seconds) %s> %s"
     _code, _duration, _cwd, _cmd = record.args
     assert _code == 3
     assert _cwd == cwd
@@ -158,11 +182,15 @@ def test_local_execute_basic_fail(caplog: LogCaptureFixture, capsys: CaptureFixt
 
 def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
     caplog.set_level(logging.NOTSET)
-    executor = LocalSubProcessExecutor()
-    request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, allow_stdin=False)
-    outcome = executor.__call__(request, show_on_standard=False, colored=False)
+    executor = LocalSubProcessExecutor(colored=False)
+    request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, stdin=StdinSource.OFF)
+    out_err = FakeOutErr()
+    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+        pass
+    outcome = status.outcome
+    assert outcome is not None
 
-    assert bool(outcome) is False
+    assert bool(outcome) is False, outcome
     assert outcome.exit_code != Outcome.OK
     assert outcome.out == ""
     assert outcome.err == ""
@@ -220,10 +248,14 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     mocker.patch("sys.stdout.isatty", return_value=tty)
     mocker.patch("sys.stderr.isatty", return_value=tty)
 
-    executor = LocalSubProcessExecutor()
+    executor = LocalSubProcessExecutor(colored=False)
     cmd: List[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
-    request = ExecuteRequest(cmd=cmd, allow_stdin=True, cwd=Path.cwd(), env=dict(os.environ))
-    outcome = executor.__call__(request, show_on_standard=False, colored=False)
+    request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ))
+    out_err = FakeOutErr()
+    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+        pass
+    outcome = status.outcome
+    assert outcome is not None
 
     assert outcome
     info = json.loads(outcome.out)

@@ -4,6 +4,7 @@
 __pycache__
 .eggs
 /src/tox/version.py
+/dev
 build
 dist
 *.egg-info

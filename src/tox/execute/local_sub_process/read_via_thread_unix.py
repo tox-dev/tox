@@ -11,8 +11,8 @@ STOP_EVENT_CHECK_PERIODICITY_IN_MS = 0.01  # pragma: win32 no cover
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], None]) -> None:
-        super().__init__(file_no, handler)
+    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, on_exit_drain: bool) -> None:
+        super().__init__(file_no, handler, name, on_exit_drain)
 
     def _read_stream(self) -> None:
         while not self.stop.is_set():
@@ -22,7 +22,10 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
             if ready:
                 data = os.read(self.file_no, 1)
                 if data:
-                    self.handler(data)
+                    try:
+                        self.handler(data)
+                    except Exception:  # noqa
+                        pass
 
     def _drain_stream(self) -> bytes:
         result = bytearray()  # on closed file read returns empty

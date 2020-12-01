@@ -24,4 +24,4 @@ def test_no_tox_ini(tox_project: ToxProjectCreator) -> None:
     project = tox_project({})
     outcome = project.run("l")
     # assume an empty tox.ini at the cwd level
-    assert outcome.state.options.work_dir == project.path
+    assert outcome.state.options.work_dir is None

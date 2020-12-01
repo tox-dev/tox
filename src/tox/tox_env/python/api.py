@@ -4,7 +4,7 @@ Declare the abstract base class for tox environments that handle the Python lang
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, NoReturn, Optional, Sequence, Union, cast
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Union, cast
 
 from packaging.requirements import Requirement
 from virtualenv.discovery.py_spec import PythonSpec
@@ -13,8 +13,9 @@ from tox.config.cli.parser import Parsed
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
+from tox.report import ToxHandler
 from tox.tox_env.api import ToxEnv
-from tox.tox_env.errors import Fail, Recreate
+from tox.tox_env.errors import Fail, Recreate, Skip
 
 
 class VersionInfo(NamedTuple):
@@ -60,10 +61,12 @@ PythonDeps = Sequence[PythonDep]
 
 
 class Python(ToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal) -> None:
+    def __init__(
+        self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+    ) -> None:
         self._base_python: Optional[PythonInfo] = None
         self._base_python_searched: bool = False
-        super().__init__(conf, core, options, journal)
+        super().__init__(conf, core, options, journal, log_handler)
 
     def register_config(self) -> None:
         super().register_config()
@@ -153,7 +156,9 @@ class Python(ToxEnv, ABC):
             self._base_python_searched = True
             self._base_python = self._get_python(base_pythons)
             if self._base_python is None:
-                self.no_base_python_found(base_pythons)
+                if self.core["skip_missing_interpreters"]:
+                    raise Skip
+                raise NoInterpreter(base_pythons)
             if self.journal:
                 value = {
                     "executable": str(self._base_python.executable),
@@ -166,10 +171,6 @@ class Python(ToxEnv, ABC):
                 }
                 self.journal["python"] = value
         return cast(PythonInfo, self._base_python)
-
-    @abstractmethod
-    def no_base_python_found(self, base_pythons: List[str]) -> NoReturn:
-        raise NotImplementedError
 
     @abstractmethod
     def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
@@ -208,4 +209,7 @@ class NoInterpreter(Fail):
     """could not find interpreter"""
 
     def __init__(self, base_pythons: List[str]) -> None:
-        self.python = base_pythons
+        self.base_pythons = base_pythons
+
+    def __str__(self) -> str:
+        return f"could not find python interpreter matching any of the specs {', '.join(self.base_pythons)}"

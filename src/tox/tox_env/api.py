@@ -7,14 +7,17 @@ import re
 import shutil
 import sys
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
+from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Union, cast
+from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Sequence, Tuple, Union, cast
 
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
-from tox.execute.api import Execute, Outcome
+from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
 from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
+from tox.report import OutErr, ToxHandler
 from tox.tox_env.errors import Recreate
 
 from .info import Info
@@ -22,53 +25,39 @@ from .info import Info
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
 
-
-class EnvLogger(logging.Logger):
-    def __init__(self, name: str):
-        super().__init__(name)
-        self.enabled = True
-        self._collected: List[logging.LogRecord] = []
-
-    def handle(self, record: logging.LogRecord) -> None:
-        if self.enabled:
-            super().handle(record)
-        else:
-            self._collected.append(record)
-
-    def drain_collected(self, backfill: bool) -> None:
-        self.enabled = True
-        if backfill:
-            for record in self._collected:
-                self.handle(record)
-        self._collected.clear()
-
-
-logging.setLoggerClass(EnvLogger)
+LOGGER = logging.getLogger(__name__)
 
 
 class ToxEnv(ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal) -> None:
+    def __init__(
+        self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
+    ) -> None:
         self.journal = journal
         self.conf: ConfigSet = conf
         self.core: ConfigSet = core
         self.options = options
-        self._executor = self.executor()
+        self._executor: Optional[Execute] = None
         self.register_config()
         self._cache = Info(self.conf["env_dir"])
         self._paths: List[Path] = []
-
-        self.logger: EnvLogger = cast(EnvLogger, logging.getLogger(self.conf["env_name"]))
-        self._hidden_outcomes: List[Outcome] = []
-
+        self._hidden_outcomes: Optional[List[Outcome]] = []
+        self.log_handler = log_handler
         self._env_vars: Optional[Dict[str, str]] = None
+        self._suspended_out_err: Optional[OutErr] = None
         self.setup_done = False
         self.clean_done = False
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
 
-    @abstractmethod
+    @property
     def executor(self) -> Execute:
+        if self._executor is None:
+            self._executor = self.build_executor()
+        return self._executor
+
+    @abstractmethod
+    def build_executor(self) -> Execute:
         raise NotImplementedError
 
     def register_config(self) -> None:
@@ -184,7 +173,7 @@ class ToxEnv(ABC):
         """Ensure exists and empty"""
         env_tmp_dir: Path = self.conf["env_tmp_dir"]
         if env_tmp_dir.exists():
-            self.logger.debug("removing %s", env_tmp_dir)
+            LOGGER.debug("removing %s", env_tmp_dir)
             shutil.rmtree(env_tmp_dir, ignore_errors=True)
         env_tmp_dir.mkdir(parents=True)
 
@@ -193,7 +182,7 @@ class ToxEnv(ABC):
             return
         env_dir: Path = self.conf["env_dir"]
         if env_dir.exists():
-            self.logger.info("remove tox env folder %s", env_dir)
+            LOGGER.info("remove tox env folder %s", env_dir)
             shutil.rmtree(env_dir)
         self._cache.reset()
         self.setup_done, self.clean_done = False, True
@@ -217,22 +206,45 @@ class ToxEnv(ABC):
         set_env: Dict[str, str] = self.conf["set_env"]
         result.update(set_env)
         result["PATH"] = os.pathsep.join([str(i) for i in self._paths] + os.environ.get("PATH", "").split(os.pathsep))
+        columns, lines = shutil.get_terminal_size(fallback=(-1, -1))  # if cannot get (-1) do not set env-vars
+        if columns != -1:  # pragma: no branch # no easy way to control get_terminal_size without env-vars
+            result["COLUMNS"] = str(columns)
+        if columns != 1:  # pragma: no branch # no easy way to control get_terminal_size without env-vars
+            result["LINES"] = str(lines)
         self._env_vars = result
         return result
 
     def execute(
         self,
         cmd: Sequence[Union[Path, str]],
-        allow_stdin: bool,
-        show_on_standard: Optional[bool] = None,
+        stdin: StdinSource,
+        show: Optional[bool] = None,
         cwd: Optional[Path] = None,
         run_id: str = "",
+        executor: Optional[Execute] = None,
     ) -> Outcome:
+        with self.execute_async(cmd, stdin, show, cwd, run_id, executor) as status:
+            while status.exit_code is None:
+                status.wait()
+        if status.outcome is None:
+            raise RuntimeError
+        return status.outcome
+
+    @contextmanager
+    def execute_async(
+        self,
+        cmd: Sequence[Union[Path, str]],
+        stdin: StdinSource,
+        show: Optional[bool] = None,
+        cwd: Optional[Path] = None,
+        run_id: str = "",
+        executor: Optional[Execute] = None,
+    ) -> Iterator[ExecuteStatus]:
         if cwd is None:
             cwd = self.core["tox_root"]
-        if show_on_standard is None:
-            show_on_standard = self.options.verbosity > 3
-        request = ExecuteRequest(cmd, cwd, self.environment_variables, allow_stdin)
+        if show is None:
+            show = self.options.verbosity > 3
+        request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin)
         if _CWD == request.cwd:
             repr_cwd = ""
         else:
@@ -240,38 +252,51 @@ class ToxEnv(ABC):
                 repr_cwd = f" {_CWD.relative_to(cwd)}"
             except ValueError:
                 repr_cwd = str(cwd)
-        self.logger.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd)
-        outcome = self._executor(
+        LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd)
+        out_err = self.log_handler.stdout, self.log_handler.stderr
+        if executor is None:
+            executor = self.executor
+        with executor.call(
             request=request,
-            show_on_standard=show_on_standard and self.logger.enabled,
-            colored=self.options.colored,
-        )
-        if self.logger.enabled is False and show_on_standard:
-            self._hidden_outcomes.append(outcome)
-        if self.journal:
-            self.journal.add_execute(outcome, run_id)
-        return outcome
+            show=show,
+            out_err=out_err,
+        ) as execute_status:
+            yield execute_status
+        if show and self._hidden_outcomes is not None:
+            if execute_status.outcome is not None:  # if it gets cancelled before even starting
+                self._hidden_outcomes.append(execute_status.outcome)
+        if self.journal and execute_status.outcome is not None:
+            self.journal.add_execute(execute_status.outcome, run_id)
 
     @staticmethod
     @abstractmethod
     def id() -> str:
         raise NotImplementedError
 
-    def hide_display(self) -> None:
-        """No longer show output on the standard output, but still collect"""
-        # first let's collect the log records
-        # and the
-        self.logger.enabled = False
+    @contextmanager
+    def display_context(self, suspend: bool) -> Iterator[None]:
+        with self.log_context():
+            with self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
+                if suspend:  # only set if suspended
+                    self._suspended_out_err = out_err
+                yield
 
-    def resume_display(self, backfill: bool) -> None:
-        """No longer show"""
-        show_output: bool = self.conf["parallel_show_output"] or backfill
-        self.logger.drain_collected(show_output)
-        if show_output:
-            for outcome in self._hidden_outcomes:
-                sys.stdout.write(outcome.out)
-                sys.stderr.write(outcome.err)
-        self._hidden_outcomes.clear()
+    def close_and_read_out_err(self) -> Optional[Tuple[bytes, bytes]]:
+        if self._suspended_out_err is None:
+            return None
+        (out, err), self._suspended_out_err = self._suspended_out_err, None
+        out_b, err_b = cast(BytesIO, out.buffer).getvalue(), cast(BytesIO, err.buffer).getvalue()
+        out.close()
+        err.close()
+        return out_b, err_b
+
+    @contextmanager
+    def log_context(self) -> Iterator[None]:
+        with self.log_handler.with_context(cast(str, self.conf.name)):
+            yield
+
+    def teardown(self) -> None:
+        """Any cleanup operation on environment done"""
 
 
 _CWD = Path.cwd()
