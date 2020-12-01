@@ -32,7 +32,7 @@ class EnvJournal:
                 "start": outcome.start,
                 "end": outcome.end,
             }
-            if run_id.startswith("commands") or run_id == "build":
+            if run_id.startswith("commands") or run_id.startswith("build"):
                 tests.append(one)
             else:
                 setup.append(one)

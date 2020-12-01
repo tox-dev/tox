@@ -11,9 +11,10 @@ from virtualenv.run.session import Session
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed
 from tox.config.sets import ConfigSet
-from tox.execute.api import Execute, Outcome
+from tox.execute.api import Execute, Outcome, StdinSource
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.journal import EnvJournal
+from tox.report import ToxHandler
 
 from ..api import Python, PythonDeps, PythonInfo
 
@@ -21,9 +22,11 @@ from ..api import Python, PythonDeps, PythonInfo
 class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip"""
 
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal) -> None:
+    def __init__(
+        self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+    ) -> None:
         self._virtualenv_session: Optional[Session] = None  # type: ignore[no-any-unimported]
-        super().__init__(conf, core, options, journal)
+        super().__init__(conf, core, options, journal, log_handler)
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()
@@ -37,14 +40,15 @@ class VirtualEnv(Python, ABC):
         env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "1"
         return env
 
-    def executor(self) -> Execute:
-        return LocalSubProcessExecutor()
+    def build_executor(self) -> Execute:
+        return LocalSubProcessExecutor(self.options.is_colored)
 
     @property
     def session(self) -> Session:  # type: ignore[no-any-unimported]
         if self._virtualenv_session is None:
             args = [
                 "--clear",
+                "--no-periodic-update",
                 str(cast(Path, self.conf["env_dir"])),
             ]
             base_python: List[str] = self.conf["base_python"]
@@ -61,20 +65,19 @@ class VirtualEnv(Python, ABC):
         self.session.run()
 
     def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
-        interpreter = self.creator.interpreter
         try:
-            return PythonInfo(
-                executable=Path(interpreter.system_executable),
-                implementation=interpreter.implementation,
-                version_info=interpreter.version_info,
-                version=interpreter.version,
-                is_64=(interpreter.architecture == 64),
-                platform=interpreter.platform,
-                extra_version_info=None,
-            )
-        except RuntimeError:
-            pass
-        return None
+            interpreter = self.creator.interpreter
+        except RuntimeError:  # if can't find
+            return None
+        return PythonInfo(
+            executable=Path(interpreter.system_executable),
+            implementation=interpreter.implementation,
+            version_info=interpreter.version_info,
+            version=interpreter.version,
+            is_64=(interpreter.architecture == 64),
+            platform=interpreter.platform,
+            extra_version_info=None,
+        )
 
     def paths(self) -> List[Path]:
         """Paths to add to the executable"""
@@ -105,23 +108,23 @@ class VirtualEnv(Python, ABC):
             install_command.extend(("--no-build-isolation", "-e"))
         install_command.extend(str(i) for i in packages)
         result = self.perform_install(install_command)
-        result.assert_success(self.logger)
+        result.assert_success()
 
     def perform_install(self, install_command: Sequence[str]) -> Outcome:
         return self.execute(
             cmd=install_command,
-            allow_stdin=False,
+            stdin=StdinSource.OFF,
             run_id="install",
-            show_on_standard=self.options.verbosity > DEFAULT_VERBOSITY,
+            show=self.options.verbosity > DEFAULT_VERBOSITY,
         )
 
     def get_installed_packages(self) -> List[str]:
         list_command = [self.creator.exe, "-I", "-m", "pip", "freeze", "--all"]
         result = self.execute(
             cmd=list_command,
-            allow_stdin=False,
+            stdin=StdinSource.OFF,
             run_id="freeze",
-            show_on_standard=self.options.verbosity > DEFAULT_VERBOSITY,
+            show=self.options.verbosity > DEFAULT_VERBOSITY,
         )
-        result.assert_success(self.logger)
+        result.assert_success()
         return result.out.splitlines()

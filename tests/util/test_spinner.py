@@ -87,7 +87,7 @@ def test_spinner_report(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None
     expected = [
         f"\r{spin.CLEAR_LINE}{Fore.GREEN}ok: OK ✔ in 0 seconds{Fore.RESET}",
         f"\r{spin.CLEAR_LINE}{Fore.RED}fail: FAIL ✖ in 0 seconds{Fore.RESET}",
-        f"\r{spin.CLEAR_LINE}{Fore.WHITE}skip: SKIP ⚠ in 0 seconds{Fore.RESET}",
+        f"\r{spin.CLEAR_LINE}{Fore.YELLOW}skip: SKIP ⚠ in 0 seconds{Fore.RESET}",
         f"\r{spin.CLEAR_LINE}",
     ]
     assert lines == expected

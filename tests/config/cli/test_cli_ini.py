@@ -60,18 +60,18 @@ def test_ini_empty(
     monkeypatch: MonkeyPatch,
     default_options: Dict[str, Any],
 ) -> None:
-    parsed, handlers, _ = get_options("r")
+    parsed, handlers, _, __ = get_options("r")
     assert vars(parsed) == default_options
     assert parsed.verbosity == 2
     assert handlers == core_handlers
 
     empty_ini.unlink()
-    missing_parsed, _, __ = get_options("r")
+    missing_parsed, ___, _, __ = get_options("r")
     assert vars(missing_parsed) == vars(parsed)
 
 
 @pytest.fixture
-def default_options() -> Dict[str, Any]:
+def default_options(tmp_path: Path) -> Dict[str, Any]:
     return {
         "colored": "no",
         "command": "r",
@@ -90,12 +90,13 @@ def default_options() -> Dict[str, Any]:
         "skip_missing_interpreters": "config",
         "verbose": 2,
         "no_recreate_pkg": False,
-        "work_dir": Path.cwd().absolute(),
+        "work_dir": None,
+        "config_file": (tmp_path / "tox.ini").absolute(),
     }
 
 
 def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, handlers, _ = get_options("p")
+    parsed, handlers, _, __ = get_options("p")
     assert vars(parsed) == {
         "colored": "yes",
         "command": "p",
@@ -117,7 +118,8 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dic
         "result_json": None,
         "skip_missing_interpreters": "config",
         "verbose": 5,
-        "work_dir": Path.cwd().absolute(),
+        "work_dir": None,
+        "config_file": exhaustive_ini,
     }
     assert parsed.verbosity == 4
     assert handlers == core_handlers
@@ -137,13 +139,14 @@ def test_bad_cli_ini(
 ) -> None:
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
-    parsed, __, _ = get_options("r")
+    parsed, _, __, ___ = get_options("r")
     msg = (
         "PermissionError(13, 'Permission denied')"
         if sys.platform == "win32"
         else "IsADirectoryError(21, 'Is a directory')"
     )
     assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
+    default_options["config_file"] = tmp_path
     assert vars(parsed) == default_options
 
 
@@ -166,7 +169,7 @@ def test_bad_option_cli_ini(
         ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
-    parsed, _, __ = get_options("r")
+    parsed, _, __, ___ = get_options("r")
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
             to,

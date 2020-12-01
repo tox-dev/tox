@@ -38,10 +38,11 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
     def func(conf: str, override: Optional[Sequence[Override]] = None) -> Config:
         dest = tmp_path / "c"
         dest.mkdir()
-        (dest / "tox.ini").write_bytes(conf.encode("utf-8"))
+        config_file = dest / "tox.ini"
+        config_file.write_bytes(conf.encode("utf-8"))
         with monkeypatch.context() as context:
             context.chdir(tmp_path)
-        return make_config(Parsed(work_dir=dest, override=override or []), pos_args=[])
+        return make_config(Parsed(work_dir=dest, override=override or [], config_file=config_file), pos_args=[])
 
     return func
 

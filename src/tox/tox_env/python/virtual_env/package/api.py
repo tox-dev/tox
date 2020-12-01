@@ -1,20 +1,25 @@
-import json
+import os
 import sys
-from abc import ABC
+from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
+from threading import RLock
+from typing import Any, Dict, Iterator, List, NoReturn, Optional, Sequence, Set, Tuple, Union, cast
 
-import toml
 from packaging.markers import Variable
 from packaging.requirements import Requirement
 
 from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
+from tox.execute.api import ExecuteStatus
+from tox.execute.pep517_backend import LocalSubProcessPep517Executor
+from tox.execute.request import StdinSource
 from tox.journal import EnvJournal
-from tox.tox_env.python import helper
+from tox.report import ToxHandler
+from tox.tox_env.errors import Fail
 from tox.tox_env.python.package import PythonPackage
+from tox.util.pep517.frontend import BackendFailed, CmdStatus, ConfigSettings, Frontend, WheelResult
 
 from ..api import VirtualEnv
 
@@ -34,35 +39,45 @@ class PackageType(Enum):
     skip = 4
 
 
-class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
+class ToxCmdStatus(CmdStatus):
+    def __init__(self, execute_status: ExecuteStatus) -> None:
+        self._execute_status = execute_status
+
+    @property
+    def done(self) -> bool:
+        # 1. process died
+        status = self._execute_status
+        if status.exit_code is not None:
+            return True
+        # 2. the backend output reported back that our command is done
+        content = status.out
+        at = content.rfind(b"Backend: Write response ")
+        if at != -1 and content.find(b"\n", at) != -1:
+            return True
+        return False
+
+    def out_err(self) -> Tuple[str, str]:
+        status = self._execute_status
+        if status is None or status.outcome is None:
+            return "", ""
+        return status.outcome.out_err()
+
+
+class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
     """local file system python virtual environment via the virtualenv package"""
 
-    LEGACY_BUILD_BACKEND = "setuptools.build_meta:__legacy__"
-    LEGACY_REQUIRES = ["setuptools >= 40.8.0", "wheel"]
-
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal) -> None:
-        super().__init__(conf, core, options, journal)
-        backend_module, backend_object, requires = self.load_builder_and_requires()
-        self._requires: List[Requirement] = requires
-        self.build_backend_module: str = backend_module
-        self.build_backend_obj: Optional[str] = backend_object
+    def __init__(
+        self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+    ) -> None:
+        VirtualEnv.__init__(self, conf, core, options, journal, log_handler)
+        Frontend.__init__(self, *Frontend.create_args_from_folder(core["tox_root"]))
         self._distribution_meta: Optional[PathDistribution] = None  # type: ignore[no-any-unimported]
-        self._build_requires: Optional[List[Requirement]] = None
-
-    def load_builder_and_requires(self) -> Tuple[str, Optional[str], List[Requirement]]:
-        py_project_toml = cast(Path, self.core["tox_root"]) / "pyproject.toml"
-        if py_project_toml.exists():
-            py_project = toml.load(py_project_toml)
-            build_backend = py_project.get("build-system", {}).get("build-backend", self.LEGACY_BUILD_BACKEND)
-            requires = py_project.get("build-system", {}).get("requires", self.LEGACY_REQUIRES)
-        else:
-            build_backend = self.LEGACY_BUILD_BACKEND
-            requires = self.LEGACY_REQUIRES
-        req_as_req = [Requirement(i) for i in requires]
-        build_backend_info = build_backend.split(":")
-        backend_module = build_backend_info[0]
-        backend_obj = build_backend_info[1] if len(build_backend_info) > 1 else None
-        return backend_module, backend_obj, req_as_req
+        self._build_requires: Optional[Tuple[Requirement]] = None
+        self._build_wheel_cache: Optional[WheelResult] = None
+        self._backend_executor: Optional[LocalSubProcessPep517Executor] = None
+        self._package_dependencies: Optional[List[Requirement]] = None
+        self._lock = RLock()  # can build only one package at a time
+        self._package: Optional[Path] = None
 
     def register_config(self) -> None:
         super().register_config()
@@ -79,34 +94,41 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
             desc="directory assigned to the tox environment",
         )
 
-    def requires(self) -> List[Requirement]:
-        return self._requires
+    @property
+    def meta_folder(self) -> Path:
+        meta_folder: Path = self.conf["meta_dir"]
+        meta_folder.mkdir(exist_ok=True)
+        return meta_folder
 
-    def build_requires(self) -> List[Requirement]:
-        """get_requires_for_build_sdist/get-requires-for-build-wheel"""
-        if self._build_requires is None:
+    def _ensure_meta_present(self) -> None:
+        if self._distribution_meta is None:
+            self.ensure_setup()
+            dist_info = self.prepare_metadata_for_build_wheel(self.meta_folder).metadata
+            self._distribution_meta = Distribution.at(str(dist_info))
 
-            with TemporaryDirectory() as path:
-                requires_file = Path(path) / "out.json"
-                cmd: List[Union[str, Path]] = [
-                    "python",
-                    helper.build_requires(),
-                    requires_file,
-                    self.build_backend_module,
-                ]
-                if self.build_backend_obj:
-                    cmd.append(self.build_backend_obj)
-                result = self.execute(cmd=cmd, allow_stdin=False, run_id="build requires")
-                result.assert_success(self.logger)
-                with open(str(requires_file)) as file_handler:
-                    self._build_requires = json.load(file_handler)
-        return self._build_requires
+    @abstractmethod
+    def _build_artifact(self) -> Path:
+        raise NotImplementedError
+
+    def perform_packaging(self) -> List[Path]:
+        """build_wheel/build_sdist"""
+        with self._lock:
+            if self._package is None:
+                self.ensure_setup()
+                self._package = self._build_artifact()
+        return [self._package]
 
     def get_package_dependencies(self, extras: Optional[Set[str]] = None) -> List[Requirement]:
+        with self._lock:
+            if self._package_dependencies is None:
+                self._package_dependencies = self._load_package_dependencies(extras)
+        return self._package_dependencies
+
+    def _load_package_dependencies(self, extras: Optional[Set[str]]) -> List[Requirement]:
         self._ensure_meta_present()
         if extras is None:
             extras = set()
-        result = []
+        result: List[Requirement] = []
         if self._distribution_meta is None:
             raise RuntimeError
         requires = self._distribution_meta.requires or []
@@ -132,28 +154,79 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, ABC):
                 result.append(req)
         return result
 
-    def _ensure_meta_present(self) -> None:
-        if self._distribution_meta is None:
-            self.ensure_setup()
-            self.meta_folder.mkdir(exist_ok=True)
-            cmd: List[Union[Path, str]] = [
-                "python",
-                helper.wheel_meta(),
-                self.meta_folder,
-                json.dumps(self.meta_flags),
-                self.build_backend_module,
-            ]
-            if self.build_backend_obj:
-                cmd.append(self.build_backend_obj)
-            result = self.execute(cmd=cmd, allow_stdin=False, run_id="package meta")
-            result.assert_success(self.logger)
-            dist_info = next(self.meta_folder.iterdir())
-            self._distribution_meta = Distribution.at(dist_info)
+    @property
+    def backend_executor(self) -> LocalSubProcessPep517Executor:
+        if self._backend_executor is None:
+            self._backend_executor = LocalSubProcessPep517Executor(
+                colored=self.options.is_colored,
+                cmd=self.backend_cmd,
+                env=self.environment_variables,
+                cwd=self._root,
+            )
+
+        return self._backend_executor
 
     @property
-    def meta_folder(self) -> Path:
-        return cast(Path, self.conf["meta_dir"])
+    def pkg_dir(self) -> Path:
+        return cast(Path, self.conf["pkg_dir"])
 
     @property
-    def meta_flags(self) -> Dict[str, Any]:
-        return {"config_settings": None}
+    def backend_cmd(self) -> Sequence[str]:
+        return ["python"] + self.backend_args
+
+    @property
+    def environment_variables(self) -> Dict[str, str]:
+        env = super().environment_variables
+        env["PYTHONPATH"] = os.pathsep.join(str(i) for i in self._backend_paths)
+        return env
+
+    def teardown(self) -> None:
+        if self._backend_executor is not None:
+            self._backend_executor.close()
+
+    @contextmanager
+    def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[CmdStatus]:
+        with self.execute_async(
+            cmd=self.backend_cmd,
+            cwd=self._root,
+            stdin=StdinSource.API,
+            show=None,
+            run_id=cmd,
+            executor=self.backend_executor,
+        ) as execute_status:
+            execute_status.write_stdin(f"{msg}{os.linesep}")
+            yield ToxCmdStatus(execute_status)
+        outcome = execute_status.outcome
+        if outcome is not None:
+            outcome.assert_success()
+
+    @contextmanager
+    def _wheel_directory(self) -> Iterator[Path]:
+        yield self.pkg_dir  # use our local wheel directory
+
+    def build_wheel(
+        self,
+        wheel_directory: Path,
+        config_settings: Optional[ConfigSettings] = None,
+        metadata_directory: Optional[Path] = None,
+    ) -> WheelResult:
+        # only build once a wheel per session - might need more than once if the backend doesn't
+        # support prepare metadata for wheel
+        if self._build_wheel_cache is None:
+            self._build_wheel_cache = super().build_wheel(wheel_directory, config_settings, metadata_directory)
+        return self._build_wheel_cache
+
+    def _send(self, cmd: str, missing: Any, **kwargs: Any) -> Tuple[Any, str, str]:
+        try:
+            return super()._send(cmd, missing, **kwargs)
+        except BackendFailed as exception:
+            raise Fail(exception)
+
+    def _required_command_missing(self, cmd: str) -> NoReturn:
+        try:
+            super()._required_command_missing(cmd)
+        except BackendFailed as exception:
+            raise Fail(exception)
+
+    def requires(self) -> Tuple[Requirement, ...]:
+        return self._requires

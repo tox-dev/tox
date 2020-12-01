@@ -10,11 +10,12 @@ WAIT_GENERAL = 0.1
 
 
 class ReadViaThread(ABC):
-    def __init__(self, file_no: int, handler: Callable[[bytes], None]) -> None:
+    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, on_exit_drain: bool) -> None:
         self.file_no = file_no
         self.stop = Event()
-        self.thread = Thread(target=self._read_stream)
+        self.thread = Thread(target=self._read_stream, name=f"tox-r-{name}-{file_no}")
         self.handler = handler
+        self._on_exit_drain = on_exit_drain
 
     def __enter__(self) -> "ReadViaThread":
         self.thread.start()
@@ -39,7 +40,10 @@ class ReadViaThread(ABC):
                     break  # pragma: no cover
         if exc_val is None:  # drain what remains if we were not interrupted
             try:
-                data = self._drain_stream()
+                if self._on_exit_drain:
+                    data = self._drain_stream()
+                else:
+                    data = b""
             except ValueError:  # pragma: no cover
                 pass  # pragma: no cover
             else:

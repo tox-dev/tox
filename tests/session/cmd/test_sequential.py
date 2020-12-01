@@ -1,7 +1,7 @@
 import json
 import re
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import pytest
 from re_assert import Matches
@@ -34,7 +34,7 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     reports = outcome.out.splitlines()[-3:]
     assert Matches(r"  evaluation failed :\( \(.* seconds\)") == reports[-1]
     assert Matches(r"  b: OK \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-2]
-    assert Matches(r"  a: FAIL code 1\(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-3]
+    assert Matches(r"  a: FAIL code 1 \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-3]
 
 
 @pytest.mark.timeout(60)
@@ -70,9 +70,16 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
         "version_info": list(py_info.version_info),
     }
     packaging_setup = get_cmd_exit_run_id(log_report, ".package-py", "setup")
-    assert packaging_setup == [(0, "install"), (0, "build requires"), (0, "freeze"), (0, "package meta")]
+
+    assert packaging_setup == [
+        (0, "install"),
+        (None, "_commands"),
+        (None, "get_requires_for_build_wheel"),
+        (0, "install"),
+        (0, "freeze"),
+    ]
     packaging_test = get_cmd_exit_run_id(log_report, ".package-py", "test")
-    assert packaging_test == [(0, "build")]
+    assert packaging_test == [(None, "build_wheel")]
     packaging_installed = log_report["testenvs"][".package-py"].pop("installed_packages")
     assert {i[: i.find("==")] for i in packaging_installed} == {"pip", "setuptools", "wheel"}
 
@@ -101,5 +108,5 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
     assert log_report == expected
 
 
-def get_cmd_exit_run_id(report: Dict[str, Any], name: str, group: str) -> List[Tuple[int, str]]:
+def get_cmd_exit_run_id(report: Dict[str, Any], name: str, group: str) -> List[Tuple[Union[int, None], str]]:
     return [(i["retcode"], i["run_id"]) for i in report["testenvs"][name].pop(group)]

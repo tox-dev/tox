@@ -13,6 +13,7 @@ from packaging.version import Version
 from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
+from tox.execute.api import StdinSource
 from tox.plugin.impl import impl
 from tox.session.state import State
 from tox.tox_env.python.api import PythonDep
@@ -103,5 +104,5 @@ def run_provision(deps: List[Requirement], state: State) -> int:  # noqa
     tox_env.ensure_setup(recreate=recreate)
     args: List[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
-    outcome = tox_env.execute(cmd=args, allow_stdin=True, show_on_standard=True, run_id="provision")
-    return outcome.exit_code
+    outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision")
+    return cast(int, outcome.exit_code)

@@ -1,19 +1,30 @@
 """Module declaring a command execution request."""
 import sys
+from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Sequence, Union
+
+
+class StdinSource(Enum):
+    OFF = 0
+    USER = 1
+    API = 2
+
+    @staticmethod
+    def user_only() -> "StdinSource":
+        return StdinSource.USER if sys.stdin.isatty() else StdinSource.OFF
 
 
 class ExecuteRequest:
     """Defines a commands execution request"""
 
-    def __init__(self, cmd: Sequence[Union[str, Path]], cwd: Path, env: Dict[str, str], allow_stdin: bool):
+    def __init__(self, cmd: Sequence[Union[str, Path]], cwd: Path, env: Dict[str, str], stdin: StdinSource):
         if len(cmd) == 0:
             raise ValueError("cannot execute an empty command")
         self.cmd: List[str] = [str(i) for i in cmd]
         self.cwd = cwd
         self.env = env
-        self.allow_stdin = allow_stdin
+        self.stdin = stdin
 
     @property
     def shell_cmd(self) -> str:
@@ -38,6 +49,7 @@ def shell_cmd(cmd: Sequence[str]) -> str:
 
 
 __all__ = (
+    "StdinSource",
     "ExecuteRequest",
     "shell_cmd",
 )

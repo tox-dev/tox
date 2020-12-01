@@ -4,10 +4,13 @@ import os
 import shutil
 import sys
 from subprocess import PIPE, TimeoutExpired
-from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Type
+from types import TracebackType
+from typing import TYPE_CHECKING, Generator, List, Optional, Sequence, Tuple, Type
 
-from ..api import SIGINT, ContentHandler, Execute, ExecuteInstance, Outcome
-from ..request import ExecuteRequest
+from tox.execute.stream import SyncWrite
+
+from ..api import SIGINT, Execute, ExecuteInstance, ExecuteStatus, Outcome
+from ..request import ExecuteRequest, StdinSource
 from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":  # pragma: win32 cover
@@ -35,17 +38,72 @@ WAIT_TERMINATE = 0.2
 
 
 class LocalSubProcessExecutor(Execute):
-    @staticmethod
-    def executor() -> Type[ExecuteInstance]:
-        return LocalSubProcessExecuteInstance
+    def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> ExecuteInstance:
+        return LocalSubProcessExecuteInstance(request, out, err)
+
+
+class LocalSubprocessExecuteStatus(ExecuteStatus):
+    def __init__(self, out: SyncWrite, err: SyncWrite, process: "Popen[bytes]"):
+        self._process: "Popen[bytes]" = process
+        super().__init__(out, err)
+
+    @property
+    def exit_code(self) -> Optional[int]:
+        return self._process.poll()
+
+    def wait(self, timeout: Optional[float] = None) -> None:
+        # note poll in general might deadlock if output large, but we drain in background threads so not an issue here
+        try:
+            self._process.wait(timeout=WAIT_GENERAL if timeout is None else timeout)
+        except TimeoutExpired:
+            pass
+
+    def write_stdin(self, content: str) -> None:
+        stdin = self._process.stdin
+        if stdin is not None:
+            bytes_content = content.encode()
+            stdin.write(bytes_content)
+            stdin.flush()
+
+    def close_stdin(self) -> None:
+        stdin = self._process.stdin
+        if stdin is not None:
+            stdin.close()
+
+
+class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
+    def __init__(self, out: SyncWrite, err: SyncWrite, exit_code: Optional[int]) -> None:
+        super().__init__(out, err)
+        self._exit_code = exit_code
+
+    @property
+    def exit_code(self) -> Optional[int]:
+        return self._exit_code
+
+    def wait(self, timeout: Optional[float] = None) -> None:
+        """already dead no need to wait"""
+
+    def write_stdin(self, content: str) -> None:
+        """cannot write"""
+
+    def close_stdin(self) -> None:
+        """never opened, nothing to close"""
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
-    def __init__(self, request: ExecuteRequest, out_handler: ContentHandler, err_handler: ContentHandler) -> None:
-        super().__init__(request, out_handler, err_handler)
+    def __init__(
+        self,
+        request: ExecuteRequest,
+        out: SyncWrite,
+        err: SyncWrite,
+        on_exit_drain: bool = True,
+    ) -> None:
+        super().__init__(request, out, err)
         self.process: Optional[Popen[bytes]] = None
         self._cmd: Optional[List[str]] = None
-        self._env: Optional[Dict[str, str]] = None
+        self._read_stderr: Optional[ReadViaThread] = None
+        self._read_stdout: Optional[ReadViaThread] = None
+        self._on_exit_drain = on_exit_drain
 
     @property
     def cmd(self) -> Sequence[str]:
@@ -59,54 +117,53 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self._cmd = cmd
         return self._cmd
 
-    @property
-    def env(self) -> Dict[str, str]:
-        if self._env is None:  # pragma: no branch
-            # terminal size don't pass through, if set , use the environment variables per shutil.get_terminal_size
-            env = self.request.env.copy()
-            columns, lines = shutil.get_terminal_size(fallback=(-1, -1))  # if cannot get (-1) do not set env-vars
-            if columns != -1:  # pragma: no branch # no easy way to control get_terminal_size without env-vars
-                env["COLUMNS"] = str(columns)
-            if columns != 1:  # pragma: no branch # no easy way to control get_terminal_size without env-vars
-                env["LINES"] = str(lines)
-            self._env = env
-        return self._env
-
-    def run(self) -> int:
+    def __enter__(self) -> ExecuteStatus:
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         try:
             self.process = process = Popen(
                 self.cmd,
                 stdout=next(stdout),
                 stderr=next(stderr),
-                stdin=None if self.request.allow_stdin else PIPE,
+                stdin=None if self.request.stdin is StdinSource.USER else PIPE,
                 cwd=str(self.request.cwd),
-                env=self.env,
+                env=self.request.env,
                 creationflags=CREATION_FLAGS,
             )
         except OSError as exception:
-            exit_code = exception.errno
-        else:
-            with ReadViaThread(stderr.send(process), self.err_handler) as read_stderr:
-                with ReadViaThread(stdout.send(process), self.out_handler) as read_stdout:
-                    if sys.platform == "win32":  # pragma: win32 cover
-                        process.stderr.read = read_stderr._drain_stream  # type: ignore[assignment,union-attr]
-                        process.stdout.read = read_stdout._drain_stream  # type: ignore[assignment,union-attr]
-                    # wait it out with interruptions to allow KeyboardInterrupt on Windows
-                    while process.poll() is None:
-                        try:
-                            # note poll in general might deadlock if output large
-                            # but we drain in background threads so not an issue here
-                            process.wait(timeout=WAIT_GENERAL)
-                        except TimeoutExpired:
-                            continue
-            exit_code = process.returncode
-        return exit_code
+            return LocalSubprocessExecuteFailedStatus(self._out, self._err, exception.errno)
+
+        status = LocalSubprocessExecuteStatus(self._out, self._err, process)
+        if self.request.stdin is StdinSource.OFF:
+            status.close_stdin()
+        pid = self.process.pid
+        self._read_stderr = ReadViaThread(
+            stderr.send(process), self.err_handler, name=f"err-{pid}", on_exit_drain=self._on_exit_drain
+        )
+        self._read_stderr.__enter__()
+        self._read_stdout = ReadViaThread(
+            stdout.send(process), self.out_handler, name=f"out-{pid}", on_exit_drain=self._on_exit_drain
+        )
+        self._read_stdout.__enter__()
+
+        if sys.platform == "win32":  # pragma: win32 cover
+            process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]
+            process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]
+        # wait it out with interruptions to allow KeyboardInterrupt on Windows
+        return status
+
+    def __exit__(
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+    ) -> None:
+        if self._read_stderr is not None:
+            self._read_stderr.__exit__(exc_type, exc_val, exc_tb)
+        if self._read_stdout is not None:
+            self._read_stdout.__exit__(exc_type, exc_val, exc_tb)
 
     @staticmethod
     def get_stream_file_no(key: str) -> Generator[int, "Popen[bytes]", None]:
         if sys.platform != "win32" and getattr(sys, key).isatty():  # pragma: win32 no cover
             # on UNIX if tty is set let's forward it via a pseudo terminal
+            # this allows processes running to access the host terminals traits
             import pty
 
             main, child = pty.openpty()
@@ -151,3 +208,11 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self.err_handler(err)
             return int(self.process.returncode)
         return Outcome.OK  # pragma: no cover
+
+    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
+        prev = self._out, self._err
+        if self._read_stdout is not None:
+            self._read_stdout.handler = out.handler
+        if self._read_stderr is not None:
+            self._read_stderr.handler = err.handler
+        return prev

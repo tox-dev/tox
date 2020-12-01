@@ -35,9 +35,9 @@ def show_config(state: State) -> int:
         if not keys:
             print(f"type = {type(tox_env).__name__}")
         print_conf(tox_env.conf, keys)
+        print("")
     # no print core
     if state.options.env.all or state.options.show_core:
-        print("")
         print("[tox]")
         print_conf(state.conf.core, keys)
     return 0
@@ -47,8 +47,12 @@ def print_conf(conf: ConfigSet, keys: Iterable[str]) -> None:
     for key in keys if keys else conf:
         if key not in conf:
             continue
-        value = conf[key]
-        as_str, multi_line = stringify(value)
+        try:
+            value = conf[key]
+        except Exception as exception:  # because e.g. the interpreter cannot be found
+            as_str, multi_line = f"# Exception: {exception!r}", False
+        else:
+            as_str, multi_line = stringify(value)
         if multi_line and "\n" not in as_str:
             multi_line = False
         if multi_line and as_str.strip():

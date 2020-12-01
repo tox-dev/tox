@@ -5,7 +5,7 @@ import threading
 import time
 from collections import OrderedDict
 from types import TracebackType
-from typing import IO, Any, Dict, Optional, Sequence, Type
+from typing import IO, Dict, Optional, Sequence, Type
 
 from colorama import Fore
 
@@ -16,7 +16,7 @@ if sys.platform == "win32":  # pragma: win32 cover
         _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
 
 
-def _file_support_encoding(chars: Sequence[str], file: IO[Any]) -> bool:
+def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
     encoding = getattr(file, "encoding", None)
     if encoding is not None:  # pragma: no branch  # this should be always set, unless someone passes in something bad
         for char in chars:
@@ -35,14 +35,16 @@ class Spinner:
     UNICODE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     ASCII_FRAMES = ["|", "-", "+", "x", "*"]
 
-    def __init__(self, enabled: bool = True, refresh_rate: float = 0.1, colored: bool = True) -> None:
+    def __init__(
+        self, enabled: bool = True, refresh_rate: float = 0.1, colored: bool = True, stream: Optional[IO[str]] = None
+    ) -> None:
         self.is_colored = colored
         self.refresh_rate = refresh_rate
         self.enabled = enabled
-        self.frames = (
-            self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, sys.stdout) else self.ASCII_FRAMES
-        )
-        self.stream = sys.stdout
+        stream = sys.stdout if stream is None else stream
+        self.frames = self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, stream) else self.ASCII_FRAMES
+        self.stream = stream
+
         self._envs: Dict[str, float] = OrderedDict()
         self._frame_index = 0
 
@@ -109,7 +111,7 @@ class Spinner:
         self.finalize(key, "FAIL ✖", Fore.RED)
 
     def skip(self, key: str) -> None:
-        self.finalize(key, "SKIP ⚠", Fore.WHITE)
+        self.finalize(key, "SKIP ⚠", Fore.YELLOW)
 
     def finalize(self, key: str, status: str, color: int) -> None:
         start_at = self._envs[key]
@@ -118,7 +120,8 @@ class Spinner:
             self.clear()
         base = f"{key}: {status} in {td_human_readable(time.monotonic() - start_at)}"
         if self.is_colored:
-            base = f"{color}{base}{Fore.RESET}{os.linesep}"
+            base = f"{color}{base}{Fore.RESET}"
+        base += os.linesep
         self.stream.write(base)
 
     def disable_cursor(self) -> None:

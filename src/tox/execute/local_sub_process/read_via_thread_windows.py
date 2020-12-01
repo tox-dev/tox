@@ -10,8 +10,8 @@ from .read_via_thread import ReadViaThread  # pragma: win32 cover
 
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], None]) -> None:
-        super().__init__(file_no, handler)
+    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, on_exit_drain: bool) -> None:
+        super().__init__(file_no, handler, name, on_exit_drain)
         self.closed = False
 
     def _read_stream(self) -> None:
