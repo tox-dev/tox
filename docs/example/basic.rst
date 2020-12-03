@@ -51,6 +51,7 @@ Available "default" test environments names are:
     py36
     py37
     py38
+    py39
     jython
     pypy
     pypy2
