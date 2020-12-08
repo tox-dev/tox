@@ -51,7 +51,7 @@ Global settings are defined under the ``tox`` section as:
     .. code-block:: ini
 
         [tox]
-        requires = tox-venv
+        requires = tox-pipenv
                    setuptools >= 30.0.0
 
 .. conf:: provision_tox_env ^ string ^ .tox
