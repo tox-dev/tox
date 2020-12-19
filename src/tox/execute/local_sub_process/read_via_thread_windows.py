@@ -35,7 +35,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
             try:
                 ov.ReadFile(self.file_no, BUFSIZE)  # type: ignore[attr-defined]
                 data = ov.getresult()
-            except BrokenPipeError:
+            except OSError:
                 length = 0
             else:
                 result += data

@@ -46,7 +46,8 @@ def test_local_execute_basic_pass(
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF)
     out_err = FakeOutErr()
     with executor.call(request, show=show, out_err=out_err.out_err) as status:
-        pass
+        while status.exit_code is None:
+            status.wait()
     outcome = status.outcome
     assert outcome is not None
     assert bool(outcome) is True, outcome
@@ -77,7 +78,8 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
     )
     out_err = FakeOutErr()
     with executor.call(request, show=True, out_err=out_err.out_err) as status:
-        pass
+        while status.exit_code is None:
+            status.wait()
     outcome = status.outcome
     assert outcome is not None
     assert repr(outcome)
@@ -113,7 +115,8 @@ def test_local_execute_write_a_lot(caplog: LogCaptureFixture, os_env: Dict[str, 
     )
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
-        pass
+        while status.exit_code is None:
+            status.wait()
     outcome = status.outcome
     assert outcome is not None
     assert bool(outcome), outcome
@@ -138,7 +141,8 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
     # run test
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
-        pass
+        while status.exit_code is None:
+            status.wait()
     outcome = status.outcome
     assert outcome is not None
 
@@ -186,7 +190,8 @@ def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixtur
     request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, stdin=StdinSource.OFF)
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
-        pass
+        while status.exit_code is None:
+            status.wait()
     outcome = status.outcome
     assert outcome is not None
 
@@ -253,7 +258,8 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ))
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
-        pass
+        while status.exit_code is None:
+            status.wait()
     outcome = status.outcome
     assert outcome is not None
 
@@ -262,6 +268,6 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     assert info == {
         "stdout": False if is_windows else tty,
         "stderr": False if is_windows else tty,
-        "stdin": True if is_windows else False,
+        "stdin": False,
         "terminal": [100, 100],
     }
