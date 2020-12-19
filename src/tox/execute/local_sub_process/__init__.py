@@ -49,7 +49,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
     @property
     def exit_code(self) -> Optional[int]:
-        return self._process.poll()
+        return self._process.returncode
 
     def wait(self, timeout: Optional[float] = None) -> None:
         # note poll in general might deadlock if output large, but we drain in background threads so not an issue here
@@ -62,8 +62,18 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         stdin = self._process.stdin
         if stdin is not None:
             bytes_content = content.encode()
-            stdin.write(bytes_content)
-            stdin.flush()
+            if sys.platform == "win32":  # pragma: win32 cover
+                # on Windows we have a PipeHandle object here rather than a file stream
+                import _overlapped  # type: ignore[import]
+
+                ov = _overlapped.Overlapped(0)
+                ov.WriteFile(stdin.handle, bytes_content)  # type: ignore[attr-defined]
+                result = ov.getresult(10)  # wait up to 10ms to perform the operation
+                if result != len(bytes_content):
+                    raise RuntimeError(f"failed to write to {stdin!r}")
+            else:
+                stdin.write(bytes_content)
+                stdin.flush()
 
     def close_stdin(self) -> None:
         stdin = self._process.stdin
