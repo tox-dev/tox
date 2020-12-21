@@ -386,7 +386,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     A testenv can define a new ``platform`` setting as a regular expression.
     If a non-empty expression is defined and does not match against the
-    ``sys.platform`` string the test environment will be skipped.
+    ``sys.platform`` string the entire test environment will be skipped and
+    none of the commands will be executed. Running ``tox -e <platform_name>``
+    will run commands for a particular platform and skip the rest.
 
 .. conf:: setenv ^ MULTI-LINE-LIST
 
