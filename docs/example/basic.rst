@@ -38,27 +38,17 @@ the specified command in each of them.  With:
 
 you can restrict the test run to the python3.6 environment.
 
-Available "default" test environments names are:
+Tox currently understands the following patterns:
 
 .. code-block:: shell
 
-    py
-    py2
-    py27
-    py3
-    py34
-    py35
-    py36
-    py37
-    py38
-    jython
-    pypy
-    pypy2
-    pypy27
-    pypy3
-    pypy35
-
-The environment ``py`` uses the version of Python used to invoke tox.
+    py: The current Python version tox is using
+    pypy: Whatever available PyPy there is
+    jython: Whatever available Jython there is
+    pyN: Python of version N. for example py2 or py3 ... etc
+    pyNM: Python of version N.M. for example py27 or py38 ... etc
+    pypyN: PyPy of version N. for example pypy2 or pypy3 ... etc
+    pypyNM: PyPy version N.M. for example pypy27 or pypy35 ... etc
 
 However, you can also create your own test environment names,
 see some of the examples in :doc:`examples <../examples>`.
