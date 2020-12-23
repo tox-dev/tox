@@ -14,7 +14,7 @@ from tox.pytest import ToxProjectCreator
 def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
-        "python -c 'import sys; print(\"magic pass\"); sys.exit(0)'",
+        "python -c 'import sys; print(\"magic pass\", file=sys.stdout); sys.exit(0)'",
     ]
     project = tox_project({"tox.ini": f"[tox]\nno_package=true\n[testenv]\ncommands={cmd[0]}\n {cmd[1]}"})
     outcome = project.run("r", "-e", "py")
