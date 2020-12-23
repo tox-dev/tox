@@ -2,6 +2,7 @@
 On Windows we use overlapped mechanism, borrowing it from asyncio (but without the event loop).
 """
 from asyncio.windows_utils import BUFSIZE  # pragma: win32 cover
+from time import sleep
 from typing import Callable  # pragma: win32 cover
 
 import _overlapped  # type: ignore[import]  # pragma: win32 cover
@@ -17,16 +18,24 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
     def _read_stream(self) -> None:
         ov = None
         while not self.stop.is_set():
-            if ov is None:
+            if ov is None:  # if we have no overlapped handler create one
                 ov = _overlapped.Overlapped(0)
                 try:
                     ov.ReadFile(self.file_no, 1)  # type: ignore[attr-defined]
                 except BrokenPipeError:
                     self.closed = True
                     return
-            data = ov.getresult(10)  # wait for 10ms
-            ov = None
-            self.handler(data)
+            try:
+                data = ov.getresult(False)  # wait=False to not block and give chance for the stop check
+            except OSError as exception:
+                # 996 0 (0x3E4) - Overlapped I/O event is not in a signaled state
+                if getattr(exception, "winerror", None) == 996:
+                    sleep(0.01)  # sleep for 10ms if there was no data to read and try again
+                    continue
+                raise
+            else:
+                ov = None  # reset overlapped IO if the operation was a success
+                self.handler(data)
 
     def _drain_stream(self) -> bytes:
         length, result = 1 if self.closed else 1, b""
