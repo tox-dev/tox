@@ -17,14 +17,19 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
 
     def _read_stream(self) -> None:
         ov = None
-        while not self.stop.is_set():
+        keep_reading = True
+        while keep_reading:
             if ov is None:  # if we have no overlapped handler create one
                 ov = _overlapped.Overlapped(0)
                 try:
-                    ov.ReadFile(self.file_no, 1)  # type: ignore[attr-defined]
+                    # read up to BUFSIZE at a time
+                    ov.ReadFile(self.file_no, BUFSIZE)  # type: ignore[attr-defined]
                 except BrokenPipeError:
                     self.closed = True
                     return
+            # this loop break condition is here to ensure we always try to drain a constructed overlap handler, either
+            # after a period of sleep or after just constructing one
+            keep_reading = not self.stop.is_set()
             try:
                 data = ov.getresult(False)  # wait=False to not block and give chance for the stop check
             except OSError as exception:
@@ -38,12 +43,12 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 self.handler(data)
 
     def _drain_stream(self) -> bytes:
-        length, result = 1 if self.closed else 1, b""
+        length, result = 1, b""
         while length:
             ov = _overlapped.Overlapped(0)
             try:
                 ov.ReadFile(self.file_no, BUFSIZE)  # type: ignore[attr-defined]
-                data = ov.getresult()
+                data = ov.getresult(False)
             except OSError:
                 length = 0
             else:
