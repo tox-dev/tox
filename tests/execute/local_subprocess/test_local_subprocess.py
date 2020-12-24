@@ -48,6 +48,8 @@ def test_local_execute_basic_pass(
     with executor.call(request, show=show, out_err=out_err.out_err) as status:
         while status.exit_code is None:
             status.wait()
+    assert status.out == out.encode()
+    assert status.err == err.encode()
     outcome = status.outcome
     assert outcome is not None
     assert bool(outcome) is True, outcome
