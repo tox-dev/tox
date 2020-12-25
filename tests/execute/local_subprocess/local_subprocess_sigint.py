@@ -10,7 +10,7 @@ from tox.execute.api import ToxKeyboardInterrupt
 from tox.execute.request import StdinSource
 from tox.report import NamedBytesIO
 
-logging.basicConfig(level=logging.NOTSET)
+logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
 bad_process = Path(__file__).parent / "bad_process.py"
 
 executor = local_sub_process.LocalSubProcessExecutor(colored=False)

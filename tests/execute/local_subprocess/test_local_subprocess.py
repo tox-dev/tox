@@ -226,16 +226,16 @@ def test_command_keyboard_interrupt(tmp_path: Path) -> None:
     child = next(iter(psutil.Process(pid=root).children())).pid
     process.send_signal(SIGINT)
     try:
-        out, err = process.communicate(timeout=5)
+        out, err = process.communicate(timeout=None)
     except subprocess.TimeoutExpired:  # pragma: no cover
         process.kill()
         out, err = process.communicate()
         assert False, f"{out}\n{err}"
 
-    assert "ERROR:root:got KeyboardInterrupt signal" in err, err
-    assert f"WARNING:root:KeyboardInterrupt from {root} SIGINT pid {child}" in err, err
-    assert f"WARNING:root:KeyboardInterrupt from {root} SIGTERM pid {child}" in err, err
-    assert f"INFO:root:KeyboardInterrupt from {root} SIGKILL pid {child}" in err, err
+    assert "E\tgot KeyboardInterrupt signal" in err, err
+    assert f"W\tKeyboardInterrupt from {root} SIGINT pid {child}" in err, err
+    assert f"W\tKeyboardInterrupt from {root} SIGTERM pid {child}" in err, err
+    assert f"I\tKeyboardInterrupt from {root} SIGKILL pid {child}" in err, err
 
     outs = out.split("\n")
 

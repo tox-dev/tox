@@ -1,6 +1,7 @@
 """
 On UNIX we use select.select to ensure we drain in a non-blocking fashion.
 """
+import errno  # pragma: win32 no cover
 import os  # pragma: win32 no cover
 import select  # pragma: win32 no cover
 from typing import Callable  # pragma: win32 no cover
@@ -18,14 +19,19 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         while not self.stop.is_set():
             # we need to drain the stream, but periodically give chance for the thread to break if the stop event has
             # been set (this is so that an interrupt can be handled)
-            ready, __, ___ = select.select([self.file_no], [], [], STOP_EVENT_CHECK_PERIODICITY_IN_MS)
-            if ready:
-                data = os.read(self.file_no, 1)
-                if data:
-                    try:
-                        self.handler(data)
-                    except Exception:  # noqa
-                        pass
+            try:
+                ready, __, ___ = select.select([self.file_no], [], [], STOP_EVENT_CHECK_PERIODICITY_IN_MS)
+                if ready:
+                    data = os.read(self.file_no, 1)
+                    if data:
+                        try:
+                            self.handler(data)
+                        except Exception:  # noqa
+                            pass
+            except OSError as exception:
+                if exception.errno == errno.EBADF:
+                    break
+                raise
 
     def _drain_stream(self) -> bytes:
         result = bytearray()  # on closed file read returns empty

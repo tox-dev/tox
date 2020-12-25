@@ -42,7 +42,7 @@ repos:
           - --min-py3-version
           - "3.6"
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.8.0
+    rev: v1.9.1
     hooks:
       - id: blacken-docs
         additional_dependencies:
