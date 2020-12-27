@@ -6,16 +6,18 @@ from threading import Event, Thread
 from types import TracebackType
 from typing import Callable, Optional, Type
 
-WAIT_GENERAL = 0.1
+from tox.util.signal import DelayedSignal
+
+WAIT_GENERAL = 0.05  # stop thread join every so often (give chance to a signal interrupt)
 
 
 class ReadViaThread(ABC):
-    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, on_exit_drain: bool) -> None:
+    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:
         self.file_no = file_no
         self.stop = Event()
         self.thread = Thread(target=self._read_stream, name=f"tox-r-{name}-{file_no}")
         self.handler = handler
-        self._on_exit_drain = on_exit_drain
+        self._on_exit_drain = drain
 
     def __enter__(self) -> "ReadViaThread":
         self.thread.start()
@@ -24,42 +26,16 @@ class ReadViaThread(ABC):
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None:
-        thrown = None
-        while True:
-            try:
-                self.stop.set()
-                while self.thread.is_alive():
-                    self.thread.join(WAIT_GENERAL)
-            except KeyboardInterrupt as exception:  # pragma: no cover
-                thrown = exception  # pragma: no cover
-                continue  # pragma: no cover
-            else:
-                if thrown is not None:
-                    raise thrown  # pragma: no cover
-                else:  # pragma: no cover
-                    break  # pragma: no cover
-        if exc_val is None:  # drain what remains if we were not interrupted
-            try:
-                if self._on_exit_drain:
-                    data = self._drain_stream()
-                else:
-                    data = b""
-            except ValueError:  # pragma: no cover
-                pass  # pragma: no cover
-            else:
-                while True:
-                    try:
-                        self.handler(data)
-                        break
-                    except KeyboardInterrupt as exception:  # pragma: no cover
-                        thrown = exception  # pragma: no cover
-                if thrown is not None:
-                    raise thrown  # pragma: no cover
+        with DelayedSignal():
+            self.stop.set()  # signal thread to stop
+            while self.thread.is_alive():  # wait until it stops
+                self.thread.join(WAIT_GENERAL)
+            self._drain_stream()  # read anything left
 
     @abstractmethod
     def _read_stream(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def _drain_stream(self) -> bytes:
+    def _drain_stream(self) -> None:
         raise NotImplementedError

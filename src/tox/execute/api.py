@@ -2,9 +2,7 @@
 Abstract base API for executing commands within tox environments.
 """
 import logging
-import signal
 import sys
-import threading
 import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
@@ -14,17 +12,13 @@ from typing import Callable, Iterator, NoReturn, Optional, Sequence, Tuple, Type
 from colorama import Fore
 
 from tox.report import OutErr
+from tox.util.signal import DelayedSignal
 
 from .request import ExecuteRequest, StdinSource
 from .stream import SyncWrite
 
 ContentHandler = Callable[[bytes], None]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
-if sys.platform == "win32":  # pragma: win32 cover
-    SIGINT = signal.CTRL_C_EVENT
-else:
-    SIGINT = signal.SIGINT
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -73,38 +67,22 @@ class Execute(ABC):
 
     @contextmanager
     def call(self, request: ExecuteRequest, show: bool, out_err: OutErr) -> Iterator[ExecuteStatus]:
-        start = time.monotonic()
-        interrupt = None
+        start, interrupt = time.monotonic(), None
         try:
             # collector is what forwards the content from the file streams to the standard streams
-            out = out_err[0].buffer
-            with SyncWrite(out.name, out if show else None) as out_sync:
-                err = out_err[1].buffer
-                with SyncWrite(err.name, err if show else None, Fore.RED if self._colored else None) as err_sync:
-                    instance = self.build_instance(request, out_sync, err_sync)
-                    try:
-                        with instance as status:
-                            yield status
-                        exit_code = status.exit_code
-                    except KeyboardInterrupt as exception:
+            out, err = out_err[0].buffer, out_err[1].buffer
+            out_sync = SyncWrite(out.name, out if show else None)
+            err_sync = SyncWrite(err.name, err if show else None, Fore.RED if self._colored else None)
+            with out_sync, err_sync:
+                instance = self.build_instance(request, out_sync, err_sync)
+                try:
+                    with instance as status:
+                        yield status
+                    exit_code = status.exit_code
+                except KeyboardInterrupt as exception:
+                    with DelayedSignal():
                         interrupt = exception
-                        while True:
-                            try:
-                                is_main = threading.current_thread() == threading.main_thread()
-                                if is_main:
-                                    # disable further interrupts until we finish this, main thread only
-                                    if sys.platform != "win32":  # pragma: win32 cover
-                                        signal.signal(SIGINT, signal.SIG_IGN)
-                            except KeyboardInterrupt:  # pragma: no cover
-                                continue  # pragma: no cover
-                            else:
-                                try:
-                                    exit_code = instance.interrupt()
-                                    break
-                                finally:
-                                    # restore signal handler on main thread
-                                    if is_main and sys.platform != "win32":  # pragma: no cover
-                                        signal.signal(SIGINT, signal.default_int_handler)
+                        exit_code = instance.interrupt()
         finally:
             end = time.monotonic()
         status.outcome = Outcome(request, show, exit_code, out_sync.text, err_sync.text, start, end, instance.cmd)
@@ -222,7 +200,6 @@ class ToxKeyboardInterrupt(KeyboardInterrupt):
 
 __all__ = (
     "ContentHandler",
-    "SIGINT",
     "Outcome",
     "ToxKeyboardInterrupt",
     "Execute",

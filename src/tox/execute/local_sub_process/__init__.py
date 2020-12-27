@@ -7,10 +7,11 @@ from subprocess import PIPE, TimeoutExpired
 from types import TracebackType
 from typing import TYPE_CHECKING, Generator, List, Optional, Sequence, Tuple, Type
 
-from tox.execute.stream import SyncWrite
+from tox.util.signal import SIGINT
 
-from ..api import SIGINT, Execute, ExecuteInstance, ExecuteStatus, Outcome
+from ..api import Execute, ExecuteInstance, ExecuteStatus, Outcome
 from ..request import ExecuteRequest, StdinSource
+from ..stream import SyncWrite
 from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":  # pragma: win32 cover
@@ -80,6 +81,9 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         if stdin is not None:
             stdin.close()
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
+
 
 class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
     def __init__(self, out: SyncWrite, err: SyncWrite, exit_code: Optional[int]) -> None:
@@ -143,22 +147,17 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             return LocalSubprocessExecuteFailedStatus(self._out, self._err, exception.errno)
 
         status = LocalSubprocessExecuteStatus(self._out, self._err, process)
-        if self.request.stdin is StdinSource.OFF:
-            status.close_stdin()
-        pid = self.process.pid
-        self._read_stderr = ReadViaThread(
-            stderr.send(process), self.err_handler, name=f"err-{pid}", on_exit_drain=self._on_exit_drain
-        )
+        drain, pid = self._on_exit_drain, self.process.pid
+        self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
         self._read_stderr.__enter__()
-        self._read_stdout = ReadViaThread(
-            stdout.send(process), self.out_handler, name=f"out-{pid}", on_exit_drain=self._on_exit_drain
-        )
+        self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
         self._read_stdout.__enter__()
 
         if sys.platform == "win32":  # pragma: win32 cover
             process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]
             process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]
-        # wait it out with interruptions to allow KeyboardInterrupt on Windows
+        if self.request.stdin is StdinSource.OFF:
+            status.close_stdin()
         return status
 
     def __exit__(

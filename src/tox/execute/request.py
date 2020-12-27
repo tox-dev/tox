@@ -36,6 +36,9 @@ class ExecuteRequest:
         _cmd.extend(self.cmd[1:])
         return shell_cmd(_cmd)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(cmd={self.cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
+
 
 def shell_cmd(cmd: Sequence[str]) -> str:
     if sys.platform == "win32":  # pragma: win32 cover

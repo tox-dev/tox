@@ -14,21 +14,33 @@ logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelnam
 bad_process = Path(__file__).parent / "bad_process.py"
 
 executor = local_sub_process.LocalSubProcessExecutor(colored=False)
-local_sub_process.WAIT_GENERAL = 0.05
 request = local_sub_process.ExecuteRequest(
-    cmd=[sys.executable, bad_process, sys.argv[1], sys.argv[2], str(local_sub_process.WAIT_GENERAL * 3)],
+    cmd=[sys.executable, bad_process, sys.argv[1]],
     cwd=Path().absolute(),
     env=os.environ.copy(),
     stdin=StdinSource.API,
 )
 out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
 
-try:
-    with executor.call(request, show=False, out_err=out_err) as status:
-        pass
-except ToxKeyboardInterrupt as exception:
-    outcome = exception.outcome
+
+def show_outcome(outcome):
     print(outcome.exit_code)
     print(repr(outcome.out))
     print(repr(outcome.err))
     print(outcome.elapsed, end="")
+
+
+logging.info("start %r", request)
+try:
+    with executor.call(request, show=False, out_err=out_err) as status:
+        logging.info("wait on %r", status)
+        while status.exit_code is None:
+            status.wait()
+        logging.info("wait over on %r", status)
+    show_outcome(status.outcome)
+except ToxKeyboardInterrupt as exception:
+    show_outcome(exception.outcome)
+except Exception as exception:
+    logging.exception(exception)
+finally:
+    logging.info("done")

@@ -1,31 +1,34 @@
 """This is a non compliant process that does not listens to signals"""
 # pragma: no cover
+import os
 import signal
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from types import FrameType
+
+out = sys.stdout
 
 
-def handler(signum: int, frame: Any) -> None:
-    print(f"how about no signal {signum}", file=sys.stdout)
-    sys.stdout.flush()  # force output now before we get killed
+def handler(signum: signal.Signals, _: FrameType) -> None:
+    _p(f"how about no signal {signum!r}")
 
 
+def _p(m: str) -> None:
+    out.write(f"{m}{os.linesep}")
+    out.flush()  # force output flush in case we get killed
+
+
+_p(f"start {__name__} with {sys.argv!r}")
+signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
-idle_file = Path(sys.argv[1])
-start_file = Path(sys.argv[2])
-
-idle_file.write_text("")
-time.sleep(float(sys.argv[3]))
-
-while True:
-    try:
-        if not start_file.exists():
-            start_file.write_text("")
-            print(f"created {start_file}")
-        time.sleep(100)
-    except KeyboardInterrupt:
-        print("how about no KeyboardInterrupt", file=sys.stderr)
-        sys.stderr.flush()  # force output now before we get killed
+try:
+    start_file = Path(sys.argv[1])
+    _p(f"create {start_file}")
+    start_file.write_text("")
+    _p(f"created {start_file}")
+    while True:
+        time.sleep(0.01)
+finally:
+    _p(f"done {__name__}")

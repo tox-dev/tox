@@ -12,11 +12,12 @@ import pytest
 from colorama import Fore
 from pytest_mock import MockerFixture
 
-from tox.execute.api import SIGINT, Outcome
+from tox.execute.api import Outcome
 from tox.execute.local_sub_process import CREATION_FLAGS, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.report import NamedBytesIO
+from tox.util.signal import SIGINT
 
 
 class FakeOutErr:
@@ -205,45 +206,37 @@ def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixtur
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="TODO: find out why it does not work")
-def test_command_keyboard_interrupt(tmp_path: Path) -> None:
-    send_signal = tmp_path / "send"
-    process = subprocess.Popen(
-        [
-            sys.executable,
-            str(Path(__file__).parent / "local_subprocess_sigint.py"),
-            str(tmp_path / "idle"),
-            str(send_signal),
-        ],
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
-        creationflags=CREATION_FLAGS,
-    )
-    while not send_signal.exists():
+@pytest.mark.timeout(100)
+def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, capfd: CaptureFixture) -> None:
+    monkeypatch.chdir(tmp_path)
+    process_up_signal = tmp_path / "signal"
+    cmd = [sys.executable, str(Path(__file__).parent / "local_subprocess_sigint.py"), str(process_up_signal)]
+    process = subprocess.Popen(cmd, creationflags=CREATION_FLAGS)
+    while not process_up_signal.exists():
         assert process.poll() is None
-
     root = process.pid
+
     child = next(iter(psutil.Process(pid=root).children())).pid
     process.send_signal(SIGINT)
     try:
-        out, err = process.communicate(timeout=None)
+        process.communicate(timeout=None)
     except subprocess.TimeoutExpired:  # pragma: no cover
         process.kill()
-        out, err = process.communicate()
-        assert False, f"{out}\n{err}"
+        raise
 
-    assert "E\tgot KeyboardInterrupt signal" in err, err
-    assert f"W\tKeyboardInterrupt from {root} SIGINT pid {child}" in err, err
-    assert f"W\tKeyboardInterrupt from {root} SIGTERM pid {child}" in err, err
-    assert f"I\tKeyboardInterrupt from {root} SIGKILL pid {child}" in err, err
+    out, err = capfd.readouterr()
+    assert "E	got KeyboardInterrupt signal" in err, err
+    assert f"W	KeyboardInterrupt from {root} SIGINT pid {child}" in err, err
+    assert f"W	KeyboardInterrupt from {root} SIGTERM pid {child}" in err, err
+    assert f"I	KeyboardInterrupt from {root} SIGKILL pid {child}" in err, err
 
     outs = out.split("\n")
 
     exit_code = int(outs[0])
     assert exit_code == -9
     assert float(outs[3]) > 0  # duration
-    assert "how about no signal 15" in outs[1], outs[1]  # stdout
-    assert "how about no KeyboardInterrupt" in outs[2], outs[2]  # stderr
+    assert "how about no signal 2" in outs[1], outs[1]  # 2 - Interrupt
+    assert "how about no signal 15" in outs[1], outs[1]  # 15 - Terminated
 
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])
