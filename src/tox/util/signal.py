@@ -1,14 +1,8 @@
 import logging
-import sys
 import threading
-from signal import Handlers, Signals, signal
+from signal import SIGINT, Handlers, Signals, signal
 from types import FrameType, TracebackType
 from typing import Callable, Optional, Type, Union
-
-if sys.platform == "win32":  # pragma: win32 cover
-    from signal import CTRL_C_EVENT as SIGINT
-else:
-    from signal import SIGINT
 
 
 class DelayedSignal:

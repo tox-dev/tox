@@ -7,8 +7,6 @@ from subprocess import PIPE, TimeoutExpired
 from types import TracebackType
 from typing import TYPE_CHECKING, Generator, List, Optional, Sequence, Tuple, Type
 
-from tox.util.signal import SIGINT
-
 from ..api import Execute, ExecuteInstance, ExecuteStatus, Outcome
 from ..request import ExecuteRequest, StdinSource
 from ..stream import SyncWrite
@@ -20,13 +18,14 @@ if sys.platform == "win32":  # pragma: win32 cover
         from subprocess import Popen
     else:
         from asyncio.windows_utils import Popen
+    from signal import CTRL_C_EVENT as SIG_INTERRUPT
     from subprocess import CREATE_NEW_PROCESS_GROUP
 
     from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
 
     CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP  # a custom flag needed for Windows signal send ability (CTRL+C)
-
 else:  # pragma: win32 no cover
+    from signal import SIGINT as SIG_INTERRUPT
     from subprocess import Popen
 
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
@@ -196,7 +195,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             msg = f"from {os.getpid()} {{}} pid {proc.pid}"
             if proc.poll() is None:  # still alive, first INT
                 logging.warning("KeyboardInterrupt %s", msg.format("SIGINT"))
-                proc.send_signal(SIGINT)
+                proc.send_signal(SIG_INTERRUPT)
                 try:
                     out, err = proc.communicate(timeout=WAIT_INTERRUPT)
                 except TimeoutExpired:  # if INT times out TERM
@@ -213,8 +212,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                     out, err = proc.communicate()  # just drain
                 except ValueError:  # if already drained via another communicate
                     out, err = b"", b""
-            self.out_handler(out)
-            self.err_handler(err)
+            if out:
+                self.out_handler(out)
+            if err:
+                self.err_handler(err)
             return int(self.process.returncode)
         return Outcome.OK  # pragma: no cover
 
@@ -225,3 +226,13 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         if self._read_stderr is not None:
             self._read_stderr.handler = err.handler
         return prev
+
+
+__all__ = (
+    "SIG_INTERRUPT",
+    "CREATION_FLAGS",
+    "LocalSubProcessExecuteInstance",
+    "LocalSubProcessExecutor",
+    "LocalSubprocessExecuteStatus",
+    "LocalSubprocessExecuteFailedStatus",
+)

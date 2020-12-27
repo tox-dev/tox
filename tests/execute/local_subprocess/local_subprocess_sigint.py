@@ -1,6 +1,7 @@
 # type: ignore
 import logging
 import os
+import signal
 import sys
 from io import TextIOWrapper
 from pathlib import Path
@@ -30,7 +31,13 @@ def show_outcome(outcome):
     print(outcome.elapsed, end="")
 
 
-logging.info("start %r", request)
+def handler(s, f):
+    print(f"{s} {f}")
+    raise KeyboardInterrupt
+
+
+signal.signal(signal.SIGINT, handler)
+logging.info("PID %d start %r", os.getpid(), request)
 try:
     with executor.call(request, show=False, out_err=out_err) as status:
         logging.info("wait on %r", status)

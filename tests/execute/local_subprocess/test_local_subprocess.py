@@ -13,11 +13,10 @@ from colorama import Fore
 from pytest_mock import MockerFixture
 
 from tox.execute.api import Outcome
-from tox.execute.local_sub_process import CREATION_FLAGS, LocalSubProcessExecutor
+from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.report import NamedBytesIO
-from tox.util.signal import SIGINT
 
 
 class FakeOutErr:
@@ -124,9 +123,9 @@ def test_local_execute_write_a_lot(caplog: LogCaptureFixture, os_env: Dict[str, 
     assert outcome is not None
     assert bool(outcome), outcome
     expected_out = f"{'o' * count}{os.linesep}{'b' * count}{os.linesep}"
-    assert outcome.out == expected_out
+    assert outcome.out == expected_out, expected_out[len(outcome.out) :]
     expected_err = f"{'e' * count}{os.linesep}{'a' * count}{os.linesep}"
-    assert outcome.err == expected_err
+    assert outcome.err == expected_err, expected_err[len(outcome.err) :]
 
 
 def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixture, monkeypatch: MonkeyPatch) -> None:
@@ -211,13 +210,14 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
     monkeypatch.chdir(tmp_path)
     process_up_signal = tmp_path / "signal"
     cmd = [sys.executable, str(Path(__file__).parent / "local_subprocess_sigint.py"), str(process_up_signal)]
-    process = subprocess.Popen(cmd, creationflags=CREATION_FLAGS)
+    process = subprocess.Popen(cmd, creationflags=0)
     while not process_up_signal.exists():
         assert process.poll() is None
     root = process.pid
-
     child = next(iter(psutil.Process(pid=root).children())).pid
-    process.send_signal(SIGINT)
+
+    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}")
+    process.send_signal(SIG_INTERRUPT)
     try:
         process.communicate(timeout=None)
     except subprocess.TimeoutExpired:  # pragma: no cover
@@ -232,11 +232,11 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
 
     outs = out.split("\n")
 
-    exit_code = int(outs[0])
+    exit_code = int(outs[2])
     assert exit_code == -9
-    assert float(outs[3]) > 0  # duration
-    assert "how about no signal 2" in outs[1], outs[1]  # 2 - Interrupt
-    assert "how about no signal 15" in outs[1], outs[1]  # 15 - Terminated
+    assert float(outs[5]) > 0  # duration
+    assert "how about no signal 2" in outs[3], outs[3]  # 2 - Interrupt
+    assert "how about no signal 15" in outs[3], outs[3]  # 15 - Terminated
 
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])

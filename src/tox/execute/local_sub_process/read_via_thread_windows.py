@@ -15,8 +15,8 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
     def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:
         super().__init__(file_no, handler, name, drain)
         self.closed = False
-        self._ov = _overlapped.Overlapped(0)
-        self._read = False
+        self._ov: Optional[_overlapped.Overlapped] = None  # type: ignore[no-any-unimported]
+        self._waiting_for_read = False
 
     def _read_stream(self) -> None:
         keep_reading = True
@@ -29,28 +29,37 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
             keep_reading = not self.stop.is_set()
 
     def _drain_stream(self) -> None:
-        wait: Optional[bool] = False
-        while wait is not True:
+        wait: Optional[bool] = self.closed
+        while wait is False:
             wait = self._read_batch()
 
     def _read_batch(self) -> Optional[bool]:
-        if self._read is False:
+        """:returns: None means error can no longer read, True wait for result, False try again"""
+        if self._waiting_for_read is False:
+            self._ov = _overlapped.Overlapped(0)  # can use it only once to read a batch
             try:  # read up to BUFSIZE at a time
                 self._ov.ReadFile(self.file_no, BUFSIZE)  # type: ignore[attr-defined]
-                self._read = True
-            except BrokenPipeError:
+                self._waiting_for_read = True
+            except OSError:
                 self.closed = True
                 return None
         try:  # wait=False to not block and give chance for the stop check
-            data = self._ov.getresult(False)
+            data = self._ov.getresult(False)  # type: ignore[union-attr]
         except OSError as exception:
-            # 996 0 (0x3E4) - Overlapped I/O event is not in a signaled state
-            if getattr(exception, "winerror", None) == 996:
+            # 996 (0x3E4) Overlapped I/O event is not in a signaled state.
+            # 995 (0x3E3) The I/O operation has been aborted because of either a thread exit or an application request.
+            win_error = getattr(exception, "winerror", None)
+            if win_error == 996:
                 return True
             else:
-                logging.error("failed to read %r", exception)
+                if win_error != 995:
+                    logging.error("failed to read %r", exception)
                 return None
         else:
-            self._read = False
-            self.handler(data)
+            self._ov = None
+            self._waiting_for_read = False
+            if data:
+                self.handler(data)
+            else:
+                return None
         return False
