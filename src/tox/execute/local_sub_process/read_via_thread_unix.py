@@ -19,14 +19,14 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         while not self.stop.is_set():
             # we need to drain the stream, but periodically give chance for the thread to break if the stop event has
             # been set (this is so that an interrupt can be handled)
-            if self._read_available() is None:
-                break
+            if self._read_available() is None:  # pragma: no branch
+                break  # pragma: no cover
 
     def _drain_stream(self) -> None:
         # no block just poll
         while True:
-            if self._read_available(timeout=0) is not True:
-                break
+            if self._read_available(timeout=0) is not True:  # pragma: no branch
+                break  # pragma: no cover
 
     def _read_available(self, timeout: float = STOP_EVENT_CHECK_PERIODICITY_IN_MS) -> Optional[bool]:
         try:
@@ -38,7 +38,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
                     self.handler(data)
                     return True
             return False
-        except OSError as exception:
+        except OSError as exception:  # pragma: no cover
             # Bad file descriptor or Input/output error
             if exception.errno in (errno.EBADF, errno.EIO):
                 return None

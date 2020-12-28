@@ -1,9 +1,9 @@
 """
 On Windows we use overlapped mechanism, borrowing it from asyncio (but without the event loop).
 """
-import logging
+import logging  # pragma: win32 cover
 from asyncio.windows_utils import BUFSIZE  # pragma: win32 cover
-from time import sleep
+from time import sleep  # pragma: win32 cover
 from typing import Callable, Optional  # pragma: win32 cover
 
 import _overlapped  # type: ignore[import]  # pragma: win32 cover

@@ -29,6 +29,7 @@ def show_outcome(outcome):
     print(repr(outcome.out))
     print(repr(outcome.err))
     print(outcome.elapsed, end="")
+    print("done show outcome", file=sys.stderr)
 
 
 def handler(s, f):

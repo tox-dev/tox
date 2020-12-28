@@ -60,7 +60,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
     def write_stdin(self, content: str) -> None:
         stdin = self._process.stdin
-        if stdin is not None:
+        if stdin is not None:  # pragma: no branch
             bytes_content = content.encode()
             if sys.platform == "win32":  # pragma: win32 cover
                 # on Windows we have a PipeHandle object here rather than a file stream
@@ -77,7 +77,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
     def close_stdin(self) -> None:
         stdin = self._process.stdin
-        if stdin is not None:
+        if stdin is not None:  # pragma: no branch
             stdin.close()
 
     def __repr__(self) -> str:
@@ -212,18 +212,18 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                     out, err = proc.communicate()  # just drain
                 except ValueError:  # if already drained via another communicate
                     out, err = b"", b""
-            if out:
+            if out:  # pragma: no branch
                 self.out_handler(out)
-            if err:
-                self.err_handler(err)
+            if err:  # pragma: no branch
+                self.err_handler(err)  # pragma: no cover
             return int(self.process.returncode)
         return Outcome.OK  # pragma: no cover
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
         prev = self._out, self._err
-        if self._read_stdout is not None:
+        if self._read_stdout is not None:  # pragma: no branch
             self._read_stdout.handler = out.handler
-        if self._read_stderr is not None:
+        if self._read_stderr is not None:  # pragma: no branch
             self._read_stderr.handler = err.handler
         return prev
 
