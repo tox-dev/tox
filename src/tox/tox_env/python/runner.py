@@ -62,10 +62,6 @@ class PythonRun(Python, RunToxEnv, ABC):
             self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
         self.install_package()
 
-    @property
-    def has_display_suspended(self) -> bool:
-        return self._suspended_out_err is not None
-
     def install_deps(self) -> None:
         self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
 

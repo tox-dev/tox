@@ -77,6 +77,7 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
         (None, "get_requires_for_build_wheel"),
         (0, "install"),
         (0, "freeze"),
+        (None, "_exit"),
     ]
     packaging_test = get_cmd_exit_run_id(log_report, ".package-py", "test")
     assert packaging_test == [(None, "build_wheel")]

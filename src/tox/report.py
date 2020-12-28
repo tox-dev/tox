@@ -70,11 +70,11 @@ class _LogThreadLocal(local):
         previous_out, previous_err = self.out_err
         try:
             if yes:
-                if out_err is None:
+                if out_err is None:  # pragma: no branch
                     out = self._make(f"out-{self.name}", previous_out)
                     err = self._make(f"err-{self.name}", previous_err)
                 else:
-                    out, err = out_err
+                    out, err = out_err  # pragma: no cover
                 self.out_err = out, err
             yield self.out_err
         finally:
@@ -111,7 +111,7 @@ class ToxHandler(logging.StreamHandler):
 
     @property
     def name(self) -> str:  # type: ignore[override]
-        return self._local.name
+        return self._local.name  # pragma: no cover
 
     @property  # type: ignore[override]
     def stream(self) -> IO[str]:  # type: ignore[override]

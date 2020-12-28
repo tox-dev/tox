@@ -182,6 +182,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
 
     def teardown(self) -> None:
         if self._backend_executor is not None:
+            self._send("_exit", None)
             self._backend_executor.close()
 
     @contextmanager

@@ -19,7 +19,7 @@ __version__ = "{version}"
 
 [tool.towncrier]
 package = "tox"
-package_dir = ""  # we purposfully do not set this as src, forcing import from site-package that has version.py
+package_dir = "" # we purposfully do not set this as src, forcing import from site-package that has version.py
 filename = "docs/changelog.rst"
 directory = "docs/changelog"
 title_format = false

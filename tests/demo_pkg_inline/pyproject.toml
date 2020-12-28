@@ -1,4 +1,4 @@
 [build-system]
-requires=[]
-build-backend="build"
-backend-path=["."]
+requires = []
+build-backend = "build"
+backend-path = ["."]

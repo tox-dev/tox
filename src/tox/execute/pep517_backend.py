@@ -22,10 +22,6 @@ class LocalSubProcessPep517Executor(Execute):
         self._local_execute: Optional[Tuple[LocalSubProcessExecuteInstance, ExecuteStatus]] = None
 
     def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> ExecuteInstance:
-        for key in ("cmd", "cwd", "env"):
-            left, right = getattr(self, key), getattr(request, key)
-            if left != right:
-                raise RuntimeError(f"miss-match {left!r} != {right!r}")
         return LocalSubProcessPep517ExecuteInstance(request, out, err, self.local_execute)
 
     @property
@@ -43,16 +39,17 @@ class LocalSubProcessPep517Executor(Execute):
         return self._local_execute
 
     @staticmethod
-    def _handler(into: bytearray, content: bytes) -> None:  # noqa
+    def _handler(into: bytearray, content: bytes) -> None:
         """ignore content generated"""
-        into.extend(content)
+        into.extend(content)  # pragma: no cover
 
     def close(self) -> None:
-        if self._local_execute is not None:
-            execute = self._local_execute[0]
+        if self._local_execute is not None:  # pragma: no branch
+            execute, status = self._local_execute
             execute.__exit__(None, None, None)
-            if execute.process is not None:
-                execute.process.terminate()
+            if execute.process is not None:  # pragma: no branch
+                if execute.process.returncode is None:  # pragma: no cover
+                    execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
 
 
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
@@ -92,5 +89,4 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
         self._status.set_out_err(out, err)
 
     def interrupt(self) -> int:
-        # just crash instantly
-        return self._instance.interrupt()
+        return self._instance.interrupt()  # pragma: no cover # just crash instantly

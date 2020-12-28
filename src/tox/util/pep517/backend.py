@@ -21,7 +21,7 @@ class BackendProxy:
         return method(*args, **kwargs)
 
     def _exit(self):  # noqa
-        sys.exit(1)
+        return 0
 
     def _commands(self):
         result = ["_commands", "_exit"]
@@ -60,18 +60,22 @@ def run(argv):
         else:
             result = {}
             try:
-                print("Backend: run command {} with args {}".format(parsed_message["cmd"], parsed_message["kwargs"]))
+                cmd = parsed_message["cmd"]
+                print("Backend: run command {} with args {}".format(cmd, parsed_message["kwargs"]))
                 outcome = backend_proxy(parsed_message["cmd"], **parsed_message["kwargs"])
                 result["return"] = outcome
+                if cmd == "_exit":
+                    break
             except Exception as exception:
                 traceback.print_exc()
                 result["code"] = exception.code if isinstance(exception, SystemExit) else 1
                 result["exc_type"] = exception.__class__.__name__
                 result["exc_msg"] = str(exception)
-            with open(result_file, "wt") as file_handler:
-                json.dump(result, file_handler)
-            print(f"Backend: Write response {result} to {result_file}")
-            flush()
+            finally:
+                with open(result_file, "wt") as file_handler:
+                    json.dump(result, file_handler)
+                print(f"Backend: Write response {result} to {result_file}")
+                flush()
 
 
 def flush():

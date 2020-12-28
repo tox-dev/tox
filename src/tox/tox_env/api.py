@@ -56,6 +56,10 @@ class ToxEnv(ABC):
             self._executor = self.build_executor()
         return self._executor
 
+    @property
+    def has_display_suspended(self) -> bool:
+        return self._suspended_out_err is not None
+
     @abstractmethod
     def build_executor(self) -> Execute:
         raise NotImplementedError
@@ -251,7 +255,7 @@ class ToxEnv(ABC):
             try:
                 repr_cwd = f" {_CWD.relative_to(cwd)}"
             except ValueError:
-                repr_cwd = str(cwd)
+                repr_cwd = f" {cwd}"
         LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd)
         out_err = self.log_handler.stdout, self.log_handler.stderr
         if executor is None:

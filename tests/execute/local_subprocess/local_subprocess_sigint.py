@@ -33,7 +33,7 @@ def show_outcome(outcome):
 
 
 def handler(s, f):
-    print(f"{s} {f}")
+    print(f"signal {s} at {f}")
     raise KeyboardInterrupt
 
 
@@ -42,13 +42,13 @@ logging.info("PID %d start %r", os.getpid(), request)
 try:
     with executor.call(request, show=False, out_err=out_err) as status:
         logging.info("wait on %r", status)
-        while status.exit_code is None:
+        while status.exit_code is None:  # pragma: no branch
             status.wait()
         logging.info("wait over on %r", status)
-    show_outcome(status.outcome)
-except ToxKeyboardInterrupt as exception:
+    show_outcome(status.outcome)  # pragma: no cover
+except ToxKeyboardInterrupt as exception:  # pragma: no branch
     show_outcome(exception.outcome)
-except Exception as exception:
-    logging.exception(exception)
+except Exception as exception:  # pragma: no cover
+    logging.exception(exception)  # pragma: no cover
 finally:
     logging.info("done")

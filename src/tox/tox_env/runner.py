@@ -95,8 +95,9 @@ class RunToxEnv(ToxEnv, ABC):
 
     def clean(self, package_env: bool = True) -> None:
         super().clean()
-        if self.package_env:
-            self.package_env.clean()
+        if self.package_env is not None:
+            with self.package_env.display_context(suspend=self.has_display_suspended):
+                self.package_env.clean()
 
     @property
     def environment_variables(self) -> Dict[str, str]:
@@ -116,4 +117,5 @@ class RunToxEnv(ToxEnv, ABC):
     def teardown(self) -> None:
         super().teardown()
         if self.package_env is not None:
-            self.package_env.teardown()
+            with self.package_env.display_context(suspend=self.has_display_suspended):
+                self.package_env.teardown()

@@ -91,7 +91,7 @@ class Spinner:
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
-        if not self._stop_spinner.is_set():
+        if not self._stop_spinner.is_set():  # pragma: no branch
             if self._spinner_thread:  # pragma: no branch # hard to test
                 self._stop_spinner.set()
                 self._spinner_thread.join()

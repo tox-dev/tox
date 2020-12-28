@@ -191,6 +191,29 @@ class ToxProject:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
 
 
+@pytest.fixture(autouse=True, scope="session")
+def enable_pep517_backend_coverage() -> Iterator[None]:
+    try:
+        import coverage  # noqa: F401
+    except ImportError:
+        yield
+        return
+    # the COV_ env variables needs to be passed on for the PEP-517 backend
+    from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
+
+    def default_pass_env(self: Pep517VirtualEnvPackage) -> List[str]:
+        result = previous(self)
+        result.append("COV_*")
+        return result
+
+    previous = Pep517VirtualEnvPackage.default_pass_env
+    try:
+        Pep517VirtualEnvPackage.default_pass_env = default_pass_env  # type: ignore
+        yield
+    finally:
+        Pep517VirtualEnvPackage.default_pass_env = previous  # type: ignore
+
+
 class ToxRunOutcome:
     def __init__(self, cmd: Sequence[str], cwd: Path, code: int, out: str, err: str, state: Optional[State]) -> None:
         extended_cmd = [sys.executable, "-m", "tox"]

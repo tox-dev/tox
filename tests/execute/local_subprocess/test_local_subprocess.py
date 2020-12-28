@@ -192,8 +192,8 @@ def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixtur
     request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, stdin=StdinSource.OFF)
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
-        while status.exit_code is None:
-            status.wait()
+        while status.exit_code is None:  # pragma: no branch
+            status.wait()  # pragma: no cover
     outcome = status.outcome
     assert outcome is not None
 
@@ -204,13 +204,13 @@ def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixtur
     assert not caplog.records
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="TODO: find out why it does not work")
-@pytest.mark.timeout(100)
+@pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
+# @pytest.mark.timeout(10)
 def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, capfd: CaptureFixture) -> None:
     monkeypatch.chdir(tmp_path)
     process_up_signal = tmp_path / "signal"
     cmd = [sys.executable, str(Path(__file__).parent / "local_subprocess_sigint.py"), str(process_up_signal)]
-    process = subprocess.Popen(cmd, creationflags=0)
+    process = subprocess.Popen(cmd)
     while not process_up_signal.exists():
         assert process.poll() is None
     root = process.pid
@@ -219,7 +219,7 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
     print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}")
     process.send_signal(SIG_INTERRUPT)
     try:
-        process.communicate(timeout=None)
+        process.communicate(timeout=5)
     except subprocess.TimeoutExpired:  # pragma: no cover
         process.kill()
         raise
