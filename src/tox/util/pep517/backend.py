@@ -39,16 +39,22 @@ class BackendProxy:
         return result
 
 
+def flush():
+    sys.stderr.flush()
+    sys.stdout.flush()
+
+
 def run(argv):
-    backend_proxy = BackendProxy(argv[0], None if len(argv) == 1 else argv[1])
+    reuse_process = argv[0].lower() == "true"
+    backend_proxy = BackendProxy(argv[1], None if len(argv) == 2 else argv[2])
     while True:
         try:
             message = input().strip()
-        except EOFError:
-            break
+        except EOFError:  # pragma: no cover # when the stdout is closed without exit
+            break  # pragma: no cover
         if not message:
             continue
-        flush()
+        flush()  # flush any output generated before
         try:
             parsed_message = json.loads(message)
             result_file = parsed_message["result"]
@@ -72,16 +78,19 @@ def run(argv):
                 result["exc_type"] = exception.__class__.__name__
                 result["exc_msg"] = str(exception)
             finally:
-                with open(result_file, "wt") as file_handler:
-                    json.dump(result, file_handler)
-                print(f"Backend: Write response {result} to {result_file}")
-                flush()
-
-
-def flush():
-    sys.stderr.flush()
-    sys.stdout.flush()
+                try:
+                    with open(result_file, "wt") as file_handler:
+                        json.dump(result, file_handler)
+                except Exception:  # noqa
+                    traceback.print_exc()
+                finally:
+                    print(f"Backend: Wrote response {result} to {result_file}")
+                    flush()
+        if reuse_process is False:
+            break
+    return 0
 
 
 if __name__ == "__main__":
-    run(sys.argv[1:])
+    exit_code = run(sys.argv[1:])
+    sys.exit(exit_code)

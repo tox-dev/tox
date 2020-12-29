@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from time import sleep
-from typing import Any, Dict, Iterator, List, NamedTuple, NoReturn, Optional, Set, Tuple, Type, cast
+from typing import Any, Dict, Iterator, List, NamedTuple, NoReturn, Optional, Set, Tuple, cast
 from zipfile import ZipFile
 
 import toml
@@ -63,14 +63,14 @@ class BackendFailed(RuntimeError):
         self.out = out
         self.err = err
         self.code: int = result["code"]
-        self.exc_type: Type[Exception] = result["exc_type"]
+        self.exc_type: str = result["exc_type"]
         self.exc_msg: str = result["exc_msg"]
 
     def __str__(self) -> str:
         msg = [f"Backend failed with exit code {self.code}, exception type {self.exc_type} and message {self.exc_msg}"]
-        if self.err.strip():
+        if self.err.strip():  # pragma: no branch
             msg.append(self.err)
-        if self.out.strip():
+        if self.out.strip():  # pragma: no branch
             msg.append(self.out)
         return "\n".join(msg)
 
@@ -99,6 +99,7 @@ class Frontend(ABC):
         backend_module: str,
         backend_obj: Optional[str],
         requires: Tuple[Requirement, ...],
+        reuse_backend: bool = True,
     ) -> None:
         self._root = root
         self._backend_paths = backend_paths
@@ -106,11 +107,12 @@ class Frontend(ABC):
         self._backend_obj = backend_obj
         self._requires = requires
         self._commands: Optional[Set[str]] = None
+        self._reuse_backend = reuse_backend
 
     @classmethod
     def create_args_from_folder(
         cls, folder: Path
-    ) -> Tuple[Path, Tuple[Path, ...], str, Optional[str], Tuple[Requirement, ...]]:
+    ) -> Tuple[Path, Tuple[Path, ...], str, Optional[str], Tuple[Requirement, ...], bool]:
         py_project_toml = folder / "pyproject.toml"
         if py_project_toml.exists():
             py_project = toml.load(py_project_toml)
@@ -131,7 +133,7 @@ class Frontend(ABC):
         paths = build_backend.split(":")
         backend_module: str = paths[0]
         backend_obj: Optional[str] = paths[1] if len(paths) > 1 else None
-        return folder, backend_paths, backend_module, backend_obj, requires
+        return folder, backend_paths, backend_module, backend_obj, requires, True
 
     def build_sdist(self, sdist_directory: Path, config_settings: Optional[ConfigSettings] = None) -> SdistResult:
         sdist_directory.mkdir(parents=True, exist_ok=True)
@@ -174,7 +176,7 @@ class Frontend(ABC):
     def prepare_metadata_for_build_wheel(
         self, metadata_directory: Path, config_settings: Optional[ConfigSettings] = None
     ) -> MetadataForBuildWheelResult:
-        if metadata_directory.exists():  #
+        if metadata_directory.exists():  # start with fresh
             shutil.rmtree(metadata_directory)
         metadata_directory.mkdir(parents=True, exist_ok=True)
         basename, out, err = self._send(
@@ -261,14 +263,14 @@ class Frontend(ABC):
                     "exc_type": "RuntimeError",
                     "exc_msg": f"Backend response file {result_file} is missing",
                 }
-            out, err = status.out_err()
-            if "return" in result:
-                return result["return"], out, err
-            raise BackendFailed(result, out, err)
+        out, err = status.out_err()
+        if "return" in result:
+            return result["return"], out, err
+        raise BackendFailed(result, out, err)
 
     @property
     def backend_args(self) -> List[str]:
-        result: List[str] = [str(_HERE / "backend.py"), self._backend_module]
+        result: List[str] = [str(_HERE / "backend.py"), str(self._reuse_backend), self._backend_module]
         if self._backend_obj:
             result.append(self._backend_obj)
         return result

@@ -195,9 +195,9 @@ class ToxProject:
 def enable_pep517_backend_coverage() -> Iterator[None]:
     try:
         import coverage  # noqa: F401
-    except ImportError:
-        yield
-        return
+    except ImportError:  # pragma: no cover
+        yield  # pragma: no cover
+        return  # pragma: no cover
     # the COV_ env variables needs to be passed on for the PEP-517 backend
     from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
 

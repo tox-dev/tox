@@ -1,5 +1,6 @@
 """A executor that reuses a single subprocess for all backend calls (saving on python startup/import overhead)"""
 from pathlib import Path
+from subprocess import TimeoutExpired
 from threading import Lock
 from types import TracebackType
 from typing import Dict, Optional, Sequence, Tuple, Type
@@ -49,7 +50,10 @@ class LocalSubProcessPep517Executor(Execute):
             execute.__exit__(None, None, None)
             if execute.process is not None:  # pragma: no branch
                 if execute.process.returncode is None:  # pragma: no cover
-                    execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
+                    try:  # pragma: no cover
+                        execute.process.wait(timeout=0.1)  # pragma: no cover
+                    except TimeoutExpired:  # pragma: no cover
+                        execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
 
 
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):

@@ -51,7 +51,7 @@ class ToxCmdStatus(CmdStatus):
             return True
         # 2. the backend output reported back that our command is done
         content = status.out
-        at = content.rfind(b"Backend: Write response ")
+        at = content.rfind(b"Backend: Wrote response ")
         if at != -1 and content.find(b"\n", at) != -1:
             return True
         return False
