@@ -12,10 +12,11 @@ class DelayedSignal:
         self._frame: Optional[FrameType] = None
         self._old_handler: Union[Callable[[Signals, FrameType], None], int, Handlers, None] = None
 
-    def __enter__(self) -> None:
+    def __enter__(self) -> "DelayedSignal":
         self._signal, self._frame = None, None
         if threading.current_thread() == threading.main_thread():  # signals are always handled on the main thread only
             self._old_handler = signal(self._of, self._handler)
+        return self
 
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]

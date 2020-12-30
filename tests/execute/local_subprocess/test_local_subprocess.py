@@ -205,7 +205,6 @@ def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixtur
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
-# @pytest.mark.timeout(10)
 def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, capfd: CaptureFixture) -> None:
     monkeypatch.chdir(tmp_path)
     process_up_signal = tmp_path / "signal"
