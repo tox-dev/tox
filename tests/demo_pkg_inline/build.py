@@ -42,12 +42,14 @@ content = {
 
 
 def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):
-    path = Path(wheel_directory) / f"{name}-{version}-py{sys.version_info.major}-none-any.whl"
+    base_name = f"{name}-{version}-py{sys.version_info.major}-none-any.whl"
+    path = Path(wheel_directory) / base_name
     with ZipFile(str(path), "w") as zip_file_handler:
         for arc_name, data in content.items():
             zip_file_handler.writestr(zinfo_or_arcname=arc_name, data=dedent(data).strip())
     print(f"created wheel {path}")
+    return base_name
 
 
 def get_requires_for_build_wheel(config_settings):
-    return []
+    return []  # pragma: no cover # only executed in non-host pythons

@@ -44,7 +44,7 @@ try:
         logging.info("wait on %r", status)
         while status.exit_code is None:  # pragma: no branch
             status.wait()
-        logging.info("wait over on %r", status)
+        logging.info("wait over on %r", status)  # pragma: no cover
     show_outcome(status.outcome)  # pragma: no cover
 except ToxKeyboardInterrupt as exception:  # pragma: no branch
     show_outcome(exception.outcome)

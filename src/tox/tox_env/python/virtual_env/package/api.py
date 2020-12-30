@@ -223,9 +223,9 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         except BackendFailed as exception:
             raise Fail(exception)
 
-    def _required_command_missing(self, cmd: str) -> NoReturn:
+    def _unexpected_response(self, cmd: str, got: Any, expected_type: Any, out: str, err: str) -> NoReturn:
         try:
-            super()._required_command_missing(cmd)
+            super()._unexpected_response(cmd, got, expected_type, out, err)
         except BackendFailed as exception:
             raise Fail(exception)
 

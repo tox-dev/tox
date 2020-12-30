@@ -67,7 +67,11 @@ class BackendFailed(RuntimeError):
         self.exc_msg: str = result["exc_msg"]
 
     def __str__(self) -> str:
-        msg = [f"Backend failed with exit code {self.code}, exception type {self.exc_type} and message {self.exc_msg}"]
+
+        msg = [
+            f"Backend failed{'' if self.code is None else f' (exit code {self.code})'}, "
+            f"exception of {self.exc_type} with message {self.exc_msg}"
+        ]
         if self.err.strip():  # pragma: no branch
             msg.append(self.err)
         if self.out.strip():  # pragma: no branch
@@ -141,10 +145,10 @@ class Frontend(ABC):
             cmd="build_sdist",
             sdist_directory=sdist_directory,
             config_settings=config_settings,
-            missing=None,
+            missing=None,  #
         )
-        if basename is None:
-            self._required_command_missing("build_sdist")
+        if not isinstance(basename, str):
+            self._unexpected_response("build_sdist", basename, str, out, err)
         return SdistResult(sdist_directory / basename, out, err)
 
     def build_wheel(
@@ -161,13 +165,13 @@ class Frontend(ABC):
             metadata_directory=metadata_directory,
             missing=None,
         )
-        if basename is None:
-            self._required_command_missing("build_wheel")
+        if not isinstance(basename, str):
+            self._unexpected_response("build_wheel", basename, str, out, err)
         return WheelResult(wheel_directory / basename, out, err)
 
-    def _required_command_missing(self, cmd: str) -> NoReturn:
-        msg = f"{cmd} cannot be missing on backend {self.backend!r}"
-        raise BackendFailed({"code": None, "exc_type": ValueError.__name__, "exc_msg": msg}, "", "")
+    def _unexpected_response(self, cmd: str, got: Any, expected_type: Any, out: str, err: str) -> NoReturn:
+        msg = f"{cmd!r} on {self.backend!r} returned {got!r} but expected type {expected_type!r}"
+        raise BackendFailed({"code": None, "exc_type": TypeError.__name__, "exc_msg": msg}, out, err)
 
     @property
     def backend(self) -> str:
@@ -176,6 +180,8 @@ class Frontend(ABC):
     def prepare_metadata_for_build_wheel(
         self, metadata_directory: Path, config_settings: Optional[ConfigSettings] = None
     ) -> MetadataForBuildWheelResult:
+        if metadata_directory == self._root:
+            raise RuntimeError(f"the project root and the metadata directory can't be the same {self._root}")
         if metadata_directory.exists():  # start with fresh
             shutil.rmtree(metadata_directory)
         metadata_directory.mkdir(parents=True, exist_ok=True)
@@ -183,9 +189,11 @@ class Frontend(ABC):
             cmd="prepare_metadata_for_build_wheel",
             metadata_directory=metadata_directory,
             config_settings=config_settings,
-            missing=None,
+            missing=object,
         )
-        if basename is None:  # if backend does not provide it acquire it from the wheel
+        if basename is not object and not isinstance(basename, str):
+            self._unexpected_response("prepare_metadata_for_build_wheel", basename, str, out, err)
+        if basename is object:  # if backend does not provide it acquire it from the wheel
             basename, err, out = self._metadata_from_built_wheel(config_settings, metadata_directory)
         result = metadata_directory / basename
         return MetadataForBuildWheelResult(result, out, err)
@@ -200,8 +208,11 @@ class Frontend(ABC):
                 metadata_directory=metadata_directory,
             )
             wheel = wheel_result.wheel
+            if not wheel.exists():
+                raise RuntimeError(f"missing wheel file return by backed {wheel!r}")
             out, err = wheel_result.out, wheel_result.err
             extract_to = str(metadata_directory)
+            basename = None
             with ZipFile(str(wheel), "r") as zip_file:
                 for name in zip_file.namelist():
                     path = Path(name)
@@ -221,12 +232,16 @@ class Frontend(ABC):
         self, config_settings: Optional[ConfigSettings] = None
     ) -> RequiresBuildWheelResult:
         result, out, err = self._send(cmd="get_requires_for_build_wheel", config_settings=config_settings, missing=[])
+        if not isinstance(result, list) or not all(isinstance(i, str) for i in result):
+            self._unexpected_response("get_requires_for_build_wheel", result, "list of string", out, err)
         return RequiresBuildWheelResult(tuple(Requirement(r) for r in cast(List[str], result)), out, err)
 
     def get_requires_for_build_sdist(
         self, config_settings: Optional[ConfigSettings] = None
     ) -> RequiresBuildSdistResult:
         result, out, err = self._send(cmd="get_requires_for_build_sdist", config_settings=config_settings, missing=[])
+        if not isinstance(result, list) or not all(isinstance(i, str) for i in result):
+            self._unexpected_response("get_requires_for_build_sdist", result, "list of string", out, err)
         return RequiresBuildSdistResult(tuple(Requirement(r) for r in cast(List[str], result)), out, err)
 
     @property

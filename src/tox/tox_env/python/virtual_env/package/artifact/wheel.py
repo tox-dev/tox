@@ -29,7 +29,7 @@ class Pep517VirtualEnvPackageWheel(Pep517VirtualEnvPackage):
     def _send(self, cmd: str, missing: Any, **kwargs: Any) -> Tuple[Any, str, str]:
         if cmd == "prepare_metadata_for_build_wheel":
             # given we'll build a wheel we might skip the prepare step
-            return None, "", ""
+            return object, "", ""
         return super()._send(cmd, missing, **kwargs)
 
 

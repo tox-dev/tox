@@ -15,10 +15,9 @@ class BackendProxy:
 
     def __call__(self, name, *args, **kwargs):
         on_object = self if name.startswith("_") else self.backend
-        method = getattr(on_object, name, None)
-        if method is None:
-            return None
-        return method(*args, **kwargs)
+        if not hasattr(on_object, name):
+            raise TypeError(f"{on_object!r} has no attribute {name!r}")
+        return getattr(on_object, name)(*args, **kwargs)
 
     def _exit(self):  # noqa
         return 0
@@ -86,7 +85,7 @@ def run(argv):
                 finally:
                     print(f"Backend: Wrote response {result} to {result_file}")
                     flush()
-        if reuse_process is False:
+        if reuse_process is False:  # pragma: no branch # no test for reuse process in root test env
             break
     return 0
 

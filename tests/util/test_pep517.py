@@ -4,8 +4,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import PIPE, Popen
+from textwrap import dedent
 from threading import Thread
-from typing import IO, Any, Iterator, NamedTuple, Optional, Tuple, cast
+from typing import IO, Any, Callable, Iterator, NamedTuple, Optional, Tuple, cast
 
 import pytest
 from packaging.requirements import Requirement
@@ -51,6 +52,8 @@ class SubprocessFrontend(Frontend):
 
     @contextmanager
     def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[CmdStatus]:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.pathsep.join(str(i) for i in self._backend_paths)
         process = Popen(
             args=[sys.executable] + self.backend_args,
             stdout=PIPE,
@@ -58,6 +61,7 @@ class SubprocessFrontend(Frontend):
             stdin=PIPE,
             universal_newlines=True,
             cwd=self._root,
+            env=env,
         )
         cast(IO[str], process.stdin).write(f"{os.linesep}{msg}{os.linesep}")
         yield SubprocessCmdStatus(process)
@@ -69,7 +73,9 @@ class SubprocessFrontend(Frontend):
 @pytest.fixture(scope="session")
 def frontend_setuptools(tmp_path_factory: TempPathFactory) -> SubprocessFrontend:
     prj = tmp_path_factory.mktemp("proj")
-    (prj / "pyproject.toml").write_text('requires=["setuptools","wheel"]\nbuild-backend = "setuptools.build_meta"')
+    (prj / "pyproject.toml").write_text(
+        '[build-system]\nrequires=["setuptools","wheel"]\nbuild-backend = "setuptools.build_meta"'
+    )
     cfg = """
         [metadata]
         name = demo
@@ -127,7 +133,8 @@ def test_pep517_setuptools_get_requires_for_build_wheel(frontend_setuptools: Sub
 def test_pep517_setuptools_prepare_metadata_for_build_wheel(
     frontend_setuptools: SubprocessFrontend, tmp_path: Path
 ) -> None:
-    result = frontend_setuptools.prepare_metadata_for_build_wheel(metadata_directory=tmp_path)
+    meta = tmp_path / "meta"
+    result = frontend_setuptools.prepare_metadata_for_build_wheel(metadata_directory=meta)
     dist = Distribution.at(str(result.metadata))
     assert dist.entry_points == [EntryPoint(name="demo_exe", value="demo:a", group="console_scripts")]
     assert dist.version == "1.0"
@@ -138,7 +145,7 @@ def test_pep517_setuptools_prepare_metadata_for_build_wheel(
 
     # call it again regenerates it because frontend always deletes earlier content
     before = result.metadata.stat().st_mtime
-    result = frontend_setuptools.prepare_metadata_for_build_wheel(metadata_directory=tmp_path)
+    result = frontend_setuptools.prepare_metadata_for_build_wheel(metadata_directory=meta)
     after = result.metadata.stat().st_mtime
     assert after > before
 
@@ -228,3 +235,166 @@ def test_pep517_result_missing(frontend_setuptools: SubprocessFrontend, tmp_path
     assert exc.code == 1
     assert "Traceback" in exc.err
     assert "PermissionError" in exc.err
+
+
+@pytest.fixture
+def local_builder(tmp_path: Path) -> Callable[[str], Path]:
+    def _f(content: str) -> Path:
+        toml = '[build-system]\nrequires=[]\nbuild-backend = "build_tester"\nbackend-path=["."]'
+        (tmp_path / "pyproject.toml").write_text(toml)
+        (tmp_path / "build_tester.py").write_text(dedent(content))
+        return tmp_path
+
+    return _f
+
+
+@pytest.mark.parametrize("cmd", ["build_wheel", "build_sdist"])
+def test_pep517_missing_required_cmd(cmd: str, local_builder: Callable[[str], Path]) -> None:
+    tmp_path = local_builder("")
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(BackendFailed) as context:
+        getattr(fronted, cmd)(tmp_path)
+    exc = context.value
+    assert f"has no attribute '{cmd}'" in exc.exc_msg
+    assert exc.exc_type == "TypeError"
+
+
+def test_pep517_empty_pyproject(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text("[build-system]")
+    root, backend_paths, backend_module, backend_obj, requires, _ = SubprocessFrontend.create_args_from_folder(tmp_path)
+    assert root == tmp_path
+    assert backend_paths == ()
+    assert backend_module == "setuptools.build_meta"
+    assert backend_obj == "__legacy__"
+    for left, right in zip(requires, (Requirement("setuptools>=40.8.0"), Requirement("wheel"))):
+        assert isinstance(left, Requirement)
+        assert str(left) == str(right)
+
+
+def test_pep517_backend_no_prepare_wheel(tmp_path: Path, demo_pkg_inline: Path) -> None:
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(demo_pkg_inline)[:-1])
+    result = fronted.prepare_metadata_for_build_wheel(tmp_path)
+    assert result.metadata.name == "demo_pkg_inline-1.0.0.dist-info"
+
+
+def test_pep517_backend_obj(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        dedent(
+            """
+        [build-system]
+        requires=[]
+        build-backend = "build.api:backend:"
+        backend-path=["."]
+        """
+        )
+    )
+    build = tmp_path / "build"
+    build.mkdir()
+    (build / "__init__.py").write_text("")
+    (build / "api.py").write_text(
+        dedent(
+            """
+        class A:
+            def get_requires_for_build_sdist(self, config_settings=None):
+                return ["a"]
+
+        backend = A()
+        """
+        )
+    )
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+    result = fronted.get_requires_for_build_sdist()
+    for left, right in zip(result.requires, (Requirement("a"),)):
+        assert isinstance(left, Requirement)
+        assert str(left) == str(right)
+
+
+@pytest.mark.parametrize("of_type", ["sdist", "wheel"])
+def test_pep517_bad_return_type_get_requires_for_build(of_type: str, local_builder: Callable[[str], Path]) -> None:
+    tmp_path = local_builder(f"def get_requires_for_build_{of_type}(config_settings=None): return 1")
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(BackendFailed) as context:
+        getattr(fronted, f"get_requires_for_build_{of_type}")()
+
+    exc = context.value
+    msg = f"'get_requires_for_build_{of_type}' on 'build_tester' returned 1 but expected type 'list of string'"
+    assert exc.exc_msg == msg
+    assert exc.exc_type == "TypeError"
+
+
+def test_pep517_bad_return_type_build_sdist(local_builder: Callable[[str], Path]) -> None:
+    tmp_path = local_builder("def build_sdist(sdist_directory, config_settings=None): return 1")
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(BackendFailed) as context:
+        fronted.build_sdist(tmp_path)
+
+    exc = context.value
+    assert exc.exc_msg == f"'build_sdist' on 'build_tester' returned 1 but expected type {str!r}"
+    assert exc.exc_type == "TypeError"
+
+
+def test_pep517_bad_return_type_build_wheel(local_builder: Callable[[str], Path]) -> None:
+    txt = "def build_wheel(wheel_directory, config_settings=None, metadata_directory=None): return 1"
+    tmp_path = local_builder(txt)
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(BackendFailed) as context:
+        fronted.build_wheel(tmp_path)
+
+    exc = context.value
+    assert exc.exc_msg == f"'build_wheel' on 'build_tester' returned 1 but expected type {str!r}"
+    assert exc.exc_type == "TypeError"
+
+
+def test_pep517_bad_return_type_prepare_metadata_for_build_wheel(local_builder: Callable[[str], Path]) -> None:
+    tmp_path = local_builder("def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None): return 1")
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(BackendFailed) as context:
+        fronted.prepare_metadata_for_build_wheel(tmp_path / "meta")
+
+    exc = context.value
+    assert exc.exc_type == "TypeError"
+    assert exc.exc_msg == f"'prepare_metadata_for_build_wheel' on 'build_tester' returned 1 but expected type {str!r}"
+
+
+def test_pep517_prepare_metadata_for_build_wheel_meta_is_root(local_builder: Callable[[str], Path]) -> None:
+    tmp_path = local_builder("def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None): return 1")
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(RuntimeError) as context:
+        fronted.prepare_metadata_for_build_wheel(tmp_path)
+
+    assert str(context.value) == f"the project root and the metadata directory can't be the same {tmp_path}"
+
+
+def test_pep517_no_wheel_prepare_metadata_for_build_wheel(local_builder: Callable[[str], Path]) -> None:
+    txt = "def build_wheel(wheel_directory, config_settings=None, metadata_directory=None): return 'out'"
+    tmp_path = local_builder(txt)
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(RuntimeError, match="missing wheel file return by backed *"):
+        fronted.prepare_metadata_for_build_wheel(tmp_path / "meta")
+
+
+def test_pep517_bad_wheel_prepare_metadata_for_build_wheel(local_builder: Callable[[str], Path]) -> None:
+    txt = """
+    import sys
+    from pathlib import Path
+    from zipfile import ZipFile
+
+    def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+        path = Path(wheel_directory) / "out"
+        with ZipFile(str(path), "w") as zip_file_handler:
+            pass
+        print(f"created wheel {path}")
+        return path.name
+    """
+    tmp_path = local_builder(txt)
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+
+    with pytest.raises(RuntimeError, match="no .dist-info found inside generated wheel*"):
+        fronted.prepare_metadata_for_build_wheel(tmp_path / "meta")
