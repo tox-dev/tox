@@ -81,9 +81,7 @@ class RunToxEnv(ToxEnv, ABC):
             desc="skip installation",
         )
         skip_install: bool = self.conf["skip_install"]
-        if skip_install:
-            return False
-        return True
+        return not skip_install
 
     def set_package_env(self) -> Generator[Tuple[str, str], PackageToxEnv, None]:
         if not self.has_package:
@@ -103,9 +101,8 @@ class RunToxEnv(ToxEnv, ABC):
     def environment_variables(self) -> Dict[str, str]:
         environment_variables = super().environment_variables
         if self.has_package:  # if package(s) have been built insert them as environment variable
-            packages = self.packages
-            if packages:
-                environment_variables["TOX_PACKAGE"] = os.pathsep.join(packages)
+            if self.packages:
+                environment_variables["TOX_PACKAGE"] = os.pathsep.join(self.packages)
         return environment_variables
 
     @property

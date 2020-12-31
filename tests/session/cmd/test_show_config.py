@@ -117,3 +117,21 @@ def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": "[testenv:py]\nmagical=yes\nmagic=yes"}).run("c", "-e", "py")
     outcome.assert_success()
     assert "\n# !!! unused: magic, magical\n" in outcome.out
+
+
+def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.ini": """
+        [testenv:a]
+        base_python = missing-python
+        """,
+        },
+    )
+    outcome = project.run("c", "-e", "a", "-k", "env_site_packages_dir")
+    outcome.assert_success()
+    txt = (
+        "\nenv_site_packages_dir = # Exception: "
+        "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
+    )
+    assert txt in outcome.out

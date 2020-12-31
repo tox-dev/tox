@@ -57,28 +57,19 @@ class PythonRun(Python, RunToxEnv, ABC):
         super().setup()
         self.install_deps()
         if self.package_env is not None:
+            # 1. install pkg dependendencies
             with self.package_env.display_context(suspend=self.has_display_suspended):
                 package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
             self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
-        self.install_package()
+
+            # 2. install the package
+            with self.package_env.display_context(suspend=self.has_display_suspended):
+                self._packages = [PythonDep(p) for p in self.package_env.perform_packaging()]
+            self.install_python_packages(self._packages, **self.install_package_args())  # type: ignore[no-untyped-call]
+            self.handle_journal_package(self.journal, self._packages)
 
     def install_deps(self) -> None:
         self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
-
-    def install_package(self) -> None:
-        package = self.get_package()
-        if package:
-            self.install_python_packages(package, **self.install_package_args())  # type: ignore[no-untyped-call]
-            self.handle_journal_package(self.journal, package)
-
-    def get_package(self) -> List[PythonDep]:
-        if self.package_env is not None:
-            with self.package_env.display_context(suspend=self.has_display_suspended):
-                package: List[PythonDep] = [PythonDep(p) for p in self.package_env.perform_packaging()]
-        else:
-            package = [PythonDep(d) for d in self.get_pkg_no_env()] if self.has_package else []
-        self._packages = package
-        return package
 
     @abstractmethod
     def install_package_args(self) -> Dict[str, Any]:
@@ -103,7 +94,3 @@ class PythonRun(Python, RunToxEnv, ABC):
                 installed_meta.append(meta)
         if installed_meta:
             journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
-
-    def get_pkg_no_env(self) -> List[Path]:
-        # by default in Python just forward the root folder to the installer
-        return [cast(Path, self.core["tox_root"])]
