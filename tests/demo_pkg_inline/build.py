@@ -1,4 +1,5 @@
 import sys
+import tarfile
 from pathlib import Path
 from textwrap import dedent
 from zipfile import ZipFile
@@ -10,7 +11,7 @@ version = "1.0.0"
 dist_info = f"{name}-{version}.dist-info"
 
 content = {
-    f"{name}/__init__.py": f"def do():\nprint('greetings from {name}')",
+    f"{name}/__init__.py": f"def do():\n    print('greetings from {name}')",
     f"{dist_info}/METADATA": f"""
         Metadata-Version: 2.1
         Name: {pkg_name}
@@ -52,4 +53,17 @@ def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):
 
 
 def get_requires_for_build_wheel(config_settings):
+    return []  # pragma: no cover # only executed in non-host pythons
+
+
+def build_sdist(sdist_directory, config_settings=None):
+    result = f"{name}-{version}.tar.gz"
+    with tarfile.open(str(Path(sdist_directory) / result), "w:gz") as tar:
+        root = Path(__file__).parent
+        tar.add(str(root / "build.py"), arcname="build.py")
+        tar.add(str(root / "pyproject.toml"), arcname="pyproject.toml")
+    return result
+
+
+def get_requires_for_build_sdist(config_settings):
     return []  # pragma: no cover # only executed in non-host pythons

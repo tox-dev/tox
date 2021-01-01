@@ -47,8 +47,8 @@ class ToxCmdStatus(CmdStatus):
     def done(self) -> bool:
         # 1. process died
         status = self._execute_status
-        if status.exit_code is not None:
-            return True
+        if status.exit_code is not None:  # pragma: no branch
+            return True  # pragma: no cover
         # 2. the backend output reported back that our command is done
         content = status.out
         at = content.rfind(b"Backend: Wrote response ")
@@ -58,8 +58,8 @@ class ToxCmdStatus(CmdStatus):
 
     def out_err(self) -> Tuple[str, str]:
         status = self._execute_status
-        if status is None or status.outcome is None:
-            return "", ""
+        if status is None or status.outcome is None:  # interrupt before status create # pragma: no branch
+            return "", ""  # pragma: no cover
         return status.outcome.out_err()
 
 
@@ -101,10 +101,11 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         return meta_folder
 
     def _ensure_meta_present(self) -> None:
-        if self._distribution_meta is None:
-            self.ensure_setup()
-            dist_info = self.prepare_metadata_for_build_wheel(self.meta_folder).metadata
-            self._distribution_meta = Distribution.at(str(dist_info))
+        if self._distribution_meta is not None:  # pragma: no branch
+            return  # pragma: no cover
+        self.ensure_setup()
+        dist_info = self.prepare_metadata_for_build_wheel(self.meta_folder).metadata
+        self._distribution_meta = Distribution.at(str(dist_info))
 
     @abstractmethod
     def _build_artifact(self) -> Path:

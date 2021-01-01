@@ -26,6 +26,7 @@ def test_verbose_no_test(monkeypatch: MonkeyPatch) -> None:
         "quiet": 0,
         "colored": "no",
         "work_dir": None,
+        "root_dir": None,
         "config_file": None,
         "result_json": None,
         "command": "legacy",
@@ -102,6 +103,7 @@ def test_env_var_exhaustive_parallel_values(
         "skip_missing_interpreters": "config",
         "verbose": 5,
         "work_dir": None,
+        "root_dir": None,
         "config_file": None,
     }
     assert parsed.verbosity == 4

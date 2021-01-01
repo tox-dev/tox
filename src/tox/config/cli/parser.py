@@ -276,6 +276,15 @@ def add_core_arguments(parser: ArgumentParser) -> None:
         of_type=Optional[Path],
         help="tox working directory (if not specified will be the folder of the config file)",
     )
+    parser.add_argument(
+        "--root",
+        dest="root_dir",
+        metavar="dir",
+        default=None,
+        type=Path,
+        of_type=Optional[Path],
+        help="project root directory (if not specified will be the folder of the config file)",
+    )
 
 
 __all__ = (

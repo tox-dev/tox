@@ -86,6 +86,6 @@ def make_config(parsed: Parsed, pos_args: Optional[Sequence[str]]) -> Config:
         config_source=ini_loader,
         overrides=parsed.override,
         pos_args=pos_args,
-        root=tox_ini.parent,
+        root=parsed.root_dir if parsed.root_dir is not None else tox_ini.parent,
         work_dir=work_dir,
     )

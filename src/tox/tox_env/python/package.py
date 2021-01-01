@@ -17,10 +17,8 @@ class PythonPackage(Python, PackageToxEnv, ABC):
     def setup(self) -> None:
         """setup the tox environment"""
         super().setup()
-        fresh_requires = self.cached_install(
-            [PythonDep(i) for i in self.requires()], PythonPackage.__name__, "requires"
-        )
-        if not fresh_requires:
+        deps = [PythonDep(i) for i in self.requires()]
+        if not self.cached_install(deps, PythonPackage.__name__, "requires"):
             build_requirements: List[Union[str, Requirement]] = []
             with self._cache.compare(build_requirements, PythonPackage.__name__, "build-requires") as (eq, old):
                 if eq is False and old is None:

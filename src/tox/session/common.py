@@ -12,7 +12,7 @@ class CliEnv:
         self._names = value
 
     def __iter__(self) -> Iterator[str]:
-        if self._names is not None:
+        if self._names is not None:  # pragma: no branch
             yield from self._names
 
     def __str__(self) -> str:

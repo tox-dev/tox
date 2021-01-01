@@ -91,6 +91,7 @@ def default_options(tmp_path: Path) -> Dict[str, Any]:
         "verbose": 2,
         "no_recreate_pkg": False,
         "work_dir": None,
+        "root_dir": None,
         "config_file": (tmp_path / "tox.ini").absolute(),
     }
 
@@ -119,6 +120,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dic
         "skip_missing_interpreters": "config",
         "verbose": 5,
         "work_dir": None,
+        "root_dir": None,
         "config_file": exhaustive_ini,
     }
     assert parsed.verbosity == 4

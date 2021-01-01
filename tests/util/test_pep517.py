@@ -278,6 +278,12 @@ def test_pep517_backend_no_prepare_wheel(tmp_path: Path, demo_pkg_inline: Path) 
     assert result.metadata.name == "demo_pkg_inline-1.0.0.dist-info"
 
 
+def test_pep517_backend_build_sdist_demo_pkg_inline(tmp_path: Path, demo_pkg_inline: Path) -> None:
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(demo_pkg_inline)[:-1])
+    result = fronted.build_sdist(sdist_directory=tmp_path)
+    assert result.sdist == tmp_path / "demo_pkg_inline-1.0.0.tar.gz"
+
+
 def test_pep517_backend_obj(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text(
         dedent(

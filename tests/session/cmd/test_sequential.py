@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
 import pytest
@@ -111,3 +112,32 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
 
 def get_cmd_exit_run_id(report: Dict[str, Any], name: str, group: str) -> List[Tuple[Union[int, None], str]]:
     return [(i["retcode"], i["run_id"]) for i in report["testenvs"][name].pop(group)]
+
+
+def test_rerun_sequential_skip(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
+    result_first = proj.run("--root", str(demo_pkg_inline))
+    result_first.assert_success()
+    result_rerun = proj.run("--root", str(demo_pkg_inline))
+    result_rerun.assert_success()
+
+
+def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project(
+        {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"}
+    )
+    result_first = proj.run("--root", str(demo_pkg_inline))
+    result_first.assert_success()
+    result_rerun = proj.run("--root", str(demo_pkg_inline))
+    result_rerun.assert_success()
+
+
+@pytest.mark.integration
+def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project(
+        {"tox.ini": "[testenv]\npackage=sdist\ncommands=python -c 'from demo_pkg_inline import do; do()'"}
+    )
+    result_first = proj.run("--root", str(demo_pkg_inline))
+    result_first.assert_success()
+    result_rerun = proj.run("--root", str(demo_pkg_inline))
+    result_rerun.assert_success()
