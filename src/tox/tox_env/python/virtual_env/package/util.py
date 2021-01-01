@@ -9,6 +9,6 @@ def virtual_env_package_id(of_type: PackageType) -> str:
         return Pep517VirtualEnvPackageSdist.id()
     elif of_type is PackageType.wheel:
         return Pep517VirtualEnvPackageWheel.id()
-    elif of_type is PackageType.dev:
+    elif of_type is PackageType.dev:  # pragma: no branch
         return LegacyDevVirtualEnvPackage.id()
-    raise KeyError(PackageType.name)
+    raise KeyError(PackageType.name)  # pragma: no cover # can only happen if we introduce new types and forget to set

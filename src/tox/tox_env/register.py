@@ -33,7 +33,8 @@ class ToxEnvRegister:
 
     @default_run_env.setter
     def default_run_env(self, value: str) -> None:
-        assert value in self._run_envs, "default env must be in run envs"
+        if value not in self._run_envs:
+            raise ValueError("run env must be registered before setting it as default")
         self._default_run_env = value
 
     def runner(self, name: str) -> Type[RunToxEnv]:

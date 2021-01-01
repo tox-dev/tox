@@ -5,6 +5,7 @@ from typing import Dict, Optional, Set
 
 from tox.config.main import Config
 from tox.plugin.impl import impl
+from tox.report import HandledError
 from tox.tox_env.register import ToxEnvRegister
 
 from ..runner import PythonRun
@@ -30,7 +31,12 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
             self.conf.add_constant(["package"], desc, PackageType.dev)
         else:
             self.conf.add_config(keys="package", of_type=PackageType, default=PackageType.sdist, desc=desc)
-        pkg_type: PackageType = self.conf["package"]
+        try:
+            pkg_type: PackageType = self.conf["package"]
+        except AttributeError as exc:
+            values = ", ".join(i.name for i in PackageType)
+            raise HandledError(f"invalid package config type {exc.args[0]!r} requested, must be one of {values}")
+
         if pkg_type == PackageType.skip:
             return False
 

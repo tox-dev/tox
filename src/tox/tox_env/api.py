@@ -146,16 +146,13 @@ class ToxEnv(ABC):
         conf = {"name": self.conf.name, "type": type(self).__name__}
         try:
             with self._cache.compare(conf, ToxEnv.__name__) as (eq, old):
-                try:
-                    if eq is True:
-                        return
-                    # if either the name or type changed and already exists start over
-                    self.clean()
-                finally:
-                    env_dir.mkdir(exist_ok=True, parents=True)
+                if eq is False and old is not None:
+                    raise Recreate  # recreate if already exists and type changed
+                if not env_dir.exists():
+                    env_dir.mkdir(parents=True)
+                self.setup_done, self.clean_done = True, False
         finally:
             self._handle_env_tmp_dir()
-        self.setup_done, self.clean_done = True, False
 
     def ensure_setup(self, recreate: bool = False) -> None:
         if self.setup_done is True:

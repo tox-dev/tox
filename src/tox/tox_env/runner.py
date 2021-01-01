@@ -93,7 +93,7 @@ class RunToxEnv(ToxEnv, ABC):
 
     def clean(self, package_env: bool = True) -> None:
         super().clean()
-        if self.package_env is not None:
+        if self.package_env is not None:  # pragma: no cover branch
             with self.package_env.display_context(suspend=self.has_display_suspended):
                 self.package_env.clean()
 

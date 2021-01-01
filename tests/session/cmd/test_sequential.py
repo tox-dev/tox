@@ -141,3 +141,43 @@ def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline:
     result_first.assert_success()
     result_rerun = proj.run("--root", str(demo_pkg_inline))
     result_rerun.assert_success()
+
+
+def test_recreate_package(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project(
+        {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"}
+    )
+    result_first = proj.run("--root", str(demo_pkg_inline), "-r")
+    result_first.assert_success()
+
+    result_rerun = proj.run("-r", "--root", str(demo_pkg_inline), "--no-recreate-pkg")
+    result_rerun.assert_success()
+
+
+def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text()
+    build = (demo_pkg_inline / "build.py").read_text()
+    ini = "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"
+    proj = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build})
+
+    result_first = proj.run("r")
+    result_first.assert_success()
+    assert ".package-py: install" not in result_first.out  # no deps initially
+
+    # new deps are picked up
+    (proj.path / "pyproject.toml").write_text(toml.replace("requires = []", 'requires = ["wheel"]'))
+    (proj.path / "build.py").write_text(
+        build.replace(
+            "def get_requires_for_build_wheel(config_settings):\n    return []",
+            "def get_requires_for_build_wheel(config_settings):\n    return ['setuptools']",
+        )
+    )
+
+    result_rerun = proj.run("r")
+    result_rerun.assert_success()
+
+    # and installed
+    rerun_install = [i for i in result_rerun.out.splitlines() if i.startswith(".package-py: install")]
+    assert len(rerun_install) == 2
+    assert rerun_install[0].endswith("wheel")
+    assert rerun_install[1].endswith("setuptools")
