@@ -91,6 +91,3 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
         self._out, self._err = self._instance.set_out_err(out, err)
         # update the thread out/err
         self._status.set_out_err(out, err)
-
-    def interrupt(self) -> int:
-        return self._instance.interrupt()  # pragma: no cover # just crash instantly

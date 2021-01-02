@@ -41,8 +41,8 @@ def test_setuptools_package(
 
     result = outcome.out.split("\n")
     py_messages = [i for i in result if "py: " in i]
-    assert len(py_messages) == 5, "\n".join(py_messages)  # 1 install wheel + 3 command + 1 reports
+    assert len(py_messages) == 6, "\n".join(py_messages)  # 1 install wheel + 3 command + 1 report + 1 final report
 
     package_messages = [i for i in result if ".package: " in i]
-    # 1 install requires + 1 _commands + 1 build requires + 1 build meta + 1 build isolated + 1 exit
-    assert len(package_messages) == 6, "\n".join(package_messages)
+    # 1 install requires + 1 build requires + 1 build meta + 1 build isolated + 1 exit
+    assert len(package_messages) == 5, "\n".join(package_messages)

@@ -2,6 +2,7 @@ from typing import Callable, Dict
 
 import pytest
 
+from tox.session.cmd.depends import depends
 from tox.session.cmd.devenv import devenv
 from tox.session.cmd.legacy import legacy
 from tox.session.cmd.list_env import list_env
@@ -27,6 +28,8 @@ def core_handlers() -> Dict[str, Callable[[State], int]]:
         "devenv": devenv,
         "q": quickstart,
         "quickstart": quickstart,
+        "de": depends,
+        "depends": depends,
         "le": legacy,
         "legacy": legacy,
     }

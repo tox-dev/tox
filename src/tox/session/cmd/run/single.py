@@ -36,19 +36,23 @@ def _evaluate(tox_env: ToxEnv, recreate: bool, no_test: bool) -> Tuple[bool, int
     code: int = 0
     outcomes: List[Outcome] = []
     try:
-        tox_env.ensure_setup(recreate=recreate)
-        code, outcomes = run_commands(tox_env, no_test)
-    except Skip as exception:
-        LOGGER.info("skipped environment because %s", exception)
-        skipped = True
-    except Fail as exception:
-        LOGGER.error("failed with %s", exception)
-        code = 1
-    except Exception as exception:
-        LOGGER.exception(exception)
-        code = 2
-    finally:
-        tox_env.teardown()
+        try:
+            tox_env.ensure_setup(recreate=recreate)
+            code, outcomes = run_commands(tox_env, no_test)
+        except Skip as exception:
+            LOGGER.info("skipped environment because %s", exception)
+            skipped = True
+        except Fail as exception:
+            LOGGER.exception("what")
+            LOGGER.error("failed with %s", exception)
+            code = 1
+        except Exception:  # noqa # pragma: no cover
+            LOGGER.exception("Internal Error")  # pragma: no cover
+            code = 2  # pragma: no cover
+        finally:
+            tox_env.teardown()
+    except SystemExit as exception:
+        code = exception.code
     return skipped, code, outcomes
 
 

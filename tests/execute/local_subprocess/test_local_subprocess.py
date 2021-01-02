@@ -215,27 +215,27 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
     root = process.pid
     child = next(iter(psutil.Process(pid=root).children())).pid
 
-    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}")
+    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)
     process.send_signal(SIG_INTERRUPT)
     try:
-        process.communicate(timeout=5)
+        process.communicate(timeout=3)
     except subprocess.TimeoutExpired:  # pragma: no cover
         process.kill()
         raise
 
     out, err = capfd.readouterr()
-    assert "E	got KeyboardInterrupt signal" in err, err
-    assert f"W	KeyboardInterrupt from {root} SIGINT pid {child}" in err, err
-    assert f"W	KeyboardInterrupt from {root} SIGTERM pid {child}" in err, err
-    assert f"I	KeyboardInterrupt from {root} SIGKILL pid {child}" in err, err
+    assert f"W	requested interrupt of {child} from {root}" in err, err
+    assert f"W	send signal SIGINT(2) to {child} from {root} with timeout 0.30" in err, err
+    assert f"W	send signal SIGTERM(15) to {child} from {root} with timeout 0.20" in err, err
+    assert f"W	send signal SIGKILL(9) to {child} from {root}" in err, err
 
     outs = out.split("\n")
 
-    exit_code = int(outs[2])
+    exit_code = int(outs[0])
     assert exit_code == -9
-    assert float(outs[5]) > 0  # duration
-    assert "how about no signal 2" in outs[3], outs[3]  # 2 - Interrupt
-    assert "how about no signal 15" in outs[3], outs[3]  # 15 - Terminated
+    assert float(outs[3]) > 0  # duration
+    assert "how about no signal 2" in outs[1], outs[1]  # 2 - Interrupt
+    assert "how about no signal 15" in outs[1], outs[1]  # 15 - Terminated
 
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])

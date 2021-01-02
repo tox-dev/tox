@@ -1,15 +1,25 @@
 """Common functionality shared across multiple type of runs"""
+import logging
+import os
 import time
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
+from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Sequence, Union
+from signal import SIGINT, Handlers, signal
+from threading import Event, Thread
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union, cast
 
 from colorama import Fore
 
+from tox.config.types import EnvList
 from tox.execute import Outcome
 from tox.journal import write_journal
-from tox.session.cmd.run.single import ToxEnvRunResult
+from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.session.state import State
+from tox.tox_env.api import ToxEnv
+from tox.tox_env.runner import RunToxEnv
+from tox.util.graph import stable_topological_sort
+from tox.util.spinner import MISS_DURATION, Spinner
 
 
 class SkipMissingInterpreterAction(Action):
@@ -96,7 +106,7 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
     )
 
 
-def run_and_report(state: State, result: Iterator[ToxEnvRunResult]) -> int:
+def run_and_report(state: State, result: List[ToxEnvRunResult]) -> int:
     # manifest the results
     name_to_run = {r.name: r for r in result}
     runs = [name_to_run[n] for n in list(state.env_list(everything=False))]
@@ -128,3 +138,156 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
     else:
         _print(Fore.RED, f"  evaluation failed :( ({duration:.2f} seconds)")
         return -1
+
+
+logger = logging.getLogger(__name__)
+
+
+def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool) -> int:
+    interrupt, done = Event(), Event()
+    results: List[ToxEnvRunResult] = []
+    future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
+    previous, has_previous = None, False
+    try:
+        try:
+            thread = Thread(
+                target=_queue_and_wait,
+                name="tox-interrupt",
+                args=(state, results, future_to_env, interrupt, done, max_workers, spinner, live),
+            )
+            thread.start()
+            thread.join()
+        except KeyboardInterrupt:
+            previous, has_previous = signal(SIGINT, Handlers.SIG_IGN), True
+            logger.error(f"[{os.getpid()}] KeyboardInterrupt - teardown started")
+            interrupt.set()
+            for future, tox_env in list(future_to_env.items()):
+                if future.cancel() is False and not future.done():  # if cannot be cancelled and not done -> still runs
+                    tox_env.interrupt()
+            done.wait()
+    finally:
+        exit_code = run_and_report(state, results)
+        if has_previous:
+            signal(SIGINT, previous)
+    return exit_code
+
+
+class ToxSpinner(Spinner):
+    def __init__(self, enabled: bool, state: State, total: int) -> None:
+        super().__init__(
+            enabled=enabled,
+            colored=state.options.is_colored,
+            stream=state.log_handler.stdout,
+            total=total,
+        )
+
+    def update_spinner(self, result: ToxEnvRunResult, success: bool) -> None:
+        if success:
+            if result.skipped:
+                done = self.skip
+            else:
+                done = self.succeed
+        else:
+            done = self.fail
+        done(result.name)
+
+
+def _queue_and_wait(
+    state: State,
+    results: List[ToxEnvRunResult],
+    future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv],
+    interrupt: Event,
+    done: Event,
+    max_workers: Optional[int],
+    has_spinner: bool,
+    live: bool,
+) -> None:
+    try:
+        options = state.options
+        to_run_list = list(state.env_list())
+        with ToxSpinner(has_spinner, state, len(to_run_list)) as spinner:
+            max_workers = len(to_run_list) if max_workers is None else max_workers
+            completed: Set[str] = set()
+            envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
+
+            def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
+                spinner.add(cast(str, tox_env.conf.name))
+                return run_one(tox_env, options.recreate, options.no_test, suspend_display=live is False)
+
+            try:
+                executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")
+                while True:
+                    env_list: List[str] = next(envs_to_run_generator, [])
+                    if not env_list and not future_to_env:
+                        logger.warning(f"done {env_list, future_to_env}")
+                        break
+
+                    for env in env_list:  # queue all available
+                        tox_env_to_run = state.tox_env(env)
+                        if interrupt.is_set():  # queue the rest as failed upfront
+                            tox_env_to_run.teardown()
+                            future: "Future[ToxEnvRunResult]" = Future()
+                            res = ToxEnvRunResult(name=env, skipped=False, code=-2, outcomes=[], duration=MISS_DURATION)
+                            future.set_result(res)
+                        else:
+                            future = executor.submit(_run, tox_env_to_run)
+                        future_to_env[future] = tox_env_to_run
+                    future = next(as_completed(future_to_env))
+                    tox_env_done = future_to_env.pop(future)
+                    try:
+                        result: ToxEnvRunResult = future.result()
+                    except CancelledError:
+                        tox_env_done.teardown()
+                        name = cast(str, tox_env_done.conf.name)
+                        result = ToxEnvRunResult(name=name, skipped=False, code=-3, outcomes=[], duration=MISS_DURATION)
+                    results.append(result)
+                    completed.add(result.name)
+                    _handle_one_run_done(result, spinner, state, live)
+            except BaseException:  # pragma: no cover # noqa
+                logging.exception("Internal Error")  # pragma: no cover
+                raise  # pragma: no cover
+            finally:
+                executor.shutdown(wait=True)
+    finally:
+        done.set()
+
+
+def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: State, live: bool) -> None:
+    success = result.code == Outcome.OK
+    spinner.update_spinner(result, success)
+    if live is False and state.options.parallel_live is False:  # teardown background run
+        tox_env = state.tox_env(result.name)
+        out_err = tox_env.close_and_read_out_err()  # sync writes from buffer to stdout/stderr
+        has_package = tox_env.package_env is not None
+        pkg_out_err = tox_env.package_env.close_and_read_out_err() if has_package else None  # type: ignore
+        if not success or tox_env.conf["parallel_show_output"]:
+            if pkg_out_err is not None:  # pragma: no branch # first show package build
+                state.log_handler.write_out_err(pkg_out_err)  # pragma: no cover
+            if out_err is not None:  # pragma: no branch # first show package build
+                state.log_handler.write_out_err(out_err)
+
+
+def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]) -> Iterator[List[str]]:
+    """Generate tox environments ready to run"""
+    order, todo = run_order(state, to_run)
+    at = 0
+    while order:
+        ready_to_run: List[str] = []
+        new_order: List[str] = []
+        for env in order:  # collect next batch of ready to run
+            if todo[env] - completed:
+                new_order.append(env)
+            else:
+                ready_to_run.append(env)
+            at += 1
+        order = new_order
+        yield ready_to_run
+
+
+def run_order(state: State, to_run: List[str]) -> Tuple[List[str], Dict[str, Set[str]]]:
+    to_run_set = set(to_run)
+    todo: Dict[str, Set[str]] = {
+        env: (to_run_set & set(cast(EnvList, state.tox_env(env).conf["depends"]).envs)) for env in to_run
+    }
+    order = stable_topological_sort(todo)
+    return order, todo

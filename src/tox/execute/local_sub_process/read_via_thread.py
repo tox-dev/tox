@@ -6,8 +6,6 @@ from threading import Event, Thread
 from types import TracebackType
 from typing import Callable, Optional, Type
 
-from tox.util.signal import DelayedSignal
-
 WAIT_GENERAL = 0.05  # stop thread join every so often (give chance to a signal interrupt)
 
 
@@ -26,11 +24,10 @@ class ReadViaThread(ABC):
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None:
-        with DelayedSignal():
-            self.stop.set()  # signal thread to stop
-            while self.thread.is_alive():  # wait until it stops
-                self.thread.join(WAIT_GENERAL)
-            self._drain_stream()  # read anything left
+        self.stop.set()  # signal thread to stop
+        while self.thread.is_alive():  # wait until it stops
+            self.thread.join(WAIT_GENERAL)
+        self._drain_stream()  # read anything left
 
     @abstractmethod
     def _read_stream(self) -> None:

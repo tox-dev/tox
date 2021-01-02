@@ -2,6 +2,9 @@ import json
 import re
 import sys
 from pathlib import Path
+from signal import SIGINT
+from subprocess import PIPE, Popen
+from time import sleep
 from typing import Any, Dict, List, Tuple, Union
 
 import pytest
@@ -74,7 +77,6 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
 
     assert packaging_setup == [
         (0, "install"),
-        (None, "_commands"),
         (None, "get_requires_for_build_wheel"),
         (0, "install"),
         (0, "freeze"),
@@ -181,3 +183,32 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
     assert len(rerun_install) == 2
     assert rerun_install[0].endswith("wheel")
     assert rerun_install[1].endswith("setuptools")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
+def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Path, tmp_path: Path) -> None:
+    marker = tmp_path / "a"
+    proj = tox_project(
+        {
+            "tox.ini": "[testenv]\npackage=wheel\ncommands=python -c "
+            f'\'from time import sleep; from pathlib import Path; p = Path("{str(marker)}"); p.write_text("");'
+            " sleep(5)'\n"
+            "[testenv:dep]\ndepends=py",
+            "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
+            "build.py": (demo_pkg_inline / "build.py").read_text(),
+        }
+    )
+    cmd = [sys.executable, "-m", "tox", "-c", str(proj.path / "tox.ini"), "r", "-e", f"py,py{sys.version_info[0]},dep"]
+    process = Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    while not marker.exists():
+        sleep(0.05)
+    process.send_signal(SIGINT)
+    out, err = process.communicate()
+    assert process.returncode != 0
+    assert "KeyboardInterrupt" in err
+    assert "KeyboardInterrupt - teardown started\n" in out
+    assert "interrupt tox environment: py\n" in out
+    assert "requested interrupt of" in out
+    assert "send signal SIGINT" in out
+    assert "interrupt finished with success" in out
+    assert "interrupt tox environment: .package-py" in out

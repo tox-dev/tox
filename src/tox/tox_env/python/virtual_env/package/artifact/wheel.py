@@ -5,6 +5,7 @@ from packaging.requirements import Requirement
 
 from tox.plugin.impl import impl
 from tox.tox_env.register import ToxEnvRegister
+from tox.util.pep517.frontend import BackendFailed
 
 from ..api import Pep517VirtualEnvPackage
 
@@ -26,11 +27,16 @@ class Pep517VirtualEnvPackageWheel(Pep517VirtualEnvPackage):
         )
         return result.wheel
 
-    def _send(self, cmd: str, missing: Any, **kwargs: Any) -> Tuple[Any, str, str]:
+    def _send(self, cmd: str, **kwargs: Any) -> Tuple[Any, str, str]:
         if cmd == "prepare_metadata_for_build_wheel":
             # given we'll build a wheel we might skip the prepare step
-            return object, "", ""
-        return super()._send(cmd, missing, **kwargs)
+            result = {
+                "code": 1,
+                "exc_type": "MissingCommand",
+                "exc_message": "will need to build wheel either way, avoid prepare",
+            }
+            raise BackendFailed(result, "", "")
+        return super()._send(cmd, **kwargs)
 
 
 @impl

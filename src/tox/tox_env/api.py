@@ -46,6 +46,14 @@ class ToxEnv(ABC):
         self._suspended_out_err: Optional[OutErr] = None
         self.setup_done = False
         self.clean_done = False
+        self._execute_statuses: Dict[int, ExecuteStatus] = {}
+        self._interrupted = False
+
+    def interrupt(self) -> None:
+        logging.warning("interrupt tox environment: %s", self.conf.name)
+        self._interrupted = True
+        for status in list(self._execute_statuses.values()):
+            status.interrupt()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
@@ -173,14 +181,14 @@ class ToxEnv(ABC):
     def _handle_env_tmp_dir(self) -> None:
         """Ensure exists and empty"""
         env_tmp_dir: Path = self.conf["env_tmp_dir"]
-        if env_tmp_dir.exists():
+        if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
             LOGGER.debug("removing %s", env_tmp_dir)
             shutil.rmtree(env_tmp_dir, ignore_errors=True)
-        env_tmp_dir.mkdir(parents=True)
+        env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     def clean(self) -> None:
-        if self.clean_done is True:
-            return
+        if self.clean_done:  # pragma: no branch
+            return  # pragma: no cover
         env_dir: Path = self.conf["env_dir"]
         if env_dir.exists():
             LOGGER.info("remove tox env folder %s", env_dir)
@@ -200,7 +208,7 @@ class ToxEnv(ABC):
         for env in literal_pass_env:
             if env in os.environ:
                 result[env] = os.environ[env]
-        if glob_pass_env:
+        if glob_pass_env:  # pragma: no branch
             for env, value in os.environ.items():
                 if any(g.match(env) is not None for g in glob_pass_env):
                     result[env] = value
@@ -227,8 +235,8 @@ class ToxEnv(ABC):
         with self.execute_async(cmd, stdin, show, cwd, run_id, executor) as status:
             while status.exit_code is None:
                 status.wait()
-        if status.outcome is None:
-            raise RuntimeError
+        if status.outcome is None:  # pragma: no cover # this should not happen
+            raise RuntimeError  # pragma: no cover
         return status.outcome
 
     @contextmanager
@@ -241,6 +249,8 @@ class ToxEnv(ABC):
         run_id: str = "",
         executor: Optional[Execute] = None,
     ) -> Iterator[ExecuteStatus]:
+        if self._interrupted:
+            raise SystemExit(-2)
         if cwd is None:
             cwd = self.core["tox_root"]
         if show is None:
@@ -262,9 +272,14 @@ class ToxEnv(ABC):
             show=show,
             out_err=out_err,
         ) as execute_status:
-            yield execute_status
+            execute_id = id(execute_status)
+            try:
+                self._execute_statuses[execute_id] = execute_status
+                yield execute_status
+            finally:
+                self._execute_statuses.pop(execute_id)
         if show and self._hidden_outcomes is not None:
-            if execute_status.outcome is not None:  # if it gets cancelled before even starting
+            if execute_status.outcome is not None:  # pragma: no cover # if it gets cancelled before even starting
                 self._hidden_outcomes.append(execute_status.outcome)
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)
@@ -283,8 +298,8 @@ class ToxEnv(ABC):
                 yield
 
     def close_and_read_out_err(self) -> Optional[Tuple[bytes, bytes]]:
-        if self._suspended_out_err is None:
-            return None
+        if self._suspended_out_err is None:  # pragma: no branch
+            return None  # pragma: no cover
         (out, err), self._suspended_out_err = self._suspended_out_err, None
         out_b, err_b = cast(BytesIO, out.buffer).getvalue(), cast(BytesIO, err.buffer).getvalue()
         out.close()

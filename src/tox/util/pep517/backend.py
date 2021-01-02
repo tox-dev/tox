@@ -4,6 +4,10 @@ import sys
 import traceback
 
 
+class MissingCommand(TypeError):
+    """Missing command"""
+
+
 class BackendProxy:
     def __init__(self, backend_module, backend_obj):
         self.backend_module = backend_module
@@ -16,26 +20,11 @@ class BackendProxy:
     def __call__(self, name, *args, **kwargs):
         on_object = self if name.startswith("_") else self.backend
         if not hasattr(on_object, name):
-            raise TypeError(f"{on_object!r} has no attribute {name!r}")
+            raise MissingCommand(f"{on_object!r} has no attribute {name!r}")
         return getattr(on_object, name)(*args, **kwargs)
 
     def _exit(self):  # noqa
         return 0
-
-    def _commands(self):
-        result = ["_commands", "_exit"]
-        result.extend(
-            k
-            for k in {
-                "build_sdist",
-                "build_wheel",
-                "prepare_metadata_for_build_wheel",
-                "get_requires_for_build_wheel",
-                "get_requires_for_build_sdist",
-            }
-            if hasattr(self.backend, k)
-        )
-        return result
 
 
 def flush():
@@ -60,7 +49,6 @@ def run(argv):
         except Exception:  # noqa
             # ignore messages that are not valid JSON and contain a valid result path
             print(f"Backend: incorrect request to backend: {message}", file=sys.stderr)
-            traceback.print_exc()
             flush()
         else:
             result = {}
@@ -71,11 +59,14 @@ def run(argv):
                 result["return"] = outcome
                 if cmd == "_exit":
                     break
-            except Exception as exception:
-                traceback.print_exc()
+            except BaseException as exception:
                 result["code"] = exception.code if isinstance(exception, SystemExit) else 1
                 result["exc_type"] = exception.__class__.__name__
                 result["exc_msg"] = str(exception)
+                if not isinstance(exception, MissingCommand):  # for missing command do not print stack
+                    traceback.print_exc()
+                if not isinstance(exception, Exception):  # allow SystemExit/KeyboardInterrupt to go through
+                    raise
             finally:
                 try:
                     with open(result_file, "wt") as file_handler:
@@ -83,8 +74,8 @@ def run(argv):
                 except Exception:  # noqa
                     traceback.print_exc()
                 finally:
-                    print(f"Backend: Wrote response {result} to {result_file}")
-                    flush()
+                    print(f"Backend: Wrote response {result} to {result_file}")  # used as done marker by frontend
+                    flush()  # pragma: no branch
         if reuse_process is False:  # pragma: no branch # no test for reuse process in root test env
             break
     return 0

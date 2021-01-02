@@ -5,7 +5,7 @@ import threading
 import time
 from collections import OrderedDict
 from types import TracebackType
-from typing import IO, Dict, Optional, Sequence, Type
+from typing import IO, Dict, Optional, Sequence, Type, TypeVar
 
 from colorama import Fore
 
@@ -29,6 +29,10 @@ def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
     return False
 
 
+T = TypeVar("T", bound="Spinner")
+MISS_DURATION = 0.01
+
+
 class Spinner:
     CLEAR_LINE = "\033[K"
     max_width = 120
@@ -36,7 +40,12 @@ class Spinner:
     ASCII_FRAMES = ["|", "-", "+", "x", "*"]
 
     def __init__(
-        self, enabled: bool = True, refresh_rate: float = 0.1, colored: bool = True, stream: Optional[IO[str]] = None
+        self,
+        enabled: bool = True,
+        refresh_rate: float = 0.1,
+        colored: bool = True,
+        stream: Optional[IO[str]] = None,
+        total: Optional[int] = None,
     ) -> None:
         self.is_colored = colored
         self.refresh_rate = refresh_rate
@@ -44,6 +53,7 @@ class Spinner:
         stream = sys.stdout if stream is None else stream
         self.frames = self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, stream) else self.ASCII_FRAMES
         self.stream = stream
+        self.total = total
 
         self._envs: Dict[str, float] = OrderedDict()
         self._frame_index = 0
@@ -70,12 +80,13 @@ class Spinner:
         frame = self.frames[self._frame_index]
         self._frame_index += 1
         self._frame_index %= len(self.frames)
-        text_frame = f"[{len(self._envs)}] {' | '.join(self._envs)}"
+        total = f"/{self.total}" if self.total is not None else ""
+        text_frame = f"[{len(self._envs)}{total}] {' | '.join(self._envs)}"
         if len(text_frame) > self.max_width - 1:
             text_frame = "{}...".format(text_frame[: self.max_width - 1 - 3])
         return "{} {}".format(*[(frame, text_frame)][0])
 
-    def __enter__(self) -> "Spinner":
+    def __enter__(self: T) -> T:
         if self.enabled:
             self.disable_cursor()
         self.render_frame()
@@ -114,11 +125,11 @@ class Spinner:
         self.finalize(key, "SKIP ⚠", Fore.YELLOW)
 
     def finalize(self, key: str, status: str, color: int) -> None:
-        start_at = self._envs[key]
-        del self._envs[key]
+        start_at = self._envs.pop(key, None)
         if self.enabled:
             self.clear()
-        base = f"{key}: {status} in {td_human_readable(time.monotonic() - start_at)}"
+        duration = MISS_DURATION if start_at is None else time.monotonic() - start_at
+        base = f"{key}: {status} in {td_human_readable(duration)}"
         if self.is_colored:
             base = f"{color}{base}{Fore.RESET}"
         base += os.linesep

@@ -39,6 +39,22 @@ class PackageType(Enum):
     skip = 4
 
 
+class ToxBackendFailed(Fail, BackendFailed):
+    def __init__(self, backend_failed: BackendFailed) -> None:
+        Fail.__init__(self)
+        result: Dict[str, Any] = {
+            "code": backend_failed.code,
+            "exc_type": backend_failed.exc_type,
+            "exc_msg": backend_failed.exc_msg,
+        }
+        BackendFailed.__init__(
+            self,
+            result,
+            backend_failed.out,
+            backend_failed.err,
+        )
+
+
 class ToxCmdStatus(CmdStatus):
     def __init__(self, execute_status: ExecuteStatus) -> None:
         self._execute_status = execute_status
@@ -78,6 +94,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         self._package_dependencies: Optional[List[Requirement]] = None
         self._lock = RLock()  # can build only one package at a time
         self._package: Optional[Path] = None
+        self._teardown_done = False
 
     def register_config(self) -> None:
         super().register_config()
@@ -182,9 +199,15 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         return env
 
     def teardown(self) -> None:
-        if self._backend_executor is not None:
-            self._send("_exit", None)
-            self._backend_executor.close()
+        self.ref_count.decrement()
+        if self.ref_count.value == 0 and self._backend_executor is not None and self._teardown_done is False:
+            self._teardown_done = True
+            try:
+                self._send("_exit")  # try first on amicable shutdown
+            except SystemExit:  # if already has been interrupted ignore
+                pass
+            finally:
+                self._backend_executor.close()
 
     @contextmanager
     def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[CmdStatus]:
@@ -199,7 +222,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
             execute_status.write_stdin(f"{msg}{os.linesep}")
             yield ToxCmdStatus(execute_status)
         outcome = execute_status.outcome
-        if outcome is not None:
+        if outcome is not None:  # pragma: no branch
             outcome.assert_success()
 
     @contextmanager
@@ -218,17 +241,17 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
             self._build_wheel_cache = super().build_wheel(wheel_directory, config_settings, metadata_directory)
         return self._build_wheel_cache
 
-    def _send(self, cmd: str, missing: Any, **kwargs: Any) -> Tuple[Any, str, str]:
+    def _send(self, cmd: str, **kwargs: Any) -> Tuple[Any, str, str]:
         try:
-            return super()._send(cmd, missing, **kwargs)
+            return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
-            raise Fail(exception)
+            raise ToxBackendFailed(exception)
 
     def _unexpected_response(self, cmd: str, got: Any, expected_type: Any, out: str, err: str) -> NoReturn:
         try:
             super()._unexpected_response(cmd, got, expected_type, out, err)
         except BackendFailed as exception:
-            raise Fail(exception)
+            raise ToxBackendFailed(exception)
 
     def requires(self) -> Tuple[Requirement, ...]:
         return self._requires

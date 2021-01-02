@@ -3,7 +3,9 @@ import platform
 import re
 import sys
 
+import pytest
 from packaging.version import Version
+from pytest_mock import MockerFixture
 
 from tox.config.types import Command
 from tox.pytest import MonkeyPatch, ToxProjectCreator
@@ -135,3 +137,20 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
         "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
     )
     assert txt in outcome.out
+
+
+@pytest.mark.parametrize("stdout_is_atty", [True, False])
+def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty: bool, mocker: MockerFixture) -> None:
+    mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
+    project = tox_project({"tox.ini": ""})
+    outcome = project.run("c", "-e", "py", "-k", "pass_env")
+    pass_env = outcome.state.tox_env("py").conf["pass_env"]
+    expected = (
+        (["COMSPEC", "MSYSTEM", "PATHEXT"] if sys.platform == "win32" else [])
+        + ["PIP_*"]
+        + (["PROCESSOR_ARCHITECTURE", "SYSTEMROOT", "TEMP"] if sys.platform == "win32" else [])
+        + (["TERM"] if stdout_is_atty else [])
+        + (["TMP", "USERPROFILE"] if sys.platform == "win32" else ["TMPDIR"])
+        + ["VIRTUALENV_*", "http_proxy", "https_proxy", "no_proxy"]
+    )
+    assert pass_env == expected

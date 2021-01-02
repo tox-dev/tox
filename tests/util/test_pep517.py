@@ -67,7 +67,7 @@ class SubprocessFrontend(Frontend):
         yield SubprocessCmdStatus(process)
 
     def send_cmd(self, cmd: str, **kwargs: Any) -> Tuple[Any, str, str]:
-        return self._send(cmd, object, **kwargs)
+        return self._send(cmd, **kwargs)
 
 
 @pytest.fixture(scope="session")
@@ -98,20 +98,6 @@ def frontend_setuptools(tmp_path_factory: TempPathFactory) -> SubprocessFrontend
     (demo / "__init__.py").write_text("def a(): print('ok')")
     args = SubprocessFrontend.create_args_from_folder(prj)
     return SubprocessFrontend(*args[:-1])
-
-
-def test_pep517_setuptools_commands(frontend_setuptools: SubprocessFrontend) -> None:
-    commands = frontend_setuptools.commands
-    assert commands == {
-        "_commands",
-        "_exit",
-        "build_sdist",
-        "build_wheel",
-        "get_requires_for_build_sdist",
-        "get_requires_for_build_wheel",
-        "prepare_metadata_for_build_wheel",
-    }
-    assert commands is frontend_setuptools.commands  # ensure we cache it
 
 
 def test_pep517_setuptools_get_requires_for_build_sdist(frontend_setuptools: SubprocessFrontend) -> None:
@@ -178,10 +164,8 @@ def test_pep517_setuptools_exit(frontend_setuptools: SubprocessFrontend) -> None
 
 
 def test_pep517_setuptools_missing_command(frontend_setuptools: SubprocessFrontend) -> None:
-    result, out, err = frontend_setuptools.send_cmd("missing_command")
-    assert isinstance(out, str)
-    assert isinstance(err, str)
-    assert result is object
+    with pytest.raises(BackendFailed):
+        frontend_setuptools.send_cmd("missing_command")
 
 
 def test_pep517_setuptools_exception(frontend_setuptools: SubprocessFrontend) -> None:
@@ -257,7 +241,7 @@ def test_pep517_missing_required_cmd(cmd: str, local_builder: Callable[[str], Pa
         getattr(fronted, cmd)(tmp_path)
     exc = context.value
     assert f"has no attribute '{cmd}'" in exc.exc_msg
-    assert exc.exc_type == "TypeError"
+    assert exc.exc_type == "MissingCommand"
 
 
 def test_pep517_empty_pyproject(tmp_path: Path) -> None:
@@ -314,6 +298,14 @@ def test_pep517_backend_obj(tmp_path: Path) -> None:
     for left, right in zip(result.requires, (Requirement("a"),)):
         assert isinstance(left, Requirement)
         assert str(left) == str(right)
+
+
+@pytest.mark.parametrize("of_type", ["wheel", "sdist"])
+def test_pep517_get_requires_for_build_missing(of_type: str, local_builder: Callable[[str], Path]) -> None:
+    tmp_path = local_builder("")
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+    result = getattr(fronted, f"get_requires_for_build_{of_type}")()
+    assert result.requires == ()
 
 
 @pytest.mark.parametrize("of_type", ["sdist", "wheel"])

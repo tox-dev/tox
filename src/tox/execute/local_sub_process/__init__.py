@@ -3,11 +3,12 @@ import logging
 import os
 import shutil
 import sys
-from subprocess import PIPE, TimeoutExpired
+import time
+from subprocess import DEVNULL, PIPE, TimeoutExpired
 from types import TracebackType
 from typing import TYPE_CHECKING, Generator, List, Optional, Sequence, Tuple, Type
 
-from ..api import Execute, ExecuteInstance, ExecuteStatus, Outcome
+from ..api import Execute, ExecuteInstance, ExecuteStatus
 from ..request import ExecuteRequest, StdinSource
 from ..stream import SyncWrite
 from .read_via_thread import WAIT_GENERAL
@@ -26,6 +27,7 @@ if sys.platform == "win32":  # pragma: win32 cover
     CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP  # a custom flag needed for Windows signal send ability (CTRL+C)
 else:  # pragma: win32 no cover
     from signal import SIGINT as SIG_INTERRUPT
+    from signal import SIGKILL, SIGTERM
     from subprocess import Popen
 
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
@@ -46,10 +48,57 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
     def __init__(self, out: SyncWrite, err: SyncWrite, process: "Popen[bytes]"):
         self._process: "Popen[bytes]" = process
         super().__init__(out, err)
+        self._interrupted = False
 
     @property
     def exit_code(self) -> Optional[int]:
         return self._process.returncode
+
+    def interrupt(self) -> None:
+        self._interrupted = True
+        if self._process is not None:  # pragma: no branch
+            # A three level stop mechanism for children - INT -> TERM -> KILL
+            # communicate will wait for the app to stop, and then drain the standard streams and close them
+            proc = self._process
+            host_pid = os.getpid()
+            to_pid = proc.pid
+            logging.warning("requested interrupt of %d from %d", to_pid, host_pid)
+            if proc.poll() is None:  # still alive, first INT
+                logging.warning(
+                    "send signal %s to %d from %d with timeout %.2f",
+                    f"SIGINT({SIG_INTERRUPT})",
+                    to_pid,
+                    host_pid,
+                    WAIT_INTERRUPT,
+                )
+                proc.send_signal(SIG_INTERRUPT)
+                start = time.monotonic()
+                while proc.poll() is None and (time.monotonic() - start) < WAIT_INTERRUPT:
+                    continue
+                if proc.poll() is None:  # pragma: no branch
+                    if sys.platform == "win32":  # pragma: no branch
+                        logging.warning("terminate %d from %d", to_pid, host_pid)  # pragma: no cover
+                    else:
+                        logging.warning(
+                            "send signal %s to %d from %d with timeout %.2f",
+                            f"SIGTERM({SIGTERM})",
+                            to_pid,
+                            host_pid,
+                            WAIT_TERMINATE,
+                        )
+                    proc.terminate()
+                    start = time.monotonic()
+                    if sys.platform != "win32":  # pragma: no branch
+                        while proc.poll() is None and (time.monotonic() - start) < WAIT_TERMINATE:
+                            continue
+                        if proc.poll() is None:  # pragma: no branch
+                            logging.warning("send signal %s to %d from %d", f"SIGKILL({SIGKILL})", to_pid, host_pid)
+                            proc.kill()
+                    while proc.poll() is None:
+                        continue
+            else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
+                logging.warning("process already dead with %s within %s", proc.returncode, os.getpid())
+            logging.warning("interrupt finished with success")
 
     def wait(self, timeout: Optional[float] = None) -> None:
         # note poll in general might deadlock if output large, but we drain in background threads so not an issue here
@@ -60,8 +109,10 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
     def write_stdin(self, content: str) -> None:
         stdin = self._process.stdin
-        if stdin is not None:  # pragma: no branch
-            bytes_content = content.encode()
+        if stdin is None:  # pragma: no branch
+            return  # pragma: no cover
+        bytes_content = content.encode()
+        try:
             if sys.platform == "win32":  # pragma: win32 cover
                 # on Windows we have a PipeHandle object here rather than a file stream
                 import _overlapped  # type: ignore[import]
@@ -74,11 +125,10 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             else:
                 stdin.write(bytes_content)
                 stdin.flush()
-
-    def close_stdin(self) -> None:
-        stdin = self._process.stdin
-        if stdin is not None:  # pragma: no branch
-            stdin.close()
+        except OSError:  # pragma: no cover
+            if self._interrupted:  # pragma: no cover
+                pass  # pragma: no cover  # if the process was asked to exit in the meantime ignore write errors
+            raise  # pragma: no cover
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
@@ -99,8 +149,8 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
     def write_stdin(self, content: str) -> None:
         """cannot write"""
 
-    def close_stdin(self) -> None:
-        """never opened, nothing to close"""
+    def interrupt(self) -> None:
+        """Nothing running so nothing to interrupt"""
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
@@ -132,12 +182,13 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
     def __enter__(self) -> ExecuteStatus:
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
+        in_type = self.request.stdin
         try:
             self.process = process = Popen(
                 self.cmd,
                 stdout=next(stdout),
                 stderr=next(stderr),
-                stdin=None if self.request.stdin is StdinSource.USER else PIPE,
+                stdin=None if in_type is StdinSource.USER else (DEVNULL if in_type is StdinSource.OFF else PIPE),
                 cwd=str(self.request.cwd),
                 env=self.request.env,
                 creationflags=CREATION_FLAGS,
@@ -155,8 +206,6 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         if sys.platform == "win32":  # pragma: win32 cover
             process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]
             process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]
-        if self.request.stdin is StdinSource.OFF:
-            status.close_stdin()
         return status
 
     def __exit__(
@@ -185,39 +234,6 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                 yield stream.handle
             else:
                 yield stream.name
-
-    def interrupt(self) -> int:
-        if self.process is not None:
-            # A three level stop mechanism for children - INT -> TERM -> KILL
-            # communicate will wait for the app to stop, and then drain the standard streams and close them
-            proc = self.process
-            logging.error("got KeyboardInterrupt signal")
-            msg = f"from {os.getpid()} {{}} pid {proc.pid}"
-            if proc.poll() is None:  # still alive, first INT
-                logging.warning("KeyboardInterrupt %s", msg.format("SIGINT"))
-                proc.send_signal(SIG_INTERRUPT)
-                try:
-                    out, err = proc.communicate(timeout=WAIT_INTERRUPT)
-                except TimeoutExpired:  # if INT times out TERM
-                    logging.warning("KeyboardInterrupt %s", msg.format("SIGTERM"))
-                    proc.terminate()
-                    try:
-                        out, err = proc.communicate(timeout=WAIT_INTERRUPT)
-                    except TimeoutExpired:  # if TERM times out KILL
-                        logging.info("KeyboardInterrupt %s", msg.format("SIGKILL"))
-                        proc.kill()
-                        out, err = proc.communicate()
-            else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
-                try:
-                    out, err = proc.communicate()  # just drain
-                except ValueError:  # if already drained via another communicate
-                    out, err = b"", b""
-            if out:  # pragma: no branch
-                self.out_handler(out)
-            if err:  # pragma: no branch
-                self.err_handler(err)  # pragma: no cover
-            return int(self.process.returncode)
-        return Outcome.OK  # pragma: no cover
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
         prev = self._out, self._err

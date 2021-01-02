@@ -90,6 +90,7 @@ class RunToxEnv(ToxEnv, ABC):
         name = self.conf["package_env"]
         package_tox_env = yield name, of_type
         self.package_env = package_tox_env
+        self.package_env.ref_count.increment()
 
     def clean(self, package_env: bool = True) -> None:
         super().clean()
@@ -116,3 +117,8 @@ class RunToxEnv(ToxEnv, ABC):
         if self.package_env is not None:
             with self.package_env.display_context(suspend=self.has_display_suspended):
                 self.package_env.teardown()
+
+    def interrupt(self) -> None:
+        super().interrupt()
+        if self.package_env is not None:  # pragma: no branch
+            self.package_env.interrupt()

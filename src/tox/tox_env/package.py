@@ -12,6 +12,7 @@ from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
 from tox.plugin.impl import impl
 from tox.report import ToxHandler
+from tox.util.threading import AtomicCounter
 
 from .api import ToxEnv
 
@@ -26,6 +27,7 @@ class PackageToxEnv(ToxEnv, ABC):
     ) -> None:
         super().__init__(conf, core, options, journal, log_handler)
         self.recreate_package = options.no_recreate_pkg is False if options.recreate else False
+        self.ref_count = AtomicCounter()
 
     @abstractmethod
     def get_package_dependencies(self, extras: Optional[Set[str]] = None) -> List[Requirement]:

@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from time import sleep
-from typing import Any, Dict, Iterator, List, NamedTuple, NoReturn, Optional, Set, Tuple, cast
+from typing import Any, Dict, Iterator, List, NamedTuple, NoReturn, Optional, Tuple, cast
 from zipfile import ZipFile
 
 import toml
@@ -62,9 +62,9 @@ class BackendFailed(RuntimeError):
         super().__init__()
         self.out = out
         self.err = err
-        self.code: int = result["code"]
-        self.exc_type: str = result["exc_type"]
-        self.exc_msg: str = result["exc_msg"]
+        self.code: int = result.get("code", -2)
+        self.exc_type: str = result.get("exc_type", "missing Exception type")
+        self.exc_msg: str = result.get("exc_msg", "missing Exception message")
 
     def __str__(self) -> str:
 
@@ -89,12 +89,6 @@ class BackendFailed(RuntimeError):
 class Frontend(ABC):
     LEGACY_BUILD_BACKEND: str = "setuptools.build_meta:__legacy__"
     LEGACY_REQUIRES: Tuple[Requirement, ...] = (Requirement("setuptools >= 40.8.0"), Requirement("wheel"))
-    ALWAYS_EXIST = (
-        "_commands",
-        "_exit",
-        "build_wheel",
-        "build_sdist",
-    )
 
     def __init__(
         self,
@@ -110,7 +104,6 @@ class Frontend(ABC):
         self._backend_module = backend_module
         self._backend_obj = backend_obj
         self._requires = requires
-        self._commands: Optional[Set[str]] = None
         self._reuse_backend = reuse_backend
 
     @classmethod
@@ -145,7 +138,6 @@ class Frontend(ABC):
             cmd="build_sdist",
             sdist_directory=sdist_directory,
             config_settings=config_settings,
-            missing=None,  #
         )
         if not isinstance(basename, str):
             self._unexpected_response("build_sdist", basename, str, out, err)
@@ -163,7 +155,6 @@ class Frontend(ABC):
             wheel_directory=wheel_directory,
             config_settings=config_settings,
             metadata_directory=metadata_directory,
-            missing=None,
         )
         if not isinstance(basename, str):
             self._unexpected_response("build_wheel", basename, str, out, err)
@@ -185,16 +176,17 @@ class Frontend(ABC):
         if metadata_directory.exists():  # start with fresh
             shutil.rmtree(metadata_directory)
         metadata_directory.mkdir(parents=True, exist_ok=True)
-        basename, out, err = self._send(
-            cmd="prepare_metadata_for_build_wheel",
-            metadata_directory=metadata_directory,
-            config_settings=config_settings,
-            missing=object,
-        )
-        if basename is not object and not isinstance(basename, str):
-            self._unexpected_response("prepare_metadata_for_build_wheel", basename, str, out, err)
-        if basename is object:  # if backend does not provide it acquire it from the wheel
+        try:
+            basename, out, err = self._send(
+                cmd="prepare_metadata_for_build_wheel",
+                metadata_directory=metadata_directory,
+                config_settings=config_settings,
+            )
+        except BackendFailed:
+            # if backend does not provide it acquire it from the wheel
             basename, err, out = self._metadata_from_built_wheel(config_settings, metadata_directory)
+        if not isinstance(basename, str):
+            self._unexpected_response("prepare_metadata_for_build_wheel", basename, str, out, err)
         result = metadata_directory / basename
         return MetadataForBuildWheelResult(result, out, err)
 
@@ -231,7 +223,10 @@ class Frontend(ABC):
     def get_requires_for_build_wheel(
         self, config_settings: Optional[ConfigSettings] = None
     ) -> RequiresBuildWheelResult:
-        result, out, err = self._send(cmd="get_requires_for_build_wheel", config_settings=config_settings, missing=[])
+        try:
+            result, out, err = self._send(cmd="get_requires_for_build_wheel", config_settings=config_settings)
+        except BackendFailed as exc:
+            result, out, err = [], exc.out, exc.err
         if not isinstance(result, list) or not all(isinstance(i, str) for i in result):
             self._unexpected_response("get_requires_for_build_wheel", result, "list of string", out, err)
         return RequiresBuildWheelResult(tuple(Requirement(r) for r in cast(List[str], result)), out, err)
@@ -239,21 +234,15 @@ class Frontend(ABC):
     def get_requires_for_build_sdist(
         self, config_settings: Optional[ConfigSettings] = None
     ) -> RequiresBuildSdistResult:
-        result, out, err = self._send(cmd="get_requires_for_build_sdist", config_settings=config_settings, missing=[])
+        try:
+            result, out, err = self._send(cmd="get_requires_for_build_sdist", config_settings=config_settings)
+        except BackendFailed as exc:
+            result, out, err = [], exc.out, exc.err
         if not isinstance(result, list) or not all(isinstance(i, str) for i in result):
             self._unexpected_response("get_requires_for_build_sdist", result, "list of string", out, err)
         return RequiresBuildSdistResult(tuple(Requirement(r) for r in cast(List[str], result)), out, err)
 
-    @property
-    def commands(self) -> Set[str]:
-        if self._commands is None:
-            raw, _, __ = self._send("_commands", missing=[])
-            self._commands = set(raw)
-        return self._commands
-
-    def _send(self, cmd: str, missing: Any, **kwargs: Any) -> Tuple[Any, str, str]:
-        if cmd not in self.ALWAYS_EXIST and cmd not in self.commands:
-            return missing, "", ""
+    def _send(self, cmd: str, **kwargs: Any) -> Tuple[Any, str, str]:
         with NamedTemporaryFile(prefix=f"pep517_{cmd}-") as result_file_marker:
             result_file = Path(result_file_marker.name).with_suffix(".json")
             msg = json.dumps(

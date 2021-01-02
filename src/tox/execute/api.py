@@ -12,7 +12,6 @@ from typing import Callable, Iterator, NoReturn, Optional, Sequence, Tuple, Type
 from colorama import Fore
 
 from tox.report import OutErr
-from tox.util.signal import DelayedSignal
 
 from .request import ExecuteRequest, StdinSource
 from .stream import SyncWrite
@@ -42,7 +41,7 @@ class ExecuteStatus(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def close_stdin(self) -> None:
+    def interrupt(self) -> None:
         raise NotImplementedError
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
@@ -67,7 +66,7 @@ class Execute(ABC):
 
     @contextmanager
     def call(self, request: ExecuteRequest, show: bool, out_err: OutErr) -> Iterator[ExecuteStatus]:
-        start, interrupt = time.monotonic(), None
+        start = time.monotonic()
         try:
             # collector is what forwards the content from the file streams to the standard streams
             out, err = out_err[0].buffer, out_err[1].buffer
@@ -75,19 +74,12 @@ class Execute(ABC):
             err_sync = SyncWrite(err.name, err if show else None, Fore.RED if self._colored else None)
             with out_sync, err_sync:
                 instance = self.build_instance(request, out_sync, err_sync)
-                try:
-                    with instance as status:
-                        yield status
-                    exit_code = status.exit_code
-                except KeyboardInterrupt as exception:
-                    with DelayedSignal():
-                        interrupt = exception
-                        exit_code = instance.interrupt()
+                with instance as status:
+                    yield status
+                exit_code = status.exit_code
         finally:
             end = time.monotonic()
         status.outcome = Outcome(request, show, exit_code, out_sync.text, err_sync.text, start, end, instance.cmd)
-        if interrupt is not None:
-            raise ToxKeyboardInterrupt(status.outcome, interrupt)
 
     @abstractmethod
     def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> "ExecuteInstance":
@@ -118,10 +110,6 @@ class ExecuteInstance(ABC):
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def interrupt(self) -> int:
         raise NotImplementedError
 
     @property
@@ -192,16 +180,9 @@ class Outcome:
         return self.out, self.err
 
 
-class ToxKeyboardInterrupt(KeyboardInterrupt):
-    def __init__(self, outcome: Outcome, exc: KeyboardInterrupt):
-        self.outcome = outcome
-        self.exc = exc
-
-
 __all__ = (
     "ContentHandler",
     "Outcome",
-    "ToxKeyboardInterrupt",
     "Execute",
     "ExecuteInstance",
     "ExecuteStatus",
