@@ -1,6 +1,7 @@
 """
 Declare the abstract base class for tox environments that handle the Python language.
 """
+import logging
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -186,7 +187,8 @@ class Python(ToxEnv, ABC):
             missing = [PythonDep(Requirement(i)) for i in (set(old) - set(conf_deps))]
             if missing:  # no way yet to know what to uninstall here (transitive dependencies?)
                 # bail out and force recreate
-                raise Recreate()
+                logging.warning(f"recreate env because dependencies removed: {', '.join(str(i) for i in missing)}")
+                raise Recreate
             new_deps_str = set(conf_deps) - set(old)
             new_deps = [PythonDep(Requirement(i)) for i in new_deps_str]
             self.install_python_packages(packages=new_deps)

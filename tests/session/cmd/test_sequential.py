@@ -5,7 +5,7 @@ from pathlib import Path
 from signal import SIGINT
 from subprocess import PIPE, Popen
 from time import sleep
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pytest
 from re_assert import Matches
@@ -293,3 +293,14 @@ def test_env_name_change_recreate(tox_project: ToxProjectCreator) -> None:
     )
     assert output in result_second.out
     assert "py: remove tox env folder" in result_second.out
+
+
+def test_dep_remove(tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n"})
+    result_first = proj.run("r")
+    result_first.assert_success()
+
+    (proj.path / "tox.ini").write_text("[testenv]\npackage=skip\ndeps=\n")
+    result_second = proj.run("r")
+    result_second.assert_success()
+    assert "py: recreate env because dependencies removed: wheel" in result_second.out, result_second.out
