@@ -27,3 +27,8 @@ def test_deps_req_ne() -> None:
     dep_1 = PythonDep(Requirement("pytest"))
     dep_2 = PythonDep(Requirement("tox"))
     assert dep_1 != dep_2
+
+
+def test_deps_repr() -> None:
+    dep_1 = PythonDep(Path.cwd())
+    assert repr(dep_1) == f"PythonDep(value={Path.cwd()!r})"

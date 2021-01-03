@@ -150,14 +150,12 @@ class ToxEnv(ABC):
         1. env dir exists
         2. contains a runner with the same type.
         """
-        env_dir: Path = self.conf["env_dir"]
         conf = {"name": self.conf.name, "type": type(self).__name__}
         try:
             with self._cache.compare(conf, ToxEnv.__name__) as (eq, old):
-                if eq is False and old is not None:
+                if eq is False and old is not None:  # recreate if already created and not equals
+                    logging.warning(f"env type changed from {old} to {conf}, will recreate")
                     raise Recreate  # recreate if already exists and type changed
-                if not env_dir.exists():
-                    env_dir.mkdir(parents=True)
                 self.setup_done, self.clean_done = True, False
         finally:
             self._handle_env_tmp_dir()
@@ -170,7 +168,7 @@ class ToxEnv(ABC):
         try:
             self.setup()
         except Recreate:
-            if not recreate:
+            if not recreate:  # pragma: no cover
                 self.clean()
                 self.setup()
         self.setup_has_been_done()
@@ -182,7 +180,7 @@ class ToxEnv(ABC):
         """Ensure exists and empty"""
         env_tmp_dir: Path = self.conf["env_tmp_dir"]
         if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
-            LOGGER.debug("removing %s", env_tmp_dir)
+            LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             shutil.rmtree(env_tmp_dir, ignore_errors=True)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -191,7 +189,7 @@ class ToxEnv(ABC):
             return  # pragma: no cover
         env_dir: Path = self.conf["env_dir"]
         if env_dir.exists():
-            LOGGER.info("remove tox env folder %s", env_dir)
+            LOGGER.warning("remove tox env folder %s", env_dir)
             shutil.rmtree(env_dir)
         self._cache.reset()
         self.setup_done, self.clean_done = False, True

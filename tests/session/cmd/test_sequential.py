@@ -13,6 +13,8 @@ from virtualenv.discovery.py_info import PythonInfo
 
 from tox import __version__
 from tox.pytest import ToxProjectCreator
+from tox.tox_env.api import ToxEnv
+from tox.tox_env.info import Info
 
 
 def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator) -> None:
@@ -240,3 +242,54 @@ def test_backend_not_found(tox_project: ToxProjectCreator) -> None:
     result = proj.run("r")
     result.assert_failed(code=-5)
     assert "packaging backend failed (code=-5), with FailedToStart: could not start backend" in result.out, result.out
+
+
+def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nskip_missing_interpreters=true\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
+    proj = tox_project({"tox.ini": ini})
+
+    result = proj.run("r")
+    result.assert_success()
+    assert "py: SKIP" in result.out
+
+
+def test_missing_interpreter_skip_off(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nskip_missing_interpreters=false\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
+    proj = tox_project({"tox.ini": ini})
+
+    result = proj.run("r")
+    result.assert_failed()
+    exp = "py: failed with could not find python interpreter matching any of the specs missing-interpreter"
+    assert exp in result.out
+
+
+def test_env_tmp_dir_reset(tox_project: ToxProjectCreator) -> None:
+    ini = '[testenv]\npackage=skip\ncommands=python -c \'import os; os.mkdir(os.path.join( r"{env_tmp_dir}", "a"))\''
+    proj = tox_project({"tox.ini": ini})
+    result_first = proj.run("r")
+    result_first.assert_success()
+
+    result_second = proj.run("r", "-v", "-v")
+    result_second.assert_success()
+    assert "D clear env temp folder " in result_second.out, result_second.out
+
+
+def test_env_name_change_recreate(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=\n"})
+    result_first = proj.run("r")
+    result_first.assert_success()
+
+    tox_env = result_first.state.tox_env("py")
+    assert repr(tox_env) == "VirtualEnvRunner(name=py)"
+    path = tox_env.conf["env_dir"]
+    with Info(path).compare({"name": "p", "type": "magical"}, ToxEnv.__name__):
+        pass
+
+    result_second = proj.run("r")
+    result_second.assert_success()
+    output = (
+        "py: env type changed from {'name': 'p', 'type': 'magical'} to "
+        "{'name': 'py', 'type': 'VirtualEnvRunner'}, will recreate"
+    )
+    assert output in result_second.out
+    assert "py: remove tox env folder" in result_second.out

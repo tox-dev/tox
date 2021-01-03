@@ -37,6 +37,7 @@ from tox.run import run as tox_run
 from tox.run import setup_state as previous_setup_state
 from tox.session.cmd.run.parallel import ENV_VAR_KEY
 from tox.session.state import State
+from tox.tox_env import api as tox_env_api
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
@@ -171,6 +172,7 @@ class ToxProject:
                 return state
 
             with self.monkeypatch.context() as m:
+                m.setattr(tox_env_api, "_CWD", self.path)
                 m.setattr(tox.run, "setup_state", our_setup_state)
                 m.setattr(sys, "argv", [sys.executable, "-m", "tox"] + list(args))
                 m.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")

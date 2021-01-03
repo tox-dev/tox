@@ -124,12 +124,12 @@ class Python(ToxEnv, ABC):
 
     def setup(self) -> None:
         """setup a virtual python environment"""
-        super().setup()
         conf = self.python_cache()
         with self._cache.compare(conf, Python.__name__) as (eq, old):
-            if eq is False:
+            if eq is False:  # if changed create
                 self.create_python_env()
             self._paths = self.paths()
+        super().setup()
 
     def setup_has_been_done(self) -> None:
         """called when setup is done"""
