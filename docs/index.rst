@@ -104,7 +104,7 @@ tox roughly follows the following phases:
     any of them is not zero stop, and mark the environment failed. Note, starting a command with a
     single dash character means ignore exit code.
 
-6. **report** print out a report of outcomes for each tox environment:
+4. **report** print out a report of outcomes for each tox environment:
 
    .. code:: bash
 
