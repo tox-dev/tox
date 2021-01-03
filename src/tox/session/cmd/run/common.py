@@ -147,6 +147,8 @@ def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool)
     interrupt, done = Event(), Event()
     results: List[ToxEnvRunResult] = []
     future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
+    for env in list(state.env_list()):  # ensure envs can be constructed
+        state.tox_env(env)
     previous, has_previous = None, False
     try:
         try:

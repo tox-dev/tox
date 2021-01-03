@@ -56,7 +56,7 @@ class State:
 
     def tox_env(self, name: str) -> RunToxEnv:
         if name in self._pkg_env_discovered:
-            raise KeyError(f"{name} is a packaging tox environment")
+            raise HandledError(f"cannot run packaging environment {name}")
         with self.log_handler.with_context(name):
             tox_env = self._run_env.get(name)
             if tox_env is not None:
@@ -70,11 +70,12 @@ class State:
         # config sets have a set of defined values in it we have to ensure the tox environment is created
         if name in self._pkg_env_discovered:
             return  # packaging environments are created explicitly, nothing to do here
-        if name not in self._run_env:
-            # runtime environments are created upon lookup via the tox_env method, call it
-            self._run_env[name] = self._build_run_env(config_set)
+        if name in self._run_env:  # pragma: no branch
+            raise ValueError(f"{name} run tox env already defined")  # pragma: no cover
+        # runtime environments are created upon lookup via the tox_env method, call it
+        self._build_run_env(config_set)
 
-    def _build_run_env(self, env_conf: ConfigSet) -> RunToxEnv:
+    def _build_run_env(self, env_conf: ConfigSet) -> None:
         env_conf.add_config(
             keys="runner",
             desc="the tox execute used to evaluate this environment",
@@ -85,10 +86,11 @@ class State:
         from tox.tox_env.register import REGISTER
 
         builder = REGISTER.runner(runner)
-        journal = self.journal.get_env_journal(cast(str, env_conf.name))
+        name = cast(str, env_conf.name)
+        journal = self.journal.get_env_journal(name)
         env: RunToxEnv = builder(env_conf, self.conf.core, self.options, journal, self.log_handler)
+        self._run_env[name] = env
         self._build_package_env(env)
-        return env
 
     def _build_package_env(self, env: RunToxEnv) -> None:
         pkg_env_gen = env.set_package_env()
@@ -97,8 +99,6 @@ class State:
         except StopIteration:
             pass
         else:
-            if name in self._run_env:
-                raise HandledError(f"{name} is already defined as a run environment, cannot be packaging too")
             with self.log_handler.with_context(name):
                 package_tox_env = self._get_package_env(packager, name)
                 try:
@@ -110,12 +110,12 @@ class State:
         if name in self._pkg_env:  # if already created reuse
             pkg_tox_env: PackageToxEnv = self._pkg_env[name]
         else:
-            if name in self._run_env:  # if already detected as runner remove
-                del self._run_env[name]
             from tox.tox_env.register import REGISTER
 
             package_type = REGISTER.package(packager)
             self._pkg_env_discovered.add(name)
+            if name in self._run_env:
+                raise HandledError(f"{name} is already defined as a run environment, cannot be packaging too")
             pkg_conf = self.conf.get_env(name, package=True)
             journal = self.journal.get_env_journal(name)
             pkg_tox_env = package_type(pkg_conf, self.conf.core, self.options, journal, self.log_handler)
