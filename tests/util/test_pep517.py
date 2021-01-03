@@ -187,7 +187,7 @@ def test_pep517_bad_message(frontend_setuptools: SubprocessFrontend, tmp_path: P
         while not status.done:
             pass
     out, err = status.out_err()
-    assert not out
+    assert out
     assert "Backend: incorrect request to backend: {" in err
 
 
@@ -230,6 +230,20 @@ def local_builder(tmp_path: Path) -> Callable[[str], Path]:
         return tmp_path
 
     return _f
+
+
+def test_pep517_missing_backend(local_builder: Callable[[str], Path]) -> None:
+    tmp_path = local_builder("")
+    toml = tmp_path / "pyproject.toml"
+    toml.write_text('[build-system]\nrequires=[]\nbuild-backend = "build_tester"')
+    fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
+    with pytest.raises(BackendFailed) as context:
+        fronted.build_wheel(tmp_path / "wheel")
+    exc = context.value
+    assert exc.exc_type == "RuntimeError"
+    assert exc.code == 1
+    assert "failed to start backend" in exc.err
+    assert "ModuleNotFoundError: No module named " in exc.err
 
 
 @pytest.mark.parametrize("cmd", ["build_wheel", "build_sdist"])

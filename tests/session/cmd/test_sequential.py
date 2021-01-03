@@ -205,10 +205,38 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
     process.send_signal(SIGINT)
     out, err = process.communicate()
     assert process.returncode != 0
-    assert "KeyboardInterrupt" in err
-    assert "KeyboardInterrupt - teardown started\n" in out
-    assert "interrupt tox environment: py\n" in out
-    assert "requested interrupt of" in out
-    assert "send signal SIGINT" in out
-    assert "interrupt finished with success" in out
-    assert "interrupt tox environment: .package-py" in out
+    assert "KeyboardInterrupt" in err, err
+    assert "KeyboardInterrupt - teardown started\n" in out, out
+    assert "interrupt tox environment: py\n" in out, out
+    assert "requested interrupt of" in out, out
+    assert "send signal SIGINT" in out, out
+    assert "interrupt finished with success" in out, out
+    assert "interrupt tox environment: .package-py" in out, out
+
+
+def test_package_build_fails(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project(
+        {
+            "tox.ini": "[testenv]\npackage=wheel",
+            "pyproject.toml": '[build-system]\nrequires=[]\nbuild-backend="build"\nbackend-path=["."]',
+            "build.py": "",
+        }
+    )
+
+    result = proj.run("r")
+    result.assert_failed(code=1)
+    assert "has no attribute 'build_wheel'" in result.out, result.out
+
+
+def test_backend_not_found(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project(
+        {
+            "tox.ini": "[testenv]\npackage=wheel",
+            "pyproject.toml": '[build-system]\nrequires=[]\nbuild-backend="build"',
+            "build.py": "",
+        }
+    )
+
+    result = proj.run("r")
+    result.assert_failed(code=-5)
+    assert "packaging backend failed (code=-5), with FailedToStart: could not start backend" in result.out, result.out

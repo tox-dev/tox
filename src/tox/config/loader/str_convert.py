@@ -42,8 +42,8 @@ class StrConvert(Convert[str]):
             if row:
                 try:
                     at = row.index("=")
-                except ValueError:
-                    raise TypeError(f"dictionary lines must be of form key=value, found {row}")
+                except ValueError as exc:
+                    raise TypeError(f"dictionary lines must be of form key=value, found {row}") from exc
                 else:
                     key = row[:at].strip()
                     value = row[at + 1 :].strip()

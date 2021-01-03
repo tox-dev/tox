@@ -35,7 +35,8 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
             pkg_type: PackageType = self.conf["package"]
         except AttributeError as exc:
             values = ", ".join(i.name for i in PackageType)
-            raise HandledError(f"invalid package config type {exc.args[0]!r} requested, must be one of {values}")
+            error = HandledError(f"invalid package config type {exc.args[0]!r} requested, must be one of {values}")
+            raise error from exc
 
         if pkg_type == PackageType.skip:
             return False

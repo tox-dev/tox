@@ -203,7 +203,8 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         if self.ref_count.value == 0 and self._backend_executor is not None and self._teardown_done is False:
             self._teardown_done = True
             try:
-                self._send("_exit")  # try first on amicable shutdown
+                if self.backend_executor.is_alive:
+                    self._send("_exit")  # try first on amicable shutdown
             except SystemExit:  # if already has been interrupted ignore
                 pass
             finally:
@@ -245,13 +246,13 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         try:
             return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
-            raise ToxBackendFailed(exception)
+            raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
 
     def _unexpected_response(self, cmd: str, got: Any, expected_type: Any, out: str, err: str) -> NoReturn:
         try:
             super()._unexpected_response(cmd, got, expected_type, out, err)
         except BackendFailed as exception:
-            raise ToxBackendFailed(exception)
+            raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
 
     def requires(self) -> Tuple[Requirement, ...]:
         return self._requires

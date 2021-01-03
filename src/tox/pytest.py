@@ -238,8 +238,9 @@ class ToxRunOutcome:
     def assert_success(self) -> None:
         assert self.success, repr(self)
 
-    def assert_failed(self) -> None:
-        assert not self.success, repr(self)
+    def assert_failed(self, code: Optional[int] = None) -> None:
+        status_match = self.code != 0 if code is None else self.code == code
+        assert status_match, f"should be {code}, got {self}"
 
     def __repr__(self) -> str:
         return "\n".join(

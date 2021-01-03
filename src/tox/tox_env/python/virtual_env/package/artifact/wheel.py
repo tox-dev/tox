@@ -32,8 +32,8 @@ class Pep517VirtualEnvPackageWheel(Pep517VirtualEnvPackage):
             # given we'll build a wheel we might skip the prepare step
             result = {
                 "code": 1,
-                "exc_type": "MissingCommand",
-                "exc_message": "will need to build wheel either way, avoid prepare",
+                "exc_type": "AvoidRedundant",
+                "exc_msg": "will need to build wheel either way, avoid prepare",
             }
             raise BackendFailed(result, "", "")
         return super()._send(cmd, **kwargs)

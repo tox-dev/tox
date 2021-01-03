@@ -51,7 +51,7 @@ class State:
             use_env_list = self.conf.core["env_list"]
         if not use_env_list:
             use_env_list = CliEnv([fallback_env])
-        if use_env_list is not None:
+        if use_env_list is not None:  # pragma: no branch # can't happen
             yield from use_env_list
 
     def tox_env(self, name: str) -> RunToxEnv:

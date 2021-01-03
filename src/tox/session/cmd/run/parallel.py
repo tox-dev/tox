@@ -35,8 +35,8 @@ def parse_num_processes(str_value: str) -> Optional[int]:
         return auto_detect_cpus()
     try:
         value = int(str_value)
-    except ValueError:
-        raise ArgumentTypeError(f"value must be a positive number, is {str_value}")
+    except ValueError as exc:
+        raise ArgumentTypeError(f"value must be a positive number, is {str_value}") from exc
     if value < 0:
         raise ArgumentTypeError(f"value must be positive, is {value}")
     return value

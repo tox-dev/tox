@@ -67,16 +67,10 @@ class BackendFailed(RuntimeError):
         self.exc_msg: str = result.get("exc_msg", "missing Exception message")
 
     def __str__(self) -> str:
-
-        msg = [
-            f"Backend failed{'' if self.code is None else f' (exit code {self.code})'}, "
-            f"exception of {self.exc_type} with message {self.exc_msg}"
-        ]
-        if self.err.strip():  # pragma: no branch
-            msg.append(self.err)
-        if self.out.strip():  # pragma: no branch
-            msg.append(self.out)
-        return "\n".join(msg)
+        return (
+            f"packaging backend failed{'' if self.code is None else f' (code={self.code})'}, "
+            f"with {self.exc_type}: {self.exc_msg}\n{self.err}{self.out}"
+        ).rstrip()
 
     def __repr__(self) -> str:
         return (

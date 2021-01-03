@@ -10,6 +10,7 @@ from tox.execute.api import Execute, ExecuteInstance, ExecuteStatus
 from tox.execute.local_sub_process import LocalSubProcessExecuteInstance
 from tox.execute.request import StdinSource
 from tox.execute.stream import SyncWrite
+from tox.util.pep517.frontend import BackendFailed
 
 
 class LocalSubProcessPep517Executor(Execute):
@@ -21,12 +22,17 @@ class LocalSubProcessPep517Executor(Execute):
         self.env = env
         self.cwd = cwd
         self._local_execute: Optional[Tuple[LocalSubProcessExecuteInstance, ExecuteStatus]] = None
+        self._exc: Optional[Exception] = None
+        self.is_alive: bool = False
 
     def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> ExecuteInstance:
-        return LocalSubProcessPep517ExecuteInstance(request, out, err, self.local_execute)
+        result = LocalSubProcessPep517ExecuteInstance(request, out, err, self.local_execute)
+        return result
 
     @property
     def local_execute(self) -> Tuple[LocalSubProcessExecuteInstance, ExecuteStatus]:
+        if self._exc is not None:
+            raise self._exc
         if self._local_execute is None:
             request = ExecuteRequest(cmd=self.cmd, cwd=self.cwd, env=self.env, stdin=StdinSource.API)
 
@@ -36,7 +42,26 @@ class LocalSubProcessPep517Executor(Execute):
                 err=SyncWrite(name="pep517-err", target=None, color=None),  # not enabled no need to enter/exit
                 on_exit_drain=False,
             )
-            self._local_execute = instance, instance.__enter__()
+            status = instance.__enter__()
+            self._local_execute = instance, status
+            while True:
+                if b"started backend " in status.out:
+                    self.is_alive = True
+                    break
+                if b"failed to start backend" in status.err:
+                    from tox.tox_env.python.virtual_env.package.api import ToxBackendFailed
+
+                    failure = BackendFailed(
+                        result={
+                            "code": -5,
+                            "exc_type": "FailedToStart",
+                            "exc_msg": "could not start backend",
+                        },
+                        out=status.out.decode(),
+                        err=status.err.decode(),
+                    )
+                    self._exc = ToxBackendFailed(failure)
+                    raise self._exc
         return self._local_execute
 
     @staticmethod

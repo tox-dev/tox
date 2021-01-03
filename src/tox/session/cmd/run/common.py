@@ -137,7 +137,7 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
         return Outcome.OK
     else:
         _print(Fore.RED, f"  evaluation failed :( ({duration:.2f} seconds)")
-        return -1
+        return runs[0].code if len(runs) == 1 else -1
 
 
 logger = logging.getLogger(__name__)
@@ -169,6 +169,11 @@ def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool)
         exit_code = run_and_report(state, results)
         if has_previous:
             signal(SIGINT, previous)
+        if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover
+            import threading  # pragma: no cover
+
+            for thread in threading.enumerate():  # pragma: no cover
+                print(thread)  # pragma: no cover
     return exit_code
 
 
@@ -219,7 +224,6 @@ def _queue_and_wait(
                 while True:
                     env_list: List[str] = next(envs_to_run_generator, [])
                     if not env_list and not future_to_env:
-                        logger.warning(f"done {env_list, future_to_env}")
                         break
 
                     for env in env_list:  # queue all available

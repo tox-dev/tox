@@ -23,6 +23,9 @@ class BackendProxy:
             raise MissingCommand(f"{on_object!r} has no attribute {name!r}")
         return getattr(on_object, name)(*args, **kwargs)
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(backend={self.backend})"
+
     def _exit(self):  # noqa
         return 0
 
@@ -34,7 +37,13 @@ def flush():
 
 def run(argv):
     reuse_process = argv[0].lower() == "true"
-    backend_proxy = BackendProxy(argv[1], None if len(argv) == 2 else argv[2])
+    try:
+        backend_proxy = BackendProxy(argv[1], None if len(argv) == 2 else argv[2])
+    except BaseException:
+        print("failed to start backend", file=sys.stderr)
+        flush()
+        raise
+    print(f"started backend {backend_proxy}", file=sys.stdout)
     while True:
         try:
             message = input().strip()
@@ -82,5 +91,4 @@ def run(argv):
 
 
 if __name__ == "__main__":
-    exit_code = run(sys.argv[1:])
-    sys.exit(exit_code)
+    sys.exit(run(sys.argv[1:]))
