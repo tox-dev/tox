@@ -136,40 +136,46 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
                 self._package = self._build_artifact()
         return [self._package]
 
-    def get_package_dependencies(self, extras: Optional[Set[str]] = None) -> List[Requirement]:
+    def get_package_dependencies(self, extras: Set[str]) -> List[Requirement]:
         with self._lock:
-            if self._package_dependencies is None:
-                self._package_dependencies = self._load_package_dependencies(extras)
+            if self._package_dependencies is None:  # pragma: no branch
+                self._ensure_meta_present()
+                self._package_dependencies = self.discover_package_dependencies(self._distribution_meta, extras)
         return self._package_dependencies
 
-    def _load_package_dependencies(self, extras: Optional[Set[str]]) -> List[Requirement]:
-        self._ensure_meta_present()
-        if extras is None:
-            extras = set()
+    @staticmethod
+    def discover_package_dependencies(  # type: ignore[no-any-unimported]
+        meta: PathDistribution, extras: Set[str]
+    ) -> List[Requirement]:
         result: List[Requirement] = []
-        if self._distribution_meta is None:
-            raise RuntimeError
-        requires = self._distribution_meta.requires or []
-        for v in requires:
-            req = Requirement(v)
+        requires = meta.requires or []
+        for req_str in requires:
+            req = Requirement(req_str)
             markers: List[Union[str, Tuple[Variable, Variable, Variable]]] = getattr(req.marker, "_markers", []) or []
-            extra: Optional[str] = None
+
+            # find the extra marker (if has)
             _at: Optional[int] = None
-            for _at, (m_key, op, m_val) in (
-                (j, i) for j, i in enumerate(markers) if isinstance(i, tuple) and len(i) == 3
+            extra: Optional[str] = None
+            for _at, (marker_key, op, marker_value) in (
+                (_at_marker, marker)
+                for _at_marker, marker in enumerate(markers)
+                if isinstance(marker, tuple) and len(marker) == 3
             ):
-                if m_key.value == "extra" and op.value == "==":
-                    extra = m_val.value
+                if marker_key.value == "extra" and op.value == "==":  # pragma: no branch
+                    extra = marker_value.value
                     break
-            if extra is None or extra in extras:
-                if _at is not None:
+            # continue only if this extra should be included
+            if not (extra is None or extra in extras):
+                continue
+            # delete the extra marker if present
+            if _at is not None:
+                del markers[_at]
+                _at -= 1
+                if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
                     del markers[_at]
-                    _at -= 1
-                    if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
-                        del markers[_at]
-                    if len(markers) == 0:
-                        req.marker = None
-                result.append(req)
+                if len(markers) == 0:
+                    req.marker = None
+            result.append(req)
         return result
 
     @property
@@ -211,7 +217,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
                 self._backend_executor.close()
 
     @contextmanager
-    def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[CmdStatus]:
+    def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[ToxCmdStatus]:  # type: ignore[override]
         with self.execute_async(
             cmd=self.backend_cmd,
             cwd=self._root,

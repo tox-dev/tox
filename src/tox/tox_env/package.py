@@ -4,7 +4,7 @@ A tox environment that can build packages.
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Set
+from typing import TYPE_CHECKING, List, Set
 
 from packaging.requirements import Requirement
 
@@ -30,7 +30,7 @@ class PackageToxEnv(ToxEnv, ABC):
         self.ref_count = AtomicCounter()
 
     @abstractmethod
-    def get_package_dependencies(self, extras: Optional[Set[str]] = None) -> List[Requirement]:
+    def get_package_dependencies(self, extras: Set[str]) -> List[Requirement]:
         raise NotImplementedError
 
     @abstractmethod

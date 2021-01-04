@@ -1,73 +1,22 @@
-import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
-from subprocess import PIPE, Popen
 from textwrap import dedent
-from threading import Thread
-from typing import IO, Any, Callable, Iterator, NamedTuple, Optional, Tuple, cast
+from typing import Callable, Iterator, NamedTuple
 
 import pytest
 from packaging.requirements import Requirement
 from pytest_mock import MockerFixture
 
 from tox.pytest import TempPathFactory
-from tox.util.pep517.frontend import BackendFailed, CmdStatus, Frontend
+from tox.util.pep517.frontend import BackendFailed
+from tox.util.pep517.via_fresh_subprocess import SubprocessFrontend
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, EntryPoint  # type: ignore[attr-defined]
 else:  # pragma: no cover (<py38)
     from importlib_metadata import Distribution, EntryPoint  # noqa
-
-
-class SubprocessCmdStatus(CmdStatus, Thread):
-    def __init__(self, process: "Popen[str]") -> None:
-        super().__init__()
-        self.process = process
-        self._out_err: Optional[Tuple[str, str]] = None
-        self.start()
-
-    def run(self) -> None:
-        self._out_err = self.process.communicate()
-
-    @property
-    def done(self) -> bool:
-        return self.process.returncode is not None
-
-    def out_err(self) -> Tuple[str, str]:
-        return cast(Tuple[str, str], self._out_err)
-
-
-class SubprocessFrontend(Frontend):
-    def __init__(
-        self,
-        root: Path,
-        backend_paths: Tuple[Path, ...],
-        backend_module: str,
-        backend_obj: Optional[str],
-        requires: Tuple[Requirement, ...],
-    ):
-        super().__init__(root, backend_paths, backend_module, backend_obj, requires, reuse_backend=False)
-
-    @contextmanager
-    def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[CmdStatus]:
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join(str(i) for i in self._backend_paths)
-        process = Popen(
-            args=[sys.executable] + self.backend_args,
-            stdout=PIPE,
-            stderr=PIPE,
-            stdin=PIPE,
-            universal_newlines=True,
-            cwd=self._root,
-            env=env,
-        )
-        cast(IO[str], process.stdin).write(f"{os.linesep}{msg}{os.linesep}")
-        yield SubprocessCmdStatus(process)
-
-    def send_cmd(self, cmd: str, **kwargs: Any) -> Tuple[Any, str, str]:
-        return self._send(cmd, **kwargs)
 
 
 @pytest.fixture(scope="session")
