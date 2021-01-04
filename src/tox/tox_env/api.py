@@ -204,7 +204,7 @@ class ToxEnv(ABC):
         glob_pass_env = [re.compile(e.replace("*", ".*")) for e in pass_env if "*" in e]
         literal_pass_env = [e for e in pass_env if "*" not in e]
         for env in literal_pass_env:
-            if env in os.environ:
+            if env in os.environ:  # pragma: no branch
                 result[env] = os.environ[env]
         if glob_pass_env:  # pragma: no branch
             for env, value in os.environ.items():

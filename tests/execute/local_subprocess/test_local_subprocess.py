@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 import psutil
 import pytest
 from colorama import Fore
+from psutil import AccessDenied
 from pytest_mock import MockerFixture
 
 from tox.execute.api import Outcome
@@ -213,7 +214,10 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
     while not process_up_signal.exists():
         assert process.poll() is None
     root = process.pid
-    child = next(iter(psutil.Process(pid=root).children())).pid
+    try:
+        child = next(iter(psutil.Process(pid=root).children())).pid
+    except AccessDenied as exc:  # pragma: no cover # on termux for example
+        pytest.skip(str(exc))  # pragma: no cover
 
     print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)
     process.send_signal(SIG_INTERRUPT)
