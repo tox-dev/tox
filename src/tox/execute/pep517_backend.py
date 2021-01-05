@@ -34,7 +34,7 @@ class LocalSubProcessPep517Executor(Execute):
         if self._exc is not None:
             raise self._exc
         if self._local_execute is None:
-            request = ExecuteRequest(cmd=self.cmd, cwd=self.cwd, env=self.env, stdin=StdinSource.API)
+            request = ExecuteRequest(cmd=self.cmd, cwd=self.cwd, env=self.env, stdin=StdinSource.API, run_id="pep517")
 
             instance = LocalSubProcessExecuteInstance(
                 request,

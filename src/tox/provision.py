@@ -16,7 +16,7 @@ from tox.config.sets import ConfigSet
 from tox.execute.api import StdinSource
 from tox.plugin.impl import impl
 from tox.session.state import State
-from tox.tox_env.python.api import PythonDep
+from tox.tox_env.python.req_file import RequirementsFile
 from tox.tox_env.python.runner import PythonRun
 from tox.tox_env.python.virtual_env.package.api import PackageType
 from tox.version import __version__ as current_version
@@ -92,7 +92,8 @@ def run_provision(deps: List[Requirement], state: State) -> int:  # noqa
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         base=[],  # disable inheritance for provision environments
         package=PackageType.skip,  # no packaging for this please
-        deps=[PythonDep(d) for d in deps],  # use our own dependency specification
+        # use our own dependency specification
+        deps=RequirementsFile("\n".join(str(d) for d in deps), root=state.conf.core["tox_root"]),
         pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
     )
     provision_tox_env: str = state.conf.core["provision_tox_env"]

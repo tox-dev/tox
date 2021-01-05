@@ -191,7 +191,7 @@ class Python(ToxEnv, ABC):
                 raise Recreate
             new_deps_str = set(conf_deps) - set(old)
             new_deps = [PythonDep(Requirement(i)) for i in new_deps_str]
-            self.install_python_packages(packages=new_deps)
+            self.install_python_packages(packages=new_deps, of_type=of_type)
         return False
 
     @abstractmethod
@@ -203,7 +203,7 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def install_python_packages(self, packages: PythonDeps, no_deps: bool = False) -> None:
+    def install_python_packages(self, packages: PythonDeps, of_type: str, no_deps: bool = False) -> None:
         raise NotImplementedError
 
 

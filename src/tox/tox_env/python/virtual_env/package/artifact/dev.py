@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Tuple, cast
+from typing import List, Set, Tuple, cast
 
 from packaging.requirements import Requirement
 
 from tox.plugin.impl import impl
-from tox.tox_env.python.api import PythonDep, PythonDeps
 from tox.tox_env.register import ToxEnvRegister
 
 from ..api import Pep517VirtualEnvPackage
@@ -16,6 +15,12 @@ class LegacyDevVirtualEnvPackage(Pep517VirtualEnvPackage):
     def _build_artifact(self) -> Path:
         return cast(Path, self.core["tox_root"])  # the folder itself is the package
 
+    def get_package_dependencies(self, extras: Set[str]) -> List[Requirement]:
+        # install build-requires dependencies so that the legacy installer has them satisfied when installing package
+        result = super().get_package_dependencies(extras)
+        result.extend(self.build_requires())
+        return result
+
     @staticmethod
     def id() -> str:
         return "virtualenv-legacy-dev"
@@ -23,10 +28,6 @@ class LegacyDevVirtualEnvPackage(Pep517VirtualEnvPackage):
     def build_requires(self) -> Tuple[Requirement, ...]:
         result: Tuple[Requirement, ...] = ()
         return result
-
-    def package_deps(self) -> PythonDeps:
-        """Install requirement from pyproject.toml table"""
-        return [PythonDep(i) for i in self._requires]
 
 
 @impl

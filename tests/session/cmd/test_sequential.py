@@ -5,7 +5,7 @@ from pathlib import Path
 from signal import SIGINT
 from subprocess import PIPE, Popen
 from time import sleep
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import pytest
 from re_assert import Matches
@@ -78,9 +78,9 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
     packaging_setup = get_cmd_exit_run_id(log_report, ".package-py", "setup")
 
     assert packaging_setup == [
-        (0, "install"),
+        (0, "install_requires"),
         (None, "get_requires_for_build_wheel"),
-        (0, "install"),
+        (0, "install_build_requires"),
         (0, "freeze"),
         (None, "_exit"),
     ]
@@ -90,7 +90,7 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
     assert {i[: i.find("==")] for i in packaging_installed} == {"pip", "setuptools", "wheel"}
 
     py_setup = get_cmd_exit_run_id(log_report, "py", "setup")
-    assert py_setup == [(0, "install"), (0, "install"), (0, "freeze")]  # install => 1 dep and 1 package
+    assert py_setup == [(0, "install_package_deps"), (0, "install_package"), (0, "freeze")]
     py_test = get_cmd_exit_run_id(log_report, "py", "test")
     assert py_test == [(1, "commands[0]"), (0, "commands[1]")]
     packaging_installed = log_report["testenvs"]["py"].pop("installed_packages")
@@ -295,12 +295,47 @@ def test_env_name_change_recreate(tox_project: ToxProjectCreator) -> None:
     assert "py: remove tox env folder" in result_second.out
 
 
-def test_dep_remove(tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n"})
+def test_deps_remove_recreate(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n setuptools"})
+    execute_calls = proj.patch_execute(lambda request: 0)
     result_first = proj.run("r")
     result_first.assert_success()
+    assert execute_calls.call_count == 1
 
-    (proj.path / "tox.ini").write_text("[testenv]\npackage=skip\ndeps=\n")
+    (proj.path / "tox.ini").write_text("[testenv]\npackage=skip\ndeps=setuptools\n")
     result_second = proj.run("r")
     result_second.assert_success()
     assert "py: recreate env because dependencies removed: wheel" in result_second.out, result_second.out
+    assert execute_calls.call_count == 2
+
+
+def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    build = (demo_pkg_inline / "build.py").read_text()
+    build_with_dep = build.replace("Summary: UNKNOWN\n", "Summary: UNKNOWN\n        Requires-Dist: wheel\n")
+    proj = tox_project(
+        {
+            "tox.ini": "[testenv]\npackage=wheel",
+            "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
+            "build.py": build_with_dep,
+        }
+    )
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result_first = proj.run("r")
+    result_first.assert_success()
+    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
+    assert run_ids == [
+        "get_requires_for_build_wheel",
+        "build_wheel",
+        "install_package_deps",
+        "install_package",
+        "_exit",
+    ]
+    execute_calls.reset_mock()
+
+    (proj.path / "build.py").write_text(build)
+    result_second = proj.run("r")
+    result_second.assert_success()
+    assert "py: recreate env because dependencies removed: wheel" in result_second.out, result_second.out
+    run_ids = ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
+    assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]

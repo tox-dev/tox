@@ -16,7 +16,8 @@ from pathlib import Path
 from subprocess import PIPE, Popen, check_call
 from threading import Thread
 from types import TracebackType
-from typing import IO, TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Sequence, Tuple, Type, cast
+from typing import IO, TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, cast
+from unittest.mock import MagicMock
 
 import pytest
 from _pytest.capture import CaptureFixture as _CaptureFixture
@@ -26,18 +27,21 @@ from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
 from _pytest.tmpdir import TempPathFactory
+from pytest_mock import MockerFixture
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_WIN, fs_supports_symlink
 
 import tox.run
-from tox.execute.api import Outcome
-from tox.execute.request import shell_cmd
-from tox.report import LOGGER
+from tox.execute.api import Execute, ExecuteInstance, ExecuteStatus, Outcome
+from tox.execute.request import ExecuteRequest, shell_cmd
+from tox.execute.stream import SyncWrite
+from tox.report import LOGGER, OutErr
 from tox.run import run as tox_run
 from tox.run import setup_state as previous_setup_state
 from tox.session.cmd.run.parallel import ENV_VAR_KEY
 from tox.session.state import State
 from tox.tox_env import api as tox_env_api
+from tox.tox_env.api import ToxEnv
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
@@ -113,9 +117,11 @@ class ToxProject:
         path: Path,
         capfd: CaptureFixture,
         monkeypatch: MonkeyPatch,
+        mocker: MockerFixture,
     ) -> None:
         self.path: Path = path
         self.monkeypatch: MonkeyPatch = monkeypatch
+        self.mocker = mocker
         self._capfd = capfd
         self._setup_files(self.path, base, files)
 
@@ -136,6 +142,66 @@ class ToxProject:
             else:
                 msg = "could not handle {} with content {!r}".format(at_path / key, value)  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
+
+    def patch_execute(self, handle: Callable[[ExecuteRequest], Optional[int]]) -> MagicMock:
+        class MockExecute(Execute):
+            def __init__(self, colored: bool, exit_code: int) -> None:
+                self.exit_code = exit_code
+                super().__init__(colored)
+
+            def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> ExecuteInstance:
+                return MockExecuteInstance(request, out, err, self.exit_code)
+
+        class MockExecuteStatus(ExecuteStatus):
+            def __init__(self, out: SyncWrite, err: SyncWrite, exit_code: int) -> None:
+                super().__init__(out, err)
+                self._exit_code = exit_code
+
+            @property
+            def exit_code(self) -> Optional[int]:
+                return self._exit_code
+
+            def wait(self, timeout: Optional[float] = None) -> None:
+                """"""
+
+            def write_stdin(self, content: str) -> None:
+                """"""
+
+            def interrupt(self) -> None:
+                """"""
+
+        class MockExecuteInstance(ExecuteInstance):
+            def __init__(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite, exit_code: int) -> None:
+                super().__init__(request, out, err)
+                self.exit_code = exit_code
+
+            def __enter__(self) -> ExecuteStatus:
+                return MockExecuteStatus(self._out, self._err, self.exit_code)
+
+            def __exit__(
+                self,
+                exc_type: Optional[Type[BaseException]],
+                exc_val: Optional[BaseException],
+                exc_tb: Optional[TracebackType],
+            ) -> None:
+                pass
+
+            @property
+            def cmd(self) -> Sequence[str]:
+                return self.request.cmd
+
+        @contextmanager
+        def _execute_call(
+            executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
+        ) -> Iterator[ExecuteStatus]:
+            exit_code = handle(request)
+            if exit_code is not None:
+                executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # noqa
+            with original_execute_call(executor, out_err, request, show) as status:
+                yield status
+
+        original_execute_call = ToxEnv._execute_call  # noqa
+        return self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call)
 
     @property
     def structure(self) -> Dict[str, Any]:
@@ -294,10 +360,12 @@ class ToxProjectCreator(Protocol):
 
 
 @pytest.fixture(name="tox_project")
-def init_fixture(tmp_path: Path, capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> ToxProjectCreator:
+def init_fixture(
+    tmp_path: Path, capfd: CaptureFixture, monkeypatch: MonkeyPatch, mocker: MockerFixture
+) -> ToxProjectCreator:
     def _init(files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:
         """create tox  projects"""
-        return ToxProject(files, base, tmp_path / "p", capfd, monkeypatch)
+        return ToxProject(files, base, tmp_path / "p", capfd, monkeypatch, mocker)
 
     return _init  # noqa
 

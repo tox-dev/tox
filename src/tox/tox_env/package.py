@@ -18,7 +18,6 @@ from .api import ToxEnv
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
-    from tox.tox_env.python.api import PythonDeps
 
 
 class PackageToxEnv(ToxEnv, ABC):
@@ -36,9 +35,6 @@ class PackageToxEnv(ToxEnv, ABC):
     @abstractmethod
     def perform_packaging(self) -> List[Path]:
         raise NotImplementedError
-
-    def package_deps(self) -> "PythonDeps":
-        return []
 
     def clean(self) -> None:
         if self.recreate_package:  # only recreate if user did not opt out

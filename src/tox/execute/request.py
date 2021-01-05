@@ -18,13 +18,16 @@ class StdinSource(Enum):
 class ExecuteRequest:
     """Defines a commands execution request"""
 
-    def __init__(self, cmd: Sequence[Union[str, Path]], cwd: Path, env: Dict[str, str], stdin: StdinSource):
+    def __init__(
+        self, cmd: Sequence[Union[str, Path]], cwd: Path, env: Dict[str, str], stdin: StdinSource, run_id: str
+    ) -> None:
         if len(cmd) == 0:
             raise ValueError("cannot execute an empty command")
         self.cmd: List[str] = [str(i) for i in cmd]
         self.cwd = cwd
         self.env = env
         self.stdin = stdin
+        self.run_id = run_id
 
     @property
     def shell_cmd(self) -> str:

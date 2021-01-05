@@ -44,7 +44,7 @@ def test_local_execute_basic_pass(
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=color)
     code = f"import sys; print({repr(out)}, end=''); print({repr(err)}, end='', file=sys.stderr)"
-    request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF)
+    request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
     with executor.call(request, show=show, out_err=out_err.out_err) as status:
         while status.exit_code is None:
@@ -78,6 +78,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
         cwd=Path(),
         env=os.environ.copy(),
         stdin=StdinSource.OFF,
+        run_id="",
     )
     out_err = FakeOutErr()
     with executor.call(request, show=True, out_err=out_err.out_err) as status:
@@ -115,6 +116,7 @@ def test_local_execute_write_a_lot(caplog: LogCaptureFixture, os_env: Dict[str, 
         cwd=Path(),
         env=os_env,
         stdin=StdinSource.OFF,
+        run_id="",
     )
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
@@ -139,7 +141,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
         "-c",
         "import sys; print('out', end=''); print('err', file=sys.stderr, end=''); sys.exit(3)",
     ]
-    request = ExecuteRequest(cmd=cmd, cwd=cwd, env=os.environ.copy(), stdin=StdinSource.OFF)
+    request = ExecuteRequest(cmd=cmd, cwd=cwd, env=os.environ.copy(), stdin=StdinSource.OFF, run_id="")
 
     # run test
     out_err = FakeOutErr()
@@ -190,7 +192,9 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
 def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
-    request = ExecuteRequest(cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, stdin=StdinSource.OFF)
+    request = ExecuteRequest(
+        cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, stdin=StdinSource.OFF, run_id=""
+    )
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
         while status.exit_code is None:  # pragma: no branch
@@ -253,7 +257,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
 
     executor = LocalSubProcessExecutor(colored=False)
     cmd: List[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
-    request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ))
+    request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err) as status:
         while status.exit_code is None:

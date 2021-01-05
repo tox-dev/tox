@@ -1,6 +1,7 @@
 """
 A tox python environment runner that uses the virtualenv project.
 """
+from pathlib import Path
 from typing import Dict, Optional, Set
 
 from tox.config.main import Config
@@ -83,12 +84,10 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
             "force_reinstall": True,  # if is already installed reinstall
         }
 
-    def install_deps(self) -> None:
-        super().install_deps()
-        if self.package_env is not None:
-            package_deps = self.package_env.package_deps()
-            if package_deps:
-                self.cached_install(package_deps, PythonRun.__name__, "build-deps")
+    def install_requirement_file(self, path: Path) -> None:
+        install_command = self.base_install_cmd + ["-r", str(path)]
+        result = self.perform_install(install_command, "install_deps")
+        result.assert_success()
 
 
 @impl

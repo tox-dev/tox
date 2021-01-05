@@ -21,6 +21,7 @@ request = ExecuteRequest(
     cwd=Path().absolute(),
     env=os.environ.copy(),
     stdin=StdinSource.API,
+    run_id="",
 )
 out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
 

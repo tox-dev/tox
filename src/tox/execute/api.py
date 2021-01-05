@@ -160,11 +160,15 @@ class Outcome:
     def _assert_fail(self) -> NoReturn:
         if self.show_on_standard is False:
             if self.out:
-                print(self.out, file=sys.stdout)
+                sys.stdout.write(self.out)
+                if not self.out.endswith("\n"):
+                    sys.stdout.write("\n")
             if self.err:
-                print(Fore.RED, file=sys.stderr, end="")
-                print(self.err, file=sys.stderr, end="")
-                print(Fore.RESET, file=sys.stderr)
+                sys.stderr.write(Fore.RED)
+                sys.stderr.write(self.err)
+                sys.stderr.write(Fore.RESET)
+                if not self.err.endswith("\n"):
+                    sys.stderr.write("\n")
         self.log_run_done(logging.CRITICAL)
         raise SystemExit(self.exit_code)
 

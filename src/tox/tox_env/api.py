@@ -253,7 +253,7 @@ class ToxEnv(ABC):
             cwd = self.core["tox_root"]
         if show is None:
             show = self.options.verbosity > 3
-        request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin)
+        request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id)
         if _CWD == request.cwd:
             repr_cwd = ""
         else:
@@ -265,11 +265,7 @@ class ToxEnv(ABC):
         out_err = self.log_handler.stdout, self.log_handler.stderr
         if executor is None:
             executor = self.executor
-        with executor.call(
-            request=request,
-            show=show,
-            out_err=out_err,
-        ) as execute_status:
+        with self._execute_call(executor, out_err, request, show) as execute_status:
             execute_id = id(execute_status)
             try:
                 self._execute_statuses[execute_id] = execute_status
@@ -281,6 +277,18 @@ class ToxEnv(ABC):
                 self._hidden_outcomes.append(execute_status.outcome)
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)
+
+    @staticmethod
+    @contextmanager
+    def _execute_call(
+        executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
+    ) -> Iterator[ExecuteStatus]:
+        with executor.call(
+            request=request,
+            show=show,
+            out_err=out_err,
+        ) as execute_status:
+            yield execute_status
 
     @staticmethod
     @abstractmethod

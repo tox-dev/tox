@@ -1,20 +1,21 @@
 """
 A tox run environment that handles the Python language.
 """
+import logging
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Dict, List, Union, cast
-
-from packaging.requirements import Requirement
+from typing import Any, Dict, List, Set
 
 from tox.config.cli.parser import Parsed
 from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
+from tox.tox_env.errors import Recreate
 
 from ..runner import RunToxEnv
 from .api import Python, PythonDep
+from .req_file import RequirementsFile
 
 
 class PythonRun(Python, RunToxEnv, ABC):
@@ -24,25 +25,10 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def register_config(self) -> None:
         super().register_config()
-        outer_self = self
-
-        class _PythonDep(PythonDep):
-            def __init__(self, raw: Union[PythonDep, str]) -> None:
-                if isinstance(raw, str):
-                    if raw.startswith("-r"):
-                        val: Union[Path, Requirement] = Path(raw[2:])
-                        if not cast(Path, val).is_absolute():
-                            val = outer_self.core["toxinidir"] / val
-                    else:
-                        val = Requirement(raw)
-                else:
-                    val = raw.value
-                super().__init__(val)
-
         self.conf.add_config(
             keys="deps",
-            of_type=List[_PythonDep],
-            default=[],
+            of_type=RequirementsFile,
+            default=RequirementsFile(""),
             desc="Name of the python dependencies as specified by PEP-440",
         )
         self.core.add_config(
@@ -57,7 +43,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         super().setup()
         self.install_deps()
         if self.package_env is not None:
-            # 1. install pkg dependendencies
+            # 1. install pkg dependencies
             with self.package_env.display_context(suspend=self.has_display_suspended):
                 package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
             self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
@@ -65,14 +51,32 @@ class PythonRun(Python, RunToxEnv, ABC):
             # 2. install the package
             with self.package_env.display_context(suspend=self.has_display_suspended):
                 self._packages = [PythonDep(p) for p in self.package_env.perform_packaging()]
-            self.install_python_packages(self._packages, **self.install_package_args())  # type: ignore[no-untyped-call]
+            self.install_python_packages(
+                self._packages, "package", **self.install_package_args()  # type: ignore[no-untyped-call]
+            )
             self.handle_journal_package(self.journal, self._packages)
 
     def install_deps(self) -> None:
-        self.cached_install(self.conf["deps"], PythonRun.__name__, "deps")
+        requirements_file: RequirementsFile = self.conf["deps"]
+        requirement_file_content = requirements_file.validate_and_expand()
+        with self._cache.compare(requirement_file_content, PythonRun.__name__, "deps") as (eq, old):
+            if not eq:
+                # if new env, or additions only a simple install will do
+                missing: Set[str] = set() if old is None else set(old) - set(requirement_file_content)
+                if not missing:
+                    if requirement_file_content:
+                        with requirements_file.with_file() as path:
+                            self.install_requirement_file(path)
+                else:  # otherwise, no idea how to compute the diff, instead just start from scratch
+                    logging.warning(f"recreate env because dependencies removed: {', '.join(str(i) for i in missing)}")
+                    raise Recreate
 
     @abstractmethod
     def install_package_args(self) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def install_requirement_file(self, path: Path) -> None:
         raise NotImplementedError
 
     @property

@@ -22,7 +22,7 @@ class PythonPackage(Python, PackageToxEnv, ABC):
         self.cached_install(requires, PythonPackage.__name__, "requires")
 
         build_requires = [PythonDep(i) for i in self.build_requires()]
-        self.cached_install(build_requires, PythonPackage.__name__, "build-requires")
+        self.cached_install(build_requires, PythonPackage.__name__, "build_requires")
 
     @abstractmethod
     def requires(self) -> Tuple[Requirement, ...]:
