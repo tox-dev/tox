@@ -46,7 +46,7 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> List[Path]
     distribution = Distribution.at(dist_info)
     wheel_cache = ROOT / ".wheel_cache" / f"{sys.version_info.major}.{sys.version_info.minor}"
     wheel_cache.mkdir(parents=True, exist_ok=True)
-    cmd = [sys.executable, "-I", "-m", "pip", "--disable-pip-version-check", "download", "-d", str(wheel_cache)]
+    cmd = [sys.executable, "-I", "-m", "pip", "download", "-d", str(wheel_cache)]
     for req in distribution.requires:
         requirement = Requirement(req)
         if not requirement.extras:  # pragma: no branch  # we don't need to install any extras (tests/docs/etc)

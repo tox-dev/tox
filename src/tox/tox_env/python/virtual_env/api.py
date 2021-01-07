@@ -113,7 +113,7 @@ class VirtualEnv(Python, ABC):
 
     @property
     def base_install_cmd(self) -> List[str]:
-        return [str(self.creator.exe), "-I", "-m", "pip", "--disable-pip-version-check", "install"]
+        return [str(self.creator.exe), "-I", "-m", "pip", "install"]
 
     def perform_install(self, install_command: Sequence[str], run_id: str) -> Outcome:
         return self.execute(

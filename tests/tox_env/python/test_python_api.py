@@ -49,15 +49,7 @@ def test_requirements_txt(tox_project: ToxProjectCreator, monkeypatch: MonkeyPat
     tox_env = result.state.tox_env("py")
 
     assert execute_calls.call_count == 1
-    exp = [
-        str(tox_env.conf["env_python"]),
-        "-I",
-        "-m",
-        "pip",
-        "--disable-pip-version-check",
-        "install",
-        "-r",
-    ]
+    exp = [str(tox_env.conf["env_python"]), "-I", "-m", "pip", "install", "-r"]
     got_cmd = execute_calls.call_args[0][2].cmd
 
     assert got_cmd[:-1] == exp

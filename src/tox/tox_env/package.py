@@ -12,6 +12,7 @@ from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
 from tox.plugin.impl import impl
 from tox.report import ToxHandler
+from tox.tox_env.errors import Recreate
 from tox.util.threading import AtomicCounter
 
 from .api import ToxEnv
@@ -39,6 +40,12 @@ class PackageToxEnv(ToxEnv, ABC):
     def clean(self) -> None:
         if self.recreate_package:  # only recreate if user did not opt out
             super().clean()
+
+    def setup(self) -> None:
+        try:
+            super().setup()
+        except Recreate:
+            self.recreate_package = True
 
 
 @impl
