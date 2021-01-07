@@ -169,7 +169,7 @@ class ToxEnv(ABC):
             self.setup()
         except Recreate:
             if not recreate:  # pragma: no cover
-                self.clean()
+                self.clean(force=True)
                 self.setup()
         self.setup_has_been_done()
 
@@ -184,7 +184,7 @@ class ToxEnv(ABC):
             shutil.rmtree(env_tmp_dir, ignore_errors=True)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    def clean(self) -> None:
+    def clean(self, force: bool = False) -> None:
         if self.clean_done:  # pragma: no branch
             return  # pragma: no cover
         env_dir: Path = self.conf["env_dir"]
@@ -213,11 +213,6 @@ class ToxEnv(ABC):
         set_env: Dict[str, str] = self.conf["set_env"]
         result.update(set_env)
         result["PATH"] = os.pathsep.join([str(i) for i in self._paths] + os.environ.get("PATH", "").split(os.pathsep))
-        columns, lines = shutil.get_terminal_size(fallback=(-1, -1))  # if cannot get (-1) do not set env-vars
-        if columns != -1:  # pragma: no branch # no easy way to control get_terminal_size without env-vars
-            result["COLUMNS"] = str(columns)
-        if columns != 1:  # pragma: no branch # no easy way to control get_terminal_size without env-vars
-            result["LINES"] = str(lines)
         self._env_vars = result
         return result
 

@@ -92,11 +92,11 @@ class RunToxEnv(ToxEnv, ABC):
         self.package_env = package_tox_env
         self.package_env.ref_count.increment()
 
-    def clean(self, package_env: bool = True) -> None:
-        super().clean()
+    def clean(self, force: bool = False) -> None:
+        super().clean(force)
         if self.package_env is not None:  # pragma: no cover branch
             with self.package_env.display_context(suspend=self.has_display_suspended):
-                self.package_env.clean()
+                self.package_env.clean()  # do not pass force along, allow package env to ignore if requested
 
     @property
     def environment_variables(self) -> Dict[str, str]:

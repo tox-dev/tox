@@ -337,5 +337,29 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
     result_second = proj.run("r")
     result_second.assert_success()
     assert "py: recreate env because dependencies removed: wheel" in result_second.out, result_second.out
-    run_ids = ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
+    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
+    assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
+
+
+def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text()
+    proj = tox_project(
+        {
+            "tox.ini": "[testenv]\npackage=wheel",
+            "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]'),
+            "build.py": (demo_pkg_inline / "build.py").read_text(),
+        }
+    )
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result_first = proj.run("r")
+    result_first.assert_success()
+    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
+    assert run_ids == ["install_requires", "get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
+    execute_calls.reset_mock()
+
+    (proj.path / "pyproject.toml").write_text(toml)
+    result_second = proj.run("r")
+    result_second.assert_success()
+    assert ".package-py: recreate env because dependencies removed: setuptools" in result_second.out, result_second.out
+    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
     assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]

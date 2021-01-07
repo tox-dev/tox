@@ -98,7 +98,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
 
 
 def test_local_execute_write_a_lot(caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
-    count = 10000
+    count = 10_000
     executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(
         cmd=[
@@ -248,7 +248,6 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])
 def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, tty_mode: str) -> None:
-    is_windows = sys.platform == "win32"
     monkeypatch.setenv("COLUMNS", "100")
     monkeypatch.setenv("LINES", "100")
     tty = tty_mode == "on"
@@ -268,8 +267,8 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     assert outcome
     info = json.loads(outcome.out)
     assert info == {
-        "stdout": False if is_windows else tty,
-        "stderr": False if is_windows else tty,
+        "stdout": False,
+        "stderr": False,
         "stdin": False,
         "terminal": [100, 100],
     }

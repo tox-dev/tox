@@ -13,7 +13,7 @@ from ..request import ExecuteRequest, StdinSource
 from ..stream import SyncWrite
 from .read_via_thread import WAIT_GENERAL
 
-if sys.platform == "win32":  # pragma: win32 cover
+if sys.platform == "win32":  # check explicilty in this form so mypy understands # pragma: win32 cover
     # needs stdin/stdout handlers backed by overlapped IO
     if TYPE_CHECKING:  # the typeshed libraries don't contain this, so replace it with normal one
         from subprocess import Popen
@@ -34,9 +34,9 @@ else:  # pragma: win32 no cover
 
     CREATION_FLAGS = 0
 
-
 WAIT_INTERRUPT = 0.3
 WAIT_TERMINATE = 0.2
+IS_WIN = sys.platform == "win32"
 
 
 class LocalSubProcessExecutor(Execute):
@@ -76,7 +76,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                 while proc.poll() is None and (time.monotonic() - start) < WAIT_INTERRUPT:
                     continue
                 if proc.poll() is None:  # pragma: no branch
-                    if sys.platform == "win32":  # pragma: no branch
+                    if IS_WIN:  # pragma: no branch
                         logging.warning("terminate %d from %d", to_pid, host_pid)  # pragma: no cover
                     else:
                         logging.warning(
@@ -88,7 +88,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                         )
                     proc.terminate()
                     start = time.monotonic()
-                    if sys.platform != "win32":  # pragma: no branch
+                    if not IS_WIN:  # Windows terminate is UNIX kill  # pragma: no branch
                         while proc.poll() is None and (time.monotonic() - start) < WAIT_TERMINATE:
                             continue
                         if proc.poll() is None:  # pragma: no branch
@@ -113,7 +113,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             return  # pragma: no cover
         bytes_content = content.encode()
         try:
-            if sys.platform == "win32":  # pragma: win32 cover
+            if IS_WIN:  # pragma: win32 cover
                 # on Windows we have a PipeHandle object here rather than a file stream
                 import _overlapped  # type: ignore[import]
 
@@ -181,14 +181,21 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         return self._cmd
 
     def __enter__(self) -> ExecuteStatus:
+        # adjust sub-process terminal size
+        columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
+        if columns != -1:  # pragma: no branch
+            self.request.env["COLUMNS"] = str(columns)
+        if columns != -1:  # pragma: no branch
+            self.request.env["LINES"] = str(lines)
+
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
-        in_type = self.request.stdin
+
         try:
             self.process = process = Popen(
                 self.cmd,
                 stdout=next(stdout),
                 stderr=next(stderr),
-                stdin=None if in_type is StdinSource.USER else (DEVNULL if in_type is StdinSource.OFF else PIPE),
+                stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
                 cwd=str(self.request.cwd),
                 env=self.request.env,
                 creationflags=CREATION_FLAGS,
@@ -203,7 +210,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
         self._read_stdout.__enter__()
 
-        if sys.platform == "win32":  # pragma: win32 cover
+        if IS_WIN:  # pragma: win32 cover
             process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]
             process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]
         return status
@@ -218,22 +225,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
     @staticmethod
     def get_stream_file_no(key: str) -> Generator[int, "Popen[bytes]", None]:
-        if sys.platform != "win32" and getattr(sys, key).isatty():  # pragma: win32 no cover
-            # on UNIX if tty is set let's forward it via a pseudo terminal
-            # this allows processes running to access the host terminals traits
-            import pty
-
-            main, child = pty.openpty()
-            yield child
-            os.close(child)
-            yield main
-        else:
-            process = yield PIPE
-            stream = getattr(process, key)
-            if sys.platform == "win32":  # pragma: win32 cover
-                yield stream.handle
-            else:
-                yield stream.name
+        process = yield PIPE
+        stream = getattr(process, key)
+        yield stream.handle if IS_WIN else stream.name
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
         prev = self._out, self._err
