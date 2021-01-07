@@ -497,8 +497,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
     .. versionadded:: 3.10
 
     Set to ``true`` if you want virtualenv to upgrade pip/wheel/setuptools to
-    the latest version. When this is set you may add e.g. ``VIRTUALENV_PIP=20.3.3``
-    to your setenv to explicity set a particular version of pip.
+    the latest version. If (and only if) you want to choose a specific version
+    (not necessarily the latest) then you can add e.g. ``VIRTUALENV_PIP=20.3.3``
+    to your setenv.
 
 .. conf:: args_are_paths ^ true|false ^ true
 
