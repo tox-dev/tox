@@ -2,7 +2,6 @@
 A tox environment that can build packages.
 """
 from abc import ABC, abstractmethod
-from argparse import ArgumentParser
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Set
 
@@ -10,7 +9,6 @@ from packaging.requirements import Requirement
 
 from tox.config.sets import ConfigSet
 from tox.journal import EnvJournal
-from tox.plugin.impl import impl
 from tox.report import ToxHandler
 from tox.util.threading import AtomicCounter
 
@@ -39,13 +37,3 @@ class PackageToxEnv(ToxEnv, ABC):
     def clean(self, force: bool = False) -> None:
         if force or self.recreate_package:  # only recreate if user did not opt out
             super().clean(force)
-
-
-@impl
-def tox_add_option(parser: ArgumentParser) -> None:
-    parser.add_argument(
-        "--no-recreate-pkg",
-        dest="no_recreate_pkg",
-        help="if recreate is set do not recreate packaging tox environment(s)",
-        action="store_true",
-    )

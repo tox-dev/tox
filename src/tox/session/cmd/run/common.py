@@ -104,6 +104,18 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
         help="for python discovery first try the python executables under these paths",
         default=[],
     )
+    parser.add_argument(
+        "--no-recreate-pkg",
+        dest="no_recreate_pkg",
+        help="if recreate is set do not recreate packaging tox environment(s)",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--skip-pkg-install",
+        dest="skip_pkg_install",
+        help="skip package installation for this run",
+        action="store_true",
+    )
 
 
 def run_and_report(state: State, result: List[ToxEnvRunResult]) -> int:

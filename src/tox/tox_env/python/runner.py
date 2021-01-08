@@ -42,19 +42,26 @@ class PythonRun(Python, RunToxEnv, ABC):
         """setup the tox environment"""
         super().setup()
         self.install_deps()
-        if self.package_env is not None:
-            # 1. install pkg dependencies
-            with self.package_env.display_context(suspend=self.has_display_suspended):
-                package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
-            self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
 
-            # 2. install the package
-            with self.package_env.display_context(suspend=self.has_display_suspended):
-                self._packages = [PythonDep(p) for p in self.package_env.perform_packaging()]
-            self.install_python_packages(
-                self._packages, "package", **self.install_package_args()  # type: ignore[no-untyped-call]
-            )
-            self.handle_journal_package(self.journal, self._packages)
+        if self.package_env is None:
+            return
+        skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False)
+        if skip_pkg_install is True:
+            logging.warning("skip building and installing the package")
+            return
+
+        # 1. install pkg dependencies
+        with self.package_env.display_context(suspend=self.has_display_suspended):
+            package_deps = self.package_env.get_package_dependencies(self.conf["extras"])
+        self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
+
+        # 2. install the package
+        with self.package_env.display_context(suspend=self.has_display_suspended):
+            self._packages = [PythonDep(p) for p in self.package_env.perform_packaging()]
+        self.install_python_packages(
+            self._packages, "package", **self.install_package_args()  # type: ignore[no-untyped-call]
+        )
+        self.handle_journal_package(self.journal, self._packages)
 
     def install_deps(self) -> None:
         requirements_file: RequirementsFile = self.conf["deps"]

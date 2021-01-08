@@ -228,7 +228,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     def get_stream_file_no(key: str) -> Generator[int, "Popen[bytes]", None]:
         process = yield PIPE
         stream = getattr(process, key)
-        if sys.platform == "win32":  # explicit check for mypy
+        if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
             yield stream.handle
         else:
             yield stream.name

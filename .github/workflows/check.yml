@@ -29,20 +29,20 @@ jobs:
           - 3.7
           - 3.6
     steps:
-      - name: setup python for tox
+      - name: Setup python for tox
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
-      - name: install tox
-        run: python -m pip install tox
+          python-version: 3.9
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: setup python for test ${{ matrix.py }}
+      - name: Install self-tox
+        run: python -m pip install .
+      - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.py }}
-      - name: pick environment to run
+      - name: Pick environment to run
         run: |
           import json
           import os
@@ -51,21 +51,21 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as file_handler:
                 file_handler.write('TOXENV=' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else "3") + "\n")
         shell: python
-      - name: setup test suite
-        run: tox -vv --notest
-      - name: run test suite
-        run: tox --skip-pkg-install
+      - name: Setup test suite
+        run: tox4 r -vv --notest
+      - name: Run test suite
+        run: tox4 r --skip-pkg-install
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
-      - name: rename coverage report file
+      - name: Rename coverage report file
         run: |
-          import os; os.rename('.tox/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox/coverage.xml')
+          import os; os.rename('.tox4/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox4/coverage.xml')
         shell: python
       - uses: codecov/codecov-action@v1
         with:
-          file: ./.tox/coverage.xml
+          file: ./.tox4/coverage.xml
           flags: tests
           name: ${{ matrix.py }} - ${{ matrix.os }}
 
@@ -89,14 +89,14 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: setup Python 3.8
+      - name: Setup Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
-      - name: install tox
-        run: python -m pip install tox
-      - name: run check for ${{ matrix.tox_env }}
-        run: python -m tox -e ${{ matrix.tox_env }}
+          python-version: 3.9
+      - name: Install self-tox
+        run: python -m pip install .
+      - name: Run check for ${{ matrix.tox_env }}
+        run: tox4 r -e ${{ matrix.tox_env }}
         env:
           UPGRADE_ADVISORY: "yes"
 
@@ -105,18 +105,18 @@ jobs:
     needs: [ check, test, pre_commit ]
     runs-on: ubuntu-latest
     steps:
-      - name: setup python to build package
+      - name: Setup python to build package
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
-      - name: install pep517
-        run: python -m pip install pep517
+          python-version: 3.9
+      - name: Install build
+        run: python -m pip install build
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: build package
-        run: python -m pep517.build -s -b . -o dist
-      - name: publish to PyPi
+      - name: Build package
+        run: pyproject-build -s -w . -o dist
+      - name: Publish to PyPi
         uses: pypa/gh-action-pypi-publish@master
         with:
           skip_existing: true

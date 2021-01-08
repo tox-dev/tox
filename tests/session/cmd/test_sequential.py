@@ -363,3 +363,10 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
     assert ".package-py: recreate env because dependencies removed: setuptools" in result_second.out, result_second.out
     run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
     assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
+
+
+def test_skip_pkg_install(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\n"})
+    result_first = proj.run("--root", str(demo_pkg_inline), "--skip-pkg-install")
+    result_first.assert_success()
+    assert result_first.out.startswith("py: skip building and installing the package"), result_first.out
