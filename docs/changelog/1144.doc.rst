@@ -1,1 +1,0 @@
-Document more info about using ``platform`` setting. - by :user:`prakhargurunani`
