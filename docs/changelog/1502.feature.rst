@@ -1,1 +1,0 @@
-Allow \{ and \} in default of {env:key:default}. - by :user:`jayvdb`

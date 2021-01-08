@@ -1,2 +1,0 @@
-Relax importlib requirement to allow 3.0.0 or any newer version - by
-:user:`pkolbus`

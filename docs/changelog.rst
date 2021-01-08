@@ -11,6 +11,52 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.21.0 (2021-01-08)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix the false ``congratulations`` message that appears when a ``KeyboardInterrupt`` occurs during package installation. - by :user:`gnikonorov`
+  `#1453 <https://github.com/tox-dev/tox/issues/1453>`_
+- Fix ``platform`` support for ``install_command``. - by :user:`jayvdb`
+  `#1464 <https://github.com/tox-dev/tox/issues/1464>`_
+- Fixed regression in v3.20.0 that caused escaped curly braces in setenv
+  to break usage of the variable elsewhere in tox.ini. - by :user:`jayvdb`
+  `#1690 <https://github.com/tox-dev/tox/issues/1690>`_
+- Prevent ``{}`` and require ``{:`` is only followed by ``}``. - by :user:`jayvdb`
+  `#1711 <https://github.com/tox-dev/tox/issues/1711>`_
+- Raise ``MissingSubstitution`` on access of broken ini setting. - by :user:`jayvdb`
+  `#1716 <https://github.com/tox-dev/tox/issues/1716>`_
+
+
+Features
+^^^^^^^^
+
+- Allow \{ and \} in default of {env:key:default}. - by :user:`jayvdb`
+  `#1502 <https://github.com/tox-dev/tox/issues/1502>`_
+- Allow {posargs} in setenv. - by :user:`jayvdb`
+  `#1695 <https://github.com/tox-dev/tox/issues/1695>`_
+- Allow {/} to refer to os.sep. - by :user:`jayvdb`
+  `#1700 <https://github.com/tox-dev/tox/issues/1700>`_
+- Make parsing [testenv] sections in setup.cfg official. - by :user:`mauvilsa`
+  `#1727 <https://github.com/tox-dev/tox/issues/1727>`_
+- Relax importlib requirement to allow 3.0.0 or any newer version - by
+  :user:`pkolbus`
+  `#1763 <https://github.com/tox-dev/tox/issues/1763>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Document more info about using ``platform`` setting. - by :user:`prakhargurunani`
+  `#1144 <https://github.com/tox-dev/tox/issues/1144>`_
+- Replace ``indexserver`` in documentation with environment variables - by :user:`ziima`.
+  `#1357 <https://github.com/tox-dev/tox/issues/1357>`_
+- Document that the ``passenv`` environment setting is case insensitive. - by :user:`gnikonorov`
+  `#1534 <https://github.com/tox-dev/tox/issues/1534>`_
+
+
 v3.20.1 (2020-10-09)
 --------------------
 

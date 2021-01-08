@@ -1,1 +1,0 @@
-Prevent ``{}`` and require ``{:`` is only followed by ``}``. - by :user:`jayvdb`
