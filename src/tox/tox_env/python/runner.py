@@ -59,6 +59,7 @@ class PythonRun(Python, RunToxEnv, ABC):
     def install_deps(self) -> None:
         requirements_file: RequirementsFile = self.conf["deps"]
         requirement_file_content = requirements_file.validate_and_expand()
+        requirement_file_content.sort()  # stable order dependencies
         with self._cache.compare(requirement_file_content, PythonRun.__name__, "deps") as (eq, old):
             if not eq:
                 # if new env, or additions only a simple install will do
