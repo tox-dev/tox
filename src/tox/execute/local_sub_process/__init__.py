@@ -13,7 +13,7 @@ from ..request import ExecuteRequest, StdinSource
 from ..stream import SyncWrite
 from .read_via_thread import WAIT_GENERAL
 
-if sys.platform == "win32":  # check explicilty in this form so mypy understands # pragma: win32 cover
+if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
     # needs stdin/stdout handlers backed by overlapped IO
     if TYPE_CHECKING:  # the typeshed libraries don't contain this, so replace it with normal one
         from subprocess import Popen
@@ -76,7 +76,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                 while proc.poll() is None and (time.monotonic() - start) < WAIT_INTERRUPT:
                     continue
                 if proc.poll() is None:  # pragma: no branch
-                    if IS_WIN:  # pragma: no branch
+                    if sys.platform == "win32":  # explicit check for mypy # pragma: no branch
                         logging.warning("terminate %d from %d", to_pid, host_pid)  # pragma: no cover
                     else:
                         logging.warning(
@@ -88,7 +88,8 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                         )
                     proc.terminate()
                     start = time.monotonic()
-                    if not IS_WIN:  # Windows terminate is UNIX kill  # pragma: no branch
+                    if sys.platform != "win32":  # explicit check for mypy # pragma: no branch
+                        # Windows terminate is UNIX kill
                         while proc.poll() is None and (time.monotonic() - start) < WAIT_TERMINATE:
                             continue
                         if proc.poll() is None:  # pragma: no branch
@@ -113,7 +114,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             return  # pragma: no cover
         bytes_content = content.encode()
         try:
-            if IS_WIN:  # pragma: win32 cover
+            if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
                 # on Windows we have a PipeHandle object here rather than a file stream
                 import _overlapped  # type: ignore[import]
 
@@ -210,7 +211,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
         self._read_stdout.__enter__()
 
-        if IS_WIN:  # pragma: win32 cover
+        if sys.platform == "win32":  # explicit check for mypy:  # pragma: win32 cover
             process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]
             process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]
         return status
@@ -227,7 +228,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     def get_stream_file_no(key: str) -> Generator[int, "Popen[bytes]", None]:
         process = yield PIPE
         stream = getattr(process, key)
-        yield stream.handle if IS_WIN else stream.name
+        if sys.platform == "win32":  # explicit check for mypy
+            yield stream.handle
+        else:
+            yield stream.name
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
         prev = self._out, self._err

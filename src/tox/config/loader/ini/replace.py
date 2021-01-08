@@ -3,6 +3,7 @@ Apply value substitution (replacement) on tox strings.
 """
 import os
 import re
+import sys
 from configparser import SectionProxy
 from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple, Union
 
@@ -71,6 +72,8 @@ def _replace_match(conf: Config, current_env: Optional[str], loader: "IniLoader"
     of_type, *args = ARGS_GROUP.split(value)
     if of_type == "env":
         replace_value: Optional[str] = replace_env(args)
+    elif of_type == "tty":
+        replace_value = replace_tty(args)
     elif of_type == "posargs":
         replace_value = replace_pos_args(args, conf.pos_args)
     else:
@@ -173,6 +176,14 @@ def replace_env(args: List[str]) -> str:
     key = args[0]
     default = "" if len(args) == 1 else args[1]
     return os.environ.get(key, default)
+
+
+def replace_tty(args: List[str]) -> str:
+    if sys.stdout.isatty():
+        result = args[0] if len(args) > 0 else ""
+    else:
+        result = args[1] if len(args) > 1 else ""
+    return result
 
 
 __all__ = (

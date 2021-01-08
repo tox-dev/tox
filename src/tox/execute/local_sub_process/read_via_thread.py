@@ -1,7 +1,6 @@
 """
 A reader that drain a stream via its file no on a background thread.
 """
-import os
 from abc import ABC, abstractmethod
 from threading import Event, Thread
 from types import TracebackType
@@ -29,7 +28,6 @@ class ReadViaThread(ABC):
         while self.thread.is_alive():  # wait until it stops
             self.thread.join(WAIT_GENERAL)
         self._drain_stream()  # read anything left
-        os.close(self.file_no)
 
     @abstractmethod
     def _read_stream(self) -> None:
