@@ -21,6 +21,7 @@ import six
 import toml
 from packaging import requirements
 from packaging.utils import canonicalize_name
+from packaging.version import Version
 
 import tox
 from tox.constants import INFO
@@ -1297,7 +1298,7 @@ class ParseIni(object):
         requires_list = reader.getlist("requires")
         config.minversion = reader.getstring("minversion", None)
         config.provision_tox_env = name = reader.getstring("provision_tox_env", ".tox")
-        min_version = "tox >= {}".format(config.minversion or tox.__version__)
+        min_version = "tox >= {}".format(config.minversion or Version(tox.__version__).public)
         deps = self.ensure_requires_satisfied(config, requires_list, min_version)
         if config.run_provision:
             section_name = "testenv:{}".format(name)
