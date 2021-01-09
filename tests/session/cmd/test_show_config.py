@@ -37,14 +37,14 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     expected = rf"""
     \[testenv:{name}\]
     type = VirtualEnvRunner
+    set_env =
+      PIP_DISABLE_PIP_VERSION_CHECK=1
+      VIRTUALENV_NO_PERIODIC_UPDATE=1
     base = testenv
     runner = virtualenv
     env_name = {name}
     env_dir = {path}{sep}\.tox4{sep}{name}
     env_tmp_dir = {path}{sep}\.tox4{sep}{name}{sep}tmp
-    set_env =
-      PIP_DISABLE_PIP_VERSION_CHECK=1
-      VIRTUALENV_NO_PERIODIC_UPDATE=1
     pass_env =
     {pass_env_str}\
     parallel_show_output = False
@@ -61,7 +61,8 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     package_env = \.package
     extras =
     base_python = {name}
-    env_site_packages_dir = {path}{sep}\.tox4{sep}{name}{sep}.*
+    env_site_packages_dir = {path}{sep}\.tox4{sep}{name}{sep}.*\
+    env_bin_dir = {path}{sep}\.tox4{sep}{name}{sep}.*
     env_python = {path}{sep}\.tox4{sep}{name}{sep}.*
     deps =\
 

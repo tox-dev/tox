@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Sequence, Tuple, Union, cast
 
 from tox.config.main import Config
-from tox.config.sets import ConfigSet
+from tox.config.set_env import SetEnv
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
 from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
@@ -30,11 +31,11 @@ LOGGER = logging.getLogger(__name__)
 
 class ToxEnv(ABC):
     def __init__(
-        self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         self.journal = journal
-        self.conf: ConfigSet = conf
-        self.core: ConfigSet = core
+        self.conf: EnvConfigSet = conf
+        self.core: CoreConfigSet = core
         self.options = options
         self._executor: Optional[Execute] = None
         self.register_config()
@@ -90,19 +91,7 @@ class ToxEnv(ABC):
             default=lambda conf, name: cast(Path, conf.core["work_dir"]) / cast(str, self.conf["env_name"]) / "tmp",
             desc="a folder that is always reset at the start of the run",
         )
-
-        def set_env_post_process(values: Dict[str, str], config: Config) -> Dict[str, str]:
-            env = self.default_set_env()
-            env.update(values)
-            return env
-
-        self.conf.add_config(
-            keys=["set_env", "setenv"],
-            of_type=Dict[str, str],
-            default={},
-            desc="environment variables to set when running commands in the tox environment",
-            post_process=set_env_post_process,
-        )
+        self.conf.default_set_env_loader = self.default_set_env
 
         def pass_env_post_process(values: List[str], config: Config) -> List[str]:
             values.extend(self.default_pass_env())
@@ -199,7 +188,6 @@ class ToxEnv(ABC):
         if self._env_vars is not None:
             return self._env_vars
         result: Dict[str, str] = {}
-
         pass_env: List[str] = self.conf["pass_env"]
         glob_pass_env = [re.compile(e.replace("*", ".*")) for e in pass_env if "*" in e]
         literal_pass_env = [e for e in pass_env if "*" not in e]
@@ -210,8 +198,9 @@ class ToxEnv(ABC):
             for env, value in os.environ.items():
                 if any(g.match(env) is not None for g in glob_pass_env):
                     result[env] = value
-        set_env: Dict[str, str] = self.conf["set_env"]
-        result.update(set_env)
+        set_env: SetEnv = self.conf["set_env"]
+        for key in set_env:
+            result[key] = set_env.load(key)
         result["PATH"] = os.pathsep.join([str(i) for i in self._paths] + os.environ.get("PATH", "").split(os.pathsep))
         self._env_vars = result
         return result

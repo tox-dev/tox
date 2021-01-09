@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple, Uni
 
 from tox.config.loader.stringify import stringify
 from tox.config.main import Config
+from tox.config.set_env import SetEnv
 from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
 
@@ -18,10 +19,11 @@ if TYPE_CHECKING:
 CORE_PREFIX = "tox"
 BASE_TEST_ENV = "testenv"
 
-ARGS_GROUP = re.compile(r"(?<!\\):")
+# split alongside :, unless it's esscaped, or it's preceded by a single capital letter (Windows drive letter in paths)
+ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
 
 
-def replace(value: str, conf: Config, name: Optional[str], loader: "IniLoader") -> str:
+def replace(conf: Config, name: Optional[str], loader: "IniLoader", value: str, chain: List[str]) -> str:
     # perform all non-escaped replaces
     start, end = 0, 0
     while True:
@@ -29,7 +31,7 @@ def replace(value: str, conf: Config, name: Optional[str], loader: "IniLoader") 
         if not match:
             break
         to_replace = value[start + 1 : end]
-        replaced = _replace_match(conf, name, loader, to_replace)
+        replaced = _replace_match(conf, name, loader, to_replace, chain.copy())
         if replaced is None:
             # if we cannot replace, keep what was there, and continue looking for additional replaces following
             # note, here we cannot raise because the content may be a factorial expression, and in those case we don't
@@ -68,15 +70,22 @@ def _find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool
     return start, end, match
 
 
-def _replace_match(conf: Config, current_env: Optional[str], loader: "IniLoader", value: str) -> Optional[str]:
+def _replace_match(
+    conf: Config, current_env: Optional[str], loader: "IniLoader", value: str, chain: List[str]
+) -> Optional[str]:
     of_type, *args = ARGS_GROUP.split(value)
-    if of_type == "env":
-        replace_value: Optional[str] = replace_env(args)
+    if of_type == "/":
+        replace_value: Optional[str] = os.sep
+    elif of_type == "env":
+        replace_value = replace_env(conf, current_env, args, chain)
     elif of_type == "tty":
         replace_value = replace_tty(args)
     elif of_type == "posargs":
         replace_value = replace_pos_args(args, conf.pos_args)
     else:
+        if of_type in chain:
+            raise ValueError(f"circular chain detected {', '.join(chain[chain.index(of_type):])}")
+        chain.append(of_type)
         replace_value = replace_reference(conf, current_env, loader, value)
     return replace_value
 
@@ -172,10 +181,21 @@ def replace_pos_args(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
     return replace_value
 
 
-def replace_env(args: List[str]) -> str:
+def replace_env(conf: Config, env_name: Optional[str], args: List[str], chain: List[str]) -> str:
     key = args[0]
-    default = "" if len(args) == 1 else args[1]
-    return os.environ.get(key, default)
+    new_key = f"env:{key}"
+
+    if env_name is not None and new_key not in chain:  # check if set env
+        chain.append(new_key)
+        env_conf = conf.get_env(env_name)
+        set_env: SetEnv = env_conf["set_env"]
+        if key in set_env:
+            return set_env.load(key, chain)
+
+    if key in os.environ:
+        return os.environ[key]
+
+    return "" if len(args) == 1 else args[1]
 
 
 def replace_tty(args: List[str]) -> str:

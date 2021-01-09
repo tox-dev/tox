@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Dict, Iterator, Optional, Sequence, Set, Tuple, cast
 
 from tox.config.main import Config
-from tox.config.sets import ConfigSet
+from tox.config.sets import EnvConfigSet
 from tox.journal import Journal
 from tox.plugin.impl import impl
 from tox.report import HandledError, ToxHandler
@@ -64,7 +64,7 @@ class State:
             self.conf.get_env(name)  # the lookup here will trigger register_config_set, which will build it
             return self._run_env[name]
 
-    def register_config_set(self, name: str, config_set: ConfigSet) -> None:
+    def register_config_set(self, name: str, config_set: EnvConfigSet) -> None:
         """Ensure the config set with the given name has been registered with configuration values"""
         # during the creation of hte tox environment we automatically register configurations, so to ensure
         # config sets have a set of defined values in it we have to ensure the tox environment is created
@@ -75,7 +75,7 @@ class State:
         # runtime environments are created upon lookup via the tox_env method, call it
         self._build_run_env(config_set)
 
-    def _build_run_env(self, env_conf: ConfigSet) -> None:
+    def _build_run_env(self, env_conf: EnvConfigSet) -> None:
         env_conf.add_config(
             keys="runner",
             desc="the tox execute used to evaluate this environment",

@@ -12,7 +12,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.cli.parser import Parsed
 from tox.config.main import Config
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
 from tox.tox_env.api import ToxEnv
@@ -63,7 +63,7 @@ PythonDeps = Sequence[PythonDep]
 
 class Python(ToxEnv, ABC):
     def __init__(
-        self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         self._base_python: Optional[PythonInfo] = None
         self._base_python_searched: bool = False
@@ -81,6 +81,11 @@ class Python(ToxEnv, ABC):
             keys=["env_site_packages_dir", "envsitepackagesdir"],
             desc="the python environments site package",
             value=lambda: self.env_site_package_dir(),
+        )
+        self.conf.add_constant(
+            keys=["env_bin_dir", "envbindir"],
+            desc="the python environments site package",
+            value=lambda: self.env_bin_dir(),
         )
         self.conf.add_constant(
             ["env_python", "envpython"],
@@ -121,6 +126,11 @@ class Python(ToxEnv, ABC):
     @abstractmethod
     def env_python(self) -> Path:
         """The python executable within the tox environment"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def env_bin_dir(self) -> Path:
+        """The binary folder within the tox environment"""
         raise NotImplementedError
 
     def setup(self) -> None:

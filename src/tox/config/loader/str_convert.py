@@ -1,5 +1,4 @@
 """Convert string configuration values to tox python configuration objects."""
-import re
 import shlex
 import sys
 from itertools import chain
@@ -51,19 +50,11 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_command(value: str) -> Command:
-        win = sys.platform == "win32"
-        splitter = shlex.shlex(value, posix=not win)
+        is_win = sys.platform == "win32"
+        splitter = shlex.shlex(value, posix=not is_win)
         splitter.whitespace_split = True
-        if win:  # pragma: win32 cover
-            args = []
-            for arg in splitter:
-                if arg[0] == "'" and arg[-1] == "'":  # remove outer quote - the arg is passed as one, so no need for it
-                    arg = arg[1:-1]
-                if "/" in arg:  # normalize posix paths to nt paths
-                    arg = "\\".join(re.split(pattern=r"[\\/]", string=arg))
-                args.append(arg)
-        else:  # pragma: win32 no cover
-            args = list(splitter)
+        # on Windows quoted arguments will remain quoted, strip it
+        args = [((i[1:-1] if i.startswith("'") and i.endswith("'") else i) if is_win else i) for i in splitter]
         return Command(args)
 
     @staticmethod

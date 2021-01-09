@@ -11,7 +11,7 @@ from packaging.markers import Variable
 from packaging.requirements import Requirement
 
 from tox.config.cli.parser import Parsed
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import ExecuteStatus
 from tox.execute.pep517_backend import LocalSubProcessPep517Executor
 from tox.execute.request import StdinSource
@@ -83,7 +83,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
     """local file system python virtual environment via the virtualenv package"""
 
     def __init__(
-        self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         VirtualEnv.__init__(self, conf, core, options, journal, log_handler)
         Frontend.__init__(self, *Frontend.create_args_from_folder(core["tox_root"]))
@@ -201,7 +201,9 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
     @property
     def environment_variables(self) -> Dict[str, str]:
         env = super().environment_variables
-        env["PYTHONPATH"] = os.pathsep.join(str(i) for i in self._backend_paths)
+        backend = os.pathsep.join(str(i) for i in self._backend_paths).strip()
+        if backend:
+            env["PYTHONPATH"] = backend
         return env
 
     def teardown(self) -> None:

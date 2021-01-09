@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from argparse import ArgumentTypeError
-from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Type, TypeVar
+from concurrent.futures import Future
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any, Generator, List, Mapping, Optional, Set, Type, TypeVar
 
 from tox.plugin.impl import impl
 
@@ -82,8 +84,17 @@ class Loader(Convert[T]):
         if key in self.overrides:
             return _STR_CONVERT.to(self.overrides[key].value, of_type)
         raw = self.load_raw(key, conf, env_name)
-        converted = self.to(raw, of_type)
+        future: "Future[V]" = Future()
+        with self.build(future, key, of_type, conf, env_name, raw) as prepared:
+            converted = self.to(prepared, of_type)
+            future.set_result(converted)
         return converted
+
+    @contextmanager
+    def build(
+        self, future: "Future[V]", key: str, of_type: Type[V], conf: Optional["Config"], env_name: Optional[str], raw: T
+    ) -> Generator[T, None, None]:
+        yield raw
 
 
 @impl

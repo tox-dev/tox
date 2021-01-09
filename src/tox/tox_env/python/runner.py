@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 from tox.config.cli.parser import Parsed
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
 from tox.tox_env.errors import Recreate
@@ -19,7 +19,9 @@ from .req_file import RequirementsFile
 
 
 class PythonRun(Python, RunToxEnv, ABC):
-    def __init__(self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler):
+    def __init__(
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+    ):
         super().__init__(conf, core, options, journal, log_handler)
         self._packages: List[PythonDep] = []
 

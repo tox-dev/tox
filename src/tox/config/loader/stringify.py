@@ -2,6 +2,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Sequence, Set, Tuple
 
+from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 
 
@@ -26,6 +27,9 @@ def stringify(value: Any) -> Tuple[str, bool]:
         return "\n".join(e for e in value.envs), True
     if isinstance(value, Command):
         return value.shell, True
+    if isinstance(value, SetEnv):
+        return "\n".join(f"{stringify(k)[0]}={stringify(value.load(k))[0]}" for k in value), True
+
     return str(value), False
 
 

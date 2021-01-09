@@ -7,6 +7,7 @@ from typing import (
     Dict,
     Iterator,
     List,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -17,6 +18,7 @@ from typing import (
 )
 
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition
+from .set_env import SetEnv
 from .types import EnvList
 
 if TYPE_CHECKING:
@@ -129,3 +131,28 @@ class CoreConfigSet(ConfigSet):
             default=EnvList([]),
             desc="define environments to automatically run",
         )
+
+
+class EnvConfigSet(ConfigSet):
+    def __init__(self, conf: "Config", name: Optional[str]):
+        super().__init__(conf, name=name)
+        self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}
+
+        def set_env_post_process(values: SetEnv, config: "Config") -> SetEnv:
+            values.update(self.default_set_env_loader())
+            return values
+
+        self.add_config(
+            keys=["set_env", "setenv"],
+            of_type=SetEnv,
+            default=SetEnv(""),
+            desc="environment variables to set when running commands in the tox environment",
+            post_process=set_env_post_process,
+        )
+
+
+__all__ = (
+    "ConfigSet",
+    "CoreConfigSet",
+    "EnvConfigSet",
+)

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Tuple, cast
 
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.config.types import Command, EnvList
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class RunToxEnv(ToxEnv, ABC):
     def __init__(
-        self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         self.has_package = False
         self.package_env: Optional[PackageToxEnv] = None

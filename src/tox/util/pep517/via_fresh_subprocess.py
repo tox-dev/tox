@@ -45,7 +45,9 @@ class SubprocessFrontend(Frontend):
         self, cmd: str, result_file: Path, msg: str
     ) -> Iterator[SubprocessCmdStatus]:
         env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join(str(i) for i in self._backend_paths)
+        backend = os.pathsep.join(str(i) for i in self._backend_paths).strip()
+        if backend:
+            env["PYTHONPATH"] = backend
         process = Popen(
             args=[sys.executable] + self.backend_args,
             stdout=PIPE,

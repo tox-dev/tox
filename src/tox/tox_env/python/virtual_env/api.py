@@ -10,7 +10,7 @@ from virtualenv.create.creator import Creator
 from virtualenv.run.session import Session
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import Execute, Outcome, StdinSource
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.journal import EnvJournal
@@ -23,7 +23,7 @@ class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip"""
 
     def __init__(
-        self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         self._virtualenv_session: Optional[Session] = None  # type: ignore[no-any-unimported]
         super().__init__(conf, core, options, journal, log_handler)
@@ -89,6 +89,9 @@ class VirtualEnv(Python, ABC):
 
     def env_python(self) -> Path:
         return cast(Path, self.creator.exe)
+
+    def env_bin_dir(self) -> Path:
+        return cast(Path, self.creator.script_dir)
 
     def install_python_packages(
         self,
