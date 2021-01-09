@@ -1379,6 +1379,7 @@ class ParseIni(object):
         return factors
 
     def make_envconfig(self, name, section, subs, config, replace=True):
+        replace=True
         factors = set(name.split("-"))
         reader = SectionReader(section, self._cfg, fallbacksections=["testenv"], factors=factors)
         tc = TestenvConfig(name, config, factors, reader)
