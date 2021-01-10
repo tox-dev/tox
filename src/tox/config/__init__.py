@@ -1021,9 +1021,68 @@ class TestenvConfig:
         check later when the testenv is actually run and crash only then.
         """
 
+    def _get_value(self, name):
+        if name == "posargs":
+            return self._reader.getposargs()
+
+        replace = True
+        config = self.config
+        env_attr = self.config._testenv_attr.get(name)
+        if True:
+            atype = env_attr.type
+            try:
+                if atype in (
+                    "bool",
+                    "float",
+                    "path",
+                    "string",
+                    "dict",
+                    "dict_setenv",
+                    "argv",
+                    "argvlist",
+                    "argv_install_command",
+                ):
+                    meth = getattr(self._reader, "get{}".format(atype))
+                    res = meth(env_attr.name, env_attr.default, replace=replace)
+                elif atype == "basepython":
+                    no_fallback = self._reader.section_name in (config.provision_tox_env,)
+                    res = self._reader.getstring(
+                        env_attr.name,
+                        env_attr.default,
+                        replace=replace,
+                        no_fallback=no_fallback,
+                    )
+                elif atype == "space-separated-list":
+                    res = self._reader.getlist(env_attr.name, sep=" ")
+                elif atype == "line-list":
+                    res = self._reader.getlist(env_attr.name, sep="\n")
+                elif atype == "env-list":
+                    res = self._reader.getstring(env_attr.name, replace=False)
+                    res = tuple(_split_env(res))
+                else:
+                    raise ValueError("unknown type {!r}".format(atype))
+                if env_attr.postprocess:
+                    res = env_attr.postprocess(testenv_config=self, value=res)
+            except tox.exception.MissingSubstitution as e:
+                self._missing_subs[env_attr.name] = res = e
+            # On Python 2, exceptions are handled in __getattr__
+            if not six.PY2 or not isinstance(res, Exception):
+                setattr(self, env_attr.name, res)
+            if atype in ("path", "string", "basepython"):
+                self._reader.addsubstitutions(**{env_attr.name: res})
+
+            return res
+
     # Python 3 only, as __getattribute__ is ignored for old-style types on Python 2
     def __getattribute__(self, name):
-        rv = object.__getattribute__(self, name)
+        try:
+            rv = object.__getattribute__(self, name)
+        except AttributeError as e:
+            if name in  self.config._testenv_attr:
+                rv = self._get_value(name)
+            else:
+                raise e
+
         if isinstance(rv, Exception):
             raise rv
         return rv
@@ -1033,6 +1092,9 @@ class TestenvConfig:
         def __getattr__(self, name):
             if name in self._missing_subs:
                 raise self._missing_subs[name]
+            if name in self.config._testenv_attr:
+                return self._get_value(name)
+
             raise AttributeError(name)
 
     def get_envbindir(self):
@@ -1379,9 +1441,8 @@ class ParseIni(object):
         return factors
 
     def make_envconfig(self, name, section, subs, config, replace=True):
-        replace=True
         factors = set(name.split("-"))
-        reader = SectionReader(section, self._cfg, fallbacksections=["testenv"], factors=factors)
+        reader = SectionReader(section, self._cfg, fallbacksections=["testenv"], factors=factors, posargs=config.args)
         tc = TestenvConfig(name, config, factors, reader)
         reader.addsubstitutions(
             envname=name,
@@ -1390,48 +1451,16 @@ class ParseIni(object):
             envpython=tc.get_envpython,
             **subs
         )
-        for env_attr in config._testenv_attr.values():
-            atype = env_attr.type
-            try:
-                if atype in (
-                    "bool",
-                    "float",
-                    "path",
-                    "string",
-                    "dict",
-                    "dict_setenv",
-                    "argv",
-                    "argvlist",
-                    "argv_install_command",
-                ):
-                    meth = getattr(reader, "get{}".format(atype))
-                    res = meth(env_attr.name, env_attr.default, replace=replace)
-                elif atype == "basepython":
-                    no_fallback = name in (config.provision_tox_env,)
-                    res = reader.getstring(
-                        env_attr.name,
-                        env_attr.default,
-                        replace=replace,
-                        no_fallback=no_fallback,
-                    )
-                elif atype == "space-separated-list":
-                    res = reader.getlist(env_attr.name, sep=" ")
-                elif atype == "line-list":
-                    res = reader.getlist(env_attr.name, sep="\n")
-                elif atype == "env-list":
-                    res = reader.getstring(env_attr.name, replace=False)
-                    res = tuple(_split_env(res))
-                else:
-                    raise ValueError("unknown type {!r}".format(atype))
-                if env_attr.postprocess:
-                    res = env_attr.postprocess(testenv_config=tc, value=res)
-            except tox.exception.MissingSubstitution as e:
-                tc._missing_subs[env_attr.name] = res = e
-            # On Python 2, exceptions are handled in __getattr__
-            if not six.PY2 or not isinstance(res, Exception):
-                setattr(tc, env_attr.name, res)
-            if atype in ("path", "string", "basepython"):
-                reader.addsubstitutions(**{env_attr.name: res})
+        reader._tc = tc
+        # Force postprocess as there is the expectation that attributes
+        # postprocess runs at startup.
+        # This is needed for setting up setenv, and also for tox plugins
+        # that rely on this assumption.
+        for env_attr in self.config._testenv_attr.values():
+            if env_attr.postprocess:
+                getattr(tc, env_attr.name)
+        # Force postprocess of args_are_paths needed to parse posargs correctly
+        tc.args_are_paths
         return tc
 
     def _getallenvs(self, reader, extra_env_list=None):
@@ -1607,6 +1636,7 @@ class SectionReader:
         self._subs = {}
         self._subststack = []
         self._setenv = None
+        self._tc = None
         self.posargs = posargs
 
     def get_environ_value(self, name):
@@ -1908,6 +1938,12 @@ class Replacer:
 
     def _replace_substitution(self, sub_key):
         val = self.reader._subs.get(sub_key, None)
+        tc = self.reader._tc
+        if val is None and tc and sub_key in tc.config._testenv_attr:
+            try:
+                val = tc._get_value(sub_key)
+            except AttributeError:
+                pass
         if val is None:
             val = self._substitute_from_other_section(sub_key)
         if callable(val):
