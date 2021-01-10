@@ -458,12 +458,15 @@ class TestIniParserAgainstCommandsKey:
     def test_command_substitution_recursion_error_same_section(self, newconfig):
         expected = r"\('testenv:a', 'commands'\) already in \[\('testenv:a', 'commands'\)\]"
         with pytest.raises(tox.exception.ConfigError, match=expected):
-            newconfig(
+            config = newconfig(
                 """
                 [testenv:a]
                 commands = {[testenv:a]commands}
                 """,
             )
+            envconfig = config.envconfigs["a"]
+
+            envconfig.commands
 
     def test_command_substitution_recursion_error_other_section(self, newconfig):
         expected = (
@@ -472,7 +475,7 @@ class TestIniParserAgainstCommandsKey:
             r"\('testenv:base', 'foo'\)\]"
         )
         with pytest.raises(tox.exception.ConfigError, match=expected):
-            newconfig(
+            config = newconfig(
                 """
                 [testenv:base]
                 foo = {[testenv:py27]commands}
@@ -481,6 +484,9 @@ class TestIniParserAgainstCommandsKey:
                 commands = {[testenv:base]foo}
                 """,
             )
+            envconfig = config.envconfigs["py27"]
+
+            envconfig.commands
 
     def test_command_substitution_recursion_error_unnecessary(self, newconfig):
         # TODO: There is no reason for this recursion error to occur, so it
@@ -490,7 +496,7 @@ class TestIniParserAgainstCommandsKey:
             r"\[\('testenv:py27', 'commands'\), \('testenv:base', 'foo'\)\]"
         )
         with pytest.raises(tox.exception.ConfigError, match=expected):
-            newconfig(
+            conf = newconfig(
                 """
                 [testenv:base]
                 foo = {[testenv:base]foo}
@@ -501,7 +507,8 @@ class TestIniParserAgainstCommandsKey:
                     FOO = foo
                 commands = {env:FOO:{[testenv:base]foo}}
                 """,
-            )
+            ).envconfigs["py27"]
+            envconfig = conf.commands
 
     def test_command_missing_substitution_simple(self, newconfig):
         config = newconfig(
@@ -751,7 +758,7 @@ class TestIniParserAgainstCommandsKey:
         assert envconfig.setenv["TEST"] == "default"
 
     def test_command_env_substitution_global(self, newconfig):
-        """Ensure referenced {env:key:default} values are substituted correctly."""
+        """Ensure referenced {env:key} values are substituted correctly from global testenv."""
         config = newconfig(
             """
             [testenv]
@@ -927,6 +934,10 @@ class TestIniParser:
     def test_missing_env_sub_populates_missing_subs(self, newconfig):
         config = newconfig("[testenv:foo]\ncommands={env:VAR}")
         print(SectionReader("section", config._cfg).getstring("commands"))
+
+        assert "commands" not in config.envconfigs["foo"]._missing_subs
+        with pytest.raises(tox.exception.MissingSubstitution):
+            config.envconfigs["foo"].commands
 
         assert "commands" in config.envconfigs["foo"]._missing_subs
         missing_exception = config.envconfigs["foo"]._missing_subs["commands"]
@@ -1607,7 +1618,15 @@ class TestConfigTestEnv:
 
     def test_install_command_must_contain_packages(self, newconfig):
         with pytest.raises(tox.exception.ConfigError):
-            newconfig("[testenv]\ninstall_command=pip install")
+            config = newconfig(
+                """
+                [testenv]
+                install_command=pip install
+                """
+            )
+            envconfig = config.envconfigs["python"]
+
+            envconfig.install_command
 
     def test_install_command_substitutions(self, newconfig):
         config = newconfig(
@@ -1663,7 +1682,13 @@ class TestConfigTestEnv:
 
     def test_substitution_error(self, newconfig):
         with pytest.raises(tox.exception.ConfigError):
-            newconfig("[testenv:py27]\nbasepython={xyz}")
+            config = newconfig(
+                """
+                [testenv:py27]
+                basepython={xyz}
+                """
+            )
+            config.envconfigs["py27"].basepython
 
     def test_substitution_defaults(self, newconfig):
         config = newconfig(
@@ -2191,7 +2216,8 @@ class TestConfigTestEnv:
                 {[testing:pytest]deps}
         """
         with pytest.raises(tox.exception.ConfigError):
-            newconfig([], inisource)
+            conf = newconfig([], inisource).envconfigs["python"]
+            conf.deps
 
     def test_single_value_from_other_secton(self, newconfig, tmpdir):
         inisource = """
@@ -2318,9 +2344,9 @@ class TestConfigTestEnv:
                     env,
                 ),
             )
-        assert len(config.envconfigs) == 1
-        envconfig = config.envconfigs[env]
-        assert envconfig.basepython == exe
+            assert len(config.envconfigs) == 1
+            envconfig = config.envconfigs[env]
+            assert envconfig.basepython == exe
 
     def test_default_factors_conflict_lying_name(
         self,
