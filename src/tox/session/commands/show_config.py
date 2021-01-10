@@ -42,7 +42,7 @@ def tox_envs_info(config, parser):
     for name in env_list:
         env_config = config.envconfigs[name]
         values = OrderedDict(
-            (attr.name, str(getattr(env_config, attr.name)))
+            (attr, str(getattr(env_config, attr)))
             for attr in config._parser._testenv_attr
         )
         section = "testenv:{}".format(name)

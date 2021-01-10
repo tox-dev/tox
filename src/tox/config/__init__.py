@@ -99,7 +99,7 @@ class Parser:
             prog="tox",
             formatter_class=HelpFormatter,
         )
-        self._testenv_attr = []
+        self._testenv_attr = {}
 
     def add_argument(self, *args, **kwargs):
         """add argument to command line parser.  This takes the
@@ -122,7 +122,7 @@ class Parser:
         Any postprocess function must return a value which will then be set
         as the final value in the testenv section.
         """
-        self._testenv_attr.append(VenvAttribute(name, type, default, help, postprocess))
+        self._testenv_attr[name] = VenvAttribute(name, type, default, help, postprocess)
 
     def add_testenv_attribute_obj(self, obj):
         """add an ini-file variable as an object.
@@ -134,7 +134,7 @@ class Parser:
         assert hasattr(obj, "type")
         assert hasattr(obj, "help")
         assert hasattr(obj, "postprocess")
-        self._testenv_attr.append(obj)
+        self._testenv_attr[obj.name] = obj
 
     def parse_cli(self, args, strict=False):
         args, argv = self.argparser.parse_known_args(args)
@@ -1390,7 +1390,7 @@ class ParseIni(object):
             envpython=tc.get_envpython,
             **subs
         )
-        for env_attr in config._testenv_attr:
+        for env_attr in config._testenv_attr.values():
             atype = env_attr.type
             try:
                 if atype in (
