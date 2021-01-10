@@ -3,7 +3,7 @@ import shlex
 import sys
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterator, Tuple, Type
+from typing import Any, Iterator, List, Tuple, Type
 
 from tox.config.loader.convert import Convert
 from tox.config.types import Command, EnvList
@@ -53,8 +53,19 @@ class StrConvert(Convert[str]):
         is_win = sys.platform == "win32"
         splitter = shlex.shlex(value, posix=not is_win)
         splitter.whitespace_split = True
-        # on Windows quoted arguments will remain quoted, strip it
-        args = [((i[1:-1] if i.startswith("'") and i.endswith("'") else i) if is_win else i) for i in splitter]
+        if is_win:
+            args: List[str] = []
+            for arg in splitter:
+                # on Windows quoted arguments will remain quoted, strip it
+                if (
+                    len(arg) > 1
+                    and (arg.startswith('"') and arg.endswith('"'))
+                    or (arg.startswith("'") and arg.endswith("'"))
+                ):
+                    arg = arg[1:-1]
+                args.append(arg)
+        else:
+            args = list(splitter)
         return Command(args)
 
     @staticmethod

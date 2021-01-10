@@ -27,7 +27,7 @@ def replace(conf: Config, name: Optional[str], loader: "IniLoader", value: str, 
     # perform all non-escaped replaces
     start, end = 0, 0
     while True:
-        start, end, match = _find_replace_part(value, start, end)
+        start, end, match = find_replace_part(value, start, end)
         if not match:
             break
         to_replace = value[start + 1 : end]
@@ -49,7 +49,7 @@ def replace(conf: Config, name: Optional[str], loader: "IniLoader", value: str, 
     return value
 
 
-def _find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool]:
+def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool]:
     match = False
     while end != -1:
         end = value.find("}", end)
@@ -210,4 +210,5 @@ __all__ = (
     "CORE_PREFIX",
     "BASE_TEST_ENV",
     "replace",
+    "find_replace_part",
 )

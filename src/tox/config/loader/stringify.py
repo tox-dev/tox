@@ -28,7 +28,7 @@ def stringify(value: Any) -> Tuple[str, bool]:
     if isinstance(value, Command):
         return value.shell, True
     if isinstance(value, SetEnv):
-        return "\n".join(f"{stringify(k)[0]}={stringify(value.load(k))[0]}" for k in value), True
+        return "\n".join(f"{stringify(k)[0]}={stringify(value.load(k))[0]}" for k in sorted(list(value))), True
 
     return str(value), False
 
