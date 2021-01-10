@@ -1374,6 +1374,7 @@ class ParseIni(object):
                 config,
             )
             env_config.deps = deps
+            env_config.basepython = sys.executable
             config.envconfigs[config.provision_tox_env] = env_config
             raise tox.exception.MissingRequirement(config)
         # if provisioning is not on, now we need do a strict argument evaluation
