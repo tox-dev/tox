@@ -1627,6 +1627,26 @@ class TestConfigTestEnv:
         ]
         assert envconfig.install_command == expected_deps
 
+    def test_install_command_substitutions_other_section(self, newconfig):
+        config = newconfig(
+            """
+            [base]
+            install_command=some_install --arg={toxinidir}/foo \
+                {envname} {opts} {packages}
+            [testenv]
+            install_command={[base]install_command}
+        """,
+        )
+        envconfig = config.envconfigs["python"]
+        expected_deps = [
+            "some_install",
+            "--arg={}/foo".format(config.toxinidir),
+            "python",
+            "{opts}",
+            "{packages}",
+        ]
+        assert envconfig.install_command == expected_deps
+
     def test_pip_pre(self, newconfig):
         config = newconfig(
             """
