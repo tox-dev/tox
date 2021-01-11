@@ -1,0 +1,1 @@
+Fix regression that broke using install_command in config replacements - by :user:`jayvdb`
