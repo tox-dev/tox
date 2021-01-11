@@ -98,14 +98,13 @@ class Python(ToxEnv, ABC):
         if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [
+                    "SYSTEMDRIVE",
                     "SYSTEMROOT",  # needed for python's crypto module
-                    "PATHEXT",  # needed for discovering executables
                     "COMSPEC",  # needed for distutils cygwin compiler
                     "PROCESSOR_ARCHITECTURE",  # platform.machine()
-                    "USERPROFILE",  # needed for `os.path.expanduser()`
-                    "MSYSTEM",  # controls paths printed format
                 ]
             )
+        env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
     def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:
