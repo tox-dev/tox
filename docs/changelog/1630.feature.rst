@@ -1,2 +1,0 @@
-Add option to disable colored output, and support ``NO_COLOR`` and ``FORCE_COLOR`` environment variables - by
-:user:`gaborbernat`.
