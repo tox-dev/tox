@@ -685,7 +685,7 @@ class TestIniParserAgainstCommandsKey:
             """,
         )
         reader = SectionReader("testenv", config._cfg)
-        reader.addsubstitutions([r"argpos"])
+        reader.addsubstitutions(["argpos"])
         x = reader.getargvlist("commands")
         assert x == [["thing", "argpos", "arg2"]]
 
@@ -701,9 +701,22 @@ class TestIniParserAgainstCommandsKey:
             """,
         )
         reader = SectionReader("testenv", config._cfg)
-        reader.addsubstitutions([r"argpos"])
+        reader.addsubstitutions(["argpos"])
         x = reader.getargvlist("commands")
         assert x == [["thing", "arg1", "argpos", "endarg"]]
+
+    def test_command_posargs_with_colon(self, newconfig):
+        """Ensure posargs with default containing : succeeds"""
+        config = newconfig(
+            r"""
+            [testenv]
+            commands =
+                pytest {posargs:default with : colon after}
+            """,
+        )
+        reader = SectionReader("testenv", config._cfg)
+        x = reader.getargvlist("commands")
+        assert x[0] == ["pytest", "default", "with", ":", "colon", "after"]
 
     def test_command_missing_substitution(self, newconfig):
         config = newconfig(
@@ -747,8 +760,38 @@ class TestIniParserAgainstCommandsKey:
         """,
         )
         envconfig = config.envconfigs["py27"]
-        assert envconfig.commands == [["ls", "default"]]
         assert envconfig.setenv["TEST"] == "default"
+        assert envconfig.commands == [["ls", "default"]]
+
+    def test_command_env_substitution_posargs_with_colon(self, newconfig):
+        """Ensure {posargs} values are substituted correctly."""
+        config = newconfig(
+            """
+           [testenv:py27]
+           setenv =
+             TEST=pytest {posargs:default with:colon after}
+           commands =
+             ls {env:TEST}
+        """,
+        )
+        envconfig = config.envconfigs["py27"]
+        assert envconfig.setenv["TEST"] == "pytest default with:colon after"
+        assert envconfig.commands == [["ls", "pytest", "default", "with:colon", "after"]]
+
+    def test_command_env_substitution_posargs_with_spaced_colon(self, newconfig):
+        """Ensure {posargs} values are substituted correctly."""
+        config = newconfig(
+            """
+           [testenv:py27]
+           setenv =
+             TEST=pytest {posargs:default with : colon after}
+           commands =
+             ls {env:TEST}
+        """,
+        )
+        envconfig = config.envconfigs["py27"]
+        assert envconfig.setenv["TEST"] == "pytest default with : colon after"
+        assert envconfig.commands == [["ls", "pytest", "default", "with", ":", "colon", "after"]]
 
     def test_command_env_substitution_global(self, newconfig):
         """Ensure referenced {env:key:default} values are substituted correctly."""

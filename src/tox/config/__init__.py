@@ -1852,6 +1852,13 @@ class Replacer:
             return self.reader.getposargs(default_value)
 
         sub_type = g["sub_type"]
+        if sub_type == "posargs":
+            if default_value:
+                value = "{}:{}".format(sub_value, default_value)
+            else:
+                value = sub_value
+            return self.reader.getposargs(value)
+
         if not sub_type and not sub_value:
             raise tox.exception.ConfigError(
                 "Malformed substitution; no substitution type provided. "
