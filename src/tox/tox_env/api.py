@@ -117,21 +117,29 @@ class ToxEnv(ABC):
 
     def default_pass_env(self) -> List[str]:
         env = [
-            "https_proxy",
-            "http_proxy",
-            "no_proxy",
+            "https_proxy",  # HTTP proxy configuration
+            "http_proxy",  # HTTP proxy configuration
+            "no_proxy",  # HTTP proxy configuration
+            "LANG",  # localication
+            "LANGUAGE",  # localication
+            "CURL_CA_BUNDLE",  # curl certificates
+            "SSL_CERT_FILE",  # https certificates
+            "LD_LIBRARY_PATH",  # location of libs
         ]
         if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
             env.append("TERM")
         if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [
-                    "TEMP",
-                    "TMP",
+                    "TEMP",  # temporary file location
+                    "TMP",  # temporary file location
+                    "USERPROFILE",  # needed for `os.path.expanduser()`
+                    "PATHEXT",  # needed for discovering executables
+                    "MSYSTEM",  # controls paths printed format
                 ]
             )
         else:  # pragma: win32 no cover
-            env.append("TMPDIR")
+            env.append("TMPDIR")  # temporary file location
         return env
 
     def setup(self) -> None:

@@ -27,12 +27,6 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     version = re.escape(Version(__version__).public)
 
     monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
-    if sys.platform == "win32":  # pragma: win32 cover
-        p_env = ["COMSPEC", "MSYSTEM", "PATHEXT", "PROCESSOR_ARCHITECTURE", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE"]
-    else:  # pragma: win32 no cover
-        p_env = ["TMPDIR"]
-    p_env.extend(["PIP_*", "VIRTUALENV_*", "http_proxy", "https_proxy", "no_proxy"])
-    pass_env_str = "\n".join(f"      {re.escape(p)}" for p in sorted(p_env))[4:]
 
     expected = rf"""
     \[testenv:{name}\]
@@ -45,8 +39,8 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     env_name = {name}
     env_dir = {path}{sep}\.tox4{sep}{name}
     env_tmp_dir = {path}{sep}\.tox4{sep}{name}{sep}tmp
-    pass_env =
-    {pass_env_str}\
+    pass_env =\
+      .*
     parallel_show_output = False
     description =
     commands = magic
@@ -146,12 +140,14 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
     project = tox_project({"tox.ini": ""})
     outcome = project.run("c", "-e", "py", "-k", "pass_env")
     pass_env = outcome.state.tox_env("py").conf["pass_env"]
+    is_win = sys.platform == "win32"
     expected = (
-        (["COMSPEC", "MSYSTEM", "PATHEXT"] if sys.platform == "win32" else [])
-        + ["PIP_*"]
-        + (["PROCESSOR_ARCHITECTURE", "SYSTEMROOT", "TEMP"] if sys.platform == "win32" else [])
+        ["CURL_CA_BUNDLE", "LANG", "LANGUAGE", "LD_LIBRARY_PATH"]
+        + (["COMSPEC", "MSYSTEM", "PATHEXT"] if is_win else [])
+        + ["PIP_*", "REQUESTS_CA_BUNDLE", "SSL_CERT_FILE"]
+        + (["PROCESSOR_ARCHITECTURE", "SYSTEMDRIVE", "SYSTEMROOT", "TEMP"] if is_win else [])
         + (["TERM"] if stdout_is_atty else [])
-        + (["TMP", "USERPROFILE"] if sys.platform == "win32" else ["TMPDIR"])
+        + (["TMP", "USERPROFILE"] if is_win else ["TMPDIR"])
         + ["VIRTUALENV_*", "http_proxy", "https_proxy", "no_proxy"]
     )
     assert pass_env == expected

@@ -335,13 +335,13 @@ class ToxRunOutcome:
         if dedent:
             out = textwrap.dedent(out).lstrip()
         if regex:
-            self.matches(out, self.out, re.MULTILINE)
+            self.matches(out, self.out, re.MULTILINE | re.DOTALL)
         else:
             assert self.out == out
         if dedent:
             err = textwrap.dedent(err).lstrip()
         if regex:
-            self.matches(err, self.err, re.MULTILINE)
+            self.matches(err, self.err, re.MULTILINE | re.DOTALL)
         else:
             assert self.err == err
 
