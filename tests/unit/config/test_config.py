@@ -3459,6 +3459,22 @@ class TestCommandParser:
         assert envconfig.commands[0] == ["some", r"hello\world"]
 
 
+def test_provision_tox_env_cannot_be_in_envlist(newconfig, capsys):
+    inisource = """
+            [tox]
+            envlist = py36,.tox
+        """
+    with pytest.raises(
+        tox.exception.ConfigError,
+        match="provision_tox_env .tox cannot be part of envlist",
+    ):
+        newconfig([], inisource)
+
+    out, err = capsys.readouterr()
+    assert not err
+    assert not out
+
+
 def test_isolated_build_env_cannot_be_in_envlist(newconfig, capsys):
     inisource = """
             [tox]

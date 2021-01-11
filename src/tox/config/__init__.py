@@ -1475,6 +1475,11 @@ class ParseIni(object):
         if not env_list:
             env_list = all_envs
 
+        provision_tox_env = config.provision_tox_env
+        if config.provision_tox_env in env_list:
+            msg = "provision_tox_env {} cannot be part of envlist".format(provision_tox_env)
+            raise tox.exception.ConfigError(msg)
+
         package_env = config.isolated_build_env
         if config.isolated_build is True and package_env in all_envs:
             all_envs.remove(package_env)
@@ -1482,6 +1487,7 @@ class ParseIni(object):
         if config.isolated_build is True and package_env in env_list:
             msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
             raise tox.exception.ConfigError(msg)
+
         return env_list, all_envs, _split_env(from_config), envlist_explicit
 
     @staticmethod
