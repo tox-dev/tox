@@ -1848,6 +1848,12 @@ class Replacer:
             return os.pathsep
 
         default_value = g["default_value"]
+        # special case: opts and packages. Leave {opts} and
+        # {packages} intact, they are replaced manually in
+        # _venv.VirtualEnv.run_install_command.
+        if sub_value in ("opts", "packages"):
+            return "{{{}}}".format(sub_value)
+
         if sub_value == "posargs":
             return self.reader.getposargs(default_value)
 
