@@ -32,6 +32,7 @@ from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_WIN, fs_supports_symlink
 
 import tox.run
+from tox.config.sets import EnvConfigSet
 from tox.execute.api import Execute, ExecuteInstance, ExecuteStatus, Outcome
 from tox.execute.request import ExecuteRequest, shell_cmd
 from tox.execute.stream import SyncWrite
@@ -298,6 +299,9 @@ class ToxRunOutcome:
         if self._state is None:
             raise RuntimeError("no state")
         return self._state
+
+    def env_conf(self, name: str) -> EnvConfigSet:
+        return self.state.conf.get_env(name)
 
     @property
     def success(self) -> bool:

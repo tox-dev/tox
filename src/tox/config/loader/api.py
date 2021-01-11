@@ -71,7 +71,9 @@ class Loader(Convert[T]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}"
 
-    def load(self, key: str, of_type: Type[V], conf: Optional["Config"], env_name: Optional[str]) -> V:
+    def load(
+        self, key: str, of_type: Type[V], conf: Optional["Config"], env_name: Optional[str], chain: List[str]
+    ) -> V:
         """
         Load a value.
 
@@ -85,14 +87,21 @@ class Loader(Convert[T]):
             return _STR_CONVERT.to(self.overrides[key].value, of_type)
         raw = self.load_raw(key, conf, env_name)
         future: "Future[V]" = Future()
-        with self.build(future, key, of_type, conf, env_name, raw) as prepared:
+        with self.build(future, key, of_type, conf, env_name, raw, chain) as prepared:
             converted = self.to(prepared, of_type)
             future.set_result(converted)
         return converted
 
     @contextmanager
     def build(
-        self, future: "Future[V]", key: str, of_type: Type[V], conf: Optional["Config"], env_name: Optional[str], raw: T
+        self,
+        future: "Future[V]",
+        key: str,
+        of_type: Type[V],
+        conf: Optional["Config"],
+        env_name: Optional[str],
+        raw: T,
+        chain: List[str],
     ) -> Generator[T, None, None]:
         yield raw
 

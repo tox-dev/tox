@@ -1,10 +1,11 @@
 from typing import Callable, Dict, Iterator, List, Mapping, Optional, Tuple
 
+Replacer = Callable[[str, List[str]], str]
+
 
 class SetEnv:
     def __init__(self, raw: str) -> None:
-        self.replacer: Callable[[str, List[str]], str] = lambda s, c: s
-        # resolve tty, posargs, etc?
+        self.replacer: Replacer = lambda s, c: s
         lines = raw.splitlines()
         self._later: List[str] = []
         self._raw: Dict[str, str] = {}
@@ -15,7 +16,7 @@ class SetEnv:
                 try:
                     key, value = self._extract_key_value(line)
                     if "{" in key:
-                        raise ValueError
+                        raise ValueError(f"invalid line {line!r} in set_env")
                 except ValueError:
                     _, __, match = find_replace_part(line, 0, 0)
                     if match:
@@ -28,9 +29,10 @@ class SetEnv:
 
     @staticmethod
     def _extract_key_value(line: str) -> Tuple[str, str]:
-        at = line.index("=")
-        if at == -1:
-            raise ValueError(line)
+        try:
+            at = line.index("=")
+        except ValueError:
+            raise ValueError(f"invalid line {line!r} in set_env")
         key, value = line[:at], line[at + 1 :]
         return key.strip(), value.strip()
 

@@ -122,7 +122,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
             return  # pragma: no cover
         self.ensure_setup()
         dist_info = self.prepare_metadata_for_build_wheel(self.meta_folder).metadata
-        self._distribution_meta = Distribution.at(str(dist_info))
+        self._distribution_meta = Distribution.at(str(dist_info))  # type: ignore[no-untyped-call]
 
     @abstractmethod
     def _build_artifact(self) -> Path:
@@ -163,18 +163,16 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
             ):
                 if marker_key.value == "extra" and op.value == "==":  # pragma: no branch
                     extra = marker_value.value
+                    del markers[_at]
+                    _at -= 1
+                    if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
+                        del markers[_at]
+                    if len(markers) == 0:
+                        req.marker = None
                     break
             # continue only if this extra should be included
             if not (extra is None or extra in extras):
                 continue
-            # delete the extra marker if present
-            if _at is not None:
-                del markers[_at]
-                _at -= 1
-                if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
-                    del markers[_at]
-                if len(markers) == 0:
-                    req.marker = None
             result.append(req)
         return result
 

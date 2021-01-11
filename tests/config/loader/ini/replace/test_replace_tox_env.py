@@ -119,6 +119,15 @@ def test_replace_from_tox_section_missing_section(tox_ini_conf: ToxIniCreator) -
     assert conf_a["x"] == "{[magic]a}"
 
 
+def test_replace_circular(tox_ini_conf: ToxIniCreator) -> None:
+    conf_a = tox_ini_conf("[testenv:a]\nx = {y}\ny = {x}").get_env("a")
+    conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
+    conf_a.add_config(keys="y", of_type=str, default="n", desc="n")
+    with pytest.raises(HandledError) as exc:
+        assert conf_a["x"]
+    assert "circular chain detected x, y" in str(exc.value)
+
+
 def test_replace_from_tox_section_missing_value(tox_ini_conf: ToxIniCreator) -> None:
     conf_a = tox_ini_conf("[testenv:e]\nx = {[m]a}\n[m]").get_env("e")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="d")

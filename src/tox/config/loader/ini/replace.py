@@ -83,10 +83,7 @@ def _replace_match(
     elif of_type == "posargs":
         replace_value = replace_pos_args(args, conf.pos_args)
     else:
-        if of_type in chain:
-            raise ValueError(f"circular chain detected {', '.join(chain[chain.index(of_type):])}")
-        chain.append(of_type)
-        replace_value = replace_reference(conf, current_env, loader, value)
+        replace_value = replace_reference(conf, current_env, loader, value, chain)
     return replace_value
 
 
@@ -105,6 +102,7 @@ def replace_reference(
     current_env: Optional[str],
     loader: "IniLoader",
     value: str,
+    chain: List[str],
 ) -> Optional[str]:
     # a return value of None indicates could not replace
     match = _REPLACE_REF.match(value)
@@ -121,7 +119,7 @@ def replace_reference(
                 try:
                     if isinstance(src, SectionProxy):
                         return src[key]
-                    value = src[key]
+                    value = src.load(key, chain)
                     as_str, _ = stringify(value)
                     return as_str
                 except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
@@ -185,12 +183,15 @@ def replace_env(conf: Config, env_name: Optional[str], args: List[str], chain: L
     key = args[0]
     new_key = f"env:{key}"
 
-    if env_name is not None and new_key not in chain:  # check if set env
-        chain.append(new_key)
-        env_conf = conf.get_env(env_name)
-        set_env: SetEnv = env_conf["set_env"]
-        if key in set_env:
-            return set_env.load(key, chain)
+    if env_name is not None:  # on core no set env support # pragma: no branch
+        if new_key not in chain:  # check if set env
+            chain.append(new_key)
+            env_conf = conf.get_env(env_name)
+            set_env: SetEnv = env_conf["set_env"]
+            if key in set_env:
+                return set_env.load(key, chain)
+        elif chain[-1] != new_key:  # if there's a chain but only self-refers than use os.environ
+            raise ValueError(f"circular chain between set env {', '.join(i[4:] for i in chain[chain.index(new_key):])}")
 
     if key in os.environ:
         return os.environ[key]

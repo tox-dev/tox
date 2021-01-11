@@ -46,26 +46,27 @@ class IniLoader(StrConvert, Loader[str]):
         conf: Optional["Config"],
         env_name: Optional[str],
         raw: str,
+        chain: List[str],
     ) -> Generator[str, None, None]:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
 
-        def replacer(raw_: str, chain: List[str]) -> str:
+        def replacer(raw_: str, chain_: List[str]) -> str:
             if conf is None:
                 replaced = raw_  # no replacement supported in the core section
             else:
                 try:
-                    replaced = replace(conf, env_name, self, raw_, chain)  # do replacements
+                    replaced = replace(conf, env_name, self, raw_, chain_)  # do replacements
                 except Exception as exception:
                     msg = f"replace failed in {'tox' if env_name is None else env_name}.{key} with {exception!r}"
                     raise HandledError(msg) from exception
             return replaced
 
         if not delay_replace:
-            raw = replacer(raw, [key])
+            raw = replacer(raw, chain)
         yield raw
         if delay_replace:
             converted = future.result()
-            if hasattr(converted, "replacer"):
+            if hasattr(converted, "replacer"):  # pragma: no branch
                 converted.replacer = replacer  # type: ignore[attr-defined]
 
     def found_keys(self) -> Set[str]:

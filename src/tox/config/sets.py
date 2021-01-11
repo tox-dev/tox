@@ -81,8 +81,16 @@ class ConfigSet:
         return definition
 
     def __getitem__(self, item: str) -> Any:
+        return self.load(item)
+
+    def load(self, item: str, chain: Optional[List[str]] = None) -> Any:
         config_definition = self._defined[item]
-        return config_definition(self._conf, item, self.loaders)
+        if chain is None:
+            chain = []
+        if item in chain:
+            raise ValueError(f"circular chain detected {', '.join(chain[chain.index(item):])}")
+        chain.append(item)
+        return config_definition(self._conf, item, self.loaders, chain)
 
     def __repr__(self) -> str:
         values = (v for v in (f"name={self.name!r}" if self.name else "", f"loaders={self.loaders!r}") if v)
