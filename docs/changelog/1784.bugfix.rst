@@ -1,0 +1,7 @@
+- Python version markers are stripped in package dependencies (after wrongfully being detected as an extra marker).
+- In packaging APIs do not set ``PYTHONPATH`` (to empty string) if ``backend-path`` is empty.
+- Fix commands parsing on Windows (do not auto-escape ``\`` - instead users should use the new ``{\}``, and on parsed
+  arguments strip both ``'`` and ``"`` quoted outcomes).
+- Allow windows paths in substitution set/default (the ``:`` character used to separate substitution arguments may
+  also be present in paths on Windows - do not support single capital letter values as substitution arguments) -
+  by :user:`gaborbernat`.
