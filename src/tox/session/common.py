@@ -27,6 +27,9 @@ class CliEnv:
     def __ne__(self, other: Any) -> bool:
         return not (self == other)
 
+    def __contains__(self, item: str) -> bool:
+        return self.all or (self._names is not None and item in self._names)
+
 
 def env_list_flag(parser: ArgumentParser, default: Optional[CliEnv] = None) -> None:
     parser.add_argument(

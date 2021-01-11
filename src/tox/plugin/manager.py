@@ -13,7 +13,7 @@ from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.python.virtual_env import runner
-from tox.tox_env.python.virtual_env.package.artifact import dev, sdist, wheel
+from tox.tox_env.python.virtual_env.package import api
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
 from . import NAME, spec
@@ -28,9 +28,7 @@ class Plugin:
             loader_api,
             provision,
             runner,
-            dev,
-            sdist,
-            wheel,
+            api,
             legacy,
             version_flag,
             quickstart,

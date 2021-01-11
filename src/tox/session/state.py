@@ -32,7 +32,7 @@ class State:
         self.args = args
 
         self._run_env: Dict[str, RunToxEnv] = {}
-        self._pkg_env: Dict[str, PackageToxEnv] = {}
+        self._pkg_env: Dict[str, Tuple[str, PackageToxEnv]] = {}
         self._pkg_env_discovered: Set[str] = set()
 
         self.journal: Journal = Journal(getattr(options, "result_json", None) is not None)
@@ -86,29 +86,32 @@ class State:
         from tox.tox_env.register import REGISTER
 
         builder = REGISTER.runner(runner)
-        name = cast(str, env_conf.name)
+        name = env_conf.name
         journal = self.journal.get_env_journal(name)
         env: RunToxEnv = builder(env_conf, self.conf.core, self.options, journal, self.log_handler)
         self._run_env[name] = env
         self._build_package_env(env)
 
     def _build_package_env(self, env: RunToxEnv) -> None:
-        pkg_env_gen = env.set_package_env()
-        try:
-            name, packager = next(pkg_env_gen)
-        except StopIteration:
-            pass
-        else:
-            with self.log_handler.with_context(name):
-                package_tox_env = self._get_package_env(packager, name)
-                try:
-                    pkg_env_gen.send(package_tox_env)
-                except StopIteration:
-                    pass
+        pkg_env_gen = env.create_package_env()
+        while True:
+            try:
+                name, packager = next(pkg_env_gen)
+            except StopIteration:
+                return
+            else:
+                with self.log_handler.with_context(name):
+                    package_tox_env = self._get_package_env(packager, name)
+                    try:
+                        pkg_env_gen.send(package_tox_env)
+                    except StopIteration:
+                        return
 
     def _get_package_env(self, packager: str, name: str) -> PackageToxEnv:
         if name in self._pkg_env:  # if already created reuse
-            pkg_tox_env: PackageToxEnv = self._pkg_env[name]
+            old, pkg_tox_env = self._pkg_env[name]
+            if old != packager:
+                raise HandledError(f"{name} is already defined as a {old}, cannot be {packager} too")
         else:
             from tox.tox_env.register import REGISTER
 
@@ -119,7 +122,7 @@ class State:
             pkg_conf = self.conf.get_env(name, package=True)
             journal = self.journal.get_env_journal(name)
             pkg_tox_env = package_type(pkg_conf, self.conf.core, self.options, journal, self.log_handler)
-            self._pkg_env[name] = pkg_tox_env
+            self._pkg_env[name] = packager, pkg_tox_env
         return pkg_tox_env
 
 

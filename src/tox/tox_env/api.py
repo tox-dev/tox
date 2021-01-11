@@ -306,7 +306,7 @@ class ToxEnv(ABC):
 
     @contextmanager
     def log_context(self) -> Iterator[None]:
-        with self.log_handler.with_context(cast(str, self.conf.name)):
+        with self.log_handler.with_context(self.conf.name):
             yield
 
     def teardown(self) -> None:

@@ -230,7 +230,7 @@ def _queue_and_wait(
             envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
 
             def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
-                spinner.add(cast(str, tox_env.conf.name))
+                spinner.add(tox_env.conf.name)
                 return run_one(tox_env, options.recreate, options.no_test, suspend_display=live is False)
 
             try:
@@ -256,7 +256,7 @@ def _queue_and_wait(
                         result: ToxEnvRunResult = future.result()
                     except CancelledError:
                         tox_env_done.teardown()
-                        name = cast(str, tox_env_done.conf.name)
+                        name = tox_env_done.conf.name
                         result = ToxEnvRunResult(name=name, skipped=False, code=-3, outcomes=[], duration=MISS_DURATION)
                     results.append(result)
                     completed.add(result.name)

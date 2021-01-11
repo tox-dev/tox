@@ -34,7 +34,7 @@ def test_setuptools_package(
 
     package_env = tox_env.package_env
     assert isinstance(package_env, Pep517VirtualEnvPackageWheel)
-    packages = package_env.perform_packaging()
+    packages = package_env.perform_packaging("py")
     assert len(packages) == 1
     package = packages[0]
     assert package.name == f"demo_pkg_setuptools-1.2.3-py{sys.version_info.major}-none-any.whl"

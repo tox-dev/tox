@@ -59,7 +59,7 @@ class PythonRun(Python, RunToxEnv, ABC):
 
         # 2. install the package
         with self.package_env.display_context(suspend=self.has_display_suspended):
-            self._packages = [PythonDep(p) for p in self.package_env.perform_packaging()]
+            self._packages = [PythonDep(p) for p in self.package_env.perform_packaging(self.conf.name)]
         self.install_python_packages(
             self._packages, "package", **self.install_package_args()  # type: ignore[no-untyped-call]
         )

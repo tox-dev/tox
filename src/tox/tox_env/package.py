@@ -3,7 +3,7 @@ A tox environment that can build packages.
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Set
+from typing import TYPE_CHECKING, Any, Generator, List, Set, Tuple
 
 from packaging.requirements import Requirement
 
@@ -26,14 +26,20 @@ class PackageToxEnv(ToxEnv, ABC):
         self.recreate_package = options.no_recreate_pkg is False if options.recreate else False
         self.ref_count = AtomicCounter()
 
+    def create_package_env(self, name: str, info: Tuple[Any, ...]) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
+        """allow creating sub-package envs"""
+
     @abstractmethod
     def get_package_dependencies(self, extras: Set[str]) -> List[Requirement]:
         raise NotImplementedError
 
     @abstractmethod
-    def perform_packaging(self) -> List[Path]:
+    def perform_packaging(self, name: str) -> List[Path]:
         raise NotImplementedError
 
     def clean(self, force: bool = False) -> None:
         if force or self.recreate_package:  # only recreate if user did not opt out
             super().clean(force)
+
+    def package_envs(self, name: str) -> Generator["PackageToxEnv", None, None]:
+        yield self

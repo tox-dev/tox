@@ -1,11 +1,10 @@
 import os
 import sys
-from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
 from threading import RLock
-from typing import Any, Dict, Iterator, List, NoReturn, Optional, Sequence, Set, Tuple, Union, cast
+from typing import Any, Dict, Generator, Iterator, List, NoReturn, Optional, Sequence, Set, Tuple, Union, cast
 
 from packaging.markers import Variable
 from packaging.requirements import Requirement
@@ -16,9 +15,13 @@ from tox.execute.api import ExecuteStatus
 from tox.execute.pep517_backend import LocalSubProcessPep517Executor
 from tox.execute.request import StdinSource
 from tox.journal import EnvJournal
+from tox.plugin.impl import impl
 from tox.report import ToxHandler
 from tox.tox_env.errors import Fail
+from tox.tox_env.package import PackageToxEnv
+from tox.tox_env.python.api import PythonDep
 from tox.tox_env.python.package import PythonPackage
+from tox.tox_env.register import ToxEnvRegister
 from tox.util.pep517.frontend import BackendFailed, CmdStatus, ConfigSettings, Frontend, WheelResult
 
 from ..api import VirtualEnv
@@ -79,7 +82,7 @@ class ToxCmdStatus(CmdStatus):
         return status.outcome.out_err()
 
 
-class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
+class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
     """local file system python virtual environment via the virtualenv package"""
 
     def __init__(
@@ -93,8 +96,14 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         self._backend_executor: Optional[LocalSubProcessPep517Executor] = None
         self._package_dependencies: Optional[List[Requirement]] = None
         self._lock = RLock()  # can build only one package at a time
-        self._package: Optional[Path] = None
+        self._package: Dict[Tuple[PackageType, str], Any] = {}
+        self._run_env_to_wheel_builder_env: Dict[str, PackageToxEnv] = {}
+        self._run_env_to_info: Dict[str, Tuple[PackageType, str]] = {}
         self._teardown_done = False
+
+    @staticmethod
+    def id() -> str:
+        return "virtualenv-pep-517"
 
     def register_config(self) -> None:
         super().register_config()
@@ -111,6 +120,11 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
             desc="directory assigned to the tox environment",
         )
 
+    def setup(self) -> None:
+        super().setup()
+        build_requires = [PythonDep(i) for i in self.get_requires_for_build_wheel().requires]
+        self.cached_install(build_requires, PythonPackage.__name__, "requires-for-build-wheel")
+
     @property
     def meta_folder(self) -> Path:
         meta_folder: Path = self.conf["meta_dir"]
@@ -124,17 +138,64 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
         dist_info = self.prepare_metadata_for_build_wheel(self.meta_folder).metadata
         self._distribution_meta = Distribution.at(str(dist_info))  # type: ignore[no-untyped-call]
 
-    @abstractmethod
-    def _build_artifact(self) -> Path:
-        raise NotImplementedError
+    def perform_packaging(self, name: str) -> List[Path]:
+        """build the package to install"""
+        content = self._run_env_to_info[name]
+        if content in self._package:
+            path: Path = self._package[content]
+        else:
+            pkg_type, build_env = content
+            if pkg_type is PackageType.dev:
+                path = self.core["tox_root"]  # the folder itself is the package
+            elif (pkg_type is PackageType.sdist) or (pkg_type is PackageType.wheel and build_env == self.conf.name):
+                with self._lock:
+                    self.ensure_setup()
+                    if pkg_type is PackageType.sdist:
+                        build_requires = [PythonDep(i) for i in self.get_requires_for_build_sdist().requires]
+                        self.cached_install(build_requires, PythonPackage.__name__, "requires-for-build-sdist")
+                        path = self.build_sdist(sdist_directory=self.pkg_dir).sdist
+                    else:
+                        path = self.build_wheel(
+                            wheel_directory=self.pkg_dir,
+                            metadata_directory=self.meta_folder,
+                            config_settings={"--global-option": ["--bdist-dir", str(self.conf["env_dir"] / "build")]},
+                        ).wheel
+            elif pkg_type is PackageType.wheel:
+                wheel_pkg_env = self._run_env_to_wheel_builder_env[build_env]
+                with wheel_pkg_env.display_context(suspend=self.has_display_suspended):
+                    wheel_pkg_env.ref_count.increment()
+                    try:
+                        path = wheel_pkg_env.perform_packaging(name)[0]
+                    finally:
+                        wheel_pkg_env.teardown()
+            else:
+                raise TypeError(f"cannot handle package type {pkg_type}")
+            self._package[content] = path
+        return [path]
 
-    def perform_packaging(self) -> List[Path]:
-        """build_wheel/build_sdist"""
-        with self._lock:
-            if self._package is None:
-                self.ensure_setup()
-                self._package = self._build_artifact()
-        return [self._package]
+    def create_package_env(self, name: str, info: Tuple[Any, ...]) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
+        if not (
+            isinstance(info, tuple) and len(info) == 2 and isinstance(info[0], PackageType) and isinstance(info[1], str)
+        ):
+            raise ValueError(f"package info {info} cannot be handled for {name} by {self.conf.name}")
+
+        pkg_type, wheel_build_env = info[0], info[1]
+        self._run_env_to_info[name] = pkg_type, wheel_build_env
+
+        if pkg_type is not PackageType.wheel or wheel_build_env == self.conf.name:
+            return
+
+        yield  # type: ignore[misc]
+        wheel_pkg_tox_env = yield wheel_build_env, self.id()
+        if isinstance(wheel_pkg_tox_env, Pep517VirtualEnvPackage):  # pragma: no branch
+            wheel_pkg_tox_env._run_env_to_info[name] = PackageType.wheel, wheel_build_env
+        self._run_env_to_wheel_builder_env[wheel_build_env] = wheel_pkg_tox_env
+
+    def package_envs(self, name: str) -> Generator["PackageToxEnv", None, None]:
+        yield from super().package_envs(name)
+        _, env = self._run_env_to_info[name]
+        if env is not None and env != self.conf.name:
+            yield self._run_env_to_wheel_builder_env[env]
 
     def get_package_dependencies(self, extras: Set[str]) -> List[Requirement]:
         with self._lock:
@@ -262,3 +323,8 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
 
     def requires(self) -> Tuple[Requirement, ...]:
         return self._requires
+
+
+@impl
+def tox_register_tox_env(register: ToxEnvRegister) -> None:
+    register.add_package_env(Pep517VirtualEnvPackage)

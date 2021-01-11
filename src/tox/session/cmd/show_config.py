@@ -3,7 +3,7 @@ Show materialized configuration of tox environments.
 """
 
 from textwrap import indent
-from typing import Iterable, List
+from typing import Iterable, List, Set
 
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.stringify import stringify
@@ -11,6 +11,7 @@ from tox.config.sets import ConfigSet
 from tox.plugin.impl import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
+from tox.tox_env.api import ToxEnv
 
 
 @impl
@@ -27,20 +28,37 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def show_config(state: State) -> int:
-    show_core = state.options.env.all or state.options.show_core
     keys: List[str] = state.options.list_keys_only
-    # environments may define core configuration flags, so we must exhaust first the environments to tell the core part
-    envs = list(state.env_list(everything=False))
-    for at, name in enumerate(envs):
-        tox_env = state.tox_env(name)
-        print(f"[testenv:{name}]")
+    is_first = True
+    selected = state.options.env
+
+    def _print_env(tox_env: ToxEnv) -> None:
+        if tox_env.conf.name not in selected:
+            return
+        nonlocal is_first
+        if is_first:
+            is_first = False
+        else:
+            print("")
+        print(f"[testenv:{tox_env.conf.name}]")
         if not keys:
             print(f"type = {type(tox_env).__name__}")
         print_conf(tox_env.conf, keys)
-        if show_core or at + 1 != len(envs):
-            print("")
-    # no print core
-    if show_core:
+
+    envs = list(state.env_list(everything=True))
+    done_pkg_envs: Set[str] = set()
+    for name in envs:
+        run_env = state.tox_env(name)
+        _print_env(run_env)
+        for pkg_env in run_env.package_envs():
+            if pkg_env.conf.name in done_pkg_envs:
+                continue
+            done_pkg_envs.add(pkg_env.conf.name)
+            _print_env(pkg_env)
+
+    # environments may define core configuration flags, so we must exhaust first the environments to tell the core part
+    if selected.all or state.options.show_core:
+        print("")
         print("[tox]")
         print_conf(state.conf.core, keys)
     return 0

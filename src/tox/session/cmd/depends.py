@@ -28,9 +28,9 @@ def depends(state: State) -> int:
         print("   " * at, end="")
         print(env, end="")
         if env != "ALL":
-            pkg_env = state.tox_env(env).package_env
-            if pkg_env is not None:
-                print(f" ~ {pkg_env.conf['env_name']}", end="")
+            names = " | ".join(e.conf.name for e in state.tox_env(env).package_envs())
+            if names:
+                print(f" ~ {names}", end="")
         print("")
         at += 1
         for dep in deps[env]:
