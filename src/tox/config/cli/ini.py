@@ -51,7 +51,7 @@ class IniConfig:
                     result = None
                 else:
                     source = "file"
-                    value = self.ini.load(key, of_type=of_type, conf=None, env_name="tox")
+                    value = self.ini.load(key, of_type=of_type, conf=None, env_name="tox", chain=[key])
                     result = value, source
             except KeyError:  # just not found
                 result = None

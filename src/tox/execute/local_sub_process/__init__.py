@@ -190,7 +190,6 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self.request.env["LINES"] = str(lines)
 
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
-
         try:
             self.process = process = Popen(
                 self.cmd,

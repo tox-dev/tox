@@ -15,12 +15,13 @@ def filter_for_env(value: str, name: Optional[str]) -> str:
     overall = []
     for factors, content in expand_factors(value):
         if factors is None:
-            overall.append(content)
+            if content:
+                overall.append(content)
         else:
             for group in factors:
                 for a_name, negate in group:
                     contains = a_name in current
-                    if contains == negate:
+                    if not ((contains is True and negate is False) or (contains is False and negate is True)):
                         break
                 else:
                     overall.append(content)

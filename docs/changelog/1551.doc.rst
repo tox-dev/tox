@@ -1,1 +1,0 @@
-Add base documentation by merging virtualenv structure with tox 3 - by :user:`gaborbernat`.

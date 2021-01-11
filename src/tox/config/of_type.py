@@ -23,7 +23,7 @@ class ConfigDefinition(ABC, Generic[T]):
         self.env_name = env_name
 
     @abstractmethod
-    def __call__(self, conf: "Config", key: Optional[str], loaders: List[Loader[T]]) -> T:
+    def __call__(self, conf: "Config", key: Optional[str], loaders: List[Loader[T]], chain: List[str]) -> T:
         raise NotImplementedError
 
     def __eq__(self, o: Any) -> bool:
@@ -46,7 +46,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
         super().__init__(keys, desc, env_name)
         self.value = value
 
-    def __call__(self, conf: "Config", name: Optional[str], loaders: List[Loader[T]]) -> T:
+    def __call__(self, conf: "Config", name: Optional[str], loaders: List[Loader[T]], chain: List[str]) -> T:
         if callable(self.value):
             value = self.value()
         else:
@@ -78,13 +78,13 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         self.post_process = post_process
         self._cache: Union[object, T] = _PLACE_HOLDER
 
-    def __call__(self, conf: "Config", name: Optional[str], loaders: List[Loader[T]]) -> T:
+    def __call__(self, conf: "Config", name: Optional[str], loaders: List[Loader[T]], chain: List[str]) -> T:
         if self._cache is _PLACE_HOLDER:
             found = False
             for key in self.keys:
                 for loader in loaders:
                     try:
-                        value = loader.load(key, self.of_type, conf, self.env_name)
+                        value = loader.load(key, self.of_type, conf, self.env_name, chain)
                         found = True
                     except KeyError:
                         continue

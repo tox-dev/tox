@@ -1,0 +1,4 @@
+- Raise exception when variable substitution enters into a circle.
+- Add ``{/}`` as substitution for os specific path separator.
+- Add ``{env_bin_dir}`` constant substitution.
+- Implement support for ``--discover`` flag - by :user:`gaborbernat`.

@@ -11,7 +11,7 @@ from packaging.markers import Variable
 from packaging.requirements import Requirement
 
 from tox.config.cli.parser import Parsed
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import ExecuteStatus
 from tox.execute.pep517_backend import LocalSubProcessPep517Executor
 from tox.execute.request import StdinSource
@@ -83,7 +83,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
     """local file system python virtual environment via the virtualenv package"""
 
     def __init__(
-        self, conf: ConfigSet, core: ConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         VirtualEnv.__init__(self, conf, core, options, journal, log_handler)
         Frontend.__init__(self, *Frontend.create_args_from_folder(core["tox_root"]))
@@ -122,7 +122,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
             return  # pragma: no cover
         self.ensure_setup()
         dist_info = self.prepare_metadata_for_build_wheel(self.meta_folder).metadata
-        self._distribution_meta = Distribution.at(str(dist_info))
+        self._distribution_meta = Distribution.at(str(dist_info))  # type: ignore[no-untyped-call]
 
     @abstractmethod
     def _build_artifact(self) -> Path:
@@ -163,18 +163,16 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
             ):
                 if marker_key.value == "extra" and op.value == "==":  # pragma: no branch
                     extra = marker_value.value
+                    del markers[_at]
+                    _at -= 1
+                    if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
+                        del markers[_at]
+                    if len(markers) == 0:
+                        req.marker = None
                     break
             # continue only if this extra should be included
             if not (extra is None or extra in extras):
                 continue
-            # delete the extra marker if present
-            if _at is not None:
-                del markers[_at]
-                _at -= 1
-                if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
-                    del markers[_at]
-                if len(markers) == 0:
-                    req.marker = None
             result.append(req)
         return result
 
@@ -201,7 +199,9 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend, ABC):
     @property
     def environment_variables(self) -> Dict[str, str]:
         env = super().environment_variables
-        env["PYTHONPATH"] = os.pathsep.join(str(i) for i in self._backend_paths)
+        backend = os.pathsep.join(str(i) for i in self._backend_paths).strip()
+        if backend:
+            env["PYTHONPATH"] = backend
         return env
 
     def teardown(self) -> None:

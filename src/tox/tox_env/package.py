@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List, Set
 
 from packaging.requirements import Requirement
 
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
 from tox.util.threading import AtomicCounter
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 class PackageToxEnv(ToxEnv, ABC):
     def __init__(
-        self, conf: ConfigSet, core: ConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
+        self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         super().__init__(conf, core, options, journal, log_handler)
         self.recreate_package = options.no_recreate_pkg is False if options.recreate else False

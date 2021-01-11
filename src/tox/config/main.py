@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
 from tox.config.loader.api import Loader, Override, OverrideMap
 from tox.config.source import Source
 
-from .sets import ConfigSet, CoreConfigSet
+from .sets import CoreConfigSet, EnvConfigSet
 
 
 class Config:
@@ -26,9 +26,9 @@ class Config:
             self._overrides[override.namespace].append(override)
 
         self._src = config_source
-        self._env_to_set: Dict[str, ConfigSet] = OrderedDict()
+        self._env_to_set: Dict[str, EnvConfigSet] = OrderedDict()
         self._core_set: Optional[CoreConfigSet] = None
-        self.register_config_set: Callable[[str, ConfigSet], Any] = lambda n, e: None
+        self.register_config_set: Callable[[str, EnvConfigSet], Any] = lambda n, e: None
 
     @property
     def core(self) -> CoreConfigSet:
@@ -44,11 +44,13 @@ class Config:
         self._core_set = core
         return core
 
-    def get_env(self, item: str, package: bool = False, loaders: Optional[Sequence[Loader[Any]]] = None) -> ConfigSet:
+    def get_env(
+        self, item: str, package: bool = False, loaders: Optional[Sequence[Loader[Any]]] = None
+    ) -> EnvConfigSet:
         try:
             return self._env_to_set[item]
         except KeyError:
-            env = ConfigSet(self, item)
+            env = EnvConfigSet(self, item)
             self._env_to_set[item] = env
             if loaders is not None:
                 env.loaders.extend(loaders)

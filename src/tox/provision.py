@@ -73,7 +73,7 @@ def provision(state: State) -> Union[int, bool]:
     for package in requires:
         package_name = canonicalize_name(package.name)
         try:
-            dist = distribution(package_name)
+            dist = distribution(package_name)  # type: ignore[no-untyped-call]
             if not package.specifier.contains(dist.version, prereleases=True):
                 missing.append((package, dist.version))
         except PackageNotFoundError:

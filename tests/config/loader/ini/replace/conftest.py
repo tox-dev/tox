@@ -27,6 +27,6 @@ def replace_one(mk_ini_conf: Callable[[str], ConfigParser], tmp_path: Path) -> R
         tox_ini = ToxIni(tox_ini_file)
         config = Config(tox_ini, overrides=[], root=tmp_path, pos_args=pos_args, work_dir=tmp_path)
         loader = config.get_env("py").loaders[0]
-        return loader.load(key="env", of_type=str, conf=config, env_name="a")
+        return loader.load(key="env", of_type=str, conf=config, env_name="a", chain=[])
 
     return example  # noqa
