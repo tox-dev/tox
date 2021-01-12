@@ -1,0 +1,2 @@
+Fixed a bug that crashed tox where calling tox with the recreate flag and when multiple environments were reusing the
+same package - by :user:`gaborbernat`.

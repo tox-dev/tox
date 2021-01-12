@@ -110,8 +110,9 @@ class State:
     def _get_package_env(self, packager: str, name: str) -> PackageToxEnv:
         if name in self._pkg_env:  # if already created reuse
             old, pkg_tox_env = self._pkg_env[name]
-            if old != packager:
-                raise HandledError(f"{name} is already defined as a {old}, cannot be {packager} too")
+            if old != packager:  # pragma: no branch # same env name is used by different packaging: dpkg vs virtualenv
+                msg = f"{name} is already defined as a {old}, cannot be {packager} too"  # pragma: no cover
+                raise HandledError(msg)  # pragma: no cover
         else:
             from tox.tox_env.register import REGISTER
 

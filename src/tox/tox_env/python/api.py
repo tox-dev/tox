@@ -5,7 +5,7 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Union, cast
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Union, cast
 
 from packaging.requirements import Requirement
 from packaging.tags import INTERPRETER_SHORT_NAMES
@@ -117,18 +117,22 @@ class Python(ToxEnv, ABC):
         return env
 
     def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:  # noqa
-        candidates: Set[str] = set()
-        for factor in cast(str, env_name).split("-"):
+        base_python = None if env_name is None else self.extract_base_python(env_name)
+        return [sys.executable if base_python is None else base_python]
+
+    @staticmethod
+    def extract_base_python(env_name: str) -> Optional[str]:
+        candidates: List[str] = []
+        for factor in env_name.split("-"):
             spec = PythonSpec.from_string_spec(factor)
             if spec.implementation is not None:
                 if spec.implementation.lower() in INTERPRETER_SHORT_NAMES and env_name is not None:
-                    candidates.add(factor)
-                    break
+                    candidates.append(factor)
         if candidates:
-            if len(candidates) > 2:
+            if len(candidates) > 1:
                 raise ValueError(f"conflicting factors {', '.join(candidates)} in {env_name}")
-            return [next(iter(candidates))]
-        return [sys.executable]
+            return next(iter(candidates))
+        return None
 
     @abstractmethod
     def env_site_package_dir(self) -> Path:

@@ -49,6 +49,7 @@ class ToxEnv(ABC):
         self.clean_done = False
         self._execute_statuses: Dict[int, ExecuteStatus] = {}
         self._interrupted = False
+        self.skipped = False
 
     def interrupt(self) -> None:
         logging.warning("interrupt tox environment: %s", self.conf.name)
@@ -270,10 +271,9 @@ class ToxEnv(ABC):
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)
 
-    @staticmethod
     @contextmanager
     def _execute_call(
-        executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
+        self, executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
     ) -> Iterator[ExecuteStatus]:
         with executor.call(
             request=request,

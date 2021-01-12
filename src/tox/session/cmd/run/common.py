@@ -17,6 +17,7 @@ from tox.journal import write_journal
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
+from tox.tox_env.errors import Skip
 from tox.tox_env.runner import RunToxEnv
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
@@ -304,8 +305,13 @@ def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]) -> I
 
 def run_order(state: State, to_run: List[str]) -> Tuple[List[str], Dict[str, Set[str]]]:
     to_run_set = set(to_run)
-    todo: Dict[str, Set[str]] = {
-        env: (to_run_set & set(cast(EnvList, state.tox_env(env).conf["depends"]).envs)) for env in to_run
-    }
+    todo: Dict[str, Set[str]] = {}
+    for env in to_run:
+        try:
+            run_env = state.tox_env(env)
+        except Skip:
+            continue
+        depends = set(cast(EnvList, run_env.conf["depends"]).envs)
+        todo[env] = to_run_set & depends
     order = stable_topological_sort(todo)
     return order, todo

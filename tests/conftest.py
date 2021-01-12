@@ -1,14 +1,17 @@
 import sys
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import Callable, List, Optional, Sequence, Tuple
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
+from _pytest.monkeypatch import MonkeyPatch  # noqa # cannot import from tox.pytest yet
+from pytest_mock import MockerFixture
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.run import make_config
+from tox.tox_env.python.api import PythonInfo, VersionInfo
+from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 pytest_plugins = "tox.pytest"
 HERE = Path(__file__).absolute().parent
@@ -58,3 +61,34 @@ def demo_pkg_setuptools() -> Path:
 @pytest.fixture(scope="session")
 def demo_pkg_inline() -> Path:
     return HERE / "demo_pkg_inline"
+
+
+@pytest.fixture()
+def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], Tuple[str, str]]:
+    def _func(has_prev: bool) -> Tuple[str, str]:
+        ver = sys.version_info[0:2]
+        prev_ver = "".join(str(i) for i in (ver[0], ver[1] - 1))
+        prev_py = f"py{prev_ver}"
+        impl = sys.implementation.name.lower()
+
+        def get_python(self: VirtualEnv, base_python: List[str]) -> Optional[PythonInfo]:  # noqa
+            if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
+                return None
+            raw = list(sys.version_info)
+            if base_python[0] == prev_py:
+                raw[1] -= 1  # type: ignore[operator]
+            ver_info = VersionInfo(*raw)  # type: ignore[arg-type]
+            return PythonInfo(
+                executable=Path(sys.executable),
+                implementation=impl,
+                version_info=ver_info,
+                version="",
+                is_64=True,
+                platform=sys.platform,
+                extra_version_info=None,
+            )
+
+        mocker.patch.object(VirtualEnv, "_get_python", get_python)
+        return prev_ver, impl
+
+    return _func

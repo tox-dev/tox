@@ -17,7 +17,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def depends(state: State) -> int:
-    to_run_list = list(state.env_list())
+    to_run_list = list(state.env_list(everything=True))
     order, todo = run_order(state, to_run_list)
     print(f"Execution order: {', '.join(order)}")
 
@@ -25,6 +25,8 @@ def depends(state: State) -> int:
     deps["ALL"] = to_run_list
 
     def _handle(at: int, env: str) -> None:
+        if env not in order and env != "ALL":  # skipped envs
+            return
         print("   " * at, end="")
         print(env, end="")
         if env != "ALL":

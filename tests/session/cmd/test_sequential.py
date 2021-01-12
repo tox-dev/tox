@@ -75,18 +75,18 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
         "version": py_info.version,
         "version_info": list(py_info.version_info),
     }
-    packaging_setup = get_cmd_exit_run_id(log_report, ".package-py", "setup")
+    packaging_setup = get_cmd_exit_run_id(log_report, ".pkg", "setup")
 
     assert packaging_setup == [
         (0, "install_requires"),
         (None, "get_requires_for_build_wheel"),
-        (0, "install_build_requires"),
+        (0, "install_requires_for_build_wheel"),
         (0, "freeze"),
         (None, "_exit"),
     ]
-    packaging_test = get_cmd_exit_run_id(log_report, ".package-py", "test")
+    packaging_test = get_cmd_exit_run_id(log_report, ".pkg", "test")
     assert packaging_test == [(None, "build_wheel")]
-    packaging_installed = log_report["testenvs"][".package-py"].pop("installed_packages")
+    packaging_installed = log_report["testenvs"][".pkg"].pop("installed_packages")
     assert {i[: i.find("==")] for i in packaging_installed} == {"pip", "setuptools", "wheel"}
 
     py_setup = get_cmd_exit_run_id(log_report, "py", "setup")
@@ -106,7 +106,7 @@ def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
         "platform": sys.platform,
         "testenvs": {
             "py": {"python": host_python},
-            ".package-py": {"python": host_python},
+            ".pkg": {"python": host_python},
         },
     }
     assert "host" in log_report
@@ -166,7 +166,7 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
 
     result_first = proj.run("r")
     result_first.assert_success()
-    assert ".package-py: install" not in result_first.out  # no deps initially
+    assert ".pkg: install" not in result_first.out  # no deps initially
 
     # new deps are picked up
     (proj.path / "pyproject.toml").write_text(toml.replace("requires = []", 'requires = ["wheel"]'))
@@ -181,7 +181,7 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
     result_rerun.assert_success()
 
     # and installed
-    rerun_install = [i for i in result_rerun.out.splitlines() if i.startswith(".package-py: install")]
+    rerun_install = [i for i in result_rerun.out.splitlines() if i.startswith(".pkg: install")]
     assert len(rerun_install) == 2
     assert rerun_install[0].endswith("wheel")
     assert rerun_install[1].endswith("setuptools")
@@ -213,7 +213,7 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
     assert "requested interrupt of" in out, out
     assert "send signal SIGINT" in out, out
     assert "interrupt finished with success" in out, out
-    assert "interrupt tox environment: .package-py" in out, out
+    assert "interrupt tox environment: .pkg" in out, out
 
 
 def test_package_build_fails(tox_project: ToxProjectCreator) -> None:
@@ -323,7 +323,7 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
 
     result_first = proj.run("r")
     result_first.assert_success()
-    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert run_ids == [
         "get_requires_for_build_wheel",
         "build_wheel",
@@ -337,7 +337,7 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
     result_second = proj.run("r")
     result_second.assert_success()
     assert "py: recreate env because dependencies removed: wheel" in result_second.out, result_second.out
-    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
 
 
@@ -353,15 +353,15 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result_first = proj.run("r")
     result_first.assert_success()
-    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert run_ids == ["install_requires", "get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
     execute_calls.reset_mock()
 
     (proj.path / "pyproject.toml").write_text(toml)
     result_second = proj.run("r")
     result_second.assert_success()
-    assert ".package-py: recreate env because dependencies removed: setuptools" in result_second.out, result_second.out
-    run_ids = [i[0][2].run_id for i in execute_calls.call_args_list]
+    assert ".pkg: recreate env because dependencies removed: setuptools" in result_second.out, result_second.out
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
 
 
@@ -370,3 +370,22 @@ def test_skip_pkg_install(tox_project: ToxProjectCreator, demo_pkg_inline: Path)
     result_first = proj.run("--root", str(demo_pkg_inline), "--skip-pkg-install")
     result_first.assert_success()
     assert result_first.out.startswith("py: skip building and installing the package"), result_first.out
+
+
+def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\n"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("--root", str(demo_pkg_setuptools), "--develop")
+    result.assert_success()
+    calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    expected = [
+        (".pkg", "install_requires"),
+        (".pkg", "get_requires_for_build_wheel"),
+        (".pkg", "install_requires_for_build_wheel"),
+        (".pkg", "prepare_metadata_for_build_wheel"),
+        (".pkg", "get_requires_for_build_sdist"),
+        ("py", "install_package_deps"),
+        ("py", "install_package"),
+        (".pkg", "_exit"),
+    ]
+    assert calls == expected

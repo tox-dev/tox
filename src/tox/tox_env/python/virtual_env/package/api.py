@@ -123,7 +123,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
     def setup(self) -> None:
         super().setup()
         build_requires = [PythonDep(i) for i in self.get_requires_for_build_wheel().requires]
-        self.cached_install(build_requires, PythonPackage.__name__, "requires-for-build-wheel")
+        self.cached_install(build_requires, PythonPackage.__name__, "requires_for_build_wheel")
 
     @property
     def meta_folder(self) -> Path:
@@ -152,7 +152,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
                     self.ensure_setup()
                     if pkg_type is PackageType.sdist:
                         build_requires = [PythonDep(i) for i in self.get_requires_for_build_sdist().requires]
-                        self.cached_install(build_requires, PythonPackage.__name__, "requires-for-build-sdist")
+                        self.cached_install(build_requires, PythonPackage.__name__, "requires_for_build_sdist")
                         path = self.build_sdist(sdist_directory=self.pkg_dir).sdist
                     else:
                         path = self.build_wheel(
@@ -168,16 +168,19 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
                         path = wheel_pkg_env.perform_packaging(name)[0]
                     finally:
                         wheel_pkg_env.teardown()
-            else:
-                raise TypeError(f"cannot handle package type {pkg_type}")
+            else:  # pragma: no cover # for when we introduce new packaging types and don't implement
+                raise TypeError(f"cannot handle package type {pkg_type}")  # pragma: no cover
             self._package[content] = path
         return [path]
 
     def create_package_env(self, name: str, info: Tuple[Any, ...]) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
-        if not (
-            isinstance(info, tuple) and len(info) == 2 and isinstance(info[0], PackageType) and isinstance(info[1], str)
+        if not (  # pragma: no branch
+            isinstance(info, tuple)
+            and len(info) == 2
+            and isinstance(info[0], PackageType)
+            and isinstance(info[1], str)  # ensure we can handle package info
         ):
-            raise ValueError(f"package info {info} cannot be handled for {name} by {self.conf.name}")
+            raise ValueError(f"{name} package info {info} is invalid by {self.conf.name}")  # pragma: no cover
 
         pkg_type, wheel_build_env = info[0], info[1]
         self._run_env_to_info[name] = pkg_type, wheel_build_env
@@ -193,15 +196,24 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
 
     def package_envs(self, name: str) -> Generator["PackageToxEnv", None, None]:
         yield from super().package_envs(name)
-        _, env = self._run_env_to_info[name]
-        if env is not None and env != self.conf.name:
-            yield self._run_env_to_wheel_builder_env[env]
+        if name in self._run_env_to_info:
+            _, env = self._run_env_to_info[name]
+            if env is not None and env != self.conf.name:
+                yield self._run_env_to_wheel_builder_env[env]
 
-    def get_package_dependencies(self, extras: Set[str]) -> List[Requirement]:
+    def get_package_dependencies(self, for_env: EnvConfigSet) -> List[Requirement]:
+        env_name = for_env.name
+        extras: Set[str] = for_env["extras"]
         with self._lock:
             if self._package_dependencies is None:  # pragma: no branch
                 self._ensure_meta_present()
-                self._package_dependencies = self.discover_package_dependencies(self._distribution_meta, extras)
+                dependencies: List[Requirement] = []
+                of_type, _ = self._run_env_to_info[env_name]
+                if of_type == PackageType.dev:
+                    dependencies.extend(self.requires())
+                    dependencies.extend(self.get_requires_for_build_sdist().requires)
+                dependencies.extend(self.discover_package_dependencies(self._distribution_meta, extras))
+                self._package_dependencies = dependencies
         return self._package_dependencies
 
     @staticmethod
@@ -311,6 +323,16 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
 
     def _send(self, cmd: str, **kwargs: Any) -> Tuple[Any, str, str]:
         try:
+            if cmd == "prepare_metadata_for_build_wheel":
+                # given we'll build a wheel we might skip the prepare step
+                for pkg_type, pkg_name in self._run_env_to_info.values():
+                    if pkg_type is PackageType.wheel and pkg_name == self.conf.name:
+                        result = {
+                            "code": 1,
+                            "exc_type": "AvoidRedundant",
+                            "exc_msg": "will need to build wheel either way, avoid prepare",
+                        }
+                        raise BackendFailed(result, "", "")
             return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
             raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception

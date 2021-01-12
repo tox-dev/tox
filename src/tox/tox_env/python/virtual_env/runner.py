@@ -36,7 +36,7 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
             self.conf.add_constant(["package"], desc, PackageType.skip)
             return False
         self.conf.add_config(keys="usedevelop", desc="use develop mode", default=False, of_type=bool)
-        develop_mode = self.conf["usedevelop"]
+        develop_mode = self.conf["usedevelop"] or getattr(self.options, "develop", False)
         if develop_mode:
             self.conf.add_constant(["package"], desc, PackageType.dev)
         else:
@@ -71,10 +71,12 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
                 # https://github.com/pypa/wheel/blob/master/src/wheel/bdist_wheel.py#L234-L280
                 base: str = self.conf["package_env"]
                 run = self.base_python
-                if self.package_env is not None and isinstance(self.package_env, VirtualEnv):
+                if run is not None and self.package_env is not None and isinstance(self.package_env, VirtualEnv):
                     pkg = self.package_env.base_python
                     if pkg.version_no_dot == run.version_no_dot and pkg.impl_lower == run.impl_lower:
                         return base
+                if run is None:
+                    raise ValueError(f"could not resolve base python for {self.conf.name}")
                 return f"{base}-{run.impl_lower}{run.version_no_dot}"
 
             self.conf.add_config(

@@ -3,7 +3,7 @@ A tox environment that can build packages.
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, List, Set, Tuple
+from typing import TYPE_CHECKING, Any, Generator, List, Tuple
 
 from packaging.requirements import Requirement
 
@@ -30,7 +30,7 @@ class PackageToxEnv(ToxEnv, ABC):
         """allow creating sub-package envs"""
 
     @abstractmethod
-    def get_package_dependencies(self, extras: Set[str]) -> List[Requirement]:
+    def get_package_dependencies(self, for_env: EnvConfigSet) -> List[Requirement]:
         raise NotImplementedError
 
     @abstractmethod

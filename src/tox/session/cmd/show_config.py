@@ -12,6 +12,7 @@ from tox.plugin.impl import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
+from tox.tox_env.errors import Skip
 
 
 @impl
@@ -33,8 +34,6 @@ def show_config(state: State) -> int:
     selected = state.options.env
 
     def _print_env(tox_env: ToxEnv) -> None:
-        if tox_env.conf.name not in selected:
-            return
         nonlocal is_first
         if is_first:
             is_first = False
@@ -48,13 +47,18 @@ def show_config(state: State) -> int:
     envs = list(state.env_list(everything=True))
     done_pkg_envs: Set[str] = set()
     for name in envs:
-        run_env = state.tox_env(name)
-        _print_env(run_env)
+        try:
+            run_env = state.tox_env(name)
+        except Skip:
+            run_env = state.tox_env(name)  # get again to get the temporary state
+        if run_env.conf.name in selected:
+            _print_env(run_env)
         for pkg_env in run_env.package_envs():
             if pkg_env.conf.name in done_pkg_envs:
                 continue
             done_pkg_envs.add(pkg_env.conf.name)
-            _print_env(pkg_env)
+            if pkg_env.conf.name in selected:
+                _print_env(pkg_env)
 
     # environments may define core configuration flags, so we must exhaust first the environments to tell the core part
     if selected.all or state.options.show_core:
