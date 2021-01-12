@@ -153,7 +153,7 @@ class ToxEnv(ABC):
                 if eq is False and old is not None:  # recreate if already created and not equals
                     logging.warning(f"env type changed from {old} to {conf}, will recreate")
                     raise Recreate  # recreate if already exists and type changed
-                self.setup_done, self.clean_done = True, False
+                self.setup_done = True
         finally:
             self._handle_env_tmp_dir()
 
