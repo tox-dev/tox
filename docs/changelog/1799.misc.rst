@@ -1,1 +1,0 @@
-Enable building tox with ``setuptools_scm`` 4 and 5 by :user:hroncok

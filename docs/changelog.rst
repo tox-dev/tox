@@ -11,6 +11,32 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.21.1 (2021-01-13)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix regression that broke using install_command in config replacements - by :user:`jayvdb`
+  `#1777 <https://github.com/tox-dev/tox/issues/1777>`_
+- Fix regression parsing posargs default containing colon. - by :user:`jayvdb`
+  `#1785 <https://github.com/tox-dev/tox/issues/1785>`_
+
+
+Features
+^^^^^^^^
+
+- Prevent .tox in envlist - by :user:`jayvdb`
+  `#1684 <https://github.com/tox-dev/tox/issues/1684>`_
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- Enable building tox with ``setuptools_scm`` 4 and 5 by :user:hroncok
+  `#1799 <https://github.com/tox-dev/tox/issues/1799>`_
+
+
 v3.21.0 (2021-01-08)
 --------------------
 
