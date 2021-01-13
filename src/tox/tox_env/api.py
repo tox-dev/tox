@@ -49,6 +49,7 @@ class ToxEnv(ABC):
         self.clean_done = False
         self._execute_statuses: Dict[int, ExecuteStatus] = {}
         self._interrupted = False
+        self.skipped = False
 
     def interrupt(self) -> None:
         logging.warning("interrupt tox environment: %s", self.conf.name)
@@ -153,7 +154,7 @@ class ToxEnv(ABC):
                 if eq is False and old is not None:  # recreate if already created and not equals
                     logging.warning(f"env type changed from {old} to {conf}, will recreate")
                     raise Recreate  # recreate if already exists and type changed
-                self.setup_done, self.clean_done = True, False
+                self.setup_done = True
         finally:
             self._handle_env_tmp_dir()
 
@@ -270,10 +271,9 @@ class ToxEnv(ABC):
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)
 
-    @staticmethod
     @contextmanager
     def _execute_call(
-        executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
+        self, executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
     ) -> Iterator[ExecuteStatus]:
         with executor.call(
             request=request,
@@ -306,7 +306,7 @@ class ToxEnv(ABC):
 
     @contextmanager
     def log_context(self) -> Iterator[None]:
-        with self.log_handler.with_context(cast(str, self.conf.name)):
+        with self.log_handler.with_context(self.conf.name):
             yield
 
     def teardown(self) -> None:

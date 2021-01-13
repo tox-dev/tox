@@ -32,7 +32,7 @@ class ConfigSet:
     """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
 
     def __init__(self, conf: "Config", name: Optional[str]):
-        self.name = name
+        self._name = name
         self._conf = conf
         self.loaders: List[Loader[Any]] = []
         self._defined: Dict[str, ConfigDefinition[Any]] = {}
@@ -51,13 +51,13 @@ class ConfigSet:
         Add configuration value.
         """
         keys_ = self._make_keys(keys)
-        definition = ConfigDynamicDefinition(keys_, desc, self.name, of_type, default, post_process)
+        definition = ConfigDynamicDefinition(keys_, desc, self._name, of_type, default, post_process)
         result = self._add_conf(keys_, definition)
         return cast(ConfigDynamicDefinition[V], result)
 
     def add_constant(self, keys: Union[str, Sequence[str]], desc: str, value: V) -> ConfigConstantDefinition[V]:
         keys_ = self._make_keys(keys)
-        definition = ConfigConstantDefinition(keys_, desc, self.name, value)
+        definition = ConfigConstantDefinition(keys_, desc, self._name, value)
         result = self._add_conf(keys_, definition)
         return cast(ConfigConstantDefinition[V], result)
 
@@ -70,7 +70,7 @@ class ConfigSet:
         if key in self._defined:
             earlier = self._defined[key]
             # core definitions may be defined multiple times as long as all their options match, first defined wins
-            if self.name is None and definition == earlier:
+            if self._name is None and definition == earlier:
                 definition = earlier
             else:
                 raise ValueError(f"config {key} already defined")
@@ -93,7 +93,7 @@ class ConfigSet:
         return config_definition(self._conf, item, self.loaders, chain)
 
     def __repr__(self) -> str:
-        values = (v for v in (f"name={self.name!r}" if self.name else "", f"loaders={self.loaders!r}") if v)
+        values = (v for v in (f"name={self._name!r}" if self._name else "", f"loaders={self.loaders!r}") if v)
         return f"{self.__class__.__name__}({', '.join(values)})"
 
     def __iter__(self) -> Iterator[str]:
@@ -157,6 +157,10 @@ class EnvConfigSet(ConfigSet):
             desc="environment variables to set when running commands in the tox environment",
             post_process=set_env_post_process,
         )
+
+    @property
+    def name(self) -> str:
+        return self._name  # type: ignore
 
 
 __all__ = (

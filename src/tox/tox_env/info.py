@@ -47,6 +47,7 @@ class Info:
         self._content = {}
 
     def _write(self) -> None:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
         self._path.write_text(json.dumps(self._content, indent=2))
 
 

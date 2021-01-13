@@ -1,0 +1,16 @@
+Rework how we handle python packaging environments:
+
+- the base packaging environment changed from ``.package`` to ``.pkg``,
+- merged the ``sdist``, ``wheel`` and ``dev`` separate packaging implementations into one, and internally dynamically
+  pick the one that's needed,
+- the base packaging environment always uses the same python environment as tox is installed into,
+- the base packaging environment is used to get the metadata of the project (via PEP-517) and to build ``sdist`` and
+  ``dev`` packages,
+- for building wheels introduced a new per env configurable option ``wheel_build_env``, if the target python major/minor
+  and implementation for the run tox environment and the base package tox environment matches set this to ``.pkg``,
+  otherwise this is ``.pkg-{implementation}{major}{minor}``,
+- internally now packaging environments can create further packaging environments they are responsible of managing,
+- updated ``depends`` to use the packaging logic,
+- add support skip missing interpreters for depends and show config,
+
+by :user:`gaborbernat`.

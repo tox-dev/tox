@@ -17,6 +17,7 @@ from tox.journal import write_journal
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
+from tox.tox_env.errors import Skip
 from tox.tox_env.runner import RunToxEnv
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
@@ -230,7 +231,7 @@ def _queue_and_wait(
             envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
 
             def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
-                spinner.add(cast(str, tox_env.conf.name))
+                spinner.add(tox_env.conf.name)
                 return run_one(tox_env, options.recreate, options.no_test, suspend_display=live is False)
 
             try:
@@ -256,7 +257,7 @@ def _queue_and_wait(
                         result: ToxEnvRunResult = future.result()
                     except CancelledError:
                         tox_env_done.teardown()
-                        name = cast(str, tox_env_done.conf.name)
+                        name = tox_env_done.conf.name
                         result = ToxEnvRunResult(name=name, skipped=False, code=-3, outcomes=[], duration=MISS_DURATION)
                     results.append(result)
                     completed.add(result.name)
@@ -304,8 +305,13 @@ def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]) -> I
 
 def run_order(state: State, to_run: List[str]) -> Tuple[List[str], Dict[str, Set[str]]]:
     to_run_set = set(to_run)
-    todo: Dict[str, Set[str]] = {
-        env: (to_run_set & set(cast(EnvList, state.tox_env(env).conf["depends"]).envs)) for env in to_run
-    }
+    todo: Dict[str, Set[str]] = {}
+    for env in to_run:
+        try:
+            run_env = state.tox_env(env)
+        except Skip:
+            continue
+        depends = set(cast(EnvList, run_env.conf["depends"]).envs)
+        todo[env] = to_run_set & depends
     order = stable_topological_sort(todo)
     return order, todo

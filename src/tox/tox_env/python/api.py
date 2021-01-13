@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Union, cast
 
 from packaging.requirements import Requirement
+from packaging.tags import INTERPRETER_SHORT_NAMES
 from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.cli.parser import Parsed
@@ -35,6 +36,14 @@ class PythonInfo(NamedTuple):
     is_64: bool
     platform: str
     extra_version_info: Optional[str]
+
+    @property
+    def version_no_dot(self) -> str:
+        return f"{self.version_info.major}{self.version_info.minor}"
+
+    @property
+    def impl_lower(self) -> str:
+        return self.implementation.lower()
 
 
 class PythonDep:
@@ -70,7 +79,6 @@ class Python(ToxEnv, ABC):
         super().__init__(conf, core, options, journal, log_handler)
 
     def register_config(self) -> None:
-        super().register_config()
         self.conf.add_config(
             keys=["base_python", "basepython"],
             of_type=List[str],
@@ -92,6 +100,7 @@ class Python(ToxEnv, ABC):
             desc="python executable from within the tox environment",
             value=lambda: self.env_python(),
         )
+        super().register_config()
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()
@@ -107,12 +116,23 @@ class Python(ToxEnv, ABC):
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
-    def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:
-        spec = PythonSpec.from_string_spec(env_name)
-        if spec.implementation is not None:
-            if spec.implementation.lower() in ("cpython", "pypy") and env_name is not None:
-                return [env_name]
-        return [sys.executable]
+    def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:  # noqa
+        base_python = None if env_name is None else self.extract_base_python(env_name)
+        return [sys.executable if base_python is None else base_python]
+
+    @staticmethod
+    def extract_base_python(env_name: str) -> Optional[str]:
+        candidates: List[str] = []
+        for factor in env_name.split("-"):
+            spec = PythonSpec.from_string_spec(factor)
+            if spec.implementation is not None:
+                if spec.implementation.lower() in INTERPRETER_SHORT_NAMES and env_name is not None:
+                    candidates.append(factor)
+        if candidates:
+            if len(candidates) > 1:
+                raise ValueError(f"conflicting factors {', '.join(candidates)} in {env_name}")
+            return next(iter(candidates))
+        return None
 
     @abstractmethod
     def env_site_package_dir(self) -> Path:

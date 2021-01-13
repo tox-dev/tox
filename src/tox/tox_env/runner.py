@@ -83,12 +83,12 @@ class RunToxEnv(ToxEnv, ABC):
         skip_install: bool = self.conf["skip_install"]
         return not skip_install
 
-    def set_package_env(self) -> Generator[Tuple[str, str], PackageToxEnv, None]:
+    def create_package_env(self) -> Generator[Tuple[str, str], PackageToxEnv, None]:
         if not self.has_package:
             return
-        of_type = self.conf["package_tox_env_type"]
+        core_type = self.conf["package_tox_env_type"]
         name = self.conf["package_env"]
-        package_tox_env = yield name, of_type
+        package_tox_env = yield name, core_type
         self.package_env = package_tox_env
         self.package_env.ref_count.increment()
 
@@ -122,3 +122,7 @@ class RunToxEnv(ToxEnv, ABC):
         super().interrupt()
         if self.package_env is not None:  # pragma: no branch
             self.package_env.interrupt()
+
+    def package_envs(self) -> Generator[PackageToxEnv, None, None]:
+        if self.package_env is not None and self.conf.name is not None:
+            yield from self.package_env.package_envs(self.conf.name)

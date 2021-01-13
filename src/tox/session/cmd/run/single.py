@@ -25,7 +25,7 @@ class ToxEnvRunResult(NamedTuple):
 
 def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:
     start_one = time.monotonic()
-    name = cast(str, tox_env.conf.name)
+    name = tox_env.conf.name
     with tox_env.display_context(suspend_display):
         skipped, code, outcomes = _evaluate(tox_env, recreate, no_test)
     duration = time.monotonic() - start_one

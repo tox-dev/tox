@@ -193,16 +193,17 @@ class ToxProject:
 
         @contextmanager
         def _execute_call(
-            executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
+            self: ToxEnv, executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool  # noqa
         ) -> Iterator[ExecuteStatus]:
             exit_code = handle(request)
             if exit_code is not None:
                 executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # noqa
-            with original_execute_call(executor, out_err, request, show) as status:
+            with original_execute_call(self, executor, out_err, request, show) as status:
                 yield status
 
         original_execute_call = ToxEnv._execute_call  # noqa
-        return self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call)
+        result = self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
+        return result
 
     @property
     def structure(self) -> Dict[str, Any]:

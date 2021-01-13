@@ -1,77 +1,28 @@
-import os
 import platform
-import re
 import sys
+from configparser import ConfigParser
+from typing import Callable, Tuple
 
 import pytest
-from packaging.version import Version
 from pytest_mock import MockerFixture
 
 from tox.config.types import Command
 from tox.pytest import MonkeyPatch, ToxProjectCreator
-from tox.version import __version__
 
 
 def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     py_ver = sys.version_info[0:2]
     name = "py{}{}".format(*py_ver) if platform.python_implementation() == "CPython" else "pypy3"
     project = tox_project({"tox.ini": f"[tox]\nenv_list = {name}\n[testenv:{name}]\ncommands={{posargs}}"})
-    result = project.run("c", "--", "magic")
+    result = project.run("c", "-e", name, "--core", "--", "magic")
     state = result.state
-    assert state.args == ("c", "--", "magic")
+    assert state.args == ("c", "-e", name, "--core", "--", "magic")
     outcome = list(state.env_list(everything=True))
     assert outcome == [name]
-
-    path = re.escape(str(project.path))
-    sep = re.escape(str(os.sep))
-    version = re.escape(Version(__version__).public)
-
     monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
-
-    expected = rf"""
-    \[testenv:{name}\]
-    type = VirtualEnvRunner
-    set_env =
-      PIP_DISABLE_PIP_VERSION_CHECK=1
-      VIRTUALENV_NO_PERIODIC_UPDATE=1
-    base = testenv
-    runner = virtualenv
-    env_name = {name}
-    env_dir = {path}{sep}\.tox4{sep}{name}
-    env_tmp_dir = {path}{sep}\.tox4{sep}{name}{sep}tmp
-    pass_env =\
-      .*
-    parallel_show_output = False
-    description =
-    commands = magic
-    commands_pre =
-    commands_post =
-    change_dir = {path}
-    depends =
-    skip_install = False
-    usedevelop = False
-    package = sdist
-    package_tox_env_type = virtualenv-pep-517-sdist
-    package_env = \.package
-    extras =
-    base_python = {name}
-    env_site_packages_dir = {path}{sep}\.tox4{sep}{name}{sep}.*\
-    env_bin_dir = {path}{sep}\.tox4{sep}{name}{sep}.*
-    env_python = {path}{sep}\.tox4{sep}{name}{sep}.*
-    deps =\
-
-    \[tox\]
-    tox_root = {path}
-    work_dir = {path}{sep}\.tox4
-    temp_dir = {path}{sep}\.temp
-    env_list = {name}
-    min_version = {version}
-    provision_tox_env = \.tox
-    requires = tox>={version}
-    no_package = False\
-    skip_missing_interpreters = True
-    """
-    result.assert_out_err(expected, "", regex=True)
+    parser = ConfigParser()
+    parser.read_string(result.out)
+    assert list(parser.sections()) == [f"testenv:{name}", "tox"]
 
 
 def test_show_config_commands(tox_project: ToxProjectCreator) -> None:
@@ -154,3 +105,39 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
         + ["VIRTUALENV_*", "http_proxy", "https_proxy", "no_proxy"]
     )
     assert pass_env == expected
+
+
+def test_show_config_pkg_env_once(
+    tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], Tuple[str, str]]
+) -> None:
+    prev_ver, impl = patch_prev_py(True)
+    project = tox_project({"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"})
+    result = project.run("c")
+    result.assert_success()
+    parser = ConfigParser()
+    parser.read_string(result.out)
+    sections = set(parser.sections())
+    assert sections == {"testenv:.pkg", f"testenv:.pkg-{impl}{prev_ver}", f"testenv:py{prev_ver}", "testenv:py", "tox"}
+
+
+def test_show_config_pkg_env_skip(
+    tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], Tuple[str, str]]
+) -> None:
+    prev_ver, impl = patch_prev_py(False)
+    project = tox_project({"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"})
+    result = project.run("c")
+    result.assert_success()
+    parser = ConfigParser()
+    parser.read_string(result.out)
+    sections = set(parser.sections())
+    assert sections == {"testenv:.pkg", "tox", "testenv:py", f"testenv:py{prev_ver}"}
+
+
+def test_show_config_select_only(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[tox]\nenv_list=\n a\n b"})
+    result = project.run("c", "-e", "b,.pkg")
+    result.assert_success()
+    parser = ConfigParser()
+    parser.read_string(result.out)
+    sections = set(parser.sections())
+    assert sections == {"testenv:.pkg", "testenv:b"}
