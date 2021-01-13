@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-from datetime import timedelta
 
 import pytest
 from colorama import Fore
@@ -135,10 +134,12 @@ def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture
         (4.13, "4.13 seconds"),
         (4.137, "4.14 seconds"),
         (42.12345, "42.12 seconds"),
+        (60, "1 minute"),
         (61, "1 minute 1 second"),
+        (120, "2 minutes"),
+        (40 * 24 * 60 * 60 + 5 * 60, "40 days 5 minutes"),
         (40 * 24 * 60 * 60 + 4 * 60 * 60 + 5 * 60 + 1.5, "40 days 4 hours 5 minutes 1.5 seconds"),
     ],
 )
 def test_td_human_readable(seconds: float, expected: str) -> None:
-    dt = timedelta(seconds=seconds)
-    assert spinner.td_human_readable(dt.total_seconds()) == expected
+    assert spinner.td_human_readable(seconds) == expected

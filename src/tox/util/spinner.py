@@ -5,7 +5,7 @@ import threading
 import time
 from collections import OrderedDict
 from types import TracebackType
-from typing import IO, Dict, Optional, Sequence, Type, TypeVar
+from typing import IO, Dict, List, Optional, Sequence, Type, TypeVar
 
 from colorama import Fore
 
@@ -167,16 +167,14 @@ _PERIODS = [
 
 
 def td_human_readable(seconds: float) -> str:
-    texts = []
-    total_seconds = seconds
+    texts: List[str] = []
     for period_name, period_seconds in _PERIODS:
-        if seconds > period_seconds or period_seconds == 1:
-            period_value = int(seconds) // period_seconds
-            seconds %= period_seconds
-            if period_name == "second":
-                ms = period_value + total_seconds - int(total_seconds)
-                period_str = f"{ms:.2f}".rstrip("0").rstrip(".")
-            else:
-                period_str = str(period_value)
+        period_str = None
+        if period_name == "second" and (seconds >= 0.01 or not texts):
+            period_str = f"{seconds:.2f}".rstrip("0").rstrip(".")
+        elif seconds >= period_seconds:
+            period_value, seconds = divmod(seconds, period_seconds)
+            period_str = f"{period_value:.0f}"
+        if period_str is not None:
             texts.append(f"{period_str} {period_name}{'' if period_str == '1' else 's'}")
     return " ".join(texts)
