@@ -1,4 +1,5 @@
 """Contains the plugin manager object"""
+import logging
 from typing import List, Type, cast
 
 import pluggy
@@ -42,12 +43,19 @@ class Plugin:
         )
 
         for plugin in internal_plugins:
+            logging.info("Registering %s", plugin)
             self.manager.register(plugin)
-        self.manager.load_setuptools_entrypoints(NAME)
-        self.manager.register(state)
+        try:
+            self.manager.load_setuptools_entrypoints(NAME)
+            self.manager.register(state)
 
-        REGISTER.populate(self)
-        self.manager.check_pending()
+            REGISTER.populate(self)
+            self.manager.check_pending()
+        except ImportError as e:
+            logging.warning(
+                "Ignored plugin %s which failed to load. %s",
+                NAME,
+                e)
 
     def tox_add_option(self, parser: ToxParser) -> None:
         self.manager.hook.tox_add_option(parser=parser)
