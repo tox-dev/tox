@@ -4,6 +4,7 @@ from typing import Any, Mapping, Sequence, Set, Tuple
 
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
+from tox.tox_env.python.req_file import RequirementsFile
 
 
 def stringify(value: Any) -> Tuple[str, bool]:
@@ -29,6 +30,8 @@ def stringify(value: Any) -> Tuple[str, bool]:
         return value.shell, True
     if isinstance(value, SetEnv):
         return stringify({k: value.load(k) for k in sorted(list(value))})
+    if isinstance(value, RequirementsFile):
+        return stringify(value.validate_and_expand())
     return str(value), False
 
 

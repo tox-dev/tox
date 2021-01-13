@@ -87,9 +87,11 @@ class ConfigSet:
         config_definition = self._defined[item]
         if chain is None:
             chain = []
-        if item in chain:
-            raise ValueError(f"circular chain detected {', '.join(chain[chain.index(item):])}")
-        chain.append(item)
+        env_name = "tox" if self._name is None else f"testenv:{self._name}"
+        key = f"{env_name}.{item}"
+        if key in chain:
+            raise ValueError(f"circular chain detected {', '.join(chain[chain.index(key):])}")
+        chain.append(key)
         return config_definition(self._conf, item, self.loaders, chain)
 
     def __repr__(self) -> str:

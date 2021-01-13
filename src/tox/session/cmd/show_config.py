@@ -5,6 +5,8 @@ Show materialized configuration of tox environments.
 from textwrap import indent
 from typing import Iterable, List, Set
 
+from colorama import Fore
+
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.stringify import stringify
 from tox.config.sets import ConfigSet
@@ -29,6 +31,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def show_config(state: State) -> int:
+    is_colored = state.options.is_colored
     keys: List[str] = state.options.list_keys_only
     is_first = True
     selected = state.options.env
@@ -39,10 +42,10 @@ def show_config(state: State) -> int:
             is_first = False
         else:
             print("")
-        print(f"[testenv:{tox_env.conf.name}]")
+        print_section_header(is_colored, f"[testenv:{tox_env.conf.name}]")
         if not keys:
-            print(f"type = {type(tox_env).__name__}")
-        print_conf(tox_env.conf, keys)
+            print_key_value(is_colored, "type", type(tox_env).__name__)
+        print_conf(is_colored, tox_env.conf, keys)
 
     envs = list(state.env_list(everything=True))
     done_pkg_envs: Set[str] = set()
@@ -63,27 +66,48 @@ def show_config(state: State) -> int:
     # environments may define core configuration flags, so we must exhaust first the environments to tell the core part
     if selected.all or state.options.show_core:
         print("")
-        print("[tox]")
-        print_conf(state.conf.core, keys)
+        print_section_header(is_colored, "[tox]")
+        print_conf(is_colored, state.conf.core, keys)
     return 0
 
 
-def print_conf(conf: ConfigSet, keys: Iterable[str]) -> None:
+def _colored(is_colored: bool, color: int, msg: str) -> str:
+    return f"{color}{msg}{Fore.RESET}" if is_colored else msg
+
+
+def print_section_header(is_colored: bool, name: str) -> None:
+    print(_colored(is_colored, Fore.YELLOW, name))
+
+
+def print_comment(is_colored: bool, comment: str) -> None:
+    print(_colored(is_colored, Fore.CYAN, comment))
+
+
+def print_key_value(is_colored: bool, key: str, value: str, multi_line: bool = False) -> None:
+    print(_colored(is_colored, Fore.GREEN, key), end="")
+    print(" =", end="")
+    if multi_line:
+        print("")
+        value_str = indent(value, prefix="  ")
+    else:
+        print(" ", end="")
+        value_str = value
+    print(value_str)
+
+
+def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None:
     for key in keys if keys else conf:
         if key not in conf:
             continue
         try:
             value = conf[key]
         except Exception as exception:  # because e.g. the interpreter cannot be found
-            as_str, multi_line = f"# Exception: {exception!r}", False
+            as_str, multi_line = _colored(is_colored, Fore.LIGHTRED_EX, f"# Exception: {exception!r}"), False
         else:
             as_str, multi_line = stringify(value)
         if multi_line and "\n" not in as_str:
             multi_line = False
-        if multi_line and as_str.strip():
-            print(f"{key} =\n{indent(as_str, prefix='  ')}")
-        else:
-            print(f"{key} ={' ' if as_str else ''}{as_str}")
+        print_key_value(is_colored, key, as_str, multi_line=multi_line)
     unused = conf.unused()
     if unused and not keys:
-        print(f"# !!! unused: {', '.join(unused)}")
+        print_comment(is_colored, f"# !!! unused: {', '.join(unused)}")

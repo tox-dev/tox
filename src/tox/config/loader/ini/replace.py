@@ -110,8 +110,8 @@ def replace_reference(
         settings = match.groupdict()
 
         key = settings["key"]
-        if settings["section"] is None and settings["full_env"] == BASE_TEST_ENV:
-            settings["section"] = BASE_TEST_ENV
+        if settings["section"] is None and settings["full_env"]:
+            settings["section"] = settings["full_env"]
 
         exception: Optional[Exception] = None
         try:
@@ -152,20 +152,21 @@ def _config_value_sources(
         else:
             raise KeyError(f"missing tox environment with name {env}")
 
-    # if we have a section name specified take only from there
-    if section is not None:
-        # special handle the core section under name tox
-        if section == CORE_PREFIX:
-            yield conf.core  # try via registered configs
-        value = loader.get_section(section)  # fallback to section
-        if value is not None:
-            yield value
+    if section is None:
+        # if no section specified perhaps it's an unregistered config:
+        # 1. try first from core conf
+        yield conf.core
+        # 2. and then fallback to our own environment
+        if current_env is not None:
+            yield conf.get_env(current_env)
         return
 
-    # otherwise try first from core conf, and fallback to our own environment
-    yield conf.core
-    if current_env is not None:
-        yield conf.get_env(current_env)
+    # if there's a section, special handle the core section under name tox
+    if section == CORE_PREFIX:
+        yield conf.core  # try via registered configs
+    value = loader.get_section(section)  # fallback to section
+    if value is not None:
+        yield value
 
 
 def replace_pos_args(args: List[str], pos_args: Optional[Sequence[str]]) -> str:

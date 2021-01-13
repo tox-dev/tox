@@ -24,7 +24,6 @@ class RunToxEnv(ToxEnv, ABC):
         super().__init__(conf, core, options, journal, log_handler)
 
     def register_config(self) -> None:
-        super().register_config()
         self.conf.add_config(
             keys=["description"],
             of_type=str,
@@ -32,16 +31,23 @@ class RunToxEnv(ToxEnv, ABC):
             desc="description attached to the tox environment",
         )
         self.conf.add_config(
-            keys=["commands"],
-            of_type=List[Command],
-            default=[],
-            desc="the commands to be called for testing",
+            "depends",
+            of_type=EnvList,
+            desc="tox environments that this environment depends on (must be run after those)",
+            default=EnvList([]),
         )
+        super().register_config()
         self.conf.add_config(
             keys=["commands_pre"],
             of_type=List[Command],
             default=[],
             desc="the commands to be called before testing",
+        )
+        self.conf.add_config(
+            keys=["commands"],
+            of_type=List[Command],
+            default=[],
+            desc="the commands to be called for testing",
         )
         self.conf.add_config(
             keys=["commands_post"],
@@ -54,12 +60,6 @@ class RunToxEnv(ToxEnv, ABC):
             of_type=Path,
             default=lambda conf, name: cast(Path, conf.core["tox_root"]),
             desc="Change to this working directory when executing the test command.",
-        )
-        self.conf.add_config(
-            "depends",
-            of_type=EnvList,
-            desc="tox environments that this environment depends on (must be run after those)",
-            default=EnvList([]),
         )
         self.has_package = self.add_package_conf()
 

@@ -67,6 +67,7 @@ from tox.tox_env.python.req_file import RequirementsFile
 )
 def test_requirements_txt(tmp_path: Path, req: str, key: str) -> None:
     req_file = RequirementsFile(req, root=tmp_path)
+    assert req == str(req_file)
     expanded = req_file.validate_and_expand()
     if key:
         assert len(expanded) == 1

@@ -79,6 +79,7 @@ class Python(ToxEnv, ABC):
         super().__init__(conf, core, options, journal, log_handler)
 
     def register_config(self) -> None:
+        super().register_config()
         self.conf.add_config(
             keys=["base_python", "basepython"],
             of_type=List[str],
@@ -100,7 +101,6 @@ class Python(ToxEnv, ABC):
             desc="python executable from within the tox environment",
             value=lambda: self.env_python(),
         )
-        super().register_config()
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()
