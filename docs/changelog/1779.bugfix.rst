@@ -1,1 +1,0 @@
-``env`` substitution does not uses values from ``set_env`` - by :user:`gaborbernat`.

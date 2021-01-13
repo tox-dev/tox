@@ -1,4 +1,0 @@
-Adopt tox 3 base pass env list, by adding:
-
-- on all platforms: ``LANG``, ``LANGUAGE``, ``CURL_CA_BUNDLE``, ``SSL_CERT_FILE`` , ``LD_LIBRARY_PATH`` and ``REQUESTS_CA_BUNLDE``,
-- on Windows: ``SYSTEMDRIVE`` - by :user:`gaborbernat`.

@@ -1,1 +1,0 @@
-Raise exception when set env enters into a circular reference - by :user:`gaborbernat`.

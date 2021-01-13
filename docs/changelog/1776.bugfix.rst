@@ -1,1 +1,0 @@
-Entries in the ``set_env`` does not reference environments from ``set_env`` - by :user:`gaborbernat`.
