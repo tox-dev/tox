@@ -52,10 +52,7 @@ class Plugin:
             REGISTER.populate(self)
             self.manager.check_pending()
         except ImportError as e:
-            logging.warning(
-                "Ignored plugin %s which failed to load. %s",
-                NAME,
-                e)
+            logging.warning("Ignored plugin %s which failed to load. %s", NAME, e)
 
     def tox_add_option(self, parser: ToxParser) -> None:
         self.manager.hook.tox_add_option(parser=parser)
