@@ -1,1 +1,0 @@
-Prevent .tox in envlist - by :user:`jayvdb`
