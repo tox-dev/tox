@@ -3,8 +3,6 @@ build:
   image: latest
 formats:
   - htmlzip
-  - epub
-  - pdf
 python:
    version: 3.8
    install:
@@ -15,4 +13,3 @@ python:
 sphinx:
   builder: html
   configuration: docs/conf.py
-  fail_on_warning: true
