@@ -1,5 +1,4 @@
-[![Latest version on
-PyPi](https://badge.fury.io/py/tox.svg)](https://badge.fury.io/py/tox)
+![PyPI](https://img.shields.io/pypi/v/tox?style=flat-square)
 [![Supported Python
 versions](https://img.shields.io/pypi/pyversions/tox.svg)](https://pypi.org/project/tox/)
 [![Azure Pipelines build
