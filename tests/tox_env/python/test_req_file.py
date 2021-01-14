@@ -29,8 +29,6 @@ from tox.tox_env.python.req_file import RequirementsFile
         ("--extra-index-url a", "--extra-index-url a"),
         ("-e a", "-e a"),
         ("--editable a", "--editable a"),
-        ("-c a", "-c a"),
-        ("--constraint a", "--constraint a"),
         ("-f a", "-f a"),
         ("--find-links a", "--find-links a"),
         ("--trusted-host a", "--trusted-host a"),
@@ -114,13 +112,14 @@ def test_requirements_env_var_missing(monkeypatch: MonkeyPatch, tmp_path: Path) 
         assert filename.read_text() == "${ENV_VAR}"
 
 
-def test_requirements_txt_transitive(tmp_path: Path) -> None:
+@pytest.mark.parametrize("flag", ["-r", "--requirement"])
+def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("magic\nmagical")
-    req = RequirementsFile("-r other-requirements.txt", root=tmp_path)
+    req = RequirementsFile(f"{flag} other-requirements.txt", root=tmp_path)
     assert req.validate_and_expand() == ["magic", "magical"]
     with req.with_file() as filename:
-        assert filename.read_text() == "-r other-requirements.txt"
+        assert filename.read_text() == f"{flag} other-requirements.txt"
 
 
 @pytest.mark.parametrize(
@@ -137,3 +136,27 @@ def test_bad_line(raw: str) -> None:
     req = RequirementsFile(raw)
     with pytest.raises(ValueError, match=re.escape(raw)):
         req.validate_and_expand()
+
+
+def test_legacy_requirement_file(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "requirement.txt").write_text("a")
+    raw = RequirementsFile("-rrequirement.txt")
+    assert raw.validate_and_expand() == ["a"]
+
+
+def test_legacy_constraint_file(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "constraint.txt").write_text("b")
+    raw = RequirementsFile("-cconstraint.txt")
+    assert raw.validate_and_expand() == ["b"]
+
+
+@pytest.mark.parametrize("flag", ["-c", "--constraint"])
+def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
+    other_req = tmp_path / "other.txt"
+    other_req.write_text("magic\nmagical")
+    req = RequirementsFile(f"{flag} other.txt", root=tmp_path)
+    assert req.validate_and_expand() == ["magic", "magical"]
+    with req.with_file() as filename:
+        assert filename.read_text() == f"{flag} other.txt"
