@@ -56,13 +56,6 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
         help="don't fail tests for missing interpreters: {config,true,false} choice",
     )
     parser.add_argument(
-        "-r",
-        "--recreate",
-        dest="recreate",
-        help="recreate the tox environments",
-        action="store_true",
-    )
-    parser.add_argument(
         "-n",
         "--notest",
         dest="no_test",
