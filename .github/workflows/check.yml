@@ -61,11 +61,11 @@ jobs:
           DIFF_AGAINST: HEAD
       - name: Rename coverage report file
         run: |
-          import os; os.rename('.tox4/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox4/coverage.xml')
+          import os; os.rename('.tox/4/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox/4/coverage.xml')
         shell: python
       - uses: codecov/codecov-action@v1
         with:
-          file: ./.tox4/coverage.xml
+          file: ./.tox/4/coverage.xml
           flags: tests
           name: ${{ matrix.py }} - ${{ matrix.os }}
 
