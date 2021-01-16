@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from tox.pytest import MonkeyPatch
-from tox.tox_env.python.req_file import RequirementsFile
+from tox.tox_env.python.req_file import ONE_ARG, RequirementsFile
 
 
 @pytest.mark.parametrize(
@@ -127,6 +127,7 @@ def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
     [
         "--pre something",
         "--missing",
+        "--index-url a b",
         "-k",
         "magic+https://git.example.com/MyProject#egg=MyProject",
     ],
@@ -165,6 +166,14 @@ def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
     assert req.validate_and_expand() == ["magic", "magical"]
     with req.with_file() as filename:
         assert filename.read_text() == f"{flag} other.txt"
+
+
+@pytest.mark.parametrize("flag", sorted(ONE_ARG - {"-c", "--constraint", "-r", "--requirement"}))
+def test_one_arg_expanded(tmp_path: Path, flag: str) -> None:
+    req = RequirementsFile(f"{flag}argument", root=tmp_path)
+    assert req.validate_and_expand() == [f"{flag} argument"]
+    with req.with_file() as filename:
+        assert filename.read_text() == f"{flag} argument"
 
 
 @pytest.mark.parametrize("escape_upfront", [True, False])
