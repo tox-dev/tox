@@ -126,7 +126,6 @@ def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
     "raw",
     [
         "--pre something",
-        "-r one two",
         "--missing",
         "-k",
         "magic+https://git.example.com/MyProject#egg=MyProject",
@@ -135,6 +134,12 @@ def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
 def test_bad_line(raw: str) -> None:
     req = RequirementsFile(raw)
     with pytest.raises(ValueError, match=re.escape(raw)):
+        req.validate_and_expand()
+
+
+def test_requirements_file_missing() -> None:
+    req = RequirementsFile("-r one two")
+    with pytest.raises(ValueError, match="requirement file path '.*one two' does not exist"):
         req.validate_and_expand()
 
 
@@ -160,3 +165,19 @@ def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
     assert req.validate_and_expand() == ["magic", "magical"]
     with req.with_file() as filename:
         assert filename.read_text() == f"{flag} other.txt"
+
+
+@pytest.mark.parametrize("escape_upfront", [True, False])
+def test_req_path_with_space(tmp_path: Path, escape_upfront: bool) -> None:
+    req_file = tmp_path / "a b"
+    req_file.write_text("c")
+    path = f"-r {str(req_file)}"
+    if escape_upfront:
+        path = f'{path[:-len("a b")]}a\\ b'
+    req = RequirementsFile(path)
+
+    # must be escaped within the requirements file
+    assert "a\\ b" in str(req)
+
+    # but still unroll during transitive dependencies
+    assert req.validate_and_expand() == ["c"]

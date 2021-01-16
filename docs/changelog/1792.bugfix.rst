@@ -1,0 +1,2 @@
+When specifying requirements/editable/constraint paths within ``deps`` escape space, unless already escaped to support
+running specifying transitive requirements files within deps - by :user:`gaborbernat`.
