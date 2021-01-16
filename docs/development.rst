@@ -83,12 +83,28 @@ run:
 
 .. code-block:: shell
 
-    tox -e fix_lint
+    tox -e fix
 
 .. note::
 
     Avoid using ``# noqa`` comments to suppress linter warnings - wherever possible, warnings should be fixed instead.
-    ``# noqa`` comments are reserved for rare cases where the recommended style causes severe readability problems.
+    ``# noqa`` comments are reserved for rare cases where the recommended style causes severe readability problems or
+    sidestep bugs within the linters.
+
+Code style guide
+~~~~~~~~~~~~~~~~
+
+- First and foremost, the linters configured for the project must pass; this generally means following PEP-8 rules,
+  as codified by: ``flake8``, ``black``, ``isort``, ``pyupgrade``.
+- Packaging options should be specified within ``setup.cfg``, ``setup.py`` is only kept for editable installs.
+- All code (tests too) must be type annotated as much as required by ``mypy``.
+- We use a ling length of 120.
+- Exception messages should only be capitalized (and ended with a period/exclamation mark) if they are multi-sentenced,
+  which should be avoided. Otherwise, use statements that start with lowercase.
+- All function (including test) names must follow PEP-8, so they must be fully snake cased. All classes are upper
+  camel-cased.
+- Prefer f-strings instead of the ``str.format`` method.
+- Tests should contain as little information as possible but do use descriptive variable names within it.
 
 Building documentation
 ~~~~~~~~~~~~~~~~~~~~~~
