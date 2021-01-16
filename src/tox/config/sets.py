@@ -119,13 +119,14 @@ class CoreConfigSet(ConfigSet):
             default=root,
             desc="the root directory (where the configuration file is found)",
         )
-        work_dir_builder = (
-            lambda conf, _: (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox4"
-        )
+
+        def work_dir_builder(conf: "Config", env_name: Optional[str]) -> Path:  # noqa
+            # here we pin to .tox/4 to be able to use in parallel with v3 until final release
+            return (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox" / "4"
+
         self.add_config(
             keys=["work_dir", "toxworkdir"],
             of_type=Path,
-            # here we pin to .tox4 to be able to use in parallel with v3 until final release
             default=work_dir_builder,
             desc="working directory",
         )
