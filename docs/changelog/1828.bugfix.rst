@@ -1,2 +1,0 @@
-Raise ``ValueError`` with descriptive message when a requirements file specified does not exist
-- by :user:`gaborbernat`.

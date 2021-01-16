@@ -5,6 +5,38 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0a4 (2021-01-16)
+---------------------
+
+Features - 4.0.0a4
+~~~~~~~~~~~~~~~~~~
+- Use ``.tox/4`` instead of ``.tox4`` folder (so ignores for tox 3 works for tox 4 too), reminder we'll rename this to
+  just ``.tox`` before public release, however to encourage testing tox 4 in parallel with tox 3 this is helpful
+  - by :user:`gaborbernat`. (`#1812 <https://github.com/tox-dev/tox/issues/1812>`_)
+- Colorize the ``config`` command: section headers are yellow, keys are green, values remained white, exceptions are light
+  red and comments are cyan - by :user:`gaborbernat`. (`#1821 <https://github.com/tox-dev/tox/issues/1821>`_)
+
+Bugfixes - 4.0.0a4
+~~~~~~~~~~~~~~~~~~
+- Support legacy format (``-cconstraint.txt``) of constraint files in ``deps``, and expand constraint files too when
+  viewing inside the ``deps`` or calculating weather our environment is up to date or not - by :user:`gaborbernat`. (`#1788 <https://github.com/tox-dev/tox/issues/1788>`_)
+- When specifying requirements/editable/constraint paths within ``deps`` escape space, unless already escaped to support
+  running specifying transitive requirements files within deps - by :user:`gaborbernat`. (`#1792 <https://github.com/tox-dev/tox/issues/1792>`_)
+- When using a provisioned tox environment requesting ``--recreate`` failed with ``AttributeError`` -
+  by :user:`gaborbernat`. (`#1793 <https://github.com/tox-dev/tox/issues/1793>`_)
+- Fix ``RequirementsFile`` from tox is rendered incorrectly in ``config`` command - by :user:`gaborbernat`. (`#1820 <https://github.com/tox-dev/tox/issues/1820>`_)
+- Fix a bug in the configuration system where referring to the same named key in another env/section causes circular
+  dependency error - by :user:`gaborbernat`. (`#1821 <https://github.com/tox-dev/tox/issues/1821>`_)
+- Raise ``ValueError`` with descriptive message when a requirements file specified does not exist
+  - by :user:`gaborbernat`. (`#1828 <https://github.com/tox-dev/tox/issues/1828>`_)
+- Support all valid requirement file specification without delimiting space in the ``deps`` of the ``tox.ini`` -
+  by :user:`gaborbernat`. (`#1834 <https://github.com/tox-dev/tox/issues/1834>`_)
+
+Improved Documentation - 4.0.0a4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add code style guide for contributors - by :user:`gaborbernat`. (`#1734 <https://github.com/tox-dev/tox/issues/1734>`_)
+
+
 v4.0.0a3 (2021-01-13)
 ---------------------
 

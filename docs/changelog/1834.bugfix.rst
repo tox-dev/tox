@@ -1,2 +1,0 @@
-Support all valid requirement file specification without delimiting space in the ``deps`` of the ``tox.ini`` -
-by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-When using a provisioned tox environment requesting ``--recreate`` failed with ``AttributeError`` -
-by :user:`gaborbernat`.

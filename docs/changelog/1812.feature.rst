@@ -1,3 +1,0 @@
-Use ``.tox/4`` instead of ``.tox4`` folder (so ignores for tox 3 works for tox 4 too), reminder we'll rename this to
-just ``.tox`` before public release, however to encourage testing tox 4 in parallel with tox 3 this is helpful
-- by :user:`gaborbernat`.

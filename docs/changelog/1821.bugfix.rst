@@ -1,2 +1,0 @@
-Fix a bug in the configuration system where referring to the same named key in another env/section causes circular
-dependency error - by :user:`gaborbernat`.

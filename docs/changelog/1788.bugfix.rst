@@ -1,2 +1,0 @@
-Support legacy format (``-cconstraint.txt``) of constraint files in ``deps``, and expand constraint files too when
-viewing inside the ``deps`` or calculating weather our environment is up to date or not - by :user:`gaborbernat`.

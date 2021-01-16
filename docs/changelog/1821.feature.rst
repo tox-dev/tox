@@ -1,2 +1,0 @@
-Colorize the ``config`` command: section headers are yellow, keys are green, values remained white, exceptions are light
-red and comments are cyan - by :user:`gaborbernat`.

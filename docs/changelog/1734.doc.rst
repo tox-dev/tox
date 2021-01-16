@@ -1,1 +1,0 @@
-Add code style guide for contributors - by :user:`gaborbernat`.
