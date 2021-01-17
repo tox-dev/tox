@@ -1,4 +1,3 @@
-CLI interface
-=============
-
-To be done at a later point.
+.. cli_api::
+  :module: tox.config.cli.parse
+  :func: _get_parser
