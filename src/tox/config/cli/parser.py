@@ -124,8 +124,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         if root is True:
             self._add_base_options()
         if add_cmd is True:
-            msg = "tox command to execute (default to legacy if not specified)"
-            self._cmd: Optional[Any] = self.add_subparsers(title="command", help=msg, dest="command")
+            msg = "tox command to execute (by default legacy)"
+            self._cmd: Optional[Any] = self.add_subparsers(title="subcommands", description=msg, dest="command")
             self._cmd.required = False
             self._cmd.default = "legacy"
         else:
@@ -193,7 +193,13 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     @classmethod
     def core(cls: Type[ToxParserT]) -> ToxParserT:
-        return cls(prog=NAME, formatter_class=HelpFormatter, add_cmd=True, root=True)
+        return cls(
+            prog=NAME,
+            formatter_class=HelpFormatter,
+            add_cmd=True,
+            root=True,
+            description="create and set up environments to run command(s) in them",
+        )
 
     def _add_base_options(self) -> None:
         """Argument options that always make sense."""
@@ -227,9 +233,8 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
     from tox.report import LEVELS
 
     level_map = "|".join("{} - {}".format(c, logging.getLevelName(l)) for c, l in sorted(list(LEVELS.items())))
-    verbosity_group = parser.add_argument_group(
-        f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}",
-    )
+    verbosity_group = parser.add_argument_group("verbosity")
+    verbosity_group.description = f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}"
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument(
         "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=DEFAULT_VERBOSITY

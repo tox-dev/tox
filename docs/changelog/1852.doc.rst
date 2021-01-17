@@ -1,0 +1,1 @@
+Add CLI documentation - by :user:`gaborbernat`.

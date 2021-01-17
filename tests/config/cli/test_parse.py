@@ -10,4 +10,4 @@ def test_help_does_not_default_cmd(capsys: CaptureFixture) -> None:
     out, err = capsys.readouterr()
     assert not err
     assert "--verbose" in out
-    assert "command:" in out
+    assert "subcommands:" in out
