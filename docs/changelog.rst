@@ -33,7 +33,7 @@ Features
 Miscellaneous
 ^^^^^^^^^^^^^
 
-- Enable building tox with ``setuptools_scm`` 4 and 5 by :user:hroncok
+- Enable building tox with ``setuptools_scm`` 4 and 5 by :user:`hroncok`
   `#1799 <https://github.com/tox-dev/tox/issues/1799>`_
 
 
