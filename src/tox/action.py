@@ -49,6 +49,10 @@ class Action(object):
         self.suicide_timeout = suicide_timeout
         self.interrupt_timeout = interrupt_timeout
         self.terminate_timeout = terminate_timeout
+        if is_main_thread():
+            # python allows only main thread to install signal handlers
+            # see https://docs.python.org/3/library/signal.html#signals-and-threads
+            self._install_sigterm_handler()
 
     def __enter__(self):
         msg = "{} {}".format(self.msg, " ".join(map(str, self.args)))
@@ -278,3 +282,14 @@ class Action(object):
             new_args.append(str(arg))
 
         return new_args
+
+    def _install_sigterm_handler(self):
+        """Handle sigterm as if it were a keyboardinterrupt"""
+        def sigterm_handler(signum, frame):
+            reporter.error('Got SIGTERM, handling it as a KeyboardInterrupt')
+            raise KeyboardInterrupt()
+
+        signal.signal(
+            signal.SIGTERM,
+            sigterm_handler
+        )

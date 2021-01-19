@@ -73,7 +73,8 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
     "sys.platform == 'win32'",
     reason="triggering SIGINT reliably on Windows is hard",
 )
-def test_provision_interrupt_child(initproj, monkeypatch, capfd):
+@pytest.mark.parametrize('signal_type', [signal.SIGINT, signal.SIGTERM])
+def test_provision_interrupt_child(initproj, monkeypatch, capfd, signal_type):
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
     monkeypatch.setenv(str("TOX_REPORTER_TIMESTAMP"), str("1"))
     initproj(
@@ -123,7 +124,7 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd):
         # 1 process for the host tox, 1 for the provisioned
         assert len(all_process) >= 2, all_process
 
-    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal_type)
     process.communicate()
     out, err = capfd.readouterr()
     assert ".tox KeyboardInterrupt: from" in out, out

@@ -607,9 +607,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionadded:: 3.15.2
 
-    When an interrupt is sent via Ctrl+C, the SIGINT is sent to all foreground
-    processes. The :conf:``suicide_timeout`` gives the running process time to
-    cleanup and exit before receiving (in some cases, a duplicate) SIGINT from
+    When an interrupt is sent via Ctrl+C or the tox process is killed with a SIGTERM,
+    a SIGINT is sent to all foreground processes. The :conf:``suicide_timeout`` gives
+    the running process time to cleanup and exit before receiving (in some cases, a duplicate) SIGINT from
     tox.
 
 .. conf:: interrupt_timeout ^ float ^ 0.3
