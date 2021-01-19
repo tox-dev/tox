@@ -87,7 +87,7 @@ def check_os_environ_stable():
     diff = {
         "{} = {} vs {}".format(k, old[k], new[k])
         for k in set(old) & set(new)
-        if old[k] != new[k] and not k.startswith("PYTEST_")
+        if old[k] != new[k] and not (k.startswith("PYTEST_") or k.startswith("COV_"))
     }
     if extra or miss or diff:
         msg = "test changed environ"
