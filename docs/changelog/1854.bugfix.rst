@@ -1,0 +1,2 @@
+Newer coverage tools update the ``COV_CORE_CONTEXT`` environment variable, add it to the list of environment variables
+that can change in our pytest plugin - by :user:`gaborbernat`.
