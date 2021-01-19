@@ -285,11 +285,9 @@ class Action(object):
 
     def _install_sigterm_handler(self):
         """Handle sigterm as if it were a keyboardinterrupt"""
+
         def sigterm_handler(signum, frame):
-            reporter.error('Got SIGTERM, handling it as a KeyboardInterrupt')
+            reporter.error("Got SIGTERM, handling it as a KeyboardInterrupt")
             raise KeyboardInterrupt()
 
-        signal.signal(
-            signal.SIGTERM,
-            sigterm_handler
-        )
+        signal.signal(signal.SIGTERM, sigterm_handler)

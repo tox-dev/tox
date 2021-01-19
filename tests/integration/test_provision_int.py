@@ -73,7 +73,7 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
     "sys.platform == 'win32'",
     reason="triggering SIGINT reliably on Windows is hard",
 )
-@pytest.mark.parametrize('signal_type', [signal.SIGINT, signal.SIGTERM])
+@pytest.mark.parametrize("signal_type", [signal.SIGINT, signal.SIGTERM])
 def test_provision_interrupt_child(initproj, monkeypatch, capfd, signal_type):
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
     monkeypatch.setenv(str("TOX_REPORTER_TIMESTAMP"), str("1"))
