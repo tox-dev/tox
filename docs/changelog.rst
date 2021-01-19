@@ -11,6 +11,17 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.21.2 (2021-01-19)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Newer coverage tools update the ``COV_CORE_CONTEXT`` environment variable, add it to the list of environment variables
+  that can change in our pytest plugin - by :user:`gaborbernat`.
+  `#1854 <https://github.com/tox-dev/tox/issues/1854>`_
+
+
 v3.21.1 (2021-01-13)
 --------------------
 
