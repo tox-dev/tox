@@ -222,6 +222,13 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self._read_stderr.__exit__(exc_type, exc_val, exc_tb)
         if self._read_stdout is not None:
             self._read_stdout.__exit__(exc_type, exc_val, exc_tb)
+        if self.process is not None:  # cleanup the file handlers
+            for stream in (self.process.stdout, self.process.stderr, self.process.stdin):
+                if stream is not None and not stream.closed:
+                    try:
+                        stream.close()
+                    except OSError as exc:  # pragma: no cover
+                        logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
 
     @staticmethod
     def get_stream_file_no(key: str) -> Generator[int, "Popen[bytes]", None]:
