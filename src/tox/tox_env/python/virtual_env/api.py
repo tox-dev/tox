@@ -10,6 +10,7 @@ from virtualenv.create.creator import Creator
 from virtualenv.run.session import Session
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed
+from tox.config.loader.str_convert import StrConvert
 from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import Execute, Outcome, StdinSource
 from tox.execute.local_sub_process import LocalSubProcessExecutor
@@ -25,8 +26,37 @@ class VirtualEnv(Python, ABC):
     def __init__(
         self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
-        self._virtualenv_session: Optional[Session] = None  # type: ignore[no-any-unimported]
+        self._virtualenv_session: Optional[Session] = None
         super().__init__(conf, core, options, journal, log_handler)
+
+    def register_config(self) -> None:
+        super().register_config()
+        self.conf.add_config(
+            keys=["system_site_packages", "sitepackages"],
+            of_type=bool,
+            default=lambda conf, name: StrConvert().to_bool(
+                self.environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False")
+            ),
+            desc="create virtual environments that also have access to globally installed packages.",
+        )
+        self.conf.add_config(
+            keys=["always_copy", "alwayscopy"],
+            of_type=bool,
+            default=lambda conf, name: StrConvert().to_bool(
+                self.environment_variables.get(
+                    "VIRTUALENV_COPIES", self.environment_variables.get("VIRTUALENV_ALWAYS_COPY", "False")
+                )
+            ),
+            desc="force virtualenv to always copy rather than symlink",
+        )
+        self.conf.add_config(
+            keys=["download"],
+            of_type=bool,
+            default=lambda conf, name: StrConvert().to_bool(
+                self.environment_variables.get("VIRTUALENV_DOWNLOAD", "False")
+            ),
+            desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
+        )
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()
@@ -37,28 +67,37 @@ class VirtualEnv(Python, ABC):
     def default_set_env(self) -> Dict[str, str]:
         env = super().default_set_env()
         env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
-        env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "1"
         return env
 
     def build_executor(self) -> Execute:
         return LocalSubProcessExecutor(self.options.is_colored)
 
     @property
-    def session(self) -> Session:  # type: ignore[no-any-unimported]
+    def session(self) -> Session:
         if self._virtualenv_session is None:
-            args = [
-                "--clear",
-                "--no-periodic-update",
-                str(cast(Path, self.conf["env_dir"])),
-            ]
-            base_python: List[str] = self.conf["base_python"]
-            for base in base_python:
-                args.extend(["-p", base])
-            self._virtualenv_session = session_via_cli(args, setup_logging=False)
+            self._virtualenv_session = session_via_cli(
+                [str(cast(Path, self.conf["env_dir"]))],
+                options=None,
+                setup_logging=False,
+                env=self.virtualenv_env_vars(),
+            )
         return self._virtualenv_session
 
+    def virtualenv_env_vars(self) -> Dict[str, str]:
+        env = self.environment_variables.copy()
+        base_python: List[str] = self.conf["base_python"]
+        if "VIRTUALENV_CLEAR" not in env:
+            env["VIRTUALENV_CLEAR"] = "True"
+        if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
+            env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
+        env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] = str(self.conf["system_site_packages"])
+        env["VIRTUALENV_COPIES"] = str(self.conf["always_copy"])
+        env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
+        env["VIRTUALENV_PYTHON"] = "\n".join(base_python)
+        return env
+
     @property
-    def creator(self) -> Creator:  # type: ignore[no-any-unimported]
+    def creator(self) -> Creator:
         return self.session.creator
 
     def create_python_env(self) -> None:
@@ -79,10 +118,10 @@ class VirtualEnv(Python, ABC):
             extra_version_info=None,
         )
 
-    def paths(self) -> List[Path]:
+    def python_env_paths(self) -> List[Path]:
         """Paths to add to the executable"""
         # we use the original executable as shims may be somewhere else
-        return list({self.creator.bin_dir, self.creator.script_dir})
+        return list(dict.fromkeys((self.creator.bin_dir, self.creator.script_dir)))
 
     def env_site_package_dir(self) -> Path:
         return cast(Path, self.creator.purelib)

@@ -210,9 +210,25 @@ class ToxEnv(ABC):
         set_env: SetEnv = self.conf["set_env"]
         for key in set_env:
             result[key] = set_env.load(key)
-        result["PATH"] = os.pathsep.join([str(i) for i in self._paths] + os.environ.get("PATH", "").split(os.pathsep))
+        result["PATH"] = self.paths_env()
         self._env_vars = result
         return result
+
+    @property
+    def paths(self) -> List[Path]:
+        return self._paths
+
+    @paths.setter
+    def paths(self, value: List[Path]) -> None:
+        self._paths = value
+        if self._env_vars is not None:  # pragma: no branch # also update the environment variables with the new value
+            self._env_vars["PATH"] = self.paths_env()
+
+    def paths_env(self) -> str:
+        # remove duplicates and prepend the tox env paths
+        values = dict.fromkeys(str(i) for i in self.paths)
+        values.update(dict.fromkeys(os.environ.get("PATH", "").split(os.pathsep)))
+        return os.pathsep.join(values)
 
     def execute(
         self,

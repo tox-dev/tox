@@ -23,9 +23,9 @@ def test_tox_ini_package_type_valid(tox_project: ToxProjectCreator, pkg_type: st
     proj = tox_project({"tox.ini": f"[testenv]\npackage={pkg_type}"})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_success()
-    res = result.state.tox_env("py").conf["package"]
+    res = result.env_conf("py")["package"]
     assert res is getattr(PackageType, pkg_type)
-    got_type = result.state.tox_env("py").conf["package_tox_env_type"]
+    got_type = result.env_conf("py")["package_tox_env_type"]
     assert got_type == "virtualenv-pep-517"
 
 

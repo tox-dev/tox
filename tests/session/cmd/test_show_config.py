@@ -45,7 +45,7 @@ def test_show_config_commands(tox_project: ToxProjectCreator) -> None:
     )
     outcome = project.run("c")
     outcome.assert_success()
-    env_config = outcome.state.tox_env("py").conf
+    env_config = outcome.env_conf("py")
     assert env_config["commands_pre"] == [Command(args=["python", "-c", 'import sys; print("start", sys.executable)'])]
     assert env_config["commands"] == [
         Command(args=["pip", "config", "list"]),
@@ -90,7 +90,7 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
     mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
     project = tox_project({"tox.ini": ""})
     outcome = project.run("c", "-e", "py", "-k", "pass_env")
-    pass_env = outcome.state.tox_env("py").conf["pass_env"]
+    pass_env = outcome.env_conf("py")["pass_env"]
     is_win = sys.platform == "win32"
     expected = (
         (["COMSPEC"] if is_win else [])

@@ -44,9 +44,9 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
 def test_set_env_default(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:
     set_env = eval_set_env("")
     keys = list(set_env)
-    assert keys == ["PIP_DISABLE_PIP_VERSION_CHECK", "VIRTUALENV_NO_PERIODIC_UPDATE"]
+    assert keys == ["PIP_DISABLE_PIP_VERSION_CHECK"]
     values = [set_env.load(k) for k in keys]
-    assert values == ["1", "1"]
+    assert values == ["1"]
 
 
 def test_set_env_self_key(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:

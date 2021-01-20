@@ -158,8 +158,12 @@ class Python(ToxEnv, ABC):
         with self._cache.compare(conf, Python.__name__) as (eq, old):
             if eq is False:  # if changed create
                 self.create_python_env()
-            self._paths = self.paths()
+        self.paths = self.python_env_paths()  # now that the environment exist we can add them to the path
         super().setup()
+
+    @abstractmethod
+    def python_env_paths(self) -> List[Path]:
+        raise NotImplementedError
 
     def setup_has_been_done(self) -> None:
         """called when setup is done"""
@@ -225,10 +229,6 @@ class Python(ToxEnv, ABC):
 
     @abstractmethod
     def create_python_env(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def paths(self) -> List[Path]:
         raise NotImplementedError
 
     @abstractmethod

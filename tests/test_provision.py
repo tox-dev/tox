@@ -124,7 +124,7 @@ def test_provision_requires_ok(
     assert "py" in log_report["testenvs"]
 
     # recreate without recreating the provisioned env
-    provision_env = result_first.state.tox_env(".tox").conf["env_dir"]
+    provision_env = result_first.env_conf(".tox")["env_dir"]
     result_recreate_no_pr = proj.run("r", "--recreate", "--no-recreate-provision")
     result_recreate_no_pr.assert_success()
     assert prov_msg in result_recreate_no_pr.out
