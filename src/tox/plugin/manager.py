@@ -21,7 +21,7 @@ from . import NAME, spec
 
 class Plugin:
     def __init__(self) -> None:
-        self.manager: pluggy.PluginManager = pluggy.PluginManager(NAME)  # type: ignore[no-any-unimported]
+        self.manager: pluggy.PluginManager = pluggy.PluginManager(NAME)
         self.manager.add_hookspecs(spec)
 
         internal_plugins = (

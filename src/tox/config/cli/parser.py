@@ -87,7 +87,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         text: str = super()._get_help_string(action) or ""  # noqa
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
-            if text.endswith(default):
+            if text.endswith(default):  # pragma: no branch
                 text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
         return text
 

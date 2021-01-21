@@ -1,0 +1,2 @@
+Support the ``system_site_packages``/``sitepackages`` flag for virtual environment based tox environments -
+by :user:`gaborbernat`.

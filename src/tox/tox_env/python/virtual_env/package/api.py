@@ -90,7 +90,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
     ) -> None:
         VirtualEnv.__init__(self, conf, core, options, journal, log_handler)
         Frontend.__init__(self, *Frontend.create_args_from_folder(core["tox_root"]))
-        self._distribution_meta: Optional[PathDistribution] = None  # type: ignore[no-any-unimported]
+        self._distribution_meta: Optional[PathDistribution] = None
         self._build_requires: Optional[Tuple[Requirement]] = None
         self._build_wheel_cache: Optional[WheelResult] = None
         self._backend_executor: Optional[LocalSubProcessPep517Executor] = None
@@ -217,9 +217,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
         return self._package_dependencies
 
     @staticmethod
-    def discover_package_dependencies(  # type: ignore[no-any-unimported]
-        meta: PathDistribution, extras: Set[str]
-    ) -> List[Requirement]:
+    def discover_package_dependencies(meta: PathDistribution, extras: Set[str]) -> List[Requirement]:
         result: List[Requirement] = []
         requires = meta.requires or []
         for req_str in requires:

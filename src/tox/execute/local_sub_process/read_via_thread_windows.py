@@ -15,7 +15,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
     def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:
         super().__init__(file_no, handler, name, drain)
         self.closed = False
-        self._ov: Optional[_overlapped.Overlapped] = None  # type: ignore[no-any-unimported]
+        self._ov: Optional[_overlapped.Overlapped] = None
         self._waiting_for_read = False
 
     def _read_stream(self) -> None:
