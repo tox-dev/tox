@@ -217,9 +217,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
         return self._package_dependencies
 
     @staticmethod
-    def discover_package_dependencies(
-        meta: PathDistribution, extras: Set[str]
-    ) -> List[Requirement]:
+    def discover_package_dependencies(meta: PathDistribution, extras: Set[str]) -> List[Requirement]:
         result: List[Requirement] = []
         requires = meta.requires or []
         for req_str in requires:
