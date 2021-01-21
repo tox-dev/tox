@@ -224,7 +224,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self._read_stdout.__exit__(exc_type, exc_val, exc_tb)
         if self.process is not None:  # cleanup the file handlers
             for stream in (self.process.stdout, self.process.stderr, self.process.stdin):
-                if stream is not None and not stream.closed:
+                if stream is not None and not getattr(stream, "closed", False):
                     try:
                         stream.close()
                     except OSError as exc:  # pragma: no cover
