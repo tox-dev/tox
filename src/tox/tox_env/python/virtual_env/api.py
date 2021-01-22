@@ -5,6 +5,7 @@ from abc import ABC
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, cast
 
+from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
 from virtualenv.create.creator import Creator
 from virtualenv.run.session import Session
@@ -16,6 +17,7 @@ from tox.execute.api import Execute, Outcome, StdinSource
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
+from tox.tox_env.errors import Recreate
 
 from ..api import Python, PythonDeps, PythonInfo
 
@@ -57,6 +59,12 @@ class VirtualEnv(Python, ABC):
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
         )
+
+    def setup(self) -> None:
+        with self._cache.compare({"version": virtualenv_version}, VirtualEnv.__name__) as (eq, old):
+            if eq is False and old is not None:  # if changed create
+                raise Recreate
+        super().setup()
 
     def default_pass_env(self) -> List[str]:
         env = super().default_pass_env()

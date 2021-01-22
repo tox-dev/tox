@@ -105,3 +105,16 @@ def test_honor_set_env_for_clear_periodic_update(
 
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.no_periodic_update is False
+
+
+def test_recreate_when_virtualenv_changes(
+    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions, mocker: MockerFixture
+) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    proj.run("r")
+
+    from tox.tox_env.python.virtual_env import api
+
+    mocker.patch.object(api, "virtualenv_version", "1.0")
+    result = proj.run("r")
+    assert "remove tox env folder" in result.out
