@@ -1,0 +1,1 @@
+Recreate virtual environment based tox environments when the ``virtualenv`` version changes - by :user:`gaborbernat`.
