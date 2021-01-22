@@ -44,7 +44,7 @@ class SetEnv:
         raw = self._raw[item]
         result = self.replacer(raw, chain)  # apply any replace options
         self._materialized[item] = result
-        del self._raw[item]
+        self._raw.pop(item, None)  # if the replace requires the env we may be called again, so allow pop to fail
         return result
 
     def __contains__(self, item: object) -> bool:
@@ -59,13 +59,17 @@ class SetEnv:
             expanded_line = self.replacer(line, [])
             sub_raw = {}
             for sub_line in expanded_line.splitlines():
-                key, value = self._extract_key_value(sub_line)
-                sub_raw[key] = value
+                if sub_line:
+                    key, value = self._extract_key_value(sub_line)
+                    sub_raw[key] = value
             self._raw.update(sub_raw)
             yield from sub_raw.keys()
 
-    def update(self, param: Mapping[str, str]) -> None:
-        self._materialized.update(param)
+    def update_if_not_present(self, param: Mapping[str, str]) -> None:
+        for key, value in param.items():
+            # do not override something already set explicitly
+            if key not in self._raw and key not in self._materialized:
+                self._materialized[key] = value
 
 
 __all__ = ("SetEnv",)

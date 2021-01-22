@@ -29,7 +29,8 @@ def stringify(value: Any) -> Tuple[str, bool]:
     if isinstance(value, Command):
         return value.shell, True
     if isinstance(value, SetEnv):
-        return stringify({k: value.load(k) for k in sorted(list(value))})
+        env_var_keys = sorted(list(value))
+        return stringify({k: value.load(k) for k in env_var_keys})
     if isinstance(value, RequirementsFile):
         return stringify(value.validate_and_expand())
     return str(value), False

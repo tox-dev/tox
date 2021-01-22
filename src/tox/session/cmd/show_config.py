@@ -101,10 +101,9 @@ def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None:
             continue
         try:
             value = conf[key]
+            as_str, multi_line = stringify(value)
         except Exception as exception:  # because e.g. the interpreter cannot be found
             as_str, multi_line = _colored(is_colored, Fore.LIGHTRED_EX, f"# Exception: {exception!r}"), False
-        else:
-            as_str, multi_line = stringify(value)
         if multi_line and "\n" not in as_str:
             multi_line = False
         print_key_value(is_colored, key, as_str, multi_line=multi_line)

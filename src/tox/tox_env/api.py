@@ -208,10 +208,13 @@ class ToxEnv(ABC):
                 if any(g.match(env) is not None for g in glob_pass_env):
                     result[env] = value
         set_env: SetEnv = self.conf["set_env"]
+        # load/paths_env might trigger a load of the environment variables, set result here, returns current state
+        self._env_vars = result
+        # set PATH here in case setting and environment variable requires access to the environment variable PATH
+        result["PATH"] = os.environ.get("PATH", "")
         for key in set_env:
             result[key] = set_env.load(key)
         result["PATH"] = self.paths_env()
-        self._env_vars = result
         return result
 
     @property

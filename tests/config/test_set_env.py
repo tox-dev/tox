@@ -9,7 +9,7 @@ from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 def test_set_env_explicit(monkeypatch: MonkeyPatch) -> None:
     set_env = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4")
-    set_env.update({"E": "5 ", "F": "6"})
+    set_env.update_if_not_present({"E": "5 ", "F": "6"})
 
     keys = list(set_env)
     assert keys == ["E", "F", "A", "B", "C", "D"]
@@ -90,11 +90,23 @@ def test_set_env_tty_off(eval_set_env: EvalSetEnv, mocker: MockerFixture) -> Non
 def test_set_env_circular_use_os_environ(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=a={env:b}\n b={env:a}"})
     result = prj.run("c", "-e", "py")
-    result.assert_failed()
-    assert "ValueError" in result.out, result.out
+    result.assert_success()
+    assert "replace failed in py.set_env with ValueError" in result.out, result.out
     assert "circular chain between set env a, b" in result.out, result.out
 
 
 def test_set_env_invalid_lines(eval_set_env: EvalSetEnv) -> None:
     with pytest.raises(ValueError, match="a"):
         eval_set_env("[testenv]\npackage=skip\nset_env=a\n b")
+
+
+def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("MAGIC", "\nb=2\n")
+    set_env = eval_set_env("[testenv]\npackage=skip\nset_env=a=1\n {env:MAGIC}")
+    env = {k: set_env.load(k) for k in set_env}
+    assert env == {"PIP_DISABLE_PIP_VERSION_CHECK": "1", "a": "1", "b": "2"}
+
+
+def test_set_env_honor_override(eval_set_env: EvalSetEnv) -> None:
+    set_env = eval_set_env("[testenv]\npackage=skip\nset_env=PIP_DISABLE_PIP_VERSION_CHECK=0")
+    assert set_env.load("PIP_DISABLE_PIP_VERSION_CHECK") == "0"

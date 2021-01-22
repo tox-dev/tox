@@ -150,7 +150,7 @@ class EnvConfigSet(ConfigSet):
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}
 
         def set_env_post_process(values: SetEnv, config: "Config") -> SetEnv:
-            values.update(self.default_set_env_loader())
+            values.update_if_not_present(self.default_set_env_loader())
             return values
 
         self.add_config(

@@ -57,6 +57,8 @@ class IniLoader(StrConvert, Loader[str]):
                 try:
                     replaced = replace(conf, env_name, self, raw_, chain_)  # do replacements
                 except Exception as exception:
+                    if isinstance(exception, HandledError):
+                        raise
                     msg = f"replace failed in {'tox' if env_name is None else env_name}.{key} with {exception!r}"
                     raise HandledError(msg) from exception
             return replaced
