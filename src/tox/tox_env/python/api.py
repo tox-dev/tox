@@ -191,7 +191,7 @@ class Python(ToxEnv, ABC):
             self._base_python = self._get_python(base_pythons)
             if self._base_python is None:
                 if self.core["skip_missing_interpreters"]:
-                    raise Skip
+                    raise Skip(f"could not find python interpreter with spec(s): {', '.join(base_pythons)}")
                 raise NoInterpreter(base_pythons)
             if self.journal:
                 value = {

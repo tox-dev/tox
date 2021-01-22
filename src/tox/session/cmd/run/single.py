@@ -41,7 +41,7 @@ def _evaluate(tox_env: ToxEnv, recreate: bool, no_test: bool) -> Tuple[bool, int
             tox_env.ensure_setup(recreate=recreate)
             code, outcomes = run_commands(tox_env, no_test)
         except Skip as exception:
-            LOGGER.info("skipped environment because %s", exception)
+            LOGGER.warning("skipped environment because %s", exception)
             skipped = True
         except ToxBackendFailed as exception:
             LOGGER.error("%s", exception)

@@ -75,12 +75,9 @@ class VirtualEnv(Python, ABC):
     @property
     def session(self) -> Session:
         if self._virtualenv_session is None:
-            self._virtualenv_session = session_via_cli(
-                [str(cast(Path, self.conf["env_dir"]))],
-                options=None,
-                setup_logging=False,
-                env=self.virtualenv_env_vars(),
-            )
+            env_dir = [str(cast(Path, self.conf["env_dir"]))]
+            env = self.virtualenv_env_vars()
+            self._virtualenv_session = session_via_cli(env_dir, options=None, setup_logging=False, env=env)
         return self._virtualenv_session
 
     def virtualenv_env_vars(self) -> Dict[str, str]:
