@@ -2,7 +2,7 @@
 Group together configuration values that belong together (such as base tox configuration, tox environment configs)
 """
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, List, Optional, Type, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, List, Mapping, Optional, Type, TypeVar, Union, cast
 
 from tox.config.loader.api import Loader
 
@@ -71,11 +71,13 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         of_type: Type[T],
         default: Union[Callable[["Config", Optional[str]], T], T],
         post_process: Optional[Callable[[T, "Config"], T]] = None,
+        kwargs: Optional[Mapping[str, Any]] = None,
     ) -> None:
         super().__init__(keys, desc, env_name)
         self.of_type = of_type
         self.default = default
         self.post_process = post_process
+        self.kwargs: Mapping[str, Any] = {} if kwargs is None else kwargs
         self._cache: Union[object, T] = _PLACE_HOLDER
 
     def __call__(self, conf: "Config", name: Optional[str], loaders: List[Loader[T]], chain: List[str]) -> T:
@@ -84,7 +86,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
             for key in self.keys:
                 for loader in loaders:
                     try:
-                        value = loader.load(key, self.of_type, conf, self.env_name, chain)
+                        value = loader.load(key, self.of_type, self.kwargs, conf, self.env_name, chain)
                         found = True
                     except KeyError:
                         continue

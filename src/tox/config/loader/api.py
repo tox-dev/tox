@@ -72,7 +72,13 @@ class Loader(Convert[T]):
         return f"{type(self).__name__}"
 
     def load(
-        self, key: str, of_type: Type[V], conf: Optional["Config"], env_name: Optional[str], chain: List[str]
+        self,
+        key: str,
+        of_type: Type[V],
+        kwargs: Mapping[str, Any],
+        conf: Optional["Config"],
+        env_name: Optional[str],
+        chain: List[str],
     ) -> V:
         """
         Load a value.
@@ -84,11 +90,11 @@ class Loader(Convert[T]):
         :return: the converted type
         """
         if key in self.overrides:
-            return _STR_CONVERT.to(self.overrides[key].value, of_type)
+            return _STR_CONVERT.to(self.overrides[key].value, of_type, kwargs)
         raw = self.load_raw(key, conf, env_name)
         future: "Future[V]" = Future()
         with self.build(future, key, of_type, conf, env_name, raw, chain) as prepared:
-            converted = self.to(prepared, of_type)
+            converted = self.to(prepared, of_type, kwargs)
             future.set_result(converted)
         return converted
 

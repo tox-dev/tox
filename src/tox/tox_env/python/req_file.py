@@ -66,7 +66,7 @@ class RequirementsFile:
     """
 
     def __init__(self, raw: str, within_tox_ini: bool = True, root: Optional[Path] = None) -> None:
-        self._root = Path().cwd() if root is None else root
+        self._root = Path().cwd() if root is None else root.resolve()
         if within_tox_ini:  # patch the content coming from tox.ini
             lines: List[str] = []
             for line in raw.splitlines():
@@ -124,7 +124,7 @@ class RequirementsFile:
             else:
                 path = ini_dir / line
                 try:
-                    is_valid_file = path.exists() and path.is_file()
+                    is_valid_file = path.exists() and (path.is_file() or path.is_dir())
                 except OSError:  # https://bugs.python.org/issue42855 # pragma: no cover
                     is_valid_file = False  # pragma: no cover
                 if not is_valid_file:

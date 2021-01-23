@@ -1,1 +1,2 @@
-Support ``=`` separator in requirement file flags - by :user:`gaborbernat`.
+Support ``=`` separator in requirement file flags, directories as requirements and correctly set the root of the
+requirements file when using the ``--root`` CLI flag to change the root - by :user:`gaborbernat`.

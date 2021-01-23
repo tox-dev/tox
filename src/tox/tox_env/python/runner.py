@@ -27,10 +27,12 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def register_config(self) -> None:
         super().register_config()
+        deps_kwargs = {"root": self.core["toxinidir"]}
         self.conf.add_config(
             keys="deps",
             of_type=RequirementsFile,
-            default=RequirementsFile(""),
+            kwargs=deps_kwargs,
+            default=RequirementsFile("", **deps_kwargs),
             desc="Name of the python dependencies as specified by PEP-440",
         )
         self.core.add_config(

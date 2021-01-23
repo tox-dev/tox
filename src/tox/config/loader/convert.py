@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Generic, Iterator, List, Set, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Dict, Generic, Iterator, List, Mapping, Set, Tuple, Type, TypeVar, Union, cast
 
 from ..types import Command, EnvList
 
@@ -21,10 +21,10 @@ V = TypeVar("V")
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type"""
 
-    def to(self, raw: T, of_type: Type[V]) -> V:
+    def to(self, raw: T, of_type: Type[V], kwargs: Mapping[str, Any]) -> V:
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
-            return self._to_typing(raw, of_type)  # type: ignore[return-value]
+            return self._to_typing(raw, of_type, kwargs)  # type: ignore[return-value]
         elif issubclass(of_type, Path):
             return self.to_path(raw)  # type: ignore[return-value]
         elif issubclass(of_type, bool):
@@ -39,21 +39,22 @@ class Convert(ABC, Generic[T]):
             return raw
         elif issubclass(of_type, Enum):
             return cast(V, getattr(of_type, str(raw)))
-        return of_type(raw)  # type: ignore[call-arg]
+        return of_type(raw, **kwargs)  # type: ignore[call-arg]
 
-    def _to_typing(self, raw: T, of_type: Type[V]) -> V:
+    def _to_typing(self, raw: T, of_type: Type[V], kwargs: Mapping[str, Any]) -> V:
         origin = getattr(of_type, "__origin__", of_type.__class__)
         result: Any = _NO_MAPPING
         if origin in (list, List):
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-            result = [self.to(i, entry_type) for i in self.to_list(raw, entry_type)]
+            result = [self.to(i, entry_type, kwargs) for i in self.to_list(raw, entry_type)]
         elif origin in (set, Set):
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-            result = {self.to(i, entry_type) for i in self.to_set(raw, entry_type)}
+            result = {self.to(i, entry_type, kwargs) for i in self.to_set(raw, entry_type)}
         elif origin in (dict, Dict):
             key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
             result = OrderedDict(
-                (self.to(k, key_type), self.to(v, value_type)) for k, v in self.to_dict(raw, (key_type, value_type))
+                (self.to(k, key_type, {}), self.to(v, value_type, {}))
+                for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin == Union:  # handle Optional values
             args: List[Type[Any]] = of_type.__args__  # type: ignore[attr-defined]
@@ -65,7 +66,7 @@ class Convert(ABC, Generic[T]):
                     result = None
                 else:
                     new_type = next(i for i in args if i != none)  # pragma: no cover # this will always find a element
-                    result = self.to(raw, new_type)
+                    result = self.to(raw, new_type, kwargs)
         elif origin == Literal or origin == type(Literal):
             if sys.version_info >= (3, 7):  # pragma: no cover (py37+)
                 choice = of_type.__args__
