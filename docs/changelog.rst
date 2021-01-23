@@ -5,6 +5,42 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0a5 (2021-01-23)
+---------------------
+
+Features - 4.0.0a5
+~~~~~~~~~~~~~~~~~~
+- Support the ``system_site_packages``/``sitepackages`` flag for virtual environment based tox environments -
+  by :user:`gaborbernat`. (`#1847 <https://github.com/tox-dev/tox/issues/1847>`_)
+- Support the ``always_copy``/``alwayscopy`` flag for virtual environment based tox environments -
+  by :user:`gaborbernat`. (`#1848 <https://github.com/tox-dev/tox/issues/1848>`_)
+- Support the ``download`` flag for virtual environment based tox environments - by :user:`gaborbernat`. (`#1849 <https://github.com/tox-dev/tox/issues/1849>`_)
+- Recreate virtual environment based tox environments when the ``virtualenv`` version changes - by :user:`gaborbernat`. (`#1865 <https://github.com/tox-dev/tox/issues/1865>`_)
+
+Bugfixes - 4.0.0a5
+~~~~~~~~~~~~~~~~~~
+- Not all package dependencies are installed when different tox environments in the same run use different set of
+  extras - by :user:`gaborbernat`. (`#1868 <https://github.com/tox-dev/tox/issues/1868>`_)
+- Support ``=`` separator in requirement file flags, directories as requirements and correctly set the root of the
+  requirements file when using the ``--root`` CLI flag to change the root - by :user:`gaborbernat`. (`#1853 <https://github.com/tox-dev/tox/issues/1853>`_)
+- Cleanup local subprocess file handlers when exiting runs (fixes ``ResourceWarning: unclosed file`` errors when running
+  with ``env PYTHONTRACEMALLOC=5 PYTHONDEVMODE=y`` under a python built with ``--with-pydebug``)
+  - by :user:`gaborbernat`. (`#1857 <https://github.com/tox-dev/tox/issues/1857>`_)
+- Various small bugfixes:
+
+  - honor updating default environment variables set by internal tox via set env (``PIP_DISABLE_PIP_VERSION_CHECK``)
+  - do not multi-wrap ``HandledError`` in the ini file loader,
+  - skipped environments are logged now with their fail message at default verbosity level,
+  - fix an error that made the show configuration command crash when making the string of a config value failed,
+  - support empty-new lines within the set env configurations replacements,
+
+  by :user:`gaborbernat`. (`#1864 <https://github.com/tox-dev/tox/issues/1864>`_)
+
+Improved Documentation - 4.0.0a5
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add CLI documentation - by :user:`gaborbernat`. (`#1852 <https://github.com/tox-dev/tox/issues/1852>`_)
+
+
 v4.0.0a4 (2021-01-16)
 ---------------------
 

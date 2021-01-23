@@ -1,9 +1,0 @@
-Various small bugfixes:
-
-- honor updating default environment variables set by internal tox via set env (``PIP_DISABLE_PIP_VERSION_CHECK``)
-- do not multi-wrap ``HandledError`` in the ini file loader,
-- skipped environments are logged now with their fail message at default verbosity level,
-- fix an error that made the show configuration command crash when making the string of a config value failed,
-- support empty-new lines within the set env configurations replacements,
-
-by :user:`gaborbernat`.
