@@ -1,2 +1,0 @@
-Not all package dependencies are installed when different tox environments in the same run use different set of
-extras - by :user:`gaborbernat`.

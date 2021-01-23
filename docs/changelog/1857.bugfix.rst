@@ -1,3 +1,0 @@
-Cleanup local subprocess file handlers when exiting runs (fixes ``ResourceWarning: unclosed file`` errors when running
-with ``env PYTHONTRACEMALLOC=5 PYTHONDEVMODE=y`` under a python built with ``--with-pydebug``)
-- by :user:`gaborbernat`.
