@@ -50,7 +50,7 @@ else:  # pragma: no cover (py38+)
     ],
 )
 def test_str_convert_ok(raw: str, value: Any, of_type: Type[Any]) -> None:
-    result = StrConvert().to(raw, of_type)  # noqa
+    result = StrConvert().to(raw, of_type, {})  # noqa
     assert result == value
 
 
@@ -64,4 +64,4 @@ def test_str_convert_ok(raw: str, value: Any, of_type: Type[Any]) -> None:
 )
 def test_str_convert_nok(raw: str, of_type: Type[Any], msg: str, exc_type: Type[Exception]) -> None:
     with pytest.raises(exc_type, match=msg):
-        result = StrConvert().to(raw, of_type)  # noqa
+        result = StrConvert().to(raw, of_type, {})  # noqa

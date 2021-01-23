@@ -66,12 +66,21 @@ class RequirementsFile:
     """
 
     def __init__(self, raw: str, within_tox_ini: bool = True, root: Optional[Path] = None) -> None:
-        self._root = Path().cwd() if root is None else root
+        self._root = Path().cwd() if root is None else root.resolve()
         if within_tox_ini:  # patch the content coming from tox.ini
             lines: List[str] = []
             for line in raw.splitlines():
                 # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
-                arg_match = next((o for o in ONE_ARG if line.startswith(o) and not line[len(o)].isspace()), None)
+                arg_match = next(
+                    (
+                        arg
+                        for arg in ONE_ARG
+                        if line.startswith(arg)
+                        and len(line) > len(arg)
+                        and not (line[len(arg)].isspace() or line[len(arg)] == "=")
+                    ),
+                    None,
+                )
                 if arg_match is not None:
                     line = f"{arg_match} {line[len(arg_match):]}"
                 # escape spaces
@@ -97,54 +106,59 @@ class RequirementsFile:
         result: List[str] = []
         ini_dir = self.root
         for at, line in enumerate(raw.splitlines(), start=1):
-            if line.startswith("#"):
+            line = re.sub(r"(?<!\\)\s#.*", "", line).strip()
+            if not line or line.startswith("#"):
                 continue
-            line = re.sub(r"\s#.*", "", line).strip()
-            if not line:
-                continue
-            if line.startswith("-"):  # handle flags
-                words = [i for i in re.split(r"(?<!\\)\s", line) if i]
-                first = words[0]
-                if first in NO_ARG:
-                    if len(words) != 1:
-                        raise ValueError(line)
-                    else:
-                        result.append(" ".join(words))
-                elif first in ONE_ARG:
-                    if len(words) != 2:
-                        raise ValueError(line)
-                    else:
-                        if first in ("-r", "--requirement", "-c", "--constraint"):
-                            raw_path = line[len(first) + 1 :].strip()
-                            unescaped_path = re.sub(r"\\(\s)", r"\1", raw_path)
-                            path = Path(unescaped_path)
-                            if not path.is_absolute():
-                                path = ini_dir / path
-                            if not path.exists():
-                                raise ValueError(f"requirement file path {str(path)!r} does not exist")
-                            req_file = RequirementsFile(path.read_text(), within_tox_ini=False, root=self.root)
-                            result.extend(req_file.validate_and_expand())
-                        else:
-                            result.append(" ".join(words))
-                else:
-                    raise ValueError(line)
+            if line.startswith("-"):
+                self._expand_flag(ini_dir, line, result)
             else:
-                try:
-                    req = Requirement(line)
-                    result.append(str(req))
-                except InvalidRequirement as exc:
-                    if is_url(line) or any(line.startswith(f"{v}+") and is_url(line[len(v) + 1 :]) for v in VCS):
-                        result.append(line)
-                    else:
-                        path = ini_dir / line
-                        try:
-                            is_valid_file = path.exists() and path.is_file()
-                        except OSError:  # https://bugs.python.org/issue42855 # pragma: no cover
-                            is_valid_file = False  # pragma: no cover
-                        if not is_valid_file:
-                            raise ValueError(f"{at}: {line}") from exc
-                        result.append(str(path))
+                self._expand_non_flag(at, ini_dir, line, result)
         return result
+
+    def _expand_non_flag(self, at: int, ini_dir: Path, line: str, result: List[str]) -> None:  # noqa
+        try:
+            req = Requirement(line)
+        except InvalidRequirement as exc:
+            if is_url(line) or any(line.startswith(f"{v}+") and is_url(line[len(v) + 1 :]) for v in VCS):
+                result.append(line)
+            else:
+                path = ini_dir / line
+                try:
+                    is_valid_file = path.exists() and (path.is_file() or path.is_dir())
+                except OSError:  # https://bugs.python.org/issue42855 # pragma: no cover
+                    is_valid_file = False  # pragma: no cover
+                if not is_valid_file:
+                    raise ValueError(f"{at}: {line}") from exc
+                result.append(str(path))
+        else:
+            result.append(str(req))
+
+    def _expand_flag(self, ini_dir: Path, line: str, result: List[str]) -> None:
+        words = [i for i in re.split(r"(?<!\\)(\s|=)", line, maxsplit=1)]
+        first = words[0]
+        if first in NO_ARG:
+            if len(words) != 1:  # argument provided
+                raise ValueError(line)
+            result.append(first)
+        elif first in ONE_ARG:
+            if len(words) != 3:  # no argument provided
+                raise ValueError(line)
+            if len(re.split(r"(?<!\\)\s", words[2])) > 1:  # too many arguments provided
+                raise ValueError(line)
+            if first in ("-r", "--requirement", "-c", "--constraint"):
+                raw_path = line[len(first) + 1 :].strip()
+                unescaped_path = re.sub(r"\\(\s)", r"\1", raw_path)
+                path = Path(unescaped_path)
+                if not path.is_absolute():
+                    path = ini_dir / path
+                if not path.exists():
+                    raise ValueError(f"requirement file path {str(path)!r} does not exist")
+                req_file = RequirementsFile(path.read_text(), within_tox_ini=False, root=self.root)
+                result.extend(req_file.validate_and_expand())
+            else:
+                result.append(f"{first} {words[2]}")
+        else:
+            raise ValueError(line)
 
     def _normalize_raw(self) -> str:
         # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively

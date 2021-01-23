@@ -16,7 +16,7 @@ def test_memory_loader_repr() -> None:
 def test_memory_loader_override() -> None:
     loader = MemoryLoader(a=1)
     loader.overrides["a"] = Override("a=2")
-    loaded = loader.load("a", of_type=int, conf=None, env_name=None, chain=[])
+    loaded = loader.load("a", of_type=int, conf=None, env_name=None, chain=[], kwargs={})
     assert loaded == 2
 
 
@@ -37,8 +37,8 @@ def test_memory_loader_override() -> None:
     ],
 )
 def test_memory_loader(value: Any, of_type: Type[Any]) -> None:
-    loader = MemoryLoader(**{"a": value})
-    loaded = loader.load("a", of_type=of_type, conf=None, env_name=None, chain=[])  # noqa
+    loader = MemoryLoader(**{"a": value}, kwargs={})
+    loaded = loader.load("a", of_type=of_type, conf=None, env_name=None, chain=[], kwargs={})  # noqa
     assert loaded == value
 
 

@@ -119,7 +119,7 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
     for env in config.core["env_list"]:
         env_config = config.get_env(env)
-        env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps", overwrite=True)
+        env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps", kwargs={})
         deps = env_config["deps-x"]
         assert "pytest" in deps
         if "py36" in env:

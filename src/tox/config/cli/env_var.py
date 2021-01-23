@@ -24,7 +24,7 @@ def get_env_var(key: str, of_type: Type[Any]) -> Optional[Tuple[Any, str]]:
             value = os.environ[environ_key]
             try:
                 source = f"env var {environ_key}"
-                result = CONVERT.to(raw=value, of_type=of_type)
+                result = CONVERT.to(raw=value, of_type=of_type, kwargs={})
                 return result, source
             except Exception as exception:  # noqa
                 logging.warning(
