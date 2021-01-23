@@ -222,8 +222,7 @@ class Python(ToxEnv, ABC):
                 # bail out and force recreate
                 logging.warning(f"recreate env because dependencies removed: {', '.join(str(i) for i in missing)}")
                 raise Recreate
-            new_deps_str = set(conf_deps) - set(old)
-            new_deps = [PythonDep(Requirement(i)) for i in new_deps_str]
+            new_deps = [PythonDep(Requirement(i)) for i in conf_deps if i not in old]
             self.install_python_packages(packages=new_deps, of_type=of_type)
         return False
 

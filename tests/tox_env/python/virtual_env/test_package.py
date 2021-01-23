@@ -1,5 +1,6 @@
 import sys
 from itertools import zip_longest
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -37,7 +38,7 @@ def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.fixture(scope="session")
-def pkg_with_extras(tmp_path_factory: TempPathFactory) -> PathDistribution:  # type: ignore[no-any-unimported]
+def pkg_with_extras_project(tmp_path_factory: TempPathFactory) -> Path:
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
     setup_cfg = f"""
     [metadata]
@@ -64,14 +65,19 @@ def pkg_with_extras(tmp_path_factory: TempPathFactory) -> PathDistribution:  # t
     (tmp_path / "setup.py").write_text("from setuptools import setup; setup()")
     toml = '[build-system]\nrequires=["setuptools", "wheel"]\nbuild-backend = "setuptools.build_meta"'
     (tmp_path / "pyproject.toml").write_text(toml)
-    frontend = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
-    meta = tmp_path / "meta"
+    return tmp_path
+
+
+@pytest.fixture(scope="session")
+def pkg_with_extras(pkg_with_extras_project: Path) -> PathDistribution:  # type: ignore[no-any-unimported]
+    frontend = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(pkg_with_extras_project)[:-1])
+    meta = pkg_with_extras_project / "meta"
     result = frontend.prepare_metadata_for_build_wheel(meta)
     return Distribution.at(result.metadata)
 
 
 def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:  # type: ignore[no-any-unimported]
-    result = Pep517VirtualEnvPackage.discover_package_dependencies(pkg_with_extras, set())
+    result = Pep517VirtualEnvPackage.dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], set())
     for left, right in zip_longest(result, (Requirement("appdirs>=1.4.3"), Requirement("colorama>=0.4.3"))):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
@@ -79,7 +85,9 @@ def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:  #
 
 def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:  # type: ignore[no-any-unimported]
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
-    result = Pep517VirtualEnvPackage.discover_package_dependencies(pkg_with_extras, {"docs", "testing"})
+    result = Pep517VirtualEnvPackage.dependencies_with_extras(
+        [Requirement(i) for i in pkg_with_extras.requires], {"docs", "testing"}
+    )
     exp = [
         Requirement("appdirs>=1.4.3"),
         Requirement("colorama>=0.4.3"),
@@ -91,3 +99,19 @@ def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None: 
     for left, right in zip_longest(result, exp):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
+
+
+def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv:a]\npackage=dev\nextras=docs\n[testenv:b]\npackage=sdist\nextras=format"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--root", str(pkg_with_extras_project), "-e", "a,b")
+    result.assert_success()
+    installs = {
+        i[0][0].conf.name: i[0][3].cmd[5:]
+        for i in execute_calls.call_args_list
+        if i[0][3].run_id.startswith("install_package_deps")
+    }
+    assert installs == {
+        "a": ["setuptools", "wheel", "appdirs>=1.4.3", "colorama>=0.4.3", "sphinx>=3", "sphinx-rtd-theme<1,>=0.4.3"],
+        "b": ["appdirs>=1.4.3", "colorama>=0.4.3", "black>=3", "flake8"],
+    }
