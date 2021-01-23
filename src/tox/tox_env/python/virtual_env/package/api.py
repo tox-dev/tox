@@ -1,6 +1,7 @@
 import os
 import sys
 from contextlib import contextmanager
+from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from threading import RLock
@@ -95,6 +96,7 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
         self._build_wheel_cache: Optional[WheelResult] = None
         self._backend_executor: Optional[LocalSubProcessPep517Executor] = None
         self._package_dependencies: Optional[List[Requirement]] = None
+        self._package_dev_dependencies: Optional[List[Requirement]] = None
         self._lock = RLock()  # can build only one package at a time
         self._package: Dict[Tuple[PackageType, str], Any] = {}
         self._run_env_to_wheel_builder_env: Dict[str, PackageToxEnv] = {}
@@ -203,27 +205,28 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
 
     def get_package_dependencies(self, for_env: EnvConfigSet) -> List[Requirement]:
         env_name = for_env.name
-        extras: Set[str] = for_env["extras"]
         with self._lock:
             if self._package_dependencies is None:  # pragma: no branch
                 self._ensure_meta_present()
-                dependencies: List[Requirement] = []
-                of_type, _ = self._run_env_to_info[env_name]
-                if of_type == PackageType.dev:
-                    dependencies.extend(self.requires())
-                    dependencies.extend(self.get_requires_for_build_sdist().requires)
-                dependencies.extend(self.discover_package_dependencies(self._distribution_meta, extras))
-                self._package_dependencies = dependencies
-        return self._package_dependencies
+                requires: List[str] = cast(PathDistribution, self._distribution_meta).requires or []
+                self._package_dependencies = [Requirement(i) for i in requires]
+            of_type, _ = self._run_env_to_info[env_name]
+            if of_type == PackageType.dev and self._package_dev_dependencies is None:
+                self._package_dev_dependencies = [*self.requires(), *self.get_requires_for_build_sdist().requires]
+        if of_type == PackageType.dev:
+            result: List[Requirement] = cast(List[Requirement], self._package_dev_dependencies).copy()
+        else:
+            result = []
+        extras: Set[str] = for_env["extras"]
+        result.extend(self.dependencies_with_extras(self._package_dependencies, extras))
+        return result
 
     @staticmethod
-    def discover_package_dependencies(meta: PathDistribution, extras: Set[str]) -> List[Requirement]:
+    def dependencies_with_extras(deps: List[Requirement], extras: Set[str]) -> List[Requirement]:
         result: List[Requirement] = []
-        requires = meta.requires or []
-        for req_str in requires:
-            req = Requirement(req_str)
+        for req in deps:
+            req = deepcopy(req)
             markers: List[Union[str, Tuple[Variable, Variable, Variable]]] = getattr(req.marker, "_markers", []) or []
-
             # find the extra marker (if has)
             _at: Optional[int] = None
             extra: Optional[str] = None
@@ -241,7 +244,6 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
                     if len(markers) == 0:
                         req.marker = None
                     break
-            # continue only if this extra should be included
             if not (extra is None or extra in extras):
                 continue
             result.append(req)
