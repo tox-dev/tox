@@ -15,9 +15,9 @@ and `devpi <https://devpi.net/>`_).
 .. image:: https://readthedocs.org/projects/tox/badge/?version=latest&style=flat-square
   :target: https://tox.tox-dev.io
   :alt: Documentation status
-.. image:: https://img.shields.io/gitter/room/tox-dev/tox?color=FF004F&style=flat-square
-  :target: https://gitter.im/tox-dev/Lobby
-  :alt: Gitter
+.. image:: https://img.shields.io/discord/802911963368783933?style=flat-square
+  :target: https://discord.gg/edtj86wzBX
+  :alt: Discord
 .. image:: https://img.shields.io/pypi/dm/tox?style=flat-square
   :target: https://pypistats.org/packages/tox
   :alt: PyPI - Downloads
