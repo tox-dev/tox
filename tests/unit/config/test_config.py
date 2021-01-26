@@ -1502,6 +1502,7 @@ class TestConfigTestEnv:
         assert "PATH" in envconfig.passenv
         assert "PIP_INDEX_URL" in envconfig.passenv
         assert "PIP_EXTRA_INDEX_URL" in envconfig.passenv
+        assert "PIP_TRUSTED_HOST" in envconfig.passenv
         assert "REQUESTS_CA_BUNDLE" in envconfig.passenv
         assert "SSL_CERT_FILE" in envconfig.passenv
         assert "LANG" in envconfig.passenv

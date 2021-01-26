@@ -1,0 +1,1 @@
+Add `PIP_TRUSTED_HOST` to default passenv variables - by :user:`d-ryzhikov`

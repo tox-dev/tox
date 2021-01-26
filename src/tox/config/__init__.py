@@ -759,6 +759,7 @@ def tox_addoption(parser):
             "PATH",
             "PIP_INDEX_URL",
             "PIP_EXTRA_INDEX_URL",
+            "PIP_TRUSTED_HOST",
             "REQUESTS_CA_BUNDLE",
             "SSL_CERT_FILE",
             "TOX_WORK_DIR",
