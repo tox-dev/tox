@@ -59,7 +59,13 @@ class RunToxEnv(ToxEnv, ABC):
             keys=["change_dir", "changedir"],
             of_type=Path,
             default=lambda conf, name: cast(Path, conf.core["tox_root"]),
-            desc="Change to this working directory when executing the test command.",
+            desc="change to this working directory when executing the test command",
+        )
+        self.conf.add_config(
+            keys=["ignore_errors"],
+            of_type=bool,
+            default=False,
+            desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
         )
         self.has_package = self.add_package_conf()
 

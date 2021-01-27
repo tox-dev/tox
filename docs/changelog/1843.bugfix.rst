@@ -1,0 +1,2 @@
+Fix handling of ``commands_pre``/``commands``/``commands_post`` to be in line with tox 3 (returned incorrect exit codes
+and post was not always executed) - by :user:`gaborbernat`.

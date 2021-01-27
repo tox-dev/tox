@@ -161,8 +161,8 @@ def test_recreate_package(tox_project: ToxProjectCreator, demo_pkg_inline: Path)
 def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     build = (demo_pkg_inline / "build.py").read_text()
-    ini = "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"
-    proj = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build})
+    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel", "pyproject.toml": toml, "build.py": build})
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
 
     result_first = proj.run("r")
     result_first.assert_success()
@@ -170,12 +170,7 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
 
     # new deps are picked up
     (proj.path / "pyproject.toml").write_text(toml.replace("requires = []", 'requires = ["wheel"]'))
-    (proj.path / "build.py").write_text(
-        build.replace(
-            "def get_requires_for_build_wheel(config_settings):\n    return []",
-            "def get_requires_for_build_wheel(config_settings):\n    return ['setuptools']",
-        )
-    )
+    (proj.path / "build.py").write_text(build.replace("return []", "return ['setuptools']"))
 
     result_rerun = proj.run("r")
     result_rerun.assert_success()
@@ -389,3 +384,58 @@ def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: 
         (".pkg", "_exit"),
     ]
     assert calls == expected
+
+
+def _c(code: int) -> str:
+    return f"python -c 'raise SystemExit({code})'"
+
+
+def test_commands_pre_fail_post_runs(tox_project: ToxProjectCreator) -> None:
+    ini = f"[testenv]\npackage=skip\ncommands_pre={_c(8)}\ncommands={_c(0)}\ncommands_post={_c(9)}"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run()
+    result.assert_failed(code=8)
+    assert "commands_pre[0]" in result.out
+    assert "commands[0]" not in result.out
+    assert "commands_post[0]" in result.out
+
+
+def test_commands_pre_pass_post_runs_main_fails(tox_project: ToxProjectCreator) -> None:
+    ini = f"[testenv]\npackage=skip\ncommands_pre={_c(0)}\ncommands={_c(8)}\ncommands_post={_c(9)}"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run()
+    result.assert_failed(code=8)
+    assert "commands_pre[0]" in result.out
+    assert "commands[0]" in result.out
+    assert "commands_post[0]" in result.out
+
+
+def test_commands_post_fails_exit_code(tox_project: ToxProjectCreator) -> None:
+    ini = f"[testenv]\npackage=skip\ncommands_pre={_c(0)}\ncommands={_c(0)}\ncommands_post={_c(9)}"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run()
+    result.assert_failed(code=9)
+    assert "commands_pre[0]" in result.out
+    assert "commands[0]" in result.out
+    assert "commands_post[0]" in result.out
+
+
+@pytest.mark.parametrize(
+    ["pre", "main", "post", "outcome"],
+    [
+        (0, 8, 0, 8),
+        (0, 0, 8, 8),
+        (8, 0, 0, 8),
+    ],
+)
+def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: int, post: int, outcome: int) -> None:
+    def _s(key: str, code: int) -> str:
+        return f"\ncommands{key}=\n {_c(code)}\n {'' if code == 0 else _c(code+1)}"
+
+    ini = f"[testenv]\npackage=skip\nignore_errors=True{_s('_pre', pre)}{_s('', main)}{_s('_post', post)}"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run()
+    result.assert_failed(code=outcome)
+    assert "commands_pre[0]" in result.out
+    assert "commands[0]" in result.out
+    assert "commands_post[0]" in result.out

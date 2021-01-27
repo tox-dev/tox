@@ -2,6 +2,7 @@ import sys
 import tarfile
 from pathlib import Path
 from textwrap import dedent
+from typing import Dict, List, Optional
 from zipfile import ZipFile
 
 name = "demo_pkg_inline"
@@ -42,7 +43,11 @@ content = {
 }
 
 
-def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):
+def build_wheel(
+    wheel_directory: str,
+    metadata_directory: Optional[str] = None,
+    config_settings: Optional[Dict[str, str]] = None,
+) -> str:
     base_name = f"{name}-{version}-py{sys.version_info.major}-none-any.whl"
     path = Path(wheel_directory) / base_name
     with ZipFile(str(path), "w") as zip_file_handler:
@@ -52,11 +57,11 @@ def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):
     return base_name
 
 
-def get_requires_for_build_wheel(config_settings):
+def get_requires_for_build_wheel(config_settings: Optional[Dict[str, str]] = None) -> List[str]:
     return []  # pragma: no cover # only executed in non-host pythons
 
 
-def build_sdist(sdist_directory, config_settings=None):
+def build_sdist(sdist_directory: str, config_settings: Optional[Dict[str, str]] = None) -> str:
     result = f"{name}-{version}.tar.gz"
     with tarfile.open(str(Path(sdist_directory) / result), "w:gz") as tar:
         root = Path(__file__).parent
@@ -65,5 +70,5 @@ def build_sdist(sdist_directory, config_settings=None):
     return result
 
 
-def get_requires_for_build_sdist(config_settings):
+def get_requires_for_build_sdist(config_settings: Optional[Dict[str, str]] = None) -> List[str]:
     return []  # pragma: no cover # only executed in non-host pythons
