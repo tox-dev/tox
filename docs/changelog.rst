@@ -11,6 +11,17 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.21.3 (2021-01-28)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix a killed tox (via SIGTERM) leaving the commands subprocesses running
+  by handling it as if it were a KeyboardInterrupt - by :user:`dajose`
+  `#1772 <https://github.com/tox-dev/tox/issues/1772>`_
+
+
 v3.21.2 (2021-01-19)
 --------------------
 
