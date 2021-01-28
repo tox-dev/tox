@@ -1,2 +1,0 @@
-Fix a killed tox (via SIGTERM) leaving the commands subprocesses running
-by handling it as if it were a KeyboardInterrupt - by :user:`dajose`
