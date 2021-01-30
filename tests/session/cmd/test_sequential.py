@@ -5,7 +5,7 @@ from pathlib import Path
 from signal import SIGINT
 from subprocess import PIPE, Popen
 from time import sleep
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pytest
 from re_assert import Matches
@@ -45,7 +45,7 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.timeout(120)
 @pytest.mark.integration
-def test_result_json_sequential(tox_project: ToxProjectCreator) -> None:
+def test_result_json_sequential(tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
         "python -c 'import sys; print(\"magic pass\"); sys.exit(0)'",

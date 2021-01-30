@@ -1,4 +1,3 @@
-from tox.config.main import Config
 from tox.config.of_type import ConfigConstantDefinition, ConfigDynamicDefinition
 
 
@@ -9,7 +8,7 @@ def test_config_constant_eq() -> None:
 
 
 def test_config_dynamic_eq() -> None:
-    def func(name: str, _: Config) -> str:
+    def func(name: str) -> str:
         return name  # pragma: no cover
 
     val_1 = ConfigDynamicDefinition(("key",), "description", "env", str, "default", post_process=func)

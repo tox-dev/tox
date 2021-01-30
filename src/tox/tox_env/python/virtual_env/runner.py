@@ -121,7 +121,7 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
         }
 
     def install_requirement_file(self, path: Path) -> None:
-        install_command = self.base_install_cmd + ["-r", str(path)]
+        install_command = self.build_install_cmd(["-r", str(path)])
         result = self.perform_install(install_command, "install_deps")
         result.assert_success()
 

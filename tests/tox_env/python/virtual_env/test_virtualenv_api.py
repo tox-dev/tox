@@ -1,10 +1,12 @@
 import os
+from typing import Tuple
 
 import pytest
 from pytest_mock import MockerFixture
 from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
 
+from tox.execute import ExecuteRequest
 from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator
 
 
@@ -130,3 +132,16 @@ def test_pip_pre(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, on: b
         assert "--pre" in execute_calls.call_args[0][3].cmd
     else:
         assert "--pre" not in execute_calls.call_args[0][3].cmd
+
+
+def test_install_command_no_packages(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, disable_pip_pypi_access: Tuple[str, str]
+) -> None:
+    install_cmd = "python -m pip install -i {env:PIP_INDEX_URL}"
+    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\ninstall_command={install_cmd}\npip_pre=true\ndeps=magic"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r")
+    result.assert_success()
+    request: ExecuteRequest = execute_calls.call_args[0][3]
+    found_cmd = request.cmd
+    assert found_cmd[:-1] == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "-r"]
