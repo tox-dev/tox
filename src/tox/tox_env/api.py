@@ -12,7 +12,6 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Sequence, Tuple, Union, cast
 
-from tox.config.main import Config
 from tox.config.set_env import SetEnv
 from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
@@ -94,7 +93,7 @@ class ToxEnv(ABC):
         )
         self.conf.default_set_env_loader = self.default_set_env
 
-        def pass_env_post_process(values: List[str], config: Config) -> List[str]:
+        def pass_env_post_process(values: List[str]) -> List[str]:
             values.extend(self.default_pass_env())
             return sorted(list({k: None for k in values}.keys()))
 

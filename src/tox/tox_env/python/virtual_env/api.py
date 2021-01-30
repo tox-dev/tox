@@ -12,7 +12,9 @@ from virtualenv.run.session import Session
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed
 from tox.config.loader.str_convert import StrConvert
+from tox.config.main import Config
 from tox.config.sets import CoreConfigSet, EnvConfigSet
+from tox.config.types import Command
 from tox.execute.api import Execute, Outcome, StdinSource
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.journal import EnvJournal
@@ -65,6 +67,33 @@ class VirtualEnv(Python, ABC):
             default=False,
             desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
         )
+
+        self.conf.add_config(
+            keys=["install_command"],
+            of_type=Command,
+            default=self.default_install_command,
+            post_process=self.post_process_install_command,
+            desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
+        )
+
+    def post_process_install_command(self, cmd: Command) -> Command:
+        install_command = cmd.args
+        pip_pre: bool = self.conf["pip_pre"]
+        try:
+            opts_at = install_command.index("{opts}")
+        except ValueError:
+            if pip_pre:
+                install_command.append("--pre")
+        else:
+            if pip_pre:
+                install_command[opts_at] = "--pre"
+            else:
+                install_command.pop(opts_at)
+        return cmd
+
+    def default_install_command(self, conf: Config, env_name: Optional[str]) -> Command:  # noqa
+        cmd = Command(["python", "-I", "-m", "pip", "install", "{opts}", "{packages}"])
+        return self.post_process_install_command(cmd)
 
     def setup(self) -> None:
         with self._cache.compare({"version": virtualenv_version}, VirtualEnv.__name__) as (eq, old):
@@ -153,23 +182,30 @@ class VirtualEnv(Python, ABC):
     ) -> None:
         if not packages:
             return
-        install_command = self.base_install_cmd
-        if no_deps:
-            install_command.append("--no-deps")
-        if force_reinstall:
-            install_command.append("--force-reinstall")
-        if develop is True:
-            install_command.extend(("--no-build-isolation", "-e"))
 
-        install_command.extend(str(i) for i in packages)
+        args: List[str] = []
+        if no_deps:
+            args.append("--no-deps")
+        if force_reinstall:
+            args.append("--force-reinstall")
+        if develop is True:
+            args.extend(("--no-build-isolation", "-e"))
+        args.extend(str(i) for i in packages)
+        install_command = self.build_install_cmd(args)
+
         result = self.perform_install(install_command, f"install_{of_type}")
         result.assert_success()
 
-    @property
-    def base_install_cmd(self) -> List[str]:
-        result = [str(self.creator.exe), "-I", "-m", "pip", "install"]
-        if self.conf["pip_pre"]:
-            result.append("--pre")
+    def build_install_cmd(self, args: Sequence[str]) -> List[str]:
+        cmd: Command = self.conf["install_command"]
+        install_command = cmd.args
+        try:
+            opts_at = install_command.index("{packages}")
+        except ValueError:
+            opts_at = len(install_command)
+        result = install_command[:opts_at]
+        result.extend(args)
+        result.extend(install_command[opts_at + 1 :])
         return result
 
     def perform_install(self, install_command: Sequence[str], run_id: str) -> Outcome:

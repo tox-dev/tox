@@ -44,7 +44,7 @@ class ConfigSet:
         of_type: Type[V],
         default: Union[Callable[["Config", Optional[str]], V], V],
         desc: str,
-        post_process: Optional[Callable[[V, "Config"], V]] = None,
+        post_process: Optional[Callable[[V], V]] = None,
         kwargs: Optional[Mapping[str, Any]] = None,
     ) -> ConfigDynamicDefinition[V]:
         """
@@ -149,7 +149,7 @@ class EnvConfigSet(ConfigSet):
         super().__init__(conf, name=name)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}
 
-        def set_env_post_process(values: SetEnv, config: "Config") -> SetEnv:
+        def set_env_post_process(values: SetEnv) -> SetEnv:
             values.update_if_not_present(self.default_set_env_loader())
             return values
 

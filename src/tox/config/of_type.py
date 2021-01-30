@@ -70,7 +70,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         env_name: Optional[str],
         of_type: Type[T],
         default: Union[Callable[["Config", Optional[str]], T], T],
-        post_process: Optional[Callable[[T, "Config"], T]] = None,
+        post_process: Optional[Callable[[T], T]] = None,
         kwargs: Optional[Mapping[str, Any]] = None,
     ) -> None:
         super().__init__(keys, desc, env_name)
@@ -96,7 +96,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
             else:
                 value = self.default(conf, self.env_name) if callable(self.default) else self.default
             if self.post_process is not None:
-                value = self.post_process(value, conf)  # noqa
+                value = self.post_process(value)  # noqa
             self._cache = value
         return cast(T, self._cache)
 

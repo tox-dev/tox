@@ -11,8 +11,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 from tox.config.loader.memory import MemoryLoader
-from tox.config.main import Config
-from tox.config.sets import ConfigSet
+from tox.config.sets import CoreConfigSet
 from tox.execute.api import StdinSource
 from tox.plugin.impl import impl
 from tox.session.state import State
@@ -45,7 +44,7 @@ def tox_add_option(parser: ArgumentParser) -> None:
 
 
 @impl
-def tox_add_core_config(core: ConfigSet) -> None:
+def tox_add_core_config(core: CoreConfigSet) -> None:
     core.add_config(
         keys=["min_version", "minversion"],
         of_type=Version,
@@ -60,8 +59,8 @@ def tox_add_core_config(core: ConfigSet) -> None:
         desc="Name of the virtual environment used to provision a tox.",
     )
 
-    def add_tox_requires_min_version(requires: List[Requirement], conf: Config) -> List[Requirement]:
-        min_version: Version = conf.core["min_version"]
+    def add_tox_requires_min_version(requires: List[Requirement]) -> List[Requirement]:  # noqa
+        min_version: Version = core["min_version"]
         requires.append(Requirement(f"tox >= {min_version.public}"))
         return requires
 
