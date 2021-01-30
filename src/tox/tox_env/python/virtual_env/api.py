@@ -59,6 +59,12 @@ class VirtualEnv(Python, ABC):
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
         )
+        self.conf.add_config(
+            keys=["pip_pre"],
+            of_type=bool,
+            default=False,
+            desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
+        )
 
     def setup(self) -> None:
         with self._cache.compare({"version": virtualenv_version}, VirtualEnv.__name__) as (eq, old):
@@ -154,13 +160,17 @@ class VirtualEnv(Python, ABC):
             install_command.append("--force-reinstall")
         if develop is True:
             install_command.extend(("--no-build-isolation", "-e"))
+
         install_command.extend(str(i) for i in packages)
         result = self.perform_install(install_command, f"install_{of_type}")
         result.assert_success()
 
     @property
     def base_install_cmd(self) -> List[str]:
-        return [str(self.creator.exe), "-I", "-m", "pip", "install"]
+        result = [str(self.creator.exe), "-I", "-m", "pip", "install"]
+        if self.conf["pip_pre"]:
+            result.append("--pre")
+        return result
 
     def perform_install(self, install_command: Sequence[str], run_id: str) -> Outcome:
         return self.execute(

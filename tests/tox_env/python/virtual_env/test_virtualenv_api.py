@@ -118,3 +118,15 @@ def test_recreate_when_virtualenv_changes(
     mocker.patch.object(api, "virtualenv_version", "1.0")
     result = proj.run("r")
     assert "remove tox env folder" in result.out
+
+
+@pytest.mark.parametrize("on", [True, False])
+def test_pip_pre(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, on: bool) -> None:
+    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\npip_pre={on}\ndeps=magic"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "-e", "py")
+    result.assert_success()
+    if on:
+        assert "--pre" in execute_calls.call_args[0][3].cmd
+    else:
+        assert "--pre" not in execute_calls.call_args[0][3].cmd
