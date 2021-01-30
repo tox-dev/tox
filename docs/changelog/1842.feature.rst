@@ -1,0 +1,2 @@
+Add support for the ``list_dependencies_command`` settings in the virtual env test environments - by
+:user:`gaborbernat`.
