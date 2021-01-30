@@ -1,0 +1,1 @@
+Add support for the ``recreate`` settings in tox test environments - by :user:`gaborbernat`.

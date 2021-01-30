@@ -105,12 +105,17 @@ class ToxEnv(ABC):
             desc="environment variables to pass on to the tox environment",
             post_process=pass_env_post_process,
         )
-
         self.conf.add_config(
             "parallel_show_output",
             of_type=bool,
             default=False,
             desc="if set to True the content of the output will always be shown  when running in parallel mode",
+        )
+        self.conf.add_config(
+            "recreate",
+            of_type=bool,
+            default=False,
+            desc="always recreate virtual environment if this option is true, otherwise leave it up to tox",
         )
 
     def default_set_env(self) -> Dict[str, str]:
@@ -161,6 +166,8 @@ class ToxEnv(ABC):
     def ensure_setup(self, recreate: bool = False) -> None:
         if self.setup_done is True:
             return
+        if self.conf["recreate"]:
+            recreate = True
         if recreate:
             self.clean()
         try:
