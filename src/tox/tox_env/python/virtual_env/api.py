@@ -1,6 +1,7 @@
 """
 Declare the abstract base class for tox environments that handle the Python language via the virtualenv project.
 """
+import sys
 from abc import ABC
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, cast
@@ -232,3 +233,7 @@ class VirtualEnv(Python, ABC):
         )
         result.assert_success()
         return result.out.splitlines()
+
+    @property
+    def runs_on_platform(self) -> str:
+        return sys.platform

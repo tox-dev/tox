@@ -112,16 +112,6 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
     )
 
 
-def run_and_report(state: State, result: List[ToxEnvRunResult]) -> int:
-    # manifest the results
-    name_to_run = {r.name: r for r in result}
-    runs = [name_to_run[n] for n in list(state.env_list(everything=False))]
-    # write the journal
-    write_journal(getattr(state.options, "result_json", None), state.journal)
-    # report the outcome
-    return report(state.options.start, runs, state.options.is_colored)
-
-
 def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
     def _print(color: int, message: str) -> None:
         print(f"{color if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
@@ -153,15 +143,17 @@ def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool)
     interrupt, done = Event(), Event()
     results: List[ToxEnvRunResult] = []
     future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
-    for env in list(state.env_list()):  # ensure envs can be constructed
-        state.tox_env(env)
+    to_run_list: List[str] = []
+    for env in state.env_list():  # ensure envs can be constructed and are active
+        if state.tox_env(env).active:
+            to_run_list.append(env)
     previous, has_previous = None, False
     try:
         try:
             thread = Thread(
                 target=_queue_and_wait,
                 name="tox-interrupt",
-                args=(state, results, future_to_env, interrupt, done, max_workers, spinner, live),
+                args=(state, to_run_list, results, future_to_env, interrupt, done, max_workers, spinner, live),
             )
             thread.start()
             thread.join()
@@ -174,7 +166,14 @@ def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool)
                     tox_env.interrupt()
             done.wait()
     finally:
-        exit_code = run_and_report(state, results)
+        ordered_results: List[ToxEnvRunResult] = []
+        name_to_run = {r.name: r for r in results}
+        for env in to_run_list:
+            ordered_results.append(name_to_run[env])
+        # write the journal
+        write_journal(getattr(state.options, "result_json", None), state.journal)
+        # report the outcome
+        exit_code = report(state.options.start, ordered_results, state.options.is_colored)
         if has_previous:
             signal(SIGINT, previous)
         if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover
@@ -207,6 +206,7 @@ class ToxSpinner(Spinner):
 
 def _queue_and_wait(
     state: State,
+    to_run_list: List[str],
     results: List[ToxEnvRunResult],
     future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv],
     interrupt: Event,
@@ -217,7 +217,6 @@ def _queue_and_wait(
 ) -> None:
     try:
         options = state.options
-        to_run_list = list(state.env_list())
         with ToxSpinner(has_spinner, state, len(to_run_list)) as spinner:
             max_workers = len(to_run_list) if max_workers is None else max_workers
             completed: Set[str] = set()
