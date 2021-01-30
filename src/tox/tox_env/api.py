@@ -92,6 +92,12 @@ class ToxEnv(ABC):
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.default_set_env_loader = self.default_set_env
+        self.conf.add_config(
+            keys=["platform"],
+            of_type=str,
+            default="",
+            desc="run on platforms that match this regular expression (empty means any platform)",
+        )
 
         def pass_env_post_process(values: List[str]) -> List[str]:
             values.extend(self.default_pass_env())
@@ -336,6 +342,19 @@ class ToxEnv(ABC):
 
     def teardown(self) -> None:
         """Any cleanup operation on environment done"""
+
+    @property
+    @abstractmethod
+    def runs_on_platform(self) -> str:
+        raise NotImplementedError
+
+    @property
+    def active(self) -> bool:
+        platform_str: str = self.conf["platform"]
+        if not platform_str:
+            return True
+        match = re.fullmatch(platform_str, self.runs_on_platform)
+        return match is not None
 
 
 _CWD = Path.cwd()
