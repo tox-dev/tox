@@ -145,3 +145,13 @@ def test_install_command_no_packages(
     request: ExecuteRequest = execute_calls.call_args[0][3]
     found_cmd = request.cmd
     assert found_cmd[:-1] == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "-r"]
+
+
+def test_list_dependencies_command(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    install_cmd = "python -m pip freeze"
+    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={install_cmd}"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--result-json", str(proj.path / "out.json"))
+    result.assert_success()
+    request: ExecuteRequest = execute_calls.call_args[0][3]
+    assert request.cmd == ["python", "-m", "pip", "freeze"]

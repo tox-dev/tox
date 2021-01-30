@@ -67,12 +67,17 @@ class VirtualEnv(Python, ABC):
             default=False,
             desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
         )
-
         self.conf.add_config(
             keys=["install_command"],
             of_type=Command,
             default=self.default_install_command,
             post_process=self.post_process_install_command,
+            desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
+        )
+        self.conf.add_config(
+            keys=["list_dependencies_command"],
+            of_type=Command,
+            default=Command(["python", "-m", "pip", "freeze", "--all"]),
             desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
         )
 
@@ -218,9 +223,9 @@ class VirtualEnv(Python, ABC):
         )
 
     def get_installed_packages(self) -> List[str]:
-        list_command = [self.creator.exe, "-I", "-m", "pip", "freeze", "--all"]
+        cmd: Command = self.conf["list_dependencies_command"]
         result = self.execute(
-            cmd=list_command,
+            cmd=cmd.args,
             stdin=StdinSource.OFF,
             run_id="freeze",
             show=self.options.verbosity > DEFAULT_VERBOSITY,
