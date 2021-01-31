@@ -141,3 +141,9 @@ def test_show_config_select_only(tox_project: ToxProjectCreator) -> None:
     parser.read_string(result.out)
     sections = set(parser.sections())
     assert sections == {"testenv:.pkg", "testenv:b"}
+
+
+def test_show_config_alias(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "setenv")
+    outcome.assert_success()
+    assert "set_env = " in outcome.out

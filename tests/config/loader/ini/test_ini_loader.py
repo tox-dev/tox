@@ -38,3 +38,21 @@ def test_ini_loader_raw_strip_escaped_newline(mk_ini_conf: Callable[[str], Confi
     loader = IniLoader("tox", mk_ini_conf(f"[tox]{sep}a=b\\{sep} c"), [])
     result = loader.load(key="a", of_type=str, conf=None, env_name=None, chain=[], kwargs={})
     assert result == "bc"
+
+
+@pytest.mark.parametrize(
+    ["case", "result"],
+    [
+        ("# a", ""),
+        ("#", ""),
+        ("a # w", "a"),
+        ("a\t# w", "a"),
+        ("a# w", "a"),
+        ("a\\# w", "a\\# w"),
+        ("#a\n b # w\n w", "b\nw"),
+    ],
+)
+def test_ini_loader_strip_comments(mk_ini_conf: Callable[[str], ConfigParser], case: str, result: str) -> None:
+    loader = IniLoader("tox", mk_ini_conf(f"[tox]\na={case}"), [])
+    outcome = loader.load(key="a", of_type=str, conf=None, env_name=None, chain=[], kwargs={})
+    assert outcome == result
