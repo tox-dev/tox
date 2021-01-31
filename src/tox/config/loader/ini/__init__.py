@@ -1,4 +1,5 @@
 import inspect
+import re
 from concurrent.futures import Future
 from configparser import ConfigParser, SectionProxy
 from contextlib import contextmanager
@@ -30,11 +31,21 @@ class IniLoader(StrConvert, Loader[str]):
 
     def load_raw(self, key: str, conf: Optional[Config], env_name: Optional[str]) -> str:
         value = self._section[key]
-        collapsed_newlines = value.replace("\\\r\n", "").replace("\\\n", "")  # collapse explicit new-line escape
+        collapsed_newlines = value.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
+        # strip comments
+        strip_comments = "\n".join(
+            no_comment
+            for no_comment in (
+                re.sub(r"(\s)*(?<!\\)#.*", "", line)
+                for line in collapsed_newlines.split("\n")
+                if not line.startswith("#")
+            )
+            if no_comment.strip()
+        )
         if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
-            factor_filtered = collapsed_newlines  # we don't support factor and replace functionality there
+            factor_filtered = strip_comments  # we don't support factor and replace functionality there
         else:
-            factor_filtered = filter_for_env(collapsed_newlines, env_name)  # select matching factors
+            factor_filtered = filter_for_env(strip_comments, env_name)  # select matching factors
         return factor_filtered
 
     @contextmanager

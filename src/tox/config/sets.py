@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -36,7 +35,8 @@ class ConfigSet:
         self._conf = conf
         self.loaders: List[Loader[Any]] = []
         self._defined: Dict[str, ConfigDefinition[Any]] = {}
-        self._keys: Dict[str, None] = OrderedDict()
+        self._keys: Dict[str, None] = {}
+        self._alias: Dict[str, str] = {}
 
     def add_config(
         self,
@@ -76,6 +76,8 @@ class ConfigSet:
                 raise ValueError(f"config {key} already defined")
         else:
             self._keys[key] = None
+            for item in keys:
+                self._alias[item] = key
             for key in keys:
                 self._defined[key] = definition
         return definition
@@ -101,6 +103,9 @@ class ConfigSet:
     def __iter__(self) -> Iterator[str]:
         return iter(self._keys.keys())
 
+    def __contains__(self, item: str) -> bool:
+        return item in self._alias
+
     def unused(self) -> List[str]:
         """Return a list of keys present in the config source but not used"""
         found: Set[str] = set()
@@ -108,6 +113,9 @@ class ConfigSet:
             found.update(loader.found_keys())
         found -= self._defined.keys()
         return list(sorted(found))
+
+    def primary_key(self, key: str) -> str:
+        return self._alias[key]
 
 
 class CoreConfigSet(ConfigSet):
