@@ -15,15 +15,22 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command(
         "devenv",
         ["d"],
-        "sets up a development environment at ENVDIR based on the env's tox configuration specified ",
+        "sets up a development environment at ENVDIR based on the tox configuration specified ",
         devenv,
     )
     our.add_argument("devenv_path", metavar="path", default=Path("venv").absolute(), nargs="?")
     env_list_flag(our, default=CliEnv("py"))
-    env_run_create_flags(our)
+    env_run_create_flags(our, mode="devenv")
 
 
 def devenv(state: State) -> int:
+    opt = state.options
+    opt.skip_missing_interpreters = False
+    opt.no_test = False
+    opt.package_only = False
+    opt.install_pkg = None
+    opt.skip_pkg_install = False
+
     env_list = list(state.env_list(everything=False))
     if len(env_list) != 1:
         raise HandledError(f"exactly one target environment allowed in devenv mode but found {', '.join(env_list)}")

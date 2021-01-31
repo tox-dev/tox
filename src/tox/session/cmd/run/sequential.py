@@ -13,7 +13,7 @@ from .common import env_run_create_flags, execute
 def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run", ["r"], "run environments", run_sequential)
     env_list_flag(our)
-    env_run_create_flags(our)
+    env_run_create_flags(our, mode="run")
 
 
 def run_sequential(state: State) -> int:

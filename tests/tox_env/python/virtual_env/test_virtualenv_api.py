@@ -175,3 +175,18 @@ def test_platform_filter(
         assert "py" in result.out
     else:
         assert "py" not in result.out
+
+
+@pytest.mark.parametrize("mode", ["r", "p", "le"])
+def test_install_pkg(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, mode: str) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    file = proj.path / "a"
+    file.write_text("")
+
+    result = proj.run(mode, "--installpkg", str(file))
+
+    result.assert_success()
+    execute_calls.assert_called_once()
+    request: ExecuteRequest = execute_calls.call_args[0][3]
+    assert request.cmd == ["python", "-I", "-m", "pip", "install", "--no-deps", "--force-reinstall", str(file)]

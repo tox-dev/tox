@@ -47,7 +47,7 @@ def tox_add_option(parser: ToxParser) -> None:
         of_type=Path,
     )
     env_list_flag(our)
-    env_run_create_flags(our)
+    env_run_create_flags(our, mode="legacy")
     parallel_flags(our, default_parallel=OFF_VALUE)
     our.add_argument(
         "--pre",
@@ -75,11 +75,13 @@ def tox_add_option(parser: ToxParser) -> None:
         "--sitepackages",
         action="store_true",
         help="override sitepackages setting to True in all envs",
+        dest="site_packages",
     )
     our.add_argument(
         "--alwayscopy",
         action="store_true",
-        help="override alwayscopy setting to True in all envs",
+        help="override always copy setting to True in all envs",
+        dest="always_copy",
     )
 
 

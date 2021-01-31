@@ -2,7 +2,7 @@
 import logging
 import os
 import time
-from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
+from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
@@ -27,17 +27,36 @@ class SkipMissingInterpreterAction(Action):
     def __call__(
         self,
         parser: ArgumentParser,  # noqa
-        args: Namespace,
+        namespace: Namespace,
         values: Union[str, Sequence[Any], None],
         option_string: Optional[str] = None,
     ) -> None:
         value = "true" if values is None else values
         if value not in ("config", "true", "false"):
-            raise ArgumentTypeError(f"value must be 'config', 'true', or 'false' (got {repr(value)})")
-        setattr(args, self.dest, value)
+            raise ArgumentError(self, f"value must be 'config', 'true', or 'false' (got {repr(value)})")
+        setattr(namespace, self.dest, value)
 
 
-def env_run_create_flags(parser: ArgumentParser) -> None:
+class InstallPackageAction(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,  # noqa
+        namespace: Namespace,
+        values: Union[str, Sequence[Any], None],
+        option_string: Optional[str] = None,
+    ) -> None:
+        if not values:
+            raise ArgumentError(self, "cannot be empty")
+        path = Path(cast(str, values)).absolute()
+        if not path.exists():
+            raise ArgumentError(self, f"{path} does not exist")
+        if not path.is_file():
+            raise ArgumentError(self, f"{path} is not a file")
+        setattr(namespace, self.dest, path)
+
+
+def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
+    # mode can be one of: run, run-parallel, legacy, devenv
     parser.add_argument(
         "--result-json",
         dest="result_json",
@@ -46,42 +65,45 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
         default=None,
         help="write a json file with detailed information about all commands and results involved",
     )
-    parser.add_argument(
-        "-s",
-        "--skip-missing-interpreters",
-        default="config",
-        metavar="v",
-        nargs="?",
-        action=SkipMissingInterpreterAction,
-        help="don't fail tests for missing interpreters: {config,true,false} choice",
-    )
-    parser.add_argument(
-        "-n",
-        "--notest",
-        dest="no_test",
-        help="do not run the test commands",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-b",
-        "--pkg-only",
-        "--sdistonly",
-        action="store_true",
-        help="only perform the packaging activity",
-        dest="package_only",
-    )
-    parser.add_argument(
-        "--installpkg",
-        help="use specified package for installation into venv, instead of creating an sdist.",
-        default=None,
-        of_type=Path,
-    )
-    parser.add_argument(
-        "--develop",
-        action="store_true",
-        help="install package in develop mode",
-        dest="develop",
-    )
+    if mode != "devenv":
+        parser.add_argument(
+            "-s",
+            "--skip-missing-interpreters",
+            default="config",
+            metavar="v",
+            nargs="?",
+            action=SkipMissingInterpreterAction,
+            help="don't fail tests for missing interpreters: {config,true,false} choice",
+        )
+        parser.add_argument(
+            "-n",
+            "--notest",
+            dest="no_test",
+            help="do not run the test commands",
+            action="store_true",
+        )
+        parser.add_argument(
+            "-b",
+            "--pkg-only",
+            "--sdistonly",
+            action="store_true",
+            help="only perform the packaging activity",
+            dest="package_only",
+        )
+        parser.add_argument(
+            "--installpkg",
+            help="use specified package for installation into venv, instead of packaging the project",
+            default=None,
+            of_type=Optional[Path],
+            action=InstallPackageAction,
+            dest="install_pkg",
+        )
+        parser.add_argument(
+            "--develop",
+            action="store_true",
+            help="install package in develop mode",
+            dest="develop",
+        )
     parser.add_argument(
         "--hashseed",
         metavar="SEED",
@@ -89,6 +111,7 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
         "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
         type=str,
         default="noset",
+        dest="hash_seed",
     )
     parser.add_argument(
         "--discover",
@@ -104,12 +127,13 @@ def env_run_create_flags(parser: ArgumentParser) -> None:
         help="if recreate is set do not recreate packaging tox environment(s)",
         action="store_true",
     )
-    parser.add_argument(
-        "--skip-pkg-install",
-        dest="skip_pkg_install",
-        help="skip package installation for this run",
-        action="store_true",
-    )
+    if mode != "devenv":
+        parser.add_argument(
+            "--skip-pkg-install",
+            dest="skip_pkg_install",
+            help="skip package installation for this run",
+            action="store_true",
+        )
 
 
 def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
