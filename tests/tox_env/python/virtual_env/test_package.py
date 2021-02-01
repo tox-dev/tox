@@ -115,3 +115,19 @@ def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_pr
         "a": ["setuptools", "wheel", "appdirs>=1.4.3", "colorama>=0.4.3", "sphinx>=3", "sphinx-rtd-theme<1,>=0.4.3"],
         "b": ["appdirs>=1.4.3", "colorama>=0.4.3", "black>=3", "flake8"],
     }
+
+
+def test_package_root_via_root(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg"
+    proj = tox_project({"tox.ini": ini})
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+
+
+def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = f"[testenv]\npackage=wheel\nwheel_build_env=.pkg\npackage_root={demo_pkg_inline}"
+    proj = tox_project({"tox.ini": ini})
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()

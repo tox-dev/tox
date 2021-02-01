@@ -90,7 +90,8 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
         self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         VirtualEnv.__init__(self, conf, core, options, journal, log_handler)
-        Frontend.__init__(self, *Frontend.create_args_from_folder(core["tox_root"]))
+        root: Path = self.conf["package_root"]
+        Frontend.__init__(self, *Frontend.create_args_from_folder(root))
         self._distribution_meta: Optional[PathDistribution] = None
         self._build_requires: Optional[Tuple[Requirement]] = None
         self._build_wheel_cache: Optional[WheelResult] = None
