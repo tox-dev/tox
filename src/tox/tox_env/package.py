@@ -3,7 +3,7 @@ A tox environment that can build packages.
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, List, Tuple
+from typing import TYPE_CHECKING, Any, Generator, List, Tuple, cast
 
 from packaging.requirements import Requirement
 
@@ -25,6 +25,21 @@ class PackageToxEnv(ToxEnv, ABC):
         super().__init__(conf, core, options, journal, log_handler)
         self.recreate_package = options.no_recreate_pkg is False if options.recreate else False
         self.ref_count = AtomicCounter()
+
+    def register_config(self) -> None:
+        super().register_config()
+        self.core.add_config(
+            keys=["package_root", "setupdir"],
+            of_type=Path,
+            default=cast(Path, self.core["tox_root"]),
+            desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
+        )
+        self.conf.add_config(
+            keys=["package_root", "setupdir"],
+            of_type=Path,
+            default=cast(Path, self.core["package_root"]),
+            desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
+        )
 
     def create_package_env(self, name: str, info: Tuple[Any, ...]) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
         """allow creating sub-package envs"""
