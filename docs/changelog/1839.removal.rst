@@ -1,0 +1,6 @@
+- Drop support for ``sdistsrc`` flag because introduces a significant complexity and is barely used (5 hits on a github
+  search).
+- ``--skip-missing-interpreters``, ``--notest``, ``--sdistonly``, ``--installpkg``, ``--develop`` and
+  ``--skip-pkg-install`` CLI flags are no longer available for ``devenv`` (enforce the only sane value for these).
+
+By :user:`gaborbernat`

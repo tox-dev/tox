@@ -24,7 +24,7 @@ DEFAULT_PARALLEL = OFF_VALUE
 def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     env_list_flag(our)
-    env_run_create_flags(our)
+    env_run_create_flags(our, mode="run-parallel")
     parallel_flags(our, default_parallel=auto_detect_cpus())
 
 

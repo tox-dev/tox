@@ -1,10 +1,7 @@
 from pathlib import Path
 
-from packaging.requirements import Requirement
-
 from tox.journal import EnvJournal
 from tox.pytest import ToxProjectCreator
-from tox.tox_env.python.api import PythonDep
 from tox.tox_env.python.runner import PythonRun
 
 
@@ -38,7 +35,7 @@ def test_journal_one_wheel_file(tmp_path: Path) -> None:
     wheel.write_bytes(b"magical")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun.handle_journal_package(journal, [PythonDep(wheel)])
+    PythonRun.handle_journal_package(journal, [wheel])
 
     content = journal.content
     assert content == {
@@ -57,7 +54,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
     wheel_2.write_bytes(b"magic")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun.handle_journal_package(journal, [PythonDep(wheel_1), PythonDep(wheel_2)])
+    PythonRun.handle_journal_package(journal, [wheel_1, wheel_2])
 
     content = journal.content
     assert content == {
@@ -79,7 +76,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
 def test_journal_packge_dir(tmp_path: Path) -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun.handle_journal_package(journal, [PythonDep(tmp_path)])
+    PythonRun.handle_journal_package(journal, [tmp_path])
 
     content = journal.content
     assert content == {
@@ -88,12 +85,3 @@ def test_journal_packge_dir(tmp_path: Path) -> None:
             "type": "dir",
         }
     }
-
-
-def test_journal_package_requirement(tmp_path: Path) -> None:
-    journal = EnvJournal(enabled=True, name="a")
-
-    PythonRun.handle_journal_package(journal, [PythonDep(Requirement("pytest"))])
-
-    content = journal.content
-    assert content == {}

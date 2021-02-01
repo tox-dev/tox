@@ -12,7 +12,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.4
+    rev: v2.8.0
     hooks:
       - id: pyupgrade
         args:
@@ -56,6 +56,6 @@ repos:
       - id: changelogs-rst
         name: changelog filenames
         language: fail
-        entry: "changelog files must be named ####.(bugfix|feature|deprecation|breaking|doc|misc).rst"
-        exclude: ^docs/changelog/(\d+\.(bugfix|feature|deprecation|breaking|doc|misc).rst|README.rst|template.jinja2)
+        entry: "changelog files must be named ####.(feature|bugfix|doc|removal|misc).rst"
+        exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|README.rst|template.jinja2)
         files: ^docs/changelog/

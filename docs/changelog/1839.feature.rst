@@ -1,0 +1,1 @@
+Implement support for the ``--installpkg`` CLI flag - by :user:`gaborbernat`.

@@ -136,8 +136,9 @@ class VirtualEnv(Python, ABC):
             env["VIRTUALENV_CLEAR"] = "True"
         if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
             env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
-        env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] = str(self.conf["system_site_packages"])
-        env["VIRTUALENV_COPIES"] = str(self.conf["always_copy"])
+        site = getattr(self.options, "site_packages", False) or self.conf["system_site_packages"]
+        env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] = str(site)
+        env["VIRTUALENV_COPIES"] = str(getattr(self.options, "always_copy", False) or self.conf["always_copy"])
         env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
         env["VIRTUALENV_PYTHON"] = "\n".join(base_python)
         return env

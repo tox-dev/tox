@@ -1,5 +1,7 @@
+import logging
 import os
 from abc import ABC, abstractmethod
+from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Tuple, cast
 
@@ -68,6 +70,42 @@ class RunToxEnv(ToxEnv, ABC):
             desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
         )
         self.has_package = self.add_package_conf()
+
+    def setup(self) -> None:
+        super().setup()
+        self.before_package_install()
+        self.handle_package()
+
+    def handle_package(self) -> None:
+        if self.package_env is None:
+            return
+        skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False)
+        if skip_pkg_install is True:
+            logging.warning("skip building and installing the package")
+            return
+        paths = self.install_package()
+        self.handle_journal_package(self.journal, paths)
+
+    def before_package_install(self) -> None:
+        """logic to run before package install"""
+
+    @abstractmethod
+    def install_package(self) -> List[Path]:
+        raise NotImplementedError
+
+    @staticmethod
+    def handle_journal_package(journal: EnvJournal, package: List[Path]) -> None:
+        if not journal:
+            return
+        installed_meta = []
+        for pkg in package:
+            of_type = "file" if pkg.is_file() else ("dir" if pkg.is_dir() else "N/A")
+            meta = {"basename": pkg.name, "type": of_type}
+            if of_type == "file":
+                meta["sha256"] = sha256(pkg.read_bytes()).hexdigest()
+            installed_meta.append(meta)
+        if installed_meta:
+            journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
     def add_package_conf(self) -> bool:
         """If this returns True package_env and package_tox_env_type configurations must be defined"""
