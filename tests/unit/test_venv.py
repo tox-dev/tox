@@ -78,7 +78,7 @@ def test_create(mocksession, newconfig):
         our_sys_path = py.path.local(sys.executable).realpath()
         assert our_sys_path == py.path.local(args[0]).realpath()
         # assert Envconfig.toxworkdir in args
-        assert venv.getcommandpath("easy_install", cwd=py.path.local())
+        assert venv.getcommandpath("pip", cwd=py.path.local())
     interp = venv._getliveconfig().base_resolved_python_path
     assert interp == venv.envconfig.python_info.executable
     assert venv.path_config.check(exists=False)
@@ -112,10 +112,10 @@ def test_commandpath_venv_precedence(tmpdir, monkeypatch, mocksession, newconfig
     mocksession.new_config(config)
     venv = mocksession.getvenv("py123")
     envconfig = venv.envconfig
-    tmpdir.ensure("easy_install")
+    tmpdir.ensure("pip")
     monkeypatch.setenv("PATH", str(tmpdir), prepend=os.pathsep)
-    envconfig.envbindir.ensure("easy_install")
-    p = venv.getcommandpath("easy_install")
+    envconfig.envbindir.ensure("pip")
+    p = venv.getcommandpath("pip")
     assert py.path.local(p).relto(envconfig.envbindir), p
 
 
@@ -904,17 +904,18 @@ def test_run_custom_install_command(newmocksession):
         [],
         """\
         [testenv]
-        install_command=easy_install {opts} {packages}
+        install_command=cool-installer {opts} {packages}
         """,
     )
     venv = mocksession.getvenv("python")
     venv.just_created = True
     venv.envconfig.envdir.ensure(dir=1)
+    venv.envconfig.envbindir.ensure("cool-installer")
     with mocksession.newaction(venv.name, "hello") as action:
         venv.run_install_command(packages=["whatever"], action=action)
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
-    assert "easy_install" in pcalls[0].args[0]
+    assert "cool-installer" in pcalls[0].args[0]
     assert pcalls[0].args[1:] == ["whatever"]
 
 

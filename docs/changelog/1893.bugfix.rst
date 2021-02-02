@@ -1,0 +1,1 @@
+Adapt tests not to assume the ``easy_install`` command exists, as it was removed from ``setuptools`` 52.0.0+ - by :user:`hroncok`
