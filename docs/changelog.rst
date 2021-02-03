@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.21.4 (2021-02-02)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Adapt tests not to assume the ``easy_install`` command exists, as it was removed from ``setuptools`` 52.0.0+ - by :user:`hroncok`
+  `#1893 <https://github.com/tox-dev/tox/issues/1893>`_
+
+
 v3.21.3 (2021-01-28)
 --------------------
 
