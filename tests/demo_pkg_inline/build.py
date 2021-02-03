@@ -8,13 +8,14 @@ name = "demo_pkg_inline"
 pkg_name = name.replace("_", "-")
 
 version = "1.0.0"
-dist_info = f"{name}-{version}.dist-info"
-
+dist_info = "{}-{}.dist-info".format(name, version)
+logic = "{}/__init__.py".format(name)
+metadata = "{}/METADATA".format(dist_info)
+wheel = "{}/WHEEL".format(dist_info)
+record = "{}/RECORD".format(dist_info)
 content = {
-    f"{name}/__init__.py": f"def do():\n    print('greetings from {name}')",
-    "{}/METADATA".format(
-        dist_info
-    ): """
+    logic: "def do():\n    print('greetings from {}')".format(name),
+    metadata: """
         Metadata-Version: 2.1
         Name: {}
         Version: {}
@@ -29,9 +30,7 @@ content = {
        """.format(
         pkg_name, version
     ),
-    "{}/WHEEL".format(
-        dist_info
-    ): """
+    wheel: """
         Wheel-Version: 1.0
         Generator: {}-{}
         Root-Is-Purelib: true
@@ -39,10 +38,8 @@ content = {
        """.format(
         name, version, sys.version_info[0]
     ),
-    f"{dist_info}/top_level.txt": name,
-    "{}/RECORD".format(
-        dist_info
-    ): """
+    "{}/top_level.txt".format(dist_info): name,
+    record: """
         {0}/__init__.py,,
         {1}/METADATA,,
         {1}/WHEEL,,
@@ -54,13 +51,13 @@ content = {
 }
 
 
-def build_wheel(wheel_directory, metadata_directory=None, config_settings=None) -> str:  # noqa: U100
-    base_name = f"{name}-{version}-py{sys.version_info.major}-none-any.whl"
+def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):  # noqa: U100
+    base_name = "{}-{}-py{}-none-any.whl".format(name, version, sys.version_info[0])
     path = os.path.join(wheel_directory, base_name)
     with ZipFile(path, "w") as zip_file_handler:
         for arc_name, data in content.items():
             zip_file_handler.writestr(arc_name, dedent(data).strip())
-    print(f"created wheel {path}")
+    print("created wheel {}".format(path))
     return base_name
 
 
@@ -68,8 +65,8 @@ def get_requires_for_build_wheel(config_settings=None):  # noqa: U100
     return []  # pragma: no cover # only executed in non-host pythons
 
 
-def build_sdist(sdist_directory: str, config_settings=None) -> str:  # noqa: U100
-    result = f"{name}-{version}.tar.gz"
+def build_sdist(sdist_directory, config_settings=None):  # noqa: U100
+    result = "{}-{}.tar.gz".format(name, version)
     with tarfile.open(os.path.join(sdist_directory, result), "w:gz") as tar:
         root = os.path.dirname(os.path.abspath(__file__))
         tar.add(os.path.join(root, "build.py"), "build.py")

@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from typing import Tuple
 
 import pytest
@@ -184,3 +185,19 @@ def test_install_pkg(tox_project: ToxProjectCreator, mode: str) -> None:
     execute_calls.assert_called_once()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     assert request.cmd == ["python", "-I", "-m", "pip", "install", "--no-deps", "--force-reinstall", str(file)]
+
+
+def test_can_build_and_run_python_2(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    try:
+        session_via_cli(["-p", "2.7", "venv"])
+    except RuntimeError:  # pragma: no cover
+        pytest.skip("no python 2.7 interpreter")  # pragma: no cover
+    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "-e", "py27", "--root", str(demo_pkg_inline))
+    result.assert_success()
+
+    install_cmd = next(
+        i[0][3].cmd for i in execute_calls.call_args_list if "install" in i[0][3].run_id
+    )  # pragma: no cover
+    assert install_cmd[:-1] == ["python", "-E", "-m", "pip", "install", "--no-deps", "--force-reinstall"]

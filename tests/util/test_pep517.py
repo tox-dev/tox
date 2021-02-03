@@ -132,12 +132,12 @@ def test_pep517_setuptools_exception(frontend_setuptools: SubprocessFrontend) ->
 
 
 def test_pep517_bad_message(frontend_setuptools: SubprocessFrontend, tmp_path: Path) -> None:
-    with frontend_setuptools._send_msg("bad_cmd", tmp_path / "a", "{") as status:
+    with frontend_setuptools._send_msg("bad_cmd", tmp_path / "a", "{{") as status:
         while not status.done:
             pass
     out, err = status.out_err()
     assert out
-    assert "Backend: incorrect request to backend: {" in err
+    assert "Backend: incorrect request to backend: bytearray(b'{{')" in err
 
 
 def test_pep517_result_missing(frontend_setuptools: SubprocessFrontend, tmp_path: Path, mocker: MockerFixture) -> None:

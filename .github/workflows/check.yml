@@ -38,6 +38,10 @@ jobs:
           fetch-depth: 0
       - name: Install self-tox
         run: python -m pip install .
+      - name: Setup python2.7 as test dependency
+        uses: actions/setup-python@v2
+        with:
+          python-version: 2.7
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
         with:
