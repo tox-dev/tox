@@ -207,7 +207,7 @@ class Python(ToxEnv, ABC):
         return cast(PythonInfo, self._base_python)
 
     @abstractmethod
-    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
+    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:  # noqa: U100
         raise NotImplementedError
 
     def cached_install(self, deps: PythonDeps, section: str, of_type: str) -> bool:
@@ -231,7 +231,7 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def install_python_packages(self, packages: PythonDeps, of_type: str, no_deps: bool = False) -> None:
+    def install_python_packages(self, packages: PythonDeps, of_type: str, no_deps: bool = False) -> None:  # noqa: U100
         raise NotImplementedError
 
 

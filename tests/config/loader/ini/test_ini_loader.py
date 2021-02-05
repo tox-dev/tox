@@ -41,7 +41,7 @@ def test_ini_loader_raw_strip_escaped_newline(mk_ini_conf: Callable[[str], Confi
 
 
 @pytest.mark.parametrize(
-    ["case", "result"],
+    ("case", "result"),
     [
         ("# a", ""),
         ("#", ""),

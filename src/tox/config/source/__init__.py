@@ -13,18 +13,18 @@ class Source(ABC):
     """
 
     @abstractmethod
-    def get_core(self, override_map: OverrideMap) -> Iterator[Loader[Any]]:
+    def get_core(self, override_map: OverrideMap) -> Iterator[Loader[Any]]:  # noqa: U100
         """Return the core loader from this source."""
         raise NotImplementedError
 
     @abstractmethod
     def get_env_loaders(
-        self, env_name: str, override_map: OverrideMap, package: bool, conf: ConfigSet
+        self, env_name: str, override_map: OverrideMap, package: bool, conf: ConfigSet  # noqa: U100
     ) -> Iterator[Loader[Any]]:
         """Return the load for this environment."""
         raise NotImplementedError
 
     @abstractmethod
-    def envs(self, core_conf: "CoreConfigSet") -> Iterator[str]:
+    def envs(self, core_conf: "CoreConfigSet") -> Iterator[str]:  # noqa: U100
         """Return a list of environments defined within this source"""
         raise NotImplementedError

@@ -21,7 +21,7 @@ def test_memory_loader_override() -> None:
 
 
 @pytest.mark.parametrize(
-    ["value", "of_type"],
+    ("value", "of_type"),
     [
         (True, bool),
         (1, int),

@@ -7,7 +7,7 @@ from tox.config.set_env import SetEnv
 from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
-def test_set_env_explicit(monkeypatch: MonkeyPatch) -> None:
+def test_set_env_explicit() -> None:
     set_env = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4")
     set_env.update_if_not_present({"E": "5 ", "F": "6"})
 
@@ -41,7 +41,7 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
     return func
 
 
-def test_set_env_default(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:
+def test_set_env_default(eval_set_env: EvalSetEnv) -> None:
     set_env = eval_set_env("")
     keys = list(set_env)
     assert keys == ["PIP_DISABLE_PIP_VERSION_CHECK"]

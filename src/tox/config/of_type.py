@@ -23,7 +23,9 @@ class ConfigDefinition(ABC, Generic[T]):
         self.env_name = env_name
 
     @abstractmethod
-    def __call__(self, conf: "Config", key: Optional[str], loaders: List[Loader[T]], chain: List[str]) -> T:
+    def __call__(
+        self, conf: "Config", key: Optional[str], loaders: List[Loader[T]], chain: List[str]  # noqa: U100
+    ) -> T:
         raise NotImplementedError
 
     def __eq__(self, o: Any) -> bool:
@@ -46,7 +48,9 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
         super().__init__(keys, desc, env_name)
         self.value = value
 
-    def __call__(self, conf: "Config", name: Optional[str], loaders: List[Loader[T]], chain: List[str]) -> T:
+    def __call__(
+        self, conf: "Config", name: Optional[str], loaders: List[Loader[T]], chain: List[str]  # noqa: U100
+    ) -> T:
         if callable(self.value):
             value = self.value()
         else:
@@ -80,7 +84,13 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         self.kwargs: Mapping[str, Any] = {} if kwargs is None else kwargs
         self._cache: Union[object, T] = _PLACE_HOLDER
 
-    def __call__(self, conf: "Config", name: Optional[str], loaders: List[Loader[T]], chain: List[str]) -> T:
+    def __call__(
+        self,
+        conf: "Config",
+        name: Optional[str],  # noqa: U100
+        loaders: List[Loader[T]],
+        chain: List[str],
+    ) -> T:
         if self._cache is _PLACE_HOLDER:
             found = False
             for key in self.keys:

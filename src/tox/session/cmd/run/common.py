@@ -29,7 +29,7 @@ class SkipMissingInterpreterAction(Action):
         parser: ArgumentParser,  # noqa
         namespace: Namespace,
         values: Union[str, Sequence[Any], None],
-        option_string: Optional[str] = None,
+        option_string: Optional[str] = None,  # noqa: U100
     ) -> None:
         value = "true" if values is None else values
         if value not in ("config", "true", "false"):
@@ -43,7 +43,7 @@ class InstallPackageAction(Action):
         parser: ArgumentParser,  # noqa
         namespace: Namespace,
         values: Union[str, Sequence[Any], None],
-        option_string: Optional[str] = None,
+        option_string: Optional[str] = None,  # noqa: U100
     ) -> None:
         if not values:
             raise ArgumentError(self, "cannot be empty")

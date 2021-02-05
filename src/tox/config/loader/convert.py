@@ -81,40 +81,40 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_str(value: T) -> str:
+    def to_str(value: T) -> str:  # noqa: U100
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:
+    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:
+    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:
+    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:  # noqa: U100
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_path(value: T) -> Path:
+    def to_path(value: T) -> Path:  # noqa: U100
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_command(value: T) -> Command:
+    def to_command(value: T) -> Command:  # noqa: U100
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_env_list(value: T) -> EnvList:
+    def to_env_list(value: T) -> EnvList:  # noqa: U100
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def to_bool(value: T) -> bool:
+    def to_bool(value: T) -> bool:  # noqa: U100
         raise NotImplementedError

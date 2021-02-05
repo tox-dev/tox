@@ -45,7 +45,7 @@ def test_install_pkg_not_file(tmp_path: Path) -> None:
         InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, Namespace(), path)
 
 
-def test_install_pkg_empty(tmp_path: Path) -> None:
+def test_install_pkg_empty() -> None:
     argument_parser = ArgumentParser()
     with pytest.raises(ArgumentError, match=re.escape("argument --install-pkg: cannot be empty")):
         InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, Namespace(), "")

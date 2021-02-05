@@ -118,7 +118,7 @@ class ToxHandler(logging.StreamHandler):
         return self.stdout
 
     @stream.setter
-    def stream(self, value: IO[str]) -> None:
+    def stream(self, value: IO[str]) -> None:  # noqa: U100
         """ignore anyone changing this"""
 
     @property
@@ -167,7 +167,7 @@ class ToxHandler(logging.StreamHandler):
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name  # type: ignore[attr-defined]
         basename = os.path.dirname(record.pathname)
-        sys_path_match = sorted([p for p in sys.path if basename.startswith(p)], key=len, reverse=True)
+        sys_path_match = sorted((p for p in sys.path if basename.startswith(p)), key=len, reverse=True)
         record.pathname = record.pathname[len(sys_path_match[0]) + 1 :]
 
         if record.levelno >= logging.ERROR:

@@ -32,11 +32,11 @@ else:  # pragma: no cover (<py38)
 
 
 class ToxIniCreator(Protocol):
-    def __call__(self, conf: str, override: Optional[Sequence[Override]] = None) -> Config:
+    def __call__(self, conf: str, override: Optional[Sequence[Override]] = None) -> Config:  # noqa: U100
         ...
 
 
-@pytest.fixture
+@pytest.fixture()
 def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
     def func(conf: str, override: Optional[Sequence[Override]] = None) -> Config:
         dest = tmp_path / "c"

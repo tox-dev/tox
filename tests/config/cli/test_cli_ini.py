@@ -55,10 +55,7 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 def test_ini_empty(
-    empty_ini: Path,
-    core_handlers: Dict[str, Callable[[State], int]],
-    monkeypatch: MonkeyPatch,
-    default_options: Dict[str, Any],
+    empty_ini: Path, core_handlers: Dict[str, Callable[[State], int]], default_options: Dict[str, Any]
 ) -> None:
     parsed, handlers, _, __ = get_options("r")
     assert vars(parsed) == default_options
@@ -70,7 +67,7 @@ def test_ini_empty(
     assert vars(missing_parsed) == vars(parsed)
 
 
-@pytest.fixture
+@pytest.fixture()
 def default_options(tmp_path: Path) -> Dict[str, Any]:
     return {
         "colored": "no",

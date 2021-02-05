@@ -150,7 +150,7 @@ class VirtualEnv(Python, ABC):
     def create_python_env(self) -> None:
         self.session.run()
 
-    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
+    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:  # noqa: U100
         try:
             interpreter = self.creator.interpreter
         except RuntimeError:  # if can't find

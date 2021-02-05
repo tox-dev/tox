@@ -9,17 +9,17 @@ from tox.session.common import CliEnv
 from tox.session.state import State
 
 
-def test_verbose(monkeypatch: MonkeyPatch) -> None:
+def test_verbose() -> None:
     parsed, _, __, ___ = get_options("-v", "-v")
     assert parsed.verbosity == 4
 
 
-def test_verbose_compound(monkeypatch: MonkeyPatch) -> None:
+def test_verbose_compound() -> None:
     parsed, _, __, ___ = get_options("-vv")
     assert parsed.verbosity == 4
 
 
-def test_verbose_no_test(monkeypatch: MonkeyPatch) -> None:
+def test_verbose_no_test() -> None:
     parsed, _, __, ___ = get_options("--notest", "-vv", "--runner", "virtualenv")
     assert vars(parsed) == {
         "verbose": 4,

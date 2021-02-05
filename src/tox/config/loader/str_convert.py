@@ -35,7 +35,7 @@ class StrConvert(Convert[str]):
             yield value
 
     @staticmethod
-    def to_dict(value: str, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[str, str]]:
+    def to_dict(value: str, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[str, str]]:  # noqa: U100
         for row in value.split("\n"):
             row = row.strip()
             if row:
@@ -77,7 +77,7 @@ class StrConvert(Convert[str]):
 
     TRUTHFUL_VALUES = {"true", "1", "yes", "on"}
     FALSE_VALUES = {"false", "0", "no", "off", ""}
-    VALID_BOOL = list(sorted(TRUTHFUL_VALUES | FALSE_VALUES))
+    VALID_BOOL = sorted(TRUTHFUL_VALUES | FALSE_VALUES)
 
     @staticmethod
     def to_bool(value: str) -> bool:

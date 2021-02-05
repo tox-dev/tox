@@ -13,6 +13,6 @@ def tox_add_option(parser: ToxParser) -> None:
     )
 
 
-def quickstart(state: State) -> int:
+def quickstart(state: State) -> int:  # noqa: U100
     print("done quickstart")
     return 0

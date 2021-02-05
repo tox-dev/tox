@@ -86,7 +86,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def install_requirement_file(self, path: Path) -> None:
+    def install_requirement_file(self, path: Path) -> None:  # noqa: U100
         raise NotImplementedError
 
     @property

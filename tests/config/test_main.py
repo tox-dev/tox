@@ -7,7 +7,7 @@ from tox.config.main import Config
 from tox.config.sets import ConfigSet
 
 
-@pytest.fixture
+@pytest.fixture()
 def empty_config(tox_ini_conf: ToxIniCreator) -> Config:
     return tox_ini_conf("")
 

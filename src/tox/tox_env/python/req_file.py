@@ -134,7 +134,7 @@ class RequirementsFile:
             result.append(str(req))
 
     def _expand_flag(self, ini_dir: Path, line: str, result: List[str]) -> None:
-        words = [i for i in re.split(r"(?<!\\)(\s|=)", line, maxsplit=1)]
+        words = list(re.split(r"(?<!\\)(\s|=)", line, maxsplit=1))
         first = words[0]
         if first in NO_ARG:
             if len(words) != 1:  # argument provided

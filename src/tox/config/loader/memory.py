@@ -13,7 +13,7 @@ class MemoryLoader(Loader[Any]):
         super().__init__([])
         self.raw: Dict[str, Any] = {**kwargs}
 
-    def load_raw(self, key: Any, conf: Optional["Config"], env_name: Optional[str]) -> T:
+    def load_raw(self, key: Any, conf: Optional["Config"], env_name: Optional[str]) -> T:  # noqa: U100
         return cast(T, self.raw[key])
 
     def found_keys(self) -> Set[str]:
@@ -28,15 +28,15 @@ class MemoryLoader(Loader[Any]):
         return value  # type: ignore[no-any-return]
 
     @staticmethod
-    def to_list(value: Any, of_type: Type[Any]) -> Iterator[T]:
+    def to_list(value: Any, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
         return value  # type: ignore[no-any-return]
 
     @staticmethod
-    def to_set(value: Any, of_type: Type[Any]) -> Iterator[T]:
+    def to_set(value: Any, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
         return iter(value)  # type: ignore[no-any-return]
 
     @staticmethod
-    def to_dict(value: Any, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:
+    def to_dict(value: Any, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:  # noqa: U100
         return value.items()  # type: ignore[no-any-return]
 
     @staticmethod

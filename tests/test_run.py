@@ -16,7 +16,7 @@ def test_exit_code_minus_2_on_expected_exit(exception: Exception, mocker: Mocker
 
 def test_re_raises_on_unexpected_exit(mocker: MockerFixture) -> None:
     mocker.patch("tox.run.main", side_effect=ValueError)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=""):  # noqa: PT011
         run()
 
 

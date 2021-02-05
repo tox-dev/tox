@@ -63,14 +63,14 @@ if fs_supports_symlink():  # pragma: no cover # used to speed up test suite run 
 
 
 @pytest.fixture(autouse=True)
-def ensure_logging_framework_not_altered() -> Iterator[None]:
+def ensure_logging_framework_not_altered() -> Iterator[None]:  # noqa: PT004
     before_handlers = list(LOGGER.handlers)
     yield
     LOGGER.handlers = before_handlers
 
 
 @contextmanager
-def check_os_environ() -> Iterator[None]:
+def check_os_environ() -> Iterator[None]:  # noqa: PT004
     old = os.environ.copy()
     to_clean = {k: os.environ.pop(k, None) for k in {ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT"}}
 
@@ -99,14 +99,14 @@ def check_os_environ() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def check_os_environ_stable(monkeypatch: MonkeyPatch) -> Iterator[None]:
+def check_os_environ_stable(monkeypatch: MonkeyPatch) -> Iterator[None]:  # noqa: PT004
     with check_os_environ():
         yield
         monkeypatch.undo()
 
 
 @pytest.fixture(autouse=True)
-def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:
+def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: PT004, U100
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
@@ -262,7 +262,7 @@ class ToxProject:
 
 
 @pytest.fixture(autouse=True, scope="session")
-def enable_pep517_backend_coverage() -> Iterator[None]:
+def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
     try:
         import coverage  # noqa: F401
     except ImportError:  # pragma: no cover
@@ -360,7 +360,7 @@ class ToxRunOutcome:
 
 
 class ToxProjectCreator(Protocol):
-    def __call__(self, files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:
+    def __call__(self, files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:  # noqa: U100
         ...
 
 
@@ -524,7 +524,10 @@ class IndexServer:
         return index
 
     def __exit__(
-        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self,
+        exc_type: Optional[Type[BaseException]],  # noqa: U100
+        exc_val: Optional[BaseException],  # noqa: U100
+        exc_tb: Optional[TracebackType],  # noqa: U100
     ) -> None:
         if self._process is not None:  # pragma: no cover # defend against devpi startup fail
             self._process.terminate()
@@ -549,7 +552,7 @@ def pypi_server(tmp_path_factory: TempPathFactory) -> Iterator[IndexServer]:
 
 
 @pytest.fixture(scope="session")
-def _invalid_index_fake_port() -> int:
+def _invalid_index_fake_port() -> int:  # noqa: PT005
     return _find_free_port()
 
 

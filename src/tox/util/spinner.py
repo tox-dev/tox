@@ -98,9 +98,9 @@ class Spinner:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: Optional[Type[BaseException]],  # noqa: U100
+        exc_val: Optional[BaseException],  # noqa: U100
+        exc_tb: Optional[TracebackType],  # noqa: U100
     ) -> None:
         if not self._stop_spinner.is_set():  # pragma: no branch
             if self._spinner_thread:  # pragma: no branch # hard to test

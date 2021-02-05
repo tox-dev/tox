@@ -6,7 +6,7 @@ import pytest
 from packaging.requirements import Requirement
 from pytest_mock import MockerFixture
 
-from tox.pytest import MonkeyPatch, ToxProjectCreator
+from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.api import Python, PythonDep
 
 
@@ -39,7 +39,7 @@ def test_deps_repr() -> None:
     assert repr(dep_1) == f"PythonDep(value={Path.cwd()!r})"
 
 
-def test_requirements_txt(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
     prj = tox_project(
         {
             "tox.ini": "[testenv]\npackage=skip\ndeps=-rrequirements.txt",

@@ -83,7 +83,7 @@ def test_replace_ref_bad_type(tox_ini_conf: ToxIniCreator) -> None:
 
 
 @pytest.mark.parametrize(
-    ["start", "end"],
+    ("start", "end"),
     [
         ("0", "0"),
         ("0}", "0}"),
@@ -147,7 +147,7 @@ def test_replace_from_tox_section_registered(tox_ini_conf: ToxIniCreator, tmp_pa
     assert conf_a["x"] == (tmp_path / "c")
 
 
-def test_replace_from_tox_other_tox_section_same_name(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+def test_replace_from_tox_other_tox_section_same_name(tox_ini_conf: ToxIniCreator) -> None:
     conf_a = tox_ini_conf("[testenv:a]\nx={[testenv:b]c}\nc=d\n[testenv:b]}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="", desc="d")
     assert conf_a["x"] == "{[testenv:b]c}"

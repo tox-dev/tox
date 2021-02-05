@@ -14,7 +14,7 @@ else:  # pragma: no cover (py38+)
 
 
 @pytest.mark.parametrize(
-    ["raw", "value", "of_type"],
+    ("raw", "value", "of_type"),
     [
         ("true", True, bool),
         ("false", False, bool),
@@ -55,7 +55,7 @@ def test_str_convert_ok(raw: str, value: Any, of_type: Type[Any]) -> None:
 
 
 @pytest.mark.parametrize(
-    ["raw", "of_type", "exc_type", "msg"],
+    ("raw", "of_type", "exc_type", "msg"),
     [
         ("a", TypeVar, TypeError, r"a cannot cast to .*typing.TypeVar.*"),
         ("3", Literal["1", "2"], ValueError, r"3 must be one of \('1', '2'\)"),
