@@ -17,6 +17,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.extlinks",
+    "sphinx_argparse_cli",
 ]
 
 templates_path = []
@@ -73,17 +74,8 @@ generate_draft_news()
 def setup(app):
     app.add_css_file("custom.css")
 
-    # the CLI arguments are dynamically generated
+    # the CLI arguments are dynamically generated - do not cache
     doc_tree = Path(app.doctreedir)
     cli_interface_doctree = doc_tree / "cli_interface.doctree"
     if cli_interface_doctree.exists():
         cli_interface_doctree.unlink()
-
-    here = Path(__file__).parent
-    if str(here) not in sys.path:
-        sys.path.append(str(here))
-
-    # noinspection PyUnresolvedReferences
-    from render_cli import CliApi
-
-    app.add_directive(CliApi.name, CliApi)
