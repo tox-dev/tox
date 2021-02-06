@@ -33,11 +33,11 @@ class ExecuteStatus(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def wait(self, timeout: Optional[float] = None) -> None:
+    def wait(self, timeout: Optional[float] = None) -> None:  # noqa: U100
         raise NotImplementedError
 
     @abstractmethod
-    def write_stdin(self, content: str) -> None:
+    def write_stdin(self, content: str) -> None:  # noqa: U100
         raise NotImplementedError
 
     @abstractmethod
@@ -82,7 +82,9 @@ class Execute(ABC):
         status.outcome = Outcome(request, show, exit_code, out_sync.text, err_sync.text, start, end, instance.cmd)
 
     @abstractmethod
-    def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> "ExecuteInstance":
+    def build_instance(
+        self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite  # noqa: U100
+    ) -> "ExecuteInstance":
         raise NotImplementedError
 
 
@@ -108,7 +110,10 @@ class ExecuteInstance(ABC):
 
     @abstractmethod
     def __exit__(
-        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self,
+        exc_type: Optional[Type[BaseException]],  # noqa: U100
+        exc_val: Optional[BaseException],  # noqa: U100
+        exc_tb: Optional[TracebackType],  # noqa: U100
     ) -> None:
         raise NotImplementedError
 

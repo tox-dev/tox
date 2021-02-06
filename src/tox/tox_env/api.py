@@ -101,7 +101,7 @@ class ToxEnv(ABC):
 
         def pass_env_post_process(values: List[str]) -> List[str]:
             values.extend(self.default_pass_env())
-            return sorted(list({k: None for k in values}.keys()))
+            return sorted({k: None for k in values}.keys())
 
         self.conf.add_config(
             keys=["pass_env", "passenv"],
@@ -194,7 +194,7 @@ class ToxEnv(ABC):
             shutil.rmtree(env_tmp_dir, ignore_errors=True)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    def clean(self, force: bool = False) -> None:
+    def clean(self, force: bool = False) -> None:  # noqa: U100
         if self.clean_done:  # pragma: no branch
             return  # pragma: no cover
         env_dir: Path = self.conf["env_dir"]

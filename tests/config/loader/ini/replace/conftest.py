@@ -1,7 +1,6 @@
 import sys
-from configparser import ConfigParser
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import pytest
 
@@ -15,12 +14,12 @@ else:  # pragma: no cover (<py38)
 
 
 class ReplaceOne(Protocol):
-    def __call__(self, conf: str, pos_args: Optional[List[str]] = None) -> str:
+    def __call__(self, conf: str, pos_args: Optional[List[str]] = None) -> str:  # noqa: U100
         ...
 
 
-@pytest.fixture
-def replace_one(mk_ini_conf: Callable[[str], ConfigParser], tmp_path: Path) -> ReplaceOne:
+@pytest.fixture()
+def replace_one(tmp_path: Path) -> ReplaceOne:
     def example(conf: str, pos_args: Optional[List[str]] = None) -> str:
         tox_ini_file = tmp_path / "tox.ini"
         tox_ini_file.write_text(f"[testenv:py]\nenv={conf}\n")

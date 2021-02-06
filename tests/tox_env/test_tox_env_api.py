@@ -1,7 +1,7 @@
-from tox.pytest import MonkeyPatch, ToxProjectCreator
+from tox.pytest import ToxProjectCreator
 
 
-def test_requirements_txt(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nrecreate=True"})
     result_first = prj.run("r")
     result_first.assert_success()

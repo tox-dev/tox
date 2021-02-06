@@ -144,10 +144,10 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
     def exit_code(self) -> Optional[int]:
         return self._exit_code
 
-    def wait(self, timeout: Optional[float] = None) -> None:
+    def wait(self, timeout: Optional[float] = None) -> None:  # noqa: U100
         """already dead no need to wait"""
 
-    def write_stdin(self, content: str) -> None:
+    def write_stdin(self, content: str) -> None:  # noqa: U100
         """cannot write"""
 
     def interrupt(self) -> None:

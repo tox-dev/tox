@@ -112,7 +112,7 @@ class ConfigSet:
         for loader in self.loaders:
             found.update(loader.found_keys())
         found -= self._defined.keys()
-        return list(sorted(found))
+        return sorted(found)
 
     def primary_key(self, key: str) -> str:
         return self._alias[key]

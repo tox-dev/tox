@@ -4,7 +4,7 @@ from tox.session.common import CliEnv
 
 
 @pytest.mark.parametrize(
-    "val, exp",
+    ("val", "exp"),
     [
         (CliEnv(["a", "b"]), "CliEnv(['a', 'b'])"),
         (CliEnv(["ALL", "b"]), "CliEnv()"),
@@ -21,7 +21,7 @@ def test_cli_env_repr_all() -> None:
 
 
 @pytest.mark.parametrize(
-    "val, exp",
+    ("val", "exp"),
     [
         (CliEnv(["a", "b"]), "a,b"),
         (CliEnv(["ALL", "b"]), "ALL"),

@@ -170,7 +170,7 @@ def test_pep517_result_missing(frontend_setuptools: SubprocessFrontend, tmp_path
     assert "PermissionError" in exc.err
 
 
-@pytest.fixture
+@pytest.fixture()
 def local_builder(tmp_path: Path) -> Callable[[str], Path]:
     def _f(content: str) -> Path:
         toml = '[build-system]\nrequires=[]\nbuild-backend = "build_tester"\nbackend-path=["."]'

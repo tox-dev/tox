@@ -45,7 +45,9 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.timeout(120)
 @pytest.mark.integration
-def test_result_json_sequential(tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]) -> None:
+def test_result_json_sequential(
+    tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]  # noqa: U100
+) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
         "python -c 'import sys; print(\"magic pass\"); sys.exit(0)'",
@@ -421,7 +423,7 @@ def test_commands_post_fails_exit_code(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.parametrize(
-    ["pre", "main", "post", "outcome"],
+    ("pre", "main", "post", "outcome"),
     [
         (0, 8, 0, 8),
         (0, 0, 8, 8),

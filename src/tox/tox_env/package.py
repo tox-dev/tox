@@ -41,20 +41,22 @@ class PackageToxEnv(ToxEnv, ABC):
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
 
-    def create_package_env(self, name: str, info: Tuple[Any, ...]) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
+    def create_package_env(
+        self, name: str, info: Tuple[Any, ...]  # noqa: U100
+    ) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
         """allow creating sub-package envs"""
 
     @abstractmethod
-    def get_package_dependencies(self, for_env: EnvConfigSet) -> List[Requirement]:
+    def get_package_dependencies(self, for_env: EnvConfigSet) -> List[Requirement]:  # noqa: U100
         raise NotImplementedError
 
     @abstractmethod
-    def perform_packaging(self, name: str) -> List[Path]:
+    def perform_packaging(self, name: str) -> List[Path]:  # noqa: U100
         raise NotImplementedError
 
     def clean(self, force: bool = False) -> None:
         if force or self.recreate_package:  # only recreate if user did not opt out
             super().clean(force)
 
-    def package_envs(self, name: str) -> Generator["PackageToxEnv", None, None]:
+    def package_envs(self, name: str) -> Generator["PackageToxEnv", None, None]:  # noqa: U100
         yield self

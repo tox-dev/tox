@@ -291,7 +291,9 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
                 self._backend_executor.close()
 
     @contextmanager
-    def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[ToxCmdStatus]:  # type: ignore[override]
+    def _send_msg(
+        self, cmd: str, result_file: Path, msg: str  # noqa: U100
+    ) -> Iterator[ToxCmdStatus]:  # type: ignore[override]
         with self.execute_async(
             cmd=self.backend_cmd,
             cwd=self._root,

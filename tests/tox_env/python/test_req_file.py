@@ -8,7 +8,7 @@ from tox.tox_env.python.req_file import ONE_ARG, RequirementsFile
 
 
 @pytest.mark.parametrize(
-    ["req", "key"],
+    ("req", "key"),
     [
         ("--pre", "--pre"),
         ("--no-index", "--no-index"),
@@ -20,7 +20,6 @@ from tox.tox_env.python.req_file import ONE_ARG, RequirementsFile
         ("--pre\\\n", "--pre"),
         ("--pre # magic", "--pre"),
         ("--pre\t# magic", "--pre"),
-        ("--no-index", "--no-index"),
         ("--find-links /my/local/archives", "--find-links /my/local/archives"),
         ("--find-links \\\n/my/local/archives", "--find-links /my/local/archives"),
         ("--find-links http://some.archives.com/archives", "--find-links http://some.archives.com/archives"),

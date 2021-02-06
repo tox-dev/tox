@@ -99,7 +99,7 @@ def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> No
 
 
 def test_honor_set_env_for_clear_periodic_update(
-    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions, monkeypatch: MonkeyPatch
+    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions
 ) -> None:
     ini = "[testenv]\npackage=skip\nset_env=\n  VIRTUALENV_CLEAR=0\n  VIRTUALENV_NO_PERIODIC_UPDATE=0"
     proj = tox_project({"tox.ini": ini})
@@ -110,9 +110,7 @@ def test_honor_set_env_for_clear_periodic_update(
     assert virtualenv_opt.no_periodic_update is False
 
 
-def test_recreate_when_virtualenv_changes(
-    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions, mocker: MockerFixture
-) -> None:
+def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     proj.run("r")
 
@@ -124,7 +122,7 @@ def test_recreate_when_virtualenv_changes(
 
 
 @pytest.mark.parametrize("on", [True, False])
-def test_pip_pre(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, on: bool) -> None:
+def test_pip_pre(tox_project: ToxProjectCreator, on: bool) -> None:
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\npip_pre={on}\ndeps=magic"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "-e", "py")
@@ -135,9 +133,7 @@ def test_pip_pre(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, on: b
         assert "--pre" not in execute_calls.call_args[0][3].cmd
 
 
-def test_install_command_no_packages(
-    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, disable_pip_pypi_access: Tuple[str, str]
-) -> None:
+def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip_pypi_access: Tuple[str, str]) -> None:
     install_cmd = "python -m pip install -i {env:PIP_INDEX_URL}"
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\ninstall_command={install_cmd}\npip_pre=true\ndeps=magic"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
@@ -148,7 +144,7 @@ def test_install_command_no_packages(
     assert found_cmd[:-1] == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "-r"]
 
 
-def test_list_dependencies_command(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     install_cmd = "python -m pip freeze"
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={install_cmd}"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
@@ -159,9 +155,7 @@ def test_list_dependencies_command(tox_project: ToxProjectCreator, monkeypatch: 
 
 
 @pytest.mark.parametrize("keep", [True, False])
-def test_platform_filter(
-    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions, monkeypatch: MonkeyPatch, keep: bool
-) -> None:
+def test_platform_filter(tox_project: ToxProjectCreator, keep: bool) -> None:
     platform = sys.platform
     if not keep:
         platform += "1"
@@ -178,7 +172,7 @@ def test_platform_filter(
 
 
 @pytest.mark.parametrize("mode", ["r", "p", "le"])
-def test_install_pkg(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, mode: str) -> None:
+def test_install_pkg(tox_project: ToxProjectCreator, mode: str) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     file = proj.path / "a"

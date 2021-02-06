@@ -29,7 +29,7 @@ def test_spinner(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
 
 
 @freeze_time("2012-01-14")
-def test_spinner_disabled(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
+def test_spinner_disabled(capfd: CaptureFixture) -> None:
     with spinner.Spinner(refresh_rate=100, enabled=False) as spin:
         spin.add("x")
         for _ in range(len(spin.frames)):
@@ -126,7 +126,7 @@ def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture
 
 
 @pytest.mark.parametrize(
-    "seconds, expected",
+    ("seconds", "expected"),
     [
         (0, "0 seconds"),
         (1.0, "1 second"),

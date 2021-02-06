@@ -27,7 +27,7 @@ def test_replace_pos_args(replace_one: ReplaceOne) -> None:
 
 
 @pytest.mark.parametrize(
-    ["value", "result"],
+    ("value", "result"),
     [
         ("magic", "magic"),
         ("magic:colon", "magic:colon"),

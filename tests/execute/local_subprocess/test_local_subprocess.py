@@ -31,7 +31,7 @@ class FakeOutErr:
 
 
 @pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
-@pytest.mark.parametrize(["out", "err"], [("out", "err"), ("", "")], ids=["simple", "nothing"])
+@pytest.mark.parametrize(("out", "err"), [("out", "err"), ("", "")], ids=["simple", "nothing"])
 @pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
 def test_local_execute_basic_pass(
     caplog: LogCaptureFixture,
@@ -97,7 +97,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
     assert not caplog.records
 
 
-def test_local_execute_write_a_lot(caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
+def test_local_execute_write_a_lot(os_env: Dict[str, str]) -> None:
     count = 10_000
     executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(
@@ -189,7 +189,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
     assert _duration > 0
 
 
-def test_command_does_not_exist(capsys: CaptureFixture, caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
+def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(

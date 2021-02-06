@@ -11,7 +11,7 @@ ConfBuilder = Callable[[str], ConfigSet]
 
 
 @pytest.fixture(name="conf_builder")
-def _conf_builder(tox_ini_conf: ToxIniCreator) -> ConfBuilder:
+def _conf_builder(tox_ini_conf: ToxIniCreator) -> ConfBuilder:  # noqa: PT005
     def _make(conf_str: str) -> ConfigSet:
         return tox_ini_conf(f"[tox]\nenvlist=py39\n[testenv]\n{conf_str}").get_env("py39")
 
@@ -50,7 +50,7 @@ def test_config_optional_none(conf_builder: ConfBuilder) -> None:
 
 def test_config_dict(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("dict = a=1\n  b=2\n  c=3")
-    config_set.add_config(keys="dict", of_type=Dict[str, int], default=dict(), desc="dict")
+    config_set.add_config(keys="dict", of_type=Dict[str, int], default={}, desc="dict")
     dict_val = config_set["dict"]
     assert dict_val == OrderedDict([("a", 1), ("b", 2), ("c", 3)])
 

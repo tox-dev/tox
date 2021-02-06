@@ -53,7 +53,7 @@ class Loader(Convert[T]):
         self.overrides = {o.key: o for o in overrides}
 
     @abstractmethod
-    def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> T:
+    def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> T:  # noqa: U100
         """
         Load the raw object from the config store.
 
@@ -101,13 +101,13 @@ class Loader(Convert[T]):
     @contextmanager
     def build(
         self,
-        future: "Future[V]",
-        key: str,
-        of_type: Type[V],
-        conf: Optional["Config"],
-        env_name: Optional[str],
+        future: "Future[V]",  # noqa: U100
+        key: str,  # noqa: U100
+        of_type: Type[V],  # noqa: U100
+        conf: Optional["Config"],  # noqa: U100
+        env_name: Optional[str],  # noqa: U100
         raw: T,
-        chain: List[str],
+        chain: List[str],  # noqa: U100
     ) -> Generator[T, None, None]:
         yield raw
 
