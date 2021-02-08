@@ -104,9 +104,10 @@ def read_line():
             char = os.read(0, 1)
         except EOFError:  # pragma: no cover # when the stdout is closed without exit
             break  # pragma: no cover
-        if char == b"\n":
+        if char == b"\n":  # pragma: no cover
             break
-        content += char
+        if char != b"\r":  # pragma: win32 cover
+            content += char
     return content
 
 
