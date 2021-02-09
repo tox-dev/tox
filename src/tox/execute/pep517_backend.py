@@ -1,4 +1,5 @@
 """A executor that reuses a single subprocess for all backend calls (saving on python startup/import overhead)"""
+import time
 from pathlib import Path
 from subprocess import TimeoutExpired
 from threading import Lock
@@ -62,6 +63,7 @@ class LocalSubProcessPep517Executor(Execute):
                     )
                     self._exc = ToxBackendFailed(failure)
                     raise self._exc
+                time.sleep(0.01)  # wait a short while for the output to populate
         return self._local_execute
 
     @staticmethod

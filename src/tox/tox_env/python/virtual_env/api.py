@@ -98,7 +98,8 @@ class VirtualEnv(Python, ABC):
         return cmd
 
     def default_install_command(self, conf: Config, env_name: Optional[str]) -> Command:  # noqa
-        cmd = Command(["python", "-I", "-m", "pip", "install", "{opts}", "{packages}"])
+        isolated_flag = "-E" if self.base_python.version_info.major == 2 else "-I"
+        cmd = Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
         return self.post_process_install_command(cmd)
 
     def setup(self) -> None:
