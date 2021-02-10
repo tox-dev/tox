@@ -1,0 +1,4 @@
+Remove Jenkins override support: this feature goes against the spirit of tox - blurring the line between the CI and
+local runs. It also singles out a single CI provider, which opens the door for other CIs wanting similar functionality.
+Finally, only 54 code file examples came back on a Github search, showing this is a not widely used feature. People who
+still want Jenkins override support may create a tox plugin to achieve this functionality - by :user:`gaborbernat`.
