@@ -142,7 +142,7 @@ def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip
     result.assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     found_cmd = request.cmd
-    assert found_cmd[:-1] == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "-r"]
+    assert found_cmd == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "magic"]
 
 
 def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:

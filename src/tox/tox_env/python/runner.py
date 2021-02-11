@@ -4,7 +4,7 @@ A tox run environment that handles the Python language.
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, Dict, List, Optional, Sequence, Set, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.sets import CoreConfigSet, EnvConfigSet
@@ -54,8 +54,7 @@ class PythonRun(Python, RunToxEnv, ABC):
                 missing: Set[str] = set() if old is None else set(old) - set(requirement_file_content)
                 if not missing:
                     if requirement_file_content:
-                        with requirements_file.with_file() as path:
-                            self.install_requirement_file(path)
+                        self.install_deps(requirement_file_content)
                 else:  # otherwise, no idea how to compute the diff, instead just start from scratch
                     logging.warning(f"recreate env because dependencies removed: {', '.join(str(i) for i in missing)}")
                     raise Recreate
@@ -86,7 +85,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def install_requirement_file(self, path: Path) -> None:  # noqa: U100
+    def install_deps(self, args: Sequence[str]) -> None:  # noqa: U100
         raise NotImplementedError
 
     @property

@@ -1,0 +1,2 @@
+Do not construct a requirements file for deps in virtualenv, instead pass content as CLI argument to pip - by
+:user:`gaborbernat`.
