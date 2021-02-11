@@ -1,12 +1,45 @@
+import sys
+from textwrap import dedent
+
+from packaging.version import Version
+
 from tox.pytest import ToxProjectCreator
+from tox.version import __version__
 
 
-def test_quickstart(tox_project: ToxProjectCreator) -> None:
+def test_quickstart_ok(tox_project: ToxProjectCreator) -> None:
     project = tox_project({})
-    outcome = project.run("q")
+    tox_ini = project.path / "demo" / "tox.ini"
+    assert not tox_ini.exists()
+
+    outcome = project.run("q", str(tox_ini.parent))
     outcome.assert_success()
-    out = (
-        f"ROOT: No tox.ini or pyproject.toml found, assuming empty tox.ini at {project.path / 'tox.ini'}\n"
-        "done quickstart\n"
-    )
-    outcome.assert_out_err(out, "")
+
+    assert tox_ini.exists()
+    found = tox_ini.read_text()
+
+    version = str(Version(__version__.split("+")[0]))
+    text = f"""
+            [tox]
+            env_list =
+                py{''.join(str(i) for i in sys.version_info[0:2])}
+            minversion = {version}
+
+            [testenv]
+            description = run the tests with pytest
+            package = wheel
+            wheel_build_env = .pkg
+            deps =
+                pytest>=6
+            commands =
+                pytest {{tty:--color=yes}} {{posargs}}
+        """
+    content = dedent(text).lstrip()
+    assert found == content
+
+
+def test_quickstart_refuse(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": ""})
+    outcome = project.run("q", str(project.path))
+    outcome.assert_failed(code=1)
+    assert "tox.ini already exist, refusing to overwrite" in outcome.out
