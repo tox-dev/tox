@@ -62,6 +62,8 @@ from tox.tox_env.python.req_file import ONE_ARG, RequirementsFile
             "git+https://git.example.com/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709#egg=MyProject",
             "git+https://git.example.com/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709#egg=MyProject",
         ),
+        ("attrs --hash a\t--hash b", "attrs --hash a --hash b"),
+        ("attrs --hash=a\\\n --hash=b", "attrs --hash=a --hash=b"),
     ],
 )
 def test_requirements_txt(tmp_path: Path, req: str, key: str) -> None:

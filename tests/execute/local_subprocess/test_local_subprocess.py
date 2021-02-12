@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 import psutil
 import pytest
 from colorama import Fore
+from flaky import flaky
 from psutil import AccessDenied
 from pytest_mock import MockerFixture
 
@@ -209,6 +210,7 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: Dict[str, str
     assert not caplog.records
 
 
+@flaky  # type: ignore
 @pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
 def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, capfd: CaptureFixture) -> None:
     monkeypatch.chdir(tmp_path)

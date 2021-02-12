@@ -117,7 +117,12 @@ class RequirementsFile:
 
     def _expand_non_flag(self, at: int, ini_dir: Path, line: str, result: List[str]) -> None:  # noqa
         try:
-            req = Requirement(line)
+            at = line.index(" --hash")
+            requirement, hash_part = line[:at], re.sub(r"\s+", " ", line[at + 1 :])
+        except ValueError:
+            requirement, hash_part = line, ""
+        try:
+            req = Requirement(requirement)
         except InvalidRequirement as exc:
             if is_url(line) or any(line.startswith(f"{v}+") and is_url(line[len(v) + 1 :]) for v in VCS):
                 result.append(line)
@@ -131,7 +136,10 @@ class RequirementsFile:
                     raise ValueError(f"{at}: {line}") from exc
                 result.append(str(path))
         else:
-            result.append(str(req))
+            entry = str(req)
+            if hash_part:
+                entry = f"{entry} {hash_part}"
+            result.append(entry)
 
     def _expand_flag(self, ini_dir: Path, line: str, result: List[str]) -> None:
         words = list(re.split(r"(?<!\\)(\s|=)", line, maxsplit=1))
