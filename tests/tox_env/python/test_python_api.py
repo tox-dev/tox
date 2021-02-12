@@ -49,18 +49,12 @@ def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = prj.run("r", "-e", "py")
     result.assert_success()
-    tox_env = result.state.tox_env("py")
 
     assert execute_calls.call_count == 1
-    exp = ["python", "-I", "-m", "pip", "install", "-r"]
+    exp = ["python", "-I", "-m", "pip", "install", "nose"]
     got_cmd = execute_calls.call_args[0][3].cmd
 
-    assert got_cmd[:-1] == exp
-
-    req = Path(got_cmd[-1])
-    assert req.parent == tox_env.core["tox_root"]
-    assert req.name.startswith("requirements-")
-    assert req.name.endswith(".txt")
+    assert got_cmd == exp
 
 
 def test_conflicting_base_python() -> None:
