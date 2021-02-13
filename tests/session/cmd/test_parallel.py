@@ -63,6 +63,7 @@ def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPat
 
     out = outcome.out
     oks, skips, fails = {"a", "b", "c"}, {"d"}, {"e", "f"}
+    missing = set()
     for env in "a", "b", "c", "d", "e", "f":
         if env in ("c", "e"):
             assert "run c" in out, out
@@ -73,11 +74,14 @@ def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPat
         of_type = "OK" if env in oks else ("SKIP" if env in skips else "FAIL")
         of_type_icon = "✔" if env in oks else ("⚠" if env in skips else "✖")
         env_done = f"{env}: {of_type} {of_type_icon}"
-        assert env_done in out, out
-
+        is_missing = env_done not in out
+        if is_missing:
+            missing.add(env_done)
         env_report = f"  {env}: {of_type} {'code 1 ' if env in fails else ''}("
         assert env_report in out, out
-        assert out.index(env_done) < out.index(env_report), out
+        if not is_missing:
+            assert out.index(env_done) < out.index(env_report), out
+    assert len(missing) == 1, out
 
 
 def test_parallel_run_live_out(tox_project: ToxProjectCreator) -> None:
