@@ -1,5 +1,5 @@
 """
-Provides configuration values from the the environment variables.
+Provides configuration values from the environment variables.
 """
 import logging
 import os
