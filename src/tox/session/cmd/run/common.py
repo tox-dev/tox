@@ -163,7 +163,7 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
 logger = logging.getLogger(__name__)
 
 
-def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool) -> int:
+def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: bool) -> int:
     interrupt, done = Event(), Event()
     results: List[ToxEnvRunResult] = []
     future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
@@ -173,6 +173,7 @@ def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool)
             to_run_list.append(env)
     previous, has_previous = None, False
     try:
+        spinner = ToxSpinner(has_spinner, state, len(to_run_list))
         try:
             thread = Thread(
                 target=_queue_and_wait,
@@ -183,6 +184,7 @@ def execute(state: State, max_workers: Optional[int], spinner: bool, live: bool)
             thread.join()
         except KeyboardInterrupt:
             previous, has_previous = signal(SIGINT, Handlers.SIG_IGN), True
+            spinner.print_report = False  # no need to print reports at this point, final report coming up
             logger.error(f"[{os.getpid()}] KeyboardInterrupt - teardown started")
             interrupt.set()
             for future, tox_env in list(future_to_env.items()):
@@ -236,12 +238,12 @@ def _queue_and_wait(
     interrupt: Event,
     done: Event,
     max_workers: Optional[int],
-    has_spinner: bool,
+    spinner: ToxSpinner,
     live: bool,
 ) -> None:
     try:
         options = state.options
-        with ToxSpinner(has_spinner, state, len(to_run_list)) as spinner:
+        with spinner:
             max_workers = len(to_run_list) if max_workers is None else max_workers
             completed: Set[str] = set()
             envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
@@ -252,11 +254,8 @@ def _queue_and_wait(
 
             try:
                 executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")
+                env_list: List[str] = []
                 while True:
-                    env_list: List[str] = next(envs_to_run_generator, [])
-                    if not env_list and not future_to_env:
-                        break
-
                     for env in env_list:  # queue all available
                         tox_env_to_run = state.tox_env(env)
                         if interrupt.is_set():  # queue the rest as failed upfront
@@ -267,17 +266,33 @@ def _queue_and_wait(
                         else:
                             future = executor.submit(_run, tox_env_to_run)
                         future_to_env[future] = tox_env_to_run
-                    future = next(as_completed(future_to_env))
-                    tox_env_done = future_to_env.pop(future)
-                    try:
-                        result: ToxEnvRunResult = future.result()
-                    except CancelledError:
-                        tox_env_done.teardown()
-                        name = tox_env_done.conf.name
-                        result = ToxEnvRunResult(name=name, skipped=False, code=-3, outcomes=[], duration=MISS_DURATION)
-                    results.append(result)
-                    completed.add(result.name)
-                    _handle_one_run_done(result, spinner, state, live)
+
+                    if not future_to_env:
+                        result: Optional[ToxEnvRunResult] = None
+                    else:  # if we have queued wait for completed
+                        future = next(as_completed(future_to_env))
+                        tox_env_done = future_to_env.pop(future)
+                        try:
+                            result = future.result()
+                        except CancelledError:
+                            tox_env_done.teardown()
+                            name = tox_env_done.conf.name
+                            result = ToxEnvRunResult(
+                                name=name, skipped=False, code=-3, outcomes=[], duration=MISS_DURATION
+                            )
+                        results.append(result)
+                        completed.add(result.name)
+
+                    env_list = next(envs_to_run_generator, [])
+                    # if nothing running and nothing more to run we're done
+                    final_run = not env_list and not future_to_env
+                    if final_run:  # disable report on final env
+                        spinner.print_report = False
+                    if result is not None:
+                        _handle_one_run_done(result, spinner, state, live)
+                    if final_run:
+                        break
+
             except BaseException:  # pragma: no cover # noqa
                 logging.exception("Internal Error")  # pragma: no cover
                 raise  # pragma: no cover

@@ -54,6 +54,7 @@ class Spinner:
         self.frames = self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, stream) else self.ASCII_FRAMES
         self.stream = stream
         self.total = total
+        self.print_report = True
 
         self._envs: Dict[str, float] = OrderedDict()
         self._frame_index = 0
@@ -128,12 +129,13 @@ class Spinner:
         start_at = self._envs.pop(key, None)
         if self.enabled:
             self.clear()
-        duration = MISS_DURATION if start_at is None else time.monotonic() - start_at
-        base = f"{key}: {status} in {td_human_readable(duration)}"
-        if self.is_colored:
-            base = f"{color}{base}{Fore.RESET}"
-        base += os.linesep
-        self.stream.write(base)
+        if self.print_report:
+            duration = MISS_DURATION if start_at is None else time.monotonic() - start_at
+            base = f"{key}: {status} in {td_human_readable(duration)}"
+            if self.is_colored:
+                base = f"{color}{base}{Fore.RESET}"
+            base += os.linesep
+            self.stream.write(base)
 
     def disable_cursor(self) -> None:
         if self.stream.isatty():

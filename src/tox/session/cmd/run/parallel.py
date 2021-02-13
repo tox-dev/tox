@@ -74,6 +74,6 @@ def run_parallel(state: State) -> int:
     return execute(
         state,
         max_workers=state.options.parallel,
-        spinner=state.options.parallel_no_spinner is False and state.options.parallel_live is False,
+        has_spinner=state.options.parallel_no_spinner is False and state.options.parallel_live is False,
         live=state.options.parallel_live,
     )

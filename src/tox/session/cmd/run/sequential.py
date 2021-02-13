@@ -17,4 +17,4 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def run_sequential(state: State) -> int:
-    return execute(state, max_workers=1, spinner=False, live=True)
+    return execute(state, max_workers=1, has_spinner=False, live=True)
