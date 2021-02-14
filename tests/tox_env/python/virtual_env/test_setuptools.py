@@ -9,7 +9,6 @@ from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
 
 
-@pytest.mark.timeout(60)
 @pytest.mark.integration
 def test_setuptools_package(
     tox_project: ToxProjectCreator,

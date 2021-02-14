@@ -1,0 +1,2 @@
+Normalize description text to collapse newlines and one or more than whitespace to a single space - by
+:user:`gaborbernat`.

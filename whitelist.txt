@@ -215,3 +215,4 @@ virtualenv
 whl
 win32
 writestr
+xdist

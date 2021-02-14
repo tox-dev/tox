@@ -1,10 +1,13 @@
+import os
 import sys
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence, Tuple
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch  # noqa # cannot import from tox.pytest yet
+from _pytest.tmpdir import TempPathFactory
 from pytest_mock import MockerFixture
+from virtualenv import cli_run
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
@@ -92,3 +95,14 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], Tuple[str, str]]:
         return prev_ver, impl
 
     return _func
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _do_not_share_virtualenv_for_parallel_runs(tmp_path_factory: TempPathFactory, worker_id: str) -> None:
+    # virtualenv uses locks to manage access to its cache, when running with xdist this may throw off test timings
+    if worker_id != "master":  # pragma: no branch
+        temp_app_data = str(tmp_path_factory.mktemp(f"virtualenv-app-{worker_id}"))  # pragma: no cover
+        os.environ["VIRTUALENV_APP_DATA"] = temp_app_data  # pragma: no cover
+        seed_env_folder = str(tmp_path_factory.mktemp(f"seed-cache-{worker_id}"))  # pragma: no cover
+        args = [seed_env_folder, "--without-pip", "--activators", ""]  # pragma: no cover
+        cli_run(args, setup_logging=False)  # pragma: no cover

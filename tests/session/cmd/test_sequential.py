@@ -43,7 +43,6 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  a: FAIL code 1 \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-3]
 
 
-@pytest.mark.timeout(120)
 @pytest.mark.integration
 def test_result_json_sequential(
     tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]  # noqa: U100

@@ -147,3 +147,10 @@ def test_show_config_alias(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "setenv")
     outcome.assert_success()
     assert "set_env = " in outcome.out
+
+
+def test_show_config_description_normalize(tox_project: ToxProjectCreator) -> None:
+    tox_ini = "[testenv]\ndescription = A   magical\t pipe\n  of\tthis"
+    outcome = tox_project({"tox.ini": tox_ini}).run("c", "-e", "py", "-k", "description")
+    outcome.assert_success()
+    assert outcome.out == "[testenv:py]\ndescription = A magical pipe of this\n"

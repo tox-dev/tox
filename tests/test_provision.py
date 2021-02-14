@@ -102,7 +102,6 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.integration
-@pytest.mark.timeout(80)
 def test_provision_requires_ok(
     tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
