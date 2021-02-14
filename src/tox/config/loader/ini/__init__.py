@@ -19,12 +19,7 @@ V = TypeVar("V")
 class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary)"""
 
-    def __init__(
-        self,
-        section: str,
-        parser: ConfigParser,
-        overrides: List[Override],
-    ) -> None:
+    def __init__(self, section: str, parser: ConfigParser, overrides: List[Override]) -> None:
         self._section: SectionProxy = parser[section]
         self._parser = parser
         super().__init__(overrides)

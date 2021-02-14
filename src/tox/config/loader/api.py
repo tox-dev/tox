@@ -51,6 +51,7 @@ class Loader(Convert[T]):
 
     def __init__(self, overrides: List[Override]) -> None:
         self.overrides = {o.key: o for o in overrides}
+        self.parent: Optional["Loader[Any]"] = None
 
     @abstractmethod
     def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> T:  # noqa: U100

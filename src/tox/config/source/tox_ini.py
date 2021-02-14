@@ -53,7 +53,7 @@ class ToxIni(Source):
         except KeyError:
             loaders: List[IniLoader] = []
             self._envs[section] = loaders
-
+            loader: Optional[IniLoader] = None
             if self._parser.has_section(section):
                 loader = IniLoader(
                     section=section,
@@ -73,11 +73,14 @@ class ToxIni(Source):
                 for base in conf["base"]:
                     for section in (base, f"{TEST_ENV_PREFIX}{base}"):
                         if self._parser.has_section(section):
+                            child = loader
                             loader = IniLoader(
                                 section=section,
                                 parser=self._parser,
                                 overrides=override_map.get(section, []),
                             )
+                            if child is not None:
+                                child.parent = loader
                             yield loader
                             loaders.append(loader)
                             break

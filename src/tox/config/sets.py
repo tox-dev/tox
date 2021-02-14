@@ -109,8 +109,11 @@ class ConfigSet:
     def unused(self) -> List[str]:
         """Return a list of keys present in the config source but not used"""
         found: Set[str] = set()
+        # keys within loaders (only if the loader is not a parent too)
+        parents = {id(i.parent) for i in self.loaders if i.parent is not None}
         for loader in self.loaders:
-            found.update(loader.found_keys())
+            if id(loader) not in parents:
+                found.update(loader.found_keys())
         found -= self._defined.keys()
         return sorted(found)
 
