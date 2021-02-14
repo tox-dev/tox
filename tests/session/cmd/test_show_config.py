@@ -62,7 +62,8 @@ def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:
 
 
 def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": "[testenv:py]\nmagical=yes\nmagic=yes"}).run("c", "-e", "py")
+    tox_ini = "[testenv]\nok=false\n[testenv:py]\nmagical=yes\nmagic=yes"
+    outcome = tox_project({"tox.ini": tox_ini}).run("c", "-e", "py")
     outcome.assert_success()
     assert "\n# !!! unused: magic, magical\n" in outcome.out
 
