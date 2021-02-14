@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
@@ -26,11 +27,15 @@ class RunToxEnv(ToxEnv, ABC):
         super().__init__(conf, core, options, journal, log_handler)
 
     def register_config(self) -> None:
+        def ensure_one_line(value: str) -> str:
+            return re.sub(r"\s+", " ", value.replace("\r", "").replace("\n", " "))
+
         self.conf.add_config(
             keys=["description"],
             of_type=str,
             default="",
             desc="description attached to the tox environment",
+            post_process=ensure_one_line,
         )
         self.conf.add_config(
             "depends",
