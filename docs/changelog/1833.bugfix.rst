@@ -1,2 +1,0 @@
-Show config no longer marks as unused keys that are inherited (e.g. if the key is coming from ``testenv`` section and our
-target is ``testenv:fix``) - by :user:`gaborbernat`.

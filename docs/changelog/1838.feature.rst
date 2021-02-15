@@ -1,3 +1,0 @@
-Add support for the ``package_root`` \ ``setupdir`` (python scoped) configuration that sets the root directory used for
-packaging (the location of the historical ``setup.py`` and modern ``pyproject.toml``). This can be set at root level, or
-at tox environment level (the later takes precedence over the former) - by :user:`gaborbernat`.

@@ -1,1 +1,0 @@
-Support requirement files containing ``--hash`` constraints - by :user:`gaborbernat`.

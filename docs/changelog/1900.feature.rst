@@ -1,1 +1,0 @@
-Allow python test and packaging environments with version 2.7 - by :user:`gaborbernat`.

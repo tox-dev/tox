@@ -1,1 +1,0 @@
-Add support for the ``install_command`` settings in the virtual env test environments - by :user:`gaborbernat`.

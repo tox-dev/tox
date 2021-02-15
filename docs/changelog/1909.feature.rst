@@ -1,2 +1,0 @@
-Do not display status update environment reports when interrupted or for the final environment ran (because at the
-final report will be soon printed and makes the status update redundant) - by :user:`gaborbernat`.

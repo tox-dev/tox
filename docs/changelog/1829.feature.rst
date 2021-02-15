@@ -1,1 +1,0 @@
-Add basic quickstart implementation (just use pytest with the current python version) - by :user:`gaborbernat`.
