@@ -1,1 +1,0 @@
-``--alwayscopy`` and ``--sitepackages`` legacy only flags do not work - by :user:`gaborbernat`.

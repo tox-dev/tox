@@ -5,6 +5,62 @@ Release History
 
 .. towncrier release notes start
 
+4.0.0a6 (2021-02-15)
+--------------------
+
+Features - 4.0.0a6
+~~~~~~~~~~~~~~~~~~
+- Add basic quickstart implementation (just use pytest with the current python version) - by :user:`gaborbernat`. (`#1829 <https://github.com/tox-dev/tox/issues/1829>`_)
+- Support comments via the ``#`` character within the ini configuration (to force a literal ``#`` use ``\#``) -
+  by :user:`gaborbernat`. (`#1831 <https://github.com/tox-dev/tox/issues/1831>`_)
+- Add support for the ``install_command`` settings in the virtual env test environments - by :user:`gaborbernat`. (`#1832 <https://github.com/tox-dev/tox/issues/1832>`_)
+- Add support for the ``package_root`` \ ``setupdir`` (python scoped) configuration that sets the root directory used for
+  packaging (the location of the historical ``setup.py`` and modern ``pyproject.toml``). This can be set at root level, or
+  at tox environment level (the later takes precedence over the former) - by :user:`gaborbernat`. (`#1838 <https://github.com/tox-dev/tox/issues/1838>`_)
+- Implement support for the ``--installpkg`` CLI flag - by :user:`gaborbernat`. (`#1839 <https://github.com/tox-dev/tox/issues/1839>`_)
+- Add support for the ``list_dependencies_command`` settings in the virtual env test environments - by
+  :user:`gaborbernat`. (`#1842 <https://github.com/tox-dev/tox/issues/1842>`_)
+- Add support for the ``ignore_errors`` settings in tox test environments - by :user:`gaborbernat`. (`#1843 <https://github.com/tox-dev/tox/issues/1843>`_)
+- Add support for the ``pip_pre`` settings for virtual environment based tox environments - by :user:`gaborbernat`. (`#1844 <https://github.com/tox-dev/tox/issues/1844>`_)
+- Add support for the ``platform`` settings in tox test environments - by :user:`gaborbernat`. (`#1845 <https://github.com/tox-dev/tox/issues/1845>`_)
+- Add support for the ``recreate`` settings in tox test environments - by :user:`gaborbernat`. (`#1846 <https://github.com/tox-dev/tox/issues/1846>`_)
+- Allow python test and packaging environments with version 2.7 - by :user:`gaborbernat`. (`#1900 <https://github.com/tox-dev/tox/issues/1900>`_)
+- Do not construct a requirements file for deps in virtualenv, instead pass content as CLI argument to pip - by
+  :user:`gaborbernat`. (`#1906 <https://github.com/tox-dev/tox/issues/1906>`_)
+- Do not display status update environment reports when interrupted or for the final environment ran (because at the
+  final report will be soon printed and makes the status update redundant) - by :user:`gaborbernat`. (`#1909 <https://github.com/tox-dev/tox/issues/1909>`_)
+- The ``_TOX_SHOW_THREAD`` environment variable can be used to print alive threads when tox exists (useful to debug
+  when tox hangs because of some non-finished thread) and also now prints the pid of the local subprocess when reporting
+  the outcome of a execution - by :user:`gaborbernat`. (`#1915 <https://github.com/tox-dev/tox/issues/1915>`_)
+
+Bugfixes - 4.0.0a6
+~~~~~~~~~~~~~~~~~~
+- Normalize description text to collapse newlines and one or more than whitespace to a single space - by
+  :user:`gaborbernat`. (`#1829 <https://github.com/tox-dev/tox/issues/1829>`_)
+- Support aliases in show config key specification (will print with the primary key) - by :user:`gaborbernat`. (`#1831 <https://github.com/tox-dev/tox/issues/1831>`_)
+- Show config no longer marks as unused keys that are inherited (e.g. if the key is coming from ``testenv`` section and our
+  target is ``testenv:fix``) - by :user:`gaborbernat`. (`#1833 <https://github.com/tox-dev/tox/issues/1833>`_)
+- ``--alwayscopy`` and ``--sitepackages`` legacy only flags do not work - by :user:`gaborbernat`. (`#1839 <https://github.com/tox-dev/tox/issues/1839>`_)
+- Fix handling of ``commands_pre``/``commands``/``commands_post`` to be in line with tox 3 (returned incorrect exit codes
+  and post was not always executed) - by :user:`gaborbernat`. (`#1843 <https://github.com/tox-dev/tox/issues/1843>`_)
+- Support requirement files containing ``--hash`` constraints - by :user:`gaborbernat`. (`#1903 <https://github.com/tox-dev/tox/issues/1903>`_)
+- Fix a bug that caused tox to never finish when pulling configuration from a tox run environment that was never executed
+  - by :user:`gaborbernat`. (`#1915 <https://github.com/tox-dev/tox/issues/1915>`_)
+
+Deprecations and Removals - 4.0.0a6
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- - Drop support for ``sdistsrc`` flag because introduces a significant complexity and is barely used (5 hits on a github
+    search).
+  - ``--skip-missing-interpreters``, ``--notest``, ``--sdistonly``, ``--installpkg``, ``--develop`` and
+    ``--skip-pkg-install`` CLI flags are no longer available for ``devenv`` (enforce the only sane value for these).
+
+  By :user:`gaborbernat` (`#1839 <https://github.com/tox-dev/tox/issues/1839>`_)
+- Remove Jenkins override support: this feature goes against the spirit of tox - blurring the line between the CI and
+  local runs. It also singles out a single CI provider, which opens the door for other CIs wanting similar functionality.
+  Finally, only 54 code file examples came back on a Github search, showing this is a not widely used feature. People who
+  still want Jenkins override support may create a tox plugin to achieve this functionality - by :user:`gaborbernat`. (`#1841 <https://github.com/tox-dev/tox/issues/1841>`_)
+
+
 v4.0.0a5 (2021-01-23)
 ---------------------
 

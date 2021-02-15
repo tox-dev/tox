@@ -1,3 +1,0 @@
-The ``_TOX_SHOW_THREAD`` environment variable can be used to print alive threads when tox exists (useful to debug
-when tox hangs because of some non-finished thread) and also now prints the pid of the local subprocess when reporting
-the outcome of a execution - by :user:`gaborbernat`.

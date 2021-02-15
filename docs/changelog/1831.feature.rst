@@ -1,2 +1,0 @@
-Support comments via the ``#`` character within the ini configuration (to force a literal ``#`` use ``\#``) -
-by :user:`gaborbernat`.

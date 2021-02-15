@@ -1,1 +1,0 @@
-Add support for the ``ignore_errors`` settings in tox test environments - by :user:`gaborbernat`.
