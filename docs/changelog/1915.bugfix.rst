@@ -1,0 +1,2 @@
+Fix a bug that caused tox to never finish when pulling configuration from a tox run environment that was never executed
+- by :user:`gaborbernat`.

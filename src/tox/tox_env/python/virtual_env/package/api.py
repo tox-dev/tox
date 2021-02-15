@@ -279,16 +279,17 @@ class Pep517VirtualEnvPackage(VirtualEnv, PythonPackage, Frontend):
         return env
 
     def teardown(self) -> None:
-        self.ref_count.decrement()
-        if self.ref_count.value == 0 and self._backend_executor is not None and self._teardown_done is False:
-            self._teardown_done = True
-            try:
-                if self.backend_executor.is_alive:
-                    self._send("_exit")  # try first on amicable shutdown
-            except SystemExit:  # if already has been interrupted ignore
-                pass
-            finally:
-                self._backend_executor.close()
+        if not self._teardown_done:
+            self.ref_count.decrement()
+            if self.ref_count.value == 0 and self._backend_executor is not None and self._teardown_done is False:
+                self._teardown_done = True
+                try:
+                    if self.backend_executor.is_alive:
+                        self._send("_exit")  # try first on amicable shutdown
+                except SystemExit:  # if already has been interrupted ignore
+                    pass
+                finally:
+                    self._backend_executor.close()
 
     @contextmanager
     def _send_msg(

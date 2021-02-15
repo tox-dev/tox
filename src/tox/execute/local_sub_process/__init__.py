@@ -6,7 +6,7 @@ import sys
 import time
 from subprocess import DEVNULL, PIPE, TimeoutExpired
 from types import TracebackType
-from typing import TYPE_CHECKING, Generator, List, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple, Type
 
 from ..api import Execute, ExecuteInstance, ExecuteStatus
 from ..request import ExecuteRequest, StdinSource
@@ -133,6 +133,10 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return {"pid": self._process.pid} if self._process.pid else {}
 
 
 class LocalSubprocessExecuteFailedStatus(ExecuteStatus):

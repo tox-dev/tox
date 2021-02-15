@@ -1,5 +1,6 @@
 """Main entry point for tox."""
 import logging
+import os
 import sys
 import time
 from itertools import chain
@@ -27,6 +28,12 @@ def run(args: Optional[Sequence[str]] = None) -> None:
             raise
     except KeyboardInterrupt:
         result = -2
+    finally:
+        if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover
+            import threading  # pragma: no cover
+
+            for thread in threading.enumerate():  # pragma: no cover
+                print(thread)  # pragma: no cover
     raise SystemExit(result)
 
 
