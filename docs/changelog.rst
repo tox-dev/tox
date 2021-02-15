@@ -5,8 +5,8 @@ Release History
 
 .. towncrier release notes start
 
-4.0.0a6 (2021-02-15)
---------------------
+v4.0.0a6 (2021-02-15)
+---------------------
 
 Features - 4.0.0a6
 ~~~~~~~~~~~~~~~~~~
