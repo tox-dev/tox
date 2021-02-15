@@ -202,11 +202,6 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
         exit_code = report(state.options.start, ordered_results, state.options.is_colored)
         if has_previous:
             signal(SIGINT, previous)
-        if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover
-            import threading  # pragma: no cover
-
-            for thread in threading.enumerate():  # pragma: no cover
-                print(thread)  # pragma: no cover
     return exit_code
 
 
@@ -299,7 +294,12 @@ def _queue_and_wait(
             finally:
                 executor.shutdown(wait=True)
     finally:
-        done.set()
+        try:
+            # call teardown - configuration only environments for example could not be finished
+            for _, tox_env in state.run_envs():
+                tox_env.teardown()
+        finally:
+            done.set()
 
 
 def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: State, live: bool) -> None:

@@ -126,6 +126,9 @@ class State:
             self._pkg_env[name] = packager, pkg_tox_env
         return pkg_tox_env
 
+    def run_envs(self) -> Iterator[Tuple[str, RunToxEnv]]:
+        yield from self._run_env.items()
+
 
 @impl
 def tox_add_option(parser: "ToxParser") -> None:

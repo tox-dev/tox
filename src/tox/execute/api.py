@@ -7,7 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from types import TracebackType
-from typing import Callable, Iterator, NoReturn, Optional, Sequence, Tuple, Type
+from typing import Any, Callable, Dict, Iterator, NoReturn, Optional, Sequence, Tuple, Type
 
 from colorama import Fore
 
@@ -57,6 +57,10 @@ class ExecuteStatus(ABC):
     def err(self) -> bytearray:
         return self._err.content
 
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return {}
+
 
 class Execute(ABC):
     """Abstract API for execution of a tox environment"""
@@ -79,7 +83,9 @@ class Execute(ABC):
                 exit_code = status.exit_code
         finally:
             end = time.monotonic()
-        status.outcome = Outcome(request, show, exit_code, out_sync.text, err_sync.text, start, end, instance.cmd)
+        status.outcome = Outcome(
+            request, show, exit_code, out_sync.text, err_sync.text, start, end, instance.cmd, status.metadata
+        )
 
     @abstractmethod
     def build_instance(
@@ -138,6 +144,7 @@ class Outcome:
         start: float,
         end: float,
         cmd: Sequence[str],
+        metadata: Dict[str, Any],
     ):
         self.request = request
         self.show_on_standard = show_on_standard
@@ -147,6 +154,7 @@ class Outcome:
         self.start = start
         self.end = end
         self.cmd = cmd
+        self.metadata = metadata
 
     def __bool__(self) -> bool:
         return self.exit_code == self.OK
@@ -179,7 +187,18 @@ class Outcome:
 
     def log_run_done(self, lvl: int) -> None:
         req = self.request
-        LOGGER.log(lvl, "exit %s (%.2f seconds) %s> %s", self.exit_code, self.elapsed, req.cwd, req.shell_cmd)
+        metadata = ""
+        if self.metadata:
+            metadata = f" {', '.join(f'{k}={v}' for k, v in self.metadata.items())}"
+        LOGGER.log(
+            lvl,
+            "exit %s (%.2f seconds) %s> %s%s",
+            self.exit_code,
+            self.elapsed,
+            req.cwd,
+            req.shell_cmd,
+            metadata,
+        )
 
     @property
     def elapsed(self) -> float:
