@@ -11,6 +11,17 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.22.0 (2021-02-16)
+--------------------
+
+Features
+^^^^^^^^
+
+- The value of the :conf:`requires` configuration option is now exposed via
+  the :class:`tox.config.Config` object - by :user:`hroncok`
+  `#1918 <https://github.com/tox-dev/tox/issues/1918>`_
+
+
 v3.21.4 (2021-02-02)
 --------------------
 
