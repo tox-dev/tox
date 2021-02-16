@@ -47,6 +47,35 @@ def test_provision_min_version_is_requires(newconfig, next_tox_major):
     assert config.ignore_basepython_conflict is False
 
 
+def test_provision_config_has_minversion_and_requires(newconfig, next_tox_major):
+    with pytest.raises(MissingRequirement) as context:
+        newconfig(
+            [],
+            """\
+            [tox]
+            minversion = {}
+            requires =
+                setuptools > 2
+                pip > 3
+            """.format(
+                next_tox_major,
+            ),
+        )
+    config = context.value.config
+
+    assert config.run_provision is True
+    assert config.minversion == next_tox_major
+    assert config.requires == ["setuptools > 2", "pip > 3"]
+
+
+def test_provision_config_empty_minversion_and_requires(newconfig, next_tox_major):
+    config = newconfig([], "")
+
+    assert config.run_provision is False
+    assert config.minversion is None
+    assert config.requires == []
+
+
 def test_provision_tox_change_name(newconfig):
     config = newconfig(
         [],

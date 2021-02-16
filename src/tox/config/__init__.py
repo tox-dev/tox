@@ -1295,11 +1295,11 @@ class ParseIni(object):
             feedback("--devenv requires only a single -e", sysexit=True)
 
     def handle_provision(self, config, reader):
-        requires_list = reader.getlist("requires")
+        config.requires = reader.getlist("requires")
         config.minversion = reader.getstring("minversion", None)
         config.provision_tox_env = name = reader.getstring("provision_tox_env", ".tox")
         min_version = "tox >= {}".format(config.minversion or Version(tox.__version__).public)
-        deps = self.ensure_requires_satisfied(config, requires_list, min_version)
+        deps = self.ensure_requires_satisfied(config, config.requires, min_version)
         if config.run_provision:
             section_name = "testenv:{}".format(name)
             if section_name not in self._cfg.sections:
