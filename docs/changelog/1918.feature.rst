@@ -1,2 +1,0 @@
-The value of the :conf:`requires` configuration option is now exposed via
-the :class:`tox.config.Config` object - by :user:`hroncok`
