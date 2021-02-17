@@ -1,0 +1,6 @@
+tox can now be invoked with a new ``--no-provision`` flag that prevents provision,
+if :conf:`requires` or :conf:`minversion` are not satisfied,
+tox will fail;
+if a path is specified as an argument to the flag
+(e.g. as ``tox --no-provision missing.json``) and provision is prevented,
+provision metadata are written as JSON to that path - by :user:`hroncok`

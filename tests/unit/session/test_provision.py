@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
 import os
 import shutil
 import subprocess
@@ -183,6 +184,99 @@ def test_provision_cli_args_not_ignored_if_provision_false(cmd, initproj):
     initproj("test-0.1", {"tox.ini": "[tox]"})
     result = cmd("-a", "--option", "b")
     result.assert_fail(is_run_test_env=False)
+
+
+parametrize_json_path = pytest.mark.parametrize("json_path", [None, "missing.json"])
+
+
+@parametrize_json_path
+def test_provision_does_not_fail_with_no_provision_no_reason(cmd, initproj, json_path):
+    p = initproj("test-0.1", {"tox.ini": "[tox]"})
+    result = cmd("--no-provision", *([json_path] if json_path else []))
+    result.assert_success(is_run_test_env=True)
+    assert not (p / "missing.json").exists()
+
+
+@parametrize_json_path
+def test_provision_fails_with_no_provision_next_tox(cmd, initproj, next_tox_major, json_path):
+    p = initproj(
+        "test-0.1",
+        {
+            "tox.ini": """\
+                             [tox]
+                             minversion = {}
+                             """.format(
+                next_tox_major,
+            )
+        },
+    )
+    result = cmd("--no-provision", *([json_path] if json_path else []))
+    result.assert_fail(is_run_test_env=False)
+    if json_path:
+        missing = json.loads((p / json_path).read_text("utf-8"))
+        assert missing["minversion"] == next_tox_major
+
+
+@parametrize_json_path
+def test_provision_fails_with_no_provision_missing_requires(cmd, initproj, json_path):
+    p = initproj(
+        "test-0.1",
+        {
+            "tox.ini": """\
+                             [tox]
+                             requires =
+                                 virtualenv > 99999999
+                             """
+        },
+    )
+    result = cmd("--no-provision", *([json_path] if json_path else []))
+    result.assert_fail(is_run_test_env=False)
+    if json_path:
+        missing = json.loads((p / json_path).read_text("utf-8"))
+        assert missing["requires"] == ["virtualenv > 99999999"]
+
+
+@parametrize_json_path
+def test_provision_does_not_fail_with_satisfied_requires(cmd, initproj, next_tox_major, json_path):
+    p = initproj(
+        "test-0.1",
+        {
+            "tox.ini": """\
+                             [tox]
+                             minversion = 0
+                             requires =
+                                 setuptools > 2
+                                 pip > 3
+                             """
+        },
+    )
+    result = cmd("--no-provision", *([json_path] if json_path else []))
+    result.assert_success(is_run_test_env=True)
+    assert not (p / "missing.json").exists()
+
+
+@parametrize_json_path
+def test_provision_fails_with_no_provision_combined(cmd, initproj, next_tox_major, json_path):
+    p = initproj(
+        "test-0.1",
+        {
+            "tox.ini": """\
+                             [tox]
+                             minversion = {}
+                             requires =
+                                 setuptools > 2
+                                 pip > 3
+                             """.format(
+                next_tox_major,
+            )
+        },
+    )
+    result = cmd("--no-provision", *([json_path] if json_path else []))
+    result.assert_fail(is_run_test_env=False)
+    if json_path:
+        missing = json.loads((p / json_path).read_text("utf-8"))
+        assert missing["minversion"] == next_tox_major
+        assert missing["requires"] == ["setuptools > 2", "pip > 3"]
 
 
 @pytest.fixture(scope="session")

@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import argparse
 import itertools
+import json
 import os
 import random
 import re
@@ -571,6 +572,16 @@ def tox_addoption(parser):
         "--alwayscopy",
         action="store_true",
         help="override alwayscopy setting to True in all envs",
+    )
+    parser.add_argument(
+        "--no-provision",
+        action="store",
+        nargs="?",
+        default=False,
+        const=True,
+        metavar="REQUIRES_JSON",
+        help="do not perform provision, but fail and if a path was provided "
+        "write provision metadata as JSON to it",
     )
 
     cli_skip_missing_interpreter(parser)
@@ -1318,8 +1329,8 @@ class ParseIni(object):
         # raise on unknown args
         self.config._parser.parse_cli(args=self.config.args, strict=True)
 
-    @staticmethod
-    def ensure_requires_satisfied(config, requires, min_version):
+    @classmethod
+    def ensure_requires_satisfied(cls, config, requires, min_version):
         missing_requirements = []
         failed_to_parse = False
         deps = []
@@ -1346,11 +1357,32 @@ class ParseIni(object):
                 missing_requirements.append(str(requirements.Requirement(require)))
         if failed_to_parse:
             raise tox.exception.BadRequirement()
+        if config.option.no_provision and missing_requirements:
+            msg = "provisioning explicitly disabled within {}, but missing {}"
+            if config.option.no_provision is not True:  # it's a path
+                msg += " and wrote to {}"
+                cls.write_requires_to_json_file(config)
+            raise tox.exception.Error(
+                msg.format(sys.executable, missing_requirements, config.option.no_provision)
+            )
         if WITHIN_PROVISION and missing_requirements:
             msg = "break infinite loop provisioning within {} missing {}"
             raise tox.exception.Error(msg.format(sys.executable, missing_requirements))
         config.run_provision = bool(len(missing_requirements))
         return deps
+
+    @staticmethod
+    def write_requires_to_json_file(config):
+        requires_dict = {
+            "minversion": config.minversion,
+            "requires": config.requires,
+        }
+        try:
+            with open(config.option.no_provision, "w", encoding="utf-8") as outfile:
+                json.dump(requires_dict, outfile, indent=4)
+        except TypeError:  # Python 2
+            with open(config.option.no_provision, "w") as outfile:
+                json.dump(requires_dict, outfile, indent=4, encoding="utf-8")
 
     def parse_build_isolation(self, config, reader):
         config.isolated_build = reader.getbool("isolated_build", False)
