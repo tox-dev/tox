@@ -8,22 +8,21 @@ from configparser import SectionProxy
 from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple, Union
 
 from tox.config.loader.stringify import stringify
-from tox.config.main import Config
 from tox.config.set_env import SetEnv
 from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:
     from tox.config.loader.ini import IniLoader
+    from tox.config.main import Config
 
-CORE_PREFIX = "tox"
 BASE_TEST_ENV = "testenv"
 
 # split alongside :, unless it's esscaped, or it's preceded by a single capital letter (Windows drive letter in paths)
 ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
 
 
-def replace(conf: Config, name: Optional[str], loader: "IniLoader", value: str, chain: List[str]) -> str:
+def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str, chain: List[str]) -> str:
     # perform all non-escaped replaces
     start, end = 0, 0
     while True:
@@ -71,7 +70,7 @@ def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool]
 
 
 def _replace_match(
-    conf: Config, current_env: Optional[str], loader: "IniLoader", value: str, chain: List[str]
+    conf: "Config", current_env: Optional[str], loader: "IniLoader", value: str, chain: List[str]
 ) -> Optional[str]:
     of_type, *args = ARGS_GROUP.split(value)
     if of_type == "/":
@@ -98,7 +97,7 @@ _REPLACE_REF = re.compile(
 
 
 def replace_reference(
-    conf: Config,
+    conf: "Config",
     current_env: Optional[str],
     loader: "IniLoader",
     value: str,
@@ -141,7 +140,7 @@ def _config_value_sources(
     env: Optional[str],
     section: Optional[str],
     current_env: Optional[str],
-    conf: Config,
+    conf: "Config",
     loader: "IniLoader",
 ) -> Iterator[Union[SectionProxy, ConfigSet]]:
     # if we have an env name specified take only from there
@@ -162,7 +161,7 @@ def _config_value_sources(
         return
 
     # if there's a section, special handle the core section under name tox
-    if section == CORE_PREFIX:
+    if section == loader.core_prefix:
         yield conf.core  # try via registered configs
     value = loader.get_section(section)  # fallback to section
     if value is not None:
@@ -180,7 +179,7 @@ def replace_pos_args(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
     return replace_value
 
 
-def replace_env(conf: Config, env_name: Optional[str], args: List[str], chain: List[str]) -> str:
+def replace_env(conf: "Config", env_name: Optional[str], args: List[str], chain: List[str]) -> str:
     key = args[0]
     new_key = f"env:{key}"
 
@@ -209,7 +208,6 @@ def replace_tty(args: List[str]) -> str:
 
 
 __all__ = (
-    "CORE_PREFIX",
     "BASE_TEST_ENV",
     "replace",
     "find_replace_part",

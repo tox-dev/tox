@@ -48,7 +48,7 @@ repos:
         additional_dependencies:
           - black==20.8b1
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.7.1
+    rev: v1.8.0
     hooks:
       - id: rst-backticks
   - repo: local

@@ -36,7 +36,7 @@ class IniConfig:
                 with self.config_file.open() as file_handler:
                     parser.read_file(file_handler)
                 self.has_tox_section = parser.has_section("tox")
-                self.ini = IniLoader("tox", parser, overrides=[]) if self.has_tox_section else None
+                self.ini = IniLoader("tox", parser, overrides=[], core_prefix="") if self.has_tox_section else None
             except Exception as exception:
                 logging.error("failed to read config file %s because %r", config_file, exception)
                 self.has_config_file = None

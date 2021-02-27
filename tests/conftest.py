@@ -12,7 +12,6 @@ from virtualenv import cli_run
 from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
-from tox.run import make_config
 from tox.tox_env.python.api import PythonInfo, VersionInfo
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
@@ -48,7 +47,7 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
         config_file.write_bytes(conf.encode("utf-8"))
         with monkeypatch.context() as context:
             context.chdir(tmp_path)
-        return make_config(
+        return Config.make(
             Parsed(work_dir=dest, override=override or [], config_file=config_file, root_dir=None),
             pos_args=[],
         )

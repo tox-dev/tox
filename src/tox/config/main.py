@@ -1,11 +1,14 @@
 from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence
 
 from tox.config.loader.api import Loader, Override, OverrideMap
-from tox.config.source import Source
 
 from .sets import CoreConfigSet, EnvConfigSet
+from .source import Source, discover_source
+
+if TYPE_CHECKING:
+    from .cli.parser import Parsed
 
 
 class Config:
@@ -29,6 +32,22 @@ class Config:
         self._env_to_set: Dict[str, EnvConfigSet] = OrderedDict()
         self._core_set: Optional[CoreConfigSet] = None
         self.register_config_set: Callable[[str, EnvConfigSet], Any] = lambda n, e: None
+
+    @classmethod
+    def make(cls, parsed: "Parsed", pos_args: Optional[Sequence[str]]) -> "Config":
+        """Make a tox configuration object."""
+        source = discover_source(parsed.config_file, parsed.root_dir)
+        # root is the project root, where the configuration file is at
+        # work dir is where we put our own files
+        root: Path = source.path.parent if parsed.root_dir is None else parsed.root_dir
+        work_dir: Path = source.path.parent if parsed.work_dir is None else parsed.work_dir
+        return cls(
+            config_source=source,
+            overrides=parsed.override,
+            pos_args=pos_args,
+            root=root,
+            work_dir=work_dir,
+        )
 
     @property
     def core(self) -> CoreConfigSet:
@@ -69,3 +88,7 @@ class Config:
 
     def __contains__(self, item: str) -> bool:
         return any(name for name in self if name == item)
+
+    @property
+    def src_path(self) -> Path:
+        return self._src.path
