@@ -71,7 +71,7 @@ def test_pep517_setuptools_prepare_metadata_for_build_wheel(
     meta = tmp_path / "meta"
     result = frontend_setuptools.prepare_metadata_for_build_wheel(metadata_directory=meta)
     dist = Distribution.at(str(result.metadata))
-    assert dist.entry_points == [EntryPoint(name="demo_exe", value="demo:a", group="console_scripts")]
+    assert list(dist.entry_points) == [EntryPoint(name="demo_exe", value="demo:a", group="console_scripts")]
     assert dist.version == "1.0"
     assert dist.metadata["Name"] == "demo"
     assert [v for k, v in dist.metadata.items() if k == "Requires-Dist"] == ["requests (>2)", "magic (>3)"]

@@ -1,0 +1,1 @@
+Add support for configuration taken from the ``setup.cfg`` file -by :user:`gaborbernat`.
