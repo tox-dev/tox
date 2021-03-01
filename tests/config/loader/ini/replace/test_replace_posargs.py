@@ -11,7 +11,7 @@ def test_replace_pos_args_none_sys_argv(replace_one: ReplaceOne) -> None:
 
 
 def test_replace_pos_args_empty_sys_argv(replace_one: ReplaceOne) -> None:
-    result = replace_one("{posargs}", None)
+    result = replace_one("{posargs}", [])
     assert result == ""
 
 
