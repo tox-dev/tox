@@ -302,7 +302,7 @@ def parseconfig(args, plugins=()):
 
 
 def get_py_project_toml(path):
-    with open(str(path)) as file_handler:
+    with open(str(path), encoding="UTF-8") as file_handler:
         config_data = toml.load(file_handler)
         return config_data
 
