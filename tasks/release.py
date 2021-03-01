@@ -3,9 +3,8 @@ from pathlib import Path
 from subprocess import check_call
 from typing import Tuple
 
-from packaging.version import Version
-
 from git import Commit, Head, Remote, Repo, TagReference
+from packaging.version import Version
 
 ROOT_SRC_DIR = Path(__file__).parents[1]
 
