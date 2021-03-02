@@ -69,10 +69,35 @@ def test_getbool(get_option):
         )
 
 
+def test_getargvlist(get_option):
+    """[] is substituted in options of type argvlist"""
+    value = get_option(
+        """
+        [testenv]
+        commands = foo []
+        """,
+        "commands",
+    )
+    assert value == [["foo"]]
+
+
+def test_getargvlist_nonempty(get_option):
+    """[] is substituted in options of type argvlist"""
+    value = get_option(
+        """
+        [testenv]
+        commands = foo []
+        """,
+        "commands",
+        ["bar"],
+    )
+    assert value == [["foo", "bar"]]
+
+
 @pytest.fixture
 def get_option(newconfig):
-    def do(tox_ini, option_name):
-        config = newconfig([], tox_ini)
+    def do(tox_ini, option_name, pos_args=()):
+        config = newconfig(list(pos_args), tox_ini)
         print(type(config.envconfigs), config.envconfigs.keys())
         return getattr(config.envconfigs["python"], option_name)
 
