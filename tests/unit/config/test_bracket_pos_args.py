@@ -57,6 +57,18 @@ def test_getfloat(get_option):
         )
 
 
+def test_getbool(get_option):
+    """[] is not substituted in options of type bool"""
+    with pytest.raises(tox.exception.ConfigError):
+        get_option(
+            """
+            [testenv]
+            ignore_outcome = []
+            """,
+            "ignore_outcome",
+        )
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name):
