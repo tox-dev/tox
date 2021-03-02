@@ -1,14 +1,13 @@
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
 from tox.config.main import Config
-from tox.config.types import Command
 from tox.config.set_env import SetEnv
 from tox.config.source.tox_ini import ToxIni
-
+from tox.config.types import Command
+from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
 
 # ConfigError = tox.exception.ConfigError
 ConfigError = TypeError
@@ -28,6 +27,7 @@ def get_option(tmp_path: Path) -> Any:
         if isinstance(value, SetEnv):
             return value._raw
         return value
+
     return do
 
 
@@ -165,8 +165,12 @@ def test_get_string(get_option: Any) -> None:
     [
         ("x[]", "x[]"),  # no substitution inside a word
         ("[]x", "[]x"),  # no substitution inside a word
-        pytest.param("{envname}[]", "pythonbar", marks=pytest.mark.xfail(raises=AssertionError)),  # noqa: SC100 {envname} and [] are two separate words
-        pytest.param("[]{envname}", "barpython", marks=pytest.mark.xfail(raises=AssertionError)),  # noqa: SC100 {envname} and [] are two separate words
+        pytest.param(
+            "{envname}[]", "pythonbar", marks=pytest.mark.xfail(raises=AssertionError)
+        ),  # noqa: SC100 {envname} and [] are two separate words
+        pytest.param(
+            "[]{envname}", "barpython", marks=pytest.mark.xfail(raises=AssertionError)
+        ),  # noqa: SC100 {envname} and [] are two separate words
     ],
 )
 def test_examples(value: str, result: str, get_option: Any) -> None:
