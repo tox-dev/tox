@@ -1,9 +1,15 @@
+from typing import Any
+
 import pytest
 
-import tox
+
+# TODO
+# ConfigError = tox.exception.ConfigError
+class ConfigError(Exception):
+    pass
 
 
-def test_get_path(get_option):
+def test_get_path(get_option: Any) -> None:
     """[] is not substituted in options of type path"""
     value = get_option(
         """
@@ -15,7 +21,7 @@ def test_get_path(get_option):
     assert str(value)[-2:] == "[]"
 
 
-def test_get_list(get_option):
+def test_get_list(get_option: Any) -> None:
     """[] is not substituted in options of type list"""
     value = get_option(
         """
@@ -27,7 +33,7 @@ def test_get_list(get_option):
     assert value == ["[]"]
 
 
-def test_dict_setenv(get_option):
+def test_dict_setenv(get_option: Any) -> None:
     """[] is not substituted in options of type dict_setenv"""
     value = get_option(
         """
@@ -40,9 +46,9 @@ def test_dict_setenv(get_option):
     assert value["FOO"] == "[]"
 
 
-def test_get_float(get_option):
+def test_get_float(get_option: Any) -> None:
     """[] is not substituted in options of type float"""
-    with pytest.raises(tox.exception.ConfigError):
+    with pytest.raises(ConfigError):
         get_option(
             """
             [testenv]
@@ -52,9 +58,9 @@ def test_get_float(get_option):
         )
 
 
-def test_get_bool(get_option):
+def test_get_bool(get_option: Any) -> None:
     """[] is not substituted in options of type bool"""
-    with pytest.raises(tox.exception.ConfigError):
+    with pytest.raises(ConfigError):
         get_option(
             """
             [testenv]
@@ -64,7 +70,7 @@ def test_get_bool(get_option):
         )
 
 
-def test_get_argv_list(get_option):
+def test_get_argv_list(get_option: Any) -> None:
     """[] is substituted in options of type argvlist"""
     value = get_option(
         """
@@ -76,7 +82,7 @@ def test_get_argv_list(get_option):
     assert value == [["foo"]]
 
 
-def test_get_argv_list_nonempty(get_option):
+def test_get_argv_list_nonempty(get_option: Any) -> None:
     """[] is substituted in options of type argvlist"""
     value = get_option(
         """
@@ -89,7 +95,7 @@ def test_get_argv_list_nonempty(get_option):
     assert value == [["foo", "bar"]]
 
 
-def test_get_argv(get_option):
+def test_get_argv(get_option: Any) -> None:
     """[] is substituted in options of type argv"""
     value = get_option(
         """
@@ -102,7 +108,7 @@ def test_get_argv(get_option):
     assert value == ["foo", "bar"]
 
 
-def test_get_argv_install_command(get_option):
+def test_get_argv_install_command(get_option: Any) -> None:
     """[] is substituted in options of type argv_install_command"""
     value = get_option(
         """
@@ -115,7 +121,7 @@ def test_get_argv_install_command(get_option):
     assert value == ["foo", "bar", "{packages}"]
 
 
-def test_get_string(get_option):
+def test_get_string(get_option: Any) -> None:
     """[] is not substituted in options of type string"""
     value = get_option(
         """
@@ -136,7 +142,7 @@ def test_get_string(get_option):
         ("[]{envname}", "barpython"),  # noqa: SC100 {envname} and [] are two separate words
     ],
 )
-def test_examples(value, result, get_option):
+def test_examples(value: str, result: str, get_option: Any) -> None:
     got = get_option(
         """
         [testenv]
@@ -149,7 +155,7 @@ def test_examples(value, result, get_option):
     assert got == ["foo", result]
 
 
-def test_no_substitutions_inside_pos_args(get_option):
+def test_no_substitutions_inside_pos_args(get_option: Any) -> None:
     got = get_option(
         """
         [testenv]
@@ -161,7 +167,7 @@ def test_no_substitutions_inside_pos_args(get_option):
     assert got == ["foo", "{envname}"]
 
 
-def test_no_pos_args_inside_substitutions(get_option, monkeypatch):
+def test_no_pos_args_inside_substitutions(get_option: Any, monkeypatch: Any) -> None:
     monkeypatch.setenv("BAZ", "[]")
     got = get_option(
         """
