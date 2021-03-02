@@ -25,6 +25,11 @@ def test_getlist(get_option):
     assert value == ["[]"]
 
 
+def test_getdict(get_option):
+    """[] is not substituted in options of type dict"""
+    # TODO
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name):
