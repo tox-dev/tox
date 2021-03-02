@@ -132,6 +132,28 @@ def test_getstring(get_option):
     assert value == "[]"
 
 
+@pytest.mark.parametrize(
+    ("value", "result"),
+    [
+        ("x[]", "x[]"),  # no substitution inside a word
+        ("[]x", "[]x"),  # no substitution inside a word
+        ("{envname}[]", "pythonbar"),  # {envname} and [] are two separate words
+        ("[]{envname}", "barpython"),  # {envname} and [] are two separate words
+    ],
+)
+def test_examples(value, result, get_option):
+    got = get_option(
+        """
+        [testenv]
+        list_dependencies_command = foo %s
+        """
+        % value,
+        "list_dependencies_command",
+        ["bar"],
+    )
+    assert got == ["foo", result]
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name, pos_args=()):
