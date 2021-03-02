@@ -30,6 +30,19 @@ def test_getdict(get_option):
     # TODO
 
 
+def test_dict_setenv(get_option):
+    """[] is not substituted in options of type dict_setenv"""
+    value = get_option(
+        """
+        [testenv]
+        setenv =
+          FOO = []
+        """,
+        "setenv",
+    )
+    assert value["FOO"] == "[]"
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name):
