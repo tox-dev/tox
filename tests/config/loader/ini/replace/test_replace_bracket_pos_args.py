@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
 import pytest
 
@@ -15,12 +15,15 @@ ConfigError = TypeError
 
 @pytest.fixture()
 def get_option(tmp_path: Path) -> Any:
-    def do(tox_ini: str, option_name: str, pos_args: list[str] = ()) -> Any:
+    def do(tox_ini: str, option_name: str, pos_args: List[str] = []) -> Any:
         tox_ini_file = tmp_path / "tox.ini"
         tox_ini_file.write_text(tox_ini)
-        tox_ini = ToxIni(tox_ini_file)
-        config = Config(tox_ini, overrides=[], root=tmp_path, pos_args=pos_args, work_dir=tmp_path)
-        env = VirtualEnvRunner(config.get_env("python"), config.core, None, None, None)
+        ini = ToxIni(tox_ini_file)
+        config = Config(ini, overrides=[], root=tmp_path, pos_args=pos_args, work_dir=tmp_path)
+        options: Any = None
+        journal: Any = None
+        log_handler: Any = None
+        env = VirtualEnvRunner(config.get_env("python"), config.core, options, journal, log_handler)
         value = env.conf[option_name]
         if isinstance(value, Command):
             return value.args
