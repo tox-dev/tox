@@ -2,6 +2,7 @@ import pytest
 
 
 def test_getpath(get_option):
+    """[] is not substituted in options of type path"""
     changedir = get_option(
         """
         [testenv]
