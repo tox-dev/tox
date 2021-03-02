@@ -13,6 +13,18 @@ def test_getpath(get_option):
     assert str(changedir)[-2:] == "[]"
 
 
+def test_getlist(get_option):
+    """[] is not substituted in options of type list"""
+    value = get_option(
+        """
+        [testenv]
+        allowlist_externals = []
+        """,
+        "allowlist_externals",
+    )
+    assert value == ["[]"]
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name):
