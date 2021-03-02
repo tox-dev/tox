@@ -1413,8 +1413,6 @@ class ParseIni(object):
                         replace=replace,
                         no_fallback=no_fallback,
                     )
-                elif atype == "space-separated-list":
-                    res = reader.getlist(env_attr.name, sep=" ")
                 elif atype == "line-list":
                     res = reader.getlist(env_attr.name, sep="\n")
                 elif atype == "env-list":
