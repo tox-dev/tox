@@ -94,6 +94,19 @@ def test_getargvlist_nonempty(get_option):
     assert value == [["foo", "bar"]]
 
 
+def test_getargv(get_option):
+    """[] is substituted in options of type argv"""
+    value = get_option(
+        """
+        [testenv]
+        list_dependencies_command = foo []
+        """,
+        "list_dependencies_command",
+        ["bar"],
+    )
+    assert value == ["foo", "bar"]
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name, pos_args=()):
