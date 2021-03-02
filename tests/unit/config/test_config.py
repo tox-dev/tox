@@ -3557,7 +3557,7 @@ def test_config_via_pyproject_legacy(initproj):
     initproj(
         "config_via_pyproject_legacy-0.5",
         filedefs={
-            "pyproject.toml": '''
+            "pyproject.toml": u'''
                 [project]
                 description = "Factory ⸻ A code generator 🏭"
                 authors = [{name = "Łukasz Langa"}]
