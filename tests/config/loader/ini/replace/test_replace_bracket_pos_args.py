@@ -3,19 +3,19 @@ import pytest
 import tox
 
 
-def test_getpath(get_option):
+def test_get_path(get_option):
     """[] is not substituted in options of type path"""
-    changedir = get_option(
+    value = get_option(
         """
         [testenv]
         changedir = []
         """,
         "changedir",
     )
-    assert str(changedir)[-2:] == "[]"
+    assert str(value)[-2:] == "[]"
 
 
-def test_getlist(get_option):
+def test_get_list(get_option):
     """[] is not substituted in options of type list"""
     value = get_option(
         """
@@ -25,11 +25,6 @@ def test_getlist(get_option):
         "allowlist_externals",
     )
     assert value == ["[]"]
-
-
-def test_getdict(get_option):
-    """[] is not substituted in options of type dict"""
-    # TODO
 
 
 def test_dict_setenv(get_option):
@@ -45,7 +40,7 @@ def test_dict_setenv(get_option):
     assert value["FOO"] == "[]"
 
 
-def test_getfloat(get_option):
+def test_get_float(get_option):
     """[] is not substituted in options of type float"""
     with pytest.raises(tox.exception.ConfigError):
         get_option(
@@ -57,7 +52,7 @@ def test_getfloat(get_option):
         )
 
 
-def test_getbool(get_option):
+def test_get_bool(get_option):
     """[] is not substituted in options of type bool"""
     with pytest.raises(tox.exception.ConfigError):
         get_option(
@@ -69,7 +64,7 @@ def test_getbool(get_option):
         )
 
 
-def test_getargvlist(get_option):
+def test_get_argv_list(get_option):
     """[] is substituted in options of type argvlist"""
     value = get_option(
         """
@@ -81,7 +76,7 @@ def test_getargvlist(get_option):
     assert value == [["foo"]]
 
 
-def test_getargvlist_nonempty(get_option):
+def test_get_argv_list_nonempty(get_option):
     """[] is substituted in options of type argvlist"""
     value = get_option(
         """
@@ -94,7 +89,7 @@ def test_getargvlist_nonempty(get_option):
     assert value == [["foo", "bar"]]
 
 
-def test_getargv(get_option):
+def test_get_argv(get_option):
     """[] is substituted in options of type argv"""
     value = get_option(
         """
@@ -107,7 +102,7 @@ def test_getargv(get_option):
     assert value == ["foo", "bar"]
 
 
-def test_getargv_install_command(get_option):
+def test_get_argv_install_command(get_option):
     """[] is substituted in options of type argv_install_command"""
     value = get_option(
         """
@@ -120,7 +115,7 @@ def test_getargv_install_command(get_option):
     assert value == ["foo", "bar", "{packages}"]
 
 
-def test_getstring(get_option):
+def test_get_string(get_option):
     """[] is not substituted in options of type string"""
     value = get_option(
         """
@@ -137,8 +132,8 @@ def test_getstring(get_option):
     [
         ("x[]", "x[]"),  # no substitution inside a word
         ("[]x", "[]x"),  # no substitution inside a word
-        ("{envname}[]", "pythonbar"),  # {envname} and [] are two separate words
-        ("[]{envname}", "barpython"),  # {envname} and [] are two separate words
+        ("{envname}[]", "pythonbar"),  # noqa: SC100 {envname} and [] are two separate words
+        ("[]{envname}", "barpython"),  # noqa: SC100 {envname} and [] are two separate words
     ],
 )
 def test_examples(value, result, get_option):
@@ -166,7 +161,7 @@ def test_no_substitutions_inside_pos_args(get_option):
     assert got == ["foo", "{envname}"]
 
 
-def test_no_posargs_inside_substitutions(get_option, monkeypatch):
+def test_no_pos_args_inside_substitutions(get_option, monkeypatch):
     monkeypatch.setenv("BAZ", "[]")
     got = get_option(
         """
