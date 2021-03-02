@@ -13,7 +13,7 @@ from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
 ConfigError = TypeError
 
 
-@pytest.fixture
+@pytest.fixture()
 def get_option(tmp_path: Path) -> Any:
     def do(tox_ini: str, option_name: str, pos_args: list[str] = ()) -> Any:
         tox_ini_file = tmp_path / "tox.ini"
@@ -68,7 +68,7 @@ def test_dict_setenv(get_option: Any) -> None:
     assert value["FOO"] == "[]"
 
 
-@pytest.mark.xfail(raises=KeyError, reason="interrupt_timeout is not implemented in tox4")
+@pytest.mark.xfail(raises=KeyError, reason="interrupt_timeout is not implemented in tox4")  # noqa: SC200
 def test_get_float(get_option: Any) -> None:
     """[] is not substituted in options of type float"""
     with pytest.raises(ConfigError):
@@ -93,7 +93,7 @@ def test_get_bool(get_option: Any) -> None:
         )
 
 
-@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
 def test_get_argv_list(get_option: Any) -> None:
     """[] is substituted in options of type argvlist"""
     value = get_option(
@@ -106,7 +106,7 @@ def test_get_argv_list(get_option: Any) -> None:
     assert value == [["foo"]]
 
 
-@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
 def test_get_argv_list_nonempty(get_option: Any) -> None:
     """[] is substituted in options of type argvlist"""
     value = get_option(
@@ -120,7 +120,7 @@ def test_get_argv_list_nonempty(get_option: Any) -> None:
     assert value == [["foo", "bar"]]
 
 
-@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
 def test_get_argv(get_option: Any) -> None:
     """[] is substituted in options of type argv"""
     value = get_option(
@@ -134,7 +134,7 @@ def test_get_argv(get_option: Any) -> None:
     assert value == ["foo", "bar"]
 
 
-@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
 def test_get_argv_install_command(get_option: Any) -> None:
     """[] is substituted in options of type argv_install_command"""
     value = get_option(
@@ -166,11 +166,11 @@ def test_get_string(get_option: Any) -> None:
         ("x[]", "x[]"),  # no substitution inside a word
         ("[]x", "[]x"),  # no substitution inside a word
         pytest.param(
-            "{envname}[]", "pythonbar", marks=pytest.mark.xfail(raises=AssertionError)
+            "{envname}[]", "pythonbar", marks=pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
         ),  # noqa: SC100 {envname} and [] are two separate words
         pytest.param(
-            "[]{envname}", "barpython", marks=pytest.mark.xfail(raises=AssertionError)
-        ),  # noqa: SC100 {envname} and [] are two separate words
+            "[]{envname}", "barpython", marks=pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
+        ),  # noqa: SC100, SC200 {envname} and [] are two separate words
     ],
 )
 def test_examples(value: str, result: str, get_option: Any) -> None:
@@ -186,7 +186,7 @@ def test_examples(value: str, result: str, get_option: Any) -> None:
     assert got == ["foo", result]
 
 
-@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
 def test_no_substitutions_inside_pos_args(get_option: Any) -> None:
     got = get_option(
         """
