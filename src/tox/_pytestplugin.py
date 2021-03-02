@@ -491,7 +491,7 @@ def create_files(base, filedefs):
             create_files(base.ensure(key, dir=1), value)
         elif isinstance(value, six.string_types):
             s = textwrap.dedent(value)
-            base.join(key).write(s)
+            base.join(key).write_text(s, encoding="UTF-8")
 
 
 @pytest.fixture()
