@@ -1,5 +1,7 @@
 import pytest
 
+import tox
+
 
 def test_getpath(get_option):
     """[] is not substituted in options of type path"""
@@ -41,6 +43,18 @@ def test_dict_setenv(get_option):
         "setenv",
     )
     assert value["FOO"] == "[]"
+
+
+def test_getfloat(get_option):
+    """[] is not substituted in options of type float"""
+    with pytest.raises(tox.exception.ConfigError):
+        get_option(
+            """
+            [testenv]
+            interrupt_timeout = []
+            """,
+            "interrupt_timeout",
+        )
 
 
 @pytest.fixture
