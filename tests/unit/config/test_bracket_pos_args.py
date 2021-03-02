@@ -154,6 +154,18 @@ def test_examples(value, result, get_option):
     assert got == ["foo", result]
 
 
+def test_no_substitutions_inside_pos_args(get_option):
+    got = get_option(
+        """
+        [testenv]
+        list_dependencies_command = foo []
+        """,
+        "list_dependencies_command",
+        ["{envname}"],
+    )
+    assert got == ["foo", "{envname}"]
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name, pos_args=()):
