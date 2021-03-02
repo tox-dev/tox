@@ -166,6 +166,19 @@ def test_no_substitutions_inside_pos_args(get_option):
     assert got == ["foo", "{envname}"]
 
 
+def test_no_posargs_inside_substitutions(get_option, monkeypatch):
+    monkeypatch.setenv("BAZ", "[]")
+    got = get_option(
+        """
+        [testenv]
+        list_dependencies_command = foo {env:BAZ}
+        """,
+        "list_dependencies_command",
+        ["bar"],
+    )
+    assert got == ["foo", "[]"]
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name, pos_args=()):
