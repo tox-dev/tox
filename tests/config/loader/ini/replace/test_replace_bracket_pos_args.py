@@ -9,10 +9,9 @@ from tox.config.types import Command
 from tox.config.set_env import SetEnv
 from tox.config.source.tox_ini import ToxIni
 
-# TODO
+
 # ConfigError = tox.exception.ConfigError
-class ConfigError(Exception):
-    pass
+ConfigError = TypeError
 
 
 @pytest.fixture
@@ -49,11 +48,11 @@ def test_get_list(get_option: Any) -> None:
     value = get_option(
         """
         [testenv]
-        allowlist_externals = []
+        extras = []
         """,
-        "allowlist_externals",
+        "extras",
     )
-    assert value == ["[]"]
+    assert list(value) == ["[]"]
 
 
 def test_dict_setenv(get_option: Any) -> None:
@@ -81,16 +80,15 @@ def test_get_float(get_option: Any) -> None:
         )
 
 
-@pytest.mark.xfail(raises=AssertionError)
 def test_get_bool(get_option: Any) -> None:
     """[] is not substituted in options of type bool"""
     with pytest.raises(ConfigError):
         get_option(
             """
             [testenv]
-            ignore_outcome = []
+            skip_install = []
             """,
-            "ignore_outcome",
+            "skip_install",
         )
 
 
