@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 import pytest
 
@@ -15,7 +15,9 @@ ConfigError = TypeError
 
 @pytest.fixture()
 def get_option(tmp_path: Path) -> Any:
-    def do(tox_ini: str, option_name: str, pos_args: List[str] = []) -> Any:
+    def do(tox_ini: str, option_name: str, pos_args: Optional[List[str]] = None) -> Any:
+        if not pos_args:
+            pos_args = []
         tox_ini_file = tmp_path / "tox.ini"
         tox_ini_file.write_text(tox_ini)
         ini = ToxIni(tox_ini_file)
