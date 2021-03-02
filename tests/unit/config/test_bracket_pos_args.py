@@ -107,6 +107,19 @@ def test_getargv(get_option):
     assert value == ["foo", "bar"]
 
 
+def test_getargv_install_command(get_option):
+    """[] is substituted in options of type argv_install_command"""
+    value = get_option(
+        """
+        [testenv]
+        install_command = foo [] {packages}
+        """,
+        "install_command",
+        ["bar"],
+    )
+    assert value == ["foo", "bar", "{packages}"]
+
+
 @pytest.fixture
 def get_option(newconfig):
     def do(tox_ini, option_name, pos_args=()):
