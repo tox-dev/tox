@@ -68,6 +68,7 @@ def test_dict_setenv(get_option: Any) -> None:
     assert value["FOO"] == "[]"
 
 
+@pytest.mark.xfail(raises=KeyError, reason="interrupt_timeout is not implemented in tox4")
 def test_get_float(get_option: Any) -> None:
     """[] is not substituted in options of type float"""
     with pytest.raises(ConfigError):
