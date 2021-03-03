@@ -1,0 +1,1 @@
+Implemented [] substitution (same as {posargs}). This preserves backward compatibility with tox3 that also substitutes [].
