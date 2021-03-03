@@ -1,1 +1,2 @@
-Implemented [] substitution (alias for {posargs})
+Implemented ``[]`` substitution (alias for ``{posargs}``) - by
+:user:`hexagonrecursion`.
