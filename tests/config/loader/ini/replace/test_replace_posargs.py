@@ -59,9 +59,12 @@ def test_replace_pos_args_default(replace_one: ReplaceOne, value: str, result: s
         "\\{posargs\\}",
         "{\\{posargs}",
         "{\\{posargs}{}",
+        pytest.param("\\[]", marks=pytest.mark.xfail(raises=AssertionError)),  # noqa: SC200
+        pytest.param("[\\]", marks=pytest.mark.xfail(raises=AssertionError)),  # noqa: SC200
+        pytest.param("\\[\\]", marks=pytest.mark.xfail(raises=AssertionError)),  # noqa: SC200
     ],
 )
 def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
     result = replace_one(value, None)
-    outcome = value.replace("\\{", "{").replace("\\}", "}")
+    outcome = value.replace("\\", "")
     assert result == outcome
