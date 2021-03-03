@@ -51,6 +51,34 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
 
 
 def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool]:
+    brackets = find_brackets(value, end)
+    braces = find_braces(value, start, end)
+
+    # If neither matches, report failure
+    # If only one matches, return it
+    # If both match, return leftmost
+    if not brackets[-1]:
+        return braces
+    if not braces[-1]:
+        return brackets
+    if brackets[0] < braces[0]:
+        return brackets
+    else:
+        return braces
+
+
+def find_brackets(value: str, end: int) -> Tuple[int, int, bool]:
+    while True:
+        pos = value.find("[]", end)
+        if pos == -1:
+            return -1, -1, False
+        if pos >= 1 and value[pos - 1] == "\\":  # the opened bracket is escaped
+            end = pos + 1
+            continue
+        return pos, pos + 1, True
+
+
+def find_braces(value: str, start: int, end: int) -> Tuple[int, int, bool]:
     match = False
     while end != -1:
         end = value.find("}", end)
