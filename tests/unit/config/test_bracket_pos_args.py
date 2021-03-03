@@ -194,3 +194,17 @@ def test_substitutions_inside_regular_pos_args(get_option):
         ["{envname}"],
     )
     assert got == ["foo", "python"]
+
+
+def test_regular_posargs_substituted_inside_substitutions(get_option, monkeypatch):
+    """Compare this to test_no_posargs_inside_substitutions"""
+    monkeypatch.setenv("BAZ", "{posargs}")
+    got = get_option(
+        """
+        [testenv]
+        list_dependencies_command = foo {env:BAZ}
+        """,
+        "list_dependencies_command",
+        ["bar"],
+    )
+    assert got == ["foo", "bar"]
