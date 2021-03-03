@@ -29,7 +29,10 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
         start, end, match = find_replace_part(value, start, end)
         if not match:
             break
-        to_replace = value[start + 1 : end]
+        if value[start : end + 1] == "[]":
+            to_replace = "posargs"
+        else:
+            to_replace = value[start + 1 : end]
         replaced = _replace_match(conf, name, loader, to_replace, chain.copy())
         if replaced is None:
             # if we cannot replace, keep what was there, and continue looking for additional replaces following
