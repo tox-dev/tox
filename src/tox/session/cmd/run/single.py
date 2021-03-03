@@ -21,6 +21,7 @@ class ToxEnvRunResult(NamedTuple):
     code: int
     outcomes: List[Outcome]
     duration: float
+    ignore_outcome: bool = False
 
 
 def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:
@@ -29,7 +30,8 @@ def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool, suspend_display: 
     with tox_env.display_context(suspend_display):
         skipped, code, outcomes = _evaluate(tox_env, recreate, no_test)
     duration = time.monotonic() - start_one
-    return ToxEnvRunResult(name, skipped, code, outcomes, duration)
+    ignore_outcome: bool = tox_env.conf["ignore_outcome"]
+    return ToxEnvRunResult(name, skipped, code, outcomes, duration, ignore_outcome)
 
 
 def _evaluate(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> Tuple[bool, int, List[Outcome]]:
