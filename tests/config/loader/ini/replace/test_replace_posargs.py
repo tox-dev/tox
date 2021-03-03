@@ -5,8 +5,11 @@ import pytest
 from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
-def test_replace_pos_args_none_sys_argv(replace_one: ReplaceOne) -> None:
-    result = replace_one("{posargs}", None)
+@pytest.mark.parametrize(
+    "syntax", ["{posargs}", pytest.param("[]", marks=pytest.mark.xfail(raises=AssertionError))]  # noqa: SC200
+)
+def test_replace_pos_args_none_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
+    result = replace_one(syntax, None)
     assert result == ""
 
 
