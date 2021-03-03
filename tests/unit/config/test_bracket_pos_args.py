@@ -155,6 +155,7 @@ def test_examples(value, result, get_option):
 
 
 def test_no_substitutions_inside_pos_args(get_option):
+    """[] substitution does not undergo additional expansion"""
     got = get_option(
         """
         [testenv]
@@ -177,3 +178,19 @@ def test_no_posargs_inside_substitutions(get_option, monkeypatch):
         ["bar"],
     )
     assert got == ["foo", "[]"]
+
+
+# TODO: maybe port the below tests to the rewrite branch
+def test_substitutions_inside_regular_pos_args(get_option):
+    """{posargs} undergoes additional expansion
+    Compare this to test_no_substitutions_inside_pos_args
+    """
+    got = get_option(
+        """
+        [testenv]
+        list_dependencies_command = foo {posargs}
+        """,
+        "list_dependencies_command",
+        ["{envname}"],
+    )
+    assert got == ["foo", "python"]
