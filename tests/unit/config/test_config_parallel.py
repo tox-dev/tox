@@ -38,7 +38,7 @@ def test_parallel_number_negative(newconfig, capsys):
     assert "value must be positive" in err
 
 
-def test_depends(newconfig, capsys):
+def test_depends(newconfig):
     config = newconfig(
         """\
         [tox]
@@ -49,7 +49,7 @@ def test_depends(newconfig, capsys):
     assert config.envconfigs["py"].depends == ("py37", "py36")
 
 
-def test_depends_multi_row_facotr(newconfig, capsys):
+def test_depends_multi_row_facotr(newconfig):
     config = newconfig(
         """\
         [tox]
@@ -61,7 +61,7 @@ def test_depends_multi_row_facotr(newconfig, capsys):
     assert config.envconfigs["py"].depends == ("py37", "py36-a", "py36-b")
 
 
-def test_depends_factor(newconfig, capsys):
+def test_depends_factor(newconfig):
     config = newconfig(
         """\
         [tox]
