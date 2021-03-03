@@ -141,18 +141,30 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
         print(f"{color if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
     end = time.monotonic()
-    all_ok = True
     for run in runs:
-        ok = run.code == Outcome.OK
-        msg = ("SKIP" if run.skipped else "OK") if ok else f"FAIL code {run.code}"
+        if run.code != Outcome.OK and run.ignore_outcome:
+            msg = f"IGNORED FAIL code {run.code}"
+            color = Fore.YELLOW
+        elif run.code != Outcome.OK:
+            assert not run.ignore_outcome
+            msg = f"FAIL code {run.code}"
+            color = Fore.RED
+        elif run.skipped:
+            assert run.code == Outcome.OK
+            msg = "SKIP"
+            color = Fore.YELLOW
+        else:
+            assert run.code == Outcome.OK
+            assert not run.skipped
+            msg = "OK"
+            color = Fore.GREEN
         duration_individual = [o.elapsed for o in run.outcomes]
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if len(duration_individual) else ""
         setup = run.duration - sum(duration_individual)
         out = f"  {run.name}: {msg} ({run.duration:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
-        _print((Fore.YELLOW if run.skipped else Fore.GREEN) if ok else Fore.RED, out)
-        all_ok = ok and all_ok
+        _print(color, out)
     duration = end - start
-    if all_ok:
+    if all(run.code == Outcome.OK or run.ignore_outcome for run in runs):
         _print(Fore.GREEN, f"  congratulations :) ({duration:.2f} seconds)")
         return Outcome.OK
     else:
