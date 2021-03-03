@@ -5,25 +5,19 @@ import pytest
 from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
-@pytest.mark.parametrize(
-    "syntax", ["{posargs}", pytest.param("[]", marks=pytest.mark.xfail(raises=AssertionError))]  # noqa: SC200
-)
+@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
 def test_replace_pos_args_none_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, None)
     assert result == ""
 
 
-@pytest.mark.parametrize(
-    "syntax", ["{posargs}", pytest.param("[]", marks=pytest.mark.xfail(raises=AssertionError))]  # noqa: SC200
-)
+@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
 def test_replace_pos_args_empty_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, [])
     assert result == ""
 
 
-@pytest.mark.parametrize(
-    "syntax", ["{posargs}", pytest.param("[]", marks=pytest.mark.xfail(raises=AssertionError))]  # noqa: SC200
-)
+@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
 def test_replace_pos_args_extra_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, [sys.executable, "magic"])
     assert result == f"{sys.executable} magic"
