@@ -74,6 +74,13 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
         )
+        self.conf.add_config(
+            keys=["ignore_outcome"],
+            of_type=bool,
+            default=False,
+            desc="if set to true a failing result of this testenv will not make tox fail, "
+            "only a warning will be produced",
+        )
         self.has_package = self.add_package_conf()
 
     def setup(self) -> None:
