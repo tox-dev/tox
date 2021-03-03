@@ -45,6 +45,8 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
     # remove escape sequences
     value = value.replace("\\{", "{")
     value = value.replace("\\}", "}")
+    value = value.replace("\\[", "[")
+    value = value.replace("\\]", "]")
     return value
 
 
