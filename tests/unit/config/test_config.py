@@ -1,3 +1,4 @@
+# coding=utf-8
 import os
 import re
 import sys
@@ -3556,7 +3557,10 @@ def test_config_via_pyproject_legacy(initproj):
     initproj(
         "config_via_pyproject_legacy-0.5",
         filedefs={
-            "pyproject.toml": '''
+            "pyproject.toml": u'''
+                [project]
+                description = "Factory ⸻ A code generator 🏭"
+                authors = [{name = "Łukasz Langa"}]
                 [tool.tox]
                 legacy_tox_ini = """
                 [tox]
