@@ -38,6 +38,11 @@ Global settings are defined under the ``tox`` section as:
    than this the tool will create an environment and provision it with a version of
    tox that satisfies this under :conf:`provision_tox_env`.
 
+   .. versionchanged:: 3.23.0
+
+   When tox is invoked with the ``--no-provision`` flag,
+   the provision won't be attempted, tox will fail instead.
+
 .. conf:: requires ^ LIST of PEP-508
 
     .. versionadded:: 3.2.0
@@ -54,12 +59,22 @@ Global settings are defined under the ``tox`` section as:
         requires = tox-pipenv
                    setuptools >= 30.0.0
 
+    .. versionchanged:: 3.23.0
+
+    When tox is invoked with the ``--no-provision`` flag,
+    the provision won't be attempted, tox will fail instead.
+
 .. conf:: provision_tox_env ^ string ^ .tox
 
     .. versionadded:: 3.8.0
 
     Name of the virtual environment used to provision a tox having all dependencies specified
     inside :conf:`requires` and :conf:`minversion`.
+
+    .. versionchanged:: 3.23.0
+
+    When tox is invoked with the ``--no-provision`` flag,
+    the provision won't be attempted, tox will fail instead.
 
 .. conf:: toxworkdir ^ PATH ^ {toxinidir}/.tox
 
