@@ -62,3 +62,16 @@ def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
     result = replace_one(value, None)
     outcome = value.replace("\\", "")
     assert result == outcome
+
+
+@pytest.mark.parametrize(
+    ("value", "result"),
+    [
+        ("[]{posargs}", "foofoo"),
+        ("{posargs}[]", "foofoo"),
+    ],
+)
+def test_replace_mixed_brackets_and_braces(replace_one: ReplaceOne, value: str, result: str) -> None:
+    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    outcome = replace_one(value, ["foo"])
+    assert result == outcome
