@@ -11,6 +11,23 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.23.0 (2021-03-03)
+--------------------
+
+Features
+^^^^^^^^
+
+- tox can now be invoked with a new ``--no-provision`` flag that prevents provision,
+  if :conf:`requires` or :conf:`minversion` are not satisfied,
+  tox will fail;
+  if a path is specified as an argument to the flag
+  (e.g. as ``tox --no-provision missing.json``) and provision is prevented,
+  provision metadata are written as JSON to that path - by :user:`hroncok`
+  `#1921 <https://github.com/tox-dev/tox/issues/1921>`_
+- Unicode support in ``pyproject.toml`` - by :user:`domdfcoding`
+  `#1940 <https://github.com/tox-dev/tox/issues/1940>`_
+
+
 v3.22.0 (2021-02-16)
 --------------------
 
