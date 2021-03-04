@@ -440,3 +440,22 @@ def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: 
     assert "commands_pre[0]" in result.out
     assert "commands[0]" in result.out
     assert "commands_post[0]" in result.out
+
+
+@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
+def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.ini": """
+            [tox]
+            no_package = true
+
+            [testenv]
+            commands = python -c 'exit(1)'
+            ignore_outcome = true
+            """
+        }
+    )
+    result = project.run("r")
+    print(result)
+    result.assert_success()
