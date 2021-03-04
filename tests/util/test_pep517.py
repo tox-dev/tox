@@ -140,10 +140,11 @@ def test_pep517_bad_message(frontend_setuptools: SubprocessFrontend, tmp_path: P
     assert "Backend: incorrect request to backend: bytearray(b'{{')" in err
 
 
-def test_pep517_result_missing(frontend_setuptools: SubprocessFrontend, tmp_path: Path, mocker: MockerFixture) -> None:
-    class _Result(NamedTuple):
-        name: str
+class _Result(NamedTuple):
+    name: str
 
+
+def test_pep517_result_missing(frontend_setuptools: SubprocessFrontend, tmp_path: Path, mocker: MockerFixture) -> None:
     @contextmanager
     def named_temporary_file(prefix: str) -> Iterator[_Result]:
         write = S_IWUSR | S_IWGRP | S_IWOTH
