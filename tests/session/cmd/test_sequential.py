@@ -442,7 +442,6 @@ def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: 
     assert "commands_post[0]" in result.out
 
 
-@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
 def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
@@ -459,3 +458,6 @@ def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
     result = project.run("r")
     print(result)
     result.assert_success()
+    reports = result.out.splitlines()[-2:]
+    assert Matches(r"  py: IGNORED FAIL code 1 \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-2]
+    assert Matches(r"  congratulations :\) \(.* seconds\)") == reports[-1]
