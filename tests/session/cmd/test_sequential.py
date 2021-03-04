@@ -443,21 +443,12 @@ def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: 
 
 
 def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.ini": """
-            [tox]
-            no_package = true
-
-            [testenv]
-            commands = python -c 'exit(1)'
-            ignore_outcome = true
-            """
-        }
-    )
+    ini = "[tox]\nno_package=true\n[testenv]\ncommands=python -c 'exit(1)'\nignore_outcome=true"
+    project = tox_project({"tox.ini": ini})
     result = project.run("r")
-    print(result)
+
     result.assert_success()
-    reports = result.out.splitlines()[-2:]
-    assert Matches(r"  py: IGNORED FAIL code 1 \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-2]
-    assert Matches(r"  congratulations :\) \(.* seconds\)") == reports[-1]
+    reports = result.out.splitlines()
+
+    assert Matches(r"  py: IGNORED FAIL code 1 .*") == reports[-2]
+    assert Matches(r"  congratulations :\) .*") == reports[-1]

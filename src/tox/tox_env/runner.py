@@ -78,8 +78,7 @@ class RunToxEnv(ToxEnv, ABC):
             keys=["ignore_outcome"],
             of_type=bool,
             default=False,
-            desc="if set to true a failing result of this testenv will not make tox fail, "
-            "only a warning will be produced",
+            desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
         self.has_package = self.add_package_conf()
 
