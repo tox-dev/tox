@@ -26,10 +26,9 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
     # perform all non-escaped replaces
     start, end = 0, 0
     while True:
-        start, end, match = find_replace_part(value, start, end)
-        if not match:
+        start, end, to_replace = find_replace_part(value, start, end)
+        if to_replace is None:
             break
-        to_replace = value[start + 1 : end]
         replaced = _replace_match(conf, name, loader, to_replace, chain.copy())
         if replaced is None:
             # if we cannot replace, keep what was there, and continue looking for additional replaces following
@@ -38,17 +37,39 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
             start = end = end + 1
             continue
         new_value = value[:start] + replaced + value[end + 1 :]
-        start, end = 0, 0  # if we performed a replace start over
+        start, end = 0, 0  # if we performed a replacement start over
         if new_value == value:  # if we're not making progress stop (circular reference?)
             break
         value = new_value
     # remove escape sequences
     value = value.replace("\\{", "{")
     value = value.replace("\\}", "}")
+    value = value.replace("\\[", "[")
+    value = value.replace("\\]", "]")
     return value
 
 
-def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, bool]:
+def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, Optional[str]]:
+    bracket_at = find_brackets(value, end)
+    if bracket_at != -1:
+        return bracket_at, bracket_at + 1, "posargs"  # brackets is an alias for positional arguments
+    start, end, match = find_braces(value, start, end)
+    return start, end, (value[start + 1 : end] if match else None)
+
+
+def find_brackets(value: str, end: int) -> int:
+    while True:
+        pos = value.find("[]", end)
+        if pos == -1:
+            break
+        if pos >= 1 and value[pos - 1] == "\\":  # the opened bracket is escaped
+            end = pos + 1
+            continue
+        break
+    return pos
+
+
+def find_braces(value: str, start: int, end: int) -> Tuple[int, int, bool]:
     match = False
     while end != -1:
         end = value.find("}", end)
