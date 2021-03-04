@@ -23,8 +23,9 @@ def test_replace_pos_args_extra_sys_argv(syntax: str, replace_one: ReplaceOne) -
     assert result == f"{sys.executable} magic"
 
 
-def test_replace_pos_args(replace_one: ReplaceOne) -> None:
-    result = replace_one("{posargs}", ["ok", "what", " yes "])
+@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
+def test_replace_pos_args(syntax: str, replace_one: ReplaceOne) -> None:
+    result = replace_one(syntax, ["ok", "what", " yes "])
     quote = '"' if sys.platform == "win32" else "'"
     assert result == f"ok what {quote} yes {quote}"
 
@@ -34,8 +35,8 @@ def test_replace_pos_args(replace_one: ReplaceOne) -> None:
     [
         ("magic", "magic"),
         ("magic:colon", "magic:colon"),
-        ("magic\n b:c", "magic\nb:c"),  # unescaped newline keeps the newline
-        ("magi\\\n c:d", "magic:d"),  # escaped newline merges the lines
+        ("magic\n b:c", "magic\nb:c"),  # an unescaped newline keeps the newline
+        ("magi\\\n c:d", "magic:d"),  # an escaped newline merges the lines
         ("\\{a\\}", "{a}"),  # escaped curly braces
     ],
 )
@@ -67,11 +68,10 @@ def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
 @pytest.mark.parametrize(
     ("value", "result"),
     [
-        ("[]{posargs}", "foofoo"),
-        ("{posargs}[]", "foofoo"),
+        ("[]-{posargs}", "foo-foo"),
+        ("{posargs}-[]", "foo-foo"),
     ],
 )
 def test_replace_mixed_brackets_and_braces(replace_one: ReplaceOne, value: str, result: str) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
     outcome = replace_one(value, ["foo"])
     assert result == outcome
