@@ -440,3 +440,15 @@ def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: 
     assert "commands_pre[0]" in result.out
     assert "commands[0]" in result.out
     assert "commands_post[0]" in result.out
+
+
+def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nno_package=true\n[testenv]\ncommands=python -c 'exit(1)'\nignore_outcome=true"
+    project = tox_project({"tox.ini": ini})
+    result = project.run("r")
+
+    result.assert_success()
+    reports = result.out.splitlines()
+
+    assert Matches(r"  py: IGNORED FAIL code 1 .*") == reports[-2]
+    assert Matches(r"  congratulations :\) .*") == reports[-1]
