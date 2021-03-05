@@ -49,6 +49,12 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
     return value
 
 
+def new_find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]]:
+    if False:
+        new_find_replace_part(value, end)
+    return 0, 1, "posargs"
+
+
 def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, Optional[str]]:
     bracket_at = find_brackets(value, end)
     if bracket_at != -1:
