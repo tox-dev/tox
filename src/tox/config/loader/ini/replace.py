@@ -52,7 +52,7 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
 REPLACE_PART = re.compile(
     r"""
         (?<! \\) \{  # Unescaped {
-            ( [^{}] | \\ \{ | \\ \} )*  # Anything except and unescaped { or }
+            ( [^{}] | \\ \{ | \\ \} )*  # Anything except an unescaped { or }
         (?<! \\) \}  # Unescaped }
     |
         (?<! \\) \[ \]  # Unescaped []
