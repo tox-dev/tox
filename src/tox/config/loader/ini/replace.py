@@ -49,10 +49,14 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
     return value
 
 
+REPLACE_PART = re.compile(r"\[\]")
+
+
 def new_find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]]:
-    if False:
-        new_find_replace_part(value, end)
-    return len(value) - 2, len(value) - 1, "posargs"
+    match = REPLACE_PART.search(value, end)
+    if match is None:
+        return -1, -1, None
+    return match.start(), match.end() - 1, "posargs"
 
 
 def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, Optional[str]]:
