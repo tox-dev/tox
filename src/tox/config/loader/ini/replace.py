@@ -51,7 +51,11 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
 
 REPLACE_PART = re.compile(
     r"""
-    (?<! \\) \[ \]  # Unescaped []
+        \{  # Unescaped {
+        .*
+        \}  # Unescaped }
+    |
+        (?<! \\) \[ \]  # Unescaped []
     """,
     re.X,
 )
@@ -61,7 +65,9 @@ def new_find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]
     match = REPLACE_PART.search(value, end)
     if match is None:
         return -1, -1, None
-    return match.start(), match.end() - 1, "posargs"
+    if match.group() == "[]":
+        return match.start(), match.end() - 1, "posargs"  # brackets is an alias for positional arguments
+    return match.start(), match.end() - 1, match.group()[1:-1]
 
 
 def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, Optional[str]]:
