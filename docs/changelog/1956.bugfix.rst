@@ -1,0 +1,3 @@
+Due to a bug ``\{posargs} {posargs}`` used to expand to literal ``{posargs} {posargs}``.
+Now the second ``{posargs}`` is expanded.
+``\{posargs} {posargs}`` expands to ``{posargs} positional arguments here`` - by :user:`hexagonrecursion`.
