@@ -24,7 +24,7 @@ ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
 
 def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str, chain: List[str]) -> str:
     # perform all non-escaped replaces
-    start, end = 0, 0
+    end = 0
     while True:
         start, end, to_replace = find_replace_part(value, end)
         if to_replace is None:
@@ -34,10 +34,10 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
             # if we cannot replace, keep what was there, and continue looking for additional replaces following
             # note, here we cannot raise because the content may be a factorial expression, and in those case we don't
             # want to enforce escaping curly braces, e.g. it should work to write: env_list = {py39,py38}-{,dep}
-            start = end = end + 1
+            end = end + 1
             continue
         new_value = value[:start] + replaced + value[end + 1 :]
-        start, end = 0, 0  # if we performed a replacement start over
+        end = 0  # if we performed a replacement start over
         if new_value == value:  # if we're not making progress stop (circular reference?)
             break
         value = new_value
