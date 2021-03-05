@@ -75,3 +75,10 @@ def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
 def test_replace_mixed_brackets_and_braces(replace_one: ReplaceOne, value: str, result: str) -> None:
     outcome = replace_one(value, ["foo"])
     assert result == outcome
+
+
+@pytest.mark.xfail(raises=AssertionError)  # noqa: SC200
+def test_half_escaped_braces(replace_one: ReplaceOne) -> None:
+    """See https://github.com/tox-dev/tox/issues/1956"""
+    outcome = replace_one(r"\{posargs} {posargs}", ["foo"])
+    assert "{posargs} foo" == outcome
