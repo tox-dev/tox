@@ -53,7 +53,7 @@ REPLACE_PART = re.compile(
     r"""
         (?<! \\) \{  # Unescaped {
             [^{]*
-        \}  # Unescaped }
+        (?<! \\) \}  # Unescaped }
     |
         (?<! \\) \[ \]  # Unescaped []
     """,

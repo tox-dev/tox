@@ -17,6 +17,7 @@ from tox.config.loader.ini.replace import new_find_replace_part as find_replace_
         ("{foo}", (0, 4, "foo")),
         (r"\{foo} {bar}", (7, 11, "bar")),
         ("{foo} {bar}", (0, 4, "foo")),
+        (r"{foo\} {bar}", (7, 11, "bar")),
     ],
 )
 def test_match(value: str, result: Tuple[int, int, str]) -> None:
