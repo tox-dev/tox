@@ -2,7 +2,7 @@ from typing import Tuple
 
 import pytest
 
-from tox.config.loader.ini.replace import new_find_replace_part as find_replace_part
+from tox.config.loader.ini.replace import find_replace_part
 
 
 @pytest.mark.parametrize(

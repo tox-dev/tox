@@ -26,7 +26,7 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
     # perform all non-escaped replaces
     start, end = 0, 0
     while True:
-        start, end, to_replace = find_replace_part(value, start, end)
+        start, end, to_replace = find_replace_part(value, end)
         if to_replace is None:
             break
         replaced = _replace_match(conf, name, loader, to_replace, chain.copy())
@@ -61,54 +61,13 @@ REPLACE_PART = re.compile(
 )
 
 
-def new_find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]]:
+def find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]]:
     match = REPLACE_PART.search(value, end)
     if match is None:
         return -1, -1, None
     if match.group() == "[]":
         return match.start(), match.end() - 1, "posargs"  # brackets is an alias for positional arguments
     return match.start(), match.end() - 1, match.group()[1:-1]
-
-
-def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, Optional[str]]:
-    bracket_at = find_brackets(value, end)
-    if bracket_at != -1:
-        return bracket_at, bracket_at + 1, "posargs"  # brackets is an alias for positional arguments
-    start, end, match = find_braces(value, start, end)
-    return start, end, (value[start + 1 : end] if match else None)
-
-
-def find_brackets(value: str, end: int) -> int:
-    while True:
-        pos = value.find("[]", end)
-        if pos == -1:
-            break
-        if pos >= 1 and value[pos - 1] == "\\":  # the opened bracket is escaped
-            end = pos + 1
-            continue
-        break
-    return pos
-
-
-def find_braces(value: str, start: int, end: int) -> Tuple[int, int, bool]:
-    match = False
-    while end != -1:
-        end = value.find("}", end)
-        if end == -1:
-            continue
-        if end >= 1 and value[end - 1] == "\\":  # ignore escaped
-            end += 1
-            continue
-        before = end
-        while True:
-            start = value.rfind("{", 0, before)
-            if start >= 1 and value[start - 1] == "\\":  # ignore escaped
-                before = start - 1
-                continue
-            match = start != -1
-            break
-        break  # pragma: no cover # for some odd reason this line is not reported by coverage, though is needed
-    return start, end, match
 
 
 def _replace_match(
