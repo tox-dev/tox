@@ -52,7 +52,7 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
 def new_find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]]:
     if False:
         new_find_replace_part(value, end)
-    return 0, 1, "posargs"
+    return len(value) - 2, len(value) - 1, "posargs"
 
 
 def find_replace_part(value: str, start: int, end: int) -> Tuple[int, int, Optional[str]]:

@@ -1,8 +1,16 @@
+from typing import Tuple
+
+import pytest
+
 from tox.config.loader.ini.replace import new_find_replace_part as find_replace_part
 
 
-def test_match() -> None:
-    start, end, to_replace = find_replace_part("[]", 0)
-    assert start == 0
-    assert end == 1
-    assert to_replace == "posargs"
+@pytest.mark.parametrize(
+    ("value", "result"),
+    [
+        ("[]", (0, 1, "posargs")),
+        ("123[]", (3, 4, "posargs")),
+    ],
+)
+def test_match(value: str, result: Tuple[int, int, str]) -> None:
+    assert find_replace_part(value, 0) == result
