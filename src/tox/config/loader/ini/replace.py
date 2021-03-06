@@ -57,8 +57,8 @@ REPLACE_PART = re.compile(
     |
         (?<! \\) \[ \]  # Unescaped []
     """,
-    re.X,
-)
+    re.VERBOSE,
+)  # simplified - not verbose version (?<!\\)([^{}]|\\\{|\\\})*(?<!\\)\}|(?<!\\)\[\]
 
 
 def find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]]:
