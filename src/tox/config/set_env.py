@@ -18,7 +18,7 @@ class SetEnv:
                     if "{" in key:
                         raise ValueError(f"invalid line {line!r} in set_env")
                 except ValueError:
-                    _, __, match = find_replace_part(line, 0, 0)
+                    _, __, match = find_replace_part(line, 0)
                     if match:
                         self._later.append(line)
                     else:
