@@ -10,17 +10,17 @@ from tox.session.state import State
 
 
 def test_verbose() -> None:
-    parsed, _, __, ___ = get_options("-v", "-v")
+    parsed, _, __, ___, ____ = get_options("-v", "-v")
     assert parsed.verbosity == 4
 
 
 def test_verbose_compound() -> None:
-    parsed, _, __, ___ = get_options("-vv")
+    parsed, _, __, ___, ____ = get_options("-vv")
     assert parsed.verbosity == 4
 
 
 def test_verbose_no_test() -> None:
-    parsed, _, __, ___ = get_options("--notest", "-vv", "--runner", "virtualenv")
+    parsed, _, __, ___, ____ = get_options("--notest", "-vv", "--runner", "virtualenv")
     assert vars(parsed) == {
         "verbose": 4,
         "quiet": 0,
@@ -73,7 +73,7 @@ def test_env_var_exhaustive_parallel_values(
     monkeypatch.setenv("TOX_PARALLEL_LIVE", "no")
     monkeypatch.setenv("TOX_OVERRIDE", "a=b\nc=d")
 
-    parsed, handlers, _, __ = get_options()
+    parsed, handlers, _, __, ___ = get_options()
     assert vars(parsed) == {
         "always_copy": False,
         "colored": "no",
@@ -131,7 +131,7 @@ def test_bad_env_var(
 ) -> None:
     monkeypatch.setenv("TOX_VERBOSE", "should-be-number")
     monkeypatch.setenv("TOX_QUIET", "1.00")
-    parsed, _, __, ___ = get_options()
+    parsed, _, __, ___, ____ = get_options()
     assert parsed.verbose == 2
     assert parsed.quiet == 0
     assert parsed.verbosity == 2

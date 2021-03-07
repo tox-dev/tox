@@ -48,10 +48,10 @@ def setup_state(args: Sequence[str]) -> State:
     """Setup the state object of this run."""
     start = time.monotonic()
     # parse CLI arguments
-    parsed, handlers, pos_args, log_handler = get_options(*args)
+    parsed, handlers, pos_args, log_handler, source = get_options(*args)
     parsed.start = start
     # parse configuration file
-    config = Config.make(parsed, pos_args)
+    config = Config.make(parsed, pos_args, source)
     # build tox environment config objects
     state = State(config, (parsed, handlers), args, log_handler)
     return state

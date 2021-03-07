@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict
 
 import pytest
+from pytest_mock import MockerFixture
 
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
@@ -55,15 +56,19 @@ def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 def test_ini_empty(
-    empty_ini: Path, core_handlers: Dict[str, Callable[[State], int]], default_options: Dict[str, Any]
+    empty_ini: Path,
+    core_handlers: Dict[str, Callable[[State], int]],
+    default_options: Dict[str, Any],
+    mocker: MockerFixture,
 ) -> None:
-    parsed, handlers, _, __ = get_options("r")
+    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
+    parsed, handlers, _, __, ___ = get_options("r")
     assert vars(parsed) == default_options
     assert parsed.verbosity == 2
     assert handlers == core_handlers
 
     empty_ini.unlink()
-    missing_parsed, ___, _, __ = get_options("r")
+    missing_parsed, ____, _, __, ___ = get_options("r")
     assert vars(missing_parsed) == vars(parsed)
 
 
@@ -96,7 +101,7 @@ def default_options(tmp_path: Path) -> Dict[str, Any]:
 
 
 def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
-    parsed, handlers, _, __ = get_options("p")
+    parsed, handlers, _, __, ___ = get_options("p")
     assert vars(parsed) == {
         "colored": "yes",
         "command": "p",
@@ -138,11 +143,16 @@ def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
 
 
 def test_bad_cli_ini(
-    tmp_path: Path, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture, default_options: Dict[str, Any]
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
+    default_options: Dict[str, Any],
+    mocker: MockerFixture,
 ) -> None:
+    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
-    parsed, _, __, ___ = get_options("r")
+    parsed, _, __, ___, ____ = get_options("r")
     msg = (
         "PermissionError(13, 'Permission denied')"
         if sys.platform == "win32"
@@ -172,7 +182,7 @@ def test_bad_option_cli_ini(
         ),
     )
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
-    parsed, _, __, ___ = get_options("r")
+    parsed, _, __, ___, ____ = get_options("r")
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
             to,
