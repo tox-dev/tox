@@ -66,7 +66,7 @@ class State:
 
     def register_config_set(self, name: str, config_set: EnvConfigSet) -> None:
         """Ensure the config set with the given name has been registered with configuration values"""
-        # during the creation of hte tox environment we automatically register configurations, so to ensure
+        # during the creation of the tox environment we automatically register configurations, so to ensure
         # config sets have a set of defined values in it we have to ensure the tox environment is created
         if name in self._pkg_env_discovered:
             return  # packaging environments are created explicitly, nothing to do here
