@@ -16,7 +16,7 @@ def test_override_incorrect(flag: str, capsys: CaptureFixture) -> None:
 
 @pytest.mark.parametrize("flag", ["-x", "--override"])
 def test_override_add(flag: str) -> None:
-    parsed, _, __, ___ = get_options(flag, "magic=true")
+    parsed, _, __, ___, ____ = get_options(flag, "magic=true")
     assert len(parsed.override) == 1
     value = parsed.override[0]
     assert value.key == "magic"

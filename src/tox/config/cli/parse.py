@@ -4,6 +4,7 @@ This module pulls together this package: create and parse CLI arguments for tox.
 
 from typing import Dict, Optional, Sequence, Tuple, cast
 
+from tox.config.source import Source, discover_source
 from tox.report import ToxHandler, setup_report
 
 from .parser import Handler, Parsed, ToxParser
@@ -11,7 +12,7 @@ from .parser import Handler, Parsed, ToxParser
 Handlers = Dict[str, Handler]
 
 
-def get_options(*args: str) -> Tuple[Parsed, Handlers, Optional[Sequence[str]], ToxHandler]:
+def get_options(*args: str) -> Tuple[Parsed, Handlers, Optional[Sequence[str]], ToxHandler, Source]:
     pos_args: Optional[Tuple[str, ...]] = None
     try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
         pos_arg_at = args.index("--")
@@ -20,20 +21,26 @@ def get_options(*args: str) -> Tuple[Parsed, Handlers, Optional[Sequence[str]], 
     except ValueError:
         pass
 
-    guess_verbosity, log_handler = _get_base(args)
+    guess_verbosity, log_handler, source = _get_base(args)
     parsed, cmd_handlers = _get_all(args)
     if guess_verbosity != parsed.verbosity:
         setup_report(parsed.verbosity, parsed.is_colored)  # pragma: no cover
-    return parsed, cmd_handlers, pos_args, log_handler
+    return parsed, cmd_handlers, pos_args, log_handler, source
 
 
-def _get_base(args: Sequence[str]) -> Tuple[int, ToxHandler]:
+def _get_base(args: Sequence[str]) -> Tuple[int, ToxHandler, Source]:
     """First just load the base options (verbosity+color) to setup the logging framework."""
     tox_parser = ToxParser.base()
     parsed, _ = tox_parser.parse_known_args(args)
     guess_verbosity = parsed.verbosity
     handler = setup_report(guess_verbosity, parsed.is_colored)
-    return guess_verbosity, handler
+
+    source = discover_source(parsed.config_file, parsed.root_dir)
+    from tox.plugin.manager import MANAGER  # noqa
+
+    MANAGER.load_inline_plugin(source.path)
+
+    return guess_verbosity, handler, source
 
 
 def _get_all(args: Sequence[str]) -> Tuple[Parsed, Handlers]:

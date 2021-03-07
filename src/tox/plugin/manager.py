@@ -1,6 +1,5 @@
 """Contains the plugin manager object"""
 from pathlib import Path
-from runpy import run_path
 from typing import List, Type, cast
 
 import pluggy
@@ -47,7 +46,6 @@ class Plugin:
         for plugin in internal_plugins:
             self.manager.register(plugin)
         self.manager.load_setuptools_entrypoints(NAME)
-        self.handle_inline_plugin()
         self.manager.register(state)
 
         REGISTER.populate(self)
@@ -62,8 +60,8 @@ class Plugin:
     def tox_register_tox_env(self, register: "ToxEnvRegister") -> List[Type[ToxEnv]]:
         return cast(List[Type[ToxEnv]], self.manager.hook.tox_register_tox_env(register=register))
 
-    def handle_inline_plugin(self):
-        result = load_inline()
+    def load_inline_plugin(self, path: Path) -> None:
+        result = load_inline(path)
         if result is not None:
             self.manager.register(result)
 

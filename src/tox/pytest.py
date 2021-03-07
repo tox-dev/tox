@@ -23,6 +23,7 @@ import pytest
 from _pytest.capture import CaptureFixture as _CaptureFixture
 from _pytest.config import Config as PyTestConfig
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import SubRequest
 from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
@@ -67,6 +68,15 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:  # noqa: PT004
     before_handlers = list(LOGGER.handlers)
     yield
     LOGGER.handlers = before_handlers
+
+
+@pytest.fixture(autouse=True)
+def disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Optional[MagicMock]:
+    return (
+        None
+        if request.node.get_closest_marker("plugin_test")
+        else mocker.patch("tox.plugin.inline._load_plugin", return_value=None)
+    )
 
 
 @contextmanager
@@ -388,6 +398,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 def pytest_configure(config: PyTestConfig) -> None:
     config.addinivalue_line("markers", "integration")
+    config.addinivalue_line("markers", "plugin_test")
 
 
 @pytest.mark.trylast

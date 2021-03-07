@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional,
 from tox.config.loader.api import Loader, Override, OverrideMap
 
 from .sets import CoreConfigSet, EnvConfigSet
-from .source import Source, discover_source
+from .source import Source
 
 if TYPE_CHECKING:
     from .cli.parser import Parsed
@@ -34,9 +34,8 @@ class Config:
         self.register_config_set: Callable[[str, EnvConfigSet], Any] = lambda n, e: None
 
     @classmethod
-    def make(cls, parsed: "Parsed", pos_args: Optional[Sequence[str]]) -> "Config":
+    def make(cls, parsed: "Parsed", pos_args: Optional[Sequence[str]], source: Source) -> "Config":
         """Make a tox configuration object."""
-        source = discover_source(parsed.config_file, parsed.root_dir)
         # root is the project root, where the configuration file is at
         # work dir is where we put our own files
         root: Path = source.path.parent if parsed.root_dir is None else parsed.root_dir
