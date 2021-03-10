@@ -6,6 +6,7 @@ from typing import Optional
 import pytest
 
 from tox.pytest import ToxProjectCreator
+from tox.tox_env.python.package import WheelPackage
 from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
 
 
@@ -30,12 +31,13 @@ def test_setuptools_package(
     assert f"\ngreetings from demo_pkg_setuptools{os.linesep}" in outcome.out
     tox_env = outcome.state.tox_env("py")
 
-    package_env = tox_env.package_env
+    (package_env,) = list(tox_env.package_envs)
     assert isinstance(package_env, Pep517VirtualEnvPackage)
-    packages = package_env.perform_packaging("py")
+    packages = package_env.perform_packaging(tox_env.conf)
     assert len(packages) == 1
     package = packages[0]
-    assert package.name == f"demo_pkg_setuptools-1.2.3-py{sys.version_info.major}-none-any.whl"
+    assert isinstance(package, WheelPackage)
+    assert package.path.name == f"demo_pkg_setuptools-1.2.3-py{sys.version_info.major}-none-any.whl"
 
     result = outcome.out.split("\n")
     py_messages = [i for i in result if "py: " in i]

@@ -93,6 +93,8 @@ class NamedBytesIO(BytesIO):
 
 
 class ToxHandler(logging.StreamHandler):
+    # """Controls tox output."""
+
     def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:
         self._local = _LogThreadLocal(out_err)
         super().__init__(stream=self.stdout)
@@ -100,34 +102,43 @@ class ToxHandler(logging.StreamHandler):
         if is_colored:
             deinit()
             init()
-        self.error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
-        self.warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
-        self.remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
+        self._error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
+        self._warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
+        self._remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
 
     @contextmanager
     def with_context(self, name: str) -> Iterator[None]:
+        """
+        Set a new tox environment context
+
+        :param name: the name of the tox environment
+        """
         with self._local.with_name(name):
             yield
 
     @property
     def name(self) -> str:  # type: ignore[override]
+        """:return: the current tox environment name"""
         return self._local.name  # pragma: no cover
+
+    @property
+    def stdout(self) -> TextIOWrapper:
+        """:return: the current standard output"""
+        return self._local.out_err[0]
+
+    @property
+    def stderr(self) -> TextIOWrapper:
+        """:return: the current standard error"""
+        return self._local.out_err[1]
 
     @property  # type: ignore[override]
     def stream(self) -> IO[str]:  # type: ignore[override]
+        """:return: the current stream to write to (alias for the current standard output)"""
         return self.stdout
 
     @stream.setter
     def stream(self, value: IO[str]) -> None:  # noqa: U100
         """ignore anyone changing this"""
-
-    @property
-    def stdout(self) -> TextIOWrapper:
-        return self._local.out_err[0]
-
-    @property
-    def stderr(self) -> TextIOWrapper:
-        return self._local.out_err[1]
 
     @contextmanager
     def suspend_out_err(self, yes: bool, out_err: Optional[OutErr] = None) -> Iterator[OutErr]:
@@ -171,10 +182,10 @@ class ToxHandler(logging.StreamHandler):
         record.pathname = record.pathname[len_sys_path_match + 1 :]
 
         if record.levelno >= logging.ERROR:
-            return self.error_formatter.format(record)
+            return self._error_formatter.format(record)
         if record.levelno >= logging.WARNING:
-            return self.warning_formatter.format(record)
-        return self.remaining_formatter.format(record)
+            return self._warning_formatter.format(record)
+        return self._remaining_formatter.format(record)
 
     @staticmethod
     @contextmanager

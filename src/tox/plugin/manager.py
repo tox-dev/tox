@@ -1,6 +1,5 @@
 """Contains the plugin manager object"""
 from pathlib import Path
-from typing import List, Type, cast
 
 import pluggy
 
@@ -12,7 +11,6 @@ from tox.session import state
 from tox.session.cmd import depends, devenv, legacy, list_env, quickstart, show_config, version_flag
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
-from tox.tox_env.api import ToxEnv
 from tox.tox_env.python.virtual_env import runner
 from tox.tox_env.python.virtual_env.package import api
 from tox.tox_env.register import REGISTER, ToxEnvRegister
@@ -47,8 +45,6 @@ class Plugin:
             self.manager.register(plugin)
         self.manager.load_setuptools_entrypoints(NAME)
         self.manager.register(state)
-
-        REGISTER.populate(self)
         self.manager.check_pending()
 
     def tox_add_option(self, parser: ToxParser) -> None:
@@ -57,13 +53,16 @@ class Plugin:
     def tox_add_core_config(self, core: ConfigSet) -> None:
         self.manager.hook.tox_add_core_config(core=core)
 
-    def tox_register_tox_env(self, register: "ToxEnvRegister") -> List[Type[ToxEnv]]:
-        return cast(List[Type[ToxEnv]], self.manager.hook.tox_register_tox_env(register=register))
+    def tox_register_tox_env(self, register: "ToxEnvRegister") -> None:
+        self.manager.hook.tox_register_tox_env(register=register)
 
     def load_inline_plugin(self, path: Path) -> None:
         result = load_inline(path)
         if result is not None:
             self.manager.register(result)
+        REGISTER._register_tox_env_types(self)  # noqa
+        if result is not None:  #: recheck pending for the inline plugins
+            self.manager.check_pending()
 
 
 MANAGER = Plugin()

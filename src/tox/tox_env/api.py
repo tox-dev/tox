@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union, cast
 
 from tox.config.set_env import SetEnv
 from tox.config.sets import CoreConfigSet, EnvConfigSet
@@ -19,6 +19,7 @@ from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
 from tox.report import OutErr, ToxHandler
 from tox.tox_env.errors import Recreate, Skip
+from tox.tox_env.installer import Installer
 
 from .info import Info
 
@@ -29,49 +30,54 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ToxEnv(ABC):
+    """A tox environment."""
+
     def __init__(
         self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
-        self.journal = journal
-        self.conf: EnvConfigSet = conf
-        self.core: CoreConfigSet = core
-        self.options = options
-        self._executor: Optional[Execute] = None
-        self.register_config()
-        self._cache = Info(self.conf["env_dir"])
-        self._paths: List[Path] = []
+        """Create a new tox environment.
+
+        :param conf: the config set to use for this environment
+        :param core: the core config set
+        :param options: CLI options
+        :param journal: tox environment journal
+        :param log_handler: handler to the tox reporting system
+        """
+        self.journal: EnvJournal = journal  #: handler to the tox reporting system
+        self.conf: EnvConfigSet = conf  #: the config set to use for this environment
+        self.core: CoreConfigSet = core  #: the core tox config set
+        self.options: Parsed = options  #: CLI options
+        self.log_handler: ToxHandler = log_handler  #: handler to the tox reporting system
+
+        #: encode the run state of various methods (setup/clean/etc)
+        self._run_state = {"setup": False, "clean": False, "teardown": False}
+        self._paths_private: List[Path] = []  #: a property holding the PATH environment variables
         self._hidden_outcomes: Optional[List[Outcome]] = []
-        self.log_handler = log_handler
         self._env_vars: Optional[Dict[str, str]] = None
         self._suspended_out_err: Optional[OutErr] = None
-        self.setup_done = False
-        self.clean_done = False
         self._execute_statuses: Dict[int, ExecuteStatus] = {}
         self._interrupted = False
-        self.skipped = False
 
-    def interrupt(self) -> None:
-        logging.warning("interrupt tox environment: %s", self.conf.name)
-        self._interrupted = True
-        for status in list(self._execute_statuses.values()):
-            status.interrupt()
+        self.register_config()
+        self.cache = Info(self.env_dir)
+
+    @staticmethod
+    @abstractmethod
+    def id() -> str:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def executor(self) -> Execute:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def installer(self) -> Installer[Any]:
+        raise NotImplementedError
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
-
-    @property
-    def executor(self) -> Execute:
-        if self._executor is None:
-            self._executor = self.build_executor()
-        return self._executor
-
-    @property
-    def has_display_suspended(self) -> bool:
-        return self._suspended_out_err is not None
-
-    @abstractmethod
-    def build_executor(self) -> Execute:
-        raise NotImplementedError
 
     def register_config(self) -> None:
         self.conf.add_constant(
@@ -82,16 +88,16 @@ class ToxEnv(ABC):
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / cast(str, self.conf["env_name"]),
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / cast(str, self.conf["env_name"]) / "tmp",
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",
             desc="a folder that is always reset at the start of the run",
         )
-        self.conf.default_set_env_loader = self.default_set_env
+        self.conf.default_set_env_loader = self._default_set_env
         self.conf.add_config(
             keys=["platform"],
             of_type=str,
@@ -100,7 +106,7 @@ class ToxEnv(ABC):
         )
 
         def pass_env_post_process(values: List[str]) -> List[str]:
-            values.extend(self.default_pass_env())
+            values.extend(self._default_pass_env())
             return sorted({k: None for k in values}.keys())
 
         self.conf.add_config(
@@ -123,16 +129,30 @@ class ToxEnv(ABC):
             desc="always recreate virtual environment if this option is true, otherwise leave it up to tox",
         )
 
-    def default_set_env(self) -> Dict[str, str]:
+    @property
+    def env_dir(self) -> Path:
+        """:return: the tox environments environment folder"""
+        return cast(Path, self.conf["env_dir"])
+
+    @property
+    def env_tmp_dir(self) -> Path:
+        """:return: the tox environments temp folder"""
+        return cast(Path, self.conf["env_tmp_dir"])
+
+    @property
+    def name(self) -> str:
+        return cast(str, self.conf["env_name"])
+
+    def _default_set_env(self) -> Dict[str, str]:
         return {}
 
-    def default_pass_env(self) -> List[str]:
+    def _default_pass_env(self) -> List[str]:
         env = [
             "https_proxy",  # HTTP proxy configuration
             "http_proxy",  # HTTP proxy configuration
             "no_proxy",  # HTTP proxy configuration
-            "LANG",  # localication
-            "LANGUAGE",  # localication
+            "LANG",  # localization
+            "LANGUAGE",  # localization
             "CURL_CA_BUNDLE",  # curl certificates
             "SSL_CERT_FILE",  # https certificates
             "LD_LIBRARY_PATH",  # location of libs
@@ -153,38 +173,42 @@ class ToxEnv(ABC):
             env.append("TMPDIR")  # temporary file location
         return env
 
-    def setup(self) -> None:
+    def setup(self, recreate: bool = False) -> None:
         """
-        1. env dir exists
-        2. contains a runner with the same type.
+        Setup the tox environment.
+
+        :param recreate: flag to force recreation of the environment from scratch
         """
-        conf = {"name": self.conf.name, "type": type(self).__name__}
-        try:
-            with self._cache.compare(conf, ToxEnv.__name__) as (eq, old):
-                if eq is False and old is not None:  # recreate if already created and not equals
-                    logging.warning(f"env type changed from {old} to {conf}, will recreate")
-                    raise Recreate  # recreate if already exists and type changed
-                self.setup_done = True
-        finally:
-            self._handle_env_tmp_dir()
+        if self._run_state["setup"] is False:  # pragma: no branch
+            self._platform_check()
+            recreate = recreate or cast(bool, self.conf["recreate"])
+            if recreate:
+                self._clean()
+            try:
+                self._setup_env()
+                self._setup_with_env()
+            except Recreate as exception:  # once we might try over
+                if not recreate:  # pragma: no cover
+                    logging.warning(f"recreate env because {exception.args[0]}")
+                    self._clean(force=True)
+                    self._setup_env()
+                    self._setup_with_env()
+            else:
+                self._done_with_setup()
+            finally:
+                self._run_state.update({"setup": True, "clean": False})
 
-    def ensure_setup(self, recreate: bool = False) -> None:
-        self.check_platform()
-        if self.setup_done is True:
-            return
-        if self.conf["recreate"]:
-            recreate = True
-        if recreate:
-            self.clean()
-        try:
-            self.setup()
-        except Recreate:
-            if not recreate:  # pragma: no cover
-                self.clean(force=True)
-                self.setup()
-        self.setup_has_been_done()
+    def teardown(self) -> None:
+        if not self._run_state["teardown"]:
+            try:
+                self._teardown()
+            finally:
+                self._run_state.update({"teardown": True})
 
-    def check_platform(self) -> None:
+    def _teardown(self) -> None:
+        pass
+
+    def _platform_check(self) -> None:
         """skip env when platform does not match"""
         platform_str: str = self.conf["platform"]
         if platform_str:
@@ -192,29 +216,48 @@ class ToxEnv(ABC):
             if match is None:
                 raise Skip(f"platform {self.runs_on_platform} does not match {platform_str}")
 
-    def setup_has_been_done(self) -> None:
+    @property
+    @abstractmethod
+    def runs_on_platform(self) -> str:
+        raise NotImplementedError
+
+    def _setup_env(self) -> None:
+        """
+        1. env dir exists
+        2. contains a runner with the same type.
+        """
+        conf = {"name": self.conf.name, "type": type(self).__name__}
+        with self.cache.compare(conf, ToxEnv.__name__) as (eq, old):
+            if eq is False and old is not None:  # recreate if already created and not equals
+                raise Recreate(f"env type changed from {old} to {conf}")
+        self._handle_env_tmp_dir()
+
+    def _setup_with_env(self) -> None:
+        pass
+
+    def _done_with_setup(self) -> None:
         """called when setup is done"""
 
     def _handle_env_tmp_dir(self) -> None:
         """Ensure exists and empty"""
-        env_tmp_dir: Path = self.conf["env_tmp_dir"]
+        env_tmp_dir = self.env_tmp_dir
         if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             shutil.rmtree(env_tmp_dir, ignore_errors=True)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    def clean(self, force: bool = False) -> None:  # noqa: U100
-        if self.clean_done:  # pragma: no branch
+    def _clean(self, force: bool = False) -> None:  # noqa: U100
+        if self._run_state["clean"]:  # pragma: no branch
             return  # pragma: no cover
-        env_dir: Path = self.conf["env_dir"]
+        env_dir = self.env_dir
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
             shutil.rmtree(env_dir)
-        self._cache.reset()
-        self.setup_done, self.clean_done = False, True
+        self.cache.reset()
+        self._run_state.update({"setup": False, "clean": True})
 
     @property
-    def environment_variables(self) -> Dict[str, str]:
+    def _environment_variables(self) -> Dict[str, str]:
         if self._env_vars is not None:
             return self._env_vars
         result: Dict[str, str] = {}
@@ -232,27 +275,29 @@ class ToxEnv(ABC):
         # load/paths_env might trigger a load of the environment variables, set result here, returns current state
         self._env_vars = result
         # set PATH here in case setting and environment variable requires access to the environment variable PATH
-        result["PATH"] = os.environ.get("PATH", "")
+        result["PATH"] = self._make_path()
         for key in set_env:
             result[key] = set_env.load(key)
-        result["PATH"] = self.paths_env()
         return result
 
     @property
-    def paths(self) -> List[Path]:
-        return self._paths
+    def _paths(self) -> List[Path]:
+        return self._paths_private
 
-    @paths.setter
-    def paths(self, value: List[Path]) -> None:
-        self._paths = value
-        if self._env_vars is not None:  # pragma: no branch # also update the environment variables with the new value
-            self._env_vars["PATH"] = self.paths_env()
+    @_paths.setter
+    def _paths(self, value: List[Path]) -> None:
+        self._paths_private = value
+        # also update the environment variable with the new value
+        if self._env_vars is not None:  # pragma: no branch
+            # remove duplicates and prepend the tox env paths
+            result = self._make_path()
+            self._env_vars["PATH"] = result
 
-    def paths_env(self) -> str:
-        # remove duplicates and prepend the tox env paths
-        values = dict.fromkeys(str(i) for i in self.paths)
+    def _make_path(self) -> str:
+        values = dict.fromkeys(str(i) for i in self._paths)
         values.update(dict.fromkeys(os.environ.get("PATH", "").split(os.pathsep)))
-        return os.pathsep.join(values)
+        result = os.pathsep.join(values)
+        return result
 
     def execute(
         self,
@@ -270,6 +315,13 @@ class ToxEnv(ABC):
             raise RuntimeError  # pragma: no cover
         return status.outcome
 
+    def interrupt(self) -> None:
+        """Interrupt the execution of a tox environment."""
+        logging.warning("interrupt tox environment: %s", self.conf.name)
+        self._interrupted = True
+        for status in list(self._execute_statuses.values()):
+            status.interrupt()
+
     @contextmanager
     def execute_async(
         self,
@@ -286,7 +338,7 @@ class ToxEnv(ABC):
             cwd = self.core["tox_root"]
         if show is None:
             show = self.options.verbosity > 3
-        request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id)
+        request = ExecuteRequest(cmd, cwd, self._environment_variables, stdin, run_id)
         if _CWD == request.cwd:
             repr_cwd = ""
         else:
@@ -322,14 +374,9 @@ class ToxEnv(ABC):
         ) as execute_status:
             yield execute_status
 
-    @staticmethod
-    @abstractmethod
-    def id() -> str:
-        raise NotImplementedError
-
     @contextmanager
     def display_context(self, suspend: bool) -> Iterator[None]:
-        with self.log_context():
+        with self._log_context():
             with self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
                 if suspend:  # only set if suspended
                     self._suspended_out_err = out_err
@@ -345,17 +392,13 @@ class ToxEnv(ABC):
         return out_b, err_b
 
     @contextmanager
-    def log_context(self) -> Iterator[None]:
+    def _log_context(self) -> Iterator[None]:
         with self.log_handler.with_context(self.conf.name):
             yield
 
-    def teardown(self) -> None:
-        """Any cleanup operation on environment done"""
-
     @property
-    @abstractmethod
-    def runs_on_platform(self) -> str:
-        raise NotImplementedError
+    def _has_display_suspended(self) -> bool:
+        return self._suspended_out_err is not None
 
 
 _CWD = Path.cwd()

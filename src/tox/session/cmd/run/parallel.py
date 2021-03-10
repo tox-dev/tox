@@ -6,7 +6,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from typing import Optional
 
 from tox.config.cli.parser import ToxParser
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
 from tox.util.cpu import auto_detect_cpus

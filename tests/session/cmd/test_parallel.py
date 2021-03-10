@@ -35,12 +35,12 @@ def test_parse_num_processes_minus_one() -> None:
 
 def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
     def setup(self: ToxEnv) -> None:
-        if self.conf["env_name"] == "f":
+        if self.name == "f":
             raise Fail("something bad happened")
         return prev_setup(self)
 
-    prev_setup = ToxEnv.setup
-    mocker.patch.object(ToxEnv, "setup", autospec=True, side_effect=setup)
+    prev_setup = ToxEnv._setup_env
+    mocker.patch.object(ToxEnv, "_setup_env", autospec=True, side_effect=setup)
     monkeypatch.setenv("PATH", "")
 
     ini = """

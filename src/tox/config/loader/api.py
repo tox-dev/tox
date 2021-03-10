@@ -4,7 +4,7 @@ from concurrent.futures import Future
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Generator, List, Mapping, Optional, Set, Type, TypeVar
 
-from tox.plugin.impl import impl
+from tox.plugin import impl
 
 from .convert import Convert
 from .str_convert import StrConvert
@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 
 
 class Override:
+    """
+    An override for config definitions.
+    """
+
     def __init__(self, value: str) -> None:
         key, equal, self.value = value.partition("=")
         if not equal:
@@ -78,7 +82,7 @@ class Loader(Convert[T]):
         chain: List[str],
     ) -> V:
         """
-        Load a value.
+        Load a value (raw and then convert).
 
         :param key: the key under it lives
         :param of_type: the type to convert to
@@ -106,6 +110,17 @@ class Loader(Convert[T]):
         raw: T,
         chain: List[str],  # noqa: U100
     ) -> Generator[T, None, None]:
+        """
+        Materialize the raw configuration value from the loader.
+
+        :param future: a future which when called will provide the converted config value
+        :param key: the config key
+        :param of_type: the config type
+        :param conf: the global config
+        :param env_name: the tox environment name
+        :param raw: the raw value
+        :param chain: a list of config keys already loaded in this build phase
+        """
         yield raw
 
 

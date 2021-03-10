@@ -1,22 +1,29 @@
+import importlib
 import sys
 from pathlib import Path
-from runpy import run_path
 from types import ModuleType
-from typing import Any, Dict, Optional
+from typing import Optional
 
 
 def load_inline(path: Path) -> Optional[ModuleType]:
     # nox uses here the importlib.machinery.SourceFileLoader but I consider this similarly good, and we can keep any
     # name for the tox file, it's content will always be loaded in the this module from a system point of view
-    path = path.parent / "tox_.py"
-    if path.exists():
-        return _load_plugin(path)
+    for name in ("toxfile", "☣"):
+        candidate = path.parent / f"{name}.py"
+        if candidate.exists():
+            return _load_plugin(candidate)
     return None
 
 
 def _load_plugin(path: Path) -> ModuleType:
-    loaded_module: Dict[str, Any] = run_path(str(path), run_name="__tox__")  # type: ignore # python/typeshed - 4965
-    for key, value in loaded_module.items():
-        if not key.startswith("_"):
-            globals()[key] = value
-    return sys.modules[__name__]
+    in_folder = path.parent
+    module_name = path.stem
+
+    sys.path.insert(0, str(in_folder))
+    try:
+        if module_name in sys.modules:
+            del sys.modules[module_name]  # pragma: no cover
+        module = importlib.import_module(module_name)
+        return module
+    finally:
+        del sys.path[0]

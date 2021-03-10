@@ -6,8 +6,8 @@ from .ini import IniSource
 class SetupCfg(IniSource):
     """Configuration sourced from a tox.ini file"""
 
-    FILENAME = "setup.cfg"
     CORE_PREFIX = "tox:tox"
+    FILENAME = "setup.cfg"
 
     def __init__(self, path: Path):
         super().__init__(path)

@@ -2,13 +2,14 @@ from pathlib import Path
 
 from tox.journal import EnvJournal
 from tox.pytest import ToxProjectCreator
+from tox.tox_env.package import PathPackage
 from tox.tox_env.python.runner import PythonRun
 
 
 def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
-            "tox.ini": "[testenv:py]\ndeps =-rpath.txt\n -r {toxinidir}/path2.txt\n pytest",
+            "tox.ini": "[testenv:py]\ndeps =-rpath.txt\n -r {toxinidir}{/}path2.txt\n pytest",
             "path.txt": "alpha",
             "path2.txt": "beta",
         }
@@ -16,15 +17,14 @@ def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
     result = project.run("c", "-e", "py")
     result.assert_success()
     deps = result.state.conf.get_env("py")["deps"]
-    assert deps.validate_and_expand() == ["alpha", "beta", "pytest"]
-    with deps.with_file() as filename:
-        assert filename.read_text() == f"-r path.txt\n-r {project.path}/path2.txt\npytest"
+    assert deps.unroll() == [{"-r path.txt": ["alpha"]}, {"-r path2.txt": ["beta"]}, "pytest"]
+    assert str(deps) == f"-rpath.txt\n-r {project.path / 'path2.txt'}\npytest"
 
 
 def test_journal_package_empty() -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun.handle_journal_package(journal, [])
+    PythonRun._handle_journal_package(journal, [])
 
     content = journal.content
     assert content == {}
@@ -35,7 +35,7 @@ def test_journal_one_wheel_file(tmp_path: Path) -> None:
     wheel.write_bytes(b"magical")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun.handle_journal_package(journal, [wheel])
+    PythonRun._handle_journal_package(journal, [PathPackage(wheel)])
 
     content = journal.content
     assert content == {
@@ -54,7 +54,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
     wheel_2.write_bytes(b"magic")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun.handle_journal_package(journal, [wheel_1, wheel_2])
+    PythonRun._handle_journal_package(journal, [PathPackage(wheel_1), PathPackage(wheel_2)])
 
     content = journal.content
     assert content == {
@@ -76,7 +76,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
 def test_journal_packge_dir(tmp_path: Path) -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun.handle_journal_package(journal, [tmp_path])
+    PythonRun._handle_journal_package(journal, [PathPackage(tmp_path)])
 
     content = journal.content
     assert content == {

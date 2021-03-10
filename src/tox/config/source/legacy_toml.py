@@ -9,7 +9,7 @@ class LegacyToml(IniSource):
     FILENAME = "pyproject.toml"
 
     def __init__(self, path: Path):
-        if not path.exists():
+        if path.name != self.FILENAME or not path.exists():
             raise ValueError
         toml_content = toml.loads(path.read_text())
         try:

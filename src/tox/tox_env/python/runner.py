@@ -1,21 +1,22 @@
 """
 A tox run environment that handles the Python language.
 """
-import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set, cast
+from typing import Iterator, List, Optional, Set, Tuple
 
 from tox.config.cli.parser import Parsed
+from tox.config.main import Config
 from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.journal import EnvJournal
-from tox.report import ToxHandler
-from tox.tox_env.errors import Recreate, Skip
-from tox.tox_env.package import PackageToxEnv
+from tox.report import HandledError, ToxHandler
+from tox.tox_env.errors import Skip
+from tox.tox_env.package import Package, PathPackage
+from tox.tox_env.python.package import PythonPackageToxEnv
+from tox.tox_env.python.pip.req_file import PythonDeps
 
 from ..runner import RunToxEnv
-from .api import Python, PythonDep
-from .req_file import RequirementsFile
+from .api import Python
 
 
 class PythonRun(Python, RunToxEnv, ABC):
@@ -23,16 +24,15 @@ class PythonRun(Python, RunToxEnv, ABC):
         self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
     ):
         super().__init__(conf, core, options, journal, log_handler)
-        self._packages: List[PythonDep] = []
 
     def register_config(self) -> None:
         super().register_config()
         deps_kwargs = {"root": self.core["toxinidir"]}
         self.conf.add_config(
             keys="deps",
-            of_type=RequirementsFile,
+            of_type=PythonDeps,
             kwargs=deps_kwargs,
-            default=RequirementsFile("", **deps_kwargs),
+            default=PythonDeps("", **deps_kwargs),
             desc="Name of the python dependencies as specified by PEP-440",
         )
         self.core.add_config(
@@ -42,55 +42,97 @@ class PythonRun(Python, RunToxEnv, ABC):
             desc="skip running missing interpreters",
         )
 
-    def before_package_install(self) -> None:
-        super().before_package_install()
-        # install deps
-        requirements_file: RequirementsFile = self.conf["deps"]
-        requirement_file_content = requirements_file.validate_and_expand()
-        requirement_file_content.sort()  # stable order dependencies
-        with self._cache.compare(requirement_file_content, PythonRun.__name__, "deps") as (eq, old):
-            if not eq:
-                # if new env, or additions only a simple install will do
-                missing: Set[str] = set() if old is None else set(old) - set(requirement_file_content)
-                if not missing:
-                    if requirement_file_content:
-                        self.install_deps(requirement_file_content)
-                else:  # otherwise, no idea how to compute the diff, instead just start from scratch
-                    logging.warning(f"recreate env because dependencies removed: {', '.join(str(i) for i in missing)}")
-                    raise Recreate
-
-    def install_package(self) -> List[Path]:
-        package_env = cast(PackageToxEnv, self.package_env)
-        explicit_install_package: Optional[Path] = getattr(self.options, "install_pkg", None)
-        if explicit_install_package is None:
-            # 1. install package dependencies
-            with package_env.display_context(suspend=self.has_display_suspended):
-                try:
-                    package_deps = package_env.get_package_dependencies(self.conf)
-                except Skip as exception:
-                    raise Skip(f"{exception.args[0]} for package environment {package_env.conf['env_name']}")
-            self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
-
-            # 2. install the package
-            with package_env.display_context(suspend=self.has_display_suspended):
-                self._packages = [PythonDep(p) for p in package_env.perform_packaging(self.conf.name)]
-        else:
-            # ideally here we should parse the package dependencies, but that would break tox 3 behaviour
-            # and might not be trivial (e.g. in case of sdist), for now keep legacy functionality
-            self._packages = [PythonDep(explicit_install_package)]
-        self.install_python_packages(
-            self._packages, "package", **self.install_package_args()  # type: ignore[no-untyped-call]
-        )
-        return [i.value for i in self._packages if isinstance(i.value, Path)]
-
-    @abstractmethod
-    def install_package_args(self) -> Dict[str, Any]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def install_deps(self, args: Sequence[str]) -> None:  # noqa: U100
-        raise NotImplementedError
+    def iter_package_env_types(self) -> Iterator[Tuple[str, str, str]]:
+        yield from super().iter_package_env_types()
+        if self.pkg_type == "wheel":
+            wheel_build_env: str = self.conf["wheel_build_env"]
+            if wheel_build_env not in self._package_envs:  # pragma: no branch
+                package_tox_env_type = self.conf["package_tox_env_type"]
+                yield "wheel", wheel_build_env, package_tox_env_type
 
     @property
-    def packages(self) -> List[str]:
-        return [str(d.value) for d in self._packages]
+    def _package_types(self) -> Tuple[str, ...]:
+        return "wheel", "sdist", "dev-legacy", "skip"
+
+    def _register_package_conf(self) -> bool:
+        desc = f"package installation mode - {' | '.join(i for i in self._package_types)} "
+        if not super()._register_package_conf():
+            self.conf.add_constant(["package"], desc, "skip")
+            return False
+        self.conf.add_config(keys="usedevelop", desc="use develop mode", default=False, of_type=bool)
+        develop_mode = self.conf["usedevelop"] or getattr(self.options, "develop", False)
+        if develop_mode:
+            self.conf.add_constant(["package"], desc, "dev-legacy")
+        else:
+            self.conf.add_config(keys="package", of_type=str, default="sdist", desc=desc)
+        pkg_type = self.pkg_type
+
+        if pkg_type == "skip":
+            return False
+
+        if pkg_type == "wheel":
+
+            def default_wheel_tag(conf: "Config", env_name: Optional[str]) -> str:
+                # https://www.python.org/dev/peps/pep-0427/#file-name-convention
+                # when building wheels we need to ensure that the built package is compatible with the target env
+                # compatibility is documented within https://www.python.org/dev/peps/pep-0427/#file-name-convention
+                # a wheel tag example: {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
+                # python only code are often compatible at major level (unless universal wheel in which case both 2/3)
+                # c-extension codes are trickier, but as of today both poetry/setuptools uses pypa/wheels logic
+                # https://github.com/pypa/wheel/blob/master/src/wheel/bdist_wheel.py#L234-L280
+                default_package_env = self._package_envs["default"]
+                self_py = self.base_python
+                if self_py is not None and isinstance(default_package_env, PythonPackageToxEnv):
+                    default_pkg_py = default_package_env.base_python
+                    if (
+                        default_pkg_py.version_no_dot == self_py.version_no_dot
+                        and default_pkg_py.impl_lower == self_py.impl_lower
+                    ):
+                        return default_package_env.conf.name
+                if self_py is None:
+                    raise ValueError(f"could not resolve base python for {self.conf.name}")
+                return f"{default_package_env.conf.name}-{self_py.impl_lower}{self_py.version_no_dot}"
+
+            self.conf.add_config(
+                keys=["wheel_build_env"],
+                of_type=str,
+                default=default_wheel_tag,
+                desc="wheel tag to use for building applications",
+            )
+        self.conf.add_config(
+            keys=["extras"],
+            of_type=Set[str],
+            default=set(),
+            desc="extras to install of the target package",
+        )
+        return True
+
+    @property
+    def pkg_type(self) -> str:
+        pkg_type: str = self.conf["package"]
+        if pkg_type not in self._package_types:
+            values = ", ".join(i for i in self._package_types)
+            raise HandledError(f"invalid package config type {pkg_type} requested, must be one of {values}")
+        return pkg_type
+
+    def _setup_env(self) -> None:
+        super()._setup_env()
+        # install deps
+        requirements_file: PythonDeps = self.conf["deps"]
+        self.installer.install(requirements_file, PythonRun.__name__, "deps")
+
+    def _build_packages(self) -> List[Package]:
+        explicit_install_package: Optional[Path] = getattr(self.options, "install_pkg", None)
+        if explicit_install_package is not None:
+            return [PathPackage(explicit_install_package)]
+
+        package_env = self._package_envs[self._get_package_env()]
+        with package_env.display_context(self._has_display_suspended):
+            try:
+                packages = package_env.perform_packaging(self.conf)
+            except Skip as exception:
+                raise Skip(f"{exception.args[0]} for package environment {package_env.conf['env_name']}")
+        return packages
+
+    def _get_package_env(self) -> str:
+        return "wheel" if self.pkg_type == "wheel" else "default"

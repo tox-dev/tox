@@ -5,7 +5,7 @@ from textwrap import dedent
 from packaging.version import Version
 
 from tox.config.cli.parser import ToxParser
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.session.state import State
 from tox.version import __version__
 

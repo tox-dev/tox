@@ -2,7 +2,7 @@ from pathlib import Path
 
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.memory import MemoryLoader
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.report import HandledError
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.sequential import run_sequential

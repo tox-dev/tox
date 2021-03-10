@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, ToxParser
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.parallel import OFF_VALUE, parallel_flags, run_parallel
 from tox.session.cmd.run.sequential import run_sequential

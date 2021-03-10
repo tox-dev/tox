@@ -4,7 +4,7 @@ Display the version information about tox.
 from pathlib import Path
 
 from tox.config.cli.parser import ToxParser
-from tox.plugin.impl import impl
+from tox.plugin import impl
 
 
 @impl

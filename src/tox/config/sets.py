@@ -49,6 +49,14 @@ class ConfigSet:
     ) -> ConfigDynamicDefinition[V]:
         """
         Add configuration value.
+
+        :param keys: the keys under what to register the config (first is primary key)
+        :param of_type: the type of the config value
+        :param default: the default value of the config value
+        :param desc: a help message describing the configuration
+        :param post_process: a callback to post-process the configuration value after it has been loaded
+        :param kwargs: additional arguments to pass to the configuration type at construction time
+        :return: the new dynamic config definition
         """
         keys_ = self._make_keys(keys)
         definition = ConfigDynamicDefinition(keys_, desc, self._name, of_type, default, post_process, kwargs)
@@ -56,6 +64,14 @@ class ConfigSet:
         return cast(ConfigDynamicDefinition[V], result)
 
     def add_constant(self, keys: Union[str, Sequence[str]], desc: str, value: V) -> ConfigConstantDefinition[V]:
+        """
+        Add a constant value.
+
+        :param keys: the keys under what to register the config (first is primary key)
+        :param desc: a help message describing the configuration
+        :param value: the config value to use
+        :return: the new constant config value
+        """
         keys_ = self._make_keys(keys)
         definition = ConfigConstantDefinition(keys_, desc, self._name, value)
         result = self._add_conf(keys_, definition)
@@ -83,9 +99,22 @@ class ConfigSet:
         return definition
 
     def __getitem__(self, item: str) -> Any:
+        """
+        Get the config value for a given key (will materialize in case of dynamic config).
+
+        :param item: the config key
+        :return: the configuration value
+        """
         return self.load(item)
 
     def load(self, item: str, chain: Optional[List[str]] = None) -> Any:
+        """
+        Get the config value for a given key (will materialize in case of dynamic config).
+
+        :param item: the config key
+        :param chain: a chain of configuration keys already loaded for this load operation (used to detect circles)
+        :return: the configuration value
+        """
         config_definition = self._defined[item]
         if chain is None:
             chain = []
@@ -101,13 +130,20 @@ class ConfigSet:
         return f"{self.__class__.__name__}({', '.join(values)})"
 
     def __iter__(self) -> Iterator[str]:
+        """:return: iterate through the defined config keys (primary keys used)"""
         return iter(self._keys.keys())
 
     def __contains__(self, item: str) -> bool:
+        """
+        Check if a configuration key is within the config set.
+
+        :param item: the configuration value
+        :return: a boolean indicating the truthiness of the statement
+        """
         return item in self._alias
 
     def unused(self) -> List[str]:
-        """Return a list of keys present in the config source but not used"""
+        """:return: Return a list of keys present in the config source but not used"""
         found: Set[str] = set()
         # keys within loaders (only if the loader is not a parent too)
         parents = {id(i.parent) for i in self.loaders if i.parent is not None}
@@ -118,10 +154,18 @@ class ConfigSet:
         return sorted(found)
 
     def primary_key(self, key: str) -> str:
+        """
+        Get the primary key for a config key.
+
+        :param key: the config key
+        :return: the key that's considered the primary for the input key
+        """
         return self._alias[key]
 
 
 class CoreConfigSet(ConfigSet):
+    """Configuration set for the core tox config"""
+
     def __init__(self, conf: "Config", root: Path) -> None:
         super().__init__(conf, name=None)
         self.add_config(
@@ -156,6 +200,8 @@ class CoreConfigSet(ConfigSet):
 
 
 class EnvConfigSet(ConfigSet):
+    """Configuration set for a tox environment"""
+
     def __init__(self, conf: "Config", name: Optional[str]):
         super().__init__(conf, name=name)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}

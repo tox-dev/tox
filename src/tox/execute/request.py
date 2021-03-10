@@ -6,12 +6,13 @@ from typing import Dict, List, Sequence, Union
 
 
 class StdinSource(Enum):
-    OFF = 0
-    USER = 1
-    API = 2
+    OFF = 0  #: input disabled
+    USER = 1  #: input via the standard input
+    API = 2  #: input via programmatic access
 
     @staticmethod
     def user_only() -> "StdinSource":
+        """:return: ``USER`` if the standard input is tty type else ``OFF``"""
         return StdinSource.USER if sys.stdin.isatty() else StdinSource.OFF
 
 
@@ -21,16 +22,26 @@ class ExecuteRequest:
     def __init__(
         self, cmd: Sequence[Union[str, Path]], cwd: Path, env: Dict[str, str], stdin: StdinSource, run_id: str
     ) -> None:
+        """
+        Create a new execution request.
+
+        :param cmd: the command to run
+        :param cwd: the current working directory
+        :param env: the environment variables
+        :param stdin: the type of standard input allowed
+        :param run_id: an id to identify this run
+        """
         if len(cmd) == 0:
             raise ValueError("cannot execute an empty command")
-        self.cmd: List[str] = [str(i) for i in cmd]
-        self.cwd = cwd
-        self.env = env
-        self.stdin = stdin
-        self.run_id = run_id
+        self.cmd: List[str] = [str(i) for i in cmd]  #: the command to run
+        self.cwd = cwd  #: the working directory to use
+        self.env = env  #: the environment variables to use
+        self.stdin = stdin  #: the type of standard input interaction allowed
+        self.run_id = run_id  #: an id to identify this run
 
     @property
     def shell_cmd(self) -> str:
+        """:return: the command to run as a shell command"""
         try:
             exe = str(Path(self.cmd[0]).relative_to(self.cwd))
         except ValueError:

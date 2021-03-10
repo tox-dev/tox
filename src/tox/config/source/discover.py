@@ -43,12 +43,13 @@ def _locate_source() -> Optional[Source]:
 
 
 def _load_exact_source(config_file: Path) -> Source:
-    for src_type in SOURCE_TYPES:  # pragma: no branch # SOURCE_TYPES will never be empty
-        if src_type.FILENAME == config_file.name:
-            try:
-                return src_type(config_file)
-            except ValueError:
-                pass
+    # if the filename matches to the letter some config file name do not fallback to other source types
+    exact_match = next((s for s in SOURCE_TYPES if config_file.name == s.FILENAME), None)  # pragma: no cover
+    for src_type in (exact_match,) if exact_match is not None else SOURCE_TYPES:  # pragma: no branch
+        try:
+            return src_type(config_file)
+        except ValueError:
+            pass
     raise HandledError(f"could not recognize config file {config_file}")
 
 

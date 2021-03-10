@@ -40,7 +40,7 @@ def tox_wheel(tmp_path_factory: TempPathFactory, worker_id: str) -> Path:
     cache_file = root_tmp_dir / "tox_wheel.json"
     with FileLock(f"{cache_file}.lock"):
         if cache_file.is_file():
-            data = Path(json.loads(cache_file.read_text()))
+            data = Path(json.loads(cache_file.read_text()))  # pragma: no cover
         else:
             data = _make_tox_wheel(tmp_path_factory)
             cache_file.write_text(json.dumps(str(data)))
@@ -56,7 +56,8 @@ def _make_tox_wheel(tmp_path_factory: TempPathFactory) -> Path:
                 package = env_tox_pkg  # pragma: no cover
         if package is None:
             # when we don't get a wheel path injected, build it (for example when running from an IDE)
-            package = build_wheel(tmp_path_factory.mktemp("dist"), Path(__file__).parents[1])  # pragma: no cover
+            into = tmp_path_factory.mktemp("dist")  # pragma: no cover
+            package = build_wheel(into, Path(__file__).parents[1], isolation=False)  # pragma: no cover
         return package
 
 
@@ -88,10 +89,10 @@ def demo_pkg_inline_wheel(tmp_path_factory: TempPathFactory, demo_pkg_inline: Pa
     return build_wheel(tmp_path_factory.mktemp("dist"), demo_pkg_inline)
 
 
-def build_wheel(dist_dir: Path, of: Path) -> Path:
+def build_wheel(dist_dir: Path, of: Path, isolation: bool = True) -> Path:
     from build.__main__ import build_package  # noqa
 
-    build_package(str(of), str(dist_dir), distributions=["wheel"])
+    build_package(str(of), str(dist_dir), distributions=["wheel"], isolation=isolation)
     package = next(dist_dir.iterdir())
     return package
 

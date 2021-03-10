@@ -146,15 +146,28 @@ class Outcome:
         cmd: Sequence[str],
         metadata: Dict[str, Any],
     ):
-        self.request = request
-        self.show_on_standard = show_on_standard
-        self.exit_code = exit_code
-        self.out = out
-        self.err = err
-        self.start = start
-        self.end = end
-        self.cmd = cmd
-        self.metadata = metadata
+        """
+        Create a new execution outcome.
+
+        :param request: the execution request
+        :param show_on_standard: a flag indicating if the execution was shown on stdout/stderr
+        :param exit_code: the exit code for the execution
+        :param out: the standard output of the execution
+        :param err: the standard error of the execution
+        :param start: a timer sample for the start of the execution
+        :param end: a timer sample for the end of the execution
+        :param cmd: the command as executed
+        :param metadata: additional metadata attached to the execution
+        """
+        self.request = request  #: the execution request
+        self.show_on_standard = show_on_standard  #: a flag indicating if the execution was shown on stdout/stderr
+        self.exit_code = exit_code  #: the exit code for the execution
+        self.out = out  #: the standard output of the execution
+        self.err = err  #: the standard error of the execution
+        self.start = start  #: a timer sample for the start of the execution
+        self.end = end  #: a timer sample for the end of the execution
+        self.cmd = cmd  #: the command as executed
+        self.metadata = metadata  #: additional metadata attached to the execution
 
     def __bool__(self) -> bool:
         return self.exit_code == self.OK
@@ -166,6 +179,7 @@ class Outcome:
         )
 
     def assert_success(self) -> None:
+        """Assert that the execution succeeded"""
         if self.exit_code is not None and self.exit_code != self.OK:
             self._assert_fail()
         self.log_run_done(logging.INFO)
@@ -186,6 +200,11 @@ class Outcome:
         raise SystemExit(self.exit_code)
 
     def log_run_done(self, lvl: int) -> None:
+        """
+        Log that the run was done.
+
+        :param lvl: the level on what to log as interpreted by :func:`logging.log`
+        """
         req = self.request
         metadata = ""
         if self.metadata:
@@ -202,9 +221,11 @@ class Outcome:
 
     @property
     def elapsed(self) -> float:
+        """:return: time the execution took in seconds"""
         return self.end - self.start
 
     def out_err(self) -> Tuple[str, str]:
+        """:return: a tuple of the standard output and standard error"""
         return self.out, self.err
 
 

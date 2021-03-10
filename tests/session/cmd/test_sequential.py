@@ -277,88 +277,18 @@ def test_env_name_change_recreate(tox_project: ToxProjectCreator) -> None:
 
     tox_env = result_first.state.tox_env("py")
     assert repr(tox_env) == "VirtualEnvRunner(name=py)"
-    path = tox_env.conf["env_dir"]
+    path = tox_env.env_dir
     with Info(path).compare({"name": "p", "type": "magical"}, ToxEnv.__name__):
         pass
 
     result_second = proj.run("r")
     result_second.assert_success()
     output = (
-        "py: env type changed from {'name': 'p', 'type': 'magical'} to "
-        "{'name': 'py', 'type': 'VirtualEnvRunner'}, will recreate"
+        "recreate env because env type changed from {'name': 'p', 'type': 'magical'} "
+        "to {'name': 'py', 'type': 'VirtualEnvRunner'}"
     )
     assert output in result_second.out
     assert "py: remove tox env folder" in result_second.out
-
-
-def test_deps_remove_recreate(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n setuptools"})
-    execute_calls = proj.patch_execute(lambda request: 0)
-    result_first = proj.run("r")
-    result_first.assert_success()
-    assert execute_calls.call_count == 1
-
-    (proj.path / "tox.ini").write_text("[testenv]\npackage=skip\ndeps=setuptools\n")
-    result_second = proj.run("r")
-    result_second.assert_success()
-    assert "py: recreate env because dependencies removed: wheel" in result_second.out, result_second.out
-    assert execute_calls.call_count == 2
-
-
-def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    build = (demo_pkg_inline / "build.py").read_text()
-    build_with_dep = build.replace("Summary: UNKNOWN\n", "Summary: UNKNOWN\n        Requires-Dist: wheel\n")
-    proj = tox_project(
-        {
-            "tox.ini": "[testenv]\npackage=wheel",
-            "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
-            "build.py": build_with_dep,
-        }
-    )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-
-    result_first = proj.run("r")
-    result_first.assert_success()
-    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == [
-        "get_requires_for_build_wheel",
-        "build_wheel",
-        "install_package_deps",
-        "install_package",
-        "_exit",
-    ]
-    execute_calls.reset_mock()
-
-    (proj.path / "build.py").write_text(build)
-    result_second = proj.run("r")
-    result_second.assert_success()
-    assert "py: recreate env because dependencies removed: wheel" in result_second.out, result_second.out
-    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
-
-
-def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    toml = (demo_pkg_inline / "pyproject.toml").read_text()
-    proj = tox_project(
-        {
-            "tox.ini": "[testenv]\npackage=wheel",
-            "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]'),
-            "build.py": (demo_pkg_inline / "build.py").read_text(),
-        }
-    )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result_first = proj.run("r")
-    result_first.assert_success()
-    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == ["install_requires", "get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
-    execute_calls.reset_mock()
-
-    (proj.path / "pyproject.toml").write_text(toml)
-    result_second = proj.run("r")
-    result_second.assert_success()
-    assert ".pkg: recreate env because dependencies removed: setuptools" in result_second.out, result_second.out
-    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == ["get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
 
 
 def test_skip_pkg_install(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
@@ -376,8 +306,6 @@ def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: 
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     expected = [
         (".pkg", "install_requires"),
-        (".pkg", "get_requires_for_build_wheel"),
-        (".pkg", "install_requires_for_build_wheel"),
         (".pkg", "prepare_metadata_for_build_wheel"),
         (".pkg", "get_requires_for_build_sdist"),
         ("py", "install_package_deps"),
