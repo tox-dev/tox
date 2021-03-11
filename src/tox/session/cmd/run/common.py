@@ -331,7 +331,6 @@ def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: St
 def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]) -> Iterator[List[str]]:
     """Generate tox environments ready to run"""
     order, todo = run_order(state, to_run)
-    at = 0
     while order:
         ready_to_run: List[str] = []
         new_order: List[str] = []
@@ -340,7 +339,6 @@ def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]) -> I
                 new_order.append(env)
             else:
                 ready_to_run.append(env)
-            at += 1
         order = new_order
         yield ready_to_run
 
