@@ -179,9 +179,9 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
     results: List[ToxEnvRunResult] = []
     future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
     to_run_list: List[str] = []
-    for env in state.env_list():  # ensure envs can be constructed and are active
-        if state.tox_env(env).active:
-            to_run_list.append(env)
+    for env in state.env_list():  # ensure envs can be constructed
+        state.tox_env(env)  # this causes some side effects
+        to_run_list.append(env)
     previous, has_previous = None, False
     try:
         spinner = ToxSpinner(has_spinner, state, len(to_run_list))
