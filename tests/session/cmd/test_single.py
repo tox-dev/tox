@@ -9,7 +9,7 @@ def test_platform_does_not_match(tox_project: ToxProjectCreator) -> None:
 
     result = proj.run("r")
     result.assert_success()
-    exp = "py: skipped environment because platform linux does not match wrong_platform"
+    exp = f"py: skipped environment because platform {sys.platform} does not match wrong_platform"
     assert exp in result.out
 
 
