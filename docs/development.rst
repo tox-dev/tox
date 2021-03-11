@@ -98,7 +98,7 @@ Code style guide
   as codified by: ``flake8``, ``black``, ``isort``, ``pyupgrade``.
 - Packaging options should be specified within ``setup.cfg``, ``setup.py`` is only kept for editable installs.
 - All code (tests too) must be type annotated as much as required by ``mypy``.
-- We use a ling length of 120.
+- We use a line length of 120.
 - Exception messages should only be capitalized (and ended with a period/exclamation mark) if they are multi-sentenced,
   which should be avoided. Otherwise, use statements that start with lowercase.
 - All function (including test) names must follow PEP-8, so they must be fully snake cased. All classes are upper
