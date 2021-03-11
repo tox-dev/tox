@@ -105,7 +105,7 @@ Current features
 * ``plugin system`` to modify tox execution with simple hooks.
 * uses :pypi:`pip` and :pypi:`setuptools` by default. Support for configuring the installer command through
   ``install_command``.
-* **cross-Python compatible**: CPython-3.5 and higher, pypy 3.6+ and higher.
+* **cross-Python compatible**: CPython-3.6 and higher, pypy 3.6+ and higher.
 * **cross-platform**: Windows and Unix style environments
 * **integrates with continuous integration servers** like Jenkins (formerly known as Hudson) and helps you to avoid
   boilerplatish and platform-specific build-step hacks.

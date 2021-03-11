@@ -1,6 +1,6 @@
 # External facing
 
-0. `Python 3.5+` only.
+0. `Python 3.6+` only.
 1. Lazy configuration - everything is materialized only when needed (don't ever generate data that will not be used -
    general speed improvement)
 2. built-in wheel build support - no longer generates sdist only
