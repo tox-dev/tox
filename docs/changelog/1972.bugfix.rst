@@ -1,0 +1,3 @@
+Enable setting a different ``upstream`` repository for the coverage diff report.
+This has been hardcoded to ``upstream/rewrite`` until now.
+by :user:`jugmac00`.
