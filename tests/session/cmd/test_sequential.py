@@ -452,3 +452,20 @@ def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
 
     assert Matches(r"  py: IGNORED FAIL code 1 .*") == reports[-2]
     assert Matches(r"  congratulations :\) .*") == reports[-1]
+
+
+def test_platform_does_not_match(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\nplatform=wrong_platform"
+    proj = tox_project({"tox.ini": ini})
+
+    result = proj.run("r")
+    result.assert_success()
+    exp = f"py: skipped environment because platform {sys.platform} does not match wrong_platform"
+    assert exp in result.out
+
+
+def test_platform_matches(tox_project: ToxProjectCreator) -> None:
+    ini = f"[testenv]\npackage=skip\nplatform={sys.platform}"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run("r")
+    result.assert_success()
