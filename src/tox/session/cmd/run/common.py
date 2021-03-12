@@ -180,7 +180,7 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
     future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
     to_run_list: List[str] = []
     for env in state.env_list():  # ensure envs can be constructed
-        state.tox_env(env)  # this causes some side effects
+        state.tox_env(env)
         to_run_list.append(env)
     previous, has_previous = None, False
     try:
