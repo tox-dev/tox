@@ -16,14 +16,10 @@ if TYPE_CHECKING:
 
 class Override:
     def __init__(self, value: str) -> None:
-        split_at = value.find("=")
-        if split_at == -1:
+        key, equal, self.value = value.partition("=")
+        if not equal:
             raise ArgumentTypeError(f"override {value} has no = sign in it")
-        key = value[:split_at]
-        ns_at = key.find(".")
-        self.namespace = "" if ns_at == -1 else key[:ns_at]
-        self.key = key[ns_at + 1 :]
-        self.value = value[split_at + 1 :]
+        self.namespace, _, self.key = key.rpartition(".")
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self}')"

@@ -67,13 +67,13 @@ tox roughly follows the following phases:
 
    2. **install** (optional): install the environment dependencies specified inside the ``deps`` configuration
    section, and then the earlier packaged source distribution. By default ``pip`` is used to install packages, however
-   one can customise this via ``install_command``. Note ``pip`` will not update project dependencies (specified
+   one can customize this via ``install_command``. Note ``pip`` will not update project dependencies (specified
    either in the ``install_requires`` or the ``extras`` section of the ``setup.py``) if any version already exists in
    the virtual environment; therefore we recommend to recreate your environments whenever your project dependencies
    change.
 
    3. **commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
-   zero stop, and mark the environment failed. Note, starting a command with a single dash character means ignore exit
+   zero, stop and mark the environment failed. Note, starting a command with a single dash character means ignore exit
    code.
 
 6. **report** print out a report of outcomes for each tox environment:
@@ -89,7 +89,7 @@ tox roughly follows the following phases:
 
 tox will take care of environment isolation for you: it will strip away all operating system environment variables not
 specified via ``passenv``. Furthermore, it will also alter the ``PATH`` variable so that your commands resolve
-within the current active tox environment. In general all executables in the path are available in ``commands``, but
+within the current active tox environment. In general, all executables in the path are available in ``commands``, but
 tox will emit a warning if it was not explicitly allowed via ``whitelist_externals``.
 
 Current features
@@ -105,7 +105,7 @@ Current features
 * ``plugin system`` to modify tox execution with simple hooks.
 * uses :pypi:`pip` and :pypi:`setuptools` by default. Support for configuring the installer command through
   ``install_command``.
-* **cross-Python compatible**: CPython-3.5 and higher, pypy 3.6+ and higher.
+* **cross-Python compatible**: CPython-3.6 and higher, pypy 3.6+ and higher.
 * **cross-platform**: Windows and Unix style environments
 * **integrates with continuous integration servers** like Jenkins (formerly known as Hudson) and helps you to avoid
   boilerplatish and platform-specific build-step hacks.

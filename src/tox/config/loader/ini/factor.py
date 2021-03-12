@@ -19,11 +19,7 @@ def filter_for_env(value: str, name: Optional[str]) -> str:
                 overall.append(content)
         else:
             for group in factors:
-                for a_name, negate in group:
-                    contains = a_name in current
-                    if not ((contains is True and negate is False) or (contains is False and negate is True)):
-                        break
-                else:
+                if all((a_name in current) ^ negate for a_name, negate in group):
                     overall.append(content)
     result = "\n".join(overall)
     return result

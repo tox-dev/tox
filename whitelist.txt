@@ -164,6 +164,7 @@ replacer
 Replacer
 req
 rfind
+rpartition
 rreq
 rtd
 runpy
