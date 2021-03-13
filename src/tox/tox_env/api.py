@@ -169,11 +169,7 @@ class ToxEnv(ABC):
             self._handle_env_tmp_dir()
 
     def ensure_setup(self, recreate: bool = False) -> None:
-        platform_str: str = self.conf["platform"]
-        if platform_str:
-            match = re.fullmatch(platform_str, self.runs_on_platform)
-            if match is None:
-                raise Skip(f"platform {self.runs_on_platform} does not match {platform_str}")
+        self.check_platform()
         if self.setup_done is True:
             return
         if self.conf["recreate"]:
@@ -187,6 +183,14 @@ class ToxEnv(ABC):
                 self.clean(force=True)
                 self.setup()
         self.setup_has_been_done()
+
+    def check_platform(self) -> None:
+        """skip env when platform does not match"""
+        platform_str: str = self.conf["platform"]
+        if platform_str:
+            match = re.fullmatch(platform_str, self.runs_on_platform)
+            if match is None:
+                raise Skip(f"platform {self.runs_on_platform} does not match {platform_str}")
 
     def setup_has_been_done(self) -> None:
         """called when setup is done"""
