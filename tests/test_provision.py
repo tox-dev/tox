@@ -134,3 +134,20 @@ def test_provision_requires_ok(
     result_recreate.assert_success()
     assert prov_msg in result_recreate.out
     assert f"ROOT: remove tox env folder {provision_env}" in result_recreate.out, result_recreate.out
+
+
+@pytest.mark.integration
+def test_provision_platform_check_does_not_raise_skip_exception(
+    tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch, tmp_path: Path
+) -> None:
+    pypi_index_self.use(monkeypatch)
+    proj = tox_project({"tox.ini": "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\nplatform=phantasy"})
+    log = tmp_path / "out.log"
+
+    result = proj.run("r", "--result-json", str(log))
+    result.assert_success()
+    prov_msg = (
+        f"ROOT: will run in automatically provisioned tox, host {sys.executable} is missing"
+        f" [requires (has)]: demo-pkg-inline (N/A)"
+    )
+    assert prov_msg in result.out
