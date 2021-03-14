@@ -469,3 +469,16 @@ def test_platform_matches(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": ini})
     result = proj.run("r")
     result.assert_success()
+
+
+def test_packaging_platform_check_does_not_raise_unhandled_skip_exception(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path
+) -> None:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text()
+    build = (demo_pkg_inline / "build.py").read_text()
+    proj = tox_project(
+        {"tox.ini": "[testenv]\npackage=wheel\nplatform=wrong_platform", "pyproject.toml": toml, "build.py": build}
+    )
+    result = proj.run("r")
+    result.assert_success()
+    assert "congratulations" in result.out
