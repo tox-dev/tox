@@ -537,9 +537,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. versionadded:: 0.9
 
-    (DEPRECATED, will be removed in a future version) Multi-line ``name =
-    URL`` definitions of python package servers.  Dependencies can
-    specify using a specified index server through the
+    (DEPRECATED, will be removed in a future version) Use
+    :conf:`install_command` instead of this.
+
+    Multi-line ``name = URL`` definitions of python package servers.
+    Dependencies can specify using a specified index server through the
     ``:indexservername:depname`` pattern.  The ``default`` indexserver
     definition determines where unscoped dependencies and the sdist install
     installs from.  Example:
