@@ -40,14 +40,14 @@ repos:
     hooks:
       - id: rst-backticks
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.16.0
+    rev: v1.17.0
     hooks:
       - id: setup-cfg-fmt
         args:
           - --min-py3-version
           - "3.4"
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 3.9.0
     hooks:
       - id: flake8
         additional_dependencies:
