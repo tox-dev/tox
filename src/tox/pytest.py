@@ -553,11 +553,10 @@ class IndexServer:
         return f"{self.__class__.__name__}(url={self.url}, indexes={list(self._indexes)})"  # pragma: no cover
 
 
-@pytest.fixture(scope="session")
-def pypi_server(tmp_path_factory: TempPathFactory) -> Iterator[IndexServer]:
+@pytest.fixture()
+def pypi_server(tmp_path: Path) -> Iterator[IndexServer]:
     # takes around 2.5s
-    path = tmp_path_factory.mktemp("pypi")
-    with IndexServer(path) as server:
+    with IndexServer(tmp_path) as server:
         server.create_index("empty", "volatile=False")
         yield server
 
