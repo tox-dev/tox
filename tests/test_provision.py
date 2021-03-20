@@ -80,7 +80,7 @@ def build_wheel(dist_dir: Path, of: Path) -> Path:
     return package
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def pypi_index_self(pypi_server: IndexServer, tox_wheels: List[Path], demo_pkg_inline_wheel: Path) -> Index:
     with elapsed("start devpi and create index"):  # takes around 1s
         self_index = pypi_server.create_index("self", "volatile=False")
