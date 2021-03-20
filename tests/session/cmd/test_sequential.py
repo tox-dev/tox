@@ -431,7 +431,7 @@ def test_commands_post_fails_exit_code(tox_project: ToxProjectCreator) -> None:
 )
 def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: int, post: int, outcome: int) -> None:
     def _s(key: str, code: int) -> str:
-        return f"\ncommands{key}=\n {_c(code)}\n {'' if code == 0 else _c(code+1)}"
+        return f"\ncommands{key}=\n {_c(code)}\n {'' if code == 0 else _c(code + 1)}"
 
     ini = f"[testenv]\npackage=skip\nignore_errors=True{_s('_pre', pre)}{_s('', main)}{_s('_post', post)}"
     proj = tox_project({"tox.ini": ini})
@@ -476,9 +476,8 @@ def test_packaging_platform_check_does_not_raise_unhandled_skip_exception(
 ) -> None:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     build = (demo_pkg_inline / "build.py").read_text()
-    proj = tox_project(
-        {"tox.ini": "[testenv]\npackage=wheel\nplatform=wrong_platform", "pyproject.toml": toml, "build.py": build}
-    )
-    result = proj.run("r")
+    ini = "[testenv]\npackage=wheel\n[testenv:.pkg]\nplatform=wrong_platform"
+    proj = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build})
+    result = proj.run("r", "--notest")
     result.assert_success()
-    assert "congratulations" in result.out
+    assert "skipped" not in result.out

@@ -141,7 +141,8 @@ def test_provisioning_platform_check_does_not_raise_unhandled_skip_exception(
     tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
     pypi_index_self.use(monkeypatch)
-    proj = tox_project({"tox.ini": "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\nplatform=wrong_platform"})
+    ini = "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\n[testenv:.tox]\nplatform=wrong_platform"
+    proj = tox_project({"tox.ini": ini})
     log = tmp_path / "out.log"
 
     result = proj.run("r", "--result-json", str(log))
