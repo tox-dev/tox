@@ -9,6 +9,7 @@ from typing import Iterator, List, Optional
 from zipfile import ZipFile
 
 import pytest
+from filelock import FileLock
 from packaging.requirements import Requirement
 
 from tox.pytest import Index, IndexServer, MonkeyPatch, TempPathFactory, ToxProjectCreator
@@ -31,7 +32,22 @@ def elapsed(msg: str) -> Iterator[None]:
 
 
 @pytest.fixture(scope="session")
-def tox_wheel(tmp_path_factory: TempPathFactory) -> Path:
+def tox_wheel(tmp_path_factory: TempPathFactory, worker_id: str) -> Path:
+    if worker_id == "master":  # if not running under xdist we can just return
+        return _make_tox_wheel(tmp_path_factory)  # pragma: no cover
+    # otherwise we need to ensure only one worker creates the wheel, and the rest reuses
+    root_tmp_dir = tmp_path_factory.getbasetemp().parent
+    cache_file = root_tmp_dir / "tox_wheel.json"
+    with FileLock(f"{cache_file}.lock"):
+        if cache_file.is_file():
+            data = Path(json.loads(cache_file.read_text()))
+        else:
+            data = _make_tox_wheel(tmp_path_factory)
+            cache_file.write_text(json.dumps(str(data)))
+    return data
+
+
+def _make_tox_wheel(tmp_path_factory: TempPathFactory) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
         package: Optional[Path] = None
         if "TOX_PACKAGE" in os.environ:

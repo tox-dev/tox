@@ -23,8 +23,8 @@ chdir
 cmd
 Cmd
 colorama
-Conf
 conf
+Conf
 configs
 conftest
 const
@@ -64,8 +64,8 @@ envs
 epilog
 eq
 esscaped
-Eval
 eval
+Eval
 exc
 exe
 executables
@@ -73,6 +73,7 @@ expr
 extlinks
 extractall
 favicon
+filelock
 fmt
 formatter
 Formatter
@@ -81,6 +82,7 @@ fromlist
 fs
 fullmatch
 func
+getbasetemp
 getfqdn
 getitem
 getoption
@@ -134,8 +136,8 @@ parsers
 pathlib
 pathname
 pathsep
-Pep517
 pep517
+Pep517
 pluggy
 Popen
 pos
