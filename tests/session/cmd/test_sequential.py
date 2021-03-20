@@ -43,7 +43,7 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  a: FAIL code 1 \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-3]
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 def test_result_json_sequential(
     tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]  # noqa: U100
 ) -> None:
@@ -137,7 +137,7 @@ def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline:
     result_rerun.assert_success()
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=sdist\ncommands=python -c 'from demo_pkg_inline import do; do()'"}
@@ -454,30 +454,32 @@ def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  congratulations :\) .*") == reports[-1]
 
 
-def test_platform_does_not_match(tox_project: ToxProjectCreator) -> None:
+def test_platform_does_not_match_run_env(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\nplatform=wrong_platform"
     proj = tox_project({"tox.ini": ini})
 
     result = proj.run("r")
     result.assert_success()
-    exp = f"py: skipped environment because platform {sys.platform} does not match wrong_platform"
+    exp = f"py: skipped because platform {sys.platform} does not match wrong_platform"
     assert exp in result.out
 
 
-def test_platform_matches(tox_project: ToxProjectCreator) -> None:
+def test_platform_matches_run_env(tox_project: ToxProjectCreator) -> None:
     ini = f"[testenv]\npackage=skip\nplatform={sys.platform}"
     proj = tox_project({"tox.ini": ini})
     result = proj.run("r")
     result.assert_success()
 
 
-def test_packaging_platform_check_does_not_raise_unhandled_skip_exception(
-    tox_project: ToxProjectCreator, demo_pkg_inline: Path
-) -> None:
+def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     build = (demo_pkg_inline / "build.py").read_text()
     ini = "[testenv]\npackage=wheel\n[testenv:.pkg]\nplatform=wrong_platform"
     proj = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build})
-    result = proj.run("r", "--notest")
+    result = proj.run("r", "-e", "a,b")
     result.assert_success()
-    assert "skipped" not in result.out
+    assert "a: SKIP" in result.out
+    assert "b: SKIP" in result.out
+    msg = f"skipped because platform {sys.platform} does not match wrong_platform for package environment .pkg"
+    assert f"a: {msg}" in result.out
+    assert f"b: {msg}" in result.out

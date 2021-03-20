@@ -101,7 +101,7 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
     )
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 def test_provision_requires_ok(
     tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -136,19 +136,15 @@ def test_provision_requires_ok(
     assert f"ROOT: remove tox env folder {provision_env}" in result_recreate.out, result_recreate.out
 
 
-@pytest.mark.integration
-def test_provisioning_platform_check_does_not_raise_unhandled_skip_exception(
-    tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch, tmp_path: Path
+@pytest.mark.integration()
+def test_provision_platform_check(
+    tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch
 ) -> None:
     pypi_index_self.use(monkeypatch)
     ini = "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\n[testenv:.tox]\nplatform=wrong_platform"
     proj = tox_project({"tox.ini": ini})
-    log = tmp_path / "out.log"
 
-    result = proj.run("r", "--result-json", str(log))
-    result.assert_success()
-    prov_msg = (
-        f"ROOT: will run in automatically provisioned tox, host {sys.executable} is missing"
-        f" [requires (has)]: demo-pkg-inline (N/A)"
-    )
-    assert prov_msg in result.out
+    result = proj.run("r")
+    result.assert_failed(-2)
+    msg = f"cannot provision tox environment .tox because platform {sys.platform} does not match wrong_platform"
+    assert msg in result.out

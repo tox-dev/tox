@@ -3,7 +3,7 @@ import pytest
 from tox.pytest import ToxProjectCreator
 
 
-@pytest.mark.plugin_test
+@pytest.mark.plugin_test()
 def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     ini = """
     from tox.plugin.impl import impl

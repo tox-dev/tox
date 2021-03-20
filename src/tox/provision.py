@@ -14,7 +14,9 @@ from tox.config.loader.memory import MemoryLoader
 from tox.config.sets import CoreConfigSet
 from tox.execute.api import StdinSource
 from tox.plugin.impl import impl
+from tox.report import HandledError
 from tox.session.state import State
+from tox.tox_env.errors import Skip
 from tox.tox_env.python.req_file import RequirementsFile
 from tox.tox_env.python.runner import PythonRun
 from tox.tox_env.python.virtual_env.package.api import PackageType
@@ -108,7 +110,10 @@ def run_provision(deps: List[Requirement], state: State) -> int:  # noqa
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     recreate = state.options.no_recreate_provision is False if state.options.recreate else False
-    tox_env.ensure_setup(recreate=recreate)
+    try:
+        tox_env.ensure_setup(recreate=recreate)
+    except Skip as exception:
+        raise HandledError(f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}")
     args: List[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision")
