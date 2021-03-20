@@ -18,7 +18,7 @@ from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
 from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
 from tox.report import OutErr, ToxHandler
-from tox.tox_env.errors import Recreate
+from tox.tox_env.errors import Recreate, Skip
 
 from .info import Info
 
@@ -169,6 +169,7 @@ class ToxEnv(ABC):
             self._handle_env_tmp_dir()
 
     def ensure_setup(self, recreate: bool = False) -> None:
+        self.check_platform()
         if self.setup_done is True:
             return
         if self.conf["recreate"]:
@@ -182,6 +183,14 @@ class ToxEnv(ABC):
                 self.clean(force=True)
                 self.setup()
         self.setup_has_been_done()
+
+    def check_platform(self) -> None:
+        """skip env when platform does not match"""
+        platform_str: str = self.conf["platform"]
+        if platform_str:
+            match = re.fullmatch(platform_str, self.runs_on_platform)
+            if match is None:
+                raise Skip(f"platform {self.runs_on_platform} does not match {platform_str}")
 
     def setup_has_been_done(self) -> None:
         """called when setup is done"""
@@ -347,14 +356,6 @@ class ToxEnv(ABC):
     @abstractmethod
     def runs_on_platform(self) -> str:
         raise NotImplementedError
-
-    @property
-    def active(self) -> bool:
-        platform_str: str = self.conf["platform"]
-        if not platform_str:
-            return True
-        match = re.fullmatch(platform_str, self.runs_on_platform)
-        return match is not None
 
 
 _CWD = Path.cwd()

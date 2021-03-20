@@ -10,7 +10,7 @@ from tox.config.cli.parser import Parsed
 from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
-from tox.tox_env.errors import Recreate
+from tox.tox_env.errors import Recreate, Skip
 from tox.tox_env.package import PackageToxEnv
 
 from ..runner import RunToxEnv
@@ -65,7 +65,10 @@ class PythonRun(Python, RunToxEnv, ABC):
         if explicit_install_package is None:
             # 1. install package dependencies
             with package_env.display_context(suspend=self.has_display_suspended):
-                package_deps = package_env.get_package_dependencies(self.conf)
+                try:
+                    package_deps = package_env.get_package_dependencies(self.conf)
+                except Skip as exception:
+                    raise Skip(f"{exception.args[0]} for package environment {package_env.conf['env_name']}")
             self.cached_install([PythonDep(p) for p in package_deps], PythonRun.__name__, "package_deps")
 
             # 2. install the package

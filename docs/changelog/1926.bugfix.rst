@@ -1,0 +1,2 @@
+ Environments with a platform mismatch are no longer silently skipped,
+ but properly reported - by :user:`jugmac00`.

@@ -9,6 +9,7 @@ from typing import Iterator, List, Optional
 from zipfile import ZipFile
 
 import pytest
+from filelock import FileLock
 from packaging.requirements import Requirement
 
 from tox.pytest import Index, IndexServer, MonkeyPatch, TempPathFactory, ToxProjectCreator
@@ -31,7 +32,22 @@ def elapsed(msg: str) -> Iterator[None]:
 
 
 @pytest.fixture(scope="session")
-def tox_wheel(tmp_path_factory: TempPathFactory) -> Path:
+def tox_wheel(tmp_path_factory: TempPathFactory, worker_id: str) -> Path:
+    if worker_id == "master":  # if not running under xdist we can just return
+        return _make_tox_wheel(tmp_path_factory)  # pragma: no cover
+    # otherwise we need to ensure only one worker creates the wheel, and the rest reuses
+    root_tmp_dir = tmp_path_factory.getbasetemp().parent
+    cache_file = root_tmp_dir / "tox_wheel.json"
+    with FileLock(f"{cache_file}.lock"):
+        if cache_file.is_file():
+            data = Path(json.loads(cache_file.read_text()))
+        else:
+            data = _make_tox_wheel(tmp_path_factory)
+            cache_file.write_text(json.dumps(str(data)))
+    return data
+
+
+def _make_tox_wheel(tmp_path_factory: TempPathFactory) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
         package: Optional[Path] = None
         if "TOX_PACKAGE" in os.environ:
@@ -101,7 +117,7 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
     )
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 def test_provision_requires_ok(
     tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -134,3 +150,17 @@ def test_provision_requires_ok(
     result_recreate.assert_success()
     assert prov_msg in result_recreate.out
     assert f"ROOT: remove tox env folder {provision_env}" in result_recreate.out, result_recreate.out
+
+
+@pytest.mark.integration()
+def test_provision_platform_check(
+    tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch
+) -> None:
+    pypi_index_self.use(monkeypatch)
+    ini = "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\n[testenv:.tox]\nplatform=wrong_platform"
+    proj = tox_project({"tox.ini": ini})
+
+    result = proj.run("r")
+    result.assert_failed(-2)
+    msg = f"cannot provision tox environment .tox because platform {sys.platform} does not match wrong_platform"
+    assert msg in result.out

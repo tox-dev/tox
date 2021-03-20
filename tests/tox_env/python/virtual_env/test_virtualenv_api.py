@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 from typing import Tuple
 
@@ -153,23 +152,6 @@ def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     assert request.cmd == ["python", "-m", "pip", "freeze"]
-
-
-@pytest.mark.parametrize("keep", [True, False])
-def test_platform_filter(tox_project: ToxProjectCreator, keep: bool) -> None:
-    platform = sys.platform
-    if not keep:
-        platform += "1"
-    ini = f"[testenv]\npackage=skip\nplatform={platform}"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "-e", "py")
-    result.assert_success()
-
-    assert result.state.tox_env("py").active is keep
-    if keep:
-        assert "py" in result.out
-    else:
-        assert "py" not in result.out
 
 
 @pytest.mark.parametrize("mode", ["r", "p", "le"])
