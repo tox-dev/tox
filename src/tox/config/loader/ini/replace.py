@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 BASE_TEST_ENV = "testenv"
 
-# split alongside :, unless it's esscaped, or it's preceded by a single capital letter (Windows drive letter in paths)
+# split alongside :, unless it's escaped, or it's preceded by a single capital letter (Windows drive letter in paths)
 ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
 
 
