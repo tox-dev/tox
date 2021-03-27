@@ -559,6 +559,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. code-block:: ini
 
+        [testenv]
         setenv =
             PIP_INDEX_URL = {env:PIP_INDEX_URL:https://pypi.org/simple/}
 
