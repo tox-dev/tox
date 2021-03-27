@@ -541,7 +541,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     to configure PIP_INDEX_URL environment variable, see below.
 
     Multi-line ``name = URL`` definitions of python package servers.
-    Dependencies can specify using a specified index server through the
+    You can specify an alternative index server for dependencies by applying the
     ``:indexservername:depname`` pattern.  The ``default`` indexserver
     definition determines where unscoped dependencies and the sdist install
     installs from.  Example:
@@ -555,7 +555,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     will make tox install all dependencies from this PyPI index server
     (including when installing the project sdist package).
 
-    The recommended way to set custom index server URL is to use :conf:`setenv`:
+    The recommended way to set a custom index server URL is to use :conf:`setenv`:
 
     .. code-block:: ini
 
@@ -564,7 +564,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
             PIP_INDEX_URL = {env:PIP_INDEX_URL:https://pypi.org/simple/}
 
     This will ensure the desired index server gets used for virtual environment
-    creation and allow overriding index server URL with environment variable.
+    creation and allow overriding the index server URL with an environment variable.
 
 .. conf:: envdir ^ PATH ^ {toxworkdir}/{envname}
 
