@@ -192,7 +192,9 @@ class TestInterpreterInfo:
         version_info="my-version-info",
         sysplatform="my-sys-platform",
     ):
-        return InterpreterInfo(implementation, executable, version_info, sysplatform, True, None)
+        return InterpreterInfo(
+            implementation, executable, version_info, sysplatform, True, "/", None
+        )
 
     def test_data(self):
         x = self.info("larry", "moe", "shemp", "curly")

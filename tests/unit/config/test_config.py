@@ -1469,6 +1469,22 @@ class TestConfigTestEnv:
         if bp == "jython":
             assert envconfig.envpython == envconfig.envbindir.join(bp)
 
+    @pytest.mark.parametrize("sep, bindir", [("\\", "Scripts"), ("/", "bin")])
+    def test_envbindir_win(self, newconfig, monkeypatch, sep, bindir):
+        monkeypatch.setattr(tox.INFO, "IS_WIN", True)
+        config = newconfig(
+            """
+            [testenv]
+            basepython=python
+        """,
+        )
+        assert len(config.envconfigs) == 1
+        envconfig = config.envconfigs["python"]
+        envconfig.python_info.os_sep = sep  # force os.sep result
+        # on win32 with msys2, virtualenv uses "bin" for python
+        assert envconfig.envbindir.basename == bindir
+        assert envconfig.envpython == envconfig.envbindir.join("python")
+
     @pytest.mark.parametrize("plat", ["win32", "linux2"])
     def test_passenv_as_multiline_list(self, newconfig, monkeypatch, plat):
         monkeypatch.setattr(tox.INFO, "IS_WIN", plat == "win32")
