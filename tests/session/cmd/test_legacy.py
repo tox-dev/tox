@@ -31,8 +31,9 @@ def test_legacy_list_default(tox_project: ToxProjectCreator, mocker: MockerFixtu
 @pytest.mark.parametrize(
     "configuration",
     [
-        pytest.param("", id="missing envlist"),
-        pytest.param("[toxenv]", id="empty envlist"),
+        pytest.param("", id="missing toxenv section"),
+        pytest.param("[toxenv]", id="missing envlist"),
+        pytest.param("[toxenv]\nenv_list=", id="empty envlist"),
     ],
 )
 def test_legacy_list_env_with_empty_or_missing_env_list(tox_project: ToxProjectCreator, configuration: str) -> None:
@@ -41,6 +42,16 @@ def test_legacy_list_env_with_empty_or_missing_env_list(tox_project: ToxProjectC
 
     outcome.assert_success()
     outcome.assert_out_err("", "")
+
+
+def test_legacy_list_env_with_no_tox_file(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"pytest.ini": ""})
+    outcome = project.run("le", "-l")
+
+    outcome.assert_success()
+    outcome.assert_out_err(
+        f"ROOT: No tox.ini or setup.cfg or pyproject.toml found, assuming empty tox.ini at {project.path}\n", ""
+    )
 
 
 @pytest.mark.parametrize("verbose", range(3))
