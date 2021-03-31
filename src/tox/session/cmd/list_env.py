@@ -24,7 +24,7 @@ def list_env(state: State) -> int:
 
     if not option.list_no_description and default:
         print("default environments:")
-    max_length = max(len(env) for env in (default.envs + extra)) if default.envs + extra else 0
+    max_length = max((len(env) for env in (default.envs + extra)), default=0)
 
     def report_env(name: str) -> None:
         if not option.list_no_description:
