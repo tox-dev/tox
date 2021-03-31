@@ -1,1 +1,1 @@
-Enable building tox with ``setuptools_scm`` 6+ by :user:hroncok
+Enable building tox with ``setuptools_scm`` 6+ by :user:`hroncok`
