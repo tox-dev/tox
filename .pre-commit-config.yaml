@@ -64,3 +64,28 @@ repos:
         exclude: >-
           ^docs/changelog/(\d+\.(bugfix|feature|deprecation|breaking|doc|misc).rst|README.rst|template.jinja2)
         files: ^docs/changelog/
+      - id: changelogs-user-role
+        name: changelog files have a non-broken :user:`name` role
+        language: system
+        entry: >-
+          sh -c '
+          rc=0;
+          for f in "$@";
+          do
+          if ! >/dev/null grep ":user:" -- "${f}";
+          then
+          continue;
+          fi;
+          grep ":user:" -- "${f}"
+          | sed "s/.*\(:user:[^ .,]\+\).*$/\1/"
+          | >/dev/null grep -v "^:user:\`[^ \`]\+\`";
+          if [ "$?" -eq 0 ];
+          then
+          rc=1;
+          2>&1 echo ":user: RST role syntax is broken in '${f}'...";
+          fi;
+          done;
+          exit $rc
+          '
+        pass_filenames: true
+        types: [file, rst]
