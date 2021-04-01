@@ -45,13 +45,12 @@ def test_legacy_list_env_with_empty_or_missing_env_list(tox_project: ToxProjectC
 
 
 def test_legacy_list_env_with_no_tox_file(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"pytest.ini": ""})
+    project = tox_project({})
     outcome = project.run("le", "-l")
 
     outcome.assert_success()
-    outcome.assert_out_err(
-        f"ROOT: No tox.ini or setup.cfg or pyproject.toml found, assuming empty tox.ini at {project.path}\n", ""
-    )
+    out = f"ROOT: No tox.ini or setup.cfg or pyproject.toml found, assuming empty tox.ini at {project.path}\n"
+    outcome.assert_out_err(out, "")
 
 
 @pytest.mark.parametrize("verbose", range(3))
