@@ -67,7 +67,6 @@ repos:
       - id: changelogs-user-role
         name: changelog files have a non-broken :user:`name` role
         language: pygrep
-        entry: >-
-          :user:([^`]+`?|`[^`]+[\s,])
+        entry: :user:([^`]+`?|`[^`]+[\s,])
         pass_filenames: true
         types: [file, rst]
