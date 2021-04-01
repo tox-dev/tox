@@ -1,0 +1,1 @@
+Fix legacy list env command for empty/missing envlist - by :user:`jugmac00`.

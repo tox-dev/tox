@@ -28,6 +28,31 @@ def test_legacy_list_default(tox_project: ToxProjectCreator, mocker: MockerFixtu
     assert outcome.state.options.show_core is False
 
 
+@pytest.mark.parametrize(
+    "configuration",
+    [
+        pytest.param("", id="missing toxenv section"),
+        pytest.param("[toxenv]", id="missing envlist"),
+        pytest.param("[toxenv]\nenv_list=", id="empty envlist"),
+    ],
+)
+def test_legacy_list_env_with_empty_or_missing_env_list(tox_project: ToxProjectCreator, configuration: str) -> None:
+    """we want to stay backwards compatible with tox 3 and show no output"""
+    outcome = tox_project({"tox.ini": configuration}).run("le", "-l")
+
+    outcome.assert_success()
+    outcome.assert_out_err("", "")
+
+
+def test_legacy_list_env_with_no_tox_file(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({})
+    outcome = project.run("le", "-l")
+
+    outcome.assert_success()
+    out = f"ROOT: No tox.ini or setup.cfg or pyproject.toml found, assuming empty tox.ini at {project.path}\n"
+    outcome.assert_out_err(out, "")
+
+
 @pytest.mark.parametrize("verbose", range(3))
 def test_legacy_list_all(tox_project: ToxProjectCreator, mocker: MockerFixture, verbose: int) -> None:
     list_env = mocker.patch("tox.session.cmd.legacy.list_env")
