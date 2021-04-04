@@ -96,7 +96,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                             logging.warning("send signal %s to %d from %d", f"SIGKILL({SIGKILL})", to_pid, host_pid)
                             proc.kill()
                     while proc.poll() is None:
-                        continue
+                        continue  # pragma: no cover
             else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
                 logging.warning("process already dead with %s within %s", proc.returncode, os.getpid())
             logging.warning("interrupt finished with success")

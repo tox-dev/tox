@@ -99,13 +99,17 @@ DEFAULT_VERBOSITY = 2
 
 
 class Parsed(Namespace):
+    """CLI options"""
+
     @property
     def verbosity(self) -> int:
+        """:return: reporting verbosity"""
         result: int = max(self.verbose - self.quiet, 0)
         return result
 
     @property
     def is_colored(self) -> bool:
+        """:return: flag indicating if the output is colored or not"""
         return cast(bool, self.colored == "yes")
 
 

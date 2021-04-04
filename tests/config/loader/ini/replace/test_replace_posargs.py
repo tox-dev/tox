@@ -41,7 +41,6 @@ def test_replace_pos_args(syntax: str, replace_one: ReplaceOne) -> None:
     ],
 )
 def test_replace_pos_args_default(replace_one: ReplaceOne, value: str, result: str) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
     outcome = replace_one(f"{{posargs:{value}}}", None)
     assert result == outcome
 

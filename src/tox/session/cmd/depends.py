@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from tox.config.cli.parser import ToxParser
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.session.cmd.run.common import run_order
 from tox.session.state import State
 
@@ -30,7 +30,7 @@ def depends(state: State) -> int:
         print("   " * at, end="")
         print(env, end="")
         if env != "ALL":
-            names = " | ".join(e.conf.name for e in state.tox_env(env).package_envs())
+            names = " | ".join(e.conf.name for e in state.tox_env(env).package_envs)
             if names:
                 print(f" ~ {names}", end="")
         print("")

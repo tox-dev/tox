@@ -1,6 +1,6 @@
 from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
 
 from tox.config.loader.api import Loader, Override, OverrideMap
 
@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 
 class Config:
+    """Main configuration object for tox."""
+
     def __init__(
         self,
         config_source: Source,
@@ -20,8 +22,8 @@ class Config:
         pos_args: Optional[Sequence[str]],
         work_dir: Path,
     ) -> None:
-        self.pos_args = pos_args
-        self.work_dir = work_dir
+        self._pos_args = None if pos_args is None else tuple(pos_args)
+        self._work_dir = work_dir
         self._root = root
 
         self._overrides: OverrideMap = defaultdict(list)
@@ -32,6 +34,32 @@ class Config:
         self._env_to_set: Dict[str, EnvConfigSet] = OrderedDict()
         self._core_set: Optional[CoreConfigSet] = None
         self.register_config_set: Callable[[str, EnvConfigSet], Any] = lambda n, e: None
+
+    @property
+    def pos_args(self) -> Optional[Tuple[str, ...]]:
+        """:return: positional arguments"""
+        return self._pos_args
+
+    @property
+    def work_dir(self) -> Path:
+        """:return: working directory for this project"""
+        return self._work_dir
+
+    @property
+    def src_path(self) -> Path:
+        """:return: the location of the tox configuration source"""
+        return self._src.path
+
+    def __iter__(self) -> Iterator[str]:
+        """:return: an iterator that goes through existing environments"""
+        return self._src.envs(self.core)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(config_source={self._src!r})"
+
+    def __contains__(self, item: str) -> bool:
+        """:return: check if an environment already exists"""
+        return any(name for name in self if name == item)
 
     @classmethod
     def make(cls, parsed: "Parsed", pos_args: Optional[Sequence[str]], source: Source) -> "Config":
@@ -50,6 +78,7 @@ class Config:
 
     @property
     def core(self) -> CoreConfigSet:
+        """:return: the core configuration"""
         if self._core_set is not None:
             return self._core_set
         core = CoreConfigSet(self, self._root)
@@ -65,6 +94,14 @@ class Config:
     def get_env(
         self, item: str, package: bool = False, loaders: Optional[Sequence[Loader[Any]]] = None
     ) -> EnvConfigSet:
+        """
+        Return the configuration for a given tox environment (will create if not exist yet).
+
+        :param item: the name of the environment
+        :param package: a flag indicating if the environment is of type packaging or not (only used for creation)
+        :param loaders: loaders to use for this configuration (only used for creation)
+        :return: the tox environments config
+        """
         try:
             return self._env_to_set[item]
         except KeyError:
@@ -78,16 +115,3 @@ class Config:
             # configuration values
             self.register_config_set(item, env)
             return env
-
-    def __iter__(self) -> Iterator[str]:
-        return self._src.envs(self.core)
-
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(config_source={self._src!r})"
-
-    def __contains__(self, item: str) -> bool:
-        return any(name for name in self if name == item)
-
-    @property
-    def src_path(self) -> Path:
-        return self._src.path

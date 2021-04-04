@@ -286,12 +286,12 @@ def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
         result.append("COV_*")
         return result
 
-    previous = Pep517VirtualEnvPackage.default_pass_env
+    previous = Pep517VirtualEnvPackage._default_pass_env
     try:
-        Pep517VirtualEnvPackage.default_pass_env = default_pass_env  # type: ignore
+        Pep517VirtualEnvPackage._default_pass_env = default_pass_env  # type: ignore
         yield
     finally:
-        Pep517VirtualEnvPackage.default_pass_env = previous  # type: ignore
+        Pep517VirtualEnvPackage._default_pass_env = previous  # type: ignore
 
 
 class ToxRunOutcome:

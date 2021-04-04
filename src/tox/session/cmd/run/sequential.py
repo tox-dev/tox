@@ -2,7 +2,7 @@
 Run tox environments in sequential order.
 """
 from tox.config.cli.parser import ToxParser
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
 

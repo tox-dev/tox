@@ -1,13 +1,11 @@
 """
 Declare the abstract base class for tox environments that handle the Python language.
 """
-import logging
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Union, cast
+from typing import Any, Dict, List, NamedTuple, Optional, cast
 
-from packaging.requirements import Requirement
 from packaging.tags import INTERPRETER_SHORT_NAMES
 from virtualenv.discovery.py_spec import PythonSpec
 
@@ -46,30 +44,6 @@ class PythonInfo(NamedTuple):
         return self.implementation.lower()
 
 
-class PythonDep:
-    def __init__(self, value: Union[Path, Requirement]) -> None:
-        self._value = value
-
-    @property
-    def value(self) -> Union[Path, Requirement]:
-        return self._value
-
-    def __str__(self) -> str:
-        return str(self._value)
-
-    def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and str(self) == str(other)
-
-    def __ne__(self, other: Any) -> bool:
-        return not (self == other)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(value={self.value!r})"
-
-
-PythonDeps = Sequence[PythonDep]
-
-
 class Python(ToxEnv, ABC):
     def __init__(
         self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
@@ -102,8 +76,8 @@ class Python(ToxEnv, ABC):
             value=lambda: self.env_python(),
         )
 
-    def default_pass_env(self) -> List[str]:
-        env = super().default_pass_env()
+    def _default_pass_env(self) -> List[str]:
+        env = super()._default_pass_env()
         if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [
@@ -152,29 +126,41 @@ class Python(ToxEnv, ABC):
         """The binary folder within the tox environment"""
         raise NotImplementedError
 
-    def setup(self) -> None:
+    def _setup_env(self) -> None:
         """setup a virtual python environment"""
+        super()._setup_env()
         conf = self.python_cache()
-        with self._cache.compare(conf, Python.__name__) as (eq, old):
-            if eq is False:  # if changed create
+        with self.cache.compare(conf, Python.__name__) as (eq, old):
+            if old is None:  # does not exist -> create
                 self.create_python_env()
-        self.paths = self.python_env_paths()  # now that the environment exist we can add them to the path
-        super().setup()
+            elif eq is False:  # pragma: no branch # exists but changed -> recreate
+                raise Recreate(self._diff_msg(conf, old))
+        self._paths = self.prepend_env_var_path()  # now that the environment exist we can add them to the path
+
+    @staticmethod
+    def _diff_msg(conf: Dict[str, Any], old: Dict[str, Any]) -> str:
+        result: List[str] = []
+        added = [f"{k}={v!r}" for k, v in conf.items() if k not in old]
+        if added:  # pragma: no branch
+            result.append(f"added {' | '.join(added)}")
+        removed = [f"{k}={v!r}" for k, v in old.items() if k not in conf]
+        if removed:
+            result.append(f"removed {' | '.join(removed)}")
+        changed = [f"{k}={v!r}->{old[k]!r}" for k, v in conf.items() if k in old and v != old[k]]
+        if changed:
+            result.append(f"changed {' | '.join(changed)}")
+        return f'python {", ".join(result)}'
 
     @abstractmethod
-    def python_env_paths(self) -> List[Path]:
+    def prepend_env_var_path(self) -> List[Path]:
         raise NotImplementedError
 
-    def setup_has_been_done(self) -> None:
+    def _done_with_setup(self) -> None:
         """called when setup is done"""
-        super().setup_has_been_done()
+        super()._done_with_setup()
         if self.journal:
-            outcome = self.get_installed_packages()
+            outcome = self.installer.installed()
             self.journal["installed_packages"] = outcome
-
-    @abstractmethod
-    def get_installed_packages(self) -> List[str]:
-        raise NotImplementedError
 
     def python_cache(self) -> Dict[str, Any]:
         return {
@@ -194,44 +180,28 @@ class Python(ToxEnv, ABC):
                     raise Skip(f"could not find python interpreter with spec(s): {', '.join(base_pythons)}")
                 raise NoInterpreter(base_pythons)
             if self.journal:
-                value = {
-                    "executable": str(self._base_python.executable),
-                    "implementation": self._base_python.implementation,
-                    "version_info": tuple(self.base_python.version_info),
-                    "version": self._base_python.version,
-                    "is_64": self._base_python.is_64,
-                    "sysplatform": self._base_python.platform,
-                    "extra_version_info": None,
-                }
+                value = self._get_env_journal_python()
                 self.journal["python"] = value
         return cast(PythonInfo, self._base_python)
+
+    def _get_env_journal_python(self) -> Dict[str, Any]:
+        assert self._base_python is not None
+        return {
+            "executable": str(self._base_python.executable),
+            "implementation": self._base_python.implementation,
+            "version_info": tuple(self.base_python.version_info),
+            "version": self._base_python.version,
+            "is_64": self._base_python.is_64,
+            "sysplatform": self._base_python.platform,
+            "extra_version_info": None,
+        }
 
     @abstractmethod
     def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:  # noqa: U100
         raise NotImplementedError
 
-    def cached_install(self, deps: PythonDeps, section: str, of_type: str) -> bool:
-        conf_deps: List[str] = [str(i) for i in deps]
-        with self._cache.compare(conf_deps, section, of_type) as (eq, old):
-            if eq is True:
-                return True
-            if old is None:
-                old = []
-            missing = [PythonDep(Requirement(i)) for i in (set(old) - set(conf_deps))]
-            if missing:  # no way yet to know what to uninstall here (transitive dependencies?)
-                # bail out and force recreate
-                logging.warning(f"recreate env because dependencies removed: {', '.join(str(i) for i in missing)}")
-                raise Recreate
-            new_deps = [PythonDep(Requirement(i)) for i in conf_deps if i not in old]
-            self.install_python_packages(packages=new_deps, of_type=of_type)
-        return False
-
     @abstractmethod
     def create_python_env(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def install_python_packages(self, packages: PythonDeps, of_type: str, no_deps: bool = False) -> None:  # noqa: U100
         raise NotImplementedError
 
 

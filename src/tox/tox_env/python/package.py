@@ -2,23 +2,45 @@
 A tox build environment that handles Python packages.
 """
 from abc import ABC, abstractmethod
-from typing import Tuple
+from pathlib import Path
+from typing import Any, Sequence, Tuple
 
 from packaging.requirements import Requirement
 
-from ..package import PackageToxEnv
-from .api import Python, PythonDep
+from ..package import Package, PackageToxEnv, PathPackage
+from .api import Python
 
 
-class PythonPackage(Python, PackageToxEnv, ABC):
+class PythonPackage(Package):
+    """python package"""
+
+
+class PythonPathPackageWithDeps(PathPackage):
+    def __init__(self, path: Path, deps: Sequence[Any]) -> None:
+        super().__init__(path=path)
+        self.deps: Sequence[Package] = deps
+
+
+class WheelPackage(PythonPathPackageWithDeps):
+    """wheel package"""
+
+
+class SdistPackage(PythonPathPackageWithDeps):
+    """sdist package"""
+
+
+class DevLegacyPackage(PythonPathPackageWithDeps):
+    """legacy dev package"""
+
+
+class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def register_config(self) -> None:
         super().register_config()
 
-    def setup(self) -> None:
+    def _setup_env(self) -> None:
         """setup the tox environment"""
-        super().setup()
-        requires = [PythonDep(i) for i in self.requires()]
-        self.cached_install(requires, PythonPackage.__name__, "requires")
+        super()._setup_env()
+        self.installer.install(self.requires(), PythonPackageToxEnv.__name__, "requires")
 
     @abstractmethod
     def requires(self) -> Tuple[Requirement, ...]:

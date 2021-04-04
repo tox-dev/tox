@@ -48,7 +48,7 @@ def test_ini_loader_raw_strip_escaped_newline(mk_ini_conf: Callable[[str], Confi
         ("a # w", "a"),
         ("a\t# w", "a"),
         ("a# w", "a"),
-        ("a\\# w", "a\\# w"),
+        ("a\\# w", "a# w"),
         ("#a\n b # w\n w", "b\nw"),
     ],
 )

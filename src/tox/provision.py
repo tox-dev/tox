@@ -13,13 +13,12 @@ from packaging.version import Version
 from tox.config.loader.memory import MemoryLoader
 from tox.config.sets import CoreConfigSet
 from tox.execute.api import StdinSource
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.report import HandledError
 from tox.session.state import State
 from tox.tox_env.errors import Skip
-from tox.tox_env.python.req_file import RequirementsFile
+from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.runner import PythonRun
-from tox.tox_env.python.virtual_env.package.api import PackageType
 from tox.version import __version__ as current_version
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
@@ -89,9 +88,8 @@ def provision(state: State) -> Union[int, bool]:
     if not missing:
         return False
     deps = ", ".join(f"{p} ({ver})" for p, ver in missing)
-    logging.warning(
-        "will run in automatically provisioned tox, host %s is missing [requires (has)]: %s", sys.executable, deps
-    )
+    msg = "will run in automatically provisioned tox, host %s is missing [requires (has)]: %s"
+    logging.warning(msg, sys.executable, deps)
     return run_provision(requires, state)
 
 
@@ -99,9 +97,9 @@ def run_provision(deps: List[Requirement], state: State) -> int:  # noqa
     """"""
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         base=[],  # disable inheritance for provision environments
-        package=PackageType.skip,  # no packaging for this please
+        package="skip",  # no packaging for this please
         # use our own dependency specification
-        deps=RequirementsFile("\n".join(str(d) for d in deps), root=state.conf.core["tox_root"]),
+        deps=PythonDeps("\n".join(str(d) for d in deps), root=state.conf.core["tox_root"]),
         pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
     )
     provision_tox_env: str = state.conf.core["provision_tox_env"]
@@ -111,7 +109,7 @@ def run_provision(deps: List[Requirement], state: State) -> int:  # noqa
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     recreate = state.options.no_recreate_provision is False if state.options.recreate else False
     try:
-        tox_env.ensure_setup(recreate=recreate)
+        tox_env.setup(recreate=recreate)
     except Skip as exception:
         raise HandledError(f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}")
     args: List[str] = [str(env_python), "-m", "tox"]

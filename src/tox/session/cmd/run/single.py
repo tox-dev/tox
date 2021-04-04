@@ -39,7 +39,7 @@ def _evaluate(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> Tuple[bool, 
     outcomes: List[Outcome] = []
     try:
         try:
-            tox_env.ensure_setup(recreate=recreate)
+            tox_env.setup(recreate=recreate)
             code, outcomes = run_commands(tox_env, no_test)
         except Skip as exception:
             LOGGER.warning("skipped because %s", exception)

@@ -319,10 +319,13 @@ def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: St
     if live is False and state.options.parallel_live is False:  # teardown background run
         tox_env = state.tox_env(result.name)
         out_err = tox_env.close_and_read_out_err()  # sync writes from buffer to stdout/stderr
-        has_package = tox_env.package_env is not None
-        pkg_out_err = tox_env.package_env.close_and_read_out_err() if has_package else None  # type: ignore
+        pkg_out_err_list = []
+        for package_env in tox_env.package_envs:
+            out_err = package_env.close_and_read_out_err()
+            if out_err is not None:  # pragma: no branch
+                pkg_out_err_list.append(out_err)
         if not success or tox_env.conf["parallel_show_output"]:
-            if pkg_out_err is not None:  # pragma: no branch # first show package build
+            for pkg_out_err in pkg_out_err_list:
                 state.log_handler.write_out_err(pkg_out_err)  # pragma: no cover
             if out_err is not None:  # pragma: no branch # first show package build
                 state.log_handler.write_out_err(out_err)

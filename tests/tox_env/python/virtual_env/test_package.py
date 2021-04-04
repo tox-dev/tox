@@ -7,7 +7,7 @@ import pytest
 from packaging.requirements import Requirement
 
 from tox.pytest import TempPathFactory, ToxProjectCreator
-from tox.tox_env.python.virtual_env.package.api import PackageType, Pep517VirtualEnvPackage
+from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
 from tox.util.pep517.via_fresh_subprocess import SubprocessFrontend
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
@@ -18,14 +18,14 @@ else:  # pragma: no cover (<py38)
 
 @pytest.mark.parametrize(
     "pkg_type",
-    ["dev", "sdist", "wheel"],
+    ["dev-legacy", "sdist", "wheel"],
 )
 def test_tox_ini_package_type_valid(tox_project: ToxProjectCreator, pkg_type: str) -> None:
     proj = tox_project({"tox.ini": f"[testenv]\npackage={pkg_type}"})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_success()
     res = result.env_conf("py")["package"]
-    assert res is getattr(PackageType, pkg_type)
+    assert res == pkg_type
     got_type = result.env_conf("py")["package_tox_env_type"]
     assert got_type == "virtualenv-pep-517"
 
@@ -34,7 +34,7 @@ def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=bad"})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_failed()
-    assert " invalid package config type 'bad' requested, must be one of sdist, wheel, dev, skip" in result.out
+    assert " invalid package config type bad requested, must be one of wheel, sdist, dev-legacy, skip" in result.out
 
 
 @pytest.fixture(scope="session")
@@ -77,7 +77,9 @@ def pkg_with_extras(pkg_with_extras_project: Path) -> PathDistribution:  # type:
 
 
 def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:  # type: ignore[no-any-unimported]
-    result = Pep517VirtualEnvPackage.dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], set())
+    result = Pep517VirtualEnvPackage._dependencies_with_extras(
+        [Requirement(i) for i in pkg_with_extras.requires], set()
+    )
     for left, right in zip_longest(result, (Requirement("appdirs>=1.4.3"), Requirement("colorama>=0.4.3"))):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
@@ -85,7 +87,7 @@ def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:  #
 
 def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:  # type: ignore[no-any-unimported]
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
-    result = Pep517VirtualEnvPackage.dependencies_with_extras(
+    result = Pep517VirtualEnvPackage._dependencies_with_extras(
         [Requirement(i) for i in pkg_with_extras.requires], {"docs", "testing"}
     )
     exp = [
@@ -102,7 +104,8 @@ def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None: 
 
 
 def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[testenv:a]\npackage=dev\nextras=docs\n[testenv:b]\npackage=sdist\nextras=format"})
+    ini = "[testenv:a]\npackage=dev-legacy\nextras=docs\n[testenv:b]\npackage=sdist\nextras=format"
+    proj = tox_project({"tox.ini": ini})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--root", str(pkg_with_extras_project), "-e", "a,b")
     result.assert_success()
@@ -112,8 +115,8 @@ def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_pr
         if i[0][3].run_id.startswith("install_package_deps")
     }
     assert installs == {
-        "a": ["setuptools", "wheel", "appdirs>=1.4.3", "colorama>=0.4.3", "sphinx>=3", "sphinx-rtd-theme<1,>=0.4.3"],
-        "b": ["appdirs>=1.4.3", "colorama>=0.4.3", "black>=3", "flake8"],
+        "a": ["appdirs>=1.4.3", "colorama>=0.4.3", "setuptools", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3", "wheel"],
+        "b": ["appdirs>=1.4.3", "black>=3", "colorama>=0.4.3", "flake8"],
     }
 
 

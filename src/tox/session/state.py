@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict, Iterator, Optional, Sequence, Set, Tuple
 from tox.config.main import Config
 from tox.config.sets import EnvConfigSet
 from tox.journal import Journal
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.report import HandledError, ToxHandler
 from tox.session.common import CliEnv
 from tox.tox_env.package import PackageToxEnv
@@ -93,19 +93,10 @@ class State:
         self._build_package_env(env)
 
     def _build_package_env(self, env: RunToxEnv) -> None:
-        pkg_env_gen = env.create_package_env()
-        while True:
-            try:
-                name, packager = next(pkg_env_gen)
-            except StopIteration:
-                return
-            else:
-                with self.log_handler.with_context(name):
-                    package_tox_env = self._get_package_env(packager, name)
-                    try:
-                        pkg_env_gen.send(package_tox_env)
-                    except StopIteration:
-                        return
+        for tag, name, core_type in env.iter_package_env_types():
+            with self.log_handler.with_context(name):
+                package_tox_env = self._get_package_env(core_type, name)
+                env.notify_of_package_env(tag, package_tox_env)
 
     def _get_package_env(self, packager: str, name: str) -> PackageToxEnv:
         if name in self._pkg_env:  # if already created reuse

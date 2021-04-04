@@ -1,7 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Generic, Iterator, List, Mapping, Set, Tuple, Type, TypeVar, Union, cast
 
@@ -22,6 +21,14 @@ class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type"""
 
     def to(self, raw: T, of_type: Type[V], kwargs: Mapping[str, Any]) -> V:
+        """
+        Convert given raw type to python type
+
+        :param raw: the raw type
+        :param of_type: python type
+        :param kwargs: additional keyword arguments for conversion
+        :return: the converted type
+        """
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
             return self._to_typing(raw, of_type, kwargs)  # type: ignore[return-value]
@@ -37,8 +44,6 @@ class Convert(ABC, Generic[T]):
             return self.to_str(raw)  # type: ignore[return-value]
         elif isinstance(raw, of_type):
             return raw
-        elif issubclass(of_type, Enum):
-            return cast(V, getattr(of_type, str(raw)))
         return of_type(raw, **kwargs)  # type: ignore[call-arg]
 
     def _to_typing(self, raw: T, of_type: Type[V], kwargs: Mapping[str, Any]) -> V:
@@ -82,39 +87,90 @@ class Convert(ABC, Generic[T]):
     @staticmethod
     @abstractmethod
     def to_str(value: T) -> str:  # noqa: U100
-        raise NotImplementedError
+        """
+        Convert to string.
 
-    @staticmethod
-    @abstractmethod
-    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:  # noqa: U100
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_path(value: T) -> Path:  # noqa: U100
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_command(value: T) -> Command:  # noqa: U100
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_env_list(value: T) -> EnvList:  # noqa: U100
+        :param value: the value to convert
+        :returns: a string representation of the value
+        """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_bool(value: T) -> bool:  # noqa: U100
+        """
+        Convert to boolean.
+
+        :param value: the value to convert
+        :returns: a boolean representation of the value
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
+        """
+        Convert to list.
+
+        :param value: the value to convert
+        :param of_type: the type of elements in the list
+        :returns: a list representation of the value
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
+        """
+        Convert to set.
+
+        :param value: the value to convert
+        :param of_type: the type of elements in the set
+        :returns: a set representation of the value
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:  # noqa: U100
+        """
+        Convert to dictionary.
+
+        :param value: the value to convert
+        :param of_type: a tuple indicating the type of the key and the value
+        :returns: a iteration of key-value pairs that gets populated into a dict
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_path(value: T) -> Path:  # noqa: U100
+        """
+        Convert to path.
+
+        :param value: the value to convert
+        :returns: path representation of the value
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_command(value: T) -> Command:  # noqa: U100
+        """
+        Convert to a command to execute.
+
+        :param value: the value to convert
+        :returns: command representation of the value
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_env_list(value: T) -> EnvList:  # noqa: U100
+        """
+        Convert to a tox EnvList.
+
+        :param value: the value to convert
+        :returns: a list of tox environments from the value
+        """
         raise NotImplementedError

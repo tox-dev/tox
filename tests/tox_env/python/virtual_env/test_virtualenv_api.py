@@ -4,6 +4,7 @@ from typing import Tuple
 
 import pytest
 from pytest_mock import MockerFixture
+from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
 
@@ -34,7 +35,7 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     assert conf["always_copy"] is False
     assert conf["download"] is False
 
-    assert virtualenv_opt.clear is True
+    assert virtualenv_opt.clear is False
     assert virtualenv_opt.system_site is False
     assert virtualenv_opt.download is False
     assert virtualenv_opt.copies is False
@@ -118,6 +119,7 @@ def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker
 
     mocker.patch.object(api, "virtualenv_version", "1.0")
     result = proj.run("r")
+    assert f"recreate env because python changed virtualenv version='1.0'->'{virtualenv_version}'" in result.out
     assert "remove tox env folder" in result.out
 
 
@@ -166,7 +168,7 @@ def test_install_pkg(tox_project: ToxProjectCreator, mode: str) -> None:
     result.assert_success()
     execute_calls.assert_called_once()
     request: ExecuteRequest = execute_calls.call_args[0][3]
-    assert request.cmd == ["python", "-I", "-m", "pip", "install", "--no-deps", "--force-reinstall", str(file)]
+    assert request.cmd == ["python", "-I", "-m", "pip", "install", str(file)]
 
 
 def test_can_build_and_run_python_2(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
@@ -182,4 +184,4 @@ def test_can_build_and_run_python_2(tox_project: ToxProjectCreator, demo_pkg_inl
     install_cmd = next(
         i[0][3].cmd for i in execute_calls.call_args_list if "install" in i[0][3].run_id
     )  # pragma: no cover
-    assert install_cmd[:-1] == ["python", "-E", "-m", "pip", "install", "--no-deps", "--force-reinstall"]
+    assert install_cmd[:-1] == ["python", "-E", "-m", "pip", "install", "--force-reinstall", "--no-deps"]

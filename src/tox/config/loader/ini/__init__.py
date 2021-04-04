@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 V = TypeVar("V")
+_COMMENTS = re.compile(r"(\s)*(?<!\\)#.*")
 
 
 class IniLoader(StrConvert, Loader[str]):
@@ -31,15 +32,13 @@ class IniLoader(StrConvert, Loader[str]):
         value = self._section[key]
         collapsed_newlines = value.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
         # strip comments
-        strip_comments = "\n".join(
-            no_comment
-            for no_comment in (
-                re.sub(r"(\s)*(?<!\\)#.*", "", line)
-                for line in collapsed_newlines.split("\n")
-                if not line.startswith("#")
-            )
-            if no_comment.strip()
-        )
+        elements: List[str] = []
+        for line in collapsed_newlines.split("\n"):
+            if not line.startswith("#"):
+                part = _COMMENTS.sub("", line)
+                elements.append(part.replace("\\#", "#"))
+        strip_comments = "\n".join(elements)
+
         if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
             factor_filtered = strip_comments  # we don't support factor and replace functionality there
         else:

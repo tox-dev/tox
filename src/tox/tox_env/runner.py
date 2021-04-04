@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, Tuple, cast
 
 from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.config.types import Command, EnvList
@@ -12,7 +12,7 @@ from tox.journal import EnvJournal
 from tox.report import ToxHandler
 
 from .api import ToxEnv
-from .package import PackageToxEnv
+from .package import Package, PackageToxEnv, PathPackage
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
@@ -22,8 +22,8 @@ class RunToxEnv(ToxEnv, ABC):
     def __init__(
         self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
-        self.has_package = False
-        self.package_env: Optional[PackageToxEnv] = None
+        self._package_envs: Dict[str, PackageToxEnv] = {}
+        self._packages: List[Package] = []
         super().__init__(conf, core, options, journal, log_handler)
 
     def register_config(self) -> None:
@@ -80,45 +80,63 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
-        self.has_package = self.add_package_conf()
+        if self._register_package_conf():
+            self.conf.add_config(
+                keys=["package_env", "isolated_build_env"],
+                of_type=str,
+                default=self._default_package_env,
+                desc="tox environment used to package",
+            )
+            self.conf.add_constant(
+                keys=["package_tox_env_type"],
+                desc="tox package type used to package",
+                value=self._default_package_tox_env_type,
+            )
 
-    def setup(self) -> None:
-        super().setup()
-        self.before_package_install()
-        self.handle_package()
+    def _teardown(self) -> None:
+        super()._teardown()
+        self._call_pkg_envs("teardown_env", self.conf)
 
-    def handle_package(self) -> None:
-        if self.package_env is None:
-            return
-        skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False)
-        if skip_pkg_install is True:
-            logging.warning("skip building and installing the package")
-            return
-        paths = self.install_package()
-        self.handle_journal_package(self.journal, paths)
+    def interrupt(self) -> None:
+        super().interrupt()
+        self._call_pkg_envs("interrupt")
 
-    def before_package_install(self) -> None:
-        """logic to run before package install"""
+    def iter_package_env_types(self) -> Iterator[Tuple[str, str, str]]:
+        if "package_env" in self.conf:
+            name, pkg_env_type = self.conf["package_env"], self.conf["package_tox_env_type"]
+            yield "default", name, pkg_env_type
 
+    def notify_of_package_env(self, tag: str, env: PackageToxEnv) -> None:
+        self._package_envs[tag] = env
+        env.notify_of_run_env(self.conf)
+
+    def _call_pkg_envs(self, method_name: str, *args: Any) -> None:
+        for package_env in self.package_envs:
+            with package_env.display_context(suspend=self._has_display_suspended):
+                getattr(package_env, method_name)(*args)
+
+    def _clean(self, force: bool = False) -> None:
+        super()._clean(force)
+        self._call_pkg_envs("_clean")  # do not pass force along, allow package env to ignore if requested
+
+    @property
+    def _default_package_env(self) -> str:
+        return ".pkg"
+
+    @property
     @abstractmethod
-    def install_package(self) -> List[Path]:
+    def _default_package_tox_env_type(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
-    def handle_journal_package(journal: EnvJournal, package: List[Path]) -> None:
-        if not journal:
-            return
-        installed_meta = []
-        for pkg in package:
-            of_type = "file" if pkg.is_file() else ("dir" if pkg.is_dir() else "N/A")
-            meta = {"basename": pkg.name, "type": of_type}
-            if of_type == "file":
-                meta["sha256"] = sha256(pkg.read_bytes()).hexdigest()
-            installed_meta.append(meta)
-        if installed_meta:
-            journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
+    def _setup_with_env(self) -> None:
+        if self._package_envs:
+            skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False)
+            if skip_pkg_install is True:
+                logging.warning("skip building and installing the package")
+            else:
+                self._setup_pkg()
 
-    def add_package_conf(self) -> bool:
+    def _register_package_conf(self) -> bool:
         """If this returns True package_env and package_tox_env_type configurations must be defined"""
         self.core.add_config(
             keys=["no_package", "skipsdist"],
@@ -138,46 +156,41 @@ class RunToxEnv(ToxEnv, ABC):
         skip_install: bool = self.conf["skip_install"]
         return not skip_install
 
-    def create_package_env(self) -> Generator[Tuple[str, str], PackageToxEnv, None]:
-        if not self.has_package:
-            return
-        core_type = self.conf["package_tox_env_type"]
-        name = self.conf["package_env"]
-        package_tox_env = yield name, core_type
-        self.package_env = package_tox_env
-        self.package_env.ref_count.increment()
+    def _setup_pkg(self) -> None:
+        self._packages = self._build_packages()
+        self.installer.install(self._packages, RunToxEnv.__name__, "package")
+        self._handle_journal_package(self.journal, self._packages)
 
-    def clean(self, force: bool = False) -> None:
-        super().clean(force)
-        if self.package_env is not None:  # pragma: no cover branch
-            with self.package_env.display_context(suspend=self.has_display_suspended):
-                self.package_env.clean()  # do not pass force along, allow package env to ignore if requested
+    @staticmethod
+    def _handle_journal_package(journal: EnvJournal, packages: List[Package]) -> None:
+        if not journal:
+            return
+        installed_meta = []
+        for package in packages:
+            if isinstance(package, PathPackage):
+                pkg = package.path
+                of_type = "file" if pkg.is_file() else ("dir" if pkg.is_dir() else "N/A")
+                meta = {"basename": pkg.name, "type": of_type}
+                if of_type == "file":
+                    meta["sha256"] = sha256(pkg.read_bytes()).hexdigest()
+            else:
+                raise NotImplementedError
+            installed_meta.append(meta)
+        if installed_meta:
+            journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
     @property
-    def environment_variables(self) -> Dict[str, str]:
-        environment_variables = super().environment_variables
-        if self.has_package:  # if package(s) have been built insert them as environment variable
-            if self.packages:
-                environment_variables["TOX_PACKAGE"] = os.pathsep.join(self.packages)
+    def _environment_variables(self) -> Dict[str, str]:
+        environment_variables = super()._environment_variables
+        if self._package_envs and self._packages:  # if package(s) have been built insert them as environment variable
+            environment_variables["TOX_PACKAGE"] = os.pathsep.join(str(i) for i in self._packages)
         return environment_variables
 
-    @property
     @abstractmethod
-    def packages(self) -> List[str]:
+    def _build_packages(self) -> List[Package]:
         """:returns: a list of packages installed in the environment"""
         raise NotImplementedError
 
-    def teardown(self) -> None:
-        super().teardown()
-        if self.package_env is not None:
-            with self.package_env.display_context(suspend=self.has_display_suspended):
-                self.package_env.teardown()
-
-    def interrupt(self) -> None:
-        super().interrupt()
-        if self.package_env is not None:  # pragma: no branch
-            self.package_env.interrupt()
-
-    def package_envs(self) -> Generator[PackageToxEnv, None, None]:
-        if self.package_env is not None and self.conf.name is not None:
-            yield from self.package_env.package_envs(self.conf.name)
+    @property
+    def package_envs(self) -> Iterable[PackageToxEnv]:
+        yield from dict.fromkeys(self._package_envs.values()).keys()

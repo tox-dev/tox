@@ -1,10 +1,9 @@
-from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Sequence, Set, Tuple
 
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
-from tox.tox_env.python.req_file import RequirementsFile
+from tox.tox_env.python.pip.req_file import PythonDeps
 
 
 def stringify(value: Any) -> Tuple[str, bool]:
@@ -22,8 +21,6 @@ def stringify(value: Any) -> Tuple[str, bool]:
         return "\n".join(f"{stringify(k)[0]}={stringify(v)[0]}" for k, v in value.items()), True
     if isinstance(value, (Sequence, Set)):
         return "\n".join(stringify(i)[0] for i in value), True
-    if isinstance(value, Enum):
-        return value.name, False
     if isinstance(value, EnvList):
         return "\n".join(e for e in value.envs), True
     if isinstance(value, Command):
@@ -31,8 +28,8 @@ def stringify(value: Any) -> Tuple[str, bool]:
     if isinstance(value, SetEnv):
         env_var_keys = sorted(value)
         return stringify({k: value.load(k) for k in env_var_keys})
-    if isinstance(value, RequirementsFile):
-        return stringify(value.validate_and_expand())
+    if isinstance(value, PythonDeps):
+        return stringify([next(iter(v.keys())) if isinstance(v, dict) else v for v in value.validate_and_expand()])
     return str(value), False
 
 

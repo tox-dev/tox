@@ -2,7 +2,7 @@
 Print available tox environments.
 """
 from tox.config.cli.parser import ToxParser
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.session.state import State
 
 

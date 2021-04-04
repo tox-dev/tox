@@ -70,6 +70,6 @@ you want to do more research, we recommend taking a look at these projects:
    installation
    user_guide
    cli_interface
-   extend
+   plugins
    development
    changelog

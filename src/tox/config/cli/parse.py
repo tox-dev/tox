@@ -34,9 +34,9 @@ def _get_base(args: Sequence[str]) -> Tuple[int, ToxHandler, Source]:
     parsed, _ = tox_parser.parse_known_args(args)
     guess_verbosity = parsed.verbosity
     handler = setup_report(guess_verbosity, parsed.is_colored)
+    from tox.plugin.manager import MANAGER  # noqa # load the plugin system right after we setu up report
 
     source = discover_source(parsed.config_file, parsed.root_dir)
-    from tox.plugin.manager import MANAGER  # noqa
 
     MANAGER.load_inline_plugin(source.path)
 

@@ -10,7 +10,7 @@ from colorama import Fore
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.stringify import stringify
 from tox.config.sets import ConfigSet
-from tox.plugin.impl import impl
+from tox.plugin import impl
 from tox.session.common import env_list_flag
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
@@ -56,7 +56,7 @@ def show_config(state: State) -> int:
             run_env = state.tox_env(name)  # get again to get the temporary state
         if run_env.conf.name in selected:
             _print_env(run_env)
-        for pkg_env in run_env.package_envs():
+        for pkg_env in run_env.package_envs:
             if pkg_env.conf.name in done_pkg_envs:
                 continue
             done_pkg_envs.add(pkg_env.conf.name)
