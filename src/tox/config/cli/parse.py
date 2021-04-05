@@ -16,10 +16,11 @@ def get_options(*args: str) -> Tuple[Parsed, Handlers, Optional[Sequence[str]], 
     pos_args: Optional[Tuple[str, ...]] = None
     try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
         pos_arg_at = args.index("--")
-        pos_args = tuple(args[pos_arg_at + 1 :])
-        args = args[:pos_arg_at]
     except ValueError:
         pass
+    else:
+        pos_args = tuple(args[pos_arg_at + 1 :])
+        args = args[:pos_arg_at]
 
     guess_verbosity, log_handler, source = _get_base(args)
     parsed, cmd_handlers = _get_all(args)
