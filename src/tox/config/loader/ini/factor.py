@@ -1,14 +1,14 @@
 """
 Expand tox factor expressions to tox environment list.
 """
-import itertools
 import re
+from itertools import chain, groupby, product
 from typing import Iterator, List, Optional, Tuple
 
 
 def filter_for_env(value: str, name: Optional[str]) -> str:
     current = (
-        set(itertools.chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(name)]))
+        set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(name)]))
         if name is not None
         else set()
     )
@@ -68,12 +68,12 @@ def find_factor_groups(value: str) -> Iterator[List[Tuple[str, bool]]]:
 
 def expand_env_with_negation(value: str) -> Iterator[str]:
     """transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']"""
-    for key, group in itertools.groupby(re.split(r"((?:{[^}]+})+)|,", value), key=bool):
+    for key, group in groupby(re.split(r"((?:{[^}]+})+)|,", value), key=bool):
         if key:
             group_str = "".join(group).strip()
             elements = re.split(r"{([^}]+)}", group_str)
             parts = [re.sub(r"\s+", "", elem).split(",") for elem in elements]
-            for variant in itertools.product(*parts):
+            for variant in product(*parts):
                 variant_str = "".join(variant)
                 yield variant_str
 
