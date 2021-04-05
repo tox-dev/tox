@@ -55,9 +55,7 @@ class SetEnv:
         while self._later:
             line = self._later.pop(0)
             expanded_line = self.replacer(line, [])
-            sub_raw = dict(self._extract_key_value(sub_line)
-                           for sub_line in expanded_line.splitlines()
-                           if sub_line)
+            sub_raw = dict(self._extract_key_value(sub_line) for sub_line in expanded_line.splitlines() if sub_line)
             self._raw.update(sub_raw)
             yield from sub_raw.keys()
 
