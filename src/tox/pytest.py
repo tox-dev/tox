@@ -461,7 +461,7 @@ class IndexServer:
         self.path = path
 
         self.host, self.port = "localhost", _find_free_port()
-        self._passwd = "".join(random.choice(string.ascii_letters) for _ in range(8))
+        self._passwd = "".join(random.choices(string.ascii_letters, k=8))
 
         def _exe(name: str) -> str:
             return str(Path(scripts_dir) / f"{name}{'.exe' if IS_WIN else ''}")

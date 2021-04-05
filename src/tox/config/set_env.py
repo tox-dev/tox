@@ -6,12 +6,11 @@ Replacer = Callable[[str, List[str]], str]
 class SetEnv:
     def __init__(self, raw: str) -> None:
         self.replacer: Replacer = lambda s, c: s
-        lines = raw.splitlines()
         self._later: List[str] = []
         self._raw: Dict[str, str] = {}
         from .loader.ini.replace import find_replace_part
 
-        for line in lines:
+        for line in raw.splitlines():
             if line.strip():
                 try:
                     key, value = self._extract_key_value(line)
@@ -56,11 +55,9 @@ class SetEnv:
         while self._later:
             line = self._later.pop(0)
             expanded_line = self.replacer(line, [])
-            sub_raw = {}
-            for sub_line in expanded_line.splitlines():
-                if sub_line:
-                    key, value = self._extract_key_value(sub_line)
-                    sub_raw[key] = value
+            sub_raw = dict(self._extract_key_value(sub_line)
+                           for sub_line in expanded_line.splitlines()
+                           if sub_line)
             self._raw.update(sub_raw)
             yield from sub_raw.keys()
 
