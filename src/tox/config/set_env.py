@@ -29,12 +29,11 @@ class SetEnv:
 
     @staticmethod
     def _extract_key_value(line: str) -> Tuple[str, str]:
-        try:
-            at = line.index("=")
-        except ValueError:
+        key, sep, value = line.partition("=")
+        if sep:
+            return key.strip(), value.strip()
+        else:
             raise ValueError(f"invalid line {line!r} in set_env")
-        key, value = line[:at], line[at + 1 :]
-        return key.strip(), value.strip()
 
     def load(self, item: str, chain: Optional[List[str]] = None) -> str:
         if chain is None:

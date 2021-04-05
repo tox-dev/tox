@@ -19,7 +19,7 @@ def is_url(name: str) -> bool:
 
 
 def get_url_scheme(url: str) -> Optional[str]:
-    return None if ":" not in url else url.split(":", 1)[0].lower()
+    return None if ":" not in url else url.partition(":")[0].lower()
 
 
 NO_ARG = {
