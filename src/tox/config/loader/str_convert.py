@@ -57,11 +57,7 @@ class StrConvert(Convert[str]):
             args: List[str] = []
             for arg in splitter:
                 # on Windows quoted arguments will remain quoted, strip it
-                if (
-                    len(arg) > 1
-                    and (arg.startswith('"') and arg.endswith('"'))
-                    or (arg.startswith("'") and arg.endswith("'"))
-                ):
+                if len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):
                     arg = arg[1:-1]
                 args.append(arg)
         else:

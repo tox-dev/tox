@@ -47,7 +47,7 @@ def test_parser_color(
     stdout_mock.isatty.return_value = is_atty
 
     if tox_color in ("yes", "no"):
-        expected = True if tox_color == "yes" else False
+        expected = tox_color == "yes"
     elif no_color == "1":
         expected = False
     elif force_color == "1":

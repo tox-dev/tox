@@ -182,7 +182,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def add_argument(self, *args: str, of_type: Optional[Type[Any]] = None, **kwargs: Any) -> Action:
         result = super().add_argument(*args, **kwargs)
-        if self.of_cmd is None and (result.dest not in ("help",)):
+        if self.of_cmd is None and result.dest != "help":
             self._arguments.append((args, of_type, kwargs))
             if hasattr(self, "_cmd") and self._cmd is not None and hasattr(self._cmd, "choices"):
                 for parser in {id(v): v for k, v in self._cmd.choices.items()}.values():
