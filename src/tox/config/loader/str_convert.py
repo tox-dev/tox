@@ -42,7 +42,7 @@ class StrConvert(Convert[str]):
                 if sep:
                     yield key.strip(), value.strip()
                 else:
-                    raise TypeError(f"dictionary lines must be of form key=value, found {row}")
+                    raise TypeError(f"dictionary lines must be of form key=value, found {row!r}")
 
     @staticmethod
     def to_command(value: str) -> Command:

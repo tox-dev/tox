@@ -36,9 +36,9 @@ def parse_num_processes(str_value: str) -> Optional[int]:
     try:
         value = int(str_value)
     except ValueError as exc:
-        raise ArgumentTypeError(f"value must be a positive number, is {str_value}") from exc
+        raise ArgumentTypeError(f"value must be a positive number, is {str_value!r}") from exc
     if value < 0:
-        raise ArgumentTypeError(f"value must be positive, is {value}")
+        raise ArgumentTypeError(f"value must be positive, is {value!r}")
     return value
 
 

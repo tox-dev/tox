@@ -70,7 +70,7 @@ def test_config_bad_dict(conf_builder: ConfBuilder) -> None:
     config_set.add_config(keys="bad_dict", of_type=Dict[str, str], default={}, desc="bad_dict")
     with pytest.raises(TypeError) as context:
         assert config_set["bad_dict"]
-    assert str(context.value) == "dictionary lines must be of form key=value, found something"
+    assert str(context.value) == "dictionary lines must be of form key=value, found 'something'"
 
 
 def test_config_bad_bool(conf_builder: ConfBuilder) -> None:
