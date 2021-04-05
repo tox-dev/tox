@@ -64,3 +64,9 @@ repos:
         exclude: >-
           ^docs/changelog/(\d+\.(bugfix|feature|deprecation|breaking|doc|misc).rst|README.rst|template.jinja2)
         files: ^docs/changelog/
+      - id: changelogs-user-role
+        name: changelog files have a non-broken :user:`name` role
+        language: pygrep
+        entry: :user:([^`]+`?|`[^`]+[\s,])
+        pass_filenames: true
+        types: [file, rst]
