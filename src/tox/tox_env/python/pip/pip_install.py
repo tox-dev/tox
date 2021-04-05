@@ -92,7 +92,7 @@ class Pip(Installer[Python]):
         result = arguments.validate_and_expand()
         new_set = arguments.unroll()
         # content we can have here in a nested fashion
-        # the the entire universe does not resolve anymore, therefore we only cache the first level
+        # the entire universe does not resolve anymore, therefore we only cache the first level
         # root level -> Union[Flags, Requirement, PathReq, EditablePathReq, UrlReq, ConstraintFile, RequirementsFile]
         # if the constraint file changes recreate
         with self._env.cache.compare(new_set, section, of_type) as (eq, old):
