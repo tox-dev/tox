@@ -111,7 +111,7 @@ class Config:
                 env.loaders.extend(loaders)
             for loader in self._src.get_env_loaders(item, self._overrides, package, env):
                 env.loaders.append(loader)
-            # whenever we load a new configuration we need build a tox environment which process defines the valid
+            # whenever we load a new configuration we need to build a tox environment which process defines the valid
             # configuration values
             self.register_config_set(item, env)
             return env
