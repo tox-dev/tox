@@ -2,6 +2,7 @@
 Group together configuration values that belong together (such as base tox configuration, tox environment configs)
 """
 from abc import ABC, abstractmethod
+from itertools import product
 from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, List, Mapping, Optional, Type, TypeVar, Union, cast
 
 from tox.config.loader.api import Loader
@@ -92,16 +93,12 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         chain: List[str],
     ) -> T:
         if self._cache is _PLACE_HOLDER:
-            found = False
-            for key in self.keys:
-                for loader in loaders:
-                    try:
-                        value = loader.load(key, self.of_type, self.kwargs, conf, self.env_name, chain)
-                        found = True
-                    except KeyError:
-                        continue
-                    break
-                if found:
+            for key, loader in product(self.keys, loaders):
+                try:
+                    value = loader.load(key, self.of_type, self.kwargs, conf, self.env_name, chain)
+                except KeyError:
+                    continue
+                else:
                     break
             else:
                 value = self.default(conf, self.env_name) if callable(self.default) else self.default
