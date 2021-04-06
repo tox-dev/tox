@@ -151,3 +151,18 @@ def test_replace_from_tox_other_tox_section_same_name(tox_ini_conf: ToxIniCreato
     conf_a = tox_ini_conf("[testenv:a]\nx={[testenv:b]c}\nc=d\n[testenv:b]}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="", desc="d")
     assert conf_a["x"] == "{[testenv:b]c}"
+
+
+@pytest.mark.parametrize(
+    "envname, exp",
+    (
+        ("testenv:foobar", "1"),
+        ("testenv:foo-bar", "1"),
+        ("foo-bar", "1"),
+        ("foobar", "1"),
+    ),
+)
+def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, envname, exp) -> None:
+    conf_a = tox_ini_conf(f"[{envname}]\na={exp}\n[testenv:a]\nx = {{[{envname}]a}}").get_env("a")
+    conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
+    assert conf_a["x"] == exp

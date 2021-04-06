@@ -89,7 +89,7 @@ def _replace_match(
 
 _REPLACE_REF = re.compile(
     rf"""
-    (\[(?P<full_env>{BASE_TEST_ENV}(:(?P<env>[^]]+))?|(?P<section>\w+))\])? # env/section
+    (\[(?P<full_env>{BASE_TEST_ENV}(:(?P<env>[^]]+))?|(?P<section>[-\w]+))\])? # env/section
     (?P<key>[a-zA-Z0-9_]+) # key
     (:(?P<default>.*))? # default value
 """,
