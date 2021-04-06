@@ -3,7 +3,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
 
 from packaging.requirements import InvalidRequirement, Requirement
 
@@ -108,25 +108,27 @@ class RequirementWithFlags(Requirement, Flags):
 
 
 class PathReq(PipRequirementEntry):
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, extras: List[str]) -> None:
         self.path = path
+        self.extras = extras
 
     def as_args(self) -> Iterable[str]:
-        return (str(self.path),)
+        return (str(self),)
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, self.__class__) and self.path == other.path
+        return isinstance(other, self.__class__) and self.path == other.path and self.extras == other.extras
 
     def __str__(self) -> str:
-        return str(self.path)
+        extra_group = f"[{','.join(self.extras)}]" if self.extras else ""
+        return f"{self.path}{extra_group}"
 
 
 class EditablePathReq(PathReq):
     def as_args(self) -> Iterable[str]:
-        return "-e", str(self.path)
+        return ("-e", super().__str__())
 
     def __str__(self) -> str:
-        return f"-e {self.path}"
+        return f"-e {super().__str__()}"
 
 
 class UrlReq(PipRequirementEntry):
@@ -141,6 +143,11 @@ class UrlReq(PipRequirementEntry):
 
     def __str__(self) -> str:
         return self.url
+
+
+# https://www.python.org/dev/peps/pep-0508/#extras
+_EXTRA_PATH = re.compile(r"(.*)\[([-._,\sa-zA-Z0-9]*)]")
+_EXTRA_ELEMENT = re.compile(r"[a-zA-Z0-9]*[-._a-zA-Z0-9]")
 
 
 class PythonDeps:
@@ -215,16 +222,34 @@ class PythonDeps:
             if is_url(line) or any(line.startswith(f"{v}+") and is_url(line[len(v) + 1 :]) for v in VCS):
                 result.append(UrlReq(line))
             else:
-                path = ini_dir / line
-                try:
-                    is_valid_file = path.exists() and (path.is_file() or path.is_dir())
-                except OSError:  # https://bugs.python.org/issue42855 # pragma: no cover
-                    is_valid_file = False  # pragma: no cover
-                if not is_valid_file:
+                for path, extra in self._path_candidate(ini_dir / line):
+                    try:
+                        if path.exists() and (path.is_file() or path.is_dir()):
+                            result.append(PathReq(path, extra))
+                            break
+                    except OSError:  # https://bugs.python.org/issue42855 # pragma: no cover
+                        continue
+                else:
                     raise ValueError(f"{at}: {line}") from exc
-                result.append(PathReq(path))
         else:
             result.append(req)
+
+    @staticmethod
+    def _path_candidate(path: Path) -> Iterator[Tuple[Path, List[str]]]:
+        yield path, []
+        # if there's a trailing [a,b] section that could mean either a folder or extras, try both
+        match = _EXTRA_PATH.fullmatch(path.name)
+        if match:
+            extras = []
+            for extra in match.group(2).split(","):
+                extra = extra.strip()
+                if not extra:
+                    continue
+                if not _EXTRA_ELEMENT.fullmatch(extra):
+                    break
+                extras.append(extra)
+            else:
+                yield path.parent / match.group(1), extras
 
     def _load_requirement_with_extra(self, line: str) -> Tuple[str, List[str]]:
         return line, []
@@ -254,7 +279,7 @@ class PythonDeps:
                 req_file.validate_and_expand()
                 result.append(req_file)
             elif first in ("-e", "--editable"):
-                result.append(EditablePathReq(Path(words[2])))
+                result.append(EditablePathReq(Path(words[2]), []))
             elif first in [
                 "-i",
                 "--index-url",
