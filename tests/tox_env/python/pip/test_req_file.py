@@ -45,6 +45,7 @@ from tox.tox_env.python.pip.req_file import (
         pytest.param("--extra-index-url a", "--extra-index-url a", id="extra-index-url"),
         pytest.param("-e a", "-e a", id="e"),
         pytest.param("--editable a", "-e a", id="editable"),
+        pytest.param("--editable .[extra1,extra2]", "-e .[extra1,extra2]", id="editable extra"),
         pytest.param("-f a", "-f a", id="f"),
         pytest.param("--find-links a", "--find-links a", id="find-links"),
         pytest.param("--trusted-host a", "--trusted-host a", id="trusted-host"),
@@ -136,6 +137,16 @@ def test_requirements_txt(tmp_path: Path, req: str, key: str) -> None:
         assert str(expanded[0]) == key
     else:
         assert expanded == []
+
+
+def test_deps_path_with_extra_ok(tmp_path: Path) -> None:
+    result = PythonDeps(".[\t, a1. , B2-\t, C3_, ]", root=tmp_path).unroll()
+    assert result == [f"{tmp_path}[a1.,B2-,C3_]"]
+
+
+def test_deps_path_with_extra_nok(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match=re.escape(".[\t, a.1]")):
+        PythonDeps(".[\t, a.1]", root=tmp_path).unroll()
 
 
 def test_requirements_txt_local_path_file_protocol(tmp_path: Path) -> None:
@@ -300,24 +311,24 @@ def test_requirement_with_flags_has_args() -> None:
 
 
 def test_path_req(tmp_path: Path) -> None:
-    path_req = PathReq(tmp_path)
+    path_req = PathReq(tmp_path, [])
 
     assert path_req.as_args() == (str(tmp_path),)
     assert str(path_req) == str(tmp_path)
 
-    assert path_req != PathReq(tmp_path / "a")
-    assert path_req == PathReq(tmp_path)
+    assert path_req != PathReq(tmp_path / "a", [])
+    assert path_req == PathReq(tmp_path, [])
     assert path_req != object
 
 
 def test_editable_path_req(tmp_path: Path) -> None:
-    editable_path_req = EditablePathReq(tmp_path)
+    editable_path_req = EditablePathReq(tmp_path, [])
 
     assert editable_path_req.as_args() == ("-e", str(tmp_path))
     assert str(editable_path_req) == f"-e {tmp_path}"
 
-    assert editable_path_req != EditablePathReq(tmp_path / "a")
-    assert editable_path_req == EditablePathReq(tmp_path)
+    assert editable_path_req != EditablePathReq(tmp_path / "a", [])
+    assert editable_path_req == EditablePathReq(tmp_path, [])
     assert editable_path_req != object
 
 

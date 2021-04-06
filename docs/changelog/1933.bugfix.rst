@@ -1,0 +1,1 @@
+Support for extras with paths for python deps and requirement files - by :user:`gaborbernat`.
