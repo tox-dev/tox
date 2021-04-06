@@ -1469,6 +1469,7 @@ class TestConfigTestEnv:
         if bp == "jython":
             assert envconfig.envpython == envconfig.envbindir.join(bp)
 
+    @pytest.mark.skipif(tox.INFO.IS_PYPY, reason="only applies to CPython")
     @pytest.mark.parametrize("sep, bindir", [("\\", "Scripts"), ("/", "bin")])
     def test_envbindir_win(self, newconfig, monkeypatch, sep, bindir):
         monkeypatch.setattr(tox.INFO, "IS_WIN", True)
