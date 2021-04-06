@@ -62,11 +62,7 @@ class ToxCmdStatus(CmdStatus):
         if status.exit_code is not None:  # pragma: no branch
             return True  # pragma: no cover
         # 2. the backend output reported back that our command is done
-        content = status.out
-        at = content.rfind(b"Backend: Wrote response ")
-        if at != -1 and content.find(b"\n", at) != -1:
-            return True
-        return False
+        return b"\n" in status.out.rpartition(b"Backend: Wrote response ")[0]
 
     def out_err(self) -> Tuple[str, str]:
         status = self._execute_status

@@ -37,16 +37,12 @@ class StrConvert(Convert[str]):
     @staticmethod
     def to_dict(value: str, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[str, str]]:  # noqa: U100
         for row in value.split("\n"):
-            row = row.strip()
-            if row:
-                try:
-                    at = row.index("=")
-                except ValueError as exc:
-                    raise TypeError(f"dictionary lines must be of form key=value, found {row}") from exc
+            if row.strip():
+                key, sep, value = row.partition("=")
+                if sep:
+                    yield key.strip(), value.strip()
                 else:
-                    key = row[:at].strip()
-                    value = row[at + 1 :].strip()
-                    yield key, value
+                    raise TypeError(f"dictionary lines must be of form key=value, found {row!r}")
 
     @staticmethod
     def to_command(value: str) -> Command:
@@ -57,11 +53,7 @@ class StrConvert(Convert[str]):
             args: List[str] = []
             for arg in splitter:
                 # on Windows quoted arguments will remain quoted, strip it
-                if (
-                    len(arg) > 1
-                    and (arg.startswith('"') and arg.endswith('"'))
-                    or (arg.startswith("'") and arg.endswith("'"))
-                ):
+                if len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):
                     arg = arg[1:-1]
                 args.append(arg)
         else:

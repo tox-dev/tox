@@ -87,7 +87,7 @@ nitpick_ignore = []
 
 
 def skip_member(app: Sphinx, what: str, name: str, obj: Any, would_skip: bool, options: Options) -> bool:  # noqa: U100
-    return True if name in options.get("exclude-members", set()) else would_skip
+    return name in options.get("exclude-members", set()) or would_skip
 
 
 def process_signature(

@@ -31,7 +31,7 @@ class PackageToxEnv(ToxEnv, ABC):
         self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         super().__init__(conf, core, options, journal, log_handler)
-        self.recreate_package = options.no_recreate_pkg is False if options.recreate else False
+        self.recreate_package = options.recreate and not options.no_recreate_pkg
         self._envs: Set[str] = set()
         self._lock = Lock()
 

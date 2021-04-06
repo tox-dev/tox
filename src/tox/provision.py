@@ -81,10 +81,11 @@ def provision(state: State) -> Union[int, bool]:
         package_name = canonicalize_name(package.name)
         try:
             dist = distribution(package_name)  # type: ignore[no-untyped-call]
-            if not package.specifier.contains(dist.version, prereleases=True):
-                missing.append((package, dist.version))
         except PackageNotFoundError:
             missing.append((package, "N/A"))
+        else:
+            if not package.specifier.contains(dist.version, prereleases=True):
+                missing.append((package, dist.version))
     if not missing:
         return False
     deps = ", ".join(f"{p} ({ver})" for p, ver in missing)
@@ -107,7 +108,7 @@ def run_provision(deps: List[Requirement], state: State) -> int:  # noqa
     tox_env = cast(PythonRun, state.tox_env(provision_tox_env))
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
-    recreate = state.options.no_recreate_provision is False if state.options.recreate else False
+    recreate = state.options.recreate and not state.options.no_recreate_provision
     try:
         tox_env.setup(recreate=recreate)
     except Skip as exception:
