@@ -103,6 +103,7 @@ class InterpreterInfo:
         version_info,
         sysplatform,
         is_64,
+        os_sep,
         extra_version_info,
     ):
         self.implementation = implementation
@@ -111,6 +112,7 @@ class InterpreterInfo:
         self.version_info = version_info
         self.sysplatform = sysplatform
         self.is_64 = is_64
+        self.os_sep = os_sep
         self.extra_version_info = extra_version_info
 
     def __str__(self):

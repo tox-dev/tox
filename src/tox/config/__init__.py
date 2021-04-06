@@ -1054,6 +1054,11 @@ class TestenvConfig:
             or tox.INFO.IS_WIN is False
             or self.python_info.implementation == "Jython"
             or (
+                # this combination is MSYS2
+                tox.INFO.IS_WIN
+                and self.python_info.os_sep == "/"
+            )
+            or (
                 tox.INFO.IS_WIN
                 and self.python_info.implementation == "PyPy"
                 and self.python_info.extra_version_info < (7, 3, 1)
