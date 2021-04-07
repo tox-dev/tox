@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Sequence, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 from packaging.requirements import Requirement
 
@@ -8,20 +8,13 @@ from tox.config.cli.parser import DEFAULT_VERBOSITY
 from tox.config.main import Config
 from tox.config.types import Command
 from tox.execute.request import StdinSource
+from tox.report import HandledError
 from tox.tox_env.errors import Recreate
 from tox.tox_env.installer import Installer
 from tox.tox_env.package import PathPackage
 from tox.tox_env.python.api import Python
 from tox.tox_env.python.package import DevLegacyPackage, SdistPackage, WheelPackage
-from tox.tox_env.python.pip.req_file import (
-    ConstraintFile,
-    EditablePathReq,
-    Flags,
-    PathReq,
-    PythonDeps,
-    RequirementsFile,
-    UrlReq,
-)
+from tox.tox_env.python.pip.req_file import PythonDeps
 
 
 class Pip(Installer[Python]):
@@ -89,64 +82,37 @@ class Pip(Installer[Python]):
             raise SystemExit(1)
 
     def _install_requirement_file(self, arguments: PythonDeps, section: str, of_type: str) -> None:
-        result = arguments.validate_and_expand()
-        new_set = arguments.unroll()
-        # content we can have here in a nested fashion
-        # the entire universe does not resolve anymore, therefore we only cache the first level
-        # root level -> Union[Flags, Requirement, PathReq, EditablePathReq, UrlReq, ConstraintFile, RequirementsFile]
-        # if the constraint file changes recreate
-        with self._env.cache.compare(new_set, section, of_type) as (eq, old):
-            if not eq:  # pick all options and constraint files, do not pick other equal requirements
-                new_deps: List[str] = []
-                found: Set[int] = set()
-                has_dep = False
-                for entry, as_cache in zip(result, new_set):
-                    entry_as_str = str(entry)
-                    found_pos = None
-                    for at_pos, value in enumerate(old or []):
-                        if (next(iter(value)) if isinstance(value, dict) else value) == entry_as_str:
-                            found_pos = at_pos
-                            break
-                    if found_pos is not None:
-                        found.add(found_pos)
-                    if isinstance(entry, Flags):
-                        if found_pos is None and old is not None:
-                            raise Recreate(f"new flag {entry}")
-                        new_deps.extend(entry.as_args())
-                    elif isinstance(entry, Requirement):
-                        if found_pos is None:
-                            has_dep = True
-                            new_deps.append(str(entry))
-                    elif isinstance(entry, (PathReq, EditablePathReq, UrlReq)):
-                        if found_pos is None:
-                            has_dep = True
-                            new_deps.extend(entry.as_args())
-                    elif isinstance(entry, ConstraintFile):
-                        if found_pos is None and old is not None:
-                            raise Recreate(f"new constraint file {entry}")
-                        if old is not None and old[found_pos] != as_cache:
-                            raise Recreate(f"constraint file {entry.rel_path} changed")
-                        new_deps.extend(entry.as_args())
-                    elif isinstance(entry, RequirementsFile):
-                        if found_pos is None:
-                            has_dep = True
-                            new_deps.extend(entry.as_args())
-                        elif old is not None and old[found_pos] != as_cache:
-                            raise Recreate(f"requirements file {entry.rel_path} changed")
-                    else:
-                        # can only happen when we introduce new content and we don't handle it in any of the branches
-                        logging.warning(f"pip cannot install {entry!r}")  # pragma: no cover
-                        raise SystemExit(1)  # pragma: no cover
-                if len(found) != len(old or []):
-                    missing = " ".join(
-                        (next(iter(o)) if isinstance(o, dict) else o) for i, o in enumerate(old or []) if i not in found
-                    )
-                    raise Recreate(f"dependencies removed: {missing}")
-                if new_deps:
-                    if not has_dep:
-                        logging.warning(f"no dependencies for tox env {self._env.name} within {of_type}")
-                        raise SystemExit(1)
-                    self._execute_installer(new_deps, of_type)
+        try:
+            new_options, new_reqs = arguments.unroll()
+        except ValueError as exception:
+            raise HandledError(f"{exception} for tox env py within deps")
+        new_requirements: List[str] = []
+        new_constraints: List[str] = []
+        for req in new_reqs:
+            (new_constraints if req.startswith("-c ") else new_requirements).append(req)
+        new = {"options": new_options, "requirements": new_requirements, "constraints": new_constraints}
+        # if option or constraint change in any way recreate, if the requirements change only if some are removed
+        with self._env.cache.compare(new, section, of_type) as (eq, old):
+            if not eq:
+                if old is not None:
+                    self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda i: i)
+                    self._recreate_if_diff("constraint(s)", new_constraints, old["constraints"], lambda i: i[3:])
+                    missing_requirement = set(old["requirements"]) - set(new_requirements)
+                    if missing_requirement:
+                        raise Recreate(f"requirements removed: {' '.join(missing_requirement)}")
+                args = arguments.as_args()
+                if args:
+                    self._execute_installer(args, of_type)
+
+    @staticmethod
+    def _recreate_if_diff(of_type: str, new_opts: List[str], old_opts: List[str], fmt: Callable[[str], str]) -> None:
+        if old_opts == new_opts:
+            return
+        removed_opts = set(old_opts) - set(new_opts)
+        removed = f" removed {', '.join(sorted(fmt(i) for i in removed_opts))}" if removed_opts else ""
+        added_opts = set(new_opts) - set(old_opts)
+        added = f" added {', '.join(sorted(fmt(i) for i in added_opts))}" if added_opts else ""
+        raise Recreate(f"changed {of_type}{removed}{added}")
 
     def _install_list_of_deps(
         self,

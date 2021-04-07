@@ -29,7 +29,7 @@ def stringify(value: Any) -> Tuple[str, bool]:
         env_var_keys = sorted(value)
         return stringify({k: value.load(k) for k in env_var_keys})
     if isinstance(value, PythonDeps):
-        return stringify([next(iter(v.keys())) if isinstance(v, dict) else v for v in value.validate_and_expand()])
+        return stringify(value.lines())
     return str(value), False
 
 

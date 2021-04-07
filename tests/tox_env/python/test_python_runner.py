@@ -17,8 +17,9 @@ def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
     result = project.run("c", "-e", "py")
     result.assert_success()
     deps = result.state.conf.get_env("py")["deps"]
-    assert deps.unroll() == [{"-r path.txt": ["alpha"]}, {"-r path2.txt": ["beta"]}, "pytest"]
-    assert str(deps) == f"-rpath.txt\n-r {project.path / 'path2.txt'}\npytest"
+    assert deps.unroll() == ([], ["alpha", "beta", "pytest"])
+    assert deps.as_args() == ["-r", "path.txt", "-r", str(project.path / "path2.txt"), "pytest"]
+    assert str(deps) == f"-r {project.path / 'tox.ini'}"
 
 
 def test_journal_package_empty() -> None:
