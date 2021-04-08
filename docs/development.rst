@@ -153,7 +153,7 @@ Automated testing
 
 All pull requests and merges to the ``master`` branch are tested using
 `GitHub Actions <https://github.com/features/actions>`_ (configured by ``check.yml`` file inside the
-``.github/workflows`` directory). You can find the status and results to the CI runs for your
+``.github/workflows`` directory). You can find the status and the results to the CI runs for your
 PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages for the specific builds in
 the form of "Details" links, in case the CI run fails and you wish to view the output.
 
