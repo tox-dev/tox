@@ -197,9 +197,6 @@ by a blank line separating it from a description of the feature/change in one or
 at 120 characters. Remember that a changelog entry is meant for end users and should only contain details relevant to an
 end user.
 
-Choosing the type of changelog entries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 A trivial change is anything that does not warrant an entry in the changelog. Some examples are: code refactors that
 don't change anything as far as the public is concerned, typo fixes, white space modification, etc. To mark a PR
 as trivial a contributor simply needs to add a randomly named, empty file to the ``docs/changelog/`` directory with the
