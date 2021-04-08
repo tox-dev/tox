@@ -186,7 +186,7 @@ you may create a file for each of them with the same contents and :pypi:`towncri
 Contents of a changelog entry
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The contents of this file are reStructuredText formatted text that will be used as the content of the changelog entry.
+The content of this file is reStructuredText formatted text that will be used as the content of the changelog entry.
 You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of
 the affected issues when rendering the changelog.
 
