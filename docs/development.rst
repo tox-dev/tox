@@ -197,7 +197,6 @@ by a blank line separating it from a description of the feature/change in one or
 at 120 characters. Remember that a changelog entry is meant for end users and should only contain details relevant to an
 end user.
 
-as trivial a contributor simply needs to add a randomly named, empty file to the ``docs/changelog/`` directory with the
 extension of ``.trivial``.
 
 Becoming a maintainer
