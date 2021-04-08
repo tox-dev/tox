@@ -71,7 +71,7 @@ select tests using the various ways that pytest provides:
     tox -e py -- -k "test_extra"
 
 Some tests require additional dependencies to be run, such is the various shell activators (``bash``, ``fish``,
-``powershell``, etc). These tests will be skipped automatically if these are not present, note however that in CI
+``powershell``, etc). The tests will be skipped automatically if the dependencies are not present, note however that in CI
 all tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
 
 Running linters
