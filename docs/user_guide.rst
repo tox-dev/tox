@@ -74,8 +74,7 @@ tox roughly follows the following phases:
    change.
 
    3. **commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
-   zero, stop and mark the environment failed. You can ignore the exit code when you start a command with a single dash
-   character.
+   zero, stop and mark the environment failed. When you start a command with a dash character, the exit code will be ignored.
 
 4. **report** print out a report of outcomes for each tox environment:
 
