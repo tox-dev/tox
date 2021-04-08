@@ -2,13 +2,14 @@ User Guide
 ==========
 
 Basic example
------------------
+-------------
+
 Put basic information about your project and the test environments you want your project to run in into a ``tox.ini``
 file residing at the root of your project:
 
 .. code-block:: ini
 
-    # content of: tox.ini at the root of the project
+    # content of tox.ini at the root of the project
     [tox]
     envlist =
         py38
@@ -22,15 +23,15 @@ file residing at the root of your project:
         # NOTE: you can run any command line tool here - not just tests
         pytest
 
-You can also try generating a ``tox.ini`` file automatically, by running ``tox-quickstart`` and then answering a few
-simple questions. To sdist-package, install and test your project against Python3.7 and Python3.8, just type:
+You can also try generating a ``tox.ini`` file automatically by running ``tox-quickstart`` and then answering a few
+simple questions. To sdist-package, install and test your project against Python3.7 and Python3.8, just type
 
 .. code-block:: console
 
     tox
 
-and watch things happening (you must have python3.7 and python3.8 installed in your environment otherwise you will see
-errors). When you run ``tox`` a second time you'll note that it runs much faster because it keeps track of virtualenv
+and watch things happening. You must have python3.7 and python3.8 installed in your environment, otherwise you will see
+errors. When you run ``tox`` a second time you'll notice that it runs much faster because it keeps track of virtualenv
 details and will not recreate or re-install dependencies.
 
 System overview
@@ -45,7 +46,7 @@ System overview
 tox roughly follows the following phases:
 
 1. **configuration:** load ``tox.ini`` and merge it with options from the command line and the operating system
-   environment variables.
+   environment variables
 2. **packaging** (optional): create a source distribution of the current project by invoking
 
    .. code-block:: bash
@@ -56,9 +57,9 @@ tox roughly follows the following phases:
    need to make sure that it contains your build dependencies). Skip this step for application projects that don't have
    a ``setup.py``.
 
-3. **environment** - for each tox environment (e.g. ``py37``, ``py38``) do:
+3. **environment**: for each tox environment (e.g. ``py37``, ``py38``) do:
 
-   1. **environment creation**: create a fresh environment, by default :pypi:`virtualenv` is used. tox will
+   1. **environment creation**: create a fresh environment; by default :pypi:`virtualenv` is used. tox will
    automatically try to discover a valid Python interpreter version by using the environment name (e.g. ``py37`` means
    Python 3.7 and the ``basepython`` configuration value) and the current operating system ``PATH`` value. This is
    created at first run only to be re-used at subsequent runs. If certain aspects of the project change, a re-creation
@@ -73,10 +74,10 @@ tox roughly follows the following phases:
    change.
 
    3. **commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
-   zero, stop and mark the environment failed. Note, starting a command with a single dash character means ignore exit
-   code.
+   zero, stop and mark the environment failed. You can ignore the exit code when you start a command with a single dash
+   character.
 
-6. **report** print out a report of outcomes for each tox environment:
+4. **report** print out a report of outcomes for each tox environment:
 
    .. code:: bash
 
@@ -96,21 +97,21 @@ Current features
 ----------------
 
 * **automation of tedious Python related test activities**
-* **test your Python package against many interpreter and dependency configs**
+* **test your Python package against many interpreter and dependency configurations**
 
-    - automatic customizable (re)creation of :pypi:`virtualenv` test environments - installs your ``setup.py`` based
-      project into each virtual environment
-    - test-tool agnostic: runs pytest, nose or unittests in a uniform manner
+    - automatic customizable (re)creation of :pypi:`virtualenv` test environments
+    - installs your project into each virtual environment
+    - test-tool agnostic: runs pytest, nose or unittest in a uniform manner
 
 * ``plugin system`` to modify tox execution with simple hooks.
 * uses :pypi:`pip` and :pypi:`setuptools` by default. Support for configuring the installer command through
   ``install_command``.
-* **cross-Python compatible**: CPython-3.6 and higher, pypy 3.6+ and higher.
+* **cross-Python compatible**: CPython 3.6 and higher, pypy 3.6+ and higher.
 * **cross-platform**: Windows and Unix style environments
 * **integrates with continuous integration servers** like Jenkins (formerly known as Hudson) and helps you to avoid
-  boilerplatish and platform-specific build-step hacks.
+  boilerplatish and platform-specific build-step hacks
 * **full interoperability with devpi**: is integrated with and is used for testing in the :pypi:`devpi` system, a
-  versatile PyPI index server and release managing tool.
+  versatile PyPI index server and release managing tool
 * **driven by a simple ini-style config file**
 * **documented** examples and configuration
 * **concise reporting** about tool invocations and configuration errors

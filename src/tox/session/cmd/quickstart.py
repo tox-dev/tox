@@ -15,7 +15,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command(
         "quickstart",
         ["q"],
-        "Command-line script to quickly tox config file for a Python project",
+        "Command line script to quickly create a tox config file for a Python project",
         quickstart,
     )
     our.add_argument(

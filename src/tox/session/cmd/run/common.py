@@ -63,7 +63,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         metavar="path",
         of_type=Path,
         default=None,
-        help="write a json file with detailed information about all commands and results involved",
+        help="write a JSON file with detailed information about all commands and results involved",
     )
     if mode != "devenv":
         parser.add_argument(
@@ -101,7 +101,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         parser.add_argument(
             "--develop",
             action="store_true",
-            help="install package in develop mode",
+            help="install package in development mode",
             dest="develop",
         )
     parser.add_argument(
@@ -118,7 +118,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         dest="discover",
         nargs="+",
         metavar="path",
-        help="for python discovery first try the python executables under these paths",
+        help="for Python discovery first try the Python executables under these paths",
         default=[],
     )
     parser.add_argument(

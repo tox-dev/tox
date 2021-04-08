@@ -37,7 +37,7 @@ and `devpi <https://devpi.net/>`_).
 tox is a generic virtual environment management and test command line tool you can use for:
 
 * checking your package builds and installs correctly under different environments (such as different Python
-  implementations, versions or install dependencies),
+  implementations, versions or installation dependencies),
 * running your tests in each of the environments with the test tool of choice,
 * acting as a frontend to Continuous Integration servers, greatly reducing boilerplate and merging CI and
   shell-based testing.

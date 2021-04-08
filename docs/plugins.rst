@@ -127,7 +127,7 @@ on how to migrate.
 
 ``tox_get_python_executable``
 -----------------------------
-With tox 4 the python discovery is performed ``tox.tox_env.python.virtual_env.api._get_python`` that delegates the job
+With tox 4 the Python discovery is performed ``tox.tox_env.python.virtual_env.api._get_python`` that delegates the job
 to ``virtualenv``. Therefore first `define a new virtualenv discovery mechanism
 <https://virtualenv.pypa.io/en/latest/extend.html#python-discovery>`_ and then set that by setting the
 ``VIRTUALENV_DISCOVERY`` environment variable.
@@ -136,6 +136,6 @@ to ``virtualenv``. Therefore first `define a new virtualenv discovery mechanism
 ---------------
 Register new packager types via :func:`tox_register_tox_env <tox.plugin.spec.tox_register_tox_env>`.
 
-``tox_addoption``
------------------
+``tox_adoption``
+----------------
 Renamed to :func:`tox_add_option <tox.plugin.spec.tox_add_option>`.

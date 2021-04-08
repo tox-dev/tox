@@ -20,7 +20,7 @@ def _spec(func: _F) -> _F:
 @_spec
 def tox_register_tox_env(register: ToxEnvRegister) -> None:  # noqa: U100
     """
-    Register new tox environment type that. You can register:
+    Register new tox environment type that you can register:
 
     - **run environment**: by default this is a local subprocess backed virtualenv Python
     - **packaging environment**: by default this is a PEP-517 compliant local subprocess backed virtualenv Python
