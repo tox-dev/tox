@@ -37,6 +37,7 @@ def test_setuptools_package(
     assert len(packages) == 1
     package = packages[0]
     assert isinstance(package, WheelPackage)
+    assert str(package) == str(package.path)
     assert package.path.name == f"demo_pkg_setuptools-1.2.3-py{sys.version_info.major}-none-any.whl"
 
     result = outcome.out.split("\n")

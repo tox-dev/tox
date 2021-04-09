@@ -1,3 +1,4 @@
+import sys
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
@@ -70,7 +71,7 @@ from tox.tox_env.python.pip.req.file import ParsedRequirement, RequirementsFile
         pytest.param("--editable a", {}, ["-e a"], id="editable"),
         pytest.param("--editable .[2,1]", {}, ["-e .[1,2]"], id="editable extra"),
         pytest.param(".[\t, a1. , B2-\t, C3_, ]", {}, [".[B2-,C3_,a1.]"], id="path with extra"),
-        pytest.param(".[\t, a.1]", {}, [".[\t, a.1]"], id="path with invalid extra is path"),
+        pytest.param(".[a.1]", {}, [".[a.1]"], id="path with invalid extra is path"),
         pytest.param("-f a", {"find_links": ["a"]}, [], id="f"),
         pytest.param("--find-links a", {"find_links": ["a"]}, [], id="find-links"),
         pytest.param("--trusted-host a", {"trusted_hosts": ["a"]}, [], id="trusted-host"),
@@ -280,7 +281,8 @@ def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
     assert found == ["-c magic", "-c magical"]
 
 
-def test_req_path_with_space(tmp_path: Path) -> None:
+@pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
+def test_req_path_with_space_escape(tmp_path: Path) -> None:
     dep_requirements_file = tmp_path / "a b"
     dep_requirements_file.write_text("c")
     path = f"-r {str(dep_requirements_file)}"
@@ -340,7 +342,7 @@ def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None
     assert str(req_file) == f"-{'c' if is_constraint else 'r'} {requirements_txt}"
     assert vars(req_file.options) == {"index_url": ["i"]}
     found = [str(i) for i in req_file.requirements]
-    assert found == [f"{'-c ' if is_constraint else '' }a"]
+    assert found == [f"{'-c ' if is_constraint else ''}a"]
 
 
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
@@ -372,7 +374,7 @@ def test_requirement_via_file_protocol(tmp_path: Path, loc: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("-i i\na")
     requirements_text = tmp_path / "req.txt"
-    requirements_text.write_text(f"-r {loc}{other_req}")
+    requirements_text.write_text(f"-r {loc}{'/' if sys.platform == 'win32' else ''}{other_req}")
 
     req_file = RequirementsFile(requirements_text, constraint=False)
 
@@ -385,7 +387,7 @@ def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("-i i\na")
     requirements_text = tmp_path / "req.txt"
-    requirements_text.write_text(f"-r file://magic.com{other_req}")
+    requirements_text.write_text(f"-r file://magic.com{'/' if sys.platform == 'win32' else ''}{other_req}")
 
     req_file = RequirementsFile(requirements_text, constraint=False)
     pattern = r"non-local file URIs are not supported on this platform: 'file://magic\.com\.*"

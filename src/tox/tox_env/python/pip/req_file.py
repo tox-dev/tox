@@ -1,5 +1,6 @@
 import re
 import shlex
+import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -34,7 +35,7 @@ class PythonDeps(RequirementsFile):
     def as_args(self) -> List[str]:
         result = []
         for line in self.lines():
-            result.extend(shlex.split(line))
+            result.extend(shlex.split(line, posix=sys.platform != "win32"))
         return result
 
     def lines(self) -> List[str]:
@@ -109,7 +110,6 @@ ONE_ARG_ESCAPE = {
     "-e",
     "--editable",
 }
-
 
 __all__ = (
     "PythonDeps",

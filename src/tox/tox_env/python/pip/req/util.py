@@ -1,5 +1,4 @@
 """Borrowed from the pip code base"""
-import sys
 from typing import Optional
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
@@ -22,8 +21,6 @@ def url_to_path(url: str) -> str:
     _, netloc, path, _, _ = urlsplit(url)
     if not netloc or netloc == "localhost":  # According to RFC 8089, same as empty authority.
         netloc = ""
-    elif sys.platform == "win32":  # pragma: win32 cover
-        netloc = "\\\\" + netloc  # If we have a UNC path, prepend UNC share notation.
     else:
         raise ValueError(f"non-local file URIs are not supported on this platform: {url!r}")
     path = url2pathname(netloc + path)

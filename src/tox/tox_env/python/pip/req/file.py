@@ -3,6 +3,7 @@
 import os
 import re
 import shlex
+import sys
 import urllib.parse
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -237,7 +238,7 @@ class RequirementsFile:
 
     def _parse_line(self, line: str) -> Tuple[str, Namespace]:
         args_str, options_str = self._break_args_options(line)
-        args = shlex.split(options_str)
+        args = shlex.split(options_str, posix=sys.platform != "win32")
         opts = self._parser.parse_args(args)
         return args_str, opts
 

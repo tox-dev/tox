@@ -25,6 +25,9 @@ class PathPackage(Package):
         super().__init__()
         self.path = path
 
+    def __str__(self) -> str:
+        return str(self.path)
+
 
 class PackageToxEnv(ToxEnv, ABC):
     def __init__(
