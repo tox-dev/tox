@@ -40,7 +40,7 @@ repos:
     rev: "0.5.0"
     hooks:
       - id: tox-ini-fmt
-        args: [ "-p", "fix,flake8" ]
+        args: [ "-p", "fix" ]
   - repo: https://github.com/asottile/blacken-docs
     rev: v1.10.0
     hooks:
@@ -59,3 +59,13 @@ repos:
         entry: "changelog files must be named ####.(feature|bugfix|doc|removal|misc).rst"
         exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|README.rst|template.jinja2)
         files: ^docs/changelog/
+  - repo: https://github.com/PyCQA/flake8
+    rev: 3.9.0
+    hooks:
+      - id: flake8
+        additional_dependencies:
+        - flake8-bugbear==21.4.3
+        - flake8-comprehensions==3.4
+        - flake8-pytest-style==1.4.1
+        - flake8-spellcheck==0.24
+        - flake8-unused-arguments==0.0.6

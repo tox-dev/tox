@@ -1,0 +1,2 @@
+Port pip requirements file parser to ``tox`` to achieve full equivalency (such as support for the per requirement
+``--install-option`` and ``--global-option`` flags) - by :user:`gaborbernat`.
