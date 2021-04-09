@@ -10,12 +10,23 @@
 }
 
 dl {
-  margin-bottom: 0!important;
+  /*margin-bottom: 0!important;*/
 }
-
+dt {
+  display: inline !important;
+  padding: 3px;
+}
 dd {
   margin-bottom: 2px!important;
 }
 .rst-content dd p {
   margin-bottom: 0px;
+}
+
+/* Reduce whitespace before enumeration */
+.section p {
+  margin-bottom: 12px;
+}
+.section ol {
+  margin-bottom: 12px !important;
 }

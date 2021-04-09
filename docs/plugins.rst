@@ -84,6 +84,9 @@ environments
 .. autoclass:: tox.tox_env.package.PackageToxEnv
    :members:
 
+.. autoclass:: tox.tox_env.package.Package
+   :members:
+
 journal
 -------
 .. autoclass:: tox.journal.env.EnvJournal
@@ -118,6 +121,12 @@ execute
    :members:
 
 .. autoclass:: tox.execute.stream.SyncWrite
+   :members:
+
+installer
+---------
+
+.. autoclass:: tox.tox_env.installer.Installer
    :members:
 
 Migration from tox 3
