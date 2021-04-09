@@ -163,10 +163,12 @@ pull request. If needed, project maintainers can manually trigger a restart of a
 Changelog entries
 ~~~~~~~~~~~~~~~~~
 
-The ``changelog.rst`` file is managed using :pypi:`towncrier` and all non trivial changes must be accompanied by a
+The ``changelog.rst`` file is managed using :pypi:`towncrier` and all changes must be accompanied by a
 changelog entry. To add an entry to the changelog, first you need to have created an issue describing the
 change you want to make. A  pull request itself *may* function as such, but it is preferred to have a dedicated issue
 (for example, in case the PR ends up rejected due to code quality reasons).
+
+There is no need to create an issue for trivial changes, e.g. for typo fixes.
 
 Once you have an issue or pull request, you take the number and you create a file inside of the ``docs/changelog``
 directory named after that issue number with an extension of:
