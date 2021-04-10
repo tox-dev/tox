@@ -1,6 +1,7 @@
 """A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
 import os
 import sys
+import textwrap
 import threading
 import time
 from collections import OrderedDict
@@ -83,8 +84,7 @@ class Spinner:
         self._frame_index %= len(self.frames)
         total = f"/{self.total}" if self.total is not None else ""
         text_frame = f"[{len(self._envs)}{total}] {' | '.join(self._envs)}"
-        if len(text_frame) > self.max_width - 1:
-            text_frame = "{}...".format(text_frame[: self.max_width - 1 - 3])
+        text_frame = textwrap.shorten(text_frame, width=self.max_width - 1, placeholder="...")
         return f"{frame} {text_frame}"
 
     def __enter__(self: T) -> T:

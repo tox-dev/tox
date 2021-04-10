@@ -21,8 +21,8 @@ def test_spinner(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
         spin.stream.write("\n")
     out, err = capfd.readouterr()
     lines = out.split("\n")
-    expected = [f"\r{spin.CLEAR_LINE}\r{i} [0] " for i in spin.frames] + [
-        f"\r{spin.CLEAR_LINE}\r{spin.frames[0]} [0] ",
+    expected = [f"\r{spin.CLEAR_LINE}\r{i} [0]" for i in spin.frames] + [
+        f"\r{spin.CLEAR_LINE}\r{spin.frames[0]} [0]",
         f"\r{spin.CLEAR_LINE}",
     ]
     assert lines == expected
@@ -63,7 +63,7 @@ def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     lines = out.split("\n")
     posix = os.name == "posix"
     expected = [
-        "{}\r{}\r{} [0] ".format("\x1b[?25l" if posix else "", spin.CLEAR_LINE, spin.frames[0]),
+        "{}\r{}\r{} [0]".format("\x1b[?25l" if posix else "", spin.CLEAR_LINE, spin.frames[0]),
         "\r\x1b[K{}".format("\x1b[?25h" if posix else ""),
     ]
     assert lines == expected
@@ -104,7 +104,7 @@ def test_spinner_long_text(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> N
     out, err = capfd.readouterr()
     assert not err
     expected = [
-        f"\r{spin.CLEAR_LINE}\r{spin.frames[1]} [2] {'a' * 60} | {'b' * 49}...",
+        f"\r{spin.CLEAR_LINE}\r{spin.frames[1]} [2] {'a' * 60} |...",
         f"\r{spin.CLEAR_LINE}",
     ]
     lines = out.split("\n")
