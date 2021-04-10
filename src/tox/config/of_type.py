@@ -109,7 +109,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
 
     def __repr__(self) -> str:
         values = ((k, v) for k, v in vars(self).items() if k != "post_process" and v is not None)
-        return f"{type(self).__name__}({', '.join('{}={}'.format(k, v) for k,v in values)})"
+        return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
     def __eq__(self, o: Any) -> bool:
         return (

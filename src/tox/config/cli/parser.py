@@ -236,7 +236,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 def add_verbosity_flags(parser: ArgumentParser) -> None:
     from tox.report import LEVELS
 
-    level_map = "|".join("{} - {}".format(c, logging.getLevelName(l)) for c, l in sorted(LEVELS.items()))
+    level_map = "|".join(f"{c} - {logging.getLevelName(l)}" for c, l in sorted(LEVELS.items()))
     verbosity_group = parser.add_argument_group("verbosity")
     verbosity_group.description = f"verbosity=verbose-quiet, default {logging.getLevelName(LEVELS[3])}, map {level_map}"
     verbosity = verbosity_group.add_mutually_exclusive_group()

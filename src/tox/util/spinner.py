@@ -85,7 +85,7 @@ class Spinner:
         text_frame = f"[{len(self._envs)}{total}] {' | '.join(self._envs)}"
         if len(text_frame) > self.max_width - 1:
             text_frame = "{}...".format(text_frame[: self.max_width - 1 - 3])
-        return "{} {}".format(*[(frame, text_frame)][0])
+        return f"{frame} {text_frame}"
 
     def __enter__(self: T) -> T:
         if self.enabled:

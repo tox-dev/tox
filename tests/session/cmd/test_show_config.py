@@ -12,7 +12,7 @@ from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     py_ver = sys.version_info[0:2]
-    name = "py{}{}".format(*py_ver) if platform.python_implementation() == "CPython" else "pypy3"
+    name = f"py{py_ver[0]}{py_ver[1]}" if platform.python_implementation() == "CPython" else "pypy3"
     project = tox_project({"tox.ini": f"[tox]\nenv_list = {name}\n[testenv:{name}]\ncommands={{posargs}}"})
     result = project.run("c", "-e", name, "--core", "--", "magic")
     state = result.state
