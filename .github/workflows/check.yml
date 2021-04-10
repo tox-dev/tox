@@ -83,14 +83,12 @@ jobs:
           - Windows
           - Ubuntu
         tox_env:
-          - flake8
           - type
           - dev
           - docs
           - pkg_meta
         exclude:
           - { os: windows, tox_env: pkg_meta }
-          - { os: windows, tox_env: flake8 }
     steps:
       - uses: actions/checkout@v2
         with:
