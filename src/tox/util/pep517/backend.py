@@ -1,4 +1,8 @@
-"""Handles communication on the backend side between frontend and backend"""
+"""Handles communication on the backend side between frontend and backend
+
+Please keep this file Python 2.7 compatible.
+See https://tox.readthedocs.io/en/rewrite/development.html#code-style-guide
+"""
 from __future__ import print_function, unicode_literals
 
 import json

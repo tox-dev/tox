@@ -96,6 +96,11 @@ Code style guide
 
 - First and foremost, the linters configured for the project must pass; this generally means following PEP-8 rules,
   as codified by: ``flake8``, ``black``, ``isort``, ``pyupgrade``.
+- The supported Python versions (and the code syntax to use) are listed in the ``setup.cfg`` file
+  in the ``options/python_requires`` entry. However, there are some files that have to be kept compatible
+  with Python 2.7 to allow and test for running Python 2 envs from tox. They are listed in ``.pre-commit-config.yaml``
+  under ``repo: https://github.com/asottile/pyupgrade`` under ``hooks/exclude``.
+  Please do not attempt to modernize them to Python 3.x.
 - Packaging options should be specified within ``setup.cfg``; ``setup.py`` is only kept for editable installs.
 - All code (tests too) must be type annotated as much as required by ``mypy``.
 - We use a line length of 120.
