@@ -151,7 +151,7 @@ class ToxProject:
             elif isinstance(value, str):
                 at_path.write_text(textwrap.dedent(value))
             else:
-                msg = "could not handle {} with content {!r}".format(at_path / key, value)  # pragma: no cover
+                msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
 
     def patch_execute(self, handle: Callable[[ExecuteRequest], Optional[int]]) -> MagicMock:
