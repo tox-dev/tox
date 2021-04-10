@@ -123,7 +123,9 @@ def test_pep517_setuptools_exception(frontend_setuptools: SubprocessFrontend) ->
     assert isinstance(context.value.out, str)
     assert isinstance(context.value.err, str)
     assert context.value.exc_type == "TypeError"
-    assert context.value.exc_msg == "build_wheel() missing 1 required positional argument: 'wheel_directory'"
+    prefix = "_BuildMetaBackend." if sys.version_info >= (3, 10) else ""
+    msg = f"{prefix}build_wheel() missing 1 required positional argument: 'wheel_directory'"
+    assert context.value.exc_msg == msg
     assert context.value.code == 1
     assert context.value.args == ()
     assert repr(context.value)
