@@ -36,6 +36,8 @@ repos:
         args:
           - --min-py3-version
           - "3.6"
+          - --max-py-version
+          - "3.10"
   - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: "0.5.0"
     hooks:
