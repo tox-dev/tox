@@ -213,7 +213,7 @@ class RequirementsFile:
             with open(url, "rb") as file_handler:
                 text = self._read_decode(file_handler)
         except OSError as exc:
-            raise ValueError(f"Could not open requirements file: {exc}")
+            raise ValueError(f"Could not open requirements file {url}: {exc}") from exc
         return text
 
     @staticmethod
