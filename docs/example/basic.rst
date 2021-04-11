@@ -172,7 +172,7 @@ This variable can be also set in ``tox.ini``:
 
 .. code-block:: ini
 
-    [tox]
+    [testenv]
     setenv =
         PIP_INDEX_URL = https://pypi.my-alternative-index.org
 
@@ -180,7 +180,7 @@ Alternatively, a configuration where ``PIP_INDEX_URL`` could be overriden from e
 
 .. code-block:: ini
 
-    [tox]
+    [testenv]
     setenv =
         PIP_INDEX_URL = {env:PIP_INDEX_URL:https://pypi.my-alternative-index.org}
 
@@ -192,11 +192,9 @@ multiple PyPI servers, using ``PIP_EXTRA_INDEX_URL`` environment variable:
 
 .. code-block:: ini
 
-    [tox]
+    [testenv]
     setenv =
         PIP_EXTRA_INDEX_URL = https://mypypiserver.org
-
-    [testenv]
     deps =
         # docutils will be installed directly from PyPI
         docutils
@@ -204,8 +202,14 @@ multiple PyPI servers, using ``PIP_EXTRA_INDEX_URL`` environment variable:
         mypackage
 
 This configuration will install ``docutils`` from the default
-Python PYPI server and will install the ``mypackage`` from
+Python PyPI server and will install the ``mypackage`` from
 our index server at ``https://mypypiserver.org`` URL.
+
+.. warning::
+
+  Using an extra PyPI index as a fallback for installing private packages may cause security issues.
+  For example, if ``mypackage`` is registered in the default PyPI index, PIP will install ``mypackage``
+  from default PyPI index, not from custom one.
 
 Further customizing installation
 ---------------------------------
