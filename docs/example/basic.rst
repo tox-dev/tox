@@ -208,7 +208,7 @@ our index server at ``https://mypypiserver.org`` URL.
 .. warning::
 
   Using an extra PyPI index for installing private packages may cause security issues.
-  For example, if ``mypackage`` is registered in the default PyPI index, PIP will install ``mypackage``
+  For example, if ``mypackage`` is registered with the default PyPI index, pip will install ``mypackage``
   from default PyPI index, not from custom one.
 
 Further customizing installation
