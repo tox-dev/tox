@@ -68,7 +68,7 @@ Python and OS Compatibility
 
 tox works with the following Python interpreter implementations:
 
-- `CPython <https://www.python.org/>`_ versions 3.6, 3.7, 3.8, 3.9
+- `CPython <https://www.python.org/>`_ versions 3.6, 3.7, 3.8, 3.9, 3.10
 - `PyPy <https://pypy.org/>`_ 3.6+.
 
 This means tox works on the latest patch version of each of these minor versions. Previous patch versions are
