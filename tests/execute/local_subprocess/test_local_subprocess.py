@@ -44,7 +44,7 @@ def test_local_execute_basic_pass(
 ) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=color)
-    code = f"import sys; print({repr(out)}, end=''); print({repr(err)}, end='', file=sys.stderr)"
+    code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
     with executor.call(request, show=show, out_err=out_err.out_err) as status:

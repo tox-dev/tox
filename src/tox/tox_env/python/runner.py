@@ -111,7 +111,7 @@ class PythonRun(Python, RunToxEnv, ABC):
     def pkg_type(self) -> str:
         pkg_type: str = self.conf["package"]
         if pkg_type not in self._package_types:
-            values = ", ".join(i for i in self._package_types)
+            values = ", ".join(self._package_types)
             raise HandledError(f"invalid package config type {pkg_type} requested, must be one of {values}")
         return pkg_type
 

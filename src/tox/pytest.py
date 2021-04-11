@@ -417,8 +417,8 @@ def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -
         for item in items:
             if is_integration(item):
                 item.add_marker(skip_int)
-    # run integration tests after unit tests
-    items.sort(key=lambda i: 1 if is_integration(i) else 0)
+    # run integration tests (is_integration is True) after unit tests (False)
+    items.sort(key=is_integration)
 
 
 class Index:

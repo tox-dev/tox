@@ -33,7 +33,7 @@ class SkipMissingInterpreterAction(Action):
     ) -> None:
         value = "true" if values is None else values
         if value not in ("config", "true", "false"):
-            raise ArgumentError(self, f"value must be 'config', 'true', or 'false' (got {repr(value)})")
+            raise ArgumentError(self, f"value must be 'config', 'true', or 'false' (got {value!r})")
         setattr(namespace, self.dest, value)
 
 
@@ -144,7 +144,7 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
     for run in runs:
         all_good &= run.code == Outcome.OK or run.ignore_outcome
         duration_individual = [o.elapsed for o in run.outcomes]
-        extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if len(duration_individual) else ""
+        extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if duration_individual else ""
         setup = run.duration - sum(duration_individual)
         msg, color = _get_outcome_message(run)
         out = f"  {run.name}: {msg} ({run.duration:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
@@ -227,10 +227,7 @@ class ToxSpinner(Spinner):
 
     def update_spinner(self, result: ToxEnvRunResult, success: bool) -> None:
         if success:
-            if result.skipped:
-                done = self.skip
-            else:
-                done = self.succeed
+            done = self.skip if result.skipped else self.succeed
         else:
             done = self.fail
         done(result.name)

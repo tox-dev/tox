@@ -171,10 +171,7 @@ def _config_value_sources(
 
 def replace_pos_args(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
     if pos_args is None:
-        if args:
-            replace_value = ":".join(args)  # if we use the defaults join back remaining args
-        else:
-            replace_value = ""
+        replace_value = ":".join(args)  # if we use the defaults join back remaining args
     else:
         replace_value = shell_cmd(pos_args)
     return replace_value
