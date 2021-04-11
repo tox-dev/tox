@@ -1,0 +1,2 @@
+Update examples in the documentation to use ``setenv`` in the ``[testenv]`` sections, not wrongly in the ``[tox]`` main section.
+- by :user:`AndreyNautilus`
