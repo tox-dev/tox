@@ -72,7 +72,7 @@ class Convert(ABC, Generic[T]):
                 else:
                     new_type = next(i for i in args if i != none)  # pragma: no cover # this will always find a element
                     result = self.to(raw, new_type, kwargs)
-        elif origin == Literal or origin == type(Literal):
+        elif origin in (Literal, type(Literal)):
             if sys.version_info >= (3, 7):  # pragma: no cover (py37+)
                 choice = of_type.__args__
             else:  # pragma: no cover (py38+)

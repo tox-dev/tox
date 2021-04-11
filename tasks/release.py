@@ -39,9 +39,8 @@ def create_release_branch(repo: Repo, version: Version) -> Tuple[Remote, Head]:
 
 def get_upstream(repo: Repo) -> Remote:
     for remote in repo.remotes:
-        for url in remote.urls:
-            if url.endswith("tox-dev/tox.git"):
-                return remote
+        if any(url.endswith("tox-dev/tox.git") for url in remote.urls):
+            return remote
     raise RuntimeError("could not find tox-dev/tox.git remote")
 
 

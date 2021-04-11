@@ -18,8 +18,7 @@ def get_env_var(key: str, of_type: Type[Any]) -> Optional[Tuple[Any, str]]:
     :return:
     """
     key_upper = key.upper()
-    for fmt in ("TOX_{}", "TOX{}"):
-        environ_key = fmt.format(key_upper)
+    for environ_key in (f"TOX_{key_upper}", f"TOX{key_upper}"):
         if environ_key in os.environ:
             value = os.environ[environ_key]
             try:

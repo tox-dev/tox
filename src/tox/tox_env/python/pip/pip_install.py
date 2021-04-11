@@ -168,9 +168,7 @@ class Pip(Installer[Python]):
             opts_at = install_command.index("{packages}")
         except ValueError:
             opts_at = len(install_command)
-        result = install_command[:opts_at]
-        result.extend(args)
-        result.extend(install_command[opts_at + 1 :])
+        result = install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
         return result
 
 
