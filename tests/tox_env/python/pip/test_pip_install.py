@@ -57,7 +57,7 @@ def test_pip_install_new_flag_recreates(tox_project: ToxProjectCreator) -> None:
     ("content", "args"),
     [
         pytest.param("-e .", ["-e", "."], id="short editable"),
-        pytest.param("--editable .", ["--editable", "."], id="long editable"),
+        pytest.param("--editable .", ["-e", "."], id="long editable"),
         pytest.param(
             "git+ssh://git.example.com/MyProject\\#egg=MyProject",
             ["git+ssh://git.example.com/MyProject#egg=MyProject"],
@@ -87,7 +87,7 @@ def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: 
     result_second = proj.run("r")
     result_second.assert_success()
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install"] + args + ["a"]
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a"] + args
 
 
 def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
@@ -185,7 +185,7 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     result_second = proj.run("r")
     result_second.assert_success()
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "-r", "r.txt", "b"]
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
 
     # if the requirement file changes recreate
     (proj.path / "r.txt").write_text("c\nd")
@@ -194,7 +194,7 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     result_third.assert_success()
     assert "py: recreate env because requirements removed: a" in result_third.out, result_third.out
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "-r", "r.txt", "b"]
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
 
 
 def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreator) -> None:
@@ -203,7 +203,7 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     result = proj.run("r")
     result.assert_success()
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "-c", "c.txt", "a"]
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
 
     # a new dependency triggers an install
     (proj.path / "tox.ini").write_text("[testenv]\ndeps=-c c.txt\n a\n d\nskip_install=true")
@@ -211,7 +211,7 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     result_second = proj.run("r")
     result_second.assert_success()
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "-c", "c.txt", "a", "d"]
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "d", "-c", "c.txt"]
 
     # a new constraints triggers a recreate
     (proj.path / "c.txt").write_text("")
@@ -220,7 +220,7 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     result_third.assert_success()
     assert "py: recreate env because changed constraint(s) removed b" in result_third.out, result_third.out
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "-c", "c.txt", "a", "d"]
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "d", "-c", "c.txt"]
 
 
 def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator) -> None:

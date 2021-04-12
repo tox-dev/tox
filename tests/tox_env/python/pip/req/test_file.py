@@ -10,208 +10,270 @@ from pytest_mock import MockerFixture
 from tox.pytest import CaptureFixture, MonkeyPatch
 from tox.tox_env.python.pip.req.file import ParsedRequirement, RequirementsFile
 
+_REQ_FILE_TEST_CASES = [
+    pytest.param("--pre", {"pre": True}, [], ["--pre"], id="pre"),
+    pytest.param("--no-index", {"index_url": []}, [], ["--no-index"], id="no-index"),
+    pytest.param("--no-index\n-i a\n--no-index", {"index_url": []}, [], ["--no-index"], id="no-index overwrites index"),
+    pytest.param("--prefer-binary", {"prefer_binary": True}, [], ["--prefer-binary"], id="prefer-binary"),
+    pytest.param("--require-hashes", {"require_hashes": True}, [], ["--require-hashes"], id="requires-hashes"),
+    pytest.param("--pre ", {"pre": True}, [], ["--pre"], id="space after"),
+    pytest.param(" --pre", {"pre": True}, [], ["--pre"], id="space before"),
+    pytest.param("--pre\\\n", {"pre": True}, [], ["--pre"], id="newline after"),
+    pytest.param("--pre # magic", {"pre": True}, [], ["--pre"], id="comment after space"),
+    pytest.param("--pre\t# magic", {"pre": True}, [], ["--pre"], id="comment after tab"),
+    pytest.param(
+        "--find-links /my/local/archives",
+        {"find_links": ["/my/local/archives"]},
+        [],
+        ["-f", "/my/local/archives"],
+        id="find-links path",
+    ),
+    pytest.param(
+        "--find-links /my/local/archives --find-links /my/local/archives",
+        {"find_links": ["/my/local/archives"]},
+        [],
+        ["-f", "/my/local/archives"],
+        id="find-links duplicate same line",
+    ),
+    pytest.param(
+        "--find-links /my/local/archives\n--find-links /my/local/archives",
+        {"find_links": ["/my/local/archives"]},
+        [],
+        ["-f", "/my/local/archives"],
+        id="find-links duplicate different line",
+    ),
+    pytest.param(
+        "--find-links \\\n/my/local/archives",
+        {"find_links": ["/my/local/archives"]},
+        [],
+        ["-f", "/my/local/archives"],
+        id="find-links newline path",
+    ),
+    pytest.param(
+        "--find-links http://some.archives.com/archives",
+        {"find_links": ["http://some.archives.com/archives"]},
+        [],
+        ["-f", "http://some.archives.com/archives"],
+        id="find-links url",
+    ),
+    pytest.param("-i a", {"index_url": ["a"]}, [], ["-i", "a"], id="index url short"),
+    pytest.param("--index-url a", {"index_url": ["a"]}, [], ["-i", "a"], id="index url long"),
+    pytest.param("-i a -i b\n-i c", {"index_url": ["c"]}, [], ["-i", "c"], id="index url multiple"),
+    pytest.param(
+        "--extra-index-url a",
+        {"index_url": ["https://pypi.org/simple", "a"]},
+        [],
+        ["--extra-index-url", "a"],
+        id="extra-index-url",
+    ),
+    pytest.param(
+        "--extra-index-url a --extra-index-url a",
+        {"index_url": ["https://pypi.org/simple", "a"]},
+        [],
+        ["--extra-index-url", "a"],
+        id="extra-index-url dup same line",
+    ),
+    pytest.param(
+        "--extra-index-url a\n--extra-index-url a",
+        {"index_url": ["https://pypi.org/simple", "a"]},
+        [],
+        ["--extra-index-url", "a"],
+        id="extra-index-url dup different line",
+    ),
+    pytest.param("-e a", {}, ["-e a"], ["-e", "a"], id="e"),
+    pytest.param("--editable a", {}, ["-e a"], ["-e", "a"], id="editable"),
+    pytest.param("--editable .[2,1]", {}, ["-e .[1,2]"], ["-e", ".[1,2]"], id="editable extra"),
+    pytest.param(".[\t, a1. , B2-\t, C3_, ]", {}, [".[B2-,C3_,a1.]"], [".[B2-,C3_,a1.]"], id="path with extra"),
+    pytest.param(".[a.1]", {}, [".[a.1]"], [".[a.1]"], id="path with invalid extra is path"),
+    pytest.param("-f a", {"find_links": ["a"]}, [], ["-f", "a"], id="f"),
+    pytest.param("--find-links a", {"find_links": ["a"]}, [], ["-f", "a"], id="find-links"),
+    pytest.param("--trusted-host a", {"trusted_hosts": ["a"]}, [], ["--trusted-host", "a"], id="trusted-host"),
+    pytest.param(
+        "--trusted-host a --trusted-host a",
+        {"trusted_hosts": ["a"]},
+        [],
+        ["--trusted-host", "a"],
+        id="trusted-host dup same line",
+    ),
+    pytest.param(
+        "--trusted-host a\n--trusted-host a",
+        {"trusted_hosts": ["a"]},
+        [],
+        ["--trusted-host", "a"],
+        id="trusted-host dup different line",
+    ),
+    pytest.param(
+        "--use-feature 2020-resolver",
+        {"features_enabled": ["2020-resolver"]},
+        [],
+        ["--use-feature", "2020-resolver"],
+        id="use-feature space",
+    ),
+    pytest.param(
+        "--use-feature=fast-deps",
+        {"features_enabled": ["fast-deps"]},
+        [],
+        ["--use-feature", "fast-deps"],
+        id="use-feature equal",
+    ),
+    pytest.param(
+        "--use-feature=fast-deps --use-feature 2020-resolver",
+        {"features_enabled": ["2020-resolver", "fast-deps"]},
+        [],
+        ["--use-feature", "2020-resolver", "--use-feature", "fast-deps"],
+        id="use-feature multiple same line",
+    ),
+    pytest.param(
+        "--use-feature=fast-deps\n--use-feature 2020-resolver",
+        {"features_enabled": ["2020-resolver", "fast-deps"]},
+        [],
+        ["--use-feature", "2020-resolver", "--use-feature", "fast-deps"],
+        id="use-feature multiple different line",
+    ),
+    pytest.param(
+        "--use-feature=fast-deps\n--use-feature 2020-resolver\n" * 2,
+        {"features_enabled": ["2020-resolver", "fast-deps"]},
+        [],
+        ["--use-feature", "2020-resolver", "--use-feature", "fast-deps"],
+        id="use-feature multiple duplicate different line",
+    ),
+    pytest.param("--no-binary :all:", {"no_binary": ":all:"}, [], ["--no-binary", ":all:"], id="no-binary all"),
+    pytest.param("--no-binary :none:", {"no_binary": ":none:"}, [], ["--no-binary", ":none:"], id="no-binary none"),
+    pytest.param("--only-binary :all:", {"only_binary": ":all:"}, [], ["--only-binary", ":all:"], id="only-binary all"),
+    pytest.param(
+        "--only-binary :none:", {"only_binary": ":none:"}, [], ["--only-binary", ":none:"], id="only-binary none"
+    ),
+    pytest.param("####### example-requirements.txt #######", {}, [], [], id="comment"),
+    pytest.param("\t##### Requirements without Version Specifiers ######", {}, [], [], id="tab and comment"),
+    pytest.param("  # start", {}, [], [], id="space and comment"),
+    pytest.param("nose", {}, ["nose"], ["nose"], id="req"),
+    pytest.param("nose\nnose", {}, ["nose"], ["nose"], id="req dup"),
+    pytest.param(
+        "numpy[2,1]  @ file://./downloads/numpy-1.9.2-cp34-none-win32.whl",
+        {},
+        ["numpy[1,2]@ file://./downloads/numpy-1.9.2-cp34-none-win32.whl"],
+        ["numpy[1,2]@ file://./downloads/numpy-1.9.2-cp34-none-win32.whl"],
+        id="path with name-extra-protocol",
+    ),
+    pytest.param(
+        "docopt == 0.6.1             # Version Matching. Must be version 0.6.1",
+        {},
+        ["docopt==0.6.1"],
+        ["docopt==0.6.1"],
+        id="req equal comment",
+    ),
+    pytest.param(
+        "keyring >= 4.1.1            # Minimum version 4.1.1",
+        {},
+        ["keyring>=4.1.1"],
+        ["keyring>=4.1.1"],
+        id="req ge comment",
+    ),
+    pytest.param(
+        "coverage != 3.5             # Version Exclusion. Anything except version 3.5",
+        {},
+        ["coverage!=3.5"],
+        ["coverage!=3.5"],
+        id="req ne comment",
+    ),
+    pytest.param(
+        "Mopidy-Dirble ~= 1.1        # Compatible release. Same as >= 1.1, == 1.*",
+        {},
+        ["Mopidy-Dirble~=1.1"],
+        ["Mopidy-Dirble~=1.1"],
+        id="req approx comment",
+    ),
+    pytest.param("b==1.3", {}, ["b==1.3"], ["b==1.3"], id="req eq"),
+    pytest.param("c >=1.2,<2.0", {}, ["c<2.0,>=1.2"], ["c<2.0,>=1.2"], id="req ge lt"),
+    pytest.param("d[bar,foo]", {}, ["d[bar,foo]"], ["d[bar,foo]"], id="req extras"),
+    pytest.param("d[foo, bar]", {}, ["d[bar,foo]"], ["d[bar,foo]"], id="req extras space"),
+    pytest.param("d[foo,\tbar]", {}, ["d[bar,foo]"], ["d[bar,foo]"], id="req extras tab"),
+    pytest.param("e~=1.4.2", {}, ["e~=1.4.2"], ["e~=1.4.2"], id="req approx"),
+    pytest.param(
+        "f ==5.4 ; python_version < '2.7'",
+        {},
+        ['f==5.4; python_version < "2.7"'],
+        ['f==5.4; python_version < "2.7"'],
+        id="python version filter",
+    ),
+    pytest.param(
+        "g; sys_platform == 'win32'",
+        {},
+        ['g; sys_platform == "win32"'],
+        ['g; sys_platform == "win32"'],
+        id="platform filter",
+    ),
+    pytest.param(
+        "http://w.org/w_P-3.0.3.dev1820+49a8884-cp34-none-win_amd64.whl",
+        {},
+        ["http://w.org/w_P-3.0.3.dev1820+49a8884-cp34-none-win_amd64.whl"],
+        ["http://w.org/w_P-3.0.3.dev1820+49a8884-cp34-none-win_amd64.whl"],
+        id="http URI",
+    ),
+    pytest.param(
+        "git+https://git.example.com/MyProject#egg=MyProject",
+        {},
+        ["git+https://git.example.com/MyProject#egg=MyProject"],
+        ["git+https://git.example.com/MyProject#egg=MyProject"],
+        id="vcs with https",
+    ),
+    pytest.param(
+        "git+ssh://git.example.com/MyProject#egg=MyProject",
+        {},
+        ["git+ssh://git.example.com/MyProject#egg=MyProject"],
+        ["git+ssh://git.example.com/MyProject#egg=MyProject"],
+        id="vcs with ssh",
+    ),
+    pytest.param(
+        "git+https://git.example.com/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709#egg=MyProject",
+        {},
+        ["git+https://git.example.com/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709#egg=MyProject"],
+        ["git+https://git.example.com/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709#egg=MyProject"],
+        id="vcs with commit hash pin",
+    ),
+    pytest.param(
+        "attrs --hash sha384:142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04"
+        "912224782ab\t--hash=sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 # ok",
+        {},
+        [
+            "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
+            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
+        ],
+        ["attrs"],
+        id="hash",
+    ),
+    pytest.param(
+        "attrs --hash=sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152\\\n "
+        "--hash sha384:142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5"
+        "e2ff2c528ecae04912224782ab\n",
+        {},
+        [
+            "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
+            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
+        ],
+        ["attrs"],
+        id="hash with escaped newline",
+    ),
+    pytest.param(
+        "attrs --hash=sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+        "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+        {},
+        [
+            "attrs --hash sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
+        ],
+        ["attrs"],
+        id="sha512 hash is supported",
+    ),
+]
 
-@pytest.mark.parametrize(
-    ("req", "opts", "requirements"),
-    [
-        pytest.param("--pre", {"pre": True}, [], id="pre"),
-        pytest.param("--no-index", {"index_url": []}, [], id="no-index"),
-        pytest.param("--no-index\n-i a\n--no-index", {"index_url": []}, [], id="no-index overwrites index"),
-        pytest.param("--prefer-binary", {"prefer_binary": True}, [], id="prefer-binary"),
-        pytest.param("--require-hashes", {"require_hashes": True}, [], id="requires-hashes"),
-        pytest.param("--pre ", {"pre": True}, [], id="space after"),
-        pytest.param(" --pre", {"pre": True}, [], id="space before"),
-        pytest.param("--pre\\\n", {"pre": True}, [], id="newline after"),
-        pytest.param("--pre # magic", {"pre": True}, [], id="comment after space"),
-        pytest.param("--pre\t# magic", {"pre": True}, [], id="comment after tab"),
-        pytest.param(
-            "--find-links /my/local/archives",
-            {"find_links": ["/my/local/archives"]},
-            [],
-            id="find-links path",
-        ),
-        pytest.param(
-            "--find-links /my/local/archives --find-links /my/local/archives",
-            {"find_links": ["/my/local/archives"]},
-            [],
-            id="find-links duplicate same line",
-        ),
-        pytest.param(
-            "--find-links /my/local/archives\n--find-links /my/local/archives",
-            {"find_links": ["/my/local/archives"]},
-            [],
-            id="find-links duplicate different line",
-        ),
-        pytest.param(
-            "--find-links \\\n/my/local/archives",
-            {"find_links": ["/my/local/archives"]},
-            [],
-            id="find-links newline path",
-        ),
-        pytest.param(
-            "--find-links http://some.archives.com/archives",
-            {"find_links": ["http://some.archives.com/archives"]},
-            [],
-            id="find-links url",
-        ),
-        pytest.param("-i a", {"index_url": ["a"]}, [], id="index url short"),
-        pytest.param("--index-url a", {"index_url": ["a"]}, [], id="index url long"),
-        pytest.param("-i a -i b\n-i c", {"index_url": ["c"]}, [], id="index url multiple"),
-        pytest.param("--extra-index-url a", {"index_url": ["a"]}, [], id="extra-index-url"),
-        pytest.param(
-            "--extra-index-url a --extra-index-url a", {"index_url": ["a"]}, [], id="extra-index-url dup same line"
-        ),
-        pytest.param(
-            "--extra-index-url a\n--extra-index-url a",
-            {"index_url": ["a"]},
-            [],
-            id="extra-index-url dup different line",
-        ),
-        pytest.param("-e a", {}, ["-e a"], id="e"),
-        pytest.param("--editable a", {}, ["-e a"], id="editable"),
-        pytest.param("--editable .[2,1]", {}, ["-e .[1,2]"], id="editable extra"),
-        pytest.param(".[\t, a1. , B2-\t, C3_, ]", {}, [".[B2-,C3_,a1.]"], id="path with extra"),
-        pytest.param(".[a.1]", {}, [".[a.1]"], id="path with invalid extra is path"),
-        pytest.param("-f a", {"find_links": ["a"]}, [], id="f"),
-        pytest.param("--find-links a", {"find_links": ["a"]}, [], id="find-links"),
-        pytest.param("--trusted-host a", {"trusted_hosts": ["a"]}, [], id="trusted-host"),
-        pytest.param(
-            "--trusted-host a --trusted-host a", {"trusted_hosts": ["a"]}, [], id="trusted-host dup same line"
-        ),
-        pytest.param(
-            "--trusted-host a\n--trusted-host a", {"trusted_hosts": ["a"]}, [], id="trusted-host dup different line"
-        ),
-        pytest.param(
-            "--use-feature 2020-resolver", {"features_enabled": ["2020-resolver"]}, [], id="use-feature space"
-        ),
-        pytest.param("--use-feature=fast-deps", {"features_enabled": ["fast-deps"]}, [], id="use-feature equal"),
-        pytest.param(
-            "--use-feature=fast-deps --use-feature 2020-resolver",
-            {"features_enabled": ["2020-resolver", "fast-deps"]},
-            [],
-            id="use-feature multiple same line",
-        ),
-        pytest.param(
-            "--use-feature=fast-deps\n--use-feature 2020-resolver",
-            {"features_enabled": ["2020-resolver", "fast-deps"]},
-            [],
-            id="use-feature multiple different line",
-        ),
-        pytest.param(
-            "--use-feature=fast-deps\n--use-feature 2020-resolver\n" * 2,
-            {"features_enabled": ["2020-resolver", "fast-deps"]},
-            [],
-            id="use-feature multiple duplicate different line",
-        ),
-        pytest.param("--no-binary :all:", {}, [], id="no-binary"),
-        pytest.param("--only-binary :all:", {}, [], id="only-binary space"),
-        pytest.param("--only-binary=:all:", {}, [], id="only-binary equal"),
-        pytest.param("####### example-requirements.txt #######", {}, [], id="comment"),
-        pytest.param("\t##### Requirements without Version Specifiers ######", {}, [], id="tab and comment"),
-        pytest.param("  # start", {}, [], id="space and comment"),
-        pytest.param("nose", {}, ["nose"], id="req"),
-        pytest.param("nose\nnose", {}, ["nose"], id="req dup"),
-        pytest.param(
-            "numpy[2,1]  @ file://./downloads/numpy-1.9.2-cp34-none-win32.whl",
-            {},
-            ["numpy[1,2]@ file://./downloads/numpy-1.9.2-cp34-none-win32.whl"],
-            id="path with name-extra-protocol",
-        ),
-        pytest.param(
-            "docopt == 0.6.1             # Version Matching. Must be version 0.6.1",
-            {},
-            ["docopt==0.6.1"],
-            id="req equal comment",
-        ),
-        pytest.param(
-            "keyring >= 4.1.1            # Minimum version 4.1.1",
-            {},
-            ["keyring>=4.1.1"],
-            id="req ge comment",
-        ),
-        pytest.param(
-            "coverage != 3.5             # Version Exclusion. Anything except version 3.5",
-            {},
-            ["coverage!=3.5"],
-            id="req ne comment",
-        ),
-        pytest.param(
-            "Mopidy-Dirble ~= 1.1        # Compatible release. Same as >= 1.1, == 1.*",
-            {},
-            ["Mopidy-Dirble~=1.1"],
-            id="req approx comment",
-        ),
-        pytest.param("b==1.3", {}, ["b==1.3"], id="req eq"),
-        pytest.param("c >=1.2,<2.0", {}, ["c<2.0,>=1.2"], id="req ge lt"),
-        pytest.param("d[bar,foo]", {}, ["d[bar,foo]"], id="req extras"),
-        pytest.param("d[foo, bar]", {}, ["d[bar,foo]"], id="req extras space"),
-        pytest.param("d[foo,\tbar]", {}, ["d[bar,foo]"], id="req extras tab"),
-        pytest.param("e~=1.4.2", {}, ["e~=1.4.2"], id="req approx"),
-        pytest.param(
-            "f ==5.4 ; python_version < '2.7'", {}, ['f==5.4; python_version < "2.7"'], id="python version filter"
-        ),
-        pytest.param("g; sys_platform == 'win32'", {}, ['g; sys_platform == "win32"'], id="platform filter"),
-        pytest.param(
-            "http://w.org/w_P-3.0.3.dev1820+49a8884-cp34-none-win_amd64.whl",
-            {},
-            ["http://w.org/w_P-3.0.3.dev1820+49a8884-cp34-none-win_amd64.whl"],
-            id="http URI",
-        ),
-        pytest.param(
-            "git+https://git.example.com/MyProject#egg=MyProject",
-            {},
-            ["git+https://git.example.com/MyProject#egg=MyProject"],
-            id="vcs with https",
-        ),
-        pytest.param(
-            "git+ssh://git.example.com/MyProject#egg=MyProject",
-            {},
-            ["git+ssh://git.example.com/MyProject#egg=MyProject"],
-            id="vcs with ssh",
-        ),
-        pytest.param(
-            "git+https://git.example.com/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709#egg=MyProject",
-            {},
-            ["git+https://git.example.com/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709#egg=MyProject"],
-            id="vcs with commit hash pin",
-        ),
-        pytest.param(
-            "attrs --hash sha384:142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04"
-            "912224782ab\t--hash=sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 # ok",
-            {},
-            [
-                "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
-                "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
-            ],
-            id="hash",
-        ),
-        pytest.param(
-            "attrs --hash=sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152\\\n "
-            "--hash sha384:142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5"
-            "e2ff2c528ecae04912224782ab\n",
-            {},
-            [
-                "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
-                "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
-            ],
-            id="hash with escaped newline",
-        ),
-        pytest.param(
-            "attrs --hash=sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
-            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
-            {},
-            [
-                "attrs --hash sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
-                "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
-            ],
-            id="sha512 hash is supported",
-        ),
-    ],
-)
-def test_req_file(tmp_path: Path, req: str, opts: Dict[str, Any], requirements: List[str]) -> None:
+
+@pytest.mark.parametrize(("req", "opts", "requirements", "as_args"), _REQ_FILE_TEST_CASES)
+def test_req_file(tmp_path: Path, req: str, opts: Dict[str, Any], requirements: List[str], as_args: List[str]) -> None:
     requirements_txt = tmp_path / "req.txt"
     requirements_txt.write_text(req)
     req_file = RequirementsFile(requirements_txt, constraint=False)
+    assert req_file.as_root_args == as_args
     assert str(req_file) == f"-r {requirements_txt}"
     assert vars(req_file.options) == opts
     found = [str(i) for i in req_file.requirements]
@@ -243,8 +305,10 @@ def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("magic\nmagical")
     requirements_file = tmp_path / "req.txt"
-    requirements_file.write_text(f"{flag} other-requirements.txt")
+    requirements_file.write_text(f"{flag} other-requirements.txt\n{flag} other-requirements.txt")
     req_file = RequirementsFile(requirements_file, constraint=False)
+    assert req_file.as_root_args == ["-r", "other-requirements.txt"]
+    assert req_file.as_root_args is req_file.as_root_args  # check it's cached
     assert vars(req_file.options) == {}
     found = [str(i) for i in req_file.requirements]
     assert found == ["magic", "magical"]
@@ -284,8 +348,9 @@ def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
     other_req = tmp_path / "other.txt"
     other_req.write_text("magic\nmagical\n-i a")
     requirements_file = tmp_path / "req.txt"
-    requirements_file.write_text(f"{flag} other.txt")
+    requirements_file.write_text(f"{flag} other.txt\n{flag} other.txt")
     req_file = RequirementsFile(requirements_file, constraint=True)
+    assert req_file.as_root_args == ["-c", "other.txt"]
     assert vars(req_file.options) == {"index_url": ["a"]}
     found = [str(i) for i in req_file.requirements]
     assert found == ["-c magic", "-c magical"]

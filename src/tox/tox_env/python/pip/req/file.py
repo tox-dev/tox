@@ -7,7 +7,7 @@ import sys
 import urllib.parse
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 from urllib.request import urlopen
 
 import chardet
@@ -25,6 +25,8 @@ _COMMENT_RE = re.compile(r"(^|\s+)#.*$")
 _EXTRA_PATH = re.compile(r"(.*)\[([-._,\sa-zA-Z0-9]*)]")
 _EXTRA_ELEMENT = re.compile(r"[a-zA-Z0-9]*[-._a-zA-Z0-9]")
 ReqFileLines = Iterator[Tuple[int, str]]
+
+DEFAULT_INDEX_URL = "https://pypi.org/simple"
 
 
 class ParsedRequirement:
@@ -93,8 +95,13 @@ class ParsedRequirement:
             result.extend(("--hash", hash_value))
         return " ".join(result)
 
+    def as_args(self) -> Iterator[str]:
+        if self.options.get("is_editable"):
+            yield "-e"
+        yield str(self._requirement)
 
-class _ParsedLine:
+
+class ParsedLine:
     def __init__(self, filename: str, lineno: int, args: str, opts: Namespace, constraint: bool) -> None:
         self.filename = filename
         self.lineno = lineno
@@ -118,8 +125,8 @@ class RequirementsFile:
         self._path = path
         self._is_constraint: bool = constraint
         self._opt = Namespace()
-        self._result: List[ParsedRequirement] = []
-        self._loaded = False
+        self._requirements: Optional[List[ParsedRequirement]] = None
+        self._as_root_args: Optional[List[str]] = None
         self._parser_private: Optional[ArgumentParser] = None
 
     def __str__(self) -> str:
@@ -135,13 +142,13 @@ class RequirementsFile:
 
     @property
     def options(self) -> Namespace:
-        self._parse_requirements()
+        self._ensure_requirements_parsed()
         return self._opt
 
     @property
     def requirements(self) -> List[ParsedRequirement]:
-        self._parse_requirements()
-        return self._result
+        self._ensure_requirements_parsed()
+        return cast(List[ParsedRequirement], self._requirements)
 
     @property
     def _parser(self) -> ArgumentParser:
@@ -149,31 +156,34 @@ class RequirementsFile:
             self._parser_private = build_parser(False)
         return self._parser_private
 
-    def _parse_requirements(self) -> None:
-        if self._loaded:
-            return
-        self._result, found = [], set()
-        for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint):
-            parsed_req = self._handle_line(parsed_line)
-            if parsed_req is not None:
+    def _ensure_requirements_parsed(self) -> None:
+        if self._requirements is None:
+            self._requirements = self._parse_requirements(opt=self._opt, recurse=True)
+
+    def _parse_requirements(self, opt: Namespace, recurse: bool) -> List[ParsedRequirement]:
+        result, found = [], set()
+        for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint, recurse):
+            if parsed_line.is_requirement:
+                parsed_req = self._handle_requirement_line(parsed_line)
                 key = str(parsed_req)
                 if key not in found:
                     found.add(key)
-                    self._result.append(parsed_req)
+                    result.append(parsed_req)
+            else:
+                self._merge_option_line(opt, parsed_line.opts, parsed_line.filename)
+        result.sort(key=self._key_func)
+        return result
 
-        def key_func(line: ParsedRequirement) -> Tuple[int, Tuple[int, str, str]]:
-            of_type = {Requirement: 0, Path: 1, str: 2}[type(line.requirement)]
-            between = of_type, str(line.requirement).lower(), str(line.options)
-            if "is_constraint" in line.options:
-                return 2, between
-            if "is_editable" in line.options:
-                return 1, between
-            return 0, between
+    def _key_func(self, line: ParsedRequirement) -> Tuple[int, Tuple[int, str, str]]:  # noqa
+        of_type = {Requirement: 0, Path: 1, str: 2}[type(line.requirement)]
+        between = of_type, str(line.requirement).lower(), str(line.options)
+        if "is_constraint" in line.options:
+            return 2, between
+        if "is_editable" in line.options:
+            return 1, between
+        return 0, between
 
-        self._result.sort(key=key_func)
-        self._loaded = True
-
-    def _parse_and_recurse(self, filename: str, constraint: bool) -> Iterator[_ParsedLine]:
+    def _parse_and_recurse(self, filename: str, constraint: bool, recurse: bool) -> Iterator[ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
                 if line.opts.requirements:  # parse a nested requirements file
@@ -185,15 +195,19 @@ class RequirementsFile:
                 elif not _SCHEME_RE.search(req_path):  # original file and nested file are paths
                     # do a join so relative paths work
                     req_path = os.path.join(os.path.dirname(filename), req_path)
-                yield from self._parse_and_recurse(req_path, nested_constraint)
+                if recurse:
+                    yield from self._parse_and_recurse(req_path, nested_constraint, recurse)
+                else:
+                    line.filename = req_path
+                    yield line
             else:
                 yield line
 
-    def _parse_file(self, url: str, constraint: bool) -> Iterator[_ParsedLine]:
+    def _parse_file(self, url: str, constraint: bool) -> Iterator[ParsedLine]:
         content = self._get_file_content(url)
         for line_number, line in self._pre_process(content):
             args_str, opts = self._parse_line(line)
-            yield _ParsedLine(url, line_number, args_str, opts, constraint)
+            yield ParsedLine(url, line_number, args_str, opts, constraint)
 
     def _get_file_content(self, url: str) -> str:
         """
@@ -242,30 +256,8 @@ class RequirementsFile:
         opts = self._parser.parse_args(args)
         return args_str, opts
 
-    def _handle_line(self, line: _ParsedLine) -> Optional[ParsedRequirement]:
-        """
-        Handle a single parsed requirements line; This can result in creating/yielding requirements or updating options.
-
-        :param line: The parsed line to be processed.
-
-        Returns a ParsedRequirement object if the line is a requirement line, otherwise returns None.
-
-        For lines that contain requirements, the only options that have an effect are from SUPPORTED_OPTIONS_REQ, and
-        they are scoped to the requirement. Other options from SUPPORTED_OPTIONS may be present, but are ignored.
-
-        For lines that do not contain requirements, the only options that have an effect are from SUPPORTED_OPTIONS.
-        Options from SUPPORTED_OPTIONS_REQ may be present, but are ignored. These lines may contain multiple options
-        (although our docs imply only one is supported), and all our parsed and affect the finder.
-        """
-        if line.is_requirement:
-            parsed_req = self._handle_requirement_line(line)
-            return parsed_req
-        else:
-            self._handle_option_line(line.opts, line.filename)
-            return None
-
     @staticmethod
-    def _handle_requirement_line(line: _ParsedLine) -> ParsedRequirement:
+    def _handle_requirement_line(line: ParsedLine) -> ParsedRequirement:
         # For editable requirements, we don't support per-requirement options, so just return the parsed requirement.
         # get the options that apply to requirements
         req_options = {}
@@ -278,50 +270,66 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _handle_option_line(self, opts: Namespace, filename: str) -> None:  # noqa: C901
+    @staticmethod
+    def _merge_option_line(base_opt: Namespace, opt: Namespace, filename: str) -> None:  # noqa: C901
         # percolate options upward
-        if opts.require_hashes:
-            self._opt.require_hashes = True
-        if opts.features_enabled:
-            if not hasattr(self._opt, "features_enabled"):
-                self._opt.features_enabled = []
-            for feature in opts.features_enabled:
-                if feature not in self._opt.features_enabled:
-                    self._opt.features_enabled.append(feature)
-            self._opt.features_enabled.sort()
-        if opts.index_url:
-            if not hasattr(self._opt, "index_url"):
-                self._opt.index_url = []
-            self._opt.index_url = [opts.index_url]
-        if opts.no_index is True:
-            self._opt.index_url = []
-        if opts.extra_index_url:
-            if not hasattr(self._opt, "index_url"):
-                self._opt.index_url = []
-            for url in opts.extra_index_url:
-                if url not in self._opt.index_url:
-                    self._opt.index_url.extend(opts.extra_index_url)
-        if opts.find_links:
+        if opt.requirements:
+            if not hasattr(base_opt, "requirements"):
+                base_opt.requirements = []
+            if opt.requirements[0] not in base_opt.requirements:
+                base_opt.requirements.append(opt.requirements[0])
+        if opt.constraints:
+            if not hasattr(base_opt, "constraints"):
+                base_opt.constraints = []
+            if opt.constraints[0] not in base_opt.constraints:
+                base_opt.constraints.append(opt.constraints[0])
+        if opt.require_hashes:
+            base_opt.require_hashes = True
+        if opt.features_enabled:
+            if not hasattr(base_opt, "features_enabled"):
+                base_opt.features_enabled = []
+            for feature in opt.features_enabled:
+                if feature not in base_opt.features_enabled:
+                    base_opt.features_enabled.append(feature)
+            base_opt.features_enabled.sort()
+        if opt.index_url:
+            if getattr(base_opt, "index_url", []):
+                base_opt.index_url[0] = opt.index_url
+            else:
+                base_opt.index_url = [opt.index_url]
+        if opt.no_index is True:
+            base_opt.index_url = []
+        if opt.extra_index_url:
+            if not getattr(base_opt, "index_url", []):
+                base_opt.index_url = [DEFAULT_INDEX_URL]
+            for url in opt.extra_index_url:
+                if url not in base_opt.index_url:
+                    base_opt.index_url.extend(opt.extra_index_url)
+        if opt.find_links:
             # FIXME: it would be nice to keep track of the source of the find_links: support a find-links local path
             # relative to a requirements file.
-            if not hasattr(self._opt, "index_url"):  # pragma: no branch
-                self._opt.find_links = []
-            value = opts.find_links[0]
+            if not hasattr(base_opt, "index_url"):  # pragma: no branch
+                base_opt.find_links = []
+            value = opt.find_links[0]
             req_dir = os.path.dirname(os.path.abspath(filename))
             relative_to_reqs_file = os.path.join(req_dir, value)
             if os.path.exists(relative_to_reqs_file):
                 value = relative_to_reqs_file  # pragma: no cover
-            if value not in self._opt.find_links:  # pragma: no branch
-                self._opt.find_links.append(value)
-        if opts.pre:
-            self._opt.pre = True
-        if opts.prefer_binary:
-            self._opt.prefer_binary = True
-        for host in opts.trusted_host or []:
-            if not hasattr(self._opt, "trusted_hosts"):
-                self._opt.trusted_hosts = []
-            if host not in self._opt.trusted_hosts:
-                self._opt.trusted_hosts.append(host)
+            if value not in base_opt.find_links:  # pragma: no branch
+                base_opt.find_links.append(value)
+        if opt.pre:
+            base_opt.pre = True
+        if opt.prefer_binary:
+            base_opt.prefer_binary = True
+        for host in opt.trusted_host or []:
+            if not hasattr(base_opt, "trusted_hosts"):
+                base_opt.trusted_hosts = []
+            if host not in base_opt.trusted_hosts:
+                base_opt.trusted_hosts.append(host)
+        if opt.no_binary:
+            base_opt.no_binary = opt.no_binary
+        if opt.only_binary:
+            base_opt.only_binary = opt.only_binary
 
     @staticmethod
     def _break_args_options(line: str) -> Tuple[str, str]:
@@ -398,6 +406,53 @@ class RequirementsFile:
                     continue
                 line = line.replace(env_var, value)
             yield line_number, line
+
+    @property
+    def as_root_args(self) -> List[str]:
+        if self._as_root_args is None:
+            opt = Namespace()
+            result: List[str] = []
+            for req in self._parse_requirements(opt=opt, recurse=False):
+                result.extend(req.as_args())
+            option_args = self._option_to_args(opt)
+            result.extend(option_args)
+
+            self._as_root_args = result
+        return self._as_root_args
+
+    @staticmethod
+    def _option_to_args(opt: Namespace) -> List[str]:
+        result: List[str] = []
+        for req in getattr(opt, "requirements", []):
+            result.extend(("-r", req))
+        for req in getattr(opt, "constraints", []):
+            result.extend(("-c", req))
+        index_url = getattr(opt, "index_url", None)
+        if index_url is not None:
+            if index_url:
+                if index_url[0] != DEFAULT_INDEX_URL:
+                    result.extend(("-i", index_url[0]))
+                for url in index_url[1:]:
+                    result.extend(("--extra-index-url", url))
+            else:
+                result.append("--no-index")
+        for link in getattr(opt, "find_links", []):
+            result.extend(("-f", link))
+        if hasattr(opt, "pre"):
+            result.append("--pre")
+        for host in getattr(opt, "trusted_hosts", []):
+            result.extend(("--trusted-host", host))
+        if hasattr(opt, "prefer_binary"):
+            result.append("--prefer-binary")
+        if hasattr(opt, "require_hashes"):
+            result.append("--require-hashes")
+        for feature in getattr(opt, "features_enabled", []):
+            result.extend(("--use-feature", feature))
+        if hasattr(opt, "no_binary"):
+            result.extend(("--no-binary", opt.no_binary))
+        if hasattr(opt, "only_binary"):
+            result.extend(("--only-binary", opt.only_binary))
+        return result
 
 
 __all__ = (

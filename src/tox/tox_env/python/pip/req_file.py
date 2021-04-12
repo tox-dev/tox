@@ -1,6 +1,4 @@
 import re
-import shlex
-import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -16,9 +14,12 @@ class PythonDeps(RequirementsFile):
         self._unroll: Optional[Tuple[List[str], List[str]]] = None
 
     def _get_file_content(self, url: str) -> str:
-        if url == str(self._path):
+        if self._is_url_self(url):
             return self._raw
         return super()._get_file_content(url)
+
+    def _is_url_self(self, url: str) -> bool:
+        return url == str(self._path)
 
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
@@ -31,12 +32,6 @@ class PythonDeps(RequirementsFile):
         if self._parser_private is None:
             self._parser_private = build_parser(cli_only=True)  # e.g. no --hash for cli only
         return self._parser_private
-
-    def as_args(self) -> List[str]:
-        result = []
-        for line in self.lines():
-            result.extend(shlex.split(line, posix=sys.platform != "win32"))
-        return result
 
     def lines(self) -> List[str]:
         return self._raw.splitlines()
