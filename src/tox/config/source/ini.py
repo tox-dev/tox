@@ -1,7 +1,6 @@
 """Load """
 from abc import ABC
 from configparser import ConfigParser
-from itertools import chain
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Set
 
@@ -109,7 +108,7 @@ class IniSource(Source, ABC):
                 if not is_base_section:
                     yield name
                 if known_factors is None:
-                    known_factors = set(chain.from_iterable(e.split("-") for e in explicit))
+                    known_factors = {factor for e in explicit for factor in e.split("-")}
                 yield from self._discover_from_section(section, known_factors)
 
     def _discover_from_section(self, section: str, known_factors: Set[str]) -> Iterator[str]:

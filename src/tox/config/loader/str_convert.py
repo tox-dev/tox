@@ -1,7 +1,6 @@
 """Convert string configuration values to tox python configuration objects."""
 import shlex
 import sys
-from itertools import chain
 from pathlib import Path
 from typing import Any, Iterator, List, Tuple, Type
 
@@ -64,7 +63,8 @@ class StrConvert(Convert[str]):
     def to_env_list(value: str) -> EnvList:
         from tox.config.loader.ini.factor import extend_factors
 
-        elements = list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n")))
+        elements = [elem for expr in value.split("\n") for elem in extend_factors(expr)]
+
         return EnvList(elements)
 
     TRUTHFUL_VALUES = {"true", "1", "yes", "on"}

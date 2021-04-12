@@ -1,6 +1,6 @@
 import os
 import sys
-from itertools import chain, combinations
+from itertools import combinations
 from pathlib import Path
 from textwrap import dedent
 from typing import List, Sequence
@@ -35,7 +35,7 @@ def test_tox_project_base(tmp_path: Path, tox_project: ToxProjectCreator) -> Non
     assert project.structure
 
 
-COMB = list(chain.from_iterable(combinations(["DIFF", "MISS", "EXTRA"], i) for i in range(4)))
+COMB = [comb for i in range(4) for comb in combinations(["DIFF", "MISS", "EXTRA"], i)]
 
 
 @pytest.mark.parametrize("ops", COMB, ids=["-".join(i) for i in COMB])

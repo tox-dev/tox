@@ -2,14 +2,12 @@
 Expand tox factor expressions to tox environment list.
 """
 import re
-from itertools import chain, groupby, product
+from itertools import groupby, product
 from typing import Iterator, List, Optional, Tuple
 
 
 def filter_for_env(value: str, name: Optional[str]) -> str:
-    current = (
-        set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(name)])) if name is not None else set()
-    )
+    current = set() if name is None else {i for a in find_factor_groups(name) for i, _ in a}
     overall = []
     for factors, content in expand_factors(value):
         if factors is None:
