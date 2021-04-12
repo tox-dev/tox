@@ -196,6 +196,16 @@ from tox.tox_env.python.pip.req.file import ParsedRequirement, RequirementsFile
             ],
             id="hash with escaped newline",
         ),
+        pytest.param(
+            "attrs --hash=sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+            {},
+            [
+                "attrs --hash sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+                "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
+            ],
+            id="sha512 hash is supported",
+        ),
     ],
 )
 def test_req_file(tmp_path: Path, req: str, opts: Dict[str, Any], requirements: List[str]) -> None:
