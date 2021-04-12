@@ -49,7 +49,7 @@ def _req_options(parser: ArgumentParser, cli_only: bool) -> None:
         parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
 
 
-_HASH = re.compile(r"sha(256:[a-z0-9]{64}|384:[a-z0-9]{96}|512:[a-z0-9]{128})")
+_HASH = re.compile(r"sha(256:[a-f0-9]{64}|384:[a-f0-9]{96}|512:[a-f0-9]{128})")
 
 
 def _validate_hash(value: str) -> str:
