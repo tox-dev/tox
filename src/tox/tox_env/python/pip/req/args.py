@@ -17,7 +17,7 @@ class _OurArgumentParser(ArgumentParser):
 
 
 def build_parser(cli_only: bool) -> ArgumentParser:
-    parser = _OurArgumentParser(add_help=False, prog="")
+    parser = _OurArgumentParser(add_help=False, prog="", allow_abbrev=False)
     _global_options(parser)
     _req_options(parser, cli_only)
     return parser

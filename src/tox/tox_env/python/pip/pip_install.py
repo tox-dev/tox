@@ -100,7 +100,7 @@ class Pip(Installer[Python]):
                     missing_requirement = set(old["requirements"]) - set(new_requirements)
                     if missing_requirement:
                         raise Recreate(f"requirements removed: {' '.join(missing_requirement)}")
-                args = arguments.as_args()
+                args = arguments.as_root_args
                 if args:
                     self._execute_installer(args, of_type)
 
