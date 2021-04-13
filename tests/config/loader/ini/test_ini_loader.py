@@ -5,7 +5,6 @@ import pytest
 
 from tox.config.loader.api import Override
 from tox.config.loader.ini import IniLoader
-from tox.config.main import Config
 
 
 def test_ini_loader_keys(mk_ini_conf: Callable[[str], ConfigParser]) -> None:
@@ -56,25 +55,4 @@ def test_ini_loader_raw_strip_escaped_newline(mk_ini_conf: Callable[[str], Confi
 def test_ini_loader_strip_comments(mk_ini_conf: Callable[[str], ConfigParser], case: str, result: str) -> None:
     loader = IniLoader("tox", mk_ini_conf(f"[tox]\na={case}"), [], core_prefix="tox")
     outcome = loader.load(key="a", of_type=str, conf=None, env_name=None, chain=[], kwargs={})
-    assert outcome == result
-
-
-@pytest.mark.parametrize(
-    ("env", "result"),
-    [
-        ("py35", "python -m coverage html -d cov"),
-        ("py36", "python -m coverage html -d cov\n--show-contexts"),
-    ],
-)
-def test_ini_loader_raw_with_factors(
-    mk_ini_conf: Callable[[str], ConfigParser], env: str, result: str, empty_config: Config
-) -> None:
-    commands = "python -m coverage html -d cov \n    !py35: --show-contexts"
-    loader = IniLoader(
-        section="testenv",
-        parser=mk_ini_conf(f"[tox]\nenvlist=py35,py36\n[testenv]\ncommands={commands}"),
-        overrides=[],
-        core_prefix="tox",
-    )
-    outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
     assert outcome == result
