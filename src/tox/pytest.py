@@ -501,7 +501,7 @@ class IndexServer:
                     for _ in stdout:
                         pass
 
-                # important to keep draining the stdout, otherwise once the buffer is full Windows blocks the processg s
+                # important to keep draining the stdout, otherwise once the buffer is full Windows blocks the process
                 self._stdout_drain = Thread(target=_keep_draining, name="tox-test-stdout-drain")
                 self._stdout_drain.start()
                 break

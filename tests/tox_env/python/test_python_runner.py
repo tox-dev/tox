@@ -74,7 +74,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
     }
 
 
-def test_journal_packge_dir(tmp_path: Path) -> None:
+def test_journal_package_dir(tmp_path: Path) -> None:
     journal = EnvJournal(enabled=True, name="a")
 
     PythonRun._handle_journal_package(journal, [PathPackage(tmp_path)])
