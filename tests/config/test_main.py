@@ -1,15 +1,8 @@
-import pytest
-
 from tests.conftest import ToxIniCreator
 from tox.config.loader.api import Override
 from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet
-
-
-@pytest.fixture()
-def empty_config(tox_ini_conf: ToxIniCreator) -> Config:
-    return tox_ini_conf("")
 
 
 def test_empty_config_repr(empty_config: Config) -> None:

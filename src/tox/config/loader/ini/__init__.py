@@ -30,10 +30,10 @@ class IniLoader(StrConvert, Loader[str]):
 
     def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> str:
         value = self._section[key]
-        collapsed_newlines = value.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
+
         # strip comments
         elements: List[str] = []
-        for line in collapsed_newlines.split("\n"):
+        for line in value.split("\n"):
             if not line.startswith("#"):
                 part = _COMMENTS.sub("", line)
                 elements.append(part.replace("\\#", "#"))
@@ -43,7 +43,8 @@ class IniLoader(StrConvert, Loader[str]):
             factor_filtered = strip_comments  # we don't support factor and replace functionality there
         else:
             factor_filtered = filter_for_env(strip_comments, env_name)  # select matching factors
-        return factor_filtered
+        collapsed = factor_filtered.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
+        return collapsed
 
     @contextmanager
     def build(
