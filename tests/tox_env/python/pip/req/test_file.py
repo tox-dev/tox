@@ -372,11 +372,20 @@ def test_req_path_with_space_escape(tmp_path: Path) -> None:
     assert found == ["c"]
 
 
-def test_bad_hash(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "hash_value",
+    [
+        "sha256:a",
+        "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
+        "sha512:thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+        "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+    ],
+)
+def test_bad_hash(hash_value: str, tmp_path: Path) -> None:
     requirements_txt = tmp_path / "req.txt"
-    requirements_txt.write_text("attrs --hash sha256:a")
+    requirements_txt.write_text(f"attrs --hash {hash_value}")
     req_file = RequirementsFile(requirements_txt, constraint=False)
-    with pytest.raises(ValueError, match="^argument --hash: sha256:a$"):
+    with pytest.raises(ValueError, match=f"^argument --hash: {hash_value}$"):
         assert req_file.requirements
 
 
