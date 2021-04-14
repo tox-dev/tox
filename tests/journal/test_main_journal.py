@@ -24,7 +24,7 @@ def test_journal_enabled_default(base_info: Dict[str, Any]) -> None:
     assert journal.content == base_info
 
 
-def test_journal_disabed_default() -> None:
+def test_journal_disabled_default() -> None:
     journal = Journal(enabled=False)
     assert bool(journal) is False
     assert journal.content == {}

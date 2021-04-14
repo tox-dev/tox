@@ -41,6 +41,6 @@ For now reach out to [Bernat Gabor](https://github.com/gaborbernat/) directly.
 
 Contributions are welcome, though expect a lot of rough edges at this early point of development. See
 [contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our
-[Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md). Currently the
-[code](https://github.com/tox-dev/tox) and the [issues](https://github.com/tox-dev/tox/issues) are hosted on Github. The
+[Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md). Currently, the
+[code](https://github.com/tox-dev/tox) and the [issues](https://github.com/tox-dev/tox/issues) are hosted on GitHub. The
 project is licensed under [MIT](https://github.com/tox-dev/tox/blob/master/LICENSE).
