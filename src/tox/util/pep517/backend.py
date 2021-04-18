@@ -5,6 +5,7 @@ See https://tox.readthedocs.io/en/rewrite/development.html#code-style-guide
 """
 from __future__ import print_function, unicode_literals
 
+import importlib
 import json
 import os
 import sys
@@ -19,7 +20,7 @@ class BackendProxy:
     def __init__(self, backend_module, backend_obj):
         self.backend_module = backend_module
         self.backend_object = backend_obj
-        backend = __import__(self.backend_module, fromlist=[None])  # type: ignore[list-item]
+        backend = importlib.import_module(self.backend_module)
         if self.backend_object:
             backend = getattr(backend, self.backend_object)
         self.backend = backend
