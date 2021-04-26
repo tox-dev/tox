@@ -154,7 +154,7 @@ class VirtualEnv(object):
 
     @property
     def path(self):
-        """ Path to environment base dir. """
+        """Path to environment base dir."""
         return self.envconfig.envdir
 
     @property
@@ -163,7 +163,7 @@ class VirtualEnv(object):
 
     @property
     def name(self):
-        """ test environment name. """
+        """test environment name."""
         return self.envconfig.envname
 
     def __repr__(self):

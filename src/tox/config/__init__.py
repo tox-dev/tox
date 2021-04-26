@@ -1076,7 +1076,7 @@ class TestenvConfig:
         return self.get_envpython()
 
     def get_envpython(self):
-        """ path to python/jython executable. """
+        """path to python/jython executable."""
         if "jython" in str(self.basepython):
             name = "jython"
         else:
@@ -1552,7 +1552,7 @@ class ParseIni(object):
 
 
 def _split_env(env):
-    """if handed a list, action="append" was used for -e """
+    """if handed a list, action="append" was used for -e"""
     if env is None:
         return []
     if not isinstance(env, list):
