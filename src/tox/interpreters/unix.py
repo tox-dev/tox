@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
+
 import sys
 
-from tox import reporter
 import tox
+from tox import reporter
 
 from .common import base_discover
 from .via_path import check_with_path
