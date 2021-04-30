@@ -61,9 +61,9 @@ SUICIDE_TIMEOUT = 0.0
 INTERRUPT_TIMEOUT = 0.3
 TERMINATE_TIMEOUT = 0.2
 
-_FACTOR_LINE_PATTERN = re.compile(r"^([\w{}\.!,-]+)\:\s+(.+)")
-_ENVSTR_SPLIT_PATTERN = re.compile(r"((?:\{[^}]+\})+)|,")
-_ENVSTR_EXPAND_PATTERN = re.compile(r"\{([^}]+)\}")
+_FACTOR_LINE_PATTERN = re.compile(r"^([\w{}.!,-]+):\s+(.+)")
+_ENVSTR_SPLIT_PATTERN = re.compile(r"((?:{[^}]+})+)|,")
+_ENVSTR_EXPAND_PATTERN = re.compile(r"{([^}]+)}")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 
 
@@ -1412,7 +1412,7 @@ class ParseIni(object):
         factors = set()
         if section in self._cfg:
             for _, value in self._cfg[section].items():
-                exprs = re.findall(r"^([\w{}\.!,-]+)\:\s+", value, re.M)
+                exprs = re.findall(r"^([\w{}.!,-]+):\s+", value, re.M)
                 factors.update(*mapcat(_split_factor_expr_all, exprs))
         return factors
 
@@ -1536,7 +1536,7 @@ class ParseIni(object):
         The parser will see it as two different sections: [testenv:py36-cov], [testenv:py37-cov]
 
         """
-        factor_re = re.compile(r"\{\s*([\w\s,-]+)\s*\}")
+        factor_re = re.compile(r"{\s*([\w\s,-]+)\s*}")
         split_re = re.compile(r"\s*,\s*")
         to_remove = set()
         for section in list(config.sections):
