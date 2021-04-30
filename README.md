@@ -103,7 +103,7 @@ On [Stack Overflow (tagged with `tox`)](https://stackoverflow.com/questions/tagg
 Contributions are welcome. See [contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our
 [Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md).
 
-Currently the [code](https://github.com/tox-dev/tox) and the [issues](https://github.com/tox-dev/tox/issues) are hosted
-on Github.
+Currently, the [code](https://github.com/tox-dev/tox) and the [issues](https://github.com/tox-dev/tox/issues) are hosted
+on GitHub.
 
 The project is licensed under [MIT](https://github.com/tox-dev/tox/blob/master/LICENSE).

@@ -32,7 +32,7 @@ type=conda-env
 ```
 
 1. Create a new ``create_env_command`` option.
-;2. Create a new ``env_activate_command`` option (also consider how to make that platform dependent).
+2. Create a new ``env_activate_command`` option (also consider how to make that platform dependent).
 2. New substitution variable: {python_version} ('3.5', '2.7', etc')
 3. env type concept: different types change the default options.
 
