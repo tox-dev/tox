@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something that does not works as expected
+about: Something that does not work as expected
 title: ""
 labels: bug:normal
 assignees: ''

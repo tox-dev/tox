@@ -47,7 +47,7 @@ To summarize - we would need a:
 
 * reporting in detox is minimal (would need to improve)
 * restricting processes would be necessary depending on power of the machine
-  (creating 16 processe on a dual core machine might be overkill)
+  (creating 16 processes on a dual-core machine might be overkill)
 * port it from eventlets to threads?
 
 ### Concrete use case conda integration (started by Bruno)
