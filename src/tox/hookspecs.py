@@ -6,7 +6,7 @@ hookspec = pluggy.HookspecMarker("tox")
 
 @hookspec
 def tox_addoption(parser):
-    """ add command line options to the argparse-style parser object."""
+    """add command line options to the argparse-style parser object."""
 
 
 @hookspec

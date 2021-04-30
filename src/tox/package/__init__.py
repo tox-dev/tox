@@ -18,7 +18,7 @@ def tox_package(session, venv):
 
 
 def get_package(session):
-    """"Perform the package operation"""
+    """Perform the package operation"""
     config = session.config
     if config.skipsdist:
         info("skipping sdist step")
