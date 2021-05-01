@@ -1,4 +1,4 @@
-![PyPI](https://img.shields.io/pypi/v/tox?style=flat-square)
+[![PyPI](https://img.shields.io/pypi/v/tox?style=flat-square)](https://pypi.org/project/tox/)
 [![Supported Python
 versions](https://img.shields.io/pypi/pyversions/tox.svg)](https://pypi.org/project/tox/)
 [![Azure Pipelines build
@@ -33,7 +33,7 @@ the configuration.
 
 To test a simple project that has some tests, here is an example with a `tox.ini` in the root of the project:
 
-```{.sourceCode .ini}
+```ini
 [tox]
 envlist = py37,py38
 
@@ -42,7 +42,7 @@ deps = pytest
 commands = pytest
 ```
 
-```{.sourceCode .console}
+```console
 $ tox
 
 [lots of output from what tox does]
@@ -54,7 +54,7 @@ __________________ summary _________________
   congratulations :)
 ```
 
-tox created two `testenvs` - one based on Python3.7 and one based on Python3.8, it installed pytest in them and ran the
+tox created two `testenvs` - one based on Python 3.7 and one based on Python 3.8, it installed pytest in them and ran the
 tests. The report at the end summarizes which `testenvs` have failed and which have succeeded.
 
 **Note:** To learn more about what you can do with tox, have a look at
@@ -63,7 +63,7 @@ tests. The report at the end summarizes which `testenvs` have failed and which h
 
 ### How it works
 
-tox creates virtual environments for all configured so called `testenvs`, it then installs the project and other
+tox creates virtual environments for all configured so-called `testenvs`, it then installs the project and other
 necessary dependencies and runs the configured set of commands. See
 [system overview](https://tox.readthedocs.io/en/latest/#system-overview) for more details.
 
@@ -79,7 +79,7 @@ necessary dependencies and runs the configured set of commands. See
 - creating development environments
 - running static code analysis and test tools
 - automating package builds
-- running tests against the package build by tox
+- running tests against the package built by tox
 - checking that packages install correctly with different Python versions/interpreters
 - unifying Continuous Integration and command line based testing
 - building and deploying project documentation
