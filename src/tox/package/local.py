@@ -49,7 +49,7 @@ def get_latest_version_of_package(package_spec):
         return candidates[0]
 
 
-_REGEX_FILE_NAME_WITH_VERSION = re.compile(r"[\w_\-\+\.]+-(.*)\.(zip|tar\.gz)")
+_REGEX_FILE_NAME_WITH_VERSION = re.compile(r"[\w_+.-]+-(.*)\.(zip|tar\.gz)")
 
 
 def get_version_from_filename(basename):
