@@ -1,8 +1,10 @@
 import os
+import subprocess
 
 import py
 import pytest
 
+import tox.helper
 from tox.package.builder.isolated import get_build_info
 from tox.reporter import _INSTANCE
 
@@ -193,3 +195,10 @@ def test_verbose_isolated_build_in_tree(initproj, mock_venv, cmd):
     assert "running sdist" in result.out, result.out
     assert "running egg_info" in result.out, result.out
     assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out
+
+
+def test_isolated_build_script_args(tmp_path):
+    """Verify that build_isolated.py can be called with only 2 argurments."""
+    # cannot import build_isolated because of its side effects
+    script_path = os.path.join(os.path.dirname(tox.helper.__file__), "build_isolated.py")
+    subprocess.check_call(("python", script_path, str(tmp_path), "setuptools.build_meta"))
