@@ -29,7 +29,7 @@ def _ensure_module_in_paths(module, paths):
 dist_folder = sys.argv[1]
 backend_spec = sys.argv[2]
 backend_obj = sys.argv[3] if len(sys.argv) >= 4 else None
-backend_paths = sys.argv[4].split(os.path.pathsep) if sys.argv[4] else []
+backend_paths = sys.argv[4].split(os.path.pathsep) if (len(sys.argv) >= 5 and sys.argv[4]) else []
 
 sys.path[:0] = backend_paths
 
