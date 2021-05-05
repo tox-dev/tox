@@ -1,3 +1,0 @@
-Distinguish between normal Windows Python and MSYS2 Python when looking for
-virtualenv executable path.  Adds os.sep to :class:`InterpreterInfo`
-- by :user:`jschwartzentruber`

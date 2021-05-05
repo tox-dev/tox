@@ -1,1 +1,0 @@
-Fix a ``tox-conda`` isolation build bug - by :user:`AntoineD`.

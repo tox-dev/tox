@@ -11,6 +11,33 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.23.1 (2021-05-05)
+Bugfixes
+^^^^^^^^
+
+- Distinguish between normal Windows Python and MSYS2 Python when looking for
+  virtualenv executable path.  Adds os.sep to :class:`InterpreterInfo`
+  - by :user:`jschwartzentruber`
+  `#1982 <https://github.com/tox-dev/tox/issues/1982>`_
+- Fix a ``tox-conda`` isolation build bug - by :user:`AntoineD`.
+  `#2056 <https://github.com/tox-dev/tox/issues/2056>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Update examples in the documentation to use ``setenv`` in the ``[testenv]`` sections, not wrongly in the ``[tox]`` main section.
+  - by :user:`AndreyNautilus`
+  `#1999 <https://github.com/tox-dev/tox/issues/1999>`_
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- Enable building tox with ``setuptools_scm`` 6+ by :user:`hroncok`
+  `#1984 <https://github.com/tox-dev/tox/issues/1984>`_
+
+
 v3.23.0 (2021-03-03)
 --------------------
 
