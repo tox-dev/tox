@@ -6,7 +6,7 @@ from typing import IO, Any, NoReturn, Optional, Sequence, Union
 
 class _OurArgumentParser(ArgumentParser):
     def print_usage(self, file: Optional[IO[str]] = None) -> None:  # noqa: U100
-        """"""
+        """ """
 
     def exit(self, status: int = 0, message: Optional[str] = None) -> NoReturn:  # noqa: U100
         message = "" if message is None else message

@@ -18,7 +18,7 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 
 
 class Pip(Installer[Python]):
-    """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517 """
+    """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517"""
 
     def _register_config(self) -> None:
         self._env.conf.add_config(

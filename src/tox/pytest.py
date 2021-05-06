@@ -173,13 +173,13 @@ class ToxProject:
                 return self._exit_code
 
             def wait(self, timeout: Optional[float] = None) -> None:
-                """"""
+                """ """
 
             def write_stdin(self, content: str) -> None:
-                """"""
+                """ """
 
             def interrupt(self) -> None:
-                """"""
+                """ """
 
         class MockExecuteInstance(ExecuteInstance):
             def __init__(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite, exit_code: int) -> None:
