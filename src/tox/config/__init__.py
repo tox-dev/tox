@@ -595,7 +595,7 @@ def tox_addoption(parser):
     )
 
     def _set_envdir_from_devenv(testenv_config, value):
-        if testenv_config.config.option.devenv is not None:
+        if testenv_config.config.option.devenv is not None and testenv_config.envname != ".tox":
             return py.path.local(testenv_config.config.option.devenv)
         else:
             return value
