@@ -527,7 +527,7 @@ class VirtualEnv(object):
                 # happens if the same environment is invoked twice
                 message = "commands[{}] | {}".format(
                     i,
-                    " ".join([pipes.quote(str(x)) for x in argv]),
+                    " ".join(pipes.quote(str(x)) for x in argv),
                 )
                 action.setactivity(name, message)
                 # check to see if we need to ignore the return code
@@ -609,10 +609,10 @@ class VirtualEnv(object):
                 "unresolvable substitution(s):\n    {}\n"
                 "Environment variables are missing or defined recursively.".format(
                     "\n    ".join(
-                        [
+                        
                             "{}: '{}'".format(section_key, exc.name)
                             for section_key, exc in sorted(self.envconfig._missing_subs.items())
-                        ],
+                        ,
                     ),
                 )
             )

@@ -223,8 +223,8 @@ def get_default_deps(commands):
 def post_process_input(map_):
     envlist = [env for env in tox.PYTHON.QUICKSTART_PY_ENVS if map_.get(env) is True]
     map_["envlist"] = ", ".join(envlist)
-    map_["commands"] = "\n    ".join([cmd.strip() for cmd in map_["commands"]])
-    map_["deps"] = "\n    ".join([dep.strip() for dep in set(map_["deps"])])
+    map_["commands"] = "\n    ".join(cmd.strip() for cmd in map_["commands"])
+    map_["deps"] = "\n    ".join(dep.strip() for dep in set(map_["deps"]))
 
 
 def generate(map_):
@@ -247,7 +247,7 @@ def generate(map_):
 
 
 def prepare_content(content):
-    return "\n".join([line.rstrip() for line in content.split("\n")])
+    return "\n".join(line.rstrip() for line in content.split("\n"))
 
 
 def parse_args():

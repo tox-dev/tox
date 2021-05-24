@@ -1560,7 +1560,7 @@ def _split_env(env):
         return []
     if not isinstance(env, list):
         env = [e.split("#", 1)[0].strip() for e in env.split("\n")]
-        env = ",".join([e for e in env if e])
+        env = ",".join(e for e in env if e)
         env = [env]
     return mapcat(_expand_envstr, env)
 
@@ -1792,7 +1792,7 @@ class SectionReader:
             if sys.platform.startswith("win"):
                 posargs_string = list2cmdline([x for x in posargs if x])
             else:
-                posargs_string = " ".join([shlex_quote(x) for x in posargs if x])
+                posargs_string = " ".join(shlex_quote(x) for x in posargs if x)
             return posargs_string
         else:
             return default or ""

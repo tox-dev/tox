@@ -85,7 +85,7 @@ def get_last_release_versions(repo: Repo) -> Tuple[Version, Version]:
     print("get latest release version")
     commit_to_tag = {tag.commit.hexsha: tag for tag in repo.tags}
     _, release_tag = sorted(
-        [(tag.commit.committed_datetime, tag) for tag in repo.tags],
+        ((tag.commit.committed_datetime, tag) for tag in repo.tags),
         reverse=True,
     )[0]
     for commit in release_tag.commit.iter_parents():
