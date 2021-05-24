@@ -609,9 +609,8 @@ class VirtualEnv(object):
                 "unresolvable substitution(s):\n    {}\n"
                 "Environment variables are missing or defined recursively.".format(
                     "\n    ".join(
-                        
-                            "{}: '{}'".format(section_key, exc.name)
-                            for section_key, exc in sorted(self.envconfig._missing_subs.items())
+                        "{}: '{}'".format(section_key, exc.name)
+                        for section_key, exc in sorted(self.envconfig._missing_subs.items())
                     ),
                 )
             )
