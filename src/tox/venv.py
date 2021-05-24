@@ -612,7 +612,6 @@ class VirtualEnv(object):
                         
                             "{}: '{}'".format(section_key, exc.name)
                             for section_key, exc in sorted(self.envconfig._missing_subs.items())
-                        ,
                     ),
                 )
             )
