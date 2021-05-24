@@ -385,3 +385,20 @@ def space_path2url(path):
     if " " not in at_path:
         return at_path
     return urljoin("file:", pathname2url(os.path.abspath(at_path)))
+
+
+def test_provision_does_not_occur_in_devenv(newconfig, next_tox_major):
+    """Adding --devenv should not change the directory where provisioning occurs"""
+    with pytest.raises(MissingRequirement) as context:
+        newconfig(
+            ["--devenv", "my_devenv"],
+            """\
+            [tox]
+            minversion = {}
+            """.format(
+                next_tox_major,
+            ),
+        )
+    config = context.value.config
+    assert config.run_provision is True
+    assert config.envconfigs[".tox"].envdir.basename != "my_devenv"
