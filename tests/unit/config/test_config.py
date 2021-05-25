@@ -1956,7 +1956,7 @@ class TestConfigTestEnv:
                 frob{{env:ENV_VAR:>1.0,<2.0}}
         """.format(
             envlist=",".join(envlist),
-            deps="\n" + "\n".join([" " * 17 + d for d in deps]),
+            deps="\n" + "\n".join(" " * 17 + d for d in deps),
         )
         conf = newconfig([], inisource).envconfigs["py27"]
         packages = [dep.name for dep in conf.deps]
