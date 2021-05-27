@@ -48,6 +48,7 @@ You will get some output similar to this::
     tox-docker (1.0.0)                   - Launch a docker instance around test runs
     tox-bitbucket-status (1.0)           - Update bitbucket status for each env
     tox-pipenv-install (1.0.3)           - Install packages from Pipfile
+    tox-poetry (0.3.0)                   - Install packages using poetry
 
 
 There might also be some plugins not (yet) available from PyPI that could be installed directly
