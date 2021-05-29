@@ -1093,8 +1093,22 @@ user can bypass the system's interpreter parser by defining the
 When the workaround is enabled, all tox-invoked text file executables will have
 their interpreter directive parsed by and explicitly executed by ``tox``.
 
+Environment variables
+---------------------
+tox will treat the following environment variables:
+
+- ``TOX_DISCOVER`` for python discovery first try the python executables under these paths
+- ``TOXENV`` see :conf:`envlist`.
+- ``TOX_LIMITED_SHEBANG`` see :ref:`long interpreter directives`.
+- ``TOX_PARALLEL_NO_SPINNER`` see :ref:`parallel_mode`.
+- ``_TOX_PARALLEL_ENV`` lets tox know that it is invoked in the parallel mode.
+- ``TOX_PROVISION`` is only intended to be used internally.
+- ``TOX_REPORTER_TIMESTAMP`` enables showing for each output line its delta since the tox startup when set to ``1``.
+- ``TOX_SKIP_ENV`` see :conf:`envlist`.
+- ``TOX_TESTENV_PASSENV`` see :conf:`passenv`.
+
 Injected environment variables
-------------------------------
+++++++++++++++++++++++++++++++
 tox will inject the following environment variables that you can use to test that your command is running within tox:
 
 .. versionadded:: 3.4
