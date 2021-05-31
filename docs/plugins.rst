@@ -21,33 +21,45 @@ e.g.:
 
     $ pip install tox-travis
 
-You can search for available plugins on PyPI by typing ``pip search tox`` and filter for
-packages that are prefixed ``tox-`` or contain the word "plugin" in the description.
-You will get some output similar to this::
+You can search for available plugins on PyPI by visiting `PyPI <https://pypi.org/search/?q=tox>`_ and
+searching for packages that are prefixed ``tox-`` or contain the word "plugin" in the description.
+Examples include::
 
-    tox-pipenv (1.4.1)                   - A pipenv plugin for tox
-    tox-pyenv (1.1.0)                    - tox plugin that makes tox use ``pyenv which`` to find
-                                           python executables
-    tox-globinterpreter (0.3)            - tox plugin to allow specification of interpreter
-                                           locationspaths to use
-    tox-venv (0.2.0)                     - Use python3 venvs for python3 tox testenvs
-    tox-cmake (0.1.1)                    - Build CMake projects using tox
-    tox-tags (0.2.0)                     - Allows running subsets of environments based on tags
-    tox-travis (0.10)                    - Seamless integration of tox into Travis CI
-    tox-py-backwards (0.1)               - tox plugin for py-backwards
-    tox-pytest-summary (0.1.2)           - tox + Py.test summary
-    tox-envreport (0.2.0)                - A tox-plugin to document the setup of used virtual
-                                           environments.
-    tox-no-internet (0.1.0)              - Workarounds for using tox with no internet connection
-    tox-virtualenv-no-download (1.0.2)   - Disable virtualenv's download-by-default in tox
-    tox-run-command (0.4)                - tox plugin to run arbitrary commands in a virtualenv
-    tox-pip-extensions (1.2.1)           - Augment tox with different installation methods via
+    tox-ansible                          - Plugin for generating tox environments for tools like ansible-test
+    tox-asdf                             - A tox plugin that finds python executables using asdf
+    tox-backticks                        - Allows backticks within setenv blocks for populating
+                                           environment variables
+    tox-bindep                           - Runs bindep checks prior to tests
+    tox-bitbucket-status                 - Update bitbucket status for each env
+    tox-cmake                            - Build CMake projects using tox
+    tox-conda                            - Provides integration with the condo package manager
+    tox-current-env                      - Run tests in the current python environment
+    tox-docker                           - Launch a docker instance around test runs
+    tox-direct                           - Run everything directly without tox venvs
+    tox-envlist                          - Allows selection of a different tox envlist
+    tox-envreport                        - A tox-plugin to document the setup of used virtual
+    tox-factor                           - Runs a subset of tox test environments
+    tox-globinterpreter                  - tox plugin to allow specification of interpreter
+    tox-gh-actions                       - A plugin for helping to run tox in GitHub actions.
+    tox-ltt                              - Light-the-torch integration
+    tox-no-internet                      - Workarounds for using tox with no internet connection
+    tox-pdm                              - Utilizes PDM as the package manager and installer
+    tox-pip-extensions                   - Augment tox with different installation methods via
                                            progressive enhancement.
-    tox-run-before (0.1)                 - tox plugin to run shell commands before the test
+    tox-pipenv                           - A pipenv plugin for tox
+    tox-pipenv-install                   - Install packages from Pipfile
+    tox-poetry                           - Install packages using poetry
+    tox-py-backwards                     - tox plugin for py-backwards
+    tox-pyenv                            - tox plugin that makes tox use ``pyenv which`` to find
+                                           python executables
+    tox-pytest-summary                   - tox + Py.test summary
+    tox-run-before                       - tox plugin to run shell commands before the test
                                            environments are created.
-    tox-docker (1.0.0)                   - Launch a docker instance around test runs
-    tox-bitbucket-status (1.0)           - Update bitbucket status for each env
-    tox-pipenv-install (1.0.3)           - Install packages from Pipfile
+    tox-run-command                      - tox plugin to run arbitrary commands in a virtualenv
+    tox-tags                             - Allows running subsets of environments based on tags
+    tox-travis                           - Seamless integration of tox into Travis CI
+    tox-venv                             - Use python3 venvs for python3 tox testenvs environments.
+    tox-virtualenv-no-download           - Disable virtualenv's download-by-default in tox
 
 
 There might also be some plugins not (yet) available from PyPI that could be installed directly
