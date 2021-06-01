@@ -7,7 +7,7 @@ Getting in contact:
 
 * join the `tox-dev mailing list`_ for tox related questions and development discussions
 * file a `report on the issue tracker`_
-* hang out on the irc.freenode.net #pylib channel
+* hang out on the tox discord server channel at https://discord.gg/tox
 * `fork the github repository`_ and submit merge/pull requests (see the developers help page -- :ref:`developers`)
 
 Paid professional support
