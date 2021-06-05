@@ -636,7 +636,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
     .. versionadded:: 3.15.2
 
     When an interrupt is sent via Ctrl+C or the tox process is killed with a SIGTERM,
-    a SIGINT is sent to all foreground processes. The :conf:``suicide_timeout`` gives
+    a SIGINT is sent to all foreground processes. The :conf:`suicide_timeout` gives
     the running process time to cleanup and exit before receiving (in some cases, a duplicate) SIGINT from
     tox.
 
@@ -645,17 +645,17 @@ Complete list of settings that you can put into ``testenv*`` sections:
     .. versionadded:: 3.15.0
 
     When tox is interrupted, it propagates the signal to the child process
-    after :conf:``suicide_timeout`` seconds. If the process still hasn't exited
-    after :conf:``interrupt_timeout`` seconds, its sends a SIGTERM.
+    after :conf:`suicide_timeout` seconds. If the process still hasn't exited
+    after :conf:`interrupt_timeout` seconds, its sends a SIGTERM.
 
 .. conf:: terminate_timeout ^ float ^ 0.2
 
     .. versionadded:: 3.15.0
 
-    When tox is interrupted, after waiting :conf:``interrupt_timeout`` seconds,
+    When tox is interrupted, after waiting :conf:`interrupt_timeout` seconds,
     it propagates the signal to the child process, waits
-    :conf:``interrupt_timeout`` seconds, sends it a SIGTERM, waits
-    :conf:``terminate_timeout`` seconds, and sends it a SIGKILL if it hasn't
+    :conf:`interrupt_timeout` seconds, sends it a SIGTERM, waits
+    :conf:`terminate_timeout` seconds, and sends it a SIGKILL if it hasn't
     exited.
 
 Substitutions
