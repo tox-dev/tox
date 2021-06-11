@@ -133,13 +133,6 @@ or
 .. code-block:: ini
 
     [testenv]
-    deps = -cconstraints.txt
-
-or
-
-.. code-block:: ini
-
-    [testenv]
     deps =
         -rrequirements.txt
         -cconstraints.txt
