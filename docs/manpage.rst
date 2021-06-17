@@ -1,4 +1,4 @@
-tox
+tox manpage
 ===========
 
 SYNOPSIS

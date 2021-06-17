@@ -184,6 +184,7 @@ tox has influenced several other projects in the Python test automation space. I
    developers
    example/result
    announce/changelog-only
+   manpage
 
 
 .. include:: links.rst
