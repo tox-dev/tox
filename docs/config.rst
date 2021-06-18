@@ -273,6 +273,25 @@ Complete list of settings that you can put into ``testenv*`` sections:
         translates as the virtual environments ``python`` (having the same runtime version
         as the :conf:`basepython`), and ``pip`` translates as the virtual environments ``pip``.
 
+    :note: Shell and batch scripts can be run like other commands with one caveat:
+        discovery is performed from the initial directory, not taking into account
+        the value of :conf:`changedir`. The working directory is modified as expected
+        when running the script though. Any paths should be specified relative to
+        ``{toxinidir}``, or better yet, made absolute.
+
+            .. code-block:: ini
+
+                ; Relative path
+                [testenv]
+                commands = path/to/my_script
+
+                ; Absolute path
+                [testenv]
+                commands = {toxinidir}{/}path{/}to{/}my_script
+
+        Scripts are also often platform dependent.
+        Consider using :ref:`platform-specification`.
+
 .. conf:: commands_pre ^ ARGVLIST
 
     .. versionadded:: 3.4
@@ -365,6 +384,10 @@ Complete list of settings that you can put into ``testenv*`` sections:
     .. note::
 
         If the directory does not exist yet, it will be created.
+
+    .. note::
+
+        :conf:`changedir` does not affect script discovery, see :conf:`commands`.
 
 .. conf:: deps ^ MULTI-LINE-LIST
 

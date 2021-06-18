@@ -1,3 +1,5 @@
+.. _platform-specification:
+
 Platform specification
 ============================
 
