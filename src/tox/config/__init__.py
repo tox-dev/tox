@@ -1306,6 +1306,10 @@ class ParseIni(object):
             for name in config.envlist
         )
 
+        if reader.getstring("skipdist", None) is not None:
+            raise tox.exception.ConfigError(
+                "Found use of 'skipdist', correct it to 'skipsdist' or remove it."
+            )
         config.skipsdist = reader.getbool("skipsdist", all_develop)
 
         if config.option.devenv is not None:
