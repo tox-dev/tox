@@ -273,22 +273,12 @@ Complete list of settings that you can put into ``testenv*`` sections:
         translates as the virtual environments ``python`` (having the same runtime version
         as the :conf:`basepython`), and ``pip`` translates as the virtual environments ``pip``.
 
-    :note: Shell and batch scripts can be run like other commands with one caveat:
-        discovery is performed from the initial directory, not taking into account
-        the value of :conf:`changedir`. The working directory is modified as expected
-        when running the script though. Any paths should be specified relative to
-        ``{toxinidir}``, or better yet, made absolute.
-
-            .. code-block:: ini
-
-                [testenv:relative]
-                commands = path/to/my_script
-
-                [testenv:absolute]
-                commands = {toxinidir}{/}path{/}to{/}my_script
-
-        Scripts are also often platform dependent.
-        Consider using :ref:`platform-specification`.
+    :note: Inline scripts can be used, however note these are discovered from the project root directory,
+        and is not influenced by :conf:`changedir` (this only affects the runtime current working directory).
+        To make this behaviour explicit we recommend that you make inline scripts absolute paths by 
+        prepending ``{toxinidir}``, instead of ``path/to/my_script`` prefer
+        ``{toxinidir}{/}path{/}to{/}my_script``. If your inline script is platform dependent refer to
+        :ref:`platform-specification` on how to select different script per platform.
 
 .. conf:: commands_pre ^ ARGVLIST
 
@@ -377,15 +367,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: changedir ^ PATH ^ {toxinidir}
 
-    Change to this working directory when executing the test command.
+    Change to the current working directory when executing the test command.
 
     .. note::
 
         If the directory does not exist yet, it will be created.
-
-    .. note::
-
-        :conf:`changedir` does not affect script discovery, see :conf:`commands`.
 
 .. conf:: deps ^ MULTI-LINE-LIST
 
