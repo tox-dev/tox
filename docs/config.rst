@@ -275,7 +275,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     :note: Inline scripts can be used, however note these are discovered from the project root directory,
         and is not influenced by :conf:`changedir` (this only affects the runtime current working directory).
-        To make this behaviour explicit we recommend that you make inline scripts absolute paths by 
+        To make this behaviour explicit we recommend that you make inline scripts absolute paths by
         prepending ``{toxinidir}``, instead of ``path/to/my_script`` prefer
         ``{toxinidir}{/}path{/}to{/}my_script``. If your inline script is platform dependent refer to
         :ref:`platform-specification` on how to select different script per platform.
