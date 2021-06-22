@@ -281,12 +281,10 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
             .. code-block:: ini
 
-                ; Relative path
-                [testenv]
+                [testenv:relative]
                 commands = path/to/my_script
 
-                ; Absolute path
-                [testenv]
+                [testenv:absolute]
                 commands = {toxinidir}{/}path{/}to{/}my_script
 
         Scripts are also often platform dependent.
