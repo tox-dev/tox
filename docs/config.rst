@@ -273,6 +273,13 @@ Complete list of settings that you can put into ``testenv*`` sections:
         translates as the virtual environments ``python`` (having the same runtime version
         as the :conf:`basepython`), and ``pip`` translates as the virtual environments ``pip``.
 
+    :note: Inline scripts can be used, however note these are discovered from the project root directory,
+        and is not influenced by :conf:`changedir` (this only affects the runtime current working directory).
+        To make this behaviour explicit we recommend that you make inline scripts absolute paths by
+        prepending ``{toxinidir}``, instead of ``path/to/my_script`` prefer
+        ``{toxinidir}{/}path{/}to{/}my_script``. If your inline script is platform dependent refer to
+        :ref:`platform-specification` on how to select different script per platform.
+
 .. conf:: commands_pre ^ ARGVLIST
 
     .. versionadded:: 3.4
@@ -360,7 +367,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: changedir ^ PATH ^ {toxinidir}
 
-    Change to this working directory when executing the test command.
+    Change the current working directory when executing the test command.
 
     .. note::
 
