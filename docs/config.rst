@@ -367,7 +367,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: changedir ^ PATH ^ {toxinidir}
 
-    Change to the current working directory when executing the test command.
+    Change the current working directory when executing the test command.
 
     .. note::
 
