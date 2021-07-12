@@ -375,7 +375,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
 .. conf:: deps ^ MULTI-LINE-LIST
 
-    Environment dependencies - installed into the environment ((see :conf:`install_command`) prior
+    Environment dependencies - installed into the environment (see :conf:`install_command`) prior
     to project after environment creation. One dependency (a file, a URL or a package name) per
     line. Must be PEP-508_ compliant. All installer commands are executed using the toxinidir_ as the
     current working directory.
