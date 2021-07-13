@@ -2,7 +2,6 @@ import sys
 from collections import OrderedDict
 
 from packaging.requirements import Requirement
-from packaging.utils import canonicalize_name
 from six import StringIO
 from six.moves import configparser
 
@@ -65,16 +64,15 @@ def version_info(parser):
     while to_visit:
         current = to_visit.pop()
         current_dist = importlib_metadata.distribution(current)
-        current_name = canonicalize_name(current_dist.metadata["name"])
+        current_name = current_dist.metadata["name"]
         versions[current_name] = current_dist.version
         if current_dist.requires is not None:
             for require in current_dist.requires:
                 pkg = Requirement(require)
-                pkg_name = canonicalize_name(pkg.name)
                 if (
                     pkg.marker is None or pkg.marker.evaluate({"extra": ""})
-                ) and pkg_name not in versions:
-                    to_visit.add(pkg_name)
+                ) and pkg.name not in versions:
+                    to_visit.add(pkg.name)
     set_section(parser, "tox:versions", versions)
 
 
