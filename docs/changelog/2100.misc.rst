@@ -1,0 +1,2 @@
+``tox`` no longer shows deprecation warnings for ``distutils.sysconfig`` on
+Python 3.10 - by :user:`9999years`
