@@ -11,6 +11,31 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.24.0 (2021-07-14)
+Bugfixes
+^^^^^^^^
+
+- ``--devenv`` no longer modifies the directory in which the ``.tox`` environment is provisioned - by :user:`isaac-ped`
+  `#2065 <https://github.com/tox-dev/tox/issues/2065>`_
+- Fix show config when the package names are not in canonical form - by :user:`gaborbernat`.
+  `#2103 <https://github.com/tox-dev/tox/issues/2103>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Extended environment variables section - by :user:`majiang`
+  `#2036 <https://github.com/tox-dev/tox/issues/2036>`_
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- ``tox`` no longer shows deprecation warnings for ``distutils.sysconfig`` on
+  Python 3.10 - by :user:`9999years`
+  `#2100 <https://github.com/tox-dev/tox/issues/2100>`_
+
+
 v3.23.1 (2021-05-05)
 --------------------
 

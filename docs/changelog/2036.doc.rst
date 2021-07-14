@@ -1,1 +1,0 @@
-Extended environment variables section - by :user:`majiang`

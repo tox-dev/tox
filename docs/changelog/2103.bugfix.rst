@@ -1,1 +1,0 @@
-Fix show config when the package names are not in canonical form - by :user:`gaborbernat`.
