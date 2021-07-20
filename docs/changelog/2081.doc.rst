@@ -1,0 +1,1 @@
+The documentation of ``install_command`` now also mentions that you can provide arbitrary commands - by :user:`jugmac00`

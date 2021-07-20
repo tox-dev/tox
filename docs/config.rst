@@ -306,6 +306,11 @@ Complete list of settings that you can put into ``testenv*`` sections:
     such as ``--pre`` (configured as ``pip_pre``) and potentially index-options from the
     deprecated :conf:`indexserver` option.
 
+    .. note::
+
+        You can also provide arbitrary commands to the ``install_command``.
+        Please take care that these commands can be executed on the supported operating systems.
+
 .. conf:: list_dependencies_command ^ ARGV ^ python -m pip freeze
 
     .. versionadded:: 2.4
