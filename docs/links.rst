@@ -20,7 +20,7 @@
 .. _unittest2: https://pypi.org/project/unittest2
 .. _mock: https://pypi.org/project/mock/
 .. _flit: https://flit.readthedocs.io/en/latest/
-.. _poetry: https://poetry.eustace.io/
+.. _poetry: https://python-poetry.org/
 .. _pypy: https://pypy.org
 
 .. _`Python Packaging Guide`: https://packaging.python.org/tutorials/packaging-projects/
