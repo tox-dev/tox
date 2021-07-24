@@ -1,0 +1,2 @@
+Actually run all environments when ``ALL`` is provided
+to the legacy env command - by :user:`jugmac00`.

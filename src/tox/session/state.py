@@ -47,6 +47,8 @@ class State:
                 yield fallback_env
             return
         use_env_list: Optional[CliEnv] = getattr(self.options, "env", None)
+        if use_env_list and "ALL" in use_env_list:
+            use_env_list = CliEnv(list(self.env_list(everything=True)))
         if use_env_list is None or use_env_list.all:
             use_env_list = self.conf.core["env_list"]
         if not use_env_list:

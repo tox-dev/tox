@@ -89,3 +89,29 @@ def test_legacy_run_sequential(tox_project: ToxProjectCreator, mocker: MockerFix
     tox_project({"tox.ini": ""}).run("le", "-e", "py")
 
     assert run_sequential.call_count == 1
+
+
+def test_ensure_all_environments_are_executed(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [tox]
+    env_list = aaa
+    [testenv]
+    [testenv:bbb]
+    description = not in env_list
+    """
+    setup_py = """
+    from setuptools import setup
+    setup(
+        name='a',
+        version='1.0',
+        install_requires=['setuptools>44'],
+    )
+    """
+    outcome = tox_project(
+        {
+            "tox.ini": ini,
+            "setup.py": setup_py,
+        }
+    ).run("le", "-e", "ALL")
+    assert "aaa: OK" in outcome.out
+    assert "bbb: OK" in outcome.out
