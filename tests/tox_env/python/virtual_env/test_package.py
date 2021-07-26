@@ -46,7 +46,7 @@ def pkg_with_extras_project(tmp_path_factory: TempPathFactory) -> Path:
     [options]
     packages = find:
     install_requires =
-        appdirs>=1.4.3
+        platformdirs>=2.1
         colorama>=0.4.3
 
     [options.extras_require]
@@ -80,7 +80,7 @@ def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:  #
     result = Pep517VirtualEnvPackage._dependencies_with_extras(
         [Requirement(i) for i in pkg_with_extras.requires], set()
     )
-    for left, right in zip_longest(result, (Requirement("appdirs>=1.4.3"), Requirement("colorama>=0.4.3"))):
+    for left, right in zip_longest(result, (Requirement("platformdirs>=2.1"), Requirement("colorama>=0.4.3"))):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
 
@@ -91,7 +91,7 @@ def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None: 
         [Requirement(i) for i in pkg_with_extras.requires], {"docs", "testing"}
     )
     exp = [
-        Requirement("appdirs>=1.4.3"),
+        Requirement("platformdirs>=2.1"),
         Requirement("colorama>=0.4.3"),
         Requirement("sphinx>=3"),
         Requirement("sphinx-rtd-theme<1,>=0.4.3"),
@@ -115,8 +115,8 @@ def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_pr
         if i[0][3].run_id.startswith("install_package_deps")
     }
     assert installs == {
-        "a": ["appdirs>=1.4.3", "colorama>=0.4.3", "setuptools", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3", "wheel"],
-        "b": ["appdirs>=1.4.3", "black>=3", "colorama>=0.4.3", "flake8"],
+        "a": ["colorama>=0.4.3", "platformdirs>=2.1", "setuptools", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3", "wheel"],
+        "b": ["black>=3", "colorama>=0.4.3", "flake8", "platformdirs>=2.1"],
     }
 
 

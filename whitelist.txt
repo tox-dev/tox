@@ -7,7 +7,6 @@ abi
 addinivalue
 addnodes
 addoption
-appdirs
 argparsing
 autoclass
 autodoc
@@ -153,6 +152,7 @@ pathsep
 PEP263
 pep517
 Pep517
+platformdirs
 pluggy
 Popen
 pos
