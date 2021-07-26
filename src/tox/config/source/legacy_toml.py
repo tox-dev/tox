@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import toml
+import tomli
 
 from .ini import IniSource
 
@@ -11,7 +11,8 @@ class LegacyToml(IniSource):
     def __init__(self, path: Path):
         if path.name != self.FILENAME or not path.exists():
             raise ValueError
-        toml_content = toml.loads(path.read_text())
+        with path.open() as file_handler:
+            toml_content = tomli.load(file_handler)
         try:
             content = toml_content["tool"]["tox"]["legacy_tox_ini"]
         except KeyError:

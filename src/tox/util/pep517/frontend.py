@@ -9,7 +9,7 @@ from time import sleep
 from typing import Any, Dict, Iterator, List, NamedTuple, NoReturn, Optional, Tuple, cast
 from zipfile import ZipFile
 
-import toml
+import tomli
 from packaging.requirements import Requirement
 
 _HERE = Path(__file__).parent
@@ -106,7 +106,8 @@ class Frontend(ABC):
     ) -> Tuple[Path, Tuple[Path, ...], str, Optional[str], Tuple[Requirement, ...], bool]:
         py_project_toml = folder / "pyproject.toml"
         if py_project_toml.exists():
-            py_project = toml.load(py_project_toml)
+            with py_project_toml.open() as file_handler:
+                py_project = tomli.load(file_handler)
             build_system = py_project.get("build-system", {})
             if "backend-path" in build_system:
                 backend_paths: Tuple[Path, ...] = tuple(folder / p for p in build_system["backend-path"])
