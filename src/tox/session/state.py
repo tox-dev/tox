@@ -39,22 +39,19 @@ class State:
 
     def env_list(self, everything: bool = False) -> Iterator[str]:
         fallback_env = "py"
-        if everything:
+        use_env_list: Optional[CliEnv] = getattr(self.options, "env", None)
+        if everything or (use_env_list is not None and use_env_list.all):
             _at = 0
             for _at, env in enumerate(self.conf, start=1):
                 yield env
             if _at == 0:  # if we discovered no other env, inject the default
                 yield fallback_env
             return
-        use_env_list: Optional[CliEnv] = getattr(self.options, "env", None)
-        if use_env_list and "ALL" in use_env_list:
-            use_env_list = CliEnv(list(self.env_list(everything=True)))
-        if use_env_list is None or use_env_list.all:
+        if use_env_list is not None and use_env_list.use_default_list:
             use_env_list = self.conf.core["env_list"]
-        if not use_env_list:
+        if use_env_list is None or bool(use_env_list) is False:
             use_env_list = CliEnv([fallback_env])
-        if use_env_list is not None:  # pragma: no branch # can't happen
-            yield from use_env_list
+        yield from use_env_list
 
     def tox_env(self, name: str) -> RunToxEnv:
         if name in self._pkg_env_discovered:
