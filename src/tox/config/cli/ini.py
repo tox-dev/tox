@@ -7,7 +7,7 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Type
 
-from appdirs import user_config_dir
+from platformdirs import user_config_dir
 
 from tox.config.loader.ini import IniLoader
 
