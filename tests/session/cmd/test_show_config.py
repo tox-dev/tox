@@ -136,12 +136,12 @@ def test_show_config_pkg_env_skip(
 
 def test_show_config_select_only(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[tox]\nenv_list=\n a\n b"})
-    result = project.run("c", "-e", "b,.pkg")
+    result = project.run("c", "-e", ".pkg,b,.pkg")
     result.assert_success()
     parser = ConfigParser()
     parser.read_string(result.out)
-    sections = set(parser.sections())
-    assert sections == {"testenv:.pkg", "testenv:b"}
+    sections = list(parser.sections())
+    assert sections == ["testenv:.pkg", "testenv:b"]
 
 
 def test_show_config_alias(tox_project: ToxProjectCreator) -> None:

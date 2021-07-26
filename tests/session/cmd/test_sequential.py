@@ -411,3 +411,10 @@ def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, dem
     msg = f"skipped because platform {sys.platform} does not match wrong_platform for package environment .pkg"
     assert f"a: {msg}" in result.out
     assert f"b: {msg}" in result.out
+
+
+def test_sequential_run_all(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nenv_list=a\n[testenv]\npackage=skip\n[testenv:b]"
+    outcome = tox_project({"tox.ini": ini}).run("r", "-e", "ALL")
+    assert "a: OK" in outcome.out
+    assert "b: OK" in outcome.out
