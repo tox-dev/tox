@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
       - id: check-ast
       - id: check-builtin-literals
@@ -12,7 +12,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.14.0
+    rev: v2.23.0
     hooks:
       - id: pyupgrade
         args: ["--py36-plus"]
@@ -20,11 +20,11 @@ repos:
       - id: pyupgrade
         files: "^(src/tox/util/pep517/backend.py|tests/demo_pkg_inline/build.py)$"
   - repo: https://github.com/PyCQA/isort
-    rev: 5.8.0
+    rev: 5.9.2
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 21.5b0
+    rev: 21.7b0
     hooks:
       - id: black
         args:
@@ -39,7 +39,7 @@ repos:
           - --max-py-version
           - "3.10"
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "0.5.0"
+    rev: "0.5.1"
     hooks:
       - id: tox-ini-fmt
         args: [ "-p", "fix" ]
@@ -48,9 +48,9 @@ repos:
     hooks:
       - id: blacken-docs
         additional_dependencies:
-          - black==20.8b1
+          - black==21.7b0
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.8.0
+    rev: v1.9.0
     hooks:
       - id: rst-backticks
   - repo: local
@@ -62,12 +62,12 @@ repos:
         exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|README.rst|template.jinja2)
         files: ^docs/changelog/
   - repo: https://github.com/PyCQA/flake8
-    rev: 3.9.1
+    rev: 3.9.2
     hooks:
       - id: flake8
         additional_dependencies:
         - flake8-bugbear==21.4.3
-        - flake8-comprehensions==3.4
-        - flake8-pytest-style==1.4.1
+        - flake8-comprehensions==3.5
+        - flake8-pytest-style==1.5
         - flake8-spellcheck==0.24
         - flake8-unused-arguments==0.0.6
