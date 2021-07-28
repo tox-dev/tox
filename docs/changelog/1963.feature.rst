@@ -1,3 +1,0 @@
-Inline plugin support via ``tox_.py``. This is loaded where the tox config source is discovered. It's a python file
-that can contain arbitrary python code, such as definition of a plugin. Eventually we'll add a plugin that allows
-succinct declaration/generation of new tox environments - by :user:`gaborbernat`.

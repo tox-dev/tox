@@ -1,1 +1,0 @@
-Explain how ``-v`` and ``-q`` flags play together to determine CLI verbosity level - by :user:`jugmac00`.

@@ -1,1 +1,0 @@
-Update documentation about changelog entries for trivial changes - by :user:`jugmac00`.

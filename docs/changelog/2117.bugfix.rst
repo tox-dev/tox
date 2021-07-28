@@ -1,1 +1,0 @@
-Move from ``appdirs`` to ``platformdirs`` - by :user:`gaborbernat`.

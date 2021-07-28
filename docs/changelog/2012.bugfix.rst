@@ -1,1 +1,0 @@
-Prefer f-strings instead of the str.format method - by :user:`eumiro`.

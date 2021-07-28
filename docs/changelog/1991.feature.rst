@@ -1,2 +1,0 @@
-Introduce the installer concept, and collect pip installation into a ``pip`` package, also attach to this
-the requirements file parsing which got a major rework - by :user:`gaborbernat`.

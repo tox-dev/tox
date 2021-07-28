@@ -1,4 +1,0 @@
-Start documenting the plugin interface. Added :meth:`tox_register_tox_env <tox.plugin.spec.tox_register_tox_env>`,
-:meth:`tox_add_option <tox.plugin.spec.tox_add_option>`,
-:meth:`tox_add_core_config <tox.plugin.spec.tox_add_core_config>`,
-:meth:`tox_configure <tox.plugin.spec.tox_configure>` - by :user:`gaborbernat`.

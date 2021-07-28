@@ -1,1 +1,0 @@
-Fix regex validation for SHA 512 hashes - by :user:`jugmac00`.
