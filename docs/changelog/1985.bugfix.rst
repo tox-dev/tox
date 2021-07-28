@@ -1,2 +1,0 @@
-Enable replacements (a.k.a section substitions) for section names containing a dash in sections
-without the ``testenv:`` prefix - by :user:`jugmac00`, :user:`obestwalter`, :user:`eumiro`.

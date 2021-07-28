@@ -1,1 +1,0 @@
-Add configuration documentation - by :user:`gaborbernat`.

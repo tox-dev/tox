@@ -4,6 +4,61 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0a7 (2021-07-28)
+---------------------
+
+Features - 4.0.0a7
+~~~~~~~~~~~~~~~~~~
+- Add support for configuration taken from the ``setup.cfg`` file -by :user:`gaborbernat`. (`#1836 <https://github.com/tox-dev/tox/issues/1836>`_)
+- Add support for configuration taken from the ``pyproject.toml`` file, ``tox`` section ``legacy_tox_ini`` key - by
+  :user:`gaborbernat`. (`#1837 <https://github.com/tox-dev/tox/issues/1837>`_)
+- Add configuration documentation - by :user:`gaborbernat`. (`#1914 <https://github.com/tox-dev/tox/issues/1914>`_)
+- Implemented ``[]`` substitution (alias for ``{posargs}``) - by
+  :user:`hexagonrecursion`. (`#1928 <https://github.com/tox-dev/tox/issues/1928>`_)
+- Implement ``[testenv] ignore_outcome`` - "a failing result of this testenv will not make tox fail" - by :user:`hexagonrecursion`. (`#1947 <https://github.com/tox-dev/tox/issues/1947>`_)
+- Inline plugin support via ``tox_.py``. This is loaded where the tox config source is discovered. It's a python file
+  that can contain arbitrary python code, such as definition of a plugin. Eventually we'll add a plugin that allows
+  succinct declaration/generation of new tox environments - by :user:`gaborbernat`. (`#1963 <https://github.com/tox-dev/tox/issues/1963>`_)
+- Introduce the installer concept, and collect pip installation into a ``pip`` package, also attach to this
+  the requirements file parsing which got a major rework - by :user:`gaborbernat`. (`#1991 <https://github.com/tox-dev/tox/issues/1991>`_)
+- Support CPython ``3.10`` -by :user:`gaborbernat`. (`#2014 <https://github.com/tox-dev/tox/issues/2014>`_)
+
+Bugfixes - 4.0.0a7
+~~~~~~~~~~~~~~~~~~
+- Environments with a platform mismatch are no longer silently skipped, but properly reported - by :user:`jugmac00`. (`#1926 <https://github.com/tox-dev/tox/issues/1926>`_)
+- Port pip requirements file parser to ``tox`` to achieve full equivalency (such as support for the per requirement
+  ``--install-option`` and ``--global-option`` flags) - by :user:`gaborbernat`. (`#1929 <https://github.com/tox-dev/tox/issues/1929>`_)
+- Support for extras with paths for python deps and requirement files - by :user:`gaborbernat`. (`#1933 <https://github.com/tox-dev/tox/issues/1933>`_)
+- Due to a bug ``\{posargs} {posargs}`` used to expand to literal ``{posargs} {posargs}``.
+  Now the second ``{posargs}`` is expanded.
+  ``\{posargs} {posargs}`` expands to ``{posargs} positional arguments here`` - by :user:`hexagonrecursion`. (`#1956 <https://github.com/tox-dev/tox/issues/1956>`_)
+- Enable setting a different ``upstream`` repository for the coverage diff report.
+  This has been hardcoded to ``upstream/rewrite`` until now.
+  by :user:`jugmac00`. (`#1972 <https://github.com/tox-dev/tox/issues/1972>`_)
+- Enable replacements (a.k.a section substitions) for section names containing a dash in sections
+  without the ``testenv:`` prefix - by :user:`jugmac00`, :user:`obestwalter`, :user:`eumiro`. (`#1985 <https://github.com/tox-dev/tox/issues/1985>`_)
+- Fix legacy list env command for empty/missing envlist - by :user:`jugmac00`. (`#1987 <https://github.com/tox-dev/tox/issues/1987>`_)
+- Requirements and constraints files handling got reimplemented, which should fix all open issues related to this area
+  - by :user:`gaborbernat`. (`#1991 <https://github.com/tox-dev/tox/issues/1991>`_)
+- Use importlib instead of ``__import__`` - by :user:`dmendek`. (`#1995 <https://github.com/tox-dev/tox/issues/1995>`_)
+- Evaluate factor conditions for ``command`` keys - by :user:`jugmac00`. (`#2002 <https://github.com/tox-dev/tox/issues/2002>`_)
+- Prefer f-strings instead of the str.format method - by :user:`eumiro`. (`#2012 <https://github.com/tox-dev/tox/issues/2012>`_)
+- Fix regex validation for SHA 512 hashes - by :user:`jugmac00`. (`#2018 <https://github.com/tox-dev/tox/issues/2018>`_)
+- Actually run all environments when ``ALL`` is provided to the legacy env command - by :user:`jugmac00`. (`#2112 <https://github.com/tox-dev/tox/issues/2112>`_)
+- Move from ``appdirs`` to ``platformdirs`` - by :user:`gaborbernat`. (`#2117 <https://github.com/tox-dev/tox/issues/2117>`_)
+- Move from ``toml`` to ``tomli`` - by :user:`gaborbernat`. (`#2118 <https://github.com/tox-dev/tox/issues/2118>`_)
+
+Improved Documentation - 4.0.0a7
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Start documenting the plugin interface. Added :meth:`tox_register_tox_env <tox.plugin.spec.tox_register_tox_env>`,
+  :meth:`tox_add_option <tox.plugin.spec.tox_add_option>`,
+  :meth:`tox_add_core_config <tox.plugin.spec.tox_add_core_config>`,
+  :meth:`tox_configure <tox.plugin.spec.tox_configure>` - by :user:`gaborbernat`. (`#1991 <https://github.com/tox-dev/tox/issues/1991>`_)
+- Explain how ``-v`` and ``-q`` flags play together to determine CLI verbosity level - by :user:`jugmac00`. (`#2005 <https://github.com/tox-dev/tox/issues/2005>`_)
+- Start polishing the documentation for the upcoming final release - by :user:`jugmac00`. (`#2006 <https://github.com/tox-dev/tox/issues/2006>`_)
+- Update documentation about changelog entries for trivial changes - by :user:`jugmac00`. (`#2007 <https://github.com/tox-dev/tox/issues/2007>`_)
+
+
 v4.0.0a6 (2021-02-15)
 ---------------------
 

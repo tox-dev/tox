@@ -1,2 +1,0 @@
-Requirements and constraints files handling got reimplemented, which should fix all open issues related to this area
-- by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Add support for configuration taken from the ``pyproject.toml`` file, ``tox`` section ``legacy_tox_ini`` key - by
-:user:`gaborbernat`.

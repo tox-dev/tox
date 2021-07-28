@@ -1,1 +1,0 @@
-Use importlib instead of ``__import__`` - by :user:`dmendek`.
