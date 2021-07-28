@@ -81,10 +81,16 @@ class RunToxEnv(ToxEnv, ABC):
             desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
         if self._register_package_conf():
-            self.conf.add_config(
+            self.core.add_config(
                 keys=["package_env", "isolated_build_env"],
                 of_type=str,
                 default=self._default_package_env,
+                desc="tox environment used to package",
+            )
+            self.conf.add_config(
+                keys=["package_env"],
+                of_type=str,
+                default=self.core["package_env"],
                 desc="tox environment used to package",
             )
             self.conf.add_constant(

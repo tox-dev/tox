@@ -101,13 +101,13 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv, Frontend):
             keys=["meta_dir"],
             of_type=Path,
             default=lambda conf, name: self.env_dir / ".meta",
-            desc="directory assigned to the tox environment",
+            desc="directory where to put the project metadata files",
         )
         self.conf.add_config(
             keys=["pkg_dir"],
             of_type=Path,
             default=lambda conf, name: self.env_dir / "dist",
-            desc="directory assigned to the tox environment",
+            desc="directory where to put project packages",
         )
 
     @property

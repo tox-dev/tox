@@ -67,7 +67,7 @@ class Python(ToxEnv, ABC):
         )
         self.conf.add_constant(
             keys=["env_bin_dir", "envbindir"],
-            desc="the python environments site package",
+            desc="the python environments binary folder",
             value=lambda: self.env_bin_dir(),
         )
         self.conf.add_constant(
