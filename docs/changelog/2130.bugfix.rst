@@ -1,0 +1,1 @@
+``get_requires_for_build_sdist`` hook (PEP 517) is assumed to return an empty list if left unimplemented by the backend build system - by :user:`oczkoisse`
