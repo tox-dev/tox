@@ -10,12 +10,12 @@ pip, that define not what requirements to install but instead what version const
 otherwise specified requirements. The constraint file must always be specified together with the requirement(s) to
 install. While creating a test environment tox will invoke pip multiple times, in separate phases:
 
-1. If :ref:`deps` is specified, will install a set of dependencies before installing the package.
+1. If :ref:`deps` is specified, it will install a set of dependencies before installing the package.
 2. If the target environment contains a package (the project does not have :ref:`package` ``skip`` or
-   :ref:`skip_install` is ``true``):
+   :ref:`skip_install` is ``true``), it will:
 
-   1. Install the package dependencies.
-   2. Install the package itself.
+   1. install the dependencies of the package.
+   2. install the package itself.
 
 Some solutions and their drawbacks:
 
@@ -60,7 +60,7 @@ and the following ``tox.ini`` content:
     # upon tox invocation you will be greeted according to your platform
     commands=
        lin: python -c 'print("Hello, Linus!")'
-       mac: python -c 'print("Hello, Steve!")'
+       mac: python -c 'print("Hello, Tim!")'
        win: python -c 'print("Hello, Satya!")'
 
 You can invoke ``tox`` in the directory where your ``tox.ini`` resides. ``tox`` creates two virtualenv environments
