@@ -11,6 +11,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.24.1 (2021-07-31)
+Bugfixes
+^^^^^^^^
+
+- ``get_requires_for_build_sdist`` hook (PEP 517) is assumed to return an empty list if left unimplemented by the backend build system - by :user:`oczkoisse`
+  `#2130 <https://github.com/tox-dev/tox/issues/2130>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- The documentation of ``install_command`` now also mentions that you can provide arbitrary commands - by :user:`jugmac00`
+  `#2081 <https://github.com/tox-dev/tox/issues/2081>`_
+
+
 v3.24.0 (2021-07-14)
 --------------------
 
