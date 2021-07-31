@@ -202,3 +202,72 @@ def test_isolated_build_script_args(tmp_path):
     # cannot import build_isolated because of its side effects
     script_path = os.path.join(os.path.dirname(tox.helper.__file__), "build_isolated.py")
     subprocess.check_call(("python", script_path, str(tmp_path), "setuptools.build_meta"))
+
+
+def test_isolated_build_backend_missing_hook(initproj, cmd):
+    """Verify that tox works with a backend missing optional hooks
+
+    PEP 517 allows backends to omit get_requires_for_build_sdist hook, in which
+    case a default implementation that returns an empty list should be assumed
+    instead of raising an error.
+    """
+    name = "ensconsproj"
+    version = "0.1"
+    src_root = "src"
+
+    initproj(
+        (name, version),
+        filedefs={
+            # pyproject.toml with enscons as backend
+            "pyproject.toml": """
+            [build-system]
+            requires = ["pytoml>=0.1", "enscons==0.26.0"]
+            build-backend = "enscons.api"
+
+            [tool.enscons]
+            name = "{name}"
+            version = "{version}"
+            description = "Example enscons project"
+            license = "MIT"
+            packages = ["{name}"]
+            src_root = "{src_root}"
+            """.format(
+                name=name, version=version, src_root=src_root
+            ),
+            "tox.ini": """
+            [tox]
+            isolated_build = true
+            """,
+            "SConstruct": """
+            import enscons
+
+            env = Environment(
+                tools=["default", "packaging", enscons.generate],
+                PACKAGE_METADATA=dict(
+                    name = "{name}",
+                    version = "{version}"
+                ),
+                WHEEL_TAG="py2.py3-none-any"
+            )
+
+            py_source = env.Glob("src/{name}/*.py")
+
+            purelib = env.Whl("purelib", py_source, root="{src_root}")
+            whl = env.WhlFile(purelib)
+
+            sdist = env.SDist(source=FindSourceFiles() + ["PKG-INFO"])
+            env.NoClean(sdist)
+            env.Alias("sdist", sdist)
+
+            develop = env.Command("#DEVELOP", enscons.egg_info_targets(env), enscons.develop)
+            env.Alias("develop", develop)
+
+            env.Default(whl, sdist)
+            """.format(
+                name=name, version=version, src_root=src_root
+            ),
+        },
+    )
+
+    result = cmd("--sdistonly", "-v", "-v", "-e", "py")
+    assert "scons: done building targets" in result.out, result.out
