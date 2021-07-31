@@ -218,7 +218,6 @@ def test_isolated_build_backend_missing_hook(initproj, cmd):
     initproj(
         (name, version),
         filedefs={
-            # pyproject.toml with enscons as backend
             "pyproject.toml": """
             [build-system]
             requires = ["pytoml>=0.1", "enscons==0.26.0"]
