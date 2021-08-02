@@ -20,6 +20,6 @@ def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_pa
     result = prj.run("r")
 
     result.assert_failed(1)
-    out = fr".*py: failed with {fake_exe_on_path.stem} is not allowed, use allowlist_external to allow it.*"
+    out = fr".*py: failed with {fake_exe_on_path.stem} is not allowed, use allowlist_externals to allow it.*"
     result.assert_out_err(out=out, err="", regex=True)
     execute_calls.assert_called()

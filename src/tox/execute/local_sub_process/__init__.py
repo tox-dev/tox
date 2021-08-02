@@ -192,7 +192,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                             break
                     else:
                         msg = f"{base} (resolves to {executable})" if base == executable else base
-                        raise Fail(f"{msg} is not allowed, use allowlist_external to allow it")
+                        raise Fail(f"{msg} is not allowed, use allowlist_externals to allow it")
                 # else use expanded format
                 cmd = [executable, *self.request.cmd[1:]]
             self._cmd = cmd

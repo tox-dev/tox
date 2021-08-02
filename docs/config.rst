@@ -262,7 +262,7 @@ Base
    :default: <empty list>
 
    Each line specifies a command name (in glob-style pattern format) which can be used in the commands section even if
-   it's located outside of the tox environment. For example: if you use the unix make for running tests you can list
+   it's located outside of the tox environment. For example: if you use the unix make command for running tests you can list
    ``allowlist_externals=make`` or ``allowlist_externals=/usr/bin/make``. If you want to allow all external commands
    you can use ``allowlist_externals=*`` which will match all commands (not recommended).
 
