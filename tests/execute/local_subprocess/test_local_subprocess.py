@@ -15,8 +15,9 @@ from psutil import AccessDenied
 from pytest_mock import MockerFixture
 
 from tox.execute.api import Outcome
-from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecutor
+from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecuteInstance, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
+from tox.execute.stream import SyncWrite
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.report import NamedBytesIO
 
@@ -275,3 +276,23 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
         "stdin": False,
         "terminal": [100, 100],
     }
+
+
+@pytest.mark.parametrize("mode", ["stem", "full", "stem-pattern", "full-pattern", "all"])
+def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
+    exe = f"{fake_exe_on_path}{'.EXE' if sys.platform == 'win32' else ''}"
+    allow = exe if "full" in mode else fake_exe_on_path.stem
+    allow = f"{allow[:-2]}*" if "pattern" in mode else allow
+    allow = "*" if mode == "all" else allow
+
+    request = ExecuteRequest(
+        cmd=[fake_exe_on_path.stem],
+        cwd=Path.cwd(),
+        env={"PATH": os.environ["PATH"]},
+        stdin=StdinSource.OFF,
+        run_id="run-id",
+        allow=[allow],
+    )
+    inst = LocalSubProcessExecuteInstance(request, out=SyncWrite("out", None), err=SyncWrite("err", None))
+
+    assert inst.cmd == [exe]

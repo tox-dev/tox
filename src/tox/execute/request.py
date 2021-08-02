@@ -2,7 +2,7 @@
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 
 class StdinSource(Enum):
@@ -20,7 +20,13 @@ class ExecuteRequest:
     """Defines a commands execution request"""
 
     def __init__(
-        self, cmd: Sequence[Union[str, Path]], cwd: Path, env: Dict[str, str], stdin: StdinSource, run_id: str
+        self,
+        cmd: Sequence[Union[str, Path]],
+        cwd: Path,
+        env: Dict[str, str],
+        stdin: StdinSource,
+        run_id: str,
+        allow: Optional[List[str]] = None,
     ) -> None:
         """
         Create a new execution request.
@@ -38,6 +44,9 @@ class ExecuteRequest:
         self.env = env  #: the environment variables to use
         self.stdin = stdin  #: the type of standard input interaction allowed
         self.run_id = run_id  #: an id to identify this run
+        if allow is not None and "*" in allow:
+            allow = None  # if we allow everything we can just disable the check
+        self.allow = allow
 
     @property
     def shell_cmd(self) -> str:

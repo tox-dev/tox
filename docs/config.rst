@@ -257,6 +257,15 @@ Base
 
    Always recreate virtual environment if this option is true, otherwise leave it up to tox.
 
+.. conf::
+   :keys: allowlist_externals, whitelist_externals
+   :default: <empty list>
+
+   Each line specifies a command name (in glob-style pattern format) which can be used in the commands section even if
+   it's located outside of the tox environment. For example: if you use the unix make command for running tests you can list
+   ``allowlist_externals=make`` or ``allowlist_externals=/usr/bin/make``. If you want to allow all external commands
+   you can use ``allowlist_externals=*`` which will match all commands (not recommended).
+
 Run
 ~~~
 
@@ -504,14 +513,7 @@ Python virtual environment
 
      In cases where a command line tool is also installed globally you have to make sure that you use the tool installed
      in the virtualenv by using ``python -m <command line tool>`` (if supported by the tool) or
-     ``{env_bin_dir}/<command line tool>``. If you forget to do that you will get a warning like this:
-
-      .. code-block::
-
-         WARNING: test command found but not installed in testenv
-             cmd: /path/to/parent/interpreter/bin/<some command>
-             env: /foo/bar/.tox/python
-         Maybe you forgot to specify a dependency? See also the allowlist_externals envconfig settin
+     ``{env_bin_dir}/<command line tool>``. If you forget to do that you will get an error.
 
 .. conf::
    :keys: always_copy, alwayscopy

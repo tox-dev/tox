@@ -1,11 +1,14 @@
 import os
 import sys
 from pathlib import Path
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, Iterator, List, Optional, Sequence, Tuple
+from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch  # noqa # cannot import from tox.pytest yet
 from _pytest.tmpdir import TempPathFactory
+from distlib.scripts import ScriptMaker
 from pytest_mock import MockerFixture
 from virtualenv import cli_run
 
@@ -108,3 +111,15 @@ def _do_not_share_virtualenv_for_parallel_runs(tmp_path_factory: TempPathFactory
         seed_env_folder = str(tmp_path_factory.mktemp(f"seed-cache-{worker_id}"))  # pragma: no cover
         args = [seed_env_folder, "--without-pip", "--activators", ""]  # pragma: no cover
         cli_run(args, setup_logging=False)  # pragma: no cover
+
+
+@pytest.fixture(scope="session")
+def fake_exe_on_path(tmp_path_factory: TempPathFactory) -> Iterator[Path]:
+    tmp_path = Path(tmp_path_factory.mktemp("a"))
+    cmd_name = uuid4().hex
+    maker = ScriptMaker(None, str(tmp_path))
+    maker.set_mode = True
+    maker.variants = {""}
+    maker.make(f"{cmd_name} = b:c")
+    with patch.dict(os.environ, {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"}):
+        yield tmp_path / cmd_name

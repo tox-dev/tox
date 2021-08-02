@@ -20,7 +20,7 @@ canonicalize
 capfd
 caplog
 capsys
-Cfg
+cfg
 changelog
 chardet
 chdir
@@ -51,6 +51,7 @@ devenv
 DEVNULL
 devpi
 dirname
+distlib
 divmod
 doc2path
 docname
@@ -139,7 +140,7 @@ parsers
 pathlib
 pathname
 pathsep
-pep517
+Pep517
 platformdirs
 pluggy
 Popen

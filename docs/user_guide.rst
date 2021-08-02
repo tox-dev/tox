@@ -90,7 +90,7 @@ tox roughly follows the following phases:
 tox will take care of environment isolation for you: it will strip away all operating system environment variables not
 specified via ``passenv``. Furthermore, it will also alter the ``PATH`` variable so that your commands resolve
 within the current active tox environment. In general, all executables in the path are available in ``commands``, but
-tox will emit a warning if it was not explicitly allowed via ``whitelist_externals``.
+tox will error if it was not explicitly allowed via :ref:`allowlist_externals`.
 
 Current features
 ----------------
