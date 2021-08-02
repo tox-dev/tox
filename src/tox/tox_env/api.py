@@ -128,6 +128,12 @@ class ToxEnv(ABC):
             default=False,
             desc="always recreate virtual environment if this option is true, otherwise leave it up to tox",
         )
+        self.conf.add_config(
+            keys=["allowlist_externals", "whitelist_externals"],
+            of_type=List[str],
+            default=[],
+            desc="external command glob to allow calling",
+        )
 
     @property
     def env_dir(self) -> Path:
@@ -293,6 +299,12 @@ class ToxEnv(ABC):
             result = self._make_path()
             self._env_vars["PATH"] = result
 
+    @property
+    def _allow_externals(self) -> List[str]:
+        result: List[str] = [f"{i}{os.sep}*" for i in self._paths]
+        result.extend(i.strip() for i in self.conf["allowlist_externals"])
+        return result
+
     def _make_path(self) -> str:
         values = dict.fromkeys(str(i) for i in self._paths)
         values.update(dict.fromkeys(os.environ.get("PATH", "").split(os.pathsep)))
@@ -338,7 +350,7 @@ class ToxEnv(ABC):
             cwd = self.core["tox_root"]
         if show is None:
             show = self.options.verbosity > 3
-        request = ExecuteRequest(cmd, cwd, self._environment_variables, stdin, run_id)
+        request = ExecuteRequest(cmd, cwd, self._environment_variables, stdin, run_id, allow=self._allow_externals)
         if _CWD == request.cwd:
             repr_cwd = ""
         else:

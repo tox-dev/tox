@@ -1,4 +1,5 @@
 """Execute that runs on local file system via subprocess-es"""
+import fnmatch
 import logging
 import os
 import shutil
@@ -7,6 +8,8 @@ import time
 from subprocess import DEVNULL, PIPE, TimeoutExpired
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple, Type
+
+from tox.tox_env.errors import Fail
 
 from ..api import Execute, ExecuteInstance, ExecuteStatus
 from ..request import ExecuteRequest, StdinSource
@@ -176,10 +179,20 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     @property
     def cmd(self) -> Sequence[str]:
         if self._cmd is None:
-            executable = shutil.which(self.request.cmd[0], path=self.request.env["PATH"])
+            base = self.request.cmd[0]
+            executable = shutil.which(base, path=self.request.env["PATH"])
             if executable is None:
                 cmd = self.request.cmd  # if failed to find leave as it is
             else:
+                if self.request.allow is not None:
+                    for allow in self.request.allow:
+                        # 1. allow matches just the original name of the executable
+                        # 2. allow matches the entire resolved path
+                        if fnmatch.fnmatch(self.request.cmd[0], allow) or fnmatch.fnmatch(executable, allow):
+                            break
+                    else:
+                        msg = f"{base} (resolves to {executable})" if base == executable else base
+                        raise Fail(f"{msg} is not allowed, use allowlist_external to allow it")
                 # else use expanded format
                 cmd = [executable, *self.request.cmd[1:]]
             self._cmd = cmd
