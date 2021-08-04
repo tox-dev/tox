@@ -1,0 +1,1 @@
+Add support for ``{:}`` substitution in ini files as placeholder for the OS path separator - by :user:`gaborbernat`.
