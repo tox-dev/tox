@@ -222,6 +222,15 @@ Base
    A folder that is always reset at the start of the run.
 
 .. conf::
+   :keys: env_log_dir, envlogdir
+   :default: {work_dir}/{env_name}/log
+
+   A folder containing log files about tox runs. It's always reset at the start of the run. Currently contains every
+   process invocation in the format of ``<index>-<run name>.log``, and details the execution request (command,
+   environment variables, current working directory, etc.) and its outcome (exit code and standard output/error
+   content).
+
+.. conf::
    :keys: platform
 
    Run on platforms that match this regular expression (empty means any platform). If a non-empty expression is defined
