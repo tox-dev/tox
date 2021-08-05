@@ -76,6 +76,8 @@ def _replace_match(
     of_type, *args = ARGS_GROUP.split(value)
     if of_type == "/":
         replace_value: Optional[str] = os.sep
+    elif of_type == "" and args == [""]:
+        replace_value = os.pathsep
     elif of_type == "env":
         replace_value = replace_env(conf, current_env, args, chain)
     elif of_type == "tty":
