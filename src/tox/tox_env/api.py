@@ -398,17 +398,17 @@ class ToxEnv(ABC):
     @staticmethod
     def _write_execute_log(env_name: str, log_file: Path, request: ExecuteRequest, status: ExecuteStatus) -> None:
         with log_file.open("wt") as file:
-            file.write(f"name: {env_name}{os.linesep}")
-            file.write(f"run_id: {request.run_id}{os.linesep}")
+            file.write(f"name: {env_name}\n")
+            file.write(f"run_id: {request.run_id}\n")
             for env_key, env_value in request.env.items():
-                file.write(f"env {env_key}: {env_value}{os.linesep}")
+                file.write(f"env {env_key}: {env_value}\n")
             for meta_key, meta_value in status.metadata.items():
-                file.write(f"metadata {meta_key}: {meta_value}{os.linesep}")
-            file.write(f"cwd: {request.cwd}{os.linesep}")
+                file.write(f"metadata {meta_key}: {meta_value}\n")
+            file.write(f"cwd: {request.cwd}\n")
             allow = ["*"] if request.allow is None else request.allow
-            file.write(f"allow: {':'.join(allow)}{os.linesep}")
-            file.write(f"cmd: {request.shell_cmd}{os.linesep}")
-            file.write(f"exit_code: {status.exit_code}{os.linesep}")
+            file.write(f"allow: {':'.join(allow)}\n")
+            file.write(f"cmd: {request.shell_cmd}\n")
+            file.write(f"exit_code: {status.exit_code}\n")
         with log_file.open("ab") as file_b:
             if status.out:
                 file_b.write(status.out)

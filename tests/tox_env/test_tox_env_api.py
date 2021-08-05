@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from textwrap import dedent
 
@@ -28,8 +27,8 @@ def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_pa
 
 
 def test_env_log(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\npackage=skip\ncommands=python -c 'import sys; print(1); print(2, file=sys.stderr)'"
-    prj = tox_project({"tox.ini": ini})
+    cmd = "commands=python -c 'import sys; print(1); print(2); print(3, file=sys.stderr); print(4, file=sys.stderr)'"
+    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})
     result_first = prj.run("r")
     result_first.assert_success()
 
@@ -44,16 +43,18 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
     assert f"allow: {prj.path}" in content
     assert "metadata " in content
     assert "env PATH: " in content
-    assert content.startswith(f"name: py{os.linesep}run_id: commands[0]")
+    assert content.startswith("name: py\nrun_id: commands[0]")
+    assert "cmd: python -c" in content
     ending = """
-    cmd: python -c 'import sys; print(1); print(2, file=sys.stderr)'
     exit_code: 0
     1
+    2
 
     standard error:
-    2
+    3
+    4
     """
-    assert content.endswith(dedent(ending).lstrip())
+    assert content.endswith(dedent(ending).lstrip()), content
 
     result_second = prj.run("r")  # second run overwrites, so no new files
     result_second.assert_success()
