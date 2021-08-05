@@ -57,6 +57,7 @@ class ToxEnv(ABC):
         self._suspended_out_err: Optional[OutErr] = None
         self._execute_statuses: Dict[int, ExecuteStatus] = {}
         self._interrupted = False
+        self._log_id = 0
 
         self.register_config()
         self.cache = Info(self.env_dir)
@@ -96,6 +97,12 @@ class ToxEnv(ABC):
             of_type=Path,
             default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",
             desc="a folder that is always reset at the start of the run",
+        )
+        self.conf.add_config(
+            keys=["env_log_dir", "envlogdir"],
+            of_type=Path,
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",
+            desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.conf.default_set_env_loader = self._default_set_env
         self.conf.add_config(
@@ -144,6 +151,11 @@ class ToxEnv(ABC):
     def env_tmp_dir(self) -> Path:
         """:return: the tox environments temp folder"""
         return cast(Path, self.conf["env_tmp_dir"])
+
+    @property
+    def env_log_dir(self) -> Path:
+        """:return: the tox environments log folder"""
+        return cast(Path, self.conf["env_log_dir"])
 
     @property
     def name(self) -> str:
@@ -374,6 +386,37 @@ class ToxEnv(ABC):
                 self._hidden_outcomes.append(execute_status.outcome)
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)
+        self._log_execute(request, execute_status)
+
+    def _log_execute(self, request: ExecuteRequest, status: ExecuteStatus) -> None:
+        if self._log_id == 0:  # start with fresh slate on new run
+            shutil.rmtree(self.env_log_dir, ignore_errors=True)
+            self.env_log_dir.mkdir(parents=True, exist_ok=True)
+        self._log_id += 1
+        self._write_execute_log(self.name, self.env_log_dir / f"{self._log_id}-{request.run_id}.log", request, status)
+
+    @staticmethod
+    def _write_execute_log(env_name: str, log_file: Path, request: ExecuteRequest, status: ExecuteStatus) -> None:
+        with log_file.open("wt") as file:
+            file.write(f"name: {env_name}{os.linesep}")
+            file.write(f"run_id: {request.run_id}{os.linesep}")
+            for env_key, env_value in request.env.items():
+                file.write(f"env {env_key}: {env_value}{os.linesep}")
+            for meta_key, meta_value in status.metadata.items():
+                file.write(f"metadata {meta_key}: {meta_value}{os.linesep}")
+            file.write(f"cwd: {request.cwd}{os.linesep}")
+            allow = ["*"] if request.allow is None else request.allow
+            file.write(f"allow: {':'.join(allow)}{os.linesep}")
+            file.write(f"cmd: {request.shell_cmd}{os.linesep}")
+            file.write(f"exit_code: {status.exit_code}{os.linesep}")
+        with log_file.open("ab") as file_b:
+            if status.out:
+                file_b.write(status.out)
+            if status.err:
+                file_b.write(os.linesep.encode())
+                file_b.write(b"standard error:")
+                file_b.write(os.linesep.encode())
+                file_b.write(status.err)
 
     @contextmanager
     def _execute_call(
