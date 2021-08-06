@@ -11,7 +11,7 @@ class LegacyToml(IniSource):
     def __init__(self, path: Path):
         if path.name != self.FILENAME or not path.exists():
             raise ValueError
-        with path.open() as file_handler:
+        with path.open("rb") as file_handler:
             toml_content = tomli.load(file_handler)
         try:
             content = toml_content["tool"]["tox"]["legacy_tox_ini"]

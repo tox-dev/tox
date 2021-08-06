@@ -4,7 +4,6 @@ Defines the abstract base traits of a tox environment.
 import logging
 import os
 import re
-import shutil
 import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
@@ -20,6 +19,7 @@ from tox.journal import EnvJournal
 from tox.report import OutErr, ToxHandler
 from tox.tox_env.errors import Recreate, Skip
 from tox.tox_env.installer import Installer
+from tox.util.path import ensure_empty_dir
 
 from .info import Info
 
@@ -261,7 +261,7 @@ class ToxEnv(ABC):
         env_tmp_dir = self.env_tmp_dir
         if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
-            shutil.rmtree(env_tmp_dir, ignore_errors=True)
+            ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     def _clean(self, force: bool = False) -> None:  # noqa: U100
@@ -270,7 +270,7 @@ class ToxEnv(ABC):
         env_dir = self.env_dir
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
-            shutil.rmtree(env_dir)
+            ensure_empty_dir(env_dir)
         self.cache.reset()
         self._run_state.update({"setup": False, "clean": True})
 
@@ -390,8 +390,7 @@ class ToxEnv(ABC):
 
     def _log_execute(self, request: ExecuteRequest, status: ExecuteStatus) -> None:
         if self._log_id == 0:  # start with fresh slate on new run
-            shutil.rmtree(self.env_log_dir, ignore_errors=True)
-            self.env_log_dir.mkdir(parents=True, exist_ok=True)
+            ensure_empty_dir(self.env_log_dir)
         self._log_id += 1
         self._write_execute_log(self.name, self.env_log_dir / f"{self._log_id}-{request.run_id}.log", request, status)
 
