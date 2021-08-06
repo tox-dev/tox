@@ -49,15 +49,17 @@ class StrConvert(Convert[str]):
         is_win = sys.platform == "win32"
         splitter = shlex.shlex(value, posix=not is_win)
         splitter.whitespace_split = True
-        if is_win:  # pragma: win32 cover
-            args: List[str] = []
+        args: List[str] = []
+        pos = 0
+        try:
             for arg in splitter:
-                # on Windows quoted arguments will remain quoted, strip it
-                if len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):
+                if is_win and len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):  # pragma: win32 cover
+                    # on Windows quoted arguments will remain quoted, strip it
                     arg = arg[1:-1]
                 args.append(arg)
-        else:
-            args = list(splitter)
+                pos = splitter.instream.tell()
+        except ValueError:
+            args.append(value[pos:])
         return Command(args)
 
     @staticmethod

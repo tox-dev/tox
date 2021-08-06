@@ -103,6 +103,7 @@ IGN
 impl
 INET
 insort
+instream
 intersphinx
 isalpha
 isatty
