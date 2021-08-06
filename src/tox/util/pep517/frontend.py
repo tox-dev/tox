@@ -1,6 +1,5 @@
 """Build frontend for PEP-517"""
 import json
-import shutil
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
@@ -11,6 +10,8 @@ from zipfile import ZipFile
 
 import tomli
 from packaging.requirements import Requirement
+
+from tox.util.path import ensure_empty_dir
 
 _HERE = Path(__file__).parent
 ConfigSettings = Optional[Dict[str, Any]]
@@ -106,7 +107,7 @@ class Frontend(ABC):
     ) -> Tuple[Path, Tuple[Path, ...], str, Optional[str], Tuple[Requirement, ...], bool]:
         py_project_toml = folder / "pyproject.toml"
         if py_project_toml.exists():
-            with py_project_toml.open() as file_handler:
+            with py_project_toml.open("rb") as file_handler:
                 py_project = tomli.load(file_handler)
             build_system = py_project.get("build-system", {})
             if "backend-path" in build_system:
@@ -169,7 +170,7 @@ class Frontend(ABC):
         if metadata_directory == self._root:
             raise RuntimeError(f"the project root and the metadata directory can't be the same {self._root}")
         if metadata_directory.exists():  # start with fresh
-            shutil.rmtree(metadata_directory)
+            ensure_empty_dir(metadata_directory)
         metadata_directory.mkdir(parents=True, exist_ok=True)
         try:
             basename, out, err = self._send(
