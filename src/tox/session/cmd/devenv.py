@@ -12,14 +12,10 @@ from tox.session.state import State
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    our = parser.add_command(
-        "devenv",
-        ["d"],
-        "sets up a development environment at ENVDIR based on the tox configuration specified ",
-        devenv,
-    )
+    help_msg = "sets up a development environment at ENVDIR based on the tox configuration specified "
+    our = parser.add_command("devenv", ["d"], help_msg, devenv)
     our.add_argument("devenv_path", metavar="path", default=Path("venv").absolute(), nargs="?")
-    env_list_flag(our, default=CliEnv("py"))
+    env_list_flag(our, default=CliEnv("py"), multiple=False)
     env_run_create_flags(our, mode="devenv")
 
 

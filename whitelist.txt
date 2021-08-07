@@ -20,7 +20,7 @@ canonicalize
 capfd
 caplog
 capsys
-cfg
+Cfg
 changelog
 chardet
 chdir
@@ -67,13 +67,14 @@ entrypoints
 envs
 epilog
 eq
-eval
+Eval
 exc
 exe
 executables
 expr
 extlinks
 extractall
+fallbacks
 favicon
 filelock
 fixup
@@ -147,6 +148,7 @@ platformdirs
 pluggy
 Popen
 pos
+posargs
 posix
 prepend
 prereleases
