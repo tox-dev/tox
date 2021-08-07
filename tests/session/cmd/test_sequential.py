@@ -77,6 +77,7 @@ def test_result_json_sequential(
         "version_info": list(py_info.version_info),
     }
     packaging_setup = get_cmd_exit_run_id(log_report, ".pkg", "setup")
+    assert "result" not in log_report["testenvs"][".pkg"]
 
     assert packaging_setup == [
         (0, "install_requires"),
@@ -89,6 +90,10 @@ def test_result_json_sequential(
     assert packaging_test == [(None, "build_wheel")]
     packaging_installed = log_report["testenvs"][".pkg"].pop("installed_packages")
     assert {i[: i.find("==")] for i in packaging_installed} == {"pip", "setuptools", "wheel"}
+
+    result_py = log_report["testenvs"]["py"].pop("result")
+    assert result_py.pop("duration") > 0
+    assert result_py == {"success": True, "exit_code": 0}
 
     py_setup = get_cmd_exit_run_id(log_report, "py", "setup")
     assert py_setup == [(0, "install_package_deps"), (0, "install_package"), (0, "freeze")]
