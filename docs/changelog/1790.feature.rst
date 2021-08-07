@@ -1,2 +1,2 @@
-Add ``exec`` subcommand that allows users to run arbitrary command within the tox environment (without needing to modify
+Add ``exec`` subcommand that allows users to run an arbitrary command within the tox environment (without needing to modify
 their configuration) - by :user:`gaborbernat`.
