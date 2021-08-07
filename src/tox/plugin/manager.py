@@ -8,7 +8,7 @@ from tox.config.cli.parser import ToxParser
 from tox.config.loader import api as loader_api
 from tox.config.sets import ConfigSet
 from tox.session import state
-from tox.session.cmd import depends, devenv, legacy, list_env, quickstart, show_config, version_flag
+from tox.session.cmd import depends, devenv, exec_, legacy, list_env, quickstart, show_config, version_flag
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
 from tox.tox_env.python.virtual_env import runner
@@ -31,6 +31,7 @@ class Plugin:
             api,
             legacy,
             version_flag,
+            exec_,
             quickstart,
             show_config,
             devenv,

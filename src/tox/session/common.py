@@ -39,11 +39,10 @@ class CliEnv:
         return len(list(self)) == 0
 
 
-def env_list_flag(parser: ArgumentParser, default: Optional[CliEnv] = None) -> None:
-    parser.add_argument(
-        "-e",
-        dest="env",
-        help="tox environment(s) to run (ALL -> all environments, not set -> <env_list>)",
-        default=CliEnv() if default is None else default,
-        type=CliEnv,
+def env_list_flag(parser: ArgumentParser, default: Optional[CliEnv] = None, multiple: bool = True) -> None:
+    help_msg = (
+        "tox environment(s) to run (ALL -> all environments, not set -> <env_list>)"
+        if multiple
+        else "tox environment to run"
     )
+    parser.add_argument("-e", dest="env", help=help_msg, default=CliEnv() if default is None else default, type=CliEnv)

@@ -4,6 +4,7 @@ import pytest
 
 from tox.session.cmd.depends import depends
 from tox.session.cmd.devenv import devenv
+from tox.session.cmd.exec_ import exec_
 from tox.session.cmd.legacy import legacy
 from tox.session.cmd.list_env import list_env
 from tox.session.cmd.quickstart import quickstart
@@ -32,4 +33,6 @@ def core_handlers() -> Dict[str, Callable[[State], int]]:
         "depends": depends,
         "le": legacy,
         "legacy": legacy,
+        "e": exec_,
+        "exec": exec_,
     }
