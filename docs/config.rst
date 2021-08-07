@@ -242,11 +242,10 @@ Base
    :keys: pass_env, passenv
    :default: <empty list>
 
-   Environment variables to pass on to the tox environment. You can use the ``*`` to express wildcard expressions, e.g.
-   ``PIP_*`` translates to all environment variables that start with the ``PIP_`` characters.  If a specified
-   environment variable doesn't exist in the tox invocation environment it is ignored. The list of environment variable
-   names is not case sensitive, and all variables that match when upper cased will be passed. For example, passing ``A``
-   will pass both ``A`` and ``a``.
+   Environment variables to pass on to the tox environment. The values are evaluated as UNIX shell-style wildcards, see
+   `fnmatch <https://docs.python.org/3/library/fnmatch.html>`_  If a specified environment variable doesn't exist in the
+   tox invocation environment it is ignored. The list of environment variable names is not case sensitive, for example:
+   passing ``A`` or ``a`` will pass through both ``A`` and ``a``.
 
 .. conf::
    :keys: set_env, setenv

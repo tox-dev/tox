@@ -1,7 +1,11 @@
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import patch
+
+import pytest
 
 from tox.pytest import ToxProjectCreator
+from tox.tox_env.api import ToxEnv
 
 
 def test_recreate(tox_project: ToxProjectCreator) -> None:
@@ -60,3 +64,23 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
     result_second.assert_success()
     filename = {i.name for i in log_dir.iterdir()}
     assert filename == {"1-commands[0].log"}
+
+
+def test_tox_env_pass_env_literal_exist() -> None:
+    with patch("os.environ", {"A": "1"}):
+        env = ToxEnv._load_pass_env(["A"])
+    assert env == {"A": "1"}
+
+
+def test_tox_env_pass_env_literal_miss() -> None:
+    with patch("os.environ", {}):
+        env = ToxEnv._load_pass_env(["A"])
+    assert not env
+
+
+@pytest.mark.parametrize("glob", ["*", "?"])
+@pytest.mark.parametrize("char", ["a", "A"])
+def test_tox_env_pass_env_match_ignore_case(char: str, glob: str) -> None:
+    with patch("os.environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"}):
+        env = ToxEnv._load_pass_env([f"{char}{glob}"])
+    assert env == {"A1": "1", "a2": "2", "A2": "3"}
