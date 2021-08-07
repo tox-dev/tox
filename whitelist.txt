@@ -44,7 +44,7 @@ dedent
 deinit
 delenv
 dep
-deps
+Deps
 desc
 dest
 devenv
@@ -100,6 +100,7 @@ hookspecs
 htmlhelp
 ident
 IGN
+IGNORECASE
 impl
 INET
 insort
@@ -170,7 +171,7 @@ refspec
 reftitle
 releaselevel
 replacer
-repo
+Repo
 req
 reqs
 retann
@@ -205,7 +206,7 @@ testenv
 textwrap
 tmp
 tmpdir
-toml
+Toml
 tomli
 towncrier
 tox

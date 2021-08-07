@@ -1,6 +1,7 @@
 """
 Defines the abstract base traits of a tox environment.
 """
+import fnmatch
 import logging
 import os
 import re
@@ -278,17 +279,8 @@ class ToxEnv(ABC):
     def _environment_variables(self) -> Dict[str, str]:
         if self._env_vars is not None:
             return self._env_vars
-        result: Dict[str, str] = {}
         pass_env: List[str] = self.conf["pass_env"]
-        glob_pass_env = [re.compile(e.replace("*", ".*")) for e in pass_env if "*" in e]
-        literal_pass_env = [e for e in pass_env if "*" not in e]
-        for env in literal_pass_env:
-            if env in os.environ:  # pragma: no branch
-                result[env] = os.environ[env]
-        if glob_pass_env:  # pragma: no branch
-            for env, value in os.environ.items():
-                if any(g.match(env) is not None for g in glob_pass_env):
-                    result[env] = value
+        result = self._load_pass_env(pass_env)
         set_env: SetEnv = self.conf["set_env"]
         # load/paths_env might trigger a load of the environment variables, set result here, returns current state
         self._env_vars = result
@@ -296,6 +288,15 @@ class ToxEnv(ABC):
         result["PATH"] = self._make_path()
         for key in set_env:
             result[key] = set_env.load(key)
+        return result
+
+    @staticmethod
+    def _load_pass_env(pass_env: List[str]) -> Dict[str, str]:
+        result: Dict[str, str] = {}
+        patterns = [re.compile(fnmatch.translate(e), re.IGNORECASE) for e in pass_env]
+        for env, value in os.environ.items():
+            if any(p.match(env) for p in patterns):
+                result[env] = value
         return result
 
     @property
