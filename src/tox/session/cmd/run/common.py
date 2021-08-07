@@ -313,8 +313,14 @@ def _queue_and_wait(
 def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: State, live: bool) -> None:
     success = result.code == Outcome.OK
     spinner.update_spinner(result, success)
+    tox_env = state.tox_env(result.name)
+    if tox_env.journal:  # add overall journal entry
+        tox_env.journal["result"] = {
+            "success": success,
+            "exit_code": result.code,
+            "duration": result.duration,
+        }
     if live is False and state.options.parallel_live is False:  # teardown background run
-        tox_env = state.tox_env(result.name)
         out_err = tox_env.close_and_read_out_err()  # sync writes from buffer to stdout/stderr
         pkg_out_err_list = []
         for package_env in tox_env.package_envs:
