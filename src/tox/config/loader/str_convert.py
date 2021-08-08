@@ -47,8 +47,10 @@ class StrConvert(Convert[str]):
     @staticmethod
     def to_command(value: str) -> Command:
         is_win = sys.platform == "win32"
+        value = value.replace(r"\#", "#")
         splitter = shlex.shlex(value, posix=not is_win)
         splitter.whitespace_split = True
+        splitter.commenters = ""  # comments handled earlier, and the shlex does not know escaped comment characters
         args: List[str] = []
         pos = 0
         try:

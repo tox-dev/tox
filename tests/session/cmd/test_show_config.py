@@ -168,7 +168,7 @@ def test_show_config_ini_comment_path(tox_project: ToxProjectCreator, tmp_path: 
     set_env =
         A=1 # comment
         # more comment
-    commands = {envpython} -c 'import os; print(os.linesep.join(f"{k}={v!r}" for k, v in os.environ.items()))'
+    commands = {envpython} -c 'import os; print(os.linesep.join(f"{k}={v}" for k, v in os.environ.items()))'
     [testenv:py]
     set_env =
         {[testenv]set_env}
@@ -178,6 +178,6 @@ def test_show_config_ini_comment_path(tox_project: ToxProjectCreator, tmp_path: 
     result = project.run("r", "-e", "py")
     result.assert_success()
     a_line = next(i for i in result.out.splitlines() if i.startswith("A="))  # pragma: no branch  # not found raises
-    assert a_line == "A='1'"
+    assert a_line == "A=1"
     b_line = next(i for i in result.out.splitlines() if i.startswith("B="))  # pragma: no branch  # not found raises
-    assert b_line == f"B='{prj_path}'"
+    assert b_line == f"B={prj_path}"
