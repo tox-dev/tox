@@ -423,3 +423,15 @@ def test_sequential_run_all(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ini}).run("r", "-e", "ALL")
     assert "a: OK" in outcome.out
     assert "b: OK" in outcome.out
+
+
+def test_virtualenv_cache(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip"
+    proj = tox_project({"tox.ini": ini})
+    result_first = proj.run("r", "-v", "-v")
+    result_first.assert_success()
+    assert " create virtual environment via " in result_first.out
+
+    result_second = proj.run("r", "-v", "-v")
+    result_second.assert_success()
+    assert " create virtual environment via " not in result_second.out

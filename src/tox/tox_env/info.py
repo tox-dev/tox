@@ -30,7 +30,7 @@ class Info:
             old = old.get(sub_section)
 
         if old == value:
-            yield True, None
+            yield True, old
         else:
             yield False, old
             # if no exception thrown update
