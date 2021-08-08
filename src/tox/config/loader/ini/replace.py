@@ -20,6 +20,7 @@ BASE_TEST_ENV = "testenv"
 
 # split alongside :, unless it's escaped, or it's preceded by a single capital letter (Windows drive letter in paths)
 ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
+NOT_ESCAPED_COMMENT = re.compile(r"(?<!\\)#")
 
 
 def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str, chain: List[str]) -> str:
@@ -120,9 +121,11 @@ def replace_reference(
             for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, loader):
                 try:
                     if isinstance(src, SectionProxy):
-                        return src[key]
+                        return loader.process_raw(conf, current_env, src[key])
                     value = src.load(key, chain)
                     as_str, _ = stringify(value)
+                    # escape unescaped comment characters to preserve them during processing
+                    as_str = NOT_ESCAPED_COMMENT.sub("\\#", as_str)
                     return as_str
                 except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                     exception = exc
