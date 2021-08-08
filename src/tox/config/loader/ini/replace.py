@@ -120,9 +120,10 @@ def replace_reference(
             for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, loader):
                 try:
                     if isinstance(src, SectionProxy):
-                        return src[key]
+                        return loader.process_raw(conf, current_env, src[key])
                     value = src.load(key, chain)
                     as_str, _ = stringify(value)
+                    as_str = as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
                     return as_str
                 except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                     exception = exc

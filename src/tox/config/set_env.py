@@ -41,6 +41,7 @@ class SetEnv:
             return self._materialized[item]
         raw = self._raw[item]
         result = self.replacer(raw, chain)  # apply any replace options
+        result = result.replace(r"\#", "#")  # unroll escaped comment with replacement
         self._materialized[item] = result
         self._raw.pop(item, None)  # if the replace requires the env we may be called again, so allow pop to fail
         return result

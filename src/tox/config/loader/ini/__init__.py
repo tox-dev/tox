@@ -29,8 +29,10 @@ class IniLoader(StrConvert, Loader[str]):
         super().__init__(overrides)
 
     def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> str:
-        value = self._section[key]
+        return self.process_raw(conf, env_name, self._section[key])
 
+    @staticmethod
+    def process_raw(conf: Optional["Config"], env_name: Optional[str], value: str) -> str:
         # strip comments
         elements: List[str] = []
         for line in value.split("\n"):
@@ -38,7 +40,6 @@ class IniLoader(StrConvert, Loader[str]):
                 part = _COMMENTS.sub("", line)
                 elements.append(part.replace("\\#", "#"))
         strip_comments = "\n".join(elements)
-
         if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
             factor_filtered = strip_comments  # we don't support factor and replace functionality there
         else:

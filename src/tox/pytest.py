@@ -370,7 +370,9 @@ class ToxRunOutcome:
 
 
 class ToxProjectCreator(Protocol):
-    def __call__(self, files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:  # noqa: U100
+    def __call__(
+        self, files: Dict[str, Any], base: Optional[Path] = None, prj_path: Optional[Path] = None  # noqa: U100
+    ) -> ToxProject:
         ...
 
 
@@ -378,9 +380,9 @@ class ToxProjectCreator(Protocol):
 def init_fixture(
     tmp_path: Path, capfd: CaptureFixture, monkeypatch: MonkeyPatch, mocker: MockerFixture
 ) -> ToxProjectCreator:
-    def _init(files: Dict[str, Any], base: Optional[Path] = None) -> ToxProject:
+    def _init(files: Dict[str, Any], base: Optional[Path] = None, prj_path: Optional[Path] = None) -> ToxProject:
         """create tox  projects"""
-        return ToxProject(files, base, tmp_path / "p", capfd, monkeypatch, mocker)
+        return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
 
     return _init  # noqa
 

@@ -1,6 +1,8 @@
 import platform
 import sys
 from configparser import ConfigParser
+from pathlib import Path
+from textwrap import dedent
 from typing import Callable, Tuple
 
 import pytest
@@ -155,3 +157,27 @@ def test_show_config_description_normalize(tox_project: ToxProjectCreator) -> No
     outcome = tox_project({"tox.ini": tox_ini}).run("c", "-e", "py", "-k", "description")
     outcome.assert_success()
     assert outcome.out == "[testenv:py]\ndescription = A magical pipe of this\n"
+
+
+def test_show_config_ini_comment_path(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    prj_path = tmp_path / "#magic"
+    prj_path.mkdir()
+    ini = """
+    [testenv]
+    package = skip
+    set_env =
+        A=1 # comment
+        # more comment
+    commands = {envpython} -c 'import os; print(os.linesep.join(f"{k}={v}" for k, v in os.environ.items()))'
+    [testenv:py]
+    set_env =
+        {[testenv]set_env}
+        B = {tox_root} # just some comment
+    """
+    project = tox_project({"tox.ini": dedent(ini)}, prj_path=prj_path)
+    result = project.run("r", "-e", "py")
+    result.assert_success()
+    a_line = next(i for i in result.out.splitlines() if i.startswith("A="))  # pragma: no branch  # not found raises
+    assert a_line == "A=1"
+    b_line = next(i for i in result.out.splitlines() if i.startswith("B="))  # pragma: no branch  # not found raises
+    assert b_line == f"B={prj_path}"

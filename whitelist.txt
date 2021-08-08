@@ -27,6 +27,7 @@ chdir
 cmd
 codec
 colorama
+commenters
 conf
 configs
 conftest
