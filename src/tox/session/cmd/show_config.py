@@ -11,6 +11,7 @@ from tox.config.cli.parser import ToxParser
 from tox.config.loader.stringify import stringify
 from tox.config.sets import ConfigSet
 from tox.plugin import impl
+from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.common import CliEnv, env_list_flag
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
@@ -29,6 +30,7 @@ def tox_add_option(parser: ToxParser) -> None:
         "--core", action="store_true", help="show core options too when selecting an env with -e", dest="show_core"
     )
     env_list_flag(our, default=CliEnv("ALL"))
+    env_run_create_flags(our, mode="config")
 
 
 def show_config(state: State) -> int:

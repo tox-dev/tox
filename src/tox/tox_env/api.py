@@ -12,6 +12,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union, cast
 
+from tox.config.main import Config
 from tox.config.set_env import SetEnv
 from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
@@ -133,7 +134,7 @@ class ToxEnv(ABC):
         self.conf.add_config(
             "recreate",
             of_type=bool,
-            default=False,
+            default=self._recreate_default,
             desc="always recreate virtual environment if this option is true, otherwise leave it up to tox",
         )
         self.conf.add_config(
@@ -142,6 +143,9 @@ class ToxEnv(ABC):
             default=[],
             desc="external command glob to allow calling",
         )
+
+    def _recreate_default(self, conf: "Config", value: Optional[str]) -> bool:  # noqa: U100
+        return cast(bool, self.options.recreate)
 
     @property
     def env_dir(self) -> Path:
@@ -192,24 +196,22 @@ class ToxEnv(ABC):
             env.append("TMPDIR")  # temporary file location
         return env
 
-    def setup(self, recreate: bool = False) -> None:
+    def setup(self) -> None:
         """
         Setup the tox environment.
-
-        :param recreate: flag to force recreation of the environment from scratch
         """
         if self._run_state["setup"] is False:  # pragma: no branch
             self._platform_check()
-            recreate = recreate or cast(bool, self.conf["recreate"])
+            recreate = cast(bool, self.conf["recreate"])
             if recreate:
-                self._clean()
+                self._clean(transitive=True)
             try:
                 self._setup_env()
                 self._setup_with_env()
             except Recreate as exception:  # once we might try over
                 if not recreate:  # pragma: no cover
                     logging.warning(f"recreate env because {exception.args[0]}")
-                    self._clean(force=True)
+                    self._clean(transitive=False)
                     self._setup_env()
                     self._setup_with_env()
             else:
@@ -265,13 +267,14 @@ class ToxEnv(ABC):
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    def _clean(self, force: bool = False) -> None:  # noqa: U100
+    def _clean(self, transitive: bool = False) -> None:  # noqa: U100
         if self._run_state["clean"]:  # pragma: no branch
             return  # pragma: no cover
         env_dir = self.env_dir
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
             ensure_empty_dir(env_dir)
+        self._log_id = 0  # we deleted logs, so start over counter
         self.cache.reset()
         self._run_state.update({"setup": False, "clean": True})
 
