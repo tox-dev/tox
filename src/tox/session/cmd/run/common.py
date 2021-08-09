@@ -56,15 +56,16 @@ class InstallPackageAction(Action):
 
 
 def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
-    # mode can be one of: run, run-parallel, legacy, devenv
-    parser.add_argument(
-        "--result-json",
-        dest="result_json",
-        metavar="path",
-        of_type=Path,
-        default=None,
-        help="write a JSON file with detailed information about all commands and results involved",
-    )
+    # mode can be one of: run, run-parallel, legacy, devenv, config
+    if mode != "config":
+        parser.add_argument(
+            "--result-json",
+            dest="result_json",
+            metavar="path",
+            of_type=Path,
+            default=None,
+            help="write a JSON file with detailed information about all commands and results involved",
+        )
     if mode != "devenv":
         parser.add_argument(
             "-s",
@@ -75,6 +76,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             action=SkipMissingInterpreterAction,
             help="don't fail tests for missing interpreters: {config,true,false} choice",
         )
+    if mode not in ("devenv", "config"):
         parser.add_argument(
             "-n",
             "--notest",
@@ -98,21 +100,23 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             action=InstallPackageAction,
             dest="install_pkg",
         )
+    if mode != "devenv":
         parser.add_argument(
             "--develop",
             action="store_true",
             help="install package in development mode",
             dest="develop",
         )
-    parser.add_argument(
-        "--hashseed",
-        metavar="SEED",
-        help="set PYTHONHASHSEED to SEED before running commands. Defaults to a random integer in the range "
-        "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
-        type=str,
-        default="noset",
-        dest="hash_seed",
-    )
+    if mode != "config":
+        parser.add_argument(
+            "--hashseed",
+            metavar="SEED",
+            help="set PYTHONHASHSEED to SEED before running commands. Defaults to a random integer in the range "
+            "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
+            type=str,
+            default="noset",
+            dest="hash_seed",
+        )
     parser.add_argument(
         "--discover",
         dest="discover",
@@ -127,7 +131,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         help="if recreate is set do not recreate packaging tox environment(s)",
         action="store_true",
     )
-    if mode != "devenv":
+    if mode not in ("devenv", "config"):
         parser.add_argument(
             "--skip-pkg-install",
             dest="skip_pkg_install",
@@ -253,7 +257,7 @@ def _queue_and_wait(
 
             def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
                 spinner.add(tox_env.conf.name)
-                return run_one(tox_env, options.recreate, options.no_test, suspend_display=live is False)
+                return run_one(tox_env, options.no_test, suspend_display=live is False)
 
             try:
                 executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")

@@ -4,8 +4,9 @@ A tox environment that can build packages.
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Lock
-from typing import TYPE_CHECKING, Any, Generator, List, Set, Tuple, cast
+from typing import TYPE_CHECKING, Any, Generator, List, Optional, Set, Tuple, cast
 
+from tox.config.main import Config
 from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.journal import EnvJournal
 from tox.report import ToxHandler
@@ -34,7 +35,6 @@ class PackageToxEnv(ToxEnv, ABC):
         self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
     ) -> None:
         super().__init__(conf, core, options, journal, log_handler)
-        self.recreate_package = options.recreate and not options.no_recreate_pkg
         self._envs: Set[str] = set()
         self._lock = Lock()
 
@@ -53,6 +53,9 @@ class PackageToxEnv(ToxEnv, ABC):
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
 
+    def _recreate_default(self, conf: "Config", value: Optional[str]) -> bool:
+        return self.options.no_recreate_pkg is False and super()._recreate_default(conf, value)
+
     def create_package_env(
         self, name: str, info: Tuple[Any, ...]  # noqa: U100
     ) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
@@ -61,10 +64,6 @@ class PackageToxEnv(ToxEnv, ABC):
     @abstractmethod
     def perform_packaging(self, for_env: EnvConfigSet) -> List[Package]:  # noqa: U100
         raise NotImplementedError
-
-    def _clean(self, force: bool = False) -> None:
-        if force or self.recreate_package:  # only recreate if user did not opt out
-            super()._clean(force)
 
     def notify_of_run_env(self, conf: EnvConfigSet) -> None:
         with self._lock:

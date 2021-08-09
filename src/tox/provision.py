@@ -102,15 +102,15 @@ def run_provision(deps: List[Requirement], state: State) -> int:  # noqa
         # use our own dependency specification
         deps=PythonDeps("\n".join(str(d) for d in deps), root=state.conf.core["tox_root"]),
         pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
+        recreate=state.options.recreate and not state.options.no_recreate_provision,
     )
     provision_tox_env: str = state.conf.core["provision_tox_env"]
     state.conf.get_env(provision_tox_env, loaders=[loader])
     tox_env = cast(PythonRun, state.tox_env(provision_tox_env))
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
-    recreate = state.options.recreate and not state.options.no_recreate_provision
     try:
-        tox_env.setup(recreate=recreate)
+        tox_env.setup()
     except Skip as exception:
         raise HandledError(f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}")
     args: List[str] = [str(env_python), "-m", "tox"]

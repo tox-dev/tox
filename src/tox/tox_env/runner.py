@@ -121,9 +121,10 @@ class RunToxEnv(ToxEnv, ABC):
             with package_env.display_context(suspend=self._has_display_suspended):
                 getattr(package_env, method_name)(*args)
 
-    def _clean(self, force: bool = False) -> None:
-        super()._clean(force)
-        self._call_pkg_envs("_clean")  # do not pass force along, allow package env to ignore if requested
+    def _clean(self, transitive: bool = False) -> None:
+        super()._clean(transitive)
+        if transitive:
+            self._call_pkg_envs("_clean")
 
     @property
     def _default_package_env(self) -> str:

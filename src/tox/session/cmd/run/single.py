@@ -24,22 +24,22 @@ class ToxEnvRunResult(NamedTuple):
     ignore_outcome: bool = False
 
 
-def run_one(tox_env: RunToxEnv, recreate: bool, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:
+def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:
     start_one = time.monotonic()
     name = tox_env.conf.name
     with tox_env.display_context(suspend_display):
-        skipped, code, outcomes = _evaluate(tox_env, recreate, no_test)
+        skipped, code, outcomes = _evaluate(tox_env, no_test)
     duration = time.monotonic() - start_one
     return ToxEnvRunResult(name, skipped, code, outcomes, duration, tox_env.conf["ignore_outcome"])
 
 
-def _evaluate(tox_env: RunToxEnv, recreate: bool, no_test: bool) -> Tuple[bool, int, List[Outcome]]:
+def _evaluate(tox_env: RunToxEnv, no_test: bool) -> Tuple[bool, int, List[Outcome]]:
     skipped = False
     code: int = 0
     outcomes: List[Outcome] = []
     try:
         try:
-            tox_env.setup(recreate=recreate)
+            tox_env.setup()
             code, outcomes = run_commands(tox_env, no_test)
         except Skip as exception:
             LOGGER.warning("skipped because %s", exception)
