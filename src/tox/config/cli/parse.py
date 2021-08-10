@@ -62,6 +62,16 @@ def _get_parser() -> ToxParser:
     return tox_parser
 
 
+def _get_parser_doc() -> ToxParser:
+    # trigger register of tox env types (during normal run we call this later to handle plugins)
+    from tox.plugin.manager import MANAGER  # pragma: no cover
+    from tox.tox_env.register import REGISTER  # pragma: no cover
+
+    REGISTER._register_tox_env_types(MANAGER)  # pragma: no cover
+
+    return _get_parser()  # pragma: no cover
+
+
 __all__ = (
     "get_options",
     "Handlers",

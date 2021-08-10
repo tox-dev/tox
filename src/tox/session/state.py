@@ -127,7 +127,7 @@ def tox_add_option(parser: "ToxParser") -> None:
     parser.add_argument(
         "--runner",
         dest="default_runner",
-        help="default execute",
+        help="the tox run engine to use when not explicitly stated in tox env configuration",
         default=REGISTER.default_run_env,
         choices=list(REGISTER.run_envs),
     )
