@@ -26,6 +26,8 @@ Some solutions and their drawbacks:
 - specify the constraint file by extending the :ref:`install_command` (tox will not know about the content of the
   constraint file and such will not trigger a rebuild of the environment when its content changes).
 
+Note constraint files are a subset of requirement files. Therefore, it's valid to pass a constraint file wherever you
+can specify a requirement file.
 
 .. _platform-specification:
 
