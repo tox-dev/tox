@@ -420,13 +420,21 @@ Python
    This determines in practice the python for what we'll create a virtual isolated environment. Use this to specify the
    python version for a tox environment. If not specified, the virtual environments factors (e.g. name part) will be
    used to automatically set one. For example, ``py310`` means ``python3.10``, ``py3`` means ``python3`` and ``py``
-   means ``python``.
+   means ``python``. If the name does not match this pattern the same python version tox is installed into will be used.
 
     .. versionchanged:: 3.1
 
         After resolving this value if the interpreter reports back a different version number than implied from the name
         a warning will be printed by default. However, if :ref:`ignore_basepython_conflict` is set, the value is
         ignored and we force the :ref:`base_python` implied from the factor name.
+
+    .. note::
+
+      Leaving this unset will cause an error if the package under test has a different python requires than tox itself
+      and tox is installed into a python that's not supported by the package. For example, if your package requires
+      python 3.9 or later, and you install tox in python 3.8, when you run a tox environment that has left this
+      unspecified tox will use python 3.8 to build and install your package which will fail given it requires 3.9.
+
 
 .. conf::
    :keys: ignore_base_python_conflict, ignore_basepython_conflict
