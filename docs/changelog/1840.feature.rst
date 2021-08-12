@@ -1,0 +1,2 @@
+Add check to validate the base python names and the environments name do not conflict python spec wise, when they do
+raise error if :ref:`ignore_base_python_conflict` is not set or ``False`` - by :user:`gaborbernat`.

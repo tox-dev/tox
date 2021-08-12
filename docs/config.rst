@@ -448,10 +448,9 @@ Python
     do so. To help with sanity of users a error will be raised whenever the environment name version does not matches
     up with this expectation.
 
-    Furthermore, we allow hard enforcing this rule (and bypassing the warning) by setting this flag to ``true``. In such
-    cases we ignore the :ref:`base_python` and instead always use the base python implied from the Python name. This
-    allows you to configure :ref:`base_python` in the :ref:`base` section without affecting environments that have
-    implied base python versions.
+    Furthermore, we allow hard enforcing this rule by setting this flag to ``true``. In such cases we ignore the
+    :ref:`base_python` and instead always use the base python implied from the Python name. This allows you to configure
+    :ref:`base_python` in the :ref:`base` section without affecting environments that have implied base python versions.
 
 .. conf::
    :keys: env_site_packages_dir, envsitepackagesdir
