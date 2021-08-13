@@ -16,8 +16,8 @@ Features - 4.0.0a7
 - Implemented ``[]`` substitution (alias for ``{posargs}``) - by
   :user:`hexagonrecursion`. (`#1928 <https://github.com/tox-dev/tox/issues/1928>`_)
 - Implement ``[testenv] ignore_outcome`` - "a failing result of this testenv will not make tox fail" - by :user:`hexagonrecursion`. (`#1947 <https://github.com/tox-dev/tox/issues/1947>`_)
-- Inline plugin support via ``tox_.py``. This is loaded where the tox config source is discovered. It's a python file
-  that can contain arbitrary python code, such as definition of a plugin. Eventually we'll add a plugin that allows
+- Inline plugin support via ``tox_.py``. This is loaded where the tox config source is discovered. It's a Python file
+  that can contain arbitrary Python code, such as definition of a plugin. Eventually we'll add a plugin that allows
   succinct declaration/generation of new tox environments - by :user:`gaborbernat`. (`#1963 <https://github.com/tox-dev/tox/issues/1963>`_)
 - Introduce the installer concept, and collect pip installation into a ``pip`` package, also attach to this
   the requirements file parsing which got a major rework - by :user:`gaborbernat`. (`#1991 <https://github.com/tox-dev/tox/issues/1991>`_)
@@ -28,7 +28,7 @@ Bugfixes - 4.0.0a7
 - Environments with a platform mismatch are no longer silently skipped, but properly reported - by :user:`jugmac00`. (`#1926 <https://github.com/tox-dev/tox/issues/1926>`_)
 - Port pip requirements file parser to ``tox`` to achieve full equivalency (such as support for the per requirement
   ``--install-option`` and ``--global-option`` flags) - by :user:`gaborbernat`. (`#1929 <https://github.com/tox-dev/tox/issues/1929>`_)
-- Support for extras with paths for python deps and requirement files - by :user:`gaborbernat`. (`#1933 <https://github.com/tox-dev/tox/issues/1933>`_)
+- Support for extras with paths for Python deps and requirement files - by :user:`gaborbernat`. (`#1933 <https://github.com/tox-dev/tox/issues/1933>`_)
 - Due to a bug ``\{posargs} {posargs}`` used to expand to literal ``{posargs} {posargs}``.
   Now the second ``{posargs}`` is expanded.
   ``\{posargs} {posargs}`` expands to ``{posargs} positional arguments here`` - by :user:`hexagonrecursion`. (`#1956 <https://github.com/tox-dev/tox/issues/1956>`_)
@@ -64,11 +64,11 @@ v4.0.0a6 (2021-02-15)
 
 Features - 4.0.0a6
 ~~~~~~~~~~~~~~~~~~
-- Add basic quickstart implementation (just use pytest with the current python version) - by :user:`gaborbernat`. (`#1829 <https://github.com/tox-dev/tox/issues/1829>`_)
+- Add basic quickstart implementation (just use pytest with the current Python version) - by :user:`gaborbernat`. (`#1829 <https://github.com/tox-dev/tox/issues/1829>`_)
 - Support comments via the ``#`` character within the ini configuration (to force a literal ``#`` use ``\#``) -
   by :user:`gaborbernat`. (`#1831 <https://github.com/tox-dev/tox/issues/1831>`_)
 - Add support for the ``install_command`` settings in the virtual env test environments - by :user:`gaborbernat`. (`#1832 <https://github.com/tox-dev/tox/issues/1832>`_)
-- Add support for the ``package_root`` \ ``setupdir`` (python scoped) configuration that sets the root directory used for
+- Add support for the ``package_root`` \ ``setupdir`` ( Python scoped) configuration that sets the root directory used for
   packaging (the location of the historical ``setup.py`` and modern ``pyproject.toml``). This can be set at root level, or
   at tox environment level (the later takes precedence over the former) - by :user:`gaborbernat`. (`#1838 <https://github.com/tox-dev/tox/issues/1838>`_)
 - Implement support for the ``--installpkg`` CLI flag - by :user:`gaborbernat`. (`#1839 <https://github.com/tox-dev/tox/issues/1839>`_)
@@ -78,7 +78,7 @@ Features - 4.0.0a6
 - Add support for the ``pip_pre`` settings for virtual environment based tox environments - by :user:`gaborbernat`. (`#1844 <https://github.com/tox-dev/tox/issues/1844>`_)
 - Add support for the ``platform`` settings in tox test environments - by :user:`gaborbernat`. (`#1845 <https://github.com/tox-dev/tox/issues/1845>`_)
 - Add support for the ``recreate`` settings in tox test environments - by :user:`gaborbernat`. (`#1846 <https://github.com/tox-dev/tox/issues/1846>`_)
-- Allow python test and packaging environments with version 2.7 - by :user:`gaborbernat`. (`#1900 <https://github.com/tox-dev/tox/issues/1900>`_)
+- Allow Python test and packaging environments with version 2.7 - by :user:`gaborbernat`. (`#1900 <https://github.com/tox-dev/tox/issues/1900>`_)
 - Do not construct a requirements file for deps in virtualenv, instead pass content as CLI argument to pip - by
   :user:`gaborbernat`. (`#1906 <https://github.com/tox-dev/tox/issues/1906>`_)
 - Do not display status update environment reports when interrupted or for the final environment ran (because at the
@@ -134,7 +134,7 @@ Bugfixes - 4.0.0a5
 - Support ``=`` separator in requirement file flags, directories as requirements and correctly set the root of the
   requirements file when using the ``--root`` CLI flag to change the root - by :user:`gaborbernat`. (`#1853 <https://github.com/tox-dev/tox/issues/1853>`_)
 - Cleanup local subprocess file handlers when exiting runs (fixes ``ResourceWarning: unclosed file`` errors when running
-  with ``env PYTHONTRACEMALLOC=5 PYTHONDEVMODE=y`` under a python built with ``--with-pydebug``)
+  with ``env PYTHONTRACEMALLOC=5 PYTHONDEVMODE=y`` under a Python built with ``--with-pydebug``)
   - by :user:`gaborbernat`. (`#1857 <https://github.com/tox-dev/tox/issues/1857>`_)
 - Various small bugfixes:
 
@@ -211,15 +211,15 @@ Bugfixes - 4.0.0a3
   - Allow windows paths in substitution set/default (the ``:`` character used to separate substitution arguments may
     also be present in paths on Windows - do not support single capital letter values as substitution arguments) -
     by :user:`gaborbernat`. (`#1784 <https://github.com/tox-dev/tox/issues/1784>`_)
-- Rework how we handle python packaging environments:
+- Rework how we handle Python packaging environments:
 
   - the base packaging environment changed from ``.package`` to ``.pkg``,
   - merged the ``sdist``, ``wheel`` and ``dev`` separate packaging implementations into one, and internally dynamically
     pick the one that's needed,
-  - the base packaging environment always uses the same python environment as tox is installed into,
+  - the base packaging environment always uses the same Python environment as tox is installed into,
   - the base packaging environment is used to get the metadata of the project (via PEP-517) and to build ``sdist`` and
     ``dev`` packages,
-  - for building wheels introduced a new per env configurable option ``wheel_build_env``, if the target python major/minor
+  - for building wheels introduced a new per env configurable option ``wheel_build_env``, if the target Python major/minor
     and implementation for the run tox environment and the base package tox environment matches set this to ``.pkg``,
     otherwise this is ``.pkg-{implementation}{major}{minor}``,
   - internally now packaging environments can create further packaging environments they are responsible of managing,

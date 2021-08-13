@@ -68,13 +68,25 @@ def test_diff_msg_no_diff() -> None:
     assert Python._diff_msg({}, {}) == "python "
 
 
-@pytest.mark.parametrize("ignore_base_python_conflict", [True, False])
+@pytest.mark.parametrize("ignore_conflict", [True, False])
 @pytest.mark.parametrize(
-    ("env_name", "base_python", "conflict"),
+    ("env", "base_python"),
     [
-        ("magic", ["pypy"], []),
-        ("magic", ["py39"], []),
-        (".pkg", ["py"], []),
+        ("magic", ["pypy"]),
+        ("magic", ["py39"]),
+        (".pkg", ["py"]),
+    ],
+    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
+)
+def test_base_python_env_no_conflict(env: str, base_python: List[str], ignore_conflict: bool) -> None:
+    result = Python._validate_base_python(env, base_python, ignore_conflict)
+    assert result is base_python
+
+
+@pytest.mark.parametrize("ignore_conflict", [True, False])
+@pytest.mark.parametrize(
+    ("env", "base_python", "conflict"),
+    [
         ("py", ["pypy"], ["pypy"]),
         ("cpython", ["pypy"], ["pypy"]),
         ("pypy", ["cpython"], ["cpython"]),
@@ -89,38 +101,32 @@ def test_diff_msg_no_diff() -> None:
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
-def test_base_python_matches_env_name(
-    env_name: str, base_python: List[str], conflict: List[str], ignore_base_python_conflict: bool
-) -> None:
-    if conflict:
-        if ignore_base_python_conflict:
-            result = Python._validate_base_python(env_name, base_python, ignore_base_python_conflict)
-            assert result == [env_name]
-        else:
-            msg = f"env name {env_name} conflicting with base python {conflict[0]}"
-            with pytest.raises(Fail, match=msg):
-                Python._validate_base_python(env_name, base_python, ignore_base_python_conflict)
+def test_base_python_env_conflict(env: str, base_python: List[str], conflict: List[str], ignore_conflict: bool) -> None:
+    if ignore_conflict:
+        result = Python._validate_base_python(env, base_python, ignore_conflict)
+        assert result == [env]
     else:
-        result = Python._validate_base_python(env_name, base_python, ignore_base_python_conflict)
-        assert result is base_python
+        msg = f"env name {env} conflicting with base python {conflict[0]}"
+        with pytest.raises(Fail, match=msg):
+            Python._validate_base_python(env, base_python, ignore_conflict)
 
 
-@pytest.mark.parametrize("ignore_base_python_conflict", [True, False, None])
-def test_conflicting_base_python_env_name(tox_project: ToxProjectCreator, ignore_base_python_conflict: bool) -> None:
+@pytest.mark.parametrize("ignore_conflict", [True, False, None])
+def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, ignore_conflict: bool) -> None:
     py_ver = "".join(str(i) for i in sys.version_info[0:2])
     py_ver_next = "".join(str(i) for i in (sys.version_info[0], sys.version_info[1] + 2))
     ini = f"[testenv]\npackage=skip\nbase_python=py{py_ver_next}"
-    if ignore_base_python_conflict is not None:
-        ini += f"\nignore_base_python_conflict={ignore_base_python_conflict}"
+    if ignore_conflict is not None:
+        ini += f"\nignore_base_python_conflict={ignore_conflict}"
     project = tox_project({"tox.ini": ini})
     result = project.run("c", "-e", f"py{py_ver}", "-k", "base_python")
     result.assert_success()
-    if ignore_base_python_conflict:
+    if ignore_conflict:
         out = f"[testenv:py{py_ver}]\nbase_python = py{py_ver}\n"
     else:
-        coma_in_exc = sys.version_info[0:2] <= (3, 6)
+        comma_in_exc = sys.version_info[0:2] <= (3, 6)
         out = (
             f"[testenv:py{py_ver}]\nbase_python = # Exception: Fail('env name py{py_ver} conflicting with"
-            f" base python py{py_ver_next}'{',' if coma_in_exc else ''})\n"
+            f" base python py{py_ver_next}'{',' if comma_in_exc else ''})\n"
         )
     result.assert_out_err(out, "")

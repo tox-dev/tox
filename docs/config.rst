@@ -103,7 +103,7 @@ Core
    :version_added: 3.2.0
 
    Specify a list of `PEP-508 <https://www.python.org/dev/peps/pep-0508/>`_ compliant dependencies that must be
-   satisfied in the python environment hosting tox when running the tox command. If any of these dependencies are not
+   satisfied in the Python environment hosting tox when running the tox command. If any of these dependencies are not
    satisfied will automatically create a provisioned tox environment that does not have this issue, and run the tox
    command within that environment. See :ref:`provision_tox_env` for more details.
 
@@ -417,10 +417,10 @@ Python
    :default: {package_root}
 
    Name or path to a Python interpreter which will be used for creating the virtual environment, first one found wins.
-   This determines in practice the python for what we'll create a virtual isolated environment. Use this to specify the
-   python version for a tox environment. If not specified, the virtual environments factors (e.g. name part) will be
+   This determines in practice the Python for what we'll create a virtual isolated environment. Use this to specify the
+   Python version for a tox environment. If not specified, the virtual environments factors (e.g. name part) will be
    used to automatically set one. For example, ``py310`` means ``python3.10``, ``py3`` means ``python3`` and ``py``
-   means ``python``. If the name does not match this pattern the same python version tox is installed into will be used.
+   means ``python``. If the name does not match this pattern the same Python version tox is installed into will be used.
 
     .. versionchanged:: 3.1
 
@@ -430,10 +430,10 @@ Python
 
     .. note::
 
-      Leaving this unset will cause an error if the package under test has a different python requires than tox itself
-      and tox is installed into a python that's not supported by the package. For example, if your package requires
-      python 3.9 or later, and you install tox in python 3.8, when you run a tox environment that has left this
-      unspecified tox will use python 3.8 to build and install your package which will fail given it requires 3.9.
+      Leaving this unset will cause an error if the package under test has a different Python requires than tox itself
+      and tox is installed into a Python that's not supported by the package. For example, if your package requires
+      Python 3.9 or later, and you install tox in Python 3.8, when you run a tox environment that has left this
+      unspecified tox will use Python 3.8 to build and install your package which will fail given it requires 3.9.
 
 
 .. conf::
@@ -442,21 +442,21 @@ Python
 
     .. versionadded:: 3.1.0
 
-    tox allows setting the python version for an environment via the :ref:`basepython` setting. If that's not set tox
-    can set a default value from the environment name (e.g. ``py310`` implies Python 3.10). Matching up the python
+    tox allows setting the Python version for an environment via the :ref:`basepython` setting. If that's not set tox
+    can set a default value from the environment name (e.g. ``py310`` implies Python 3.10). Matching up the Python
     version with the environment name has became expected at this point, leading to surprises when some configs don't
     do so. To help with sanity of users a error will be raised whenever the environment name version does not matches
     up with this expectation.
 
     Furthermore, we allow hard enforcing this rule by setting this flag to ``true``. In such cases we ignore the
-    :ref:`base_python` and instead always use the base python implied from the Python name. This allows you to configure
-    :ref:`base_python` in the :ref:`base` section without affecting environments that have implied base python versions.
+    :ref:`base_python` and instead always use the base Python implied from the Python name. This allows you to configure
+    :ref:`base_python` in the :ref:`base` section without affecting environments that have implied base Python versions.
 
 .. conf::
    :keys: env_site_packages_dir, envsitepackagesdir
    :constant:
 
-   The python environments site package - where packages are installed (the purelib folder path).
+   The Python environments site package - where packages are installed (the purelib folder path).
 
 .. conf::
    :keys: env_bin_dir, envbindir
@@ -468,7 +468,7 @@ Python
    :keys: env_python, envpython
    :constant:
 
-   The python executable from within the tox environment.
+   The Python executable from within the tox environment.
 
 Python run
 ~~~~~~~~~~
@@ -476,7 +476,7 @@ Python run
    :keys: deps
    :default: <empty list>
 
-   Name of the python dependencies as specified by `PEP-440`_. Installed into the environment prior to project after
+   Name of the Python dependencies as specified by `PEP-440`_. Installed into the environment prior to project after
    environment creation, but before package installation. All installer commands are executed using the :ref:`tox_root`
    as the current working directory.
 
@@ -502,9 +502,9 @@ Python run
    :default: <package_env>-<python-flavor-lowercase><python-version-no-dot>
 
    If :ref:`wheel_build_env` is set to ``wheel`` this will be the tox Python environment in which the wheel will be
-   built. The value is generated to be unique per python flavor and version, and prefixed with :ref:`package_env` value.
+   built. The value is generated to be unique per Python flavor and version, and prefixed with :ref:`package_env` value.
    This is to ensure the target interpreter and the generated wheel will be compatible. If you have a wheel that can be
-   reused across multiple python versions set this value to the same across them (to avoid building a new wheel for
+   reused across multiple Python versions set this value to the same across them (to avoid building a new wheel for
    each one of them).
 
 .. conf::
