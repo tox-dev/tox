@@ -1,0 +1,1 @@
+Add support for :ref:`args_are_paths` flag - by :user:`gaborbernat`.
