@@ -117,7 +117,7 @@ def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, igno
     py_ver_next = "".join(str(i) for i in (sys.version_info[0], sys.version_info[1] + 2))
     ini = f"[testenv]\npackage=skip\nbase_python=py{py_ver_next}"
     if ignore_conflict is not None:
-        ini += f"\nignore_base_python_conflict={ignore_conflict}"
+        ini += f"\n[tox]\nignore_base_python_conflict={ignore_conflict}"
     project = tox_project({"tox.ini": ini})
     result = project.run("c", "-e", f"py{py_ver}", "-k", "base_python")
     result.assert_success()

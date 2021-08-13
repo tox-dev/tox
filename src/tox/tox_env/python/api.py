@@ -56,7 +56,7 @@ class Python(ToxEnv, ABC):
         super().register_config()
 
         def validate_base_python(value: List[str]) -> List[str]:
-            return self._validate_base_python(self.name, value, self.conf["ignore_base_python_conflict"])
+            return self._validate_base_python(self.name, value, self.core["ignore_base_python_conflict"])
 
         self.conf.add_config(
             keys=["base_python", "basepython"],
@@ -65,7 +65,7 @@ class Python(ToxEnv, ABC):
             desc="environment identifier for python, first one found wins",
             post_process=validate_base_python,
         )
-        self.conf.add_config(
+        self.core.add_config(
             keys=["ignore_base_python_conflict", "ignore_basepython_conflict"],
             of_type=bool,
             default=False,

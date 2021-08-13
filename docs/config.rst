@@ -195,6 +195,25 @@ Core
 
     Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
 
+Python
+~~~~~~
+.. conf::
+   :keys: ignore_base_python_conflict, ignore_basepython_conflict
+   :default: True
+
+    .. versionadded:: 3.1.0
+
+    tox allows setting the Python version for an environment via the :ref:`basepython` setting. If that's not set tox
+    can set a default value from the environment name (e.g. ``py310`` implies Python 3.10). Matching up the Python
+    version with the environment name has became expected at this point, leading to surprises when some configs don't
+    do so. To help with sanity of users a error will be raised whenever the environment name version does not matches
+    up with this expectation.
+
+    Furthermore, we allow hard enforcing this rule by setting this flag to ``true``. In such cases we ignore the
+    :ref:`base_python` and instead always use the base Python implied from the Python name. This allows you to configure
+    :ref:`base_python` in the :ref:`base` section without affecting environments that have implied base Python versions.
+
+
 
 tox environment
 ---------------
@@ -434,23 +453,6 @@ Python
       and tox is installed into a Python that's not supported by the package. For example, if your package requires
       Python 3.9 or later, and you install tox in Python 3.8, when you run a tox environment that has left this
       unspecified tox will use Python 3.8 to build and install your package which will fail given it requires 3.9.
-
-
-.. conf::
-   :keys: ignore_base_python_conflict, ignore_basepython_conflict
-   :default: True
-
-    .. versionadded:: 3.1.0
-
-    tox allows setting the Python version for an environment via the :ref:`basepython` setting. If that's not set tox
-    can set a default value from the environment name (e.g. ``py310`` implies Python 3.10). Matching up the Python
-    version with the environment name has became expected at this point, leading to surprises when some configs don't
-    do so. To help with sanity of users a error will be raised whenever the environment name version does not matches
-    up with this expectation.
-
-    Furthermore, we allow hard enforcing this rule by setting this flag to ``true``. In such cases we ignore the
-    :ref:`base_python` and instead always use the base Python implied from the Python name. This allows you to configure
-    :ref:`base_python` in the :ref:`base` section without affecting environments that have implied base Python versions.
 
 .. conf::
    :keys: env_site_packages_dir, envsitepackagesdir
