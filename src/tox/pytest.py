@@ -34,7 +34,7 @@ from virtualenv.info import IS_WIN, fs_supports_symlink
 
 import tox.run
 from tox.config.sets import EnvConfigSet
-from tox.execute.api import Execute, ExecuteInstance, ExecuteStatus, Outcome
+from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, Outcome
 from tox.execute.request import ExecuteRequest, shell_cmd
 from tox.execute.stream import SyncWrite
 from tox.report import LOGGER, OutErr
@@ -160,34 +160,38 @@ class ToxProject:
                 self.exit_code = exit_code
                 super().__init__(colored)
 
-            def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> ExecuteInstance:
-                return MockExecuteInstance(request, out, err, self.exit_code)
+            def build_instance(
+                self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite
+            ) -> ExecuteInstance:
+                return MockExecuteInstance(request, options, out, err, self.exit_code)
 
         class MockExecuteStatus(ExecuteStatus):
-            def __init__(self, out: SyncWrite, err: SyncWrite, exit_code: int) -> None:
-                super().__init__(out, err)
+            def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int) -> None:
+                super().__init__(options, out, err)
                 self._exit_code = exit_code
 
             @property
             def exit_code(self) -> Optional[int]:
                 return self._exit_code
 
-            def wait(self, timeout: Optional[float] = None) -> None:
-                """ """
+            def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+                return self._exit_code
 
             def write_stdin(self, content: str) -> None:
-                """ """
+                return None  # pragma: no cover
 
             def interrupt(self) -> None:
-                """ """
+                return None  # pragma: no cover
 
         class MockExecuteInstance(ExecuteInstance):
-            def __init__(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite, exit_code: int) -> None:
-                super().__init__(request, out, err)
+            def __init__(
+                self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int
+            ) -> None:
+                super().__init__(request, options, out, err)
                 self.exit_code = exit_code
 
             def __enter__(self) -> ExecuteStatus:
-                return MockExecuteStatus(self._out, self._err, self.exit_code)
+                return MockExecuteStatus(self.options, self._out, self._err, self.exit_code)
 
             def __exit__(
                 self,

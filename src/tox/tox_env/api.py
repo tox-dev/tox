@@ -106,6 +106,7 @@ class ToxEnv(ABC):
             default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",
             desc="a folder for logging where tox will put logs of tool invocation",
         )
+        self.executor.register_conf(self)
         self.conf.default_set_env_loader = self._default_set_env
         self.conf.add_config(
             keys=["platform"],
@@ -337,8 +338,8 @@ class ToxEnv(ABC):
         executor: Optional[Execute] = None,
     ) -> Outcome:
         with self.execute_async(cmd, stdin, show, cwd, run_id, executor) as status:
-            while status.exit_code is None:
-                status.wait()
+            while status.wait() is None:
+                pass  # pragma: no cover
         if status.outcome is None:  # pragma: no cover # this should not happen
             raise RuntimeError  # pragma: no cover
         return status.outcome
@@ -427,6 +428,7 @@ class ToxEnv(ABC):
     ) -> Iterator[ExecuteStatus]:
         with executor.call(
             request=request,
+            env=self,
             show=show,
             out_err=out_err,
         ) as execute_status:

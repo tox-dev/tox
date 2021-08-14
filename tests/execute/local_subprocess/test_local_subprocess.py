@@ -6,6 +6,7 @@ import sys
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Dict, List, Tuple
+from unittest.mock import MagicMock
 
 import psutil
 import pytest
@@ -48,7 +49,7 @@ def test_local_execute_basic_pass(
     code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
-    with executor.call(request, show=show, out_err=out_err.out_err) as status:
+    with executor.call(request, show=show, out_err=out_err.out_err, env=MagicMock()) as status:
         while status.exit_code is None:
             status.wait()
     assert status.out == out.encode()
@@ -83,7 +84,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
         run_id="",
     )
     out_err = FakeOutErr()
-    with executor.call(request, show=True, out_err=out_err.out_err) as status:
+    with executor.call(request, show=True, out_err=out_err.out_err, env=MagicMock()) as status:
         while status.exit_code is None:
             status.wait()
     outcome = status.outcome
@@ -121,7 +122,7 @@ def test_local_execute_write_a_lot(os_env: Dict[str, str]) -> None:
         run_id="",
     )
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
         while status.exit_code is None:
             status.wait()
     outcome = status.outcome
@@ -147,7 +148,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
 
     # run test
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
         while status.exit_code is None:
             status.wait()
     outcome = status.outcome
@@ -199,7 +200,7 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: Dict[str, str
         cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, stdin=StdinSource.OFF, run_id=""
     )
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()  # pragma: no cover
     outcome = status.outcome
@@ -226,6 +227,7 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
         child = next(iter(psutil.Process(pid=root).children())).pid
     except AccessDenied as exc:  # pragma: no cover # on termux for example
         pytest.skip(str(exc))  # pragma: no cover
+        raise  # pragma: no cover
 
     print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)
     process.send_signal(SIG_INTERRUPT)
@@ -236,9 +238,9 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
         raise
 
     out, err = capfd.readouterr()
-    assert f"W	requested interrupt of {child} from {root}" in err, err
-    assert f"W	send signal SIGINT(2) to {child} from {root} with timeout 0.30" in err, err
-    assert f"W	send signal SIGTERM(15) to {child} from {root} with timeout 0.20" in err, err
+    assert f"W	requested interrupt of {child} from {root}, activate in 0.01" in err, err
+    assert f"W	send signal SIGINT(2) to {child} from {root} with timeout 0.05" in err, err
+    assert f"W	send signal SIGTERM(15) to {child} from {root} with timeout 0.07" in err, err
     assert f"W	send signal SIGKILL(9) to {child} from {root}" in err, err
 
     outs = out.split("\n")
@@ -262,7 +264,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     cmd: List[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
         while status.exit_code is None:
             status.wait()
     outcome = status.outcome
@@ -293,6 +295,6 @@ def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
         run_id="run-id",
         allow=[allow],
     )
-    inst = LocalSubProcessExecuteInstance(request, out=SyncWrite("out", None), err=SyncWrite("err", None))
+    inst = LocalSubProcessExecuteInstance(request, MagicMock(), out=SyncWrite("out", None), err=SyncWrite("err", None))
 
     assert inst.cmd == [exe]

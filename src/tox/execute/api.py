@@ -7,7 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from types import TracebackType
-from typing import Any, Callable, Dict, Iterator, NoReturn, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, NoReturn, Optional, Sequence, Tuple, Type, cast
 
 from colorama import Fore
 
@@ -16,14 +16,56 @@ from tox.report import OutErr
 from .request import ExecuteRequest, StdinSource
 from .stream import SyncWrite
 
+if TYPE_CHECKING:
+    from tox.tox_env.api import ToxEnv
+
 ContentHandler = Callable[[bytes], None]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
 LOGGER = logging.getLogger(__name__)
 
 
+class ExecuteOptions:
+    def __init__(self, env: "ToxEnv") -> None:
+        self._env = env
+
+    @classmethod
+    def register_conf(cls, env: "ToxEnv") -> None:  # noqa
+        env.conf.add_config(
+            keys=["suicide_timeout"],
+            desc="timeout to allow process to exit before sending SIGINT",
+            of_type=float,
+            default=0.0,
+        )
+        env.conf.add_config(
+            keys=["interrupt_timeout"],
+            desc="timeout before sending SIGTERM after SIGINT",
+            of_type=float,
+            default=0.3,
+        )
+        env.conf.add_config(
+            keys=["terminate_timeout"],
+            desc="timeout before sending SIGKILL after SIGTERM",
+            of_type=float,
+            default=0.2,
+        )
+
+    @property
+    def suicide_timeout(self) -> float:
+        return cast(float, self._env.conf["suicide_timeout"])
+
+    @property
+    def interrupt_timeout(self) -> float:
+        return cast(float, self._env.conf["interrupt_timeout"])
+
+    @property
+    def terminate_timeout(self) -> float:
+        return cast(float, self._env.conf["terminate_timeout"])
+
+
 class ExecuteStatus(ABC):
-    def __init__(self, out: SyncWrite, err: SyncWrite) -> None:
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.outcome: Optional[Outcome] = None
+        self.options = options
         self._out = out
         self._err = err
 
@@ -33,7 +75,7 @@ class ExecuteStatus(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def wait(self, timeout: Optional[float] = None) -> None:  # noqa: U100
+    def wait(self, timeout: Optional[float] = None) -> Optional[int]:  # noqa: U100
         raise NotImplementedError
 
     @abstractmethod
@@ -65,11 +107,13 @@ class ExecuteStatus(ABC):
 class Execute(ABC):
     """Abstract API for execution of a tox environment"""
 
+    _option_class: Type[ExecuteOptions] = ExecuteOptions
+
     def __init__(self, colored: bool) -> None:
         self._colored = colored
 
     @contextmanager
-    def call(self, request: ExecuteRequest, show: bool, out_err: OutErr) -> Iterator[ExecuteStatus]:
+    def call(self, request: ExecuteRequest, show: bool, out_err: OutErr, env: "ToxEnv") -> Iterator[ExecuteStatus]:
         start = time.monotonic()
         try:
             # collector is what forwards the content from the file streams to the standard streams
@@ -77,7 +121,7 @@ class Execute(ABC):
             out_sync = SyncWrite(out.name, out if show else None)
             err_sync = SyncWrite(err.name, err if show else None, Fore.RED if self._colored else None)
             with out_sync, err_sync:
-                instance = self.build_instance(request, out_sync, err_sync)
+                instance = self.build_instance(request, self._option_class(env), out_sync, err_sync)
                 with instance as status:
                     yield status
                 exit_code = status.exit_code
@@ -89,16 +133,21 @@ class Execute(ABC):
 
     @abstractmethod
     def build_instance(
-        self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite  # noqa: U100
+        self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite  # noqa: U100
     ) -> "ExecuteInstance":
         raise NotImplementedError
+
+    @classmethod
+    def register_conf(cls, env: "ToxEnv") -> None:
+        cls._option_class.register_conf(env)
 
 
 class ExecuteInstance(ABC):
     """An instance of a command execution"""
 
-    def __init__(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> None:
+    def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.request = request
+        self.options = options
         self._out = out
         self._err = err
 
@@ -234,6 +283,7 @@ __all__ = (
     "Outcome",
     "Execute",
     "ExecuteInstance",
+    "ExecuteOptions",
     "ExecuteStatus",
     "StdinSource",
 )
