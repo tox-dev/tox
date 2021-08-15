@@ -21,6 +21,7 @@ if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
     else:
         from asyncio.windows_utils import Popen
     from signal import CTRL_C_EVENT as SIG_INTERRUPT
+    from signal import SIGTERM
     from subprocess import CREATE_NEW_PROCESS_GROUP
 
     from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
