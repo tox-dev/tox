@@ -54,11 +54,22 @@ class Python(ToxEnv, ABC):
 
     def register_config(self) -> None:
         super().register_config()
+
+        def validate_base_python(value: List[str]) -> List[str]:
+            return self._validate_base_python(self.name, value, self.core["ignore_base_python_conflict"])
+
         self.conf.add_config(
             keys=["base_python", "basepython"],
             of_type=List[str],
             default=self.default_base_python,
             desc="environment identifier for python, first one found wins",
+            post_process=validate_base_python,
+        )
+        self.core.add_config(
+            keys=["ignore_base_python_conflict", "ignore_basepython_conflict"],
+            of_type=bool,
+            default=False,
+            desc="do not raise error if the environment name conflicts with base python",
         )
         self.conf.add_constant(
             keys=["env_site_packages_dir", "envsitepackagesdir"],
@@ -107,6 +118,26 @@ class Python(ToxEnv, ABC):
                 raise ValueError(f"conflicting factors {', '.join(candidates)} in {env_name}")
             return next(iter(candidates))
         return None
+
+    @staticmethod
+    def _validate_base_python(env_name: str, base_pythons: List[str], ignore_base_python_conflict: bool) -> List[str]:
+        elements = {env_name}  # match with full env-name
+        elements.update(env_name.split("-"))  # and also any factor
+        for candidate in elements:
+            spec_name = PythonSpec.from_string_spec(candidate)
+            if spec_name.implementation is not None and spec_name.implementation.lower() in ("pypy", "cpython"):
+                for base_python in base_pythons:
+                    spec_base = PythonSpec.from_string_spec(base_python)
+                    if any(
+                        getattr(spec_base, key) != getattr(spec_name, key)
+                        for key in ("implementation", "major", "minor", "micro", "architecture")
+                        if getattr(spec_base, key) is not None and getattr(spec_name, key) is not None
+                    ):
+                        msg = f"env name {env_name} conflicting with base python {base_python}"
+                        if ignore_base_python_conflict:
+                            return [env_name]  # ignore the base python settings
+                        raise Fail(msg)
+        return base_pythons
 
     @abstractmethod
     def env_site_package_dir(self) -> Path:
@@ -172,7 +203,7 @@ class Python(ToxEnv, ABC):
     def base_python(self) -> PythonInfo:
         """Resolve base python"""
         if self._base_python_searched is False:
-            base_pythons = self.conf["base_python"]
+            base_pythons: List[str] = self.conf["base_python"]
             self._base_python_searched = True
             self._base_python = self._get_python(base_pythons)
             if self._base_python is None:

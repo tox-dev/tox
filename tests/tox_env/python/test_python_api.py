@@ -1,11 +1,12 @@
 import sys
 from pathlib import Path
-from typing import Callable, Tuple
+from typing import Callable, List, Tuple
 
 import pytest
 from pytest_mock import MockerFixture
 
 from tox.pytest import ToxProjectCreator
+from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
 
 
@@ -27,7 +28,7 @@ def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
     assert got_cmd == exp
 
 
-def test_conflicting_base_python() -> None:
+def test_conflicting_base_python_factor() -> None:
     major, minor = sys.version_info[0:2]
     name = f"py{major}{minor}-py{major}{minor-1}"
     with pytest.raises(ValueError, match=f"conflicting factors py{major}{minor}, py{major}{minor-1} in {name}"):
@@ -65,3 +66,67 @@ def test_diff_msg_added_removed_changed() -> None:
 
 def test_diff_msg_no_diff() -> None:
     assert Python._diff_msg({}, {}) == "python "
+
+
+@pytest.mark.parametrize("ignore_conflict", [True, False])
+@pytest.mark.parametrize(
+    ("env", "base_python"),
+    [
+        ("magic", ["pypy"]),
+        ("magic", ["py39"]),
+        (".pkg", ["py"]),
+    ],
+    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
+)
+def test_base_python_env_no_conflict(env: str, base_python: List[str], ignore_conflict: bool) -> None:
+    result = Python._validate_base_python(env, base_python, ignore_conflict)
+    assert result is base_python
+
+
+@pytest.mark.parametrize("ignore_conflict", [True, False])
+@pytest.mark.parametrize(
+    ("env", "base_python", "conflict"),
+    [
+        ("py", ["pypy"], ["pypy"]),
+        ("cpython", ["pypy"], ["pypy"]),
+        ("pypy", ["cpython"], ["cpython"]),
+        ("pypy2", ["pypy3"], ["pypy3"]),
+        ("py3", ["py2"], ["py2"]),
+        ("py38", ["py39"], ["py39"]),
+        ("py38", ["py38", "py39"], ["py39"]),
+        ("py310", ["py38", "py39"], ["py38", "py39"]),
+        ("py3.11.1", ["py3.11.2"], ["py3.11.2"]),
+        ("py3-64", ["py3-32"], ["py3-32"]),
+        ("py310-magic", ["py39"], ["py39"]),
+    ],
+    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
+)
+def test_base_python_env_conflict(env: str, base_python: List[str], conflict: List[str], ignore_conflict: bool) -> None:
+    if ignore_conflict:
+        result = Python._validate_base_python(env, base_python, ignore_conflict)
+        assert result == [env]
+    else:
+        msg = f"env name {env} conflicting with base python {conflict[0]}"
+        with pytest.raises(Fail, match=msg):
+            Python._validate_base_python(env, base_python, ignore_conflict)
+
+
+@pytest.mark.parametrize("ignore_conflict", [True, False, None])
+def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, ignore_conflict: bool) -> None:
+    py_ver = "".join(str(i) for i in sys.version_info[0:2])
+    py_ver_next = "".join(str(i) for i in (sys.version_info[0], sys.version_info[1] + 2))
+    ini = f"[testenv]\npackage=skip\nbase_python=py{py_ver_next}"
+    if ignore_conflict is not None:
+        ini += f"\n[tox]\nignore_base_python_conflict={ignore_conflict}"
+    project = tox_project({"tox.ini": ini})
+    result = project.run("c", "-e", f"py{py_ver}", "-k", "base_python")
+    result.assert_success()
+    if ignore_conflict:
+        out = f"[testenv:py{py_ver}]\nbase_python = py{py_ver}\n"
+    else:
+        comma_in_exc = sys.version_info[0:2] <= (3, 6)
+        out = (
+            f"[testenv:py{py_ver}]\nbase_python = # Exception: Fail('env name py{py_ver} conflicting with"
+            f" base python py{py_ver_next}'{',' if comma_in_exc else ''})\n"
+        )
+    result.assert_out_err(out, "")

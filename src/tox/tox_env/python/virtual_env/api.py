@@ -120,6 +120,7 @@ class VirtualEnv(Python, ABC):
         self.session.run()
 
     def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:  # noqa: U100
+        # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter
         except RuntimeError:  # if can't find
