@@ -5,7 +5,8 @@ import os
 import re
 import sys
 from configparser import SectionProxy
-from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Iterator, List, Optional, Tuple, Union
 
 from tox.config.loader.stringify import stringify
 from tox.config.set_env import SetEnv
@@ -83,7 +84,7 @@ def _replace_match(
     elif of_type == "tty":
         replace_value = replace_tty(args)
     elif of_type == "posargs":
-        replace_value = replace_pos_args(args, conf.pos_args)
+        replace_value = replace_pos_args(conf, current_env, args)
     else:
         replace_value = replace_reference(conf, current_env, loader, value, chain)
     return replace_value
@@ -172,7 +173,16 @@ def _config_value_sources(
         yield value
 
 
-def replace_pos_args(args: List[str], pos_args: Optional[Sequence[str]]) -> str:
+def replace_pos_args(conf: "Config", env_name: Optional[str], args: List[str]) -> str:
+    to_path: Optional[Path] = None
+    if env_name is not None:  # pragma: no branch
+        env_conf = conf.get_env(env_name)
+        try:
+            if env_conf["args_are_paths"]:  # pragma: no branch
+                to_path = env_conf["change_dir"]
+        except KeyError:
+            pass
+    pos_args = conf.pos_args(to_path)
     if pos_args is None:
         replace_value = ":".join(args)  # if we use the defaults join back remaining args
     else:

@@ -362,6 +362,14 @@ Run
    Change to this working directory when executing the test command. If the directory does not exist yet, it will be
    created (required for Windows to be able to execute any command).
 
+.. conf::
+   :keys: args_are_paths
+   :default: False
+
+   Treat positional arguments passed to tox as file system paths and - if they exist on the filesystem and are in
+   relative format - rewrite them according to the current and :ref:`change_dir` working directory. This handles
+   automatically transforming relative paths specified on the CLI to relative paths respective of the commands executing
+   directory.
 
 .. conf::
    :keys: ignore_errors

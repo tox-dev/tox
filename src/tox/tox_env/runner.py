@@ -69,6 +69,12 @@ class RunToxEnv(ToxEnv, ABC):
             desc="change to this working directory when executing the test command",
         )
         self.conf.add_config(
+            keys=["args_are_paths"],
+            of_type=bool,
+            default=True,
+            desc="if True rewrite relative posargs paths from cwd to change_dir",
+        )
+        self.conf.add_config(
             keys=["ignore_errors"],
             of_type=bool,
             default=False,

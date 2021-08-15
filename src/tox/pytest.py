@@ -229,16 +229,16 @@ class ToxProject:
         return result
 
     @contextmanager
-    def chdir(self) -> Iterator[None]:
+    def chdir(self, to: Optional[Path] = None) -> Iterator[None]:
         cur_dir = os.getcwd()
-        os.chdir(str(self.path))
+        os.chdir(str(to or self.path))
         try:
             yield
         finally:
             os.chdir(cur_dir)
 
-    def run(self, *args: str) -> "ToxRunOutcome":
-        with self.chdir():
+    def run(self, *args: str, from_cwd: Optional[Path] = None) -> "ToxRunOutcome":
+        with self.chdir(from_cwd):
             state = None
             self._capfd.readouterr()  # start with a clean state - drain
             code = None

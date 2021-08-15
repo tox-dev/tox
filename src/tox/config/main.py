@@ -1,3 +1,4 @@
+import os
 from collections import OrderedDict, defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
@@ -35,9 +36,23 @@ class Config:
         self._core_set: Optional[CoreConfigSet] = None
         self.register_config_set: Callable[[str, EnvConfigSet], Any] = lambda n, e: None
 
-    @property
-    def pos_args(self) -> Optional[Tuple[str, ...]]:
-        """:return: positional arguments"""
+    def pos_args(self, to_path: Optional[Path]) -> Optional[Tuple[str, ...]]:
+        """
+        :param to_path: if not None rewrite relative posargs paths from cwd to to_path
+        :return: positional argument
+        """
+        if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
+            args = []
+            to_path_str = os.path.abspath(str(to_path))  # we use os.path to unroll .. in path without resolve
+            for arg in self._pos_args:
+                path_arg = Path(arg)
+                if path_arg.exists() and not path_arg.is_absolute():
+                    path_arg_str = os.path.abspath(str(path_arg))  # we use os.path to unroll .. in path without resolve
+                    relative = os.path.relpath(path_arg_str, to_path_str)  # we use os.path to not fail when not within
+                    args.append(relative)
+                else:
+                    args.append(arg)
+            return tuple(args)
         return self._pos_args
 
     @property
