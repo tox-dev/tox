@@ -188,3 +188,18 @@ def test_show_config_cli_flag(tox_project: ToxProjectCreator) -> None:
     result = project.run("c", "-e", "py,.pkg", "-k", "package", "recreate", "--develop", "-r", "--no-recreate-pkg")
     expected = "[testenv:py]\npackage = dev-legacy\nrecreate = True\n\n[testenv:.pkg]\nrecreate = False\n"
     assert result.out == expected
+
+
+def test_show_config_timeout_default(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npakcage=skip"})
+    result = project.run("c", "-e", "py", "-k", "suicide_timeout", "interrupt_timeout", "terminate_timeout")
+    expected = "[testenv:py]\nsuicide_timeout = 0.0\ninterrupt_timeout = 0.3\nterminate_timeout = 0.2\n"
+    assert result.out == expected
+
+
+def test_show_config_timeout_custom(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npakcage=skip\nsuicide_timeout = 1\ninterrupt_timeout = 2.222\nterminate_timeout = 3.0\n"
+    project = tox_project({"tox.ini": ini})
+    result = project.run("c", "-e", "py", "-k", "suicide_timeout", "interrupt_timeout", "terminate_timeout")
+    expected = "[testenv:py]\nsuicide_timeout = 1.0\ninterrupt_timeout = 2.222\nterminate_timeout = 3.0\n"
+    assert result.out == expected

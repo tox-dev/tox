@@ -4,17 +4,15 @@ import logging
 import os
 import shutil
 import sys
-import time
 from subprocess import DEVNULL, PIPE, TimeoutExpired
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple, Type
 
 from tox.tox_env.errors import Fail
 
-from ..api import Execute, ExecuteInstance, ExecuteStatus
+from ..api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
 from ..request import ExecuteRequest, StdinSource
 from ..stream import SyncWrite
-from .read_via_thread import WAIT_GENERAL
 
 if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
     # needs stdin/stdout handlers backed by overlapped IO
@@ -23,6 +21,7 @@ if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
     else:
         from asyncio.windows_utils import Popen
     from signal import CTRL_C_EVENT as SIG_INTERRUPT
+    from signal import SIGTERM
     from subprocess import CREATE_NEW_PROCESS_GROUP
 
     from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
@@ -37,20 +36,21 @@ else:  # pragma: win32 no cover
 
     CREATION_FLAGS = 0
 
-WAIT_INTERRUPT = 0.3
-WAIT_TERMINATE = 0.2
+
 IS_WIN = sys.platform == "win32"
 
 
 class LocalSubProcessExecutor(Execute):
-    def build_instance(self, request: ExecuteRequest, out: SyncWrite, err: SyncWrite) -> ExecuteInstance:
-        return LocalSubProcessExecuteInstance(request, out, err)
+    def build_instance(
+        self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite
+    ) -> ExecuteInstance:
+        return LocalSubProcessExecuteInstance(request, options, out, err)
 
 
 class LocalSubprocessExecuteStatus(ExecuteStatus):
-    def __init__(self, out: SyncWrite, err: SyncWrite, process: "Popen[bytes]"):
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: "Popen[bytes]"):
         self._process: "Popen[bytes]" = process
-        super().__init__(out, err)
+        super().__init__(options, out, err)
         self._interrupted = False
 
     @property
@@ -62,54 +62,30 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         if self._process is not None:  # pragma: no branch
             # A three level stop mechanism for children - INT -> TERM -> KILL
             # communicate will wait for the app to stop, and then drain the standard streams and close them
-            proc = self._process
-            host_pid = os.getpid()
-            to_pid = proc.pid
-            logging.warning("requested interrupt of %d from %d", to_pid, host_pid)
-            if proc.poll() is None:  # still alive, first INT
-                logging.warning(
-                    "send signal %s to %d from %d with timeout %.2f",
-                    f"SIGINT({SIG_INTERRUPT})",
-                    to_pid,
-                    host_pid,
-                    WAIT_INTERRUPT,
-                )
-                proc.send_signal(SIG_INTERRUPT)
-                start = time.monotonic()
-                while proc.poll() is None and (time.monotonic() - start) < WAIT_INTERRUPT:
-                    continue
-                if proc.poll() is None:  # pragma: no branch
-                    if sys.platform == "win32":  # explicit check for mypy # pragma: no branch
-                        logging.warning("terminate %d from %d", to_pid, host_pid)  # pragma: no cover
-                    else:
-                        logging.warning(
-                            "send signal %s to %d from %d with timeout %.2f",
-                            f"SIGTERM({SIGTERM})",
-                            to_pid,
-                            host_pid,
-                            WAIT_TERMINATE,
-                        )
-                    proc.terminate()
-                    start = time.monotonic()
-                    if sys.platform != "win32":  # explicit check for mypy # pragma: no branch
-                        # Windows terminate is UNIX kill
-                        while proc.poll() is None and (time.monotonic() - start) < WAIT_TERMINATE:
-                            continue
-                        if proc.poll() is None:  # pragma: no branch
-                            logging.warning("send signal %s to %d from %d", f"SIGKILL({SIGKILL})", to_pid, host_pid)
-                            proc.kill()
-                    while proc.poll() is None:
-                        continue  # pragma: no cover
+            to_pid, host_pid = self._process.pid, os.getpid()
+            msg = "requested interrupt of %d from %d, activate in %.2f"
+            logging.warning(msg, to_pid, host_pid, self.options.suicide_timeout)
+            if self.wait(self.options.suicide_timeout) is None:  # still alive -> INT
+                msg = "send signal %s to %d from %d with timeout %.2f"
+                logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
+                self._process.send_signal(SIG_INTERRUPT)
+                if self.wait(self.options.interrupt_timeout) is None:  # still alive -> TERM # pragma: no branch
+                    logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, self.options.terminate_timeout)
+                    self._process.terminate()
+                    if sys.platform != "win32":  # Windows terminate is UNIX kill
+                        if self.wait(self.options.terminate_timeout) is None:  # still alive -> KILL
+                            logging.warning(msg[:-18], f"SIGKILL({SIGKILL})", to_pid, host_pid)
+                            self._process.kill()
+                    self.wait()  # unconditional wait as kill should soon bring down the process
+                logging.warning("interrupt finished with success")
             else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
-                logging.warning("process already dead with %s within %s", proc.returncode, os.getpid())
-            logging.warning("interrupt finished with success")
+                logging.warning("process already dead with %s within %s", self._process.returncode, host_pid)
 
-    def wait(self, timeout: Optional[float] = None) -> None:
-        # note poll in general might deadlock if output large, but we drain in background threads so not an issue here
-        try:
-            self._process.wait(timeout=WAIT_GENERAL if timeout is None else timeout)
+    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+        try:  # note wait in general might deadlock if output large, but we drain in background threads so not an issue
+            return self._process.wait(timeout=timeout)
         except TimeoutExpired:
-            pass
+            return None
 
     def write_stdin(self, content: str) -> None:
         stdin = self._process.stdin
@@ -143,33 +119,34 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
 
 class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
-    def __init__(self, out: SyncWrite, err: SyncWrite, exit_code: Optional[int]) -> None:
-        super().__init__(out, err)
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: Optional[int]) -> None:
+        super().__init__(options, out, err)
         self._exit_code = exit_code
 
     @property
     def exit_code(self) -> Optional[int]:
         return self._exit_code
 
-    def wait(self, timeout: Optional[float] = None) -> None:  # noqa: U100
-        """already dead no need to wait"""
+    def wait(self, timeout: Optional[float] = None) -> Optional[int]:  # noqa: U100
+        return self._exit_code  # pragma: no cover
 
     def write_stdin(self, content: str) -> None:  # noqa: U100
         """cannot write"""
 
     def interrupt(self) -> None:
-        """Nothing running so nothing to interrupt"""
+        return None  # pragma: no cover # nothing running so nothing to interrupt
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
     def __init__(
         self,
         request: ExecuteRequest,
+        options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
         on_exit_drain: bool = True,
     ) -> None:
-        super().__init__(request, out, err)
+        super().__init__(request, options, out, err)
         self.process: Optional[Popen[bytes]] = None
         self._cmd: Optional[List[str]] = None
         self._read_stderr: Optional[ReadViaThread] = None
@@ -218,9 +195,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                 creationflags=CREATION_FLAGS,
             )
         except OSError as exception:
-            return LocalSubprocessExecuteFailedStatus(self._out, self._err, exception.errno)
+            return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception.errno)
 
-        status = LocalSubprocessExecuteStatus(self._out, self._err, process)
+        status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
         drain, pid = self._on_exit_drain, self.process.pid
         self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
         self._read_stderr.__enter__()

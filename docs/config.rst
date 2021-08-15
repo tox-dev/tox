@@ -293,6 +293,35 @@ Base
    ``allowlist_externals=make`` or ``allowlist_externals=/usr/bin/make``. If you want to allow all external commands
    you can use ``allowlist_externals=*`` which will match all commands (not recommended).
 
+Execute
+~~~~~~~
+
+.. conf::
+   :keys: suicide_timeout
+   :default: 0.0
+   :version_added: 3.15.2
+
+    When an interrupt is sent via Ctrl+C or the tox process is killed with a SIGTERM, a SIGINT is sent to all foreground
+    processes. The :ref:`suicide_timeout` gives the running process time to cleanup and exit before receiving (in some
+    cases, a duplicate) SIGINT from tox.
+
+.. conf::
+   :keys: interrupt_timeout
+   :default: 0.3
+   :version_added: 3.15
+
+    When tox is interrupted, it propagates the signal to the child process after :ref:`suicide_timeout` seconds. If the
+    process still hasn't exited after :ref:`interrupt_timeout` seconds, its sends a SIGTERM.
+
+.. conf::
+   :keys: terminate_timeout
+   :default: 0.2
+   :version_added: 3.15
+
+    When tox is interrupted, after waiting :ref:`interrupt_timeout` seconds, it propagates the signal to the child
+    process, waits :ref:`interrupt_timeout` seconds, sends it a SIGTERM, waits :ref:`terminate_timeout` seconds, and
+    sends it a SIGKILL if it hasn't exited.
+
 Run
 ~~~
 
