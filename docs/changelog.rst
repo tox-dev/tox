@@ -11,6 +11,14 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.24.2 (2021-08-18)
+Bugfixes
+^^^^^^^^
+
+- include ``LC_ALL`` to implicit list of passenv variables - by :user:`ssbarnea`
+  `#2162 <https://github.com/tox-dev/tox/issues/2162>`_
+
+
 v3.24.1 (2021-07-31)
 --------------------
 
