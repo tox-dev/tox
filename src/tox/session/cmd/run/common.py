@@ -328,9 +328,9 @@ def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: St
         out_err = tox_env.close_and_read_out_err()  # sync writes from buffer to stdout/stderr
         pkg_out_err_list = []
         for package_env in tox_env.package_envs:
-            out_err = package_env.close_and_read_out_err()
-            if out_err is not None:  # pragma: no branch
-                pkg_out_err_list.append(out_err)
+            pkg_out_err = package_env.close_and_read_out_err()
+            if pkg_out_err is not None:  # pragma: no branch
+                pkg_out_err_list.append(pkg_out_err)
         if not success or tox_env.conf["parallel_show_output"]:
             for pkg_out_err in pkg_out_err_list:
                 state.log_handler.write_out_err(pkg_out_err)  # pragma: no cover
