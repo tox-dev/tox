@@ -70,12 +70,13 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                 logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
                 self._process.send_signal(SIG_INTERRUPT)
                 if self.wait(self.options.interrupt_timeout) is None:  # still alive -> TERM # pragma: no branch
-                    logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, self.options.terminate_timeout)
+                    terminate_output = self.options.terminate_timeout
+                    logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, terminate_output)
                     self._process.terminate()
-                    if sys.platform != "win32":  # Windows terminate is UNIX kill
-                        if self.wait(self.options.terminate_timeout) is None:  # still alive -> KILL
-                            logging.warning(msg[:-18], f"SIGKILL({SIGKILL})", to_pid, host_pid)
-                            self._process.kill()
+                    # Windows terminate is UNIX kill
+                    if sys.platform != "win32" and self.wait(terminate_output) is None:  # pragma: no branch
+                        logging.warning(msg[:-18], f"SIGKILL({SIGKILL})", to_pid, host_pid)
+                        self._process.kill()  # still alive -> KILL
                     self.wait()  # unconditional wait as kill should soon bring down the process
                 logging.warning("interrupt finished with success")
             else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
