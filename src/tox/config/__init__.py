@@ -770,6 +770,7 @@ def tox_addoption(parser):
             "CURL_CA_BUNDLE",
             "LANG",
             "LANGUAGE",
+            "LC_ALL",
             "LD_LIBRARY_PATH",
             "PATH",
             "PIP_INDEX_URL",
