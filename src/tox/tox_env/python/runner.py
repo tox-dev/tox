@@ -5,25 +5,21 @@ from abc import ABC
 from pathlib import Path
 from typing import Iterator, List, Optional, Set, Tuple
 
-from tox.config.cli.parser import Parsed
 from tox.config.main import Config
-from tox.config.sets import CoreConfigSet, EnvConfigSet
-from tox.journal import EnvJournal
-from tox.report import HandledError, ToxHandler
+from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.package import Package, PathPackage
 from tox.tox_env.python.package import PythonPackageToxEnv
 from tox.tox_env.python.pip.req_file import PythonDeps
 
+from ..api import ToxEnvCreateArgs
 from ..runner import RunToxEnv
 from .api import Python
 
 
 class PythonRun(Python, RunToxEnv, ABC):
-    def __init__(
-        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
-    ):
-        super().__init__(conf, core, options, journal, log_handler)
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
+        super().__init__(create_args)
 
     def register_config(self) -> None:
         super().register_config()
@@ -117,7 +113,9 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def _setup_env(self) -> None:
         super()._setup_env()
-        # install deps
+        self._install_deps()
+
+    def _install_deps(self) -> None:
         requirements_file: PythonDeps = self.conf["deps"]
         self.installer.install(requirements_file, PythonRun.__name__, "deps")
 

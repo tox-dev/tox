@@ -10,14 +10,12 @@ from cachetools import cached
 from packaging.markers import Variable
 from packaging.requirements import Requirement
 
-from tox.config.cli.parser import Parsed
-from tox.config.sets import CoreConfigSet, EnvConfigSet
+from tox.config.sets import EnvConfigSet
 from tox.execute.api import ExecuteStatus
 from tox.execute.pep517_backend import LocalSubProcessPep517Executor
 from tox.execute.request import StdinSource
-from tox.journal import EnvJournal
 from tox.plugin import impl
-from tox.report import ToxHandler
+from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.errors import Fail
 from tox.tox_env.package import Package
 from tox.tox_env.python.package import DevLegacyPackage, PythonPackageToxEnv, SdistPackage, WheelPackage
@@ -74,10 +72,8 @@ class ToxCmdStatus(CmdStatus):
 class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv, Frontend):
     """local file system python virtual environment via the virtualenv package"""
 
-    def __init__(
-        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
-    ) -> None:
-        VirtualEnv.__init__(self, conf, core, options, journal, log_handler)
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
+        VirtualEnv.__init__(self, create_args)
         root: Path = self.conf["package_root"]
         Frontend.__init__(self, *Frontend.create_args_from_folder(root))
 

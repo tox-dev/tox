@@ -4,17 +4,12 @@ A tox environment that can build packages.
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Lock
-from typing import TYPE_CHECKING, Any, Generator, List, Optional, Set, Tuple, cast
+from typing import Any, Generator, List, Optional, Set, Tuple, cast
 
 from tox.config.main import Config
-from tox.config.sets import CoreConfigSet, EnvConfigSet
-from tox.journal import EnvJournal
-from tox.report import ToxHandler
+from tox.config.sets import EnvConfigSet
 
-from .api import ToxEnv
-
-if TYPE_CHECKING:
-    from tox.config.cli.parser import Parsed
+from .api import ToxEnv, ToxEnvCreateArgs
 
 
 class Package:
@@ -31,10 +26,8 @@ class PathPackage(Package):
 
 
 class PackageToxEnv(ToxEnv, ABC):
-    def __init__(
-        self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
-    ) -> None:
-        super().__init__(conf, core, options, journal, log_handler)
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
+        super().__init__(create_args)
         self._envs: Set[str] = set()
         self._lock = Lock()
 

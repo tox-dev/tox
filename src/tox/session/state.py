@@ -6,6 +6,7 @@ from tox.journal import Journal
 from tox.plugin import impl
 from tox.report import HandledError, ToxHandler
 from tox.session.common import CliEnv
+from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.runner import RunToxEnv
 
@@ -87,7 +88,8 @@ class State:
         builder = REGISTER.runner(runner)
         name = env_conf.name
         journal = self.journal.get_env_journal(name)
-        env: RunToxEnv = builder(env_conf, self.conf.core, self.options, journal, self.log_handler)
+        args = ToxEnvCreateArgs(env_conf, self.conf.core, self.options, journal, self.log_handler)
+        env: RunToxEnv = builder(args)
         self._run_env[name] = env
         self._build_package_env(env)
 
@@ -112,7 +114,8 @@ class State:
                 raise HandledError(f"{name} is already defined as a run environment, cannot be packaging too")
             pkg_conf = self.conf.get_env(name, package=True)
             journal = self.journal.get_env_journal(name)
-            pkg_tox_env = package_type(pkg_conf, self.conf.core, self.options, journal, self.log_handler)
+            args = ToxEnvCreateArgs(pkg_conf, self.conf.core, self.options, journal, self.log_handler)
+            pkg_tox_env = package_type(args)
             self._pkg_env[name] = packager, pkg_tox_env
         return pkg_tox_env
 

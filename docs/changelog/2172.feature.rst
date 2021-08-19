@@ -1,0 +1,3 @@
+Changes to help plugin development: simpler tox env creation argument list, expose python creation directly,
+allow skipping list dependencies install command for pip and executable is only part of the python cache for virtualenv
+- by :user:`gaborbernat`.

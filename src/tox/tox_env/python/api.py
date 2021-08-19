@@ -9,12 +9,8 @@ from typing import Any, Dict, List, NamedTuple, Optional, cast
 from packaging.tags import INTERPRETER_SHORT_NAMES
 from virtualenv.discovery.py_spec import PythonSpec
 
-from tox.config.cli.parser import Parsed
 from tox.config.main import Config
-from tox.config.sets import CoreConfigSet, EnvConfigSet
-from tox.journal import EnvJournal
-from tox.report import ToxHandler
-from tox.tox_env.api import ToxEnv
+from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
 
 
@@ -27,13 +23,12 @@ class VersionInfo(NamedTuple):
 
 
 class PythonInfo(NamedTuple):
-    executable: Path
     implementation: str
     version_info: VersionInfo
     version: str
     is_64: bool
     platform: str
-    extra_version_info: Optional[str]
+    extra: Dict[str, Any]
 
     @property
     def version_no_dot(self) -> str:
@@ -45,12 +40,10 @@ class PythonInfo(NamedTuple):
 
 
 class Python(ToxEnv, ABC):
-    def __init__(
-        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
-    ) -> None:
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._base_python: Optional[PythonInfo] = None
         self._base_python_searched: bool = False
-        super().__init__(conf, core, options, journal, log_handler)
+        super().__init__(create_args)
 
     def register_config(self) -> None:
         super().register_config()
@@ -160,13 +153,16 @@ class Python(ToxEnv, ABC):
     def _setup_env(self) -> None:
         """setup a virtual python environment"""
         super()._setup_env()
+        self.ensure_python_env()
+        self._paths = self.prepend_env_var_path()  # now that the environment exist we can add them to the path
+
+    def ensure_python_env(self) -> None:
         conf = self.python_cache()
         with self.cache.compare(conf, Python.__name__) as (eq, old):
             if old is None:  # does not exist -> create
                 self.create_python_env()
             elif eq is False:  # pragma: no branch # exists but changed -> recreate
                 raise Recreate(self._diff_msg(conf, old))
-        self._paths = self.prepend_env_var_path()  # now that the environment exist we can add them to the path
 
     @staticmethod
     def _diff_msg(conf: Dict[str, Any], old: Dict[str, Any]) -> str:
@@ -196,7 +192,6 @@ class Python(ToxEnv, ABC):
     def python_cache(self) -> Dict[str, Any]:
         return {
             "version_info": list(self.base_python.version_info),
-            "executable": str(self.base_python.executable),
         }
 
     @property
@@ -218,7 +213,6 @@ class Python(ToxEnv, ABC):
     def _get_env_journal_python(self) -> Dict[str, Any]:
         assert self._base_python is not None
         return {
-            "executable": str(self._base_python.executable),
             "implementation": self._base_python.implementation,
             "version_info": tuple(self.base_python.version_info),
             "version": self._base_python.version,

@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, NamedTuple, Optional, Sequence, Tuple, Union, cast
 
 from tox.config.main import Config
 from tox.config.set_env import SetEnv
@@ -20,10 +20,9 @@ from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
 from tox.report import OutErr, ToxHandler
 from tox.tox_env.errors import Recreate, Skip
+from tox.tox_env.info import Info
 from tox.tox_env.installer import Installer
 from tox.util.path import ensure_empty_dir
-
-from .info import Info
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
@@ -31,25 +30,29 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
+class ToxEnvCreateArgs(NamedTuple):
+    """Arguments to pass on when creating a tox environment"""
+
+    conf: EnvConfigSet
+    core: CoreConfigSet
+    options: "Parsed"
+    journal: EnvJournal
+    log_handler: ToxHandler
+
+
 class ToxEnv(ABC):
     """A tox environment."""
 
-    def __init__(
-        self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
-    ) -> None:
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         """Create a new tox environment.
 
-        :param conf: the config set to use for this environment
-        :param core: the core config set
-        :param options: CLI options
-        :param journal: tox environment journal
-        :param log_handler: handler to the tox reporting system
+        :param create_args: tox env create args
         """
-        self.journal: EnvJournal = journal  #: handler to the tox reporting system
-        self.conf: EnvConfigSet = conf  #: the config set to use for this environment
-        self.core: CoreConfigSet = core  #: the core tox config set
-        self.options: Parsed = options  #: CLI options
-        self.log_handler: ToxHandler = log_handler  #: handler to the tox reporting system
+        self.journal: EnvJournal = create_args.journal  #: handler to the tox reporting system
+        self.conf: EnvConfigSet = create_args.conf  #: the config set to use for this environment
+        self.core: CoreConfigSet = create_args.core  #: the core tox config set
+        self.options: Parsed = create_args.options  #: CLI options
+        self.log_handler: ToxHandler = create_args.log_handler  #: handler to the tox reporting system
 
         #: encode the run state of various methods (setup/clean/etc)
         self._run_state = {"setup": False, "clean": False, "teardown": False}
