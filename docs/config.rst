@@ -789,6 +789,8 @@ the above example is roughly equivalent to
 Interactive shell substitution
 ++++++++++++++++++++++++++++++
 
+.. versionadded:: 3.4.0
+
 It's possible to inject a config value only when tox is running in interactive shell (standard input)::
 
     {tty:ON_VALUE:OFF_VALUE}
