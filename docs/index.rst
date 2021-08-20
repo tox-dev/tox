@@ -137,7 +137,7 @@ Current features
 * :doc:`plugin system <plugins>` to modify tox execution with simple hooks.
 
 * uses pip_ and setuptools_ by default.  Support for configuring the installer command
-  through :conf:`install_command=ARGV`.
+  through :conf:`install_command = ARGV <install_command>`.
 
 * **cross-Python compatible**: CPython-2.7, 3.5 and higher, Jython and pypy_.
 
