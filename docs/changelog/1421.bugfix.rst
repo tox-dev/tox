@@ -1,0 +1,1 @@
+``--parallel`` reports now show ASCII OK/FAIL/SKIP lines when full Unicode output is not available - by :user:`brettcs`

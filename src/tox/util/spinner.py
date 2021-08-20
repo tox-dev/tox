@@ -36,6 +36,9 @@ class Spinner(object):
     CLEAR_LINE = "\033[K"
     max_width = 120
     FRAMES = SpinnerMessage("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏", "|-+x*")
+    OK_FLAG = SpinnerMessage("✔ OK", "[ OK ]")
+    FAIL_FLAG = SpinnerMessage("✖ FAIL", "[FAIL]")
+    SKIP_FLAG = SpinnerMessage("⚠ SKIP", "[SKIP]")
 
     def __init__(self, enabled=True, refresh_rate=0.1):
         self.refresh_rate = refresh_rate
@@ -100,13 +103,13 @@ class Spinner(object):
         self._envs[name] = datetime.now()
 
     def succeed(self, key):
-        self.finalize(key, "✔ OK", green=True)
+        self.finalize(key, self.OK_FLAG.for_file(self._file), green=True)
 
     def fail(self, key):
-        self.finalize(key, "✖ FAIL", red=True)
+        self.finalize(key, self.FAIL_FLAG.for_file(self._file), red=True)
 
     def skip(self, key):
-        self.finalize(key, "⚠ SKIP", white=True)
+        self.finalize(key, self.SKIP_FLAG.for_file(self._file), white=True)
 
     def finalize(self, key, status, **kwargs):
         start_at = self._envs[key]

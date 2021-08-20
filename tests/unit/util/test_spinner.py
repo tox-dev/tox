@@ -113,6 +113,31 @@ def test_spinner_stdout_not_unicode(mocker, capfd):
     assert all(f in written for f in spin.frames)
 
 
+@freeze_time("2012-01-14")
+def test_spinner_report_not_unicode(mocker, capfd):
+    stdout = mocker.patch("tox.util.spinner.sys.stdout")
+    stdout.encoding = "ascii"
+    # Disable color to simplify parsing output strings
+    stdout.isatty = lambda: False
+    with spinner.Spinner(refresh_rate=100) as spin:
+        spin.stream.write(os.linesep)
+        spin.add("ok!")
+        spin.add("fail!")
+        spin.add("skip!")
+        spin.succeed("ok!")
+        spin.fail("fail!")
+        spin.skip("skip!")
+    lines = "".join(args[0] for args, _ in stdout.write.call_args_list).split(os.linesep)
+    del lines[0]
+    expected = [
+        "\r{}[ OK ] ok! in 0.0 seconds".format(spin.CLEAR_LINE),
+        "\r{}[FAIL] fail! in 0.0 seconds".format(spin.CLEAR_LINE),
+        "\r{}[SKIP] skip! in 0.0 seconds".format(spin.CLEAR_LINE),
+        "\r{}".format(spin.CLEAR_LINE),
+    ]
+    assert lines == expected
+
+
 @pytest.mark.parametrize(
     "seconds, expected",
     [
