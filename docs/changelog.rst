@@ -1073,7 +1073,7 @@ Features
 - While running tox invokes various commands (such as building the package, pip installing dependencies and so on), these were printed in case they failed as Python arrays. Changed the representation to a shell command, allowing the users to quickly replicate/debug the failure on their own - by :user:`gaborbernat` (`#851 <https://github.com/tox-dev/tox/issues/851>`_)
 - skip missing interpreters value from the config file can now be overridden via the ``--skip-missing-interpreters`` cli flag - by :user:`gaborbernat` (`#903 <https://github.com/tox-dev/tox/issues/903>`_)
 - keep additional environments config order when listing them - by :user:`gaborbernat` (`#921 <https://github.com/tox-dev/tox/issues/921>`_)
-- allow injecting config value inside the ini file dependent of the fact that we're connected to an interactive shell or not  - by :user:`gaborbernat` (`#947 <https://github.com/tox-dev/tox/issues/947>`_)
+- allow injecting config value inside the ini file dependent of the fact that we're connected to an interactive shell or not via exposing a ``{tty}`` substitution - by :user:`gaborbernat` (`#947 <https://github.com/tox-dev/tox/issues/947>`_)
 - do not build sdist if skip install is specified for the envs to be run - by :user:`gaborbernat` (`#974 <https://github.com/tox-dev/tox/issues/974>`_)
 - when verbosity level increases above two start passing through verbosity flags to pip - by :user:`gaborbernat` (`#982 <https://github.com/tox-dev/tox/issues/982>`_)
 - when discovering the interpreter to use check if the tox host Python matches and use that if so - by :user:`gaborbernat` (`#994 <https://github.com/tox-dev/tox/issues/994>`_)
