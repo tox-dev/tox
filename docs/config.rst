@@ -82,6 +82,8 @@ Global settings are defined under the ``tox`` section as:
 
 .. conf:: temp_dir ^ PATH ^ {toxworkdir}/.tmp
 
+   .. versionadded:: 3.5.0
+
    Directory where to put tox temporary files. For example: we create a hard link (if possible,
    otherwise new copy) in this directory for the project package. This ensures tox works correctly
    when having parallel runs (as each session will have its own copy of the project package - e.g.
