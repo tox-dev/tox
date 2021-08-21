@@ -1,3 +1,0 @@
-When cleaning directories (for tox environment, ``env_log_dir``, ``env_tmp_dir`` and packaging metadata folders) do not
-delete the directory itself and recreate, but instead just delete its content (this allows the user to cd into it and
-still be in a valid folder after a new run) - by :user:`gaborbernat`.

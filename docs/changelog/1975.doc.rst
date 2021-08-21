@@ -1,2 +1,0 @@
-Add a note about having a package with different Python requirements than tox and not specifying :ref:`base_python` -
-by :user:`gaborbernat`.

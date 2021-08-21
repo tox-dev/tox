@@ -1,2 +1,0 @@
-If the command expression fails to parse with shlex fallback to literal pass through of the remaining elements
-- by :user:`gaborbernat`.
