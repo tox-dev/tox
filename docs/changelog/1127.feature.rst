@@ -1,1 +1,0 @@
-Add support for :ref:`allowlist_externals`, commands not matching error - by :user:`gaborbernat`.

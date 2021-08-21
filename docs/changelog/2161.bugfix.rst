@@ -1,1 +1,0 @@
-Parallel show output not working when there's a packaging phase in the run - by :user:`gaborbernat`.

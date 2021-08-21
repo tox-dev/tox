@@ -1,2 +1,0 @@
-tox config fails on `--recreate <tox-config---recreate>`_ flag, and once specified the output does not reflect the
-impact of the CLI flags - by :user:`gaborbernat`.

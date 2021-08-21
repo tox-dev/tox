@@ -1,1 +1,0 @@
-Note constraint files are a subset of requirement files - by :user:`gaborbernat`.

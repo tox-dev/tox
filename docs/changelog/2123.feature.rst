@@ -1,2 +1,0 @@
-Add support for :ref:`env_log_dir` (compared to tox 3 extend content and keep only last run entries) -
-by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Add outcome of environments into the result json (:ref:`--result-json <tox-run---result-json>`) under the ``result`` key
-containing ``success`` boolean, ``exit_code`` integer and ``duration`` float value  - by :user:`gaborbernat`.

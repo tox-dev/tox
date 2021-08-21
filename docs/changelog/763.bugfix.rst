@@ -1,1 +1,0 @@
-Support ``#`` character in path for the tox project - by :user:`gaborbernat`.

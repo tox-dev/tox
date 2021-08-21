@@ -4,6 +4,50 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0a8 (2021-08-21)
+---------------------
+
+Features - 4.0.0a8
+~~~~~~~~~~~~~~~~~~
+- Add support for :ref:`allowlist_externals`, commands not matching error - by :user:`gaborbernat`. (`#1127 <https://github.com/tox-dev/tox/issues/1127>`_)
+- Add outcome of environments into the result json (:ref:`--result-json <tox-run---result-json>`) under the ``result`` key
+  containing ``success`` boolean, ``exit_code`` integer and ``duration`` float value  - by :user:`gaborbernat`. (`#1405 <https://github.com/tox-dev/tox/issues/1405>`_)
+- Add ``exec`` subcommand that allows users to run an arbitrary command within the tox environment (without needing to
+  modify their configuration) - by :user:`gaborbernat`. (`#1790 <https://github.com/tox-dev/tox/issues/1790>`_)
+- Add check to validate the base Python names and the environments name do not conflict Python spec wise, when they do
+  raise error if :ref:`ignore_base_python_conflict` is not set or ``False`` - by :user:`gaborbernat`. (`#1840 <https://github.com/tox-dev/tox/issues/1840>`_)
+- Allow any Unix shell-style wildcards expression for  :ref:`pass_env` - by :user:`gaborbernat`. (`#2121 <https://github.com/tox-dev/tox/issues/2121>`_)
+- Add support for :ref:`args_are_paths` flag - by :user:`gaborbernat`. (`#2122 <https://github.com/tox-dev/tox/issues/2122>`_)
+- Add support for :ref:`env_log_dir` (compared to tox 3 extend content and keep only last run entries) -
+  by :user:`gaborbernat`. (`#2123 <https://github.com/tox-dev/tox/issues/2123>`_)
+- Add support for ``{:}`` substitution in ini files as placeholder for the OS path separator - by :user:`gaborbernat`. (`#2125 <https://github.com/tox-dev/tox/issues/2125>`_)
+- When cleaning directories (for tox environment, ``env_log_dir``, ``env_tmp_dir`` and packaging metadata folders) do not
+  delete the directory itself and recreate, but instead just delete its content (this allows the user to cd into it and
+  still be in a valid folder after a new run) - by :user:`gaborbernat`. (`#2139 <https://github.com/tox-dev/tox/issues/2139>`_)
+- Changes to help plugin development: simpler tox env creation argument list, expose python creation directly,
+  allow skipping list dependencies install command for pip and executable is only part of the python cache for virtualenv
+  - by :user:`gaborbernat`. (`#2172 <https://github.com/tox-dev/tox/issues/2172>`_)
+
+Bugfixes - 4.0.0a8
+~~~~~~~~~~~~~~~~~~
+- Support ``#`` character in path for the tox project - by :user:`gaborbernat`. (`#763 <https://github.com/tox-dev/tox/issues/763>`_)
+- If the command expression fails to parse with shlex fallback to literal pass through of the remaining elements
+  - by :user:`gaborbernat`. (`#1944 <https://github.com/tox-dev/tox/issues/1944>`_)
+- tox config fails on `--recreate <tox-config---recreate>`_ flag, and once specified the output does not reflect the
+  impact of the CLI flags - by :user:`gaborbernat`. (`#2037 <https://github.com/tox-dev/tox/issues/2037>`_)
+- Virtual environment creation for Python is always triggered at every run - by :user:`gaborbernat`. (`#2041 <https://github.com/tox-dev/tox/issues/2041>`_)
+- Add support for setting :ref:`suicide_timeout`, :ref:`interrupt_timeout` and :ref:`terminate_timeout` - by
+  :user:`gaborbernat`. (`#2124 <https://github.com/tox-dev/tox/issues/2124>`_)
+- Parallel show output not working when there's a packaging phase in the run - by :user:`gaborbernat`. (`#2161 <https://github.com/tox-dev/tox/issues/2161>`_)
+
+Improved Documentation - 4.0.0a8
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Note constraint files are a subset of requirement files - by :user:`gaborbernat`. (`#1939 <https://github.com/tox-dev/tox/issues/1939>`_)
+- Add a note about having a package with different Python requirements than tox and not specifying :ref:`base_python` -
+  by :user:`gaborbernat`. (`#1975 <https://github.com/tox-dev/tox/issues/1975>`_)
+- Fix :ref:`--runner <tox---runner>` is missing default value and documentation unclear - by :user:`gaborbernat`. (`#2004 <https://github.com/tox-dev/tox/issues/2004>`_)
+
+
 v4.0.0a7 (2021-07-28)
 ---------------------
 

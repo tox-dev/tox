@@ -1,1 +1,0 @@
-Fix :ref:`--runner <tox---runner>` is missing default value and documentation unclear - by :user:`gaborbernat`.

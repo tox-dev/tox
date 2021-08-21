@@ -1,2 +1,0 @@
-Add support for setting :ref:`suicide_timeout`, :ref:`interrupt_timeout` and :ref:`terminate_timeout` - by
-:user:`gaborbernat`.

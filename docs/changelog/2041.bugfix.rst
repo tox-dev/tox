@@ -1,1 +1,0 @@
-Virtual environment creation for Python is always triggered at every run - by :user:`gaborbernat`.

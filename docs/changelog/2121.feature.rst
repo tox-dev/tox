@@ -1,1 +1,0 @@
-Allow any Unix shell-style wildcards expression for  :ref:`pass_env` - by :user:`gaborbernat`.
