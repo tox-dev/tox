@@ -129,3 +129,8 @@ extlinks = {
     "pull": ("https://github.com/tox-dev/tox/pull/%s", "p"),
     "user": ("https://github.com/%s", "@"),
 }
+
+nitpicky = True
+nitpick_ignore = [
+    ("py:class", "tox.interpreters.InterpreterInfo"),
+]

@@ -72,7 +72,7 @@ Bugfixes
 ^^^^^^^^
 
 - Distinguish between normal Windows Python and MSYS2 Python when looking for
-  virtualenv executable path.  Adds os.sep to :class:`InterpreterInfo`
+  virtualenv executable path.  Adds os.sep to :class:`~tox.interpreters.InterpreterInfo`
   - by :user:`jschwartzentruber`
   `#1982 <https://github.com/tox-dev/tox/issues/1982>`_
 - Fix a ``tox-conda`` isolation build bug - by :user:`AntoineD`.
