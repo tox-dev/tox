@@ -5,7 +5,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import threading
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from datetime import datetime
 
 import py
@@ -19,34 +19,32 @@ if os.name == "nt":
         _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
 
 
-def _file_support_encoding(chars, file):
-    encoding = getattr(file, "encoding", None)
-    if encoding is not None:
-        for char in chars:
-            try:
-                char.encode(encoding)
-            except UnicodeEncodeError:
-                break
+_BaseMessage = namedtuple("_BaseMessage", ["unicode_msg", "ascii_msg"])
+
+
+class SpinnerMessage(_BaseMessage):
+    def for_file(self, file):
+        try:
+            self.unicode_msg.encode(file.encoding)
+        except (AttributeError, TypeError, UnicodeEncodeError):
+            return self.ascii_msg
         else:
-            return True
-    return False
+            return self.unicode_msg
 
 
 class Spinner(object):
     CLEAR_LINE = "\033[K"
     max_width = 120
-    UNICODE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-    ASCII_FRAMES = ["|", "-", "+", "x", "*"]
+    FRAMES = SpinnerMessage("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏", "|-+x*")
+    OK_FLAG = SpinnerMessage("✔ OK", "[ OK ]")
+    FAIL_FLAG = SpinnerMessage("✖ FAIL", "[FAIL]")
+    SKIP_FLAG = SpinnerMessage("⚠ SKIP", "[SKIP]")
 
     def __init__(self, enabled=True, refresh_rate=0.1):
         self.refresh_rate = refresh_rate
         self.enabled = enabled
         self._file = sys.stdout
-        self.frames = (
-            self.UNICODE_FRAMES
-            if _file_support_encoding(self.UNICODE_FRAMES, sys.stdout)
-            else self.ASCII_FRAMES
-        )
+        self.frames = self.FRAMES.for_file(self._file)
         self.stream = py.io.TerminalWriter(file=self._file)
         self._envs = OrderedDict()
         self._frame_index = 0
@@ -105,13 +103,13 @@ class Spinner(object):
         self._envs[name] = datetime.now()
 
     def succeed(self, key):
-        self.finalize(key, "✔ OK", green=True)
+        self.finalize(key, self.OK_FLAG.for_file(self._file), green=True)
 
     def fail(self, key):
-        self.finalize(key, "✖ FAIL", red=True)
+        self.finalize(key, self.FAIL_FLAG.for_file(self._file), red=True)
 
     def skip(self, key):
-        self.finalize(key, "⚠ SKIP", white=True)
+        self.finalize(key, self.SKIP_FLAG.for_file(self._file), white=True)
 
     def finalize(self, key, status, **kwargs):
         start_at = self._envs[key]
