@@ -20,6 +20,10 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 class Pip(Installer[Python]):
     """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517"""
 
+    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:
+        self._with_list_deps = with_list_deps
+        super().__init__(tox_env)
+
     def _register_config(self) -> None:
         self._env.conf.add_config(
             keys=["pip_pre"],
@@ -32,14 +36,15 @@ class Pip(Installer[Python]):
             of_type=Command,
             default=self.default_install_command,
             post_process=self.post_process_install_command,
-            desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
+            desc="command used to install packages",
         )
-        self._env.conf.add_config(
-            keys=["list_dependencies_command"],
-            of_type=Command,
-            default=Command(["python", "-m", "pip", "freeze", "--all"]),
-            desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
-        )
+        if self._with_list_deps:  # pragma: no branch
+            self._env.conf.add_config(
+                keys=["list_dependencies_command"],
+                of_type=Command,
+                default=Command(["python", "-m", "pip", "freeze", "--all"]),
+                desc="command used to list isntalled packages",
+            )
 
     def default_install_command(self, conf: Config, env_name: Optional[str]) -> Command:  # noqa
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"

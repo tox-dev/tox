@@ -11,28 +11,23 @@ from virtualenv import session_via_cli
 from virtualenv.create.creator import Creator
 from virtualenv.run.session import Session
 
-from tox.config.cli.parser import Parsed
 from tox.config.loader.str_convert import StrConvert
-from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.execute.api import Execute
 from tox.execute.local_sub_process import LocalSubProcessExecutor
-from tox.journal import EnvJournal
-from tox.report import ToxHandler
 from tox.tox_env.python.pip.pip_install import Pip
 
+from ...api import ToxEnvCreateArgs
 from ..api import Python, PythonInfo
 
 
 class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip"""
 
-    def __init__(
-        self, conf: EnvConfigSet, core: CoreConfigSet, options: Parsed, journal: EnvJournal, log_handler: ToxHandler
-    ) -> None:
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._virtualenv_session: Optional[Session] = None
         self._executor: Optional[Execute] = None
         self._installer: Optional[Pip] = None
-        super().__init__(conf, core, options, journal, log_handler)
+        super().__init__(create_args)
 
     def register_config(self) -> None:
         super().register_config()
@@ -77,7 +72,17 @@ class VirtualEnv(Python, ABC):
 
     def python_cache(self) -> Dict[str, Any]:
         base = super().python_cache()
-        base["virtualenv version"] = virtualenv_version
+        base.update(
+            {
+                "executable": str(self.base_python.extra["executable"]),
+                "virtualenv version": virtualenv_version,
+            }
+        )
+        return base
+
+    def _get_env_journal_python(self) -> Dict[str, Any]:
+        base = super()._get_env_journal_python()
+        base["executable"] = str(self.base_python.extra["executable"])
         return base
 
     def _default_pass_env(self) -> List[str]:
@@ -126,13 +131,12 @@ class VirtualEnv(Python, ABC):
         except RuntimeError:  # if can't find
             return None
         return PythonInfo(
-            executable=Path(interpreter.system_executable),
             implementation=interpreter.implementation,
             version_info=interpreter.version_info,
             version=interpreter.version,
             is_64=(interpreter.architecture == 64),
             platform=interpreter.platform,
-            extra_version_info=None,
+            extra={"executable": Path(interpreter.system_executable)},
         )
 
     def prepend_env_var_path(self) -> List[Path]:

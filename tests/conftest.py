@@ -87,13 +87,12 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], Tuple[str, str]]:
                 raw[1] -= 1  # type: ignore[operator]
             ver_info = VersionInfo(*raw)  # type: ignore[arg-type]
             return PythonInfo(
-                executable=Path(sys.executable),
                 implementation=impl,
                 version_info=ver_info,
                 version="",
                 is_64=True,
                 platform=sys.platform,
-                extra_version_info=None,
+                extra={"executable": Path(sys.executable)},
             )
 
         mocker.patch.object(VirtualEnv, "_get_python", get_python)

@@ -4,27 +4,20 @@ import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, Tuple, cast
+from typing import Any, Dict, Iterable, Iterator, List, Tuple, cast
 
-from tox.config.sets import CoreConfigSet, EnvConfigSet
 from tox.config.types import Command, EnvList
 from tox.journal import EnvJournal
-from tox.report import ToxHandler
 
-from .api import ToxEnv
+from .api import ToxEnv, ToxEnvCreateArgs
 from .package import Package, PackageToxEnv, PathPackage
-
-if TYPE_CHECKING:
-    from tox.config.cli.parser import Parsed
 
 
 class RunToxEnv(ToxEnv, ABC):
-    def __init__(
-        self, conf: EnvConfigSet, core: CoreConfigSet, options: "Parsed", journal: EnvJournal, log_handler: ToxHandler
-    ) -> None:
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._package_envs: Dict[str, PackageToxEnv] = {}
         self._packages: List[Package] = []
-        super().__init__(conf, core, options, journal, log_handler)
+        super().__init__(create_args)
 
     def register_config(self) -> None:
         def ensure_one_line(value: str) -> str:
