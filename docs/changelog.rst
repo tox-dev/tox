@@ -11,6 +11,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.24.3 (2021-08-21)
+Bugfixes
+^^^^^^^^
+
+- ``--parallel`` reports now show ASCII OK/FAIL/SKIP lines when full Unicode output is not available - by :user:`brettcs`
+  `#1421 <https://github.com/tox-dev/tox/issues/1421>`_
+
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- Started enforcing valid references in Sphinx docs -- :user:`webknjaz`
+  `#2168 <https://github.com/tox-dev/tox/issues/2168>`_
+
+
 v3.24.2 (2021-08-18)
 --------------------
 
