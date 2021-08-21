@@ -706,6 +706,12 @@ Globally available substitutions
     the directory where virtual environments are created and sub directories
     for packaging reside.
 
+``{temp_dir}``
+    the directory where tox temporary files live.
+
+    .. versionadded:: 3.16.1
+
+
 ``{homedir}``
     the user-home directory path.
 
