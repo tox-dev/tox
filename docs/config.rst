@@ -711,7 +711,6 @@ Globally available substitutions
 
     .. versionadded:: 3.16.1
 
-
 ``{homedir}``
     the user-home directory path.
 
