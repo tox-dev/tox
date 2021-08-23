@@ -90,6 +90,7 @@ epub_title = project
 epub_author = author
 epub_publisher = author
 epub_copyright = copyright
+suppress_warnings = ["epub.unknown_project_files"]  # Prevent barking at `.ico`
 
 intersphinx_mapping = {"https://docs.python.org/": None}
 
