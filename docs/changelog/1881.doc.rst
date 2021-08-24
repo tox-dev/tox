@@ -1,0 +1,3 @@
+Adopt furo theme, update our state diagram and description in user docs (SVG + light/dark variant), split
+the Python API into its own page from under the plugin page, and document plugin adoption under the ``tox-dev``
+organization - by :user:`gaborbernat`.

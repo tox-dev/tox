@@ -195,8 +195,9 @@ Core
 
     Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
 
-Python
-~~~~~~
+Python language core options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. conf::
    :keys: ignore_base_python_conflict, ignore_basepython_conflict
    :default: True
@@ -218,8 +219,8 @@ Python
 tox environment
 ---------------
 
-Base
-~~~~
+Base options
+~~~~~~~~~~~~
 
 .. conf::
    :keys: envname, env_name
@@ -466,8 +467,8 @@ Package
    Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
 
 
-Python
-~~~~~~
+Python options
+~~~~~~~~~~~~~~
 .. conf::
    :keys: base_python, basepython
    :default: {package_root}

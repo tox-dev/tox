@@ -4,12 +4,13 @@ Installation
 via pipx
 --------
 
-:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.6 or higher) to run.
-We recommend :pypi:`pipx` to install tox into an isolated environment. This has the added
-benefit that later you'll be able to upgrade tox without affecting other parts of the system.
+:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.6 or higher) to run. We recommend :pypi:`pipx` to
+install tox into an isolated environment. This has the added benefit that later you'll be able to upgrade tox without
+affecting other parts of the system.
 
-.. code-block:: console
+.. code-block:: bash
 
+    python -m pip install pipx-in-pipx --user
     pipx install tox
     tox --help
 
@@ -18,21 +19,21 @@ via pip
 
 Alternatively you can install it within the global Python interpreter itself (perhaps as a user package via the
 ``--user`` flag). Be cautious if you are using a Python installation that is managed by your operating system or
-another package manager. ``pip`` might not coordinate with those tools, and may leave your system in an
-inconsistent state. Note, if you go down this path you need to ensure pip is new enough per the subsections below:
+another package manager. ``pip`` might not coordinate with those tools, and may leave your system in an inconsistent
+state. Note, if you go down this path you need to ensure pip is new enough per the subsections below:
 
-.. code-block:: console
+.. code-block:: bash
 
     python -m pip install --user tox
     python -m tox --help
 
 wheel
 ~~~~~
-Installing tox via a wheel (default with pip) requires an installer that can understand the ``python-requires``
-tag (see `PEP-503 <https://www.python.org/dev/peps/pep-0503/>`_), with pip this is version ``9.0.0`` (released in
-November 2016). Furthermore, in case you're not installing it via PyPi you need to use a mirror that correctly
-forwards the ``python-requires`` tag (notably the OpenStack mirrors don't do this, or older
-`devpi <https://github.com/devpi/devpi>`_ versions - added with version ``4.7.0``).
+Installing tox via a wheel (default with pip) requires an installer that can understand the ``python-requires`` tag (see
+`PEP-503 <https://www.python.org/dev/peps/pep-0503/>`_), with pip this is version ``9.0.0`` (released in November 2016).
+Furthermore, in case you're not installing it via PyPi you need to use a mirror that correctly forwards the
+``python-requires`` tag (notably the OpenStack mirrors don't do this, or older `devpi <https://github.com/devpi/devpi>`_
+versions - added with version ``4.7.0``).
 
 .. _sdist:
 
@@ -69,7 +70,6 @@ Python and OS Compatibility
 tox works with the following Python interpreter implementations:
 
 - `CPython <https://www.python.org/>`_ versions 3.6, 3.7, 3.8, 3.9, 3.10
-- `PyPy <https://pypy.org/>`_ 3.6+.
 
-This means tox works on the latest patch version of each of these minor versions. Previous patch versions are
-supported on a best effort approach. We support all platforms ``virtualenv`` supports.
+This means tox works on the latest patch version of each of these minor versions. Previous patch versions are supported
+on a best effort approach.
