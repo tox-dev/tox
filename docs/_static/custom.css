@@ -1,32 +1,7 @@
-.wy-nav-content {
-  padding: 1em;
-  max-width: 100%;
-}
-
-/* Reduce whitespace on the inline-code snippets and add softer corners */
-.rst-content code {
-  padding: 2px 3px;
-  border-radius: 3px;
-}
-
-dl {
-  /*margin-bottom: 0!important;*/
-}
-dt {
-  display: inline !important;
-  padding: 3px;
-}
-dd {
-  margin-bottom: 2px!important;
-}
-.rst-content dd p {
-  margin-bottom: 0px;
-}
-
-/* Reduce whitespace before enumeration */
-.section p {
-  margin-bottom: 12px;
-}
-.section ol {
-  margin-bottom: 12px !important;
+blockquote {
+    border-left: none;
+    font-style: normal;
+    margin-left: 1.5rem;
+    margin-right: 0;
+    padding: 0;
 }

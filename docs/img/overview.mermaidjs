@@ -1,0 +1,40 @@
+stateDiagram-v2
+%%{init:{'state':{'nodeSpacing': 0, 'rankSpacing': 20}}}%%
+
+[*] --> conf
+conf --> tox_env
+
+state tox_env {
+    state hdi <<choice>>
+    state hpi <<choice>>
+    state fpi <<choice>>
+
+    [*] --> create
+    create --> hdi : has (new) project dependencies (deps)
+    hdi --> deps: yes
+    hdi --> hpi: no, has package
+    deps --> hpi: has package
+    hpi --> fpi: yes, built package in this run
+    hpi --> commands : no
+    fpi --> install_deps: yes
+    fpi --> package: no
+    package --> install_deps
+    install_deps --> install
+    install --> commands
+    commands --> commands: for each entry <br>in commands*
+    commands --> [*] : pass outcome to report
+}
+tox_env --> tox_env :for each tox environment
+
+tox_env --> report
+report --> report :for each tox environment
+report --> [*]
+
+conf: build configuration (CLI + files) <br> identify environments to run
+create: create an isolated tox environment <br> the other steps executed within this
+deps: install project dependencies (if has deps)
+package: build package
+install: install package without dependencies
+install_deps: install (new) package dependencies
+commands: run command
+report: report the outcome of the run

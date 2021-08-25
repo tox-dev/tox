@@ -6,7 +6,6 @@ from pathlib import Path
 from subprocess import check_output
 from typing import Any, cast
 
-import sphinx_rtd_theme
 from docutils.nodes import Element, Node, Text, container, fully_normalize_name, literal, paragraph, reference, strong
 from docutils.parsers.rst.directives import flag, unchanged, unchanged_required
 from docutils.parsers.rst.states import RSTState, RSTStateMachine
@@ -51,23 +50,16 @@ pygments_style = "default"
 project = name
 today_fmt = "%B %d, %Y"
 
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "furo"
 html_theme_options = {
-    "canonical_url": "https://tox.readthedocs.io/en/latest/",
-    "logo_only": False,
-    "display_version": True,
-    "prev_next_buttons_location": "bottom",
-    "collapse_navigation": False,
-    "sticky_navigation": True,
-    "navigation_depth": 6,
-    "includehidden": True,
+    "navigation_with_keys": True,
 }
+html_title = "tox 4 - rewrite"
 html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]
 html_last_updated_fmt = datetime.now().isoformat()
 html_logo = "_static/img/tox.svg"
 html_favicon = "_static/img/toxfavi.ico"
-htmlhelp_basename = "Pastedoc"
 
 autoclass_content = "class"
 autodoc_member_order = "bysource"
@@ -148,7 +140,6 @@ def setup(app: Sphinx) -> None:
     app.connect("autodoc-skip-member", skip_member)
     app.connect("autodoc-process-signature", process_signature, priority=400)
     app.add_domain(PatchedPythonDomain, override=True)
-    app.add_css_file("custom.css")
 
     class ToxConfig(SphinxDirective):
         name = "conf"

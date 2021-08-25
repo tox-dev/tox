@@ -223,3 +223,15 @@ initiate a vote among the existing maintainers.
     - PyPI Publishing Access
     - CI Administration capabilities
     - ReadTheDocs Administration capabilities
+    - The list below
+
+.. _current-maintainers:
+
+Current maintainers
+^^^^^^^^^^^^^^^^^^^
+
+-  `Anthony Sottile <https://github.com/asottile>`_
+-  `Bernát Gábor <https://github.com/gaborbernat>`_
+-  `Jürgen Gmach <https://github.com/jugmac00>`_
+-  `Miroslav Šedivý <https://github.com/eumiro>`_
+-  `Oliver Bestwalter <https://github.com/obestwalter>`_

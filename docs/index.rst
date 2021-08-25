@@ -73,5 +73,6 @@ you want to do more research, we recommend taking a look at these projects:
    config
    faq
    plugins
+   plugins_api
    development
    changelog

@@ -9,74 +9,96 @@ file residing at the root of your project:
 
 .. code-block:: ini
 
-    # content of tox.ini at the root of the project
     [tox]
     envlist =
-        py38
-        py37
+        format
+        py310
+        py39
 
     [testenv]
-    # install pytest in the virtualenv where commands will be executed
+    # install pytest in a virtual environment and invoke it on the test folder
     deps =
-        pytest >= 5, <6
-    commands =
-        # NOTE: you can run any command line tool here - not just tests
-        pytest
+        pytest>=6
+        pytest-sugar
+    commands = pytest tests {posargs}
+
+    [testenv:format]
+    # install black in a virtual environment and invoke it on the current folder
+    deps = black
+    skip_install = true
+    commands = black .
 
 You can also try generating a ``tox.ini`` file automatically by running ``tox quickstart`` and then answering a few
-simple questions. To sdist-package, install and test your project against Python3.7 and Python3.8, just type
+simple questions. The configuration above will run three separate tox environments ``format``, ``py310`` and ``py39``
+when you type in ``tox`` onto the command line within the projects folder (as defined by ``envlist``). The ``format``
+environment will create a Python virtual environment, install the ``black`` tool in it and the invoke it on the project
+root folder.
 
-.. code-block:: console
+The ``py310`` and ``py39`` do not have their own dedicated configuration section as ```format`` had (via
+``[testenv:format]``) so they'll pull their configuration entirely from the ``[testenv]`` section. A Python virtual
+environment is created, the dependencies from the ``deps`` config installed, the project package built and installed,
+and then the ``pytest`` tool invoked.
 
-    tox
+The ``{posargs}`` argument is replaced with whatever you pass in after the ``--`` on the CI, so if you'd run
+``tox -- -k test_something`` the command tox would run would be ``pytest tests -k test_something``. Note for this to
+work you must have Python 3.10 and 3.9 installed on the machine as virtualenv can only create virtual environments if
+the given python version is globally available on the machine.
 
-and watch things happening. You must have python3.7 and python3.8 installed in your environment, otherwise you will see
-errors. When you run ``tox`` a second time you'll notice that it runs much faster because it keeps track of virtualenv
+When you run ``tox`` a second time you'll notice that it runs much faster because it keeps track of virtualenv
 details and will not recreate or re-install dependencies.
 
 System overview
 ---------------
 
-.. figure:: img/tox_flow.png
+Here you can see a graphical representation of its run states:
+
+.. image:: img/overview_light.svg
    :align: center
-   :width: 800px
+   :class: only-light
 
-   tox workflow diagram
+.. image:: img/overview_dark.svg
+   :align: center
+   :class: only-dark
 
-tox roughly follows the following phases:
 
-1. **configuration:** load ``tox.ini`` and merge it with options from the command line and the operating system
-   environment variables
-2. **packaging** (optional): create a source distribution of the current project by invoking
+tox roughly follows the following states:
 
-   .. code-block:: bash
+#. **configuration:** load tox configuration files (such as ``tox.ini``, ``pyproject.toml``, and ``toxfile.py``) and
+   merge it with options from the command line and the operating system environment variables
 
-      python setup.py sdist
+#. **environment**: for each selected tox environment (e.g. ``py310``, ``py39``) do:
 
-   Note that for this operation the same Python environment will be used as the one tox is installed into (therefore you
-   need to make sure that it contains your build dependencies). Skip this step for application projects that don't have
-   a ``setup.py``.
+   #. **creation**: create a fresh environment; by default :pypi:`virtualenv` is used, but configurable via
+      :ref:`runner`. For `virtualenv` tox will use the `virtualenv discovery logic
+      <https://virtualenv.pypa.io/en/latest/user_guide.html#python-discovery>`_ where the python specification is
+      defined by the tox environments :ref:`base_python` (if not set will default to the environments name). This is
+      created at first run only to be re-used at subsequent runs. If certain aspects of the project change (python
+      version, dependencies removed, etc.), a re-creation of the environment is automatically triggered. To force the
+      recreation tox can be invoked with the :ref:`recreate` flag (``-r``).
 
-3. **environment**: for each tox environment (e.g. ``py37``, ``py38``) do:
+   #. **install dependencies** (optional): install the environment dependencies specified inside the ``deps``
+      configuration section, and then the earlier packaged source distribution. By default ``pip`` is used to install
+      packages, however one can customize this via ``install_command``. Note ``pip`` will not update project
+      dependencies (specified either in the ``install_requires`` or the ``extras`` section of the ``setup.py``) if any
+      version already exists in the virtual environment; therefore we recommend to recreate your environments whenever
+      your project dependencies change.
 
-   1. **environment creation**: create a fresh environment; by default :pypi:`virtualenv` is used. tox will
-   automatically try to discover a valid Python interpreter version by using the environment name (e.g. ``py37`` means
-   Python 3.7 and the ``basepython`` configuration value) and the current operating system ``PATH`` value. This is
-   created at first run only to be re-used at subsequent runs. If certain aspects of the project change, a re-creation
-   of the environment is automatically triggered. To force the recreation tox can be invoked with
-   ``-r``/``--recreate``.
+   #. **packaging** (optional): create a distribution of the current project
 
-   2. **install** (optional): install the environment dependencies specified inside the ``deps`` configuration
-   section, and then the earlier packaged source distribution. By default ``pip`` is used to install packages, however
-   one can customize this via ``install_command``. Note ``pip`` will not update project dependencies (specified
-   either in the ``install_requires`` or the ``extras`` section of the ``setup.py``) if any version already exists in
-   the virtual environment; therefore we recommend to recreate your environments whenever your project dependencies
-   change.
+      #. **Build**: If the tox environment has a package configured tox will build a package from the current source
+         tree. If multiple tox environments are run and the package built are compatible in between them then it will be
+         reused. This is to ensure that we build the package as rare as needed. By default for Python a source
+         distribution is built as defined via the ``pyproject.toml`` style build (see PEP-517 and PEP-518).
 
-   3. **commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
-   zero, stop and mark the environment failed. When you start a command with a dash character, the exit code will be ignored.
+      #. **Install the package dependencies**. If this has not changed since the last run this step will be skipped.
 
-4. **report** print out a report of outcomes for each tox environment:
+      #. **Install the package**. This operation will force reinstall the package without its dependencies.
+
+   #. **commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
+      zero, stop and mark the environment failed. When you start a command with a dash character, the exit code will be
+      ignored.
+
+#. **report** print out a report of outcomes for each tox environment:
 
    .. code:: bash
 
@@ -92,26 +114,23 @@ specified via ``passenv``. Furthermore, it will also alter the ``PATH`` variable
 within the current active tox environment. In general, all executables in the path are available in ``commands``, but
 tox will error if it was not explicitly allowed via :ref:`allowlist_externals`.
 
-Current features
-----------------
+Main features
+-------------
 
 * **automation of tedious Python related test activities**
 * **test your Python package against many interpreter and dependency configurations**
 
-    - automatic customizable (re)creation of :pypi:`virtualenv` test environments
-    - installs your project into each virtual environment
-    - test-tool agnostic: runs pytest, nose or unittest in a uniform manner
+  - automatic customizable (re)creation of :pypi:`virtualenv` test environments
+  - installs your project into each virtual environment
+  - test-tool agnostic: runs pytest, nose or unittest in a uniform manner
 
 * ``plugin system`` to modify tox execution with simple hooks.
-* uses :pypi:`pip` and :pypi:`setuptools` by default. Support for configuring the installer command through
-  ``install_command``.
-* **cross-Python compatible**: CPython 3.6 and higher, pypy 3.6+ and higher.
-* **cross-platform**: Windows and Unix style environments
-* **integrates with continuous integration servers** like Jenkins (formerly known as Hudson) and helps you to avoid
-  boilerplatish and platform-specific build-step hacks
+* uses :pypi:`pip` and :pypi:`virtualenv` by default. Support for plugins replacing it with their own.
+* **cross-Python compatible**: CPython 3.6 and higher.
+* **cross-platform**: Windows, macOS and Unix style environments
 * **full interoperability with devpi**: is integrated with and is used for testing in the :pypi:`devpi` system, a
   versatile PyPI index server and release managing tool
-* **driven by a simple ini-style config file**
+* **driven by a simple (but flexible to allow expressing more complicated variants) ini-style config file**
 * **documented** examples and configuration
 * **concise reporting** about tool invocations and configuration errors
 * **professionally** supported

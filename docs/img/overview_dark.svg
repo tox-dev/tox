@@ -1,0 +1,563 @@
+<svg
+  id="graph-div"
+  width="100%"
+  xmlns="http://www.w3.org/2000/svg"
+  class="statediagram"
+  height="1323"
+  style="max-width: 1393.79296875px;"
+  viewBox="0.5 0 796.453125 1323"
+><style
+  >#graph-div {font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#ccc;}#graph-div .error-icon{fill:#a44141;}#graph-div .error-text{fill:#ddd;stroke:#ddd;}#graph-div .edge-thickness-normal{stroke-width:2px;}#graph-div .edge-thickness-thick{stroke-width:3.5px;}#graph-div .edge-pattern-solid{stroke-dasharray:0;}#graph-div .edge-pattern-dashed{stroke-dasharray:3;}#graph-div .edge-pattern-dotted{stroke-dasharray:2;}#graph-div .marker{fill:lightgrey;stroke:lightgrey;}#graph-div .marker.cross{stroke:lightgrey;}#graph-div svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#graph-div defs #statediagram-barbEnd{fill:lightgrey;stroke:lightgrey;}#graph-div g.stateGroup text{fill:#81B1DB;stroke:none;font-size:10px;}#graph-div g.stateGroup text{fill:#ccc;stroke:none;font-size:10px;}#graph-div g.stateGroup .state-title{font-weight:bolder;fill:#e0dfdf;}#graph-div g.stateGroup rect{fill:#1f2020;stroke:#81B1DB;}#graph-div g.stateGroup line{stroke:lightgrey;stroke-width:1;}#graph-div .transition{stroke:lightgrey;stroke-width:1;fill:none;}#graph-div .stateGroup .composit{fill:#333;border-bottom:1px;}#graph-div .stateGroup .alt-composit{fill:#e0e0e0;border-bottom:1px;}#graph-div .state-note{stroke:hsl(180, 0%, 18.3529411765%);fill:hsl(180, 1.5873015873%, 28.3529411765%);}#graph-div .state-note text{fill:rgb(183.8476190475, 181.5523809523, 181.5523809523);stroke:none;font-size:10px;}#graph-div .stateLabel .box{stroke:none;stroke-width:0;fill:#1f2020;opacity:0.5;}#graph-div .edgeLabel .label rect{fill:#1f2020;opacity:0.5;}#graph-div .edgeLabel .label text{fill:#ccc;}#graph-div .label div .edgeLabel{color:#ccc;}#graph-div .stateLabel text{fill:#e0dfdf;font-size:10px;font-weight:bold;}#graph-div .node circle.state-start{fill:#f4f4f4;stroke:#f4f4f4;}#graph-div .node .fork-join{fill:#f4f4f4;stroke:#f4f4f4;}#graph-div .node circle.state-end{fill:hsl(180, 0%, 2.3529411765%);stroke:#333;stroke-width:1.5;}#graph-div .end-state-inner{fill:#333;stroke-width:1.5;}#graph-div .node rect{fill:#1f2020;stroke:#81B1DB;stroke-width:1px;}#graph-div .node polygon{fill:#1f2020;stroke:#81B1DB;stroke-width:1px;}#graph-div #statediagram-barbEnd{fill:lightgrey;}#graph-div .statediagram-cluster rect{fill:#1f2020;stroke:#81B1DB;stroke-width:1px;}#graph-div .cluster-label,#graph-div .nodeLabel{color:#e0dfdf;}#graph-div .statediagram-cluster rect.outer{rx:5px;ry:5px;}#graph-div .statediagram-state .divider{stroke:#81B1DB;}#graph-div .statediagram-state .title-state{rx:5px;ry:5px;}#graph-div .statediagram-cluster.statediagram-cluster .inner{fill:#333;}#graph-div .statediagram-cluster.statediagram-cluster-alt .inner{fill:#555;}#graph-div .statediagram-cluster .inner{rx:0;ry:0;}#graph-div .statediagram-state rect.basic{rx:5px;ry:5px;}#graph-div .statediagram-state rect.divider{stroke-dasharray:10,10;fill:#555;}#graph-div .note-edge{stroke-dasharray:5;}#graph-div .statediagram-note rect{fill:hsl(180, 1.5873015873%, 28.3529411765%);stroke:hsl(180, 0%, 18.3529411765%);stroke-width:1px;rx:0;ry:0;}#graph-div .statediagram-note rect{fill:hsl(180, 1.5873015873%, 28.3529411765%);stroke:hsl(180, 0%, 18.3529411765%);stroke-width:1px;rx:0;ry:0;}#graph-div .statediagram-note text{fill:rgb(183.8476190475, 181.5523809523, 181.5523809523);}#graph-div .statediagram-note .nodeLabel{color:rgb(183.8476190475, 181.5523809523, 181.5523809523);}#graph-div .statediagram .edgeLabel{color:red;}#graph-div #dependencyStart,#graph-div #dependencyEnd{fill:lightgrey;stroke:lightgrey;stroke-width:1;}#graph-div :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g
+  ><defs><marker
+        id="statediagram-barbEnd"
+        refX="19"
+        refY="7"
+        markerWidth="20"
+        markerHeight="14"
+        markerUnits="strokeWidth"
+        orient="auto"
+      ><path d="M 19,7 L9,13 L14,7 L9,1 Z" /></marker></defs><g class="root"><g class="clusters" /><g
+        class="edgePaths"
+      ><path
+          d="M292.9296875,22L292.9296875,23.666666666666668C292.9296875,25.333333333333332,292.9296875,28.666666666666668,292.9296875,32C292.9296875,35.333333333333336,292.9296875,38.666666666666664,292.9296875,40.333333333333336L292.9296875,42"
+          id="edge120"
+          class=" edge-thickness-normal transition"
+          style="fill:none"
+          marker-end="url(#statediagram-barbEnd)"
+        /><path
+          d="M403.6015625,1250.300900024325L417.2734375,1248.9174166869377C430.9453125,1247.5339333495501,458.2890625,1244.766966674775,475.37890625,1243.3834833373876C492.46875,1242,499.3046875,1242,506.140625,1245.25C512.9765625,1248.5,519.8125,1255,519.8125,1261.5C519.8125,1268,512.9765625,1274.5,506.140625,1277.75C499.3046875,1281,492.46875,1281,475.37890625,1279.6165166626124C458.2890625,1278.233033325225,430.9453125,1275.4660666504499,417.2734375,1274.0825833130623L403.6015625,1272.699099975675"
+          id="edge138"
+          class=" edge-thickness-normal transition"
+          style="fill:none"
+          marker-end="url(#statediagram-barbEnd)"
+        /><path
+          d="M292.9296875,1281L292.9296875,1282.6666666666667C292.9296875,1284.3333333333333,292.9296875,1287.6666666666667,292.9296875,1291C292.9296875,1294.3333333333333,292.9296875,1297.6666666666667,292.9296875,1299.3333333333333L292.9296875,1301"
+          id="edge139"
+          class=" edge-thickness-normal transition"
+          style="fill:none"
+          marker-end="url(#statediagram-barbEnd)"
+        /><path
+          d="M292.9296875,105L292.9296875,106.66666666666667C292.9296875,108.33333333333333,292.9296875,111.66666666666667,292.9296875,115C292.9296875,118.33333333333333,292.9296875,121.66666666666667,292.9296875,123.33333333333333L292.9296875,125"
+          id="edge121"
+          class=" edge-thickness-normal transition"
+          style="fill:none"
+          marker-end="url(#statediagram-barbEnd)"
+        /><path
+          d="M577.859375,247.61288880372996L591.53125,227.17740733644163C605.203125,206.7419258691533,632.546875,165.87096293457665,649.63671875,145.43548146728833C666.7265625,125,673.5625,125,680.3984375,216.41666666666666C687.234375,307.8333333333333,694.0703125,490.6666666666667,694.0703125,673.5C694.0703125,856.3333333333334,687.234375,1039.1666666666667,680.3984375,1130.5833333333333C673.5625,1222,666.7265625,1222,649.63671875,1201.5645185327116C632.546875,1181.1290370654233,605.203125,1140.2580741308468,591.53125,1119.8225926635585L577.859375,1099.38711119627"
+          id="edge136"
+          class=" edge-thickness-normal transition"
+          style="fill:none"
+          marker-end="url(#statediagram-barbEnd)"
+        /><path
+          d="M292.9296875,1222L292.9296875,1223.6666666666667C292.9296875,1225.3333333333333,292.9296875,1228.6666666666667,292.9296875,1232C292.9296875,1235.3333333333333,292.9296875,1238.6666666666667,292.9296875,1240.3333333333333L292.9296875,1242"
+          id="edge137"
+          class=" edge-thickness-normal transition"
+          style="fill:none"
+          marker-end="url(#statediagram-barbEnd)"
+        /></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><rect
+              rx="0"
+              ry="0"
+              width="0"
+              height="0"
+            /><foreignObject width="0" height="0"><div
+                xmlns="http://www.w3.org/1999/xhtml"
+                style="display: inline-block; white-space: nowrap;"
+              ><span class="edgeLabel" /></div></foreignObject></g></g><g
+          class="edgeLabel"
+          transform="translate(526.6484375, 1261.5)"
+        ><g class="label" transform="translate(-88.046875, -12)"><rect
+              rx="0"
+              ry="0"
+              width="176.09375"
+              height="24"
+            /><foreignObject width="176.09375" height="24"><div
+                xmlns="http://www.w3.org/1999/xhtml"
+                style="display: inline-block; white-space: nowrap;"
+              ><span class="edgeLabel">for each tox environment</span></div></foreignObject></g></g><g
+          class="edgeLabel"
+        ><g class="label" transform="translate(0, 0)"><rect rx="0" ry="0" width="0" height="0" /><foreignObject
+              width="0"
+              height="0"
+            ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                  class="edgeLabel"
+                /></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><rect
+              rx="0"
+              ry="0"
+              width="0"
+              height="0"
+            /><foreignObject width="0" height="0"><div
+                xmlns="http://www.w3.org/1999/xhtml"
+                style="display: inline-block; white-space: nowrap;"
+              ><span class="edgeLabel" /></div></foreignObject></g></g><g
+          class="edgeLabel"
+          transform="translate(700.90625, 673.5)"
+        ><g class="label" transform="translate(-88.046875, -12)"><rect
+              rx="0"
+              ry="0"
+              width="176.09375"
+              height="24"
+            /><foreignObject width="176.09375" height="24"><div
+                xmlns="http://www.w3.org/1999/xhtml"
+                style="display: inline-block; white-space: nowrap;"
+              ><span class="edgeLabel">for each tox environment</span></div></foreignObject></g></g><g
+          class="edgeLabel"
+        ><g class="label" transform="translate(0, 0)"><rect rx="0" ry="0" width="0" height="0" /><foreignObject
+              width="0"
+              height="0"
+            ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                  class="edgeLabel"
+                /></div></foreignObject></g></g></g><g class="nodes"><g
+          class="node default"
+          id="state-root_start-120"
+          transform="translate(292.9296875, 15)"
+        ><circle class="state-start" r="7" width="14" height="14" /></g><g
+          class="node statediagram-state"
+          id="state-conf-140"
+          transform="translate(292.9296875, 73.5)"
+        ><rect class="outer title-state" x="-118" y="-31.5" width="236" height="63" /><line
+            class="divider"
+            x1="-118"
+            x2="118"
+            y1="24"
+            y2="24"
+          /><g class="label" transform="translate(-110.5, -28.5)"><foreignObject
+              width="221"
+              height="48"
+              transform="translate( 0, 0)"
+            ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                  class="nodeLabel"
+                >build configuration (CLI + files) <br
+                  /> identify environments to run</span></div></foreignObject><foreignObject
+              width="0"
+              height="0"
+              transform="translate( 110.5, 60.5)"
+            ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                  class="nodeLabel"
+                /></div></foreignObject></g></g><g class="root" transform="translate(0.5, 117)"><g class="clusters"><g
+              class="statediagram-state statediagram-cluster"
+              id="tox_env"
+            ><rect class="outer" x="8" y="8" width="569.859375" height="1097" /><g
+                class="cluster-label"
+                transform="translate(264.90625, 8)"
+              ><foreignObject width="56.046875" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="nodeLabel">tox_env</span></div></foreignObject></g><rect
+                class="inner"
+                x="8"
+                y="31"
+                width="569.859375"
+                height="1070"
+              /></g></g><g class="edgePaths"><path
+              d="M254.1796875,47L254.1796875,51.166666666666664C254.1796875,55.333333333333336,254.1796875,63.666666666666664,254.1796875,72C254.1796875,80.33333333333333,254.1796875,88.66666666666667,254.1796875,92.83333333333333L254.1796875,97"
+              id="edge122"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M254.1796875,160L254.1796875,166.16666666666666C254.1796875,172.33333333333334,254.1796875,184.66666666666666,254.1796875,197C254.1796875,209.33333333333334,254.1796875,221.66666666666666,254.1796875,227.83333333333334L254.1796875,234"
+              id="edge123"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M267.1135217079987,253.35872491176792L285.4735076733322,260.9656040931399C303.8334936386658,268.57248327451197,340.5534655693329,283.78624163725596,358.9134515346664,297.55978748529463C377.2734375,311.3333333333333,377.2734375,323.6666666666667,377.2734375,329.8333333333333L377.2734375,336"
+              id="edge124"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M241.2458532920013,253.35872491176792L222.88586732666775,260.9656040931399C204.5258813613342,268.57248327451197,167.8059094306671,283.78624163725596,149.44592346533355,300.80978748529463C131.0859375,317.8333333333333,131.0859375,336.6666666666667,131.0859375,355.5C131.0859375,374.3333333333333,131.0859375,393.1666666666667,149.44592346533355,410.1902125147053C167.8059094306671,427.21375836274404,204.5258813613342,442.42751672548803,222.88586732666775,450.03439590686L241.2458532920013,457.6412750882321"
+              id="edge125"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M377.2734375,375L377.2734375,381.1666666666667C377.2734375,387.3333333333333,377.2734375,399.6666666666667,358.9134515346664,413.4402125147053C340.5534655693329,427.21375836274404,303.8334936386658,442.42751672548803,285.4735076733322,450.03439590686L267.1135217079987,457.6412750882321"
+              id="edge126"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M267.04318230147834,468.52544129390037L284.6876779595653,476.10453441158364C302.33217361765224,483.6836275292669,337.6211649338261,498.8418137646334,355.26566059191305,512.5875735489834C372.91015625,526.3333333333334,372.91015625,538.6666666666666,372.91015625,544.8333333333334L372.91015625,551"
+              id="edge127"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M240.94351563408082,467.5611132781208L218.482877611734,475.30092773176733C196.02223958938723,483.0407421854138,151.1009635446936,498.5203710927069,128.64032552234679,514.7601855463535C106.1796875,531,106.1796875,548,106.1796875,565C106.1796875,582,106.1796875,599,106.1796875,616.9166666666666C106.1796875,634.8333333333334,106.1796875,653.6666666666666,106.1796875,672.5C106.1796875,691.3333333333334,106.1796875,710.1666666666666,106.1796875,729C106.1796875,747.8333333333334,106.1796875,766.6666666666666,106.1796875,783.5C106.1796875,800.3333333333334,106.1796875,815.1666666666666,106.1796875,830C106.1796875,844.8333333333334,106.1796875,859.6666666666666,106.1796875,874.5C106.1796875,889.3333333333334,106.1796875,904.1666666666666,121.44401041666667,916.6370618665541C136.70833333333334,929.1074570664414,167.23697916666666,939.2149141328829,182.50130208333334,944.2686426661036L197.765625,949.3223711993244"
+              id="edge128"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M359.85390027432646,570.0531356500384L340.0677033536054,577.710946375032C320.2815064328843,585.3687571000256,280.70911259144214,600.6843785500128,260.92291567072107,617.758855941673C241.13671875,634.8333333333334,241.13671875,653.6666666666666,241.13671875,672.5C241.13671875,691.3333333333334,241.13671875,710.1666666666666,255.51907033554573,725.75C269.90142192109147,741.3333333333334,298.6661250921829,753.6666666666666,313.0484766777286,759.8333333333334L327.43082826327435,766"
+              id="edge129"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M382.92071592353943,574.7871699189554L389.9462997279495,581.6559749324629C396.97188353235964,588.5247799459703,411.0230511411798,602.2623899729851,418.04863494558987,615.2978616531592C425.07421875,628.3333333333334,425.07421875,640.6666666666666,425.07421875,646.8333333333334L425.07421875,653"
+              id="edge130"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M425.07421875,692L425.07421875,698.1666666666666C425.07421875,704.3333333333334,425.07421875,716.6666666666666,419.38079599926255,729C413.6873732485251,741.3333333333334,402.3005277470502,753.6666666666666,396.60710499631267,759.8333333333334L390.9136822455752,766"
+              id="edge131"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M372.91015625,805L372.91015625,809.1666666666666C372.91015625,813.3333333333334,372.91015625,821.6666666666666,372.91015625,830C372.91015625,838.3333333333334,372.91015625,846.6666666666666,372.91015625,850.8333333333334L372.91015625,855"
+              id="edge132"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M372.91015625,894L372.91015625,898.1666666666666C372.91015625,902.3333333333334,372.91015625,910.6666666666666,360.99672486181976,919.75C349.08329347363946,928.8333333333334,325.2564306972789,938.6666666666666,313.3429993090986,943.5833333333334L301.4295679209184,948.5"
+              id="edge133"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M310.59375,962.1224068122052L332.3854166666667,959.8520056768376C354.1770833333333,957.58160454147,397.7604166666667,953.0408022707351,425,950.7704011353676C452.2395833333333,948.5,463.1354166666667,948.5,474.03125,951.75C484.9270833333333,955,495.8229166666667,961.5,495.8229166666667,968C495.8229166666667,974.5,484.9270833333333,981,474.03125,984.25C463.1354166666667,987.5,452.2395833333333,987.5,425,985.2295988646324C397.7604166666667,982.9591977292649,354.1770833333333,978.41839545853,332.3854166666667,976.1479943231624L310.59375,973.8775931877948"
+              id="edge134"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /><path
+              d="M254.1796875,987.5L254.1796875,994.4166666666666C254.1796875,1001.3333333333334,254.1796875,1015.1666666666666,254.1796875,1028.25C254.1796875,1041.3333333333333,254.1796875,1053.6666666666667,254.1796875,1059.8333333333333L254.1796875,1066"
+              id="edge135"
+              class=" edge-thickness-normal transition"
+              style="fill:none"
+              marker-end="url(#statediagram-barbEnd)"
+            /></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><rect
+                  rx="0"
+                  ry="0"
+                  width="0"
+                  height="0"
+                /><foreignObject width="0" height="0"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel" /></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(254.1796875, 197)"
+            ><g class="label" transform="translate(-138.3046875, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="276.609375"
+                  height="24"
+                /><foreignObject width="276.609375" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">has (new) project dependencies (deps)</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(377.2734375, 299)"
+            ><g class="label" transform="translate(-12.453125, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="24.90625"
+                  height="24"
+                /><foreignObject width="24.90625" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">yes</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(131.0859375, 355.5)"
+            ><g class="label" transform="translate(-58.7109375, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="117.421875"
+                  height="24"
+                /><foreignObject width="117.421875" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">no, has package</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(377.2734375, 412)"
+            ><g class="label" transform="translate(-45.3671875, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="90.734375"
+                  height="24"
+                /><foreignObject width="90.734375" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">has package</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(372.91015625, 514)"
+            ><g class="label" transform="translate(-100.9453125, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="201.890625"
+                  height="24"
+                /><foreignObject width="201.890625" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">yes, built package in this run</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(106.1796875, 729)"
+            ><g class="label" transform="translate(-8.8984375, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="17.796875"
+                  height="24"
+                /><foreignObject width="17.796875" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">no</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(241.13671875, 672.5)"
+            ><g class="label" transform="translate(-12.453125, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="24.90625"
+                  height="24"
+                /><foreignObject width="24.90625" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">yes</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(425.07421875, 616)"
+            ><g class="label" transform="translate(-8.8984375, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="17.796875"
+                  height="24"
+                /><foreignObject width="17.796875" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">no</span></div></foreignObject></g></g><g class="edgeLabel"><g
+                class="label"
+                transform="translate(0, 0)"
+              ><rect rx="0" ry="0" width="0" height="0" /><foreignObject width="0" height="0"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel" /></div></foreignObject></g></g><g class="edgeLabel"><g
+                class="label"
+                transform="translate(0, 0)"
+              ><rect rx="0" ry="0" width="0" height="0" /><foreignObject width="0" height="0"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel" /></div></foreignObject></g></g><g class="edgeLabel"><g
+                class="label"
+                transform="translate(0, 0)"
+              ><rect rx="0" ry="0" width="0" height="0" /><foreignObject width="0" height="0"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel" /></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(506.71875, 968)"
+            ><g class="label" transform="translate(-51.140625, -24)"><rect
+                  rx="0"
+                  ry="0"
+                  width="102.28125"
+                  height="48"
+                /><foreignObject width="102.28125" height="48"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">for each entry <br />in commands*</span></div></foreignObject></g></g><g
+              class="edgeLabel"
+              transform="translate(254.1796875, 1029)"
+            ><g class="label" transform="translate(-81.8203125, -12)"><rect
+                  rx="0"
+                  ry="0"
+                  width="163.640625"
+                  height="24"
+                /><foreignObject width="163.640625" height="24"><div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style="display: inline-block; white-space: nowrap;"
+                  ><span class="edgeLabel">pass outcome to report</span></div></foreignObject></g></g></g><g
+            class="nodes"
+          ><g class="node default" id="state-tox_env_start-122" transform="translate(254.1796875, 40)"><circle
+                class="state-start"
+                r="7"
+                width="14"
+                height="14"
+              /></g><g
+              class="node statediagram-state"
+              id="state-create-140"
+              transform="translate(254.1796875, 128.5)"
+            ><rect class="outer title-state" x="-132.4609375" y="-31.5" width="264.921875" height="63" /><line
+                class="divider"
+                x1="-132.4609375"
+                x2="132.4609375"
+                y1="24"
+                y2="24"
+              /><g class="label" transform="translate(-124.9609375, -28.5)"><foreignObject
+                  width="249.921875"
+                  height="48"
+                  transform="translate( 0, 0)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    >create an isolated tox environment <br
+                      /> the other steps executed within this</span></div></foreignObject><foreignObject
+                  width="0"
+                  height="0"
+                  transform="translate( 124.9609375, 60.5)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    /></div></foreignObject></g></g><g
+              class="node default"
+              id="state-hdi-125"
+              transform="translate(254.1796875, 248)"
+            ><polygon points="0,14 14,0 0,-14 -14,0" class="state-start" r="7" width="28" height="28" /></g><g
+              class="node statediagram-state"
+              id="state-deps-140"
+              transform="translate(377.2734375, 355.5)"
+            ><rect class="outer title-state" x="-152.4765625" y="-19.5" width="304.953125" height="39" /><line
+                class="divider"
+                x1="-152.4765625"
+                x2="152.4765625"
+                y1="12"
+                y2="12"
+              /><g class="label" transform="translate(-144.9765625, -16.5)"><foreignObject
+                  width="289.953125"
+                  height="24"
+                  transform="translate( 0, 0)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    >install project dependencies (if has deps)</span></div></foreignObject><foreignObject
+                  width="0"
+                  height="0"
+                  transform="translate( 144.9765625, 36.5)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    /></div></foreignObject></g></g><g
+              class="node default"
+              id="state-hpi-128"
+              transform="translate(254.1796875, 463)"
+            ><polygon points="0,14 14,0 0,-14 -14,0" class="state-start" r="7" width="28" height="28" /></g><g
+              class="node default"
+              id="state-fpi-130"
+              transform="translate(372.91015625, 565)"
+            ><polygon points="0,14 14,0 0,-14 -14,0" class="state-start" r="7" width="28" height="28" /></g><g
+              class="node statediagram-state"
+              id="state-commands-140"
+              transform="translate(254.1796875, 968)"
+            ><rect class="outer title-state" x="-56.4140625" y="-19.5" width="112.828125" height="39" /><line
+                class="divider"
+                x1="-56.4140625"
+                x2="56.4140625"
+                y1="12"
+                y2="12"
+              /><g class="label" transform="translate(-48.9140625, -16.5)"><foreignObject
+                  width="97.828125"
+                  height="24"
+                  transform="translate( 0, 0)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    >run command</span></div></foreignObject><foreignObject
+                  width="0"
+                  height="0"
+                  transform="translate( 48.9140625, 36.5)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    /></div></foreignObject></g></g><g
+              class="node statediagram-state"
+              id="state-install_deps-140"
+              transform="translate(372.91015625, 785.5)"
+            ><rect class="outer title-state" x="-134.6953125" y="-19.5" width="269.390625" height="39" /><line
+                class="divider"
+                x1="-134.6953125"
+                x2="134.6953125"
+                y1="12"
+                y2="12"
+              /><g class="label" transform="translate(-127.1953125, -16.5)"><foreignObject
+                  width="254.390625"
+                  height="24"
+                  transform="translate( 0, 0)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    >install (new) package dependencies</span></div></foreignObject><foreignObject
+                  width="0"
+                  height="0"
+                  transform="translate( 127.1953125, 36.5)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    /></div></foreignObject></g></g><g
+              class="node statediagram-state"
+              id="state-package-140"
+              transform="translate(425.07421875, 672.5)"
+            ><rect class="outer title-state" x="-56.875" y="-19.5" width="113.75" height="39" /><line
+                class="divider"
+                x1="-56.875"
+                x2="56.875"
+                y1="12"
+                y2="12"
+              /><g class="label" transform="translate(-49.375, -16.5)"><foreignObject
+                  width="98.75"
+                  height="24"
+                  transform="translate( 0, 0)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    >build package</span></div></foreignObject><foreignObject
+                  width="0"
+                  height="0"
+                  transform="translate( 49.375, 36.5)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    /></div></foreignObject></g></g><g
+              class="node statediagram-state"
+              id="state-install-140"
+              transform="translate(372.91015625, 874.5)"
+            ><rect class="outer title-state" x="-140.0390625" y="-19.5" width="280.078125" height="39" /><line
+                class="divider"
+                x1="-140.0390625"
+                x2="140.0390625"
+                y1="12"
+                y2="12"
+              /><g class="label" transform="translate(-132.5390625, -16.5)"><foreignObject
+                  width="265.078125"
+                  height="24"
+                  transform="translate( 0, 0)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    >install package without dependencies</span></div></foreignObject><foreignObject
+                  width="0"
+                  height="0"
+                  transform="translate( 132.5390625, 36.5)"
+                ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                      class="nodeLabel"
+                    /></div></foreignObject></g></g><g
+              class="node default"
+              id="state-tox_env_end-135"
+              transform="translate(254.1796875, 1073)"
+            ><circle class="state-start" r="7" width="14" height="14" /><circle
+                class="state-end"
+                r="5"
+                width="10"
+                height="10"
+              /></g></g></g><g
+          class="node statediagram-state"
+          id="state-report-140"
+          transform="translate(292.9296875, 1261.5)"
+        ><rect class="outer title-state" x="-110.671875" y="-19.5" width="221.34375" height="39" /><line
+            class="divider"
+            x1="-110.671875"
+            x2="110.671875"
+            y1="12"
+            y2="12"
+          /><g class="label" transform="translate(-103.171875, -16.5)"><foreignObject
+              width="206.34375"
+              height="24"
+              transform="translate( 0, 0)"
+            ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                  class="nodeLabel"
+                >report the outcome of the run</span></div></foreignObject><foreignObject
+              width="0"
+              height="0"
+              transform="translate( 103.171875, 36.5)"
+            ><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span
+                  class="nodeLabel"
+                /></div></foreignObject></g></g><g
+          class="node default"
+          id="state-root_end-139"
+          transform="translate(292.9296875, 1308)"
+        ><circle class="state-start" r="7" width="14" height="14" /><circle
+            class="state-end"
+            r="5"
+            width="10"
+            height="10"
+          /></g></g></g></g></svg>

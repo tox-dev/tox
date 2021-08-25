@@ -1,8 +1,9 @@
-Plugin system
+Extending tox
 =============
 
-Plugin API
-~~~~~~~~~~
+Extensions points
+~~~~~~~~~~~~~~~~~
+
 .. automodule:: tox.plugin
    :members:
    :exclude-members: impl
@@ -13,121 +14,30 @@ Plugin API
 .. automodule:: tox.plugin.spec
    :members:
 
-tox objects
-~~~~~~~~~~~
+Adoption of a plugin under tox-dev Github organization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-register
---------
+You're free to host your plugin on your favorite platform, however the core tox development is happening on Github,
+under the ``tox-dev`` org organization. We are happy to adopt tox plugins under the ``tox-dev`` organization if:
 
-.. automodule:: tox.tox_env.register
-   :members:
-   :exclude-members: REGISTER
+- we determine it's trying to solve a valid use case and it's not malicious (e.g. no plugin that deletes the users home
+  directory),
+- it's released on PyPi with at least 100 downloads per month (to ensure it's a plugin used by people).
 
-.. autodata:: REGISTER
-   :no-value:
+What's in for you in this:
 
-config
-------
-.. autoclass:: tox.config.cli.parser.Parsed
-   :members:
+- you get owner rights on the repository under the tox-dev organization,
+- exposure of your plugin under the core umbrella,
+- backup maintainers from other tox plugin development.
 
-.. autoclass:: tox.config.main.Config
-   :members:
-   :exclude-members: __init__, make
+How to apply:
 
-.. autoclass:: tox.config.sets.ConfigSet
-   :members:
-   :special-members: __iter__, __contains__
-
-.. autoclass:: tox.config.sets.CoreConfigSet
-   :members:
-
-.. autoclass:: tox.config.sets.EnvConfigSet
-   :members:
-
-.. autoclass:: tox.config.of_type.ConfigDefinition
-   :members:
-
-.. autoclass:: tox.config.of_type.ConfigDynamicDefinition
-   :members:
-
-.. autoclass:: tox.config.of_type.ConfigConstantDefinition
-   :members:
-
-.. autoclass:: tox.config.source.api.Source
-   :members:
-
-.. autoclass:: tox.config.loader.api.Override
-   :members:
-
-.. autoclass:: tox.config.loader.api.Loader
-   :members:
-
-.. autoclass:: tox.config.loader.convert.Convert
-   :members:
-
-.. autoclass:: tox.config.types.EnvList
-   :members:
-   :special-members: __bool__, __iter__
-
-.. autoclass:: tox.config.types.Command
-   :members:
-
-environments
-------------
-.. autoclass:: tox.tox_env.api.ToxEnv
-   :members:
-
-.. autoclass:: tox.tox_env.runner.RunToxEnv
-   :members:
-
-.. autoclass:: tox.tox_env.package.PackageToxEnv
-   :members:
-
-.. autoclass:: tox.tox_env.package.Package
-   :members:
-
-journal
--------
-.. autoclass:: tox.journal.env.EnvJournal
-   :members:
-   :exclude-members: __init__
-   :special-members: __bool__, __setitem__
-
-report
-------
-.. autoclass:: tox.report.ToxHandler
-   :members:
-   :exclude-members: stream, format, patch_thread, write_out_err, suspend_out_err
-
-execute
--------
-.. autoclass:: tox.execute.request.ExecuteRequest
-   :members:
-
-.. autoclass:: tox.execute.request.StdinSource
-   :members:
-
-.. autoclass:: tox.execute.api.Outcome
-   :members:
-
-.. autoclass:: tox.execute.api.Execute
-   :members:
-
-.. autoclass:: tox.execute.api.ExecuteStatus
-   :members:
-
-.. autoclass:: tox.execute.api.ExecuteInstance
-   :members:
-
-.. autoclass:: tox.execute.stream.SyncWrite
-   :members:
-
-installer
----------
-
-.. autoclass:: tox.tox_env.installer.Installer
-   :members:
+- create an issue under the ``tox-dev/tox`` Github repository with the title `Adopt plugin \<name\>
+  <https://github.com/tox-dev/tox/issues/new?labels=feature%3Anew&template=feature_request.md&title=Adopt%20plugin&body=>`_,
+- wait for the green light by one of our maintainers (see :ref:`current-maintainers`),
+- follow the `guidance by Github
+  <https://docs.github.com/en/github/administering-a-repository/managing-repository-settings/transferring-a-repository>`_,
+- (optionally) add at least one other people as co-maintainer on PyPI.
 
 Migration from tox 3
 ~~~~~~~~~~~~~~~~~~~~
@@ -145,6 +55,6 @@ to ``virtualenv``. Therefore first `define a new virtualenv discovery mechanism
 ---------------
 Register new packager types via :func:`tox_register_tox_env <tox.plugin.spec.tox_register_tox_env>`.
 
-``tox_adoption``
-----------------
+``tox_addoption``
+-----------------
 Renamed to :func:`tox_add_option <tox.plugin.spec.tox_add_option>`.
