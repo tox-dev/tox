@@ -121,7 +121,7 @@ jobs:
           fetch-depth: 0
       - name: Build package
         run: pyproject-build -s -w . -o dist
-      - name: Publish to PyPi
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
           skip_existing: true

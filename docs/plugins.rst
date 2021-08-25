@@ -22,7 +22,7 @@ under the ``tox-dev`` org organization. We are happy to adopt tox plugins under 
 
 - we determine it's trying to solve a valid use case and it's not malicious (e.g. no plugin that deletes the users home
   directory),
-- it's released on PyPi with at least 100 downloads per month (to ensure it's a plugin used by people).
+- it's released on PyPI with at least 100 downloads per month (to ensure it's a plugin used by people).
 
 What's in for you in this:
 
