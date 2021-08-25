@@ -367,7 +367,7 @@ class ToxRunOutcome:
         except ImportError:  # pragma: no cover # hard to test
             match = re.match(pattern, text, flags)
             if match is None:
-                warnings.warn("install the re-assert PyPi package for bette error message", UserWarning)
+                warnings.warn("install the re-assert PyPI package for bette error message", UserWarning)
             assert match
         else:
             assert Matches(pattern, flags=flags) == text

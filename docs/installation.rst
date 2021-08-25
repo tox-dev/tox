@@ -31,7 +31,7 @@ wheel
 ~~~~~
 Installing tox via a wheel (default with pip) requires an installer that can understand the ``python-requires`` tag (see
 `PEP-503 <https://www.python.org/dev/peps/pep-0503/>`_), with pip this is version ``9.0.0`` (released in November 2016).
-Furthermore, in case you're not installing it via PyPi you need to use a mirror that correctly forwards the
+Furthermore, in case you're not installing it via PyPI you need to use a mirror that correctly forwards the
 ``python-requires`` tag (notably the OpenStack mirrors don't do this, or older `devpi <https://github.com/devpi/devpi>`_
 versions - added with version ``4.7.0``).
 
