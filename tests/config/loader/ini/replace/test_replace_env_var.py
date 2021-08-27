@@ -36,3 +36,10 @@ def test_replace_env_var_circular(replace_one: ReplaceOne, monkeypatch: MonkeyPa
     monkeypatch.setenv("MAGIC", "{env:MAGIC}")
     result = replace_one("{env:MAGIC}")
     assert result == "{env:MAGIC}"
+
+
+def test_replace_env_default_with_colon(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    monkeypatch.delenv("MAGIC", raising=False)
+    result = replace_one("{env:MAGIC:https://some.url.org}")
+    assert result == "https://some.url.org"

@@ -207,7 +207,7 @@ def replace_env(conf: "Config", env_name: Optional[str], args: List[str], chain:
     if key in os.environ:
         return os.environ[key]
 
-    return "" if len(args) == 1 else args[1]
+    return "" if len(args) == 1 else ":".join(args[1:])
 
 
 def replace_tty(args: List[str]) -> str:
