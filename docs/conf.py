@@ -56,7 +56,7 @@ html_theme_options = {
 }
 html_title = "tox 4 - rewrite"
 html_static_path = ["_static"]
-html_css_files = ["css/custom.css"]
+html_css_files = ["custom.css"]
 html_last_updated_fmt = datetime.now().isoformat()
 html_logo = "_static/img/tox.svg"
 html_favicon = "_static/img/toxfavi.ico"
