@@ -81,6 +81,7 @@ html_theme_options = {
 html_sidebars = {
     "**": ["about.html", "localtoc.html", "relations.html", "searchbox.html", "donate.html"],
 }
+html_favicon = "_static/img/toxfavi.ico"
 html_show_sourcelink = False
 html_static_path = ["_static"]
 htmlhelp_basename = "{}doc".format(project)

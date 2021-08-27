@@ -1,0 +1,3 @@
+Enabled the use of the favicon in the Sphinx docs first
+introduced in :pull:`764` but not integrated fully
+-- :user:`webknjaz`
