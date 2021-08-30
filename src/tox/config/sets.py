@@ -166,8 +166,9 @@ class ConfigSet:
 class CoreConfigSet(ConfigSet):
     """Configuration set for the core tox config"""
 
-    def __init__(self, conf: "Config", root: Path) -> None:
+    def __init__(self, conf: "Config", root: Path, src_path: Path) -> None:
         super().__init__(conf, name=None)
+        self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=src_path)
         self.add_config(
             keys=["tox_root", "toxinidir"],
             of_type=Path,

@@ -1,11 +1,11 @@
 import os
 from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Optional, Sequence, Tuple
 
-from tox.config.loader.api import Loader, Override, OverrideMap
+from tox.config.loader.api import Loader, OverrideMap
 
-from .sets import CoreConfigSet, EnvConfigSet
+from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 from .source import Source
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class Config:
     def __init__(
         self,
         config_source: Source,
-        overrides: List[Override],
+        options: "Parsed",
         root: Path,
         pos_args: Optional[Sequence[str]],
         work_dir: Path,
@@ -26,15 +26,20 @@ class Config:
         self._pos_args = None if pos_args is None else tuple(pos_args)
         self._work_dir = work_dir
         self._root = root
+        self._options = options
 
         self._overrides: OverrideMap = defaultdict(list)
-        for override in overrides:
+        for override in options.override:
             self._overrides[override.namespace].append(override)
 
         self._src = config_source
         self._env_to_set: Dict[str, EnvConfigSet] = OrderedDict()
         self._core_set: Optional[CoreConfigSet] = None
         self.register_config_set: Callable[[str, EnvConfigSet], Any] = lambda n, e: None
+
+        from tox.plugin.manager import MANAGER
+
+        MANAGER.tox_configure(self)
 
     def pos_args(self, to_path: Optional[Path]) -> Optional[Tuple[str, ...]]:
         """
@@ -85,18 +90,22 @@ class Config:
         work_dir: Path = source.path.parent if parsed.work_dir is None else parsed.work_dir
         return cls(
             config_source=source,
-            overrides=parsed.override,
+            options=parsed,
             pos_args=pos_args,
             root=root,
             work_dir=work_dir,
         )
 
     @property
+    def options(self) -> "Parsed":
+        return self._options
+
+    @property
     def core(self) -> CoreConfigSet:
         """:return: the core configuration"""
         if self._core_set is not None:
             return self._core_set
-        core = CoreConfigSet(self, self._root)
+        core = CoreConfigSet(self, self._root, self.src_path)
         for loader in self._src.get_core(self._overrides):
             core.loaders.append(loader)
 
@@ -105,6 +114,10 @@ class Config:
         MANAGER.tox_add_core_config(core)
         self._core_set = core
         return core
+
+    def register_section_loaders(self, name: str, for_set: ConfigSet) -> None:
+        for loader in self._src.get_section(name, self._overrides):
+            for_set.loaders.append(loader)
 
     def get_env(
         self, item: str, package: bool = False, loaders: Optional[Sequence[Loader[Any]]] = None

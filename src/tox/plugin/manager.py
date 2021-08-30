@@ -15,6 +15,7 @@ from tox.tox_env.python.virtual_env import runner
 from tox.tox_env.python.virtual_env.package import api
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
+from ..config.main import Config
 from . import NAME, spec
 from .inline import load_inline
 
@@ -53,6 +54,9 @@ class Plugin:
 
     def tox_add_core_config(self, core: ConfigSet) -> None:
         self.manager.hook.tox_add_core_config(core=core)
+
+    def tox_configure(self, config: Config) -> None:
+        self.manager.hook.tox_configure(config=config)
 
     def tox_register_tox_env(self, register: "ToxEnvRegister") -> None:
         self.manager.hook.tox_register_tox_env(register=register)
