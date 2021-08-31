@@ -5,7 +5,10 @@ from typing import Callable, Dict, Optional, Set, TypeVar
 import pytest
 
 from tests.conftest import ToxIniCreator
+from tox.config.cli.parser import Parsed
+from tox.config.main import Config
 from tox.config.sets import ConfigSet
+from tox.pytest import ToxProjectCreator
 
 ConfBuilder = Callable[[str], ConfigSet]
 
@@ -112,14 +115,14 @@ def test_config_redefine_constant_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
     config_set.add_constant(keys="path", desc="desc", value="value")
     with pytest.raises(ValueError, match="config path already defined"):
-        config_set.add_constant(keys="path", desc="desc", value="value")
+        config_set.add_constant(keys="path", desc="desc2", value="value")
 
 
 def test_config_redefine_dynamic_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
-    config_set.add_config(keys="path", of_type=str, default="default", desc="path")
+    config_set.add_config(keys="path", of_type=str, default="default_1", desc="path")
     with pytest.raises(ValueError, match="config path already defined"):
-        config_set.add_config(keys="path", of_type=str, default="default", desc="path")
+        config_set.add_config(keys="path", of_type=str, default="default_2", desc="path")
 
 
 def test_config_dynamic_not_equal(conf_builder: ConfBuilder) -> None:
@@ -127,3 +130,23 @@ def test_config_dynamic_not_equal(conf_builder: ConfBuilder) -> None:
     path = config_set.add_config(keys="path", of_type=Path, default=Path(), desc="path")
     paths = config_set.add_config(keys="paths", of_type=Path, default=Path(), desc="path")
     assert path != paths
+
+
+def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
+    class MagicConfigSet(ConfigSet):
+        SECTION = "magic"
+
+        def __init__(self, conf: Config):
+            super().__init__(conf)
+            self.add_config("a", of_type=int, default=0, desc="number")
+            self.add_config("b", of_type=str, default="", desc="string")
+
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\n[magic]\na = 1\nb = ok"})
+    result = project.run()
+
+    conf = result.state.conf.get_section_config(MagicConfigSet.SECTION, MagicConfigSet)
+    assert conf["a"] == 1
+    assert conf["b"] == "ok"
+    assert repr(conf) == "MagicConfigSet(loaders=[IniLoader(section=<Section: magic>, overrides={})])"
+
+    assert isinstance(result.state.conf.options, Parsed)

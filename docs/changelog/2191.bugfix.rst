@@ -1,0 +1,1 @@
+Fix the ``tox_configure`` plugin entrypoint is not called -- by :user:`gaborbernat`.

@@ -98,7 +98,6 @@ groupdict
 hookimpl
 hookspec
 hookspecs
-htmlhelp
 ident
 ign
 ignorecase
@@ -180,7 +179,6 @@ rfind
 rpartition
 rreq
 rst
-rtd
 runtime
 sdist
 setdefault

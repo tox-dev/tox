@@ -29,24 +29,28 @@ class IniSource(Source, ABC):
                 raise ValueError
             content = path.read_text()
         self._parser.read_string(content, str(path))
-        self._envs: Dict[Optional[str], List[IniLoader]] = {}
+        self._envs: Dict[str, List[IniLoader]] = {}
+        self._sections: Dict[str, List[IniLoader]] = {}
 
     def get_core(self, override_map: OverrideMap) -> Iterator[IniLoader]:
-        if None in self._envs:
-            yield from self._envs[None]
+        yield from self.get_section(self.CORE_PREFIX, override_map)
+
+    def get_section(self, name: str, override_map: OverrideMap) -> Iterator[IniLoader]:
+        if name in self._sections:
+            yield from self._sections[name]
             return
-        core = []
-        if self._parser.has_section(self.CORE_PREFIX):
-            core.append(
+        section = []
+        if self._parser.has_section(name):
+            section.append(
                 IniLoader(
-                    section=self.CORE_PREFIX,
+                    section=name,
                     parser=self._parser,
-                    overrides=override_map.get(self.CORE_PREFIX, []),
+                    overrides=override_map.get(name, []),
                     core_prefix=self.CORE_PREFIX,
                 )
             )
-        self._envs[None] = core
-        yield from core
+        self._sections[name] = section
+        yield from section
 
     def get_env_loaders(
         self, env_name: str, override_map: OverrideMap, package: bool, conf: ConfigSet

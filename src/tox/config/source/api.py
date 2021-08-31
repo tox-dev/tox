@@ -29,6 +29,17 @@ class Source(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_section(self, name: str, override_map: OverrideMap) -> Iterator[Loader[Any]]:  # noqa: U100
+        """
+        Return a loader that loads the core configuration values.
+
+        :param name: name of the section to load
+        :param override_map: a list of overrides to apply
+        :returns: the core loader from this source
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def get_env_loaders(
         self, env_name: str, override_map: OverrideMap, package: bool, conf: ConfigSet  # noqa: U100
     ) -> Iterator[Loader[Any]]:

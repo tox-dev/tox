@@ -18,19 +18,22 @@ V = TypeVar("V")
 class ConfigDefinition(ABC, Generic[T]):
     """Abstract base class for configuration definitions"""
 
-    def __init__(self, keys: Iterable[str], desc: str, env_name: Optional[str]) -> None:
+    def __init__(self, keys: Iterable[str], desc: str) -> None:
         self.keys = keys
         self.desc = desc
-        self.env_name = env_name
 
     @abstractmethod
     def __call__(
-        self, conf: "Config", key: Optional[str], loaders: List[Loader[T]], chain: List[str]  # noqa: U100
+        self,
+        conf: "Config",  # noqa: U100
+        loaders: List[Loader[T]],  # noqa: U100
+        env_name: Optional[str],  # noqa: U100
+        chain: Optional[List[str]],  # noqa: U100
     ) -> T:
         raise NotImplementedError
 
     def __eq__(self, o: Any) -> bool:
-        return type(self) == type(o) and (self.keys, self.desc, self.env_name) == (o.keys, o.desc, o.env_name)
+        return type(self) == type(o) and (self.keys, self.desc) == (o.keys, o.desc)
 
     def __ne__(self, o: Any) -> bool:
         return not (self == o)
@@ -43,14 +46,17 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
         self,
         keys: Iterable[str],
         desc: str,
-        env_name: Optional[str],
         value: Union[Callable[[], T], T],
     ) -> None:
-        super().__init__(keys, desc, env_name)
+        super().__init__(keys, desc)
         self.value = value
 
     def __call__(
-        self, conf: "Config", name: Optional[str], loaders: List[Loader[T]], chain: List[str]  # noqa: U100
+        self,
+        conf: "Config",  # noqa: U100
+        loaders: List[Loader[T]],  # noqa: U100
+        env_name: Optional[str],  # noqa: U100
+        chain: Optional[List[str]],  # noqa: U100
     ) -> T:
         if callable(self.value):
             value = self.value()
@@ -72,13 +78,12 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         self,
         keys: Iterable[str],
         desc: str,
-        env_name: Optional[str],
         of_type: Type[T],
         default: Union[Callable[["Config", Optional[str]], T], T],
         post_process: Optional[Callable[[T], T]] = None,
         kwargs: Optional[Mapping[str, Any]] = None,
     ) -> None:
-        super().__init__(keys, desc, env_name)
+        super().__init__(keys, desc)
         self.of_type = of_type
         self.default = default
         self.post_process = post_process
@@ -86,22 +91,26 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         self._cache: Union[object, T] = _PLACE_HOLDER
 
     def __call__(
-        self,
-        conf: "Config",
-        name: Optional[str],  # noqa: U100
-        loaders: List[Loader[T]],
-        chain: List[str],
+        self, conf: "Config", loaders: List[Loader[T]], env_name: Optional[str], chain: Optional[List[str]]
     ) -> T:
+        if chain is None:
+            chain = []
         if self._cache is _PLACE_HOLDER:
             for key, loader in product(self.keys, loaders):
+                chain_key = f"{loader.section_name}.{key}"
+                if chain_key in chain:
+                    raise ValueError(f"circular chain detected {', '.join(chain[chain.index(chain_key):])}")
+                chain.append(chain_key)
                 try:
-                    value = loader.load(key, self.of_type, self.kwargs, conf, self.env_name, chain)
+                    value = loader.load(key, self.of_type, self.kwargs, conf, env_name, chain)
                 except KeyError:
                     continue
                 else:
                     break
+                finally:
+                    del chain[-1]
             else:
-                value = self.default(conf, self.env_name) if callable(self.default) else self.default
+                value = self.default(conf, env_name) if callable(self.default) else self.default
             if self.post_process is not None:
                 value = self.post_process(value)  # noqa
             self._cache = value
