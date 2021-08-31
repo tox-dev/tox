@@ -26,7 +26,7 @@ class IniLoader(StrConvert, Loader[str]):
         self._section: SectionProxy = parser[section]
         self._parser = parser
         self.core_prefix = core_prefix
-        super().__init__(overrides)
+        super().__init__(section, overrides)
 
     def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> str:
         return self.process_raw(conf, env_name, self._section[key])

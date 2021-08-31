@@ -49,9 +49,14 @@ V = TypeVar("V")
 class Loader(Convert[T]):
     """Loader loads a configuration value and converts it."""
 
-    def __init__(self, overrides: List[Override]) -> None:
+    def __init__(self, section: str, overrides: List[Override]) -> None:
+        self._section_name = section
         self.overrides = {o.key: o for o in overrides}
         self.parent: Optional["Loader[Any]"] = None
+
+    @property
+    def section_name(self) -> str:
+        return self._section_name
 
     @abstractmethod
     def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> T:  # noqa: U100

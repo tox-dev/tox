@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Optional, Sequence, Tuple, Type, TypeVar
 
 from tox.config.loader.api import Loader, OverrideMap
 
@@ -10,6 +10,8 @@ from .source import Source
 
 if TYPE_CHECKING:
     from .cli.parser import Parsed
+
+T = TypeVar("T", bound=ConfigSet)
 
 
 class Config:
@@ -115,9 +117,11 @@ class Config:
         self._core_set = core
         return core
 
-    def register_section_loaders(self, name: str, for_set: ConfigSet) -> None:
-        for loader in self._src.get_section(name, self._overrides):
-            for_set.loaders.append(loader)
+    def get_section_config(self, section_name: str, of_type: Type[T]) -> T:
+        conf_set = of_type(self)
+        for loader in self._src.get_section(section_name, self._overrides):
+            conf_set.loaders.append(loader)
+        return conf_set
 
     def get_env(
         self, item: str, package: bool = False, loaders: Optional[Sequence[Loader[Any]]] = None

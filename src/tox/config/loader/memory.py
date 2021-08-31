@@ -10,7 +10,7 @@ from .api import Loader
 
 class MemoryLoader(Loader[Any]):
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__([])
+        super().__init__("<memory>", [])
         self.raw: Dict[str, Any] = {**kwargs}
 
     def load_raw(self, key: Any, conf: Optional["Config"], env_name: Optional[str]) -> T:  # noqa: U100

@@ -30,8 +30,7 @@ V = TypeVar("V")
 class ConfigSet:
     """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
 
-    def __init__(self, conf: "Config", name: Optional[str]):
-        self._name = name
+    def __init__(self, conf: "Config"):
         self._conf = conf
         self.loaders: List[Loader[Any]] = []
         self._defined: Dict[str, ConfigDefinition[Any]] = {}
@@ -59,7 +58,7 @@ class ConfigSet:
         :return: the new dynamic config definition
         """
         keys_ = self._make_keys(keys)
-        definition = ConfigDynamicDefinition(keys_, desc, self._name, of_type, default, post_process, kwargs)
+        definition = ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, kwargs)
         result = self._add_conf(keys_, definition)
         return cast(ConfigDynamicDefinition[V], result)
 
@@ -73,7 +72,7 @@ class ConfigSet:
         :return: the new constant config value
         """
         keys_ = self._make_keys(keys)
-        definition = ConfigConstantDefinition(keys_, desc, self._name, value)
+        definition = ConfigConstantDefinition(keys_, desc, value)
         result = self._add_conf(keys_, definition)
         return cast(ConfigConstantDefinition[V], result)
 
@@ -84,12 +83,7 @@ class ConfigSet:
     def _add_conf(self, keys: Sequence[str], definition: ConfigDefinition[V]) -> ConfigDefinition[V]:
         key = keys[0]
         if key in self._defined:
-            earlier = self._defined[key]
-            # core definitions may be defined multiple times as long as all their options match, first defined wins
-            if self._name is None and definition == earlier:
-                definition = earlier
-            else:
-                raise ValueError(f"config {key} already defined")
+            self._on_duplicate_conf(key, definition)
         else:
             self._keys[key] = None
             for item in keys:
@@ -97,6 +91,11 @@ class ConfigSet:
             for key in keys:
                 self._defined[key] = definition
         return definition
+
+    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
+        earlier = self._defined[key]
+        if definition != earlier:  # pragma: no branch
+            raise ValueError(f"config {key} already defined")
 
     def __getitem__(self, item: str) -> Any:
         """
@@ -116,18 +115,14 @@ class ConfigSet:
         :return: the configuration value
         """
         config_definition = self._defined[item]
-        if chain is None:
-            chain = []
-        env_name = "tox" if self._name is None else f"testenv:{self._name}"
-        key = f"{env_name}.{item}"
-        if key in chain:
-            raise ValueError(f"circular chain detected {', '.join(chain[chain.index(key):])}")
-        chain.append(key)
-        return config_definition(self._conf, item, self.loaders, chain)
+        return config_definition.__call__(self._conf, self.loaders, self.name, chain)
+
+    @property
+    def name(self) -> Optional[str]:
+        return None
 
     def __repr__(self) -> str:
-        values = (v for v in (f"name={self._name!r}" if self._name else "", f"loaders={self.loaders!r}") if v)
-        return f"{self.__class__.__name__}({', '.join(values)})"
+        return f"{self.__class__.__name__}(loaders={self.loaders!r})"
 
     def __iter__(self) -> Iterator[str]:
         """:return: iterate through the defined config keys (primary keys used)"""
@@ -167,7 +162,7 @@ class CoreConfigSet(ConfigSet):
     """Configuration set for the core tox config"""
 
     def __init__(self, conf: "Config", root: Path, src_path: Path) -> None:
-        super().__init__(conf, name=None)
+        super().__init__(conf)
         self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=src_path)
         self.add_config(
             keys=["tox_root", "toxinidir"],
@@ -199,12 +194,16 @@ class CoreConfigSet(ConfigSet):
             desc="define environments to automatically run",
         )
 
+    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:  # noqa: U100
+        pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
+
 
 class EnvConfigSet(ConfigSet):
     """Configuration set for a tox environment"""
 
-    def __init__(self, conf: "Config", name: Optional[str]):
-        super().__init__(conf, name=name)
+    def __init__(self, conf: "Config", name: str):
+        self._name = name
+        super().__init__(conf)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}
 
         def set_env_post_process(values: SetEnv) -> SetEnv:
@@ -221,7 +220,10 @@ class EnvConfigSet(ConfigSet):
 
     @property
     def name(self) -> str:
-        return self._name  # type: ignore
+        return self._name
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name={self._name!r}, loaders={self.loaders!r})"
 
 
 __all__ = (
