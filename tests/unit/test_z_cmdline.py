@@ -727,6 +727,38 @@ def test_test_usedevelop(cmd, initproj, src_root, skipsdist):
     assert "develop-inst-nodeps" in result.out
 
 
+def test_usedevelop_with_setup_cfg_no_setup_py(cmd, initproj):
+    """Verify that an env with usedevelop enabled, no setup.py and a setup.cfg
+    can survive more than one tox execution."""
+    name = "example123-spameggs"
+    initproj(
+        (name, "0.5"),
+        filedefs={
+            "tox.ini": """
+            [testenv]
+            usedevelop=True
+            """,
+            "setup.cfg": """
+            [metadata]
+            name={}
+            [options]
+            package_dir =
+                =.
+            packages = find:
+            [options.packages.find]
+            where = .
+            """.format(
+                name
+            ),
+        },
+        add_missing_setup_py=False,
+    )
+    result = cmd("-v")
+    result.assert_success()
+    result = cmd("-v")
+    result.assert_success()
+
+
 def test_warning_emitted(cmd, initproj):
     initproj(
         "spam-0.0.1",
