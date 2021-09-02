@@ -1,0 +1,1 @@
+Fixed an issue when using usedevelop with a project that has no setup.py -- by :user:`AntoineD`.
