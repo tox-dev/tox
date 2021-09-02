@@ -7,6 +7,7 @@ import sys
 from itertools import chain
 
 import py
+import setuptools
 
 import tox
 from tox import reporter
@@ -323,20 +324,27 @@ class VirtualEnv(object):
     def _needs_reinstall(self, setupdir, action):
         setup_py = setupdir.join("setup.py")
         setup_cfg = setupdir.join("setup.cfg")
-        args = [self.envconfig.envpython, str(setup_py), "--name"]
         env = self._get_os_environ()
-        output = action.popen(
-            args,
-            cwd=setupdir,
-            redirect=False,
-            returnout=True,
-            env=env,
-            capture_err=False,
-        )
-        name = next(
-            (i for i in output.split("\n") if i and not i.startswith("pydev debugger:")),
-            "",
-        )
+
+        if setup_py.exists():
+            args = [self.envconfig.envpython, str(setup_py), "--name"]
+            output = action.popen(
+                args,
+                cwd=setupdir,
+                redirect=False,
+                returnout=True,
+                env=env,
+                capture_err=False,
+            )
+            name = next(
+                (i for i in output.split("\n") if i and not i.startswith("pydev debugger:")),
+                "",
+            )
+        else:
+            dist = setuptools.Distribution()
+            dist.parse_config_files()
+            name = dist.metadata.name
+
         args = [
             self.envconfig.envpython,
             "-c",
