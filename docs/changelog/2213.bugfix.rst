@@ -1,0 +1,1 @@
+Report fails when report does not support Unicode characters -- by :user:`gaborbernat`.

@@ -131,6 +131,7 @@ def setup(app: Sphinx) -> None:
                 "tox.config.loader.api.T": "typing.TypeVar",
                 "tox.config.loader.convert.T": "typing.TypeVar",
                 "tox.tox_env.installer.T": "typing.TypeVar",
+                "ToxParserT": "typing.TypeVar",
             }
             if target in mapping:
                 node["reftarget"] = mapping[target]

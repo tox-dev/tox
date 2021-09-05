@@ -1,0 +1,3 @@
+Allow running code in plugins before and after commands via
+:meth:`tox_before_run_commands <tox.plugin.spec.tox_before_run_commands>` and
+:meth:`tox_after_run_commands <tox.plugin.spec.tox_after_run_commands>` plugin points -- by :user:`gaborbernat`.

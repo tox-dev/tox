@@ -1,5 +1,6 @@
 """Contains the plugin manager object"""
 from pathlib import Path
+from typing import List
 
 import pluggy
 
@@ -16,6 +17,8 @@ from tox.tox_env.python.virtual_env.package import api
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
 from ..config.main import Config
+from ..execute import Outcome
+from ..tox_env.api import ToxEnv
 from . import NAME, spec
 from .inline import load_inline
 
@@ -58,8 +61,14 @@ class Plugin:
     def tox_configure(self, config: Config) -> None:
         self.manager.hook.tox_configure(config=config)
 
-    def tox_register_tox_env(self, register: "ToxEnvRegister") -> None:
+    def tox_register_tox_env(self, register: ToxEnvRegister) -> None:
         self.manager.hook.tox_register_tox_env(register=register)
+
+    def tox_before_run_commands(self, tox_env: ToxEnv) -> None:
+        self.manager.hook.tox_before_run_commands(tox_env=tox_env)
+
+    def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: List[Outcome]) -> None:
+        self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
 
     def load_inline_plugin(self, path: Path) -> None:
         result = load_inline(path)

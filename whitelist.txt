@@ -92,6 +92,7 @@ getoption
 getpid
 getresult
 getsockname
+getsourcelines
 globals
 groupby
 groupdict
@@ -219,6 +220,7 @@ unescaped
 unimported
 unittest
 unlink
+unregister
 untyped
 url2pathname
 usedevelop

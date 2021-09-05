@@ -16,6 +16,12 @@ register
 
 config
 ------
+.. autoclass:: tox.config.cli.parser.ArgumentParserWithEnvAndConfig
+   :members:
+
+.. autoclass:: tox.config.cli.parser.ToxParser
+   :members:
+
 .. autoclass:: tox.config.cli.parser.Parsed
    :members:
 
