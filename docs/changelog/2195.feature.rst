@@ -1,0 +1,1 @@
+Let tox run fail when all envs are skipped -- by :user:`jugmac00`.

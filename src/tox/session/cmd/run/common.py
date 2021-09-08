@@ -144,9 +144,10 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
     def _print(color_: int, message: str) -> None:
         print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
-    all_good = True
+    successful, skipped = [], []
     for run in runs:
-        all_good &= run.code == Outcome.OK or run.ignore_outcome
+        successful.append(run.code == Outcome.OK or run.ignore_outcome)
+        skipped.append(run.skipped)
         duration_individual = [o.elapsed for o in run.outcomes]
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if duration_individual else ""
         setup = run.duration - sum(duration_individual)
@@ -155,6 +156,7 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
         _print(color, out)
 
     duration = time.monotonic() - start
+    all_good = all(successful) and not all(skipped)
     if all_good:
         _print(Fore.GREEN, f"  congratulations :) ({duration:.2f} seconds)")
         return Outcome.OK
