@@ -1498,9 +1498,10 @@ class ParseIni(object):
 
         env_list = []
         envlist_explicit = False
-        if (from_option and "ALL" in from_option) or (
-            not from_option and from_environ and "ALL" in from_environ.split(",")
-        ):
+        if (
+            (from_option and "ALL" in from_option)
+            or (not from_option and from_environ and "ALL" in from_environ.split(","))
+        ) and PARALLEL_ENV_VAR_KEY_PRIVATE not in os.environ:
             all_envs = self._getallenvs(reader)
         else:
             candidates = (

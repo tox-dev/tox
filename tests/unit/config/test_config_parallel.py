@@ -1,5 +1,7 @@
 import pytest
 
+from tox.config.parallel import ENV_VAR_KEY_PRIVATE as PARALLEL_ENV_VAR_KEY_PRIVATE
+
 
 def test_parallel_default(newconfig):
     config = newconfig([], "")
@@ -70,3 +72,17 @@ def test_depends_factor(newconfig):
         """,
     )
     assert config.envconfigs["py"].depends == ("py37-cov", "py37-no", "py36-cov", "py36-no")
+
+
+def test_parallel_env_selection_with_ALL(newconfig, monkeypatch):
+    # Regression test for #2167
+    inisource = """
+        [tox]
+        envlist = py,lint
+    """
+    monkeypatch.setenv(PARALLEL_ENV_VAR_KEY_PRIVATE, "py")
+    config = newconfig(["-eALL"], inisource)
+    assert config.envlist == ["py"]
+    monkeypatch.setenv(PARALLEL_ENV_VAR_KEY_PRIVATE, "lint")
+    config = newconfig(["-eALL"], inisource)
+    assert config.envlist == ["lint"]
