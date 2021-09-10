@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 V = TypeVar("V")
 
 
-class ConfigSet:
+class ConfigSet(ABC):
     """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
 
     def __init__(self, conf: "Config"):
@@ -118,8 +119,9 @@ class ConfigSet:
         return config_definition.__call__(self._conf, self.loaders, self.name, chain)
 
     @property
+    @abstractmethod
     def name(self) -> Optional[str]:
-        return None
+        raise NotImplementedError
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(loaders={self.loaders!r})"
@@ -196,6 +198,10 @@ class CoreConfigSet(ConfigSet):
 
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:  # noqa: U100
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
+
+    @property
+    def name(self) -> Optional[str]:
+        return None
 
 
 class EnvConfigSet(ConfigSet):

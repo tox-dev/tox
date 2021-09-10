@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable, Dict, Optional, Set, TypeVar
 
 import pytest
+from pytest_mock import MockerFixture
 
 from tests.conftest import ToxIniCreator
 from tox.config.cli.parser import Parsed
@@ -134,12 +135,17 @@ def test_config_dynamic_not_equal(conf_builder: ConfBuilder) -> None:
 
 def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     class MagicConfigSet(ConfigSet):
+
         SECTION = "magic"
 
         def __init__(self, conf: Config):
             super().__init__(conf)
             self.add_config("a", of_type=int, default=0, desc="number")
             self.add_config("b", of_type=str, default="", desc="string")
+
+        @property
+        def name(self) -> Optional[str]:
+            return self.SECTION
 
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\n[magic]\na = 1\nb = ok"})
     result = project.run()
@@ -150,3 +156,8 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     assert repr(conf) == "MagicConfigSet(loaders=[IniLoader(section=<Section: magic>, overrides={})])"
 
     assert isinstance(result.state.conf.options, Parsed)
+
+
+def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
+    with pytest.raises(TypeError, match="Can't instantiate"):
+        ConfigSet(mocker.create_autospec(Config))  # type: ignore # the type checker also warns that ABC
