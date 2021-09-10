@@ -9,6 +9,7 @@ import tox
 from tox.interpreters import NoInterpreterInfo
 from tox.session.commands.run.sequential import installpkg, runtestenv
 from tox.venv import (
+    MAXINTERP,
     CreationConfig,
     VirtualEnv,
     getdigest,
@@ -1147,6 +1148,18 @@ def test_tox_testenv_interpret_shebang_long_example(tmpdir):
     ]
 
     assert args == expected + base_args
+
+
+@pytest.mark.skipif("sys.platform == 'win32'", reason="no shebang on Windows")
+def test_tox_testenv_interpret_shebang_skip_truncated(tmpdir):
+    testfile = tmpdir.join("check_shebang_truncation.py")
+    original_args = [str(testfile), "arg1", "arg2", "arg3"]
+
+    # interpreter (too long example)
+    testfile.write("#!" + ("x" * (MAXINTERP + 1)))
+    args = prepend_shebang_interpreter(original_args)
+
+    assert args == original_args
 
 
 @pytest.mark.parametrize("download", [True, False, None])

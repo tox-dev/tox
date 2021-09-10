@@ -19,6 +19,9 @@ from tox.util.path import ensure_empty_dir
 
 from .config import DepConfig
 
+#: maximum parsed shebang interpreter length (see: prepend_shebang_interpreter)
+MAXINTERP = 2048
+
 
 class CreationConfig:
     def __init__(
@@ -682,8 +685,9 @@ def prepend_shebang_interpreter(args):
     try:
         with open(args[0], "rb") as f:
             if f.read(1) == b"#" and f.read(1) == b"!":
-                MAXINTERP = 2048
-                interp = f.readline(MAXINTERP).rstrip().decode("UTF-8")
+                interp = f.readline(MAXINTERP + 1).rstrip().decode("UTF-8")
+                if len(interp) > MAXINTERP:  # avoid a truncated interpreter
+                    return args
                 interp_args = interp.split(None, 1)[:2]
                 return interp_args + args
     except (UnicodeDecodeError, IOError):
