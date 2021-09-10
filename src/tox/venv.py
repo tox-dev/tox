@@ -675,7 +675,7 @@ def prepend_shebang_interpreter(args):
     #
     # When preparing virtual environments in a file container which has large
     # length, the system might not be able to invoke shebang scripts which
-    # define interpreters beyond system limits (e.x. Linux as a limit of 128;
+    # define interpreters beyond system limits (e.g. Linux has a limit of 128;
     # BINPRM_BUF_SIZE). This method can be used to check if the executable is
     # a script containing a shebang line. If so, extract the interpreter (and
     # possible optional argument) and prepend the values to the provided

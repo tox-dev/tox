@@ -1097,9 +1097,9 @@ Handle interpreter directives with long lengths
 For systems supporting executable text files (scripts with a shebang), the
 system will attempt to parse the interpreter directive to determine the program
 to execute on the target text file. When ``tox`` prepares a virtual environment
-in a file container which has a large length (e.x. using Jenkins Pipelines), the
+in a file container which has a large length (e.g. using Jenkins Pipelines), the
 system might not be able to invoke shebang scripts which define interpreters
-beyond system limits (e.x. Linux as a limit of 128; ``BINPRM_BUF_SIZE``). To
+beyond system limits (e.g. Linux has a limit of 128; ``BINPRM_BUF_SIZE``). To
 workaround an environment which suffers from an interpreter directive limit, a
 user can bypass the system's interpreter parser by defining the
 ``TOX_LIMITED_SHEBANG`` environment variable before invoking ``tox``::
