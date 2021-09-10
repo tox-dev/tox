@@ -77,6 +77,9 @@ class Loader(Convert[T]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}"
 
+    def __contains__(self, item: str) -> bool:
+        return item in self.found_keys()
+
     def load(
         self,
         key: str,
@@ -91,8 +94,10 @@ class Loader(Convert[T]):
 
         :param key: the key under it lives
         :param of_type: the type to convert to
+        :param kwargs: keyword arguments to forward
         :param conf: the configuration object of this tox session (needed to manifest the value)
         :param env_name: env name
+        :param chain: a chain of lookups
         :return: the converted type
         """
         if key in self.overrides:

@@ -45,3 +45,9 @@ def test_memory_loader(value: Any, of_type: Type[Any]) -> None:
 def test_memory_found_keys() -> None:
     loader = MemoryLoader(a=1, c=2)
     assert loader.found_keys() == {"a", "c"}
+
+
+def test_memory_loader_contains() -> None:
+    loader = MemoryLoader(a=1)
+    assert "a" in loader
+    assert "b" not in loader
