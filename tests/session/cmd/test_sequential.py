@@ -410,7 +410,7 @@ def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, dem
     ini = "[testenv]\npackage=wheel\n[testenv:.pkg]\nplatform=wrong_platform"
     proj = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build})
     result = proj.run("r", "-e", "a,b")
-    result.assert_success()
+    result.assert_failed()  # tox run fails as all envs are skipped
     assert "a: SKIP" in result.out
     assert "b: SKIP" in result.out
     msg = f"skipped because platform {sys.platform} does not match wrong_platform for package environment .pkg"
