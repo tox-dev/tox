@@ -173,7 +173,7 @@ class Python(ToxEnv, ABC):
         removed = [f"{k}={v!r}" for k, v in old.items() if k not in conf]
         if removed:
             result.append(f"removed {' | '.join(removed)}")
-        changed = [f"{k}={v!r}->{old[k]!r}" for k, v in conf.items() if k in old and v != old[k]]
+        changed = [f"{k}={old[k]!r}->{v!r}" for k, v in conf.items() if k in old and v != old[k]]
         if changed:
             result.append(f"changed {' | '.join(changed)}")
         return f'python {", ".join(result)}'

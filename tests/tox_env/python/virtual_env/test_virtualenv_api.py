@@ -119,7 +119,7 @@ def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker
 
     mocker.patch.object(api, "virtualenv_version", "1.0")
     result = proj.run("r")
-    assert f"recreate env because python changed virtualenv version='1.0'->'{virtualenv_version}'" in result.out
+    assert f"recreate env because python changed virtualenv version='{virtualenv_version}'->'1.0'" in result.out
     assert "remove tox env folder" in result.out
 
 
