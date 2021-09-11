@@ -1,7 +1,7 @@
 """
 A pytest plugin useful to test tox itself (and its plugins).
 """
-
+import inspect
 import os
 import random
 import re
@@ -71,12 +71,18 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:  # noqa: PT004
 
 
 @pytest.fixture(autouse=True)
-def disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Optional[MagicMock]:
-    return (
-        None
-        if request.node.get_closest_marker("plugin_test")
-        else mocker.patch("tox.plugin.inline._load_plugin", return_value=None)
-    )
+def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator[None]:
+    """unless this is a plugin test do not allow loading toxfile.py"""
+    if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
+        from tox.plugin import manager
+
+        inline_plugin = mocker.spy(manager, "load_inline")
+        yield
+        if inline_plugin.spy_return is not None:  # pragma: no branch
+            manager.MANAGER.manager.unregister(inline_plugin.spy_return)
+    else:  # do not allow loading inline plugins
+        mocker.patch("tox.plugin.inline._load_plugin", return_value=None)
+        yield
 
 
 @contextmanager
@@ -145,6 +151,8 @@ class ToxProject:
             if not isinstance(key, str):
                 raise TypeError(f"{key!r} at {dest}")  # pragma: no cover
             at_path = dest / key
+            if callable(value):
+                value = textwrap.dedent("\n".join(inspect.getsourcelines(value)[0][1:]))
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
                 ToxProject._setup_files(at_path, None, value)

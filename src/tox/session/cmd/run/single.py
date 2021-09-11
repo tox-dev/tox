@@ -63,19 +63,26 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> Tuple[bool, int, List[Outcom
 def run_commands(tox_env: RunToxEnv, no_test: bool) -> Tuple[int, List[Outcome]]:
     outcomes: List[Outcome] = []
     if no_test:
-        status_pre, status_main, status_post = Outcome.OK, Outcome.OK, Outcome.OK
+        exit_code = Outcome.OK
     else:
+        from tox.plugin.manager import MANAGER  # importing this here to avoid circular import
+
         chdir: Path = tox_env.conf["change_dir"]
         ignore_errors: bool = tox_env.conf["ignore_errors"]
+        MANAGER.tox_before_run_commands(tox_env)
+        status_pre, status_main, status_post = -1, -1, -1
         try:
-            status_pre = run_command_set(tox_env, "commands_pre", chdir, ignore_errors, outcomes)
-            if status_pre == Outcome.OK or ignore_errors:
-                status_main = run_command_set(tox_env, "commands", chdir, ignore_errors, outcomes)
-            else:
-                status_main = Outcome.OK
+            try:
+                status_pre = run_command_set(tox_env, "commands_pre", chdir, ignore_errors, outcomes)
+                if status_pre == Outcome.OK or ignore_errors:
+                    status_main = run_command_set(tox_env, "commands", chdir, ignore_errors, outcomes)
+                else:
+                    status_main = Outcome.OK
+            finally:
+                status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes)
         finally:
-            status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes)
-    exit_code = status_pre or status_main or status_post  # first non-success
+            exit_code = status_pre or status_main or status_post  # first non-success
+            MANAGER.tox_after_run_commands(tox_env, exit_code, outcomes)
     return exit_code, outcomes
 
 

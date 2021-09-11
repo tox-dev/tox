@@ -6,7 +6,7 @@ import threading
 import time
 from collections import OrderedDict
 from types import TracebackType
-from typing import IO, Dict, List, Optional, Sequence, Type, TypeVar
+from typing import IO, Dict, List, NamedTuple, Optional, Sequence, Type, TypeVar
 
 from colorama import Fore
 
@@ -34,11 +34,19 @@ T = TypeVar("T", bound="Spinner")
 MISS_DURATION = 0.01
 
 
+class Outcome(NamedTuple):
+    ok: str
+    fail: str
+    skip: str
+
+
 class Spinner:
     CLEAR_LINE = "\033[K"
     max_width = 120
     UNICODE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     ASCII_FRAMES = ["|", "-", "+", "x", "*"]
+    UNICODE_OUTCOME = Outcome(ok="✔", fail="✖", skip="⚠")
+    ASCII_OUTCOME = Outcome(ok="+", fail="!", skip="?")
 
     def __init__(
         self,
@@ -53,6 +61,9 @@ class Spinner:
         self.enabled = enabled
         stream = sys.stdout if stream is None else stream
         self.frames = self.UNICODE_FRAMES if _file_support_encoding(self.UNICODE_FRAMES, stream) else self.ASCII_FRAMES
+        self.outcome = (
+            self.UNICODE_OUTCOME if _file_support_encoding(self.UNICODE_OUTCOME, stream) else self.ASCII_OUTCOME
+        )
         self.stream = stream
         self.total = total
         self.print_report = True
@@ -117,13 +128,13 @@ class Spinner:
         self._envs[name] = time.monotonic()
 
     def succeed(self, key: str) -> None:
-        self.finalize(key, "OK ✔", Fore.GREEN)
+        self.finalize(key, f"OK {self.outcome.ok}", Fore.GREEN)
 
     def fail(self, key: str) -> None:
-        self.finalize(key, "FAIL ✖", Fore.RED)
+        self.finalize(key, f"FAIL {self.outcome.fail}", Fore.RED)
 
     def skip(self, key: str) -> None:
-        self.finalize(key, "SKIP ⚠", Fore.YELLOW)
+        self.finalize(key, f"SKIP {self.outcome.skip}", Fore.YELLOW)
 
     def finalize(self, key: str, status: str, color: int) -> None:
         start_at = self._envs.pop(key, None)
