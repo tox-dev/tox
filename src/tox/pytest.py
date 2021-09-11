@@ -398,8 +398,11 @@ def empty_project(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> T
     return project
 
 
+_RUN_INTEGRATION_TEST_FLAG = "--run-integration"
+
+
 def pytest_addoption(parser: Parser) -> None:
-    parser.addoption("--run-integration", action="store_true", help="run the integration tests")
+    parser.addoption(_RUN_INTEGRATION_TEST_FLAG, action="store_true", help="run the integration tests")
 
 
 def pytest_configure(config: PyTestConfig) -> None:
@@ -413,12 +416,12 @@ def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -
     if len(items) == 1:  # pragma: no cover # hard to test
         return
 
-    skip_int = pytest.mark.skip(reason="integration tests not run (no --run-int flag)")
+    skip_int = pytest.mark.skip(reason=f"integration tests not run (no {_RUN_INTEGRATION_TEST_FLAG} flag)")
 
     def is_integration(test_item: Function) -> bool:
         return test_item.get_closest_marker("integration") is not None
 
-    integration_enabled = config.getoption("--run-integration")
+    integration_enabled = config.getoption(_RUN_INTEGRATION_TEST_FLAG)
     if not integration_enabled:  # pragma: no cover # hard to test
         for item in items:
             if is_integration(item):

@@ -60,7 +60,7 @@ def test_build_wheel_in_non_base_pkg_env(
 def test_diff_msg_added_removed_changed() -> None:
     before = {"A": "1", "F": "8", "C": "3", "D": "4", "E": "6"}
     after = {"G": "9", "B": "2", "C": "3", "D": "5", "E": "7"}
-    expected = "python added A='1' | F='8', removed G='9' | B='2', changed D='4'->'5' | E='6'->'7'"
+    expected = "python added A='1' | F='8', removed G='9' | B='2', changed D='5'->'4' | E='7'->'6'"
     assert Python._diff_msg(before, after) == expected
 
 
