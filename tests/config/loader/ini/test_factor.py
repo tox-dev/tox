@@ -8,6 +8,7 @@ from tests.conftest import ToxIniCreator
 from tox.config.loader.ini import IniLoader
 from tox.config.loader.ini.factor import filter_for_env, find_envs
 from tox.config.main import Config
+from tox.config.source.ini_section import IniSection
 
 
 def test_factor_env_discover_empty() -> None:
@@ -122,7 +123,7 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
     for env in config.core["env_list"]:
         env_config = config.get_env(env)
-        env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps", kwargs={})
+        env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps")
         deps = env_config["deps-x"]
         assert "pytest" in deps
         if "py36" in env:
@@ -163,10 +164,10 @@ def test_ini_loader_raw_with_factors(
 ) -> None:
     commands = "python -m coverage html -d cov \n    !py35: --show-contexts"
     loader = IniLoader(
-        section="testenv",
+        section=IniSection(None, "testenv"),
         parser=mk_ini_conf(f"[tox]\nenvlist=py35,py36\n[testenv]\ncommands={commands}"),
         overrides=[],
-        core_prefix="tox",
+        core_section=IniSection(None, "tox"),
     )
     outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
     assert outcome == result

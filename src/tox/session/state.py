@@ -1,11 +1,10 @@
-from typing import TYPE_CHECKING, Dict, Iterator, Optional, Sequence, Set, Tuple, cast
+from typing import TYPE_CHECKING, Dict, Iterator, Sequence, Set, Tuple, cast
 
 from tox.config.main import Config
 from tox.config.sets import EnvConfigSet
 from tox.journal import Journal
 from tox.plugin import impl
 from tox.report import HandledError, ToxHandler
-from tox.session.common import CliEnv
 from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.runner import RunToxEnv
@@ -25,7 +24,7 @@ class State:
         log_handler: ToxHandler,
     ) -> None:
         self.conf = conf
-        self.conf.register_config_set = self.register_config_set
+        self.conf.register_config_set = self.register_config_set  # type: ignore[assignment]
         options, cmd_handlers = opt_parse
         self.options = options
         self.cmd_handlers = cmd_handlers
@@ -38,22 +37,6 @@ class State:
 
         self.journal: Journal = Journal(getattr(options, "result_json", None) is not None)
 
-    def env_list(self, everything: bool = False) -> Iterator[str]:
-        fallback_env = "py"
-        use_env_list: Optional[CliEnv] = getattr(self.options, "env", None)
-        if everything or (use_env_list is not None and use_env_list.all):
-            _at = 0
-            for _at, env in enumerate(self.conf, start=1):
-                yield env
-            if _at == 0:  # if we discovered no other env, inject the default
-                yield fallback_env
-            return
-        if use_env_list is not None and use_env_list.use_default_list:
-            use_env_list = self.conf.core["env_list"]
-        if use_env_list is None or bool(use_env_list) is False:
-            use_env_list = CliEnv([fallback_env])
-        yield from use_env_list
-
     def tox_env(self, name: str) -> RunToxEnv:
         if name in self._pkg_env_discovered:
             raise HandledError(f"cannot run packaging environment {name}")
@@ -64,7 +47,7 @@ class State:
             self.conf.get_env(name)  # the lookup here will trigger register_config_set, which will build it
             return self._run_env[name]
 
-    def register_config_set(self, name: str, config_set: EnvConfigSet) -> None:
+    def register_config_set(self, name: str, env_config_set: EnvConfigSet) -> None:
         """Ensure the config set with the given name has been registered with configuration values"""
         # during the creation of the tox environment we automatically register configurations, so to ensure
         # config sets have a set of defined values in it we have to ensure the tox environment is created
@@ -73,14 +56,14 @@ class State:
         if name in self._run_env:  # pragma: no branch
             raise ValueError(f"{name} run tox env already defined")  # pragma: no cover
         # runtime environments are created upon lookup via the tox_env method, call it
-        self._build_run_env(config_set)
+        self._build_run_env(env_config_set)
 
     def _build_run_env(self, env_conf: EnvConfigSet) -> None:
         env_conf.add_config(
             keys="runner",
             desc="the tox execute used to evaluate this environment",
             of_type=str,
-            default=self.options.default_runner,  # noqa
+            default=self.options.default_runner,
         )
         runner = cast(str, env_conf["runner"])
         from tox.tox_env.register import REGISTER

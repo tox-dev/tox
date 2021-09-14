@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Any, Generator, List, Mapping, Optional, Set, 
 
 from tox.plugin import impl
 
-from .convert import Convert
+from .convert import Convert, Factory
+from .section import Section
 from .str_convert import StrConvert
 
 if TYPE_CHECKING:
@@ -40,6 +41,24 @@ class Override:
         return not (self == other)
 
 
+class ConfigLoadArgs:
+    """Arguments that help loading a configuration value."""
+
+    def __init__(self, chain: Optional[List[str]], name: Optional[str], env_name: Optional[str]):
+        """
+        :param chain: the configuration chain (useful to detect circular references)
+        :param name: the name of the configuration
+        :param env_name: the tox environment this load is for
+        """
+        self.chain: List[str] = chain or []
+        self.name = name
+        self.env_name = env_name
+
+    def copy(self) -> "ConfigLoadArgs":
+        """:return: create a copy of the object"""
+        return ConfigLoadArgs(self.chain.copy(), self.name, self.env_name)
+
+
 OverrideMap = Mapping[str, List[Override]]
 
 T = TypeVar("T")
@@ -49,22 +68,22 @@ V = TypeVar("V")
 class Loader(Convert[T]):
     """Loader loads a configuration value and converts it."""
 
-    def __init__(self, section: str, overrides: List[Override]) -> None:
-        self._section_name = section
+    def __init__(self, section: Section, overrides: List[Override]) -> None:
+        self._section = section
         self.overrides = {o.key: o for o in overrides}
         self.parent: Optional["Loader[Any]"] = None
 
     @property
-    def section_name(self) -> str:
-        return self._section_name
+    def section(self) -> Section:
+        return self._section
 
     @abstractmethod
-    def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> T:  # noqa: U100
+    def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> T:
         """
         Load the raw object from the config store.
 
         :param key: the key under what we want the configuration
-        :param env_name: the name of the environment this load is happening for
+        :param env_name: load for env name
         :param conf: the global config object
         """
         raise NotImplementedError
@@ -84,28 +103,26 @@ class Loader(Convert[T]):
         self,
         key: str,
         of_type: Type[V],
-        kwargs: Mapping[str, Any],
+        factory: Factory[V],
         conf: Optional["Config"],
-        env_name: Optional[str],
-        chain: List[str],
+        args: ConfigLoadArgs,
     ) -> V:
         """
         Load a value (raw and then convert).
 
         :param key: the key under it lives
         :param of_type: the type to convert to
-        :param kwargs: keyword arguments to forward
+        :param factory: factory method to build the object
         :param conf: the configuration object of this tox session (needed to manifest the value)
-        :param env_name: env name
-        :param chain: a chain of lookups
+        :param args: the config load arguments
         :return: the converted type
         """
         if key in self.overrides:
-            return _STR_CONVERT.to(self.overrides[key].value, of_type, kwargs)
-        raw = self.load_raw(key, conf, env_name)
+            return _STR_CONVERT.to(self.overrides[key].value, of_type, factory)
+        raw = self.load_raw(key, conf, args.env_name)
         future: "Future[V]" = Future()
-        with self.build(future, key, of_type, conf, env_name, raw, chain) as prepared:
-            converted = self.to(prepared, of_type, kwargs)
+        with self.build(future, key, of_type, conf, raw, args) as prepared:
+            converted = self.to(prepared, of_type, factory)
             future.set_result(converted)
         return converted
 
@@ -116,9 +133,8 @@ class Loader(Convert[T]):
         key: str,  # noqa: U100
         of_type: Type[V],  # noqa: U100
         conf: Optional["Config"],  # noqa: U100
-        env_name: Optional[str],  # noqa: U100
         raw: T,
-        chain: List[str],  # noqa: U100
+        args: ConfigLoadArgs,  # noqa: U100
     ) -> Generator[T, None, None]:
         """
         Materialize the raw configuration value from the loader.
@@ -127,9 +143,8 @@ class Loader(Convert[T]):
         :param key: the config key
         :param of_type: the config type
         :param conf: the global config
-        :param env_name: the tox environment name
         :param raw: the raw value
-        :param chain: a list of config keys already loaded in this build phase
+        :param args: env args
         """
         yield raw
 

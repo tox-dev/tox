@@ -27,7 +27,7 @@ from ..api import VirtualEnv
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
 else:  # pragma: no cover (<py38)
-    from importlib_metadata import Distribution, PathDistribution  # noqa
+    from importlib_metadata import Distribution, PathDistribution
 
 
 TOX_PACKAGE_ENV_ID = "virtualenv-pep-517"
@@ -134,7 +134,7 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv, Frontend):
             try:
                 if self._backend_executor.is_alive:
                     self._send("_exit")  # try first on amicable shutdown
-            except SystemExit:  # if already has been interrupted ignore
+            except SystemExit:  # pragma: no cover  # if already has been interrupted ignore
                 pass
             finally:
                 self._backend_executor_.close()
@@ -168,7 +168,7 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv, Frontend):
             if self._package_dependencies is None:  # pragma: no branch
                 self._ensure_meta_present()
                 requires: List[str] = cast(PathDistribution, self._distribution_meta).requires or []
-                self._package_dependencies = [Requirement(i) for i in requires]
+                self._package_dependencies = [Requirement(i) for i in requires]  # pragma: no branch
         return self._package_dependencies
 
     def _ensure_meta_present(self) -> None:

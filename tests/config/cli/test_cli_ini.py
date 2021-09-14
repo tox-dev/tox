@@ -41,33 +41,25 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
     return to
 
 
-@pytest.fixture()
-def empty_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
-    to = tmp_path / "tox.ini"
-    to.write_text(
-        textwrap.dedent(
-            """
-        [tox]
-        """,
-        ),
-    )
-    monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
-    return to
-
-
+@pytest.mark.parametrize("content", ["[tox]", ""])
 def test_ini_empty(
-    empty_ini: Path,
+    tmp_path: Path,
     core_handlers: Dict[str, Callable[[State], int]],
     default_options: Dict[str, Any],
     mocker: MockerFixture,
+    monkeypatch: MonkeyPatch,
+    content: str,
 ) -> None:
+    to = tmp_path / "tox.ini"
+    monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
+    to.write_text(content)
     mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
     parsed, handlers, _, __, ___ = get_options("r")
     assert vars(parsed) == default_options
     assert parsed.verbosity == 2
     assert handlers == core_handlers
 
-    empty_ini.unlink()
+    to.unlink()
     missing_parsed, ____, _, __, ___ = get_options("r")
     assert vars(missing_parsed) == vars(parsed)
 

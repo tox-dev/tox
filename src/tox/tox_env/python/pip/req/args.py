@@ -61,7 +61,7 @@ def _validate_hash(value: str) -> str:
 class AddSortedUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa
+        parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
         values: Union[str, Sequence[Any], None],
         option_string: Optional[str] = None,  # noqa: U100
@@ -76,7 +76,7 @@ class AddSortedUniqueAction(Action):
 class AddUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa
+        parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
         values: Union[str, Sequence[Any], None],
         option_string: Optional[str] = None,  # noqa: U100

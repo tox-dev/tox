@@ -253,7 +253,7 @@ class ToxEnv(ABC):
         """
         conf = {"name": self.conf.name, "type": type(self).__name__}
         with self.cache.compare(conf, ToxEnv.__name__) as (eq, old):
-            if eq is False and old is not None:  # recreate if already created and not equals
+            if eq is False and old is not None:  # pragma: no branch  # recreate if already created and not equals
                 raise Recreate(f"env type changed from {old} to {conf}")
         self._handle_env_tmp_dir()
 
@@ -365,7 +365,7 @@ class ToxEnv(ABC):
         executor: Optional[Execute] = None,
     ) -> Iterator[ExecuteStatus]:
         if self._interrupted:
-            raise SystemExit(-2)
+            raise SystemExit(-2)  # pragma: no cover
         if cwd is None:
             cwd = self.core["tox_root"]
         if show is None:
@@ -419,7 +419,7 @@ class ToxEnv(ABC):
         with log_file.open("ab") as file_b:
             if status.out:
                 file_b.write(status.out)
-            if status.err:
+            if status.err:  # pragma: no branch
                 file_b.write(os.linesep.encode())
                 file_b.write(b"standard error:")
                 file_b.write(os.linesep.encode())

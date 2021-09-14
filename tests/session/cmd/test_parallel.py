@@ -1,5 +1,9 @@
+import sys
 from argparse import ArgumentTypeError
 from pathlib import Path
+from signal import SIGINT
+from subprocess import PIPE, Popen
+from time import sleep
 
 import pytest
 from pytest_mock import MockerFixture
@@ -106,3 +110,37 @@ def test_parallel_show_output_with_pkg(tox_project: ToxProjectCreator, demo_pkg_
     project = tox_project({"tox.ini": ini})
     result = project.run("p", "--root", str(demo_pkg_inline))
     assert "r py" in result.out
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
+def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Path, tmp_path: Path) -> None:
+    marker = tmp_path / "a"
+    ini = f"""
+    [testenv]
+    package=wheel
+    commands=python -c 'from time import sleep; from pathlib import Path; \
+                        p = Path("{str(marker)}"); p.write_text(""); sleep(100)'
+    [testenv:dep]
+    depends=py
+    """
+    proj = tox_project(
+        {
+            "tox.ini": ini,
+            "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
+            "build.py": (demo_pkg_inline / "build.py").read_text(),
+        }
+    )
+    cmd = ["-c", str(proj.path / "tox.ini"), "p", "-p", "1", "-e", f"py,py{sys.version_info[0]},dep"]
+    process = Popen([sys.executable, "-m", "tox"] + cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    while not marker.exists():
+        sleep(0.05)
+    process.send_signal(SIGINT)
+    out, err = process.communicate()
+    assert process.returncode != 0
+    assert "KeyboardInterrupt" in err, err
+    assert "KeyboardInterrupt - teardown started\n" in out, out
+    assert "interrupt tox environment: py\n" in out, out
+    assert "requested interrupt of" in out, out
+    assert "send signal SIGINT" in out, out
+    assert "interrupt finished with success" in out, out
+    assert "interrupt tox environment: .pkg" in out, out

@@ -94,7 +94,7 @@ class Python(ToxEnv, ABC):
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
-    def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:  # noqa
+    def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:  # noqa: U100
         base_python = None if env_name is None else self.extract_base_python(env_name)
         return [sys.executable if base_python is None else base_python]
 
@@ -222,7 +222,7 @@ class Python(ToxEnv, ABC):
         }
 
     @abstractmethod
-    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:  # noqa: U100
+    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
         raise NotImplementedError
 
     @abstractmethod

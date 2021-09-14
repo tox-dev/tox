@@ -16,7 +16,7 @@ from tox.util.pep517.via_fresh_subprocess import SubprocessFrontend
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, EntryPoint  # type: ignore[attr-defined]
 else:  # pragma: no cover (<py38)
-    from importlib_metadata import Distribution, EntryPoint  # noqa
+    from importlib_metadata import Distribution, EntryPoint
 
 
 @pytest.fixture(scope="session")
@@ -135,7 +135,7 @@ def test_pep517_setuptools_exception(frontend_setuptools: SubprocessFrontend) ->
 
 def test_pep517_bad_message(frontend_setuptools: SubprocessFrontend, tmp_path: Path) -> None:
     with frontend_setuptools._send_msg("bad_cmd", tmp_path / "a", "{{") as status:
-        while not status.done:
+        while not status.done:  # pragma: no branch
             pass
     out, err = status.out_err()
     assert out

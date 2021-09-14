@@ -17,7 +17,7 @@ from tox.pytest import Index, IndexServer, MonkeyPatch, TempPathFactory, ToxProj
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution  # type: ignore[attr-defined]
 else:  # pragma: no cover (<py38)
-    from importlib_metadata import Distribution  # noqa
+    from importlib_metadata import Distribution
 
 ROOT = Path(__file__).parents[1]
 
@@ -90,7 +90,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: TempPathFactory, demo_pkg_inline: Pa
 
 
 def build_wheel(dist_dir: Path, of: Path, isolation: bool = True) -> Path:
-    from build.__main__ import build_package  # noqa
+    from build.__main__ import build_package
 
     build_package(str(of), str(dist_dir), distributions=["wheel"], isolation=isolation)
     package = next(dist_dir.iterdir())

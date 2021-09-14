@@ -10,7 +10,7 @@ from tox.config.types import Command, EnvList
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
 else:  # pragma: no cover (py38+)
-    from typing_extensions import Literal  # noqa
+    from typing_extensions import Literal
 
 
 @pytest.mark.parametrize(
@@ -50,7 +50,7 @@ else:  # pragma: no cover (py38+)
     ],
 )
 def test_str_convert_ok(raw: str, value: Any, of_type: Type[Any]) -> None:
-    result = StrConvert().to(raw, of_type, {})  # noqa
+    result = StrConvert().to(raw, of_type, None)
     assert result == value
 
 
@@ -64,7 +64,7 @@ def test_str_convert_ok(raw: str, value: Any, of_type: Type[Any]) -> None:
 )
 def test_str_convert_nok(raw: str, of_type: Type[Any], msg: str, exc_type: Type[Exception]) -> None:
     with pytest.raises(exc_type, match=msg):
-        result = StrConvert().to(raw, of_type, {})  # noqa
+        StrConvert().to(raw, of_type, None)
 
 
 @pytest.mark.parametrize(

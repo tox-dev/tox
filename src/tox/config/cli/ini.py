@@ -9,7 +9,9 @@ from typing import Any, Dict, Optional, Tuple, Type
 
 from platformdirs import user_config_dir
 
+from tox.config.loader.api import ConfigLoadArgs
 from tox.config.loader.ini import IniLoader
+from tox.config.source.ini_section import CORE
 
 DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
 
@@ -17,8 +19,6 @@ DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
 class IniConfig:
     TOX_CONFIG_FILE_ENV_VAR = "TOX_CONFIG_FILE"
     STATE = {None: "failed to parse", True: "active", False: "missing"}
-
-    section = "tox"
 
     def __init__(self) -> None:
         config_file = os.environ.get(self.TOX_CONFIG_FILE_ENV_VAR, None)
@@ -35,8 +35,9 @@ class IniConfig:
                 parser = ConfigParser()
                 with self.config_file.open() as file_handler:
                     parser.read_file(file_handler)
-                self.has_tox_section = parser.has_section("tox")
-                self.ini = IniLoader("tox", parser, overrides=[], core_prefix="") if self.has_tox_section else None
+                self.has_tox_section = parser.has_section(CORE.key)
+                if self.has_tox_section:
+                    self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
             except Exception as exception:
                 logging.error("failed to read config file %s because %r", config_file, exception)
                 self.has_config_file = None
@@ -51,11 +52,12 @@ class IniConfig:
                     result = None
                 else:
                     source = "file"
-                    value = self.ini.load(key, of_type=of_type, conf=None, env_name="tox", chain=[key], kwargs={})
+                    args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)
+                    value = self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args)
                     result = value, source
             except KeyError:  # just not found
                 result = None
-            except Exception as exception:  # noqa
+            except Exception as exception:
                 logging.warning("%s key %s as type %r failed with %r", self.config_file, key, of_type, exception)
                 result = None
         self._cache[cache_key] = result

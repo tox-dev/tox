@@ -58,7 +58,7 @@ def show_config(state: State) -> int:
     # because the target env could be a packaging one we first need to discover all defined ones
     run_envs: Dict[str, RunToxEnv] = {}
     pkg_envs: Dict[str, PackageToxEnv] = {}
-    for name in state.env_list(everything=True):
+    for name in state.conf.env_list(everything=True):
         run_env = _get_run_env(name)
         run_envs[name] = run_env
         for pkg_env in run_env.package_envs:
@@ -66,7 +66,7 @@ def show_config(state: State) -> int:
 
     show_everything = state.options.env.all
     done_pkg_envs: Set[str] = set()
-    for name in state.env_list():  # now go through selected ones
+    for name in state.conf.env_list():  # now go through selected ones
         if name in pkg_envs:
             if name not in done_pkg_envs:
                 _print_env(pkg_envs[name])

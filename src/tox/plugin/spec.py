@@ -3,7 +3,7 @@ from typing import Any, Callable, List, TypeVar, cast
 import pluggy
 
 from tox.config.main import Config
-from tox.config.sets import ConfigSet
+from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.tox_env.register import ToxEnvRegister
 
 from ..config.cli.parser import ToxParser
@@ -42,21 +42,22 @@ def tox_add_option(parser: ToxParser) -> None:  # noqa: U100
 
 
 @_spec
-def tox_add_core_config(core: ConfigSet) -> None:  # noqa: U100
+def tox_add_core_config(core_conf: ConfigSet, config: "Config") -> None:  # noqa: U100
     """
-    Define a new core (non test environment bound) settings for tox. Called the first time the core configuration is
-    used (at the start of the provision check).
+    Called when the core configuration is built for a tox environment.
 
-    :param core: the core configuration object
+    :param core_conf: the core configuration object
+    :param config: the global tox config object
     """
 
 
 @_spec
-def tox_configure(config: Config) -> None:  # noqa: U100
+def tox_add_env_config(env_conf: EnvConfigSet, config: "Config") -> None:  # noqa: U100
     """
-    Called after command line options are parsed and ini-file has been read.
+    Called when configuration is built for a tox environment.
 
-    :param config: the configuration object
+    :param env_conf: the core configuration object
+    :param config: the global tox config object
     """
 
 
@@ -85,7 +86,7 @@ __all__ = [
     "tox_register_tox_env",
     "tox_add_option",
     "tox_add_core_config",
-    "tox_configure",
+    "tox_add_env_config",
     "tox_before_run_commands",
     "tox_after_run_commands",
 ]

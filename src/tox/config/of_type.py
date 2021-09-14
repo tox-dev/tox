@@ -3,9 +3,10 @@ Group together configuration values that belong together (such as base tox confi
 """
 from abc import ABC, abstractmethod
 from itertools import product
-from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, List, Mapping, Optional, Type, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, List, Optional, Type, TypeVar, Union, cast
 
-from tox.config.loader.api import Loader
+from tox.config.loader.api import ConfigLoadArgs, Loader
+from tox.config.loader.convert import Factory
 
 if TYPE_CHECKING:
     from tox.config.main import Config  # pragma: no cover
@@ -23,13 +24,7 @@ class ConfigDefinition(ABC, Generic[T]):
         self.desc = desc
 
     @abstractmethod
-    def __call__(
-        self,
-        conf: "Config",  # noqa: U100
-        loaders: List[Loader[T]],  # noqa: U100
-        env_name: Optional[str],  # noqa: U100
-        chain: Optional[List[str]],  # noqa: U100
-    ) -> T:
+    def __call__(self, conf: "Config", loaders: List[Loader[T]], args: ConfigLoadArgs) -> T:
         raise NotImplementedError
 
     def __eq__(self, o: Any) -> bool:
@@ -55,8 +50,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
         self,
         conf: "Config",  # noqa: U100
         loaders: List[Loader[T]],  # noqa: U100
-        env_name: Optional[str],  # noqa: U100
-        chain: Optional[List[str]],  # noqa: U100
+        args: ConfigLoadArgs,  # noqa: U100
     ) -> T:
         if callable(self.value):
             value = self.value()
@@ -81,38 +75,39 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         of_type: Type[T],
         default: Union[Callable[["Config", Optional[str]], T], T],
         post_process: Optional[Callable[[T], T]] = None,
-        kwargs: Optional[Mapping[str, Any]] = None,
+        factory: Factory[T] = None,
     ) -> None:
         super().__init__(keys, desc)
         self.of_type = of_type
         self.default = default
         self.post_process = post_process
-        self.kwargs: Mapping[str, Any] = {} if kwargs is None else kwargs
+        self.factory = factory
         self._cache: Union[object, T] = _PLACE_HOLDER
 
     def __call__(
-        self, conf: "Config", loaders: List[Loader[T]], env_name: Optional[str], chain: Optional[List[str]]
+        self,
+        conf: "Config",
+        loaders: List[Loader[T]],
+        args: ConfigLoadArgs,
     ) -> T:
-        if chain is None:
-            chain = []
         if self._cache is _PLACE_HOLDER:
             for key, loader in product(self.keys, loaders):
-                chain_key = f"{loader.section_name}.{key}"
-                if chain_key in chain:
-                    raise ValueError(f"circular chain detected {', '.join(chain[chain.index(chain_key):])}")
-                chain.append(chain_key)
+                chain_key = f"{loader.section.key}.{key}"
+                if chain_key in args.chain:
+                    raise ValueError(f"circular chain detected {', '.join(args.chain[args.chain.index(chain_key):])}")
+                args.chain.append(chain_key)
                 try:
-                    value = loader.load(key, self.of_type, self.kwargs, conf, env_name, chain)
+                    value = loader.load(key, self.of_type, self.factory, conf, args)
                 except KeyError:
                     continue
                 else:
                     break
                 finally:
-                    del chain[-1]
+                    del args.chain[-1]
             else:
-                value = self.default(conf, env_name) if callable(self.default) else self.default
+                value = self.default(conf, args.env_name) if callable(self.default) else self.default
             if self.post_process is not None:
-                value = self.post_process(value)  # noqa
+                value = self.post_process(value)
             self._cache = value
         return cast(T, self._cache)
 
@@ -126,3 +121,11 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
             and super().__eq__(o)
             and (self.of_type, self.default, self.post_process) == (o.of_type, o.default, o.post_process)
         )
+
+
+__all__ = [
+    "ConfigLoadArgs",
+    "ConfigDefinition",
+    "ConfigDynamicDefinition",
+    "ConfigConstantDefinition",
+]

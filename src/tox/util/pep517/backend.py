@@ -34,7 +34,7 @@ class BackendProxy:
     def __str__(self):
         return "{}(backend={})".format(self.__class__.__name__, self.backend)
 
-    def _exit(self):  # noqa
+    def _exit(self):
         return 0
 
 
@@ -65,7 +65,7 @@ def run(argv):
                 content = content.decode()  # pragma: no cover
             parsed_message = json.loads(content)
             result_file = parsed_message["result"]
-        except Exception:  # noqa
+        except Exception:
             # ignore messages that are not valid JSON and contain a valid result path
             print("Backend: incorrect request to backend: {}".format(content), file=sys.stderr)
             flush()
@@ -90,7 +90,7 @@ def run(argv):
                 try:
                     with open(result_file, "wt") as file_handler:
                         json.dump(result, file_handler)
-                except Exception:  # noqa
+                except Exception:
                     traceback.print_exc()
                 finally:
                     # used as done marker by frontend

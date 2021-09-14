@@ -97,7 +97,7 @@ Improved Documentation - 4.0.0a7
 - Start documenting the plugin interface. Added :meth:`tox_register_tox_env <tox.plugin.spec.tox_register_tox_env>`,
   :meth:`tox_add_option <tox.plugin.spec.tox_add_option>`,
   :meth:`tox_add_core_config <tox.plugin.spec.tox_add_core_config>`,
-  :meth:`tox_configure <tox.plugin.spec.tox_configure>` - by :user:`gaborbernat`. (`#1991 <https://github.com/tox-dev/tox/issues/1991>`_)
+  ``tox_configure`` - by :user:`gaborbernat`. (`#1991 <https://github.com/tox-dev/tox/issues/1991>`_)
 - Explain how ``-v`` and ``-q`` flags play together to determine CLI verbosity level - by :user:`jugmac00`. (`#2005 <https://github.com/tox-dev/tox/issues/2005>`_)
 - Start polishing the documentation for the upcoming final release - by :user:`jugmac00`. (`#2006 <https://github.com/tox-dev/tox/issues/2006>`_)
 - Update documentation about changelog entries for trivial changes - by :user:`jugmac00`. (`#2007 <https://github.com/tox-dev/tox/issues/2007>`_)

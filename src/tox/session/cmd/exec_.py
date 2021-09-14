@@ -24,7 +24,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def exec_(state: State) -> int:
-    env_list = list(state.env_list(everything=False))
+    env_list = list(state.conf.env_list(everything=False))
     if len(env_list) != 1:
         raise HandledError(f"exactly one target environment allowed in exec mode but found {', '.join(env_list)}")
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)

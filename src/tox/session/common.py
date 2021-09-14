@@ -7,7 +7,7 @@ from tox.config.loader.str_convert import StrConvert
 class CliEnv:
     def __init__(self, value: Union[None, List[str], str] = None):
         if isinstance(value, str):
-            value = StrConvert().to(value, of_type=List[str], kwargs={})
+            value = StrConvert().to(value, of_type=List[str], factory=None)
         self._names = value
 
     def __iter__(self) -> Iterator[str]:

@@ -45,7 +45,7 @@ def test_spinner_disabled(capfd: CaptureFixture) -> None:
 def test_spinner_progress(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner() as spin:
-        for _ in range(len(spin.frames)):
+        for _ in range(len(spin.frames)):  # pragma: no branch
             spin.stream.write("\n")
             time.sleep(spin.refresh_rate)
 
@@ -116,7 +116,7 @@ def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture
     stdout = mocker.patch("tox.util.spinner.sys.stdout")
     stdout.encoding = "ascii"
     with spinner.Spinner(refresh_rate=100) as spin:
-        for _ in range(len(spin.frames)):
+        for _ in range(len(spin.frames)):  # pragma: no branch
             spin.render_frame()
     out, err = capfd.readouterr()
     assert not err

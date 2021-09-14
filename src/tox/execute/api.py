@@ -29,7 +29,7 @@ class ExecuteOptions:
         self._env = env
 
     @classmethod
-    def register_conf(cls, env: "ToxEnv") -> None:  # noqa
+    def register_conf(cls, env: "ToxEnv") -> None:
         env.conf.add_config(
             keys=["suicide_timeout"],
             desc="timeout to allow process to exit before sending SIGINT",
@@ -75,11 +75,11 @@ class ExecuteStatus(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def wait(self, timeout: Optional[float] = None) -> Optional[int]:  # noqa: U100
+    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
         raise NotImplementedError
 
     @abstractmethod
-    def write_stdin(self, content: str) -> None:  # noqa: U100
+    def write_stdin(self, content: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -133,7 +133,7 @@ class Execute(ABC):
 
     @abstractmethod
     def build_instance(
-        self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite  # noqa: U100
+        self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite
     ) -> "ExecuteInstance":
         raise NotImplementedError
 
@@ -166,9 +166,9 @@ class ExecuteInstance(ABC):
     @abstractmethod
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],  # noqa: U100
-        exc_val: Optional[BaseException],  # noqa: U100
-        exc_tb: Optional[TracebackType],  # noqa: U100
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
     ) -> None:
         raise NotImplementedError
 

@@ -51,7 +51,7 @@ class SyncWrite:
             if self._target_enabled is False:
                 return
             at = content.rfind(b"\n")
-            if at != -1:
+            if at != -1:  # pragma: no branch
                 at = len(self._content) - len(content) + at + 1
         if at != -1:
             self._cancel()
@@ -76,7 +76,7 @@ class SyncWrite:
     def _write(self, at: int) -> None:
         assert self._target is not None  # because _do_print is guarding the call of this method
         with self._lock:
-            if at > self._at:
+            if at > self._at:  # pragma: no branch
                 try:
                     with self.colored():
                         self._target.write(self._content[self._at : at])

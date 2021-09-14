@@ -88,6 +88,7 @@ func
 getbasetemp
 getfqdn
 getitem
+getmodule
 getoption
 getpid
 getresult
@@ -123,6 +124,7 @@ lineno
 linesep
 list2cmdline
 loc
+lru
 lvl
 metavar
 mktemp
@@ -132,7 +134,6 @@ namelist
 nitpicky
 nok
 nonlocal
-notimplementederror
 notset
 nox
 num

@@ -1,13 +1,16 @@
 from typing import Callable, Dict, Iterator, List, Mapping, Optional, Tuple
 
-Replacer = Callable[[str, List[str]], str]
+from tox.config.loader.api import ConfigLoadArgs
+
+Replacer = Callable[[str, ConfigLoadArgs], str]
 
 
 class SetEnv:
-    def __init__(self, raw: str) -> None:
+    def __init__(self, raw: str, name: str, env_name: Optional[str]) -> None:
         self.replacer: Replacer = lambda s, c: s
         self._later: List[str] = []
         self._raw: Dict[str, str] = {}
+        self._name, self._env_name = name, env_name
         from .loader.ini.replace import find_replace_part
 
         for line in raw.splitlines():
@@ -34,13 +37,13 @@ class SetEnv:
         else:
             raise ValueError(f"invalid line {line!r} in set_env")
 
-    def load(self, item: str, chain: Optional[List[str]] = None) -> str:
-        if chain is None:
-            chain = [f"env:{item}"]
+    def load(self, item: str, args: Optional[ConfigLoadArgs] = None) -> str:
+        args = ConfigLoadArgs([], self._name, self._env_name) if args is None else args
+        args.chain.append(f"env:{item}")
         if item in self._materialized:
             return self._materialized[item]
         raw = self._raw[item]
-        result = self.replacer(raw, chain)  # apply any replace options
+        result = self.replacer(raw, args)  # apply any replace options
         result = result.replace(r"\#", "#")  # unroll escaped comment with replacement
         self._materialized[item] = result
         self._raw.pop(item, None)  # if the replace requires the env we may be called again, so allow pop to fail
@@ -55,7 +58,7 @@ class SetEnv:
         yield from list(self._raw.keys())  # iterating over this may trigger materialization and change the dict
         while self._later:
             line = self._later.pop(0)
-            expanded_line = self.replacer(line, [])
+            expanded_line = self.replacer(line, ConfigLoadArgs([], self._name, self._env_name))
             sub_raw = dict(self._extract_key_value(sub_line) for sub_line in expanded_line.splitlines() if sub_line)
             self._raw.update(sub_raw)
             yield from sub_raw.keys()

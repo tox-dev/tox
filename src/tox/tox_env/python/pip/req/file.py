@@ -174,7 +174,7 @@ class RequirementsFile:
         result.sort(key=self._key_func)
         return result
 
-    def _key_func(self, line: ParsedRequirement) -> Tuple[int, Tuple[int, str, str]]:  # noqa
+    def _key_func(self, line: ParsedRequirement) -> Tuple[int, Tuple[int, str, str]]:
         of_type = {Requirement: 0, Path: 1, str: 2}[type(line.requirement)]
         between = of_type, str(line.requirement).lower(), str(line.options)
         if "is_constraint" in line.options:
@@ -244,7 +244,7 @@ class RequirementsFile:
 
         :param content: the content of the requirements file
         """
-        lines_enum: ReqFileLines = enumerate(content.splitlines(), start=1)  # noqa
+        lines_enum: ReqFileLines = enumerate(content.splitlines(), start=1)
         lines_enum = self._join_lines(lines_enum)
         lines_enum = self._ignore_comments(lines_enum)
         lines_enum = self._expand_env_variables(lines_enum)

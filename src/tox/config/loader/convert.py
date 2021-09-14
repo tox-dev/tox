@@ -2,63 +2,68 @@ import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, Generic, Iterator, List, Mapping, Set, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union, cast
 
 from ..types import Command, EnvList
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
 else:  # pragma: no cover (py38+)
-    from typing_extensions import Literal  # noqa
+    from typing_extensions import Literal
 
 
 _NO_MAPPING = object()
 T = TypeVar("T")
 V = TypeVar("V")
 
+Factory = Optional[Callable[[object], T]]  # note the argument is anything, due e.g. memory loader can inject anything
+
 
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type"""
 
-    def to(self, raw: T, of_type: Type[V], kwargs: Mapping[str, Any]) -> V:
+    def to(self, raw: T, of_type: Type[V], factory: Factory[V]) -> V:
         """
         Convert given raw type to python type
 
         :param raw: the raw type
         :param of_type: python type
-        :param kwargs: additional keyword arguments for conversion
+        :param factory: factory method to build the object
         :return: the converted type
         """
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
-            return self._to_typing(raw, of_type, kwargs)  # type: ignore[return-value]
-        elif issubclass(of_type, Path):
+            return self._to_typing(raw, of_type, factory)  # type: ignore
+        if issubclass(of_type, Path):
             return self.to_path(raw)  # type: ignore[return-value]
-        elif issubclass(of_type, bool):
+        if issubclass(of_type, bool):
             return self.to_bool(raw)  # type: ignore[return-value]
-        elif issubclass(of_type, Command):
+        if issubclass(of_type, Command):
             return self.to_command(raw)  # type: ignore[return-value]
-        elif issubclass(of_type, EnvList):
+        if issubclass(of_type, EnvList):
             return self.to_env_list(raw)  # type: ignore[return-value]
-        elif issubclass(of_type, str):
+        if issubclass(of_type, str):
             return self.to_str(raw)  # type: ignore[return-value]
-        elif isinstance(raw, of_type):
+        if isinstance(raw, of_type):  # already target type no need to transform it
+            # do it this late to allow normalization - e.g. string strip
             return raw
-        return of_type(raw, **kwargs)  # type: ignore[call-arg]
+        if factory:
+            return factory(raw)
+        return of_type(raw)  # type: ignore[call-arg]
 
-    def _to_typing(self, raw: T, of_type: Type[V], kwargs: Mapping[str, Any]) -> V:
+    def _to_typing(self, raw: T, of_type: Type[V], factory: Factory[V]) -> V:
         origin = getattr(of_type, "__origin__", of_type.__class__)
         result: Any = _NO_MAPPING
         if origin in (list, List):
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-            result = [self.to(i, entry_type, kwargs) for i in self.to_list(raw, entry_type)]
+            result = [self.to(i, entry_type, factory) for i in self.to_list(raw, entry_type)]
         elif origin in (set, Set):
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-            result = {self.to(i, entry_type, kwargs) for i in self.to_set(raw, entry_type)}
+            result = {self.to(i, entry_type, factory) for i in self.to_set(raw, entry_type)}
         elif origin in (dict, Dict):
             key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
             result = OrderedDict(
-                (self.to(k, key_type, {}), self.to(v, value_type, {}))
+                (self.to(k, key_type, factory), self.to(v, value_type, factory))
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin == Union:  # handle Optional values
@@ -71,7 +76,7 @@ class Convert(ABC, Generic[T]):
                     result = None
                 else:
                     new_type = next(i for i in args if i != none)  # pragma: no cover # this will always find a element
-                    result = self.to(raw, new_type, kwargs)
+                    result = self.to(raw, new_type, factory)
         elif origin in (Literal, type(Literal)):
             if sys.version_info >= (3, 7):  # pragma: no cover (py37+)
                 choice = of_type.__args__
@@ -86,7 +91,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_str(value: T) -> str:  # noqa: U100
+    def to_str(value: T) -> str:
         """
         Convert to string.
 
@@ -97,7 +102,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_bool(value: T) -> bool:  # noqa: U100
+    def to_bool(value: T) -> bool:
         """
         Convert to boolean.
 
@@ -108,7 +113,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
+    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:
         """
         Convert to list.
 
@@ -120,7 +125,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
+    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:
         """
         Convert to set.
 
@@ -132,7 +137,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:  # noqa: U100
+    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:
         """
         Convert to dictionary.
 
@@ -144,7 +149,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_path(value: T) -> Path:  # noqa: U100
+    def to_path(value: T) -> Path:
         """
         Convert to path.
 
@@ -155,7 +160,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_command(value: T) -> Command:  # noqa: U100
+    def to_command(value: T) -> Command:
         """
         Convert to a command to execute.
 
@@ -166,7 +171,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_env_list(value: T) -> EnvList:  # noqa: U100
+    def to_env_list(value: T) -> EnvList:
         """
         Convert to a tox EnvList.
 
@@ -174,3 +179,9 @@ class Convert(ABC, Generic[T]):
         :returns: a list of tox environments from the value
         """
         raise NotImplementedError
+
+
+__all__ = [
+    "Convert",
+    "Factory",
+]
