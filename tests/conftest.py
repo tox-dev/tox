@@ -6,7 +6,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch  # noqa # cannot import from tox.pytest yet
+from _pytest.monkeypatch import MonkeyPatch  # cannot import from tox.pytest yet
 from _pytest.tmpdir import TempPathFactory
 from distlib.scripts import ScriptMaker
 from pytest_mock import MockerFixture
@@ -34,7 +34,7 @@ def value_error() -> Callable[[str], str]:
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
 else:  # pragma: no cover (<py38)
-    from typing_extensions import Protocol  # noqa
+    from typing_extensions import Protocol
 
 
 class ToxIniCreator(Protocol):
@@ -52,11 +52,13 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
         with monkeypatch.context() as context:
             context.chdir(tmp_path)
         source = discover_source(config_file, None)
-        return Config.make(
+        config = Config.make(
             Parsed(work_dir=dest, override=override or [], config_file=config_file, root_dir=None),
             pos_args=[],
             source=source,
         )
+        config.register_config_set = lambda name, env_config_set: None  # type: ignore[assignment] # no override in mypy
+        return config
 
     return func
 
@@ -79,7 +81,7 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], Tuple[str, str]]:
         prev_py = f"py{prev_ver}"
         impl = sys.implementation.name.lower()
 
-        def get_python(self: VirtualEnv, base_python: List[str]) -> Optional[PythonInfo]:  # noqa
+        def get_python(self: VirtualEnv, base_python: List[str]) -> Optional[PythonInfo]:
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
             raw = list(sys.version_info)

@@ -19,7 +19,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     result = project.run("c", "-e", name, "--core", "--", "magic")
     state = result.state
     assert state.args == ("c", "-e", name, "--core", "--", "magic")
-    outcome = list(state.env_list(everything=True))
+    outcome = list(state.conf.env_list(everything=True))
     assert outcome == [name]
     monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
     parser = ConfigParser()

@@ -17,7 +17,9 @@ from typing import (
     cast,
 )
 
-from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition
+from .loader.convert import Factory
+from .loader.section import Section
+from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
 from .set_env import SetEnv
 from .types import EnvList
 
@@ -31,12 +33,19 @@ V = TypeVar("V")
 class ConfigSet(ABC):
     """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
 
-    def __init__(self, conf: "Config"):
+    def __init__(self, conf: "Config", section: Section, env_name: Optional[str]):
+        self._section = section
+        self._env_name = env_name
         self._conf = conf
         self.loaders: List[Loader[Any]] = []
         self._defined: Dict[str, ConfigDefinition[Any]] = {}
         self._keys: Dict[str, None] = {}
         self._alias: Dict[str, str] = {}
+        self.register_config()
+
+    @abstractmethod
+    def register_config(self) -> None:
+        raise NotImplementedError
 
     def add_config(
         self,
@@ -45,7 +54,7 @@ class ConfigSet(ABC):
         default: Union[Callable[["Config", Optional[str]], V], V],
         desc: str,
         post_process: Optional[Callable[[V], V]] = None,
-        kwargs: Optional[Mapping[str, Any]] = None,
+        factory: Factory[V] = None,
     ) -> ConfigDynamicDefinition[V]:
         """
         Add configuration value.
@@ -55,11 +64,11 @@ class ConfigSet(ABC):
         :param default: the default value of the config value
         :param desc: a help message describing the configuration
         :param post_process: a callback to post-process the configuration value after it has been loaded
-        :param kwargs: additional arguments to pass to the configuration type at construction time
+        :param factory: factory method to use to build the object
         :return: the new dynamic config definition
         """
         keys_ = self._make_keys(keys)
-        definition = ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, kwargs)
+        definition = ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory)
         result = self._add_conf(keys_, definition)
         return cast(ConfigDynamicDefinition[V], result)
 
@@ -116,12 +125,7 @@ class ConfigSet(ABC):
         :return: the configuration value
         """
         config_definition = self._defined[item]
-        return config_definition.__call__(self._conf, self.loaders, self.name, chain)
-
-    @property
-    @abstractmethod
-    def name(self) -> Optional[str]:
-        raise NotImplementedError
+        return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(loaders={self.loaders!r})"
@@ -159,21 +163,33 @@ class ConfigSet(ABC):
         """
         return self._alias[key]
 
+    @property
+    def name(self) -> str:
+        return self._section.name
+
+    @property
+    def env_name(self) -> Optional[str]:
+        return self._env_name
+
 
 class CoreConfigSet(ConfigSet):
     """Configuration set for the core tox config"""
 
-    def __init__(self, conf: "Config", root: Path, src_path: Path) -> None:
-        super().__init__(conf)
-        self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=src_path)
+    def __init__(self, conf: "Config", section: Section, root: Path, src_path: Path) -> None:
+        self._root = root
+        self._src_path = src_path
+        super().__init__(conf, section=section, env_name=None)
+
+    def register_config(self) -> None:
+        self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=self._src_path)
         self.add_config(
             keys=["tox_root", "toxinidir"],
             of_type=Path,
-            default=root,
+            default=self._root,
             desc="the root directory (where the configuration file is found)",
         )
 
-        def work_dir_builder(conf: "Config", env_name: Optional[str]) -> Path:  # noqa
+        def work_dir_builder(conf: "Config", env_name: Optional[str]) -> Path:
             # here we pin to .tox/4 to be able to use in parallel with v3 until final release
             return (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox" / "4"
 
@@ -199,37 +215,35 @@ class CoreConfigSet(ConfigSet):
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:  # noqa: U100
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
 
-    @property
-    def name(self) -> Optional[str]:
-        return None
-
 
 class EnvConfigSet(ConfigSet):
     """Configuration set for a tox environment"""
 
-    def __init__(self, conf: "Config", name: str):
-        self._name = name
-        super().__init__(conf)
+    def __init__(self, conf: "Config", section: Section, env_name: str) -> None:
+        super().__init__(conf, section, env_name)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}
 
+    def register_config(self) -> None:
         def set_env_post_process(values: SetEnv) -> SetEnv:
             values.update_if_not_present(self.default_set_env_loader())
             return values
 
+        def set_env_factory(raw: object) -> SetEnv:
+            if not isinstance(raw, str):
+                raise TypeError(raw)
+            return SetEnv(raw, self.name, self.env_name)
+
         self.add_config(
             keys=["set_env", "setenv"],
             of_type=SetEnv,
-            default=SetEnv(""),
+            factory=set_env_factory,
+            default=SetEnv("", self.name, self.env_name),
             desc="environment variables to set when running commands in the tox environment",
             post_process=set_env_post_process,
         )
 
-    @property
-    def name(self) -> str:
-        return self._name
-
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name={self._name!r}, loaders={self.loaders!r})"
+        return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
 
 
 __all__ = (

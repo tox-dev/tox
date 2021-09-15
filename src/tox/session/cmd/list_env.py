@@ -20,7 +20,7 @@ def list_env(state: State) -> int:
     default = core["env_list"]  # this should be something not affected by env-vars :-|
     ignore = {core["provision_tox_env"]}.union(default)
 
-    extra = [] if option.list_default_only else [e for e in state.env_list(everything=True) if e not in ignore]
+    extra = [] if option.list_default_only else [e for e in state.conf.env_list(everything=True) if e not in ignore]
 
     if not option.list_no_description and default:
         print("default environments:")

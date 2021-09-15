@@ -15,7 +15,7 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from subprocess import PIPE, Popen, check_call
 from threading import Thread
-from types import TracebackType
+from types import ModuleType, TracebackType
 from typing import IO, TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, cast
 from unittest.mock import MagicMock
 
@@ -48,7 +48,7 @@ from tox.tox_env.api import ToxEnv
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
 else:  # pragma: no cover (<py38)
-    from typing_extensions import Protocol  # noqa
+    from typing_extensions import Protocol
 
 if TYPE_CHECKING:
     CaptureFixture = _CaptureFixture[str]
@@ -76,7 +76,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
         from tox.plugin import manager
 
-        inline_plugin = mocker.spy(manager, "load_inline")
+        inline_plugin = mocker.spy(manager, "_load_inline")
         yield
         if inline_plugin.spy_return is not None:  # pragma: no branch
             manager.MANAGER.manager.unregister(inline_plugin.spy_return)
@@ -86,7 +86,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
 
 
 @contextmanager
-def check_os_environ() -> Iterator[None]:  # noqa: PT004
+def check_os_environ() -> Iterator[None]:
     old = os.environ.copy()
     to_clean = {k: os.environ.pop(k, None) for k in {ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT"}}
 
@@ -215,15 +215,15 @@ class ToxProject:
 
         @contextmanager
         def _execute_call(
-            self: ToxEnv, executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool  # noqa
+            self: ToxEnv, executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
         ) -> Iterator[ExecuteStatus]:
             exit_code = handle(request)
             if exit_code is not None:
-                executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # noqa
+                executor = MockExecute(colored=executor._colored, exit_code=exit_code)
             with original_execute_call(self, executor, out_err, request, show) as status:
                 yield status
 
-        original_execute_call = ToxEnv._execute_call  # noqa
+        original_execute_call = ToxEnv._execute_call
         result = self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
         return result
 
@@ -274,7 +274,7 @@ class ToxProject:
                     tox_run(args)
                 except SystemExit as exception:
                     code = exception.code
-                if code is None:
+                if code is None:  # pragma: no branch
                     raise RuntimeError("exit code not set")
             out, err = self._capfd.readouterr()
             return ToxRunOutcome(args, self.path, code, out, err, state)
@@ -396,7 +396,7 @@ def init_fixture(
         """create tox  projects"""
         return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
 
-    return _init  # noqa
+    return _init
 
 
 @pytest.fixture()
@@ -605,6 +605,16 @@ def enable_pip_pypi_access_fixture(
     return previous_url
 
 
+def register_inline_plugin(mocker: MockerFixture, *args: Callable[..., Any]) -> None:  #
+    frame_info = inspect.stack()[1]
+    caller_module = inspect.getmodule(frame_info[0])
+    assert caller_module is not None
+    plugin = ModuleType(f"{caller_module.__name__}|{frame_info[3]}")
+    plugin.__file__ = caller_module.__file__
+    plugin.__dict__.update({f.__name__: f for f in args})
+    mocker.patch("tox.plugin.manager.load_inline", return_value=plugin)
+
+
 __all__ = (
     "CaptureFixture",
     "LogCaptureFixture",
@@ -616,4 +626,5 @@ __all__ = (
     "check_os_environ",
     "IndexServer",
     "Index",
+    "register_inline_plugin",
 )

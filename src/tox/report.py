@@ -89,7 +89,7 @@ class _LogThreadLocal(local):
 class NamedBytesIO(BytesIO):
     def __init__(self, name: str) -> None:
         super().__init__()
-        self.name: str = name  # noqa
+        self.name: str = name
 
 
 class ToxHandler(logging.StreamHandler):

@@ -132,9 +132,13 @@ def setup(app: Sphinx) -> None:
                 "tox.config.loader.convert.T": "typing.TypeVar",
                 "tox.tox_env.installer.T": "typing.TypeVar",
                 "ToxParserT": "typing.TypeVar",
+                "_Section": "Section",
             }
             if target in mapping:
                 node["reftarget"] = mapping[target]
+            if target == "_Section":
+                target = "Section"
+                contnode = Text(target, target)
 
             return super().resolve_xref(env, fromdocname, builder, type, target, node, contnode)
 

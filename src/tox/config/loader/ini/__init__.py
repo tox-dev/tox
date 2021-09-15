@@ -5,9 +5,10 @@ from configparser import ConfigParser, SectionProxy
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Generator, List, Optional, Set, Type, TypeVar
 
-from tox.config.loader.api import Loader, Override
+from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import replace
+from tox.config.loader.section import Section
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.report import HandledError
@@ -22,14 +23,16 @@ _COMMENTS = re.compile(r"(\s)*(?<!\\)#.*")
 class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary)"""
 
-    def __init__(self, section: str, parser: ConfigParser, overrides: List[Override], core_prefix: str) -> None:
-        self._section: SectionProxy = parser[section]
+    def __init__(
+        self, section: Section, parser: ConfigParser, overrides: List[Override], core_section: Section
+    ) -> None:
+        self._section_proxy: SectionProxy = parser[section.key]
         self._parser = parser
-        self.core_prefix = core_prefix
+        self.core_section = core_section
         super().__init__(section, overrides)
 
     def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> str:
-        return self.process_raw(conf, env_name, self._section[key])
+        return self.process_raw(conf, env_name, self._section_proxy[key])
 
     @staticmethod
     def process_raw(conf: Optional["Config"], env_name: Optional[str], value: str) -> str:
@@ -54,27 +57,27 @@ class IniLoader(StrConvert, Loader[str]):
         key: str,
         of_type: Type[V],
         conf: Optional["Config"],
-        env_name: Optional[str],
         raw: str,
-        chain: List[str],
+        args: ConfigLoadArgs,
     ) -> Generator[str, None, None]:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
 
-        def replacer(raw_: str, chain_: List[str]) -> str:
+        def replacer(raw_: str, args_: ConfigLoadArgs) -> str:
             if conf is None:
                 replaced = raw_  # no replacement supported in the core section
             else:
                 try:
-                    replaced = replace(conf, env_name, self, raw_, chain_)  # do replacements
+                    replaced = replace(conf, self, raw_, args_)  # do replacements
                 except Exception as exception:
                     if isinstance(exception, HandledError):
                         raise
-                    msg = f"replace failed in {'tox' if env_name is None else env_name}.{key} with {exception!r}"
+                    name = self.core_section.key if args_.env_name is None else args_.env_name
+                    msg = f"replace failed in {name}.{key} with {exception!r}"
                     raise HandledError(msg) from exception
             return replaced
 
         if not delay_replace:
-            raw = replacer(raw, chain)
+            raw = replacer(raw, args)
         yield raw
         if delay_replace:
             converted = future.result()
@@ -82,7 +85,7 @@ class IniLoader(StrConvert, Loader[str]):
                 converted.replacer = replacer  # type: ignore[attr-defined]
 
     def found_keys(self) -> Set[str]:
-        return set(self._section.keys())
+        return set(self._section_proxy.keys())
 
     def get_section(self, name: str) -> Optional[SectionProxy]:
         # needed for non tox environment replacements
@@ -91,4 +94,4 @@ class IniLoader(StrConvert, Loader[str]):
         return None
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(section={self._section}, overrides={self.overrides!r})"
+        return f"{self.__class__.__name__}(section={self._section.key}, overrides={self.overrides!r})"

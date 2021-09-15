@@ -1,10 +1,11 @@
 """Sources."""
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from tox.config.loader.api import Loader, OverrideMap
 
+from ..loader.section import Section
 from ..sets import ConfigSet, CoreConfigSet
 
 
@@ -17,50 +18,91 @@ class Source(ABC):
 
     def __init__(self, path: Path) -> None:
         self.path: Path = path  #: the path to the configuration source
+        self._section_to_loaders: Dict[str, List[Loader[Any]]] = {}
 
-    @abstractmethod
-    def get_core(self, override_map: OverrideMap) -> Iterator[Loader[Any]]:  # noqa: U100
-        """
-        Return a loader that loads the core configuration values.
-
-        :param override_map: a list of overrides to apply
-        :returns: the core loader from this source
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_section(self, name: str, override_map: OverrideMap) -> Iterator[Loader[Any]]:  # noqa: U100
-        """
-        Return a loader that loads the core configuration values.
-
-        :param name: name of the section to load
-        :param override_map: a list of overrides to apply
-        :returns: the core loader from this source
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_env_loaders(
-        self, env_name: str, override_map: OverrideMap, package: bool, conf: ConfigSet  # noqa: U100
+    def get_loaders(
+        self, section: Section, base: Optional[List[str]], override_map: OverrideMap, conf: ConfigSet
     ) -> Iterator[Loader[Any]]:
         """
-        Return the load for this environment.
+        Return a loader that loads settings from a given section name.
 
-        :param env_name: the environment name
+        :param section: the section to load
+        :param base: base sections to fallback to
         :param override_map: a list of overrides to apply
-        :param package: a flag indicating if this is a package environment, otherwise is of type run
         :param conf: the config set to use
-        :returns: an iterable of loaders extracting config value from this source
+        :returns: the loaders to use
+        """
+        section = self.transform_section(section)
+        key = section.key
+        if key in self._section_to_loaders:
+            yield from self._section_to_loaders[key]
+            return
+        loaders: List[Loader[Any]] = []
+        self._section_to_loaders[key] = loaders
+        loader: Optional[Loader[Any]] = self.get_loader(section, override_map)
+        if loader is not None:
+            loaders.append(loader)
+            yield loader
+
+        if base is not None:
+            conf.add_config(
+                keys="base",
+                of_type=List[str],
+                desc="inherit missing keys from these sections",
+                default=base,
+            )
+            for base_section in self.get_base_sections(conf["base"], section):
+                child = loader
+                loader = self.get_loader(base_section, override_map)
+                if loader is None:
+                    loader = child
+                    continue
+                if child is not None and loader is not None:
+                    child.parent = loader
+                yield loader
+                loaders.append(loader)
+
+    @abstractmethod
+    def transform_section(self, section: Section) -> Section:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_loader(self, section: Section, override_map: OverrideMap) -> Optional[Loader[Any]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_base_sections(self, base: List[str], in_section: Section) -> Iterator[Section]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def sections(self) -> Iterator[Section]:
+        """
+        Return a loader that loads the core configuration values.
+
+        :returns: the core loader from this source
         """
         raise NotImplementedError
 
     @abstractmethod
-    def envs(self, core_conf: "CoreConfigSet") -> Iterator[str]:  # noqa: U100
+    def envs(self, core_conf: "CoreConfigSet") -> Iterator[str]:
         """
         :param core_conf: the core configuration set
         :returns: a list of environments defined within this source
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def get_tox_env_section(self, item: str) -> Tuple[Section, List[str]]:
+        """:returns: the section for a tox environment"""
+        raise NotImplementedError
 
-__all__ = ("Source",)
+    @abstractmethod
+    def get_core_section(self) -> Section:
+        """:returns: the core section"""
+        raise NotImplementedError
+
+
+__all__ = [
+    "Section",
+    "Source",
+]

@@ -23,12 +23,18 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def register_config(self) -> None:
         super().register_config()
-        deps_kwargs = {"root": self.core["toxinidir"]}
+        root = self.core["toxinidir"]
+
+        def python_deps_factory(raw: object) -> PythonDeps:
+            if not isinstance(raw, str):
+                raise TypeError(raw)
+            return PythonDeps(raw, root)
+
         self.conf.add_config(
             keys="deps",
             of_type=PythonDeps,
-            kwargs=deps_kwargs,
-            default=PythonDeps("", **deps_kwargs),
+            factory=python_deps_factory,
+            default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
         )
         self.core.add_config(

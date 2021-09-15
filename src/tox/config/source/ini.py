@@ -3,23 +3,22 @@ from abc import ABC
 from configparser import ConfigParser
 from itertools import chain
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Set
+from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 from tox.config.loader.ini.factor import find_envs
 
 from ..loader.api import OverrideMap
 from ..loader.ini import IniLoader
-from ..loader.ini.replace import BASE_TEST_ENV
+from ..loader.section import Section
 from ..sets import ConfigSet
 from .api import Source
-
-TEST_ENV_PREFIX = f"{BASE_TEST_ENV}:"
+from .ini_section import CORE, TEST_ENV_PREFIX, IniSection
 
 
 class IniSource(Source, ABC):
     """Configuration sourced from a ini file (such as tox.ini)"""
 
-    CORE_PREFIX = "tox"
+    CORE_SECTION = CORE
 
     def __init__(self, path: Path, content: Optional[str] = None) -> None:
         super().__init__(path)
@@ -29,71 +28,37 @@ class IniSource(Source, ABC):
                 raise ValueError
             content = path.read_text()
         self._parser.read_string(content, str(path))
-        self._envs: Dict[str, List[IniLoader]] = {}
         self._sections: Dict[str, List[IniLoader]] = {}
 
-    def get_core(self, override_map: OverrideMap) -> Iterator[IniLoader]:
-        yield from self.get_section(self.CORE_PREFIX, override_map)
+    def transform_section(self, section: Section) -> Section:
+        return IniSection(section.prefix, section.name)
 
-    def get_section(self, name: str, override_map: OverrideMap) -> Iterator[IniLoader]:
-        if name in self._sections:
-            yield from self._sections[name]
-            return
-        section = []
-        if self._parser.has_section(name):
-            section.append(
-                IniLoader(
-                    section=name,
-                    parser=self._parser,
-                    overrides=override_map.get(name, []),
-                    core_prefix=self.CORE_PREFIX,
-                )
-            )
-        self._sections[name] = section
-        yield from section
+    def sections(self) -> Iterator[IniSection]:
+        for section in self._parser.sections():
+            yield IniSection.from_key(section)
 
-    def get_env_loaders(
-        self, env_name: str, override_map: OverrideMap, package: bool, conf: ConfigSet
-    ) -> Iterator[IniLoader]:
-        section = f"{TEST_ENV_PREFIX}{env_name}"
-        try:
-            yield from self._envs[section]
-        except KeyError:
-            loaders: List[IniLoader] = []
-            self._envs[section] = loaders
-            loader: Optional[IniLoader] = None
-            if self._parser.has_section(section):
-                loader = IniLoader(
-                    section=section,
-                    parser=self._parser,
-                    overrides=override_map.get(section, []),
-                    core_prefix=self.CORE_PREFIX,
-                )
-                yield loader
-                loaders.append(loader)
+    def get_loader(self, section: Section, override_map: OverrideMap) -> Optional[IniLoader]:
+        if not self._parser.has_section(section.key):
+            return None
+        return IniLoader(
+            section=section,
+            parser=self._parser,
+            overrides=override_map.get(section.key, []),
+            core_section=self.CORE_SECTION,
+        )
 
-            if package is False:
-                conf.add_config(  # base may be override within the testenv:py section
-                    keys="base",
-                    of_type=List[str],
-                    desc="inherit missing keys from these sections",
-                    default=[BASE_TEST_ENV],
-                )
-                for base in conf["base"]:
-                    for section in (base, f"{TEST_ENV_PREFIX}{base}"):
-                        if self._parser.has_section(section):
-                            child = loader
-                            loader = IniLoader(
-                                section=section,
-                                parser=self._parser,
-                                overrides=override_map.get(section, []),
-                                core_prefix=self.CORE_PREFIX,
-                            )
-                            if child is not None:
-                                child.parent = loader
-                            yield loader
-                            loaders.append(loader)
-                            break
+    def get_core_section(self) -> Section:
+        return self.CORE_SECTION
+
+    def get_base_sections(self, base: List[str], in_section: Section) -> Iterator[Section]:
+        for a_base in base:
+            section = IniSection.from_key(a_base)
+            yield section  # the base specifier is explicit
+            if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
+                yield IniSection(in_section.prefix, a_base)
+
+    def get_tox_env_section(self, item: str) -> Tuple[Section, List[str]]:
+        return IniSection.test_env(item), [TEST_ENV_PREFIX]
 
     def envs(self, core_config: ConfigSet) -> Iterator[str]:
         seen = set()
@@ -106,18 +71,15 @@ class IniSource(Source, ABC):
         explicit = list(core_config["env_list"])
         yield from explicit
         known_factors = None
-        for section in self._parser.sections():
-            if section.startswith(BASE_TEST_ENV):
-                is_base_section = section == BASE_TEST_ENV
-                name = BASE_TEST_ENV if is_base_section else section[len(TEST_ENV_PREFIX) :]
-                if not is_base_section:
-                    yield name
-                if known_factors is None:
-                    known_factors = set(chain.from_iterable(e.split("-") for e in explicit))
-                yield from self._discover_from_section(section, known_factors)
+        for section in self.sections():
+            if section.is_test_env:
+                yield section.name
+            if known_factors is None:
+                known_factors = set(chain.from_iterable(e.split("-") for e in explicit))
+            yield from self._discover_from_section(section, known_factors)
 
-    def _discover_from_section(self, section: str, known_factors: Set[str]) -> Iterator[str]:
-        for value in self._parser[section].values():
+    def _discover_from_section(self, section: IniSection, known_factors: Set[str]) -> Iterator[str]:
+        for value in self._parser[section.key].values():
             for env in find_envs(value):
                 if env not in known_factors:
                     yield env
@@ -126,4 +88,6 @@ class IniSource(Source, ABC):
         return f"{type(self).__name__}(path={self.path})"
 
 
-__all__ = ("IniSource",)
+__all__ = [
+    "IniSource",
+]

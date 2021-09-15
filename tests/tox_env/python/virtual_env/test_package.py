@@ -13,7 +13,7 @@ from tox.util.pep517.via_fresh_subprocess import SubprocessFrontend
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
 else:  # pragma: no cover (<py38)
-    from importlib_metadata import Distribution, PathDistribution  # noqa
+    from importlib_metadata import Distribution, PathDistribution
 
 
 @pytest.mark.parametrize(

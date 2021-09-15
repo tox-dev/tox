@@ -26,7 +26,7 @@ from tox.util.spinner import MISS_DURATION, Spinner
 class SkipMissingInterpreterAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa
+        parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
         values: Union[str, Sequence[Any], None],
         option_string: Optional[str] = None,  # noqa: U100
@@ -40,7 +40,7 @@ class SkipMissingInterpreterAction(Action):
 class InstallPackageAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa
+        parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
         values: Union[str, Sequence[Any], None],
         option_string: Optional[str] = None,  # noqa: U100
@@ -185,7 +185,7 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
     results: List[ToxEnvRunResult] = []
     future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
     to_run_list: List[str] = []
-    for env in state.env_list():  # ensure envs can be constructed
+    for env in state.conf.env_list():  # ensure envs can be constructed
         state.tox_env(env)
         to_run_list.append(env)
     previous, has_previous = None, False
@@ -204,8 +204,11 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
             spinner.print_report = False  # no need to print reports at this point, final report coming up
             logger.error(f"[{os.getpid()}] KeyboardInterrupt - teardown started")
             interrupt.set()
-            for future, tox_env in list(future_to_env.items()):
-                if future.cancel() is False and not future.done():  # if cannot be cancelled and not done -> still runs
+            # cancel in reverse order to not allow submitting new jobs as we cancel running ones
+            for future, tox_env in reversed(list(future_to_env.items())):
+                cancelled = future.cancel()
+                # if cannot be cancelled and not done -> still runs
+                if cancelled is False and not future.done():  # pragma: no branch
                     tox_env.interrupt()
             done.wait()
     finally:

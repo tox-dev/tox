@@ -55,7 +55,7 @@ class PackageToxEnv(ToxEnv, ABC):
         """allow creating sub-package envs"""
 
     @abstractmethod
-    def perform_packaging(self, for_env: EnvConfigSet) -> List[Package]:  # noqa: U100
+    def perform_packaging(self, for_env: EnvConfigSet) -> List[Package]:
         raise NotImplementedError
 
     def notify_of_run_env(self, conf: EnvConfigSet) -> None:

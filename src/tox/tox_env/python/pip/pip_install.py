@@ -46,7 +46,7 @@ class Pip(Installer[Python]):
                 desc="command used to list isntalled packages",
             )
 
-    def default_install_command(self, conf: Config, env_name: Optional[str]) -> Command:  # noqa
+    def default_install_command(self, conf: Config, env_name: Optional[str]) -> Command:  # noqa: U100
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"
         cmd = Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
         return self.post_process_install_command(cmd)
@@ -98,7 +98,7 @@ class Pip(Installer[Python]):
         new = {"options": new_options, "requirements": new_requirements, "constraints": new_constraints}
         # if option or constraint change in any way recreate, if the requirements change only if some are removed
         with self._env.cache.compare(new, section, of_type) as (eq, old):
-            if not eq:
+            if not eq:  # pragma: no branch
                 if old is not None:
                     self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda i: i)
                     self._recreate_if_diff("constraint(s)", new_constraints, old["constraints"], lambda i: i[3:])
@@ -106,7 +106,7 @@ class Pip(Installer[Python]):
                     if missing_requirement:
                         raise Recreate(f"requirements removed: {' '.join(missing_requirement)}")
                 args = arguments.as_root_args
-                if args:
+                if args:  # pragma: no branch
                     self._execute_installer(args, of_type)
 
     @staticmethod
@@ -144,12 +144,12 @@ class Pip(Installer[Python]):
         for value in groups.values():
             value.sort()
         with self._env.cache.compare(groups["req"], section, req_of_type) as (eq, old):
-            if not eq:
+            if not eq:  # pragma: no branch
                 miss = sorted(set(old or []) - set(groups["req"]))
                 if miss:  # no way yet to know what to uninstall here (transitive dependencies?)
                     raise Recreate(f"dependencies removed: {', '.join(str(i) for i in miss)}")  # pragma: no branch
                 new_deps = sorted(set(groups["req"]) - set(old or []))
-                if new_deps:
+                if new_deps:  # pragma: no branch
                     self._execute_installer(new_deps, req_of_type)
         install_args = ["--force-reinstall", "--no-deps"]
         if groups["pkg"]:

@@ -17,7 +17,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def depends(state: State) -> int:
-    to_run_list = list(state.env_list(everything=True))
+    to_run_list = list(state.conf.env_list(everything=True))
     order, todo = run_order(state, to_run_list)
     print(f"Execution order: {', '.join(order)}")
 

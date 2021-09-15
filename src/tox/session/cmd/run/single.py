@@ -50,7 +50,7 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> Tuple[bool, int, List[Outcom
         except Fail as exception:
             LOGGER.error("failed with %s", exception)
             code = 1
-        except Exception:  # noqa # pragma: no cover
+        except Exception:  # pragma: no cover
             LOGGER.exception("internal error")  # pragma: no cover
             code = 2  # pragma: no cover
         finally:

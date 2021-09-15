@@ -14,7 +14,7 @@ from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
 def test_setuptools_package(
     tox_project: ToxProjectCreator,
     demo_pkg_setuptools: Path,
-    enable_pip_pypi_access: Optional[str],  # noqa
+    enable_pip_pypi_access: Optional[str],  # noqa: U100
 ) -> None:
     tox_ini = """
         [testenv]

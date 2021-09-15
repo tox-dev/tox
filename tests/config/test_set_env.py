@@ -8,7 +8,7 @@ from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
 def test_set_env_explicit() -> None:
-    set_env = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4")
+    set_env = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4", "py", "py")
     set_env.update_if_not_present({"E": "5 ", "F": "6"})
 
     keys = list(set_env)
@@ -23,7 +23,7 @@ def test_set_env_explicit() -> None:
 
 def test_set_env_bad_line() -> None:
     with pytest.raises(ValueError, match="A"):
-        SetEnv("A")
+        SetEnv("A", "py", "py")
 
 
 EvalSetEnv = Callable[[str], SetEnv]

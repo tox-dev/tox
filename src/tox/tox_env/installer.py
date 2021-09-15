@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 if TYPE_CHECKING:
-    from tox.tox_env.api import ToxEnv  # noqa
+    from tox.tox_env.api import ToxEnv
 
 T = TypeVar("T", bound="ToxEnv")
 
@@ -23,5 +23,5 @@ class Installer(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def install(self, arguments: Any, section: str, of_type: str) -> None:  # noqa: U100
+    def install(self, arguments: Any, section: str, of_type: str) -> None:
         raise NotImplementedError

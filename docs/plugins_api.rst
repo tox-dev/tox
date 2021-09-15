@@ -29,6 +29,12 @@ config
    :members:
    :exclude-members: __init__, make
 
+.. autoclass:: tox.config.loader.section.Section
+   :members:
+
+.. autoclass:: tox.config.loader.api.ConfigLoadArgs
+   :members:
+
 .. autoclass:: tox.config.sets.ConfigSet
    :members:
    :special-members: __iter__, __contains__

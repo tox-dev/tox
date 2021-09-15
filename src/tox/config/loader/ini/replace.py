@@ -5,9 +5,11 @@ import os
 import re
 import sys
 from configparser import SectionProxy
+from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterator, List, Optional, Pattern, Tuple, Union
 
+from tox.config.loader.api import ConfigLoadArgs
 from tox.config.loader.stringify import stringify
 from tox.config.set_env import SetEnv
 from tox.config.sets import ConfigSet
@@ -17,27 +19,25 @@ if TYPE_CHECKING:
     from tox.config.loader.ini import IniLoader
     from tox.config.main import Config
 
-BASE_TEST_ENV = "testenv"
-
 # split alongside :, unless it's escaped, or it's preceded by a single capital letter (Windows drive letter in paths)
 ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
 
 
-def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str, chain: List[str]) -> str:
+def replace(conf: "Config", loader: "IniLoader", value: str, args: ConfigLoadArgs) -> str:
     # perform all non-escaped replaces
     end = 0
     while True:
         start, end, to_replace = find_replace_part(value, end)
         if to_replace is None:
             break
-        replaced = _replace_match(conf, name, loader, to_replace, chain.copy())
+        replaced = _replace_match(conf, loader, to_replace, args.copy())
         if replaced is None:
             # if we cannot replace, keep what was there, and continue looking for additional replaces following
             # note, here we cannot raise because the content may be a factorial expression, and in those case we don't
             # want to enforce escaping curly braces, e.g. it should work to write: env_list = {py39,py38}-{,dep}
             end = end + 1
             continue
-        new_value = value[:start] + replaced + value[end + 1 :]
+        new_value = f"{value[:start]}{replaced}{value[end + 1:]}"
         end = 0  # if we performed a replacement start over
         if new_value == value:  # if we're not making progress stop (circular reference?)
             break
@@ -52,11 +52,11 @@ def replace(conf: "Config", name: Optional[str], loader: "IniLoader", value: str
 
 REPLACE_PART = re.compile(
     r"""
-        (?<! \\) \{  # Unescaped {
-            ( [^{}] | \\ \{ | \\ \} )*  # Anything except an unescaped { or }
-        (?<! \\) \}  # Unescaped }
+        (?<! \\) {  # Unescaped {
+            ( [^{}] | \\ { | \\ } )*  # Anything except an unescaped { or }
+        (?<! \\) }  # Unescaped }
     |
-        (?<! \\) \[ \]  # Unescaped []
+        (?<! \\) \[ ]  # Unescaped []
     """,
     re.VERBOSE,
 )  # simplified - not verbose version (?<!\\)([^{}]|\\\{|\\\})*(?<!\\)\}|(?<!\\)\[\]
@@ -71,44 +71,39 @@ def find_replace_part(value: str, end: int) -> Tuple[int, int, Optional[str]]:
     return match.start(), match.end() - 1, match.group()[1:-1]
 
 
-def _replace_match(
-    conf: "Config", current_env: Optional[str], loader: "IniLoader", value: str, chain: List[str]
-) -> Optional[str]:
+def _replace_match(conf: "Config", loader: "IniLoader", value: str, conf_args: ConfigLoadArgs) -> Optional[str]:
     of_type, *args = ARGS_GROUP.split(value)
     if of_type == "/":
         replace_value: Optional[str] = os.sep
     elif of_type == "" and args == [""]:
         replace_value = os.pathsep
     elif of_type == "env":
-        replace_value = replace_env(conf, current_env, args, chain)
+        replace_value = replace_env(conf, args, conf_args)
     elif of_type == "tty":
         replace_value = replace_tty(args)
     elif of_type == "posargs":
-        replace_value = replace_pos_args(conf, current_env, args)
+        replace_value = replace_pos_args(conf, args, conf_args)
     else:
-        replace_value = replace_reference(conf, current_env, loader, value, chain)
+        replace_value = replace_reference(conf, loader, value, conf_args)
     return replace_value
 
 
-_REPLACE_REF = re.compile(
-    rf"""
-    (\[(?P<full_env>{BASE_TEST_ENV}(:(?P<env>[^]]+))?|(?P<section>[-\w]+))\])? # env/section
+@lru_cache(maxsize=None)
+def _replace_ref(env: Optional[str]) -> Pattern[str]:
+    return re.compile(
+        rf"""
+    (\[(?P<full_env>{re.escape(env or '.*')}(:(?P<env>[^]]+))?|(?P<section>[-\w]+))])? # env/section
     (?P<key>[a-zA-Z0-9_]+) # key
     (:(?P<default>.*))? # default value
 """,
-    re.VERBOSE,
-)
+        re.VERBOSE,
+    )
 
 
-def replace_reference(
-    conf: "Config",
-    current_env: Optional[str],
-    loader: "IniLoader",
-    value: str,
-    chain: List[str],
-) -> Optional[str]:
+def replace_reference(conf: "Config", loader: "IniLoader", value: str, conf_args: ConfigLoadArgs) -> Optional[str]:
     # a return value of None indicates could not replace
-    match = _REPLACE_REF.match(value)
+    pattern = _replace_ref(loader.section.prefix or loader.section.name)
+    match = pattern.match(value)
     if match:
         settings = match.groupdict()
 
@@ -118,11 +113,11 @@ def replace_reference(
 
         exception: Optional[Exception] = None
         try:
-            for src in _config_value_sources(settings["env"], settings["section"], current_env, conf, loader):
+            for src in _config_value_sources(settings["env"], settings["section"], conf_args.env_name, conf, loader):
                 try:
                     if isinstance(src, SectionProxy):
-                        return loader.process_raw(conf, current_env, src[key])
-                    value = src.load(key, chain)
+                        return loader.process_raw(conf, conf_args.env_name, src[key])
+                    value = src.load(key, conf_args.chain)
                     as_str, _ = stringify(value)
                     as_str = as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
                     return as_str
@@ -149,12 +144,9 @@ def _config_value_sources(
     loader: "IniLoader",
 ) -> Iterator[Union[SectionProxy, ConfigSet]]:
     # if we have an env name specified take only from there
-    # config is None only when loading the global tox config file for the CLI arguments, in this case no replace works
     if env is not None:
         if env in conf:
             yield conf.get_env(env)
-        else:
-            raise KeyError(f"missing tox environment with name {env}")
 
     if section is None:
         # if no section specified perhaps it's an unregistered config:
@@ -165,18 +157,18 @@ def _config_value_sources(
             yield conf.get_env(current_env)
         return
 
-    # if there's a section, special handle the core section under name tox
-    if section == loader.core_prefix:
+    # if there's a section, special handle the core section
+    if section == loader.core_section.name:
         yield conf.core  # try via registered configs
     value = loader.get_section(section)  # fallback to section
     if value is not None:
         yield value
 
 
-def replace_pos_args(conf: "Config", env_name: Optional[str], args: List[str]) -> str:
+def replace_pos_args(conf: "Config", args: List[str], conf_args: ConfigLoadArgs) -> str:
     to_path: Optional[Path] = None
-    if env_name is not None:  # pragma: no branch
-        env_conf = conf.get_env(env_name)
+    if conf_args.env_name is not None:  # pragma: no branch
+        env_conf = conf.get_env(conf_args.env_name)
         try:
             if env_conf["args_are_paths"]:  # pragma: no branch
                 to_path = env_conf["change_dir"]
@@ -190,19 +182,20 @@ def replace_pos_args(conf: "Config", env_name: Optional[str], args: List[str]) -
     return replace_value
 
 
-def replace_env(conf: "Config", env_name: Optional[str], args: List[str], chain: List[str]) -> str:
+def replace_env(conf: "Config", args: List[str], conf_args: ConfigLoadArgs) -> str:
     key = args[0]
     new_key = f"env:{key}"
 
-    if env_name is not None:  # on core no set env support # pragma: no branch
-        if new_key not in chain:  # check if set env
-            chain.append(new_key)
-            env_conf = conf.get_env(env_name)
+    if conf_args.env_name is not None:  # on core no set env support # pragma: no branch
+        if new_key not in conf_args.chain:  # check if set env
+            conf_args.chain.append(new_key)
+            env_conf = conf.get_env(conf_args.env_name)
             set_env: SetEnv = env_conf["set_env"]
             if key in set_env:
-                return set_env.load(key, chain)
-        elif chain[-1] != new_key:  # if there's a chain but only self-refers than use os.environ
-            raise ValueError(f"circular chain between set env {', '.join(i[4:] for i in chain[chain.index(new_key):])}")
+                return set_env.load(key, conf_args)
+        elif conf_args.chain[-1] != new_key:  # if there's a chain but only self-refers than use os.environ
+            circular = ", ".join(i[4:] for i in conf_args.chain[conf_args.chain.index(new_key) :])
+            raise ValueError(f"circular chain between set env {circular}")
 
     if key in os.environ:
         return os.environ[key]
@@ -219,7 +212,6 @@ def replace_tty(args: List[str]) -> str:
 
 
 __all__ = (
-    "BASE_TEST_ENV",
     "replace",
     "find_replace_part",
 )

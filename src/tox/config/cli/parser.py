@@ -48,8 +48,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
             if outcome is not None:
                 action.default, default_value = outcome
                 action.default_source = default_value  # type: ignore[attr-defined]
-        if isinstance(action, argparse._SubParsersAction):  # noqa
-            for values in action.choices.values():  # noqa
+        if isinstance(action, argparse._SubParsersAction):
+            for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
                     raise RuntimeError("detected sub-parser added without using our own add command")
                 values.fix_defaults()
@@ -58,16 +58,16 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     def get_type(action: Action) -> Type[Any]:
         of_type: Optional[Type[Any]] = getattr(action, "of_type", None)
         if of_type is None:
-            if isinstance(action, argparse._AppendAction):  # noqa
+            if isinstance(action, argparse._AppendAction):
                 of_type = List[action.type]  # type: ignore[name-defined]
-            elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa
+            elif isinstance(action, argparse._StoreAction) and action.choices:
                 loc = locals()
                 loc["Literal"] = Literal
                 as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
                 of_type = eval(as_literal, globals(), loc)
             elif action.default is not None:
                 of_type = type(action.default)
-            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa
+            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:
                 of_type = type(action.const)
             else:
                 raise TypeError(action)
@@ -84,7 +84,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
     def _get_help_string(self, action: Action) -> Optional[str]:
 
-        text: str = super()._get_help_string(action) or ""  # noqa
+        text: str = super()._get_help_string(action) or ""
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
             if text.endswith(default):  # pragma: no branch

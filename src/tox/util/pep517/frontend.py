@@ -202,12 +202,12 @@ class Frontend(ABC):
             extract_to = str(metadata_directory)
             basename = None
             with ZipFile(str(wheel), "r") as zip_file:
-                for name in zip_file.namelist():
+                for name in zip_file.namelist():  # pragma: no branch
                     path = Path(name)
                     if path.parts[0].endswith(".dist-info"):
                         basename = path.parts[0]
                         zip_file.extract(name, extract_to)
-            if basename is None:
+            if basename is None:  # pragma: no branch
                 raise RuntimeError(f"no .dist-info found inside generated wheel {wheel}")
         return basename, err, out
 
@@ -249,7 +249,7 @@ class Frontend(ABC):
                 }
             )
             with self._send_msg(cmd, result_file, msg) as status:
-                while not status.done:
+                while not status.done:  # pragma: no branch
                     sleep(0.001)  # wait a bit for things to happen
             if result_file.exists():
                 try:
@@ -277,5 +277,5 @@ class Frontend(ABC):
 
     @abstractmethod
     @contextmanager
-    def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[CmdStatus]:  # noqa: U100
+    def _send_msg(self, cmd: str, result_file: Path, msg: str) -> Iterator[CmdStatus]:
         raise NotImplementedError

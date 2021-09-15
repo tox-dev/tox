@@ -60,7 +60,7 @@ def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):
     base_name = "{}-{}-py{}-none-any.whl".format(name, version, sys.version_info[0])
     path = os.path.join(wheel_directory, base_name)
     with ZipFile(path, "w") as zip_file_handler:
-        for arc_name, data in content.items():
+        for arc_name, data in content.items():  # pragma: no branch
             zip_file_handler.writestr(arc_name, dedent(data).strip())
     print("created wheel {}".format(path))
     return base_name

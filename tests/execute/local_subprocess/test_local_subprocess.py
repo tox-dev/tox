@@ -50,7 +50,7 @@ def test_local_execute_basic_pass(
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
     with executor.call(request, show=show, out_err=out_err.out_err, env=MagicMock()) as status:
-        while status.exit_code is None:
+        while status.exit_code is None:  # pragma: no branch
             status.wait()
     assert status.out == out.encode()
     assert status.err == err.encode()
@@ -85,7 +85,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
     )
     out_err = FakeOutErr()
     with executor.call(request, show=True, out_err=out_err.out_err, env=MagicMock()) as status:
-        while status.exit_code is None:
+        while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -123,7 +123,7 @@ def test_local_execute_write_a_lot(os_env: Dict[str, str]) -> None:
     )
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
-        while status.exit_code is None:
+        while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -149,7 +149,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
     # run test
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
-        while status.exit_code is None:
+        while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -265,7 +265,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
-        while status.exit_code is None:
+        while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
     assert outcome is not None

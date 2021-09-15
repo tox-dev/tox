@@ -51,11 +51,11 @@ def test_config_overrides(tox_ini_conf: ToxIniCreator) -> None:
     assert conf["c"] == "ok"
 
 
-def test_config_new_source(tox_ini_conf: ToxIniCreator) -> None:
+def test_config_override_wins_memory_loader(tox_ini_conf: ToxIniCreator) -> None:
     main_conf = tox_ini_conf("[testenv]", override=[Override("testenv.c=ok")])
     conf = main_conf.get_env("py", loaders=[MemoryLoader(c="something_else")])
     conf.add_config("c", of_type=str, default="d", desc="desc")
-    assert conf["c"] == "something_else"
+    assert conf["c"] == "ok"
 
 
 def test_args_are_paths_when_disabled(tox_project: ToxProjectCreator) -> None:

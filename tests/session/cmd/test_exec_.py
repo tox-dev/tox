@@ -22,7 +22,7 @@ def test_exec_fail_multiple_target(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.parametrize("exit_code", [1, 0])
-def test_exec(tox_project: ToxProjectCreator, exit_code: int) -> None:  # noqa: U100
+def test_exec(tox_project: ToxProjectCreator, exit_code: int) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     py_cmd = f"import sys; print(sys.version); raise SystemExit({exit_code})"
     outcome = prj.run("e", "-e", "py", "--", "python", "-c", py_cmd)

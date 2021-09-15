@@ -27,7 +27,7 @@ def tox_add_option(parser: ToxParser) -> None:
     )
 
 
-def quickstart(state: State) -> int:  # noqa: U100
+def quickstart(state: State) -> int:
     root = state.options.quickstart_root.absolute()
     tox_ini = root / "tox.ini"
     if tox_ini.exists():
