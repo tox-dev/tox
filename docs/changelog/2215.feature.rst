@@ -1,0 +1,1 @@
+Allow plugins to update the :ref:`set_env` and change the :ref:`pass_env` configurations -- by :user:`gaborbernat`.

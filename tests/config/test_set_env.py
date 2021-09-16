@@ -9,7 +9,7 @@ from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 def test_set_env_explicit() -> None:
     set_env = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4", "py", "py")
-    set_env.update_if_not_present({"E": "5 ", "F": "6"})
+    set_env.update({"E": "5 ", "F": "6"}, override=False)
 
     keys = list(set_env)
     assert keys == ["E", "F", "A", "B", "C", "D"]
