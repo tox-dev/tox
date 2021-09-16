@@ -11,6 +11,26 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.24.4 (2021-09-16)
+Bugfixes
+^^^^^^^^
+
+- Fixed handling of ``-e ALL`` in parallel mode by ignoring the ``ALL`` in subprocesses -- by :user:`guahki`.
+  `#2167 <https://github.com/tox-dev/tox/issues/2167>`_
+- Prevent tox from using a truncated interpreter when using
+  ``TOX_LIMITED_SHEBANG`` -- by :user:`jdknight`.
+  `#2208 <https://github.com/tox-dev/tox/issues/2208>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Enabled the use of the favicon in the Sphinx docs first
+  introduced in :pull:`764` but not integrated fully
+  -- :user:`webknjaz`
+  `#2177 <https://github.com/tox-dev/tox/issues/2177>`_
+
+
 v3.24.3 (2021-08-21)
 --------------------
 

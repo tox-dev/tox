@@ -1,2 +1,0 @@
-Prevent tox from using a truncated interpreter when using
-``TOX_LIMITED_SHEBANG`` -- by :user:`jdknight`.
