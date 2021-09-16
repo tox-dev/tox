@@ -1,1 +1,0 @@
-Fixed handling of ``-e ALL`` in parallel mode by ignoring the ``ALL`` in subprocesses -- by :user:`guahki`.
