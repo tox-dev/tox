@@ -1,5 +1,0 @@
-Expose the configuration loading mechanism to plugins to define and load their own sections. Add
-:meth:`tox_add_env_config <tox.plugin.spec.tox_add_env_config>` plugin hook called after the configuration environment
-is created for a tox environment and removed ``tox_configure``. Add the main configuration object as argument to
-:meth:`tox_add_core_config <tox.plugin.spec.tox_add_core_config>`. Move the environment list method from the state to
-the main configuration object to allow its use within plugins -- by :user:`gaborbernat`.

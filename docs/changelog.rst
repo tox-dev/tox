@@ -4,6 +4,39 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0a9 (2021-09-16)
+---------------------
+
+Features - 4.0.0a9
+~~~~~~~~~~~~~~~~~~
+- Expose the parsed CLI arguments on the main configuration object for plugins and allow plugins to define their own
+  configuration section -- by :user:`gaborbernat`. (`#2191 <https://github.com/tox-dev/tox/issues/2191>`_)
+- Let tox run fail when all envs are skipped -- by :user:`jugmac00`. (`#2195 <https://github.com/tox-dev/tox/issues/2195>`_)
+- Expose the configuration loading mechanism to plugins to define and load their own sections. Add
+  :meth:`tox_add_env_config <tox.plugin.spec.tox_add_env_config>` plugin hook called after the configuration environment
+  is created for a tox environment and removed ``tox_configure``. Add the main configuration object as argument to
+  :meth:`tox_add_core_config <tox.plugin.spec.tox_add_core_config>`. Move the environment list method from the state to
+  the main configuration object to allow its use within plugins -- by :user:`gaborbernat`. (`#2200 <https://github.com/tox-dev/tox/issues/2200>`_)
+- Allow running code in plugins before and after commands via
+  :meth:`tox_before_run_commands <tox.plugin.spec.tox_before_run_commands>` and
+  :meth:`tox_after_run_commands <tox.plugin.spec.tox_after_run_commands>` plugin points -- by :user:`gaborbernat`. (`#2201 <https://github.com/tox-dev/tox/issues/2201>`_)
+- Allow plugins to update the :ref:`set_env` and change the :ref:`pass_env` configurations -- by :user:`gaborbernat`. (`#2215 <https://github.com/tox-dev/tox/issues/2215>`_)
+
+Bugfixes - 4.0.0a9
+~~~~~~~~~~~~~~~~~~
+- Fix env variable substitutions with defaults containing colon (e.g. URL) -- by :user:`comabrewer`. (`#2182 <https://github.com/tox-dev/tox/issues/2182>`_)
+- Do not allow constructing ``ConfigSet`` directly and implement ``__contains__`` for ``Loader`` -- by
+  :user:`gaborbernat`. (`#2209 <https://github.com/tox-dev/tox/issues/2209>`_)
+- Fix old-new value on recreate cache miss-match are swapped -- by :user:`gaborbernat`. (`#2211 <https://github.com/tox-dev/tox/issues/2211>`_)
+- Report fails when report does not support Unicode characters -- by :user:`gaborbernat`. (`#2213 <https://github.com/tox-dev/tox/issues/2213>`_)
+
+Improved Documentation - 4.0.0a9
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Adopt furo theme, update our state diagram and description in user docs (SVG + light/dark variant), split
+  the Python API into its own page from under the plugin page, and document plugin adoption under the ``tox-dev``
+  organization - by :user:`gaborbernat`. (`#1881 <https://github.com/tox-dev/tox/issues/1881>`_)
+
+
 v4.0.0a8 (2021-08-21)
 ---------------------
 
