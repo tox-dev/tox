@@ -12,6 +12,8 @@ with advance notice in the **Deprecations** section of releases.
 .. towncrier release notes start
 
 v3.24.4 (2021-09-16)
+--------------------
+
 Bugfixes
 ^^^^^^^^
 
