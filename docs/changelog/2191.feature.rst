@@ -1,2 +1,0 @@
-Expose the parsed CLI arguments on the main configuration object for plugins and allow plugins to define their own
-configuration section -- by :user:`gaborbernat`.

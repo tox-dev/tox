@@ -1,2 +1,0 @@
-Do not allow constructing ``ConfigSet`` directly and implement ``__contains__`` for ``Loader`` -- by
-:user:`gaborbernat`.
