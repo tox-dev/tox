@@ -1,6 +1,8 @@
 import logging
+import os
 import sys
 from typing import List
+from unittest.mock import patch
 
 import pytest
 from pytest_mock import MockerFixture
@@ -134,3 +136,47 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
     result = project.run()
     result.assert_failed()
     assert "raise TypeError(raw)" in result.out
+
+
+def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    @impl
+    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:
+        env_conf["pass_env"].append("MAGIC_*")
+
+    register_inline_plugin(mocker, tox_add_env_config)
+    ini = """
+    [testenv]
+    package=skip
+    commands=python -c 'import os; print(os.environ["MAGIC_1"]); print(os.environ["MAGIC_2"])'
+    """
+    project = tox_project({"tox.ini": ini})
+    with patch.dict(os.environ, {"MAGIC_1": "magic_1", "MAGIC_2": "magic_2"}):
+        result = project.run("r")
+    result.assert_success()
+    assert "magic_1" in result.out
+    assert "magic_2" in result.out
+
+    result_conf = project.run("c", "-e", "py", "-k", "pass_env")
+    result_conf.assert_success()
+    assert "MAGIC_*" in result_conf.out
+
+
+def test_plugin_extend_set_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    @impl
+    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:
+        env_conf["set_env"].update({"MAGI_CAL": "magi_cal"})
+
+    register_inline_plugin(mocker, tox_add_env_config)
+    ini = """
+    [testenv]
+    package=skip
+    commands=python -c 'import os; print(os.environ["MAGI_CAL"])'
+    """
+    project = tox_project({"tox.ini": ini})
+    result = project.run("r")
+    result.assert_success()
+    assert "magi_cal" in result.out
+
+    result_conf = project.run("c", "-e", "py", "-k", "set_env")
+    result_conf.assert_success()
+    assert "MAGI_CAL=magi_cal" in result_conf.out

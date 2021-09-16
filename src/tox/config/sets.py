@@ -225,7 +225,7 @@ class EnvConfigSet(ConfigSet):
 
     def register_config(self) -> None:
         def set_env_post_process(values: SetEnv) -> SetEnv:
-            values.update_if_not_present(self.default_set_env_loader())
+            values.update(self.default_set_env_loader(), override=False)
             return values
 
         def set_env_factory(raw: object) -> SetEnv:

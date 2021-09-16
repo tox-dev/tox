@@ -37,6 +37,7 @@ from tox.config.sets import EnvConfigSet
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, Outcome
 from tox.execute.request import ExecuteRequest, shell_cmd
 from tox.execute.stream import SyncWrite
+from tox.plugin import manager
 from tox.report import LOGGER, OutErr
 from tox.run import run as tox_run
 from tox.run import setup_state as previous_setup_state
@@ -74,12 +75,19 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:  # noqa: PT004
 def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator[None]:
     """unless this is a plugin test do not allow loading toxfile.py"""
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
-        from tox.plugin import manager
+        module, load_inline = None, manager._load_inline
 
-        inline_plugin = mocker.spy(manager, "_load_inline")
+        def _load_inline(path: Path) -> Optional[ModuleType]:  # register only on first run, and unregister at end
+            nonlocal module
+            if module is None:
+                module = load_inline(path)
+                return module
+            return None
+
+        mocker.patch.object(manager, "_load_inline", _load_inline)
         yield
-        if inline_plugin.spy_return is not None:  # pragma: no branch
-            manager.MANAGER.manager.unregister(inline_plugin.spy_return)
+        if module is not None:  # pragma: no branch
+            manager.MANAGER.manager.unregister(module)
     else:  # do not allow loading inline plugins
         mocker.patch("tox.plugin.inline._load_plugin", return_value=None)
         yield
@@ -605,7 +613,7 @@ def enable_pip_pypi_access_fixture(
     return previous_url
 
 
-def register_inline_plugin(mocker: MockerFixture, *args: Callable[..., Any]) -> None:  #
+def register_inline_plugin(mocker: MockerFixture, *args: Callable[..., Any]) -> None:
     frame_info = inspect.stack()[1]
     caller_module = inspect.getmodule(frame_info[0])
     assert caller_module is not None

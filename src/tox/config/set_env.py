@@ -28,6 +28,7 @@ class SetEnv:
                 else:
                     self._raw[key] = value
         self._materialized: Dict[str, str] = {}
+        self.changed = False
 
     @staticmethod
     def _extract_key_value(line: str) -> Tuple[str, str]:
@@ -63,11 +64,12 @@ class SetEnv:
             self._raw.update(sub_raw)
             yield from sub_raw.keys()
 
-    def update_if_not_present(self, param: Mapping[str, str]) -> None:
+    def update(self, param: Mapping[str, str], *, override: bool = True) -> None:
         for key, value in param.items():
             # do not override something already set explicitly
-            if key not in self._raw and key not in self._materialized:
+            if override or (key not in self._raw and key not in self._materialized):
                 self._materialized[key] = value
+                self.changed = True
 
 
 __all__ = ("SetEnv",)

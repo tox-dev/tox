@@ -59,6 +59,7 @@ class ToxEnv(ABC):
         self._paths_private: List[Path] = []  #: a property holding the PATH environment variables
         self._hidden_outcomes: Optional[List[Outcome]] = []
         self._env_vars: Optional[Dict[str, str]] = None
+        self._env_vars_pass_env: List[str] = []
         self._suspended_out_err: Optional[OutErr] = None
         self._execute_statuses: Dict[int, ExecuteStatus] = {}
         self._interrupted = False
@@ -284,13 +285,14 @@ class ToxEnv(ABC):
 
     @property
     def _environment_variables(self) -> Dict[str, str]:
-        if self._env_vars is not None:
-            return self._env_vars
         pass_env: List[str] = self.conf["pass_env"]
-        result = self._load_pass_env(pass_env)
         set_env: SetEnv = self.conf["set_env"]
+        if self._env_vars_pass_env == pass_env and not set_env.changed and self._env_vars is not None:
+            return self._env_vars
+
+        result = self._load_pass_env(pass_env)
         # load/paths_env might trigger a load of the environment variables, set result here, returns current state
-        self._env_vars = result
+        self._env_vars, self._env_vars_pass_env, set_env.changed = result, pass_env, False
         # set PATH here in case setting and environment variable requires access to the environment variable PATH
         result["PATH"] = self._make_path()
         for key in set_env:
