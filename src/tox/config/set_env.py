@@ -1,6 +1,8 @@
+from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Mapping, Optional, Tuple
 
 from tox.config.loader.api import ConfigLoadArgs
+from tox.tox_env.errors import Fail
 
 Replacer = Callable[[str, ConfigLoadArgs], str]
 
@@ -15,20 +17,38 @@ class SetEnv:
 
         for line in raw.splitlines():
             if line.strip():
-                try:
-                    key, value = self._extract_key_value(line)
-                    if "{" in key:
-                        raise ValueError(f"invalid line {line!r} in set_env")
-                except ValueError:
-                    _, __, match = find_replace_part(line, 0)
-                    if match:
-                        self._later.append(line)
-                    else:
-                        raise
+                if line.startswith("file|"):
+                    for key, value in self._read_env_file(line):
+                        self._raw[key] = value
                 else:
-                    self._raw[key] = value
+                    try:
+                        key, value = self._extract_key_value(line)
+                        if "{" in key:
+                            raise ValueError(f"invalid line {line!r} in set_env")
+                    except ValueError:
+                        _, __, match = find_replace_part(line, 0)
+                        if match:
+                            self._later.append(line)
+                        else:
+                            raise
+                    else:
+                        self._raw[key] = value
         self._materialized: Dict[str, str] = {}
         self.changed = False
+
+    def _read_env_file(self, line: str) -> Iterator[Tuple[str, str]]:
+        # Our rules in the documentation, some upstream environment file rules (we follow mostly the docker one):
+        # - https://www.npmjs.com/package/dotenv#rules
+        # - https://docs.docker.com/compose/env-file/
+        env_file = Path(line[len("file|") :])
+        if not env_file.exists():
+            raise Fail(f"{env_file} does not exist for set_env")
+        for env_line in env_file.read_text().splitlines():
+            env_line = env_line.strip()
+            if not env_line or env_line.startswith("#"):
+                continue
+            key, value = self._extract_key_value(env_line)
+            yield key, value
 
     @staticmethod
     def _extract_key_value(line: str) -> Tuple[str, str]:

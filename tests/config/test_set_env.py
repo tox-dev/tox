@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Any, Dict, Optional, Protocol
 
 import pytest
 from pytest_mock import MockerFixture
@@ -26,13 +26,15 @@ def test_set_env_bad_line() -> None:
         SetEnv("A", "py", "py")
 
 
-EvalSetEnv = Callable[[str], SetEnv]
+class EvalSetEnv(Protocol):
+    def __call__(self, tox_ini: str, extra_files: Optional[Dict[str, Any]] = None) -> SetEnv:  # noqa: U100
+        ...
 
 
 @pytest.fixture()
 def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
-    def func(tox_ini: str) -> SetEnv:
-        prj = tox_project({"tox.ini": tox_ini})
+    def func(tox_ini: str, extra_files: Optional[Dict[str, Any]] = None) -> SetEnv:
+        prj = tox_project({"tox.ini": tox_ini, **(extra_files or {})})
         result = prj.run("c", "-k", "set_env", "-e", "py")
         result.assert_success()
         set_env: SetEnv = result.env_conf("py")["set_env"]
@@ -110,3 +112,31 @@ def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) ->
 def test_set_env_honor_override(eval_set_env: EvalSetEnv) -> None:
     set_env = eval_set_env("[testenv]\npackage=skip\nset_env=PIP_DISABLE_PIP_VERSION_CHECK=0")
     assert set_env.load("PIP_DISABLE_PIP_VERSION_CHECK") == "0"
+
+
+def test_set_env_environment_file(eval_set_env: EvalSetEnv) -> None:
+    env_file = """
+    A=1
+    B= 2
+    C = 1
+    # D = comment # noqa: E800
+    E = "1"
+    F =
+    """
+    set_env = eval_set_env("[testenv]\npackage=skip\nset_env=file|a.txt", extra_files={"a.txt": env_file})
+    content = {k: set_env.load(k) for k in set_env}
+    assert content == {
+        "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        "A": "1",
+        "B": "2",
+        "C": "1",
+        "E": '"1"',
+        "F": "",
+    }
+
+
+def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=file|magic.txt"})
+    result = project.run("r")
+    result.assert_failed()
+    assert "py: failed with magic.txt does not exist for set_env" in result.out
