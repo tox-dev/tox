@@ -1,13 +1,13 @@
 """Defines tox error types"""
 
 
-class Recreate(RuntimeError):
+class Recreate(Exception):  # noqa: N818
     """Recreate the tox environment"""
 
 
-class Skip(RuntimeError):
+class Skip(Exception):  # noqa: N818
     """Skip this tox environment"""
 
 
-class Fail(RuntimeError):
+class Fail(Exception):  # noqa: N818
     """Failed creating env"""

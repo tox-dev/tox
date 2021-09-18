@@ -166,6 +166,8 @@ class ToxProject:
                 ToxProject._setup_files(at_path, None, value)
             elif isinstance(value, str):
                 at_path.write_text(textwrap.dedent(value))
+            elif value is None:
+                at_path.mkdir()
             else:
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover

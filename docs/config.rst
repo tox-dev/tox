@@ -270,7 +270,17 @@ Base options
 .. conf::
    :keys: set_env, setenv
 
-   A dictionary of environment variables to set when running commands in the tox environment.
+   A dictionary of environment variables to set when running commands in the tox environment. Lines starting with a
+   ``file|`` prefix define the location of environment file.
+
+    .. note::
+
+       Environment files are processed using the following rules:
+
+       - blank lines are ignored,
+       - lines starting with the ``#`` character are ignored,
+       - each line is in KEY=VALUE format; both the key and the value are stripped,
+       - there is no special handling of quotation marks, they are part of the key or value.
 
 .. conf::
    :keys: parallel_show_output

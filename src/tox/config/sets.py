@@ -231,13 +231,14 @@ class EnvConfigSet(ConfigSet):
         def set_env_factory(raw: object) -> SetEnv:
             if not isinstance(raw, str):
                 raise TypeError(raw)
-            return SetEnv(raw, self.name, self.env_name)
+            return SetEnv(raw, self.name, self.env_name, root)
 
+        root = self._conf.core["tox_root"]
         self.add_config(
             keys=["set_env", "setenv"],
             of_type=SetEnv,
             factory=set_env_factory,
-            default=SetEnv("", self.name, self.env_name),
+            default=SetEnv("", self.name, self.env_name, root),
             desc="environment variables to set when running commands in the tox environment",
             post_process=set_env_post_process,
         )
