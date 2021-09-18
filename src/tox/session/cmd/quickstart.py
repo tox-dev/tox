@@ -7,7 +7,7 @@ from packaging.version import Version
 from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
 from tox.session.state import State
-from tox.version import __version__
+from tox.version import version as __version__
 
 
 @impl

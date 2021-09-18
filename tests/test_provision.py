@@ -12,6 +12,7 @@ import pytest
 from filelock import FileLock
 from packaging.requirements import Requirement
 
+from tox import __version__
 from tox.pytest import Index, IndexServer, MonkeyPatch, TempPathFactory, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
@@ -112,7 +113,7 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
     outcome.assert_failed()
     outcome.assert_out_err(
         r".*will run in automatically provisioned tox, host .* is missing \[requires \(has\)\]:"
-        r" pkg-does-not-exist \(N/A\), setuptools==1 \(.*\).*",
+        r" pkg-does-not-exist, setuptools==1 \(.*\).*",
         r".*",
         regex=True,
     )
@@ -131,7 +132,7 @@ def test_provision_requires_ok(
     result_first.assert_success()
     prov_msg = (
         f"ROOT: will run in automatically provisioned tox, host {sys.executable} is missing"
-        f" [requires (has)]: demo-pkg-inline (N/A)"
+        f" [requires (has)]: demo-pkg-inline"
     )
     assert prov_msg in result_first.out
 
@@ -165,3 +166,26 @@ def test_provision_platform_check(
     result.assert_failed(-2)
     msg = f"cannot provision tox environment .tox because platform {sys.platform} does not match wrong_platform"
     assert msg in result.out
+
+
+def test_provision_no_recreate(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nrequires = p\nskipsdist=true\n"
+    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "--no-provision")
+    result.assert_failed()
+    assert f"provisioning explicitly disabled within {sys.executable}, but is missing [requires (has)]: p" in result.out
+
+
+def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nrequires = p\nskipsdist=true\n"
+    project = tox_project({"tox.ini": ini})
+    result = project.run("c", "-e", "py", "--no-provision", "out.json")
+    result.assert_failed()
+    msg = (
+        f"provisioning explicitly disabled within {sys.executable}, "
+        f"but is missing [requires (has)]: p and wrote to out.json"
+    )
+    assert msg in result.out
+    with (project.path / "out.json").open() as file_handler:
+        requires = json.load(file_handler)
+    version = __version__.split("+")[0]
+    assert requires == {"minversion": version, "requires": ["p", f"tox>={version}"]}

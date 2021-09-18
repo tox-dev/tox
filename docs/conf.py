@@ -20,7 +20,7 @@ from sphinx.locale import __
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
 
-from tox.version import __version__
+from tox import __version__
 
 company = "tox-dev"
 name = "tox"

@@ -3,7 +3,7 @@ import socket
 import sys
 from typing import Any, Dict
 
-from tox.version import __version__
+from tox.version import version
 
 from .env import EnvJournal
 
@@ -20,7 +20,7 @@ class Journal:
             self._content.update(
                 {
                     "reportversion": "1",
-                    "toxversion": __version__,
+                    "toxversion": version,
                     "platform": sys.platform,
                     "host": socket.getfqdn(),
                 }
