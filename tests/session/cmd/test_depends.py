@@ -14,9 +14,7 @@ def test_depends(
     ver = sys.version_info[0:2]
     py = f"py{''.join(str(i) for i in ver)}"
     prev_py = f"py{prev_ver}"
-    project = tox_project(
-        {
-            "tox.ini": f"""
+    ini = f"""
     [tox]
     env_list = py,{py},{prev_py},py31,cov2,cov
     [testenv]
@@ -28,8 +26,7 @@ def test_depends(
     depends = cov
     skip_install = true
     """
-        }
-    )
+    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     outcome = project.run("de")
     outcome.assert_success()
     lines = outcome.out.splitlines()
