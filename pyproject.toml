@@ -12,10 +12,6 @@ known_first_party = ["tox", "tests"]
 
 [tool.setuptools_scm]
 write_to = "src/tox/version.py"
-write_to_template = """
-\"\"\" Version information \"\"\"
-__version__ = "{version}"
-"""
 
 [tool.towncrier]
 name = "tox"

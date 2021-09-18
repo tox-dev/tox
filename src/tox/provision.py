@@ -1,10 +1,12 @@
 """
 This package handles provisioning an appropriate tox version per requirements.
 """
+import json
 import logging
 import sys
 from argparse import ArgumentParser
-from typing import List, Tuple, Union, cast
+from pathlib import Path
+from typing import List, Optional, Tuple, Union, cast
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
@@ -20,7 +22,7 @@ from tox.session.state import State
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.runner import PythonRun
-from tox.version import __version__ as current_version
+from tox.version import version as current_version
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import PackageNotFoundError, distribution
@@ -30,6 +32,14 @@ else:  # pragma: no cover (py38+)
 
 @impl
 def tox_add_option(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--no-provision",
+        default=False,
+        const=True,
+        nargs="?",
+        metavar="REQ_JSON",
+        help="do not perform provision, but fail and if a path was provided write provision metadata as JSON to it",
+    )
     parser.add_argument(
         "--no-recreate-provision",
         dest="no_recreate_provision",
@@ -77,22 +87,41 @@ def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:  # no
 
 def provision(state: State) -> Union[int, bool]:
     requires: List[Requirement] = state.conf.core["requires"]
-    missing: List[Tuple[Requirement, str]] = []
+    missing = _get_missing(requires)
+    if not missing:
+        return False
+
+    deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
+    miss_msg = f"is missing [requires (has)]: {deps}"
+
+    no_provision: Union[bool, str] = state.options.no_provision
+    if no_provision:
+        msg = f"provisioning explicitly disabled within {sys.executable}, but {miss_msg}"
+        if isinstance(no_provision, str):
+            msg += f" and wrote to {no_provision}"
+            requires_dict = {
+                "minversion": str(next(i.specifier for i in requires if i.name == "tox")).split("=")[1],
+                "requires": [str(i) for i in requires],
+            }
+            Path(no_provision).write_text(json.dumps(requires_dict, indent=4))
+        raise HandledError(msg)
+
+    logging.warning("will run in automatically provisioned tox, host %s %s", sys.executable, miss_msg)
+    return run_provision(requires, state)
+
+
+def _get_missing(requires: List[Requirement]) -> List[Tuple[Requirement, Optional[str]]]:
+    missing: List[Tuple[Requirement, Optional[str]]] = []
     for package in requires:
         package_name = canonicalize_name(package.name)
         try:
             dist = distribution(package_name)  # type: ignore[no-untyped-call]
         except PackageNotFoundError:
-            missing.append((package, "N/A"))
+            missing.append((package, None))
         else:
             if not package.specifier.contains(dist.version, prereleases=True):
                 missing.append((package, dist.version))
-    if not missing:
-        return False
-    deps = ", ".join(f"{p} ({ver})" for p, ver in missing)
-    msg = "will run in automatically provisioned tox, host %s is missing [requires (has)]: %s"
-    logging.warning(msg, sys.executable, deps)
-    return run_provision(requires, state)
+    return missing
 
 
 def run_provision(deps: List[Requirement], state: State) -> int:

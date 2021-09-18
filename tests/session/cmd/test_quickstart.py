@@ -4,7 +4,7 @@ from textwrap import dedent
 from packaging.version import Version
 
 from tox.pytest import ToxProjectCreator
-from tox.version import __version__
+from tox.version import version as __version__
 
 
 def test_quickstart_ok(tox_project: ToxProjectCreator) -> None:
