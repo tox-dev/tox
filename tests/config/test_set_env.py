@@ -1,4 +1,6 @@
-from typing import Any, Dict, Optional, Protocol
+import sys
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import pytest
 from pytest_mock import MockerFixture
@@ -6,9 +8,14 @@ from pytest_mock import MockerFixture
 from tox.config.set_env import SetEnv
 from tox.pytest import MonkeyPatch, ToxProjectCreator
 
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
+    from typing import Protocol
+else:  # pragma: no cover (<py38)
+    from typing_extensions import Protocol
+
 
 def test_set_env_explicit() -> None:
-    set_env = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4", "py", "py")
+    set_env = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4", "py", "py", Path())
     set_env.update({"E": "5 ", "F": "6"}, override=False)
 
     keys = list(set_env)
@@ -23,19 +30,21 @@ def test_set_env_explicit() -> None:
 
 def test_set_env_bad_line() -> None:
     with pytest.raises(ValueError, match="A"):
-        SetEnv("A", "py", "py")
+        SetEnv("A", "py", "py", Path())
 
 
 class EvalSetEnv(Protocol):
-    def __call__(self, tox_ini: str, extra_files: Optional[Dict[str, Any]] = None) -> SetEnv:  # noqa: U100
+    def __call__(
+        self, tox_ini: str, extra_files: Optional[Dict[str, Any]] = ..., from_cwd: Optional[Path] = ...  # noqa: U100
+    ) -> SetEnv:
         ...
 
 
 @pytest.fixture()
 def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
-    def func(tox_ini: str, extra_files: Optional[Dict[str, Any]] = None) -> SetEnv:
+    def func(tox_ini: str, extra_files: Optional[Dict[str, Any]] = None, from_cwd: Optional[Path] = None) -> SetEnv:
         prj = tox_project({"tox.ini": tox_ini, **(extra_files or {})})
-        result = prj.run("c", "-k", "set_env", "-e", "py")
+        result = prj.run("c", "-k", "set_env", "-e", "py", from_cwd=None if from_cwd is None else prj.path / from_cwd)
         result.assert_success()
         set_env: SetEnv = result.env_conf("py")["set_env"]
         return set_env
@@ -123,7 +132,9 @@ def test_set_env_environment_file(eval_set_env: EvalSetEnv) -> None:
     E = "1"
     F =
     """
-    set_env = eval_set_env("[testenv]\npackage=skip\nset_env=file|a.txt", extra_files={"a.txt": env_file})
+    extra = {"A": {"a.txt": env_file}, "B": None, "C": None}
+    ini = "[testenv]\npackage=skip\nset_env=file|A{/}a.txt\nchange_dir=C"
+    set_env = eval_set_env(ini, extra_files=extra, from_cwd=Path("B"))
     content = {k: set_env.load(k) for k in set_env}
     assert content == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
@@ -139,4 +150,4 @@ def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> Non
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=file|magic.txt"})
     result = project.run("r")
     result.assert_failed()
-    assert "py: failed with magic.txt does not exist for set_env" in result.out
+    assert f"py: failed with {project.path / 'magic.txt'} does not exist for set_env" in result.out

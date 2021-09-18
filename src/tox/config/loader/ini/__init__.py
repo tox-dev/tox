@@ -81,8 +81,7 @@ class IniLoader(StrConvert, Loader[str]):
         yield raw
         if delay_replace:
             converted = future.result()
-            if hasattr(converted, "replacer"):  # pragma: no branch
-                converted.replacer = replacer  # type: ignore[attr-defined]
+            converted.use_replacer(replacer, args)  # type: ignore[attr-defined] # this can be only set_env that has it
 
     def found_keys(self) -> Set[str]:
         return set(self._section_proxy.keys())
