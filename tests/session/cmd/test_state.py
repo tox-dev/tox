@@ -14,7 +14,7 @@ def test_env_already_packaging(tox_project: ToxProjectCreator) -> None:
 
 
 def test_env_run_cannot_be_packaging_too(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\npackage_env=py"})
+    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\npackage_env=py", "pyproject.toml": ""})
     result = proj.run("r", "-e", "py")
     result.assert_failed(code=-2)
     assert " py is already defined as a run environment, cannot be packaging too" in result.out, result.out

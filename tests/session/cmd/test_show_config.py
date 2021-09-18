@@ -60,7 +60,7 @@ def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\nmagic=yes"})
     outcome = project.run("c", "-e", "py", "-k", "no_package", "env_name", "--core")
     outcome.assert_success()
-    outcome.assert_out_err("[testenv:py]\nenv_name = py\n\n[tox]\nno_package = False\n", "")
+    outcome.assert_out_err("[testenv:py]\nenv_name = py\n\n[tox]\nno_package = True\n", "")
 
 
 def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
@@ -114,7 +114,9 @@ def test_show_config_pkg_env_once(
     tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], Tuple[str, str]]
 ) -> None:
     prev_ver, impl = patch_prev_py(True)
-    project = tox_project({"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"})
+    project = tox_project(
+        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""}
+    )
     result = project.run("c")
     result.assert_success()
     parser = ConfigParser()
@@ -127,7 +129,9 @@ def test_show_config_pkg_env_skip(
     tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], Tuple[str, str]]
 ) -> None:
     prev_ver, impl = patch_prev_py(False)
-    project = tox_project({"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"})
+    project = tox_project(
+        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""}
+    )
     result = project.run("c")
     result.assert_success()
     parser = ConfigParser()
@@ -137,7 +141,7 @@ def test_show_config_pkg_env_skip(
 
 
 def test_show_config_select_only(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\nenv_list=\n a\n b"})
+    project = tox_project({"tox.ini": "[tox]\nenv_list=\n a\n b", "pyproject.toml": ""})
     result = project.run("c", "-e", ".pkg,b,.pkg")
     result.assert_success()
     parser = ConfigParser()
@@ -184,7 +188,7 @@ def test_show_config_ini_comment_path(tox_project: ToxProjectCreator, tmp_path: 
 
 
 def test_show_config_cli_flag(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": ""})
+    project = tox_project({"tox.ini": "", "pyproject.toml": ""})
     result = project.run("c", "-e", "py,.pkg", "-k", "package", "recreate", "--develop", "-r", "--no-recreate-pkg")
     expected = "[testenv:py]\npackage = dev-legacy\nrecreate = True\n\n[testenv:.pkg]\nrecreate = False\n"
     assert result.out == expected

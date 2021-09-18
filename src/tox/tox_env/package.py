@@ -4,7 +4,7 @@ A tox environment that can build packages.
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Lock
-from typing import Any, Generator, List, Optional, Set, Tuple, cast
+from typing import List, Optional, Set, cast
 
 from tox.config.main import Config
 from tox.config.sets import EnvConfigSet
@@ -48,11 +48,6 @@ class PackageToxEnv(ToxEnv, ABC):
 
     def _recreate_default(self, conf: "Config", value: Optional[str]) -> bool:
         return self.options.no_recreate_pkg is False and super()._recreate_default(conf, value)
-
-    def create_package_env(
-        self, name: str, info: Tuple[Any, ...]  # noqa: U100
-    ) -> Generator[Tuple[str, str], "PackageToxEnv", None]:
-        """allow creating sub-package envs"""
 
     @abstractmethod
     def perform_packaging(self, for_env: EnvConfigSet) -> List[Package]:

@@ -21,7 +21,7 @@ else:  # pragma: no cover (<py38)
     ["dev-legacy", "sdist", "wheel"],
 )
 def test_tox_ini_package_type_valid(tox_project: ToxProjectCreator, pkg_type: str) -> None:
-    proj = tox_project({"tox.ini": f"[testenv]\npackage={pkg_type}"})
+    proj = tox_project({"tox.ini": f"[testenv]\npackage={pkg_type}", "pyproject.toml": ""})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_success()
     res = result.env_conf("py")["package"]
@@ -31,7 +31,7 @@ def test_tox_ini_package_type_valid(tox_project: ToxProjectCreator, pkg_type: st
 
 
 def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\npackage=bad"})
+    proj = tox_project({"tox.ini": "[testenv]\npackage=bad", "pyproject.toml": ""})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_failed()
     assert " invalid package config type bad requested, must be one of wheel, sdist, dev-legacy, skip" in result.out
@@ -122,7 +122,7 @@ def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_pr
 
 def test_package_root_via_root(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     ini = f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg"
-    proj = tox_project({"tox.ini": ini})
+    proj = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_success()
@@ -130,7 +130,7 @@ def test_package_root_via_root(tox_project: ToxProjectCreator, demo_pkg_inline: 
 
 def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     ini = f"[testenv]\npackage=wheel\nwheel_build_env=.pkg\npackage_root={demo_pkg_inline}"
-    proj = tox_project({"tox.ini": ini})
+    proj = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_success()
