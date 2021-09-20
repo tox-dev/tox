@@ -1,12 +1,14 @@
 import json
 import logging
 import os
+import shutil
+import stat
 import subprocess
 import sys
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Dict, List, Tuple
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 import psutil
 import pytest
@@ -15,7 +17,7 @@ from flaky import flaky
 from psutil import AccessDenied
 from pytest_mock import MockerFixture
 
-from tox.execute.api import Outcome
+from tox.execute.api import ExecuteOptions, Outcome
 from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecuteInstance, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.stream import SyncWrite
@@ -298,3 +300,36 @@ def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
     inst = LocalSubProcessExecuteInstance(request, MagicMock(), out=SyncWrite("out", None), err=SyncWrite("err", None))
 
     assert inst.cmd == [exe]
+
+
+def test_shebang_limited_on(tmp_path: Path) -> None:
+    exe, script, instance = _create_shebang_test(tmp_path, env={"TOX_LIMITED_SHEBANG": "1"})
+    if sys.platform == "win32":  # pragma: win32 cover
+        assert instance.cmd == [str(script), "--magic"]
+    else:
+        assert instance.cmd == [exe, "-s", str(script), "--magic"]
+
+
+@pytest.mark.parametrize("env", [{}, {"TOX_LIMITED_SHEBANG": ""}])
+def test_shebang_limited_off(tmp_path: Path, env: Dict[str, str]) -> None:
+    _, script, instance = _create_shebang_test(tmp_path, env=env)
+    assert instance.cmd == [str(script), "--magic"]
+
+
+def test_shebang_failed_to_parse(tmp_path: Path) -> None:
+    _, script, instance = _create_shebang_test(tmp_path, env={"TOX_LIMITED_SHEBANG": "yes"})
+    script.write_text("")
+    assert instance.cmd == [str(script), "--magic"]
+
+
+def _create_shebang_test(tmp_path: Path, env: Dict[str, str]) -> Tuple[str, Path, LocalSubProcessExecuteInstance]:
+    exe = shutil.which("python")
+    assert exe is not None
+    script = tmp_path / "s.py"
+    script.write_text(f"#!{exe} -s")
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)  # mark it executable
+    env["PATH"] = str(script.parent)
+    request = create_autospec(ExecuteRequest, cmd=["s.py", "--magic"], env=env, allow=None)
+    writer = create_autospec(SyncWrite)
+    instance = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
+    return exe, script, instance
