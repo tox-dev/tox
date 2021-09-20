@@ -325,11 +325,11 @@ def test_shebang_failed_to_parse(tmp_path: Path) -> None:
 def _create_shebang_test(tmp_path: Path, env: Dict[str, str]) -> Tuple[str, Path, LocalSubProcessExecuteInstance]:
     exe = shutil.which("python")
     assert exe is not None
-    script = tmp_path / "s.py"
+    script = tmp_path / f"s{'.EXE' if sys.platform == 'win32' else ''}"
     script.write_text(f"#!{exe} -s")
     script.chmod(script.stat().st_mode | stat.S_IEXEC)  # mark it executable
     env["PATH"] = str(script.parent)
-    request = create_autospec(ExecuteRequest, cmd=["s.py", "--magic"], env=env, allow=None)
+    request = create_autospec(ExecuteRequest, cmd=["s", "--magic"], env=env, allow=None)
     writer = create_autospec(SyncWrite)
     instance = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
     return exe, script, instance
