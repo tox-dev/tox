@@ -13,6 +13,8 @@ autoclass
 autodoc
 autosectionlabel
 autouse
+binprm
+buf
 bufsize
 byref
 cachetools
@@ -81,6 +83,7 @@ fixup
 fmt
 formatter
 fromdocname
+fromhex
 fromkeys
 fs
 fullmatch
@@ -101,6 +104,7 @@ hookimpl
 hookspec
 hookspecs
 ident
+iexec
 ign
 ignorecase
 impl

@@ -1,0 +1,2 @@
+Add support for rewriting script invocations that have valid shebang lines when the ``TOX_LIMITED_SHEBANG`` environment
+variable is set and not empty - by :user:`gaborbernat`.

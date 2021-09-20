@@ -13,6 +13,7 @@ from tox.tox_env.errors import Fail
 from ..api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
 from ..request import ExecuteRequest, StdinSource
 from ..stream import SyncWrite
+from ..util import shebang
 
 if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
     # needs stdin/stdout handlers backed by overlapped IO
@@ -171,8 +172,12 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                     else:
                         msg = f"{base} (resolves to {executable})" if base == executable else base
                         raise Fail(f"{msg} is not allowed, use allowlist_externals to allow it")
-                # else use expanded format
-                cmd = [executable, *self.request.cmd[1:]]
+                cmd = [executable]
+                if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
+                    shebang_line = shebang(executable)
+                    if shebang_line:
+                        cmd = [*shebang_line, executable]
+                cmd.extend(self.request.cmd[1:])
             self._cmd = cmd
         return self._cmd
 
