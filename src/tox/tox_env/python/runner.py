@@ -66,7 +66,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         if develop_mode:
             self.conf.add_constant(["package"], desc, "dev-legacy")
         else:
-            self.conf.add_config(keys="package", of_type=str, default="sdist", desc=desc)
+            self.conf.add_config(keys="package", of_type=str, default=self.default_pkg_type, desc=desc)
         pkg_type = self.pkg_type
 
         if pkg_type == "skip":
@@ -108,6 +108,10 @@ class PythonRun(Python, RunToxEnv, ABC):
             desc="extras to install of the target package",
         )
         return True
+
+    @property
+    def default_pkg_type(self) -> str:
+        return "sdist"
 
     @property
     def pkg_type(self) -> str:

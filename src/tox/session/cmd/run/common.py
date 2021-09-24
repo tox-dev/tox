@@ -17,7 +17,6 @@ from tox.journal import write_journal
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
-from tox.tox_env.errors import Skip
 from tox.tox_env.runner import RunToxEnv
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
@@ -213,9 +212,9 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
             done.wait()
             # workaround for https://bugs.python.org/issue45274
             lock = getattr(thread, "_tstate_lock", None)
-            if lock is not None and lock.locked():
-                lock.release()
-                thread._stop()  # type: ignore # we must call this private method to fix the thread state
+            if lock is not None and lock.locked():  # pragma: no branch
+                lock.release()  # pragma: no cover
+                thread._stop()  # type: ignore  # pragma: no cover # calling private method to fix thread state
             thread.join()
     finally:
         ordered_results: List[ToxEnvRunResult] = []
@@ -319,7 +318,7 @@ def _queue_and_wait(
     finally:
         try:
             # call teardown - configuration only environments for example could not be finished
-            for _, tox_env in state.run_envs():
+            for _, tox_env in state.created_run_envs():
                 tox_env.teardown()
         finally:
             done.set()
@@ -368,10 +367,7 @@ def run_order(state: State, to_run: List[str]) -> Tuple[List[str], Dict[str, Set
     to_run_set = set(to_run)
     todo: Dict[str, Set[str]] = {}
     for env in to_run:
-        try:
-            run_env = state.tox_env(env)
-        except Skip:
-            continue
+        run_env = state.tox_env(env)
         depends = set(cast(EnvList, run_env.conf["depends"]).envs)
         todo[env] = to_run_set & depends
     order = stable_topological_sort(todo)

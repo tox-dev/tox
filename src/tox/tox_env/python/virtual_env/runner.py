@@ -22,13 +22,14 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
         return "virtualenv-pep-517"
 
     @property
-    def has_package_by_default(self) -> bool:
+    def default_pkg_type(self) -> str:
         tox_root: Path = self.core["tox_root"]
-        return (
-            getattr(self.options, "install_pkg", None) is not None
-            or (tox_root / "pyproject.toml").exists()
-            or (tox_root / "setup.py").exists()
-        )
+        if not (
+            any((tox_root / i).exists() for i in ("pyproject.toml", "setup.py", "setup.cfg"))
+            or getattr(self.options, "install_pkg", None) is not None
+        ):
+            return "skip"
+        return super().default_pkg_type
 
 
 @impl

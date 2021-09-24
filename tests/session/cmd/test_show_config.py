@@ -60,7 +60,7 @@ def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\nmagic=yes"})
     outcome = project.run("c", "-e", "py", "-k", "no_package", "env_name", "--core")
     outcome.assert_success()
-    outcome.assert_out_err("[testenv:py]\nenv_name = py\n\n[tox]\nno_package = True\n", "")
+    outcome.assert_out_err("[testenv:py]\nenv_name = py\n\n[tox]\nno_package = False\n", "")
 
 
 def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
