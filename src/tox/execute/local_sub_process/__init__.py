@@ -23,19 +23,15 @@ if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
         from asyncio.windows_utils import Popen
     from signal import CTRL_C_EVENT as SIG_INTERRUPT
     from signal import SIGTERM
-    from subprocess import CREATE_NEW_PROCESS_GROUP
 
     from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
 
-    CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP  # a custom flag needed for Windows signal send ability (CTRL+C)
 else:  # pragma: win32 no cover
     from signal import SIGINT as SIG_INTERRUPT
     from signal import SIGKILL, SIGTERM
     from subprocess import Popen
 
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
-
-    CREATION_FLAGS = 0
 
 
 IS_WIN = sys.platform == "win32"
@@ -67,9 +63,10 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             msg = "requested interrupt of %d from %d, activate in %.2f"
             logging.warning(msg, to_pid, host_pid, self.options.suicide_timeout)
             if self.wait(self.options.suicide_timeout) is None:  # still alive -> INT
-                msg = "send signal %s to %d from %d with timeout %.2f"
-                logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
-                self._process.send_signal(SIG_INTERRUPT)
+                if sys.platform != "win32":  # on Windows everyone in the same process group, so they got the message
+                    msg = "send signal %s to %d from %d with timeout %.2f"
+                    logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
+                    self._process.send_signal(SIG_INTERRUPT)
                 if self.wait(self.options.interrupt_timeout) is None:  # still alive -> TERM # pragma: no branch
                     terminate_output = self.options.terminate_timeout
                     logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, terminate_output)
@@ -198,7 +195,6 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                 stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
                 cwd=str(self.request.cwd),
                 env=self.request.env,
-                creationflags=CREATION_FLAGS,
             )
         except OSError as exception:
             return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception.errno)

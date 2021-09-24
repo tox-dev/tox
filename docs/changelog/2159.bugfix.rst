@@ -1,0 +1,1 @@
+Fix ``CTRL+C`` is not stopping the process on Windows - by :user:`gaborbernat`.
