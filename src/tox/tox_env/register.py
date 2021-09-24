@@ -40,17 +40,17 @@ class ToxEnvRegister:
         self._package_envs[of_type.id()] = of_type
 
     @property
-    def run_envs(self) -> Iterable[str]:
+    def env_runners(self) -> Iterable[str]:
         """:returns: run environment types currently defined"""
         return self._run_envs.keys()
 
     @property
-    def default_run_env(self) -> str:
+    def default_env_runner(self) -> str:
         """:returns: the default run environment type"""
         return self._default_run_env
 
-    @default_run_env.setter
-    def default_run_env(self, value: str) -> None:
+    @default_env_runner.setter
+    def default_env_runner(self, value: str) -> None:
         """
         Change the default run environment type.
 

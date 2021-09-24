@@ -7,14 +7,17 @@ from tox.pytest import ToxProject, ToxProjectCreator
 def project(tox_project: ToxProjectCreator) -> ToxProject:
     ini = """
     [tox]
-    env_list=py39,py38,py
+    env_list=py32,py31,py
     [testenv]
+    package = wheel
+    wheel_build_env = pkg
     description = with {basepython}
     deps = pypy:
     [testenv:py]
-    basepython=py39,py38
+    basepython=py32,py31
     [testenv:fix]
     description = fix it
+    [testenv:pkg]
     """
     return tox_project({"tox.ini": ini})
 
@@ -25,9 +28,9 @@ def test_list_env(project: ToxProject) -> None:
     outcome.assert_success()
     expected = """
     default environments:
-    py39 -> with py39
-    py38 -> with py38
-    py   -> with py39 py38
+    py32 -> with py32
+    py31 -> with py31
+    py   -> with py32 py31
 
     additional environments:
     fix  -> fix it
@@ -41,9 +44,9 @@ def test_list_env_default(project: ToxProject) -> None:
     outcome.assert_success()
     expected = """
     default environments:
-    py39 -> with py39
-    py38 -> with py38
-    py   -> with py39 py38
+    py32 -> with py32
+    py31 -> with py31
+    py   -> with py32 py31
     """
     outcome.assert_out_err(expected, "")
 
@@ -53,8 +56,8 @@ def test_list_env_quiet(project: ToxProject) -> None:
 
     outcome.assert_success()
     expected = """
-    py39
-    py38
+    py32
+    py31
     py
     fix
     """
@@ -66,8 +69,8 @@ def test_list_env_quiet_default(project: ToxProject) -> None:
 
     outcome.assert_success()
     expected = """
-    py39
-    py38
+    py32
+    py31
     py
     """
     outcome.assert_out_err(expected, "")

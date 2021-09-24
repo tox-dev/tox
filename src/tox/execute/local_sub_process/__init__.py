@@ -63,7 +63,8 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             msg = "requested interrupt of %d from %d, activate in %.2f"
             logging.warning(msg, to_pid, host_pid, self.options.suicide_timeout)
             if self.wait(self.options.suicide_timeout) is None:  # still alive -> INT
-                if sys.platform != "win32":  # on Windows everyone in the same process group, so they got the message
+                # on Windows everyone in the same process group, so they got the message
+                if sys.platform != "win32":  # pragma: win32 cover
                     msg = "send signal %s to %d from %d with timeout %.2f"
                     logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
                     self._process.send_signal(SIG_INTERRUPT)

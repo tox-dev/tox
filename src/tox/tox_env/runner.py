@@ -147,7 +147,7 @@ class RunToxEnv(ToxEnv, ABC):
         self.core.add_config(
             keys=["no_package", "skipsdist"],
             of_type=bool,
-            default=not self.has_package_by_default,
+            default=False,
             desc="is there any packaging involved in this project",
         )
         core_no_package: bool = self.core["no_package"]
@@ -161,11 +161,6 @@ class RunToxEnv(ToxEnv, ABC):
         )
         skip_install: bool = self.conf["skip_install"]
         return not skip_install
-
-    @property
-    @abstractmethod
-    def has_package_by_default(self) -> bool:
-        raise NotImplementedError
 
     def _setup_pkg(self) -> None:
         self._packages = self._build_packages()

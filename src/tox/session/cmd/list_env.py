@@ -18,9 +18,8 @@ def list_env(state: State) -> int:
     option = state.options
 
     default = core["env_list"]  # this should be something not affected by env-vars :-|
-    ignore = {core["provision_tox_env"]}.union(default)
 
-    extra = [] if option.list_default_only else [e for e in state.conf.env_list(everything=True) if e not in ignore]
+    extra = [] if option.list_default_only else [e for e in state.all_run_envs(with_skip=True) if e not in default]
 
     if not option.list_no_description and default:
         print("default environments:")
@@ -28,22 +27,24 @@ def list_env(state: State) -> int:
 
     def report_env(name: str) -> None:
         if not option.list_no_description:
-            text = state.tox_env(name).conf["description"]
+            tox_env = state.tox_env(name)
+            text = tox_env.conf["description"]
             if not text.strip():
                 text = "[no description]"
             text = text.replace("\n", " ")
-            msg = f"{e.ljust(max_length)} -> {text}".strip()
+            msg = f"{env.ljust(max_length)} -> {text}".strip()
         else:
-            msg = e
+            msg = env
         print(msg)
 
-    for e in default:
-        report_env(e)
+    for env in default:
+        report_env(env)
+
     if not option.list_default_only and extra:
         if not option.list_no_description:
             if default:
                 print("")
             print("additional environments:")
-        for e in extra:
-            report_env(e)
+        for env in extra:
+            report_env(env)
     return 0

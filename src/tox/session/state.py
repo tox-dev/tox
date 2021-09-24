@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import TYPE_CHECKING, Dict, Iterator, Sequence, Set, Tuple, cast
 
 from tox.config.main import Config
@@ -6,6 +7,7 @@ from tox.journal import Journal
 from tox.plugin import impl
 from tox.report import HandledError, ToxHandler
 from tox.tox_env.api import ToxEnvCreateArgs
+from tox.tox_env.errors import Skip
 from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.runner import RunToxEnv
 
@@ -102,8 +104,25 @@ class State:
             self._pkg_env[name] = packager, pkg_tox_env
         return pkg_tox_env
 
-    def run_envs(self) -> Iterator[Tuple[str, RunToxEnv]]:
+    def created_run_envs(self) -> Iterator[Tuple[str, RunToxEnv]]:
         yield from self._run_env.items()
+
+    def all_run_envs(self, *, with_skip: bool = True) -> Iterator[str]:
+        default_env_list = self.conf.core["env_list"]
+        ignore = {self.conf.core["provision_tox_env"]}
+        for env in chain(default_env_list.envs, self.conf.env_list(everything=True)):
+            if env in ignore:
+                continue
+            ignore.add(env)  # ignore self
+            skip = False
+            try:
+                tox_env = self.tox_env(env)
+            except Skip:
+                skip = True
+                tox_env = self.tox_env(env)
+            ignore.update(i.name for i in tox_env.package_envs)  # ignore package environments
+            if not skip or with_skip:
+                yield env
 
 
 @impl
@@ -114,6 +133,6 @@ def tox_add_option(parser: "ToxParser") -> None:
         "--runner",
         dest="default_runner",
         help="the tox run engine to use when not explicitly stated in tox env configuration",
-        default=REGISTER.default_run_env,
-        choices=list(REGISTER.run_envs),
+        default=REGISTER.default_env_runner,
+        choices=list(REGISTER.env_runners),
     )
