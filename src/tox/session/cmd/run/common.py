@@ -211,6 +211,12 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
                 if cancelled is False and not future.done():  # pragma: no branch
                     tox_env.interrupt()
             done.wait()
+            # workaround for https://bugs.python.org/issue45274
+            lock = getattr(thread, "_tstate_lock", None)
+            if lock is not None and lock.locked():
+                lock.release()
+                thread._stop()  # type: ignore # we must call this private method to fix the thread state
+            thread.join()
     finally:
         ordered_results: List[ToxEnvRunResult] = []
         name_to_run = {r.name: r for r in results}
