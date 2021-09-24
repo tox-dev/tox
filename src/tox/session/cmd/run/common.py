@@ -191,13 +191,13 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
     previous, has_previous = None, False
     try:
         spinner = ToxSpinner(has_spinner, state, len(to_run_list))
+        thread = Thread(
+            target=_queue_and_wait,
+            name="tox-interrupt",
+            args=(state, to_run_list, results, future_to_env, interrupt, done, max_workers, spinner, live),
+        )
+        thread.start()
         try:
-            thread = Thread(
-                target=_queue_and_wait,
-                name="tox-interrupt",
-                args=(state, to_run_list, results, future_to_env, interrupt, done, max_workers, spinner, live),
-            )
-            thread.start()
             thread.join()
         except KeyboardInterrupt:
             previous, has_previous = signal(SIGINT, Handlers.SIG_IGN), True
