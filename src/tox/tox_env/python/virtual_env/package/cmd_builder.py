@@ -5,7 +5,7 @@ import tarfile
 from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
-from typing import List, Optional, Set, cast
+from typing import Generator, Iterator, List, Optional, Set, Tuple, cast
 from zipfile import ZipFile
 
 from packaging.requirements import Requirement
@@ -15,13 +15,16 @@ from tox.config.types import Command
 from tox.execute import Outcome
 from tox.plugin import impl
 from tox.session.cmd.run.single import run_command_set
+from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.errors import Fail
-from tox.tox_env.package import Package
+from tox.tox_env.package import Package, PackageToxEnv
 from tox.tox_env.python.package import PythonPackageToxEnv, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.tox_env.register import ToxEnvRegister
+from tox.tox_env.runner import RunToxEnv
 
+from .pep517 import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras
 
 if sys.version_info >= (3, 8):
@@ -31,6 +34,10 @@ else:
 
 
 class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
+    def __init__(self, create_args: ToxEnvCreateArgs) -> None:
+        super().__init__(create_args)
+        self._sdist_meta_tox_env: Optional[Pep517VirtualEnvPackager] = None
+
     @staticmethod
     def id() -> str:
         return "virtualenv-cmd-builder"
@@ -109,9 +116,22 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
                 tar.extractall(path=str(work_dir))
-            deps: List[Requirement] = []  # builder.get_package_dependencies() # use PEP-517 to generate the metadata
+            assert self._sdist_meta_tox_env is not None  # the register run env is guaranteed to be called before this
+            with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
+                self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
+                deps = self._sdist_meta_tox_env.get_package_dependencies()
             package = SdistPackage(path, dependencies_with_extras(deps, extras))
         return [package]
+
+    def register_run_env(self, run_env: RunToxEnv) -> Generator[Tuple[str, str], PackageToxEnv, None]:
+        yield from super().register_run_env(run_env)
+        # in case the outcome is a sdist we'll use this to find out its metadata
+        result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
+        self._sdist_meta_tox_env = cast(Pep517VirtualEnvPackager, result)
+
+    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # noqa: U100
+        if self._sdist_meta_tox_env is not None:
+            yield self._sdist_meta_tox_env
 
 
 class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has type Any
@@ -135,7 +155,7 @@ class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has ty
             except KeyError:
                 return None
 
-    def locate_file(self, path: str) -> PathLike[str]:
+    def locate_file(self, path: str) -> "PathLike[str]":
         return self._wheel / path  # pragma: no cover # not used by us, but part of the ABC
 
 

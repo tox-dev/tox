@@ -114,5 +114,6 @@ def run_command_set(tox_env: ToxEnv, key: str, cwd: Path, ignore_errors: bool, o
 
 __all__ = (
     "run_one",
+    "run_command_set",
     "ToxEnvRunResult",
 )

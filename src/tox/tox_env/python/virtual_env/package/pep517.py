@@ -66,13 +66,13 @@ class ToxCmdStatus(CmdStatus):
         return status.outcome.out_err()
 
 
-class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv):
+class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     """local file system python virtual environment via the virtualenv package"""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
-        self._root: Path = self.conf["package_root"]
-        self._frontend = Pep517VirtualEnvFrontend(self._root, self)
+        self.root: Path = self.conf["package_root"]
+        self._frontend_private: Optional[Pep517VirtualEnvFrontend] = None
         self.builds: Set[str] = set()
         self._distribution_meta: Optional[PathDistribution] = None
         self._package_dependencies: Optional[List[Requirement]] = None
@@ -81,6 +81,12 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv):
     @staticmethod
     def id() -> str:
         return "virtualenv-pep-517"
+
+    @property
+    def _frontend(self) -> "Pep517VirtualEnvFrontend":
+        if self._frontend_private is None:
+            self._frontend_private = Pep517VirtualEnvFrontend(self.root, self)
+        return self._frontend_private
 
     def register_config(self) -> None:
         super().register_config()
@@ -116,7 +122,7 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv):
         if "wheel" in self.builds:
             build_requires = self._frontend.get_requires_for_build_wheel().requires
             self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_wheel")
-        if "sdist" in self.builds:
+        if "sdist" in self.builds or "external" in self.builds:
             build_requires = self._frontend.get_requires_for_build_sdist().requires
             self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_sdist")
 
@@ -141,7 +147,7 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv):
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):
-                    reqs = w_env.get_package_dependencies() if isinstance(w_env, Pep517VirtualEnvPackage) else []
+                    reqs = w_env.get_package_dependencies() if isinstance(w_env, Pep517VirtualEnvPackager) else []
         if reqs is None:
             reqs = self.get_package_dependencies()
 
@@ -196,7 +202,7 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv):
 
 
 class Pep517VirtualEnvFrontend(Frontend):
-    def __init__(self, root: Path, env: Pep517VirtualEnvPackage) -> None:
+    def __init__(self, root: Path, env: Pep517VirtualEnvPackager) -> None:
         super().__init__(*Frontend.create_args_from_folder(root))
         self._tox_env = env
         self._backend_executor_: Optional[LocalSubProcessPep517Executor] = None
@@ -271,4 +277,4 @@ class Pep517VirtualEnvFrontend(Frontend):
 
 @impl
 def tox_register_tox_env(register: ToxEnvRegister) -> None:
-    register.add_package_env(Pep517VirtualEnvPackage)
+    register.add_package_env(Pep517VirtualEnvPackager)
