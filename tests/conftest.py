@@ -124,3 +124,21 @@ def fake_exe_on_path(tmp_path_factory: TempPathFactory) -> Iterator[Path]:
     maker.make(f"{cmd_name} = b:c")
     with patch.dict(os.environ, {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"}):
         yield tmp_path / cmd_name
+
+
+@pytest.fixture(scope="session")
+def demo_pkg_inline_wheel(tmp_path_factory: TempPathFactory, demo_pkg_inline: Path) -> Path:
+    return build_pkg(tmp_path_factory.mktemp("dist"), demo_pkg_inline, ["wheel"])
+
+
+def build_pkg(dist_dir: Path, of: Path, distributions: List[str], isolation: bool = True) -> Path:
+    from build.__main__ import build_package
+
+    build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
+    package = next(dist_dir.iterdir())
+    return package
+
+
+@pytest.fixture(scope="session")
+def pkg_builder() -> Callable[[Path, Path, List[str], bool], Path]:
+    return build_pkg

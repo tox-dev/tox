@@ -8,8 +8,9 @@ from typing import List, NamedTuple, Tuple
 
 from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
+from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail, Skip
-from tox.tox_env.python.virtual_env.package.api import ToxBackendFailed
+from tox.tox_env.python.virtual_env.package.pep517 import ToxBackendFailed
 from tox.tox_env.runner import RunToxEnv
 
 LOGGER = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> Tuple[int, List[Outcome]]
     return exit_code, outcomes
 
 
-def run_command_set(tox_env: RunToxEnv, key: str, cwd: Path, ignore_errors: bool, outcomes: List[Outcome]) -> int:
+def run_command_set(tox_env: ToxEnv, key: str, cwd: Path, ignore_errors: bool, outcomes: List[Outcome]) -> int:
     exit_code = Outcome.OK
     command_set: List[Command] = tox_env.conf[key]
     for at, cmd in enumerate(command_set):

@@ -3,12 +3,13 @@ A tox build environment that handles Python packages.
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Sequence, Tuple
+from typing import Any, Sequence, Tuple, Union
 
 from packaging.requirements import Requirement
 
 from ..package import Package, PackageToxEnv, PathPackage
 from .api import Python
+from .pip.req_file import PythonDeps
 
 
 class PythonPackage(Package):
@@ -43,5 +44,5 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         self.installer.install(self.requires(), PythonPackageToxEnv.__name__, "requires")
 
     @abstractmethod
-    def requires(self) -> Tuple[Requirement, ...]:
+    def requires(self) -> Union[Tuple[Requirement, ...], PythonDeps]:
         raise NotImplementedError

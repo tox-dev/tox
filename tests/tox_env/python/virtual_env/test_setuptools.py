@@ -7,7 +7,7 @@ import pytest
 
 from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.package import WheelPackage
-from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
+from tox.tox_env.python.virtual_env.package.pep517 import Pep517VirtualEnvPackage
 
 
 @pytest.mark.integration()

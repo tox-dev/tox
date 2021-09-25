@@ -156,21 +156,6 @@ def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     assert request.cmd == ["python", "-m", "pip", "freeze"]
 
 
-@pytest.mark.parametrize("mode", ["r", "p", "le"])
-def test_install_pkg(tox_project: ToxProjectCreator, mode: str) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    file = proj.path / "a"
-    file.write_text("")
-
-    result = proj.run(mode, "--installpkg", str(file))
-
-    result.assert_success()
-    execute_calls.assert_called_once()
-    request: ExecuteRequest = execute_calls.call_args[0][3]
-    assert request.cmd == ["python", "-I", "-m", "pip", "install", str(file)]
-
-
 def test_can_build_and_run_python_2(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     try:
         session_via_cli(["-p", "2.7", "venv"])

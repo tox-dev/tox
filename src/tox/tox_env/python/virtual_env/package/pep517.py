@@ -1,13 +1,11 @@
 import os
 import sys
 from contextlib import contextmanager
-from copy import deepcopy
 from pathlib import Path
 from threading import RLock
-from typing import Any, Dict, Iterator, List, NoReturn, Optional, Sequence, Set, Tuple, Union, cast
+from typing import Any, Dict, Iterator, List, NoReturn, Optional, Sequence, Set, Tuple, cast
 
 from cachetools import cached
-from packaging.markers import Variable
 from packaging.requirements import Requirement
 
 from tox.config.sets import EnvConfigSet
@@ -23,14 +21,12 @@ from tox.tox_env.register import ToxEnvRegister
 from tox.util.pep517.frontend import BackendFailed, CmdStatus, ConfigSettings, Frontend
 
 from ..api import VirtualEnv
+from .util import dependencies_with_extras
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
 else:  # pragma: no cover (<py38)
     from importlib_metadata import Distribution, PathDistribution
-
-
-TOX_PACKAGE_ENV_ID = "virtualenv-pep-517"
 
 
 class ToxBackendFailed(Fail, BackendFailed):
@@ -144,7 +140,7 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv, Frontend):
         """build the package to install"""
         of_type: str = for_env["package"]
         extras: Set[str] = for_env["extras"]
-        deps = self._dependencies_with_extras(self._get_package_dependencies(), extras)
+        deps = dependencies_with_extras(self.get_package_dependencies(), extras)
         if of_type == "dev-legacy":
             deps = [*self.requires(), *self.get_requires_for_build_sdist().requires] + deps
             package: Package = DevLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
@@ -163,7 +159,7 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv, Frontend):
             raise TypeError(f"cannot handle package type {of_type}")  # pragma: no cover
         return [package]
 
-    def _get_package_dependencies(self) -> List[Requirement]:
+    def get_package_dependencies(self) -> List[Requirement]:
         with self._pkg_lock:
             if self._package_dependencies is None:  # pragma: no branch
                 self._ensure_meta_present()
@@ -177,34 +173,6 @@ class Pep517VirtualEnvPackage(PythonPackageToxEnv, VirtualEnv, Frontend):
         self.setup()
         dist_info = self.prepare_metadata_for_build_wheel(self.meta_folder, self._wheel_config_settings).metadata
         self._distribution_meta = Distribution.at(str(dist_info))  # type: ignore[no-untyped-call]
-
-    @staticmethod
-    def _dependencies_with_extras(deps: List[Requirement], extras: Set[str]) -> List[Requirement]:
-        result: List[Requirement] = []
-        for req in deps:
-            req = deepcopy(req)
-            markers: List[Union[str, Tuple[Variable, Variable, Variable]]] = getattr(req.marker, "_markers", []) or []
-            # find the extra marker (if has)
-            _at: Optional[int] = None
-            extra: Optional[str] = None
-            for _at, (marker_key, op, marker_value) in (
-                (_at_marker, marker)
-                for _at_marker, marker in enumerate(markers)
-                if isinstance(marker, tuple) and len(marker) == 3
-            ):
-                if marker_key.value == "extra" and op.value == "==":  # pragma: no branch
-                    extra = marker_value.value
-                    del markers[_at]
-                    _at -= 1
-                    if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
-                        del markers[_at]
-                    if len(markers) == 0:
-                        req.marker = None
-                    break
-            if not (extra is None or extra in extras):
-                continue
-            result.append(req)
-        return result
 
     @contextmanager
     def _wheel_directory(self) -> Iterator[Path]:

@@ -301,7 +301,7 @@ def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
         yield  # pragma: no cover
         return  # pragma: no cover
     # the COV_ env variables needs to be passed on for the PEP-517 backend
-    from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
+    from tox.tox_env.python.virtual_env.package.pep517 import Pep517VirtualEnvPackage
 
     def default_pass_env(self: Pep517VirtualEnvPackage) -> List[str]:
         result = previous(self)

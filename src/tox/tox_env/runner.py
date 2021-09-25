@@ -79,7 +79,8 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
-        if self._register_package_conf():
+        has_install_pkg = getattr(self.options, "install_pkg", None) is not None
+        if self._register_package_conf() or has_install_pkg:
             self.core.add_config(
                 keys=["package_env", "isolated_build_env"],
                 of_type=str,
@@ -89,13 +90,14 @@ class RunToxEnv(ToxEnv, ABC):
             self.conf.add_config(
                 keys=["package_env"],
                 of_type=str,
-                default=self.core["package_env"],
+                default=f'{self.core["package_env"]}{"_install" if has_install_pkg else ""}',
                 desc="tox environment used to package",
             )
+            is_external = self.conf["package"] == "external"
             self.conf.add_constant(
                 keys=["package_tox_env_type"],
-                desc="tox package type used to package",
-                value=self._default_package_tox_env_type,
+                desc="tox package type used to generate the package",
+                value=self._external_pkg_tox_env_type if is_external else self._package_tox_env_type,
             )
 
     def _teardown(self) -> None:
@@ -131,7 +133,12 @@ class RunToxEnv(ToxEnv, ABC):
 
     @property
     @abstractmethod
-    def _default_package_tox_env_type(self) -> str:
+    def _package_tox_env_type(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _external_pkg_tox_env_type(self) -> str:
         raise NotImplementedError
 
     def _setup_with_env(self) -> None:

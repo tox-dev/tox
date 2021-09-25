@@ -14,7 +14,7 @@ from tox.session.cmd import depends, devenv, exec_, legacy, list_env, quickstart
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
 from tox.tox_env.python.virtual_env import runner
-from tox.tox_env.python.virtual_env.package import api
+from tox.tox_env.python.virtual_env.package import cmd_builder, pep517
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
 from ..config.main import Config
@@ -33,7 +33,8 @@ class Plugin:
             loader_api,
             provision,
             runner,
-            api,
+            pep517,
+            cmd_builder,
             legacy,
             version_flag,
             exec_,

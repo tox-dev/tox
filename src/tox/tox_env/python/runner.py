@@ -2,13 +2,12 @@
 A tox run environment that handles the Python language.
 """
 from abc import ABC
-from pathlib import Path
 from typing import Iterator, List, Optional, Set, Tuple
 
 from tox.config.main import Config
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
-from tox.tox_env.package import Package, PathPackage
+from tox.tox_env.package import Package
 from tox.tox_env.python.package import PythonPackageToxEnv
 from tox.tox_env.python.pip.req_file import PythonDeps
 
@@ -54,19 +53,24 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     @property
     def _package_types(self) -> Tuple[str, ...]:
-        return "wheel", "sdist", "dev-legacy", "skip"
+        return "wheel", "sdist", "dev-legacy", "skip", "external"
 
     def _register_package_conf(self) -> bool:
         desc = f"package installation mode - {' | '.join(i for i in self._package_types)} "
         if not super()._register_package_conf():
             self.conf.add_constant(["package"], desc, "skip")
             return False
-        self.conf.add_config(keys=["use_develop", "usedevelop"], desc="use develop mode", default=False, of_type=bool)
-        develop_mode = self.conf["use_develop"] or getattr(self.options, "develop", False)
-        if develop_mode:
-            self.conf.add_constant(["package"], desc, "dev-legacy")
+        if getattr(self.options, "install_pkg", None) is not None:
+            self.conf.add_constant(["package"], desc, "external")
         else:
-            self.conf.add_config(keys="package", of_type=str, default=self.default_pkg_type, desc=desc)
+            self.conf.add_config(
+                keys=["use_develop", "usedevelop"], desc="use develop mode", default=False, of_type=bool
+            )
+            develop_mode = self.conf["use_develop"] or getattr(self.options, "develop", False)
+            if develop_mode:
+                self.conf.add_constant(["package"], desc, "dev-legacy")
+            else:
+                self.conf.add_config(keys="package", of_type=str, default=self.default_pkg_type, desc=desc)
         pkg_type = self.pkg_type
 
         if pkg_type == "skip":
@@ -130,10 +134,6 @@ class PythonRun(Python, RunToxEnv, ABC):
         self.installer.install(requirements_file, PythonRun.__name__, "deps")
 
     def _build_packages(self) -> List[Package]:
-        explicit_install_package: Optional[Path] = getattr(self.options, "install_pkg", None)
-        if explicit_install_package is not None:
-            return [PathPackage(explicit_install_package)]
-
         package_env = self._package_envs[self._get_package_env()]
         with package_env.display_context(self._has_display_suspended):
             try:
