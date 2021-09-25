@@ -98,7 +98,7 @@ class Frontend(ABC):
         self._backend_paths = backend_paths
         self._backend_module = backend_module
         self._backend_obj = backend_obj
-        self._requires = requires
+        self.requires = requires
         self._reuse_backend = reuse_backend
 
     @classmethod

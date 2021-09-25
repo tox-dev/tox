@@ -284,7 +284,7 @@ class ToxEnv(ABC):
         self._run_state.update({"setup": False, "clean": True})
 
     @property
-    def _environment_variables(self) -> Dict[str, str]:
+    def environment_variables(self) -> Dict[str, str]:
         pass_env: List[str] = self.conf["pass_env"]
         set_env: SetEnv = self.conf["set_env"]
         if self._env_vars_pass_env == pass_env and not set_env.changed and self._env_vars is not None:
@@ -372,7 +372,7 @@ class ToxEnv(ABC):
             cwd = self.core["tox_root"]
         if show is None:
             show = self.options.verbosity > 3
-        request = ExecuteRequest(cmd, cwd, self._environment_variables, stdin, run_id, allow=self._allow_externals)
+        request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals)
         if _CWD == request.cwd:
             repr_cwd = ""
         else:

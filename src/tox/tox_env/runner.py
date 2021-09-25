@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Tuple, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 from tox.config.types import Command, EnvList
 from tox.journal import EnvJournal
@@ -15,7 +15,7 @@ from .package import Package, PackageToxEnv, PathPackage
 
 class RunToxEnv(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        self._package_envs: Dict[str, PackageToxEnv] = {}
+        self.package_env: Optional[PackageToxEnv] = None
         self._packages: List[Package] = []
         super().__init__(create_args)
 
@@ -79,8 +79,8 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
-        has_install_pkg = getattr(self.options, "install_pkg", None) is not None
-        if self._register_package_conf() or has_install_pkg:
+        has_external_pkg = self.external_pkg is not None
+        if self._register_package_conf() or has_external_pkg:
             self.core.add_config(
                 keys=["package_env", "isolated_build_env"],
                 of_type=str,
@@ -90,7 +90,7 @@ class RunToxEnv(ToxEnv, ABC):
             self.conf.add_config(
                 keys=["package_env"],
                 of_type=str,
-                default=f'{self.core["package_env"]}{"_install" if has_install_pkg else ""}',
+                default=f'{self.core["package_env"]}{"_external" if has_external_pkg else ""}',
                 desc="tox environment used to package",
             )
             is_external = self.conf["package"] == "external"
@@ -100,6 +100,10 @@ class RunToxEnv(ToxEnv, ABC):
                 value=self._external_pkg_tox_env_type if is_external else self._package_tox_env_type,
             )
 
+    @property
+    def external_pkg(self) -> Optional[Path]:
+        return getattr(self.options, "install_pkg", None)  # type: ignore # does not know namespace types
+
     def _teardown(self) -> None:
         super()._teardown()
         self._call_pkg_envs("teardown_env", self.conf)
@@ -108,14 +112,10 @@ class RunToxEnv(ToxEnv, ABC):
         super().interrupt()
         self._call_pkg_envs("interrupt")
 
-    def iter_package_env_types(self) -> Iterator[Tuple[str, str, str]]:
-        if "package_env" in self.conf:
-            name, pkg_env_type = self.conf["package_env"], self.conf["package_tox_env_type"]
-            yield "default", name, pkg_env_type
-
-    def notify_of_package_env(self, tag: str, env: PackageToxEnv) -> None:
-        self._package_envs[tag] = env
-        env.notify_of_run_env(self.conf)
+    def get_package_env_types(self) -> Optional[Tuple[str, str]]:
+        if "package_env" not in self.conf:
+            return None
+        return self.conf["package_env"], self.conf["package_tox_env_type"]
 
     def _call_pkg_envs(self, method_name: str, *args: Any) -> None:
         for package_env in self.package_envs:
@@ -142,7 +142,7 @@ class RunToxEnv(ToxEnv, ABC):
         raise NotImplementedError
 
     def _setup_with_env(self) -> None:
-        if self._package_envs:
+        if self.package_env is not None:
             skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False)
             if skip_pkg_install is True:
                 logging.warning("skip building and installing the package")
@@ -193,9 +193,10 @@ class RunToxEnv(ToxEnv, ABC):
             journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
     @property
-    def _environment_variables(self) -> Dict[str, str]:
-        environment_variables = super()._environment_variables
-        if self._package_envs and self._packages:  # if package(s) have been built insert them as environment variable
+    def environment_variables(self) -> Dict[str, str]:
+        environment_variables = super().environment_variables
+        if self.package_env is not None and self._packages:
+            # if package(s) have been built insert them as environment variable
             environment_variables["TOX_PACKAGE"] = os.pathsep.join(str(i) for i in self._packages)
         return environment_variables
 
@@ -206,4 +207,6 @@ class RunToxEnv(ToxEnv, ABC):
 
     @property
     def package_envs(self) -> Iterable[PackageToxEnv]:
-        yield from dict.fromkeys(self._package_envs.values()).keys()
+        if self.package_env is not None:
+            yield self.package_env
+            yield from self.package_env.child_pkg_envs(self.conf)

@@ -4,12 +4,15 @@ A tox environment that can build packages.
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Lock
-from typing import List, Optional, Set, cast
+from typing import TYPE_CHECKING, Generator, Iterator, List, Optional, Set, Tuple, cast
 
 from tox.config.main import Config
 from tox.config.sets import EnvConfigSet
 
 from .api import ToxEnv, ToxEnvCreateArgs
+
+if TYPE_CHECKING:
+    from .runner import RunToxEnv
 
 
 class Package:
@@ -53,13 +56,19 @@ class PackageToxEnv(ToxEnv, ABC):
     def perform_packaging(self, for_env: EnvConfigSet) -> List[Package]:
         raise NotImplementedError
 
-    def notify_of_run_env(self, conf: EnvConfigSet) -> None:
-        with self._lock:
-            self._envs.add(conf.name)
-
     def teardown_env(self, conf: EnvConfigSet) -> None:
         with self._lock:
             self._envs.remove(conf.name)
             has_envs = bool(self._envs)
         if not has_envs:
             self._teardown()
+
+    def register_run_env(self, run_env: "RunToxEnv") -> Generator[Tuple[str, str], "PackageToxEnv", None]:
+        with self._lock:
+            self._envs.add(run_env.conf.name)
+        return
+        yield  # make this a generator
+
+    @abstractmethod
+    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator["PackageToxEnv"]:
+        raise NotImplementedError
