@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any, List
 from unittest.mock import Mock
@@ -51,6 +52,15 @@ def test_pip_install_new_flag_recreates(tox_project: ToxProjectCreator) -> None:
     result_second.assert_success()
     assert "recreate env because changed install flag(s) added index_url=['i']" in result_second.out
     assert "install_deps> python -I -m pip install a -i i" in result_second.out
+
+
+def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv:py]\ndeps=.{/}a\nskip_install=true"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result = proj.run("r")
+    result.assert_success()
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", f".{os.sep}a"]
 
 
 @pytest.mark.parametrize(

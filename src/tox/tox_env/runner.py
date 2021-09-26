@@ -79,8 +79,9 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
-        has_external_pkg = self.external_pkg is not None
+        has_external_pkg = getattr(self.options, "install_pkg", None) is not None
         if self._register_package_conf() or has_external_pkg:
+            has_external_pkg = has_external_pkg or self.conf["package"] == "external"
             self.core.add_config(
                 keys=["package_env", "isolated_build_env"],
                 of_type=str,
@@ -99,10 +100,6 @@ class RunToxEnv(ToxEnv, ABC):
                 desc="tox package type used to generate the package",
                 value=self._external_pkg_tox_env_type if is_external else self._package_tox_env_type,
             )
-
-    @property
-    def external_pkg(self) -> Optional[Path]:
-        return getattr(self.options, "install_pkg", None)  # type: ignore # does not know namespace types
 
     def _teardown(self) -> None:
         super()._teardown()

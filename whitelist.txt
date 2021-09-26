@@ -228,6 +228,7 @@ unregister
 untyped
 url2pathname
 usedevelop
+usefixtures
 util
 utils
 v3

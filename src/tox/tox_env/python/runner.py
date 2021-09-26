@@ -2,6 +2,7 @@
 A tox run environment that handles the Python language.
 """
 from abc import ABC
+from functools import partial
 from typing import List, Set, Tuple
 
 from tox.report import HandledError
@@ -21,16 +22,10 @@ class PythonRun(Python, RunToxEnv, ABC):
     def register_config(self) -> None:
         super().register_config()
         root = self.core["toxinidir"]
-
-        def python_deps_factory(raw: object) -> PythonDeps:
-            if not isinstance(raw, str):
-                raise TypeError(raw)
-            return PythonDeps(raw, root)
-
         self.conf.add_config(
             keys="deps",
             of_type=PythonDeps,
-            factory=python_deps_factory,
+            factory=partial(PythonDeps.factory, root),
             default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
         )

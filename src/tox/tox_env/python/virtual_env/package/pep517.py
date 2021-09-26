@@ -128,7 +128,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     def _teardown(self) -> None:
         executor = self._frontend.backend_executor
-        if executor is not None:
+        if executor is not None:  # pragma: no branch
             try:
                 if executor.is_alive:
                     self._frontend._send("_exit")  # try first on amicable shutdown

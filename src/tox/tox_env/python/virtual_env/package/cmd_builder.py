@@ -2,6 +2,7 @@ import glob
 import shutil
 import sys
 import tarfile
+from functools import partial
 from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
@@ -27,9 +28,9 @@ from tox.tox_env.runner import RunToxEnv
 from .pep517 import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution
-else:
+else:  # pragma: no cover (py38+)
     from importlib_metadata import Distribution
 
 
@@ -45,16 +46,10 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
     def register_config(self) -> None:
         super().register_config()
         root = self.core["toxinidir"]
-
-        def python_deps_factory(raw: object) -> PythonDeps:
-            if not isinstance(raw, str):
-                raise TypeError(raw)
-            return PythonDeps(raw, root)
-
         self.conf.add_config(
             keys="deps",
             of_type=PythonDeps,
-            factory=python_deps_factory,
+            factory=partial(PythonDeps.factory, root),
             default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
         )
@@ -79,7 +74,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         self.conf.add_config(
             keys=["package_glob"],
             of_type=str,
-            default=str(self.conf["env_tmp_dir"] / "*"),
+            default=str(self.conf["env_tmp_dir"] / "dist" / "*"),
             desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
         )
 
@@ -111,8 +106,8 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             package: Package = WheelPackage(path, dependencies_with_extras([Requirement(i) for i in requires], extras))
         else:  # must be source distribution
             work_dir = self.env_tmp_dir / "sdist-extract"
-            if work_dir.exists():
-                shutil.rmtree(work_dir)
+            if work_dir.exists():  # pragma: no branch
+                shutil.rmtree(work_dir)  # pragma: no cover
             work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
                 tar.extractall(path=str(work_dir))
@@ -130,7 +125,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         self._sdist_meta_tox_env = cast(Pep517VirtualEnvPackager, result)
 
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # noqa: U100
-        if self._sdist_meta_tox_env is not None:
+        if self._sdist_meta_tox_env is not None:  # pragma: no branch
             yield self._sdist_meta_tox_env
 
 
@@ -143,8 +138,13 @@ class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has ty
     def dist_name(self) -> str:
         if self._dist_name is None:
             with ZipFile(self._wheel) as zip_file:
-                names = zip_file.namelist()
-                self._dist_name = next(i.split("/")[0] for i in names if i.split("/")[0].endswith(".dist-info"))
+                for name in zip_file.namelist():
+                    root = name.split("/")[0]
+                    if root.endswith(".dist-info"):
+                        self._dist_name = root
+                        break
+                else:
+                    raise Fail(f"no .dist-info inside {self._wheel}")
         return self._dist_name
 
     def read_text(self, filename: str) -> Optional[str]:

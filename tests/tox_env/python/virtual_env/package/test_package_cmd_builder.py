@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Callable, List
+from zipfile import ZipFile
 
 import pytest
 
@@ -65,3 +66,79 @@ def test_install_pkg_via(tox_project: ToxProjectCreator, mode: str, pkg_with_ext
     result.assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [("py", "install_package_deps"), ("py", "install_package")]
+
+
+@pytest.mark.usefixtures("enable_pip_pypi_access")
+def test_build_wheel_external(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = """
+    [testenv]
+    package = external
+    package_env = .ext
+    commands =
+        python -c 'from demo_pkg_inline import do; do()'
+
+    [testenv:.ext]
+    deps = build
+    package_glob = {envtmpdir}{/}dist{/}*.whl
+    commands =
+        pyproject-build -w . -o {envtmpdir}{/}dist
+    """
+    project = tox_project({"tox.ini": ini})
+    result = project.run("r", "--root", str(demo_pkg_inline))
+
+    result.assert_success()
+    assert "greetings from demo_pkg_inline" in result.out
+
+
+def test_build_wheel_external_fail_build(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [testenv]
+    package = external
+    [testenv:.pkg_external]
+    commands = xyz
+    """
+    project = tox_project({"tox.ini": ini})
+    result = project.run("r")
+
+    result.assert_failed()
+    assert "stopping as failed to build package" in result.out, result.out
+
+
+def test_build_wheel_external_fail_no_pkg(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [testenv]
+    package = external
+    """
+    project = tox_project({"tox.ini": ini})
+    result = project.run("r")
+
+    result.assert_failed()
+    assert "failed with no package found in " in result.out, result.out
+
+
+def test_build_wheel_external_fail_many_pkg(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [testenv]
+    package = external
+    [testenv:.pkg_external]
+    commands =
+        python -c 'from pathlib import Path; (Path(r"{env_tmp_dir}") / "dist").mkdir()'
+        python -c 'from pathlib import Path; (Path(r"{env_tmp_dir}") / "dist" / "a").write_text("")'
+        python -c 'from pathlib import Path; (Path(r"{env_tmp_dir}") / "dist" / "b").write_text("")'
+    """
+    project = tox_project({"tox.ini": ini})
+    result = project.run("r")
+
+    result.assert_failed()
+    assert "failed with found more than one package " in result.out, result.out
+
+
+def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    wheel = tmp_path / "w.whl"
+    with ZipFile(str(wheel), "w"):
+        pass
+    proj = tox_project({"tox.ini": "[testenv]"})
+    result = proj.run("r", "-e", "py", "--installpkg", str(wheel))
+
+    result.assert_failed()
+    assert "failed with no .dist-info inside " in result.out, result.out

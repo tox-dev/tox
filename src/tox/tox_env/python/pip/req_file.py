@@ -77,6 +77,12 @@ class PythonDeps(RequirementsFile):
             self._unroll = result_opts, result_req
         return self._unroll
 
+    @classmethod
+    def factory(cls, root: Path, raw: object) -> "PythonDeps":
+        if not isinstance(raw, str):
+            raise TypeError(raw)
+        return cls(raw, root)
+
 
 ONE_ARG = {
     "-i",
