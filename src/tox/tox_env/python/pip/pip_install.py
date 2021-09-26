@@ -135,8 +135,6 @@ class Pip(Installer[Python]):
             elif isinstance(arg, DevLegacyPackage):
                 groups["req"].extend(str(i) for i in arg.deps)
                 groups["dev_pkg"].append(str(arg.path))
-            elif isinstance(arg, PathPackage):
-                groups["path_pkg"].append(str(arg.path))
             else:
                 logging.warning(f"pip cannot install {arg!r}")
                 raise SystemExit(1)
@@ -158,8 +156,6 @@ class Pip(Installer[Python]):
             for entry in groups["dev_pkg"]:
                 install_args.extend(("-e", str(entry)))
             self._execute_installer(install_args, of_type)
-        if groups["path_pkg"]:
-            self._execute_installer(groups["path_pkg"], of_type)
 
     def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:
         cmd = self.build_install_cmd(deps)

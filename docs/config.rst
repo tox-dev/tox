@@ -476,6 +476,7 @@ Package
 
    Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
 
+.. _python-options:
 
 Python options
 ~~~~~~~~~~~~~~
@@ -542,8 +543,8 @@ Python run
    :keys: package
    :version_added: 4.0
 
-   When option can be one of ``skip``, ``dev-legacy``, ``sdist`` or ``wheel``. If :ref:`use_develop` is set this becomes
-   a constant of ``dev-legacy``. If :ref:`skip_install` is set this becomes a constant of ``skip``.
+   When option can be one of ``skip``, ``dev-legacy``, ``sdist``, ``wheel`` or ``external``. If :ref:`use_develop` is
+   set this becomes a constant of ``dev-legacy``. If :ref:`skip_install` is set this becomes a constant of ``skip``.
 
 
 .. conf::
@@ -564,6 +565,59 @@ Python run
 
    A list of "extras" from the package to be installed. For example, ``extras = testing`` is equivalent to ``[testing]``
    in a ``pip install`` command.
+
+.. _external-package-builder:
+
+External package builder
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+tox supports operating with externally built packages. External packages might be provided in two wayas:
+
+- explicitly via the :ref:`--installpkg <tox-run---installpkg>` CLI argument,
+- setting the :ref:`package` to ``external`` and using a tox packaging environment named ``<package_env>_external``
+  (see :ref:`package_env`) to build the package. The tox packaging environment takes all configuration flags of a
+  :ref:`python environment <python-options>`, plus the following:
+
+.. conf::
+   :keys: deps
+   :default: <empty list>
+   :ref_suffix: external
+
+   Name of the Python dependencies as specified by `PEP-440`_. Installed into the environment prior running the build
+   commands. All installer commands are executed using the :ref:`tox_root` as the current working directory.
+
+.. conf::
+   :keys: commands
+   :default: <empty list>
+   :ref_suffix: external
+
+   Commands to run that will build the package. If any command fails the packaging operation is considered failed and
+   will fail all environments using that package.
+
+.. conf::
+   :keys: ignore_errors
+   :default: False
+   :ref_suffix: external
+
+   When executing the commands keep going even if a sub-command exits with non-zero exit code. The overall status will
+   be "commands failed", i.e. tox will exit non-zero in case any command failed. It may be helpful to note that this
+   setting is analogous to the ``-k`` or ``--keep-going`` option of GNU Make.
+
+.. conf::
+   :keys: change_dir, changedir
+   :default: {tox root}
+   :ref_suffix: external
+
+   Change to this working directory when executing the package build command. If the directory does not exist yet, it
+   will be created (required for Windows to be able to execute any command).
+
+.. conf::
+   :keys: package_glob
+   :default: {envtmpdir}{/}dist{/}*
+
+   A glob that should match the wheel/sdist file to install. If no file or multiple files is matched the packaging
+   operation is considered failed and will raise an error.
+
 
 Python virtual environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

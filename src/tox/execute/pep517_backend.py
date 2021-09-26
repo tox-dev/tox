@@ -52,7 +52,7 @@ class LocalSubProcessPep517Executor(Execute):
                     self.is_alive = True
                     break
                 if b"failed to start backend" in status.err:
-                    from tox.tox_env.python.virtual_env.package.api import ToxBackendFailed
+                    from tox.tox_env.python.virtual_env.package.pep517 import ToxBackendFailed
 
                     failure = BackendFailed(
                         result={

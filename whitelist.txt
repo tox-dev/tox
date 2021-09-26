@@ -38,7 +38,6 @@ contnode
 copytree
 cov
 cpus
-creationflags
 creq
 crypto
 ctrl
@@ -229,6 +228,7 @@ unregister
 untyped
 url2pathname
 usedevelop
+usefixtures
 util
 utils
 v3

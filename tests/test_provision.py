@@ -5,7 +5,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import check_call
-from typing import Iterator, List, Optional
+from typing import Callable, Iterator, List, Optional
 from zipfile import ZipFile
 
 import pytest
@@ -33,9 +33,11 @@ def elapsed(msg: str) -> Iterator[None]:
 
 
 @pytest.fixture(scope="session")
-def tox_wheel(tmp_path_factory: TempPathFactory, worker_id: str) -> Path:
+def tox_wheel(
+    tmp_path_factory: TempPathFactory, worker_id: str, pkg_builder: Callable[[Path, Path, List[str], bool], Path]
+) -> Path:
     if worker_id == "master":  # if not running under xdist we can just return
-        return _make_tox_wheel(tmp_path_factory)  # pragma: no cover
+        return _make_tox_wheel(tmp_path_factory, pkg_builder)  # pragma: no cover
     # otherwise we need to ensure only one worker creates the wheel, and the rest reuses
     root_tmp_dir = tmp_path_factory.getbasetemp().parent
     cache_file = root_tmp_dir / "tox_wheel.json"
@@ -43,12 +45,14 @@ def tox_wheel(tmp_path_factory: TempPathFactory, worker_id: str) -> Path:
         if cache_file.is_file():
             data = Path(json.loads(cache_file.read_text()))  # pragma: no cover
         else:
-            data = _make_tox_wheel(tmp_path_factory)
+            data = _make_tox_wheel(tmp_path_factory, pkg_builder)
             cache_file.write_text(json.dumps(str(data)))
     return data
 
 
-def _make_tox_wheel(tmp_path_factory: TempPathFactory) -> Path:
+def _make_tox_wheel(
+    tmp_path_factory: TempPathFactory, pkg_builder: Callable[[Path, Path, List[str], bool], Path]
+) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
         package: Optional[Path] = None
         if "TOX_PACKAGE" in os.environ:
@@ -58,7 +62,7 @@ def _make_tox_wheel(tmp_path_factory: TempPathFactory) -> Path:
         if package is None:
             # when we don't get a wheel path injected, build it (for example when running from an IDE)
             into = tmp_path_factory.mktemp("dist")  # pragma: no cover
-            package = build_wheel(into, Path(__file__).parents[1], isolation=False)  # pragma: no cover
+            package = pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
         return package
 
 
@@ -83,19 +87,6 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> List[Path]
         check_call(cmd)
         result.extend(wheel_cache.iterdir())
         return result
-
-
-@pytest.fixture(scope="session")
-def demo_pkg_inline_wheel(tmp_path_factory: TempPathFactory, demo_pkg_inline: Path) -> Path:
-    return build_wheel(tmp_path_factory.mktemp("dist"), demo_pkg_inline)
-
-
-def build_wheel(dist_dir: Path, of: Path, isolation: bool = True) -> Path:
-    from build.__main__ import build_package
-
-    build_package(str(of), str(dist_dir), distributions=["wheel"], isolation=isolation)
-    package = next(dist_dir.iterdir())
-    return package
 
 
 @pytest.fixture(scope="session")

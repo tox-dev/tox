@@ -79,10 +79,24 @@ class State:
         self._build_package_env(env)
 
     def _build_package_env(self, env: RunToxEnv) -> None:
-        for tag, name, core_type in env.iter_package_env_types():
-            with self.log_handler.with_context(name):
-                package_tox_env = self._get_package_env(core_type, name)
-                env.notify_of_package_env(tag, package_tox_env)
+        pkg_info = env.get_package_env_types()
+        if pkg_info is not None:
+            name, core_type = pkg_info
+            env.package_env = self._build_pkg_env(name, core_type, env)
+
+    def _build_pkg_env(self, name: str, core_type: str, env: RunToxEnv) -> PackageToxEnv:
+        with self.log_handler.with_context(name):
+            package_tox_env = self._get_package_env(core_type, name)
+
+            child_package_envs = package_tox_env.register_run_env(env)
+            try:
+                child_name, child_type = next(child_package_envs)
+                while True:
+                    child_pkg_env = self._build_pkg_env(child_name, child_type, env)
+                    child_name, child_type = child_package_envs.send(child_pkg_env)
+            except StopIteration:
+                pass
+            return package_tox_env
 
     def _get_package_env(self, packager: str, name: str) -> PackageToxEnv:
         if name in self._pkg_env:  # if already created reuse

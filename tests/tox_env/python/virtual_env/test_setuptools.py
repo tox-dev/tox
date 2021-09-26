@@ -7,7 +7,7 @@ import pytest
 
 from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.package import WheelPackage
-from tox.tox_env.python.virtual_env.package.api import Pep517VirtualEnvPackage
+from tox.tox_env.python.virtual_env.package.pep517 import Pep517VirtualEnvPackager
 
 
 @pytest.mark.integration()
@@ -32,7 +32,7 @@ def test_setuptools_package(
     tox_env = outcome.state.tox_env("py")
 
     (package_env,) = list(tox_env.package_envs)
-    assert isinstance(package_env, Pep517VirtualEnvPackage)
+    assert isinstance(package_env, Pep517VirtualEnvPackager)
     packages = package_env.perform_packaging(tox_env.conf)
     assert len(packages) == 1
     package = packages[0]

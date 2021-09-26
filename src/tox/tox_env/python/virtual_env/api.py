@@ -35,7 +35,7 @@ class VirtualEnv(Python, ABC):
             keys=["system_site_packages", "sitepackages"],
             of_type=bool,
             default=lambda conf, name: StrConvert().to_bool(
-                self._environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False")
+                self.environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False")
             ),
             desc="create virtual environments that also have access to globally installed packages.",
         )
@@ -43,8 +43,8 @@ class VirtualEnv(Python, ABC):
             keys=["always_copy", "alwayscopy"],
             of_type=bool,
             default=lambda conf, name: StrConvert().to_bool(
-                self._environment_variables.get(
-                    "VIRTUALENV_COPIES", self._environment_variables.get("VIRTUALENV_ALWAYS_COPY", "False")
+                self.environment_variables.get(
+                    "VIRTUALENV_COPIES", self.environment_variables.get("VIRTUALENV_ALWAYS_COPY", "False")
                 )
             ),
             desc="force virtualenv to always copy rather than symlink",
@@ -53,7 +53,7 @@ class VirtualEnv(Python, ABC):
             keys=["download"],
             of_type=bool,
             default=lambda conf, name: StrConvert().to_bool(
-                self._environment_variables.get("VIRTUALENV_DOWNLOAD", "False")
+                self.environment_variables.get("VIRTUALENV_DOWNLOAD", "False")
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
         )
@@ -105,7 +105,7 @@ class VirtualEnv(Python, ABC):
         return self._virtualenv_session
 
     def virtualenv_env_vars(self) -> Dict[str, str]:
-        env = self._environment_variables.copy()
+        env = self.environment_variables.copy()
         base_python: List[str] = self.conf["base_python"]
         if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
             env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"

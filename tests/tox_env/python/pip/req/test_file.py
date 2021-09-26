@@ -1,3 +1,4 @@
+import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO
@@ -84,7 +85,7 @@ _REQ_FILE_TEST_CASES = [
     pytest.param("--editable a", {}, ["-e a"], ["-e", "a"], id="editable"),
     pytest.param("--editable .[2,1]", {}, ["-e .[1,2]"], ["-e", ".[1,2]"], id="editable extra"),
     pytest.param(".[\t, a1. , B2-\t, C3_, ]", {}, [".[B2-,C3_,a1.]"], [".[B2-,C3_,a1.]"], id="path with extra"),
-    pytest.param(".[a.1]", {}, [".[a.1]"], [".[a.1]"], id="path with invalid extra is path"),
+    pytest.param(".[a.1]", {}, [f".{os.sep}.[a.1]"], [f".{os.sep}.[a.1]"], id="path with invalid extra is path"),
     pytest.param("-f a", {"find_links": ["a"]}, [], ["-f", "a"], id="f"),
     pytest.param("--find-links a", {"find_links": ["a"]}, [], ["-f", "a"], id="find-links"),
     pytest.param("--trusted-host a", {"trusted_hosts": ["a"]}, [], ["--trusted-host", "a"], id="trusted-host"),
@@ -297,7 +298,7 @@ def test_requirements_env_var_missing(monkeypatch: MonkeyPatch, tmp_path: Path) 
     req_file = RequirementsFile(requirements_file, constraint=False)
     assert vars(req_file.options) == {}
     found = [str(i) for i in req_file.requirements]
-    assert found == ["${ENV_VAR}"]
+    assert found == [f".{os.sep}${{ENV_VAR}}"]
 
 
 @pytest.mark.parametrize("flag", ["-r", "--requirement"])
