@@ -566,6 +566,8 @@ Python run
    A list of "extras" from the package to be installed. For example, ``extras = testing`` is equivalent to ``[testing]``
    in a ``pip install`` command.
 
+.. _external-package-builder:
+
 External package builder
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
