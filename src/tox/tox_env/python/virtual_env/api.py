@@ -1,6 +1,7 @@
 """
 Declare the abstract base class for tox environments that handle the Python language via the virtualenv project.
 """
+import os
 import sys
 from abc import ABC
 from pathlib import Path
@@ -115,6 +116,7 @@ class VirtualEnv(Python, ABC):
         env["VIRTUALENV_COPIES"] = str(getattr(self.options, "always_copy", False) or self.conf["always_copy"])
         env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
         env["VIRTUALENV_PYTHON"] = "\n".join(base_python)
+        env["VIRTUALENV_TRY_FIRST_WITH"] = os.pathsep.join(self.options.discover)
         return env
 
     @property
