@@ -1,0 +1,1 @@
+Support for the ``--discover`` CLI flag - by :user:`gaborbernat`.

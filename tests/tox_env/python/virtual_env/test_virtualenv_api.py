@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from typing import Tuple
 
@@ -27,7 +28,7 @@ def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEn
 
 def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    result = proj.run("r", "-e", "py")
+    result = proj.run("r", "-e", "py", "--discover", sys.executable, str(proj.path / "a"))
     result.assert_success()
 
     conf = result.env_conf("py")
@@ -41,6 +42,7 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     assert virtualenv_opt.copies is False
     assert virtualenv_opt.no_periodic_update is True
     assert virtualenv_opt.python == ["py"]
+    assert virtualenv_opt.try_first_with == [str(sys.executable), str(proj.path / "a")]
 
 
 def test_virtualenv_flipped_settings(
