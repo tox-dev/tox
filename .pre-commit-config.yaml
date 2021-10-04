@@ -46,6 +46,8 @@ repos:
         args:
           - --min-py3-version
           - "3.4"
+          - --max-py-version
+          - "3.10"
   - repo: https://github.com/PyCQA/flake8
     rev: 3.9.2
     hooks:
