@@ -30,7 +30,7 @@ repos:
         args:
           - --safe
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.17.0
+    rev: v1.18.0
     hooks:
       - id: setup-cfg-fmt
         args:
@@ -62,15 +62,14 @@ repos:
         exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|README.rst|template.jinja2)
         files: ^docs/changelog/
   - repo: https://github.com/PyCQA/flake8
-    rev: 3.9.2
+    rev: 4.0.1
     hooks:
       - id: flake8
         additional_dependencies:
-        - flake8-bugbear==21.9.1
-        - flake8-comprehensions==3.6.1
+        - flake8-bugbear==21.9.2
+        - flake8-comprehensions==3.7
         - flake8-pytest-style==1.5
         - flake8-spellcheck==0.24
         - flake8-unused-arguments==0.0.6
-        - flake8-noqa==1.1.0
-        - flake8-eradicate==1.1.0
+        - flake8-noqa==1.2
         - pep8-naming==0.12.1
