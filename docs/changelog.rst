@@ -1476,7 +1476,7 @@ v2.8.0 (2017-09-01)
 - `pull request 585 <https://github.com/tox-dev/tox/pull/585>`_: Expand documentation to explain pass through of flags from deps to pip
   (e.g. ``-rrequirements.txt``, ``-cconstraints.txt``). Thanks Alexander Loechel (`@loechel <https://github.com/loechel>`_).
 
-- `pull request 588 <https://github.com/tox-dev/tox/pull/588>`_: Run pytest wit xfail_strict and adapt affected tests.
+- `pull request 588 <https://github.com/tox-dev/tox/pull/588>`_: Run pytest with xfail_strict and adapt affected tests.
 
 v2.7.0 (2017-04-02)
 -------------------

@@ -157,7 +157,7 @@ class _exp:
         (
             _answers([1, "pytest", ""]),
             _exp(
-                "choose current release Python and pytest with defaut deps",
+                "choose current release Python and pytest with default deps",
                 [tox.PYTHON.CURRENT_RELEASE_ENV, "pytest", "pytest"],
             ),
             _cnf(),
@@ -173,14 +173,14 @@ class _exp:
         (
             _answers([2, "pytest", ""]),
             _exp(
-                "choose py27, current release Python and pytest with defaut deps",
+                "choose py27, current release Python and pytest with default deps",
                 ["py27, {}".format(tox.PYTHON.CURRENT_RELEASE_ENV), "pytest", "pytest"],
             ),
             _cnf(),
         ),
         (
             _answers([3, "pytest", ""]),
-            _exp("choose all supported version and pytest with defaut deps"),
+            _exp("choose all supported version and pytest with default deps"),
             _cnf(),
         ),
         (

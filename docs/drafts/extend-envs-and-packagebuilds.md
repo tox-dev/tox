@@ -93,7 +93,7 @@ package_formats=            # new option to specify wanted package formats for t
 commands = py.test
 ```
 
-Lising tox environments (`tox --list`) would display the following output:
+Listing tox environments (`tox --list`) would display the following output:
 
 ```
 (sdist) py27
@@ -152,17 +152,17 @@ Output of `tox --list`:
 ```
 
 
-### Implemenation Details
+### Implementation Details
 
 ```
 tox_package_formats() -> ['conda']   # ['sdist', 'wheel']
 tox_testenv_create(env_meta, package_type) -> # creates an environment for given package, using
                                                   # information from env_meta (like .envdir)
-                                                  # returns: an "env" object which is forwaded to the next hooks
+                                                  # returns: an "env" object which is forwarded to the next hooks
 tox_testenv_install(env_meta, package_type, env) -> # installs deps and package into environment
 tox_testenv_runtest(env_meta, package_type, env) -> # activates environment and runs test commands
 
-tox_testenv_updated(env_meta, package_type) ->  # returns True if hte environment is already up to date
+tox_testenv_updated(env_meta, package_type) ->  # returns True if the environment is already up to date
                                                 # otherwise, tox will remove the environment completely and
                                                 # create a new one
 ```

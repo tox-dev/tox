@@ -773,7 +773,7 @@ def _alwayscopy_not_supported():
 alwayscopy_not_supported = _alwayscopy_not_supported()
 
 
-@pytest.mark.skipif(alwayscopy_not_supported, reason="Platform doesnt support alwayscopy")
+@pytest.mark.skipif(alwayscopy_not_supported, reason="Platform doesn't support alwayscopy")
 def test_alwayscopy(initproj, cmd):
     initproj(
         "example123",
