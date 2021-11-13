@@ -70,6 +70,7 @@ def test_create(mocksession, newconfig):
     assert not venv.path.check()
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -135,6 +136,7 @@ def test_create_sitepackages(mocksession, newconfig):
     venv = mocksession.getvenv("site")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -144,6 +146,7 @@ def test_create_sitepackages(mocksession, newconfig):
     venv = mocksession.getvenv("nosite")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
@@ -165,6 +168,7 @@ def test_install_deps_wildcard(newmocksession):
     venv = mocksession.getvenv("py123")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
         pcalls = mocksession._pcalls
         assert len(pcalls) == 1
         distshare = venv.envconfig.config.distshare
@@ -201,6 +205,7 @@ def test_install_deps_indexserver(newmocksession):
     venv = mocksession.getvenv("py123")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
         pcalls = mocksession._pcalls
         assert len(pcalls) == 1
         pcalls[:] = []
@@ -233,6 +238,7 @@ def test_install_deps_pre(newmocksession):
     venv = mocksession.getvenv("python")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -294,6 +300,7 @@ def test_install_sdist_extras(newmocksession):
     venv = mocksession.getvenv("python")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -314,6 +321,7 @@ def test_develop_extras(newmocksession, tmpdir):
     venv = mocksession.getvenv("python")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
     pcalls = mocksession._pcalls
     assert len(pcalls) == 1
     pcalls[:] = []
@@ -519,6 +527,7 @@ def test_install_python3(newmocksession):
     venv = mocksession.getvenv("py123")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
         pcalls = mocksession._pcalls
         assert len(pcalls) == 1
         args = pcalls[0].args
@@ -1177,6 +1186,7 @@ def test_create_download(mocksession, newconfig, download):
     venv = mocksession.getvenv("env")
     with mocksession.newaction(venv.name, "getenv") as action:
         tox_testenv_create(action=action, venv=venv)
+        venv.just_created = True
     pcalls = mocksession._pcalls
     assert len(pcalls) >= 1
     args = pcalls[0].args
