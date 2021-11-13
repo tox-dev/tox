@@ -596,7 +596,9 @@ Complete list of settings that you can put into ``testenv*`` sections:
     Install the current package in development mode with "setup.py
     develop" instead of installing from the ``sdist`` package. (This
     uses pip's ``-e`` option, so should be avoided if you've specified a
-    custom :conf:`install_command` that does not support ``-e``).
+    custom :conf:`install_command` that does not support ``-e``). Note that
+    changes to the build/install process (including changes in dependencies)
+    are only detected when using setuptools with setup.py.
 
 .. conf:: skip_install ^ true|false ^ false
 

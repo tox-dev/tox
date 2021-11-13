@@ -1,0 +1,1 @@
+Fixed an issue where ``usedevelop`` would cause an invocation error if setup.py does not exist. -- by :user:`VincentVanlaer`
