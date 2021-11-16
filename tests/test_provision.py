@@ -18,7 +18,7 @@ from tox import __version__
 from tox.pytest import Index, IndexServer, MonkeyPatch, TempPathFactory, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from importlib.metadata import Distribution  # type: ignore[attr-defined]
+    from importlib.metadata import Distribution
 else:  # pragma: no cover (<py38)
     from importlib_metadata import Distribution
 

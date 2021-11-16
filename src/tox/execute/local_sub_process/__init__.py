@@ -17,6 +17,8 @@ from ..request import ExecuteRequest, StdinSource
 from ..stream import SyncWrite
 from ..util import shebang
 
+# mypy: warn-unused-ignores=false
+
 if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
     # needs stdin/stdout handlers backed by overlapped IO
     if TYPE_CHECKING:  # the typeshed libraries don't contain this, so replace it with normal one

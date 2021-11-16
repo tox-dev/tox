@@ -35,7 +35,7 @@ class Convert(ABC, Generic[T]):
         """
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
-            return self._to_typing(raw, of_type, factory)  # type: ignore
+            return self._to_typing(raw, of_type, factory)
         if issubclass(of_type, Path):
             return self.to_path(raw)  # type: ignore[return-value]
         if issubclass(of_type, bool):
@@ -80,7 +80,7 @@ class Convert(ABC, Generic[T]):
                     new_type = next(i for i in args if i != none)  # pragma: no cover # this will always find a element
                     result = self.to(raw, new_type, factory)
         elif origin in (Literal, type(Literal)):
-            choice = of_type.__args__
+            choice = of_type.__args__  # type: ignore[attr-defined]
             if raw not in choice:
                 raise ValueError(f"{raw} must be one of {choice}")
             result = raw

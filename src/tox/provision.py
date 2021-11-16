@@ -117,7 +117,7 @@ def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | N
     for package in requires:
         package_name = canonicalize_name(package.name)
         try:
-            dist = distribution(package_name)  # type: ignore[no-untyped-call]
+            dist = distribution(package_name)
         except PackageNotFoundError:
             missing.append((package, None))
         else:

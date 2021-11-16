@@ -12,6 +12,8 @@ import _overlapped  # type: ignore[import]  # pragma: win32 cover
 
 from .read_via_thread import ReadViaThread  # pragma: win32 cover
 
+# mypy: warn-unused-ignores=false
+
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
     def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:

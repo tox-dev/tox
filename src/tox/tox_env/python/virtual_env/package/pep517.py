@@ -27,7 +27,7 @@ from ..api import VirtualEnv
 from .util import dependencies_with_extras
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
+    from importlib.metadata import Distribution, PathDistribution
 else:  # pragma: no cover (<py38)
     from importlib_metadata import Distribution, PathDistribution
 ConfigSettings = Optional[Dict[str, Any]]
@@ -195,7 +195,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             self.meta_folder,
             self._wheel_config_settings,
         ).metadata
-        self._distribution_meta = Distribution.at(str(dist_info))  # type: ignore[no-untyped-call]
+        self._distribution_meta = Distribution.at(str(dist_info))
 
     @property
     def _wheel_config_settings(self) -> ConfigSettings | None:
@@ -240,7 +240,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         cmd: str,
         result_file: Path,  # noqa: U100
         msg: str,  # noqa: U100
-    ) -> Iterator[ToxCmdStatus]:  # type: ignore[override]
+    ) -> Iterator[ToxCmdStatus]:
         with self._tox_env.execute_async(
             cmd=self.backend_cmd,
             cwd=self._root,
