@@ -143,7 +143,10 @@ class Config:
             return conf_set
 
     def get_env(
-        self, item: str, package: bool = False, loaders: Optional[Sequence[Loader[Any]]] = None
+        self,
+        item: str,
+        package: bool = False,
+        loaders: Optional[Sequence[Loader[Any]]] = None,
     ) -> EnvConfigSet:
         """
         Return the configuration for a given tox environment (will create if not exist yet).

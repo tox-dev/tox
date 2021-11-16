@@ -133,7 +133,7 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
             "tox.ini": "[testenv]\npackage=wheel",
             "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
             "build.py": build_with_dep,
-        }
+        },
     )
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
 
@@ -164,7 +164,7 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
             "tox.ini": "[testenv]\npackage=wheel",
             "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]'),
             "build.py": (demo_pkg_inline / "build.py").read_text(),
-        }
+        },
     )
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result_first = proj.run("r")

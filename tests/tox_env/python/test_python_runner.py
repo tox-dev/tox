@@ -12,7 +12,7 @@ def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
             "tox.ini": "[testenv:py]\ndeps =-rpath.txt\n -r {toxinidir}{/}path2.txt\n pytest",
             "path.txt": "alpha",
             "path2.txt": "beta",
-        }
+        },
     )
     result = project.run("c", "-e", "py")
     result.assert_success()
@@ -44,7 +44,7 @@ def test_journal_one_wheel_file(tmp_path: Path) -> None:
             "basename": "a.whl",
             "sha256": "0ce2d4c7087733c06b1087b28db95e114d7caeb515b841c6cdec8960cf884654",
             "type": "file",
-        }
+        },
     }
 
 
@@ -70,7 +70,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
                 "sha256": "3be7a505483c0050243c5cbad4700da13925aa4137a55e9e33efd8bc4d05850f",
                 "type": "file",
             },
-        ]
+        ],
     }
 
 
@@ -84,5 +84,5 @@ def test_journal_package_dir(tmp_path: Path) -> None:
         "installpkg": {
             "basename": tmp_path.name,
             "type": "dir",
-        }
+        },
     }

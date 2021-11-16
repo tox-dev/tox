@@ -23,7 +23,7 @@ class Journal:
                     "toxversion": version,
                     "platform": sys.platform,
                     "host": socket.getfqdn(),
-                }
+                },
             )
 
     def get_env_journal(self, name: str) -> EnvJournal:

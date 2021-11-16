@@ -15,7 +15,7 @@ def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
         {
             "tox.ini": "[testenv]\npackage=skip\ndeps=-rrequirements.txt",
             "requirements.txt": "nose",
-        }
+        },
     )
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = prj.run("r", "-e", "py")

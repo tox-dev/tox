@@ -189,7 +189,8 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             return  # pragma: no cover
         self.setup()
         dist_info = self._frontend.prepare_metadata_for_build_wheel(
-            self.meta_folder, self._wheel_config_settings
+            self.meta_folder,
+            self._wheel_config_settings,
         ).metadata
         self._distribution_meta = Distribution.at(str(dist_info))  # type: ignore[no-untyped-call]
 
@@ -232,7 +233,10 @@ class Pep517VirtualEnvFrontend(Frontend):
 
     @contextmanager
     def _send_msg(
-        self, cmd: str, result_file: Path, msg: str  # noqa: U100
+        self,
+        cmd: str,
+        result_file: Path,  # noqa: U100
+        msg: str,  # noqa: U100
     ) -> Iterator[ToxCmdStatus]:  # type: ignore[override]
         with self._tox_env.execute_async(
             cmd=self.backend_cmd,

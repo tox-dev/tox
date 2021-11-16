@@ -8,7 +8,9 @@ from tox.pytest import ToxProjectCreator
 
 @pytest.mark.parametrize("has_prev", [True, False])
 def test_depends(
-    tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], Tuple[str, str]], has_prev: bool
+    tox_project: ToxProjectCreator,
+    patch_prev_py: Callable[[bool], Tuple[str, str]],
+    has_prev: bool,
 ) -> None:
     prev_ver, impl = patch_prev_py(has_prev)
     ver = sys.version_info[0:2]
@@ -44,7 +46,7 @@ def test_depends(
             "      cov",
             "         py ~ .pkg",
             f"         {py} ~ .pkg",
-        ]
+        ],
     )
     if has_prev:
         expected_lines.append(f"         {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}")
@@ -53,7 +55,7 @@ def test_depends(
             "   cov",
             "      py ~ .pkg",
             f"      {py} ~ .pkg",
-        ]
+        ],
     )
     if has_prev:
         expected_lines.append(f"      {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}")

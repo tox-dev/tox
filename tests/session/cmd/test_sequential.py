@@ -42,7 +42,8 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.integration()
 def test_result_json_sequential(
-    tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]  # noqa: U100
+    tox_project: ToxProjectCreator,
+    enable_pip_pypi_access: Optional[str],  # noqa: U100
 ) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
@@ -55,7 +56,7 @@ def test_result_json_sequential(
             "install_requires=['setuptools>44'])",
             "run.py": "print('run')",
             "pyproject.toml": '[build-system]\nrequires=["setuptools","wheel"]\nbuild-backend="setuptools.build_meta"',
-        }
+        },
     )
     log = project.path / "log.json"
     outcome = project.run("r", "-vv", "-e", "py", "--result-json", str(log))
@@ -131,7 +132,7 @@ def test_rerun_sequential_skip(tox_project: ToxProjectCreator, demo_pkg_inline: 
 
 def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
-        {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"}
+        {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
     result_first = proj.run("--root", str(demo_pkg_inline))
     result_first.assert_success()
@@ -142,7 +143,7 @@ def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline:
 @pytest.mark.integration()
 def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
-        {"tox.ini": "[testenv]\npackage=sdist\ncommands=python -c 'from demo_pkg_inline import do; do()'"}
+        {"tox.ini": "[testenv]\npackage=sdist\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
     result_first = proj.run("--root", str(demo_pkg_inline))
     result_first.assert_success()
@@ -152,7 +153,7 @@ def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline:
 
 def test_recreate_package(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
-        {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"}
+        {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
     result_first = proj.run("--root", str(demo_pkg_inline), "-r")
     result_first.assert_success()
@@ -191,7 +192,7 @@ def test_package_build_fails(tox_project: ToxProjectCreator) -> None:
             "tox.ini": "[testenv]\npackage=wheel",
             "pyproject.toml": '[build-system]\nrequires=[]\nbuild-backend="build"\nbackend-path=["."]',
             "build.py": "",
-        }
+        },
     )
 
     result = proj.run("r")
@@ -205,7 +206,7 @@ def test_backend_not_found(tox_project: ToxProjectCreator) -> None:
             "tox.ini": "[testenv]\npackage=wheel",
             "pyproject.toml": '[build-system]\nrequires=[]\nbuild-backend="build"',
             "build.py": "",
-        }
+        },
     )
 
     result = proj.run("r")

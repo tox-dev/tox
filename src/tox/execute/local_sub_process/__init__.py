@@ -39,7 +39,11 @@ IS_WIN = sys.platform == "win32"
 
 class LocalSubProcessExecutor(Execute):
     def build_instance(
-        self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite
+        self,
+        request: ExecuteRequest,
+        options: ExecuteOptions,
+        out: SyncWrite,
+        err: SyncWrite,
     ) -> ExecuteInstance:
         return LocalSubProcessExecuteInstance(request, options, out, err)
 
@@ -213,7 +217,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         return status
 
     def __exit__(
-        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
     ) -> None:
         if self._read_stderr is not None:
             self._read_stderr.__exit__(exc_type, exc_val, exc_tb)

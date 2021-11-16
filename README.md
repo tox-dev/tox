@@ -1,9 +1,9 @@
+# Rewrite branch
+
 [![check](https://github.com/tox-dev/tox/workflows/check/badge.svg)](https://github.com/tox-dev/tox/actions?query=workflow%3Acheck)
 [![codecov](https://codecov.io/gh/tox-dev/tox/branch/rewrite/graph/badge.svg)](https://codecov.io/gh/tox-dev/tox/branch/rewrite)
 [![Code style:
 black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
-## Rewrite branch
 
 <a href="https://tox.readthedocs.io">
     <img src="https://raw.githubusercontent.com/tox-dev/tox/master/docs/_static/img/tox.png"
@@ -29,15 +29,15 @@ for what tox is. The broad goal is to:
 **Compatibility wise we aim to be (excluding some weird edge cases) configuration file compatible with tox 3. We'll not
 be API compatible though (all plugins will break).**
 
-### Documentation
+## Documentation
 
 To be done.
 
-### Communication and questions
+## Communication and questions
 
 For now reach out to [Bernat Gabor](https://github.com/gaborbernat/) directly.
 
-### Contributing
+## Contributing
 
 Contributions are welcome, though expect a lot of rough edges at this early point of development. See
 [contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our

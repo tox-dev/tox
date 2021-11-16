@@ -50,7 +50,10 @@ class PythonRun(Python, RunToxEnv, ABC):
             self.conf.add_constant(["package"], desc, "external")
         else:
             self.conf.add_config(
-                keys=["use_develop", "usedevelop"], desc="use develop mode", default=False, of_type=bool
+                keys=["use_develop", "usedevelop"],
+                desc="use develop mode",
+                default=False,
+                of_type=bool,
             )
             develop_mode = self.conf["use_develop"] or getattr(self.options, "develop", False)
             if develop_mode:

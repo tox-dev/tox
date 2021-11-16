@@ -103,7 +103,8 @@ class Frontend(ABC):
 
     @classmethod
     def create_args_from_folder(
-        cls, folder: Path
+        cls,
+        folder: Path,
     ) -> Tuple[Path, Tuple[Path, ...], str, Optional[str], Tuple[Requirement, ...], bool]:
         py_project_toml = folder / "pyproject.toml"
         if py_project_toml.exists():
@@ -165,7 +166,9 @@ class Frontend(ABC):
         return f"{self._backend_module}{f':{self._backend_obj}' if self._backend_obj else ''}"
 
     def prepare_metadata_for_build_wheel(
-        self, metadata_directory: Path, config_settings: Optional[ConfigSettings] = None
+        self,
+        metadata_directory: Path,
+        config_settings: Optional[ConfigSettings] = None,
     ) -> MetadataForBuildWheelResult:
         if metadata_directory == self._root:
             raise RuntimeError(f"the project root and the metadata directory can't be the same {self._root}")
@@ -187,7 +190,9 @@ class Frontend(ABC):
         return MetadataForBuildWheelResult(result, out, err)
 
     def _metadata_from_built_wheel(
-        self, config_settings: Optional[ConfigSettings], metadata_directory: Optional[Path]
+        self,
+        config_settings: Optional[ConfigSettings],
+        metadata_directory: Optional[Path],
     ) -> Tuple[str, str, str]:
         with self._wheel_directory() as wheel_directory:
             wheel_result = self.build_wheel(
@@ -217,7 +222,8 @@ class Frontend(ABC):
             yield Path(wheel_directory)
 
     def get_requires_for_build_wheel(
-        self, config_settings: Optional[ConfigSettings] = None
+        self,
+        config_settings: Optional[ConfigSettings] = None,
     ) -> RequiresBuildWheelResult:
         try:
             result, out, err = self._send(cmd="get_requires_for_build_wheel", config_settings=config_settings)
@@ -228,7 +234,8 @@ class Frontend(ABC):
         return RequiresBuildWheelResult(tuple(Requirement(r) for r in cast(List[str], result)), out, err)
 
     def get_requires_for_build_sdist(
-        self, config_settings: Optional[ConfigSettings] = None
+        self,
+        config_settings: Optional[ConfigSettings] = None,
     ) -> RequiresBuildSdistResult:
         try:
             result, out, err = self._send(cmd="get_requires_for_build_sdist", config_settings=config_settings)
@@ -246,7 +253,7 @@ class Frontend(ABC):
                     "cmd": cmd,
                     "kwargs": {k: (str(v) if isinstance(v, Path) else v) for k, v in kwargs.items()},
                     "result": str(result_file),
-                }
+                },
             )
             with self._send_msg(cmd, result_file, msg) as status:
                 while not status.done:  # pragma: no branch

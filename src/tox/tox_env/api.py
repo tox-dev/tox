@@ -195,7 +195,7 @@ class ToxEnv(ABC):
                     "USERPROFILE",  # needed for `os.path.expanduser()`
                     "PATHEXT",  # needed for discovering executables
                     "MSYSTEM",  # controls paths printed format
-                ]
+                ],
             )
         else:  # pragma: win32 no cover
             env.append("TMPDIR")  # temporary file location
@@ -429,7 +429,11 @@ class ToxEnv(ABC):
 
     @contextmanager
     def _execute_call(
-        self, executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
+        self,
+        executor: Execute,
+        out_err: OutErr,
+        request: ExecuteRequest,
+        show: bool,
     ) -> Iterator[ExecuteStatus]:
         with executor.call(
             request=request,

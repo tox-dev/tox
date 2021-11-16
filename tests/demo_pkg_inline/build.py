@@ -33,7 +33,8 @@ content = {
 
         UNKNOWN
        """.format(
-        pkg_name, version
+        pkg_name,
+        version,
     ),
     wheel: """
         Wheel-Version: 1.0
@@ -41,7 +42,9 @@ content = {
         Root-Is-Purelib: true
         Tag: py{}-none-any
        """.format(
-        name, version, sys.version_info[0]
+        name,
+        version,
+        sys.version_info[0],
     ),
     "{}/top_level.txt".format(dist_info): name,
     record: """
@@ -51,7 +54,8 @@ content = {
         {1}/top_level.txt,,
         {1}/RECORD,,
        """.format(
-        name, dist_info
+        name,
+        dist_info,
     ),
 }
 

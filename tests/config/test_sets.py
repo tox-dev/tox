@@ -48,7 +48,10 @@ def test_config_set(conf_builder: ConfBuilder) -> None:
 def test_config_optional_none(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("")
     config_set.add_config(
-        keys="optional_none", of_type=Optional[int], default=None, desc="optional_none"  # type: ignore[arg-type]
+        keys="optional_none",
+        of_type=Optional[int],  # type: ignore[arg-type]
+        default=None,
+        desc="optional_none",
     )
     optional_none = config_set["optional_none"]
     assert optional_none is None

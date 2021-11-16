@@ -6,7 +6,7 @@ def test_env_already_packaging(tox_project: ToxProjectCreator) -> None:
         {
             "tox.ini": "[testenv]\npackage=wheel",
             "pyproject.toml": '[build-system]\nrequires=[]\nbuild-backend="build"',
-        }
+        },
     )
     result = proj.run("r", "-e", "py,.pkg")
     result.assert_failed(code=-2)

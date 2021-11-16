@@ -100,7 +100,7 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
     standard output
     additional environments:
     py -> [no description]
-    """
+    """,
     ).lstrip()
     assert repr(outcome) == msg
     assert outcome.shell_cmd == f"{sys.executable} -m tox l"

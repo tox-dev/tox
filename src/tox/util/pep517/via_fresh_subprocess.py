@@ -42,7 +42,10 @@ class SubprocessFrontend(Frontend):
 
     @contextmanager
     def _send_msg(  # type: ignore[override]
-        self, cmd: str, result_file: Path, msg: str  # noqa: U100
+        self,
+        cmd: str,  # noqa: U100
+        result_file: Path,  # noqa: U100
+        msg: str,  # noqa: U100
     ) -> Iterator[SubprocessCmdStatus]:
         env = os.environ.copy()
         backend = os.pathsep.join(str(i) for i in self._backend_paths).strip()

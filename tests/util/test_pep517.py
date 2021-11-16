@@ -23,7 +23,7 @@ else:  # pragma: no cover (<py38)
 def frontend_setuptools(tmp_path_factory: TempPathFactory) -> SubprocessFrontend:
     prj = tmp_path_factory.mktemp("proj")
     (prj / "pyproject.toml").write_text(
-        '[build-system]\nrequires=["setuptools","wheel"]\nbuild-backend = "setuptools.build_meta"'
+        '[build-system]\nrequires=["setuptools","wheel"]\nbuild-backend = "setuptools.build_meta"',
     )
     cfg = """
         [metadata]
@@ -66,7 +66,8 @@ def test_pep517_setuptools_get_requires_for_build_wheel(frontend_setuptools: Sub
 
 
 def test_pep517_setuptools_prepare_metadata_for_build_wheel(
-    frontend_setuptools: SubprocessFrontend, tmp_path: Path
+    frontend_setuptools: SubprocessFrontend,
+    tmp_path: Path,
 ) -> None:
     meta = tmp_path / "meta"
     result = frontend_setuptools.prepare_metadata_for_build_wheel(metadata_directory=meta)
@@ -242,8 +243,8 @@ def test_pep517_backend_obj(tmp_path: Path) -> None:
         requires=[]
         build-backend = "build.api:backend:"
         backend-path=["."]
-        """
-        )
+        """,
+        ),
     )
     build = tmp_path / "build"
     build.mkdir()
@@ -256,8 +257,8 @@ def test_pep517_backend_obj(tmp_path: Path) -> None:
                 return ["a"]
 
         backend = A()
-        """
-        )
+        """,
+        ),
     )
     fronted = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(tmp_path)[:-1])
     result = fronted.get_requires_for_build_sdist()

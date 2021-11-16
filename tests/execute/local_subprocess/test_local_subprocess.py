@@ -199,7 +199,11 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: Dict[str, str
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(
-        cmd=["sys-must-be-missing"], cwd=Path().absolute(), env=os_env, stdin=StdinSource.OFF, run_id=""
+        cmd=["sys-must-be-missing"],
+        cwd=Path().absolute(),
+        env=os_env,
+        stdin=StdinSource.OFF,
+        run_id="",
     )
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:

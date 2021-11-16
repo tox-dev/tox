@@ -21,7 +21,11 @@ class Source(ABC):
         self._section_to_loaders: Dict[str, List[Loader[Any]]] = {}
 
     def get_loaders(
-        self, section: Section, base: Optional[List[str]], override_map: OverrideMap, conf: ConfigSet
+        self,
+        section: Section,
+        base: Optional[List[str]],
+        override_map: OverrideMap,
+        conf: ConfigSet,
     ) -> Iterator[Loader[Any]]:
         """
         Return a loader that loads settings from a given section name.

@@ -24,10 +24,18 @@ from tox.tox_env.runner import RunToxEnv
 def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("config", ["c"], "show tox configuration", show_config)
     our.add_argument(
-        "-k", nargs="+", help="list just configuration keys specified", dest="list_keys_only", default=[], metavar="key"
+        "-k",
+        nargs="+",
+        help="list just configuration keys specified",
+        dest="list_keys_only",
+        default=[],
+        metavar="key",
     )
     our.add_argument(
-        "--core", action="store_true", help="show core options too when selecting an env with -e", dest="show_core"
+        "--core",
+        action="store_true",
+        help="show core options too when selecting an env with -e",
+        dest="show_core",
     )
     env_list_flag(our, default=CliEnv("ALL"))
     env_run_create_flags(our, mode="config")

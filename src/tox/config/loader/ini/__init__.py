@@ -24,7 +24,11 @@ class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary)"""
 
     def __init__(
-        self, section: Section, parser: ConfigParser, overrides: List[Override], core_section: Section
+        self,
+        section: Section,
+        parser: ConfigParser,
+        overrides: List[Override],
+        core_section: Section,
     ) -> None:
         self._section_proxy: SectionProxy = parser[section.key]
         self._parser = parser

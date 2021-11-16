@@ -27,7 +27,11 @@ class LocalSubProcessPep517Executor(Execute):
         self.is_alive: bool = False
 
     def build_instance(
-        self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite
+        self,
+        request: ExecuteRequest,
+        options: ExecuteOptions,
+        out: SyncWrite,
+        err: SyncWrite,
     ) -> ExecuteInstance:
         result = LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
         return result

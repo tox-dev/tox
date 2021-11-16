@@ -92,7 +92,13 @@ def skip_member(app: Sphinx, what: str, name: str, obj: Any, would_skip: bool, o
 
 
 def process_signature(
-    app: Sphinx, objtype: str, name: str, obj: Any, options: Options, args: str, retann: str | None  # noqa: U100
+    app: Sphinx,  # noqa: U100
+    objtype: str,
+    name: str,  # noqa: U100
+    obj: Any,  # noqa: U100
+    options: Options,
+    args: str,  # noqa: U100
+    retann: str | None,  # noqa: U100
 ) -> None | tuple[None, None]:
     # skip-member is not checked for class level docs, so disable via signature processing
     return (None, None) if objtype == "class" and "__init__" in options.get("exclude-members", set()) else None
@@ -171,7 +177,15 @@ def setup(app: Sphinx) -> None:
             state_machine: RSTStateMachine,
         ):
             super().__init__(
-                name, arguments, options, content, lineno, content_offset, block_text, state, state_machine
+                name,
+                arguments,
+                options,
+                content,
+                lineno,
+                content_offset,
+                block_text,
+                state,
+                state_machine,
             )
             self._std_domain: StandardDomain = cast(StandardDomain, self.env.get_domain("std"))
 

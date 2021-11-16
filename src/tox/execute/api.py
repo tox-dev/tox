@@ -128,12 +128,24 @@ class Execute(ABC):
         finally:
             end = time.monotonic()
         status.outcome = Outcome(
-            request, show, exit_code, out_sync.text, err_sync.text, start, end, instance.cmd, status.metadata
+            request,
+            show,
+            exit_code,
+            out_sync.text,
+            err_sync.text,
+            start,
+            end,
+            instance.cmd,
+            status.metadata,
         )
 
     @abstractmethod
     def build_instance(
-        self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite
+        self,
+        request: ExecuteRequest,
+        options: ExecuteOptions,
+        out: SyncWrite,
+        err: SyncWrite,
     ) -> "ExecuteInstance":
         raise NotImplementedError
 

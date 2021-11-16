@@ -295,7 +295,11 @@ def _queue_and_wait(
                             tox_env_done.teardown()
                             name = tox_env_done.conf.name
                             result = ToxEnvRunResult(
-                                name=name, skipped=False, code=-3, outcomes=[], duration=MISS_DURATION
+                                name=name,
+                                skipped=False,
+                                code=-3,
+                                outcomes=[],
+                                duration=MISS_DURATION,
                             )
                         results.append(result)
                         completed.add(result.name)

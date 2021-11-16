@@ -139,7 +139,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         if self._cmd is None:
             raise RuntimeError("no sub-command group allowed")
         sub_parser: ToxParser = self._cmd.add_parser(
-            cmd, help=help_msg, aliases=aliases, formatter_class=HelpFormatter, file_config=self.file_config
+            cmd,
+            help=help_msg,
+            aliases=aliases,
+            formatter_class=HelpFormatter,
+            file_config=self.file_config,
         )
         sub_parser.of_cmd = cmd  # mark it as parser for a sub-command
         content = sub_parser, handler
@@ -211,7 +215,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self.fix_defaults()
 
     def parse_known_args(  # type: ignore[override]
-        self, args: Optional[Sequence[str]], namespace: Optional[Parsed] = None
+        self,
+        args: Optional[Sequence[str]],
+        namespace: Optional[Parsed] = None,
     ) -> Tuple[Parsed, List[str]]:
         if args is None:
             args = sys.argv[1:]
@@ -244,7 +250,12 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
     )
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument(
-        "-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=DEFAULT_VERBOSITY
+        "-v",
+        "--verbose",
+        action="count",
+        dest="verbose",
+        help="increase verbosity",
+        default=DEFAULT_VERBOSITY,
     )
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
 

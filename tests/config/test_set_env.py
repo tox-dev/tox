@@ -35,7 +35,10 @@ def test_set_env_bad_line() -> None:
 
 class EvalSetEnv(Protocol):
     def __call__(
-        self, tox_ini: str, extra_files: Optional[Dict[str, Any]] = ..., from_cwd: Optional[Path] = ...  # noqa: U100
+        self,
+        tox_ini: str,  # noqa: U100
+        extra_files: Optional[Dict[str, Any]] = ...,  # noqa: U100
+        from_cwd: Optional[Path] = ...,  # noqa: U100
     ) -> SetEnv:
         ...
 

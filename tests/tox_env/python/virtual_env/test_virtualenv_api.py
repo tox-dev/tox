@@ -46,10 +46,12 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
 
 
 def test_virtualenv_flipped_settings(
-    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions, monkeypatch: MonkeyPatch
+    tox_project: ToxProjectCreator,
+    virtualenv_opt: VirtualEnvOptions,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     proj = tox_project(
-        {"tox.ini": "[testenv]\npackage=skip\nsystem_site_packages=True\nalways_copy=True\ndownload=True"}
+        {"tox.ini": "[testenv]\npackage=skip\nsystem_site_packages=True\nalways_copy=True\ndownload=True"},
     )
     monkeypatch.setenv("VIRTUALENV_CLEAR", "0")
 
@@ -69,7 +71,9 @@ def test_virtualenv_flipped_settings(
 
 
 def test_virtualenv_env_ignored_if_set(
-    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions, monkeypatch: MonkeyPatch
+    tox_project: ToxProjectCreator,
+    virtualenv_opt: VirtualEnvOptions,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     ini = "[testenv]\npackage=skip\nsystem_site_packages=True\nalways_copy=True\ndownload=True"
     proj = tox_project({"tox.ini": ini})
@@ -80,7 +84,9 @@ def test_virtualenv_env_ignored_if_set(
 
 
 def test_virtualenv_env_used_if_not_set(
-    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions, monkeypatch: MonkeyPatch
+    tox_project: ToxProjectCreator,
+    virtualenv_opt: VirtualEnvOptions,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     monkeypatch.setenv("VIRTUALENV_COPIES", "1")
@@ -102,7 +108,8 @@ def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> No
 
 
 def test_honor_set_env_for_clear_periodic_update(
-    tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions
+    tox_project: ToxProjectCreator,
+    virtualenv_opt: VirtualEnvOptions,
 ) -> None:
     ini = "[testenv]\npackage=skip\nset_env=\n  VIRTUALENV_CLEAR=0\n  VIRTUALENV_NO_PERIODIC_UPDATE=0"
     proj = tox_project({"tox.ini": ini})

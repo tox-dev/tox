@@ -128,7 +128,7 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
             "tox.ini": ini,
             "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
             "build.py": (demo_pkg_inline / "build.py").read_text(),
-        }
+        },
     )
     cmd = ["-c", str(proj.path / "tox.ini"), "p", "-p", "1", "-e", f"py,py{sys.version_info[0]},dep"]
     process = Popen([sys.executable, "-m", "tox"] + cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)

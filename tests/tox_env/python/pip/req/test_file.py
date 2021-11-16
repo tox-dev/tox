@@ -142,7 +142,11 @@ _REQ_FILE_TEST_CASES = [
     pytest.param("--no-binary :none:", {"no_binary": ":none:"}, [], ["--no-binary", ":none:"], id="no-binary none"),
     pytest.param("--only-binary :all:", {"only_binary": ":all:"}, [], ["--only-binary", ":all:"], id="only-binary all"),
     pytest.param(
-        "--only-binary :none:", {"only_binary": ":none:"}, [], ["--only-binary", ":none:"], id="only-binary none"
+        "--only-binary :none:",
+        {"only_binary": ":none:"},
+        [],
+        ["--only-binary", ":none:"],
+        id="only-binary none",
     ),
     pytest.param("####### example-requirements.txt #######", {}, [], [], id="comment"),
     pytest.param("\t##### Requirements without Version Specifiers ######", {}, [], [], id="tab and comment"),
@@ -238,7 +242,7 @@ _REQ_FILE_TEST_CASES = [
         {},
         [
             "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
-            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
+            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab",
         ],
         ["attrs"],
         id="hash",
@@ -250,7 +254,7 @@ _REQ_FILE_TEST_CASES = [
         {},
         [
             "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
-            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
+            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab",
         ],
         ["attrs"],
         id="hash with escaped newline",
@@ -261,7 +265,7 @@ _REQ_FILE_TEST_CASES = [
         {},
         [
             "attrs --hash sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
-            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
+            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
         ],
         ["attrs"],
         id="sha512 hash is supported",

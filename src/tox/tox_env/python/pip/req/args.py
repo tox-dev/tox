@@ -38,7 +38,10 @@ def _global_options(parser: ArgumentParser) -> None:
     parser.add_argument("--pre", action="store_true", default=False)
     parser.add_argument("--trusted-host", action=AddSortedUniqueAction)
     parser.add_argument(
-        "--use-feature", choices=["2020-resolver", "fast-deps"], action=AddSortedUniqueAction, dest="features_enabled"
+        "--use-feature",
+        choices=["2020-resolver", "fast-deps"],
+        action=AddSortedUniqueAction,
+        dest="features_enabled",
     )
 
 

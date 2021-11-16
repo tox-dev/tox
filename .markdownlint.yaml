@@ -1,0 +1,12 @@
+MD013:
+  code_blocks: false
+  headers: false
+  line_length: 120
+  tables: false
+
+MD046:
+  style: fenced
+
+MD033:
+  allowed_elements:
+    - a

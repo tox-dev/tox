@@ -22,7 +22,10 @@ class Info:
 
     @contextmanager
     def compare(
-        self, value: Any, section: str, sub_section: Optional[str] = None
+        self,
+        value: Any,
+        section: str,
+        sub_section: Optional[str] = None,
     ) -> Iterator[Tuple[bool, Optional[Any]]]:
         """Cache"""
         old = self._content.get(section)

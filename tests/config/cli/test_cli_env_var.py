@@ -61,7 +61,8 @@ def test_verbose_no_test() -> None:
 
 
 def test_env_var_exhaustive_parallel_values(
-    monkeypatch: MonkeyPatch, core_handlers: Dict[str, Callable[[State], int]]
+    monkeypatch: MonkeyPatch,
+    core_handlers: Dict[str, Callable[[State], int]],
 ) -> None:
     monkeypatch.setenv("TOX_COMMAND", "run-parallel")
     monkeypatch.setenv("TOX_VERBOSE", "5")
@@ -129,7 +130,10 @@ def test_ini_help(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
 
 
 def test_bad_env_var(
-    monkeypatch: MonkeyPatch, capsys: CaptureFixture, caplog: LogCaptureFixture, value_error: Callable[[str], str]
+    monkeypatch: MonkeyPatch,
+    capsys: CaptureFixture,
+    caplog: LogCaptureFixture,
+    value_error: Callable[[str], str],
 ) -> None:
     monkeypatch.setenv("TOX_VERBOSE", "should-be-number")
     monkeypatch.setenv("TOX_QUIET", "1.00")

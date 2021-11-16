@@ -118,7 +118,7 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
             py36: unittest2
-        """
+        """,
     )
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
     for env in config.core["env_list"]:
@@ -146,7 +146,7 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
             py36: unittest2
-        """
+        """,
     )
 
     assert list(config) == ["py37-django15", "py37-django16", "py36"]
@@ -160,7 +160,10 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
     ],
 )
 def test_ini_loader_raw_with_factors(
-    mk_ini_conf: Callable[[str], ConfigParser], env: str, result: str, empty_config: Config
+    mk_ini_conf: Callable[[str], ConfigParser],
+    env: str,
+    result: str,
+    empty_config: Config,
 ) -> None:
     commands = "python -m coverage html -d cov \n    !py35: --show-contexts"
     loader = IniLoader(

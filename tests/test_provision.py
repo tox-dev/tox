@@ -34,7 +34,9 @@ def elapsed(msg: str) -> Iterator[None]:
 
 @pytest.fixture(scope="session")
 def tox_wheel(
-    tmp_path_factory: TempPathFactory, worker_id: str, pkg_builder: Callable[[Path, Path, List[str], bool], Path]
+    tmp_path_factory: TempPathFactory,
+    worker_id: str,
+    pkg_builder: Callable[[Path, Path, List[str], bool], Path],
 ) -> Path:
     if worker_id == "master":  # if not running under xdist we can just return
         return _make_tox_wheel(tmp_path_factory, pkg_builder)  # pragma: no cover
@@ -51,7 +53,8 @@ def tox_wheel(
 
 
 def _make_tox_wheel(
-    tmp_path_factory: TempPathFactory, pkg_builder: Callable[[Path, Path, List[str], bool], Path]
+    tmp_path_factory: TempPathFactory,
+    pkg_builder: Callable[[Path, Path, List[str], bool], Path],
 ) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
         package: Optional[Path] = None
@@ -112,7 +115,10 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.integration()
 def test_provision_requires_ok(
-    tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch, tmp_path: Path
+    tox_project: ToxProjectCreator,
+    pypi_index_self: Index,
+    monkeypatch: MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     pypi_index_self.use(monkeypatch)
     proj = tox_project({"tox.ini": "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip"})
@@ -147,7 +153,9 @@ def test_provision_requires_ok(
 
 @pytest.mark.integration()
 def test_provision_platform_check(
-    tox_project: ToxProjectCreator, pypi_index_self: Index, monkeypatch: MonkeyPatch
+    tox_project: ToxProjectCreator,
+    pypi_index_self: Index,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     pypi_index_self.use(monkeypatch)
     ini = "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\n[testenv:.tox]\nplatform=wrong_platform"

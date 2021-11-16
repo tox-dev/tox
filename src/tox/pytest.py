@@ -179,7 +179,11 @@ class ToxProject:
                 super().__init__(colored)
 
             def build_instance(
-                self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite
+                self,
+                request: ExecuteRequest,
+                options: ExecuteOptions,
+                out: SyncWrite,
+                err: SyncWrite,
             ) -> ExecuteInstance:
                 return MockExecuteInstance(request, options, out, err, self.exit_code)
 
@@ -203,7 +207,12 @@ class ToxProject:
 
         class MockExecuteInstance(ExecuteInstance):
             def __init__(
-                self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int
+                self,
+                request: ExecuteRequest,
+                options: ExecuteOptions,
+                out: SyncWrite,
+                err: SyncWrite,
+                exit_code: int,
             ) -> None:
                 super().__init__(request, options, out, err)
                 self.exit_code = exit_code
@@ -225,7 +234,11 @@ class ToxProject:
 
         @contextmanager
         def _execute_call(
-            self: ToxEnv, executor: Execute, out_err: OutErr, request: ExecuteRequest, show: bool
+            self: ToxEnv,
+            executor: Execute,
+            out_err: OutErr,
+            request: ExecuteRequest,
+            show: bool,
         ) -> Iterator[ExecuteStatus]:
             exit_code = handle(request)
             if exit_code is not None:
@@ -393,14 +406,20 @@ class ToxRunOutcome:
 
 class ToxProjectCreator(Protocol):
     def __call__(
-        self, files: Dict[str, Any], base: Optional[Path] = None, prj_path: Optional[Path] = None  # noqa: U100
+        self,
+        files: Dict[str, Any],  # noqa: U100
+        base: Optional[Path] = None,  # noqa: U100
+        prj_path: Optional[Path] = None,  # noqa: U100
     ) -> ToxProject:
         ...
 
 
 @pytest.fixture(name="tox_project")
 def init_fixture(
-    tmp_path: Path, capfd: CaptureFixture, monkeypatch: MonkeyPatch, mocker: MockerFixture
+    tmp_path: Path,
+    capfd: CaptureFixture,
+    monkeypatch: MonkeyPatch,
+    mocker: MockerFixture,
 ) -> ToxProjectCreator:
     def _init(files: Dict[str, Any], base: Optional[Path] = None, prj_path: Optional[Path] = None) -> ToxProject:
         """create tox  projects"""
@@ -607,7 +626,8 @@ def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPa
 
 @pytest.fixture(name="enable_pip_pypi_access")
 def enable_pip_pypi_access_fixture(
-    disable_pip_pypi_access: Tuple[str, Optional[str]], monkeypatch: MonkeyPatch
+    disable_pip_pypi_access: Tuple[str, Optional[str]],
+    monkeypatch: MonkeyPatch,
 ) -> Optional[str]:
     """set a fake pip index url, tests that want to use a pypi server should create and overwrite this"""
     _, previous_url = disable_pip_pypi_access

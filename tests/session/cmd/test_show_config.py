@@ -111,11 +111,12 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
 
 
 def test_show_config_pkg_env_once(
-    tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], Tuple[str, str]]
+    tox_project: ToxProjectCreator,
+    patch_prev_py: Callable[[bool], Tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(True)
     project = tox_project(
-        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""}
+        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""},
     )
     result = project.run("c")
     result.assert_success()
@@ -126,11 +127,12 @@ def test_show_config_pkg_env_once(
 
 
 def test_show_config_pkg_env_skip(
-    tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], Tuple[str, str]]
+    tox_project: ToxProjectCreator,
+    patch_prev_py: Callable[[bool], Tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(False)
     project = tox_project(
-        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""}
+        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""},
     )
     result = project.run("c")
     result.assert_success()

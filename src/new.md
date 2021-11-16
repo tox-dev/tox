@@ -1,4 +1,6 @@
-# External facing
+# What's new
+
+## External facing
 
 0. `Python 3.6+` only.
 1. Lazy configuration - everything is materialized only when needed (don't ever generate data that will not be used -
@@ -18,7 +20,7 @@
    the standard error (previously this was only true for non captured commands)
 8. `basepython` is now a list, the first successfully detected python will be used to generate python environment
 
-# Internal
+## Internal
 
 0. `Python 3.6+` only with type annotated code.
 1. Separate core configuration concepts from the ini system (to allow introduction of new configuration)
@@ -75,7 +77,7 @@
 }
 ```
 
-# TODO
+## TODO
 
 - Make sure we're config compliant with tox 3 (excluding deprecated features) - CLI compliant is best effort
 - support for `tox.py` - inline configuration/plugins
