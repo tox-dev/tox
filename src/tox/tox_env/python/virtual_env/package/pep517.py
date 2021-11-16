@@ -7,6 +7,7 @@ from typing import Any, Dict, Generator, Iterator, List, NoReturn, Optional, Seq
 
 from cachetools import cached
 from packaging.requirements import Requirement
+from pyproject_api import BackendFailed, CmdStatus, Frontend
 
 from tox.config.sets import EnvConfigSet
 from tox.execute.api import ExecuteStatus
@@ -19,7 +20,6 @@ from tox.tox_env.package import Package, PackageToxEnv
 from tox.tox_env.python.package import DevLegacyPackage, PythonPackageToxEnv, SdistPackage, WheelPackage
 from tox.tox_env.register import ToxEnvRegister
 from tox.tox_env.runner import RunToxEnv
-from tox.util.pep517.frontend import BackendFailed, CmdStatus, ConfigSettings, Frontend
 
 from ..api import VirtualEnv
 from .util import dependencies_with_extras
@@ -28,6 +28,7 @@ if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
 else:  # pragma: no cover (<py38)
     from importlib_metadata import Distribution, PathDistribution
+ConfigSettings = Optional[Dict[str, Any]]
 
 
 class ToxBackendFailed(Fail, BackendFailed):
