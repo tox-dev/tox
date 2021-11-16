@@ -6,12 +6,13 @@ from threading import Lock
 from types import TracebackType
 from typing import Dict, Optional, Sequence, Tuple, Type
 
+from pyproject_api import BackendFailed
+
 from tox.execute import ExecuteRequest
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
 from tox.execute.local_sub_process import LocalSubProcessExecuteInstance
 from tox.execute.request import StdinSource
 from tox.execute.stream import SyncWrite
-from tox.util.pep517.frontend import BackendFailed
 
 
 class LocalSubProcessPep517Executor(Execute):

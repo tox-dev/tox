@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 from packaging.requirements import Requirement
+from pyproject_api import SubprocessFrontend
 
 from tox.tox_env.python.virtual_env.package.util import dependencies_with_extras
-from tox.util.pep517.via_fresh_subprocess import SubprocessFrontend
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution  # type: ignore[attr-defined]
