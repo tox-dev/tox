@@ -1,11 +1,13 @@
 """
 Declare the abstract base class for tox environments that handle the Python language via the virtualenv project.
 """
+from __future__ import annotations
+
 import os
 import sys
 from abc import ABC
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, cast
 
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
@@ -25,9 +27,9 @@ class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip"""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        self._virtualenv_session: Optional[Session] = None
-        self._executor: Optional[Execute] = None
-        self._installer: Optional[Pip] = None
+        self._virtualenv_session: Session | None = None
+        self._executor: Execute | None = None
+        self._installer: Pip | None = None
         super().__init__(create_args)
 
     def register_config(self) -> None:
@@ -72,7 +74,7 @@ class VirtualEnv(Python, ABC):
             self._installer = Pip(self)
         return self._installer
 
-    def python_cache(self) -> Dict[str, Any]:
+    def python_cache(self) -> dict[str, Any]:
         base = super().python_cache()
         base.update(
             {
@@ -82,18 +84,18 @@ class VirtualEnv(Python, ABC):
         )
         return base
 
-    def _get_env_journal_python(self) -> Dict[str, Any]:
+    def _get_env_journal_python(self) -> dict[str, Any]:
         base = super()._get_env_journal_python()
         base["executable"] = str(self.base_python.extra["executable"])
         return base
 
-    def _default_pass_env(self) -> List[str]:
+    def _default_pass_env(self) -> list[str]:
         env = super()._default_pass_env()
         env.append("PIP_*")  # we use pip as installer
         env.append("VIRTUALENV_*")  # we use virtualenv as isolation creator
         return env
 
-    def _default_set_env(self) -> Dict[str, str]:
+    def _default_set_env(self) -> dict[str, str]:
         env = super()._default_set_env()
         env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
         return env
@@ -106,9 +108,9 @@ class VirtualEnv(Python, ABC):
             self._virtualenv_session = session_via_cli(env_dir, options=None, setup_logging=False, env=env)
         return self._virtualenv_session
 
-    def virtualenv_env_vars(self) -> Dict[str, str]:
+    def virtualenv_env_vars(self) -> dict[str, str]:
         env = self.environment_variables.copy()
-        base_python: List[str] = self.conf["base_python"]
+        base_python: list[str] = self.conf["base_python"]
         if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
             env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
         site = getattr(self.options, "site_packages", False) or self.conf["system_site_packages"]
@@ -127,7 +129,7 @@ class VirtualEnv(Python, ABC):
     def create_python_env(self) -> None:
         self.session.run()
 
-    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:  # noqa: U100
+    def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # noqa: U100
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter
@@ -142,7 +144,7 @@ class VirtualEnv(Python, ABC):
             extra={"executable": Path(interpreter.system_executable)},
         )
 
-    def prepend_env_var_path(self) -> List[Path]:
+    def prepend_env_var_path(self) -> list[Path]:
         """Paths to add to the executable"""
         # we use the original executable as shims may be somewhere else
         return list(dict.fromkeys((self.creator.bin_dir, self.creator.script_dir)))

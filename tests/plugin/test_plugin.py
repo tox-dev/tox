@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import logging
 import os
 import sys
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -47,7 +48,7 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
         logging.warning("tox_before_run_commands")
 
     @impl
-    def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: List[Outcome]) -> None:
+    def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
         assert isinstance(tox_env, ToxEnv)
         assert exit_code == 0
         assert isinstance(outcomes, list)

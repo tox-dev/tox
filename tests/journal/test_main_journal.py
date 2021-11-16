@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import socket
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -9,7 +11,7 @@ from tox.journal.main import Journal
 
 
 @pytest.fixture()
-def base_info() -> Dict[str, Any]:
+def base_info() -> dict[str, Any]:
     return {
         "reportversion": "1",
         "toxversion": __version__,
@@ -18,7 +20,7 @@ def base_info() -> Dict[str, Any]:
     }
 
 
-def test_journal_enabled_default(base_info: Dict[str, Any]) -> None:
+def test_journal_enabled_default(base_info: dict[str, Any]) -> None:
     journal = Journal(enabled=True)
     assert bool(journal) is True
     assert journal.content == base_info
@@ -30,7 +32,7 @@ def test_journal_disabled_default() -> None:
     assert journal.content == {}
 
 
-def test_env_journal_enabled(base_info: Dict[str, Any]) -> None:
+def test_env_journal_enabled(base_info: dict[str, Any]) -> None:
     journal = Journal(enabled=True)
     env = journal.get_env_journal("a")
     assert journal.get_env_journal("a") is env

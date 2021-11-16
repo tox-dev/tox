@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner

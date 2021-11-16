@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import re
 from argparse import ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -9,7 +10,7 @@ from tox.session.cmd.run.common import InstallPackageAction, SkipMissingInterpre
 
 
 @pytest.mark.parametrize("values", ["config", None, "true", "false"])
-def test_skip_missing_interpreter_action_ok(values: Optional[str]) -> None:
+def test_skip_missing_interpreter_action_ok(values: str | None) -> None:
     args_namespace = Namespace()
     SkipMissingInterpreterAction(option_strings=["-i"], dest="into")(ArgumentParser(), args_namespace, values)
     expected = "true" if values is None else values

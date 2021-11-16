@@ -1,13 +1,15 @@
 """
 Abstract base API for executing commands within tox environments.
 """
+from __future__ import annotations
+
 import logging
 import sys
 import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, NoReturn, Optional, Sequence, Tuple, Type, cast
+from typing import TYPE_CHECKING, Any, Callable, Iterator, NoReturn, Sequence, cast
 
 from colorama import Fore
 
@@ -25,11 +27,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ExecuteOptions:
-    def __init__(self, env: "ToxEnv") -> None:
+    def __init__(self, env: ToxEnv) -> None:
         self._env = env
 
     @classmethod
-    def register_conf(cls, env: "ToxEnv") -> None:
+    def register_conf(cls, env: ToxEnv) -> None:
         env.conf.add_config(
             keys=["suicide_timeout"],
             desc="timeout to allow process to exit before sending SIGINT",
@@ -64,18 +66,18 @@ class ExecuteOptions:
 
 class ExecuteStatus(ABC):
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
-        self.outcome: Optional[Outcome] = None
+        self.outcome: Outcome | None = None
         self.options = options
         self._out = out
         self._err = err
 
     @property
     @abstractmethod
-    def exit_code(self) -> Optional[int]:
+    def exit_code(self) -> int | None:
         raise NotImplementedError
 
     @abstractmethod
-    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+    def wait(self, timeout: float | None = None) -> int | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -86,7 +88,7 @@ class ExecuteStatus(ABC):
     def interrupt(self) -> None:
         raise NotImplementedError
 
-    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
+    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
         res = self._out, self._err
         self._out, self._err = out, err
         return res
@@ -100,20 +102,20 @@ class ExecuteStatus(ABC):
         return self._err.content
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         return {}
 
 
 class Execute(ABC):
     """Abstract API for execution of a tox environment"""
 
-    _option_class: Type[ExecuteOptions] = ExecuteOptions
+    _option_class: type[ExecuteOptions] = ExecuteOptions
 
     def __init__(self, colored: bool) -> None:
         self._colored = colored
 
     @contextmanager
-    def call(self, request: ExecuteRequest, show: bool, out_err: OutErr, env: "ToxEnv") -> Iterator[ExecuteStatus]:
+    def call(self, request: ExecuteRequest, show: bool, out_err: OutErr, env: ToxEnv) -> Iterator[ExecuteStatus]:
         start = time.monotonic()
         try:
             # collector is what forwards the content from the file streams to the standard streams
@@ -146,11 +148,11 @@ class Execute(ABC):
         options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
-    ) -> "ExecuteInstance":
+    ) -> ExecuteInstance:
         raise NotImplementedError
 
     @classmethod
-    def register_conf(cls, env: "ToxEnv") -> None:
+    def register_conf(cls, env: ToxEnv) -> None:
         cls._option_class.register_conf(env)
 
 
@@ -178,9 +180,9 @@ class ExecuteInstance(ABC):
     @abstractmethod
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         raise NotImplementedError
 
@@ -199,13 +201,13 @@ class Outcome:
         self,
         request: ExecuteRequest,
         show_on_standard: bool,
-        exit_code: Optional[int],
+        exit_code: int | None,
         out: str,
         err: str,
         start: float,
         end: float,
         cmd: Sequence[str],
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ):
         """
         Create a new execution outcome.
@@ -285,7 +287,7 @@ class Outcome:
         """:return: time the execution took in seconds"""
         return self.end - self.start
 
-    def out_err(self) -> Tuple[str, str]:
+    def out_err(self) -> tuple[str, str]:
         """:return: a tuple of the standard output and standard error"""
         return self.out, self.err
 

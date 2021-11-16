@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import sys
@@ -5,7 +7,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import check_call
-from typing import Callable, Iterator, List, Optional
+from typing import Callable, Iterator
 from zipfile import ZipFile
 
 import pytest
@@ -36,7 +38,7 @@ def elapsed(msg: str) -> Iterator[None]:
 def tox_wheel(
     tmp_path_factory: TempPathFactory,
     worker_id: str,
-    pkg_builder: Callable[[Path, Path, List[str], bool], Path],
+    pkg_builder: Callable[[Path, Path, list[str], bool], Path],
 ) -> Path:
     if worker_id == "master":  # if not running under xdist we can just return
         return _make_tox_wheel(tmp_path_factory, pkg_builder)  # pragma: no cover
@@ -54,10 +56,10 @@ def tox_wheel(
 
 def _make_tox_wheel(
     tmp_path_factory: TempPathFactory,
-    pkg_builder: Callable[[Path, Path, List[str], bool], Path],
+    pkg_builder: Callable[[Path, Path, list[str], bool], Path],
 ) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
-        package: Optional[Path] = None
+        package: Path | None = None
         if "TOX_PACKAGE" in os.environ:
             env_tox_pkg = Path(os.environ["TOX_PACKAGE"])  # pragma: no cover
             if env_tox_pkg.exists() and env_tox_pkg.suffix == ".whl":  # pragma: no cover
@@ -70,9 +72,9 @@ def _make_tox_wheel(
 
 
 @pytest.fixture(scope="session")
-def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> List[Path]:
+def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]:
     with elapsed("acquire dependencies for current tox"):  # takes around 1.5s if already cached
-        result: List[Path] = [tox_wheel]
+        result: list[Path] = [tox_wheel]
         info = tmp_path_factory.mktemp("info")
         with ZipFile(str(tox_wheel), "r") as zip_file:
             zip_file.extractall(path=info)
@@ -93,7 +95,7 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> List[Path]
 
 
 @pytest.fixture(scope="session")
-def pypi_index_self(pypi_server: IndexServer, tox_wheels: List[Path], demo_pkg_inline_wheel: Path) -> Index:
+def pypi_index_self(pypi_server: IndexServer, tox_wheels: list[Path], demo_pkg_inline_wheel: Path) -> Index:
     with elapsed("start devpi and create index"):  # takes around 1s
         self_index = pypi_server.create_index("self", "volatile=False")
     with elapsed("upload tox and its wheels to devpi"):  # takes around 3.2s on build

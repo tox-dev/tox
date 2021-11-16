@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import Callable
 
 import pytest
 from pytest_mock import MockerFixture
@@ -37,7 +39,7 @@ def test_conflicting_base_python_factor() -> None:
 
 def test_build_wheel_in_non_base_pkg_env(
     tox_project: ToxProjectCreator,
-    patch_prev_py: Callable[[bool], Tuple[str, str]],
+    patch_prev_py: Callable[[bool], tuple[str, str]],
     demo_pkg_inline: Path,
     mocker: MockerFixture,
 ) -> None:
@@ -78,7 +80,7 @@ def test_diff_msg_no_diff() -> None:
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
-def test_base_python_env_no_conflict(env: str, base_python: List[str], ignore_conflict: bool) -> None:
+def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_conflict: bool) -> None:
     result = Python._validate_base_python(env, base_python, ignore_conflict)
     assert result is base_python
 
@@ -101,7 +103,7 @@ def test_base_python_env_no_conflict(env: str, base_python: List[str], ignore_co
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
-def test_base_python_env_conflict(env: str, base_python: List[str], conflict: List[str], ignore_conflict: bool) -> None:
+def test_base_python_env_conflict(env: str, base_python: list[str], conflict: list[str], ignore_conflict: bool) -> None:
     if ignore_conflict:
         result = Python._validate_base_python(env, base_python, ignore_conflict)
         assert result == [env]

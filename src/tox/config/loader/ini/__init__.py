@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import inspect
 import re
 from concurrent.futures import Future
 from configparser import ConfigParser, SectionProxy
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Generator, List, Optional, Set, Type, TypeVar
+from typing import TYPE_CHECKING, Generator, TypeVar
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
@@ -27,7 +29,7 @@ class IniLoader(StrConvert, Loader[str]):
         self,
         section: Section,
         parser: ConfigParser,
-        overrides: List[Override],
+        overrides: list[Override],
         core_section: Section,
     ) -> None:
         self._section_proxy: SectionProxy = parser[section.key]
@@ -35,13 +37,13 @@ class IniLoader(StrConvert, Loader[str]):
         self.core_section = core_section
         super().__init__(section, overrides)
 
-    def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> str:
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> str:
         return self.process_raw(conf, env_name, self._section_proxy[key])
 
     @staticmethod
-    def process_raw(conf: Optional["Config"], env_name: Optional[str], value: str) -> str:
+    def process_raw(conf: Config | None, env_name: str | None, value: str) -> str:
         # strip comments
-        elements: List[str] = []
+        elements: list[str] = []
         for line in value.split("\n"):
             if not line.startswith("#"):
                 part = _COMMENTS.sub("", line)
@@ -57,10 +59,10 @@ class IniLoader(StrConvert, Loader[str]):
     @contextmanager
     def build(
         self,
-        future: "Future[V]",
+        future: Future[V],
         key: str,
-        of_type: Type[V],
-        conf: Optional["Config"],
+        of_type: type[V],
+        conf: Config | None,
         raw: str,
         args: ConfigLoadArgs,
     ) -> Generator[str, None, None]:
@@ -87,10 +89,10 @@ class IniLoader(StrConvert, Loader[str]):
             converted = future.result()
             converted.use_replacer(replacer, args)  # type: ignore[attr-defined] # this can be only set_env that has it
 
-    def found_keys(self) -> Set[str]:
+    def found_keys(self) -> set[str]:
         return set(self._section_proxy.keys())
 
-    def get_section(self, name: str) -> Optional[SectionProxy]:
+    def get_section(self, name: str) -> SectionProxy | None:
         # needed for non tox environment replacements
         if self._parser.has_section(name):
             return self._parser[name]

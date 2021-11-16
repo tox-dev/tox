@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import os
-from typing import Dict
 
 import pytest
 
 
 @pytest.fixture(scope="session")
-def os_env() -> Dict[str, str]:
+def os_env() -> dict[str, str]:
     return os.environ.copy()

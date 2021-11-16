@@ -1,6 +1,8 @@
 """
 A pytest plugin useful to test tox itself (and its plugins).
 """
+from __future__ import annotations
+
 import inspect
 import os
 import random
@@ -16,7 +18,7 @@ from pathlib import Path
 from subprocess import PIPE, Popen, check_call
 from threading import Thread
 from types import ModuleType, TracebackType
-from typing import IO, TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, cast
+from typing import IO, TYPE_CHECKING, Any, Callable, Iterator, Sequence, cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -77,7 +79,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
         module, load_inline = None, manager._load_inline
 
-        def _load_inline(path: Path) -> Optional[ModuleType]:  # register only on first run, and unregister at end
+        def _load_inline(path: Path) -> ModuleType | None:  # register only on first run, and unregister at end
             nonlocal module
             if module is None:
                 module = load_inline(path)
@@ -137,8 +139,8 @@ def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:  
 class ToxProject:
     def __init__(
         self,
-        files: Dict[str, Any],
-        base: Optional[Path],
+        files: dict[str, Any],
+        base: Path | None,
         path: Path,
         capfd: CaptureFixture,
         monkeypatch: MonkeyPatch,
@@ -151,7 +153,7 @@ class ToxProject:
         self._setup_files(self.path, base, files)
 
     @staticmethod
-    def _setup_files(dest: Path, base: Optional[Path], content: Dict[str, Any]) -> None:
+    def _setup_files(dest: Path, base: Path | None, content: dict[str, Any]) -> None:
         if base is not None:
             shutil.copytree(str(base), str(dest))
         dest.mkdir(exist_ok=True)
@@ -172,7 +174,7 @@ class ToxProject:
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
 
-    def patch_execute(self, handle: Callable[[ExecuteRequest], Optional[int]]) -> MagicMock:
+    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None]) -> MagicMock:
         class MockExecute(Execute):
             def __init__(self, colored: bool, exit_code: int) -> None:
                 self.exit_code = exit_code
@@ -193,10 +195,10 @@ class ToxProject:
                 self._exit_code = exit_code
 
             @property
-            def exit_code(self) -> Optional[int]:
+            def exit_code(self) -> int | None:
                 return self._exit_code
 
-            def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+            def wait(self, timeout: float | None = None) -> int | None:
                 return self._exit_code
 
             def write_stdin(self, content: str) -> None:
@@ -222,9 +224,9 @@ class ToxProject:
 
             def __exit__(
                 self,
-                exc_type: Optional[Type[BaseException]],
-                exc_val: Optional[BaseException],
-                exc_tb: Optional[TracebackType],
+                exc_type: type[BaseException] | None,
+                exc_val: BaseException | None,
+                exc_tb: TracebackType | None,
             ) -> None:
                 pass
 
@@ -251,8 +253,8 @@ class ToxProject:
         return result
 
     @property
-    def structure(self) -> Dict[str, Any]:
-        result: Dict[str, Any] = {}
+    def structure(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
         for dir_name, _, files in os.walk(str(self.path)):
             dir_path = Path(dir_name)
             into = result
@@ -264,7 +266,7 @@ class ToxProject:
         return result
 
     @contextmanager
-    def chdir(self, to: Optional[Path] = None) -> Iterator[None]:
+    def chdir(self, to: Path | None = None) -> Iterator[None]:
         cur_dir = os.getcwd()
         os.chdir(str(to or self.path))
         try:
@@ -272,7 +274,7 @@ class ToxProject:
         finally:
             os.chdir(cur_dir)
 
-    def run(self, *args: str, from_cwd: Optional[Path] = None) -> "ToxRunOutcome":
+    def run(self, *args: str, from_cwd: Path | None = None) -> ToxRunOutcome:
         with self.chdir(from_cwd):
             state = None
             self._capfd.readouterr()  # start with a clean state - drain
@@ -316,7 +318,7 @@ def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
     # the COV_ env variables needs to be passed on for the PEP-517 backend
     from tox.tox_env.python.virtual_env.package.pep517 import Pep517VirtualEnvPackager
 
-    def default_pass_env(self: Pep517VirtualEnvPackager) -> List[str]:
+    def default_pass_env(self: Pep517VirtualEnvPackager) -> list[str]:
         result = previous(self)
         result.append("COV_*")
         return result
@@ -330,15 +332,15 @@ def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
 
 
 class ToxRunOutcome:
-    def __init__(self, cmd: Sequence[str], cwd: Path, code: int, out: str, err: str, state: Optional[State]) -> None:
+    def __init__(self, cmd: Sequence[str], cwd: Path, code: int, out: str, err: str, state: State | None) -> None:
         extended_cmd = [sys.executable, "-m", "tox"]
         extended_cmd.extend(cmd)
-        self.cmd: List[str] = extended_cmd
+        self.cmd: list[str] = extended_cmd
         self.cwd: Path = cwd
         self.code: int = code
         self.out: str = out
         self.err: str = err
-        self._state: Optional[State] = state
+        self._state: State | None = state
 
     @property
     def state(self) -> State:
@@ -356,7 +358,7 @@ class ToxRunOutcome:
     def assert_success(self) -> None:
         assert self.success, repr(self)
 
-    def assert_failed(self, code: Optional[int] = None) -> None:
+    def assert_failed(self, code: int | None = None) -> None:
         status_match = self.code != 0 if code is None else self.code == code
         assert status_match, f"should be {code}, got {self}"
 
@@ -407,9 +409,9 @@ class ToxRunOutcome:
 class ToxProjectCreator(Protocol):
     def __call__(
         self,
-        files: Dict[str, Any],  # noqa: U100
-        base: Optional[Path] = None,  # noqa: U100
-        prj_path: Optional[Path] = None,  # noqa: U100
+        files: dict[str, Any],  # noqa: U100
+        base: Path | None = None,  # noqa: U100
+        prj_path: Path | None = None,  # noqa: U100
     ) -> ToxProject:
         ...
 
@@ -421,7 +423,7 @@ def init_fixture(
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
 ) -> ToxProjectCreator:
-    def _init(files: Dict[str, Any], base: Optional[Path] = None, prj_path: Optional[Path] = None) -> ToxProject:
+    def _init(files: dict[str, Any], base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
         """create tox  projects"""
         return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
 
@@ -448,7 +450,7 @@ def pytest_configure(config: PyTestConfig) -> None:
 
 
 @pytest.mark.trylast()
-def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -> None:
+def pytest_collection_modifyitems(config: PyTestConfig, items: list[Function]) -> None:
     # do not require flags if called directly
     if len(items) == 1:  # pragma: no cover # hard to test
         return
@@ -468,7 +470,7 @@ def pytest_collection_modifyitems(config: PyTestConfig, items: List[Function]) -
 
 
 class Index:
-    def __init__(self, base_url: str, name: str, client_cmd_base: List[str]) -> None:
+    def __init__(self, base_url: str, name: str, client_cmd_base: list[str]) -> None:
         self._client_cmd_base = client_cmd_base
         self._server_url = base_url
         self.name = name
@@ -487,7 +489,7 @@ class Index:
         enable_pypi_server(monkeypatch, self.url)
 
 
-def enable_pypi_server(monkeypatch: MonkeyPatch, url: Optional[str]) -> None:
+def enable_pypi_server(monkeypatch: MonkeyPatch, url: str | None) -> None:
     if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
         monkeypatch.delenv("PIP_INDEX_URL", raising=False)
     else:  # pragma: no cover
@@ -519,12 +521,12 @@ class IndexServer:
 
         self._server_dir = self.path / "server"
         self._client_dir = self.path / "client"
-        self._indexes: Dict[str, Index] = {}
-        self._process: Optional["Popen[str]"] = None
+        self._indexes: dict[str, Index] = {}
+        self._process: Popen[str] | None = None
         self._has_use = False
-        self._stdout_drain: Optional[Thread] = None
+        self._stdout_drain: Thread | None = None
 
-    def __enter__(self) -> "IndexServer":
+    def __enter__(self) -> IndexServer:
         self._create_and_start_server()
         self._setup_client()
         return self
@@ -582,9 +584,9 @@ class IndexServer:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],  # noqa: U100
-        exc_val: Optional[BaseException],  # noqa: U100
-        exc_tb: Optional[TracebackType],  # noqa: U100
+        exc_type: type[BaseException] | None,  # noqa: U100
+        exc_val: BaseException | None,  # noqa: U100
+        exc_tb: TracebackType | None,  # noqa: U100
     ) -> None:
         if self._process is not None:  # pragma: no cover # defend against devpi startup fail
             self._process.terminate()
@@ -614,7 +616,7 @@ def _invalid_index_fake_port() -> int:  # noqa: PT005
 
 
 @pytest.fixture(autouse=True)
-def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPatch) -> Tuple[str, Optional[str]]:
+def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPatch) -> tuple[str, str | None]:
     """set a fake pip index url, tests that want to use a pypi server should create and overwrite this"""
     previous_url = os.environ.get("PIP_INDEX_URL")
     new_url = f"http://localhost:{_invalid_index_fake_port}/bad-pypi-server"
@@ -626,9 +628,9 @@ def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPa
 
 @pytest.fixture(name="enable_pip_pypi_access")
 def enable_pip_pypi_access_fixture(
-    disable_pip_pypi_access: Tuple[str, Optional[str]],
+    disable_pip_pypi_access: tuple[str, str | None],
     monkeypatch: MonkeyPatch,
-) -> Optional[str]:
+) -> str | None:
     """set a fake pip index url, tests that want to use a pypi server should create and overwrite this"""
     _, previous_url = disable_pip_pypi_access
     enable_pypi_server(monkeypatch, previous_url)

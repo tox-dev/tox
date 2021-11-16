@@ -1,4 +1,4 @@
-from typing import Dict, List
+from __future__ import annotations
 
 from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
@@ -21,7 +21,7 @@ def depends(state: State) -> int:
     order, todo = run_order(state, to_run_list)
     print(f"Execution order: {', '.join(order)}")
 
-    deps: Dict[str, List[str]] = {k: [o for o in order if o in v] for k, v in todo.items()}
+    deps: dict[str, list[str]] = {k: [o for o in order if o in v] for k, v in todo.items()}
     deps["ALL"] = to_run_list
 
     def _handle(at: int, env: str) -> None:

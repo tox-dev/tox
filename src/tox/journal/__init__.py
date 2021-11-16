@@ -1,13 +1,14 @@
 """This module handles collecting and persisting in json format a tox session"""
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Optional
 
 from .env import EnvJournal
 from .main import Journal
 
 
-def write_journal(path: Optional[Path], journal: Journal) -> None:
+def write_journal(path: Path | None, journal: Journal) -> None:
     if path is None:
         return
     with open(path, "wt") as file_handler:

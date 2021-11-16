@@ -1,6 +1,8 @@
 """
 A tox python environment runner that uses the virtualenv project.
 """
+from __future__ import annotations
+
 from pathlib import Path
 
 from tox.plugin import impl

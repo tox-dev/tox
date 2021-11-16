@@ -1,4 +1,6 @@
 """Execute that runs on local file system via subprocess-es"""
+from __future__ import annotations
+
 import fnmatch
 import logging
 import os
@@ -6,7 +8,7 @@ import shutil
 import sys
 from subprocess import DEVNULL, PIPE, TimeoutExpired
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Generator, Sequence
 
 from tox.tox_env.errors import Fail
 
@@ -49,13 +51,13 @@ class LocalSubProcessExecutor(Execute):
 
 
 class LocalSubprocessExecuteStatus(ExecuteStatus):
-    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: "Popen[bytes]"):
-        self._process: "Popen[bytes]" = process
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: Popen[bytes]):
+        self._process: Popen[bytes] = process
         super().__init__(options, out, err)
         self._interrupted = False
 
     @property
-    def exit_code(self) -> Optional[int]:
+    def exit_code(self) -> int | None:
         return self._process.returncode
 
     def interrupt(self) -> None:
@@ -85,7 +87,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
                 logging.warning("process already dead with %s within %s", self._process.returncode, host_pid)
 
-    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+    def wait(self, timeout: float | None = None) -> int | None:
         try:  # note wait in general might deadlock if output large, but we drain in background threads so not an issue
             return self._process.wait(timeout=timeout)
         except TimeoutExpired:
@@ -118,20 +120,20 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         return {"pid": self._process.pid} if self._process.pid else {}
 
 
 class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
-    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: Optional[int]) -> None:
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int | None) -> None:
         super().__init__(options, out, err)
         self._exit_code = exit_code
 
     @property
-    def exit_code(self) -> Optional[int]:
+    def exit_code(self) -> int | None:
         return self._exit_code
 
-    def wait(self, timeout: Optional[float] = None) -> Optional[int]:  # noqa: U100
+    def wait(self, timeout: float | None = None) -> int | None:  # noqa: U100
         return self._exit_code  # pragma: no cover
 
     def write_stdin(self, content: str) -> None:  # noqa: U100
@@ -151,10 +153,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         on_exit_drain: bool = True,
     ) -> None:
         super().__init__(request, options, out, err)
-        self.process: Optional[Popen[bytes]] = None
-        self._cmd: Optional[List[str]] = None
-        self._read_stderr: Optional[ReadViaThread] = None
-        self._read_stdout: Optional[ReadViaThread] = None
+        self.process: Popen[bytes] | None = None
+        self._cmd: list[str] | None = None
+        self._read_stderr: ReadViaThread | None = None
+        self._read_stdout: ReadViaThread | None = None
         self._on_exit_drain = on_exit_drain
 
     @property
@@ -218,9 +220,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if self._read_stderr is not None:
             self._read_stderr.__exit__(exc_type, exc_val, exc_tb)
@@ -235,7 +237,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                         logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
 
     @staticmethod
-    def get_stream_file_no(key: str) -> Generator[int, "Popen[bytes]", None]:
+    def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
         process = yield PIPE
         stream = getattr(process, key)
         if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
@@ -243,7 +245,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         else:
             yield stream.name
 
-    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> Tuple[SyncWrite, SyncWrite]:
+    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
         prev = self._out, self._err
         if self._read_stdout is not None:  # pragma: no branch
             self._read_stdout.handler = out.handler

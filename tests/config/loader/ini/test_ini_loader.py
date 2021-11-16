@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from configparser import ConfigParser
 from typing import Callable
 

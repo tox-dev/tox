@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -7,7 +9,6 @@ import subprocess
 import sys
 from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, List, Tuple
 from unittest.mock import MagicMock, create_autospec
 
 import psutil
@@ -29,7 +30,7 @@ class FakeOutErr:
     def __init__(self) -> None:
         self.out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
 
-    def read_out_err(self) -> Tuple[str, str]:
+    def read_out_err(self) -> tuple[str, str]:
         out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)  # type: ignore[attr-defined]
         err_got = self.out_err[1].buffer.getvalue().decode(self.out_err[1].encoding)  # type: ignore[attr-defined]
         return out_got, err_got
@@ -40,7 +41,7 @@ class FakeOutErr:
 @pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
 def test_local_execute_basic_pass(
     caplog: LogCaptureFixture,
-    os_env: Dict[str, str],
+    os_env: dict[str, str],
     out: str,
     err: str,
     show: bool,
@@ -102,7 +103,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
     assert not caplog.records
 
 
-def test_local_execute_write_a_lot(os_env: Dict[str, str]) -> None:
+def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
     count = 10_000
     executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(
@@ -195,7 +196,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
     assert _metadata.startswith(" pid=")
 
 
-def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: Dict[str, str]) -> None:
+def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str]) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
     request = ExecuteRequest(
@@ -267,7 +268,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     mocker.patch("sys.stderr.isatty", return_value=tty)
 
     executor = LocalSubProcessExecutor(colored=False)
-    cmd: List[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
+    cmd: list[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
@@ -315,7 +316,7 @@ def test_shebang_limited_on(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("env", [{}, {"TOX_LIMITED_SHEBANG": ""}])
-def test_shebang_limited_off(tmp_path: Path, env: Dict[str, str]) -> None:
+def test_shebang_limited_off(tmp_path: Path, env: dict[str, str]) -> None:
     _, script, instance = _create_shebang_test(tmp_path, env=env)
     assert instance.cmd == [str(script), "--magic"]
 
@@ -326,7 +327,7 @@ def test_shebang_failed_to_parse(tmp_path: Path) -> None:
     assert instance.cmd == [str(script), "--magic"]
 
 
-def _create_shebang_test(tmp_path: Path, env: Dict[str, str]) -> Tuple[str, Path, LocalSubProcessExecuteInstance]:
+def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path, LocalSubProcessExecuteInstance]:
     exe = shutil.which("python")
     assert exe is not None
     script = tmp_path / f"s{'.EXE' if sys.platform == 'win32' else ''}"

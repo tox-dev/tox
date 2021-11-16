@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import platform
 import sys
 from configparser import ConfigParser
 from pathlib import Path
 from textwrap import dedent
-from typing import Callable, Tuple
+from typing import Callable
 
 import pytest
 from pytest_mock import MockerFixture
@@ -112,7 +114,7 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
 
 def test_show_config_pkg_env_once(
     tox_project: ToxProjectCreator,
-    patch_prev_py: Callable[[bool], Tuple[str, str]],
+    patch_prev_py: Callable[[bool], tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(True)
     project = tox_project(
@@ -128,7 +130,7 @@ def test_show_config_pkg_env_once(
 
 def test_show_config_pkg_env_skip(
     tox_project: ToxProjectCreator,
-    patch_prev_py: Callable[[bool], Tuple[str, str]],
+    patch_prev_py: Callable[[bool], tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(False)
     project = tox_project(

@@ -1,6 +1,8 @@
 """
 Defines the abstract base traits of a tox environment.
 """
+from __future__ import annotations
+
 import fnmatch
 import logging
 import os
@@ -10,7 +12,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, NamedTuple, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Sequence, cast
 
 from tox.config.main import Config
 from tox.config.set_env import SetEnv
@@ -35,7 +37,7 @@ class ToxEnvCreateArgs(NamedTuple):
 
     conf: EnvConfigSet
     core: CoreConfigSet
-    options: "Parsed"
+    options: Parsed
     journal: EnvJournal
     log_handler: ToxHandler
 
@@ -56,12 +58,12 @@ class ToxEnv(ABC):
 
         #: encode the run state of various methods (setup/clean/etc)
         self._run_state = {"setup": False, "clean": False, "teardown": False}
-        self._paths_private: List[Path] = []  #: a property holding the PATH environment variables
-        self._hidden_outcomes: Optional[List[Outcome]] = []
-        self._env_vars: Optional[Dict[str, str]] = None
-        self._env_vars_pass_env: List[str] = []
-        self._suspended_out_err: Optional[OutErr] = None
-        self._execute_statuses: Dict[int, ExecuteStatus] = {}
+        self._paths_private: list[Path] = []  #: a property holding the PATH environment variables
+        self._hidden_outcomes: list[Outcome] | None = []
+        self._env_vars: dict[str, str] | None = None
+        self._env_vars_pass_env: list[str] = []
+        self._suspended_out_err: OutErr | None = None
+        self._execute_statuses: dict[int, ExecuteStatus] = {}
         self._interrupted = False
         self._log_id = 0
 
@@ -119,7 +121,7 @@ class ToxEnv(ABC):
             desc="run on platforms that match this regular expression (empty means any platform)",
         )
 
-        def pass_env_post_process(values: List[str]) -> List[str]:
+        def pass_env_post_process(values: list[str]) -> list[str]:
             values.extend(self._default_pass_env())
             return sorted({k: None for k in values}.keys())
 
@@ -149,7 +151,7 @@ class ToxEnv(ABC):
             desc="external command glob to allow calling",
         )
 
-    def _recreate_default(self, conf: "Config", value: Optional[str]) -> bool:  # noqa: U100
+    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: U100
         return cast(bool, self.options.recreate)
 
     @property
@@ -171,10 +173,10 @@ class ToxEnv(ABC):
     def name(self) -> str:
         return cast(str, self.conf["env_name"])
 
-    def _default_set_env(self) -> Dict[str, str]:
+    def _default_set_env(self) -> dict[str, str]:
         return {}
 
-    def _default_pass_env(self) -> List[str]:
+    def _default_pass_env(self) -> list[str]:
         env = [
             "https_proxy",  # HTTP proxy configuration
             "http_proxy",  # HTTP proxy configuration
@@ -284,8 +286,8 @@ class ToxEnv(ABC):
         self._run_state.update({"setup": False, "clean": True})
 
     @property
-    def environment_variables(self) -> Dict[str, str]:
-        pass_env: List[str] = self.conf["pass_env"]
+    def environment_variables(self) -> dict[str, str]:
+        pass_env: list[str] = self.conf["pass_env"]
         set_env: SetEnv = self.conf["set_env"]
         if self._env_vars_pass_env == pass_env and not set_env.changed and self._env_vars is not None:
             return self._env_vars
@@ -300,8 +302,8 @@ class ToxEnv(ABC):
         return result
 
     @staticmethod
-    def _load_pass_env(pass_env: List[str]) -> Dict[str, str]:
-        result: Dict[str, str] = {}
+    def _load_pass_env(pass_env: list[str]) -> dict[str, str]:
+        result: dict[str, str] = {}
         patterns = [re.compile(fnmatch.translate(e), re.IGNORECASE) for e in pass_env]
         for env, value in os.environ.items():
             if any(p.match(env) for p in patterns):
@@ -309,11 +311,11 @@ class ToxEnv(ABC):
         return result
 
     @property
-    def _paths(self) -> List[Path]:
+    def _paths(self) -> list[Path]:
         return self._paths_private
 
     @_paths.setter
-    def _paths(self, value: List[Path]) -> None:
+    def _paths(self, value: list[Path]) -> None:
         self._paths_private = value
         # also update the environment variable with the new value
         if self._env_vars is not None:  # pragma: no branch
@@ -322,8 +324,8 @@ class ToxEnv(ABC):
             self._env_vars["PATH"] = result
 
     @property
-    def _allow_externals(self) -> List[str]:
-        result: List[str] = [f"{i}{os.sep}*" for i in self._paths]
+    def _allow_externals(self) -> list[str]:
+        result: list[str] = [f"{i}{os.sep}*" for i in self._paths]
         result.extend(i.strip() for i in self.conf["allowlist_externals"])
         return result
 
@@ -335,12 +337,12 @@ class ToxEnv(ABC):
 
     def execute(
         self,
-        cmd: Sequence[Union[Path, str]],
+        cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: Optional[bool] = None,
-        cwd: Optional[Path] = None,
+        show: bool | None = None,
+        cwd: Path | None = None,
         run_id: str = "",
-        executor: Optional[Execute] = None,
+        executor: Execute | None = None,
     ) -> Outcome:
         with self.execute_async(cmd, stdin, show, cwd, run_id, executor) as status:
             while status.wait() is None:
@@ -359,12 +361,12 @@ class ToxEnv(ABC):
     @contextmanager
     def execute_async(
         self,
-        cmd: Sequence[Union[Path, str]],
+        cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: Optional[bool] = None,
-        cwd: Optional[Path] = None,
+        show: bool | None = None,
+        cwd: Path | None = None,
         run_id: str = "",
-        executor: Optional[Execute] = None,
+        executor: Execute | None = None,
     ) -> Iterator[ExecuteStatus]:
         if self._interrupted:
             raise SystemExit(-2)  # pragma: no cover
@@ -451,7 +453,7 @@ class ToxEnv(ABC):
                     self._suspended_out_err = out_err
                 yield
 
-    def close_and_read_out_err(self) -> Optional[Tuple[bytes, bytes]]:
+    def close_and_read_out_err(self) -> tuple[bytes, bytes] | None:
         if self._suspended_out_err is None:  # pragma: no branch
             return None  # pragma: no cover
         (out, err), self._suspended_out_err = self._suspended_out_err, None

@@ -1,5 +1,6 @@
 """Borrowed from the pip code base"""
-from typing import Optional
+from __future__ import annotations
+
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
 
@@ -11,7 +12,7 @@ def is_url(name: str) -> bool:
     return get_url_scheme(name) in VALID_SCHEMAS
 
 
-def get_url_scheme(url: str) -> Optional[str]:
+def get_url_scheme(url: str) -> str | None:
     if ":" not in url:
         return None
     return url.split(":", 1)[0].lower()

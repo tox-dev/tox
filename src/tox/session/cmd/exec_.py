@@ -1,8 +1,9 @@
 """
 Execute a command in a tox environment.
 """
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.memory import MemoryLoader
@@ -33,7 +34,7 @@ def exec_(state: State) -> int:
         commands_post=[],
     )
     conf = state.conf.get_env(env_list[0], loaders=[loader])
-    to_path: Optional[Path] = conf["change_dir"] if conf["args_are_paths"] else None
+    to_path: Path | None = conf["change_dir"] if conf["args_are_paths"] else None
     pos_args = state.conf.pos_args(to_path)
     if not pos_args:
         raise HandledError("You must specify a command as positional arguments, use -- <command>")

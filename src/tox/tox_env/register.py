@@ -1,7 +1,9 @@
 """
 Manages the tox environment registry.
 """
-from typing import TYPE_CHECKING, Dict, Iterable, Type
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterable
 
 from .package import PackageToxEnv
 from .runner import RunToxEnv
@@ -14,16 +16,16 @@ class ToxEnvRegister:
     """tox environment registry"""
 
     def __init__(self) -> None:
-        self._run_envs: Dict[str, Type[RunToxEnv]] = {}
-        self._package_envs: Dict[str, Type[PackageToxEnv]] = {}
+        self._run_envs: dict[str, type[RunToxEnv]] = {}
+        self._package_envs: dict[str, type[PackageToxEnv]] = {}
         self._default_run_env: str = ""
 
-    def _register_tox_env_types(self, manager: "Plugin") -> None:
+    def _register_tox_env_types(self, manager: Plugin) -> None:
         manager.tox_register_tox_env(register=self)
         if not self._default_run_env:
             self._default_run_env = next(iter(self._run_envs.keys()))
 
-    def add_run_env(self, of_type: Type[RunToxEnv]) -> None:
+    def add_run_env(self, of_type: type[RunToxEnv]) -> None:
         """
         Define a new run tox environment type.
 
@@ -31,7 +33,7 @@ class ToxEnvRegister:
         """
         self._run_envs[of_type.id()] = of_type
 
-    def add_package_env(self, of_type: Type[PackageToxEnv]) -> None:
+    def add_package_env(self, of_type: type[PackageToxEnv]) -> None:
         """
         Define a new packaging tox environment type.
 
@@ -60,7 +62,7 @@ class ToxEnvRegister:
             raise ValueError("run env must be registered before setting it as default")
         self._default_run_env = value
 
-    def runner(self, name: str) -> Type[RunToxEnv]:
+    def runner(self, name: str) -> type[RunToxEnv]:
         """
         Lookup a run tox environment type by name.
 
@@ -69,7 +71,7 @@ class ToxEnvRegister:
         """
         return self._run_envs[name]
 
-    def package(self, name: str) -> Type[PackageToxEnv]:
+    def package(self, name: str) -> type[PackageToxEnv]:
         """
         Lookup a packaging tox environment type by name.
 

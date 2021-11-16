@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import glob
 import shutil
 import sys
@@ -6,7 +8,7 @@ from functools import partial
 from io import TextIOWrapper
 from os import PathLike
 from pathlib import Path
-from typing import Generator, Iterator, List, Optional, Set, Tuple, cast
+from typing import Generator, Iterator, List, cast
 from zipfile import ZipFile
 
 from packaging.requirements import Requirement
@@ -37,7 +39,7 @@ else:  # pragma: no cover (py38+)
 class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
-        self._sdist_meta_tox_env: Optional[Pep517VirtualEnvPackager] = None
+        self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
 
     @staticmethod
     def id() -> str:
@@ -81,9 +83,9 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
     def requires(self) -> PythonDeps:
         return cast(PythonDeps, self.conf["deps"])
 
-    def perform_packaging(self, for_env: EnvConfigSet) -> List[Package]:
+    def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         self.setup()
-        path: Optional[Path] = getattr(self.options, "install_pkg", None)
+        path: Path | None = getattr(self.options, "install_pkg", None)
         if path is None:  # use install_pkg if specified, otherwise build via commands
             chdir: Path = self.conf["change_dir"]
             ignore_errors: bool = self.conf["ignore_errors"]
@@ -99,10 +101,10 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             path = Path(found[0])
         return self.extract_install_info(for_env, path)
 
-    def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> List[Package]:
-        extras: Set[str] = for_env["extras"]
+    def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> list[Package]:
+        extras: set[str] = for_env["extras"]
         if path.suffix == ".whl":
-            requires: List[str] = WheelDistribution(path).requires or []
+            requires: list[str] = WheelDistribution(path).requires or []
             package: Package = WheelPackage(path, dependencies_with_extras([Requirement(i) for i in requires], extras))
         else:  # must be source distribution
             work_dir = self.env_tmp_dir / "sdist-extract"
@@ -118,7 +120,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             package = SdistPackage(path, dependencies_with_extras(deps, extras))
         return [package]
 
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[Tuple[str, str], PackageToxEnv, None]:
+    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         # in case the outcome is a sdist we'll use this to find out its metadata
         result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
@@ -132,7 +134,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
 class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
-        self._dist_name: Optional[str] = None
+        self._dist_name: str | None = None
 
     @property
     def dist_name(self) -> str:
@@ -147,7 +149,7 @@ class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has ty
                     raise Fail(f"no .dist-info inside {self._wheel}")
         return self._dist_name
 
-    def read_text(self, filename: str) -> Optional[str]:
+    def read_text(self, filename: str) -> str | None:
         with ZipFile(self._wheel) as zip_file:
             try:
                 with TextIOWrapper(zip_file.open(f"{self.dist_name}/{filename}"), encoding="utf-8") as file_handler:
@@ -155,7 +157,7 @@ class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has ty
             except KeyError:
                 return None
 
-    def locate_file(self, path: str) -> "PathLike[str]":
+    def locate_file(self, path: str) -> PathLike[str]:
         return self._wheel / path  # pragma: no cover # not used by us, but part of the ABC
 
 

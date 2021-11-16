@@ -1,9 +1,10 @@
 """
 Run tox environments in parallel.
 """
+from __future__ import annotations
+
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
-from typing import Optional
 
 from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
@@ -28,7 +29,7 @@ def tox_add_option(parser: ToxParser) -> None:
     parallel_flags(our, default_parallel=auto_detect_cpus())
 
 
-def parse_num_processes(str_value: str) -> Optional[int]:
+def parse_num_processes(str_value: str) -> int | None:
     if str_value == "all":
         return None
     if str_value == "auto":

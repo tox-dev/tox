@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import sys
-from typing import Callable, Tuple
+from typing import Callable
 
 import pytest
 
@@ -9,7 +11,7 @@ from tox.pytest import ToxProjectCreator
 @pytest.mark.parametrize("has_prev", [True, False])
 def test_depends(
     tox_project: ToxProjectCreator,
-    patch_prev_py: Callable[[bool], Tuple[str, str]],
+    patch_prev_py: Callable[[bool], tuple[str, str]],
     has_prev: bool,
 ) -> None:
     prev_ver, impl = patch_prev_py(has_prev)

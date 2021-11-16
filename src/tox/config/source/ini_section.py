@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from tox.config.loader.section import Section
 
 
 class IniSection(Section):
     @classmethod
-    def test_env(cls, name: str) -> "IniSection":
+    def test_env(cls, name: str) -> IniSection:
         return cls(TEST_ENV_PREFIX, name)
 
     @property

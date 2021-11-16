@@ -1,10 +1,12 @@
 """
 On Windows we use overlapped mechanism, borrowing it from asyncio (but without the event loop).
 """
+from __future__ import annotations
+
 import logging  # pragma: win32 cover
 from asyncio.windows_utils import BUFSIZE  # pragma: win32 cover
 from time import sleep  # pragma: win32 cover
-from typing import Callable, Optional  # pragma: win32 cover
+from typing import Callable
 
 import _overlapped  # type: ignore[import]  # pragma: win32 cover
 
@@ -15,7 +17,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
     def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:
         super().__init__(file_no, handler, name, drain)
         self.closed = False
-        self._ov: Optional[_overlapped.Overlapped] = None
+        self._ov: _overlapped.Overlapped | None = None
         self._waiting_for_read = False
 
     def _read_stream(self) -> None:
@@ -29,11 +31,11 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
             keep_reading = not self.stop.is_set()
 
     def _drain_stream(self) -> None:
-        wait: Optional[bool] = self.closed
+        wait: bool | None = self.closed
         while wait is False:
             wait = self._read_batch()
 
-    def _read_batch(self) -> Optional[bool]:
+    def _read_batch(self) -> bool | None:
         """:returns: None means error can no longer read, True wait for result, False try again"""
         if self._waiting_for_read is False:
             self._ov = _overlapped.Overlapped(0)  # can use it only once to read a batch

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import signal
@@ -5,7 +7,6 @@ import sys
 from io import TextIOWrapper
 from pathlib import Path
 from types import FrameType
-from typing import Optional
 from unittest.mock import MagicMock
 
 from tox.execute import Outcome
@@ -27,7 +28,7 @@ request = ExecuteRequest(
 out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
 
 
-def show_outcome(outcome: Optional[Outcome]) -> None:
+def show_outcome(outcome: Outcome | None) -> None:
     if outcome is not None:  # pragma: no branch
         print(outcome.exit_code)
         print(repr(outcome.out))

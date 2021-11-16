@@ -1,9 +1,11 @@
 """
 A tox run environment that handles the Python language.
 """
+from __future__ import annotations
+
 from abc import ABC
 from functools import partial
-from typing import List, Set, Tuple
+from typing import Set
 
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
@@ -37,7 +39,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         )
 
     @property
-    def _package_types(self) -> Tuple[str, ...]:
+    def _package_types(self) -> tuple[str, ...]:
         return "wheel", "sdist", "dev-legacy", "skip", "external"
 
     def _register_package_conf(self) -> bool:
@@ -92,7 +94,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         requirements_file: PythonDeps = self.conf["deps"]
         self.installer.install(requirements_file, PythonRun.__name__, "deps")
 
-    def _build_packages(self) -> List[Package]:
+    def _build_packages(self) -> list[Package]:
         package_env = self.package_env
         assert package_env is not None
         with package_env.display_context(self._has_display_suspended):

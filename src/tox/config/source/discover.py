@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import logging
 from itertools import chain
 from pathlib import Path
-from typing import Optional, Tuple, Type
 
 from tox.report import HandledError
 
@@ -10,10 +11,10 @@ from .legacy_toml import LegacyToml
 from .setup_cfg import SetupCfg
 from .tox_ini import ToxIni
 
-SOURCE_TYPES: Tuple[Type[Source], ...] = (ToxIni, SetupCfg, LegacyToml)
+SOURCE_TYPES: tuple[type[Source], ...] = (ToxIni, SetupCfg, LegacyToml)
 
 
-def discover_source(config_file: Optional[Path], root_dir: Optional[Path]) -> Source:
+def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
     """
     Discover a source for configuration.
 
@@ -30,7 +31,7 @@ def discover_source(config_file: Optional[Path], root_dir: Optional[Path]) -> So
     return src
 
 
-def _locate_source() -> Optional[Source]:
+def _locate_source() -> Source | None:
     folder = Path.cwd()
     for base in chain([folder], folder.parents):
         for src_type in SOURCE_TYPES:
@@ -53,7 +54,7 @@ def _load_exact_source(config_file: Path) -> Source:
     raise HandledError(f"could not recognize config file {config_file}")
 
 
-def _create_default_source(root_dir: Optional[Path]) -> Source:
+def _create_default_source(root_dir: Path | None) -> Source:
     if root_dir is None:  # if set use that
         empty = Path.cwd()
         for base in chain([empty], empty.parents):

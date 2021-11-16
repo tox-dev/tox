@@ -1,10 +1,12 @@
 """
 Declare the abstract base class for tox environments that handle the Python language.
 """
+from __future__ import annotations
+
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, cast
+from typing import Any, List, NamedTuple, cast
 
 from packaging.tags import INTERPRETER_SHORT_NAMES
 from virtualenv.discovery.py_spec import PythonSpec
@@ -28,7 +30,7 @@ class PythonInfo(NamedTuple):
     version: str
     is_64: bool
     platform: str
-    extra: Dict[str, Any]
+    extra: dict[str, Any]
 
     @property
     def version_no_dot(self) -> str:
@@ -41,14 +43,14 @@ class PythonInfo(NamedTuple):
 
 class Python(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        self._base_python: Optional[PythonInfo] = None
+        self._base_python: PythonInfo | None = None
         self._base_python_searched: bool = False
         super().__init__(create_args)
 
     def register_config(self) -> None:
         super().register_config()
 
-        def validate_base_python(value: List[str]) -> List[str]:
+        def validate_base_python(value: list[str]) -> list[str]:
             return self._validate_base_python(self.name, value, self.core["ignore_base_python_conflict"])
 
         self.conf.add_config(
@@ -80,7 +82,7 @@ class Python(ToxEnv, ABC):
             value=lambda: self.env_python(),
         )
 
-    def _default_pass_env(self) -> List[str]:
+    def _default_pass_env(self) -> list[str]:
         env = super()._default_pass_env()
         if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
@@ -94,13 +96,13 @@ class Python(ToxEnv, ABC):
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
-    def default_base_python(self, conf: "Config", env_name: Optional[str]) -> List[str]:  # noqa: U100
+    def default_base_python(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: U100
         base_python = None if env_name is None else self.extract_base_python(env_name)
         return [sys.executable if base_python is None else base_python]
 
     @staticmethod
-    def extract_base_python(env_name: str) -> Optional[str]:
-        candidates: List[str] = []
+    def extract_base_python(env_name: str) -> str | None:
+        candidates: list[str] = []
         for factor in env_name.split("-"):
             spec = PythonSpec.from_string_spec(factor)
             if spec.implementation is not None:
@@ -113,7 +115,7 @@ class Python(ToxEnv, ABC):
         return None
 
     @staticmethod
-    def _validate_base_python(env_name: str, base_pythons: List[str], ignore_base_python_conflict: bool) -> List[str]:
+    def _validate_base_python(env_name: str, base_pythons: list[str], ignore_base_python_conflict: bool) -> list[str]:
         elements = {env_name}  # match with full env-name
         elements.update(env_name.split("-"))  # and also any factor
         for candidate in elements:
@@ -165,8 +167,8 @@ class Python(ToxEnv, ABC):
                 raise Recreate(self._diff_msg(conf, old))
 
     @staticmethod
-    def _diff_msg(conf: Dict[str, Any], old: Dict[str, Any]) -> str:
-        result: List[str] = []
+    def _diff_msg(conf: dict[str, Any], old: dict[str, Any]) -> str:
+        result: list[str] = []
         added = [f"{k}={v!r}" for k, v in conf.items() if k not in old]
         if added:  # pragma: no branch
             result.append(f"added {' | '.join(added)}")
@@ -179,7 +181,7 @@ class Python(ToxEnv, ABC):
         return f'python {", ".join(result)}'
 
     @abstractmethod
-    def prepend_env_var_path(self) -> List[Path]:
+    def prepend_env_var_path(self) -> list[Path]:
         raise NotImplementedError
 
     def _done_with_setup(self) -> None:
@@ -189,7 +191,7 @@ class Python(ToxEnv, ABC):
             outcome = self.installer.installed()
             self.journal["installed_packages"] = outcome
 
-    def python_cache(self) -> Dict[str, Any]:
+    def python_cache(self) -> dict[str, Any]:
         return {
             "version_info": list(self.base_python.version_info),
         }
@@ -198,7 +200,7 @@ class Python(ToxEnv, ABC):
     def base_python(self) -> PythonInfo:
         """Resolve base python"""
         if self._base_python_searched is False:
-            base_pythons: List[str] = self.conf["base_python"]
+            base_pythons: list[str] = self.conf["base_python"]
             self._base_python_searched = True
             self._base_python = self._get_python(base_pythons)
             if self._base_python is None:
@@ -210,7 +212,7 @@ class Python(ToxEnv, ABC):
                 self.journal["python"] = value
         return cast(PythonInfo, self._base_python)
 
-    def _get_env_journal_python(self) -> Dict[str, Any]:
+    def _get_env_journal_python(self) -> dict[str, Any]:
         assert self._base_python is not None
         return {
             "implementation": self._base_python.implementation,
@@ -222,7 +224,7 @@ class Python(ToxEnv, ABC):
         }
 
     @abstractmethod
-    def _get_python(self, base_python: List[str]) -> Optional[PythonInfo]:
+    def _get_python(self, base_python: list[str]) -> PythonInfo | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -233,7 +235,7 @@ class Python(ToxEnv, ABC):
 class NoInterpreter(Fail):
     """could not find interpreter"""
 
-    def __init__(self, base_pythons: List[str]) -> None:
+    def __init__(self, base_pythons: list[str]) -> None:
         self.base_pythons = base_pythons
 
     def __str__(self) -> str:

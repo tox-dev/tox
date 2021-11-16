@@ -1,8 +1,9 @@
 """
 This module pulls together this package: create and parse CLI arguments for tox.
 """
+from __future__ import annotations
 
-from typing import Dict, Optional, Sequence, Tuple, cast
+from typing import Dict, Sequence, cast
 
 from tox.config.source import Source, discover_source
 from tox.report import ToxHandler, setup_report
@@ -12,8 +13,8 @@ from .parser import Handler, Parsed, ToxParser
 Handlers = Dict[str, Handler]
 
 
-def get_options(*args: str) -> Tuple[Parsed, Handlers, Optional[Sequence[str]], ToxHandler, Source]:
-    pos_args: Optional[Tuple[str, ...]] = None
+def get_options(*args: str) -> tuple[Parsed, Handlers, Sequence[str] | None, ToxHandler, Source]:
+    pos_args: tuple[str, ...] | None = None
     try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
         pos_arg_at = args.index("--")
     except ValueError:
@@ -29,7 +30,7 @@ def get_options(*args: str) -> Tuple[Parsed, Handlers, Optional[Sequence[str]], 
     return parsed, cmd_handlers, pos_args, log_handler, source
 
 
-def _get_base(args: Sequence[str]) -> Tuple[int, ToxHandler, Source]:
+def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     """First just load the base options (verbosity+color) to setup the logging framework."""
     tox_parser = ToxParser.base()
     parsed, _ = tox_parser.parse_known_args(args)
@@ -44,7 +45,7 @@ def _get_base(args: Sequence[str]) -> Tuple[int, ToxHandler, Source]:
     return guess_verbosity, handler, source
 
 
-def _get_all(args: Sequence[str]) -> Tuple[Parsed, Handlers]:
+def _get_all(args: Sequence[str]) -> tuple[Parsed, Handlers]:
     """Parse all the options."""
     tox_parser = _get_parser()
     parsed = cast(Parsed, tox_parser.parse_args(args))

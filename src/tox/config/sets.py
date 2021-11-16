@@ -1,21 +1,8 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Mapping, Sequence, TypeVar, cast
 
 from .loader.convert import Factory
 from .loader.section import Section
@@ -33,14 +20,14 @@ V = TypeVar("V")
 class ConfigSet(ABC):
     """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
 
-    def __init__(self, conf: "Config", section: Section, env_name: Optional[str]):
+    def __init__(self, conf: Config, section: Section, env_name: str | None):
         self._section = section
         self._env_name = env_name
         self._conf = conf
-        self.loaders: List[Loader[Any]] = []
-        self._defined: Dict[str, ConfigDefinition[Any]] = {}
-        self._keys: Dict[str, None] = {}
-        self._alias: Dict[str, str] = {}
+        self.loaders: list[Loader[Any]] = []
+        self._defined: dict[str, ConfigDefinition[Any]] = {}
+        self._keys: dict[str, None] = {}
+        self._alias: dict[str, str] = {}
         self.register_config()
 
     @abstractmethod
@@ -49,11 +36,11 @@ class ConfigSet(ABC):
 
     def add_config(
         self,
-        keys: Union[str, Sequence[str]],
-        of_type: Type[V],
-        default: Union[Callable[["Config", Optional[str]], V], V],
+        keys: str | Sequence[str],
+        of_type: type[V],
+        default: Callable[[Config, str | None], V] | V,
         desc: str,
-        post_process: Optional[Callable[[V], V]] = None,
+        post_process: Callable[[V], V] | None = None,
         factory: Factory[V] = None,
     ) -> ConfigDynamicDefinition[V]:
         """
@@ -72,7 +59,7 @@ class ConfigSet(ABC):
         result = self._add_conf(keys_, definition)
         return cast(ConfigDynamicDefinition[V], result)
 
-    def add_constant(self, keys: Union[str, Sequence[str]], desc: str, value: V) -> ConfigConstantDefinition[V]:
+    def add_constant(self, keys: str | Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
         """
         Add a constant value.
 
@@ -87,7 +74,7 @@ class ConfigSet(ABC):
         return cast(ConfigConstantDefinition[V], result)
 
     @staticmethod
-    def _make_keys(keys: Union[str, Sequence[str]]) -> Sequence[str]:
+    def _make_keys(keys: str | Sequence[str]) -> Sequence[str]:
         return (keys,) if isinstance(keys, str) else keys
 
     def _add_conf(self, keys: Sequence[str], definition: ConfigDefinition[V]) -> ConfigDefinition[V]:
@@ -116,7 +103,7 @@ class ConfigSet(ABC):
         """
         return self.load(item)
 
-    def load(self, item: str, chain: Optional[List[str]] = None) -> Any:
+    def load(self, item: str, chain: list[str] | None = None) -> Any:
         """
         Get the config value for a given key (will materialize in case of dynamic config).
 
@@ -143,9 +130,9 @@ class ConfigSet(ABC):
         """
         return item in self._alias
 
-    def unused(self) -> List[str]:
+    def unused(self) -> list[str]:
         """:return: Return a list of keys present in the config source but not used"""
-        found: Set[str] = set()
+        found: set[str] = set()
         # keys within loaders (only if the loader is not a parent too)
         parents = {id(i.parent) for i in self.loaders if i.parent is not None}
         for loader in self.loaders:
@@ -168,14 +155,14 @@ class ConfigSet(ABC):
         return self._section.name
 
     @property
-    def env_name(self) -> Optional[str]:
+    def env_name(self) -> str | None:
         return self._env_name
 
 
 class CoreConfigSet(ConfigSet):
     """Configuration set for the core tox config"""
 
-    def __init__(self, conf: "Config", section: Section, root: Path, src_path: Path) -> None:
+    def __init__(self, conf: Config, section: Section, root: Path, src_path: Path) -> None:
         self._root = root
         self._src_path = src_path
         super().__init__(conf, section=section, env_name=None)
@@ -189,7 +176,7 @@ class CoreConfigSet(ConfigSet):
             desc="the root directory (where the configuration file is found)",
         )
 
-        def work_dir_builder(conf: "Config", env_name: Optional[str]) -> Path:
+        def work_dir_builder(conf: Config, env_name: str | None) -> Path:
             # here we pin to .tox/4 to be able to use in parallel with v3 until final release
             return (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox" / "4"
 
@@ -219,7 +206,7 @@ class CoreConfigSet(ConfigSet):
 class EnvConfigSet(ConfigSet):
     """Configuration set for a tox environment"""
 
-    def __init__(self, conf: "Config", section: Section, env_name: str) -> None:
+    def __init__(self, conf: Config, section: Section, env_name: str) -> None:
         super().__init__(conf, section, env_name)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}
 

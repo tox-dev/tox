@@ -1,10 +1,12 @@
 """A executor that reuses a single subprocess for all backend calls (saving on python startup/import overhead)"""
+from __future__ import annotations
+
 import time
 from pathlib import Path
 from subprocess import TimeoutExpired
 from threading import Lock
 from types import TracebackType
-from typing import Dict, Optional, Sequence, Tuple, Type
+from typing import Sequence
 
 from pyproject_api import BackendFailed
 
@@ -18,13 +20,13 @@ from tox.execute.stream import SyncWrite
 class LocalSubProcessPep517Executor(Execute):
     """Executor holding the backend process"""
 
-    def __init__(self, colored: bool, cmd: Sequence[str], env: Dict[str, str], cwd: Path):
+    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path):
         super().__init__(colored)
         self.cmd = cmd
         self.env = env
         self.cwd = cwd
-        self._local_execute: Optional[Tuple[LocalSubProcessExecuteInstance, ExecuteStatus]] = None
-        self._exc: Optional[Exception] = None
+        self._local_execute: tuple[LocalSubProcessExecuteInstance, ExecuteStatus] | None = None
+        self._exc: Exception | None = None
         self.is_alive: bool = False
 
     def build_instance(
@@ -37,7 +39,7 @@ class LocalSubProcessPep517Executor(Execute):
         result = LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
         return result
 
-    def local_execute(self, options: ExecuteOptions) -> Tuple[LocalSubProcessExecuteInstance, ExecuteStatus]:
+    def local_execute(self, options: ExecuteOptions) -> tuple[LocalSubProcessExecuteInstance, ExecuteStatus]:
         if self._exc is not None:
             raise self._exc
         if self._local_execute is None:
@@ -99,7 +101,7 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
         options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
-        instance_status: Tuple[LocalSubProcessExecuteInstance, ExecuteStatus],
+        instance_status: tuple[LocalSubProcessExecuteInstance, ExecuteStatus],
     ):
         super().__init__(request, options, out, err)
         self._instance, self._status = instance_status
@@ -116,9 +118,9 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],  # noqa: U100
-        exc_val: Optional[BaseException],  # noqa: U100
-        exc_tb: Optional[TracebackType],  # noqa: U100
+        exc_type: type[BaseException] | None,  # noqa: U100
+        exc_val: BaseException | None,  # noqa: U100
+        exc_tb: TracebackType | None,  # noqa: U100
     ) -> None:
         self._swap_out_err()
         self._lock.release()

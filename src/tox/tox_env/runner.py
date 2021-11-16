@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
 import os
 import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
+from typing import Any, Iterable, List, cast
 
 from tox.config.types import Command, EnvList
 from tox.journal import EnvJournal
@@ -15,8 +17,8 @@ from .package import Package, PackageToxEnv, PathPackage
 
 class RunToxEnv(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        self.package_env: Optional[PackageToxEnv] = None
-        self._packages: List[Package] = []
+        self.package_env: PackageToxEnv | None = None
+        self._packages: list[Package] = []
         super().__init__(create_args)
 
     def register_config(self) -> None:
@@ -109,7 +111,7 @@ class RunToxEnv(ToxEnv, ABC):
         super().interrupt()
         self._call_pkg_envs("interrupt")
 
-    def get_package_env_types(self) -> Optional[Tuple[str, str]]:
+    def get_package_env_types(self) -> tuple[str, str] | None:
         if "package_env" not in self.conf:
             return None
         return self.conf["package_env"], self.conf["package_tox_env_type"]
@@ -172,7 +174,7 @@ class RunToxEnv(ToxEnv, ABC):
         self._handle_journal_package(self.journal, self._packages)
 
     @staticmethod
-    def _handle_journal_package(journal: EnvJournal, packages: List[Package]) -> None:
+    def _handle_journal_package(journal: EnvJournal, packages: list[Package]) -> None:
         if not journal:
             return
         installed_meta = []
@@ -190,7 +192,7 @@ class RunToxEnv(ToxEnv, ABC):
             journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
     @property
-    def environment_variables(self) -> Dict[str, str]:
+    def environment_variables(self) -> dict[str, str]:
         environment_variables = super().environment_variables
         if self.package_env is not None and self._packages:
             # if package(s) have been built insert them as environment variable
@@ -198,7 +200,7 @@ class RunToxEnv(ToxEnv, ABC):
         return environment_variables
 
     @abstractmethod
-    def _build_packages(self) -> List[Package]:
+    def _build_packages(self) -> list[Package]:
         """:returns: a list of packages installed in the environment"""
         raise NotImplementedError
 

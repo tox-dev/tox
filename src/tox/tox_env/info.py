@@ -2,10 +2,12 @@
 Declare and handle the tox env info file (a file at the root of every tox environment that contains information about
 the status of the tox environment - python version of the environment, installed packages, etc.).
 """
+from __future__ import annotations
+
 import json
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator, Optional, Tuple
+from typing import Any, Iterator
 
 
 class Info:
@@ -25,8 +27,8 @@ class Info:
         self,
         value: Any,
         section: str,
-        sub_section: Optional[str] = None,
-    ) -> Iterator[Tuple[bool, Optional[Any]]]:
+        sub_section: str | None = None,
+    ) -> Iterator[tuple[bool, Any | None]]:
         """Cache"""
         old = self._content.get(section)
         if sub_section is not None and old is not None:

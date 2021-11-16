@@ -1,12 +1,14 @@
 """
 This package handles provisioning an appropriate tox version per requirements.
 """
+from __future__ import annotations
+
 import json
 import logging
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, cast
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
@@ -71,7 +73,7 @@ def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:  # no
         desc="Name of the virtual environment used to provision a tox.",
     )
 
-    def add_tox_requires_min_version(requires: List[Requirement]) -> List[Requirement]:
+    def add_tox_requires_min_version(requires: list[Requirement]) -> list[Requirement]:
         min_version: Version = core_conf["min_version"]
         requires.append(Requirement(f"tox >= {min_version.public}"))
         return requires
@@ -85,8 +87,8 @@ def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:  # no
     )
 
 
-def provision(state: State) -> Union[int, bool]:
-    requires: List[Requirement] = state.conf.core["requires"]
+def provision(state: State) -> int | bool:
+    requires: list[Requirement] = state.conf.core["requires"]
     missing = _get_missing(requires)
     if not missing:
         return False
@@ -94,7 +96,7 @@ def provision(state: State) -> Union[int, bool]:
     deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
     miss_msg = f"is missing [requires (has)]: {deps}"
 
-    no_provision: Union[bool, str] = state.options.no_provision
+    no_provision: bool | str = state.options.no_provision
     if no_provision:
         msg = f"provisioning explicitly disabled within {sys.executable}, but {miss_msg}"
         if isinstance(no_provision, str):
@@ -110,8 +112,8 @@ def provision(state: State) -> Union[int, bool]:
     return run_provision(requires, state)
 
 
-def _get_missing(requires: List[Requirement]) -> List[Tuple[Requirement, Optional[str]]]:
-    missing: List[Tuple[Requirement, Optional[str]]] = []
+def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | None]]:
+    missing: list[tuple[Requirement, str | None]] = []
     for package in requires:
         package_name = canonicalize_name(package.name)
         try:
@@ -124,7 +126,7 @@ def _get_missing(requires: List[Requirement]) -> List[Tuple[Requirement, Optiona
     return missing
 
 
-def run_provision(deps: List[Requirement], state: State) -> int:
+def run_provision(deps: list[Requirement], state: State) -> int:
     """ """
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         base=[],  # disable inheritance for provision environments
@@ -143,7 +145,7 @@ def run_provision(deps: List[Requirement], state: State) -> int:
         tox_env.setup()
     except Skip as exception:
         raise HandledError(f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}")
-    args: List[str] = [str(env_python), "-m", "tox"]
+    args: list[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision")
     return cast(int, outcome.exit_code)

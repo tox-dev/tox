@@ -1,7 +1,7 @@
-from typing import List, Optional
+from __future__ import annotations
 
 
-def shebang(exe: str) -> Optional[List[str]]:
+def shebang(exe: str) -> list[str] | None:
     """
     :param exe: the executable
     :return: the shebang interpreter arguments

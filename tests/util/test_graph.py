@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from collections import OrderedDict
-from typing import Dict, Set
 
 import pytest
 
@@ -7,20 +8,20 @@ from tox.util.graph import stable_topological_sort
 
 
 def test_topological_order_empty() -> None:
-    graph: Dict[str, Set[str]] = OrderedDict()
+    graph: dict[str, set[str]] = OrderedDict()
     result = stable_topological_sort(graph)
     assert result == []
 
 
 def test_topological_order_specified_only() -> None:
-    graph: Dict[str, Set[str]] = OrderedDict()
+    graph: dict[str, set[str]] = OrderedDict()
     graph["A"] = {"B", "C"}
     result = stable_topological_sort(graph)
     assert result == ["A"]
 
 
 def test_topological_order() -> None:
-    graph: Dict[str, Set[str]] = OrderedDict()
+    graph: dict[str, set[str]] = OrderedDict()
     graph["A"] = {"B", "C"}
     graph["B"] = set()
     graph["C"] = set()
@@ -29,7 +30,7 @@ def test_topological_order() -> None:
 
 
 def test_topological_order_cycle() -> None:
-    graph: Dict[str, Set[str]] = OrderedDict()
+    graph: dict[str, set[str]] = OrderedDict()
     graph["A"] = {"B", "C"}
     graph["B"] = {"A"}
     with pytest.raises(ValueError, match="A | B"):
@@ -37,7 +38,7 @@ def test_topological_order_cycle() -> None:
 
 
 def test_topological_complex() -> None:
-    graph: Dict[str, Set[str]] = OrderedDict()
+    graph: dict[str, set[str]] = OrderedDict()
     graph["A"] = {"B", "C"}
     graph["B"] = {"C", "D"}
     graph["C"] = {"D"}
@@ -47,7 +48,7 @@ def test_topological_complex() -> None:
 
 
 def test_two_sub_graph() -> None:
-    graph: Dict[str, Set[str]] = OrderedDict()
+    graph: dict[str, set[str]] = OrderedDict()
     graph["F"] = set()
     graph["E"] = set()
     graph["D"] = {"E", "F"}
@@ -60,7 +61,7 @@ def test_two_sub_graph() -> None:
 
 
 def test_two_sub_graph_circle() -> None:
-    graph: Dict[str, Set[str]] = OrderedDict()
+    graph: dict[str, set[str]] = OrderedDict()
     graph["F"] = set()
     graph["E"] = set()
     graph["D"] = {"E", "F"}

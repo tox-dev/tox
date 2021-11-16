@@ -1,4 +1,6 @@
-from typing import Callable, Dict
+from __future__ import annotations
+
+from typing import Callable
 
 import pytest
 
@@ -62,7 +64,7 @@ def test_verbose_no_test() -> None:
 
 def test_env_var_exhaustive_parallel_values(
     monkeypatch: MonkeyPatch,
-    core_handlers: Dict[str, Callable[[State], int]],
+    core_handlers: dict[str, Callable[[State], int]],
 ) -> None:
     monkeypatch.setenv("TOX_COMMAND", "run-parallel")
     monkeypatch.setenv("TOX_VERBOSE", "5")

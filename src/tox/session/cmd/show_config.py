@@ -1,9 +1,10 @@
 """
 Show materialized configuration of tox environments.
 """
+from __future__ import annotations
 
 from textwrap import indent
-from typing import Dict, Iterable, List, Set
+from typing import Iterable
 
 from colorama import Fore
 
@@ -43,7 +44,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 def show_config(state: State) -> int:
     is_colored = state.options.is_colored
-    keys: List[str] = state.options.list_keys_only
+    keys: list[str] = state.options.list_keys_only
     is_first = True
 
     def _print_env(tox_env: ToxEnv) -> None:
@@ -64,8 +65,8 @@ def show_config(state: State) -> int:
             return state.tox_env(env_name)  # get again to get the temporary state
 
     # because the target env could be a packaging one we first need to discover all defined ones
-    run_envs: Dict[str, RunToxEnv] = {}
-    pkg_envs: Dict[str, PackageToxEnv] = {}
+    run_envs: dict[str, RunToxEnv] = {}
+    pkg_envs: dict[str, PackageToxEnv] = {}
     for name in state.conf.env_list(everything=True):
         run_env = _get_run_env(name)
         run_envs[name] = run_env
@@ -73,7 +74,7 @@ def show_config(state: State) -> int:
             pkg_envs[pkg_env.conf.name] = pkg_env
 
     show_everything = state.options.env.all
-    done_pkg_envs: Set[str] = set()
+    done_pkg_envs: set[str] = set()
     for name in state.conf.env_list():  # now go through selected ones
         if name in pkg_envs:
             if name not in done_pkg_envs:

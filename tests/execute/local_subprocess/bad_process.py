@@ -1,5 +1,7 @@
 """This is a non compliant process that does not listens to signals"""
 # pragma: no cover
+from __future__ import annotations
+
 import os
 import signal
 import sys

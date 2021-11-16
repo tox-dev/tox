@@ -1,8 +1,10 @@
 """Module declaring a command execution request."""
+from __future__ import annotations
+
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Sequence
 
 
 class StdinSource(Enum):
@@ -11,7 +13,7 @@ class StdinSource(Enum):
     API = 2  #: input via programmatic access
 
     @staticmethod
-    def user_only() -> "StdinSource":
+    def user_only() -> StdinSource:
         """:return: ``USER`` if the standard input is tty type else ``OFF``"""
         return StdinSource.USER if sys.stdin.isatty() else StdinSource.OFF
 
@@ -21,12 +23,12 @@ class ExecuteRequest:
 
     def __init__(
         self,
-        cmd: Sequence[Union[str, Path]],
+        cmd: Sequence[str | Path],
         cwd: Path,
-        env: Dict[str, str],
+        env: dict[str, str],
         stdin: StdinSource,
         run_id: str,
-        allow: Optional[List[str]] = None,
+        allow: list[str] | None = None,
     ) -> None:
         """
         Create a new execution request.
@@ -39,7 +41,7 @@ class ExecuteRequest:
         """
         if len(cmd) == 0:
             raise ValueError("cannot execute an empty command")
-        self.cmd: List[str] = [str(i) for i in cmd]  #: the command to run
+        self.cmd: list[str] = [str(i) for i in cmd]  #: the command to run
         self.cwd = cwd  #: the working directory to use
         self.env = env  #: the environment variables to use
         self.stdin = stdin  #: the type of standard input interaction allowed

@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import logging
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 import pytest
 from pytest_mock import MockerFixture
@@ -44,8 +46,8 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 @pytest.mark.parametrize("content", ["[tox]", ""])
 def test_ini_empty(
     tmp_path: Path,
-    core_handlers: Dict[str, Callable[[State], int]],
-    default_options: Dict[str, Any],
+    core_handlers: dict[str, Callable[[State], int]],
+    default_options: dict[str, Any],
     mocker: MockerFixture,
     monkeypatch: MonkeyPatch,
     content: str,
@@ -65,7 +67,7 @@ def test_ini_empty(
 
 
 @pytest.fixture()
-def default_options(tmp_path: Path) -> Dict[str, Any]:
+def default_options(tmp_path: Path) -> dict[str, Any]:
     return {
         "colored": "no",
         "command": "r",
@@ -93,7 +95,7 @@ def default_options(tmp_path: Path) -> Dict[str, Any]:
     }
 
 
-def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: Dict[str, Callable[[State], int]]) -> None:
+def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dict[str, Callable[[State], int]]) -> None:
     parsed, handlers, _, __, ___ = get_options("p")
     assert vars(parsed) == {
         "colored": "yes",
@@ -140,7 +142,7 @@ def test_bad_cli_ini(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
-    default_options: Dict[str, Any],
+    default_options: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
@@ -162,7 +164,7 @@ def test_bad_option_cli_ini(
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
     value_error: Callable[[str], str],
-    default_options: Dict[str, Any],
+    default_options: dict[str, Any],
 ) -> None:
     caplog.set_level(logging.WARNING)
     to = tmp_path / "tox.ini"

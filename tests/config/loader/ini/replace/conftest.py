@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 import pytest
 
@@ -16,13 +17,13 @@ else:  # pragma: no cover (<py38)
 
 
 class ReplaceOne(Protocol):
-    def __call__(self, conf: str, pos_args: Optional[List[str]] = None) -> str:  # noqa: U100
+    def __call__(self, conf: str, pos_args: list[str] | None = None) -> str:  # noqa: U100
         ...
 
 
 @pytest.fixture()
 def replace_one(tmp_path: Path) -> ReplaceOne:
-    def example(conf: str, pos_args: Optional[List[str]] = None) -> str:
+    def example(conf: str, pos_args: list[str] | None = None) -> str:
         tox_ini_file = tmp_path / "tox.ini"
         tox_ini_file.write_text(f"[testenv:py]\nenv={conf}\n")
         tox_ini = ToxIni(tox_ini_file)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from pathlib import Path
 from typing import Callable, Dict, Optional, Set, TypeVar

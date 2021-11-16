@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import multiprocessing
 
 from pytest_mock import MockerFixture

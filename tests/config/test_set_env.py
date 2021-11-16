@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture
@@ -37,15 +39,15 @@ class EvalSetEnv(Protocol):
     def __call__(
         self,
         tox_ini: str,  # noqa: U100
-        extra_files: Optional[Dict[str, Any]] = ...,  # noqa: U100
-        from_cwd: Optional[Path] = ...,  # noqa: U100
+        extra_files: dict[str, Any] | None = ...,  # noqa: U100
+        from_cwd: Path | None = ...,  # noqa: U100
     ) -> SetEnv:
         ...
 
 
 @pytest.fixture()
 def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
-    def func(tox_ini: str, extra_files: Optional[Dict[str, Any]] = None, from_cwd: Optional[Path] = None) -> SetEnv:
+    def func(tox_ini: str, extra_files: dict[str, Any] | None = None, from_cwd: Path | None = None) -> SetEnv:
         prj = tox_project({"tox.ini": tox_ini, **(extra_files or {})})
         result = prj.run("c", "-k", "set_env", "-e", "py", from_cwd=None if from_cwd is None else prj.path / from_cwd)
         result.assert_success()

@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 from argparse import ArgumentParser
-from typing import Any, Iterator, List, Optional, Union
+from typing import Any, Iterator, List
 
 from tox.config.loader.str_convert import StrConvert
 
 
 class CliEnv:
-    def __init__(self, value: Union[None, List[str], str] = None):
+    def __init__(self, value: None | list[str] | str = None):
         if isinstance(value, str):
             value = StrConvert().to(value, of_type=List[str], factory=None)
         self._names = value
@@ -39,7 +41,7 @@ class CliEnv:
         return len(list(self)) == 0
 
 
-def env_list_flag(parser: ArgumentParser, default: Optional[CliEnv] = None, multiple: bool = True) -> None:
+def env_list_flag(parser: ArgumentParser, default: CliEnv | None = None, multiple: bool = True) -> None:
     help_msg = (
         "tox environment(s) to run (ALL -> all environments, not set -> <env_list>)"
         if multiple

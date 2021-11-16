@@ -1,4 +1,4 @@
-from typing import Tuple
+from __future__ import annotations
 
 import pytest
 
@@ -23,5 +23,5 @@ from tox.config.loader.ini.replace import find_replace_part
         (r"{\}}", (0, 3, r"\}")),
     ],
 )
-def test_match(value: str, result: Tuple[int, int, str]) -> None:
+def test_match(value: str, result: tuple[int, int, str]) -> None:
     assert find_replace_part(value, 0) == result

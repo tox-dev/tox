@@ -2,7 +2,6 @@
 Please keep this file Python 2.7 compatible.
 See https://tox.readthedocs.io/en/rewrite/development.html#code-style-guide
 """
-
 import os
 import sys
 import tarfile

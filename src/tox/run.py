@@ -1,9 +1,11 @@
 """Main entry point for tox."""
+from __future__ import annotations
+
 import logging
 import os
 import sys
 import time
-from typing import Optional, Sequence
+from typing import Sequence
 
 from tox.config.cli.parse import get_options
 from tox.config.main import Config
@@ -12,7 +14,7 @@ from tox.report import HandledError, ToxHandler
 from tox.session.state import State
 
 
-def run(args: Optional[Sequence[str]] = None) -> None:
+def run(args: Sequence[str] | None = None) -> None:
     try:
         with ToxHandler.patch_thread():
             result = main(sys.argv[1:] if args is None else args)

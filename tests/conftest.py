@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
-from typing import Callable, Iterator, List, Optional, Sequence, Tuple
+from typing import Callable, Iterator, Sequence
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -38,13 +40,13 @@ else:  # pragma: no cover (<py38)
 
 
 class ToxIniCreator(Protocol):
-    def __call__(self, conf: str, override: Optional[Sequence[Override]] = None) -> Config:  # noqa: U100
+    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config:  # noqa: U100
         ...
 
 
 @pytest.fixture()
 def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
-    def func(conf: str, override: Optional[Sequence[Override]] = None) -> Config:
+    def func(conf: str, override: Sequence[Override] | None = None) -> Config:
         dest = tmp_path / "c"
         dest.mkdir()
         config_file = dest / "tox.ini"
@@ -74,14 +76,14 @@ def demo_pkg_inline() -> Path:
 
 
 @pytest.fixture()
-def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], Tuple[str, str]]:
-    def _func(has_prev: bool) -> Tuple[str, str]:
+def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
+    def _func(has_prev: bool) -> tuple[str, str]:
         ver = sys.version_info[0:2]
         prev_ver = "".join(str(i) for i in (ver[0], ver[1] - 1))
         prev_py = f"py{prev_ver}"
         impl = sys.implementation.name.lower()
 
-        def get_python(self: VirtualEnv, base_python: List[str]) -> Optional[PythonInfo]:
+        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
             raw = list(sys.version_info)
@@ -131,7 +133,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: TempPathFactory, demo_pkg_inline: Pa
     return build_pkg(tmp_path_factory.mktemp("dist"), demo_pkg_inline, ["wheel"])
 
 
-def build_pkg(dist_dir: Path, of: Path, distributions: List[str], isolation: bool = True) -> Path:
+def build_pkg(dist_dir: Path, of: Path, distributions: list[str], isolation: bool = True) -> Path:
     from build.__main__ import build_package
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
@@ -140,5 +142,5 @@ def build_pkg(dist_dir: Path, of: Path, distributions: List[str], isolation: boo
 
 
 @pytest.fixture(scope="session")
-def pkg_builder() -> Callable[[Path, Path, List[str], bool], Path]:
+def pkg_builder() -> Callable[[Path, Path, list[str], bool], Path]:
     return build_pkg

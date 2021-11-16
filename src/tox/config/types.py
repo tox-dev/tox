@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from collections import OrderedDict
-from typing import Any, Iterator, List, Sequence
+from typing import Any, Iterator, Sequence
 
 from tox.execute.request import shell_cmd
 
@@ -7,14 +9,14 @@ from tox.execute.request import shell_cmd
 class Command:
     """A command to execute."""
 
-    def __init__(self, args: List[str]) -> None:
+    def __init__(self, args: list[str]) -> None:
         """
         Create a new command to execute
 
         :param args: the command line arguments (first value can be ``-`` to indicate ignore the exit code)
         """
         self.ignore_exit_code: bool = args[0] == "-"  #: a flag indicating if the exit code should be ignored
-        self.args: List[str] = args[1:] if self.ignore_exit_code else args  #: the command line arguments
+        self.args: list[str] = args[1:] if self.ignore_exit_code else args  #: the command line arguments
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(args={(['-'] if self.ignore_exit_code else [])+ self.args!r})"

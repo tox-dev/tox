@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Mapping, Sequence, Set, Tuple
+from typing import Any, Mapping, Sequence, Set
 
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 
-def stringify(value: Any) -> Tuple[str, bool]:
+def stringify(value: Any) -> tuple[str, bool]:
     """
     Transform a value into a string representation.
 
