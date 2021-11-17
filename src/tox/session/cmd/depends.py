@@ -1,23 +1,27 @@
 from __future__ import annotations
 
+from typing import cast
+
 from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
-from tox.session.cmd.run.common import run_order
+from tox.session.cmd.run.common import env_run_create_flags, run_order
 from tox.session.state import State
+from tox.tox_env.runner import RunToxEnv
 
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    parser.add_command(
+    our = parser.add_command(
         "depends",
         ["de"],
         "visualize tox environment dependencies",
         depends,
     )
+    env_run_create_flags(our, mode="depends")
 
 
 def depends(state: State) -> int:
-    to_run_list = list(state.all_run_envs(with_skip=False))
+    to_run_list = list(state.envs.iter(only_active=False))
     order, todo = run_order(state, to_run_list)
     print(f"Execution order: {', '.join(order)}")
 
@@ -28,7 +32,14 @@ def depends(state: State) -> int:
         print("   " * at, end="")
         print(env, end="")
         if env != "ALL":
-            names = " | ".join(e.conf.name for e in state.tox_env(env).package_envs)
+            run_env = cast(RunToxEnv, state.envs[env])
+            packager_list: list[str] = []
+            try:
+                for pkg_env in run_env.package_envs:
+                    packager_list.append(pkg_env.name)
+            except Exception as exception:
+                packager_list.append(f"... ({exception})")
+            names = " | ".join(packager_list)
             if names:
                 print(f" ~ {names}", end="")
         print("")

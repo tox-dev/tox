@@ -11,6 +11,7 @@ from packaging.requirements import Requirement
 
 from ...config.sets import EnvConfigSet
 from ..api import ToxEnvCreateArgs
+from ..errors import Skip
 from ..package import Package, PackageToxEnv, PathPackage
 from ..runner import RunToxEnv
 from .api import Python
@@ -47,9 +48,6 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         self._wheel_build_envs: dict[str, PythonPackageToxEnv] = {}
         super().__init__(create_args)
 
-    def register_config(self) -> None:
-        super().register_config()
-
     def _setup_env(self) -> None:
         """setup the tox environment"""
         super()._setup_env()
@@ -74,7 +72,8 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             # https://github.com/pypa/wheel/blob/master/src/wheel/bdist_wheel.py#L234-L280
             run_py = cast(Python, run_env).base_python
             if run_py is None:
-                raise ValueError(f"could not resolve base python for {self.conf.name}")
+                base = ",".join(run_env.conf["base_python"])
+                raise Skip(f"could not resolve base python with {base}")
 
             default_pkg_py = self.base_python
             if (

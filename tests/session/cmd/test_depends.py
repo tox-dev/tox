@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 import sys
+from textwrap import dedent
 from typing import Callable
-
-import pytest
 
 from tox.pytest import ToxProjectCreator
 
 
-@pytest.mark.parametrize("has_prev", [True, False])
-def test_depends(
-    tox_project: ToxProjectCreator,
-    patch_prev_py: Callable[[bool], tuple[str, str]],
-    has_prev: bool,
-) -> None:
-    prev_ver, impl = patch_prev_py(has_prev)
+def test_depends(tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], tuple[str, str]]) -> None:
+    prev_ver, impl = patch_prev_py(True)  # has previous python
     ver = sys.version_info[0:2]
     py = f"py{''.join(str(i) for i in ver)}"
     prev_py = f"py{prev_ver}"
@@ -33,32 +27,29 @@ def test_depends(
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     outcome = project.run("de")
     outcome.assert_success()
-    lines = outcome.out.splitlines()
-    assert lines[0] == f"Execution order: py, {py},{f' {prev_py},' if has_prev else '' } cov, cov2"
-    expected_lines = [
-        "ALL",
-        "   py ~ .pkg",
-        f"   {py} ~ .pkg",
-    ]
-    if has_prev:
-        expected_lines.append(f"   {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}")
-    expected_lines.extend(
-        [
-            "   cov2",
-            "      cov",
-            "         py ~ .pkg",
-            f"         {py} ~ .pkg",
-        ],
-    )
-    if has_prev:
-        expected_lines.append(f"         {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}")
-    expected_lines.extend(
-        [
-            "   cov",
-            "      py ~ .pkg",
-            f"      {py} ~ .pkg",
-        ],
-    )
-    if has_prev:
-        expected_lines.append(f"      {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}")
-    assert lines[1:] == expected_lines
+
+    expected = f"""
+    Execution order: py, {py}, {prev_py}, py31, cov, cov2
+    ALL
+       py ~ .pkg
+       {py} ~ .pkg
+       {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
+       py31 ~ .pkg | ... (could not resolve base python with py31)
+       cov2
+          cov
+             py ~ .pkg
+             {py} ~ .pkg
+             {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
+             py31 ~ .pkg | ... (could not resolve base python with py31)
+       cov
+          py ~ .pkg
+          {py} ~ .pkg
+          {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
+          py31 ~ .pkg | ... (could not resolve base python with py31)
+    """
+    assert outcome.out == dedent(expected).lstrip()
+
+
+def test_depends_help(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("de", "-h")
+    outcome.assert_success()

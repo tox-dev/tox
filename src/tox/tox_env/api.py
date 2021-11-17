@@ -68,7 +68,10 @@ class ToxEnv(ABC):
         self._log_id = 0
 
         self.register_config()
-        self.cache = Info(self.env_dir)
+
+    @property
+    def cache(self) -> Info:
+        return Info(self.env_dir)
 
     @staticmethod
     @abstractmethod

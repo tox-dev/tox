@@ -251,7 +251,7 @@ def test_env_name_change_recreate(tox_project: ToxProjectCreator) -> None:
     result_first = proj.run("r")
     result_first.assert_success()
 
-    tox_env = result_first.state.tox_env("py")
+    tox_env = result_first.state.envs["py"]
     assert repr(tox_env) == "VirtualEnvRunner(name=py)"
     path = tox_env.env_dir
     with Info(path).compare({"name": "p", "type": "magical"}, ToxEnv.__name__):
@@ -406,3 +406,8 @@ def test_virtualenv_cache(tox_project: ToxProjectCreator) -> None:
     result_second = proj.run("r", "-v", "-v")
     result_second.assert_success()
     assert " create virtual environment via " not in result_second.out
+
+
+def test_sequential_help(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("r", "-h")
+    outcome.assert_success()

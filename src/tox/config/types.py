@@ -57,10 +57,6 @@ class EnvList:
         """:return: iterator that goes through the defined env-list"""
         return iter(self.envs)
 
-    def __bool__(self) -> bool:
-        """:return: ``True`` if there are any environments defined"""
-        return bool(self.envs)
-
 
 __all__ = (
     "Command",

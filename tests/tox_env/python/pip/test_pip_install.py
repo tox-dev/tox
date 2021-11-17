@@ -15,7 +15,7 @@ def test_pip_install_bad_type(tox_project: ToxProjectCreator, capfd: CaptureFixt
     proj = tox_project({"tox.ini": ""})
     result = proj.run("l")
     result.assert_success()
-    pip = result.state.tox_env("py").installer
+    pip = result.state.envs["py"].installer
 
     with pytest.raises(SystemExit, match="1"):
         pip.install(arg, "section", "type")
@@ -29,7 +29,7 @@ def test_pip_install_empty_list(tox_project: ToxProjectCreator) -> None:
     result = proj.run("l")
     result.assert_success()
 
-    pip = result.state.tox_env("py").installer
+    pip = result.state.envs["py"].installer
     execute_calls = proj.patch_execute(Mock())
     pip.install([], "section", "type")
     assert execute_calls.call_count == 0

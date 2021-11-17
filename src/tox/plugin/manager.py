@@ -10,16 +10,14 @@ from tox import provision
 from tox.config.cli.parser import ToxParser
 from tox.config.loader import api as loader_api
 from tox.config.sets import ConfigSet, EnvConfigSet
-from tox.session import state
-from tox.session.cmd import depends, devenv, exec_, legacy, list_env, quickstart, show_config, version_flag
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
 from tox.tox_env.python.virtual_env import runner
 from tox.tox_env.python.virtual_env.package import cmd_builder, pep517
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
-from ..config.main import Config
 from ..execute import Outcome
+from ..session.state import State
 from ..tox_env.api import ToxEnv
 from . import NAME, spec
 from .inline import load_inline
@@ -29,6 +27,9 @@ class Plugin:
     def __init__(self) -> None:
         self.manager: pluggy.PluginManager = pluggy.PluginManager(NAME)
         self.manager.add_hookspecs(spec)
+
+        from tox.session import state
+        from tox.session.cmd import depends, devenv, exec_, legacy, list_env, quickstart, show_config, version_flag
 
         internal_plugins = (
             loader_api,
@@ -58,11 +59,11 @@ class Plugin:
     def tox_add_option(self, parser: ToxParser) -> None:
         self.manager.hook.tox_add_option(parser=parser)
 
-    def tox_add_core_config(self, core_conf: ConfigSet, config: Config) -> None:
-        self.manager.hook.tox_add_core_config(core_conf=core_conf, config=config)
+    def tox_add_core_config(self, core_conf: ConfigSet, state: State) -> None:
+        self.manager.hook.tox_add_core_config(core_conf=core_conf, state=state)
 
-    def tox_add_env_config(self, env_conf: EnvConfigSet, config: Config) -> None:
-        self.manager.hook.tox_add_env_config(env_conf=env_conf, config=config)
+    def tox_add_env_config(self, env_conf: EnvConfigSet, state: State) -> None:
+        self.manager.hook.tox_add_env_config(env_conf=env_conf, state=state)
 
     def tox_register_tox_env(self, register: ToxEnvRegister) -> None:
         self.manager.hook.tox_register_tox_env(register=register)

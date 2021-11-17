@@ -9,11 +9,10 @@ import os
 import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, cast
 
 from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
-from tox.session.state import State
 
 from .env_var import get_env_var
 from .ini import IniConfig
@@ -22,6 +21,9 @@ if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
 else:  # pragma: no cover (py38+)
     from typing_extensions import Literal
+
+if TYPE_CHECKING:
+    from tox.session.state import State
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
@@ -93,8 +95,6 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         return text
 
 
-Handler = Callable[[State], int]
-
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
 DEFAULT_VERBOSITY = 2
 
@@ -122,7 +122,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
         self.of_cmd: str | None = None
-        self.handlers: dict[str, tuple[Any, Handler]] = {}
+        self.handlers: dict[str, tuple[Any, Callable[[State], int]]] = {}
         self._arguments: list[ArgumentArgs] = []
         self._groups: list[tuple[Any, dict[str, Any], list[tuple[dict[str, Any], list[ArgumentArgs]]]]] = []
         super().__init__(*args, **kwargs)
@@ -136,7 +136,13 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         else:
             self._cmd = None
 
-    def add_command(self, cmd: str, aliases: Sequence[str], help_msg: str, handler: Handler) -> ArgumentParser:
+    def add_command(
+        self,
+        cmd: str,
+        aliases: Sequence[str],
+        help_msg: str,
+        handler: Callable[[State], int],
+    ) -> ArgumentParser:
         if self._cmd is None:
             raise RuntimeError("no sub-command group allowed")
         sub_parser: ToxParser = self._cmd.add_parser(
@@ -315,5 +321,4 @@ __all__ = (
     "DEFAULT_VERBOSITY",
     "Parsed",
     "ToxParser",
-    "Handler",
 )

@@ -17,3 +17,8 @@ def test_devenv_ok(tox_project: ToxProjectCreator, enable_pip_pypi_access: str |
     content = {"setup.py": "from setuptools import setup\nsetup(name='demo', version='1.0')"}
     outcome = tox_project(content).run("d", "-e", "py")
     outcome.assert_success()
+
+
+def test_devenv_help(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("d", "-h")
+    outcome.assert_success()

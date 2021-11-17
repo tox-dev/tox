@@ -58,7 +58,7 @@ class InstallPackageAction(Action):
 
 def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
     # mode can be one of: run, run-parallel, legacy, devenv, config
-    if mode != "config":
+    if mode not in ("config", "depends"):
         parser.add_argument(
             "--result-json",
             dest="result_json",
@@ -67,7 +67,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             default=None,
             help="write a JSON file with detailed information about all commands and results involved",
         )
-    if mode != "devenv":
+    if mode not in ("devenv", "depends"):
         parser.add_argument(
             "-s",
             "--skip-missing-interpreters",
@@ -77,7 +77,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             action=SkipMissingInterpreterAction,
             help="don't fail tests for missing interpreters: {config,true,false} choice",
         )
-    if mode not in ("devenv", "config"):
+    if mode not in ("devenv", "config", "depends"):
         parser.add_argument(
             "-n",
             "--notest",
@@ -101,14 +101,14 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             action=InstallPackageAction,
             dest="install_pkg",
         )
-    if mode != "devenv":
+    if mode not in ("devenv", "depends"):
         parser.add_argument(
             "--develop",
             action="store_true",
             help="install package in development mode",
             dest="develop",
         )
-    if mode != "config":
+    if mode not in ("config", "depends"):
         parser.add_argument(
             "--hashseed",
             metavar="SEED",
@@ -126,13 +126,14 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         help="for Python discovery first try the Python executables under these paths",
         default=[],
     )
-    parser.add_argument(
-        "--no-recreate-pkg",
-        dest="no_recreate_pkg",
-        help="if recreate is set do not recreate packaging tox environment(s)",
-        action="store_true",
-    )
-    if mode not in ("devenv", "config"):
+    if mode not in ("depends",):
+        parser.add_argument(
+            "--no-recreate-pkg",
+            dest="no_recreate_pkg",
+            help="if recreate is set do not recreate packaging tox environment(s)",
+            action="store_true",
+        )
+    if mode not in ("devenv", "config", "depends"):
         parser.add_argument(
             "--skip-pkg-install",
             dest="skip_pkg_install",
@@ -185,10 +186,10 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
     future_to_env: dict[Future[ToxEnvRunResult], ToxEnv] = {}
-    to_run_list: list[str] = []
-    for env in state.conf.env_list():  # ensure envs can be constructed
-        state.tox_env(env)
-        to_run_list.append(env)
+    state.envs.ensure_only_run_env_is_active()
+    to_run_list: list[str] = list(state.envs.iter())
+    for name in to_run_list:
+        cast(RunToxEnv, state.envs[name]).mark_active()
     previous, has_previous = None, False
     try:
         spinner = ToxSpinner(has_spinner, state, len(to_run_list))
@@ -224,9 +225,9 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         for env in to_run_list:
             ordered_results.append(name_to_run[env])
         # write the journal
-        write_journal(getattr(state.options, "result_json", None), state.journal)
+        write_journal(getattr(state.conf.options, "result_json", None), state._journal)
         # report the outcome
-        exit_code = report(state.options.start, ordered_results, state.options.is_colored)
+        exit_code = report(state.conf.options.start, ordered_results, state.conf.options.is_colored)
         if has_previous:
             signal(SIGINT, previous)
     return exit_code
@@ -236,8 +237,8 @@ class ToxSpinner(Spinner):
     def __init__(self, enabled: bool, state: State, total: int) -> None:
         super().__init__(
             enabled=enabled,
-            colored=state.options.is_colored,
-            stream=state.log_handler.stdout,
+            colored=state.conf.options.is_colored,
+            stream=state._options.log_handler.stdout,
             total=total,
         )
 
@@ -261,7 +262,7 @@ def _queue_and_wait(
     live: bool,
 ) -> None:
     try:
-        options = state.options
+        options = state._options
         with spinner:
             max_workers = len(to_run_list) if max_workers is None else max_workers
             completed: set[str] = set()
@@ -269,14 +270,14 @@ def _queue_and_wait(
 
             def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
                 spinner.add(tox_env.conf.name)
-                return run_one(tox_env, options.no_test, suspend_display=live is False)
+                return run_one(tox_env, options.parsed.no_test, suspend_display=live is False)
 
             try:
                 executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")
                 env_list: list[str] = []
                 while True:
                     for env in env_list:  # queue all available
-                        tox_env_to_run = state.tox_env(env)
+                        tox_env_to_run = cast(RunToxEnv, state.envs[env])
                         if interrupt.is_set():  # queue the rest as failed upfront
                             tox_env_to_run.teardown()
                             future: Future[ToxEnvRunResult] = Future()
@@ -324,8 +325,8 @@ def _queue_and_wait(
     finally:
         try:
             # call teardown - configuration only environments for example could not be finished
-            for _, tox_env in state.created_run_envs():
-                tox_env.teardown()
+            for name in to_run_list:
+                state.envs[name].teardown()
         finally:
             done.set()
 
@@ -333,14 +334,14 @@ def _queue_and_wait(
 def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: State, live: bool) -> None:
     success = result.code == Outcome.OK
     spinner.update_spinner(result, success)
-    tox_env = state.tox_env(result.name)
+    tox_env = cast(RunToxEnv, state.envs[result.name])
     if tox_env.journal:  # add overall journal entry
         tox_env.journal["result"] = {
             "success": success,
             "exit_code": result.code,
             "duration": result.duration,
         }
-    if live is False and state.options.parallel_live is False:  # teardown background run
+    if live is False and state.conf.options.parallel_live is False:  # teardown background run
         out_err = tox_env.close_and_read_out_err()  # sync writes from buffer to stdout/stderr
         pkg_out_err_list = []
         for package_env in tox_env.package_envs:
@@ -349,9 +350,9 @@ def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: St
                 pkg_out_err_list.append(pkg_out_err)
         if not success or tox_env.conf["parallel_show_output"]:
             for pkg_out_err in pkg_out_err_list:
-                state.log_handler.write_out_err(pkg_out_err)  # pragma: no cover
+                state._options.log_handler.write_out_err(pkg_out_err)  # pragma: no cover
             if out_err is not None:  # pragma: no branch # first show package build
-                state.log_handler.write_out_err(out_err)
+                state._options.log_handler.write_out_err(out_err)
 
 
 def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
@@ -373,7 +374,7 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
     to_run_set = set(to_run)
     todo: dict[str, set[str]] = {}
     for env in to_run:
-        run_env = state.tox_env(env)
+        run_env = cast(RunToxEnv, state.envs[env])
         depends = set(cast(EnvList, run_env.conf["depends"]).envs)
         todo[env] = to_run_set & depends
     order = stable_topological_sort(todo)

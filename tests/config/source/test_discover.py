@@ -8,7 +8,7 @@ from tox.pytest import ToxProjectCreator
 def out_no_src(path: Path) -> str:
     return (
         f"ROOT: No tox.ini or setup.cfg or pyproject.toml found, assuming empty tox.ini at {path}\n"
-        f"additional environments:\npy -> [no description]\n"
+        f"default environments:\npy -> [no description]\n"
     )
 
 

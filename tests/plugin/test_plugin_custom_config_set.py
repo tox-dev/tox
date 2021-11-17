@@ -8,10 +8,10 @@ import pytest
 from pytest_mock import MockerFixture
 
 from tox.config.loader.section import Section
-from tox.config.main import Config
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.plugin import impl
 from tox.pytest import ToxProjectCreator, register_inline_plugin
+from tox.session.state import State
 from tox.tox_env.api import ToxEnv
 
 
@@ -22,11 +22,11 @@ def _custom_config_set(mocker: MockerFixture) -> None:
             self.add_config(keys="A", of_type=int, default=0, desc="a config")
 
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:
+    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
         def factory(for_env: str, raw: object) -> DockerConfigSet:
             assert isinstance(raw, str)
             section = Section("docker", raw)
-            conf_set = config.get_section_config(section, base=["docker"], of_type=DockerConfigSet, for_env=for_env)
+            conf_set = state.conf.get_section_config(section, base=["docker"], of_type=DockerConfigSet, for_env=for_env)
             return conf_set
 
         env_conf.add_config(

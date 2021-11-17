@@ -100,7 +100,7 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
     cmd: {sys.executable} -m tox l
     cwd: {project.path}
     standard output
-    additional environments:
+    default environments:
     py -> [no description]
     """,
     ).lstrip()

@@ -7,7 +7,7 @@ import pytest
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
-from tox.session.common import CliEnv
+from tox.session.env_select import CliEnv
 from tox.session.state import State
 
 
@@ -77,8 +77,8 @@ def test_env_var_exhaustive_parallel_values(
     monkeypatch.setenv("TOX_PARALLEL_LIVE", "no")
     monkeypatch.setenv("TOX_OVERRIDE", "a=b\nc=d")
 
-    parsed, handlers, _, __, ___ = get_options()
-    assert vars(parsed) == {
+    options = get_options()
+    assert vars(options.parsed) == {
         "always_copy": False,
         "colored": "no",
         "command": "legacy",
@@ -115,8 +115,8 @@ def test_env_var_exhaustive_parallel_values(
         "root_dir": None,
         "config_file": None,
     }
-    assert parsed.verbosity == 4
-    assert handlers == core_handlers
+    assert options.parsed.verbosity == 4
+    assert options.cmd_handlers == core_handlers
 
 
 def test_ini_help(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:

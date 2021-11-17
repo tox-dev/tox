@@ -58,18 +58,19 @@ class PackageToxEnv(ToxEnv, ABC):
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         raise NotImplementedError
 
+    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: U100
+        yield from ()  # empty generator by default
+
+    def mark_active_run_env(self, run_env: RunToxEnv) -> None:
+        with self._lock:
+            self._envs.add(run_env.conf.name)
+
     def teardown_env(self, conf: EnvConfigSet) -> None:
         with self._lock:
             self._envs.remove(conf.name)
             has_envs = bool(self._envs)
         if not has_envs:
             self._teardown()
-
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
-        with self._lock:
-            self._envs.add(run_env.conf.name)
-        return
-        yield  # make this a generator
 
     @abstractmethod
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:

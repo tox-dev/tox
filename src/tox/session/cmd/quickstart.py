@@ -30,7 +30,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def quickstart(state: State) -> int:
-    root = state.options.quickstart_root.absolute()
+    root = state.conf.options.quickstart_root.absolute()
     tox_ini = root / "tox.ini"
     if tox_ini.exists():
         print(f"{tox_ini} already exist, refusing to overwrite")

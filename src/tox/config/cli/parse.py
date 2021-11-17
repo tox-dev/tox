@@ -3,17 +3,26 @@ This module pulls together this package: create and parse CLI arguments for tox.
 """
 from __future__ import annotations
 
-from typing import Dict, Sequence, cast
+from typing import TYPE_CHECKING, Callable, NamedTuple, Sequence, cast
 
 from tox.config.source import Source, discover_source
 from tox.report import ToxHandler, setup_report
 
-from .parser import Handler, Parsed, ToxParser
+from .parser import Parsed, ToxParser
 
-Handlers = Dict[str, Handler]
+if TYPE_CHECKING:
+    from tox.session.state import State
 
 
-def get_options(*args: str) -> tuple[Parsed, Handlers, Sequence[str] | None, ToxHandler, Source]:
+class Options(NamedTuple):
+    parsed: Parsed
+    pos_args: Sequence[str] | None
+    source: Source
+    cmd_handlers: dict[str, Callable[[State], int]]
+    log_handler: ToxHandler
+
+
+def get_options(*args: str) -> Options:
     pos_args: tuple[str, ...] | None = None
     try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
         pos_arg_at = args.index("--")
@@ -27,7 +36,7 @@ def get_options(*args: str) -> tuple[Parsed, Handlers, Sequence[str] | None, Tox
     parsed, cmd_handlers = _get_all(args)
     if guess_verbosity != parsed.verbosity:
         setup_report(parsed.verbosity, parsed.is_colored)  # pragma: no cover
-    return parsed, cmd_handlers, pos_args, log_handler, source
+    return Options(parsed, pos_args, source, cmd_handlers, log_handler)
 
 
 def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
@@ -45,7 +54,7 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     return guess_verbosity, handler, source
 
 
-def _get_all(args: Sequence[str]) -> tuple[Parsed, Handlers]:
+def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], int]]]:
     """Parse all the options."""
     tox_parser = _get_parser()
     parsed = cast(Parsed, tox_parser.parse_args(args))
@@ -75,5 +84,5 @@ def _get_parser_doc() -> ToxParser:
 
 __all__ = (
     "get_options",
-    "Handlers",
+    "Options",
 )

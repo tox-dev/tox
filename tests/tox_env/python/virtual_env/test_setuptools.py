@@ -3,12 +3,14 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.package import WheelPackage
 from tox.tox_env.python.virtual_env.package.pep517 import Pep517VirtualEnvPackager
+from tox.tox_env.runner import RunToxEnv
 
 
 @pytest.mark.integration()
@@ -30,7 +32,7 @@ def test_setuptools_package(
 
     outcome.assert_success()
     assert f"\ngreetings from demo_pkg_setuptools{os.linesep}" in outcome.out
-    tox_env = outcome.state.tox_env("py")
+    tox_env = cast(RunToxEnv, outcome.state.envs["py"])
 
     (package_env,) = list(tox_env.package_envs)
     assert isinstance(package_env, Pep517VirtualEnvPackager)

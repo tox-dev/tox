@@ -13,12 +13,9 @@ from tox.config.loader.stringify import stringify
 from tox.config.sets import ConfigSet
 from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags
-from tox.session.common import CliEnv, env_list_flag
+from tox.session.env_select import CliEnv, register_env_select_flags
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
-from tox.tox_env.errors import Skip
-from tox.tox_env.package import PackageToxEnv
-from tox.tox_env.runner import RunToxEnv
 
 
 @impl
@@ -38,13 +35,13 @@ def tox_add_option(parser: ToxParser) -> None:
         help="show core options too when selecting an env with -e",
         dest="show_core",
     )
-    env_list_flag(our, default=CliEnv("ALL"))
+    register_env_select_flags(our, default=CliEnv("ALL"))
     env_run_create_flags(our, mode="config")
 
 
 def show_config(state: State) -> int:
-    is_colored = state.options.is_colored
-    keys: list[str] = state.options.list_keys_only
+    is_colored = state.conf.options.is_colored
+    keys: list[str] = state.conf.options.list_keys_only
     is_first = True
 
     def _print_env(tox_env: ToxEnv) -> None:
@@ -58,39 +55,14 @@ def show_config(state: State) -> int:
             print_key_value(is_colored, "type", type(tox_env).__name__)
         print_conf(is_colored, tox_env.conf, keys)
 
-    def _get_run_env(env_name: str) -> RunToxEnv:
-        try:
-            return state.tox_env(env_name)
-        except Skip:
-            return state.tox_env(env_name)  # get again to get the temporary state
-
-    # because the target env could be a packaging one we first need to discover all defined ones
-    run_envs: dict[str, RunToxEnv] = {}
-    pkg_envs: dict[str, PackageToxEnv] = {}
-    for name in state.conf.env_list(everything=True):
-        run_env = _get_run_env(name)
-        run_envs[name] = run_env
-        for pkg_env in run_env.package_envs:
-            pkg_envs[pkg_env.conf.name] = pkg_env
-
-    show_everything = state.options.env.all
-    done_pkg_envs: set[str] = set()
-    for name in state.conf.env_list():  # now go through selected ones
-        if name in pkg_envs:
-            if name not in done_pkg_envs:
-                _print_env(pkg_envs[name])
-                done_pkg_envs.add(name)
-        else:
-            run_env = run_envs[name] if name in run_envs else _get_run_env(name)  # an on-demand env, construct it now
-            _print_env(run_env)
-            if show_everything:
-                for pkg_env in run_env.package_envs:
-                    if pkg_env.name not in done_pkg_envs:
-                        _print_env(pkg_env)
-                        done_pkg_envs.add(pkg_env.name)
+    show_everything = state.conf.options.env.is_all
+    done: set[str] = set()
+    for name in state.envs.iter(package=True):  # now go through selected ones
+        done.add(name)
+        _print_env(state.envs[name])
 
     # environments may define core configuration flags, so we must exhaust first the environments to tell the core part
-    if show_everything or state.options.show_core:
+    if show_everything or state.conf.options.show_core:
         print("")
         print_section_header(is_colored, "[tox]")
         print_conf(is_colored, state.conf.core, keys)
