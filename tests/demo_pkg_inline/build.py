@@ -74,12 +74,12 @@ def get_requires_for_build_wheel(config_settings=None):  # noqa: U100
 
 
 def build_sdist(sdist_directory, config_settings=None):  # noqa: U100
-    result = "{}-{}.tar.gz".format(name, version)
-    with tarfile.open(os.path.join(sdist_directory, result), "w:gz") as tar:
-        root = os.path.dirname(os.path.abspath(__file__))
-        tar.add(os.path.join(root, "build.py"), "build.py")
-        tar.add(os.path.join(root, "pyproject.toml"), "pyproject.toml")
-    return result
+    result = "{}-{}.tar.gz".format(name, version)  # pragma: win32 cover
+    with tarfile.open(os.path.join(sdist_directory, result), "w:gz") as tar:  # pragma: win32 cover
+        root = os.path.dirname(os.path.abspath(__file__))  # pragma: win32 cover
+        tar.add(os.path.join(root, "build.py"), "build.py")  # pragma: win32 cover
+        tar.add(os.path.join(root, "pyproject.toml"), "pyproject.toml")  # pragma: win32 cover
+    return result  # pragma: win32 cover
 
 
 def get_requires_for_build_sdist(config_settings=None):  # noqa: U100
