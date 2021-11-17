@@ -1,4 +1,6 @@
-from typing import Any, Callable, List, TypeVar, cast
+from __future__ import annotations
+
+from typing import Any, Callable, TypeVar, cast
 
 import pluggy
 
@@ -42,7 +44,7 @@ def tox_add_option(parser: ToxParser) -> None:  # noqa: U100
 
 
 @_spec
-def tox_add_core_config(core_conf: ConfigSet, config: "Config") -> None:  # noqa: U100
+def tox_add_core_config(core_conf: ConfigSet, config: Config) -> None:  # noqa: U100
     """
     Called when the core configuration is built for a tox environment.
 
@@ -52,7 +54,7 @@ def tox_add_core_config(core_conf: ConfigSet, config: "Config") -> None:  # noqa
 
 
 @_spec
-def tox_add_env_config(env_conf: EnvConfigSet, config: "Config") -> None:  # noqa: U100
+def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:  # noqa: U100
     """
     Called when configuration is built for a tox environment.
 
@@ -71,7 +73,7 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:  # noqa: U100
 
 
 @_spec
-def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: List[Outcome]) -> None:  # noqa: U100
+def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # noqa: U100
     """
     Called after the commands set is executed.
 

@@ -1,6 +1,8 @@
 """
 Run tox environments in sequential order.
 """
+from __future__ import annotations
+
 from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
 from tox.session.common import env_list_flag

@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import sys
 from argparse import Action
-from typing import Optional
 
 import pytest
 from pytest_mock import MockerFixture
@@ -33,9 +34,9 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
 def test_parser_color(
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
-    no_color: Optional[str],
-    force_color: Optional[str],
-    tox_color: Optional[str],
+    no_color: str | None,
+    force_color: str | None,
+    tox_color: str | None,
     is_atty: bool,
 ) -> None:
     for key, value in {"NO_COLOR": no_color, "TOX_COLORED": tox_color, "FORCE_COLOR": force_color}.items():

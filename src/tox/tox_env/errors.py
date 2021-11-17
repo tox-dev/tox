@@ -1,4 +1,5 @@
 """Defines tox error types"""
+from __future__ import annotations
 
 
 class Recreate(Exception):  # noqa: N818

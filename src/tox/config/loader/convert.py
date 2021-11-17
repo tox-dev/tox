@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Set, TypeVar, Union, cast
 
 from ..types import Command, EnvList
 
@@ -22,7 +24,7 @@ Factory = Optional[Callable[[object], T]]  # note the argument is anything, due 
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type"""
 
-    def to(self, raw: T, of_type: Type[V], factory: Factory[V]) -> V:
+    def to(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:
         """
         Convert given raw type to python type
 
@@ -33,7 +35,7 @@ class Convert(ABC, Generic[T]):
         """
         from_module = getattr(of_type, "__module__", None)
         if from_module in ("typing", "typing_extensions"):
-            return self._to_typing(raw, of_type, factory)  # type: ignore
+            return self._to_typing(raw, of_type, factory)
         if issubclass(of_type, Path):
             return self.to_path(raw)  # type: ignore[return-value]
         if issubclass(of_type, bool):
@@ -51,7 +53,7 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return of_type(raw)  # type: ignore[call-arg]
 
-    def _to_typing(self, raw: T, of_type: Type[V], factory: Factory[V]) -> V:
+    def _to_typing(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:
         origin = getattr(of_type, "__origin__", of_type.__class__)
         result: Any = _NO_MAPPING
         if origin in (list, List):
@@ -67,7 +69,7 @@ class Convert(ABC, Generic[T]):
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin == Union:  # handle Optional values
-            args: List[Type[Any]] = of_type.__args__  # type: ignore[attr-defined]
+            args: list[type[Any]] = of_type.__args__  # type: ignore[attr-defined]
             none = type(None)
             if len(args) == 2 and none in args:
                 if isinstance(raw, str):
@@ -78,10 +80,7 @@ class Convert(ABC, Generic[T]):
                     new_type = next(i for i in args if i != none)  # pragma: no cover # this will always find a element
                     result = self.to(raw, new_type, factory)
         elif origin in (Literal, type(Literal)):
-            if sys.version_info >= (3, 7):  # pragma: no cover (py37+)
-                choice = of_type.__args__
-            else:  # pragma: no cover (py38+)
-                choice = of_type.__values__  # type: ignore[attr-defined]
+            choice = of_type.__args__  # type: ignore[attr-defined]
             if raw not in choice:
                 raise ValueError(f"{raw} must be one of {choice}")
             result = raw
@@ -113,7 +112,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_list(value: T, of_type: Type[Any]) -> Iterator[T]:
+    def to_list(value: T, of_type: type[Any]) -> Iterator[T]:
         """
         Convert to list.
 
@@ -125,7 +124,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_set(value: T, of_type: Type[Any]) -> Iterator[T]:
+    def to_set(value: T, of_type: type[Any]) -> Iterator[T]:
         """
         Convert to set.
 
@@ -137,7 +136,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_dict(value: T, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:
+    def to_dict(value: T, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[T, T]]:
         """
         Convert to dictionary.
 

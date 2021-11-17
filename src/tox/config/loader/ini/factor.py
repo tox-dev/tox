@@ -1,12 +1,14 @@
 """
 Expand tox factor expressions to tox environment list.
 """
+from __future__ import annotations
+
 import re
 from itertools import chain, groupby, product
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator
 
 
-def filter_for_env(value: str, name: Optional[str]) -> str:
+def filter_for_env(value: str, name: str | None) -> str:
     current = (
         set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(name)])) if name is not None else set()
     )
@@ -39,11 +41,11 @@ def extend_factors(value: str) -> Iterator[str]:
         yield explode_factor(group)
 
 
-def explode_factor(group: List[Tuple[str, bool]]) -> str:
+def explode_factor(group: list[tuple[str, bool]]) -> str:
     return "-".join([name for name, _ in group])
 
 
-def expand_factors(value: str) -> Iterator[Tuple[Optional[Iterator[List[Tuple[str, bool]]]], str]]:
+def expand_factors(value: str) -> Iterator[tuple[Iterator[list[tuple[str, bool]]] | None, str]]:
     for line in value.split("\n"):
         match = re.match(r"^((?P<factor_expr>[\w{}.!,-]+):\s+)?(?P<content>.*?)$", line)
         if match is None:  # pragma: no cover
@@ -57,7 +59,7 @@ def expand_factors(value: str) -> Iterator[Tuple[Optional[Iterator[List[Tuple[st
             yield None, content
 
 
-def find_factor_groups(value: str) -> Iterator[List[Tuple[str, bool]]]:
+def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
     """transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}]"""
     for env in expand_env_with_negation(value):
         result = [name_with_negate(f) for f in env.split("-")]
@@ -76,7 +78,7 @@ def expand_env_with_negation(value: str) -> Iterator[str]:
                 yield variant_str
 
 
-def name_with_negate(factor: str) -> Tuple[str, bool]:
+def name_with_negate(factor: str) -> tuple[str, bool]:
     negated = is_negated(factor)
     result = factor[1:] if negated else factor
     return result, negated

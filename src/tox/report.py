@@ -1,11 +1,13 @@
 """Handle reporting from within tox"""
+from __future__ import annotations
+
 import logging
 import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO, TextIOWrapper
 from threading import Thread, current_thread, enumerate, local
-from typing import IO, Dict, Iterator, Optional, Tuple, Union
+from typing import IO, Iterator, Tuple
 
 from colorama import Fore, Style, deinit, init
 
@@ -26,7 +28,7 @@ OutErr = Tuple[TextIOWrapper, TextIOWrapper]
 class _LogThreadLocal(local):
     """A thread local variable that inherits values from its parent"""
 
-    _ident_to_data: Dict[Optional[int], str] = {}
+    _ident_to_data: dict[int | None, str] = {}
 
     def __init__(self, out_err: OutErr) -> None:
         self.name = self._ident_to_data.get(getattr(current_thread(), "parent_ident", None), "ROOT")
@@ -66,7 +68,7 @@ class _LogThreadLocal(local):
             self.name = previous
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: Optional[OutErr] = None) -> Iterator[OutErr]:
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:
         previous_out, previous_err = self.out_err
         try:
             if yes:
@@ -141,18 +143,18 @@ class ToxHandler(logging.StreamHandler):
         """ignore anyone changing this"""
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: Optional[OutErr] = None) -> Iterator[OutErr]:
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:
         with self._local.suspend_out_err(yes, out_err) as out_err_res:
             yield out_err_res
 
-    def write_out_err(self, out_err: Tuple[bytes, bytes]) -> None:
+    def write_out_err(self, out_err: tuple[bytes, bytes]) -> None:
         # read/write through the buffer as we collect bytes to print bytes (no transcoding needed)
         self.stdout.buffer.write(out_err[0])
         self.stderr.buffer.write(out_err[1])
 
     @staticmethod
     def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:
-        color: Union[int, str] = ""
+        color: int | str = ""
         if is_colored:
             if level >= logging.ERROR:
                 color = Fore.RED

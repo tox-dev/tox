@@ -1,9 +1,11 @@
 """
 A tox build environment that handles Python packages.
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Generator, Iterator, Sequence, cast
 
 from packaging.requirements import Requirement
 
@@ -42,7 +44,7 @@ class DevLegacyPackage(PythonPathPackageWithDeps):
 
 class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        self._wheel_build_envs: Dict[str, PythonPackageToxEnv] = {}
+        self._wheel_build_envs: dict[str, PythonPackageToxEnv] = {}
         super().__init__(create_args)
 
     def register_config(self) -> None:
@@ -54,15 +56,15 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         self.installer.install(self.requires(), PythonPackageToxEnv.__name__, "requires")
 
     @abstractmethod
-    def requires(self) -> Union[Tuple[Requirement, ...], PythonDeps]:
+    def requires(self) -> tuple[Requirement, ...] | PythonDeps:
         raise NotImplementedError
 
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[Tuple[str, str], PackageToxEnv, None]:
+    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         if not isinstance(run_env, Python) or run_env.conf["package"] != "wheel" or "wheel_build_env" in run_env.conf:
             return
 
-        def default_wheel_tag(conf: "Config", env_name: Optional[str]) -> str:
+        def default_wheel_tag(conf: Config, env_name: str | None) -> str:
             # https://www.python.org/dev/peps/pep-0427/#file-name-convention
             # when building wheels we need to ensure that the built package is compatible with the target env
             # compatibility is documented within https://www.python.org/dev/peps/pep-0427/#file-name-convention

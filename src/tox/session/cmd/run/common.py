@@ -1,4 +1,6 @@
 """Common functionality shared across multiple type of runs"""
+from __future__ import annotations
+
 import logging
 import os
 import time
@@ -7,7 +9,7 @@ from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_co
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union, cast
+from typing import Any, Iterator, Optional, Sequence, cast
 
 from colorama import Fore
 
@@ -27,8 +29,8 @@ class SkipMissingInterpreterAction(Action):
         self,
         parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: Optional[str] = None,  # noqa: U100
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,  # noqa: U100
     ) -> None:
         value = "true" if values is None else values
         if value not in ("config", "true", "false"):
@@ -41,8 +43,8 @@ class InstallPackageAction(Action):
         self,
         parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: Optional[str] = None,  # noqa: U100
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,  # noqa: U100
     ) -> None:
         if not values:
             raise ArgumentError(self, "cannot be empty")
@@ -139,7 +141,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         )
 
 
-def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
+def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool) -> int:
     def _print(color_: int, message: str) -> None:
         print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
@@ -163,7 +165,7 @@ def report(start: float, runs: List[ToxEnvRunResult], is_colored: bool) -> int:
     return runs[0].code if len(runs) == 1 else -1
 
 
-def _get_outcome_message(run: ToxEnvRunResult) -> Tuple[str, int]:
+def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, int]:
     if run.skipped:
         msg, color = "SKIP", Fore.YELLOW
     elif run.code == Outcome.OK:
@@ -179,11 +181,11 @@ def _get_outcome_message(run: ToxEnvRunResult) -> Tuple[str, int]:
 logger = logging.getLogger(__name__)
 
 
-def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: bool) -> int:
+def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool) -> int:
     interrupt, done = Event(), Event()
-    results: List[ToxEnvRunResult] = []
-    future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv] = {}
-    to_run_list: List[str] = []
+    results: list[ToxEnvRunResult] = []
+    future_to_env: dict[Future[ToxEnvRunResult], ToxEnv] = {}
+    to_run_list: list[str] = []
     for env in state.conf.env_list():  # ensure envs can be constructed
         state.tox_env(env)
         to_run_list.append(env)
@@ -217,7 +219,7 @@ def execute(state: State, max_workers: Optional[int], has_spinner: bool, live: b
                 thread._stop()  # type: ignore  # pragma: no cover # calling private method to fix thread state
             thread.join()
     finally:
-        ordered_results: List[ToxEnvRunResult] = []
+        ordered_results: list[ToxEnvRunResult] = []
         name_to_run = {r.name: r for r in results}
         for env in to_run_list:
             ordered_results.append(name_to_run[env])
@@ -249,12 +251,12 @@ class ToxSpinner(Spinner):
 
 def _queue_and_wait(
     state: State,
-    to_run_list: List[str],
-    results: List[ToxEnvRunResult],
-    future_to_env: Dict["Future[ToxEnvRunResult]", ToxEnv],
+    to_run_list: list[str],
+    results: list[ToxEnvRunResult],
+    future_to_env: dict[Future[ToxEnvRunResult], ToxEnv],
     interrupt: Event,
     done: Event,
-    max_workers: Optional[int],
+    max_workers: int | None,
     spinner: ToxSpinner,
     live: bool,
 ) -> None:
@@ -262,7 +264,7 @@ def _queue_and_wait(
         options = state.options
         with spinner:
             max_workers = len(to_run_list) if max_workers is None else max_workers
-            completed: Set[str] = set()
+            completed: set[str] = set()
             envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
 
             def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
@@ -271,13 +273,13 @@ def _queue_and_wait(
 
             try:
                 executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")
-                env_list: List[str] = []
+                env_list: list[str] = []
                 while True:
                     for env in env_list:  # queue all available
                         tox_env_to_run = state.tox_env(env)
                         if interrupt.is_set():  # queue the rest as failed upfront
                             tox_env_to_run.teardown()
-                            future: "Future[ToxEnvRunResult]" = Future()
+                            future: Future[ToxEnvRunResult] = Future()
                             res = ToxEnvRunResult(name=env, skipped=False, code=-2, outcomes=[], duration=MISS_DURATION)
                             future.set_result(res)
                         else:
@@ -285,7 +287,7 @@ def _queue_and_wait(
                         future_to_env[future] = tox_env_to_run
 
                     if not future_to_env:
-                        result: Optional[ToxEnvRunResult] = None
+                        result: ToxEnvRunResult | None = None
                     else:  # if we have queued wait for completed
                         future = next(as_completed(future_to_env))
                         tox_env_done = future_to_env.pop(future)
@@ -352,12 +354,12 @@ def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: St
                 state.log_handler.write_out_err(out_err)
 
 
-def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]) -> Iterator[List[str]]:
+def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
     """Generate tox environments ready to run"""
     order, todo = run_order(state, to_run)
     while order:
-        ready_to_run: List[str] = []
-        new_order: List[str] = []
+        ready_to_run: list[str] = []
+        new_order: list[str] = []
         for env in order:  # collect next batch of ready to run
             if todo[env] - completed:
                 new_order.append(env)
@@ -367,9 +369,9 @@ def ready_to_run_envs(state: State, to_run: List[str], completed: Set[str]) -> I
         yield ready_to_run
 
 
-def run_order(state: State, to_run: List[str]) -> Tuple[List[str], Dict[str, Set[str]]]:
+def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set[str]]]:
     to_run_set = set(to_run)
-    todo: Dict[str, Set[str]] = {}
+    todo: dict[str, set[str]] = {}
     for env in to_run:
         run_env = state.tox_env(env)
         depends = set(cast(EnvList, run_env.conf["depends"]).envs)

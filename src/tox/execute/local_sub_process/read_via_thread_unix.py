@@ -1,10 +1,12 @@
 """
 On UNIX we use select.select to ensure we drain in a non-blocking fashion.
 """
+from __future__ import annotations
+
 import errno  # pragma: win32 no cover
 import os  # pragma: win32 no cover
 import select  # pragma: win32 no cover
-from typing import Callable, Optional  # pragma: win32 no cover
+from typing import Callable
 
 from .read_via_thread import ReadViaThread  # pragma: win32 no cover
 
@@ -28,7 +30,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
             if self._read_available(timeout=0) is not True:  # pragma: no branch
                 break  # pragma: no cover
 
-    def _read_available(self, timeout: float = STOP_EVENT_CHECK_PERIODICITY_IN_MS) -> Optional[bool]:
+    def _read_available(self, timeout: float = STOP_EVENT_CHECK_PERIODICITY_IN_MS) -> bool | None:
         try:
             ready, __, ___ = select.select([self.file_no], [], [], timeout)
             if ready:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from functools import partial
 from typing import Optional
@@ -37,7 +39,7 @@ def _custom_config_set(mocker: MockerFixture) -> None:
 
     @impl
     def tox_before_run_commands(tox_env: ToxEnv) -> None:
-        docker: Optional[DockerConfigSet] = tox_env.conf["docker"]
+        docker: DockerConfigSet | None = tox_env.conf["docker"]
         assert docker is not None
         logging.warning("Name=%s env=%s A=%d", docker.name, docker.env_name, docker["A"])
 

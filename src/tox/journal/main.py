@@ -1,7 +1,9 @@
 """Generate json report of a tox run"""
+from __future__ import annotations
+
 import socket
 import sys
-from typing import Any, Dict
+from typing import Any
 
 from tox.version import version
 
@@ -13,8 +15,8 @@ class Journal:
 
     def __init__(self, enabled: bool) -> None:
         self._enabled = enabled
-        self._content: Dict[str, Any] = {}
-        self._env: Dict[str, EnvJournal] = {}
+        self._content: dict[str, Any] = {}
+        self._env: dict[str, EnvJournal] = {}
 
         if self._enabled:
             self._content.update(
@@ -34,8 +36,8 @@ class Journal:
         return self._env[name]
 
     @property
-    def content(self) -> Dict[str, Any]:
-        test_env_journals: Dict[str, Any] = {}
+    def content(self) -> dict[str, Any]:
+        test_env_journals: dict[str, Any] = {}
         for name, value in self._env.items():
             test_env_journals[name] = value.content
         if test_env_journals:

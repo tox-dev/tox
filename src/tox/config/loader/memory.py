@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Set, Tuple, Type, cast
+from typing import Any, Iterator, cast
 
 from tox.config.loader.convert import T
 from tox.config.main import Config
@@ -13,12 +15,12 @@ from .str_convert import StrConvert
 class MemoryLoader(Loader[Any]):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
-        self.raw: Dict[str, Any] = {**kwargs}
+        self.raw: dict[str, Any] = {**kwargs}
 
-    def load_raw(self, key: Any, conf: Optional["Config"], env_name: Optional[str]) -> T:  # noqa: U100
+    def load_raw(self, key: Any, conf: Config | None, env_name: str | None) -> T:  # noqa: U100
         return cast(T, self.raw[key])
 
-    def found_keys(self) -> Set[str]:
+    def found_keys(self) -> set[str]:
         return set(self.raw.keys())
 
     @staticmethod
@@ -30,15 +32,15 @@ class MemoryLoader(Loader[Any]):
         return str(value)
 
     @staticmethod
-    def to_list(value: Any, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
+    def to_list(value: Any, of_type: type[Any]) -> Iterator[T]:  # noqa: U100
         return iter(value)
 
     @staticmethod
-    def to_set(value: Any, of_type: Type[Any]) -> Iterator[T]:  # noqa: U100
+    def to_set(value: Any, of_type: type[Any]) -> Iterator[T]:  # noqa: U100
         return iter(value)
 
     @staticmethod
-    def to_dict(value: Any, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[T, T]]:  # noqa: U100
+    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[T, T]]:  # noqa: U100
         return value.items()  # type: ignore[no-any-return]
 
     @staticmethod

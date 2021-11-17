@@ -1,10 +1,12 @@
 """
 Defines how to run a single tox environment.
 """
+from __future__ import annotations
+
 import logging
 import time
 from pathlib import Path
-from typing import List, NamedTuple, Tuple
+from typing import NamedTuple
 
 from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
@@ -20,7 +22,7 @@ class ToxEnvRunResult(NamedTuple):
     name: str
     skipped: bool
     code: int
-    outcomes: List[Outcome]
+    outcomes: list[Outcome]
     duration: float
     ignore_outcome: bool = False
 
@@ -34,10 +36,10 @@ def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvR
     return ToxEnvRunResult(name, skipped, code, outcomes, duration, tox_env.conf["ignore_outcome"])
 
 
-def _evaluate(tox_env: RunToxEnv, no_test: bool) -> Tuple[bool, int, List[Outcome]]:
+def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:
     skipped = False
     code: int = 0
-    outcomes: List[Outcome] = []
+    outcomes: list[Outcome] = []
     try:
         try:
             tox_env.setup()
@@ -61,8 +63,8 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> Tuple[bool, int, List[Outcom
     return skipped, code, outcomes
 
 
-def run_commands(tox_env: RunToxEnv, no_test: bool) -> Tuple[int, List[Outcome]]:
-    outcomes: List[Outcome] = []
+def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:
+    outcomes: list[Outcome] = []
     if no_test:
         exit_code = Outcome.OK
     else:
@@ -87,9 +89,9 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> Tuple[int, List[Outcome]]
     return exit_code, outcomes
 
 
-def run_command_set(tox_env: ToxEnv, key: str, cwd: Path, ignore_errors: bool, outcomes: List[Outcome]) -> int:
+def run_command_set(tox_env: ToxEnv, key: str, cwd: Path, ignore_errors: bool, outcomes: list[Outcome]) -> int:
     exit_code = Outcome.OK
-    command_set: List[Command] = tox_env.conf[key]
+    command_set: list[Command] = tox_env.conf[key]
     for at, cmd in enumerate(command_set):
         current_outcome = tox_env.execute(
             cmd.args,

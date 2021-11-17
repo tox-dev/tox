@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from argparse import ArgumentTypeError
 from concurrent.futures import Future
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Generator, List, Mapping, Optional, Set, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Generator, List, Mapping, TypeVar
 
 from tox.plugin import impl
 
@@ -44,17 +46,17 @@ class Override:
 class ConfigLoadArgs:
     """Arguments that help loading a configuration value."""
 
-    def __init__(self, chain: Optional[List[str]], name: Optional[str], env_name: Optional[str]):
+    def __init__(self, chain: list[str] | None, name: str | None, env_name: str | None):
         """
         :param chain: the configuration chain (useful to detect circular references)
         :param name: the name of the configuration
         :param env_name: the tox environment this load is for
         """
-        self.chain: List[str] = chain or []
+        self.chain: list[str] = chain or []
         self.name = name
         self.env_name = env_name
 
-    def copy(self) -> "ConfigLoadArgs":
+    def copy(self) -> ConfigLoadArgs:
         """:return: create a copy of the object"""
         return ConfigLoadArgs(self.chain.copy(), self.name, self.env_name)
 
@@ -68,17 +70,17 @@ V = TypeVar("V")
 class Loader(Convert[T]):
     """Loader loads a configuration value and converts it."""
 
-    def __init__(self, section: Section, overrides: List[Override]) -> None:
+    def __init__(self, section: Section, overrides: list[Override]) -> None:
         self._section = section
         self.overrides = {o.key: o for o in overrides}
-        self.parent: Optional["Loader[Any]"] = None
+        self.parent: Loader[Any] | None = None
 
     @property
     def section(self) -> Section:
         return self._section
 
     @abstractmethod
-    def load_raw(self, key: str, conf: Optional["Config"], env_name: Optional[str]) -> T:
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> T:
         """
         Load the raw object from the config store.
 
@@ -89,7 +91,7 @@ class Loader(Convert[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def found_keys(self) -> Set[str]:
+    def found_keys(self) -> set[str]:
         """A list of configuration keys found within the configuration."""
         raise NotImplementedError
 
@@ -102,9 +104,9 @@ class Loader(Convert[T]):
     def load(
         self,
         key: str,
-        of_type: Type[V],
+        of_type: type[V],
         factory: Factory[V],
-        conf: Optional["Config"],
+        conf: Config | None,
         args: ConfigLoadArgs,
     ) -> V:
         """
@@ -120,7 +122,7 @@ class Loader(Convert[T]):
         if key in self.overrides:
             return _STR_CONVERT.to(self.overrides[key].value, of_type, factory)
         raw = self.load_raw(key, conf, args.env_name)
-        future: "Future[V]" = Future()
+        future: Future[V] = Future()
         with self.build(future, key, of_type, conf, raw, args) as prepared:
             converted = self.to(prepared, of_type, factory)
             future.set_result(converted)
@@ -129,10 +131,10 @@ class Loader(Convert[T]):
     @contextmanager
     def build(
         self,
-        future: "Future[V]",  # noqa: U100
+        future: Future[V],  # noqa: U100
         key: str,  # noqa: U100
-        of_type: Type[V],  # noqa: U100
-        conf: Optional["Config"],  # noqa: U100
+        of_type: type[V],  # noqa: U100
+        conf: Config | None,  # noqa: U100
         raw: T,
         args: ConfigLoadArgs,  # noqa: U100
     ) -> Generator[T, None, None]:
@@ -150,7 +152,7 @@ class Loader(Convert[T]):
 
 
 @impl
-def tox_add_option(parser: "ToxParser") -> None:
+def tox_add_option(parser: ToxParser) -> None:
     parser.add_argument(
         "-x",
         "--override",

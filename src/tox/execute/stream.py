@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from threading import Event, Lock, Timer
 from types import TracebackType
-from typing import IO, Iterator, Optional, Type
+from typing import IO, Iterator
 
 from colorama import Fore
 
@@ -15,30 +17,30 @@ class SyncWrite:
 
     REFRESH_RATE = 0.1
 
-    def __init__(self, name: str, target: Optional[IO[bytes]], color: Optional[str] = None) -> None:
+    def __init__(self, name: str, target: IO[bytes] | None, color: str | None = None) -> None:
         self._content = bytearray()
-        self._target: Optional[IO[bytes]] = target
+        self._target: IO[bytes] | None = target
         self._target_enabled: bool = target is not None
         self._keep_printing: Event = Event()
         self._content_lock: Lock = Lock()
         self._lock: Lock = Lock()
         self._at: int = 0
-        self._color: Optional[str] = color
+        self._color: str | None = color
         self.name = name
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name!r}, target={self._target!r}, color={self._color!r})"
 
-    def __enter__(self) -> "SyncWrite":
+    def __enter__(self) -> SyncWrite:
         if self._target_enabled:
             self._start()
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],  # noqa: U100
-        exc_val: Optional[BaseException],  # noqa: U100
-        exc_tb: Optional[TracebackType],  # noqa: U100
+        exc_type: type[BaseException] | None,  # noqa: U100
+        exc_val: BaseException | None,  # noqa: U100
+        exc_tb: TracebackType | None,  # noqa: U100
     ) -> None:
         if self._target_enabled:
             self._cancel()

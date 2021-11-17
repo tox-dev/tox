@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable
 from zipfile import ZipFile
 
 import pytest
@@ -10,7 +12,7 @@ from tox.pytest import ToxProjectCreator
 @pytest.fixture(scope="session")
 def pkg_with_extras_project_wheel(
     pkg_with_extras_project: Path,
-    pkg_builder: Callable[[Path, Path, List[str], bool], Path],
+    pkg_builder: Callable[[Path, Path, list[str], bool], Path],
 ) -> Path:
     dist = pkg_with_extras_project / "dist"
     pkg_builder(dist, pkg_with_extras_project, ["wheel"], False)
@@ -34,7 +36,7 @@ def test_tox_install_pkg_wheel(tox_project: ToxProjectCreator, pkg_with_extras_p
 @pytest.fixture()
 def pkg_with_extras_project_sdist(
     pkg_with_extras_project: Path,
-    pkg_builder: Callable[[Path, Path, List[str], bool], Path],
+    pkg_builder: Callable[[Path, Path, list[str], bool], Path],
 ) -> Path:
     dist = pkg_with_extras_project / "sdist"
     pkg_builder(dist, pkg_with_extras_project, ["sdist"], False)

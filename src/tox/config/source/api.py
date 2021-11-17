@@ -1,7 +1,9 @@
 """Sources."""
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Iterator, List
 
 from tox.config.loader.api import Loader, OverrideMap
 
@@ -18,12 +20,12 @@ class Source(ABC):
 
     def __init__(self, path: Path) -> None:
         self.path: Path = path  #: the path to the configuration source
-        self._section_to_loaders: Dict[str, List[Loader[Any]]] = {}
+        self._section_to_loaders: dict[str, list[Loader[Any]]] = {}
 
     def get_loaders(
         self,
         section: Section,
-        base: Optional[List[str]],
+        base: list[str] | None,
         override_map: OverrideMap,
         conf: ConfigSet,
     ) -> Iterator[Loader[Any]]:
@@ -41,9 +43,9 @@ class Source(ABC):
         if key in self._section_to_loaders:
             yield from self._section_to_loaders[key]
             return
-        loaders: List[Loader[Any]] = []
+        loaders: list[Loader[Any]] = []
         self._section_to_loaders[key] = loaders
-        loader: Optional[Loader[Any]] = self.get_loader(section, override_map)
+        loader: Loader[Any] | None = self.get_loader(section, override_map)
         if loader is not None:
             loaders.append(loader)
             yield loader
@@ -71,11 +73,11 @@ class Source(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_loader(self, section: Section, override_map: OverrideMap) -> Optional[Loader[Any]]:
+    def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_base_sections(self, base: List[str], in_section: Section) -> Iterator[Section]:
+    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
         raise NotImplementedError
 
     @abstractmethod
@@ -88,7 +90,7 @@ class Source(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def envs(self, core_conf: "CoreConfigSet") -> Iterator[str]:
+    def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
         """
         :param core_conf: the core configuration set
         :returns: a list of environments defined within this source
@@ -96,7 +98,7 @@ class Source(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_tox_env_section(self, item: str) -> Tuple[Section, List[str]]:
+    def get_tox_env_section(self, item: str) -> tuple[Section, list[str]]:
         """:returns: the section for a tox environment"""
         raise NotImplementedError
 

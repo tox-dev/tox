@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 import pytest
 
@@ -13,7 +13,7 @@ def test_devenv_fail_multiple_target(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.integration()
-def test_devenv_ok(tox_project: ToxProjectCreator, enable_pip_pypi_access: Optional[str]) -> None:  # noqa: U100
+def test_devenv_ok(tox_project: ToxProjectCreator, enable_pip_pypi_access: str | None) -> None:  # noqa: U100
     content = {"setup.py": "from setuptools import setup\nsetup(name='demo', version='1.0')"}
     outcome = tox_project(content).run("d", "-e", "py")
     outcome.assert_success()

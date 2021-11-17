@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
 from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence, TypeVar
 
 from tox.config.loader.api import Loader, OverrideMap
 
@@ -22,9 +24,9 @@ class Config:
     def __init__(
         self,
         config_source: Source,
-        options: "Parsed",
+        options: Parsed,
         root: Path,
-        pos_args: Optional[Sequence[str]],
+        pos_args: Sequence[str] | None,
         work_dir: Path,
     ) -> None:
         self._pos_args = None if pos_args is None else tuple(pos_args)
@@ -37,13 +39,13 @@ class Config:
             self._overrides[override.namespace].append(override)
 
         self._src = config_source
-        self._key_to_conf_set: Dict[Tuple[str, str], ConfigSet] = OrderedDict()
-        self._core_set: Optional[CoreConfigSet] = None
+        self._key_to_conf_set: dict[tuple[str, str], ConfigSet] = OrderedDict()
+        self._core_set: CoreConfigSet | None = None
 
     def register_config_set(self, name: str, env_config_set: EnvConfigSet) -> None:  # noqa: U100
         raise NotImplementedError  # this should be overwritten by the state object before called
 
-    def pos_args(self, to_path: Optional[Path]) -> Optional[Tuple[str, ...]]:
+    def pos_args(self, to_path: Path | None) -> tuple[str, ...] | None:
         """
         :param to_path: if not None rewrite relative posargs paths from cwd to to_path
         :return: positional argument
@@ -87,7 +89,7 @@ class Config:
         return any(name for name in self if name == item)
 
     @classmethod
-    def make(cls, parsed: "Parsed", pos_args: Optional[Sequence[str]], source: Source) -> "Config":
+    def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source) -> Config:
         """Make a tox configuration object."""
         # root is the project root, where the configuration file is at
         # work dir is where we put our own files
@@ -102,7 +104,7 @@ class Config:
         )
 
     @property
-    def options(self) -> "Parsed":
+    def options(self) -> Parsed:
         return self._options
 
     @property
@@ -122,11 +124,11 @@ class Config:
     def get_section_config(
         self,
         section: Section,
-        base: Optional[List[str]],
-        of_type: Type[T],
-        for_env: Optional[str],
-        loaders: Optional[Sequence[Loader[Any]]] = None,
-        initialize: Optional[Callable[[T], None]] = None,
+        base: list[str] | None,
+        of_type: type[T],
+        for_env: str | None,
+        loaders: Sequence[Loader[Any]] | None = None,
+        initialize: Callable[[T], None] | None = None,
     ) -> T:
         key = section.key, for_env or ""
         try:
@@ -146,7 +148,7 @@ class Config:
         self,
         item: str,
         package: bool = False,
-        loaders: Optional[Sequence[Loader[Any]]] = None,
+        loaders: Sequence[Loader[Any]] | None = None,
     ) -> EnvConfigSet:
         """
         Return the configuration for a given tox environment (will create if not exist yet).
@@ -177,7 +179,7 @@ class Config:
         :return: Return the tox environment names, by default only the default env list entries.
         """
         fallback_env = "py"
-        use_env_list: Optional[CliEnv] = getattr(self._options, "env", None)
+        use_env_list: CliEnv | None = getattr(self._options, "env", None)
         if everything or (use_env_list is not None and use_env_list.all):
             _at = 0
             for _at, env in enumerate(self, start=1):

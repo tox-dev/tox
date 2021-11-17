@@ -1,7 +1,8 @@
 """Contains the plugin manager object"""
+from __future__ import annotations
+
 from pathlib import Path
 from types import ModuleType
-from typing import List, Optional
 
 import pluggy
 
@@ -69,7 +70,7 @@ class Plugin:
     def tox_before_run_commands(self, tox_env: ToxEnv) -> None:
         self.manager.hook.tox_before_run_commands(tox_env=tox_env)
 
-    def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: List[Outcome]) -> None:
+    def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
         self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
 
     def load_inline_plugin(self, path: Path) -> None:
@@ -81,7 +82,7 @@ class Plugin:
             self.manager.check_pending()
 
 
-def _load_inline(path: Path) -> Optional[ModuleType]:  # used to be able to unregister plugin tests
+def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests
     return load_inline(path)
 
 

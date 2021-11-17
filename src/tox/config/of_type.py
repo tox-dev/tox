@@ -1,9 +1,11 @@
 """
 Group together configuration values that belong together (such as base tox configuration, tox environment configs)
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from itertools import product
-from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, List, Optional, Type, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader
 from tox.config.loader.convert import Factory
@@ -24,7 +26,7 @@ class ConfigDefinition(ABC, Generic[T]):
         self.desc = desc
 
     @abstractmethod
-    def __call__(self, conf: "Config", loaders: List[Loader[T]], args: ConfigLoadArgs) -> T:
+    def __call__(self, conf: Config, loaders: list[Loader[T]], args: ConfigLoadArgs) -> T:
         raise NotImplementedError
 
     def __eq__(self, o: Any) -> bool:
@@ -41,15 +43,15 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
         self,
         keys: Iterable[str],
         desc: str,
-        value: Union[Callable[[], T], T],
+        value: Callable[[], T] | T,
     ) -> None:
         super().__init__(keys, desc)
         self.value = value
 
     def __call__(
         self,
-        conf: "Config",  # noqa: U100
-        loaders: List[Loader[T]],  # noqa: U100
+        conf: Config,  # noqa: U100
+        loaders: list[Loader[T]],  # noqa: U100
         args: ConfigLoadArgs,  # noqa: U100
     ) -> T:
         if callable(self.value):
@@ -72,9 +74,9 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         self,
         keys: Iterable[str],
         desc: str,
-        of_type: Type[T],
-        default: Union[Callable[["Config", Optional[str]], T], T],
-        post_process: Optional[Callable[[T], T]] = None,
+        of_type: type[T],
+        default: Callable[[Config, str | None], T] | T,
+        post_process: Callable[[T], T] | None = None,
         factory: Factory[T] = None,
     ) -> None:
         super().__init__(keys, desc)
@@ -82,12 +84,12 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         self.default = default
         self.post_process = post_process
         self.factory = factory
-        self._cache: Union[object, T] = _PLACE_HOLDER
+        self._cache: object | T = _PLACE_HOLDER
 
     def __call__(
         self,
-        conf: "Config",
-        loaders: List[Loader[T]],
+        conf: Config,
+        loaders: list[Loader[T]],
         args: ConfigLoadArgs,
     ) -> T:
         if self._cache is _PLACE_HOLDER:

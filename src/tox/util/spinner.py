@@ -1,4 +1,6 @@
 """A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
+from __future__ import annotations
+
 import os
 import sys
 import textwrap
@@ -6,7 +8,7 @@ import threading
 import time
 from collections import OrderedDict
 from types import TracebackType
-from typing import IO, Dict, List, NamedTuple, Optional, Sequence, Type, TypeVar
+from typing import IO, NamedTuple, Sequence, TypeVar
 
 from colorama import Fore
 
@@ -53,8 +55,8 @@ class Spinner:
         enabled: bool = True,
         refresh_rate: float = 0.1,
         colored: bool = True,
-        stream: Optional[IO[str]] = None,
-        total: Optional[int] = None,
+        stream: IO[str] | None = None,
+        total: int | None = None,
     ) -> None:
         self.is_colored = colored
         self.refresh_rate = refresh_rate
@@ -68,7 +70,7 @@ class Spinner:
         self.total = total
         self.print_report = True
 
-        self._envs: Dict[str, float] = OrderedDict()
+        self._envs: dict[str, float] = OrderedDict()
         self._frame_index = 0
 
     def clear(self) -> None:
@@ -76,7 +78,7 @@ class Spinner:
             self.stream.write("\r")
             self.stream.write(self.CLEAR_LINE)
 
-    def render(self) -> "Spinner":
+    def render(self) -> Spinner:
         while True:
             self._stop_spinner.wait(self.refresh_rate)
             if self._stop_spinner.is_set():
@@ -110,9 +112,9 @@ class Spinner:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],  # noqa: U100
-        exc_val: Optional[BaseException],  # noqa: U100
-        exc_tb: Optional[TracebackType],  # noqa: U100
+        exc_type: type[BaseException] | None,  # noqa: U100
+        exc_val: BaseException | None,  # noqa: U100
+        exc_tb: TracebackType | None,  # noqa: U100
     ) -> None:
         if not self._stop_spinner.is_set():  # pragma: no branch
             if self._spinner_thread:  # pragma: no branch # hard to test
@@ -180,7 +182,7 @@ _PERIODS = [
 
 
 def td_human_readable(seconds: float) -> str:
-    texts: List[str] = []
+    texts: list[str] = []
     for period_name, period_seconds in _PERIODS:
         period_str = None
         if period_name == "second" and (seconds >= 0.01 or not texts):

@@ -1,16 +1,18 @@
 """
 Provides configuration values from the environment variables.
 """
+from __future__ import annotations
+
 import logging
 import os
-from typing import Any, Optional, Tuple, Type
+from typing import Any
 
 from tox.config.loader.str_convert import StrConvert
 
 CONVERT = StrConvert()
 
 
-def get_env_var(key: str, of_type: Type[Any]) -> Optional[Tuple[Any, str]]:
+def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
     """Get the environment variable option.
 
     :param key: the config key requested

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from tests.config.loader.ini.replace.conftest import ReplaceOne

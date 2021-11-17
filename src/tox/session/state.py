@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from itertools import chain
-from typing import TYPE_CHECKING, Dict, Iterator, Sequence, Set, Tuple, cast
+from typing import TYPE_CHECKING, Iterator, Sequence, cast
 
 from tox.config.main import Config
 from tox.config.sets import EnvConfigSet
@@ -21,7 +23,7 @@ class State:
     def __init__(
         self,
         conf: Config,
-        opt_parse: Tuple["Parsed", "Handlers"],
+        opt_parse: tuple[Parsed, Handlers],
         args: Sequence[str],
         log_handler: ToxHandler,
     ) -> None:
@@ -33,9 +35,9 @@ class State:
         self.log_handler = log_handler
         self.args = args
 
-        self._run_env: Dict[str, RunToxEnv] = {}
-        self._pkg_env: Dict[str, Tuple[str, PackageToxEnv]] = {}
-        self._pkg_env_discovered: Set[str] = set()
+        self._run_env: dict[str, RunToxEnv] = {}
+        self._pkg_env: dict[str, tuple[str, PackageToxEnv]] = {}
+        self._pkg_env_discovered: set[str] = set()
 
         self.journal: Journal = Journal(getattr(options, "result_json", None) is not None)
 
@@ -118,7 +120,7 @@ class State:
             self._pkg_env[name] = packager, pkg_tox_env
         return pkg_tox_env
 
-    def created_run_envs(self) -> Iterator[Tuple[str, RunToxEnv]]:
+    def created_run_envs(self) -> Iterator[tuple[str, RunToxEnv]]:
         yield from self._run_env.items()
 
     def all_run_envs(self, *, with_skip: bool = True) -> Iterator[str]:
@@ -140,7 +142,7 @@ class State:
 
 
 @impl
-def tox_add_option(parser: "ToxParser") -> None:
+def tox_add_option(parser: ToxParser) -> None:
     from tox.tox_env.register import REGISTER
 
     parser.add_argument(

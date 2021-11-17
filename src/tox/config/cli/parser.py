@@ -1,6 +1,7 @@
 """
 Customize argparse logic for tox (also contains the base options).
 """
+from __future__ import annotations
 
 import argparse
 import logging
@@ -55,8 +56,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 values.fix_defaults()
 
     @staticmethod
-    def get_type(action: Action) -> Type[Any]:
-        of_type: Optional[Type[Any]] = getattr(action, "of_type", None)
+    def get_type(action: Action) -> type[Any]:
+        of_type: type[Any] | None = getattr(action, "of_type", None)
         if of_type is None:
             if isinstance(action, argparse._AppendAction):
                 of_type = List[action.type]  # type: ignore[name-defined]
@@ -82,7 +83,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog: str) -> None:
         super().__init__(prog, max_help_position=30, width=240)
 
-    def _get_help_string(self, action: Action) -> Optional[str]:
+    def _get_help_string(self, action: Action) -> str | None:
 
         text: str = super()._get_help_string(action) or ""
         if hasattr(action, "default_source"):
@@ -120,22 +121,22 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
     """Argument parser for tox."""
 
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
-        self.of_cmd: Optional[str] = None
-        self.handlers: Dict[str, Tuple[Any, Handler]] = {}
-        self._arguments: List[ArgumentArgs] = []
-        self._groups: List[Tuple[Any, Dict[str, Any], List[Tuple[Dict[str, Any], List[ArgumentArgs]]]]] = []
+        self.of_cmd: str | None = None
+        self.handlers: dict[str, tuple[Any, Handler]] = {}
+        self._arguments: list[ArgumentArgs] = []
+        self._groups: list[tuple[Any, dict[str, Any], list[tuple[dict[str, Any], list[ArgumentArgs]]]]] = []
         super().__init__(*args, **kwargs)
         if root is True:
             self._add_base_options()
         if add_cmd is True:
             msg = "tox command to execute (by default legacy)"
-            self._cmd: Optional[Any] = self.add_subparsers(title="subcommands", description=msg, dest="command")
+            self._cmd: Any | None = self.add_subparsers(title="subcommands", description=msg, dest="command")
             self._cmd.required = False
             self._cmd.default = "legacy"
         else:
             self._cmd = None
 
-    def add_command(self, cmd: str, aliases: Sequence[str], help_msg: str, handler: Handler) -> "ArgumentParser":
+    def add_command(self, cmd: str, aliases: Sequence[str], help_msg: str, handler: Handler) -> ArgumentParser:
         if self._cmd is None:
             raise RuntimeError("no sub-command group allowed")
         sub_parser: ToxParser = self._cmd.add_parser(
@@ -166,12 +167,12 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             if args not in (("positional arguments",), ("optional arguments",)):
 
                 def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
-                    def add_argument(*a_args: str, of_type: Optional[Type[Any]] = None, **a_kwargs: Any) -> Action:
+                    def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
                         res_args: Action = prev_add_arg(*a_args, **a_kwargs)  # type: ignore[has-type]
                         arguments.append((a_args, of_type, a_kwargs))
                         return res_args
 
-                    arguments: List[ArgumentArgs] = []
+                    arguments: list[ArgumentArgs] = []
                     excl.append((e_kwargs, arguments))
                     res_excl = prev_excl(**kwargs)
                     prev_add_arg = res_excl.add_argument
@@ -180,11 +181,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
                 prev_excl = result.add_mutually_exclusive_group
                 result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[assignment]
-                excl: List[Tuple[Dict[str, Any], List[ArgumentArgs]]] = []
+                excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
                 self._groups.append((args, kwargs, excl))
         return result
 
-    def add_argument(self, *args: str, of_type: Optional[Type[Any]] = None, **kwargs: Any) -> Action:
+    def add_argument(self, *args: str, of_type: type[Any] | None = None, **kwargs: Any) -> Action:
         result = super().add_argument(*args, **kwargs)
         if self.of_cmd is None and result.dest != "help":
             self._arguments.append((args, of_type, kwargs))
@@ -196,11 +197,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return result
 
     @classmethod
-    def base(cls: Type[ToxParserT]) -> ToxParserT:
+    def base(cls: type[ToxParserT]) -> ToxParserT:
         return cls(add_help=False, root=True)
 
     @classmethod
-    def core(cls: Type[ToxParserT]) -> ToxParserT:
+    def core(cls: type[ToxParserT]) -> ToxParserT:
         return cls(
             prog=NAME,
             formatter_class=HelpFormatter,
@@ -216,12 +217,12 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def parse_known_args(  # type: ignore[override]
         self,
-        args: Optional[Sequence[str]],
-        namespace: Optional[Parsed] = None,
-    ) -> Tuple[Parsed, List[str]]:
+        args: Sequence[str] | None,
+        namespace: Parsed | None = None,
+    ) -> tuple[Parsed, list[str]]:
         if args is None:
             args = sys.argv[1:]
-        cmd_at: Optional[int] = None
+        cmd_at: int | None = None
         if self._cmd is not None and args:
             for at, arg in enumerate(args):
                 if arg in self._cmd.choices:

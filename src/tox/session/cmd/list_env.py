@@ -1,6 +1,8 @@
 """
 Print available tox environments.
 """
+from __future__ import annotations
+
 from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
 from tox.session.state import State

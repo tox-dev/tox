@@ -1,6 +1,8 @@
 """
 Display the version information about tox.
 """
+from __future__ import annotations
+
 from pathlib import Path
 
 from tox.config.cli.parser import ToxParser

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from tox.config.cli.parse import get_options

@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import importlib
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Optional
 
 
-def load_inline(path: Path) -> Optional[ModuleType]:
+def load_inline(path: Path) -> ModuleType | None:
     # nox uses here the importlib.machinery.SourceFileLoader but I consider this similarly good, and we can keep any
-    # name for the tox file, it's content will always be loaded in the this module from a system point of view
+    # name for the tox file, its content will always be loaded in this module from a system point of view
     for name in ("toxfile", "☣"):
         candidate = path.parent / f"{name}.py"
         if candidate.exists():

@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import pytest
 from re_assert import Matches
@@ -43,7 +45,7 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.integration()
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
-    enable_pip_pypi_access: Optional[str],  # noqa: U100
+    enable_pip_pypi_access: str | None,  # noqa: U100
 ) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
@@ -118,7 +120,7 @@ def test_result_json_sequential(
     assert log_report == expected
 
 
-def get_cmd_exit_run_id(report: Dict[str, Any], name: str, group: str) -> List[Tuple[Union[int, None], str]]:
+def get_cmd_exit_run_id(report: dict[str, Any], name: str, group: str) -> list[tuple[int | None, str]]:
     return [(i["retcode"], i["run_id"]) for i in report["testenvs"][name].pop(group)]
 
 

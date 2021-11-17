@@ -1,4 +1,6 @@
-from typing import Any, Optional, Type, TypeVar
+from __future__ import annotations
+
+from typing import Any, TypeVar
 
 _Section = TypeVar("_Section", bound="Section")
 
@@ -8,12 +10,12 @@ class Section:
 
     SEP = ":"  #: string used to separate the prefix and the section in the key
 
-    def __init__(self, prefix: Optional[str], name: str) -> None:
+    def __init__(self, prefix: str | None, name: str) -> None:
         self._prefix = prefix
         self._name = name
 
     @classmethod
-    def from_key(cls: Type[_Section], key: str) -> "_Section":
+    def from_key(cls: type[_Section], key: str) -> _Section:
         """
         Create a section from a section key.
 
@@ -28,7 +30,7 @@ class Section:
         return cls(prefix, name)
 
     @property
-    def prefix(self) -> Optional[str]:
+    def prefix(self) -> str | None:
         """:return: the prefix of the section"""
         return self._prefix
 

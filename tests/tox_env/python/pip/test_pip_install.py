@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -80,7 +82,7 @@ def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
         ),
     ],
 )
-def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: str, args: List[str]) -> None:
+def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: str, args: list[str]) -> None:
     proj = tox_project({"tox.ini": f"[testenv:py]\ndeps={content}\nskip_install=true"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
 

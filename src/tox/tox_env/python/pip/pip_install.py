@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from packaging.requirements import Requirement
 
@@ -46,7 +48,7 @@ class Pip(Installer[Python]):
                 desc="command used to list isntalled packages",
             )
 
-    def default_install_command(self, conf: Config, env_name: Optional[str]) -> Command:  # noqa: U100
+    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # noqa: U100
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"
         cmd = Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
         return self.post_process_install_command(cmd)
@@ -66,7 +68,7 @@ class Pip(Installer[Python]):
                 install_command.pop(opts_at)
         return cmd
 
-    def installed(self) -> List[str]:
+    def installed(self) -> list[str]:
         cmd: Command = self._env.conf["list_dependencies_command"]
         result = self._env.execute(
             cmd=cmd.args,
@@ -91,8 +93,8 @@ class Pip(Installer[Python]):
             new_options, new_reqs = arguments.unroll()
         except ValueError as exception:
             raise HandledError(f"{exception} for tox env py within deps")
-        new_requirements: List[str] = []
-        new_constraints: List[str] = []
+        new_requirements: list[str] = []
+        new_constraints: list[str] = []
         for req in new_reqs:
             (new_constraints if req.startswith("-c ") else new_requirements).append(req)
         new = {"options": new_options, "requirements": new_requirements, "constraints": new_constraints}
@@ -110,7 +112,7 @@ class Pip(Installer[Python]):
                     self._execute_installer(args, of_type)
 
     @staticmethod
-    def _recreate_if_diff(of_type: str, new_opts: List[str], old_opts: List[str], fmt: Callable[[str], str]) -> None:
+    def _recreate_if_diff(of_type: str, new_opts: list[str], old_opts: list[str], fmt: Callable[[str], str]) -> None:
         if old_opts == new_opts:
             return
         removed_opts = set(old_opts) - set(new_opts)
@@ -121,11 +123,11 @@ class Pip(Installer[Python]):
 
     def _install_list_of_deps(
         self,
-        arguments: Sequence[Union[Requirement, WheelPackage, SdistPackage, DevLegacyPackage, PathPackage]],
+        arguments: Sequence[Requirement | WheelPackage | SdistPackage | DevLegacyPackage | PathPackage],
         section: str,
         of_type: str,
     ) -> None:
-        groups: Dict[str, List[str]] = defaultdict(list)
+        groups: dict[str, list[str]] = defaultdict(list)
         for arg in arguments:
             if isinstance(arg, Requirement):
                 groups["req"].append(str(arg))
@@ -162,7 +164,7 @@ class Pip(Installer[Python]):
         outcome = self._env.execute(cmd, stdin=StdinSource.OFF, run_id=f"install_{of_type}")
         outcome.assert_success()
 
-    def build_install_cmd(self, args: Sequence[str]) -> List[str]:
+    def build_install_cmd(self, args: Sequence[str]) -> list[str]:
         cmd: Command = self._env.conf["install_command"]
         install_command = cmd.args
         try:

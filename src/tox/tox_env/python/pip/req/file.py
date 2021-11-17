@@ -1,4 +1,5 @@
 """Adapted from the pip code base"""
+from __future__ import annotations
 
 import os
 import re
@@ -7,7 +8,7 @@ import sys
 import urllib.parse
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union, cast
+from typing import IO, Any, Iterator, List, Tuple, cast
 from urllib.request import urlopen
 
 import chardet
@@ -30,16 +31,16 @@ DEFAULT_INDEX_URL = "https://pypi.org/simple"
 
 
 class ParsedRequirement:
-    def __init__(self, req: str, options: Dict[str, Any], from_file: str, lineno: int) -> None:
+    def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:
         req = req.encode("utf-8").decode("utf-8")
         try:
-            self._requirement: Union[Requirement, Path, str] = Requirement(req)
+            self._requirement: Requirement | Path | str = Requirement(req)
         except InvalidRequirement:
             if is_url(req) or any(req.startswith(f"{v}+") and is_url(req[len(v) + 1 :]) for v in VCS):
                 self._requirement = req
             else:
                 root = Path(from_file).parent
-                extras: List[str] = []
+                extras: list[str] = []
                 match = _EXTRA_PATH.fullmatch(Path(req).name)
                 if match:
                     for extra in match.group(2).split(","):
@@ -65,7 +66,7 @@ class ParsedRequirement:
         self._lineno = lineno
 
     @property
-    def requirement(self) -> Union[Requirement, Path, str]:
+    def requirement(self) -> Requirement | Path | str:
         return self._requirement
 
     @property
@@ -77,7 +78,7 @@ class ParsedRequirement:
         return self._lineno
 
     @property
-    def options(self) -> Dict[str, Any]:
+    def options(self) -> dict[str, Any]:
         return self._options
 
     def __repr__(self) -> str:
@@ -127,9 +128,9 @@ class RequirementsFile:
         self._path = path
         self._is_constraint: bool = constraint
         self._opt = Namespace()
-        self._requirements: Optional[List[ParsedRequirement]] = None
-        self._as_root_args: Optional[List[str]] = None
-        self._parser_private: Optional[ArgumentParser] = None
+        self._requirements: list[ParsedRequirement] | None = None
+        self._as_root_args: list[str] | None = None
+        self._parser_private: ArgumentParser | None = None
 
     def __str__(self) -> str:
         return f"{'-c' if self.is_constraint else '-r'} {self.path}"
@@ -148,7 +149,7 @@ class RequirementsFile:
         return self._opt
 
     @property
-    def requirements(self) -> List[ParsedRequirement]:
+    def requirements(self) -> list[ParsedRequirement]:
         self._ensure_requirements_parsed()
         return cast(List[ParsedRequirement], self._requirements)
 
@@ -162,7 +163,7 @@ class RequirementsFile:
         if self._requirements is None:
             self._requirements = self._parse_requirements(opt=self._opt, recurse=True)
 
-    def _parse_requirements(self, opt: Namespace, recurse: bool) -> List[ParsedRequirement]:
+    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:
         result, found = [], set()
         for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint, recurse):
             if parsed_line.is_requirement:
@@ -176,7 +177,7 @@ class RequirementsFile:
         result.sort(key=self._key_func)
         return result
 
-    def _key_func(self, line: ParsedRequirement) -> Tuple[int, Tuple[int, str, str]]:
+    def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:
         of_type = {Requirement: 0, Path: 1, str: 2}[type(line.requirement)]
         between = of_type, str(line.requirement).lower(), str(line.options)
         if "is_constraint" in line.options:
@@ -252,7 +253,7 @@ class RequirementsFile:
         lines_enum = self._expand_env_variables(lines_enum)
         return lines_enum
 
-    def _parse_line(self, line: str) -> Tuple[str, Namespace]:
+    def _parse_line(self, line: str) -> tuple[str, Namespace]:
         args_str, options_str = self._break_args_options(line)
         args = shlex.split(options_str, posix=sys.platform != "win32")
         opts = self._parser.parse_args(args)
@@ -334,7 +335,7 @@ class RequirementsFile:
             base_opt.only_binary = opt.only_binary
 
     @staticmethod
-    def _break_args_options(line: str) -> Tuple[str, str]:
+    def _break_args_options(line: str) -> tuple[str, str]:
         """
         Break up the line into an args and options string.  We only want to shlex (and then optparse) the options, not
         the args. args can contain markers which are corrupted by shlex.
@@ -357,7 +358,7 @@ class RequirementsFile:
         index of the first line.
         """
         primary_line_number = None
-        new_line: List[str] = []
+        new_line: list[str] = []
         for line_number, line in lines_enum:
             if not line.endswith("\\") or _COMMENT_RE.match(line):
                 if _COMMENT_RE.match(line):
@@ -410,10 +411,10 @@ class RequirementsFile:
             yield line_number, line
 
     @property
-    def as_root_args(self) -> List[str]:
+    def as_root_args(self) -> list[str]:
         if self._as_root_args is None:
             opt = Namespace()
-            result: List[str] = []
+            result: list[str] = []
             for req in self._parse_requirements(opt=opt, recurse=False):
                 result.extend(req.as_args())
             option_args = self._option_to_args(opt)
@@ -423,8 +424,8 @@ class RequirementsFile:
         return self._as_root_args
 
     @staticmethod
-    def _option_to_args(opt: Namespace) -> List[str]:
-        result: List[str] = []
+    def _option_to_args(opt: Namespace) -> list[str]:
+        result: list[str] = []
         for req in getattr(opt, "requirements", []):
             result.extend(("-r", req))
         for req in getattr(opt, "constraints", []):

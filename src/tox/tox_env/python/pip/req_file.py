@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import re
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from .req.args import build_parser
 from .req.file import ReqFileLines, RequirementsFile
@@ -11,7 +12,7 @@ class PythonDeps(RequirementsFile):
     def __init__(self, raw: str, root: Path):
         super().__init__(root / "tox.ini", constraint=False)
         self._raw = self._normalize_raw(raw)
-        self._unroll: Optional[Tuple[List[str], List[str]]] = None
+        self._unroll: tuple[list[str], list[str]] | None = None
 
     def _get_file_content(self, url: str) -> str:
         if self._is_url_self(url):
@@ -33,7 +34,7 @@ class PythonDeps(RequirementsFile):
             self._parser_private = build_parser(cli_only=True)  # e.g. no --hash for cli only
         return self._parser_private
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         return self._raw.splitlines()
 
     @staticmethod
@@ -41,7 +42,7 @@ class PythonDeps(RequirementsFile):
         # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively
         # ignored
         raw = "".join(raw.replace("\r", "").split("\\\n"))
-        lines: List[str] = []
+        lines: list[str] = []
         for line in raw.splitlines():
             # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
             arg_match = next(
@@ -67,18 +68,18 @@ class PythonDeps(RequirementsFile):
         raw = f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
         return raw
 
-    def unroll(self) -> Tuple[List[str], List[str]]:
+    def unroll(self) -> tuple[list[str], list[str]]:
         if self._unroll is None:
             opts_dict = vars(self.options)
             if not self.requirements and opts_dict:
                 raise ValueError("no dependencies")
-            result_opts: List[str] = [f"{key}={value}" for key, value in opts_dict.items()]
+            result_opts: list[str] = [f"{key}={value}" for key, value in opts_dict.items()]
             result_req = [str(req) for req in self.requirements]
             self._unroll = result_opts, result_req
         return self._unroll
 
     @classmethod
-    def factory(cls, root: Path, raw: object) -> "PythonDeps":
+    def factory(cls, root: Path, raw: object) -> PythonDeps:
         if not isinstance(raw, str):
             raise TypeError(raw)
         return cls(raw, root)

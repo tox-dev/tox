@@ -2,3 +2,6 @@
 requires = []
 build-backend = "build"
 backend-path = ["."]
+
+[tool.black]
+line-length = 120

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
-from typing import IO, Any, Dict, Iterator, List
+from typing import IO, Any, Iterator
 
 import pytest
 from pytest_mock import MockerFixture
@@ -274,7 +276,7 @@ _REQ_FILE_TEST_CASES = [
 
 
 @pytest.mark.parametrize(("req", "opts", "requirements", "as_args"), _REQ_FILE_TEST_CASES)
-def test_req_file(tmp_path: Path, req: str, opts: Dict[str, Any], requirements: List[str], as_args: List[str]) -> None:
+def test_req_file(tmp_path: Path, req: str, opts: dict[str, Any], requirements: list[str], as_args: list[str]) -> None:
     requirements_txt = tmp_path / "req.txt"
     requirements_txt.write_text(req)
     req_file = RequirementsFile(requirements_txt, constraint=False)

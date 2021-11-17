@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import sys
-from typing import List
 
 import pytest
 
@@ -7,7 +8,7 @@ from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("trail", [[], ["--"]], ids=["no_posargs", "empty_posargs"])
-def test_exec_fail_no_posargs(tox_project: ToxProjectCreator, trail: List[str]) -> None:
+def test_exec_fail_no_posargs(tox_project: ToxProjectCreator, trail: list[str]) -> None:
     outcome = tox_project({"tox.ini": ""}).run("e", "-e", "py39", *trail)
     outcome.assert_failed()
     msg = "ROOT: HandledError| You must specify a command as positional arguments, use -- <command>\n"

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Callable, Dict, Iterator, List, Mapping, Optional, Tuple
+from typing import Callable, Iterator, Mapping
 
 from tox.config.loader.api import ConfigLoadArgs
 from tox.tox_env.errors import Fail
@@ -8,12 +10,12 @@ Replacer = Callable[[str, ConfigLoadArgs], str]
 
 
 class SetEnv:
-    def __init__(self, raw: str, name: str, env_name: Optional[str], root: Path) -> None:
+    def __init__(self, raw: str, name: str, env_name: str | None, root: Path) -> None:
         self.changed = False
-        self._materialized: Dict[str, str] = {}  # env vars we already loaded
-        self._raw: Dict[str, str] = {}  # could still need replacement
-        self._needs_replacement: List[str] = []  # env vars that need replacement
-        self._env_files: List[str] = []
+        self._materialized: dict[str, str] = {}  # env vars we already loaded
+        self._raw: dict[str, str] = {}  # could still need replacement
+        self._needs_replacement: list[str] = []  # env vars that need replacement
+        self._env_files: list[str] = []
         self._replacer: Replacer = lambda s, c: s
         self._name, self._env_name, self._root = name, env_name, root
         from .loader.ini.replace import find_replace_part
@@ -57,14 +59,14 @@ class SetEnv:
             self._raw[key] = value
 
     @staticmethod
-    def _extract_key_value(line: str) -> Tuple[str, str]:
+    def _extract_key_value(line: str) -> tuple[str, str]:
         key, sep, value = line.partition("=")
         if sep:
             return key.strip(), value.strip()
         else:
             raise ValueError(f"invalid line {line!r} in set_env")
 
-    def load(self, item: str, args: Optional[ConfigLoadArgs] = None) -> str:
+    def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         if item in self._materialized:
             return self._materialized[item]
         raw = self._raw[item]

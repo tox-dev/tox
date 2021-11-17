@@ -1,5 +1,7 @@
 """Record information about tox environments"""
-from typing import Any, Dict, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 from tox.execute import Outcome
 
@@ -10,8 +12,8 @@ class EnvJournal:
     def __init__(self, enabled: bool, name: str) -> None:
         self._enabled = enabled
         self.name = name
-        self._content: Dict[str, Any] = {}
-        self._executes: List[Tuple[str, Outcome]] = []
+        self._content: dict[str, Any] = {}
+        self._executes: list[tuple[str, Outcome]] = []
 
     def __setitem__(self, key: str, value: Any) -> None:
         """
@@ -36,10 +38,10 @@ class EnvJournal:
         self._executes.append((run_id, outcome))
 
     @property
-    def content(self) -> Dict[str, Any]:
+    def content(self) -> dict[str, Any]:
         """:return: the env journal content (merges explicit keys and execution commands)"""
-        tests: List[Dict[str, Any]] = []
-        setup: List[Dict[str, Any]] = []
+        tests: list[dict[str, Any]] = []
+        setup: list[dict[str, Any]] = []
         for run_id, outcome in self._executes:
             one = {
                 "command": outcome.cmd,

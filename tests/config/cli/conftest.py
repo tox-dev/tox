@@ -1,4 +1,6 @@
-from typing import Callable, Dict
+from __future__ import annotations
+
+from typing import Callable
 
 import pytest
 
@@ -15,7 +17,7 @@ from tox.session.state import State
 
 
 @pytest.fixture()
-def core_handlers() -> Dict[str, Callable[[State], int]]:
+def core_handlers() -> dict[str, Callable[[State], int]]:
     return {
         "config": show_config,
         "c": show_config,

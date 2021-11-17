@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Set, TypeVar, Union
 
 import pytest
 
@@ -49,7 +51,7 @@ else:  # pragma: no cover (py38+)
         ("1", "1", Literal["1", "2"]),
     ],
 )
-def test_str_convert_ok(raw: str, value: Any, of_type: Type[Any]) -> None:
+def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
     result = StrConvert().to(raw, of_type, None)
     assert result == value
 
@@ -62,7 +64,7 @@ def test_str_convert_ok(raw: str, value: Any, of_type: Type[Any]) -> None:
         ("3", Union[str, int], TypeError, r"3 cannot cast to typing.Union\[str, int\]"),
     ],
 )
-def test_str_convert_nok(raw: str, of_type: Type[Any], msg: str, exc_type: Type[Exception]) -> None:
+def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[Exception]) -> None:
     with pytest.raises(exc_type, match=msg):
         StrConvert().to(raw, of_type, None)
 
@@ -74,6 +76,6 @@ def test_str_convert_nok(raw: str, of_type: Type[Any], msg: str, exc_type: Type[
         ('python " ok', ["python", '" ok']),
     ],
 )
-def test_invalid_shell_expression(value: str, expected: List[str]) -> None:
+def test_invalid_shell_expression(value: str, expected: list[str]) -> None:
     result = StrConvert().to_command(value).args
     assert result == expected

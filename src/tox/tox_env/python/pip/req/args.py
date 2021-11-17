@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import bisect
 import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
-from typing import IO, Any, NoReturn, Optional, Sequence, Union
+from typing import IO, Any, NoReturn, Sequence
 
 
 class _OurArgumentParser(ArgumentParser):
-    def print_usage(self, file: Optional[IO[str]] = None) -> None:  # noqa: U100
+    def print_usage(self, file: IO[str] | None = None) -> None:  # noqa: U100
         """ """
 
-    def exit(self, status: int = 0, message: Optional[str] = None) -> NoReturn:  # noqa: U100
+    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: U100
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
         if msg.startswith("error: "):
@@ -66,8 +68,8 @@ class AddSortedUniqueAction(Action):
         self,
         parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: Optional[str] = None,  # noqa: U100
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,  # noqa: U100
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -81,8 +83,8 @@ class AddUniqueAction(Action):
         self,
         parser: ArgumentParser,  # noqa: U100
         namespace: Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: Optional[str] = None,  # noqa: U100
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,  # noqa: U100
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])

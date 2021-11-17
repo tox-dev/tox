@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tox.config.of_type import ConfigConstantDefinition, ConfigDynamicDefinition
 
 

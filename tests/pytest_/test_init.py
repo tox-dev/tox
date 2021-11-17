@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import os
 import sys
 from itertools import chain, combinations
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Sequence
+from typing import Sequence
 
 import pytest
 from pytest_mock import MockerFixture
@@ -39,7 +41,7 @@ COMB = list(chain.from_iterable(combinations(["DIFF", "MISS", "EXTRA"], i) for i
 
 
 @pytest.mark.parametrize("ops", COMB, ids=["-".join(i) for i in COMB])
-def test_env_var(monkeypatch: MonkeyPatch, ops: List[str]) -> None:
+def test_env_var(monkeypatch: MonkeyPatch, ops: list[str]) -> None:
     with monkeypatch.context() as m:
         if "DIFF" in ops:
             m.setenv("DIFF", "B")

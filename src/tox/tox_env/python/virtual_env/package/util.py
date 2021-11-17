@@ -1,18 +1,19 @@
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import List, Optional, Set, Tuple, Union
 
 from packaging.markers import Variable
 from packaging.requirements import Requirement
 
 
-def dependencies_with_extras(deps: List[Requirement], extras: Set[str]) -> List[Requirement]:
-    result: List[Requirement] = []
+def dependencies_with_extras(deps: list[Requirement], extras: set[str]) -> list[Requirement]:
+    result: list[Requirement] = []
     for req in deps:
         req = deepcopy(req)
-        markers: List[Union[str, Tuple[Variable, Variable, Variable]]] = getattr(req.marker, "_markers", []) or []
+        markers: list[str | tuple[Variable, Variable, Variable]] = getattr(req.marker, "_markers", []) or []
         # find the extra marker (if has)
-        _at: Optional[int] = None
-        extra: Optional[str] = None
+        _at: int | None = None
+        extra: str | None = None
         for _at, (marker_key, op, marker_value) in (
             (_at_marker, marker)
             for _at_marker, marker in enumerate(markers)

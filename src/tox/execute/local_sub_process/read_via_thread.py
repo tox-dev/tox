@@ -1,10 +1,12 @@
 """
 A reader that drain a stream via its file no on a background thread.
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from threading import Event, Thread
 from types import TracebackType
-from typing import Callable, Optional, Type
+from typing import Callable
 
 WAIT_GENERAL = 0.05  # stop thread join every so often (give chance to a signal interrupt)
 
@@ -17,15 +19,15 @@ class ReadViaThread(ABC):
         self.handler = handler
         self._on_exit_drain = drain
 
-    def __enter__(self) -> "ReadViaThread":
+    def __enter__(self) -> ReadViaThread:
         self.thread.start()
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],  # noqa: U100
-        exc_val: Optional[BaseException],  # noqa: U100
-        exc_tb: Optional[TracebackType],  # noqa: U100
+        exc_type: type[BaseException] | None,  # noqa: U100
+        exc_val: BaseException | None,  # noqa: U100
+        exc_tb: TracebackType | None,  # noqa: U100
     ) -> None:
         self.stop.set()  # signal thread to stop
         while self.thread.is_alive():  # wait until it stops

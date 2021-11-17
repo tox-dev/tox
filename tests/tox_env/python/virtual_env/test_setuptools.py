@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -14,7 +15,7 @@ from tox.tox_env.python.virtual_env.package.pep517 import Pep517VirtualEnvPackag
 def test_setuptools_package(
     tox_project: ToxProjectCreator,
     demo_pkg_setuptools: Path,
-    enable_pip_pypi_access: Optional[str],  # noqa: U100
+    enable_pip_pypi_access: str | None,  # noqa: U100
 ) -> None:
     tox_ini = """
         [testenv]

@@ -1,9 +1,11 @@
 """Convert string configuration values to tox python configuration objects."""
+from __future__ import annotations
+
 import shlex
 import sys
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterator, List, Tuple, Type
+from typing import Any, Iterator
 
 from tox.config.loader.convert import Convert
 from tox.config.types import Command, EnvList
@@ -21,7 +23,7 @@ class StrConvert(Convert[str]):
         return Path(value)
 
     @staticmethod
-    def to_list(value: str, of_type: Type[Any]) -> Iterator[str]:
+    def to_list(value: str, of_type: type[Any]) -> Iterator[str]:
         splitter = "\n" if issubclass(of_type, Command) or "\n" in value else ","
         splitter = splitter.replace("\r", "")
         for token in value.split(splitter):
@@ -30,12 +32,12 @@ class StrConvert(Convert[str]):
                 yield value
 
     @staticmethod
-    def to_set(value: str, of_type: Type[Any]) -> Iterator[str]:
+    def to_set(value: str, of_type: type[Any]) -> Iterator[str]:
         for value in StrConvert.to_list(value, of_type):
             yield value
 
     @staticmethod
-    def to_dict(value: str, of_type: Tuple[Type[Any], Type[Any]]) -> Iterator[Tuple[str, str]]:  # noqa: U100
+    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # noqa: U100
         for row in value.split("\n"):
             if row.strip():
                 key, sep, value = row.partition("=")
@@ -51,7 +53,7 @@ class StrConvert(Convert[str]):
         splitter = shlex.shlex(value, posix=not is_win)
         splitter.whitespace_split = True
         splitter.commenters = ""  # comments handled earlier, and the shlex does not know escaped comment characters
-        args: List[str] = []
+        args: list[str] = []
         pos = 0
         try:
             for arg in splitter:

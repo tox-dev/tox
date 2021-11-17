@@ -1,11 +1,13 @@
 """
 Provides configuration values from tox.ini files.
 """
+from __future__ import annotations
+
 import logging
 import os
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any
 
 from platformdirs import user_config_dir
 
@@ -24,9 +26,9 @@ class IniConfig:
         config_file = os.environ.get(self.TOX_CONFIG_FILE_ENV_VAR, None)
         self.is_env_var = config_file is not None
         self.config_file = Path(config_file if config_file is not None else DEFAULT_CONFIG_FILE)
-        self._cache: Dict[Tuple[str, Type[Any]], Any] = {}
-        self.has_config_file: Optional[bool] = self.config_file.exists()
-        self.ini: Optional[IniLoader] = None
+        self._cache: dict[tuple[str, type[Any]], Any] = {}
+        self.has_config_file: bool | None = self.config_file.exists()
+        self.ini: IniLoader | None = None
 
         if self.has_config_file:
             self.config_file = self.config_file.absolute()
@@ -42,7 +44,7 @@ class IniConfig:
                 logging.error("failed to read config file %s because %r", config_file, exception)
                 self.has_config_file = None
 
-    def get(self, key: str, of_type: Type[Any]) -> Any:
+    def get(self, key: str, of_type: type[Any]) -> Any:
         cache_key = key, of_type
         if cache_key in self._cache:
             result = self._cache[cache_key]
