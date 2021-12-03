@@ -169,7 +169,7 @@ This variable can be also set in ``tox.ini``:
     setenv =
         PIP_INDEX_URL = https://pypi.my-alternative-index.org
 
-Alternatively, a configuration where ``PIP_INDEX_URL`` could be overriden from environment:
+Alternatively, a configuration where ``PIP_INDEX_URL`` could be overridden from environment:
 
 .. code-block:: ini
 

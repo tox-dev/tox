@@ -28,7 +28,7 @@ class EnvLog(object):
 
     def set_header(self, installpkg):
         """
-        :param py.path.local installpkg: Path ot the package.
+        :param py.path.local installpkg: Path to the package.
         """
         self.dict["installpkg"] = {
             "sha256": installpkg.computehash("sha256"),
