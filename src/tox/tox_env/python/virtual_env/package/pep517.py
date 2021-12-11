@@ -96,13 +96,13 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self.conf.add_config(
             keys=["meta_dir"],
             of_type=Path,
-            default=lambda conf, name: self.env_dir / ".meta",
+            default=lambda conf, name: self.env_dir / ".meta",  # noqa: U100
             desc="directory where to put the project metadata files",
         )
         self.conf.add_config(
             keys=["pkg_dir"],
             of_type=Path,
-            default=lambda conf, name: self.env_dir / "dist",
+            default=lambda conf, name: self.env_dir / "dist",  # noqa: U100
             desc="directory where to put project packages",
         )
 
@@ -211,7 +211,10 @@ class Pep517VirtualEnvFrontend(Frontend):
         self._tox_env = env
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
-        pkg_cache = cached(into, key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist")
+        pkg_cache = cached(
+            into,
+            key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist",  # noqa: U100
+        )
         self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore
         self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore
 

@@ -97,19 +97,19 @@ class ToxEnv(ABC):
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,  # noqa: U100
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",  # noqa: U100
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",  # noqa: U100
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)

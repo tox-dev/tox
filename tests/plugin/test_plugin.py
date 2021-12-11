@@ -86,7 +86,7 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
 
 def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:
+    def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:  # noqa: U100
         logging.warning("All envs: %s", ", ".join(config.env_list(everything=True)))
         logging.warning("Default envs: %s", ", ".join(config.env_list()))
 
@@ -108,7 +108,7 @@ def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: Mocker
 
 def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:
+    def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:  # noqa: U100
         logging.warning("Sections: %s", ", ".join(i.key for i in config.sections()))
 
     register_inline_plugin(mocker, tox_add_core_config)
@@ -127,7 +127,7 @@ def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: Mocker
 
 def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:
+    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:  # noqa: U100
         env_conf.loaders.insert(0, MemoryLoader(deps=[1]))
         with pytest.raises(TypeError, match="1"):
             assert env_conf["deps"]
@@ -141,7 +141,7 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
 
 def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:
+    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:  # noqa: U100
         env_conf["pass_env"].append("MAGIC_*")
 
     register_inline_plugin(mocker, tox_add_env_config)
@@ -164,7 +164,7 @@ def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFi
 
 def test_plugin_extend_set_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:
+    def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:  # noqa: U100
         env_conf["set_env"].update({"MAGI_CAL": "magi_cal"})
 
     register_inline_plugin(mocker, tox_add_env_config)

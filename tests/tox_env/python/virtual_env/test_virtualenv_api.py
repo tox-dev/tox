@@ -22,7 +22,12 @@ def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEn
     opts = VirtualEnvOptions()
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.session_via_cli",
-        side_effect=lambda args, options, setup_logging, env: session_via_cli(args, opts, setup_logging, env),
+        side_effect=lambda args, options, setup_logging, env: session_via_cli(  # noqa: U100
+            args,
+            opts,
+            setup_logging,
+            env,
+        ),
     )
     return opts
 

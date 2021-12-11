@@ -16,7 +16,7 @@ class SetEnv:
         self._raw: dict[str, str] = {}  # could still need replacement
         self._needs_replacement: list[str] = []  # env vars that need replacement
         self._env_files: list[str] = []
-        self._replacer: Replacer = lambda s, c: s
+        self._replacer: Replacer = lambda s, c: s  # noqa: U100
         self._name, self._env_name, self._root = name, env_name, root
         from .loader.ini.replace import find_replace_part
 

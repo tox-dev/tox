@@ -59,7 +59,7 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
             pos_args=[],
             source=source,
         )
-        config.register_config_set = lambda name, env_config_set: None  # type: ignore[assignment] # no override in mypy
+        config.register_config_set = lambda name, env_config_set: None  # type: ignore[assignment] # noqa: U100
         return config
 
     return func

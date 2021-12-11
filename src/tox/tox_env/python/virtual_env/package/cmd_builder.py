@@ -64,7 +64,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         self.conf.add_config(
             keys=["change_dir", "changedir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["tox_root"]),
+            default=lambda conf, name: cast(Path, conf.core["tox_root"]),  # noqa: U100
             desc="change to this working directory when executing the test command",
         )
         self.conf.add_config(

@@ -198,10 +198,10 @@ class ToxProject:
             def exit_code(self) -> int | None:
                 return self._exit_code
 
-            def wait(self, timeout: float | None = None) -> int | None:
+            def wait(self, timeout: float | None = None) -> int | None:  # noqa: U100
                 return self._exit_code
 
-            def write_stdin(self, content: str) -> None:
+            def write_stdin(self, content: str) -> None:  # noqa: U100
                 return None  # pragma: no cover
 
             def interrupt(self) -> None:
@@ -224,9 +224,9 @@ class ToxProject:
 
             def __exit__(
                 self,
-                exc_type: type[BaseException] | None,
-                exc_val: BaseException | None,
-                exc_tb: TracebackType | None,
+                exc_type: type[BaseException] | None,  # noqa: U100
+                exc_val: BaseException | None,  # noqa: U100
+                exc_tb: TracebackType | None,  # noqa: U100
             ) -> None:
                 pass
 

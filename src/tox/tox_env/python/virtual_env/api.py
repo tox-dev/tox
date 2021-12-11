@@ -37,7 +37,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["system_site_packages", "sitepackages"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: U100
                 self.environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False"),
             ),
             desc="create virtual environments that also have access to globally installed packages.",
@@ -45,7 +45,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["always_copy", "alwayscopy"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: U100
                 self.environment_variables.get(
                     "VIRTUALENV_COPIES",
                     self.environment_variables.get("VIRTUALENV_ALWAYS_COPY", "False"),
@@ -56,7 +56,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["download"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: U100
                 self.environment_variables.get("VIRTUALENV_DOWNLOAD", "False"),
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",

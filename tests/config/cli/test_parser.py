@@ -73,7 +73,7 @@ def test_parser_unsupported_type() -> None:
 def test_sub_sub_command() -> None:
     parser = ToxParser.base()
     with pytest.raises(RuntimeError, match="no sub-command group allowed"):
-        parser.add_command("c", [], "help", lambda s: 0)  # pragma: no cover - the lambda will never be run
+        parser.add_command("c", [], "help", lambda s: 0)  # pragma: no cover - the lambda will never be run # noqa: U100
 
 
 def test_parse_known_args_not_set(mocker: MockerFixture) -> None:
