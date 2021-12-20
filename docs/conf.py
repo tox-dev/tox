@@ -5,6 +5,7 @@ from datetime import date, datetime
 from pathlib import Path
 from subprocess import check_output
 from typing import Any, cast
+import os
 
 from docutils.nodes import Element, Node, Text, container, fully_normalize_name, literal, paragraph, reference, strong
 from docutils.parsers.rst.directives import flag, unchanged, unchanged_required
@@ -85,6 +86,8 @@ intersphinx_mapping = {
 }
 nitpicky = True
 nitpick_ignore = []
+
+os.environ["FORCE_COLOR"] = "yes"  # force --colored default value to be yes
 
 
 def skip_member(app: Sphinx, what: str, name: str, obj: Any, would_skip: bool, options: Options) -> bool:  # noqa: U100
