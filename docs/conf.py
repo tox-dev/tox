@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import os
 import sys
 from datetime import date, datetime
 from pathlib import Path
 from subprocess import check_output
 from typing import Any, cast
-import os
 
 from docutils.nodes import Element, Node, Text, container, fully_normalize_name, literal, paragraph, reference, strong
 from docutils.parsers.rst.directives import flag, unchanged, unchanged_required
