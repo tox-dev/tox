@@ -27,7 +27,7 @@ def test_verbose_isolated_build(initproj, mock_venv, cmd):
     result = cmd("--sdistonly", "-v", "-v", "-v", "-e", "py")
     assert "running sdist" in result.out, result.out
     assert "running egg_info" in result.out, result.out
-    assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out
+    assert "example123-0.5.tar.gz" in result.out, result.out
 
 
 def test_dist_exists_version_change(mock_venv, initproj, cmd):
@@ -194,7 +194,7 @@ def test_verbose_isolated_build_in_tree(initproj, mock_venv, cmd):
     result = cmd("--sdistonly", "-v", "-v", "-v", "-e", "py")
     assert "running sdist" in result.out, result.out
     assert "running egg_info" in result.out, result.out
-    assert "Writing example123-0.5{}setup.cfg".format(os.sep) in result.out, result.out
+    assert "example123-0.5.tar.gz" in result.out, result.out
 
 
 def test_isolated_build_script_args(tmp_path):

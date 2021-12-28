@@ -22,11 +22,11 @@ ROOT_SRC_TREE_DIR = Path(__file__).parents[1]
 
 def generate_draft_news():
     home = "https://github.com"
-    issue = "{}/issue".format(home)
+    issue = f"{home}/issue"
     fragments_path = ROOT_SRC_TREE_DIR / "docs" / "changelog"
     for pattern, replacement in (
-        (r"[^`]@([^,\s]+)", r"`@\1 <{}/\1>`_".format(home)),
-        (r"[^`]#([\d]+)", r"`#pr\1 <{}/\1>`_".format(issue)),
+        (r"[^`]@([^,\s]+)", fr"`@\1 <{home}/\1>`_"),
+        (r"[^`]#([\d]+)", fr"`#pr\1 <{issue}/\1>`_"),
     ):
         for path in fragments_path.glob("*.rst"):
             path.write_text(re.sub(pattern, replacement, path.read_text()))
@@ -43,20 +43,20 @@ def generate_draft_news():
         content = ""
     else:
         note = "*Changes in master, but not released yet are under the draft section*."
-        content = "{}\n\n{}".format(note, changelog)
+        content = f"{note}\n\n{changelog}"
     (ROOT_SRC_TREE_DIR / "docs" / "_draft.rst").write_text(content)
 
 
 generate_draft_news()
 
-project = u"tox"
+project = "tox"
 _full_version = tox.__version__
 release = _full_version.split("+", 1)[0]
 version = ".".join(release.split(".")[:2])
 
 author = "holger krekel and others"
 year = date.today().year
-copyright = u"2010-{}, {}".format(year, author)
+copyright = f"2010-{year}, {author}"
 
 master_doc = "index"
 source_suffix = ".rst"
@@ -84,9 +84,9 @@ html_sidebars = {
 html_favicon = "_static/img/toxfavi.ico"
 html_show_sourcelink = False
 html_static_path = ["_static"]
-htmlhelp_basename = "{}doc".format(project)
-latex_documents = [("index", "tox.tex", u"{} Documentation".format(project), author, "manual")]
-man_pages = [("index", project, u"{} Documentation".format(project), [author], 1)]
+htmlhelp_basename = f"{project}doc"
+latex_documents = [("index", "tox.tex", f"{project} Documentation", author, "manual")]
+man_pages = [("index", project, f"{project} Documentation", [author], 1)]
 epub_title = project
 epub_author = author
 epub_publisher = author
@@ -104,11 +104,11 @@ def setup(app):
         node += addnodes.literal_strong(name, name)
 
         if len(args) > 2:
-            default = "={}".format(args[2].strip())
+            default = f"={args[2].strip()}"
             node += nodes.literal(text=default)
 
         if len(args) > 1:
-            content = "({})".format(args[1].strip())
+            content = f"({args[1].strip()})"
             node += addnodes.compact_paragraph(text=content)
 
         return name  # this will be the link

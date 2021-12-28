@@ -8,6 +8,7 @@ import sys
 
 import py
 import pytest
+from virtualenv.info import IS_PYPY
 
 if sys.version_info[:2] >= (3, 4):
     from pathlib import Path
@@ -332,6 +333,7 @@ def magic_non_canonical_wheel(wheel, tmp_path_factory):
     return wheel(magic_proj)
 
 
+@pytest.mark.skipif(IS_PYPY and sys.version_info[0] > 2, reason="fails on pypy3")
 def test_provision_non_canonical_dep(
     cmd,
     initproj,

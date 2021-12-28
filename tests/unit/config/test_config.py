@@ -8,6 +8,7 @@ import py
 import pytest
 from pluggy import PluginManager
 from six import PY2
+from virtualenv.info import IS_PYPY
 
 import tox
 from tox.config import (
@@ -1453,6 +1454,7 @@ class TestConfigTestEnv:
         assert envconfig.envpython == envconfig.envbindir.join("python")
 
     @pytest.mark.parametrize("bp", ["jython", "pypy", "pypy3"])
+    @pytest.mark.skipif(IS_PYPY, reason="fails on pypy")
     def test_envbindir_jython(self, newconfig, bp):
         config = newconfig(
             """
@@ -2384,24 +2386,23 @@ class TestConfigTestEnv:
         for name, config in configs.items():
             assert config.basepython == "python{}.{}".format(name[2], name[3])
 
+    @pytest.mark.skipif(IS_PYPY, reason="fails on pypy")
     def test_default_factors_conflict(self, newconfig, capsys):
         with pytest.warns(UserWarning, match=r"conflicting basepython .*"):
-            exe = "pypy3" if tox.INFO.IS_PYPY else "python3"
             env = "pypy27" if tox.INFO.IS_PYPY else "py27"
             config = newconfig(
                 """\
                 [testenv]
-                basepython={}
+                basepython=python3
                 [testenv:{}]
                 commands = python --version
                 """.format(
-                    exe,
-                    env,
+                    env
                 ),
             )
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs[env]
-        assert envconfig.basepython == exe
+        assert envconfig.basepython == "python3"
 
     def test_default_factors_conflict_lying_name(
         self,

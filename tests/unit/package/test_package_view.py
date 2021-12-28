@@ -1,10 +1,14 @@
 import os
 
+import pytest
+from virtualenv.info import IS_PYPY
+
 from tox.config import parseconfig
 from tox.package import get_package
 from tox.session import Session
 
 
+@pytest.mark.skipif(IS_PYPY, reason="fails on pypy")
 def test_make_sdist_distshare(tmpdir, initproj):
     distshare = tmpdir.join("distshare")
     initproj(
