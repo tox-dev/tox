@@ -128,3 +128,11 @@ installer
 
 .. autoclass:: tox.tox_env.installer.Installer
    :members:
+
+session
+-------
+.. autoclass:: tox.session.state.State
+   :members:
+
+.. autoclass:: tox.session.env_select.EnvSelector
+   :members:

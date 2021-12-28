@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class State:
+    """Runtime state holder."""
+
     def __init__(self, options: Options, args: Sequence[str]) -> None:
         self.conf = Config.make(options.parsed, options.pos_args, options.source)
         self._options = options
@@ -24,6 +26,7 @@ class State:
 
     @property
     def envs(self) -> EnvSelector:
+        """:return: provides access to the tox environments"""
         if self._selector is None:
             self._selector = EnvSelector(self)
         return self._selector

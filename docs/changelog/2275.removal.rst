@@ -1,0 +1,3 @@
+`tox_add_core_config` and `tox_add_env_config` now take a `state: State` argument instead of a configuration one, and
+`Config` not longer provides the `envs` property (instead users should migrate to `State.envs`) -
+by :user:`gaborbernat`.

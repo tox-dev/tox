@@ -73,10 +73,12 @@ def register_env_select_flags(
 
 
 @dataclass
-class ToxEnvInfo:
-    env: PackageToxEnv | RunToxEnv
-    is_active: bool
-    package_skip: tuple[str, Skip] | None = None
+class _ToxEnvInfo:
+    """tox environment information"""
+
+    env: PackageToxEnv | RunToxEnv  #: the tox environment
+    is_active: bool  #: a flag indicating if the environment is marked as active in the current run
+    package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
 class EnvSelector:
@@ -87,7 +89,7 @@ class EnvSelector:
         self.on_empty_fallback_py = True
         self._state = state
         self._cli_envs: CliEnv | None = getattr(self._state.conf.options, "env", None)
-        self._defined_envs_: None | dict[str, ToxEnvInfo] = None
+        self._defined_envs_: None | dict[str, _ToxEnvInfo] = None
         self._pkg_env_counter: Counter[str] = Counter()
         from tox.plugin.manager import MANAGER
 
@@ -121,7 +123,7 @@ class EnvSelector:
         return env_name_to_active_map
 
     @property
-    def _defined_envs(self) -> dict[str, ToxEnvInfo]:
+    def _defined_envs(self) -> dict[str, _ToxEnvInfo]:
         # The problem of classifying run/package environments:
         # There can be two type of tox environments: run or package. Given a tox environment name there's no easy way to
         # find out which it is.  Intuitively a run environment is any environment that's not used for packaging by
@@ -143,7 +145,7 @@ class EnvSelector:
                     run_env = self._build_run_env(name)
                     if run_env is None:
                         continue
-                    self._defined_envs_[name] = ToxEnvInfo(run_env, is_active)
+                    self._defined_envs_[name] = _ToxEnvInfo(run_env, is_active)
                     pkg_name_type = run_env.get_package_env_types()
                 if pkg_name_type is not None:
                     # build package env and assign it, then register the run environment which can trigger generation
@@ -241,11 +243,15 @@ class EnvSelector:
         journal = self._journal.get_env_journal(name)
         args = ToxEnvCreateArgs(pkg_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
         pkg_env: PackageToxEnv = package_type(args)
-        self._defined_envs_[name] = ToxEnvInfo(pkg_env, is_active)
+        self._defined_envs_[name] = _ToxEnvInfo(pkg_env, is_active)
         self._manager.tox_add_env_config(pkg_conf, self._state)
         return pkg_env
 
     def __getitem__(self, item: str) -> RunToxEnv | PackageToxEnv:
+        """
+        :param item: the name of the environment
+        :return: the tox environment
+        """
         return self._defined_envs[item].env
 
     def iter(
@@ -285,5 +291,4 @@ __all__ = [
     "register_env_select_flags",
     "EnvSelector",
     "CliEnv",
-    "ToxEnvInfo",
 ]
