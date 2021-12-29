@@ -325,6 +325,10 @@ class VirtualEnv(object):
 
     def _needs_reinstall(self, setupdir, action):
         setup_py = setupdir.join("setup.py")
+
+        if not setup_py.exists():
+            return False
+
         setup_cfg = setupdir.join("setup.cfg")
         args = [self.envconfig.envpython, str(setup_py), "--name"]
         env = self._get_os_environ()
