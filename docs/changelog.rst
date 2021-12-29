@@ -11,6 +11,14 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.24.5 (2021-12-29)
+Bugfixes
+^^^^^^^^
+
+- Fixed an issue where ``usedevelop`` would cause an invocation error if setup.py does not exist. -- by :user:`VincentVanlaer`
+  `#2197 <https://github.com/tox-dev/tox/issues/2197>`_
+
+
 v3.24.4 (2021-09-16)
 --------------------
 
