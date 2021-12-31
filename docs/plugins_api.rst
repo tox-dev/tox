@@ -73,6 +73,9 @@ config
 .. autoclass:: tox.config.types.Command
    :members:
 
+.. autoclass:: tox.config.loader.convert.Factory
+   :members:
+
 environments
 ------------
 .. autoclass:: tox.tox_env.api.ToxEnv
@@ -135,4 +138,7 @@ session
    :members:
 
 .. autoclass:: tox.session.env_select.EnvSelector
+   :members:
+
+.. autoclass:: tox.tox_env.info.Info
    :members:

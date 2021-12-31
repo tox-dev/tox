@@ -12,7 +12,7 @@ from types import FrameType
 out = sys.stdout
 
 
-def handler(signum: signal.Signals, _: FrameType) -> None:  # noqa: U101
+def handler(signum: int, _: FrameType | None) -> None:  # noqa: U101
     _p(f"how about no signal {signum!r}")
 
 

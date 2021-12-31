@@ -223,7 +223,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def parse_known_args(  # type: ignore[override]
         self,
-        args: Sequence[str] | None,
+        args: Sequence[str] | None = None,
         namespace: Parsed | None = None,
     ) -> tuple[Parsed, list[str]]:
         if args is None:

@@ -37,7 +37,7 @@ def show_outcome(outcome: Outcome | None) -> None:
         print("done show outcome", file=sys.stderr)
 
 
-def handler(s: signal.Signals, f: FrameType) -> None:
+def handler(s: int, f: FrameType | None) -> None:
     logging.info(f"signal {s} at {f}")
     global interrupt_done
     if interrupt_done is False:  # pragma: no branch

@@ -11,6 +11,8 @@ from typing import Any, Iterator
 
 
 class Info:
+    """Stores metadata about the tox environment."""
+
     def __init__(self, path: Path) -> None:
         self._path = path / ".tox-info.json"
         try:
@@ -29,7 +31,14 @@ class Info:
         section: str,
         sub_section: str | None = None,
     ) -> Iterator[tuple[bool, Any | None]]:
-        """Cache"""
+        """
+        Compare new information with the existing one and update if differs.
+
+        :param value: the value stored
+        :param section: the primary key of the information
+        :param sub_section: the secondary key of the information
+        :return: a tuple where the first value is if it differs and the second is the old value
+        """
         old = self._content.get(section)
         if sub_section is not None and old is not None:
             old = old.get(sub_section)
