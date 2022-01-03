@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import dataclass
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, cast
 
 from tox.config.loader.str_convert import StrConvert
 from tox.tox_env.api import ToxEnvCreateArgs
@@ -12,6 +12,7 @@ from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
 
 from ..config.loader.memory import MemoryLoader
+from ..config.types import EnvList
 from ..report import HandledError
 from ..tox_env.errors import Skip
 from ..tox_env.package import PackageToxEnv
@@ -58,18 +59,33 @@ def register_env_select_flags(
     default: CliEnv | None,
     multiple: bool = True,
     group_only: bool = False,
-) -> None:
-    if not multiple:
-        parser.add_argument("-e", dest="env", help="environment to run", default=default, type=CliEnv)
-        return
+) -> ArgumentParser:
+    """
+    Register environment selection flags.
 
-    if not group_only:
+    :param parser: the parser to register to
+    :param default: the default value for env selection
+    :param multiple: allow selecting multiple environments
+    :param group_only:
+    :return:
+    """
+    if multiple:
         group = parser.add_argument_group("select target environment(s)")
-        excl = group.add_mutually_exclusive_group(required=False)
-        help_msg = "enumerate (ALL -> all environments, not set -> use <env_list> from config)"
-        excl.add_argument("-e", dest="env", help=help_msg, default=default, type=CliEnv)
-        # excl.add_argument("-m", dest="labels", metavar="label", help="labels to run", default=[], type=str, nargs="+")
-        # excl.add_argument("-f", dest="factors", help="factors to run", default=[], type=str, nargs="+")
+        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # type: ignore
+    else:
+        add_to = parser
+    if not group_only:
+        if multiple:
+            help_msg = "enumerate (ALL -> all environments, not set -> use <env_list> from config)"
+        else:
+            help_msg = "environment to run"
+        add_to.add_argument("-e", dest="env", help=help_msg, default=default, type=CliEnv)
+    if multiple:
+        help_msg = "labels to evaluate"
+        add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")
+        help_msg = "factors to evaluate"
+        add_to.add_argument("-f", dest="factors", metavar="factor", help=help_msg, default=[], type=str, nargs="+")
+    return add_to
 
 
 @dataclass
@@ -98,6 +114,8 @@ class EnvSelector:
         self._journal = self._state._journal
         self._provision: None | tuple[bool, str, MemoryLoader] = None
 
+        self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
+
     def _collect_names(self) -> Iterator[tuple[Iterable[str], bool]]:
         """:return: sources of tox environments defined with name and if is marked as target to run"""
         if self._provision is not None:  # pragma: no branch
@@ -110,6 +128,9 @@ class EnvSelector:
         else:
             yield self._cli_envs, True
         yield self._state.conf, everything_active
+        label_envs = dict.fromkeys(chain.from_iterable(self._state.conf.core["labels"].values()))
+        if label_envs:
+            yield label_envs.keys(), False
 
     def _env_name_to_active(self) -> dict[str, bool]:
         env_name_to_active_map = {}
@@ -117,9 +138,11 @@ class EnvSelector:
             for name in a_collection:
                 if name not in env_name_to_active_map:
                     env_name_to_active_map[name] = is_active
-        # if no active environment is defined fallback to py
-        if self.on_empty_fallback_py and not any(env_name_to_active_map.values()):
-            env_name_to_active_map["py"] = True
+        # for factor/label selection update the active flag
+        if not (self._state.conf.options.labels or self._state.conf.options.factors):
+            # if no active environment is defined fallback to py
+            if self.on_empty_fallback_py and not any(env_name_to_active_map.values()):
+                env_name_to_active_map["py"] = True
         return env_name_to_active_map
 
     @property
@@ -183,8 +206,23 @@ class EnvSelector:
             # reorder to as defined rather as found
             order = chain(env_name_to_active, (i for i in self._defined_envs_ if i not in env_name_to_active))
             self._defined_envs_ = {name: self._defined_envs_[name] for name in order if name in self._defined_envs_}
-
+            self._mark_active()
         return self._defined_envs_
+
+    def _mark_active(self):
+        labels, factors = set(self._state.conf.options.labels), set(self._state.conf.options.factors)
+        if labels or factors:
+            for env_info in self._defined_envs_.values():
+                env_info.is_active = False  # if any was selected reset
+            if labels:
+                for label in labels:
+                    for env_name in self._state.conf.core["labels"].get(label, []):
+                        self._defined_envs_[env_name].is_active = True
+                for env_info in self._defined_envs_.values():
+                    if labels.intersection(env_info.env.conf["labels"]):
+                        env_info.is_active = True
+            if self._state.conf.options.factors:  # if matches mark it active
+                raise NotImplementedError
 
     def _build_run_env(self, name: str) -> RunToxEnv | None:
         if self._provision is not None and self._provision[0] is False and name == self._provision[1]:

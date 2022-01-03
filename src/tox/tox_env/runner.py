@@ -34,12 +34,6 @@ class RunToxEnv(ToxEnv, ABC):
             post_process=ensure_one_line,
         )
         self.conf.add_config(
-            keys=["labels"],
-            of_type=List[str],
-            default=[],
-            desc="labels attached to the tox environment",
-        )
-        self.conf.add_config(
             "depends",
             of_type=EnvList,
             desc="tox environments that this environment depends on (must be run after those)",
