@@ -25,4 +25,4 @@ def test_re_raises_on_unexpected_exit(mocker: MockerFixture) -> None:
 def test_custom_work_dir(tox_project: ToxProjectCreator) -> None:
     project = tox_project({})
     outcome = project.run("c", "--workdir", str(project.path.parent))
-    assert outcome.state.options.work_dir == project.path.parent
+    assert outcome.state.conf.options.work_dir == project.path.parent

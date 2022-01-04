@@ -8,19 +8,16 @@ import logging
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, cast
+from typing import TYPE_CHECKING, List, cast
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 from tox.config.loader.memory import MemoryLoader
-from tox.config.main import Config
-from tox.config.sets import CoreConfigSet
 from tox.execute.api import StdinSource
 from tox.plugin import impl
 from tox.report import HandledError
-from tox.session.state import State
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.runner import PythonRun
@@ -30,6 +27,9 @@ if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import PackageNotFoundError, distribution
 else:  # pragma: no cover (py38+)
     from importlib_metadata import PackageNotFoundError, distribution
+
+if TYPE_CHECKING:
+    from tox.session.state import State
 
 
 @impl
@@ -57,16 +57,15 @@ def tox_add_option(parser: ArgumentParser) -> None:
     )
 
 
-@impl
-def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:  # noqa: U100
-    core_conf.add_config(
+def provision(state: State) -> int | bool:
+    state.conf.core.add_config(
         keys=["min_version", "minversion"],
         of_type=Version,
         # do not include local version specifier (because it's not allowed in version spec per PEP-440)
         default=Version(current_version.split("+")[0]),
         desc="Define the minimal tox version required to run",
     )
-    core_conf.add_config(
+    state.conf.core.add_config(
         keys="provision_tox_env",
         of_type=str,
         default=".tox",
@@ -74,29 +73,42 @@ def tox_add_core_config(core_conf: CoreConfigSet, config: Config) -> None:  # no
     )
 
     def add_tox_requires_min_version(requires: list[Requirement]) -> list[Requirement]:
-        min_version: Version = core_conf["min_version"]
+        min_version: Version = state.conf.core["min_version"]
         requires.append(Requirement(f"tox >= {min_version.public}"))
         return requires
 
-    core_conf.add_config(
+    state.conf.core.add_config(
         keys="requires",
         of_type=List[Requirement],
         default=[],
         desc="Name of the virtual environment used to provision a tox.",
         post_process=add_tox_requires_min_version,
     )
-
-
-def provision(state: State) -> int | bool:
     requires: list[Requirement] = state.conf.core["requires"]
     missing = _get_missing(requires)
+
+    deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
+    loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
+        base=[],  # disable inheritance for provision environments
+        package="skip",  # no packaging for this please
+        # use our own dependency specification
+        deps=PythonDeps("\n".join(str(r) for r in requires), root=state.conf.core["tox_root"]),
+        pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
+        recreate=state.conf.options.recreate and not state.conf.options.no_recreate_provision,
+    )
+    provision_tox_env: str = state.conf.core["provision_tox_env"]
+    state.envs._mark_provision(bool(missing), provision_tox_env, loader)
+
+    from tox.plugin.manager import MANAGER
+
+    MANAGER.tox_add_core_config(state.conf.core, state)
+
     if not missing:
         return False
 
-    deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
     miss_msg = f"is missing [requires (has)]: {deps}"
 
-    no_provision: bool | str = state.options.no_provision
+    no_provision: bool | str = state.conf.options.no_provision
     if no_provision:
         msg = f"provisioning explicitly disabled within {sys.executable}, but {miss_msg}"
         if isinstance(no_provision, str):
@@ -109,7 +121,7 @@ def provision(state: State) -> int | bool:
         raise HandledError(msg)
 
     logging.warning("will run in automatically provisioned tox, host %s %s", sys.executable, miss_msg)
-    return run_provision(requires, state)
+    return run_provision(provision_tox_env, state)
 
 
 def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | None]]:
@@ -126,19 +138,8 @@ def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | N
     return missing
 
 
-def run_provision(deps: list[Requirement], state: State) -> int:
-    """ """
-    loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
-        base=[],  # disable inheritance for provision environments
-        package="skip",  # no packaging for this please
-        # use our own dependency specification
-        deps=PythonDeps("\n".join(str(d) for d in deps), root=state.conf.core["tox_root"]),
-        pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
-        recreate=state.options.recreate and not state.options.no_recreate_provision,
-    )
-    provision_tox_env: str = state.conf.core["provision_tox_env"]
-    state.conf.get_env(provision_tox_env, loaders=[loader])
-    tox_env = cast(PythonRun, state.tox_env(provision_tox_env))
+def run_provision(name: str, state: State) -> int:
+    tox_env: PythonRun = cast(PythonRun, state.envs[name])
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     try:

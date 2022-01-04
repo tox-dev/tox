@@ -3,17 +3,17 @@ from __future__ import annotations
 import os
 from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, Iterator, Sequence, TypeVar
 
 from tox.config.loader.api import Loader, OverrideMap
 
-from ..session.common import CliEnv
 from .loader.section import Section
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 from .source import Source
 
 if TYPE_CHECKING:
     from .cli.parser import Parsed
+
 
 T = TypeVar("T", bound=ConfigSet)
 
@@ -29,6 +29,7 @@ class Config:
         pos_args: Sequence[str] | None,
         work_dir: Path,
     ) -> None:
+
         self._pos_args = None if pos_args is None else tuple(pos_args)
         self._work_dir = work_dir
         self._root = root
@@ -41,9 +42,6 @@ class Config:
         self._src = config_source
         self._key_to_conf_set: dict[tuple[str, str], ConfigSet] = OrderedDict()
         self._core_set: CoreConfigSet | None = None
-
-    def register_config_set(self, name: str, env_config_set: EnvConfigSet) -> None:  # noqa: U100
-        raise NotImplementedError  # this should be overwritten by the state object before called
 
     def pos_args(self, to_path: Path | None) -> tuple[str, ...] | None:
         """
@@ -116,9 +114,6 @@ class Config:
         core = CoreConfigSet(self, core_section, self._root, self.src_path)
         core.loaders.extend(self._src.get_loaders(core_section, base=[], override_map=self._overrides, conf=core))
         self._core_set = core
-        from tox.plugin.manager import MANAGER
-
-        MANAGER.tox_add_core_config(core, self)
         return core
 
     def get_section_config(
@@ -128,7 +123,6 @@ class Config:
         of_type: type[T],
         for_env: str | None,
         loaders: Sequence[Loader[Any]] | None = None,
-        initialize: Callable[[T], None] | None = None,
     ) -> T:
         key = section.key, for_env or ""
         try:
@@ -140,8 +134,6 @@ class Config:
                 conf_set.loaders.append(loader)
             if loaders is not None:
                 conf_set.loaders.extend(loaders)
-            if initialize is not None:
-                initialize(conf_set)
             return conf_set
 
     def get_env(
@@ -165,33 +157,12 @@ class Config:
             of_type=EnvConfigSet,
             for_env=item,
             loaders=loaders,
-            initialize=lambda e: self.register_config_set(item, e),
         )
-        from tox.plugin.manager import MANAGER
-
-        MANAGER.tox_add_env_config(conf_set, self)
         return conf_set
 
-    def env_list(self, everything: bool = False) -> Iterator[str]:
-        """
-        :param everything: if ``True`` returns all discovered tox environment names from the configuration
-
-        :return: Return the tox environment names, by default only the default env list entries.
-        """
-        fallback_env = "py"
-        use_env_list: CliEnv | None = getattr(self._options, "env", None)
-        if everything or (use_env_list is not None and use_env_list.all):
-            _at = 0
-            for _at, env in enumerate(self, start=1):
-                yield env
-            if _at == 0:  # if we discovered no other env, inject the default
-                yield fallback_env
-            return
-        if use_env_list is not None and use_env_list.use_default_list:
-            use_env_list = self.core["env_list"]
-        if use_env_list is None or bool(use_env_list) is False:
-            use_env_list = CliEnv([fallback_env])
-        yield from use_env_list
+    def clear_env(self, name: str) -> None:
+        section, _ = self._src.get_tox_env_section(name)
+        del self._key_to_conf_set[(section.key, name)]
 
 
 ___all__ = [

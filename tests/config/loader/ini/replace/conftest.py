@@ -27,8 +27,14 @@ def replace_one(tmp_path: Path) -> ReplaceOne:
         tox_ini_file = tmp_path / "tox.ini"
         tox_ini_file.write_text(f"[testenv:py]\nenv={conf}\n")
         tox_ini = ToxIni(tox_ini_file)
-        config = Config(tox_ini, options=Parsed(override=[]), root=tmp_path, pos_args=pos_args, work_dir=tmp_path)
-        config.register_config_set = lambda name, env_config_set: None  # type: ignore[assignment] # noqa: U100
+
+        config = Config(
+            tox_ini,
+            options=Parsed(override=[]),
+            root=tmp_path,
+            pos_args=pos_args,
+            work_dir=tmp_path,
+        )
         loader = config.get_env("py").loaders[0]
         args = ConfigLoadArgs(chain=[], name="a", env_name="a")
         return loader.load(key="env", of_type=str, conf=config, factory=None, args=args)

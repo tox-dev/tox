@@ -32,3 +32,8 @@ def test_exec(tox_project: ToxProjectCreator, exit_code: int) -> None:
     else:
         outcome.assert_success()
     assert sys.version in outcome.out
+
+
+def test_exec_help(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("e", "-h")
+    outcome.assert_success()

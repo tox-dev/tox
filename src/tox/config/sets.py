@@ -166,6 +166,8 @@ class CoreConfigSet(ConfigSet):
         self._root = root
         self._src_path = src_path
         super().__init__(conf, section=section, env_name=None)
+        desc = "define environments to automatically run"
+        self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
 
     def register_config(self) -> None:
         self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=self._src_path)
@@ -191,12 +193,6 @@ class CoreConfigSet(ConfigSet):
             of_type=Path,
             default=lambda conf, _: cast(Path, self["tox_root"]) / ".temp",  # noqa: U100, U101
             desc="temporary directory cleaned at start",
-        )
-        self.add_config(
-            keys=["env_list", "envlist"],
-            of_type=EnvList,
-            default=EnvList([]),
-            desc="define environments to automatically run",
         )
 
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:  # noqa: U100

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from tox.session.common import CliEnv
+from tox.session.env_select import CliEnv
 
 
 @pytest.mark.parametrize(

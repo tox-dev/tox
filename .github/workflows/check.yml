@@ -15,11 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - uses: pre-commit/action@v2.0.0
+      - uses: pre-commit/action@v2.0.3
 
   test:
-    name: test ${{ matrix.py }} - ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}-latest
+    name: test ${{ matrix.py }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,9 +29,9 @@ jobs:
           - "3.8"
           - "3.7"
         os:
-          - Ubuntu
-          - Windows
-          - MacOs
+          - ubuntu-20.04
+          - windows-2022
+          - macos-11
     steps:
       - name: Setup python for tox
         uses: actions/setup-python@v2
@@ -78,21 +78,21 @@ jobs:
           name: ${{ matrix.py }} - ${{ matrix.os }}
 
   check:
-    name: check ${{ matrix.tox_env }} - ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}-latest
+    name: tox env ${{ matrix.tox_env }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - Windows
-          - Ubuntu
         tox_env:
           - type
           - dev
           - docs
           - pkg_meta
+        os:
+          - ubuntu-20.04
+          - windows-2022
         exclude:
-          - { os: windows, tox_env: pkg_meta }
+          - { os: windows-2022, tox_env: pkg_meta }
     steps:
       - uses: actions/checkout@v2
         with:
@@ -111,7 +111,7 @@ jobs:
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     needs: [check, test, pre_commit]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Setup python to build package
         uses: actions/setup-python@v2

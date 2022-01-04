@@ -12,7 +12,7 @@ from pytest_mock import MockerFixture
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
-from tox.session.common import CliEnv
+from tox.session.env_select import CliEnv
 from tox.session.state import State
 
 
@@ -56,14 +56,14 @@ def test_ini_empty(
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
     to.write_text(content)
     mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
-    parsed, handlers, _, __, ___ = get_options("r")
-    assert vars(parsed) == default_options
-    assert parsed.verbosity == 2
-    assert handlers == core_handlers
+    options = get_options("r")
+    assert vars(options.parsed) == default_options
+    assert options.parsed.verbosity == 2
+    assert options.cmd_handlers == core_handlers
 
     to.unlink()
-    missing_parsed, ____, _, __, ___ = get_options("r")
-    assert vars(missing_parsed) == vars(parsed)
+    missing_options = get_options("r")
+    assert vars(missing_options.parsed) == vars(options.parsed)
 
 
 @pytest.fixture()
@@ -92,12 +92,14 @@ def default_options(tmp_path: Path) -> dict[str, Any]:
         "work_dir": None,
         "root_dir": None,
         "config_file": (tmp_path / "tox.ini").absolute(),
+        "factors": [],
+        "labels": [],
     }
 
 
 def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dict[str, Callable[[State], int]]) -> None:
-    parsed, handlers, _, __, ___ = get_options("p")
-    assert vars(parsed) == {
+    options = get_options("p")
+    assert vars(options.parsed) == {
         "colored": "yes",
         "command": "p",
         "default_runner": "virtualenv",
@@ -124,9 +126,11 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dic
         "work_dir": None,
         "root_dir": None,
         "config_file": exhaustive_ini,
+        "factors": [],
+        "labels": [],
     }
-    assert parsed.verbosity == 4
-    assert handlers == core_handlers
+    assert options.parsed.verbosity == 4
+    assert options.cmd_handlers == core_handlers
 
 
 def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
@@ -148,7 +152,7 @@ def test_bad_cli_ini(
     mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
-    parsed, _, __, ___, ____ = get_options("r")
+    options = get_options("r")
     msg = (
         "PermissionError(13, 'Permission denied')"
         if sys.platform == "win32"
@@ -156,7 +160,7 @@ def test_bad_cli_ini(
     )
     assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
     default_options["config_file"] = tmp_path
-    assert vars(parsed) == default_options
+    assert vars(options.parsed) == default_options
 
 
 def test_bad_option_cli_ini(

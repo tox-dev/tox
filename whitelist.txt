@@ -59,7 +59,6 @@ doc2path
 docname
 docutils
 dotall
-dpkg
 e3
 e4
 ebadf
@@ -114,10 +113,8 @@ intersphinx
 isalpha
 isatty
 isspace
+issubset
 iterdir
-iwgrp
-iwoth
-iwusr
 kernel32
 levelname
 levelno
@@ -161,7 +158,6 @@ prog
 proj
 psutil
 purelib
-py37
 py38
 py39
 pygments
@@ -219,13 +215,10 @@ trylast
 tty
 typehints
 typeshed
-unbuffered
 unescaped
-unimported
 unittest
 unlink
 unregister
-untyped
 url2pathname
 usedevelop
 usefixtures

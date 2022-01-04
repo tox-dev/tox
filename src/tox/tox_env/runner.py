@@ -20,6 +20,7 @@ class RunToxEnv(ToxEnv, ABC):
         self.package_env: PackageToxEnv | None = None
         self._packages: list[Package] = []
         super().__init__(create_args)
+        self._package_envs: list[PackageToxEnv | Exception] | None = None
 
     def register_config(self) -> None:
         def ensure_one_line(value: str) -> str:
@@ -81,6 +82,16 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
+
+    def _teardown(self) -> None:
+        super()._teardown()
+        self._call_pkg_envs("teardown_env", self.conf)
+
+    def interrupt(self) -> None:
+        super().interrupt()
+        self._call_pkg_envs("interrupt")
+
+    def get_package_env_types(self) -> tuple[str, str] | None:
         has_external_pkg = getattr(self.options, "install_pkg", None) is not None
         if self._register_package_conf() or has_external_pkg:
             has_external_pkg = has_external_pkg or self.conf["package"] == "external"
@@ -102,19 +113,8 @@ class RunToxEnv(ToxEnv, ABC):
                 desc="tox package type used to generate the package",
                 value=self._external_pkg_tox_env_type if is_external else self._package_tox_env_type,
             )
-
-    def _teardown(self) -> None:
-        super()._teardown()
-        self._call_pkg_envs("teardown_env", self.conf)
-
-    def interrupt(self) -> None:
-        super().interrupt()
-        self._call_pkg_envs("interrupt")
-
-    def get_package_env_types(self) -> tuple[str, str] | None:
-        if "package_env" not in self.conf:
-            return None
-        return self.conf["package_env"], self.conf["package_tox_env_type"]
+            return self.conf["package_env"], self.conf["package_tox_env_type"]
+        return None
 
     def _call_pkg_envs(self, method_name: str, *args: Any) -> None:
         for package_env in self.package_envs:
@@ -209,3 +209,7 @@ class RunToxEnv(ToxEnv, ABC):
         if self.package_env is not None:
             yield self.package_env
             yield from self.package_env.child_pkg_envs(self.conf)
+
+    def mark_active(self) -> None:
+        for pkg_env in self.package_envs:
+            pkg_env.mark_active_run_env(self)

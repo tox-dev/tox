@@ -195,6 +195,19 @@ Core
 
     Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
 
+.. conf::
+   :keys: labels
+   :default: <empty dictionary>
+
+   A mapping of label names to environments it applies too. For example:
+
+   .. code-block:: ini
+
+      [tox]
+      labels =
+           test = py310, py39
+           static = flake8, mypy
+
 Python language core options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -303,6 +316,20 @@ Base options
    it's located outside of the tox environment. For example: if you use the unix make command for running tests you can list
    ``allowlist_externals=make`` or ``allowlist_externals=/usr/bin/make``. If you want to allow all external commands
    you can use ``allowlist_externals=*`` which will match all commands (not recommended).
+
+.. conf::
+   :keys: labels
+   :default: <empty list>
+   :ref_suffix: env
+
+   A list of labels to apply for this environment. For example:
+
+   .. code-block:: ini
+
+      [testenv]
+      labels = test, core
+      [testenv:flake8]
+      labels = mypy
 
 Execute
 ~~~~~~~

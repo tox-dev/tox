@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Iterator, cast
+from typing import TYPE_CHECKING, Any, Iterator, TypeVar, cast
 
-from tox.config.loader.convert import T
-from tox.config.main import Config
 from tox.config.types import Command, EnvList
 
 from .api import Loader
 from .section import Section
 from .str_convert import StrConvert
+
+if TYPE_CHECKING:
+    from tox.config.main import Config
+T = TypeVar("T")
 
 
 class MemoryLoader(Loader[Any]):

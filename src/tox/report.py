@@ -94,7 +94,7 @@ class NamedBytesIO(BytesIO):
         self.name: str = name
 
 
-class ToxHandler(logging.StreamHandler):
+class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic but at runtime doesn't take a type arg
     # """Controls tox output."""
 
     def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:
@@ -217,7 +217,7 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:
         logger = logging.getLogger(name)
         logger.filters.clear()
         logger.addFilter(lower_info_level)
-    out_err: OutErr = (sys.stdout, sys.stderr)  # type: ignore[arg-type,assignment]
+    out_err: OutErr = (sys.stdout, sys.stderr)  # type: ignore[assignment]
     handler = ToxHandler(level, is_colored, out_err)
     LOGGER.addHandler(handler)
 

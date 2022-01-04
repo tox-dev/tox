@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Sequence, cast
+from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Sequence, Set, cast
 
 from tox.config.main import Config
 from tox.config.set_env import SetEnv
@@ -68,7 +68,10 @@ class ToxEnv(ABC):
         self._log_id = 0
 
         self.register_config()
-        self.cache = Info(self.env_dir)
+
+    @property
+    def cache(self) -> Info:
+        return Info(self.env_dir)
 
     @staticmethod
     @abstractmethod
@@ -93,6 +96,12 @@ class ToxEnv(ABC):
             keys=["env_name", "envname"],
             desc="the name of the tox environment",
             value=self.conf.name,
+        )
+        self.conf.add_config(
+            keys=["labels"],
+            of_type=Set[str],
+            default=set(),
+            desc="labels attached to the tox environment",
         )
         self.conf.add_config(
             keys=["env_dir", "envdir"],

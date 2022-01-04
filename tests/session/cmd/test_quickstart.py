@@ -45,3 +45,8 @@ def test_quickstart_refuse(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("q", str(project.path))
     outcome.assert_failed(code=1)
     assert "tox.ini already exist, refusing to overwrite" in outcome.out
+
+
+def test_quickstart_help(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("q", "-h")
+    outcome.assert_success()

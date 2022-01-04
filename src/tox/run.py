@@ -8,8 +8,6 @@ import time
 from typing import Sequence
 
 from tox.config.cli.parse import get_options
-from tox.config.main import Config
-from tox.provision import provision
 from tox.report import HandledError, ToxHandler
 from tox.session.state import State
 
@@ -37,11 +35,12 @@ def run(args: Sequence[str] | None = None) -> None:
 
 def main(args: Sequence[str]) -> int:
     state = setup_state(args)
+    from tox.provision import provision
+
     result = provision(state)
     if result is not False:
         return result
-    command = state.options.command
-    handler = state.cmd_handlers[command]
+    handler = state._options.cmd_handlers[state.conf.options.command]
     result = handler(state)
     return result
 
@@ -50,10 +49,8 @@ def setup_state(args: Sequence[str]) -> State:
     """Setup the state object of this run."""
     start = time.monotonic()
     # parse CLI arguments
-    parsed, handlers, pos_args, log_handler, source = get_options(*args)
-    parsed.start = start
-    # parse configuration file
-    config = Config.make(parsed, pos_args, source)
+    options = get_options(*args)
+    options.parsed.start = start
     # build tox environment config objects
-    state = State(config, (parsed, handlers), args, log_handler)
+    state = State(options, args)
     return state

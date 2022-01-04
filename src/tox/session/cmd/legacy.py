@@ -7,9 +7,9 @@ from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.parallel import OFF_VALUE, parallel_flags, run_parallel
 from tox.session.cmd.run.sequential import run_sequential
-from tox.session.common import env_list_flag
 from tox.session.state import State
 
+from ..env_select import CliEnv, register_env_select_flags
 from .devenv import devenv
 from .list_env import list_env
 from .show_config import show_config
@@ -48,7 +48,7 @@ def tox_add_option(parser: ToxParser) -> None:
         default=None,
         of_type=Path,
     )
-    env_list_flag(our)
+    register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="legacy")
     parallel_flags(our, default_parallel=OFF_VALUE)
     our.add_argument(
@@ -88,12 +88,13 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def legacy(state: State) -> int:
-    option = state.options
+    option = state.conf.options
     if option.show_config:
-        state.options.list_keys_only = []
-        state.options.show_core = True
+        option.list_keys_only = []
+        option.show_core = True
         return show_config(state)
     if option.list_envs or option.list_envs_all:
+        state.envs.on_empty_fallback_py = False
         option.list_no_description = option.verbosity <= DEFAULT_VERBOSITY
         option.list_default_only = not option.list_envs_all
         option.show_core = False

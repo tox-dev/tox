@@ -21,7 +21,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     result = project.run("c", "-e", name, "--core", "--", "magic")
     state = result.state
     assert state.args == ("c", "-e", name, "--core", "--", "magic")
-    outcome = list(state.conf.env_list(everything=True))
+    outcome = list(state.envs.iter(only_active=False))
     assert outcome == [name]
     monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
     parser = ConfigParser()
@@ -211,3 +211,8 @@ def test_show_config_timeout_custom(tox_project: ToxProjectCreator) -> None:
     result = project.run("c", "-e", "py", "-k", "suicide_timeout", "interrupt_timeout", "terminate_timeout")
     expected = "[testenv:py]\nsuicide_timeout = 1.0\ninterrupt_timeout = 2.222\nterminate_timeout = 3.0\n"
     assert result.out == expected
+
+
+def test_show_config_help(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("c", "-h")
+    outcome.assert_success()

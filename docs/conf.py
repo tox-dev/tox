@@ -142,13 +142,16 @@ def setup(app: Sphinx) -> None:
                 "tox.tox_env.installer.T": "typing.TypeVar",
                 "ToxParserT": "typing.TypeVar",
                 "_Section": "Section",
+                "ArgumentParser": "argparse.ArgumentParser",
+                "Factory": "tox.config.loader.convert.Factory",
             }
             if target in mapping:
+                if target == "Factory":
+                    type = "attr"
                 node["reftarget"] = mapping[target]
-            if target == "_Section":
-                target = "Section"
-                contnode = Text(target, target)
-
+                if target == "_Section":
+                    target = "Section"
+                    contnode = Text(target, target)
             return super().resolve_xref(env, fromdocname, builder, type, target, node, contnode)
 
     app.connect("autodoc-skip-member", skip_member)

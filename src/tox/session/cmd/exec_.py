@@ -12,7 +12,7 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.sequential import run_sequential
-from tox.session.common import CliEnv, env_list_flag
+from tox.session.env_select import CliEnv, register_env_select_flags
 from tox.session.state import State
 
 
@@ -20,20 +20,21 @@ from tox.session.state import State
 def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("exec", ["e"], "execute an arbitrary command within a tox environment", exec_)
     our.epilog = "For example: tox exec -e py39 -- python --version"
-    env_list_flag(our, default=CliEnv("py"), multiple=False)
+    register_env_select_flags(our, default=CliEnv("py"), multiple=False)
     env_run_create_flags(our, mode="exec")
 
 
 def exec_(state: State) -> int:
-    env_list = list(state.conf.env_list(everything=False))
-    if len(env_list) != 1:
-        raise HandledError(f"exactly one target environment allowed in exec mode but found {', '.join(env_list)}")
+    envs = list(state.envs.iter())
+    if len(envs) != 1:
+        raise HandledError(f"exactly one target environment allowed in exec mode but found {', '.join(envs)}")
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         commands_pre=[],
         commands=[],
         commands_post=[],
     )
-    conf = state.conf.get_env(env_list[0], loaders=[loader])
+    conf = state.envs[envs[0]].conf
+    conf.loaders.insert(0, loader)
     to_path: Path | None = conf["change_dir"] if conf["args_are_paths"] else None
     pos_args = state.conf.pos_args(to_path)
     if not pos_args:

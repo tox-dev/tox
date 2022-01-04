@@ -4,12 +4,12 @@ from typing import Any, Callable, TypeVar, cast
 
 import pluggy
 
-from tox.config.main import Config
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.tox_env.register import ToxEnvRegister
 
 from ..config.cli.parser import ToxParser
 from ..execute import Outcome
+from ..session.state import State
 from ..tox_env.api import ToxEnv
 from . import NAME
 
@@ -44,22 +44,22 @@ def tox_add_option(parser: ToxParser) -> None:  # noqa: U100
 
 
 @_spec
-def tox_add_core_config(core_conf: ConfigSet, config: Config) -> None:  # noqa: U100
+def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: U100
     """
     Called when the core configuration is built for a tox environment.
 
     :param core_conf: the core configuration object
-    :param config: the global tox config object
+    :param state: the global tox state object
     """
 
 
 @_spec
-def tox_add_env_config(env_conf: EnvConfigSet, config: Config) -> None:  # noqa: U100
+def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: U100
     """
     Called when configuration is built for a tox environment.
 
     :param env_conf: the core configuration object
-    :param config: the global tox config object
+    :param state: the global tox state object
     """
 
 

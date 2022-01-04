@@ -54,12 +54,12 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
         with monkeypatch.context() as context:
             context.chdir(tmp_path)
         source = discover_source(config_file, None)
+
         config = Config.make(
             Parsed(work_dir=dest, override=override or [], config_file=config_file, root_dir=None),
             pos_args=[],
             source=source,
         )
-        config.register_config_set = lambda name, env_config_set: None  # type: ignore[assignment] # noqa: U100
         return config
 
     return func

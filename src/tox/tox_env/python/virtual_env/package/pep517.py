@@ -74,12 +74,12 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
-        self.root: Path = self.conf["package_root"]
-        self._frontend_private: Pep517VirtualEnvFrontend | None = None
+        self._frontend_: Pep517VirtualEnvFrontend | None = None
         self.builds: set[str] = set()
         self._distribution_meta: PathDistribution | None = None
         self._package_dependencies: list[Requirement] | None = None
         self._pkg_lock = RLock()  # can build only one package at a time
+        self.root = self.conf["package_root"]
 
     @staticmethod
     def id() -> str:
@@ -87,9 +87,9 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     @property
     def _frontend(self) -> Pep517VirtualEnvFrontend:
-        if self._frontend_private is None:
-            self._frontend_private = Pep517VirtualEnvFrontend(self.root, self)
-        return self._frontend_private
+        if self._frontend_ is None:
+            self._frontend_ = Pep517VirtualEnvFrontend(self.root, self)
+        return self._frontend_
 
     def register_config(self) -> None:
         super().register_config()
