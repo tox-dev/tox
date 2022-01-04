@@ -4,6 +4,42 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0a10 (2022-01-04)
+----------------------
+
+Features - 4.0.0a10
+~~~~~~~~~~~~~~~~~~~
+- Support for grouping environment values together by applying labels to them either at :ref:`core <labels>` and
+  :ref:`environment <labels-env>` level, and allow selecting them via the :ref:`-m <tox-run--m>` flag from the CLI - by
+  :user:`gaborbernat`. (`#238 <https://github.com/tox-dev/tox/issues/238>`_)
+- Support for environment files within the :ref:`set_env` configuration via the ``file|`` prefix - by :user:`gaborbernat`. (`#1938 <https://github.com/tox-dev/tox/issues/1938>`_)
+- Support for ``--no-provision`` flag - by :user:`gaborbernat`. (`#1951 <https://github.com/tox-dev/tox/issues/1951>`_)
+- Missing ```pyproject.toml`` or ``setup.py`` file at the tox root folder without the ``--install-pkg`` flag assumes no
+  packaging - by :user:`gaborbernat`. (`#1964 <https://github.com/tox-dev/tox/issues/1964>`_)
+- Add ``external`` package type for :ref:`package` (see :ref:`external-package-builder`), and extract package dependencies
+  for packages passed in via :ref:`--installpkg <tox-run---installpkg>` - by :user:`gaborbernat`. (`#2204 <https://github.com/tox-dev/tox/issues/2204>`_)
+- Add support for rewriting script invocations that have valid shebang lines when the ``TOX_LIMITED_SHEBANG`` environment
+  variable is set and not empty - by :user:`gaborbernat`. (`#2208 <https://github.com/tox-dev/tox/issues/2208>`_)
+- Support for the ``--discover`` CLI flag - by :user:`gaborbernat`. (`#2245 <https://github.com/tox-dev/tox/issues/2245>`_)
+- Moved the python packaging logic into a dedicate package `pyproject-api <https://pypi.org/project/pyproject-api>`_ and
+  use it as a dependency - by :user:`gaborbernat`. (`#2274 <https://github.com/tox-dev/tox/issues/2274>`_)
+- Drop python 3.6 support - by :user:`gaborbernat`. (`#2275 <https://github.com/tox-dev/tox/issues/2275>`_)
+- Support for selecting target environments with a given factor via the :ref:`-m <tox-run--f>` CLI environment flag - by
+  :user:`gaborbernat`. (`#2290 <https://github.com/tox-dev/tox/issues/2290>`_)
+
+Bugfixes - 4.0.0a10
+~~~~~~~~~~~~~~~~~~~
+- Fix ``CTRL+C`` is not stopping the process on Windows - by :user:`gaborbernat`. (`#2159 <https://github.com/tox-dev/tox/issues/2159>`_)
+- Fix list/depends commands can create tox package environment as runtime environment and display an error message
+  - by :user:`gaborbernat`. (`#2234 <https://github.com/tox-dev/tox/issues/2234>`_)
+
+Deprecations and Removals - 4.0.0a10
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- ``tox_add_core_config`` and ``tox_add_env_config`` now take a ``state: State`` argument instead of a configuration one,
+  and ``Config`` not longer provides the ``envs`` property (instead users should migrate to ``State.envs``) - by
+  :user:`gaborbernat`. (`#2275 <https://github.com/tox-dev/tox/issues/2275>`_)
+
+
 v4.0.0a9 (2021-09-16)
 ---------------------
 

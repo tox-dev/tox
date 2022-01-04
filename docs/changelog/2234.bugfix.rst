@@ -1,2 +1,0 @@
-Fix list/depends commands can create tox package environment as runtime environment and display an error message
-- by :user:`gaborbernat`.

@@ -1,1 +1,0 @@
-Support for environment files within the :ref:`set_env` configuration via the ``file|`` prefix - by :user:`gaborbernat`.

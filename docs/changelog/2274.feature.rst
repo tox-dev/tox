@@ -1,2 +1,0 @@
-Moved the python packaging logic into a dedicate package `pyproject-api <https://pypi.org/project/pyproject-api>`_ and
-use it as a dependency - by :user:`gaborbernat`.

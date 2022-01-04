@@ -1,2 +1,0 @@
-Support for selecting target environments with a given factor via the :ref:`-m <tox-run--f>` CLI environment flag - by
-:user:`gaborbernat`.
