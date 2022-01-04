@@ -139,7 +139,7 @@ class EnvSelector:
                 if name not in env_name_to_active_map:
                     env_name_to_active_map[name] = is_active
         # for factor/label selection update the active flag
-        if not (self._state.conf.options.labels or self._state.conf.options.factors):
+        if not (getattr(self._state.conf.options, "labels", []) or getattr(self._state.conf.options, "factors", [])):
             # if no active environment is defined fallback to py
             if self.on_empty_fallback_py and not any(env_name_to_active_map.values()):
                 env_name_to_active_map["py"] = True
@@ -209,21 +209,6 @@ class EnvSelector:
             self._mark_active()
         return self._defined_envs_
 
-    def _mark_active(self):
-        labels, factors = set(self._state.conf.options.labels), set(self._state.conf.options.factors)
-        if labels or factors:
-            for env_info in self._defined_envs_.values():
-                env_info.is_active = False  # if any was selected reset
-            if labels:
-                for label in labels:
-                    for env_name in self._state.conf.core["labels"].get(label, []):
-                        self._defined_envs_[env_name].is_active = True
-                for env_info in self._defined_envs_.values():
-                    if labels.intersection(env_info.env.conf["labels"]):
-                        env_info.is_active = True
-            if self._state.conf.options.factors:  # if matches mark it active
-                raise NotImplementedError
-
     def _build_run_env(self, name: str) -> RunToxEnv | None:
         if self._provision is not None and self._provision[0] is False and name == self._provision[1]:
             return None
@@ -284,6 +269,25 @@ class EnvSelector:
         self._defined_envs_[name] = _ToxEnvInfo(pkg_env, is_active)
         self._manager.tox_add_env_config(pkg_conf, self._state)
         return pkg_env
+
+    def _mark_active(self) -> None:
+        labels = set(getattr(self._state.conf.options, "labels", []))
+        factors = set(getattr(self._state.conf.options, "factors", []))
+        assert self._defined_envs_ is not None
+        if labels or factors:
+            for env_info in self._defined_envs_.values():
+                env_info.is_active = False  # if any was selected reset
+            if labels:
+                for label in labels:
+                    for env_name in self._state.conf.core["labels"].get(label, []):
+                        self._defined_envs_[env_name].is_active = True
+                for env_info in self._defined_envs_.values():
+                    if labels.intersection(env_info.env.conf["labels"]):
+                        env_info.is_active = True
+            if self._state.conf.options.factors:  # if matches mark it active
+                for name, env_info in self._defined_envs_.items():
+                    if factors.issubset(set(name.split("-"))):
+                        env_info.is_active = True
 
     def __getitem__(self, item: str) -> RunToxEnv | PackageToxEnv:
         """

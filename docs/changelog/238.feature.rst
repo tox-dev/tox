@@ -1,0 +1,3 @@
+Support for grouping environment values together by applying labels to them either at :ref:`core <labels>` and
+:ref:`environment <labels-env>` level, and allow selecting them via the :ref:`-m <tox-run--m>` flag from the CLI - by
+:user:`gaborbernat`.

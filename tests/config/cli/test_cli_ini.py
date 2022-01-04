@@ -92,6 +92,8 @@ def default_options(tmp_path: Path) -> dict[str, Any]:
         "work_dir": None,
         "root_dir": None,
         "config_file": (tmp_path / "tox.ini").absolute(),
+        "factors": [],
+        "labels": [],
     }
 
 
@@ -124,6 +126,8 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dic
         "work_dir": None,
         "root_dir": None,
         "config_file": exhaustive_ini,
+        "factors": [],
+        "labels": [],
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers

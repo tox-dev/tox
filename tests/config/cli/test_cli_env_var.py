@@ -59,6 +59,8 @@ def test_verbose_no_test() -> None:
         "parallel_no_spinner": False,
         "pre": False,
         "index_url": [],
+        "factors": [],
+        "labels": [],
     }
 
 
@@ -114,6 +116,8 @@ def test_env_var_exhaustive_parallel_values(
         "work_dir": None,
         "root_dir": None,
         "config_file": None,
+        "factors": [],
+        "labels": [],
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers
