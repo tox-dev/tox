@@ -1,2 +1,0 @@
-Missing ```pyproject.toml`` or ``setup.py`` file at the tox root folder without the ``--install-pkg`` flag assumes no
-packaging - by :user:`gaborbernat`.

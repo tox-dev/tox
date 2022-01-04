@@ -1,2 +1,0 @@
-Add ``external`` package type for :ref:`package` (see :ref:`external-package-builder`), and extract package dependencies
-for packages passed in via :ref:`--installpkg <tox-run---installpkg>` - by :user:`gaborbernat`.
