@@ -24,7 +24,7 @@ Features - 4.0.0a10
 - Moved the python packaging logic into a dedicate package `pyproject-api <https://pypi.org/project/pyproject-api>`_ and
   use it as a dependency - by :user:`gaborbernat`. (`#2274 <https://github.com/tox-dev/tox/issues/2274>`_)
 - Drop python 3.6 support - by :user:`gaborbernat`. (`#2275 <https://github.com/tox-dev/tox/issues/2275>`_)
-- Support for selecting target environments with a given factor via the :ref:`-m <tox-run--f>` CLI environment flag - by
+- Support for selecting target environments with a given factor via the :ref:`-f <tox-run--f>` CLI environment flag - by
   :user:`gaborbernat`. (`#2290 <https://github.com/tox-dev/tox/issues/2290>`_)
 
 Bugfixes - 4.0.0a10
