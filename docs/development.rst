@@ -124,12 +124,6 @@ locally, run:
 The built documentation can be found in the ``.tox/docs_out`` folder and may be viewed by opening ``index.html`` within
 that folder.
 
-Release
-~~~~~~~
-
-tox's release schedule is tied to ``pip``, ``setuptools`` and ``wheel``. We bundle the latest version of these
-libraries so each time there's a new version of any of these, there will be a new tox release shortly afterwards
-(we usually wait just a few days to avoid pulling in any broken releases).
 
 Contributing
 -------------
@@ -219,11 +213,12 @@ initiate a vote among the existing maintainers.
     Upon becoming a maintainer, a person should be given access to various tox-related tooling across
     multiple platforms. These are noted here for future reference by the maintainers:
 
-    - GitHub Push Access
+    - GitHub Push Access (provides also CI administration capabilities)
     - PyPI Publishing Access
-    - CI Administration capabilities
-    - ReadTheDocs Administration capabilities
-    - The list below
+    - ReadTheDocs Administration capabilities (the root domain `tox.wiki <https://tox.wiki>`_ is currently owned and
+      maintained by the primary maintainer and author ``Bernat Gabor``; bought via `Porkbun <https://porkbun.com/>`_
+      -- reach out to him directly for any changes).
+
 
 .. _current-maintainers:
 

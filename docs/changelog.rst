@@ -14,7 +14,7 @@ Features - 4.0.0a10
   :user:`gaborbernat`. (`#238 <https://github.com/tox-dev/tox/issues/238>`_)
 - Support for environment files within the :ref:`set_env` configuration via the ``file|`` prefix - by :user:`gaborbernat`. (`#1938 <https://github.com/tox-dev/tox/issues/1938>`_)
 - Support for ``--no-provision`` flag - by :user:`gaborbernat`. (`#1951 <https://github.com/tox-dev/tox/issues/1951>`_)
-- Missing ```pyproject.toml`` or ``setup.py`` file at the tox root folder without the ``--install-pkg`` flag assumes no
+- Missing ``pyproject.toml`` or ``setup.py`` file at the tox root folder without the ``--install-pkg`` flag assumes no
   packaging - by :user:`gaborbernat`. (`#1964 <https://github.com/tox-dev/tox/issues/1964>`_)
 - Add ``external`` package type for :ref:`package` (see :ref:`external-package-builder`), and extract package dependencies
   for packages passed in via :ref:`--installpkg <tox-run---installpkg>` - by :user:`gaborbernat`. (`#2204 <https://github.com/tox-dev/tox/issues/2204>`_)
