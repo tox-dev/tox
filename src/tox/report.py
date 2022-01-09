@@ -100,10 +100,14 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
     def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:
         self._local = _LogThreadLocal(out_err)
         super().__init__(stream=self.stdout)
-        self.setLevel(level)
         if is_colored:
             deinit()
             init()
+        self._is_colored = is_colored
+        self._setup_level(is_colored, level)
+
+    def _setup_level(self, is_colored: bool, level: int) -> None:
+        self.setLevel(level)
         self._error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
         self._warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
         self._remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
@@ -194,6 +198,17 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
     def patch_thread() -> Iterator[None]:
         with _LogThreadLocal.patch_thread():
             yield
+
+    def update_verbosity(self, verbosity: int) -> None:
+        level = _get_level(verbosity)
+        LOGGER.setLevel(level)
+        for name in ("distlib.util", "filelock"):
+            logger = logging.getLogger(name)
+            for logging_filter in logger.filters:
+                if isinstance(logging_filter, LowerInfoLevel):
+                    logging_filter.level = level
+                    break
+        self._setup_level(self._is_colored, level)
 
 
 class LowerInfoLevel(logging.Filter):
