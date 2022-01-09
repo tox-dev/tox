@@ -24,7 +24,7 @@ class ConfigSet(ABC):
         self._section = section
         self._env_name = env_name
         self._conf = conf
-        self.loaders: list[Loader[Any]] = []
+        self.loaders: list[Loader[Any]] = []  #: active configuration loaders, can alter to change configuration values
         self._defined: dict[str, ConfigDefinition[Any]] = {}
         self._keys: dict[str, None] = {}
         self._alias: dict[str, str] = {}
