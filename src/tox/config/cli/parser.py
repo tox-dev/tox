@@ -77,7 +77,9 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         return of_type
 
     def parse_args(  # type: ignore # avoid defining all overloads
-        self, args: Sequence[str] | None = None, namespace: Namespace | None = None
+        self,
+        args: Sequence[str] | None = None,
+        namespace: Namespace | None = None,
     ) -> Namespace:
         res, argv = self.parse_known_args(args, namespace)
         if argv:
