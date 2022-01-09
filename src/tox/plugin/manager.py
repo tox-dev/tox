@@ -28,9 +28,13 @@ class Plugin:
         self.manager: pluggy.PluginManager = pluggy.PluginManager(NAME)
         self.manager.add_hookspecs(spec)
 
+    def _register_plugins(self, inline: ModuleType | None) -> None:
         from tox.session import state
         from tox.session.cmd import depends, devenv, exec_, legacy, list_env, quickstart, show_config, version_flag
 
+        if inline is not None:
+            self.manager.register(inline)
+        self.manager.load_setuptools_entrypoints(NAME)
         internal_plugins = (
             loader_api,
             provision,
@@ -49,10 +53,8 @@ class Plugin:
             sequential,
             package_api,
         )
-
         for plugin in internal_plugins:
             self.manager.register(plugin)
-        self.manager.load_setuptools_entrypoints(NAME)
         self.manager.register(state)
         self.manager.check_pending()
 
@@ -74,13 +76,12 @@ class Plugin:
     def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
         self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
 
-    def load_inline_plugin(self, path: Path) -> None:
-        result = _load_inline(path)
-        if result is not None:
-            self.manager.register(result)
+    def load_plugins(self, path: Path) -> None:
+        for _plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
+            self.manager.unregister(_plugin)
+        inline = _load_inline(path)
+        self._register_plugins(inline)
         REGISTER._register_tox_env_types(self)
-        if result is not None:  #: recheck pending for the inline plugins
-            self.manager.check_pending()
 
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests

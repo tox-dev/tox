@@ -81,10 +81,8 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
 
         def _load_inline(path: Path) -> ModuleType | None:  # register only on first run, and unregister at end
             nonlocal module
-            if module is None:
-                module = load_inline(path)
-                return module
-            return None
+            module = load_inline(path)
+            return module
 
         mocker.patch.object(manager, "_load_inline", _load_inline)
         yield
