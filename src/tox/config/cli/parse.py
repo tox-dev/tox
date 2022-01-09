@@ -49,7 +49,7 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
 
     source = discover_source(parsed.config_file, parsed.root_dir)
 
-    MANAGER.load_inline_plugin(source.path)
+    MANAGER.load_plugins(source.path)
 
     return guess_verbosity, handler, source
 

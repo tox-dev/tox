@@ -22,8 +22,6 @@ class ToxEnvRegister:
 
     def _register_tox_env_types(self, manager: Plugin) -> None:
         manager.tox_register_tox_env(register=self)
-        if not self._default_run_env:
-            self._default_run_env = next(iter(self._run_envs.keys()))
 
     def add_run_env(self, of_type: type[RunToxEnv]) -> None:
         """
@@ -49,6 +47,8 @@ class ToxEnvRegister:
     @property
     def default_env_runner(self) -> str:
         """:returns: the default run environment type"""
+        if not self._default_run_env and self._run_envs:
+            self._default_run_env = next(iter(self._run_envs.keys()))
         return self._default_run_env
 
     @default_env_runner.setter
