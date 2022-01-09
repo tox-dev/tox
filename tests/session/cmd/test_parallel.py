@@ -151,3 +151,14 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
 def test_parallels_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("p", "-h")
     outcome.assert_success()
+
+
+def test_parallel_legacy_accepts_no_arg(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("-p", "-h")
+    outcome.assert_success()
+
+
+def test_parallel_requires_arg(tox_project: ToxProjectCreator) -> None:
+    outcome = tox_project({"tox.ini": ""}).run("p", "-p", "-h")
+    outcome.assert_failed()
+    assert "argument -p/--parallel: expected one argument" in outcome.err

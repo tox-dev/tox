@@ -1,0 +1,1 @@
+Legacy parallel mode should accept ``-p`` flag without arguments - by :user:`gaborbernat`.
