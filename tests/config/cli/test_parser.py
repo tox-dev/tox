@@ -7,7 +7,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from tox.config.cli.parser import Parsed, ToxParser
-from tox.pytest import MonkeyPatch
+from tox.pytest import CaptureFixture, MonkeyPatch
 
 
 def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
@@ -81,3 +81,11 @@ def test_parse_known_args_not_set(mocker: MockerFixture) -> None:
     parser = ToxParser.base()
     _, unknown = parser.parse_known_args(None)
     assert unknown == ["--help"]
+
+
+def test_parser_hint(capsys: CaptureFixture) -> None:
+    parser = ToxParser.base()
+    with pytest.raises(SystemExit):
+        parser.parse_args("foo")
+    out, err = capsys.readouterr()
+    assert err.endswith("hint: if you tried to pass arguments to a command use -- to separate them from tox ones\n")

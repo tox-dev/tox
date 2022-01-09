@@ -76,6 +76,19 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 raise TypeError(action)
         return of_type
 
+    def parse_args(  # type: ignore # avoid defining all overloads
+        self,
+        args: Sequence[str] | None = None,
+        namespace: Namespace | None = None,
+    ) -> Namespace:
+        res, argv = self.parse_known_args(args, namespace)
+        if argv:
+            self.error(
+                f'unrecognized arguments: {" ".join(argv)}\n'
+                "hint: if you tried to pass arguments to a command use -- to separate them from tox ones",
+            )
+        return res
+
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     """
