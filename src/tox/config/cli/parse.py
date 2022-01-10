@@ -35,7 +35,7 @@ def get_options(*args: str) -> Options:
     guess_verbosity, log_handler, source = _get_base(args)
     parsed, cmd_handlers = _get_all(args)
     if guess_verbosity != parsed.verbosity:
-        setup_report(parsed.verbosity, parsed.is_colored)  # pragma: no cover
+        log_handler.update_verbosity(parsed.verbosity)
     return Options(parsed, pos_args, source, cmd_handlers, log_handler)
 
 

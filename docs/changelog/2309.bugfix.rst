@@ -1,0 +1,2 @@
+Environment assigment for output breaks when using ``-rv`` (when we cannot guess upfront the verbosity level from the
+CLI arguments) - by :user:`gaborbernat`.
