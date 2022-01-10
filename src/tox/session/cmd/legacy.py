@@ -50,7 +50,7 @@ def tox_add_option(parser: ToxParser) -> None:
     )
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="legacy")
-    parallel_flags(our, default_parallel=OFF_VALUE)
+    parallel_flags(our, default_parallel=OFF_VALUE, no_args=True)
     our.add_argument(
         "--pre",
         action="store_true",
