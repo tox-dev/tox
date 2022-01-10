@@ -233,14 +233,14 @@ class ToxEnv(ABC):
             else:
                 self._done_with_setup()
             finally:
-                self._run_state.update({"setup": True, "clean": False})
+                self._run_state["setup"] = True
 
     def teardown(self) -> None:
         if not self._run_state["teardown"]:
             try:
                 self._teardown()
             finally:
-                self._run_state.update({"teardown": True})
+                self._run_state["teardown"] = True
 
     def _teardown(self) -> None:
         pass

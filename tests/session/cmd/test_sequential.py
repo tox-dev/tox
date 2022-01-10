@@ -411,3 +411,9 @@ def test_virtualenv_cache(tox_project: ToxProjectCreator) -> None:
 def test_sequential_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("r", "-h")
     outcome.assert_success()
+
+
+def test_sequential_clears_pkg_at_most_once(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    project = tox_project({"tox.ini": ""})
+    result = project.run("r", "--root", str(demo_pkg_inline), "-e", "a,b", "-r")
+    result.assert_success()

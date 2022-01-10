@@ -204,8 +204,8 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         LOGGER.setLevel(level)
         for name in ("distlib.util", "filelock"):
             logger = logging.getLogger(name)
-            for logging_filter in logger.filters:
-                if isinstance(logging_filter, LowerInfoLevel):
+            for logging_filter in logger.filters:  # pragma: no branch  # the filters is never empty
+                if isinstance(logging_filter, LowerInfoLevel):  # pragma: no branch # we always find it
                     logging_filter.level = level
                     break
         self._setup_level(self._is_colored, level)
