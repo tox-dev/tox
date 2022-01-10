@@ -132,18 +132,15 @@ def setup(app: Sphinx) -> None:
             # fixup some wrongly resolved mappings
             mapping = {
                 "_io.TextIOWrapper": "io.TextIOWrapper",
-                "Future": "concurrent.futures.Future",
-                "_F": "typing.TypeVar",
-                "V": "typing.TypeVar",
                 "T": "typing.TypeVar",
+                "V": "typing.TypeVar",
                 "tox.config.of_type.T": "typing.TypeVar",
                 "tox.config.loader.api.T": "typing.TypeVar",
                 "tox.config.loader.convert.T": "typing.TypeVar",
                 "tox.tox_env.installer.T": "typing.TypeVar",
                 "ToxParserT": "typing.TypeVar",
                 "_Section": "Section",
-                "ArgumentParser": "argparse.ArgumentParser",
-                "Factory": "tox.config.loader.convert.Factory",
+                "concurrent.futures._base.Future": "concurrent.futures.Future",
             }
             if target in mapping:
                 if target == "Factory":

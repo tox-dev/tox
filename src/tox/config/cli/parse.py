@@ -3,6 +3,7 @@ This module pulls together this package: create and parse CLI arguments for tox.
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Callable, NamedTuple, Sequence, cast
 
 from tox.config.source import Source, discover_source
@@ -75,9 +76,8 @@ def _get_parser() -> ToxParser:
 def _get_parser_doc() -> ToxParser:
     # trigger register of tox env types (during normal run we call this later to handle plugins)
     from tox.plugin.manager import MANAGER  # pragma: no cover
-    from tox.tox_env.register import REGISTER  # pragma: no cover
 
-    REGISTER._register_tox_env_types(MANAGER)  # pragma: no cover
+    MANAGER.load_plugins(Path.cwd())
 
     return _get_parser()  # pragma: no cover
 
