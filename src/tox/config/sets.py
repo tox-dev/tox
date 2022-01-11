@@ -28,11 +28,15 @@ class ConfigSet(ABC):
         self._defined: dict[str, ConfigDefinition[Any]] = {}
         self._keys: dict[str, None] = {}
         self._alias: dict[str, str] = {}
+        self._final = False
         self.register_config()
 
     @abstractmethod
     def register_config(self) -> None:
         raise NotImplementedError
+
+    def mark_finalized(self) -> None:
+        self._final = True
 
     def add_config(
         self,
@@ -54,6 +58,8 @@ class ConfigSet(ABC):
         :param factory: factory method to use to build the object
         :return: the new dynamic config definition
         """
+        if self._final:
+            raise RuntimeError("config set has been marked final and cannot be extended")
         keys_ = self._make_keys(keys)
         definition = ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory)
         result = self._add_conf(keys_, definition)
@@ -68,6 +74,8 @@ class ConfigSet(ABC):
         :param value: the config value to use
         :return: the new constant config value
         """
+        if self._final:
+            raise RuntimeError("config set has been marked final and cannot be extended")
         keys_ = self._make_keys(keys)
         definition = ConfigConstantDefinition(keys_, desc, value)
         result = self._add_conf(keys_, definition)

@@ -1,0 +1,2 @@
+Do not allow extending the config set beyond setup to ensures that all configuration values are visible via the config
+sub-command. - by :user:`gaborbernat`.
