@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -417,3 +418,22 @@ def test_sequential_clears_pkg_at_most_once(tox_project: ToxProjectCreator, demo
     project = tox_project({"tox.ini": ""})
     result = project.run("r", "--root", str(demo_pkg_inline), "-e", "a,b", "-r")
     result.assert_success()
+
+
+def test_sequential_inserted_env_vars(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = """
+    [testenv]
+    commands=python -c 'import os; [print(f"{k}={v}") for k, v in os.environ.items() if \
+                        k.startswith("TOX_") or k == "VIRTUAL_ENV"]'
+    """
+    project = tox_project({"tox.ini": ini})
+    result = project.run("r", "--root", str(demo_pkg_inline))
+    result.assert_success()
+
+    assert re.search(f"TOX_PACKAGE={re.escape(str(project.path))}.*.tar.gz{os.linesep}", result.out)
+    assert f"TOX_ENV_NAME=py{os.linesep}" in result.out
+    work_dir = project.path / ".tox" / "4"
+    assert f"TOX_WORK_DIR={work_dir}{os.linesep}" in result.out
+    env_dir = work_dir / "py"
+    assert f"TOX_ENV_DIR={env_dir}{os.linesep}" in result.out
+    assert f"VIRTUAL_ENV={env_dir}{os.linesep}" in result.out
