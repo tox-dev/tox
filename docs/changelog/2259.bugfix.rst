@@ -1,2 +1,2 @@
-Insert ``TOX_WORK_DIR``, ``TOX_ENV_NAME``, ``TOX_ENV_DIR`` and ``VIRTUAL_ENV`` environment variables for each tox
-environments environment variables to keep contract with tox version 3 - by :user:`gaborbernat`.
+Insert ``TOX_WORK_DIR``, ``TOX_ENV_NAME``, ``TOX_ENV_DIR`` and ``VIRTUAL_ENV`` into the environment variables for all
+tox environments to keep contract with tox version 3 - by :user:`gaborbernat`.
