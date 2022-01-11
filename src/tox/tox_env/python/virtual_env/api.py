@@ -161,3 +161,9 @@ class VirtualEnv(Python, ABC):
     @property
     def runs_on_platform(self) -> str:
         return sys.platform
+
+    @property
+    def environment_variables(self) -> dict[str, str]:
+        environment_variables = super().environment_variables
+        environment_variables["VIRTUAL_ENV"] = str(self.conf["env_dir"])
+        return environment_variables

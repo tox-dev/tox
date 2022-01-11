@@ -308,6 +308,9 @@ class ToxEnv(ABC):
         result["PATH"] = self._make_path()
         for key in set_env:
             result[key] = set_env.load(key)
+        result["TOX_ENV_NAME"] = self.name
+        result["TOX_WORK_DIR"] = str(self.core["work_dir"])
+        result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
         return result
 
     @staticmethod
