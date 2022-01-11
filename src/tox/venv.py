@@ -595,7 +595,17 @@ class VirtualEnv(object):
         reporter.verbosity2("setting PATH={}".format(env["PATH"]))
 
         # get command
-        args[0] = self.getcommandpath(args[0], venv, cwd)
+        try:
+            args[0] = self.getcommandpath(args[0], venv, cwd)
+        except tox.exception.InvocationError:
+            if ignore_ret:
+                self.status = getattr(self, "status", 0)
+                msg = "command not found but explicitly ignored"
+                reporter.warning("{}\ncmd: {}".format(msg, args[0]))
+                return ""  # in case it's returnout
+            else:
+                raise
+
         if sys.platform != "win32" and "TOX_LIMITED_SHEBANG" in os.environ:
             args = prepend_shebang_interpreter(args)
 
