@@ -206,8 +206,15 @@ class EnvSelector:
             # reorder to as defined rather as found
             order = chain(env_name_to_active, (i for i in self._defined_envs_ if i not in env_name_to_active))
             self._defined_envs_ = {name: self._defined_envs_[name] for name in order if name in self._defined_envs_}
+            self._finalize_config()
             self._mark_active()
         return self._defined_envs_
+
+    def _finalize_config(self) -> None:
+        assert self._defined_envs_ is not None
+        for tox_env in self._defined_envs_.values():
+            tox_env.env.conf.mark_finalized()
+        self._state.conf.core.mark_finalized()
 
     def _build_run_env(self, name: str) -> RunToxEnv | None:
         if self._provision is not None and self._provision[0] is False and name == self._provision[1]:

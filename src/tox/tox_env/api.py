@@ -159,6 +159,7 @@ class ToxEnv(ABC):
             default=[],
             desc="external command glob to allow calling",
         )
+        assert self.installer is not None  # trigger installer creation to allow configuration registration
 
     def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: U100
         return cast(bool, self.options.recreate)

@@ -10,7 +10,7 @@ from pytest_mock import MockerFixture
 
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.memory import MemoryLoader
-from tox.config.sets import CoreConfigSet, EnvConfigSet
+from tox.config.sets import ConfigSet, CoreConfigSet, EnvConfigSet
 from tox.execute import Outcome
 from tox.plugin import impl
 from tox.pytest import ToxProjectCreator, register_inline_plugin
@@ -181,3 +181,32 @@ def test_plugin_extend_set_env(tox_project: ToxProjectCreator, mocker: MockerFix
     result_conf = project.run("c", "-e", "py", "-k", "set_env")
     result_conf.assert_success()
     assert "MAGI_CAL=magi_cal" in result_conf.out
+
+
+def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    def _cannot_extend_config(config_set: ConfigSet) -> None:
+        for _conf in (
+            lambda c: c.add_constant("c", "desc", "v"),
+            lambda c: c.add_config("c", of_type=str, default="c", desc="d"),
+        ):
+            try:
+                _conf(config_set)  # type: ignore # call to not typed function
+                raise NotImplementedError
+            except RuntimeError as exc:
+                assert str(exc) == "config set has been marked final and cannot be extended"
+
+    @impl
+    def tox_before_run_commands(tox_env: ToxEnv) -> None:
+        _cannot_extend_config(tox_env.conf)
+        _cannot_extend_config(tox_env.core)
+
+    @impl
+    def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # noqa: U100
+        _cannot_extend_config(tox_env.conf)
+        _cannot_extend_config(tox_env.core)
+
+    register_inline_plugin(mocker, tox_before_run_commands, tox_after_run_commands)
+
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    result = project.run("r")
+    result.assert_success()
