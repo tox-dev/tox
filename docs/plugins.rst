@@ -36,7 +36,7 @@ How to apply:
   <https://github.com/tox-dev/tox/issues/new?labels=feature%3Anew&template=feature_request.md&title=Adopt%20plugin&body=>`_,
 - wait for the green light by one of our maintainers (see :ref:`current-maintainers`),
 - follow the `guidance by Github
-  <https://docs.github.com/en/github/administering-a-repository/managing-repository-settings/transferring-a-repository>`_,
+  <https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository>`_,
 - (optionally) add at least one other people as co-maintainer on PyPI.
 
 Migration from tox 3

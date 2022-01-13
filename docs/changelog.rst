@@ -198,7 +198,7 @@ Features - 4.0.0a6
   final report will be soon printed and makes the status update redundant) - by :user:`gaborbernat`. (`#1909 <https://github.com/tox-dev/tox/issues/1909>`_)
 - The ``_TOX_SHOW_THREAD`` environment variable can be used to print alive threads when tox exists (useful to debug
   when tox hangs because of some non-finished thread) and also now prints the pid of the local subprocess when reporting
-  the outcome of a execution - by :user:`gaborbernat`. (`#1915 <https://github.com/tox-dev/tox/issues/1915>`_)
+  the outcome of a execution - by :user:`gaborbernat`. (`#1915 <https://github.com/tox-dev/tox/pull/1915>`_)
 
 Bugfixes - 4.0.0a6
 ~~~~~~~~~~~~~~~~~~
@@ -212,7 +212,7 @@ Bugfixes - 4.0.0a6
   and post was not always executed) - by :user:`gaborbernat`. (`#1843 <https://github.com/tox-dev/tox/issues/1843>`_)
 - Support requirement files containing ``--hash`` constraints - by :user:`gaborbernat`. (`#1903 <https://github.com/tox-dev/tox/issues/1903>`_)
 - Fix a bug that caused tox to never finish when pulling configuration from a tox run environment that was never executed
-  - by :user:`gaborbernat`. (`#1915 <https://github.com/tox-dev/tox/issues/1915>`_)
+  - by :user:`gaborbernat`. (`#1915 <https://github.com/tox-dev/tox/pull/1915>`_)
 
 Deprecations and Removals - 4.0.0a6
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -271,9 +271,9 @@ Features - 4.0.0a4
 ~~~~~~~~~~~~~~~~~~
 - Use ``.tox/4`` instead of ``.tox4`` folder (so ignores for tox 3 works for tox 4 too), reminder we'll rename this to
   just ``.tox`` before public release, however to encourage testing tox 4 in parallel with tox 3 this is helpful
-  - by :user:`gaborbernat`. (`#1812 <https://github.com/tox-dev/tox/issues/1812>`_)
+  - by :user:`gaborbernat`. (`#1812 <https://github.com/tox-dev/tox/discussions/1812>`_)
 - Colorize the ``config`` command: section headers are yellow, keys are green, values remained white, exceptions are light
-  red and comments are cyan - by :user:`gaborbernat`. (`#1821 <https://github.com/tox-dev/tox/issues/1821>`_)
+  red and comments are cyan - by :user:`gaborbernat`. (`#1821 feature <https://github.com/tox-dev/tox/pull/1821>`_)
 
 Bugfixes - 4.0.0a4
 ~~~~~~~~~~~~~~~~~~
@@ -285,9 +285,9 @@ Bugfixes - 4.0.0a4
   by :user:`gaborbernat`. (`#1793 <https://github.com/tox-dev/tox/issues/1793>`_)
 - Fix ``RequirementsFile`` from tox is rendered incorrectly in ``config`` command - by :user:`gaborbernat`. (`#1820 <https://github.com/tox-dev/tox/issues/1820>`_)
 - Fix a bug in the configuration system where referring to the same named key in another env/section causes circular
-  dependency error - by :user:`gaborbernat`. (`#1821 <https://github.com/tox-dev/tox/issues/1821>`_)
+  dependency error - by :user:`gaborbernat`. (`#1821 bugfix <https://github.com/tox-dev/tox/issues/1821>`_)
 - Raise ``ValueError`` with descriptive message when a requirements file specified does not exist
-  - by :user:`gaborbernat`. (`#1828 <https://github.com/tox-dev/tox/issues/1828>`_)
+  - by :user:`gaborbernat`. (`#1828 <https://github.com/tox-dev/tox/pull/1828>`_)
 - Support all valid requirement file specification without delimiting space in the ``deps`` of the ``tox.ini`` -
   by :user:`gaborbernat`. (`#1834 <https://github.com/tox-dev/tox/issues/1834>`_)
 
@@ -305,7 +305,7 @@ Features - 4.0.0a3
 - - Raise exception when variable substitution enters into a circle.
   - Add ``{/}`` as substitution for os specific path separator.
   - Add ``{env_bin_dir}`` constant substitution.
-  - Implement support for ``--discover`` flag - by :user:`gaborbernat`. (`#1784 <https://github.com/tox-dev/tox/issues/1784>`_)
+  - Implement support for ``--discover`` flag - by :user:`gaborbernat`. (`#1784 feature <https://github.com/tox-dev/tox/pull/1784>`_)
 
 Bugfixes - 4.0.0a3
 ~~~~~~~~~~~~~~~~~~
@@ -323,7 +323,7 @@ Bugfixes - 4.0.0a3
     arguments strip both ``'`` and ``"`` quoted outcomes).
   - Allow windows paths in substitution set/default (the ``:`` character used to separate substitution arguments may
     also be present in paths on Windows - do not support single capital letter values as substitution arguments) -
-    by :user:`gaborbernat`. (`#1784 <https://github.com/tox-dev/tox/issues/1784>`_)
+    by :user:`gaborbernat`. (`#1784 bugfix <https://github.com/tox-dev/tox/issues/1784>`_)
 - Rework how we handle Python packaging environments:
 
   - the base packaging environment changed from ``.package`` to ``.pkg``,
@@ -348,22 +348,22 @@ v4.0.0a2 (2021-01-09)
 Features - 4.0.0a2
 ~~~~~~~~~~~~~~~~~~
 - Add option to disable colored output, and support ``NO_COLOR`` and ``FORCE_COLOR`` environment variables - by
-  :user:`gaborbernat`. (`#1630 <https://github.com/tox-dev/tox/issues/1630>`_)
+  :user:`gaborbernat`. (`#1630 <https://github.com/tox-dev/tox/pull/1630>`_)
 
 Bugfixes - 4.0.0a2
 ~~~~~~~~~~~~~~~~~~
-- Fix coverage generation in CI - by :user:`gaborbernat`. (`#1551 <https://github.com/tox-dev/tox/issues/1551>`_)
+- Fix coverage generation in CI - by :user:`gaborbernat`. (`#1551 bugfix <https://github.com/tox-dev/tox/pull/1551>`_)
 - Fix the CI failures:
 
   - drop Python 3.5 support as it's not expected to get to a release before EOL,
   - fix test using ``\n`` instead of ``os.linesep``,
   - Windows Python 3.6 does not contain ``_overlapped.ReadFileInto``
 
-  - by :user:`gaborbernat`. (`#1556 <https://github.com/tox-dev/tox/issues/1556>`_)
+  - by :user:`gaborbernat`. (`#1556 <https://github.com/tox-dev/tox/pull/1556>`_)
 
 Improved Documentation - 4.0.0a2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Add base documentation by merging virtualenv structure with tox 3 - by :user:`gaborbernat`. (`#1551 <https://github.com/tox-dev/tox/issues/1551>`_)
+- Add base documentation by merging virtualenv structure with tox 3 - by :user:`gaborbernat`. (`#1551 docs <https://github.com/tox-dev/tox/issues/1551>`_)
 
 
 v4.0.0a1
@@ -375,4 +375,4 @@ v4.0.0a1
    The current tox is the second iteration of implementation. From version ``0.5`` all the way to ``3.X``
    we numbered the first iteration. Version ``4.0.0a1`` is a complete rewrite of the package, and as such this release
    history starts from there. The old changelog is still available in the
-   `legacy branch documentation <https://tox.readthedocs.io/en/legacy/changelog.html>`_.
+   `legacy branch documentation <https://tox.wiki/en/stable/changelog.html>`_.

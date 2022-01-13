@@ -3,7 +3,7 @@ tox - automation project
 
 ``tox`` aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging,
 testing and release process of Python software (alongside `pytest <https://docs.pytest.org/en/latest/>`_
-and `devpi <https://devpi.net/>`_).
+and `devpi <https://www.devpi.net>`_).
 
 .. image:: https://img.shields.io/pypi/v/tox?style=flat-square
   :target: https://pypi.org/project/tox/#history
@@ -13,10 +13,10 @@ and `devpi <https://devpi.net/>`_).
 .. image:: https://img.shields.io/pypi/pyversions/tox?style=flat-square
   :alt: PyPI - Python Version
 .. image:: https://readthedocs.org/projects/tox/badge/?version=latest&style=flat-square
-  :target: https://tox.tox-dev.io
+  :target: https://tox.wiki/en/latest/
   :alt: Documentation status
 .. image:: https://img.shields.io/discord/802911963368783933?style=flat-square
-  :target: https://discord.gg/edtj86wzBX
+  :target: https://discord.com/invite/tox
   :alt: Discord
 .. image:: https://img.shields.io/pypi/dm/tox?style=flat-square
   :target: https://pypistats.org/packages/tox
@@ -53,7 +53,7 @@ you want to do more research, we recommend taking a look at these projects:
 - `Invoke <https://www.pyinvoke.org/>`_ is a general-purpose task execution library, similar to Make. Invoke is far more
   general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
 
-- `Nox <https://nox.thea.codes>`_  is a project similar in spirit to tox but different in approach. Nox's key
+- `nox <https://nox.thea.codes/en/stable/>`_  is a project similar in spirit to tox but different in approach. Nox's key
   difference is that it uses Python scripts instead of a configuration file. Nox might be useful if you find tox's
   configuration too limiting but aren't looking to move to something as general-purpose as Invoke or Make.
 

@@ -1,6 +1,6 @@
 """
-tox uses `pluggy <https://pluggy.readthedocs.io/>`_ to customize the default behaviour. For example the following code
-snippet would define a new ``--magic`` command line interface flag the user can specify:
+tox uses `pluggy <https://pluggy.readthedocs.io/en/stable/>`_ to customize the default behaviour. For example the
+following code snippet would define a new ``--magic`` command line interface flag the user can specify:
 
 .. code-block:: python
 

@@ -9,8 +9,8 @@ Getting started
 below will help you get started with development, testing, and documentation. We’re pleased that you are interested in
 working on tox. This document is meant to get you setup to work on tox and to act as a guide and reference
 to the development setup. If you face any issues during this process, please
-`open an issue <https://github.com/tox-dev/tox/issues/new?title=Trouble+with+development+environment>`_ about it on
-the issue tracker.
+`open an issue <https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Ftox-dev%2Ftox%2Fissues%2Fnew%3Ftitle%3DTrouble%2Bwith%2Bdevelopment%2Benvironment>`_
+about it on the issue tracker.
 
 Setup
 ~~~~~
@@ -60,7 +60,7 @@ specify a specific version of Python by using the ``pyNN`` format, such as: ``py
 
 ``tox`` has been configured to forward any additional arguments it is given to ``pytest``.
 This enables the use of pytest's
-`rich CLI <https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests>`_. As an example, you can
+`rich CLI <https://docs.pytest.org/en/latest/how-to/usage.html#specifying-which-tests-to-run>`_. As an example, you can
 select tests using the various ways that pytest provides:
 
 .. code-block:: shell
@@ -215,8 +215,9 @@ initiate a vote among the existing maintainers.
 
     - GitHub Push Access (provides also CI administration capabilities)
     - PyPI Publishing Access
-    - ReadTheDocs Administration capabilities (the root domain `tox.wiki <https://tox.wiki>`_ is currently owned and
-      maintained by the primary maintainer and author ``Bernat Gabor``; bought via `Porkbun <https://porkbun.com/>`_
+    - ReadTheDocs Administration capabilities (the root domain `tox.wiki <https://tox.wiki/en/latest/>`_ is currently
+      owned and maintained by the primary maintainer and author ``Bernat Gabor``; bought via
+      `Porkbun <https://porkbun.com/>`_
       -- reach out to him directly for any changes).
 
 
