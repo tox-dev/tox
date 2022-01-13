@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from tox.config.cli.parser import ToxParser
@@ -23,12 +24,12 @@ def tox_add_option(parser: ToxParser) -> None:
 
 def devenv(state: State) -> int:
     opt = state.conf.options
-
     opt.skip_missing_interpreters = False  # the target python must exist
     opt.no_test = False  # do not run the test suite
     opt.package_only = False
     opt.install_pkg = None  # no explicit packages to install
     opt.skip_pkg_install = False  # always install a package in this case
+    opt.no_test = True  # do not run the test phase
 
     state.envs.ensure_only_run_env_is_active()
     envs = list(state.envs.iter())
@@ -38,7 +39,9 @@ def devenv(state: State) -> int:
         usedevelop=True,  # dev environments must be of type dev
         env_dir=Path(opt.devenv_path),  # move it in source
     )
-
-    opt.no_test = True  # do not run the test phase
-    state.conf.get_env(envs[0], loaders=[loader])
-    return run_sequential(state)
+    tox_env = state.envs[envs[0]]
+    tox_env.conf.loaders.insert(0, loader)
+    result = run_sequential(state)
+    if result == 0:
+        logging.warning(f"created development environment under {tox_env.conf['env_dir']}")
+    return result
