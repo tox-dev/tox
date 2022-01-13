@@ -1,0 +1,2 @@
+Ignore missing commands if they are prefixed by ``-``
+-- by :user:`cdown`.

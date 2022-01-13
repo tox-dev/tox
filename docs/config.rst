@@ -264,7 +264,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     Commands will execute one by one in sequential fashion until one of them fails (their exit
     code is non-zero) or all of them succeed. The exit code of a command may be ignored (meaning
-    they are always considered successful) by prefixing the command with a dash (``-``) - this is
+    they are always considered successful even if they don't exist) by prefixing the command with a dash (``-``) - this is
     similar to how ``make`` recipe lines work. The outcome of the environment is considered successful
     only if all commands (these + setup + teardown) succeeded (exit code ignored via the
     ``-`` or success exit code value of zero).

@@ -980,6 +980,21 @@ def test_ignore_outcome_failing_cmd(newmocksession):
     mocksession.report.expect("warning", "*command failed but result from testenv is ignored*")
 
 
+def test_ignore_outcome_missing_cmd(newmocksession):
+    mocksession = newmocksession(
+        [],
+        """\
+        [testenv]
+        commands=-thiscommanddoesntexist
+        """,
+    )
+
+    venv = mocksession.getvenv("python")
+    venv.test()
+    assert venv.status == 0
+    mocksession.report.expect("warning", "*command not found but explicitly ignored*")
+
+
 def test_tox_testenv_create(newmocksession):
     log = []
 
