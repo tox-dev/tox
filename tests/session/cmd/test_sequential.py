@@ -437,3 +437,9 @@ def test_sequential_inserted_env_vars(tox_project: ToxProjectCreator, demo_pkg_i
     env_dir = work_dir / "py"
     assert f"TOX_ENV_DIR={env_dir}{os.linesep}" in result.out
     assert f"VIRTUAL_ENV={env_dir}{os.linesep}" in result.out
+
+
+def test_missing_command_success_if_ignored(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\ncommands= - missing-command\nskip_install=true"})
+    result = project.run()
+    result.assert_success()
