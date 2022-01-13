@@ -1,0 +1,1 @@
+Require Python 3.10 to generate docs - by :user:`jugmac00`.
