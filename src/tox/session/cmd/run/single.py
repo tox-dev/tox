@@ -105,6 +105,7 @@ def run_command_set(tox_env: ToxEnv, key: str, cwd: Path, ignore_errors: bool, o
             current_outcome.assert_success()
         except SystemExit as exception:
             if cmd.ignore_exit_code:
+                logging.warning("command failed but is marked ignore outcome so handling it as success")
                 continue
             if ignore_errors:
                 if exit_code == Outcome.OK:

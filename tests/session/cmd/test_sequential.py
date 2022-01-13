@@ -443,3 +443,4 @@ def test_missing_command_success_if_ignored(tox_project: ToxProjectCreator) -> N
     project = tox_project({"tox.ini": "[testenv]\ncommands= - missing-command\nskip_install=true"})
     result = project.run()
     result.assert_success()
+    assert "py: command failed but is marked ignore outcome so handling it as success" in result.out
