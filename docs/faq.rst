@@ -21,7 +21,7 @@ Some solutions and their drawbacks:
 
 - specify the constraint files within :ref:`deps` (these constraints will not be applied when installing package
   dependencies),
-- use ``PIP_CONSTRAINTS`` inside :ref:`set_env` (tox will not know about the content of the constraint file and such
+- use ``PIP_CONSTRAINT`` inside :ref:`set_env` (tox will not know about the content of the constraint file and such
   will not trigger a rebuild of the environment when its content changes),
 - specify the constraint file by extending the :ref:`install_command` as in the following example
   (tox will not know about the content of the constraint file and such will not trigger a rebuild of the environment
