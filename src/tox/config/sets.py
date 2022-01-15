@@ -45,7 +45,7 @@ class ConfigSet(ABC):
         default: Callable[[Config, str | None], V] | V,
         desc: str,
         post_process: Callable[[V], V] | None = None,
-        factory: Factory[V] = None,
+        factory: Factory[Any] = None,
     ) -> ConfigDynamicDefinition[V]:
         """
         Add configuration value.
@@ -55,7 +55,8 @@ class ConfigSet(ABC):
         :param default: the default value of the config value
         :param desc: a help message describing the configuration
         :param post_process: a callback to post-process the configuration value after it has been loaded
-        :param factory: factory method to use to build the object
+        :param factory: factory method used to build contained objects (if ``of_type`` is a container type it
+          should perform the contained item creation, otherwise creates objects that match the type)
         :return: the new dynamic config definition
         """
         if self._final:

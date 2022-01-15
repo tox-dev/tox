@@ -1,0 +1,2 @@
+Fix type annotation is broken for :meth:`tox.config.sets.ConfigSet.add_config` when adding a container type
+- by :user:`gaborbernat`.
