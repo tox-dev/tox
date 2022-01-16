@@ -32,8 +32,8 @@ What's in for you in this:
 
 How to apply:
 
-- create an issue under the ``tox-dev/tox`` Github repository with the title `Adopt plugin \<name\>
-  <https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Ftox-dev%2Ftox%2Fissues%2Fnew%3Flabels%3Dfeature%253Anew%26template%3Dfeature_request.md%26title%3DAdopt%2520plugin%26body%3D>`_,
+- create an issue under the ``tox-dev/tox`` Github repository with the title
+  :gh:`Adopt plugin \<name\> <login?return_to=https%3A%2F%2Fgithub.com%2Ftox-dev%2Ftox%2Fissues%2Fnew%3Flabels%3Dfeature%253Anew%26template%3Dfeature_request.md%26title%3DAdopt%2520plugin%26body%3D>`,
 - wait for the green light by one of our maintainers (see :ref:`current-maintainers`),
 - follow the `guidance by Github
   <https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository>`_,

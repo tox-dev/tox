@@ -1,0 +1,1 @@
+Enable link check during documentation build - by :user:`gaborbernat`.

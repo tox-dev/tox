@@ -122,6 +122,7 @@ libs
 lightred
 lineno
 linesep
+linkcheck
 list2cmdline
 loc
 lru
@@ -168,6 +169,7 @@ readline
 readouterr
 recurse
 refid
+refnode
 refspec
 reftitle
 releaselevel
