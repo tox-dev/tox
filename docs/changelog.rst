@@ -11,6 +11,14 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.24.6
+Bugfixes
+^^^^^^^^
+
+- Fixed failing isolated_build because of setuptools warning. -- by :user:`zariiii9003`
+  `#2333 <https://github.com/tox-dev/tox/issues/2333>`_
+
+
 v3.24.5 (2021-12-29)
 Bugfixes
 ^^^^^^^^
