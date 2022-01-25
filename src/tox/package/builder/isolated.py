@@ -147,4 +147,4 @@ def get_build_requires(build_info, package_venv, setup_dir):
             cwd=setup_dir,
             capture_err=False,
         )
-        return json.loads(result.strip().split("\n")[-1])
+        return json.loads(result.split("\n")[-2])
