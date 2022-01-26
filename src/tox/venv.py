@@ -583,6 +583,7 @@ class VirtualEnv(object):
         ignore_ret=False,
         returnout=False,
         env=None,
+        capture_err=True,
     ):
         if env is None:
             env = self._get_os_environ(is_test_command=is_test_command)
@@ -618,6 +619,7 @@ class VirtualEnv(object):
             ignore_ret=ignore_ret,
             returnout=returnout,
             report_fail=not is_test_command,
+            capture_err=capture_err,
         )
 
     def setupenv(self):

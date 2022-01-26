@@ -145,5 +145,6 @@ def get_build_requires(build_info, package_venv, setup_dir):
             returnout=True,
             action=action,
             cwd=setup_dir,
+            capture_err=False,
         )
         return json.loads(result.split("\n")[-2])
