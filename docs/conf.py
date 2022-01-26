@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import re
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -17,6 +17,7 @@ from sphinx.builders import Builder
 from sphinx.domains.std import StandardDomain
 from sphinx.environment import BuildEnvironment
 from sphinx.ext.autodoc import Options
+from sphinx.ext.extlinks import ExternalLinksChecker
 from sphinx.locale import __
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
@@ -77,7 +78,10 @@ autosectionlabel_prefix_document = True
 extlinks = {
     "issue": ("https://github.com/tox-dev/tox/issues/%s", "#"),
     "pull": ("https://github.com/tox-dev/tox/pull/%s", "PR #"),
+    "discussion": ("https://github.com/tox-dev/tox/discussions/%s", "#"),
     "user": ("https://github.com/%s", "@"),
+    "gh_repo": ("https://github.com/%s", ""),
+    "gh": ("https://github.com/%s", ""),
     "pypi": ("https://pypi.org/project/%s", ""),
 }
 intersphinx_mapping = {
@@ -86,8 +90,9 @@ intersphinx_mapping = {
 }
 nitpicky = True
 nitpick_ignore = []
-
-os.environ["FORCE_COLOR"] = "yes"  # force --colored default value to be yes
+linkcheck_workers = 10
+linkcheck_ignore = [re.escape(r"https://github.com/tox-dev/tox/issues/new?title=Trouble+with+development+environment")]
+extlinks_detect_hardcoded_links = True
 
 
 def skip_member(app: Sphinx, what: str, name: str, obj: Any, would_skip: bool, options: Options) -> bool:  # noqa: U100
@@ -132,23 +137,15 @@ def setup(app: Sphinx) -> None:
             # fixup some wrongly resolved mappings
             mapping = {
                 "_io.TextIOWrapper": "io.TextIOWrapper",
-                "T": "typing.TypeVar",
-                "V": "typing.TypeVar",
-                "tox.config.of_type.T": "typing.TypeVar",
-                "tox.config.loader.api.T": "typing.TypeVar",
-                "tox.config.loader.convert.T": "typing.TypeVar",
-                "tox.tox_env.installer.T": "typing.TypeVar",
-                "ToxParserT": "typing.TypeVar",
-                "_Section": "Section",
+                "tox.config.of_type.T": "typing.TypeVar",  # used by Sphinx bases
+                "tox.config.loader.api.T": "typing.TypeVar",  # used by Sphinx bases
+                "tox.config.loader.convert.T": "typing.TypeVar",  # used by Sphinx bases
+                "tox.tox_env.installer.T": "typing.TypeVar",  # used by Sphinx bases
                 "concurrent.futures._base.Future": "concurrent.futures.Future",
             }
             if target in mapping:
-                if target == "Factory":
-                    type = "attr"
-                node["reftarget"] = mapping[target]
-                if target == "_Section":
-                    target = "Section"
-                    contnode = Text(target, target)
+                target = node["reftarget"] = mapping[target]
+                # node.children[0].children[0] = Text(target, target)
             return super().resolve_xref(env, fromdocname, builder, type, target, node, contnode)
 
     app.connect("autodoc-skip-member", skip_member)
@@ -240,3 +237,10 @@ def setup(app: Sphinx) -> None:
             self._std_domain.labels[of_name] = doc_name, ref_name, ref_title
 
     app.add_directive(ToxConfig.name, ToxConfig)
+
+    def check_uri(self, refnode: reference) -> None:
+        if refnode.document.attributes["source"].endswith("index.rst"):
+            return  # do not use for the index file
+        return prev_check(self, refnode)
+
+    prev_check, ExternalLinksChecker.check_uri = ExternalLinksChecker.check_uri, check_uri

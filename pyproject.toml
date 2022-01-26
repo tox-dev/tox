@@ -18,6 +18,6 @@ name = "tox"
 filename = "docs/changelog.rst"
 directory = "docs/changelog"
 title_format = false
-issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
+issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 # possible types, all default: feature, bugfix, doc, removal, misc

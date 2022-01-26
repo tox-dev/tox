@@ -9,16 +9,14 @@ Getting started
 below will help you get started with development, testing, and documentation. We’re pleased that you are interested in
 working on tox. This document is meant to get you setup to work on tox and to act as a guide and reference
 to the development setup. If you face any issues during this process, please
-`open an issue <https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Ftox-dev%2Ftox%2Fissues%2Fnew%3Ftitle%3DTrouble%2Bwith%2Bdevelopment%2Benvironment>`_
-about it on the issue tracker.
+:issue:`new?title=Trouble+with+development+environment` about it on the issue tracker.
 
 Setup
 ~~~~~
 
 tox is a command line application written in Python. To work on it, you'll need:
 
-- **Source code**: available on `GitHub <https://github.com/tox-dev/tox>`_. You can use ``git`` to clone the
-  repository:
+- **Source code**: available on :gh_repo:`GitHub <tox-dev/tox>`. You can use ``git`` to clone the repository:
 
   .. code-block:: shell
 
@@ -150,11 +148,10 @@ or whitespace within lines. Such changes can be made separately, as a "formattin
 Automated testing
 ~~~~~~~~~~~~~~~~~
 
-All pull requests and merges to the ``master`` branch are tested using
-`GitHub Actions <https://github.com/features/actions>`_ (configured by ``check.yml`` file inside the
-``.github/workflows`` directory). You can find the status and the results to the CI runs for your
-PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages for the specific builds in
-the form of "Details" links, in case the CI run fails and you wish to view the output.
+All pull requests and merges to the ``master`` branch are tested using :gh:`GitHub Actions <features/actions>`
+(configured by ``check.yml`` file inside the ``.github/workflows`` directory). You can find the status and the results
+to the CI runs for your PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages
+for the specific builds in the form of "Details" links, in case the CI run fails and you wish to view the output.
 
 To trigger CI to run again for a pull request, you can close and open the pull request or submit another change to the
 pull request. If needed, project maintainers can manually trigger a restart of a job/build.
@@ -226,8 +223,8 @@ initiate a vote among the existing maintainers.
 Current maintainers
 ^^^^^^^^^^^^^^^^^^^
 
--  `Anthony Sottile <https://github.com/asottile>`_
--  `Bernát Gábor <https://github.com/gaborbernat>`_
--  `Jürgen Gmach <https://github.com/jugmac00>`_
--  `Miroslav Šedivý <https://github.com/eumiro>`_
--  `Oliver Bestwalter <https://github.com/obestwalter>`_
+-  :user:`Anthony Sottile <asottile>`
+-  :user:`Bernát Gábor <gaborbernat>`
+-  :user:`Jürgen Gmach <jugmac00>`
+-  :user:`Miroslav Šedivý <eumiro>`
+-  :user:`Oliver Bestwalter <obestwalter>`
