@@ -25,8 +25,8 @@ def generate_draft_news():
     issue = f"{home}/issue"
     fragments_path = ROOT_SRC_TREE_DIR / "docs" / "changelog"
     for pattern, replacement in (
-        (r"[^`]@([^,\s]+)", fr"`@\1 <{home}/\1>`_"),
-        (r"[^`]#([\d]+)", fr"`#pr\1 <{issue}/\1>`_"),
+        (r"[^`]@([^,\s]+)", rf"`@\1 <{home}/\1>`_"),
+        (r"[^`]#([\d]+)", rf"`#pr\1 <{issue}/\1>`_"),
     ):
         for path in fragments_path.glob("*.rst"):
             path.write_text(re.sub(pattern, replacement, path.read_text()))
