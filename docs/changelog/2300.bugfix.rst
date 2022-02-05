@@ -1,2 +1,0 @@
-Sequential run fails because the packaging environment is deleted twice for sequential runs with recreate flag on
-- by :user:`gaborbernat`.

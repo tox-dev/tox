@@ -1,1 +1,0 @@
-Fix plugin initialization order - core plugins first, then 3rd party and finally inline - by :user:`gaborbernat`.
