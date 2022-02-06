@@ -1,1 +1,0 @@
-Print a message when ignoring outcome of commands - by :user:`gaborbernat`.

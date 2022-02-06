@@ -1,2 +1,0 @@
-Display a hint for unrecognized argument CLI parse failures to use ``--`` separator to pass arguments to commands
-- by :user:`gaborbernat`.

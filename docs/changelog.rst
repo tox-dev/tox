@@ -4,6 +4,40 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0b1 (2022-02-05)
+---------------------
+
+Features - 4.0.0b1
+~~~~~~~~~~~~~~~~~~
+- Display a hint for unrecognized argument CLI parse failures to use ``--`` separator to pass arguments to commands
+  - by :user:`gaborbernat`. (:issue:`2183`)
+- Do not allow extending the config set beyond setup to ensures that all configuration values are visible via the config
+  sub-command. - by :user:`gaborbernat`. (:issue:`2243`)
+- Print a message when ignoring outcome of commands - by :user:`gaborbernat`. (:issue:`2315`)
+
+Bugfixes - 4.0.0b1
+~~~~~~~~~~~~~~~~~~
+- Fix type annotation is broken for :meth:`tox.config.sets.ConfigSet.add_config` when adding a container type
+  - by :user:`gaborbernat`. (:issue:`2233`)
+- Insert ``TOX_WORK_DIR``, ``TOX_ENV_NAME``, ``TOX_ENV_DIR`` and ``VIRTUAL_ENV`` into the environment variables for all
+  tox environments to keep contract with tox version 3 - by :user:`gaborbernat`. (:issue:`2259`)
+- Fix plugin initialization order - core plugins first, then 3rd party and finally inline - by :user:`gaborbernat`. (:issue:`2264`)
+- Legacy parallel mode should accept ``-p`` flag without arguments - by :user:`gaborbernat`. (:issue:`2299`)
+- Sequential run fails because the packaging environment is deleted twice for sequential runs with recreate flag on
+  - by :user:`gaborbernat`. (:issue:`2300`)
+- Require Python 3.10 to generate docs - by :user:`jugmac00`. (:issue:`2321`)
+- Environment assignment for output breaks when using ``-rv`` (when we cannot guess upfront the verbosity level from the
+  CLI arguments) - by :user:`gaborbernat`. (:issue:`2324`)
+- ``devenv`` command does not respect specified path - by :user:`gaborbernat`. (:issue:`2325`)
+
+Improved Documentation - 4.0.0b1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Enable link check during documentation build - by :user:`gaborbernat`. (:issue:`806`)
+- Document ownership of the ``tox.wiki`` root domain - by :user:`gaborbernat`. (:issue:`2242`)
+- Document :meth:`tox.config.sets.ConfigSet.loaders` - by :user:`gaborbernat`. (:issue:`2287`)
+- Fix CLI documentation is missing and broken documentation references - by :user:`gaborbernat`. (:issue:`2310`)
+
+
 v4.0.0a10 (2022-01-04)
 ----------------------
 
