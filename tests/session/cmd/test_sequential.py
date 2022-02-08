@@ -432,7 +432,7 @@ def test_sequential_inserted_env_vars(tox_project: ToxProjectCreator, demo_pkg_i
 
     assert re.search(f"TOX_PACKAGE={re.escape(str(project.path))}.*.tar.gz{os.linesep}", result.out)
     assert f"TOX_ENV_NAME=py{os.linesep}" in result.out
-    work_dir = project.path / ".tox" / "4"
+    work_dir = project.path / ".tox"
     assert f"TOX_WORK_DIR={work_dir}{os.linesep}" in result.out
     env_dir = work_dir / "py"
     assert f"TOX_ENV_DIR={env_dir}{os.linesep}" in result.out
