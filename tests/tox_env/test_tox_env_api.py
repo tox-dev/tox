@@ -38,7 +38,7 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
     result_first = prj.run("r")
     result_first.assert_success()
 
-    log_dir = prj.path / ".tox" / "4" / "py" / "log"
+    log_dir = prj.path / ".tox" / "py" / "log"
     assert log_dir.exists(), result_first.out
 
     filename = {i.name for i in log_dir.iterdir()}

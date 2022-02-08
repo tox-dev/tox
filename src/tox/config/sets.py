@@ -188,8 +188,7 @@ class CoreConfigSet(ConfigSet):
         )
 
         def work_dir_builder(conf: Config, env_name: str | None) -> Path:  # noqa: U100
-            # here we pin to .tox/4 to be able to use in parallel with v3 until final release
-            return (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox" / "4"
+            return (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox"
 
         self.add_config(
             keys=["work_dir", "toxworkdir"],
