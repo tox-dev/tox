@@ -29,15 +29,15 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 21.12b0
+    rev: 22.1.0
     hooks:
       - id: black
         args: [--safe]
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.0
+    rev: v1.12.1
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==21.12b0]
+        additional_dependencies: [black==22.1.0]
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
     hooks:
@@ -73,7 +73,7 @@ repos:
           - "@prettier/plugin-xml@1.2.0"
         args: ["--print-width=120", "--prose-wrap=always"]
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.30.0
+    rev: v0.31.0
     hooks:
       - id: markdownlint
   - repo: local
