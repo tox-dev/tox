@@ -53,9 +53,9 @@ jobs:
                 file_handler.write('TOXENV=' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else "3") + "\n")
         shell: python
       - name: Setup test suite
-        run: tox4 r -vv --notest
+        run: tox r -vv --notest
       - name: Run test suite
-        run: tox4 r --skip-pkg-install
+        run: tox r --skip-pkg-install
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
@@ -97,7 +97,7 @@ jobs:
       - name: Install self-tox
         run: python -m pip install .
       - name: Run check for ${{ matrix.tox_env }}
-        run: tox4 r -e ${{ matrix.tox_env }}
+        run: tox r -e ${{ matrix.tox_env }}
         env:
           UPGRADE_ADVISORY: "yes"
 

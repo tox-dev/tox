@@ -12,4 +12,4 @@ def test_call_as_module(empty_project: ToxProject) -> None:  # noqa: U100
 
 
 def test_call_as_exe(empty_project: ToxProject) -> None:  # noqa: U100
-    subprocess.check_output([str(Path(sys.executable).parent / "tox4"), "-h"])
+    subprocess.check_output([str(Path(sys.executable).parent / "tox"), "-h"])
