@@ -1,0 +1,1 @@
+Use ``tox`` console entry point name instead of ``tox4`` - by :user:`gaborbernat`.
