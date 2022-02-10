@@ -43,7 +43,11 @@ def get_options(*args: str) -> Options:
 def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     """First just load the base options (verbosity+color) to setup the logging framework."""
     tox_parser = ToxParser.base()
-    parsed, _ = tox_parser.parse_known_args(args)
+    parsed = Parsed()
+    try:
+        tox_parser.parse_known_args(args, namespace=parsed)
+    except SystemExit:
+        ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'
     guess_verbosity = parsed.verbosity
     handler = setup_report(guess_verbosity, parsed.is_colored)
     from tox.plugin.manager import MANAGER  # load the plugin system right after we set up report
