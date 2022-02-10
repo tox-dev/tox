@@ -24,7 +24,7 @@ def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch
     outcome = list(state.envs.iter(only_active=False))
     assert outcome == [name]
     monkeypatch.delenv("TERM", raising=False)  # disable conditionally set flag
-    parser = ConfigParser()
+    parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     assert list(parser.sections()) == [f"testenv:{name}", "tox"]
 
@@ -122,7 +122,7 @@ def test_show_config_pkg_env_once(
     )
     result = project.run("c")
     result.assert_success()
-    parser = ConfigParser()
+    parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     sections = set(parser.sections())
     assert sections == {"testenv:.pkg", f"testenv:.pkg-{impl}{prev_ver}", f"testenv:py{prev_ver}", "testenv:py", "tox"}
@@ -138,7 +138,7 @@ def test_show_config_pkg_env_skip(
     )
     result = project.run("c")
     result.assert_success()
-    parser = ConfigParser()
+    parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     sections = set(parser.sections())
     assert sections == {"testenv:.pkg", "tox", "testenv:py", f"testenv:py{prev_ver}"}
@@ -148,7 +148,7 @@ def test_show_config_select_only(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[tox]\nenv_list=\n a\n b", "pyproject.toml": ""})
     result = project.run("c", "-e", ".pkg,b,.pkg")
     result.assert_success()
-    parser = ConfigParser()
+    parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     sections = list(parser.sections())
     assert sections == ["testenv:.pkg", "testenv:b"]

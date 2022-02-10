@@ -34,7 +34,7 @@ class IniConfig:
             self.config_file = self.config_file.absolute()
             try:
 
-                parser = ConfigParser()
+                parser = ConfigParser(interpolation=None)
                 with self.config_file.open() as file_handler:
                     parser.read_file(file_handler)
                 self.has_tox_section = parser.has_section(CORE.key)

@@ -9,6 +9,7 @@ from typing import Any, Callable
 import pytest
 from pytest_mock import MockerFixture
 
+from tox.config.cli.ini import IniConfig
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
@@ -190,3 +191,11 @@ def test_bad_option_cli_ini(
         ),
     ]
     assert vars(parsed) == default_options
+
+
+def test_cli_ini_with_interpolated(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    to = tmp_path / "tox.ini"
+    to.write_text("[tox]\na = %(b)s")
+    monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
+    conf = IniConfig()
+    assert conf.get("a", str)
