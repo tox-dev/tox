@@ -1,0 +1,1 @@
+Do not interpolate values when parsing ``tox.ini`` configuration files - by :user:`gaborbernat`.

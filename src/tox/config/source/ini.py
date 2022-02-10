@@ -24,7 +24,7 @@ class IniSource(Source, ABC):
 
     def __init__(self, path: Path, content: str | None = None) -> None:
         super().__init__(path)
-        self._parser = ConfigParser()
+        self._parser = ConfigParser(interpolation=None)
         if content is None:
             if not path.exists():
                 raise ValueError
