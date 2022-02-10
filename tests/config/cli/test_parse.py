@@ -38,3 +38,9 @@ def test_verbosity_guess_miss_match(capsys: CaptureFixture) -> None:
 
     out, err = capsys.readouterr()
     assert out == "ROOT: E\nROOT: W\nROOT: I\n"
+
+
+@pytest.mark.parametrize("arg", ["-av", "-va"])
+def test_verbosity(arg: str) -> None:
+    result = get_options(arg)
+    assert result.parsed.verbosity == 3
