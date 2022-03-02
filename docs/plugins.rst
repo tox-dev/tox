@@ -32,7 +32,7 @@ Examples include::
     tox-bindep                           - Runs bindep checks prior to tests
     tox-bitbucket-status                 - Update bitbucket status for each env
     tox-cmake                            - Build CMake projects using tox
-    tox-conda                            - Provides integration with the condo package manager
+    tox-conda                            - Provides integration with the conda package manager
     tox-current-env                      - Run tests in the current python environment
     tox-docker                           - Launch a docker instance around test runs
     tox-direct                           - Run everything directly without tox venvs
