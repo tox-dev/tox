@@ -1,0 +1,1 @@
+Correct misspelling of conda in tox-conda plugin description -- by :user:`vladdoster`.
