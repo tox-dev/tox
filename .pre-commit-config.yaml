@@ -47,11 +47,6 @@ repos:
     hooks:
       - id: tox-ini-fmt
         args: ["-p", "fix"]
-  - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.20.0
-    hooks:
-      - id: setup-cfg-fmt
-        args: [--min-py3-version, "3.7", "--max-py-version", "3.10"]
   - repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:
@@ -73,7 +68,7 @@ repos:
           - "@prettier/plugin-xml@1.2.0"
         args: ["--print-width=120", "--prose-wrap=always"]
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.31.0
+    rev: v0.31.1
     hooks:
       - id: markdownlint
   - repo: local
