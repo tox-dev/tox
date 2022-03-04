@@ -1,17 +1,143 @@
 [build-system]
-requires = ["setuptools>=58", "setuptools-scm>=6"]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
+requires = ["hatchling>=0.14", "hatch-vcs>=0.1"]
+
+[project]
+name = "tox"
+description = "tox is a generic virtualenv management and test command line tool"
+readme.file = "README.md"
+readme.content-type = "text/markdown"
+keywords = ["virtual", "environments", "isolated", "testing"]
+license = "MIT"
+urls.Homepage = "http://tox.readthedocs.org"
+urls.Source = "https://github.com/tox-dev/tox"
+urls.Tracker = "https://github.com/tox-dev/tox/issues"
+authors = [{ name = "Bernát Gábor", email = "gaborjbernat@gmail.com" }]
+maintainers = [
+  { name = "Anthony Sottile", email = "asottile@umich.edu" },
+  { name = "Bernát Gábor", email = "gaborjbernat@gmail.com" },
+  { name = "Jürgen Gmach", email = "juergen.gmach@googlemail.com" },
+  { name = "Oliver Bestwalter", email = "oliver@bestwalter.de" },
+]
+requires-python = ">=3.7"
+dependencies = [
+  "cachetools>=4.2",
+  "chardet>=4",
+  "colorama>=0.4.4",
+  "packaging>=21",
+  "platformdirs>=2.1",
+  "pluggy>=0.13.1",
+  "pyproject-api>=0.1",
+  "tomli>=1.1",
+  "virtualenv>=20.6",
+  'importlib-metadata>=4.6.1;python_version<"3.8"',
+  'typing-extensions>=3.10;python_version<"3.8"',
+]
+optional-dependencies.docs = [
+  "furo>=2022.1.2",
+  "sphinx>=4.4",
+  "sphinx-argparse-cli>=1.8.3",
+  "sphinx-autodoc-typehints>=1.16",
+  "sphinx-copybutton>=0.5",
+  "sphinx-inline-tabs>=2022.1.2b11",
+  "sphinxcontrib-towncrier>=0.2.1a0",
+  "towncrier>=21.3",
+]
+optional-dependencies.testing = [
+  "covdefaults>=2.2",
+  "devpi-client>=5.2",
+  "devpi-server>=6.4",
+  "distlib>=0.3.4",
+  "filelock>=3.4",
+  "flaky>=3.7",
+  "freezegun>=1.1",
+  "psutil>=5.9",
+  "pytest>=7",
+  "pytest-cov>=3",
+  "pytest-mock>=3.7",
+  "pytest-xdist>=2.5",
+  "re-assert>=1.1",
+  "hatchling>=0.14",
+  "hatch-vcs>=0.1",
+]
+scripts.tox = "tox.run:run"
+dynamic = ["version"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: tox",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Utilities",
+]
+
+[tool.hatch]
+build.dev-mode-dirs = ["src"]
+build.hooks.vcs.version-file = "src/tox/version.py"
+build.targets.sdist.include = ["/src", "/tests"]
+version.source = "vcs"
 
 [tool.black]
 line-length = 120
 
-[tool.isort]
-line_length = 120
-profile = "black"
-known_first_party = ["tox", "tests"]
+[tool.coverage]
+html.show_contexts = true
+html.skip_covered = false
+paths.source = [
+  "src",
+  ".tox*/*/lib/python*/site-packages",
+  ".tox*/pypy*/site-packages",
+  ".tox*\\*\\Lib\\site-packages",
+  "*/src",
+  "*\\src",
+]
+report.fail_under = 88
+report.omit = ["src/tox/config/cli/for_docs.py", "tests/execute/local_subprocess/bad_process.py", "tests/type_check/*"]
+run.parallel = true
+run.plugins = ["covdefaults"]
 
-[tool.setuptools_scm]
-write_to = "src/tox/version.py"
+[tool.isort]
+known_first_party = ["tox", "tests"]
+profile = "black"
+line_length = 120
+
+[tool.mypy]
+python_version = "3.7"
+show_error_codes = true
+strict = true
+overrides = [
+  { module = [
+    "colorama.*",
+    "coverage.*",
+    "distlib.*",
+    "flaky.*",
+    "importlib_metadata.*",
+    "pluggy.*",
+    "psutil.*",
+    "re_assert.*",
+    "setuptools.*",
+    "virtualenv.*",
+    "wheel.*",
+  ], ignore_missing_imports = true },
+]
+
+[tool.pep8]
+max-line-length = "120"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+junit_family = "xunit2"
+addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
 
 [tool.towncrier]
 name = "tox"
