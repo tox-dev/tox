@@ -809,6 +809,10 @@ def tox_addoption(parser):
             passenv.add("MSYSTEM")  # fixes #429
         else:
             passenv.add("TMPDIR")
+
+            # add non-uppercased variables to passenv if present (only necessary for UNIX)
+            passenv.update(name for name in os.environ if name.upper() in passenv)
+
         for spec in value:
             for name in os.environ:
                 if fnmatchcase(name.upper(), spec.upper()):
