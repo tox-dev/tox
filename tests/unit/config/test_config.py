@@ -1494,6 +1494,8 @@ class TestConfigTestEnv:
         monkeypatch.setenv("A123A", "a")
         monkeypatch.setenv("A123B", "b")
         monkeypatch.setenv("BX23", "0")
+        if plat == "linux2":
+            monkeypatch.setenv("http_proxy", "c")
         config = newconfig(
             """
             [testenv]
@@ -1518,6 +1520,9 @@ class TestConfigTestEnv:
             assert "MSYSTEM" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
+            if sys.platform != "win32":
+                # this cannot be emulated on win - it doesn't support lowercase env vars
+                assert "http_proxy" in envconfig.passenv
         assert "CURL_CA_BUNDLE" in envconfig.passenv
         assert "PATH" in envconfig.passenv
         assert "PIP_INDEX_URL" in envconfig.passenv
@@ -3575,7 +3580,7 @@ def test_config_via_pyproject_legacy(initproj):
     initproj(
         "config_via_pyproject_legacy-0.5",
         filedefs={
-            "pyproject.toml": u'''
+            "pyproject.toml": '''
                 [project]
                 description = "Factory ⸻ A code generator 🏭"
                 authors = [{name = "Łukasz Langa"}]
