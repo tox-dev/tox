@@ -119,7 +119,7 @@ def test_run_result_repr(capfd):
     with RunResult(["hello", "world"], capfd) as run_result:
         # simulate tox writing some unicode output
         stdout_buffer = getattr(sys.stdout, "buffer", sys.stdout)
-        stdout_buffer.write(u"\u2603".encode("UTF-8"))
+        stdout_buffer.write("\u2603".encode("UTF-8"))
 
     # must not `UnicodeError` on repr(...)
     ret = repr(run_result)
