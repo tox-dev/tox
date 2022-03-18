@@ -22,7 +22,7 @@ class ResultLog(object):
             "reportversion": "1",
             "toxversion": __version__,
             "platform": sys.platform,
-            "host": os.getenv(str("HOSTNAME")) or socket.getfqdn(),
+            "host": os.getenv(str("HOSTNAME")) or socket.gethostname(),
             "commands": command_log,
         }
 

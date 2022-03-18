@@ -31,7 +31,7 @@ def test_pre_set_header(clean_hostname_envvar):
     assert replog.dict["reportversion"] == "1"
     assert replog.dict["toxversion"] == tox.__version__
     assert replog.dict["platform"] == sys.platform
-    assert replog.dict["host"] == socket.getfqdn()
+    assert replog.dict["host"] == socket.gethostname()
     data = replog.dumps_json()
     replog2 = ResultLog.from_json(data)
     assert replog2.dict == replog.dict
@@ -44,7 +44,7 @@ def test_set_header(pkg, clean_hostname_envvar):
     assert replog.dict["reportversion"] == "1"
     assert replog.dict["toxversion"] == tox.__version__
     assert replog.dict["platform"] == sys.platform
-    assert replog.dict["host"] == socket.getfqdn()
+    assert replog.dict["host"] == socket.gethostname()
     expected = {"basename": "hello-1.0.tar.gz", "sha256": pkg.computehash("sha256")}
     env_log = replog.get_envlog("a")
     env_log.set_header(installpkg=pkg)
