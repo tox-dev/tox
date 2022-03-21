@@ -807,6 +807,11 @@ def tox_addoption(parser):
             passenv.add("PROCESSOR_ARCHITECTURE")  # platform.machine()
             passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
             passenv.add("MSYSTEM")  # fixes #429
+
+            # PROGRAM* required for compiler tool discovery #2382
+            passenv.add("PROGRAMFILES")
+            passenv.add("PROGRAMFILES(X86)")
+            passenv.add("PROGRAMDATA")
         else:
             passenv.add("TMPDIR")
 
