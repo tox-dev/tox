@@ -1,0 +1,1 @@
+On Windows, PROGRAMFILES, PROGRAMFILES(X86), and PROGRAMDATA environment variables are now passed through.
