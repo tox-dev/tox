@@ -1518,6 +1518,9 @@ class TestConfigTestEnv:
             assert "PROCESSOR_ARCHITECTURE" in envconfig.passenv
             assert "USERPROFILE" in envconfig.passenv
             assert "MSYSTEM" in envconfig.passenv
+            assert "PROGRAMFILES" in envconfig.passenv
+            assert "PROGRAMFILES(X86)" in envconfig.passenv
+            assert "PROGRAMDATA" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
             if sys.platform != "win32":
@@ -1562,6 +1565,9 @@ class TestConfigTestEnv:
             assert "SYSTEMROOT" in envconfig.passenv
             assert "TEMP" in envconfig.passenv
             assert "TMP" in envconfig.passenv
+            assert "PROGRAMFILES" in envconfig.passenv
+            assert "PROGRAMFILES(X86)" in envconfig.passenv
+            assert "PROGRAMDATA" in envconfig.passenv
         else:
             assert "TMPDIR" in envconfig.passenv
         assert "PATH" in envconfig.passenv

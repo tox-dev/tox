@@ -469,7 +469,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
       ``REQUESTS_CA_BUNDLE``, ``SSL_CERT_FILE``,
       ``HTTP_PROXY``, ``HTTPS_PROXY``, ``NO_PROXY``
     * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
-       ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``
+       ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``,
+       ``PROGRAMFILES``, ``PROGRAMFILES(X86)``, ``PROGRAMDATA``
     * Others (e.g. UNIX, macOS): ``TMPDIR``
 
     You can override these variables with the ``setenv`` option.
