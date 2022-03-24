@@ -59,7 +59,7 @@ you want to do more research, we recommend taking a look at these projects:
 
 **Tutorials**
 
-* `Oliver Bestwalter - Automating Build, Test and Release Workflows with tox <https://www.youtube.com/watch?v=N5vscPTWKOk>`_
+* `Oliver Bestwalter - Automating Build, Test and Release Workflows with tox <https://www.youtube.com/watch?v=PrAyvH-tm8E>`_
 * `Bernat Gabor - Standardize Testing in Python <https://www.youtube.com/watch?v=SFqna5ilqig>`_
 
 .. comment: split here
