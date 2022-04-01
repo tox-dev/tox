@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import locale
 import os
 import pipes
 import signal
@@ -125,7 +126,13 @@ class Action(object):
                 exit_code = process.returncode
             finally:
                 if out_path is not None and out_path.exists():
-                    lines = out_path.read_text("UTF-8").split("\n")
+                    # Log files of Python sub-processes like `python
+                    # -m virtualenv` are opened as text files without
+                    # specifying an explicit encoding, which means
+                    # they use the locale's preferred encoding.  They
+                    # cannot be assumed to be UTF-8.
+                    encoding = locale.getpreferredencoding(False)
+                    lines = out_path.read_text(encoding).split("\n")
                     # first three lines are the action, cwd, and cmd - remove it
                     output = "\n".join(lines[3:])
                 try:
