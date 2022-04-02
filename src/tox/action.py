@@ -126,13 +126,17 @@ class Action(object):
                 exit_code = process.returncode
             finally:
                 if out_path is not None and out_path.exists():
-                    # Log files of Python sub-processes like `python
-                    # -m virtualenv` are opened as text files without
-                    # specifying an explicit encoding, which means
-                    # they use the locale's preferred encoding.  They
-                    # cannot be assumed to be UTF-8.
-                    encoding = locale.getpreferredencoding(False)
-                    lines = out_path.read_text(encoding).split("\n")
+                    # Output of Python sub-processes like `python -m
+                    # virtualenv` may use some other system-dependent
+                    # encoding when redirected to a file.  Let's try
+                    # UTF-8 (the common case) and fall back to the
+                    # system encoding if that fails.
+                    try:
+                        encoding = "UTF-8"
+                        lines = out_path.read_text(encoding).split("\n")
+                    except UnicodeDecodeError:
+                        encoding = locale.getpreferredencoding(False)
+                        lines = out_path.read_text(encoding).split("\n")
                     # first three lines are the action, cwd, and cmd - remove it
                     output = "\n".join(lines[3:])
                 try:
