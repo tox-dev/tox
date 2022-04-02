@@ -245,7 +245,7 @@ class PosargsOption:
 class InstallcmdOption:
     name = "install_command"
     type = "argv_install_command"
-    default = r"python -m pip install \{opts\} \{packages\}"
+    default = r"python -Xutf8 -m pip install \{opts\} \{packages\}"
     help = "install command for dependencies and package under test."
 
     def postprocess(self, testenv_config, value):

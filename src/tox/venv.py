@@ -717,7 +717,7 @@ _SKIP_VENV_CREATION = os.environ.get("_TOX_SKIP_ENV_CREATION_TEST", False) == "1
 @tox.hookimpl
 def tox_testenv_create(venv, action):
     config_interpreter = venv.getsupportedinterpreter()
-    args = [sys.executable, "-m", "virtualenv"]
+    args = [sys.executable, "-Xutf8", "-m", "virtualenv"]
     if venv.envconfig.sitepackages:
         args.append("--system-site-packages")
     if venv.envconfig.alwayscopy:
