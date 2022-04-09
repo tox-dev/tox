@@ -460,7 +460,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
     ``A`` will pass both ``A`` and ``a``.
 
     Some variables are always passed through to ensure the basic functionality
-    of standard library functions or tooling like pip:
+    of standard library functions or tooling like pip.
+    This is also not case sensitive on all platforms except Windows:
 
     * passed through on all platforms: ``CURL_CA_BUNDLE``, ``PATH``,
       ``LANG``, ``LANGUAGE``,
@@ -468,7 +469,8 @@ Complete list of settings that you can put into ``testenv*`` sections:
       ``REQUESTS_CA_BUNDLE``, ``SSL_CERT_FILE``,
       ``HTTP_PROXY``, ``HTTPS_PROXY``, ``NO_PROXY``
     * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
-       ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``
+       ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``,
+       ``PROGRAMFILES``, ``PROGRAMFILES(X86)``, ``PROGRAMDATA``
     * Others (e.g. UNIX, macOS): ``TMPDIR``
 
     You can override these variables with the ``setenv`` option.

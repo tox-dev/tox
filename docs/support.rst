@@ -5,7 +5,6 @@ Support and contact channels
 
 Getting in contact:
 
-* join the `tox-dev mailing list`_ for tox related questions and development discussions
 * file a `report on the issue tracker`_
 * hang out on the tox discord server channel at https://discord.gg/tox
 * `fork the github repository`_ and submit merge/pull requests (see the developers help page -- :ref:`developers`)
@@ -21,5 +20,4 @@ experienced well-known Python developers.
 .. _`merlinux.eu`: https://merlinux.eu
 .. _`report on the issue tracker`: https://github.com/tox-dev/tox/issues
 .. _`tetamap blog`: https://holgerkrekel.net
-.. _`tox-dev mailing list`: https://mail.python.org/mm3/mailman3/lists/tox-dev.python.org/
 .. _`fork the github repository`: https://github.com/tox-dev/tox

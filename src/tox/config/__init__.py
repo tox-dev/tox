@@ -807,8 +807,16 @@ def tox_addoption(parser):
             passenv.add("PROCESSOR_ARCHITECTURE")  # platform.machine()
             passenv.add("USERPROFILE")  # needed for `os.path.expanduser()`
             passenv.add("MSYSTEM")  # fixes #429
+            # PROGRAM* required for compiler tool discovery #2382
+            passenv.add("PROGRAMFILES")
+            passenv.add("PROGRAMFILES(X86)")
+            passenv.add("PROGRAMDATA")
         else:
             passenv.add("TMPDIR")
+
+            # add non-uppercased variables to passenv if present (only necessary for UNIX)
+            passenv.update(name for name in os.environ if name.upper() in passenv)
+
         for spec in value:
             for name in os.environ:
                 if fnmatchcase(name.upper(), spec.upper()):

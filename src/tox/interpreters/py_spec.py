@@ -71,6 +71,6 @@ CURRENT = PythonSpec(
     "pypy" if tox.constants.INFO.IS_PYPY else "python",
     sys.version_info[0],
     sys.version_info[1],
-    64 if sys.maxsize > 2 ** 32 else 32,
+    64 if sys.maxsize > 2**32 else 32,
     sys.executable,
 )

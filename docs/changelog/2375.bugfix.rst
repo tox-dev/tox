@@ -1,0 +1,1 @@
+Avoid potential 30s delay caused by socket.getfqdn(). -- by :user:`ssbarnea`
