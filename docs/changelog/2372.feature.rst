@@ -1,1 +1,0 @@
-Add default environment variables (such as http_proxy) regardless of their case to passenv on UNIX -- by :user:`poggenhans`.
