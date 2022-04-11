@@ -1,1 +1,0 @@
-Fix CLI raises an error for ``-va`` with ``ignored explicit argument 'a'`` - by :user:`gaborbernat`.
