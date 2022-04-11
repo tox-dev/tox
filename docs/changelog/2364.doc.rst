@@ -1,1 +1,0 @@
-Deleted the tox mailing list -- by :user:`jugmac00`

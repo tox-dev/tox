@@ -11,6 +11,38 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.25.0 (2022-04-11)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fixed failing isolated_build because setuptools warning was captured
+  in ``build_requires``. -- by :user:`zariiii9003`
+  `#2332 <https://github.com/tox-dev/tox/issues/2332>`_
+- Avoid potential 30s delay caused by socket.getfqdn(). -- by :user:`ssbarnea`
+  `#2375 <https://github.com/tox-dev/tox/issues/2375>`_
+
+
+Features
+^^^^^^^^
+
+- Ignore missing commands if they are prefixed by ``-``
+  -- by :user:`cdown`.
+  `#2315 <https://github.com/tox-dev/tox/issues/2315>`_
+- Add default environment variables (such as http_proxy) regardless of their case to passenv on UNIX -- by :user:`poggenhans`.
+  `#2372 <https://github.com/tox-dev/tox/issues/2372>`_
+- On Windows ``PROGRAMFILES``, ``PROGRAMFILES(X86)``, and ``PROGRAMDATA`` environment variables are now passed through, unmasking system values necessary to locate resources such as a C compiler.
+  `#2382 <https://github.com/tox-dev/tox/issues/2382>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Deleted the tox mailing list -- by :user:`jugmac00`
+  `#2364 <https://github.com/tox-dev/tox/issues/2364>`_
+
+
 v3.24.5 (2021-12-29)
 --------------------
 

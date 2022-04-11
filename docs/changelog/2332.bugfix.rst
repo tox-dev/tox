@@ -1,2 +1,0 @@
-Fixed failing isolated_build because setuptools warning was captured
-in ``build_requires``. -- by :user:`zariiii9003`
