@@ -88,7 +88,7 @@ def setup(app: Sphinx) -> None:
     # 1. run towncrier
     root, exe = here.parent, Path(sys.executable)
     towncrier = exe.with_name(f"towncrier{exe.suffix}")
-    new = check_output([str(towncrier), "--draft", "--version", "NEXT"], cwd=root, universal_newlines=True)
+    new = check_output([str(towncrier), "--draft", "--version", "NEXT"], cwd=root, text=True)
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
 
     class PatchedPythonDomain(PythonDomain):

@@ -33,8 +33,7 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_set(value: str, of_type: type[Any]) -> Iterator[str]:
-        for value in StrConvert.to_list(value, of_type):
-            yield value
+        yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
     def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # noqa: U100
