@@ -1,1 +1,0 @@
-Switch to ``hatchling`` as build backend instead of ``setuptools`` - by :user:`gaborbernat`.

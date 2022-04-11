@@ -1,1 +1,0 @@
-Use ``.tox`` as working directory instead of ``.tox/4`` - by :user:`gaborbernat`.

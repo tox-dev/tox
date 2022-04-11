@@ -4,6 +4,25 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0b2 (2022-04-11)
+---------------------
+
+Features - 4.0.0b2
+~~~~~~~~~~~~~~~~~~
+- Use ``tox`` console entry point name instead of ``tox4`` - by :user:`gaborbernat`. (:issue:`2344`)
+- Use ``.tox`` as working directory instead of ``.tox/4`` - by :user:`gaborbernat`. (:issue:`2346`)
+- Switch to ``hatchling`` as build backend instead of ``setuptools`` - by :user:`gaborbernat`. (:issue:`2368`)
+
+Bugfixes - 4.0.0b2
+~~~~~~~~~~~~~~~~~~
+- Fix CLI raises an error for ``-va`` with ``ignored explicit argument 'a'`` - by :user:`gaborbernat`. (:issue:`2343`)
+- Do not interpolate values when parsing ``tox.ini`` configuration files - by :user:`gaborbernat`. (:issue:`2350`)
+
+Improved Documentation - 4.0.0b2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Deleted the tox mailing list -- by :user:`jugmac00` (:issue:`2364`)
+
+
 v4.0.0b1 (2022-02-05)
 ---------------------
 
