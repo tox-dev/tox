@@ -468,7 +468,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
       ``LD_LIBRARY_PATH``, ``PIP_INDEX_URL``, ``PIP_EXTRA_INDEX_URL``,
       ``REQUESTS_CA_BUNDLE``, ``SSL_CERT_FILE``,
       ``HTTP_PROXY``, ``HTTPS_PROXY``, ``NO_PROXY``
-    * Windows: ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
+    * Windows: ``APPDATA``, ``SYSTEMDRIVE``, ``SYSTEMROOT``, ``PATHEXT``, ``TEMP``, ``TMP``
        ``NUMBER_OF_PROCESSORS``, ``USERPROFILE``, ``MSYSTEM``,
        ``PROGRAMFILES``, ``PROGRAMFILES(X86)``, ``PROGRAMDATA``
     * Others (e.g. UNIX, macOS): ``TMPDIR``
