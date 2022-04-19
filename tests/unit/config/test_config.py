@@ -1508,6 +1508,7 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
         if plat == "win32":
+            assert "APPDATA" in envconfig.passenv
             assert "PATHEXT" in envconfig.passenv
             assert "SYSTEMDRIVE" in envconfig.passenv
             assert "SYSTEMROOT" in envconfig.passenv
@@ -1560,6 +1561,7 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["python"]
         if plat == "win32":
+            assert "APPDATA" in envconfig.passenv
             assert "PATHEXT" in envconfig.passenv
             assert "SYSTEMDRIVE" in envconfig.passenv
             assert "SYSTEMROOT" in envconfig.passenv
