@@ -1,0 +1,1 @@
+``sitepackages = true`` will add user's site-package to the python path on Windows as expected -- by :user:`niander`
