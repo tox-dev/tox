@@ -1,3 +1,5 @@
+.. _configuration:
+
 Configuration
 +++++++++++++
 
@@ -313,9 +315,9 @@ Base options
    :default: <empty list>
 
    Each line specifies a command name (in glob-style pattern format) which can be used in the commands section even if
-   it's located outside of the tox environment. For example: if you use the unix make command for running tests you can list
-   ``allowlist_externals=make`` or ``allowlist_externals=/usr/bin/make``. If you want to allow all external commands
-   you can use ``allowlist_externals=*`` which will match all commands (not recommended).
+   it's located outside of the tox environment. For example: if you use the unix *rm* command for running tests you can
+   list ``allowlist_externals=rm`` or ``allowlist_externals=/usr/bin/rm``. If you want to allow all external
+   commands you can use ``allowlist_externals=*`` which will match all commands (not recommended).
 
 .. conf::
    :keys: labels
@@ -527,8 +529,8 @@ Python options
 
       Leaving this unset will cause an error if the package under test has a different Python requires than tox itself
       and tox is installed into a Python that's not supported by the package. For example, if your package requires
-      Python 3.9 or later, and you install tox in Python 3.8, when you run a tox environment that has left this
-      unspecified tox will use Python 3.8 to build and install your package which will fail given it requires 3.9.
+      Python 3.10 or later, and you install tox in Python 3.9, when you run a tox environment that has left this
+      unspecified tox will use Python 3.9 to build and install your package which will fail given it requires 3.10.
 
 .. conf::
    :keys: env_site_packages_dir, envsitepackagesdir
@@ -554,9 +556,25 @@ Python run
    :keys: deps
    :default: <empty list>
 
-   Name of the Python dependencies as specified by `PEP-440`_. Installed into the environment prior to project after
-   environment creation, but before package installation. All installer commands are executed using the :ref:`tox_root`
-   as the current working directory.
+   Name of the Python dependencies. Installed into the environment prior to project after environment creation, but
+   before package installation. All installer commands are executed using the :ref:`tox_root` as the current working
+   directory. Each value must be one of:
+
+   - a python dependency as specified by `PEP-440`_,
+   - a `requirement file <https://pip.pypa.io/en/stable/user_guide/#requirements-files>`_ when the value starts with
+     ``-r`` (followed by a file path),
+   - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
+     ``-c`` (followed by a file path).
+
+   For example:
+
+    .. code-block:: ini
+
+        [testenv]
+        deps =
+            pytest>=7,<8
+            -r requirements.txt
+            -c constraints.txt
 
 .. conf::
    :keys: use_develop, usedevelop

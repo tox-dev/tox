@@ -4,7 +4,7 @@ Installation
 via pipx
 --------
 
-:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.6 or higher) to run. We recommend :pypi:`pipx` to
+:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.7 or higher) to run. We recommend :pypi:`pipx` to
 install tox into an isolated environment. This has the added benefit that later you'll be able to upgrade tox without
 affecting other parts of the system.
 
