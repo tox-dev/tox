@@ -18,17 +18,16 @@ def tox_add_option(parser: ToxParser) -> None:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"{version} from {Path(tox.__file__).absolute()}.\n{get_registered_plugins()}",
+        version=f"{version} from {Path(tox.__file__).absolute()}\n{get_registered_plugins()}",
     )
 
 
 def get_registered_plugins():
-    out = ["registered plugins:"]
-    plugin_dist_info = MANAGER.manager.list_plugin_distinfo()
-    if plugin_dist_info:
-        for mod, egg_info in plugin_dist_info:
+    out = []
+    plugin_info = MANAGER.manager.list_plugin_distinfo()
+    if plugin_info:
+        out.append("registered plugins:")
+        for mod, egg_info in plugin_info:
             source = getattr(mod, "__file__", repr(mod))
             out.append(f"    {egg_info.project_name}-{egg_info.version} at {source}")
-    else:
-        out.append("None.")
     return "\n".join(out)
