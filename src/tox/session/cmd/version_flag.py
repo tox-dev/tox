@@ -28,7 +28,7 @@ def get_registered_plugins():
     if plugin_dist_info:
         for mod, egg_info in plugin_dist_info:
             source = getattr(mod, "__file__", repr(mod))
-            out.append("    {}-{} at {}".format(egg_info.project_name, egg_info.version, source))
+            out.append(f"    {egg_info.project_name}-{egg_info.version} at {source}")
     else:
         out.append("None.")
     return "\n".join(out)
