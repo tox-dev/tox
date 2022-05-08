@@ -5,25 +5,24 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import tox
 from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
 from tox.plugin.manager import MANAGER
+from tox.version import version
 
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    import tox
-    from tox.version import version
-
     parser.add_argument(
         "--version",
         action="version",
-        version=f"{version} from {Path(tox.__file__).absolute()}\n{get_registered_plugins()}",
+        version=get_version_info(),
     )
 
 
-def get_registered_plugins():
-    out = []
+def get_version_info() -> str:
+    out = [f"{version} from {Path(tox.__file__).absolute()} "]
     plugin_info = MANAGER.manager.list_plugin_distinfo()
     if plugin_info:
         out.append("registered plugins:")
