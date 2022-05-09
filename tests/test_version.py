@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from _pytest.monkeypatch import MonkeyPatch
+from unittest import mock
 
 from tox.plugin.manager import MANAGER
-from tox.pytest import ToxProjectCreator
+from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
 def test_version() -> None:
@@ -24,17 +24,14 @@ def test_version_without_plugin(tox_project: ToxProjectCreator) -> None:
 def test_version_with_plugin(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     from tox import __version__
 
-    def dummy_plugin():
-        class MockModule:
-            __file__ = "dummy-path"
+    mock_module = mock.Mock(__file__="dummy-path")
 
-        class MockEggInfo:
-            project_name = "dummy-project"
-            version = "1.0"
+    mock_egg_info = mock.Mock(
+        project_name="dummy-project",
+        version="1.0",
+    )
 
-        return [(MockModule, MockEggInfo)]
-
-    monkeypatch.setattr(MANAGER.manager, "list_plugin_distinfo", dummy_plugin)
+    monkeypatch.setattr(MANAGER.manager, "list_plugin_distinfo", lambda: [(mock_module, mock_egg_info)])
 
     outcome = tox_project({"tox.ini": ""}).run("--version")
     outcome.assert_success()

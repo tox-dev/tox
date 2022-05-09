@@ -22,11 +22,11 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def get_version_info() -> str:
-    out = [f"{version} from {Path(tox.__file__).absolute()} "]
+    out = [f"{version} from {Path(tox.__file__).absolute()}"]
     plugin_info = MANAGER.manager.list_plugin_distinfo()
     if plugin_info:
         out.append("registered plugins:")
-        for mod, egg_info in plugin_info:
-            source = getattr(mod, "__file__", repr(mod))
+        for module, egg_info in plugin_info:
+            source = getattr(module, "__file__", repr(module))
             out.append(f"    {egg_info.project_name}-{egg_info.version} at {source}")
     return "\n".join(out)

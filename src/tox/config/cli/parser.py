@@ -162,7 +162,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             cmd,
             help=help_msg,
             aliases=aliases,
-            formatter_class=HelpFormatter,
+            formatter_class=argparse.RawTextHelpFormatter,
             file_config=self.file_config,
         )
         sub_parser.of_cmd = cmd  # mark it as parser for a sub-command
