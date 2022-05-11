@@ -1,5 +1,4 @@
 import os
-import pipes
 import sys
 import textwrap
 from threading import Thread
@@ -10,6 +9,11 @@ import tox
 from tox.exception import MissingDependency, MissingDirectory
 from tox.package import resolve_package
 from tox.reporter import Verbosity
+
+if sys.version_info >= (3, 3):
+    from shlex import quote as shlex_quote
+else:
+    from pipes import quote as shlex_quote
 
 
 def test_resolve_pkg_missing_directory(tmpdir, mocksession):
@@ -355,7 +359,7 @@ def test_command_prev_fail_command_skip_post_run(cmd, initproj, mock_venv):
             ___________________________________ summary ___________________________________{}
             ERROR:   py: commands failed
         """.format(
-            pipes.quote(sys.executable),
+            shlex_quote(sys.executable),
             "_" if sys.platform != "win32" else "",
         ),
     )

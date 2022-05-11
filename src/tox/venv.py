@@ -1,7 +1,6 @@
 import codecs
 import json
 import os
-import pipes
 import re
 import sys
 from itertools import chain
@@ -18,6 +17,11 @@ from tox.util.lock import get_unique_file
 from tox.util.path import ensure_empty_dir
 
 from .config import DepConfig
+
+if sys.version_info >= (3, 3):
+    from shlex import quote as shlex_quote
+else:
+    from pipes import quote as shlex_quote
 
 #: maximum parsed shebang interpreter length (see: prepend_shebang_interpreter)
 MAXINTERP = 2048
@@ -194,7 +198,7 @@ class VirtualEnv(object):
 
         if path is None:
             raise tox.exception.InvocationError(
-                "could not find executable {}".format(pipes.quote(name)),
+                "could not find executable {}".format(shlex_quote(name)),
             )
 
         return str(path)  # will not be rewritten for reporting
@@ -534,7 +538,7 @@ class VirtualEnv(object):
                 # happens if the same environment is invoked twice
                 message = "commands[{}] | {}".format(
                     i,
-                    " ".join(pipes.quote(str(x)) for x in argv),
+                    " ".join(shlex_quote(str(x)) for x in argv),
                 )
                 action.setactivity(name, message)
                 # check to see if we need to ignore the return code
