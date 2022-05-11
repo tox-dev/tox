@@ -492,7 +492,7 @@ Run
    :version_added: 4.0.0
    :default: virtualenv-pep-517
 
-   Tox package type used to package.
+   tox package type used to package.
 
 Package
 ~~~~~~~
