@@ -5,15 +5,15 @@ import sys
 import time
 
 import pytest
+import time_machine
 from colorama import Fore
-from freezegun import freeze_time
 from pytest_mock import MockerFixture
 
 from tox.pytest import CaptureFixture, MonkeyPatch
 from tox.util import spinner
 
 
-@freeze_time("2012-01-14")
+@time_machine.travel("2012-01-14", tick=False)
 def test_spinner(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner(refresh_rate=100) as spin:
@@ -30,7 +30,7 @@ def test_spinner(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     assert lines == expected
 
 
-@freeze_time("2012-01-14")
+@time_machine.travel("2012-01-14", tick=False)
 def test_spinner_disabled(capfd: CaptureFixture) -> None:
     with spinner.Spinner(refresh_rate=100, enabled=False) as spin:
         spin.add("x")
@@ -43,7 +43,7 @@ def test_spinner_disabled(capfd: CaptureFixture) -> None:
     assert err == ""
 
 
-@freeze_time("2012-01-14")
+@time_machine.travel("2012-01-14", tick=False)
 def test_spinner_progress(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner() as spin:
@@ -56,7 +56,7 @@ def test_spinner_progress(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> No
     assert len({i.strip() for i in out.split("[0]")}) > len(spin.frames) / 2
 
 
-@freeze_time("2012-01-14")
+@time_machine.travel("2012-01-14", tick=False)
 def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     with spinner.Spinner(refresh_rate=100) as spin:
@@ -71,7 +71,7 @@ def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     assert lines == expected
 
 
-@freeze_time("2012-01-14")
+@time_machine.travel("2012-01-14", tick=False)
 def test_spinner_report(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner(refresh_rate=100) as spin:
