@@ -1,6 +1,11 @@
 import os
-import pipes
 import signal
+import sys
+
+if sys.version_info >= (3, 3):
+    from shlex import quote as shlex_quote
+else:
+    from pipes import quote as shlex_quote
 
 
 def exit_code_str(exception_name, command, exit_code):
@@ -96,7 +101,7 @@ class MissingRequirement(Error):
         self.config = config
 
     def __str__(self):
-        return " ".join(pipes.quote(i) for i in self.config.requires)
+        return " ".join(shlex_quote(i) for i in self.config.requires)
 
 
 class BadRequirement(Error):

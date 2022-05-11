@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import pipes
 import signal
 import subprocess
 import sys
@@ -17,6 +16,11 @@ from tox.exception import InvocationError
 from tox.reporter import Verbosity
 from tox.util.lock import get_unique_file
 from tox.util.stdlib import is_main_thread
+
+if sys.version_info >= (3, 3):
+    from shlex import quote as shlex_quote
+else:
+    from pipes import quote as shlex_quote
 
 
 class Action(object):
@@ -89,7 +93,7 @@ class Action(object):
         """this drives an interaction with a subprocess"""
         cwd = py.path.local() if cwd is None else cwd
         cmd_args = [str(x) for x in self._rewrite_args(cwd, args)]
-        cmd_args_shell = " ".join(pipes.quote(i) for i in cmd_args)
+        cmd_args_shell = " ".join(shlex_quote(i) for i in cmd_args)
         stream_getter = self._get_standard_streams(
             capture_err,
             cmd_args_shell,

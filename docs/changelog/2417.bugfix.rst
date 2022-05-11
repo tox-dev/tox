@@ -1,0 +1,1 @@
+Avoid importing ``pipes`` on Python 3.3+ to avoid ``DeprecationWarning`` on Python 3.11 -- by :user:`adamchainz`

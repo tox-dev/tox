@@ -44,9 +44,9 @@ from .parallel import ENV_VAR_KEY_PUBLIC as PARALLEL_ENV_VAR_KEY_PUBLIC
 from .parallel import add_parallel_config, add_parallel_flags
 from .reporter import add_verbosity_commands
 
-try:
+if sys.version_info >= (3, 3):
     from shlex import quote as shlex_quote
-except ImportError:
+else:
     from pipes import quote as shlex_quote
 
 
