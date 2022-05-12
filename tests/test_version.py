@@ -33,9 +33,10 @@ def test_version_with_plugin(tox_project: ToxProjectCreator) -> None:
 
     with mock.patch.object(MANAGER.manager, "list_plugin_distinfo", return_value=[(mock_module, mock_egg_info)]):
         outcome = tox_project({"tox.ini": ""}).run("--version")
-        outcome.assert_success()
-        assert __version__ in outcome.out
-        assert "registered plugins:" in outcome.out
-        assert "dummy-path" in outcome.out
-        assert "dummy-project" in outcome.out
-        assert "1.0" in outcome.out
+
+    outcome.assert_success()
+    assert __version__ in outcome.out
+    assert "registered plugins:" in outcome.out
+    assert "dummy-path" in outcome.out
+    assert "dummy-project" in outcome.out
+    assert "1.0" in outcome.out
