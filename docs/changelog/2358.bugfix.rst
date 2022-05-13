@@ -1,0 +1,1 @@
+Display registered plugins with ``tox --version`` - by :user:`mxd4`.

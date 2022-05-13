@@ -53,6 +53,7 @@ devenv
 devnull
 devpi
 dirname
+distinfo
 distlib
 divmod
 doc2path

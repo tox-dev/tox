@@ -99,13 +99,19 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         super().__init__(prog, max_help_position=30, width=240)
 
     def _get_help_string(self, action: Action) -> str | None:
-
         text: str = super()._get_help_string(action) or ""
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
             if text.endswith(default):  # pragma: no branch
                 text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
         return text
+
+    def add_raw_text(self, text: str | None) -> None:
+        def keep(content: str) -> str:
+            return content
+
+        if text is not SUPPRESS and text is not None:
+            self._add_item(keep, [text])
 
 
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
@@ -334,4 +340,5 @@ __all__ = (
     "DEFAULT_VERBOSITY",
     "Parsed",
     "ToxParser",
+    "HelpFormatter",
 )
