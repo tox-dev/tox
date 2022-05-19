@@ -8,7 +8,7 @@ from functools import partial
 from typing import Set
 
 from tox.report import HandledError
-from tox.tox_env.errors import Skip
+from tox.tox_env.errors import Recreate, Skip
 from tox.tox_env.package import Package
 from tox.tox_env.python.pip.req_file import PythonDeps
 
@@ -87,7 +87,10 @@ class PythonRun(Python, RunToxEnv, ABC):
         return pkg_type
 
     def _setup_env(self) -> None:
-        super()._setup_env()
+        try:
+            super()._setup_env()
+        except FileExistsError as exc:
+            raise Recreate("an unexpected %s exception occured running initial setup" % type(exc)) from exc
         self._install_deps()
 
     def _install_deps(self) -> None:
