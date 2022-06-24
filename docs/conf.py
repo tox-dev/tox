@@ -51,13 +51,13 @@ autodoc_default_options = {
 autosectionlabel_prefix_document = True
 
 extlinks = {
-    "issue": ("https://github.com/tox-dev/tox/issues/%s", "#"),
-    "pull": ("https://github.com/tox-dev/tox/pull/%s", "PR #"),
-    "discussion": ("https://github.com/tox-dev/tox/discussions/%s", "#"),
-    "user": ("https://github.com/%s", "@"),
-    "gh_repo": ("https://github.com/%s", ""),
-    "gh": ("https://github.com/%s", ""),
-    "pypi": ("https://pypi.org/project/%s", ""),
+    "issue": ("https://github.com/tox-dev/tox/issues/%s", "#%s"),
+    "pull": ("https://github.com/tox-dev/tox/pull/%s", "PR #%s"),
+    "discussion": ("https://github.com/tox-dev/tox/discussions/%s", "#%s"),
+    "user": ("https://github.com/%s", "@%s"),
+    "gh_repo": ("https://github.com/%s", "%s"),
+    "gh": ("https://github.com/%s", "%s"),
+    "pypi": ("https://pypi.org/project/%s", "%s"),
 }
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
