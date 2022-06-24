@@ -242,7 +242,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         self,
         cmd: str,
         result_file: Path,  # noqa: U100
-        msg: str,  # noqa: U100
+        msg: str,
     ) -> Iterator[ToxCmdStatus]:
         with self._tox_env.execute_async(
             cmd=self.backend_cmd,

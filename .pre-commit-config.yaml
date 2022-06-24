@@ -52,20 +52,20 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - flake8-bugbear==22.3.23
-          - flake8-comprehensions==3.8
+          - flake8-bugbear==22.6.22
+          - flake8-comprehensions==3.10
           - flake8-pytest-style==1.6
           - flake8-spellcheck==0.28
-          - flake8-unused-arguments==0.0.9
-          - flake8-noqa==1.2.1
-          - pep8-naming==0.12.1
+          - flake8-unused-arguments==0.0.10
+          - flake8-noqa==1.2.5
+          - pep8-naming==0.13
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v2.6.2"
     hooks:
       - id: prettier
         additional_dependencies:
           - prettier@2.6.2
-          - "@prettier/plugin-xml@2.0.1"
+          - "@prettier/plugin-xml@2.2.0"
         args: ["--print-width=120", "--prose-wrap=always"]
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.31.1

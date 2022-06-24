@@ -317,7 +317,7 @@ def _queue_and_wait(
                     if final_run:
                         break
 
-            except BaseException:  # pragma: no cover # noqa
+            except BaseException:  # pragma: no cover
                 logging.exception("Internal Error")  # pragma: no cover
                 raise  # pragma: no cover
             finally:
