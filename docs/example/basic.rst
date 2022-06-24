@@ -121,26 +121,35 @@ Depending on requirements.txt or defining constraints
 
 .. versionadded:: 1.6.1
 
-(experimental) If you have a ``requirements.txt`` file or a ``constraints.txt`` file you can add it to your ``deps`` variable like this:
+(experimental) If you have a ``requirements.txt`` file you can add it to your ``deps`` variable like this:
 
 .. code-block:: ini
 
     [testenv]
     deps = -rrequirements.txt
 
-or
+This is actually a side effect that all elements of the dependency list is directly passed to ``pip``.
+
+If you have a ``constraints.txt`` file you could add it to your ``deps`` like the ``requirements.txt`` file above.
+However, then it would not be applied to
+
+* build time dependencies when using isolated builds (https://github.com/pypa/pip/issues/8439)
+* run time dependencies not already listed in ``deps``.
+
+A better method may be to use ``setenv`` like this:
 
 .. code-block:: ini
 
     [testenv]
-    deps =
-        -rrequirements.txt
-        -cconstraints.txt
+    setenv = PIP_CONSTRAINT=constraints.txt
+
+Make sure that all dependencies, including transient dependencies, are listed in your ``constraints.txt`` file or the version used may vary.
+
+It should be noted that ``pip``, ``setuptools`` and ``wheel`` are often not part of the dependency tree and will be left at whatever version ``virtualenv`` used to seed the environment.
 
 All installation commands are executed using ``{toxinidir}`` (the directory where ``tox.ini`` resides) as the current working directory.
 Therefore, the underlying ``pip`` installation will assume ``requirements.txt`` or ``constraints.txt`` to exist at ``{toxinidir}/requirements.txt`` or ``{toxinidir}/constraints.txt``.
 
-This is actually a side effect that all elements of the dependency list is directly passed to ``pip``.
 
 For more details on ``requirements.txt`` files or ``constraints.txt`` files please see:
 
