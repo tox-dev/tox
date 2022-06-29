@@ -11,6 +11,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+
+v3.25.1 (2022-06-29)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- ``sitepackages = true`` will add user's site-package to the python path on Windows as expected -- by :user:`niander`
+  `#2402 <https://github.com/tox-dev/tox/issues/2402>`_
+- Avoid importing ``pipes`` on Python 3.3+ to avoid ``DeprecationWarning`` on Python 3.11 -- by :user:`adamchainz`
+  `#2417 <https://github.com/tox-dev/tox/issues/2417>`_
+- Fix ``isolated_build`` when the build process produces stderr at exit.
+  `#2449 <https://github.com/tox-dev/tox/issues/2449>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Explain advantages of ``PIP_CONSTRAINT`` environment variable over ``--constraint`` argument.
+  `#2423 <https://github.com/tox-dev/tox/issues/2423>`_
+
+
 v3.25.0 (2022-04-11)
 --------------------
 
