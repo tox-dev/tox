@@ -125,6 +125,7 @@ def perform_isolated_build(build_info, package_venv, dist_dir, setup_dir):
                 os.path.pathsep.join(str(p) for p in build_info.backend_paths),
             ],
             returnout=True,
+            capture_err=False,
             action=action,
             cwd=setup_dir,
         )

@@ -1,0 +1,1 @@
+Fix ``isolated_build`` when the build process produces stderr at exit.
