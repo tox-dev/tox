@@ -10,7 +10,6 @@ affecting other parts of the system.
 
 .. code-block:: bash
 
-    python -m pip install pipx-in-pipx --user
     pipx install tox
     tox --help
 
