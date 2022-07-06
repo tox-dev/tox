@@ -53,8 +53,8 @@ __________________ summary _________________
   congratulations :)
 ```
 
-tox created two `testenvs` - one based on Python 3.7 and one based on Python 3.8, it installed pytest in them and ran the
-tests. The report at the end summarizes which `testenvs` have failed and which have succeeded.
+tox created two `testenvs` - one based on Python 3.7 and one based on Python 3.8, it installed pytest in them and ran
+the tests. The report at the end summarizes which `testenvs` have failed and which have succeeded.
 
 **Note:** To learn more about what you can do with tox, have a look at
 [the collection of examples in the documentation](https://tox.readthedocs.io/en/latest/examples.html) or
@@ -106,3 +106,12 @@ Currently, the [code](https://github.com/tox-dev/tox) and the [issues](https://g
 on GitHub.
 
 The project is licensed under [MIT](https://github.com/tox-dev/tox/blob/master/LICENSE).
+
+## tox for enterprise
+
+Available as part of the Tidelift Subscription.
+
+The maintainers of tox and thousands of other packages are working with Tidelift to deliver commercial support and
+maintenance for the open source packages you use to build your applications. Save time, reduce risk, and improve code
+health, while paying the maintainers of the exact packages you use.
+[Learn more.](https://tidelift.com/subscription/pkg/pypi-tox?utm_source=pypi-tox&utm_medium=referral&utm_campaign=readme)
