@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import argparse
-import io
 import itertools
 import json
 import os
@@ -22,13 +21,9 @@ import py
 import six
 
 if sys.version_info >= (3, 11):
-    import tomllib as toml_loader
-    toml_mode = "rb"
-    toml_encoding = None
+    import tomllib as toml
 else:
-    import toml as toml_loader
-    toml_mode = "r"
-    toml_encoding = "UTF-8"
+    import tomli as toml
 
 from packaging import requirements
 from packaging.utils import canonicalize_name
@@ -313,9 +308,9 @@ def parseconfig(args, plugins=()):
 
 
 def get_py_project_toml(path):
-    with io.open(str(path), mode=toml_mode, encoding=toml_encoding) as file_handler:
-        config_data = toml_loader.load(file_handler)
-        return config_data
+    with open(str(path), mode="rb") as file_handler:
+        config_data = toml.load(file_handler)
+    return config_data
 
 
 def propose_configs(cli_config_file):

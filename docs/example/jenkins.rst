@@ -63,7 +63,7 @@ with this:
     url = "https://bitbucket.org/hpk42/tox/raw/default/toxbootstrap.py"
     # os.environ['USETOXDEV']="1"  # use tox dev version
     d = dict(__file__="toxbootstrap.py")
-    exec urllib.urlopen(url).read() in d
+    exec(urllib.urlopen(url).read(), globals=d)
     d["cmdline"](["--recreate"])
 
 The downloaded ``toxbootstrap.py`` file downloads all necessary files to
