@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=0.14", "hatch-vcs>=0.1"]
+requires = ["hatchling>=1.6", "hatch-vcs>=0.2"]
 
 [project]
 name = "tox"
@@ -21,44 +21,44 @@ maintainers = [
 ]
 requires-python = ">=3.7"
 dependencies = [
-  "cachetools>=4.2",
-  "chardet>=4",
-  "colorama>=0.4.4",
-  "packaging>=21",
-  "platformdirs>=2.1",
-  "pluggy>=0.13.1",
-  "pyproject-api>=0.1",
-  "tomli>=1.1",
-  "virtualenv>=20.6",
-  'importlib-metadata>=4.6.1;python_version<"3.8"',
-  'typing-extensions>=3.10;python_version<"3.8"',
+  "cachetools>=5.2",
+  "chardet>=5",
+  "colorama>=0.4.5",
+  "packaging>=21.3",
+  "platformdirs>=2.5.2",
+  "pluggy>=1",
+  "pyproject-api>=0.1.1",
+  "tomli>=2.0.1",
+  "virtualenv>=20.16",
+  'importlib-metadata>=4.12;python_version<"3.8"',
+  'typing-extensions>=4.3;python_version<"3.8"',
 ]
 optional-dependencies.docs = [
-  "furo>=2022.1.2",
-  "sphinx>=4.4",
-  "sphinx-argparse-cli>=1.8.3",
-  "sphinx-autodoc-typehints>=1.16",
+  "furo>=2022.6.21",
+  "sphinx>=5.1",
+  "sphinx-argparse-cli>=1.9",
+  "sphinx-autodoc-typehints>=1.18.3",
   "sphinx-copybutton>=0.5",
   "sphinx-inline-tabs>=2022.1.2b11",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=21.3",
+  "towncrier>=21.9",
 ]
 optional-dependencies.testing = [
   "covdefaults>=2.2",
-  "devpi-client>=5.2",
-  "devpi-server>=6.4",
-  "distlib>=0.3.4",
-  "filelock>=3.4",
+  "devpi-client>=6",
+  "devpi-server>=6.5.1",
+  "distlib>=0.3.5",
+  "filelock>=3.7.1",
   "flaky>=3.7",
-  "hatch-vcs>=0.1",
-  "hatchling>=0.14",
-  "psutil>=5.9",
-  "pytest>=7",
+  "hatch-vcs>=0.2",
+  "hatchling>=1.6",
+  "psutil>=5.9.1",
+  "pytest>=7.1",
   "pytest-cov>=3",
-  "pytest-mock>=3.7",
+  "pytest-mock>=3.8",
   "pytest-xdist>=2.5",
   "re-assert>=1.1",
-  "time-machine>=2.6",
+  "time-machine>=2.7.1",
 ]
 scripts.tox = "tox.run:run"
 dynamic = ["version"]
@@ -125,9 +125,7 @@ overrides = [
     "pluggy.*",
     "psutil.*",
     "re_assert.*",
-    "setuptools.*",
     "virtualenv.*",
-    "wheel.*",
   ], ignore_missing_imports = true },
 ]
 
