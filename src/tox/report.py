@@ -182,7 +182,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
 
     def format(self, record: logging.LogRecord) -> str:
         # shorten the pathname to start from within the site-packages folder
-        record.env_name = "root" if self._local.name is None else self._local.name  # type: ignore[attr-defined]
+        record.env_name = "root" if self._local.name is None else self._local.name
         basename = os.path.dirname(record.pathname)
         len_sys_path_match = max((len(p) for p in sys.path if basename.startswith(p)), default=-1)
         record.pathname = record.pathname[len_sys_path_match + 1 :]
