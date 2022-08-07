@@ -54,4 +54,52 @@ so that you can do changes and submit patches.
 
 You can also find tox packaged for many Linux distributions and Homebrew for macOs - usually under the name of **python-tox** or simply **tox**. Be aware though that there also other projects under the same name (most prominently a `secure chat client <https://tox.chat/>`_ with no affiliation to this project), so make sure you install the correct package.
 
+Installation of all needed Python versions
+------------------------------------------
+
+As you install tox for different projects, you may notice that it wants to run tests with different versions of Python,
+some of which are not installed on your system.
+This section aims to help you further by providing an overview over different guides that help installing and using
+different versions of Python next to each other on one operating system.
+
+Which versions to install
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you run ``tox``, it will run tests with the Python versions installed and fail for those versions that are not installed.
+The ``tox.ini`` file should also give a clue.
+
+.. code::
+
+      ___________________________________ summary ____________________________________
+        py27: commands succeeded
+      ERROR:  py36: InterpreterNotFound: python3.6
+      ERROR:  py37: InterpreterNotFound: python3.7
+      ERROR:  py38: InterpreterNotFound: python3.8
+      ERROR:  py39: InterpreterNotFound: python3.9
+        py310: commands succeeded
+      ERROR:  pypy3: InterpreterNotFound: pypy3
+
+Linux
+~~~~~
+
+Have a look at these tutorials on how to install mutiple versions of Python on Linux. If you find a new one, please add it!
+
+- `pyenv <https://github.com/pyenv/pyenv#installation>`_
+
+Windows
+~~~~~~~
+
+Have a look at these tutorials on how to install mutiple versions of Python on Windows. If you find a new one, please add it!
+
+- `pyenv-win <https://github.com/pyenv-win/pyenv-win#installation>`_
+- `choosing the right location for manual installations <https://stackoverflow.com/questions/13834381/set-up-multiple-python-installations-on-windows-with-tox>`_
+
+MacOS
+~~~~~
+
+Have a look at these tutorials on how to install mutiple versions of Python on MacOS. If you find a new one, please add it!
+
+- `pyenv`_
+
+
 .. include:: links.rst
