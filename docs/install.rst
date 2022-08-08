@@ -54,7 +54,7 @@ so that you can do changes and submit patches.
 
 You can also find tox packaged for many Linux distributions and Homebrew for macOs - usually under the name of **python-tox** or simply **tox**. Be aware though that there also other projects under the same name (most prominently a `secure chat client <https://tox.chat/>`_ with no affiliation to this project), so make sure you install the correct package.
 
-Installation of all needed Python versions
+Installation of all additional Python versions
 ------------------------------------------
 
 As you install tox for different projects, you may notice that it wants to run tests with different versions of Python,
@@ -65,7 +65,7 @@ different versions of Python next to each other on one operating system.
 Which versions to install
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you run ``tox``, it will run tests with the Python versions installed and fail for those versions that are not installed.
+If you run ``tox``, it will run tests with the Python versions installed and fail or warn for those versions that are not installed.
 The ``tox.ini`` file should also give a clue.
 
 .. code::
