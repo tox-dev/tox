@@ -57,10 +57,15 @@ You can also find tox packaged for many Linux distributions and Homebrew for mac
 Installation of all additional Python versions
 ------------------------------------------
 
-As you install tox for different projects, you may notice that it wants to run tests with different versions of Python,
+As you install ``tox`` for different projects, you may notice that it wants to run tests with different versions of Python,
 some of which are not installed on your system.
 This section aims to help you further by providing an overview over different guides that help installing and using
 different versions of Python next to each other on one operating system.
+
+What this is not:
+
+- We do not endorse any specific way of installing Python here.
+- We do not give support for how to **install** Python. ``tox`` is for **testing**. You will get help somewhere else.
 
 Which versions to install
 ~~~~~~~~~~~~~~~~~~~~~~~~~
