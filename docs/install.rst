@@ -87,14 +87,17 @@ The ``tox.ini`` file should also give a clue.
 Linux
 ~~~~~
 
-Have a look at these tutorials on how to install mutiple versions of Python on Linux. If you find a new one, please add it!
+Have a look at these guides on how to install multiple versions of Python on Linux. If you find a new one, please add it!
 
+- Depending on the distribution of your choice, you might be able to install additional Python versions via your package manager.
 - `pyenv <https://github.com/pyenv/pyenv#installation>`_
+- `Deadsnakes PPA for Ubuntu <https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa>`_
+- `build Python from source <https://docs.python.org/3/using/unix.html#building-python>`_
 
 Windows
 ~~~~~~~
 
-Have a look at these tutorials on how to install mutiple versions of Python on Windows. If you find a new one, please add it!
+Have a look at these guides on how to install multiple versions of Python on Windows. If you find a new one, please add it!
 
 - `pyenv-win <https://github.com/pyenv-win/pyenv-win#installation>`_
 - `choosing the right location for manual installations <https://stackoverflow.com/questions/13834381/set-up-multiple-python-installations-on-windows-with-tox>`_
@@ -102,7 +105,7 @@ Have a look at these tutorials on how to install mutiple versions of Python on W
 MacOS
 ~~~~~
 
-Have a look at these tutorials on how to install mutiple versions of Python on MacOS. If you find a new one, please add it!
+Have a look at these guides on how to install multiple versions of Python on MacOS. If you find a new one, please add it!
 
 - `pyenv`_
 
