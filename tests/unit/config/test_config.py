@@ -380,6 +380,16 @@ class TestConfigPackage:
         assert config.setupdir.realpath() == tmpdir.realpath()
         assert config.toxworkdir.realpath() == tmpdir.join(".tox").realpath()
 
+    def test_defaults_isolated_build(self, newconfig):
+        config = newconfig(
+            [],
+            """
+            [tox]
+            isolated_build = true
+        """,
+        )
+        assert "python" in config.envconfigs
+
     def test_project_paths(self, tmpdir, newconfig):
         config = newconfig(
             """

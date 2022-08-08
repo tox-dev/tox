@@ -1484,7 +1484,7 @@ class ParseIni(object):
                 reader.addsubstitutions(**{env_attr.name: res})
         return tc
 
-    def _getallenvs(self, reader, extra_env_list=None):
+    def _getallenvs(self, reader, config, extra_env_list=None):
         extra_env_list = extra_env_list or []
         env_str = reader.getstring("envlist", replace=False)
         env_list = _split_env(env_str)
@@ -1493,9 +1493,12 @@ class ParseIni(object):
                 env_list.append(env)
 
         all_envs = OrderedDict((i, None) for i in env_list)
+        package_env = config.isolated_build_env if config.isolated_build is True else None
         for section in self._cfg:
             if section.name.startswith(testenvprefix):
-                all_envs[section.name[len(testenvprefix) :]] = None
+                section_env = section.name[len(testenvprefix) :]
+                if section_env != package_env:
+                    all_envs[section_env] = None
         if not all_envs:
             all_envs["python"] = None
         return list(all_envs.keys())
@@ -1511,7 +1514,7 @@ class ParseIni(object):
             (from_option and "ALL" in from_option)
             or (not from_option and from_environ and "ALL" in from_environ.split(","))
         ) and PARALLEL_ENV_VAR_KEY_PRIVATE not in os.environ:
-            all_envs = self._getallenvs(reader)
+            all_envs = self._getallenvs(reader, config)
         else:
             candidates = (
                 (os.environ.get(PARALLEL_ENV_VAR_KEY_PRIVATE), True),
@@ -1522,7 +1525,7 @@ class ParseIni(object):
             )
             env_str, envlist_explicit = next(((i, e) for i, e in candidates if i), ([], False))
             env_list = _split_env(env_str)
-            all_envs = self._getallenvs(reader, env_list)
+            all_envs = self._getallenvs(reader, config, env_list)
 
         if not env_list:
             env_list = all_envs
@@ -1533,9 +1536,6 @@ class ParseIni(object):
             raise tox.exception.ConfigError(msg)
 
         package_env = config.isolated_build_env
-        if config.isolated_build is True and package_env in all_envs:
-            all_envs.remove(package_env)
-
         if config.isolated_build is True and package_env in env_list:
             msg = "isolated_build_env {} cannot be part of envlist".format(package_env)
             raise tox.exception.ConfigError(msg)
