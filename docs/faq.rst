@@ -16,7 +16,7 @@ directly. pip accepts environment variables as configuration flags, therefore th
     PIP_INDEX_URL = https://tox.wiki/pypi/simple
 
 It's considered a best practice to allow the user to change the index server rather than hard code it, allowing them
-to use for example a local cache of that when they are offline. Therefore, a better form of this would be:
+to use for example a local cache when they are offline. Therefore, a better form of this would be:
 
 .. code-block:: ini
 
@@ -38,7 +38,7 @@ When you want to use two PyPI index servers because not all dependencies are fou
     PIP_INDEX_URL = {env:PIP_INDEX_URL:https://tox.wiki/pypi/simple-first}
     PIP_EXTRA_INDEX_URL = {env:PIP_EXTRA_INDEX_URL:https://tox.wiki/pypi/simple-second}
 
-If the index server defined under ``PIP_INDEX_URL`` does not contain a package pip will attempt to resolve it also from
+If the index server defined under ``PIP_INDEX_URL`` does not contain a package, pip will attempt to resolve it also from
 the URI from ``PIP_EXTRA_INDEX_URL``.
 
 .. warning::
@@ -130,7 +130,7 @@ a given command add a ``-`` prefix to that line (similar syntax to how the GNU `
 .. code-block:: ini
 
 
-   [testenv:py310]
+   [testenv]
    commands =
      - python -c 'import sys; sys.exit(1)'
      python --version

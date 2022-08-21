@@ -560,7 +560,7 @@ Python run
    before package installation. All installer commands are executed using the :ref:`tox_root` as the current working
    directory. Each value must be one of:
 
-   - a python dependency as specified by `PEP-440`_,
+   - a Python dependency as specified by `PEP-440`_,
    - a `requirement file <https://pip.pypa.io/en/stable/user_guide/#requirements-files>`_ when the value starts with
      ``-r`` (followed by a file path),
    - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
