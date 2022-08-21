@@ -135,12 +135,12 @@ a given command add a ``-`` prefix to that line (similar syntax to how the GNU `
      - python -c 'import sys; sys.exit(1)'
      python --version
 
-Customize virtual environment creation
+Customizing virtual environment creation
 --------------------------------------
 
 By default tox uses the :pypi:`project` to create Python virtual environments to run your tools in. To change how tox
-creates virtual environments set environment variables to customize virtualenv. For example, to provision a given
-pip version in the virtual environment set ``VIRTUALENV_PIP`` or to enable system site packages use the
+creates virtual environments you can set environment variables to customize virtualenv. For example, to provision a given
+pip version in the virtual environment you can set ``VIRTUALENV_PIP`` or to enable system site packages use the
 ``VIRTUALENV_SYSTEM_SITE_PACKAGES``:
 
 
@@ -155,7 +155,7 @@ pip version in the virtual environment set ``VIRTUALENV_PIP`` or to enable syste
 Consult the :pypi:`virtualenv` project for supported values (any CLI flag for virtualenv, in all upper case, prefixed
 by the ``VIRTUALENV_`` key).
 
-Build documentation with Sphinx
+Building documentation with Sphinx
 -------------------------------
 
 It's possible to orchestrate the projects documentation with tox. The advantage of this is that now generating the
@@ -180,9 +180,9 @@ the documentation under ``.tox/docs_out/index.html`` and print out a link to the
       sphinx-build -d "{envtmpdir}{/}doctree" docs "{toxworkdir}{/}docs_out" --color -b html
       python -c 'print(r"documentation available under file://{toxworkdir}{/}docs_out{/}index.html")'
 
-Note here we also require python 3.10, allowing us to use f-strings within the sphinx ``conf.py``.
+Note here we also require Python 3.10, allowing us to use f-strings within the sphinx ``conf.py``.
 
-Build documentation with mkdocs
+Building documentation with mkdocs
 -------------------------------
 
 It's possible to orchestrate the projects documentation with tox. The advantage of this is that now generating the
@@ -190,7 +190,7 @@ documentation can be part of the CI, and whenever any validations/checks/operati
 documentation you'll catch it within tox.
 
 It's best to define one environment to write/generate the documentation, and another to deploy it. Use the config
-substitution logic to avoid defining dependencies multiple time:
+substitution logic to avoid duplication:
 
 .. code-block:: ini
 

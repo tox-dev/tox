@@ -4,23 +4,23 @@ User Guide
 Basic example
 -------------
 
-tox is a environment orchestrator. Use it to define the how to setup and execute various tools on your projects. The
+tox is an environment orchestrator. Use it to define how to setup and execute various tools on your projects. The
 tool can be:
 
 - a test runner (such as :pypi:`pytest`),
 - a linter (e.g., :pypi:`flake8`),
 - a formatter (for example :pypi:`black` or :pypi:`isort`),
 - a documentation generator (e.g., :pypi:`sphinx`),
-- library build and publisher (e.g., :pypi:`build` with :pypi:`twine`),
+- library builder and publisher (e.g., :pypi:`build` with :pypi:`twine`),
 - or anything else you may need to execute.
 
-First, you need to define in a configuration file what tools you need to run and how to provision a test environment for
+First, in a configuration file you need to define what tools you need to run and how to provision a test environment for
 these. The canonical file for this is the ``tox.ini`` file, let's take a look at an example of this (this needs to live
 at the root of your project):
 
 .. note::
 
-   You can also try generating a ``tox.ini`` file automatically by running ``tox quickstart`` and then answering a few
+   You can also generate a ``tox.ini`` file automatically by running ``tox quickstart`` and then answering a few
    questions.
 
 .. code-block:: ini
@@ -44,7 +44,7 @@ at the root of your project):
     commands = pytest tests {posargs}
 
 
-The configuration is split to two type of configuration: core settings are hosted under the ``tox`` section and per run
+The configuration is split into two type of configuration: core settings are hosted under the ``tox`` section and per run
 environment settings hosted under ``testenv:<env_name>``. Under the core section we define that this project has two
 run environments named ``format`` and ``py310`` respectively (we use the ``envlist`` configuration key to do so).
 
@@ -52,10 +52,10 @@ Then we define separately what should the formatting environment (``testenv:form
 (``testenv:py310`` section). For example to format the project we:
 
 - add a description (visible when you type ``tox list`` into the command line),
-- we define that requires the ``black`` PyPI dependency with version ``22.3.0``,
+- we define that it requires the ``black`` PyPI dependency with version ``22.3.0``,
 - the black tool does not need the project we are testing to be installed into  the test environment so we disable this
   default behaviour via the ``skip_install`` configuration,
-- and we defined that the tool should be invoked as we'd type ``black .`` into the command line.
+- and we define that the tool should be invoked as we'd type ``black .`` into the command line.
 
 For testing the project we use the ``py310`` environment, for which we:
 
