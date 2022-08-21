@@ -63,20 +63,20 @@ For testing the project we use the ``py310`` environment, for which we:
 - specify that requires ``pytest`` ``7`` ot later together with the :pypi:`pytest-sugar` project,
 - and that the tool should be invoked via the ``pytest tests`` CLI command.
 
-The ``{posargs}`` is a place holder part for the CLI command that allows us to pass additional flags to the pytest
+``{posargs}`` is a place holder part for the CLI command that allows us to pass additional flags to the pytest
 invocation, for example if we'd want to run ``pytest tests -v`` as a one off, instead of ``tox run -e py310`` we'd type
 ``tox run -e py310 -- -v``. The ``--`` delimits flags for the tox tool and what should be forwarded to the tool within.
 
-tox, by default, always creates a fresh virtual environment for every run environment. The python version to use for a
+tox, by default, always creates a fresh virtual environment for every run environment. The Python version to use for a
 given environment can be controlled via the :ref:`base_python` configuration, however if not set will try to use the
-environment name to determine something sensible: if the name is in the format of ``pyxy`` then will create a CPython
-with version ``x.y`` (for example ``py310`` means CPython ``3.10``). If the name does not matches this pattern it will
-use a virtual environment with the same python version as the one tox is installed into (this is the case for
+environment name to determine something sensible: if the name is in the format of ``pyxy`` then tox will create an environment with CPython
+with version ``x.y`` (for example ``py310`` means CPython ``3.10``). If the name does not match this pattern it will
+use a virtual environment with the same Python version as the one tox is installed into (this is the case for
 ``format``).
 
 tox environments are reused between runs, so while the first ``tox run -e py310`` will take a while as tox needs to
 create a virtual environment and install ``pytest`` and ``pytest-sugar`` in it, subsequent runs only need to reinstall
-your project (as long as the environments dependency list does not changes).
+your project, as long as the environments dependency list does not change.
 
 Almost every step and aspect of virtual environments and command execution can be customized. You'll find
 an exhaustive list of configuration flags (together with what it does and detailed explanation of what values are
@@ -144,9 +144,9 @@ The primary tox states are:
    Only if all environments ran successfully tox will return exit code ``0`` (success). In this case you'll also see the
    message ``congratulations :)``.
 
-tox will take care of environment variable isolation for you (will remove system environment variables not specified via
-``passenv``). Furthermore, it will also alter the ``PATH`` variable so that your commands resolve within the current
-active tox environment. In general, all executables outside of hte tox environment are available in ``commands``, but
+tox will take care of environment variable isolation for you. That means it will remove system environment variables not specified via
+``passenv``. Furthermore, it will also alter the ``PATH`` variable so that your commands resolve within the current
+active tox environment. In general, all executables outside of the tox environment are available in ``commands``, but
 external commands need to be explicitly allowed via the :ref:`allowlist_externals` configuration.
 
 Main features
@@ -161,7 +161,7 @@ Main features
 
 * ``plugin system`` to modify tox execution with simple hooks.
 * uses :pypi:`pip` and :pypi:`virtualenv` by default. Support for plugins replacing it with their own.
-* **cross-Python compatible**: tox requires CPython 3.7 and higher (but can create environments 2.7 or later).
+* **cross-Python compatible**: tox requires CPython 3.7 and higher, but it can create environments 2.7 or later
 * **cross-platform**: Windows, macOS and Unix style environments,
 * **full interoperability with devpi**: is integrated with and is used for testing in the :pypi:`devpi` system, a
   versatile PyPI index server and release managing tool.
