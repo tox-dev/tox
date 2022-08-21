@@ -136,9 +136,9 @@ a given command add a ``-`` prefix to that line (similar syntax to how the GNU `
      python --version
 
 Customizing virtual environment creation
---------------------------------------
+----------------------------------------
 
-By default tox uses the :pypi:`project` to create Python virtual environments to run your tools in. To change how tox
+By default tox uses the :pypi:`virtualenv` to create Python virtual environments to run your tools in. To change how tox
 creates virtual environments you can set environment variables to customize virtualenv. For example, to provision a given
 pip version in the virtual environment you can set ``VIRTUALENV_PIP`` or to enable system site packages use the
 ``VIRTUALENV_SYSTEM_SITE_PACKAGES``:
@@ -156,7 +156,7 @@ Consult the :pypi:`virtualenv` project for supported values (any CLI flag for vi
 by the ``VIRTUALENV_`` key).
 
 Building documentation with Sphinx
--------------------------------
+----------------------------------
 
 It's possible to orchestrate the projects documentation with tox. The advantage of this is that now generating the
 documentation can be part of the CI, and whenever any validations/checks/operations fail while generating the
@@ -183,7 +183,7 @@ the documentation under ``.tox/docs_out/index.html`` and print out a link to the
 Note here we also require Python 3.10, allowing us to use f-strings within the sphinx ``conf.py``.
 
 Building documentation with mkdocs
--------------------------------
+----------------------------------
 
 It's possible to orchestrate the projects documentation with tox. The advantage of this is that now generating the
 documentation can be part of the CI, and whenever any validations/checks/operations fail while generating the
@@ -221,10 +221,10 @@ raised:
            '<command defined in tox.ini>' (exited with code 1)
 
 Generally always check the documentation for the command executed to understand what the code means. For example for
-:pypi:`pytest` you'd read `here <https://docs.pytest.org/en/latest/usage.html#possible-exit-codes>`_. On unix systems,
-there are some rather `common exit codes <http://www.faqs.org/docs/abs/HTML/exitcodes.html>`_. This is why for exit
-codes larger than 128, if a signal with number equal to ``<exit code> - 128`` is found in the :py:mod:`signal` module,
-an additional hint is given:
+:pypi:`pytest` you'd read `here <https://docs.pytest.org/en/latest/reference/exit-codes.html#exit-codes>`_. On unix
+systems, there are some rather `common exit codes <http://www.faqs.org/docs/abs/HTML/exitcodes.html>`_. This is why for
+exit codes larger than 128, if a signal with number equal to ``<exit code> - 128`` is found in the :py:mod:`signal`
+module, an additional hint is given:
 
 .. code-block:: shell
 
@@ -234,11 +234,11 @@ an additional hint is given:
 
 
 The signal numbers (e.g. 11 for a segmentation fault) can be found in the "Standard signals" section of the
-`signal man page <http://man7.org/linux/man-pages/man7/signal.7.html>`_.
+`signal man page <https://man7.org/linux/man-pages/man7/signal.7.html>`_.
 Their meaning is described in `POSIX signals <https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals>`_. Beware
 that programs may issue custom exit codes with any value, so their documentation should be consulted.
 
 
 Sometimes, no exit code is given at all. An example may be found in
 :gh:`pytest-qt issue #170 <pytest-dev/pytest-qt/issues/170>`, where Qt was calling
-`abort() <http://www.unix.org/version2/sample/abort.html>`_ instead of ``exit()``.
+`abort() <https://www.unix.org/version2/sample/abort.html>`_ instead of ``exit()``.

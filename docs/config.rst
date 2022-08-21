@@ -104,10 +104,10 @@ Core
    :default: <empty list>
    :version_added: 3.2.0
 
-   Specify a list of `PEP-508 <https://www.python.org/dev/peps/pep-0508/>`_ compliant dependencies that must be
-   satisfied in the Python environment hosting tox when running the tox command. If any of these dependencies are not
-   satisfied will automatically create a provisioned tox environment that does not have this issue, and run the tox
-   command within that environment. See :ref:`provision_tox_env` for more details.
+   Specify a list of :pep:`508` compliant dependencies that must be satisfied in the Python environment hosting tox when
+   running the tox command. If any of these dependencies are not satisfied will automatically create a provisioned tox
+   environment that does not have this issue, and run the tox command within that environment. See
+   :ref:`provision_tox_env` for more details.
 
    .. code-block:: ini
 
@@ -560,7 +560,7 @@ Python run
    before package installation. All installer commands are executed using the :ref:`tox_root` as the current working
    directory. Each value must be one of:
 
-   - a Python dependency as specified by `PEP-440`_,
+   - a Python dependency as specified by :pep:`440`,
    - a `requirement file <https://pip.pypa.io/en/stable/user_guide/#requirements-files>`_ when the value starts with
      ``-r`` (followed by a file path),
    - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
@@ -628,7 +628,7 @@ tox supports operating with externally built packages. External packages might b
    :default: <empty list>
    :ref_suffix: external
 
-   Name of the Python dependencies as specified by `PEP-440`_. Installed into the environment prior running the build
+   Name of the Python dependencies as specified by :pep:`440`. Installed into the environment prior running the build
    commands. All installer commands are executed using the :ref:`tox_root` as the current working directory.
 
 .. conf::
@@ -749,6 +749,3 @@ Pip installer
    If ``true``, adds ``--pre`` to the ``opts`` passed to :ref:`install_command`. This will cause it to install the
    latest available pre-release of any dependencies without a specified version. If ``false``, pip will only install
    final releases of unpinned dependencies.
-
-.. _`PEP-508`: https://www.python.org/dev/peps/pep-0508/
-.. _`PEP-440`: https://www.python.org/dev/peps/pep-0440/

@@ -254,14 +254,14 @@ Configuration
 
 - To change the current working directory for the commands run use :ref:`change_dir` (note this will make the change for
   all install commands too - watch out if you have relative paths in your project dependencies).
-- Environment variables:
 
-  - To view environment variables set and passed down use ``tox4 c -e py310 -k set_env pass_env``.
+- Environment variables:
+  - To view environment variables set and passed down use ``tox c -e py310 -k set_env pass_env``.
   - To pass through additional environment variables use :ref:`pass_env`.
   - To set environment variables use :ref:`set_env`.
 - Setup operation can be configured via the :ref:`commands_pre`, while teardown commands via the :ref:`commands_post`.
 - Configurations may be set conditionally within the ``tox.ini`` file. If a line starts with an environment name
-  (optionally can be more than one when separated by ``,``) followed by ``:`` the configuration will only be used if the
+  or names, separated by a comma, followed by ``:`` the configuration will only be used if the
   environment name(s) matches the executed tox environment. For example:
 
   .. code-block:: ini
@@ -281,20 +281,20 @@ Parallel mode
 -------------
 ``tox`` allows running environments in parallel mode via the ``parallel`` sub-command:
 
-- After the packaging phase completes tox will run in parallel processes tox environments (multi-thread based).
-- ``--parallel``  flags takes an argument specifying the degree of parallelization, defaulting to ``auto``:
+- After the packaging phase completes tox will run the tox environments in parallel processes (multi-thread based).
+- the ``--parallel``  flag takes an argument specifying the degree of parallelization, defaulting to ``auto``:
 
   - ``all`` to run all invoked environments in parallel,
   - ``auto`` to limit it to CPU count,
   - or pass an integer to set that limit.
 - Parallel mode displays a progress spinner while running tox environments in parallel, and reports outcome of these as
-  soon as completed with a human readable duration timing attached. This spinner can be disabled via the
+  soon as they have been completed with a human readable duration timing attached. This spinner can be disabled via the
   ``--parallel-no-spinner`` flag.
 - Parallel mode by default shows output only of failed environments and ones marked as :ref:`parallel_show_output`
   ``=True``.
 - There's now a concept of dependency between environments (specified via :ref:`depends`), tox will re-order the
-  environment list to be run to satisfy these dependencies (in sequential run too). Furthermore, in parallel mode,
-  will only schedule a tox environment to run once all of its dependencies finished (independent of their outcome).
+  environment list to be run to satisfy these dependencies, also for sequential runs. Furthermore, in parallel mode,
+  tox will only schedule a tox environment to run once all of its dependencies have finished (independent of their outcome).
 
   .. warning::
 
@@ -303,7 +303,7 @@ Parallel mode
     such as ``py310, py39, py38, py37``).
 
 - ``--parallel-live``/``-o`` allows showing the live output of the standard output and error, also turns off reporting
-  described above.
+  as described above.
 - Note: parallel evaluation disables standard input. Use non parallel invocation if you need standard input.
 
 Example final output:
@@ -321,7 +321,7 @@ Example final output:
       congratulations :)
 
 
-Example progress bar, showing a rotating spinner, the number of environments running and their list (limited up to \
+Example progress bar, showing a rotating spinner, the number of environments running and their list (limited up to
 120 characters):
 
 .. code-block:: bash
@@ -333,7 +333,7 @@ Packaging
 
 tox always builds projects in a PEP-518 compatible virtual environment and communicates with the build backend according
 to the interface defined in PEP-517 and PEP-660. To define package build dependencies and specify the build backend to
-use create a ``pyproject.toml`` at the root of the project, for example to use hatch:
+use create a ``pyproject.toml`` at the root of the project. For example to use hatch:
 
 .. code-block:: toml
 
@@ -345,7 +345,7 @@ By default tox will create and install a source distribution. You can configure 
 the :ref:`package` configuration to ``wheel``. Wheels are much faster to install than source distributions.
 
 To query the projects dependencies tox will use a virtual environment whose name is defined under the :ref:`package_env`
-configuration (by default ``.pkg``). The virtual environment to use for building the package depends on the artifact
+configuration (by default ``.pkg``). The virtual environment used for building the package depends on the artifact
 built:
 
 - for source distribution the :ref:`package_env`,
@@ -353,7 +353,7 @@ built:
   environment under :ref:`base_python`,  if the environment targets CPython 3.10 it will be ``.pkg-cpython310`` or
   for PyPy 3.9 it will be ``.pkg-pypy39``).
 
-For pure python projects (non C-Extension ones) it's recommended to set :ref:`wheel_build_env` to the same as the
+For pure Python projects (non C-Extension ones) it's recommended to set :ref:`wheel_build_env` to the same as the
 :ref:`package_env`. This way you'll build the wheel once and install the same wheel for all tox environments.
 
 Advanced features
