@@ -162,13 +162,13 @@ Main features
 * ``plugin system`` to modify tox execution with simple hooks.
 * uses :pypi:`pip` and :pypi:`virtualenv` by default. Support for plugins replacing it with their own.
 * **cross-Python compatible**: tox requires CPython 3.7 and higher, but it can create environments 2.7 or later
-* **cross-platform**: Windows, macOS and Unix style environments,
+* **cross-platform**: Windows, macOS and Unix style environments
 * **full interoperability with devpi**: is integrated with and is used for testing in the :pypi:`devpi` system, a
-  versatile PyPI index server and release managing tool.
+  versatile PyPI index server and release managing tool
 * **driven by a simple (but flexible to allow expressing more complicated variants) ini-style config file**
 * **documented** examples and configuration
 * **concise reporting** about tool invocations and configuration errors
-* supports using different / multiple PyPI index servers.
+* supports using different / multiple PyPI index servers
 
 Related projects
 ----------------
@@ -179,16 +179,16 @@ you want to do more research, we recommend taking a look at these projects:
 - `nox <https://nox.thea.codes>`__ is a project similar in spirit to tox but different in approach. The primary key
   difference is that it uses Python scripts instead of a configuration file. It might be useful if you find tox
   configuration too limiting but aren't looking to move to something as general-purpose as ``Invoke`` or ``make``.
-  Note tox will also soon support defining the configuration in a python file.
+  Please note that tox will support defining configuration in a Python file soon, too.
 - `Invoke <https://www.pyinvoke.org/>`__ is a general-purpose task execution library, similar to Make. Invoke is far
   more general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
 
 
 Auto-provisioning
 -----------------
-In case the host tox does not satisfy either the :ref:`min_version` or the :ref:`requires`, tox will automatically
+In case the installed tox version does not satisfy either the :ref:`min_version` or the :ref:`requires`, tox will automatically
 create a virtual environment under :ref:`provision_tox_env` name that satisfies those constraints and delegate all
-calls to this meta environment. This should allow automatically satisfying constraints on your tox environment,
+calls to this meta environment. This should allow satisfying constraints on your tox environment automatically,
 given you have at least version ``3.8.0`` of tox.
 
 For example given:
@@ -199,7 +199,7 @@ For example given:
     min_version = 4
     requires = tox-docker>=1
 
-if the user runs it with tox ``3.8`` or later installed tox will automatically ensured that both the minimum version and
+if the user runs it with tox ``3.8`` or later the installed tox application will automatically ensure that both the minimum version and
 requires constraints are satisfied, by creating a virtual environment under ``.tox`` folder, and then installing into it
 ``tox>=4`` and ``tox-docker>=1``. Afterwards all tox invocations are forwarded to the tox installed inside ``.tox\.tox``
 folder (referred to as meta-tox or auto-provisioned tox).
@@ -216,7 +216,7 @@ This section details information that you'll use most often in short form.
 CLI
 ~~~
 - Each tox subcommand has a 1 (or 2) letter shortcut form too, e.g. ``tox run`` can also be written as ``tox r`` or
-  ``tox config`` can be shorten to ``tox c``.
+  ``tox config`` can be shortened to ``tox c``.
 - To run all tox environments defined in the :ref:`env_list` run tox without any flags: ``tox``.
 - To run a single tox environment use the ``-e`` flag for the ``run`` sub-command as in ``tox run -e py310``.
 - To run two or more tox environment pass comma separated values, e.g. ``tox run -e format,py310``. The run command will
@@ -226,7 +226,7 @@ CLI
 - To view the configuration value for a given environment and a given configuration key use the config sub-command with
   the ``-k`` flag to filter for targeted configuration values: ``tox config -e py310 -k pass_env``.
 - tox tries to automatically detect changes to your project dependencies and force a recreation when needed.
-  Unfortunately the detection is not always accurate, and will also not detect changes on the PyPI index server. You can
+  Unfortunately the detection is not always accurate, and it also won't detect changes on the PyPI index server. You can
   force a fresh start for the tox environments by passing the ``-r`` flag to your run command. Whenever you see
   something that should work but fails with some esoteric error it's recommended to use this flag to make sure you don't
   have a stale Python environment; e.g. ``tox run -e py310 -r`` would clean the run environment and recreate it from
@@ -236,8 +236,8 @@ Configuration
 ~~~~~~~~~~~~~
 
 - Every tox environment has its own configuration section (e.g. in case of ``tox.ini`` configuration method the
-  ``py310`` tox environments configuration is read from ``testenv:py310`` section). If the section is missing or does
-  not contain that configuration value it will fallback to section defined by the :ref:`base` configuration (for
+  ``py310`` tox environments configuration is read from the ``testenv:py310`` section). If the section is missing or does
+  not contain that configuration value, it will fall back to the section defined by the :ref:`base` configuration (for
   ``tox.ini`` this is the ``testenv`` section). For example:
 
   .. code-block:: ini
@@ -248,8 +248,8 @@ Configuration
     [testenv:test]
     description = run the test suite with pytest
 
-  Here the ``test`` tox environments description is taken from ``testenv:test``. The ``commands`` is not specified,
-  so will instead use the value defined under the ``testenv`` section. If the base environment is also missing a
+  Here the environment description for ``test`` is taken from ``testenv:test``. As ``commands`` is not specified,
+  the value defined under the ``testenv`` section will be used. If the base environment is also missing a
   configuration value then the configuration default will be used (e.g. in case of the ``pass_env`` configuration here).
 
 - To change the current working directory for the commands run use :ref:`change_dir` (note this will make the change for
