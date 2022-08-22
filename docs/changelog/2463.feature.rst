@@ -1,1 +1,1 @@
-Use ``tomllib`` on Python 3.11 or later and ``tomli`` instead of ``toml`` library on lower versions - by :user:`gaborbernat`.
+Use ``tomllib`` on Python 3.11 or later and ``tomli`` instead of ``toml`` library on lower versions - by :user:`hroncok`.
