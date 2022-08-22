@@ -26,7 +26,7 @@ if sys.version_info >= (3, 11):
 
     toml_mode = "rb"
     toml_encoding = None
-elif sys.version_info >= (3,):
+elif sys.version_info >= (3, 6):
     import tomli as toml_loader
 
     toml_mode = "rb"
