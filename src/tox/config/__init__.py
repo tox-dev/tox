@@ -23,14 +23,17 @@ import six
 
 if sys.version_info >= (3, 11):
     import tomllib as toml_loader
+
     toml_mode = "rb"
     toml_encoding = None
 elif sys.version_info >= (3,):
     import tomli as toml_loader
+
     toml_mode = "rb"
     toml_encoding = None
 else:
     import toml as toml_loader
+
     toml_mode = "r"
     toml_encoding = "UTF-8"
 
