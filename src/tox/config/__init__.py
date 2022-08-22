@@ -21,9 +21,18 @@ import py
 import six
 
 if sys.version_info >= (3, 11):
-    import tomllib as toml
+    import tomllib as toml_loader
+    toml_mode = "rb"
+    toml_encoding = None
+elif sys.version_info >= (3,):
+    import tomli as toml_loader
+    toml_mode = "rb"
+    toml_encoding = None
 else:
-    import tomli as toml
+    import toml as toml_loader
+    toml_mode = "r"
+    toml_encoding = "UTF-8"
+
 
 from packaging import requirements
 from packaging.utils import canonicalize_name
@@ -308,8 +317,8 @@ def parseconfig(args, plugins=()):
 
 
 def get_py_project_toml(path):
-    with open(str(path), mode="rb") as file_handler:
-        config_data = toml.load(file_handler)
+    with open(str(path), mode=toml_mode, encoding=toml_encoding) as file_handler:
+        config_data = toml_loader.load(file_handler)
     return config_data
 
 
