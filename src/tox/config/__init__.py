@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import argparse
+import io
 import itertools
 import json
 import os
@@ -317,7 +318,7 @@ def parseconfig(args, plugins=()):
 
 
 def get_py_project_toml(path):
-    with open(str(path), mode=toml_mode, encoding=toml_encoding) as file_handler:
+    with io.open(str(path), mode=toml_mode, encoding=toml_encoding) as file_handler:
         config_data = toml_loader.load(file_handler)
     return config_data
 
