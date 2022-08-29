@@ -20,7 +20,24 @@ from threading import Thread
 import pluggy
 import py
 import six
-import toml
+
+if sys.version_info >= (3, 11):
+    import tomllib as toml_loader
+
+    toml_mode = "rb"
+    toml_encoding = None
+elif sys.version_info >= (3, 7):
+    import tomli as toml_loader
+
+    toml_mode = "rb"
+    toml_encoding = None
+else:
+    import toml as toml_loader
+
+    toml_mode = "r"
+    toml_encoding = "UTF-8"
+
+
 from packaging import requirements
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -304,9 +321,9 @@ def parseconfig(args, plugins=()):
 
 
 def get_py_project_toml(path):
-    with io.open(str(path), encoding="UTF-8") as file_handler:
-        config_data = toml.load(file_handler)
-        return config_data
+    with io.open(str(path), mode=toml_mode, encoding=toml_encoding) as file_handler:
+        config_data = toml_loader.load(file_handler)
+    return config_data
 
 
 def propose_configs(cli_config_file):
