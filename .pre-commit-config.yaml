@@ -28,7 +28,7 @@ repos:
     rev: v1.12.1
     hooks:
       - id: blacken-docs
-        additional_dependencies: [ black==22.6 ]
+        additional_dependencies: [ black==22.8.0 ]
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
     hooks:
