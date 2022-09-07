@@ -52,6 +52,39 @@ so that you can do changes and submit patches.
 [Linux/macOS] Install via your package manager
 ----------------------------------------------
 
-You can also find tox packaged for many Linux distributions and Homebrew for macOs - usually under the name of **python-tox** or simply **tox**. Be aware though that there also other projects under the same name (most prominently a `secure chat client <https://tox.chat/>`_ with no affiliation to this project), so make sure you install the correct package.
+You can also find tox packaged for many Linux distributions and Homebrew for macOs.
+
+Debian, Ubuntu
+
+.. code-block:: shell
+
+    $ apt-get install tox
+
+Fedora, CentOS, Red Hat
+
+.. code-block:: shell
+
+    $ yum -y install python-tox
+
+Arch Linux
+
+.. code-block:: shell
+
+    $ pacman -S python-tox
+
+openSUSE
+
+.. code-block:: shell
+
+    $ zypper install python3-tox
+
+Homebrew
+
+.. code-block:: shell
+
+    $ brew install tox
+
+The project may also be available for other package managers. Be aware though that there also other projects under the same name (most prominently a `secure chat client <https://tox.chat/>`_ with no affiliation to this project), so make sure you install the correct package.
+Most often, the package is named ``tox`` or ``python-tox``.
 
 .. include:: links.rst
