@@ -25,6 +25,7 @@ def test_verbose_isolated_build(initproj, mock_venv, cmd):
         },
     )
     result = cmd("--sdistonly", "-v", "-v", "-v", "-e", "py")
+    assert "The arguments ['--formats=gztar'] were given via `--global-option`." not in result.err
     assert "running sdist" in result.out, result.out
     assert "running egg_info" in result.out, result.out
     assert "example123-0.5.tar.gz" in result.out, result.out
