@@ -17,6 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - "3.11.0-rc.1"
           - "3.10"
           - "3.9"
           - "3.8"
@@ -45,12 +46,11 @@ jobs:
           python-version: ${{ matrix.py }}
       - name: Pick environment to run
         run: |
-          import json
-          import os
-          import subprocess
-          major, minor, impl = json.loads(subprocess.check_output(["python", "-c", "import json; import sys; import platform; print(json.dumps([sys.version_info[0], sys.version_info[1], platform.python_implementation()]));"], universal_newlines=True))
-          with open(os.environ['GITHUB_ENV'], 'a') as file_handler:
-                file_handler.write('TOXENV=' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else "3") + "\n")
+          import os; import platform; import sys; from pathlib import Path
+          env = f'TOXENV=py{"" if platform.python_implementation() == "CPython" else "py"}3{sys.version_info.minor}'
+          print(f"Picked: {env} for {sys.version} based of {sys.executable}")
+          with Path(os.environ["GITHUB_ENV"]).open("ta") as file_handler:
+               file_handler.write(env)
         shell: python
       - name: Setup test suite
         run: tox r -vv --notest
