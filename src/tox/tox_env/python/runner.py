@@ -3,7 +3,6 @@ A tox run environment that handles the Python language.
 """
 from __future__ import annotations
 
-from abc import ABC
 from functools import partial
 from typing import Set
 
@@ -17,7 +16,7 @@ from ..runner import RunToxEnv
 from .api import Python
 
 
-class PythonRun(Python, RunToxEnv, ABC):
+class PythonRun(Python, RunToxEnv):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
 
