@@ -1,7 +1,6 @@
 """Load """
 from __future__ import annotations
 
-from abc import ABC
 from configparser import ConfigParser
 from itertools import chain
 from pathlib import Path
@@ -17,7 +16,7 @@ from .api import Source
 from .ini_section import CORE, TEST_ENV_PREFIX, IniSection
 
 
-class IniSource(Source, ABC):
+class IniSource(Source):
     """Configuration sourced from a ini file (such as tox.ini)"""
 
     CORE_SECTION = CORE

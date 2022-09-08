@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import sys
-from abc import ABC
 from pathlib import Path
 from typing import Any, cast
 
@@ -23,7 +22,7 @@ from ...api import ToxEnvCreateArgs
 from ..api import Python, PythonInfo
 
 
-class VirtualEnv(Python, ABC):
+class VirtualEnv(Python):
     """A python executor that uses the virtualenv project with pip"""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
