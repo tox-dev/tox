@@ -11,6 +11,24 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.26.0 (2022-09-07)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix fallback to ``python`` environment when ``isolated_build = true`` is set -- by :user:`Unrud`
+  `#2474 <https://github.com/tox-dev/tox/issues/2474>`_
+- Fixed ``SetuptoolsDeprecationWarning`` about using ``--global-option`` -- by :user:`adamchainz`
+  `#2478 <https://github.com/tox-dev/tox/issues/2478>`_
+
+
+Features
+^^^^^^^^
+
+- Use ``tomllib`` on Python 3.11 or later and ``tomli`` instead of ``toml`` library on lower versions - by :user:`hroncok`.
+  `#2463 <https://github.com/tox-dev/tox/issues/2463>`_
+
 
 v3.25.1 (2022-06-29)
 --------------------
