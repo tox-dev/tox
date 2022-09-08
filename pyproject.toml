@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.8", "hatch-vcs>=0.2"]
+requires = ["hatchling>=1.8.1", "hatch-vcs>=0.2"]
 
 [project]
 name = "tox"
@@ -29,7 +29,7 @@ dependencies = [
   "pluggy>=1",
   "pyproject-api>=0.1.1",
   "tomli>=2.0.1",
-  "virtualenv>=20.16.3",
+  "virtualenv>=20.16.5",
   'importlib-metadata>=4.12; python_version < "3.8"',
   'typing-extensions>=4.3; python_version < "3.8"',
 ]
@@ -41,19 +41,19 @@ optional-dependencies.docs = [
   "sphinx-copybutton>=0.5",
   "sphinx-inline-tabs>=2022.1.2b11",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=21.9",
+  "towncrier>=22.8",
 ]
 optional-dependencies.testing = [
   "covdefaults>=2.2",
   "devpi-client>=6.0.1",
   "devpi-server>=6.6",
-  "distlib>=0.3.5",
+  "distlib>=0.3.6",
   "filelock>=3.8",
   "flaky>=3.7",
   "hatch-vcs>=0.2",
-  "hatchling>=1.8",
-  "psutil>=5.9.1",
-  "pytest>=7.1.2",
+  "hatchling>=1.8.1",
+  "psutil>=5.9.2",
+  "pytest>=7.1.3",
   "pytest-cov>=3",
   "pytest-mock>=3.8.2",
   "pytest-xdist>=2.5",
