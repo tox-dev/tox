@@ -1,7 +1,0 @@
-include LICENSE
-include setup.py
-include tox.ini
-graft docs
-graft tests
-
-global-exclude *.py[cod]
