@@ -1,1 +1,0 @@
-Fix fallback to ``python`` environment when ``isolated_build = true`` is set -- by :user:`Unrud`

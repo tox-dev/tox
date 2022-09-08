@@ -1,1 +1,0 @@
-Fixed ``SetuptoolsDeprecationWarning`` about using ``--global-option`` -- by :user:`adamchainz`
