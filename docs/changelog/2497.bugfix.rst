@@ -1,0 +1,1 @@
+Dropped ``--build-option`` in isolated builds, an alternative fix for the ``SetuptoolsDeprecationWarning`` about using ``--global-option`` -- by :user:`adamchainz`

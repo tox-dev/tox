@@ -38,5 +38,5 @@ _ensure_module_in_paths(backend, backend_paths)
 if backend_obj:
     backend = getattr(backend, backend_obj)
 
-basename = backend.build_sdist(dist_folder, {"--build-option": ["--formats=gztar"]})
+basename = backend.build_sdist(dist_folder, {})
 print(basename)
