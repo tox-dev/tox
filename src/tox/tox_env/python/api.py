@@ -87,6 +87,9 @@ class Python(ToxEnv, ABC):
         if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [
+                    "PROGRAMDATA",  # needed for discovering the VS compiler
+                    "PROGRAMFILES(x86)",  # needed for discovering the VS compiler
+                    "PROGRAMFILES",  # needed for discovering the VS compiler
                     "SYSTEMDRIVE",
                     "SYSTEMROOT",  # needed for python's crypto module
                     "COMSPEC",  # needed for distutils cygwin compiler

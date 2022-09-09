@@ -1,0 +1,1 @@
+Pass ``PROGRAMDATA``,  ``PROGRAMFILES(x86)``, ``PROGRAMFILES`` environments on Windows by default as it is needed for discovering the VS C++ compiler and start testing against 3.11 - by :user:`gaborbernat`.
