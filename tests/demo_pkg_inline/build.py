@@ -28,12 +28,14 @@ content = {
         Author: UNKNOWN
         Author-email: UNKNOWN
         License: UNKNOWN
+        {}
         Platform: UNKNOWN
 
         UNKNOWN
        """.format(
         pkg_name,
         version,
+        "\n        ".join(os.environ.get("METADATA_EXTRA", "").split("\n")),
     ),
     wheel: """
         Wheel-Version: 1.0

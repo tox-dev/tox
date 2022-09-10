@@ -27,7 +27,7 @@ from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.tox_env.register import ToxEnvRegister
 from tox.tox_env.runner import RunToxEnv
 
-from .pep517 import Pep517VirtualEnvPackager
+from .pyproject import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)

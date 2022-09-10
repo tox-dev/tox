@@ -13,7 +13,7 @@ from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
 from tox.tox_env.python.virtual_env import runner
-from tox.tox_env.python.virtual_env.package import cmd_builder, pep517
+from tox.tox_env.python.virtual_env.package import cmd_builder, pyproject
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
 from ..execute import Outcome
@@ -39,7 +39,7 @@ class Plugin:
             loader_api,
             provision,
             runner,
-            pep517,
+            pyproject,
             cmd_builder,
             legacy,
             version_flag,
