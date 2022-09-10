@@ -30,6 +30,12 @@ if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution
 else:  # pragma: no cover (<py38)
     from importlib_metadata import Distribution, PathDistribution
+
+if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+    import tomllib
+else:  # pragma: no cover (py311+)
+    import tomli as tomllib
+
 ConfigSettings = Optional[Dict[str, Any]]
 
 
@@ -143,23 +149,14 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         """build the package to install"""
+        deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
-
-        reqs: list[Requirement] | None = None
-        if of_type == "wheel":
-            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
-            if w_env is not None and w_env is not self:
-                with w_env.display_context(self._has_display_suspended):
-                    reqs = w_env.get_package_dependencies() if isinstance(w_env, Pep517VirtualEnvPackager) else []
-        if reqs is None:
-            reqs = self.get_package_dependencies()
-
-        extras: set[str] = for_env["extras"]
-        deps = dependencies_with_extras(reqs, extras)
         if of_type == "dev-legacy":
+            self.setup()
             deps = [*self.requires(), *self._frontend.get_requires_for_build_sdist().requires] + deps
             package: Package = DevLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
         elif of_type == "sdist":
+            self.setup()
             with self._pkg_lock:
                 package = SdistPackage(self._frontend.build_sdist(sdist_directory=self.pkg_dir).sdist, deps)
         elif of_type == "wheel":
@@ -168,6 +165,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                 with w_env.display_context(self._has_display_suspended):
                     return w_env.perform_packaging(for_env)
             else:
+                self.setup()
                 with self._pkg_lock:
                     path = self._frontend.build_wheel(
                         wheel_directory=self.pkg_dir,
@@ -178,6 +176,49 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         else:  # pragma: no cover # for when we introduce new packaging types and don't implement
             raise TypeError(f"cannot handle package type {of_type}")  # pragma: no cover
         return [package]
+
+    def _load_deps(self, for_env: EnvConfigSet) -> list[Requirement]:
+        # first check if this is statically available via PEP-621
+        deps = self._load_deps_from_static(for_env)
+        if deps is None:
+            deps = self._load_deps_from_built_metadata(for_env)
+        return deps
+
+    def _load_deps_from_static(self, for_env: EnvConfigSet) -> list[Requirement] | None:
+        pyproject_file = self.core["package_root"] / "pyproject.toml"
+        if not pyproject_file.exists():  # check if it's static PEP-621 metadata
+            return None
+        with pyproject_file.open("rb") as file_handler:
+            pyproject = tomllib.load(file_handler)
+        project = pyproject.get("project")
+        if project is None:
+            return None  # is not a PEP-621 pyproject
+        extras: set[str] = for_env["extras"]
+        for dynamic in project.get("dynamic"):
+            if dynamic == "dependencies" or (extras and dynamic == "optional-dependencies"):
+                return None  # if any dependencies are dynamic we can just calculate all dynamically
+
+        deps: list[Requirement] = [Requirement(i) for i in project.get("dependencies", [])]
+        optional_deps = project.get("optional-dependencies", {})
+        for extra in extras:
+            deps.extend(Requirement(i) for i in optional_deps.get(extra, []))
+        return deps
+
+    def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
+        # dependencies might depend on the python environment we're running in => if we build a wheel use that env
+        # to calculate the package metadata, otherwise ourselves
+        of_type: str = for_env["package"]
+        reqs: list[Requirement] | None = None
+        if of_type == "wheel":  # wheel packages
+            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
+            if w_env is not None and w_env is not self:
+                with w_env.display_context(self._has_display_suspended):
+                    reqs = w_env.get_package_dependencies() if isinstance(w_env, Pep517VirtualEnvPackager) else []
+        if reqs is None:
+            reqs = self.get_package_dependencies()
+        extras: set[str] = for_env["extras"]
+        deps = dependencies_with_extras(reqs, extras)
+        return deps
 
     def get_package_dependencies(self) -> list[Requirement]:
         with self._pkg_lock:

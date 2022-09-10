@@ -9,7 +9,7 @@ import pytest
 
 from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.package import WheelPackage
-from tox.tox_env.python.virtual_env.package.pep517 import Pep517VirtualEnvPackager
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager
 from tox.tox_env.runner import RunToxEnv
 
 

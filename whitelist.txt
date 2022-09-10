@@ -42,7 +42,6 @@ creq
 crypto
 ctrl
 cygwin
-dedent
 deinit
 delenv
 dep
@@ -143,7 +142,6 @@ objtype
 ov
 param
 parsers
-pathlib
 pathname
 pathsep
 pep517
@@ -160,6 +158,7 @@ prog
 proj
 psutil
 purelib
+py311
 py38
 py39
 pygments
@@ -183,9 +182,7 @@ rfind
 rpartition
 rreq
 rst
-runtime
 sdist
-setdefault
 setenv
 setitem
 shlex
@@ -206,11 +203,11 @@ sysconfig
 teardown
 termux
 testenv
-textwrap
 tmp
 tmpdir
 toml
 tomli
+tomllib
 towncrier
 tox
 transcoding
@@ -227,7 +224,6 @@ usedevelop
 usefixtures
 util
 utils
-v3
 vcs
 ver
 virtualenv

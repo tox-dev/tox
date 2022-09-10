@@ -12,7 +12,7 @@ from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail, Skip
-from tox.tox_env.python.virtual_env.package.pep517 import ToxBackendFailed
+from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed
 from tox.tox_env.runner import RunToxEnv
 
 LOGGER = logging.getLogger(__name__)
