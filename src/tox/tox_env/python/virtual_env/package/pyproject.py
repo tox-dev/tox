@@ -190,11 +190,11 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             return None
         with pyproject_file.open("rb") as file_handler:
             pyproject = tomllib.load(file_handler)
-        project = pyproject.get("project")
-        if project is None:
+        if "project" not in pyproject:
             return None  # is not a PEP-621 pyproject
+        project = pyproject["project"]
         extras: set[str] = for_env["extras"]
-        for dynamic in project.get("dynamic"):
+        for dynamic in project.get("dynamic", []):
             if dynamic == "dependencies" or (extras and dynamic == "optional-dependencies"):
                 return None  # if any dependencies are dynamic we can just calculate all dynamically
 
