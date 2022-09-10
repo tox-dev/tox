@@ -116,7 +116,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             assert self._sdist_meta_tox_env is not None  # the register run env is guaranteed to be called before this
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
                 self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
-                deps = self._sdist_meta_tox_env.get_package_dependencies()
+                deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
             package = SdistPackage(path, dependencies_with_extras(deps, extras))
         return [package]
 

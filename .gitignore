@@ -10,3 +10,4 @@
 __pycache__
 *.swp
 *.egg-info
+/tests/demo_pkg_setuptools/build/lib/demo_pkg_setuptools/__init__.py

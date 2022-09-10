@@ -9,7 +9,7 @@ from tox.pytest import ToxProjectCreator
 
 @pytest.mark.parametrize(
     "pkg_type",
-    ["dev-legacy", "sdist", "wheel"],
+    ["editable-legacy", "editable", "sdist", "wheel"],
 )
 def test_tox_ini_package_type_valid(tox_project: ToxProjectCreator, pkg_type: str) -> None:
     proj = tox_project({"tox.ini": f"[testenv]\npackage={pkg_type}", "pyproject.toml": ""})
@@ -25,11 +25,12 @@ def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=bad", "pyproject.toml": ""})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_failed()
-    assert " invalid package config type bad requested, must be one of wheel, sdist, dev-legacy, skip" in result.out
+    msg = " invalid package config type bad requested, must be one of wheel, sdist, editable, editable-legacy, skip"
+    assert msg in result.out
 
 
 def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv:a]\npackage=dev-legacy\nextras=docs\n[testenv:b]\npackage=sdist\nextras=format"
+    ini = "[testenv:a]\npackage=editable-legacy\nextras=docs\n[testenv:b]\npackage=sdist\nextras=format"
     proj = tox_project({"tox.ini": ini})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--root", str(pkg_with_extras_project), "-e", "a,b")
