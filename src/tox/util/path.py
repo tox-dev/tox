@@ -1,5 +1,7 @@
-import errno, os, stat
+import errno
+import os
 import shutil
+import stat
 
 from tox import reporter
 
