@@ -1,20 +1,19 @@
 import os
 from stat import S_IREAD
-from tempfile import TemporaryDirectory, NamedTemporaryFile
 
 from tox.util.path import ensure_empty_dir
 
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
 
+def test_remove_read_only(tmpdir):
+    nested_dir = tmpdir / "nested_dir"
+    nested_dir.mkdir()
 
-def test_remove_read_only(initproj, cmd):
-    temp_dir = TemporaryDirectory()
-    read_only_file = NamedTemporaryFile(dir=temp_dir.name, delete=False)
-    os.chmod(read_only_file.name, S_IREAD)
-    
-    ensure_empty_dir(temp_dir.name)
-    
-    assert not os.path.exists(temp_dir.name)
+    # create read-only file
+    read_only_file = nested_dir / "tmpfile.txt"
+    with open(str(read_only_file), "w"):
+        pass
+    os.chmod(str(read_only_file), S_IREAD)
+
+    ensure_empty_dir(nested_dir)
+
+    assert not os.listdir(nested_dir)
