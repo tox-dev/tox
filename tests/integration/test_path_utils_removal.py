@@ -16,4 +16,4 @@ def test_remove_read_only(tmpdir):
 
     ensure_empty_dir(nested_dir)
 
-    assert not os.listdir(nested_dir)
+    assert not os.listdir(str(nested_dir))
