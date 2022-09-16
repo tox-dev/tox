@@ -1,6 +1,6 @@
 import os
 from stat import S_IREAD
-from tempfile import TemporaryDirectory, NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from tox.util.path import ensure_empty_dir
 
@@ -14,7 +14,7 @@ def test_remove_read_only(initproj, cmd):
     temp_dir = TemporaryDirectory()
     read_only_file = NamedTemporaryFile(dir=temp_dir.name, delete=False)
     os.chmod(read_only_file.name, S_IREAD)
-    
+
     ensure_empty_dir(temp_dir.name)
-    
+
     assert not os.path.exists(temp_dir.name)
