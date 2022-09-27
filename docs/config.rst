@@ -1001,7 +1001,11 @@ Reading it line by line:
 - ``Django>=1.6,<1.7`` similarly depends on ``django16`` factor,
 - ``unittest2`` will be loaded for Python 3.6 environments.
 
-NOTE: that if multiple dependencies are needed for optional deps lines, separate dependencies by a ', ' (a comma and a space).
+NOTE: If multiple dependencies are needed for an optional dependency line (like py36: above), you can list separate dependencies by a comma-space separated list (', ': a comma and a space). For example:
+
+    [testenv]
+    deps =
+        py36: unittest2, types-requests
 
 tox provides a number of default factors corresponding to Python interpreter
 versions. The conditional setting above will lead to either ``python3.6`` or
