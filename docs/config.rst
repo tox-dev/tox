@@ -1001,6 +1001,8 @@ Reading it line by line:
 - ``Django>=1.6,<1.7`` similarly depends on ``django16`` factor,
 - ``unittest2`` will be loaded for Python 3.6 environments.
 
+NOTE: that if multiple dependencies are needed for optional deps lines, separate dependencies by a ', ' (a comma and a space).
+
 tox provides a number of default factors corresponding to Python interpreter
 versions. The conditional setting above will lead to either ``python3.6`` or
 ``python2.7`` used as base python, e.g. ``python3.6`` is selected if current
