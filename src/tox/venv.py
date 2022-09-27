@@ -1,4 +1,5 @@
 import codecs
+import copy
 import json
 import os
 import re
@@ -304,14 +305,27 @@ class VirtualEnv(object):
             alwayscopy,
         )
 
+    def make_dependency(self, dependency):
+        if dependency.indexserver is None:
+            package = resolve_package(package_spec=dependency.name)
+            if package != dependency.name:
+                dependency = dependency.__class__(package)
+        return dependency
+
     def get_resolved_dependencies(self):
         dependencies = []
         for dependency in self.envconfig.deps:
-            if dependency.indexserver is None:
-                package = resolve_package(package_spec=dependency.name)
-                if package != dependency.name:
-                    dependency = dependency.__class__(package)
-            dependencies.append(dependency)
+            if ", " in dependency.name:
+                new_dep_names = (dependency.name.split(", "))
+                new_dep_names = list(map(lambda s: s.strip(), new_dep_names))
+                for new_dep_name in new_dep_names:
+                    dependency_copy = copy.copy(dependency)
+                    dependency_copy.name = new_dep_name
+                    dependency_copy = self.make_dependency(dependency_copy)
+                    dependencies.append(dependency_copy)
+            else:
+                dependency = self.make_dependency(dependency)
+                dependencies.append(dependency)
         return dependencies
 
     def getsupportedinterpreter(self):
