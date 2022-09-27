@@ -1,0 +1,1 @@
+Split and install dependencies if a comma-space is in the deps line.
