@@ -316,7 +316,7 @@ class VirtualEnv(object):
         dependencies = []
         for dependency in self.envconfig.deps:
             if ", " in dependency.name:
-                new_dep_names = (dependency.name.split(", "))
+                new_dep_names = dependency.name.split(", ")
                 new_dep_names = list(map(lambda s: s.strip(), new_dep_names))
                 for new_dep_name in new_dep_names:
                     dependency_copy = copy.copy(dependency)
