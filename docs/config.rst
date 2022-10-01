@@ -310,7 +310,7 @@ Complete list of settings that you can put into ``testenv*`` sections:
 
     .. note::
 
-        You can also provide arbitrary commands to the ``install_command``. Please take care that these commands can be
+        You can also provide a single arbitrary command to the ``install_command``. Please take care that this command can be
         executed on the supported operating systems. When executing shell scripts we recommend to not specify the script
         directly but instead pass it to the appropriate shell as argument (e.g. prefer ``bash script.sh`` over
         ``script.sh``).
