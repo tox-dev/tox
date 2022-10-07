@@ -76,6 +76,11 @@ Global settings are defined under the ``tox`` section as:
     When tox is invoked with the ``--no-provision`` flag,
     the provision won't be attempted, tox will fail instead.
 
+    .. warning::
+
+      The new virtual environment will only contain dependencies specified by the :conf:`requires` keyword.
+      Any plugin used by the `tox` executable and not specified in `requires` explicitely won't be used for subsequent tasks.
+
 .. conf:: toxworkdir ^ PATH ^ {toxinidir}/.tox
 
    Directory for tox to generate its environments into, will be created if it does not exist.
