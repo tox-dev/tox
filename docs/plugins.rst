@@ -72,6 +72,11 @@ and locations of all installed plugins::
     registered plugins:
         tox-travis-0.10 at /home/ob/.virtualenvs/tmp/lib/python3.6/site-packages/tox_travis/hooks.py
 
+.. warning::
+
+    If the `tox.ini` used specifies :conf:`minversion` or :conf:`requires` options then registered plugins may not have any effect.
+    See :conf:`provision_tox_env` for details.
+
 
 Creating a plugin
 -----------------
