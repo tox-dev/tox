@@ -4,6 +4,8 @@ from __future__ import absolute_import, unicode_literals
 import os
 
 from tox.exception import InvocationError
+from tox.reporter import verbosity0
+from tox.util.lock import hold_lock
 
 
 def provision_tox(provision_venv, args):
@@ -21,5 +23,9 @@ def provision_tox(provision_venv, args):
 
 
 def ensure_meta_env_up_to_date(provision_venv):
-    if provision_venv.setupenv():
-        provision_venv.finishvenv()
+    config = provision_venv.envconfig.config
+    lock_file = config.toxworkdir.join("{}.lock".format(config.provision_tox_env))
+
+    with hold_lock(lock_file, verbosity0):
+        if provision_venv.setupenv():
+            provision_venv.finishvenv()
