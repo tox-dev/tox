@@ -134,3 +134,35 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd, signal_type):
             out,
             "\n".join(repr(i) for i in all_process),
         )
+
+
+@pytest.mark.skipif("sys.platform == 'win32'", reason="pyenv does not exists on Windows")
+def test_provision_race(initproj, cmd, monkeypatch):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tox.ini": """\
+                [tox]
+                skipsdist=True
+                minversion = 3.7.0
+                requires =
+                    setuptools == 40.6.3
+                [testenv]
+                commands=python -c "import sys; print(sys.executable); raise SystemExit(1)"
+                [testenv:x2]
+            """,
+        },
+    )
+
+    procs = [
+        subprocess.Popen(
+            [sys.executable, "-m", "tox", "-e", "py", "-vv"],
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+        )
+        for _ in range(2)
+    ]
+    for proc in procs:
+        stdout, stderr = proc.communicate()
+        assert proc.returncode != 0
+        assert ".tox/.tox/bin/python -m virtualenv" in stdout
