@@ -1,5 +1,4 @@
 """In case the tox environment is not correctly setup provision it and delegate execution"""
-from __future__ import absolute_import, unicode_literals
 
 import os
 
@@ -12,7 +11,7 @@ def provision_tox(provision_venv, args):
         provision_args = [str(provision_venv.envconfig.envpython), "-m", "tox"] + args
         try:
             env = os.environ.copy()
-            env[str("TOX_PROVISION")] = str("1")
+            env["TOX_PROVISION"] = "1"
             env.pop("__PYVENV_LAUNCHER__", None)
             action.popen(provision_args, redirect=False, report_fail=False, env=env)
             return 0

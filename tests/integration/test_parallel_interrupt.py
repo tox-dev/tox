@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import signal
 import subprocess
 import sys
@@ -24,8 +22,8 @@ from tox.util.main import MAIN_FILE
     reason="triggering SIGINT reliably on Windows is hard",
 )
 def test_parallel_interrupt(initproj, monkeypatch, capfd):
-    monkeypatch.setenv(str("_TOX_SKIP_ENV_CREATION_TEST"), str("1"))
-    monkeypatch.setenv(str("TOX_REPORTER_TIMESTAMP"), str("1"))
+    monkeypatch.setenv("_TOX_SKIP_ENV_CREATION_TEST", "1")
+    monkeypatch.setenv("TOX_REPORTER_TIMESTAMP", "1")
     start = datetime.now()
     initproj(
         "pkg123-0.7",

@@ -27,7 +27,7 @@ def suppress_output():
         from contextlib import redirect_stderr, redirect_stdout
     else:
 
-        class _RedirectStream(object):
+        class _RedirectStream:
 
             _stream = None
 

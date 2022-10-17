@@ -1,11 +1,9 @@
-from __future__ import absolute_import, unicode_literals
-
 from tox.interpreters.via_path import get_python_info
 
 from .command import CommandLog
 
 
-class EnvLog(object):
+class EnvLog:
     """Report the status of a tox environment"""
 
     def __init__(self, result_log, name, dict):

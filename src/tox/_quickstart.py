@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     tox._quickstart
     ~~~~~~~~~~~~~~~~~
@@ -106,7 +105,7 @@ def list_modificator(answer, existing=None):
 def do_prompt(map_, key, text, default=None, validator=nonempty, modificator=None):
     while True:
         prompt = "> {} [{}]: ".format(text, default) if default else "> {}: ".format(text)
-        answer = six.moves.input(prompt)
+        answer = input(prompt)
         if default and not answer:
             answer = default
         # FIXME use six instead of self baked solution

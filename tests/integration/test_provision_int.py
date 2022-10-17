@@ -62,7 +62,7 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
             """,
         },
     )
-    monkeypatch.setenv(str("__PYVENV_LAUNCHER__"), sys.executable)
+    monkeypatch.setenv("__PYVENV_LAUNCHER__", sys.executable)
     result = cmd("-e", "py", "-vv")
     result.assert_fail()
     assert ".tox/.tox/bin/python -m virtualenv" in result.out
@@ -75,8 +75,8 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
 )
 @pytest.mark.parametrize("signal_type", [signal.SIGINT, signal.SIGTERM])
 def test_provision_interrupt_child(initproj, monkeypatch, capfd, signal_type):
-    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
-    monkeypatch.setenv(str("TOX_REPORTER_TIMESTAMP"), str("1"))
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+    monkeypatch.setenv("TOX_REPORTER_TIMESTAMP", "1")
     initproj(
         "pkg123-0.7",
         filedefs={

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 """A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
-from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
@@ -32,7 +30,7 @@ class SpinnerMessage(_BaseMessage):
             return self.unicode_msg
 
 
-class Spinner(object):
+class Spinner:
     CLEAR_LINE = "\033[K"
     max_width = 120
     FRAMES = SpinnerMessage("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏", "|-+x*")

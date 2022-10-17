@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 import os
 import shutil
@@ -15,8 +13,8 @@ if sys.version_info[:2] >= (3, 4):
 else:
     from pathlib2 import Path
 
-from six.moves.urllib.parse import urljoin
-from six.moves.urllib.request import pathname2url
+from urllib.parse import urljoin
+from urllib.request import pathname2url
 
 from tox.exception import BadRequirement, MissingRequirement
 
@@ -146,7 +144,7 @@ def plugin(monkeypatch, tmp_path):
     dest = tmp_path / "a"
     shutil.copytree(str(py.path.local(__file__).dirpath().join("plugin")), str(dest))
     subprocess.check_output([sys.executable, "setup.py", "egg_info"], cwd=str(dest))
-    monkeypatch.setenv(str("PYTHONPATH"), str(dest))
+    monkeypatch.setenv("PYTHONPATH", str(dest))
 
 
 def test_provision_cli_args_ignore(cmd, initproj, monkeypatch, plugin):
@@ -361,7 +359,7 @@ def test_provision_non_canonical_dep(
         space_path2url(d) for d in (tox_wheel.parent, magic_non_canonical_wheel.parent)
     )
 
-    monkeypatch.setenv(str("PIP_FIND_LINKS"), str(find_links))
+    monkeypatch.setenv("PIP_FIND_LINKS", str(find_links))
 
     result = cmd("-a", "-v", "-v")
     result.assert_success(is_run_test_env=False)
