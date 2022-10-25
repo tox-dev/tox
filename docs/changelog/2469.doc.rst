@@ -1,1 +1,0 @@
-Documented problems with plugin and provision env - by :user:`ziima`.

@@ -11,6 +11,30 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.27.0 (2022-10-25)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Dropped ``--build-option`` in isolated builds, an alternative fix for the ``SetuptoolsDeprecationWarning`` about using ``--global-option`` -- by :user:`adamchainz`
+  `#2497 <https://github.com/tox-dev/tox/issues/2497>`_
+- Remove read-only files in ``ensure_empty_dir``.
+  `#2498 <https://github.com/tox-dev/tox/issues/2498>`_
+- Multiple tox instances no longer clobber the ``.tox`` directory when
+  ``provision_tox_env`` is used. - by :user:`masenf`
+  `#2515 <https://github.com/tox-dev/tox/issues/2515>`_
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Clarify that ``install_command`` only takes one command - by :user:`jugmac00`
+  `#2433 <https://github.com/tox-dev/tox/issues/2433>`_
+- Documented problems with plugin and provision env - by :user:`ziima`.
+  `#2469 <https://github.com/tox-dev/tox/issues/2469>`_
+
+
 v3.26.0 (2022-09-07)
 --------------------
 

@@ -1,1 +1,0 @@
-Remove read-only files in ``ensure_empty_dir``.
