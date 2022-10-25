@@ -94,7 +94,7 @@ tox roughly follows the following phases:
 
     2. **install** (optional): install the environment dependencies specified inside the
     :conf:`deps` configuration section, and then the earlier packaged source distribution.
-    By default ``pip`` is used to install packages, however one can customise this via
+    By default ``pip`` is used to install packages, however one can customize this via
     :conf:`install_command`. Note ``pip`` will not update project dependencies (specified either
     in the ``install_requires`` or the ``extras`` section of the ``setup.py``) if any version already
     exists in the virtual environment; therefore we recommend to recreate your environments
