@@ -76,6 +76,11 @@ Global settings are defined under the ``tox`` section as:
     When tox is invoked with the ``--no-provision`` flag,
     the provision won't be attempted, tox will fail instead.
 
+    .. versionchanged:: 3.27.0
+
+    When provisioning, tox will take a lock to ensure exclusive access to the
+    `provision_tox_env` and avoid clobbering by other tox instances.
+
     .. warning::
 
       The new virtual environment will only contain dependencies specified by the :conf:`requires` keyword.
