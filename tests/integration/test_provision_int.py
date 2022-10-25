@@ -158,11 +158,10 @@ def test_provision_race(initproj, cmd, monkeypatch):
         subprocess.Popen(
             [sys.executable, "-m", "tox", "-e", "py", "-vv"],
             stdout=subprocess.PIPE,
-            encoding="utf-8",
         )
         for _ in range(2)
     ]
     for proc in procs:
         stdout, stderr = proc.communicate()
         assert proc.returncode != 0
-        assert ".tox/.tox/bin/python -m virtualenv" in stdout
+        assert b".tox/.tox/bin/python -m virtualenv" in stdout
