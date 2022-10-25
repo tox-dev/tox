@@ -4,7 +4,7 @@ Installation
 via pipx
 --------
 
-:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.6 or higher) to run. We recommend :pypi:`pipx` to
+:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.7 or higher) to run. We recommend :pypi:`pipx` to
 install tox into an isolated environment. This has the added benefit that later you'll be able to upgrade tox without
 affecting other parts of the system.
 
@@ -30,27 +30,24 @@ state. Note, if you go down this path you need to ensure pip is new enough per t
 wheel
 ~~~~~
 Installing tox via a wheel (default with pip) requires an installer that can understand the ``python-requires`` tag (see
-`PEP-503 <https://www.python.org/dev/peps/pep-0503/>`_), with pip this is version ``9.0.0`` (released in November 2016).
-Furthermore, in case you're not installing it via PyPI you need to use a mirror that correctly forwards the
-``python-requires`` tag (notably the OpenStack mirrors don't do this, or older :gh_repo:`devpi/devpi` versions -
-added with version ``4.7.0``).
+:pep:`503`), with pip this is version ``9.0.0`` (released in November 2016). Furthermore, in case you're not installing
+it via PyPI you need to use a mirror that correctly forwards the ``python-requires`` tag (notably the OpenStack mirrors
+don't do this, or older :gh_repo:`devpi/devpi` versions - added with version ``4.7.0``).
 
 .. _sdist:
 
 sdist
 ~~~~~
-When installing via a source distribution you need an installer that handles the
-`PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ specification. In case of ``pip`` this is version ``18.0.0`` or
-later (released in July 2018). If you cannot upgrade your pip to support this you need to ensure that the build
-requirements from :gh:`pyproject.toml <tox-dev/tox/blob/rewrite/pyproject.toml#L2>` are satisfied before triggering the
-installation.
+When installing via a source distribution you need an installer that handles the :pep:`517` specification. In case of
+``pip`` this is version ``18.0.0`` or later (released in July 2018). If you cannot upgrade your pip to support this you
+need to ensure that the build requirements from :gh:`pyproject.toml <tox-dev/tox/blob/rewrite/pyproject.toml#L2>` are
+satisfied before triggering the installation.
 
 via ``setup.py``
 ----------------
-We don't recommend and officially support this method. You should prefer using an installer that supports
-`PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ interface, such as pip ``19.0.0`` or later. That being said you
-might be able to still install a package via this method if you satisfy build dependencies before calling the
-installation command (as described under :ref:`sdist`).
+We don't recommend and officially support this method. You should prefer using an installer that supports :pep:`517`
+interface, such as pip ``19.0.0`` or later. That being said you might be able to still install a package via this method
+if you satisfy build dependencies before calling the installation command (as described under :ref:`sdist`).
 
 latest unreleased
 -----------------

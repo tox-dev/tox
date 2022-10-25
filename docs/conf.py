@@ -66,7 +66,13 @@ intersphinx_mapping = {
 nitpicky = True
 nitpick_ignore = []
 linkcheck_workers = 10
-linkcheck_ignore = [re.escape(r"https://github.com/tox-dev/tox/issues/new?title=Trouble+with+development+environment")]
+linkcheck_ignore = [
+    re.escape(i)
+    for i in (
+        r"https://github.com/tox-dev/tox/issues/new?title=Trouble+with+development+environment",
+        r"https://www.unix.org/version2/sample/abort.html",
+    )
+]
 extlinks_detect_hardcoded_links = True
 
 
