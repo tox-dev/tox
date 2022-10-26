@@ -1,0 +1,1 @@
+Replaced deprecated ``license_file`` key with ``license_files`` in ``setup.cfg`` -- by :user:`mgorny`.
