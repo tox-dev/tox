@@ -1,1 +1,0 @@
-Clarify that ``install_command`` only takes one command - by :user:`jugmac00`
