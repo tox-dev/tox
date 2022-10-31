@@ -1,5 +1,4 @@
 """A progress reporter inspired from the logging modules"""
-from __future__ import absolute_import, unicode_literals
 
 import os
 import time
@@ -9,7 +8,7 @@ from datetime import datetime
 import py
 
 
-class Verbosity(object):
+class Verbosity:
     DEBUG = 2
     INFO = 1
     DEFAULT = 0
@@ -17,12 +16,12 @@ class Verbosity(object):
     EXTRA_QUIET = -2
 
 
-REPORTER_TIMESTAMP_ON_ENV = str("TOX_REPORTER_TIMESTAMP")
+REPORTER_TIMESTAMP_ON_ENV = "TOX_REPORTER_TIMESTAMP"
 REPORTER_TIMESTAMP_ON = os.environ.get(REPORTER_TIMESTAMP_ON_ENV, False) == "1"
 START = datetime.now()
 
 
-class Reporter(object):
+class Reporter:
     def __init__(self, verbose_level=None, quiet_level=None):
         kwargs = {}
         if verbose_level is not None:

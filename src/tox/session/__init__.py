@@ -4,7 +4,6 @@ Python2 and Python3 based virtual environments. Environments are
 setup by using virtualenv. Configuration is generally done through an
 INI-style "tox.ini" file.
 """
-from __future__ import absolute_import, unicode_literals
 
 import json
 import os
@@ -64,7 +63,7 @@ def main(args):
     try:
         config = load_config(args)
         config.logdir.ensure(dir=1)
-        with set_os_env_var(str("TOX_WORK_DIR"), config.toxworkdir):
+        with set_os_env_var("TOX_WORK_DIR", config.toxworkdir):
             session = build_session(config)
             exit_code = session.runcommand()
         if exit_code is None:
@@ -94,7 +93,7 @@ def build_session(config):
     return Session(config)
 
 
-class Session(object):
+class Session:
     """The session object that ties together configuration, reporting, venv creation, testing."""
 
     def __init__(self, config, popen=subprocess.Popen):
@@ -213,7 +212,7 @@ class Session(object):
                     venv.package = self.hook.tox_package(session=self, venv=venv)
                     if not venv.package:
                         return 2
-                    venv.envconfig.setenv[str("TOX_PACKAGE")] = str(venv.package)
+                    venv.envconfig.setenv["TOX_PACKAGE"] = str(venv.package)
         if self.config.option.sdistonly:
             return
 

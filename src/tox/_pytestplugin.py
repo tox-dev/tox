@@ -1,5 +1,3 @@
-from __future__ import print_function, unicode_literals
-
 import os
 import subprocess
 import sys
@@ -70,8 +68,8 @@ def check_os_environ_stable():
         for k in {
             PARALLEL_ENV_VAR_KEY_PRIVATE,
             PARALLEL_ENV_VAR_KEY_PUBLIC,
-            str("TOX_WORK_DIR"),
-            str("PYTHONPATH"),
+            "TOX_WORK_DIR",
+            "PYTHONPATH",
         }
     }
 
@@ -188,10 +186,7 @@ class RunResult:
             self.out,
             self.err,
         )
-        if six.PY2:
-            return res.encode("UTF-8")
-        else:
-            return res
+        return res
 
     def output(self):
         return "{}\n{}\n{}".format(self.ret, self.err, self.out)
@@ -219,10 +214,7 @@ class ReportExpectMock:
 
     def clear(self):
         self._index = -1
-        if not six.PY2:
-            self.instance.reported_lines.clear()
-        else:
-            del self.instance.reported_lines[:]
+        self.instance.reported_lines.clear()
 
     def getnext(self, cat):
         __tracebackhide__ = True
@@ -300,15 +292,12 @@ def create_mocksession(request):
     class MockSession(tox.session.Session):
         def __init__(self, config):
             self.logging_levels(config.option.quiet_level, config.option.verbose_level)
-            super(MockSession, self).__init__(config, popen=self.popen)
+            super().__init__(config, popen=self.popen)
             self._pcalls = []
             self.report = ReportExpectMock()
 
         def _clearmocks(self):
-            if not six.PY2:
-                self._pcalls.clear()
-            else:
-                del self._pcalls[:]
+            self._pcalls.clear()
             self.report.clear()
 
         def popen(self, args, cwd, shell=None, stdout=None, stderr=None, env=None, **_):
@@ -379,8 +368,8 @@ def initproj(tmpdir):
             filedefs = {}
         if not src_root:
             src_root = "."
-        if isinstance(nameversion, six.string_types):
-            parts = nameversion.rsplit(str("-"), 1)
+        if isinstance(nameversion, str):
+            parts = nameversion.rsplit("-", 1)
             if len(parts) == 1:
                 parts.append("0.1")
             name, version = parts
@@ -489,11 +478,11 @@ def create_files(base, filedefs):
     for key, value in filedefs.items():
         if isinstance(value, dict):
             create_files(base.ensure(key, dir=1), value)
-        elif isinstance(value, six.string_types):
+        elif isinstance(value, str):
             s = textwrap.dedent(value)
 
-            if not isinstance(s, six.text_type):
-                if not isinstance(s, six.binary_type):
+            if not isinstance(s, str):
+                if not isinstance(s, bytes):
                     s = str(s)
                 else:
                     s = six.ensure_text(s)
@@ -508,10 +497,10 @@ def mock_venv(monkeypatch):
     and cannot install any packages."""
 
     # first ensure we have a clean python path
-    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
+    monkeypatch.delenv("PYTHONPATH", raising=False)
 
     # object to collect some data during the execution
-    class Result(object):
+    class Result:
         def __init__(self, session):
             self.popens = popen_list
             self.session = session

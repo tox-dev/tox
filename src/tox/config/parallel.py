@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from argparse import ArgumentTypeError
 
 ENV_VAR_KEY_PUBLIC = "TOX_PARALLEL_ENV"

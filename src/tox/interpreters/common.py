@@ -11,7 +11,7 @@ def base_discover(envconfig):
     # 1. check passed in discover elements
     discovers = envconfig.config.option.discover
     if not discovers:
-        discovers = os.environ.get(str("TOX_DISCOVER"), "").split(os.pathsep)
+        discovers = os.environ.get("TOX_DISCOVER", "").split(os.pathsep)
     for discover in discovers:
         if os.path.exists(discover):
             cur_spec = exe_spec(discover, envconfig.basepython)

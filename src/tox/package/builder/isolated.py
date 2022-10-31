@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import json
 import os
 from collections import namedtuple
@@ -77,11 +75,11 @@ def get_build_info(folder):
         abort("missing build-backend key at build-system section")
 
     requires = build_system["requires"]
-    if not isinstance(requires, list) or not all(isinstance(i, six.text_type) for i in requires):
+    if not isinstance(requires, list) or not all(isinstance(i, str) for i in requires):
         abort("requires key at build-system section must be a list of string")
 
     backend = build_system["build-backend"]
-    if not isinstance(backend, six.text_type):
+    if not isinstance(backend, str):
         abort("build-backend key at build-system section must be a string")
 
     args = backend.split(":")

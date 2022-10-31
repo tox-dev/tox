@@ -155,7 +155,7 @@ def test_build_backend_without_submodule(initproj, cmd):
 
 
 def test_package_inject(initproj, cmd, monkeypatch, tmp_path):
-    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
+    monkeypatch.delenv("PYTHONPATH", raising=False)
     initproj(
         "example123-0.5",
         filedefs={
