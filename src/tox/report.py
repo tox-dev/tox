@@ -138,7 +138,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         return self._local.out_err[1]
 
     @property  # type: ignore[override]
-    def stream(self) -> IO[str]:  # type: ignore[override]
+    def stream(self) -> IO[str]:
         """:return: the current stream to write to (alias for the current standard output)"""
         return self.stdout
 

@@ -243,7 +243,7 @@ class ToxEnv(ABC):
             finally:
                 self._run_state["teardown"] = True
 
-    def _teardown(self) -> None:
+    def _teardown(self) -> None:  # noqa: B027 # empty abstract base class
         pass
 
     def _platform_check(self) -> None:
@@ -270,10 +270,10 @@ class ToxEnv(ABC):
                 raise Recreate(f"env type changed from {old} to {conf}")
         self._handle_env_tmp_dir()
 
-    def _setup_with_env(self) -> None:
+    def _setup_with_env(self) -> None:  # noqa: B027 # empty abstract base class
         pass
 
-    def _done_with_setup(self) -> None:
+    def _done_with_setup(self) -> None:  # noqa: B027 # empty abstract base class
         """called when setup is done"""
 
     def _handle_env_tmp_dir(self) -> None:

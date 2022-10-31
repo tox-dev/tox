@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.8.1", "hatch-vcs>=0.2"]
+requires = ["hatchling>=1.11.1", "hatch-vcs>=0.2"]
 
 [project]
 name = "tox"
@@ -23,21 +23,21 @@ requires-python = ">=3.7"
 dependencies = [
   "cachetools>=5.2",
   "chardet>=5",
-  "colorama>=0.4.5",
+  "colorama>=0.4.6",
   "packaging>=21.3",
   "platformdirs>=2.5.2",
   "pluggy>=1",
-  "pyproject-api>=0.1.1",
-  'tomli>=2.0.1;python_version<"3.11"',
-  "virtualenv>=20.16.5",
-  'importlib-metadata>=4.12; python_version < "3.8"',
-  'typing-extensions>=4.3; python_version < "3.8"',
+  "pyproject-api>=1.1.1",
+  'tomli>=2.0.1; python_version < "3.11"',
+  "virtualenv>=20.16.6",
+  'importlib-metadata>=5; python_version < "3.8"',
+  'typing-extensions>=4.4; python_version < "3.8"',
 ]
 optional-dependencies.docs = [
-  "furo>=2022.6.21",
-  "sphinx>=5.1.1",
+  "furo>=2022.9.29",
+  "sphinx>=5.3",
   "sphinx-argparse-cli>=1.10",
-  "sphinx-autodoc-typehints>=1.19.2",
+  "sphinx-autodoc-typehints>=1.19.4",
   "sphinx-copybutton>=0.5",
   "sphinx-inline-tabs>=2022.1.2b11",
   "sphinxcontrib-towncrier>=0.2.1a0",
@@ -45,20 +45,20 @@ optional-dependencies.docs = [
 ]
 optional-dependencies.testing = [
   "covdefaults>=2.2",
-  "devpi-client>=6.0.1",
-  "devpi-server>=6.6",
+  "devpi-client>=6.0.2",
+  "devpi-server>=6.7",
   "distlib>=0.3.6",
   "filelock>=3.8",
   "flaky>=3.7",
   "hatch-vcs>=0.2",
-  "hatchling>=1.8.1",
-  "psutil>=5.9.2",
-  "pytest>=7.1.3",
-  "pytest-cov>=3",
-  "pytest-mock>=3.8.2",
-  "pytest-xdist>=2.5",
+  "hatchling>=1.11.1",
+  "psutil>=5.9.3",
+  "pytest>=7.2",
+  "pytest-cov>=4",
+  "pytest-mock>=3.10",
+  "pytest-xdist>=3.0.2",
   "re-assert>=1.1",
-  "time-machine>=2.8.1",
+  "time-machine>=2.8.2",
 ]
 scripts.tox = "tox.run:run"
 dynamic = ["version"]
