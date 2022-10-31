@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Iterator
 
 from tox.config.types import Command, EnvList
 
@@ -11,7 +11,6 @@ from .str_convert import StrConvert
 
 if TYPE_CHECKING:
     from tox.config.main import Config
-T = TypeVar("T")
 
 
 class MemoryLoader(Loader[Any]):
@@ -19,8 +18,8 @@ class MemoryLoader(Loader[Any]):
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
         self.raw: dict[str, Any] = {**kwargs}
 
-    def load_raw(self, key: Any, conf: Config | None, env_name: str | None) -> T:  # noqa: U100
-        return cast(T, self.raw[key])
+    def load_raw(self, key: Any, conf: Config | None, env_name: str | None) -> Any:  # noqa: U100
+        return self.raw[key]
 
     def found_keys(self) -> set[str]:
         return set(self.raw.keys())
@@ -34,15 +33,15 @@ class MemoryLoader(Loader[Any]):
         return str(value)
 
     @staticmethod
-    def to_list(value: Any, of_type: type[Any]) -> Iterator[T]:  # noqa: U100
+    def to_list(value: Any, of_type: type[Any]) -> Iterator[Any]:  # noqa: U100
         return iter(value)
 
     @staticmethod
-    def to_set(value: Any, of_type: type[Any]) -> Iterator[T]:  # noqa: U100
+    def to_set(value: Any, of_type: type[Any]) -> Iterator[Any]:  # noqa: U100
         return iter(value)
 
     @staticmethod
-    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[T, T]]:  # noqa: U100
+    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:  # noqa: U100
         return value.items()  # type: ignore[no-any-return]
 
     @staticmethod

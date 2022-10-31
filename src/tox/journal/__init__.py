@@ -11,7 +11,7 @@ from .main import Journal
 def write_journal(path: Path | None, journal: Journal) -> None:
     if path is None:
         return
-    with open(path, "wt") as file_handler:
+    with open(path, "w") as file_handler:
         json.dump(journal.content, file_handler, indent=2, ensure_ascii=False)
 
 
