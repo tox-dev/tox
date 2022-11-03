@@ -840,7 +840,11 @@ def tox_runtest_post(venv):
 def tox_runenvreport(venv, action):
     # write out version dependency information
     args = venv.envconfig.list_dependencies_command
-    output = venv._pcall(args, cwd=venv.envconfig.config.toxinidir, action=action, returnout=True)
+    env = venv._get_os_environ()
+    venv.ensure_pip_os_environ_ok(env)
+    output = venv._pcall(
+        args, cwd=venv.envconfig.config.toxinidir, action=action, returnout=True, env=env
+    )
     # the output contains a mime-header, skip it
     output = output.split("\n\n")[-1]
     packages = output.strip().split("\n")
