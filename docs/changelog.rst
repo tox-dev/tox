@@ -11,6 +11,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.27.1 (2022-11-13)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Replaced deprecated ``license_file`` key with ``license_files`` in ``setup.cfg`` -- by :user:`mgorny`.
+  `#2521 <https://github.com/tox-dev/tox/issues/2521>`_
+- Add env cleanup to envreport - fix PYTHONPATH leak into "envreport" -- by :user:`f3flight`.
+  `#2528 <https://github.com/tox-dev/tox/issues/2528>`_
+
+
 v3.27.0 (2022-10-25)
 --------------------
 
