@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import io
 import itertools
@@ -64,7 +62,7 @@ from .reporter import add_verbosity_commands
 if sys.version_info >= (3, 3):
     from shlex import quote as shlex_quote
 else:
-    from pipes import quote as shlex_quote
+    from shlex import quote as shlex_quote
 
 
 hookimpl = tox.hookimpl
@@ -72,7 +70,7 @@ hookimpl = tox.hookimpl
 # Import hookimpl directly from tox instead.
 
 
-WITHIN_PROVISION = os.environ.get(str("TOX_PROVISION")) == "1"
+WITHIN_PROVISION = os.environ.get("TOX_PROVISION") == "1"
 
 SUICIDE_TIMEOUT = 0.0
 INTERRUPT_TIMEOUT = 0.3
@@ -110,7 +108,7 @@ class Parser:
     def __init__(self):
         class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
             def __init__(self, prog):
-                super(HelpFormatter, self).__init__(prog, max_help_position=35, width=190)
+                super().__init__(prog, max_help_position=35, width=190)
 
         self.argparser = argparse.ArgumentParser(
             description="tox options",
@@ -321,7 +319,7 @@ def parseconfig(args, plugins=()):
 
 
 def get_py_project_toml(path):
-    with io.open(str(path), mode=toml_mode, encoding=toml_encoding) as file_handler:
+    with open(str(path), mode=toml_mode, encoding=toml_encoding) as file_handler:
         config_data = toml_loader.load(file_handler)
     return config_data
 
@@ -384,7 +382,7 @@ def get_version_info(pm):
     return "\n".join(out)
 
 
-class SetenvDict(object):
+class SetenvDict:
     _DUMMY = object()
 
     def __init__(self, definitions, reader):
@@ -1016,7 +1014,7 @@ def cli_skip_missing_interpreter(parser):
     )
 
 
-class Config(object):
+class Config:
     """Global Tox config object."""
 
     def __init__(self, pluginmanager, option, interpreters, parser, args):
@@ -1162,7 +1160,7 @@ class SkipThisIni(Exception):
     """Internal exception to indicate the parsed ini file should be skipped"""
 
 
-class ParseIni(object):
+class ParseIni:
     def __init__(self, config, ini_path, ini_data):  # noqa
         config.toxinipath = ini_path
         using("tox.ini: {} (pid {})".format(config.toxinipath, os.getpid()))
@@ -1727,7 +1725,7 @@ class SectionReader:
                 elif line.startswith("file|"):  # file markers contain paths to env files
                     file_path = line[5:].strip()
                     if os.path.exists(file_path):
-                        with open(file_path, "rt") as file_handler:
+                        with open(file_path) as file_handler:
                             content = file_handler.read()
                         env_values.update(self._getdict(content, "", sep, replace))
                 else:
@@ -2075,8 +2073,8 @@ class _ArgvlistReader:
         return list(shlexer)
 
 
-class CommandParser(object):
-    class State(object):
+class CommandParser:
+    class State:
         def __init__(self):
             self.word = ""
             self.depth = 0

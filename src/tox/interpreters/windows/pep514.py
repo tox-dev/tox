@@ -1,5 +1,4 @@
 """Implement https://www.python.org/dev/peps/pep-0514/ to discover interpreters - Windows only"""
-from __future__ import unicode_literals
 
 import os
 import re
@@ -46,8 +45,7 @@ def discover_pythons():
             32,
         ),
     ]:
-        for spec in process_set(hive, hive_name, key, flags, default_arch):
-            yield spec
+        yield from process_set(hive, hive_name, key, flags, default_arch)
 
 
 def process_set(hive, hive_name, key, flags, default_arch):
@@ -56,8 +54,7 @@ def process_set(hive, hive_name, key, flags, default_arch):
             for company in enum_keys(root_key):
                 if company == "PyLauncher":  # reserved
                     continue
-                for spec in process_company(hive_name, company, root_key, default_arch):
-                    yield spec
+                yield from process_company(hive_name, company, root_key, default_arch)
     except OSError:
         pass
 
@@ -65,8 +62,7 @@ def process_set(hive, hive_name, key, flags, default_arch):
 def process_company(hive_name, company, root_key, default_arch):
     with winreg.OpenKeyEx(root_key, company) as company_key:
         for tag in enum_keys(company_key):
-            for spec in process_tag(hive_name, company, company_key, tag, default_arch):
-                yield spec
+            yield from process_tag(hive_name, company, company_key, tag, default_arch)
 
 
 def process_tag(hive_name, company, company_key, tag, default_arch):
@@ -116,7 +112,7 @@ def load_arch_data(hive_name, company, tag, tag_key, default_arch):
 
 
 def parse_arch(arch_str):
-    if not isinstance(arch_str, six.string_types):
+    if not isinstance(arch_str, str):
         raise ValueError("arch is not string")
     match = re.match(r"(\d+)bit", arch_str)
     if match:
@@ -143,7 +139,7 @@ def load_version_data(hive_name, company, tag, tag_key):
 
 
 def parse_version(version_str):
-    if not isinstance(version_str, six.string_types):
+    if not isinstance(version_str, str):
         raise ValueError("key is not string")
     match = re.match(r"(\d+)\.(\d+).*", version_str)
     if match:

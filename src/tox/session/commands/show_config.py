@@ -1,9 +1,9 @@
+import configparser
 import sys
 from collections import OrderedDict
+from io import StringIO
 
 from packaging.requirements import Requirement
-from six import StringIO
-from six.moves import configparser
 
 from tox import reporter
 from tox.util.stdlib import importlib_metadata

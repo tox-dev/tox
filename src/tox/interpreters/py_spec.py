@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import os
 import re
 import sys
@@ -9,7 +7,7 @@ import six
 import tox
 
 
-class PythonSpec(object):
+class PythonSpec:
     def __init__(self, name, major, minor, architecture, path, args=None):
         self.name = name
         self.major = major
