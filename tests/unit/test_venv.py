@@ -14,6 +14,7 @@ from tox.venv import (
     VirtualEnv,
     getdigest,
     prepend_shebang_interpreter,
+    tox_runenvreport,
     tox_testenv_create,
     tox_testenv_install_deps,
 )
@@ -1233,3 +1234,17 @@ def test_path_change(tmpdir, mocksession, newconfig, monkeypatch):
         path = x.env["PATH"]
         assert os.environ["PATH"] in path
         assert path.endswith(str(venv.envconfig.config.toxinidir) + "/bin")
+
+
+def test_runenvreport_pythonpath_discarded(newmocksession, mocker):
+    mock_os_environ = mocker.patch("tox.venv.VirtualEnv._get_os_environ")
+    mocksession = newmocksession([], "")
+    venv = mocksession.getvenv("python")
+    mock_os_environ.return_value = dict(PYTHONPATH="/some/path/")
+    mock_pcall = mocker.patch.object(venv, "_pcall")
+    tox_runenvreport(venv, None)
+    try:
+        env = mock_pcall.mock_calls[0].kwargs["env"]
+    except TypeError:  # older pytest (python 3.7 and below)
+        env = mock_pcall.mock_calls[0][2]["env"]
+    assert "PYTHONPATH" not in env
