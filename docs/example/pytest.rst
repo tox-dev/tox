@@ -24,7 +24,7 @@ and the following ``tox.ini`` content:
 
     [testenv]
     deps = pytest               # PYPI package providing pytest
-    commands = pytest {posargs} # substitute with tox' positional arguments
+    commands = python -m pytest {posargs} # substitute with tox' positional arguments
 
 you can now invoke ``tox`` in the directory where your ``tox.ini`` resides.
 ``tox`` will sdist-package your project, create two virtualenv environments
@@ -53,7 +53,7 @@ and the following ``tox.ini`` content:
     changedir = tests
     deps = pytest
     # change pytest tempdir and add posargs from command line
-    commands = pytest --basetemp="{envtmpdir}" {posargs}
+    commands = python -m pytest --basetemp="{envtmpdir}" {posargs}
 
 you can invoke ``tox`` in the directory where your ``tox.ini`` resides.
 Differently than in the previous example the ``pytest`` command
@@ -75,7 +75,7 @@ to make ``tox`` use this feature:
     deps = pytest-xdist
     changedir = tests
     # use three sub processes
-    commands = pytest --basetemp="{envtmpdir}"  \
+    commands = python -m pytest --basetemp="{envtmpdir}"  \
                       --confcutdir=..         \
                       -n 3                    \
                       {posargs}
