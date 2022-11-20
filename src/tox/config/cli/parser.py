@@ -290,6 +290,8 @@ def add_color_flags(parser: ArgumentParser) -> None:
     converter = StrConvert()
     if converter.to_bool(os.environ.get("NO_COLOR", "")):
         color = "no"
+    elif os.environ.get("TERM", "") == "dumb":
+        color = "no"
     elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
         color = "yes"
     else:
@@ -299,7 +301,7 @@ def add_color_flags(parser: ArgumentParser) -> None:
         "--colored",
         default=color,
         choices=["yes", "no"],
-        help="should output be enriched with colors",
+        help="should output be enriched with colors, default is yes unless TERM=dumb or NO_COLOR is defined.",
     )
 
 
