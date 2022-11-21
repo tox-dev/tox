@@ -41,7 +41,12 @@ def test_parser_color(
     is_atty: bool,
     term: str | None,
 ) -> None:
-    for key, value in {"NO_COLOR": no_color, "TOX_COLORED": tox_color, "FORCE_COLOR": force_color, "TERM": term}.items():
+    for key, value in {
+        "NO_COLOR": no_color,
+        "TOX_COLORED": tox_color,
+        "FORCE_COLOR": force_color,
+        "TERM": term,
+    }.items():
         if value is None:
             monkeypatch.delenv(key, raising=False)
         else:
@@ -49,7 +54,7 @@ def test_parser_color(
     stdout_mock = mocker.patch("tox.config.cli.parser.sys.stdout")
     stdout_mock.isatty.return_value = is_atty
 
-    if term == 'dumb':
+    if term == "dumb":
         expected = False
     elif tox_color in ("yes", "no"):
         expected = tox_color == "yes"
