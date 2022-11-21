@@ -290,10 +290,10 @@ def add_color_flags(parser: ArgumentParser) -> None:
     converter = StrConvert()
     if converter.to_bool(os.environ.get("NO_COLOR", "")):
         color = "no"
-    elif os.environ.get("TERM", "") == "dumb":
-        color = "no"
     elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
         color = "yes"
+    elif os.environ.get("TERM", "") == "dumb":
+        color = "no"
     else:
         color = "yes" if sys.stdout.isatty() else "no"
 

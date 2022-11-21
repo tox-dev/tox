@@ -1,1 +1,1 @@
-Recognize `TERM=dumb` or `NO_COLOR` environment variables. - by :user:`ssbarnea`.
+Recognize ``TERM=dumb`` or ``NO_COLOR`` environment variables. - by :user:`ssbarnea`.
