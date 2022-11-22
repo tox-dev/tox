@@ -242,3 +242,9 @@ that programs may issue custom exit codes with any value, so their documentation
 Sometimes, no exit code is given at all. An example may be found in
 :gh:`pytest-qt issue #170 <pytest-dev/pytest-qt/issues/170>`, where Qt was calling
 `abort() <https://www.unix.org/version2/sample/abort.html>`_ instead of ``exit()``.
+
+Access full logs
+----------------
+
+If you want to access the full logs you need to write ``-q`` and ``-v`` as
+individual tox arguments and avoid combining them into a single one.
