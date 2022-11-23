@@ -447,7 +447,7 @@ def pytest_configure(config: PyTestConfig) -> None:
     config.addinivalue_line("markers", "plugin_test")
 
 
-@pytest.mark.trylast()
+@pytest.hookimpl(trylast=True)  # type: ignore # not typed decorator
 def pytest_collection_modifyitems(config: PyTestConfig, items: list[Function]) -> None:
     # do not require flags if called directly
     if len(items) == 1:  # pragma: no cover # hard to test
