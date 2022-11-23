@@ -3,6 +3,8 @@ This module pulls together this package: create and parse CLI arguments for tox.
 """
 from __future__ import annotations
 
+import os
+from contextlib import redirect_stderr
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, NamedTuple, Sequence, cast
 
@@ -45,7 +47,9 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     tox_parser = ToxParser.base()
     parsed = Parsed()
     try:
-        tox_parser.parse_known_args(args, namespace=parsed)
+        with open(os.devnull, "w") as f:
+            with redirect_stderr(f):
+                tox_parser.parse_known_args(args, namespace=parsed)
     except SystemExit:
         ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'
     guess_verbosity = parsed.verbosity
