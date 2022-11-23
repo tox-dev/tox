@@ -190,6 +190,8 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         if record.levelno >= logging.ERROR:
             return self._error_formatter.format(record)
         if record.levelno >= logging.WARNING:
+            if self._is_colored and record.msg == "%s%s> %s" and record.args:
+                record.msg = f"%s{Style.NORMAL}%s{Style.DIM}>{Style.RESET_ALL} %s"
             return self._warning_formatter.format(record)
         return self._remaining_formatter.format(record)
 

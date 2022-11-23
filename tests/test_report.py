@@ -20,7 +20,8 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
     try:
         logging.critical("critical")
         logging.error("error")
-        logging.warning("warning")
+        # special warning line that should be auto-colored
+        logging.warning("%s%s> %s", "warning", "foo", "bar")
         logging.info("info")
         logging.debug("debug")
         logging.log(logging.NOTSET, "not-set")  # this should not be logged
@@ -56,5 +57,10 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
 
     if color:
         assert f"{Style.RESET_ALL}" in out
+        # check that our Warning line using special format was colored
+        expected_warning_text = "W\x1b[0m\x1b[36m warning\x1b[22mfoo\x1b[2m>\x1b[0m bar\x1b[0m\x1b[2m"
     else:
         assert f"{Style.RESET_ALL}" not in out
+        expected_warning_text = "warningfoo> bar"
+    if verbosity >= 4:  # where warnings are logged
+        assert expected_warning_text in lines[3]
