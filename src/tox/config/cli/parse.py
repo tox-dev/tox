@@ -47,8 +47,8 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     tox_parser = ToxParser.base()
     parsed = Parsed()
     try:
-        with open(os.devnull, "w") as f:
-            with redirect_stderr(f):
+        with open(os.devnull, "w") as file_handler:
+            with redirect_stderr(file_handler):
                 tox_parser.parse_known_args(args, namespace=parsed)
     except SystemExit:
         ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'

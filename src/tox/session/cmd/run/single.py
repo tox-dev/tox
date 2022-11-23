@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
@@ -59,7 +59,7 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
         finally:
             tox_env.teardown()
     except SystemExit as exception:  # setup command fails (interrupted or via invocation)
-        code = exception.code
+        code = cast(int, exception.code)
     return skipped, code, outcomes
 
 
@@ -109,9 +109,9 @@ def run_command_set(tox_env: ToxEnv, key: str, cwd: Path, ignore_errors: bool, o
                 continue
             if ignore_errors:
                 if exit_code == Outcome.OK:
-                    exit_code = exception.code  # ignore errors continues ahead but saves the exit code
+                    exit_code = cast(int, exception.code)  # ignore errors continues ahead but saves the exit code
                 continue
-            return exception.code
+            return cast(int, exception.code)
     return exit_code
 
 

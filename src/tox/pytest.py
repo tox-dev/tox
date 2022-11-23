@@ -300,7 +300,7 @@ class ToxProject:
                 if code is None:  # pragma: no branch
                     raise RuntimeError("exit code not set")
             out, err = self._capfd.readouterr()
-            return ToxRunOutcome(args, self.path, code, out, err, state)
+            return ToxRunOutcome(args, self.path, cast(int, code), out, err, state)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
