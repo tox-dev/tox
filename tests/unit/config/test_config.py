@@ -2,6 +2,7 @@
 import os
 import re
 import sys
+import warnings
 from textwrap import dedent
 
 import py
@@ -2469,7 +2470,8 @@ class TestConfigTestEnv:
 
         major, minor = sys.version_info[0:2]
 
-        with pytest.warns(None) as lying:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             config = newconfig(
                 """
                 [testenv:py{0}]
@@ -2483,9 +2485,9 @@ class TestConfigTestEnv:
 
         env_config = config.envconfigs["py{}".format(major)]
         assert env_config.basepython == "python{}.{}".format(major, minor - 1)
-        assert len(lying) == 0, "\n".join(repr(r.message) for r in lying)
 
-        with pytest.warns(None) as truthful:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             config = newconfig(
                 """
                 [testenv:py{0}]
@@ -2499,10 +2501,10 @@ class TestConfigTestEnv:
 
         env_config = config.envconfigs["py{}".format(major)]
         assert env_config.basepython == "python{}.{}".format(major, minor)
-        assert len(truthful) == 0, "\n".join(repr(r.message) for r in truthful)
 
     def test_default_factors_conflict_ignore(self, newconfig, capsys):
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             config = newconfig(
                 """
                 [tox]
@@ -2516,7 +2518,6 @@ class TestConfigTestEnv:
         assert len(config.envconfigs) == 1
         envconfig = config.envconfigs["py27"]
         assert envconfig.basepython == "python2.7"
-        assert len(record) == 0, "\n".join(repr(r.message) for r in record)
 
     def test_factors_in_boolean(self, newconfig):
         inisource = """
