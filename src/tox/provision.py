@@ -78,7 +78,7 @@ def provision(state: State) -> int | bool:
         # If own version can be a development one or a pre-release, we need to only use its base_version for
         # requirements, or pip will never be able to find a version that is compatible with the requirement.
         if min_version.is_devrelease or min_version.is_prerelease:
-            # Earliest possible pre-release number for current base version
+            # Earliest possible pre-release number for current base version.
             min_version = Version(f"{min_version.base_version}a0")
         requires.append(Requirement(f"tox >= {min_version.public}"))
         return requires
