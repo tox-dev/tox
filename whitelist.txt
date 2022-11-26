@@ -1,8 +1,10 @@
+0rc1
 0x3
 10ms
 1s
 2s
 5s
+a0
 abi
 addinivalue
 addnodes
@@ -48,9 +50,11 @@ dep
 deps
 desc
 dest
+dev1
 devenv
 devnull
 devpi
+devrelease
 dirname
 distinfo
 distlib
@@ -152,6 +156,7 @@ pos
 posargs
 posix
 prepend
+prerelease
 prereleases
 prj
 prog
