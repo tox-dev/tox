@@ -79,8 +79,9 @@ examples first and use this page as a reference.
 
 .. code-block:: toml
 
-    [tool:tox]
+    [tool.tox]
     legacy_tox_ini = """
+        [tox]
         min_version = 4.0
         env_list =
             py310

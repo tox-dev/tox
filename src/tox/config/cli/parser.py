@@ -316,7 +316,7 @@ def add_core_arguments(parser: ArgumentParser) -> None:
         default=None,
         type=Path,
         of_type=Optional[Path],
-        help="configuration file for tox (if not specified will discover one)",
+        help="configuration file/folder for tox (if not specified will discover one)",
     )
     parser.add_argument(
         "--workdir",

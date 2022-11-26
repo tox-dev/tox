@@ -1,0 +1,1 @@
+Allow passing config directory without filename. - by :user:`ssbarnea`.
