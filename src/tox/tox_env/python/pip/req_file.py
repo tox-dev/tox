@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import re
-from argparse import ArgumentParser
+from argparse import Namespace
 from pathlib import Path
 
-from .req.args import build_parser
-from .req.file import ReqFileLines, RequirementsFile
+from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
 
 
 class PythonDeps(RequirementsFile):
+    # these options are valid in requirements.txt, but not via pip cli and
+    # thus cannot be used in the testenv `deps` list
+    _illegal_options = ["hash"]
+
     def __init__(self, raw: str, root: Path):
         super().__init__(root / "tox.ini", constraint=False)
         self._raw = self._normalize_raw(raw)
@@ -27,12 +30,6 @@ class PythonDeps(RequirementsFile):
             if line.startswith("-r") or line.startswith("-c") and line[2].isalpha():
                 line = f"{line[0:2]} {line[2:]}"
             yield at, line
-
-    @property
-    def _parser(self) -> ArgumentParser:
-        if self._parser_private is None:
-            self._parser_private = build_parser(cli_only=True)  # e.g. no --hash for cli only
-        return self._parser_private
 
     def lines(self) -> list[str]:
         return self._raw.splitlines()
@@ -67,6 +64,20 @@ class PythonDeps(RequirementsFile):
         adjusted = "\n".join(lines)
         raw = f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
         return raw
+
+    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:
+        # check for any invalid options in the deps list
+        # (requirements recursively included from other files are not checked)
+        requirements = super()._parse_requirements(opt, recurse)
+        for r in requirements:
+            if r.from_file != str(self.path):
+                continue
+            for illegal_option in self._illegal_options:
+                if r.options.get(illegal_option):
+                    raise ValueError(
+                        f"Cannot use --{illegal_option} in deps list, it must be in requirements file. ({r})",
+                    )
+        return requirements
 
     def unroll(self) -> tuple[list[str], list[str]]:
         if self._unroll is None:

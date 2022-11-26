@@ -156,7 +156,7 @@ class RequirementsFile:
     @property
     def _parser(self) -> ArgumentParser:
         if self._parser_private is None:
-            self._parser_private = build_parser(False)
+            self._parser_private = build_parser()
         return self._parser_private
 
     def _ensure_requirements_parsed(self) -> None:

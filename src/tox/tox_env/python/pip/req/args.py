@@ -18,10 +18,10 @@ class _OurArgumentParser(ArgumentParser):
         raise ValueError(msg)
 
 
-def build_parser(cli_only: bool) -> ArgumentParser:
+def build_parser() -> ArgumentParser:
     parser = _OurArgumentParser(add_help=False, prog="", allow_abbrev=False)
     _global_options(parser)
-    _req_options(parser, cli_only)
+    _req_options(parser)
     return parser
 
 
@@ -47,11 +47,10 @@ def _global_options(parser: ArgumentParser) -> None:
     )
 
 
-def _req_options(parser: ArgumentParser, cli_only: bool) -> None:
+def _req_options(parser: ArgumentParser) -> None:
     parser.add_argument("--install-option", action=AddSortedUniqueAction)
     parser.add_argument("--global-option", action=AddSortedUniqueAction)
-    if not cli_only:
-        parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
+    parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
 
 
 _HASH = re.compile(r"sha(256:[a-f0-9]{64}|384:[a-f0-9]{96}|512:[a-f0-9]{128})")
