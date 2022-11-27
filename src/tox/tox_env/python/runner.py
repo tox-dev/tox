@@ -39,7 +39,7 @@ class PythonRun(Python, RunToxEnv):
 
     @property
     def _package_types(self) -> tuple[str, ...]:
-        return "wheel", "sdist", "dev-legacy", "skip", "external"
+        return "wheel", "sdist", "editable", "editable-legacy", "skip", "external"
 
     def _register_package_conf(self) -> bool:
         # provision package type
@@ -58,7 +58,7 @@ class PythonRun(Python, RunToxEnv):
             )
             develop_mode = self.conf["use_develop"] or getattr(self.options, "develop", False)
             if develop_mode:
-                self.conf.add_constant(["package"], desc, "dev-legacy")
+                self.conf.add_constant(["package"], desc, "editable")
             else:
                 self.conf.add_config(keys="package", of_type=str, default=self.default_pkg_type, desc=desc)
 

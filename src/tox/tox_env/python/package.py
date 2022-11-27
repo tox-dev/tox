@@ -39,8 +39,12 @@ class SdistPackage(PythonPathPackageWithDeps):
     """sdist package"""
 
 
-class DevLegacyPackage(PythonPathPackageWithDeps):
-    """legacy dev package"""
+class EditableLegacyPackage(PythonPathPackageWithDeps):
+    """legacy editable package"""
+
+
+class EditablePackage(PythonPathPackageWithDeps):
+    """PEP-660 editable package"""
 
 
 class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
@@ -59,7 +63,11 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
 
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
-        if not isinstance(run_env, Python) or run_env.conf["package"] != "wheel" or "wheel_build_env" in run_env.conf:
+        if (
+            not isinstance(run_env, Python)
+            or run_env.conf["package"] not in {"wheel", "editable"}
+            or "wheel_build_env" in run_env.conf
+        ):
             return
 
         def default_wheel_tag(conf: Config, env_name: str | None) -> str:  # noqa: U100

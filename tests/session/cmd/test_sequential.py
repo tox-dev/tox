@@ -283,9 +283,9 @@ def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: 
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     expected = [
         (".pkg", "install_requires"),
-        (".pkg", "prepare_metadata_for_build_wheel"),
-        (".pkg", "get_requires_for_build_sdist"),
-        ("py", "install_package_deps"),
+        (".pkg", "get_requires_for_build_editable"),
+        (".pkg", "install_requires_for_build_editable"),
+        (".pkg", "build_editable"),
         ("py", "install_package"),
         (".pkg", "_exit"),
     ]

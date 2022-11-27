@@ -19,7 +19,13 @@ from tox.plugin import impl
 from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.errors import Fail
 from tox.tox_env.package import Package, PackageToxEnv
-from tox.tox_env.python.package import DevLegacyPackage, PythonPackageToxEnv, SdistPackage, WheelPackage
+from tox.tox_env.python.package import (
+    EditableLegacyPackage,
+    EditablePackage,
+    PythonPackageToxEnv,
+    SdistPackage,
+    WheelPackage,
+)
 from tox.tox_env.register import ToxEnvRegister
 from tox.tox_env.runner import RunToxEnv
 
@@ -128,6 +134,9 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     def _setup_env(self) -> None:
         super()._setup_env()
+        if "editable" in self.builds:
+            build_requires = self._frontend.get_requires_for_build_editable().requires
+            self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
         if "wheel" in self.builds:
             build_requires = self._frontend.get_requires_for_build_wheel().requires
             self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_wheel")
@@ -151,15 +160,15 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         """build the package to install"""
         deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
-        if of_type == "dev-legacy":
+        if of_type == "editable-legacy":
             self.setup()
             deps = [*self.requires(), *self._frontend.get_requires_for_build_sdist().requires] + deps
-            package: Package = DevLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
+            package: Package = EditableLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
         elif of_type == "sdist":
             self.setup()
             with self._pkg_lock:
                 package = SdistPackage(self._frontend.build_sdist(sdist_directory=self.pkg_dir).sdist, deps)
-        elif of_type == "wheel":
+        elif of_type in {"wheel", "editable"}:
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):
@@ -167,12 +176,13 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             else:
                 self.setup()
                 with self._pkg_lock:
-                    path = self._frontend.build_wheel(
+                    method = "build_editable" if of_type == "editable" else "build_wheel"
+                    path = getattr(self._frontend, method)(
                         wheel_directory=self.pkg_dir,
                         metadata_directory=self.meta_folder,
                         config_settings=self._wheel_config_settings,
                     ).wheel
-                package = WheelPackage(path, deps)
+                package = (EditablePackage if of_type == "editable" else WheelPackage)(path, deps)
         else:  # pragma: no cover # for when we introduce new packaging types and don't implement
             raise TypeError(f"cannot handle package type {of_type}")  # pragma: no cover
         return [package]
@@ -209,38 +219,42 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         # to calculate the package metadata, otherwise ourselves
         of_type: str = for_env["package"]
         reqs: list[Requirement] | None = None
-        if of_type == "wheel":  # wheel packages
+        if of_type in ("wheel", "editable"):  # wheel packages
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):
-                    reqs = w_env.get_package_dependencies() if isinstance(w_env, Pep517VirtualEnvPackager) else []
+                    if isinstance(w_env, Pep517VirtualEnvPackager):
+                        reqs = w_env.get_package_dependencies(for_env)
+                    else:
+                        reqs = []
         if reqs is None:
-            reqs = self.get_package_dependencies()
+            reqs = self.get_package_dependencies(for_env)
         extras: set[str] = for_env["extras"]
         deps = dependencies_with_extras(reqs, extras)
         return deps
 
-    def get_package_dependencies(self) -> list[Requirement]:
+    def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
         with self._pkg_lock:
             if self._package_dependencies is None:  # pragma: no branch
-                self._ensure_meta_present()
+                self._ensure_meta_present(for_env)
                 requires: list[str] = cast(PathDistribution, self._distribution_meta).requires or []
                 self._package_dependencies = [Requirement(i) for i in requires]  # pragma: no branch
         return self._package_dependencies
 
-    def _ensure_meta_present(self) -> None:
+    def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
         if self._distribution_meta is not None:  # pragma: no branch
             return  # pragma: no cover
         self.setup()
-        dist_info = self._frontend.prepare_metadata_for_build_wheel(
-            self.meta_folder,
-            self._wheel_config_settings,
-        ).metadata
+        end = self._frontend
+        if for_env["package"] == "editable":
+            dist_info = end.prepare_metadata_for_build_editable(self.meta_folder, self._wheel_config_settings).metadata
+        else:
+            dist_info = end.prepare_metadata_for_build_wheel(self.meta_folder, self._wheel_config_settings).metadata
         self._distribution_meta = Distribution.at(str(dist_info))
 
     @property
     def _wheel_config_settings(self) -> ConfigSettings | None:
-        return {"--global-option": ["--bdist-dir", str(self.env_dir / "build")]}
+        return {"--build-option": []}
 
     def requires(self) -> tuple[Requirement, ...]:
         return self._frontend.requires
@@ -258,6 +272,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         )
         self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore
         self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore
+        self.build_editable = pkg_cache(self.build_editable)  # type: ignore
 
     @property
     def backend_cmd(self) -> Sequence[str]:
@@ -265,9 +280,9 @@ class Pep517VirtualEnvFrontend(Frontend):
 
     def _send(self, cmd: str, **kwargs: Any) -> tuple[Any, str, str]:
         try:
-            if cmd == "prepare_metadata_for_build_wheel":
+            if cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable"):
                 # given we'll build a wheel we might skip the prepare step
-                if "wheel" in self._tox_env.builds:
+                if "wheel" in self._tox_env.builds or "editable" in self._tox_env.builds:
                     result = {
                         "code": 1,
                         "exc_type": "AvoidRedundant",

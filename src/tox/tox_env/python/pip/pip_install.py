@@ -15,7 +15,7 @@ from tox.tox_env.errors import Recreate
 from tox.tox_env.installer import Installer
 from tox.tox_env.package import PathPackage
 from tox.tox_env.python.api import Python
-from tox.tox_env.python.package import DevLegacyPackage, SdistPackage, WheelPackage
+from tox.tox_env.python.package import EditableLegacyPackage, EditablePackage, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 
@@ -123,7 +123,9 @@ class Pip(Installer[Python]):
 
     def _install_list_of_deps(
         self,
-        arguments: Sequence[Requirement | WheelPackage | SdistPackage | DevLegacyPackage | PathPackage],
+        arguments: Sequence[
+            Requirement | WheelPackage | SdistPackage | EditableLegacyPackage | EditablePackage | PathPackage
+        ],
         section: str,
         of_type: str,
     ) -> None:
@@ -131,10 +133,10 @@ class Pip(Installer[Python]):
         for arg in arguments:
             if isinstance(arg, Requirement):
                 groups["req"].append(str(arg))
-            elif isinstance(arg, (WheelPackage, SdistPackage)):
+            elif isinstance(arg, (WheelPackage, SdistPackage, EditablePackage)):
                 groups["req"].extend(str(i) for i in arg.deps)
                 groups["pkg"].append(str(arg.path))
-            elif isinstance(arg, DevLegacyPackage):
+            elif isinstance(arg, EditableLegacyPackage):
                 groups["req"].extend(str(i) for i in arg.deps)
                 groups["dev_pkg"].append(str(arg.path))
             else:

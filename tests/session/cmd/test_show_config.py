@@ -197,7 +197,7 @@ def test_show_config_ini_comment_path(tox_project: ToxProjectCreator, tmp_path: 
 def test_show_config_cli_flag(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "", "pyproject.toml": ""})
     result = project.run("c", "-e", "py,.pkg", "-k", "package", "recreate", "--develop", "-r", "--no-recreate-pkg")
-    expected = "[testenv:py]\npackage = dev-legacy\nrecreate = True\n\n[testenv:.pkg]\nrecreate = False\n"
+    expected = "[testenv:py]\npackage = editable\nrecreate = True\n\n[testenv:.pkg]\nrecreate = False\n"
     assert result.out == expected
 
 
