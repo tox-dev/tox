@@ -11,7 +11,10 @@ from pytest_mock import MockerFixture
 
 from tox.config.cli.ini import IniConfig
 from tox.config.cli.parse import get_options
+from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
+from tox.config.main import Config
+from tox.config.source import discover_source
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.env_select import CliEnv
 from tox.session.state import State
@@ -199,3 +202,31 @@ def test_cli_ini_with_interpolated(tmp_path: Path, monkeypatch: MonkeyPatch) -> 
     monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
     conf = IniConfig()
     assert conf.get("a", str)
+
+
+@pytest.mark.parametrize(
+    ("conf_arg", "filename", "content"),
+    [
+        pytest.param("", "tox.ini", "[tox]", id="ini-dir"),
+        pytest.param("tox.ini", "tox.ini", "[tox]", id="ini"),
+        pytest.param("", "setup.cfg", "[tox:tox]", id="cfg-dir"),
+        pytest.param("setup.cfg", "setup.cfg", "[tox:tox]", id="cfg"),
+        pytest.param("", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml-dir"),
+        pytest.param("pyproject.toml", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml"),
+    ],
+)
+def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) -> None:
+    dest = tmp_path / "c"
+    dest.mkdir()
+    if filename:
+        cfg = dest / filename
+        cfg.write_bytes(content.encode(encoding="utf-8"))
+
+    config_file = dest / conf_arg
+    source = discover_source(config_file, None)
+
+    Config.make(
+        Parsed(work_dir=dest, override=[], config_file=config_file, root_dir=None),
+        pos_args=[],
+        source=source,
+    )

@@ -26,6 +26,17 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
         src = _locate_source()
         if src is None:
             src = _create_default_source(root_dir)
+    elif config_file.is_dir():
+        src = None
+        for src_type in SOURCE_TYPES:
+            candidate: Path = config_file / src_type.FILENAME
+            try:
+                src = src_type(candidate)
+                break
+            except ValueError:
+                continue
+        if src is None:
+            raise HandledError(f"could not find any config file in {config_file}")
     else:
         src = _load_exact_source(config_file)
     return src
