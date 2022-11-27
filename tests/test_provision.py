@@ -13,6 +13,7 @@ from zipfile import ZipFile
 import pytest
 from filelock import FileLock
 from packaging.requirements import Requirement
+from packaging.version import Version
 
 from tox import __version__
 from tox.pytest import Index, IndexServer, MonkeyPatch, TempPathFactory, ToxProjectCreator
@@ -188,5 +189,6 @@ def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
     assert msg in result.out
     with (project.path / "out.json").open() as file_handler:
         requires = json.load(file_handler)
-    version = __version__.split("+")[0]
+    # __version__ could be something like 4.0.0rc1.dev1+? so we still need to sanitize it to keep the base and add "a0"
+    version = f"{Version(__version__).base_version}a0"
     assert requires == {"minversion": version, "requires": ["p", f"tox>={version}"]}

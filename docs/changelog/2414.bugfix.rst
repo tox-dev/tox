@@ -1,0 +1,1 @@
+Avoid impossible minversion version requirements. - by :user:`ssbarnea`.
