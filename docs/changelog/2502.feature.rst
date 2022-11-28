@@ -1,2 +1,0 @@
-Add support for editable wheels, make it the default development mode and rename ``dev-legacy`` mode to
-``editable-legacy`` - by :user:`gaborbernat`.
