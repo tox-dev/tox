@@ -176,3 +176,25 @@ def test_ini_loader_raw_with_factors(
     )
     outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
     assert outcome == result
+
+
+def test_generative_section_name(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
+        [testenv:{py311,py310}-{black,lint}]
+        deps-x =
+            black: black
+            lint: flake8
+        """,
+    )
+    assert list(config) == ["py311-black", "py311-lint", "py310-black", "py310-lint", "black", "lint"]
+
+    env_config = config.get_env("py311-black")
+    env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps")
+    deps = env_config["deps-x"]
+    assert deps == ["black"]
+
+    env_config = config.get_env("py311-lint")
+    env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps")
+    deps = env_config["deps-x"]
+    assert deps == ["flake8"]

@@ -1,10 +1,11 @@
 """Load """
 from __future__ import annotations
 
+from collections import defaultdict
 from configparser import ConfigParser
 from itertools import chain
 from pathlib import Path
-from typing import Iterator
+from typing import DefaultDict, Iterator
 
 from tox.config.loader.ini.factor import find_envs
 
@@ -29,7 +30,7 @@ class IniSource(Source):
                 raise ValueError
             content = path.read_text()
         self._parser.read_string(content, str(path))
-        self._sections: dict[str, list[IniLoader]] = {}
+        self._section_mapping: DefaultDict[str, list[str]] = defaultdict(list)
 
     def transform_section(self, section: Section) -> Section:
         return IniSection(section.prefix, section.name)
@@ -39,14 +40,17 @@ class IniSource(Source):
             yield IniSection.from_key(section)
 
     def get_loader(self, section: Section, override_map: OverrideMap) -> IniLoader | None:
-        if not self._parser.has_section(section.key):
-            return None
-        return IniLoader(
-            section=section,
-            parser=self._parser,
-            overrides=override_map.get(section.key, []),
-            core_section=self.CORE_SECTION,
-        )
+        sections = self._section_mapping.get(section.name)
+        key = sections[0] if sections else section.key
+        if self._parser.has_section(key):
+            return IniLoader(
+                section=section,
+                parser=self._parser,
+                overrides=override_map.get(section.key, []),
+                core_section=self.CORE_SECTION,
+                section_key=key,
+            )
+        return None
 
     def get_core_section(self) -> Section:
         return self.CORE_SECTION
@@ -73,8 +77,10 @@ class IniSource(Source):
         yield from explicit
         known_factors = None
         for section in self.sections():
-            if section.is_test_env:
-                yield section.name
+            for name in section.names:
+                self._section_mapping[name].append(section.key)
+                if section.is_test_env:
+                    yield name
             if known_factors is None:
                 known_factors = set(chain.from_iterable(e.split("-") for e in explicit))
             yield from self._discover_from_section(section, known_factors)
