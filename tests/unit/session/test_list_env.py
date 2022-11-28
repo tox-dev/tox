@@ -1,5 +1,5 @@
 def test_listenvs(cmd, initproj, monkeypatch):
-    monkeypatch.delenv(str("TOXENV"), raising=False)
+    monkeypatch.delenv("TOXENV", raising=False)
     initproj(
         "listenvs",
         filedefs={
@@ -27,11 +27,11 @@ def test_listenvs(cmd, initproj, monkeypatch):
     result = cmd("-l", "-e", "py")
     assert result.outlines == ["py36", "py27", "py37", "pypi", "docs"]
 
-    monkeypatch.setenv(str("TOXENV"), str("py"))
+    monkeypatch.setenv("TOXENV", "py")
     result = cmd("-l")
     assert result.outlines == ["py36", "py27", "py37", "pypi", "docs"]
 
-    monkeypatch.setenv(str("TOXENV"), str("py36"))
+    monkeypatch.setenv("TOXENV", "py36")
     result = cmd("-l")
     assert result.outlines == ["py36", "py27", "py37", "pypi", "docs"]
 
@@ -95,11 +95,11 @@ def test_listenvs_all(cmd, initproj, monkeypatch):
     result = cmd("-a", "-e", "py")
     assert result.outlines == ["py36", "py27", "py37", "pypi", "docs", "py", "notincluded"]
 
-    monkeypatch.setenv(str("TOXENV"), str("py"))
+    monkeypatch.setenv("TOXENV", "py")
     result = cmd("-a")
     assert result.outlines == ["py36", "py27", "py37", "pypi", "docs", "py", "notincluded"]
 
-    monkeypatch.setenv(str("TOXENV"), str("py36"))
+    monkeypatch.setenv("TOXENV", "py36")
     result = cmd("-a")
     assert result.outlines == ["py36", "py27", "py37", "pypi", "docs", "notincluded"]
 

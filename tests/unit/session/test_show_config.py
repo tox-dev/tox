@@ -1,7 +1,9 @@
+import configparser
+from io import StringIO
+
 import py
 import pytest
-from six import PY2, StringIO
-from six.moves import configparser
+from six import PY2
 
 
 def load_config(args, cmd):

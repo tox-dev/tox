@@ -1,5 +1,4 @@
 """Generate json report of a run"""
-from __future__ import absolute_import, unicode_literals
 
 import json
 import os
@@ -12,7 +11,7 @@ from .command import CommandLog
 from .env import EnvLog
 
 
-class ResultLog(object):
+class ResultLog:
     """The result of a tox session"""
 
     def __init__(self):
@@ -22,7 +21,7 @@ class ResultLog(object):
             "reportversion": "1",
             "toxversion": __version__,
             "platform": sys.platform,
-            "host": os.getenv(str("HOSTNAME")) or socket.gethostname(),
+            "host": os.getenv("HOSTNAME") or socket.gethostname(),
             "commands": command_log,
         }
 

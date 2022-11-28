@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import os
 import platform
 import stat
@@ -81,8 +79,8 @@ def test_find_alias_on_path(monkeypatch, tmp_path, mocker):
     magic = tmp_path / "magic{}".format(os.path.splitext(sys.executable)[1])
     os.symlink(sys.executable, str(magic))
     monkeypatch.setenv(
-        str("PATH"),
-        os.pathsep.join([str(tmp_path)] + os.environ.get(str("PATH"), "").split(os.pathsep)),
+        "PATH",
+        os.pathsep.join([str(tmp_path)] + os.environ.get("PATH", "").split(os.pathsep)),
     )
 
     class envconfig:

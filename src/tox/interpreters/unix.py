@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import tox
 
 from .common import base_discover

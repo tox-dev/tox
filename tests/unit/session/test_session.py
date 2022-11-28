@@ -13,7 +13,7 @@ from tox.reporter import Verbosity
 if sys.version_info >= (3, 3):
     from shlex import quote as shlex_quote
 else:
-    from pipes import quote as shlex_quote
+    from shlex import quote as shlex_quote
 
 
 def test_resolve_pkg_missing_directory(tmpdir, mocksession):
@@ -204,7 +204,7 @@ def popen_env_test(initproj, cmd, monkeypatch):
                 """
         initproj("env_var_test", filedefs=files)
 
-        class IsolatedResult(object):
+        class IsolatedResult:
             def __init__(self):
                 self.popens = []
                 self.cwd = None

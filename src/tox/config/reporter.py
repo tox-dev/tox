@@ -1,6 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
-
 def add_verbosity_commands(parser):
     parser.add_argument(
         "-v",

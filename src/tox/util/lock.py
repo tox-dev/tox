@@ -1,5 +1,4 @@
 """holds locking functionality that works across processes"""
-from __future__ import absolute_import, unicode_literals
 
 from contextlib import contextmanager
 

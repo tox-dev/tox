@@ -5,7 +5,7 @@ import sys
 if sys.version_info >= (3, 3):
     from shlex import quote as shlex_quote
 else:
-    from pipes import quote as shlex_quote
+    from shlex import quote as shlex_quote
 
 
 def exit_code_str(exception_name, command, exit_code):

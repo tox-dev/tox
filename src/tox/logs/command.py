@@ -1,7 +1,4 @@
-from __future__ import absolute_import, unicode_literals
-
-
-class CommandLog(object):
+class CommandLog:
     """Report commands interacting with third party tools"""
 
     def __init__(self, env_log, list):

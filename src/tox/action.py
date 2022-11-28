@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import signal
 import subprocess
@@ -20,10 +18,10 @@ from tox.util.stdlib import is_main_thread
 if sys.version_info >= (3, 3):
     from shlex import quote as shlex_quote
 else:
-    from pipes import quote as shlex_quote
+    from shlex import quote as shlex_quote
 
 
-class Action(object):
+class Action:
     """Action is an effort to group operations with the same goal (within reporting)"""
 
     def __init__(

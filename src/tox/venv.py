@@ -21,7 +21,7 @@ from .config import DepConfig
 if sys.version_info >= (3, 3):
     from shlex import quote as shlex_quote
 else:
-    from pipes import quote as shlex_quote
+    from shlex import quote as shlex_quote
 
 #: maximum parsed shebang interpreter length (see: prepend_shebang_interpreter)
 MAXINTERP = 2048
@@ -118,7 +118,7 @@ class CreationConfig:
         return outcome
 
 
-class VirtualEnv(object):
+class VirtualEnv:
     def __init__(self, envconfig=None, popen=None, env_log=None):
         self.envconfig = envconfig
         self.popen = popen
@@ -418,11 +418,9 @@ class VirtualEnv(object):
         def expand(val):
             # expand an install command
             if val == "{packages}":
-                for package in packages:
-                    yield package
+                yield from packages
             elif val == "{opts}":
-                for opt in options:
-                    yield opt
+                yield from options
             else:
                 yield val
 
@@ -647,7 +645,7 @@ class VirtualEnv(object):
             envlog = self.env_log
             try:
                 status = self.update(action=action)
-            except IOError as e:
+            except OSError as e:
                 if e.args[0] != 2:
                     raise
                 status = (
@@ -710,7 +708,7 @@ def prepend_shebang_interpreter(args):
                     return args
                 interp_args = interp.split(None, 1)[:2]
                 return interp_args + args
-    except (UnicodeDecodeError, IOError):
+    except (UnicodeDecodeError, OSError):
         pass
     return args
 
