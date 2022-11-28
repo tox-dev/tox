@@ -4,6 +4,31 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0b3 (2022-11-27)
+---------------------
+
+Features - 4.0.0b3
+~~~~~~~~~~~~~~~~~~
+- Improve coloring of logged commands - by :user:`ssbarnea`. (:issue:`2356`)
+- Pass ``PROGRAMDATA``,  ``PROGRAMFILES(x86)``, ``PROGRAMFILES`` environments on Windows by default as it is needed for discovering the VS C++ compiler and start testing against 3.11 - by :user:`gaborbernat`. (:issue:`2492`)
+- Support PEP-621 static metadata for getting package dependencies - by :user:`gaborbernat`. (:issue:`2499`)
+- Add support for editable wheels, make it the default development mode and rename ``dev-legacy`` mode to
+  ``editable-legacy`` - by :user:`gaborbernat`. (:issue:`2502`)
+
+Bugfixes - 4.0.0b3
+~~~~~~~~~~~~~~~~~~
+- Recognize ``TERM=dumb`` or ``NO_COLOR`` environment variables. - by :user:`ssbarnea`. (:issue:`1290`)
+- Allow passing config directory without filename. - by :user:`ssbarnea`. (:issue:`2340`)
+- Avoid ignored explicit argument 're' console message. - by :user:`ssbarnea`. (:issue:`2342`)
+- Display registered plugins with ``tox --version`` - by :user:`mxd4`. (:issue:`2358`)
+- Allow ``--hash`` to be specified in requirements.txt files. - by :user:`masenf`. (:issue:`2373`)
+- Avoid impossible minversion version requirements. - by :user:`ssbarnea`. (:issue:`2414`)
+
+Improved Documentation - 4.0.0b3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add new documentation for tox 4 - by :user:`gaborbernat`. (:issue:`2408`)
+
+
 v4.0.0b2 (2022-04-11)
 ---------------------
 

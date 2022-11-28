@@ -1,1 +1,0 @@
-Support PEP-621 static metadata for getting package dependencies - by :user:`gaborbernat`.

@@ -1,1 +1,0 @@
-Avoid ignored explicit argument 're' console message. - by :user:`ssbarnea`.

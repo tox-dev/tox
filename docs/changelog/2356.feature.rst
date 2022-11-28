@@ -1,1 +1,0 @@
-Improve coloring of logged commands - by :user:`ssbarnea`.

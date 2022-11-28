@@ -1,1 +1,0 @@
-Allow ``--hash`` to be specified in requirements.txt files. - by :user:`masenf`.
