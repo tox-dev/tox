@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0rc1 (2022-11-29)
+----------------------
+
+Features - 4.0.0rc1
+~~~~~~~~~~~~~~~~~~~
+- Add support for generative section headers - by :user:`gaborbernat`. (:issue:`2362`)
+
+Bugfixes - 4.0.0rc1
+~~~~~~~~~~~~~~~~~~~
+- Allow installing relative paths that go outside tox root folder. - by :user:`ssbarnea`. (:issue:`2366`)
+
+
 v4.0.0b3 (2022-11-27)
 ---------------------
 
