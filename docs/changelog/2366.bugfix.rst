@@ -1,0 +1,1 @@
+Allow installing relative paths that go outside tox root folder. - by :user:`ssbarnea`.
