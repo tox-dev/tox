@@ -126,7 +126,7 @@ Depending on requirements.txt or defining constraints
 .. code-block:: ini
 
     [testenv]
-    deps = -rrequirements.txt
+    deps = -r requirements.txt
 
 This is actually a side effect that all elements of the dependency list is directly passed to ``pip``.
 
