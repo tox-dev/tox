@@ -5,7 +5,7 @@ from collections import defaultdict
 from configparser import ConfigParser
 from itertools import chain
 from pathlib import Path
-from typing import DefaultDict, Iterator
+from typing import DefaultDict, Iterable, Iterator
 
 from tox.config.loader.ini.factor import find_envs
 
@@ -73,22 +73,29 @@ class IniSource(Source):
                 yield name
 
     def _discover_tox_envs(self, core_config: ConfigSet) -> Iterator[str]:
+        def register_factors(envs: Iterable[str]) -> None:
+            known_factors.update(chain.from_iterable(e.split("-") for e in envs))
+
         explicit = list(core_config["env_list"])
         yield from explicit
-        known_factors = None
+        known_factors: set[str] = set()
+        register_factors(explicit)
+
+        # discover all additional defined environments, including generative section headers
         for section in self.sections():
+            register_factors(section.names)
             for name in section.names:
                 self._section_mapping[name].append(section.key)
                 if section.is_test_env:
                     yield name
-            if known_factors is None:
-                known_factors = set(chain.from_iterable(e.split("-") for e in explicit))
+        # add all conditional markers that are not part of the explicitly defined sections
+        for section in self.sections():
             yield from self._discover_from_section(section, known_factors)
 
     def _discover_from_section(self, section: IniSection, known_factors: set[str]) -> Iterator[str]:
         for value in self._parser[section.key].values():
             for env in find_envs(value):
-                if env not in known_factors:
+                if set(env.split("-")) - known_factors:
                     yield env
 
     def __repr__(self) -> str:

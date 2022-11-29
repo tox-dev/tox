@@ -10,7 +10,7 @@ tool can be:
 - a test runner (such as :pypi:`pytest`),
 - a linter (e.g., :pypi:`flake8`),
 - a formatter (for example :pypi:`black` or :pypi:`isort`),
-- a documentation generator (e.g., :pypi:`sphinx`),
+- a documentation generator (e.g., :pypi:`Sphinx`),
 - library builder and publisher (e.g., :pypi:`build` with :pypi:`twine`),
 - or anything else you may need to execute.
 
@@ -176,10 +176,10 @@ Related projects
 tox has influenced several other projects in the Python test automation space. If tox doesn't quite fit your needs or
 you want to do more research, we recommend taking a look at these projects:
 
-- `nox <https://nox.thea.codes>`__ is a project similar in spirit to tox but different in approach. The primary key
-  difference is that it uses Python scripts instead of a configuration file. It might be useful if you find tox
-  configuration too limiting but aren't looking to move to something as general-purpose as ``Invoke`` or ``make``.
-  Please note that tox will support defining configuration in a Python file soon, too.
+- `nox <https://nox.thea.codes/en/stable/>`__ is a project similar in spirit to tox but different in approach. The
+  primary key difference is that it uses Python scripts instead of a configuration file. It might be useful if you
+  find tox configuration too limiting but aren't looking to move to something as general-purpose as ``Invoke`` or
+  ``make``. Please note that tox will support defining configuration in a Python file soon, too.
 - `Invoke <https://www.pyinvoke.org/>`__ is a general-purpose task execution library, similar to Make. Invoke is far
   more general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
 
@@ -364,4 +364,74 @@ tox supports these features that 90 percent of the time you'll not need, but are
 Generative environments
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Django.
+Generative environment list
++++++++++++++++++++++++++++
+
+If you have a large matrix of dependencies, python versions and/or environments you can use a generative
+:ref:`env_list` and conditional settings to express that in a concise form:
+
+.. code-block:: ini
+
+    [tox]
+    env_list = py{311,310,39}-django{41,40}-{sqlite,mysql}
+
+    [testenv]
+    deps =
+        django41: Django>=4.1,<4.2
+        django40: Django>=4.0,<4.1
+        # use PyMySQL if factors "py311" and "mysql" are present in env name
+        py311-mysql: PyMySQL
+        # use urllib3 if any of "py311" or "py310" are present in env name
+        py311,py310: urllib3
+        # mocking sqlite on 3.11 and 3.10 if factor "sqlite" is present
+        py{311,310}-sqlite: mock
+
+This will generate the following tox environments:
+
+.. code-block:: shell
+
+    > tox l
+    default environments:
+    py311-django41-sqlite -> [no description]
+    py311-django41-mysql  -> [no description]
+    py311-django40-sqlite -> [no description]
+    py311-django40-mysql  -> [no description]
+    py310-django41-sqlite -> [no description]
+    py310-django41-mysql  -> [no description]
+    py310-django40-sqlite -> [no description]
+    py310-django40-mysql  -> [no description]
+    py39-django41-sqlite  -> [no description]
+    py39-django41-mysql   -> [no description]
+    py39-django40-sqlite  -> [no description]
+    py39-django40-mysql   -> [no description]
+
+Generative section names
+++++++++++++++++++++++++
+
+Suppose you have some binary packages, and need to run tests both in 32 and 64 bits. You also want an environment to
+create your virtual env for the developers.
+
+.. code-block:: ini
+
+    [testenv]
+    base_python =
+        py311-x86: python3.11-32
+        py311-x64: python3.11-64
+    commands = pytest
+
+    [testenv:py311-{x86,x64}-venv]
+    envdir =
+        x86: .venv-x86
+        x64: .venv-x64
+
+.. code-block:: shell
+
+    > tox l
+    default environments:
+    py          -> [no description]
+
+    additional environments:
+    py310-black -> [no description]
+    py310-lint  -> [no description]
+    py311-black -> [no description]
+    py311-lint  -> [no description]

@@ -102,7 +102,7 @@ def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: Mocker
     """
     project = tox_project({"tox.ini": ini})
     result = project.run()
-    assert "ROOT: All envs: explicit, implicit, section" in result.out
+    assert "ROOT: All envs: explicit, section, implicit" in result.out
     assert "ROOT: Default envs: explicit" in result.out
 
 

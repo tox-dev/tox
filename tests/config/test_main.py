@@ -39,7 +39,7 @@ def test_config_some_envs(tox_ini_conf: ToxIniCreator) -> None:
     """
     config = tox_ini_conf(example)
     tox_env_keys = list(config)
-    assert tox_env_keys == ["py38", "py37", "other", "magic"]
+    assert tox_env_keys == ["py38", "py37", "magic", "other"]
 
     config_set = config.get_env("py38")
     assert repr(config_set)
