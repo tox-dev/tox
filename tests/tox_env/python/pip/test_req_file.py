@@ -30,13 +30,8 @@ def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:
     """deps can point to a requirements file that has --hash."""
     exp_hash = "sha256:97a702083b0d906517b79672d8501eee470d60ae55df0fa9d4cfba56c7f65a82"
     requirements = tmp_path / "requirements.txt"
-    requirements.write_text(
-        f"foo==1 --hash {exp_hash}",
-    )
-    python_deps = PythonDeps(
-        raw="-r requirements.txt",
-        root=tmp_path,
-    )
+    requirements.write_text(f"foo==1 --hash {exp_hash}")
+    python_deps = PythonDeps(raw="-r requirements.txt", root=tmp_path)
     assert len(python_deps.requirements) == 1
     parsed_req = python_deps.requirements[0]
     assert str(parsed_req.requirement) == "foo==1"

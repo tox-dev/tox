@@ -59,9 +59,8 @@ class ParsedRequirement:
                 extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
                 try:
                     rel_path = str(path.resolve().relative_to(root))
-                    if (
-                        rel_path != "." and os.sep not in rel_path
-                    ):  # prefix paths in cwd to not convert them to requirement
+                    # prefix paths in cwd to not convert them to requirement
+                    if rel_path != "." and os.sep not in rel_path:
                         rel_path = f".{os.sep}{rel_path}"
                 except ValueError:
                     rel_path = str(path.resolve())

@@ -484,3 +484,11 @@ def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
     pattern = r"non-local file URIs are not supported on this platform: 'file://magic\.com\.*"
     with pytest.raises(ValueError, match=pattern):
         assert req_file.options
+
+
+def test_requirement_to_path_one_level_up(tmp_path: Path) -> None:
+    other_req = tmp_path / "other.txt"
+    other_req.write_text("-e ..")
+    req_file = RequirementsFile(other_req, constraint=False)
+    result = req_file.requirements
+    assert result[0].requirement == str(tmp_path.parent.resolve())
