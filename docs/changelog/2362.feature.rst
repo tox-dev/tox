@@ -1,0 +1,1 @@
+Add support for generative section headers - by :user:`gaborbernat`.

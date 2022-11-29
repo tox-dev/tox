@@ -31,8 +31,9 @@ class IniLoader(StrConvert, Loader[str]):
         parser: ConfigParser,
         overrides: list[Override],
         core_section: Section,
+        section_key: str | None = None,
     ) -> None:
-        self._section_proxy: SectionProxy = parser[section.key]
+        self._section_proxy: SectionProxy = parser[section_key or section.key]
         self._parser = parser
         self.core_section = core_section
         super().__init__(section, overrides)
