@@ -17,9 +17,9 @@ Provide at least:
 - OS:
 - `pip list` of the host python where `virtualenv` is installed:
 
-  ```console
+```console
 
-  ```
+```
 
 ## Output of the virtual environment creation
 
