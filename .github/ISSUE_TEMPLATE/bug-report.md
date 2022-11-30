@@ -23,7 +23,7 @@ Provide at least:
 
 ## Output of the virtual environment creation
 
-Make sure to run the creation with `-vvv --with-traceback`:
+Make sure to run the creation with `-vvv`:
 
 ```console
 
