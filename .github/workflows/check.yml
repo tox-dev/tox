@@ -109,7 +109,7 @@ jobs:
       - name: Build package
         run: pyproject-build -s -w . -o dist
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.5.1
+        uses: pypa/gh-action-pypi-publish@v1.5.2
         with:
           skip_existing: true
           user: __token__
