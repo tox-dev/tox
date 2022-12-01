@@ -140,7 +140,7 @@ class VirtualEnv(Python):
             version=interpreter.version,
             is_64=(interpreter.architecture == 64),
             platform=interpreter.platform,
-            extra={"executable": Path(interpreter.system_executable)},
+            extra={"executable": Path(interpreter.system_executable).resolve()},
         )
 
     def prepend_env_var_path(self) -> list[Path]:
