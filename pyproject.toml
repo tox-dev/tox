@@ -44,6 +44,7 @@ optional-dependencies.docs = [
   "towncrier>=22.8",
 ]
 optional-dependencies.testing = [
+  "build>=0.9.0",
   "covdefaults>=2.2",
   "devpi-client>=6.0.2",
   "devpi-server>=6.7",
