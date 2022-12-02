@@ -1,0 +1,1 @@
+Add missing 'build' test dependency - by :user:`ssbarnea`.
