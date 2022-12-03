@@ -11,12 +11,13 @@ from typing import Callable, Iterator
 from zipfile import ZipFile
 
 import pytest
+from devpi_process import Index, IndexServer
 from filelock import FileLock
 from packaging.requirements import Requirement
 from packaging.version import Version
 
 from tox import __version__
-from tox.pytest import Index, IndexServer, MonkeyPatch, TempPathFactory, ToxProjectCreator
+from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution
@@ -100,8 +101,16 @@ def pypi_index_self(pypi_server: IndexServer, tox_wheels: list[Path], demo_pkg_i
     with elapsed("start devpi and create index"):  # takes around 1s
         self_index = pypi_server.create_index("self", "volatile=False")
     with elapsed("upload tox and its wheels to devpi"):  # takes around 3.2s on build
-        self_index.upload(tox_wheels + [demo_pkg_inline_wheel])
+        self_index.upload(*tox_wheels, demo_pkg_inline_wheel)
     return self_index
+
+
+@pytest.fixture()
+def _pypi_index_self(pypi_index_self: Index, monkeypatch: MonkeyPatch) -> None:
+    pypi_index_self.use()
+    monkeypatch.setenv("PIP_INDEX_URL", pypi_index_self.url)
+    monkeypatch.setenv("PIP_RETRIES", str(2))
+    monkeypatch.setenv("PIP_TIMEOUT", str(5))
 
 
 def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
@@ -117,13 +126,8 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.integration()
-def test_provision_requires_ok(
-    tox_project: ToxProjectCreator,
-    pypi_index_self: Index,
-    monkeypatch: MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    pypi_index_self.use(monkeypatch)
+@pytest.mark.usefixtures("_pypi_index_self")
+def test_provision_requires_ok(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     proj = tox_project({"tox.ini": "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip"})
     log = tmp_path / "out.log"
 
@@ -155,12 +159,8 @@ def test_provision_requires_ok(
 
 
 @pytest.mark.integration()
-def test_provision_platform_check(
-    tox_project: ToxProjectCreator,
-    pypi_index_self: Index,
-    monkeypatch: MonkeyPatch,
-) -> None:
-    pypi_index_self.use(monkeypatch)
+@pytest.mark.usefixtures("_pypi_index_self")
+def test_provision_platform_check(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\n[testenv:.tox]\nplatform=wrong_platform"
     proj = tox_project({"tox.ini": ini})
 
