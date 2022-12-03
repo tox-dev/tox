@@ -5,20 +5,16 @@ from __future__ import annotations
 
 import inspect
 import os
-import random
 import re
 import shutil
 import socket
-import string
 import sys
 import textwrap
 import warnings
 from contextlib import closing, contextmanager
 from pathlib import Path
-from subprocess import PIPE, Popen, check_call
-from threading import Thread
 from types import ModuleType, TracebackType
-from typing import IO, TYPE_CHECKING, Any, Callable, Iterator, Sequence, cast
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence, cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -30,9 +26,9 @@ from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.python import Function
 from _pytest.tmpdir import TempPathFactory
+from devpi_process import IndexServer
 from pytest_mock import MockerFixture
-from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_WIN, fs_supports_symlink
+from virtualenv.info import fs_supports_symlink
 
 import tox.run
 from tox.config.sets import EnvConfigSet
@@ -467,26 +463,6 @@ def pytest_collection_modifyitems(config: PyTestConfig, items: list[Function]) -
     items.sort(key=is_integration)
 
 
-class Index:
-    def __init__(self, base_url: str, name: str, client_cmd_base: list[str]) -> None:
-        self._client_cmd_base = client_cmd_base
-        self._server_url = base_url
-        self.name = name
-
-    @property
-    def url(self) -> str:
-        return f"{self._server_url}/{self.name}/+simple"
-
-    def upload(self, files: Sequence[Path]) -> None:
-        check_call(self._client_cmd_base + ["upload", "--index", self.name] + [str(i) for i in files])
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(url={self.url})"  # pragma: no cover
-
-    def use(self, monkeypatch: MonkeyPatch) -> None:
-        enable_pypi_server(monkeypatch, self.url)
-
-
 def enable_pypi_server(monkeypatch: MonkeyPatch, url: str | None) -> None:
     if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
         monkeypatch.delenv("PIP_INDEX_URL", raising=False)
@@ -494,109 +470,6 @@ def enable_pypi_server(monkeypatch: MonkeyPatch, url: str | None) -> None:
         monkeypatch.setenv("PIP_INDEX_URL", url)
     monkeypatch.setenv("PIP_RETRIES", str(5))
     monkeypatch.setenv("PIP_TIMEOUT", str(2))
-
-
-def _find_free_port() -> int:
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as socket_handler:
-        socket_handler.bind(("", 0))
-        return cast(int, socket_handler.getsockname()[1])
-
-
-class IndexServer:
-    def __init__(self, path: Path) -> None:
-        self.path = path
-
-        self.host, self.port = "localhost", _find_free_port()
-        self._passwd = "".join(random.choices(string.ascii_letters, k=8))
-
-        def _exe(name: str) -> str:
-            return str(Path(scripts_dir) / f"{name}{'.exe' if IS_WIN else ''}")
-
-        scripts_dir = PythonInfo.current().sysconfig_path("scripts")
-        self._init: str = _exe("devpi-init")
-        self._server: str = _exe("devpi-server")
-        self._client: str = _exe("devpi")
-
-        self._server_dir = self.path / "server"
-        self._client_dir = self.path / "client"
-        self._indexes: dict[str, Index] = {}
-        self._process: Popen[str] | None = None
-        self._has_use = False
-        self._stdout_drain: Thread | None = None
-
-    def __enter__(self) -> IndexServer:
-        self._create_and_start_server()
-        self._setup_client()
-        return self
-
-    def _create_and_start_server(self) -> None:
-        self._server_dir.mkdir(exist_ok=True)
-        server_at = str(self._server_dir)
-        # 1. create the server
-        cmd = [self._init, "--serverdir", server_at]
-        cmd.extend(("--no-root-pypi", "--role", "standalone", "--root-passwd", self._passwd))
-        check_call(cmd, stdout=PIPE, stderr=PIPE)
-        # 2. start the server
-        cmd = [self._server, "--serverdir", server_at, "--port", str(self.port), "--offline-mode"]
-        self._process = Popen(cmd, stdout=PIPE, universal_newlines=True)
-        stdout = self._drain_stdout()
-        for line in stdout:  # pragma: no branch # will always loop at least once
-            if "serving at url" in line:
-
-                def _keep_draining() -> None:
-                    for _ in stdout:
-                        pass
-
-                # important to keep draining the stdout, otherwise once the buffer is full Windows blocks the process
-                self._stdout_drain = Thread(target=_keep_draining, name="tox-test-stdout-drain")
-                self._stdout_drain.start()
-                break
-
-    def _drain_stdout(self) -> Iterator[str]:
-        process = cast("Popen[str]", self._process)
-        stdout = cast(IO[str], process.stdout)
-        while True:
-            if process.poll() is not None:  # pragma: no cover
-                print(f"devpi server with pid {process.pid} at {self._server_dir} died")
-                break
-            yield stdout.readline()
-
-    def _setup_client(self) -> None:
-        """create a user on the server and authenticate it"""
-        self._client_dir.mkdir(exist_ok=True)
-        base = ["--clientdir", str(self._client_dir)]
-        check_call([self._client, "use"] + base + [self.url], stdout=PIPE, stderr=PIPE)
-        check_call([self._client, "login"] + base + ["root", "--password", self._passwd], stdout=PIPE, stderr=PIPE)
-
-    def create_index(self, name: str, *args: str) -> Index:
-        if name in self._indexes:  # pragma: no cover
-            raise ValueError(f"index {name} already exists")
-        base = [self._client, "--clientdir", str(self._client_dir)]
-        check_call(base + ["index", "-c", name, *args], stdout=PIPE, stderr=PIPE)
-        index = Index(f"{self.url}/root", name, base)
-        if not self._has_use:
-            self._has_use = True
-            check_call(base + ["use", f"root/{name}"], stdout=PIPE, stderr=PIPE)
-        self._indexes[name] = index
-        return index
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,  # noqa: U100
-        exc_val: BaseException | None,  # noqa: U100
-        exc_tb: TracebackType | None,  # noqa: U100
-    ) -> None:
-        if self._process is not None:  # pragma: no cover # defend against devpi startup fail
-            self._process.terminate()
-        if self._stdout_drain is not None and self._stdout_drain.is_alive():  # pragma: no cover # devpi startup fail
-            self._stdout_drain.join()
-
-    @property
-    def url(self) -> str:
-        return f"http://{self.host}:{self.port}"
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(url={self.url}, indexes={list(self._indexes)})"  # pragma: no cover
 
 
 @pytest.fixture(scope="session")
@@ -610,7 +483,9 @@ def pypi_server(tmp_path_factory: TempPathFactory) -> Iterator[IndexServer]:
 
 @pytest.fixture(scope="session")
 def _invalid_index_fake_port() -> int:  # noqa: PT005
-    return _find_free_port()
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as socket_handler:
+        socket_handler.bind(("", 0))
+        return cast(int, socket_handler.getsockname()[1])
 
 
 @pytest.fixture(autouse=True)
@@ -654,7 +529,5 @@ __all__ = (
     "ToxProject",
     "ToxProjectCreator",
     "check_os_environ",
-    "IndexServer",
-    "Index",
     "register_inline_plugin",
 )
