@@ -57,9 +57,9 @@ jobs:
       - name: Run test suite
         run: tox r --skip-pkg-install
         env:
-          PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
+          PYTEST_XDIST_AUTO_NUM_WORKERS: 0
 
   check:
     name: tox env ${{ matrix.tox_env }} on ${{ matrix.os }}

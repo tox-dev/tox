@@ -147,7 +147,6 @@ ignore = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-junit_family = "xunit2"
 addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
 
 [tool.towncrier]
