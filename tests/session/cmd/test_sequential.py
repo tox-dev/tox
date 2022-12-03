@@ -17,9 +17,10 @@ from tox.tox_env.api import ToxEnv
 from tox.tox_env.info import Info
 
 
-def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize("prefix", ["-", "- "])
+def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator, prefix: str) -> None:
     cmd = [
-        "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
+        f"{prefix}python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
         "python -c 'import sys; print(\"magic pass\", file=sys.stdout); sys.exit(0)'",
     ]
     project = tox_project({"tox.ini": f"[tox]\nno_package=true\n[testenv]\ncommands={cmd[0]}\n {cmd[1]}"})
