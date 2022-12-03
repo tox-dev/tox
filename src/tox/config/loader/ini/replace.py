@@ -95,7 +95,7 @@ def _replace_ref(env: str | None) -> Pattern[str]:
     return re.compile(
         rf"""
     (\[(?P<full_env>{re.escape(env or '.*')}(:(?P<env>[^]]+))?|(?P<section>[-\w]+))])? # env/section
-    (?P<key>[a-zA-Z0-9_]+) # key
+    (?P<key>[-a-zA-Z0-9_]+) # key
     (:(?P<default>.*))? # default value
 """,
         re.VERBOSE,

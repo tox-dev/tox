@@ -121,6 +121,12 @@ def test_replace_from_tox_section_missing_section(tox_ini_conf: ToxIniCreator) -
     assert conf_a["x"] == "{[magic]a}"
 
 
+def test_replace_from_tox_section_key_with_dash(tox_ini_conf: ToxIniCreator) -> None:
+    conf_a = tox_ini_conf("[testenv:a]\nx = {[magic]a-b}\n[magic]\na-b=1").get_env("a")
+    conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
+    assert conf_a["x"] == "1"
+
+
 def test_replace_circular(tox_ini_conf: ToxIniCreator) -> None:
     conf_a = tox_ini_conf("[testenv:a]\nx = {y}\ny = {x}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
