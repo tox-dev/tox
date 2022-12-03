@@ -48,6 +48,7 @@ optional-dependencies.testing = [
   "covdefaults>=2.2",
   "devpi-client>=6.0.2",
   "devpi-server>=6.7",
+  "diff-cover>=7.2",
   "distlib>=0.3.6",
   "filelock>=3.8",
   "flaky>=3.7",

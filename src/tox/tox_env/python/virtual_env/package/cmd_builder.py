@@ -104,8 +104,10 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
     def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> list[Package]:
         extras: set[str] = for_env["extras"]
         if path.suffix == ".whl":
-            requires: list[str] = WheelDistribution(path).requires or []
-            package: Package = WheelPackage(path, dependencies_with_extras([Requirement(i) for i in requires], extras))
+            wheel_dist = WheelDistribution(path)
+            requires: list[str] = wheel_dist.requires or []
+            deps = dependencies_with_extras([Requirement(i) for i in requires], extras, wheel_dist.metadata["Name"])
+            package: Package = WheelPackage(path, deps)
         else:  # must be source distribution
             work_dir = self.env_tmp_dir / "sdist-extract"
             if work_dir.exists():  # pragma: no branch
@@ -117,7 +119,8 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
                 self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
                 deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
-            package = SdistPackage(path, dependencies_with_extras(deps, extras))
+                name = self._sdist_meta_tox_env.get_package_name(for_env)
+            package = SdistPackage(path, dependencies_with_extras(deps, extras, name))
         return [package]
 
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:

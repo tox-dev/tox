@@ -25,7 +25,7 @@ def pkg_with_extras(pkg_with_extras_project: Path) -> PathDistribution:
 
 
 def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:
-    result = dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], set())
+    result = dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], set(), "")
     for left, right in zip_longest(result, (Requirement("platformdirs>=2.1"), Requirement("colorama>=0.4.3"))):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
@@ -33,7 +33,7 @@ def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:
 
 def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
-    result = dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], {"docs", "testing"})
+    result = dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], {"docs", "testing"}, "")
     exp = [
         Requirement("platformdirs>=2.1"),
         Requirement("colorama>=0.4.3"),
@@ -45,3 +45,17 @@ def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:
     for left, right in zip_longest(result, exp):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
+
+
+def test_loads_deps_recursive_extras() -> None:
+    requires = [
+        Requirement("no-extra"),
+        Requirement("dep1[dev]"),
+        Requirement("dep1[test]"),
+        Requirement("dep2[test]"),
+        Requirement("dep3[docs]"),
+        Requirement("name[dev]"),
+        Requirement("name[test,dev]"),
+    ]
+    result = dependencies_with_extras(requires, {"dev"}, "name")
+    assert [str(i) for i in result] == ["no-extra", "dep1", "dep2"]

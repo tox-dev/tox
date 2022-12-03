@@ -1,0 +1,1 @@
+Support for recursive extras in Python package dependencies - by :user:`gaborbernat`.
