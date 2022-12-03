@@ -1,0 +1,1 @@
+Support in INI files for ignore exit code marker the ``-`` without a subsequent space too - by :user:`gaborbernat`.
