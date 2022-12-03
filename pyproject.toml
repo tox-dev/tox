@@ -45,7 +45,7 @@ optional-dependencies.docs = [
 ]
 optional-dependencies.testing = [
   "build[virtualenv]>=0.9",
-  "covdefaults>=2.2",
+  "covdefaults>=2.2.2",
   "devpi-process>=0.2",
   "diff-cover>=7.2",
   "distlib>=0.3.6",
@@ -57,7 +57,7 @@ optional-dependencies.testing = [
   "pytest>=7.2",
   "pytest-cov>=4",
   "pytest-mock>=3.10",
-  "pytest-xdist>=3.0.2",
+  "pytest-xdist>=3.1",
   "re-assert>=1.1",
   "time-machine>=2.8.2",
 ]
@@ -133,6 +133,17 @@ overrides = [
 
 [tool.pep8]
 max-line-length = "120"
+
+[tool.flake8]
+max-complexity = 22
+max-line-length = 120
+unused-arguments-ignore-abstract-functions = true
+noqa-require-code = true
+dictionaries = ["en_US", "python", "technical", "django"]
+ignore = [
+  "E203", # whitespace before ':'
+  "W503", #  line break before binary operator
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

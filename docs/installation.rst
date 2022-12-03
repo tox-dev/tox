@@ -40,7 +40,7 @@ sdist
 ~~~~~
 When installing via a source distribution you need an installer that handles the :pep:`517` specification. In case of
 ``pip`` this is version ``18.0.0`` or later (released in July 2018). If you cannot upgrade your pip to support this you
-need to ensure that the build requirements from :gh:`pyproject.toml <tox-dev/tox/blob/rewrite/pyproject.toml#L2>` are
+need to ensure that the build requirements from :gh:`pyproject.toml <tox-dev/tox/blob/main/pyproject.toml#L2>` are
 satisfied before triggering the installation.
 
 via ``setup.py``

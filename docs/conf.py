@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from datetime import date, datetime
 from importlib.machinery import SourceFileLoader
@@ -94,7 +95,8 @@ def setup(app: Sphinx) -> None:
     # 1. run towncrier
     root, exe = here.parent, Path(sys.executable)
     towncrier = exe.with_name(f"towncrier{exe.suffix}")
-    new = check_output([str(towncrier), "--draft", "--version", "NEXT"], cwd=root, text=True)
+    cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
+    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
 
     class PatchedPythonDomain(PythonDomain):
