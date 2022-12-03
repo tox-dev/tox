@@ -191,9 +191,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         # adjust sub-process terminal size
         columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
         if columns != -1:  # pragma: no branch
-            self.request.env["COLUMNS"] = str(columns)
-        if columns != -1:  # pragma: no branch
-            self.request.env["LINES"] = str(lines)
+            self.request.env.setdefault("COLUMNS", str(columns))
+        if lines != -1:  # pragma: no branch
+            self.request.env.setdefault("LINES", str(lines))
 
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         try:

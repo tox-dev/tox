@@ -340,3 +340,21 @@ def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path
     writer = create_autospec(SyncWrite)
     instance = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
     return exe, script, instance
+
+
+@pytest.mark.parametrize("key", ["COLUMNS", "ROWS"])
+def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> None:
+    mocker.patch("shutil.get_terminal_size", return_value=(101, 102))
+    env = dict(os.environ)
+    env[key] = key
+    executor = LocalSubProcessExecutor(colored=False)
+    cmd = [sys.executable, "-c", f"import os; print(os.environ['{key}'], end='')"]
+    request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=env, run_id="")
+    out_err = FakeOutErr()
+    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+        while status.exit_code is None:  # pragma: no branch
+            status.wait()
+    outcome = status.outcome
+
+    assert outcome is not None
+    assert outcome.out == key
