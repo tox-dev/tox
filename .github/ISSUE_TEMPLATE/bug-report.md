@@ -15,15 +15,23 @@ Describe what's the expected behaviour and what you're observing.
 Provide at least:
 
 - OS:
-- `pip list` of the host python where `virtualenv` is installed:
+- `pip list` of the host Python where `tox` is installed:
 
 ```console
 
 ```
 
-## Output of the virtual environment creation
+## Output of running tox
 
-Make sure to run the creation with `-vvv`:
+Provide the output of `tox -rvv`:
+
+```console
+
+```
+
+## Minimal example
+
+If possible, provide a minimal reproducer for the issue:
 
 ```console
 
