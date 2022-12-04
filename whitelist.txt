@@ -70,6 +70,7 @@ fromdocname
 fromhex
 fs
 fullmatch
+getattribute
 getbasetemp
 getfqdn
 getitem

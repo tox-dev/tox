@@ -5,8 +5,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from threading import Lock
-from typing import TYPE_CHECKING, Generator, Iterator, cast
+from threading import RLock
+from types import MethodType
+from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator, cast
 
 from tox.config.main import Config
 from tox.config.sets import EnvConfigSet
@@ -30,11 +31,26 @@ class PathPackage(Package):
         return str(self.path)
 
 
+def _lock_method(lock: RLock, meth: Callable[..., Any]) -> Callable[..., Any]:
+    def _func(*args: Any, **kwargs: Any) -> Any:
+        with lock:
+            return meth(*args, **kwargs)
+
+    return _func
+
+
 class PackageToxEnv(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
+        self._lock = RLock()
         super().__init__(create_args)
         self._envs: set[str] = set()
-        self._lock = Lock()
+
+    def __getattribute__(self, name: str) -> Any:
+        # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
+        obj = object.__getattribute__(self, name)
+        if isinstance(obj, MethodType):
+            obj = _lock_method(self._lock, obj)
+        return obj
 
     def register_config(self) -> None:
         super().register_config()
@@ -62,13 +78,11 @@ class PackageToxEnv(ToxEnv, ABC):
         yield from ()  # empty generator by default
 
     def mark_active_run_env(self, run_env: RunToxEnv) -> None:
-        with self._lock:
-            self._envs.add(run_env.conf.name)
+        self._envs.add(run_env.conf.name)
 
     def teardown_env(self, conf: EnvConfigSet) -> None:
-        with self._lock:
-            self._envs.remove(conf.name)
-            has_envs = bool(self._envs)
+        self._envs.remove(conf.name)
+        has_envs = bool(self._envs)
         if not has_envs:
             self._teardown()
 
