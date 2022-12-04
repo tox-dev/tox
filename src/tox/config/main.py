@@ -29,7 +29,6 @@ class Config:
         pos_args: Sequence[str] | None,
         work_dir: Path,
     ) -> None:
-
         self._pos_args = None if pos_args is None else tuple(pos_args)
         self._work_dir = work_dir
         self._root = root
@@ -93,6 +92,9 @@ class Config:
         # work dir is where we put our own files
         root: Path = source.path.parent if parsed.root_dir is None else parsed.root_dir
         work_dir: Path = source.path.parent if parsed.work_dir is None else parsed.work_dir
+        # if these are relative we need to expand them them to ensure paths built on this can resolve independent on cwd
+        root = root.resolve()
+        work_dir = work_dir.resolve()
         return cls(
             config_source=source,
             options=parsed,
