@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from tests.conftest import ToxIniCreator
 from tox.config.loader.api import Override
@@ -83,3 +84,19 @@ def test_args_are_paths_when_with_change_dir(tox_project: ToxProjectCreator) -> 
     result = project.run("c", "-e", "py", "-k", "commands", "--", *args)
     result.assert_success()
     assert result.out == f"[testenv:py]\ncommands = magic.py {project.path} ..{os.sep}tox.ini a.txt . ..\n"
+
+
+def test_relative_config_paths_resolve(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[tox]"})
+    result = project.run(
+        "c",
+        "-c",
+        str(Path(project.path.name) / "tox.ini"),
+        "-k",
+        "change_dir",
+        "env_dir",
+        from_cwd=project.path.parent,
+    )
+    result.assert_success()
+    expected = f"[testenv:py]\nchange_dir = {project.path}\nenv_dir = {project.path / '.tox' / 'py'}\n\n[tox]\n"
+    assert result.out == expected

@@ -1,0 +1,2 @@
+Ensure paths constructed by tox are stable by resolving relative paths to fully qualified one, this insures that running
+tox from a different folder than project root still generates meaningful paths - by :user:`gaborbernat`.
