@@ -107,7 +107,7 @@ def test_pyproject_deps_from_static(
     result = proj.run("r", "--notest")
     result.assert_success()
 
-    expected_calls = [(".pkg", "get_requires_for_build_sdist"), (".pkg", "build_sdist")]
+    expected_calls = [(".pkg", "_optional_hooks"), (".pkg", "get_requires_for_build_sdist"), (".pkg", "build_sdist")]
     if deps:
         expected_calls.append(("py", "install_package_deps"))
     expected_calls.extend((("py", "install_package"), (".pkg", "_exit")))
@@ -157,8 +157,8 @@ def test_pyproject_deps_static_with_dynamic(
     result.assert_success()
 
     expected_calls = [
+        (".pkg", "_optional_hooks"),
         (".pkg", "get_requires_for_build_sdist"),
-        (".pkg", "prepare_metadata_for_build_wheel"),
         (".pkg", "build_wheel"),
         (".pkg", "build_sdist"),
         ("py", "install_package_deps"),
@@ -170,3 +170,25 @@ def test_pyproject_deps_static_with_dynamic(
 
     args = execute_calls.call_args_list[-3][0][3].cmd
     assert args == ["python", "-I", "-m", "pip", "install", *deps]
+
+
+def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project({"tox.ini": ""}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest", "--develop")
+    result.assert_success()
+    warning = (
+        ".pkg: package config for py is editable, however the build backend build does not support PEP-660, "
+        "falling back to editable-legacy - change your configuration to it"
+    )
+    assert warning in result.out.splitlines()
+
+    expected_calls = [
+        (".pkg", "_optional_hooks"),
+        (".pkg", "build_wheel"),
+        (".pkg", "get_requires_for_build_sdist"),
+        ("py", "install_package"),
+        (".pkg", "_exit"),
+    ]
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    assert found_calls == expected_calls

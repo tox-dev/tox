@@ -52,6 +52,7 @@ def test_tox_install_pkg_sdist(tox_project: ToxProjectCreator, pkg_with_extras_p
     deps = ["black>=3", "colorama>=0.4.3", "flake8", "platformdirs>=2.1", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3"]
     assert calls == [
         (".pkg_external_sdist_meta", "install_requires", ["setuptools", "wheel"]),
+        (".pkg_external_sdist_meta", "_optional_hooks", []),
         (".pkg_external_sdist_meta", "get_requires_for_build_sdist", []),
         (".pkg_external_sdist_meta", "prepare_metadata_for_build_wheel", []),
         ("py", "install_package_deps", deps),
