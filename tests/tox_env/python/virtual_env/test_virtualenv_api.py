@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
@@ -169,19 +168,3 @@ def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     assert request.cmd == ["python", "-m", "pip", "freeze"]
-
-
-def test_can_build_and_run_python_2(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    try:
-        session_via_cli(["-p", "2.7", "venv"])
-    except RuntimeError:  # pragma: no cover
-        pytest.skip("no python 2.7 interpreter")  # pragma: no cover
-    proj = tox_project({"tox.ini": "[testenv]\npackage=wheel"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "-e", "py27", "--root", str(demo_pkg_inline))
-    result.assert_success()
-
-    install_cmd = next(
-        i[0][3].cmd for i in execute_calls.call_args_list if "install" in i[0][3].run_id
-    )  # pragma: no cover
-    assert install_cmd[:-1] == ["python", "-E", "-m", "pip", "install", "--force-reinstall", "--no-deps"]
