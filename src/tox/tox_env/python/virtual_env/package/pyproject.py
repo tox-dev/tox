@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from contextlib import contextmanager
@@ -59,6 +60,10 @@ class ToxBackendFailed(Fail, BackendFailed):
             backend_failed.out,
             backend_failed.err,
         )
+
+
+class BuildEditableNotSupported(RuntimeError):
+    """raised when build editable is not supported"""
 
 
 class ToxCmdStatus(CmdStatus):
@@ -136,6 +141,8 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     def _setup_env(self) -> None:
         super()._setup_env()
         if "editable" in self.builds:
+            if not self._frontend.optional_hooks["build_editable"]:
+                raise BuildEditableNotSupported
             build_requires = self._frontend.get_requires_for_build_editable().requires
             self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
         if "wheel" in self.builds:
@@ -159,7 +166,17 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         """build the package to install"""
-        deps = self._load_deps(for_env)
+        try:
+            deps = self._load_deps(for_env)
+        except BuildEditableNotSupported:
+            logging.error(
+                f"package config for {for_env.env_name} is editable, however the build backend {self._frontend.backend}"
+                f" does not support PEP-660, falling back to editable-legacy - change your configuration to it",
+            )
+            self.builds.remove("editable")
+            self.builds.add("editable-legacy")
+            for_env._defined["package"].value = "editable-legacy"  # type: ignore
+            deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
         if of_type == "editable-legacy":
             self.setup()
@@ -176,8 +193,8 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                     return w_env.perform_packaging(for_env)
             else:
                 self.setup()
+                method = "build_editable" if of_type == "editable" else "build_wheel"
                 with self._pkg_lock:
-                    method = "build_editable" if of_type == "editable" else "build_wheel"
                     path = getattr(self._frontend, method)(
                         wheel_directory=self.pkg_dir,
                         metadata_directory=self.meta_folder,
@@ -293,12 +310,7 @@ class Pep517VirtualEnvFrontend(Frontend):
             if cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable"):
                 # given we'll build a wheel we might skip the prepare step
                 if "wheel" in self._tox_env.builds or "editable" in self._tox_env.builds:
-                    result = {
-                        "code": 1,
-                        "exc_type": "AvoidRedundant",
-                        "exc_msg": "will need to build wheel either way, avoid prepare",
-                    }
-                    raise BackendFailed(result, "", "")
+                    return None, "", ""  # will need to build wheel either way, avoid prepare
             return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
             raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception

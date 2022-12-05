@@ -118,7 +118,8 @@ class VirtualEnv(Python):
         env["VIRTUALENV_COPIES"] = str(getattr(self.options, "always_copy", False) or self.conf["always_copy"])
         env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
         env["VIRTUALENV_PYTHON"] = "\n".join(base_python)
-        env["VIRTUALENV_TRY_FIRST_WITH"] = os.pathsep.join(self.options.discover)
+        if hasattr(self.options, "discover"):
+            env["VIRTUALENV_TRY_FIRST_WITH"] = os.pathsep.join(self.options.discover)
         return env
 
     @property

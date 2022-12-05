@@ -83,6 +83,7 @@ def test_result_json_sequential(
 
     assert packaging_setup == [
         (0, "install_requires"),
+        (None, "_optional_hooks"),
         (None, "get_requires_for_build_wheel"),
         (0, "install_requires_for_build_wheel"),
         (0, "freeze"),
@@ -284,6 +285,7 @@ def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: 
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     expected = [
         (".pkg", "install_requires"),
+        (".pkg", "_optional_hooks"),
         (".pkg", "get_requires_for_build_editable"),
         (".pkg", "install_requires_for_build_editable"),
         (".pkg", "build_editable"),

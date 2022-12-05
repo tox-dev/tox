@@ -52,6 +52,7 @@ def test_build_wheel_in_non_base_pkg_env(
     result.assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
+        (f".pkg-{impl}{prev_ver}", "_optional_hooks"),
         (f".pkg-{impl}{prev_ver}", "get_requires_for_build_wheel"),
         (f".pkg-{impl}{prev_ver}", "build_wheel"),
         (f"py{prev_ver}", "install_package"),
