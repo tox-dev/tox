@@ -1,2 +1,0 @@
-Do not set ``COLUMNS`` or ``LINES`` environment to the current TTY size if already set by the user -
-by :user:`gaborbernat`.

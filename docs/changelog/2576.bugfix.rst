@@ -1,1 +1,0 @@
-Add missing :pypi:`build[virtualenv]<build>` test dependency - by :user:`ssbarnea`.
