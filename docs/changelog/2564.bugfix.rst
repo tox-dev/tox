@@ -1,2 +1,0 @@
-Ensure only on run environment operates at a time on a packaging environment (fixes unexpected failures when running in
-parallel mode) - by :user:`gaborbernat`.

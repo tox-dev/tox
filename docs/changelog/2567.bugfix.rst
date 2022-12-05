@@ -1,2 +1,0 @@
-Fallback to ``editable-legacy`` if package target is ``editable`` but the build backend does not have ``build_editable``
-hook - by :user:`gaborbernat`.

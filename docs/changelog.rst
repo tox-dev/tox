@@ -4,6 +4,29 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0rc2 (2022-12-04)
+----------------------
+
+Features - 4.0.0rc2
+~~~~~~~~~~~~~~~~~~~
+- Support for recursive extras in Python package dependencies - by :user:`gaborbernat`. (:issue:`2567`)
+
+Bugfixes - 4.0.0rc2
+~~~~~~~~~~~~~~~~~~~
+- Support in INI files for ignore exit code marker the ``-`` without a subsequent space too - by :user:`gaborbernat`. (:issue:`2561`)
+- Ensure paths constructed by tox are stable by resolving relative paths to fully qualified one, this insures that running
+  tox from a different folder than project root still generates meaningful paths - by :user:`gaborbernat`. (:issue:`2562`)
+- Ensure only on run environment operates at a time on a packaging environment (fixes unexpected failures when running in
+  parallel mode) - by :user:`gaborbernat`. (:issue:`2564`)
+- Fallback to ``editable-legacy`` if package target is ``editable`` but the build backend does not have ``build_editable``
+  hook - by :user:`gaborbernat`. (:issue:`2567`)
+- Allow reference replacement in INI configuration via keys that contain the ``-`` character - by :user:`gaborbernat`. (:issue:`2569`)
+- Resolve symlinks when saving Python executable path - by :user:`ssbarnea`. (:issue:`2574`)
+- Do not set ``COLUMNS`` or ``LINES`` environment to the current TTY size if already set by the user -
+  by :user:`gaborbernat`. (:issue:`2575`)
+- Add missing :pypi:`build[virtualenv]<build>` test dependency - by :user:`ssbarnea`. (:issue:`2576`)
+
+
 v4.0.0rc1 (2022-11-29)
 ----------------------
 

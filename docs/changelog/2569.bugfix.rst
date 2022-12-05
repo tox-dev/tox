@@ -1,1 +1,0 @@
-Allow reference replacement in INI configuration via keys that contain the ``-`` character - by :user:`gaborbernat`.
