@@ -30,6 +30,7 @@ dependencies = [
   "pyproject-api>=1.2.1",
   'tomli>=2.0.1; python_version < "3.11"',
   "virtualenv>=20.17",
+  "filelock>=3.8.1",
   'importlib-metadata>=5.1; python_version < "3.8"',
   'typing-extensions>=4.4; python_version < "3.8"',
 ]
@@ -49,7 +50,6 @@ optional-dependencies.testing = [
   "devpi-process>=0.3",
   "diff-cover>=7.2",
   "distlib>=0.3.6",
-  "filelock>=3.8",
   "flaky>=3.7",
   "hatch-vcs>=0.2",
   "hatchling>=1.11.1",

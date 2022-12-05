@@ -1,0 +1,2 @@
+Ensure that two parallel tox instance invocations on different tox environment targets will work by holding a file lock
+onto the packaging operations (e.g., in bash ``tox4 r -e py311 &; tox4 r -e py310``) - by :user:`gaborbernat`.

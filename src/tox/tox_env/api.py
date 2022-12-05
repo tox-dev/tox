@@ -290,7 +290,7 @@ class ToxEnv(ABC):
         env_dir = self.env_dir
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
-            ensure_empty_dir(env_dir)
+            ensure_empty_dir(env_dir, except_filename="file.lock")
         self._log_id = 0  # we deleted logs, so start over counter
         self.cache.reset()
         self._run_state.update({"setup": False, "clean": True})

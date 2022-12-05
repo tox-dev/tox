@@ -9,6 +9,8 @@ from threading import RLock
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator, cast
 
+from filelock import FileLock
+
 from tox.config.main import Config
 from tox.config.sets import EnvConfigSet
 
@@ -31,17 +33,24 @@ class PathPackage(Package):
         return str(self.path)
 
 
-def _lock_method(lock: RLock, meth: Callable[..., Any]) -> Callable[..., Any]:
+def _lock_method(thread_lock: RLock, file_lock: FileLock | None, meth: Callable[..., Any]) -> Callable[..., Any]:
     def _func(*args: Any, **kwargs: Any) -> Any:
-        with lock:
-            return meth(*args, **kwargs)
+        with thread_lock:
+            if file_lock is not None and file_lock.is_locked is False:  # file_lock is to lock from other tox processes
+                file_lock.acquire()
+            try:
+                return meth(*args, **kwargs)
+            finally:
+                if file_lock is not None:
+                    file_lock.release()
 
     return _func
 
 
 class PackageToxEnv(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        self._lock = RLock()
+        self._thread_lock = RLock()
+        self._file_lock: FileLock | None = None
         super().__init__(create_args)
         self._envs: set[str] = set()
 
@@ -49,11 +58,14 @@ class PackageToxEnv(ToxEnv, ABC):
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
         obj = object.__getattribute__(self, name)
         if isinstance(obj, MethodType):
-            obj = _lock_method(self._lock, obj)
+            obj = _lock_method(self._thread_lock, self._file_lock, obj)
         return obj
 
     def register_config(self) -> None:
         super().register_config()
+        file_lock_path: Path = self.conf["env_dir"] / "file.lock"
+        self._file_lock = FileLock(file_lock_path)
+        file_lock_path.parent.mkdir(parents=True, exist_ok=True)
         self.core.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
