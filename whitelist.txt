@@ -63,6 +63,7 @@ exe
 executables
 extlinks
 extractall
+faulthandler
 favicon
 filelock
 fixup

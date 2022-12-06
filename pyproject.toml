@@ -29,8 +29,8 @@ dependencies = [
   "pluggy>=1",
   "pyproject-api>=1.2.1",
   'tomli>=2.0.1; python_version < "3.11"',
-  "virtualenv>=20.17",
-  "filelock>=3.8.1",
+  "virtualenv>=20.17.1",
+  "filelock>=3.8.2",
   'importlib-metadata>=5.1; python_version < "3.8"',
   'typing-extensions>=4.4; python_version < "3.8"',
 ]

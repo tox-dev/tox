@@ -1,0 +1,2 @@
+Add ``--exit-and-dump-after`` flag that allows automatically killing tox if does not finish within the passed seconds,
+and dump the thread stacks (useful to debug tox when it seemingly hangs) - by :user:`gaborbernat`.

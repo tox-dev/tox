@@ -132,6 +132,8 @@ class Parsed(Namespace):
         """:return: flag indicating if the output is colored or not"""
         return cast(bool, self.colored == "yes")
 
+    exit_and_dump_after: int
+
 
 ArgumentArgs = Tuple[Tuple[str, ...], Optional[Type[Any]], Dict[str, Any]]
 
@@ -305,9 +307,21 @@ def add_color_flags(parser: ArgumentParser) -> None:
     )
 
 
+def add_exit_and_dump_after(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--exit-and-dump-after",
+        dest="exit_and_dump_after",
+        metavar="seconds",
+        default=0,
+        type=int,
+        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
+    )
+
+
 def add_core_arguments(parser: ArgumentParser) -> None:
     add_color_flags(parser)
     add_verbosity_flags(parser)
+    add_exit_and_dump_after(parser)
     parser.add_argument(
         "-c",
         "--conf",

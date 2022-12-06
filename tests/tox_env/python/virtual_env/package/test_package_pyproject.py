@@ -175,10 +175,10 @@ def test_pyproject_deps_static_with_dynamic(
 def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project({"tox.ini": ""}, base=demo_pkg_inline)
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "--notest", "--develop")
+    result = proj.run("r", "-e", "a,b", "--notest", "--develop")
     result.assert_success()
     warning = (
-        ".pkg: package config for py is editable, however the build backend build does not support PEP-660, "
+        ".pkg: package config for a, b is editable, however the build backend build does not support PEP-660, "
         "falling back to editable-legacy - change your configuration to it"
     )
     assert warning in result.out.splitlines()
@@ -187,7 +187,9 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
         (".pkg", "_optional_hooks"),
         (".pkg", "build_wheel"),
         (".pkg", "get_requires_for_build_sdist"),
-        ("py", "install_package"),
+        ("a", "install_package"),
+        (".pkg", "get_requires_for_build_sdist"),
+        ("b", "install_package"),
         (".pkg", "_exit"),
     ]
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
