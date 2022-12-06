@@ -312,7 +312,7 @@ Base options
    Always recreate virtual environment if this option is true, otherwise leave it up to tox.
 
 .. conf::
-   :keys: allowlist_externals, whitelist_externals
+   :keys: allowlist_externals
    :default: <empty list>
 
    Each line specifies a command name (in glob-style pattern format) which can be used in the commands section even if
