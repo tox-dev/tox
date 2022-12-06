@@ -3,6 +3,50 @@ FAQ
 
 Here you'll find answers to some frequently asked questions.
 
+Compatibility between tox version 3 and 4
+-----------------------------------------
+
+Version 4 of tox should be mostly backwards compatible with version 3,
+with the following exceptions:
+
+
+Plugin system
+^^^^^^^^^^^^^
+
+As the plugin system has changed,
+plugins written for tox version 3 are not compatible with version 4.
+
+Please refer to the `plugin documentation <https://tox.wiki/en/latest/plugins.html>`_.
+
+Configuration operations
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- The ``indexserver`` configuration option has been removed.
+  Please use the ``PIP_INDEX_URL`` environment variable instead.
+- The ``whitelist_externals`` configuration option has been removed.
+  Please use ``allowlist_externals`` instead.
+- Now you need to use ``allowlist_externals`` when using a command which is available globally,
+  but not installed in the ``testenv``.
+
+Substitutions
+^^^^^^^^^^^^^
+- The ``distshare`` substitution has been removed.
+
+CLI arguments
+^^^^^^^^^^^^^
+- The ``parallel--safe-build`` CLI argument has been removed.
+- When you want to pass an option to a test command, e.g. to ``pytest``,
+  you need to use ``--`` as a separator.
+
+Further news
+^^^^^^^^^^^^
+- tox version 4 now uses isolated builds by default.
+- tox offers now built-in wheel support.
+- tox offers now editable wheel support.
+- tox now uses fancy colors for reporting.
+- tox now fails when you mistype an env name.
+
+
 Using a custom PyPI server
 --------------------------
 
