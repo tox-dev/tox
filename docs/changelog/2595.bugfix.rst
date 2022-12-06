@@ -1,2 +1,0 @@
-Fix leaking backend processes when the build backend does not support editable wheels and fix failure when multiple
-environments exist that have a build backend that does not support editable wheels - by :user:`gaborbernat`.

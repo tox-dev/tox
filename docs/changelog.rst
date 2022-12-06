@@ -4,6 +4,22 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0rc3 (2022-12-05)
+----------------------
+
+Features - 4.0.0rc3
+~~~~~~~~~~~~~~~~~~~
+- Add ``--exit-and-dump-after`` flag that allows automatically killing tox if does not finish within the passed seconds,
+  and dump the thread stacks (useful to debug tox when it seemingly hangs) - by :user:`gaborbernat`. (:issue:`2595`)
+
+Bugfixes - 4.0.0rc3
+~~~~~~~~~~~~~~~~~~~
+- Ensure that two parallel tox instance invocations on different tox environment targets will work by holding a file lock
+  onto the packaging operations (e.g., in bash ``tox4 r -e py311 &; tox4 r -e py310``) - by :user:`gaborbernat`. (:issue:`2594`)
+- Fix leaking backend processes when the build backend does not support editable wheels and fix failure when multiple
+  environments exist that have a build backend that does not support editable wheels - by :user:`gaborbernat`. (:issue:`2595`)
+
+
 v4.0.0rc2 (2022-12-04)
 ----------------------
 
