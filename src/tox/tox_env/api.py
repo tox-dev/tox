@@ -154,7 +154,7 @@ class ToxEnv(ABC):
             desc="always recreate virtual environment if this option is true, otherwise leave it up to tox",
         )
         self.conf.add_config(
-            keys=["allowlist_externals", "whitelist_externals"],
+            "allowlist_externals",
             of_type=List[str],
             default=[],
             desc="external command glob to allow calling",
