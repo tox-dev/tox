@@ -77,7 +77,6 @@ def test_diff_msg_no_diff() -> None:
     [
         ("magic", ["pypy"]),
         ("magic", ["py39"]),
-        (".pkg", ["py"]),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
@@ -90,7 +89,6 @@ def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_co
 @pytest.mark.parametrize(
     ("env", "base_python", "conflict"),
     [
-        ("py", ["pypy"], ["pypy"]),
         ("cpython", ["pypy"], ["pypy"]),
         ("pypy", ["cpython"], ["cpython"]),
         ("pypy2", ["pypy3"], ["pypy3"]),

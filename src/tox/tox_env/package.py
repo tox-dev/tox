@@ -33,16 +33,21 @@ class PathPackage(Package):
         return str(self.path)
 
 
+locked = False
+
+
 def _lock_method(thread_lock: RLock, file_lock: FileLock | None, meth: Callable[..., Any]) -> Callable[..., Any]:
     def _func(*args: Any, **kwargs: Any) -> Any:
         with thread_lock:
+            file_locks = False
             if file_lock is not None and file_lock.is_locked is False:  # file_lock is to lock from other tox processes
                 file_lock.acquire()
+                file_locks = True
             try:
                 return meth(*args, **kwargs)
             finally:
-                if file_lock is not None:
-                    file_lock.release()
+                if file_locks:
+                    cast(FileLock, file_lock).release()
 
     return _func
 
@@ -94,8 +99,7 @@ class PackageToxEnv(ToxEnv, ABC):
 
     def teardown_env(self, conf: EnvConfigSet) -> None:
         self._envs.remove(conf.name)
-        has_envs = bool(self._envs)
-        if not has_envs:
+        if len(self._envs) == 0:
             self._teardown()
 
     @abstractmethod

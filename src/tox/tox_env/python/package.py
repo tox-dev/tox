@@ -107,3 +107,10 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             env = self._wheel_build_envs.get(run_conf["wheel_build_env"])
             if env is not None and env.name != self.name:
                 yield env
+
+    def _teardown(self) -> None:
+        for env in self._wheel_build_envs.values():
+            if env is not self:
+                with env.display_context(self._has_display_suspended):
+                    env.teardown()
+        super()._teardown()

@@ -108,9 +108,9 @@ class Python(ToxEnv, ABC):
         candidates: list[str] = []
         for factor in env_name.split("-"):
             spec = PythonSpec.from_string_spec(factor)
-            if spec.implementation is not None:
-                if spec.implementation.lower() in INTERPRETER_SHORT_NAMES and env_name is not None:
-                    candidates.append(factor)
+            impl = spec.implementation or "python"
+            if impl.lower() in INTERPRETER_SHORT_NAMES and env_name is not None and spec.path is None:
+                candidates.append(factor)
         if candidates:
             if len(candidates) > 1:
                 raise ValueError(f"conflicting factors {', '.join(candidates)} in {env_name}")
@@ -123,18 +123,19 @@ class Python(ToxEnv, ABC):
         elements.update(env_name.split("-"))  # and also any factor
         for candidate in elements:
             spec_name = PythonSpec.from_string_spec(candidate)
-            if spec_name.implementation is not None and spec_name.implementation.lower() in ("pypy", "cpython"):
-                for base_python in base_pythons:
-                    spec_base = PythonSpec.from_string_spec(base_python)
-                    if any(
-                        getattr(spec_base, key) != getattr(spec_name, key)
-                        for key in ("implementation", "major", "minor", "micro", "architecture")
-                        if getattr(spec_base, key) is not None and getattr(spec_name, key) is not None
-                    ):
-                        msg = f"env name {env_name} conflicting with base python {base_python}"
-                        if ignore_base_python_conflict:
-                            return [env_name]  # ignore the base python settings
-                        raise Fail(msg)
+            if spec_name.implementation and spec_name.implementation.lower() not in INTERPRETER_SHORT_NAMES:
+                continue
+            for base_python in base_pythons:
+                spec_base = PythonSpec.from_string_spec(base_python)
+                if any(
+                    getattr(spec_base, key) != getattr(spec_name, key)
+                    for key in ("implementation", "major", "minor", "micro", "architecture")
+                    if getattr(spec_base, key) is not None and getattr(spec_name, key) is not None
+                ):
+                    msg = f"env name {env_name} conflicting with base python {base_python}"
+                    if ignore_base_python_conflict:
+                        return [env_name]  # ignore the base python settings
+                    raise Fail(msg)
         return base_pythons
 
     @abstractmethod

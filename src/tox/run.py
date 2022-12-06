@@ -1,6 +1,7 @@
 """Main entry point for tox."""
 from __future__ import annotations
 
+import faulthandler
 import logging
 import os
 import sys
@@ -51,6 +52,8 @@ def setup_state(args: Sequence[str]) -> State:
     # parse CLI arguments
     options = get_options(*args)
     options.parsed.start = start
+    if options.parsed.exit_and_dump_after:
+        faulthandler.dump_traceback_later(timeout=options.parsed.exit_and_dump_after, exit=True)  # pragma: no cover
     # build tox environment config objects
     state = State(options, args)
     return state

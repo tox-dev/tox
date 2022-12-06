@@ -90,6 +90,7 @@ class LocalSubProcessPep517Executor(Execute):
                         execute.process.wait(timeout=0.1)  # pragma: no cover
                     except TimeoutExpired:  # pragma: no cover
                         execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
+        self.is_alive = False
 
 
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):

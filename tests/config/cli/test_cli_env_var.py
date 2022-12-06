@@ -44,6 +44,7 @@ def test_verbose_no_test() -> None:
         "list_envs": False,
         "devenv_path": None,
         "env": CliEnv(),
+        "exit_and_dump_after": 0,
         "skip_missing_interpreters": "config",
         "skip_pkg_install": False,
         "recreate": False,
@@ -118,6 +119,7 @@ def test_env_var_exhaustive_parallel_values(
         "config_file": None,
         "factors": [],
         "labels": [],
+        "exit_and_dump_after": 0,
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers

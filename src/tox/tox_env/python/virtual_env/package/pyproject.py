@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
@@ -92,7 +93,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
         self._frontend_: Pep517VirtualEnvFrontend | None = None
-        self.builds: set[str] = set()
+        self.builds: defaultdict[str, list[EnvConfigSet]] = defaultdict(list)
         self._distribution_meta: PathDistribution | None = None
         self._package_dependencies: list[Requirement] | None = None
         self._package_name: str | None = None
@@ -136,7 +137,8 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
-        self.builds.add(run_env.conf["package"])
+        build_type = run_env.conf["package"]
+        self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
         super()._setup_env()
@@ -169,13 +171,15 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         try:
             deps = self._load_deps(for_env)
         except BuildEditableNotSupported:
+            targets = [e for e in self.builds.pop("editable") if e["package"] == "editable"]
+            names = ", ".join(sorted({t.env_name for t in targets if t.env_name}))
             logging.error(
-                f"package config for {for_env.env_name} is editable, however the build backend {self._frontend.backend}"
+                f"package config for {names} is editable, however the build backend {self._frontend.backend}"
                 f" does not support PEP-660, falling back to editable-legacy - change your configuration to it",
             )
-            self.builds.remove("editable")
-            self.builds.add("editable-legacy")
-            for_env._defined["package"].value = "editable-legacy"  # type: ignore
+            for env in targets:
+                env._defined["package"].value = "editable-legacy"  # type: ignore
+                self.builds["editable-legacy"].append(env)
             deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
         if of_type == "editable-legacy":
