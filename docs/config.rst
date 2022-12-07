@@ -409,6 +409,11 @@ Run
    Commands to run before running the :ref:`commands`. All evaluation and configuration logic applies from
    :ref:`commands`.
 
+   .. note::
+
+     When you use the ``#`` sign inside ``commands_pre``, you need to escape it, e.g.
+     ``commands_pre = bash -c "echo 'foo\#bar'"``.
+
 .. conf::
    :keys: commands
    :default: <empty list>
@@ -437,12 +442,22 @@ Run
      ``path/to/my_script`` prefer ``{tox_root}{/}path{/}to{/}my_script``. If your inline script is platform dependent
      refer to :ref:`platform-specification` on how to select different script per platform.
 
+   .. note::
+
+     When you use the ``#`` sign inside ``commands``, you need to escape it, e.g.
+     ``commands = bash -c "echo 'foo\#bar'"``.
+
 .. conf::
    :keys: commands_post
    :default: <empty list>
 
    Commands to run after running the :ref:`commands`. Execute regardless of the outcome of both :ref:`commands` and
    :ref:`commands_pre`. All evaluation and configuration logic applies from :ref:`commands`.
+
+   .. note::
+
+     When you use the ``#`` sign inside ``commands_post``, you need to escape it, e.g.
+     ``commands_post = bash -c "echo 'foo\#bar'"``.
 
 .. conf::
    :keys: change_dir, changedir

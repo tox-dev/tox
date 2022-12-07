@@ -42,6 +42,23 @@ tox 4 - removed tox.ini keys
 | ``isolated_build``       | Isolated builds are now always used.        |
 +--------------------------+---------------------------------------------+
 
+tox 4 - changed behaviour for tox.ini keys
+++++++++++++++++++++++++++++++++++++++++++
+
+- When using any of the ``commands``, ``commands_pre`` or ``commands_post`` keys, you need to escape the ``#`` sign.
+
+Valid in tox 3:
+
+.. code-block:: ini
+
+  commands = bash -c "echo 'foo#bar'"
+
+Valid in tox 4:
+
+.. code-block:: ini
+
+  commands = bash -c "echo 'foo\#bar'"
+
 tox 4 - substitutions removed
 +++++++++++++++++++++++++++++
 - The ``distshare`` substitution has been removed.
