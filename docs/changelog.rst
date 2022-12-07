@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0 (2022-12-07)
+-------------------
+
+Bugfixes - 4.0.0
+~~~~~~~~~~~~~~~~
+- The temporary folder within the tox environment was named ``.temp`` instead of ``.tmp`` - by :user:`gaborbernat`. (:issue:`2608`)
+
+Improved Documentation - 4.0.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Enumerate breaking changes of tox 4 in the FAQ, and also list major new improvements - by :user:`gaborbernat`. (:issue:`2587`)
+- Document in the FAQ that tox 4 will raise a warning when finding conflicting environment names - by :user:`gaborbernat`. (:issue:`2602`)
+
+
 v4.0.0rc4 (2022-12-06)
 ----------------------
 
