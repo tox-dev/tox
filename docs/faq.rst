@@ -3,53 +3,123 @@ FAQ
 
 Here you'll find answers to some frequently asked questions.
 
-Compatibility between tox version 3 and 4
------------------------------------------
+Breaking changes in tox 4
+-------------------------
+Version 4 of tox should be mostly backwards compatible with version 3, with the following exceptions:
 
-Version 4 of tox should be mostly backwards compatible with version 3,
-with the following exceptions:
+tox 4 - Python support
+++++++++++++++++++++++
+- Now requires Python ``3.7`` or later and is tested only against CPython. You can still create test environments for
+  earlier Python versions or different Python interpreters. PyPy support is best effort, meaning we do not test it as
+  part of our CI runs, however if you discover issues under PyPy we will accept PRs addressing it.
 
+tox 4 - known regressions
++++++++++++++++++++++++++
 
-Plugin system
-^^^^^^^^^^^^^
+- With tox 4 the tty trait of the caller environment is no longer passed through. The most notable impact of this is
+  that some tools no longer print colored output. A PR to address this is welcomed, in the meantime you can use the
+  ``tty`` substitution to force color mode for these tools, see for example tox itself with pytest and mypy
+  `here in tox.ini <https://github.com/tox-dev/tox/blob/main/tox.ini#L28>`_.
 
-As the plugin system has changed,
-plugins written for tox version 3 are not compatible with version 4.
+tox 4 - new plugin system
++++++++++++++++++++++++++
 
-Please refer to the `plugin documentation <https://tox.wiki/en/latest/plugins.html>`_.
+tox 4 is a grounds up rewrite of the code base, and while we kept the configuration layer compatibility no such effort
+has been made for the programmatic API. Therefore, all plugins will need to redo their integration against the new code
+base. If you're a plugin developer refer to the `plugin documentation <https://tox.wiki/en/latest/plugins.html>`_ for
+more information.
 
-Configuration operations
-^^^^^^^^^^^^^^^^^^^^^^^^
+tox 4 - removed tox.ini keys
+++++++++++++++++++++++++++++
 
-- The ``indexserver`` configuration option has been removed.
-  Please use the ``PIP_INDEX_URL`` environment variable instead.
-- The ``whitelist_externals`` configuration option has been removed.
-  Please use ``allowlist_externals`` instead.
-- Now you need to use ``allowlist_externals`` when using a command which is available globally,
-  but not installed in the ``testenv``.
++--------------------------+---------------------------------------------+
+| Configuration key        | Migration path                              |
++==========================+=============================================+
+| ``indexserver``          | See `Using a custom PyPI server`_.          |
++--------------------------+---------------------------------------------+
+| ``whitelist_externals``  | Use :ref:`allowlist_externals` key instead. |
++--------------------------+---------------------------------------------+
+| ``isolated_build``       | Isolated builds are now always used.        |
++--------------------------+---------------------------------------------+
 
-Substitutions
-^^^^^^^^^^^^^
+tox 4 - substitutions removed
++++++++++++++++++++++++++++++
 - The ``distshare`` substitution has been removed.
 
-CLI arguments
-^^^^^^^^^^^^^
-- The ``parallel--safe-build`` CLI argument has been removed.
-- When you want to pass an option to a test command, e.g. to ``pytest``,
-  you need to use ``--`` as a separator.
+tox 4 - CLI arguments changed
++++++++++++++++++++++++++++++
+- The ``--parallel--safe-build`` CLI argument has been removed, no longer needed.
+- When you want to pass an option to a test command, e.g. to ``pytest``, now you must use ``--`` as a separator, this
+  worked with version 3 also, but any unknown trailing arguments were automatically passed through, while now this is
+  no longer the case.
 
-Further news
-^^^^^^^^^^^^
-- tox version 4 now uses isolated builds by default.
-- tox offers now built-in wheel support.
-- tox offers now editable wheel support.
-- tox now uses fancy colors for reporting.
-- tox now fails when you mistype an env name.
+tox 4 - packaging changes
++++++++++++++++++++++++++
+- We use isolated builds (always) as specified by :pep:`518` and use :pep:`517` to communicate with the build backend.
+- The ``--develop`` CLI flag or the :ref:`use_develop` settings now enables editable installations via the :pep:`660`
+  mechanism rather than the legacy ``pip install -e`` behaviour. The old functionality can still be forced by setting
+  the :ref:`package` setting for the run environment to ``editable-legacy``.
 
+tox 4 -- output changes
++++++++++++++++++++++++
+- We now use colors for reporting, to help make the output easier to read for humans. This can be disabled via the
+  ``TERM=dumb`` or ``NO_COLORS=0`` environment variables, or the ``--colored no`` CLI argument.
+
+New features in tox 4
+---------------------
+Here is a non-exhaustive list of these.
+
+- You can now build wheel(s) instead of a source distribution during the packaging phase by using the ``wheel`` setting
+  for the :ref:`package` setting. If your package is a universal wheel you'll likely want to set the
+  :ref:`wheel_build_env` to ``.pkg`` to avoid building a wheel for every Python version you target.
+- Editable wheel support was added as defined by :pep:`660` via the :ref:`package` setting to ``editable``.
+- We redesigned our CLI interface, we no longer try to squeeze everything under single command, instead now we have
+  multiple sub-commands. For backwards compatibility if you do not specify a subcommand we'll assume you want the tox 3
+  legacy interface (available under the legacy subcommand), for now the list of available commands are:
+
+  .. code-block:: bash
+
+    subcommands:
+      tox command to execute (by default legacy)
+
+      {run,r,run-parallel,p,depends,de,list,l,devenv,d,config,c,quickstart,q,exec,e,legacy,le}
+        run (r)                   run environments
+        run-parallel (p)          run environments in parallel
+        depends (de)              visualize tox environment dependencies
+        list (l)                  list environments
+        devenv (d)                sets up a development environment at ENVDIR based on the tox configuration specified
+        config (c)                show tox configuration
+        quickstart (q)            Command line script to quickly create a tox config file for a Python project
+        exec (e)                  execute an arbitrary command within a tox environment
+        legacy (le)               legacy entry-point command
+
+  The ``exec`` and ``depends`` are brand new features. Other subcommands are a more powerful versions of previously
+  existing single flags (e.g. ``-av`` is now succeeded by the ``list`` subcommand). All subcommand have a one or two
+  character shortcut for less typing on the CLI (e.g. ``tox run`` can be abbreviated to ``tox r``).
+- Startup times should be improved because now we no longer eagerly load all configurations for all environments, but
+  instead these are performed lazily when needed. Side-effect of this is that if you have an invalid configuration will
+  not be picked up until you try to use it.
+- We now discover your package dependency changes (either via :pep:`621` or otherwise via :pep:`517`
+  ``prepare_metadata_for_build_wheel``/``build_wheel`` metadata). If new dependencies are added these will be installed
+  on the next run. If a dependency is removed we'll recreate the entire environment. This works for ``requirements``
+  files within the :ref:`deps`. This means that you should never need to use ``--recreate`` flag, tox should be smart
+  enough to figure out when things change and automatically apply it.
+- All tox defaults can now be changed via the user level config-file (see help message output for its location, can be
+  changed via ``TOX_CONFIG_FILE`` environment variable).
+- All tox defaults can now be changed via an environment variable: ``TOX_`` prefix followed by the settings key,
+  e.g. ``TOX_PACKAGE=wheel``.
+- Any configuration can be overwritten via the CLI ``-x`` or ``--override`` flag, e.g.
+  ``tox run -e py311  -x testenv:py310.package=editable`` would force the packaging of environment ``py311`` to be an
+  editable install independent what's in the configuration file.
+- :ref:`basepython` is now a list, the first successfully detected python will be used to generate python environment.
+- We now have support for inline tox plugins via the ``toxfile.py`` at the root of your project. At a later time this
+  will allow using Python only configuration, as seen with nox.
+- You can now group tox environments via :ref:`labels` configuration, and you can invoke all tox environments within a
+  label by using the ``-m label`` CLI flag (instead of the ``-e list_of_envs``).
+- You can now invoke all tox environments within a given factor via the ``-f factor`` CLI flag.
 
 Using a custom PyPI server
 --------------------------
-
 By default tox uses pip to install Python dependencies. Therefore to change the index server you should configure pip
 directly. pip accepts environment variables as configuration flags, therefore the easiest way to do this is to set the
 ``PIP_INDEX_URL`` environment variable:

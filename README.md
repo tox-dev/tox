@@ -1,46 +1,27 @@
-# Rewrite branch
+# tox
 
-[![check](https://github.com/tox-dev/tox/workflows/check/badge.svg)](https://github.com/tox-dev/tox/actions?query=workflow%3Acheck)
-[![codecov](https://codecov.io/gh/tox-dev/tox/branch/rewrite/graph/badge.svg)](https://codecov.io/gh/tox-dev/tox/branch/rewrite)
+[![PyPI](https://img.shields.io/pypi/v/tox)](https://pypi.org/project/tox/)
+[![Supported Python
+versions](https://img.shields.io/pypi/pyversions/tox.svg)](https://pypi.org/project/tox/)
+[![Documentation
+status](https://readthedocs.org/projects/tox/badge/?version=latest)](https://tox.readthedocs.io/en/latest/?badge=latest)
 [![Code style:
 black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Downloads](https://pepy.tech/badge/tox/month)](https://pepy.tech/project/tox/month)
+[![check](https://github.com/tox-dev/tox/actions/workflows/check.yml/badge.svg)](https://github.com/tox-dev/tox/actions/workflows/check.yml)
 
-<a href="https://tox.readthedocs.io">
-    <img src="https://raw.githubusercontent.com/tox-dev/tox/master/docs/_static/img/tox.png"
-         alt="tox logo"
-         height="150px"
-         align="right">
-</a>
+`tox` aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing
+and release process of Python software (alongside [pytest](https://docs.pytest.org/en/latest/) and
+[devpi](https://www.devpi.net)).
 
-You've arrived at the rewrite branch. This is a fresh start for tox in which we aim to create a better implementation
-for what tox is. The broad goal is to:
+tox is a generic virtual environment management and test command line tool you can use for:
 
-- use modern Python with type annotations (`3.6+` only)
-- be more flexible in from where we take our configuration (proper `pyproject.toml` support besides our canonical
-  `tox.ini` file)
-- a better interface to plug and play your own python environment (historically tox was designed to work with the
-  `virtualenv` project, but we want to be able to use instead `conda`, `Docker`, OS package manager, remote machines,
-  etc.)
-- first class support for non-sdist packages (in python land e.g. wheels)
-- ability to plugin support for other languages that follow the build/install/test paradigm (e.g. node)
-- make it more flexible (ability to override any value via the CLI)
-- make it faster (improve interpreter discovery, lazy configuration manifestation, and many more).
+- checking your package builds and installs correctly under different environments (such as different Python
+  implementations, versions or installation dependencies),
+- running your tests in each of the environments with the test tool of choice,
+- acting as a frontend to continuous integration servers, greatly reducing boilerplate and merging CI and shell-based
+  testing.
 
-**Compatibility wise we aim to be (excluding some weird edge cases) configuration file compatible with tox 3. We'll not
-be API compatible though (all plugins will break).**
-
-## Documentation
-
-To be done.
-
-## Communication and questions
-
-For now reach out to [Bernat Gabor](https://github.com/gaborbernat/) directly.
-
-## Contributing
-
-Contributions are welcome, though expect a lot of rough edges at this early point of development. See
-[contributing](https://github.com/tox-dev/tox/blob/master/CONTRIBUTING.rst) and our
-[Contributor Covenant Code of Conduct](https://github.com/tox-dev/tox/blob/master/CODE_OF_CONDUCT.md). Currently, the
-[code](https://github.com/tox-dev/tox) and the [issues](https://github.com/tox-dev/tox/issues) are hosted on GitHub. The
-project is licensed under [MIT](https://github.com/tox-dev/tox/blob/master/LICENSE).
+Please read our [user guide](https://tox.wiki/en/latest/user_guide.html#basic-example) for an example and more detailed
+introduction, or watch [this YouTube video](https://www.youtube.com/watch?v=SFqna5ilqig) that presents the problem
+space and how tox solves it.
