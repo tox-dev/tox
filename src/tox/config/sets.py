@@ -199,7 +199,7 @@ class CoreConfigSet(ConfigSet):
         self.add_config(
             keys=["temp_dir"],
             of_type=Path,
-            default=lambda conf, _: cast(Path, self["tox_root"]) / ".temp",  # noqa: U100, U101
+            default=lambda conf, _: cast(Path, self["tox_root"]) / ".tmp",  # noqa: U100, U101
             desc="temporary directory cleaned at start",
         )
 
