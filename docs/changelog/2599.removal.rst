@@ -1,1 +1,0 @@
-Remove deprecated configuration option ``whitelist_externals`` which was replaced by ``allowlist_externals`` - by :user:`jugmac00`.

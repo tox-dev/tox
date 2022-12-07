@@ -1,1 +1,0 @@
-Fix extras not being kept for install dependencies - by :user:`gaborbernat`.

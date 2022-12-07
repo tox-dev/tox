@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.0rc4 (2022-12-06)
+----------------------
+
+Bugfixes - 4.0.0rc4
+~~~~~~~~~~~~~~~~~~~
+- Fix extras not being kept for install dependencies - by :user:`gaborbernat`. (:issue:`2603`)
+
+Deprecations and Removals - 4.0.0rc4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Remove deprecated configuration option ``whitelist_externals`` which was replaced by ``allowlist_externals`` - by :user:`jugmac00`. (:issue:`2599`)
+
+
 v4.0.0rc3 (2022-12-05)
 ----------------------
 
