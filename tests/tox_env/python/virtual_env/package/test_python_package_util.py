@@ -50,12 +50,12 @@ def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:
 def test_loads_deps_recursive_extras() -> None:
     requires = [
         Requirement("no-extra"),
-        Requirement("dep1[dev]"),
-        Requirement("dep1[test]"),
-        Requirement("dep2[test]"),
-        Requirement("dep3[docs]"),
-        Requirement("name[dev]"),
-        Requirement("name[test,dev]"),
+        Requirement('dep1[magic]; extra=="dev"'),
+        Requirement('dep1; extra=="test"'),
+        Requirement('dep2[a,b]; extra=="test"'),
+        Requirement('dep3; extra=="docs"'),
+        Requirement('name; extra=="dev"'),
+        Requirement('name[test]; extra=="dev"'),
     ]
     result = dependencies_with_extras(requires, {"dev"}, "name")
-    assert [str(i) for i in result] == ["no-extra", "dep1", "dep2"]
+    assert [str(i) for i in result] == ["no-extra", "dep1[magic]", "dep1", "dep2[a,b]"]
