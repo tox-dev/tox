@@ -1,0 +1,1 @@
+ Default tox min_version to 4.0 instead of current tox version - by :user:`gaborbernat`.

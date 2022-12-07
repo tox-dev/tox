@@ -21,7 +21,6 @@ from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.runner import PythonRun
-from tox.version import version as current_version
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import PackageNotFoundError, distribution
@@ -63,7 +62,7 @@ def provision(state: State) -> int | bool:
         keys=["min_version", "minversion"],
         of_type=Version,
         # do not include local version specifier (because it's not allowed in version spec per PEP-440)
-        default=Version(current_version),
+        default=Version("4.0"),
         desc="Define the minimal tox version required to run",
     )
     state.conf.core.add_config(
@@ -75,12 +74,7 @@ def provision(state: State) -> int | bool:
 
     def add_tox_requires_min_version(requires: list[Requirement]) -> list[Requirement]:
         min_version: Version = state.conf.core["min_version"]
-        # If own version can be a development one or a pre-release, we need to only use its base_version for
-        # requirements, or pip will never be able to find a version that is compatible with the requirement.
-        if min_version.is_devrelease or min_version.is_prerelease:
-            # Earliest possible pre-release number for current base version.
-            min_version = Version(f"{min_version.base_version}a0")
-        requires.append(Requirement(f"tox >= {min_version.public}"))
+        requires.append(Requirement(f"tox >= {min_version}"))
         return requires
 
     state.conf.core.add_config(
