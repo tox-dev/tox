@@ -9,9 +9,9 @@ Version 4 of tox should be mostly backwards compatible with version 3, with the 
 
 tox 4 - Python support
 ++++++++++++++++++++++
-- Now requires Python ``3.7`` or later and is tested only against CPython. You can still create test environments for
-  earlier Python versions or different Python interpreters. PyPy support is best effort, meaning we do not test it as
-  part of our CI runs, however if you discover issues under PyPy we will accept PRs addressing it.
+- tox now requires Python ``3.7`` or later and is tested only against CPython. You can still create test environments
+  for earlier Python versions or different Python interpreters. PyPy support is best effort, meaning we do not test it
+  as part of our CI runs, however if you discover issues under PyPy we will accept PRs addressing it.
 
 tox 4 - known regressions
 +++++++++++++++++++++++++
@@ -45,6 +45,12 @@ tox 4 - removed tox.ini keys
 tox 4 - substitutions removed
 +++++++++++++++++++++++++++++
 - The ``distshare`` substitution has been removed.
+
+tox 4 - disallowed env names
+++++++++++++++++++++++++++++
+- Environment names that contain multiple Python variants, such as ``name-py39-pypy`` or ``py39-py310`` will now raise
+  an error, previously this only warned, you can use :ref:`ignore_basepython_conflict` to disable this error, but we
+  recommend changing the name to avoid this name that can be confusing.
 
 tox 4 - CLI arguments changed
 +++++++++++++++++++++++++++++
@@ -94,8 +100,9 @@ Here is a non-exhaustive list of these.
         legacy (le)               legacy entry-point command
 
   The ``exec`` and ``depends`` are brand new features. Other subcommands are a more powerful versions of previously
-  existing single flags (e.g. ``-av`` is now succeeded by the ``list`` subcommand). All subcommands have a one or two
-  character shortcuts for less typing on the CLI (e.g. ``tox run`` can be abbreviated to ``tox r``).
+  existing single flags (e.g. ``-av`` is now succeeded by the ``list`` subcommand). All subcommand have a one or two
+  character shortcut for less typing on the CLI (e.g. ``tox run`` can be abbreviated to ``tox r``). For more details
+  see :ref:`cli`.
 - Startup times should be improved because now we no longer eagerly load all configurations for all environments, but
   instead these are performed lazily when needed. Side-effect of this is that if you have an invalid configuration will
   not be picked up until you try to use it.
