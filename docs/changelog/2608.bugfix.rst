@@ -1,0 +1,1 @@
+The temporary folder within the tox environment was named ``.temp`` instead of ``.tmp`` - by :user:`gaborbernat`.

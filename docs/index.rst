@@ -39,7 +39,7 @@ tox is a generic virtual environment management and test command line tool you c
 * checking your package builds and installs correctly under different environments (such as different Python
   implementations, versions or installation dependencies),
 * running your tests in each of the environments with the test tool of choice,
-* acting as a frontend to Continuous Integration servers, greatly reducing boilerplate and merging CI and
+* acting as a frontend to continuous integration servers, greatly reducing boilerplate and merging CI and
   shell-based testing.
 
 Useful links

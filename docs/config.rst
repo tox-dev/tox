@@ -497,8 +497,8 @@ Run
 
    tox package type used to package.
 
-Package
-~~~~~~~
+Packaging
+~~~~~~~~~
 .. conf::
    :keys: package_root, setupdir
    :default: {package_root}

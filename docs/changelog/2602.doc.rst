@@ -1,0 +1,1 @@
+Document in the FAQ that tox 4 will raise a warning when finding conflicting environment names - by :user:`gaborbernat`.
