@@ -95,7 +95,7 @@ Here is a non-exhaustive list of these.
 
   The ``exec`` and ``depends`` are brand new features. Other subcommands are a more powerful versions of previously
   existing single flags (e.g. ``-av`` is now succeeded by the ``list`` subcommand). All subcommand have a one or two
-  character shortcut for less typing on the CLI (e.g. ``tox run`` can be abbreviated to ``tox r``).
+  character shortcuts for less typing on the CLI (e.g. ``tox run`` can be abbreviated to ``tox r``).
 - Startup times should be improved because now we no longer eagerly load all configurations for all environments, but
   instead these are performed lazily when needed. Side-effect of this is that if you have an invalid configuration will
   not be picked up until you try to use it.
