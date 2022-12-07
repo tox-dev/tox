@@ -69,7 +69,7 @@ tox 4 - packaging changes
 tox 4 -- output changes
 +++++++++++++++++++++++
 - We now use colors for reporting, to help make the output easier to read for humans. This can be disabled via the
-  ``TERM=dumb`` or ``NO_COLORS=0`` environment variables, or the ``--colored no`` CLI argument.
+  ``TERM=dumb`` or ``NO_COLOR=1`` environment variables, or the ``--colored no`` CLI argument.
 
 New features in tox 4
 ---------------------
