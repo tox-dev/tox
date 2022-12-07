@@ -30,6 +30,7 @@ from tox.tox_env.python.package import (
 )
 from tox.tox_env.register import ToxEnvRegister
 from tox.tox_env.runner import RunToxEnv
+from tox.util.file_view import create_session_view
 
 from ..api import VirtualEnv
 from .util import dependencies_with_extras
@@ -99,6 +100,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self._package_name: str | None = None
         self._pkg_lock = RLock()  # can build only one package at a time
         self.root = self.conf["package_root"]
+        self._package_paths: set[Path] = set()
 
     @staticmethod
     def id() -> str:
@@ -164,6 +166,10 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                 pass
             finally:
                 executor.close()
+        for path in self._package_paths:
+            if path.exists():
+                logging.debug("delete package %s", path)
+                path.unlink()
         super()._teardown()
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
@@ -189,7 +195,10 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         elif of_type == "sdist":
             self.setup()
             with self._pkg_lock:
-                package = SdistPackage(self._frontend.build_sdist(sdist_directory=self.pkg_dir).sdist, deps)
+                sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir).sdist
+                sdist = create_session_view(sdist, self._package_temp_path)
+                self._package_paths.add(sdist)
+                package = SdistPackage(sdist, deps)
         elif of_type in {"wheel", "editable"}:
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
@@ -199,15 +208,21 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                 self.setup()
                 method = "build_editable" if of_type == "editable" else "build_wheel"
                 with self._pkg_lock:
-                    path = getattr(self._frontend, method)(
+                    wheel = getattr(self._frontend, method)(
                         wheel_directory=self.pkg_dir,
                         metadata_directory=self.meta_folder,
                         config_settings=self._wheel_config_settings,
                     ).wheel
-                package = (EditablePackage if of_type == "editable" else WheelPackage)(path, deps)
+                    wheel = create_session_view(wheel, self._package_temp_path)
+                    self._package_paths.add(wheel)
+                package = (EditablePackage if of_type == "editable" else WheelPackage)(wheel, deps)
         else:  # pragma: no cover # for when we introduce new packaging types and don't implement
             raise TypeError(f"cannot handle package type {of_type}")  # pragma: no cover
         return [package]
+
+    @property
+    def _package_temp_path(self) -> Path:
+        return cast(Path, self.core["temp_dir"]) / "package"
 
     def _load_deps(self, for_env: EnvConfigSet) -> list[Requirement]:
         # first check if this is statically available via PEP-621

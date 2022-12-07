@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from packaging.markers import Variable
+from packaging.markers import Variable  # type: ignore[attr-defined]
 from packaging.requirements import Requirement
 
 
