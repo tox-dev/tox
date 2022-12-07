@@ -8,15 +8,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from subprocess import check_call
 from typing import Callable, Iterator
+from unittest import mock
 from zipfile import ZipFile
 
 import pytest
 from devpi_process import Index, IndexServer
 from filelock import FileLock
 from packaging.requirements import Requirement
-from packaging.version import Version
 
-from tox import __version__
 from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
@@ -61,14 +60,11 @@ def _make_tox_wheel(
     pkg_builder: Callable[[Path, Path, list[str], bool], Path],
 ) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
-        package: Path | None = None
-        if "TOX_PACKAGE" in os.environ:
-            env_tox_pkg = Path(os.environ["TOX_PACKAGE"])  # pragma: no cover
-            if env_tox_pkg.exists() and env_tox_pkg.suffix == ".whl":  # pragma: no cover
-                package = env_tox_pkg  # pragma: no cover
-        if package is None:
-            # when we don't get a wheel path injected, build it (for example when running from an IDE)
-            into = tmp_path_factory.mktemp("dist")  # pragma: no cover
+        into = tmp_path_factory.mktemp("dist")  # pragma: no cover
+        from tox.version import version_tuple
+
+        version = f"{version_tuple[0]}.{version_tuple[1]}.{version_tuple[2] +1}"
+        with mock.patch.dict(os.environ, {"SETUPTOOLS_SCM_PRETEND_VERSION": version}):
             package = pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
         return package
 
@@ -189,5 +185,4 @@ def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
     assert msg in result.out
     with (project.path / "out.json").open() as file_handler:
         requires = json.load(file_handler)
-    version = Version(__version__).base_version
-    assert requires == {"minversion": version, "requires": ["p", f"tox>={version}"]}
+    assert requires == {"minversion": "4.0", "requires": ["p", "tox>=4.0"]}
