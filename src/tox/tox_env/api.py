@@ -132,7 +132,7 @@ class ToxEnv(ABC):
 
         def pass_env_post_process(values: list[str]) -> list[str]:
             values.extend(self._default_pass_env())
-            return sorted({k: None for k in values}.keys())
+            return sorted({k: None for val in values for k in val.split()}.keys())
 
         self.conf.add_config(
             keys=["pass_env", "passenv"],

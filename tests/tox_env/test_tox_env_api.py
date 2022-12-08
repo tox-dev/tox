@@ -86,3 +86,18 @@ def test_tox_env_pass_env_match_ignore_case(char: str, glob: str) -> None:
     with patch("os.environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"}):
         env = ToxEnv._load_pass_env([f"{char}{glob}"])
     assert env == {"A1": "1", "a2": "2", "A2": "3"}
+
+
+@pytest.mark.parametrize("passenv", ["A B", "\n  A\n  B"])
+def test_pass_env_delimiter(tox_project: ToxProjectCreator, passenv: str) -> None:
+    prj = tox_project(
+        {
+            "tox.ini": (
+                f'[testenv]\npassenv={passenv}\ncommands=python -c "'
+                "import os; print(os.environ['A'], os.environ['B'])\""
+            ),
+        },
+    )
+    prj.monkeypatch.setenv("A", "a")
+    prj.monkeypatch.setenv("B", "b")
+    assert prj.run().success
