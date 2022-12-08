@@ -71,6 +71,7 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
         from tox.plugin.manager import MANAGER  # importing this here to avoid circular import
 
         chdir: Path = tox_env.conf["change_dir"]
+        chdir.mkdir(exist_ok=True, parents=True)
         ignore_errors: bool = tox_env.conf["ignore_errors"]
         MANAGER.tox_before_run_commands(tox_env)
         status_pre, status_main, status_post = -1, -1, -1
