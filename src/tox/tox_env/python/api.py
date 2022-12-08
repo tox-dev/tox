@@ -94,6 +94,7 @@ class Python(ToxEnv, ABC):
                     "SYSTEMROOT",  # needed for python's crypto module
                     "COMSPEC",  # needed for distutils cygwin compiler
                     "PROCESSOR_ARCHITECTURE",  # platform.machine()
+                    "NUMBER_OF_PROCESSORS",  # multiprocessing.cpu_count()
                 ],
             )
         env.extend(["REQUESTS_CA_BUNDLE"])
