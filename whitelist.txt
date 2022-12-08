@@ -1,10 +1,8 @@
-0rc1
 0x3
 10ms
 1s
 2s
 5s
-a0
 abi
 addinivalue
 addnodes
@@ -30,6 +28,7 @@ chdir
 codec
 colorama
 commenters
+commonpath
 conftest
 contnode
 copytree
@@ -40,11 +39,9 @@ ctrl
 cygwin
 deinit
 delenv
-dev1
 devenv
 devnull
 devpi
-devrelease
 distinfo
 distlib
 divmod
@@ -81,6 +78,7 @@ getresult
 getsockname
 getsourcelines
 groupby
+hardlink
 hookimpl
 hookspec
 hookspecs
@@ -91,6 +89,7 @@ instream
 intersphinx
 isalpha
 isatty
+isnumeric
 isspace
 iterdir
 levelname
@@ -117,7 +116,6 @@ pluggy
 pos
 posargs
 posix
-prerelease
 prereleases
 prj
 psutil

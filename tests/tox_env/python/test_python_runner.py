@@ -88,3 +88,14 @@ def test_journal_package_dir(tmp_path: Path) -> None:
             "type": "dir",
         },
     }
+
+
+def test_package_temp_dir_view(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage=wheel"})
+    result = project.run("r", "-vv", "-e", "py", "--root", str(demo_pkg_inline))
+    result.assert_success()
+    wheel_name = "demo_pkg_inline-1.0.0-py3-none-any.whl"
+    session_path = Path(".tmp") / "package" / "1" / wheel_name
+    msg = f" D package {session_path} links to {Path('.pkg') / 'dist'/ wheel_name} ({project.path/ '.tox'}) "
+    assert msg in result.out
+    assert f" D delete package {project.path / '.tox' / session_path}" in result.out

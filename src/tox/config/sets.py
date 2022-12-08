@@ -199,8 +199,8 @@ class CoreConfigSet(ConfigSet):
         self.add_config(
             keys=["temp_dir"],
             of_type=Path,
-            default=lambda conf, _: cast(Path, self["tox_root"]) / ".tmp",  # noqa: U100, U101
-            desc="temporary directory cleaned at start",
+            default=lambda conf, _: cast(Path, self["work_dir"]) / ".tmp",  # noqa: U100, U101
+            desc="a folder for temporary files (is not cleaned at start)",
         )
 
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:  # noqa: U100
