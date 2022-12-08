@@ -219,3 +219,10 @@ def test_show_config_timeout_custom(tox_project: ToxProjectCreator) -> None:
 def test_show_config_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("c", "-h")
     outcome.assert_success()
+
+
+def test_show_config_core_host_python(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": ""})
+    outcome = project.run("c", "--core", "-e", "py", "-k", "host_python")
+    outcome.assert_success()
+    assert f"host_python = {sys.executable}" in outcome.out
