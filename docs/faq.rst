@@ -44,6 +44,10 @@ tox 4 - changed INI rules
           ALPHA
           BETA
 
+- tox 4 now errors when using the ``-U`` flag when defining dependencies, e.g. ``deps = -Ur requirements.txt``. While
+  this worked in tox 3, it was never supported officially. Additionally, in the context of a new virtual environment
+  this flag makes no sense anyway.
+
 tox 4 - known regressions
 +++++++++++++++++++++++++
 

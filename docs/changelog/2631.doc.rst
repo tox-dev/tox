@@ -1,0 +1,1 @@
+Document that tox v4 errors when using ``-U`` when defining dependencies via ``deps``  - by :user:`jugmac00`.
