@@ -4,6 +4,26 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.3 (2022-12-08)
+-------------------
+
+Bugfixes - 4.0.3
+~~~~~~~~~~~~~~~~
+- Always set environment variable ``PYTHONIOENCODING`` to ``utf-8`` to ensure tox works under Windows custom encodings
+  - by :user:`gaborbernat`. (:issue:`2422`)
+- Ensure :ref:`change_dir` is created if does not exist before executing :ref:`commands` - by :user:`gaborbernat`. (:issue:`2620`)
+- Pass through ``NUMBER_OF_PROCESSORS`` on Windows as is needed for ``multiprocessing.cpu_count`` -
+  by :user:`gaborbernat`. (:issue:`2629`)
+- The core tox configuration now contains ``host_python`` key showing the host python executable path -
+  by :user:`gaborbernat`. (:issue:`2630`)
+
+Improved Documentation - 4.0.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document that space separator is no longer valid for the :ref:`passenv` and instead one should use comma  -
+  by :user:`gaborbernat`. (:issue:`2615`)
+- Document necessity to escape ``#`` within INI configuration - by :user:`jugmac00`. (:issue:`2617`)
+
+
 v4.0.2 (2022-12-07)
 -------------------
 
