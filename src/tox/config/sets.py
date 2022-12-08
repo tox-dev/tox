@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterator, Mapping, Sequence, TypeVar, cast
@@ -202,6 +203,7 @@ class CoreConfigSet(ConfigSet):
             default=lambda conf, _: cast(Path, self["work_dir"]) / ".tmp",  # noqa: U100, U101
             desc="a folder for temporary files (is not cleaned at start)",
         )
+        self.add_constant("host_python", "the host python executable path", sys.executable)
 
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:  # noqa: U100
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
