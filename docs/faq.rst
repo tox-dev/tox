@@ -93,6 +93,8 @@ tox 4 - CLI arguments changed
 - When you want to pass an option to a test command, e.g. to ``pytest``, now you must use ``--`` as a separator, this
   worked with version 3 also, but any unknown trailing arguments were automatically passed through, while now this is
   no longer the case.
+- Running ``--showconfig```or ``--help-ini`` with the ``-v`` flag will add interleaved debugging information, whereas
+  tox 3 added additional lines at the start. If you want to generate valid ini files you must not use the ``-v`` flag.
 
 tox 4 - packaging changes
 +++++++++++++++++++++++++
