@@ -1,2 +1,0 @@
-The core tox configuration now contains ``host_python`` key showing the host python executable path -
-by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Pass through ``NUMBER_OF_PROCESSORS`` on Windows as is needed for ``multiprocessing.cpu_count`` -
-by :user:`gaborbernat`.
