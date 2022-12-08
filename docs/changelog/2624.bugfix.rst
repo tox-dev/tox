@@ -1,1 +1,0 @@
-``tox --showconfig -e py311`` reports tox section, though it should not - by :user:`gaborbernat`.
