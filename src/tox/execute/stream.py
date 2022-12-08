@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import sys
 from contextlib import contextmanager
 from threading import Event, Lock, Timer
 from types import TracebackType
@@ -17,7 +17,7 @@ class SyncWrite:
 
     REFRESH_RATE = 0.1
 
-    def __init__(self, name: str, target: IO[bytes] | None, color: str | None = None) -> None:
+    def __init__(self, name: str, target: IO[bytes] | None, color: str | None = None, encoding: str | None = None) -> None:
         self._content = bytearray()
         self._target: IO[bytes] | None = target
         self._target_enabled: bool = target is not None
@@ -27,6 +27,7 @@ class SyncWrite:
         self._at: int = 0
         self._color: str | None = color
         self.name = name
+        self.encoding = sys.getdefaultencoding() if encoding is None else encoding
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name!r}, target={self._target!r}, color={self._color!r})"
@@ -100,7 +101,7 @@ class SyncWrite:
     @property
     def text(self) -> str:
         with self._content_lock:
-            return self._content.decode("utf-8")
+            return self._content.decode(self.encoding)
 
     @property
     def content(self) -> bytearray:
