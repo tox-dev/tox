@@ -1,0 +1,2 @@
+Always set environment variable ``PYTHONIOENCODING`` to ``utf-8`` to ensure tox works under Windows custom encodings
+- by :user:`gaborbernat`.
