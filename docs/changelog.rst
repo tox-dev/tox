@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.1 (2022-12-07)
+-------------------
+
+Bugfixes - 4.0.1
+~~~~~~~~~~~~~~~~
+- Create session views of the build wheel/sdist into the :ref:`temp_dir` folder - by :user:`gaborbernat`. (:issue:`2612`)
+- Default tox min_version to 4.0 instead of current tox version - by :user:`gaborbernat`. (:issue:`2613`)
+
+
 v4.0.0 (2022-12-07)
 -------------------
 

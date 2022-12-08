@@ -1,1 +1,0 @@
-Create session views of the build wheel/sdist into the :ref:`temp_dir` folder - by :user:`gaborbernat`.
