@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.2 (2022-12-07)
+-------------------
+
+Bugfixes - 4.0.2
+~~~~~~~~~~~~~~~~
+- Unescaped comma in substitution should not be replaced during INI expansion - by :user:`gaborbernat`. (:issue:`2616`)
+- ``tox --showconfig -e py311`` reports tox section, though it should not - by :user:`gaborbernat`. (:issue:`2624`)
+
+
 v4.0.1 (2022-12-07)
 -------------------
 
