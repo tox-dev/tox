@@ -86,3 +86,10 @@ def test_tox_env_pass_env_match_ignore_case(char: str, glob: str) -> None:
     with patch("os.environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"}):
         env = ToxEnv._load_pass_env([f"{char}{glob}"])
     assert env == {"A1": "1", "a2": "2", "A2": "3"}
+
+
+def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> None:
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nchange_dir=a{/}b\ncommands=python --version"})
+    result_first = prj.run("r")
+    result_first.assert_success()
+    assert (prj.path / "a" / "b").exists()
