@@ -1,1 +1,1 @@
-Document necessity to escape ``#`` used  in ``commands``, ``commands_pre`` or ``commands_post`` - by :user:`jugmac00`.
+Document necessity to escape ``#`` within INI configuration - by :user:`jugmac00`.

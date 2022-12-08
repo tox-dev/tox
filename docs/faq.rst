@@ -13,6 +13,37 @@ tox 4 - Python support
   for earlier Python versions or different Python interpreters. PyPy support is best effort, meaning we do not test it
   as part of our CI runs, however if you discover issues under PyPy we will accept PRs addressing it.
 
+tox 4 - changed INI rules
++++++++++++++++++++++++++
+- The ``#`` character now always acts as comment within ``tox.ini`` or ``setup.cfg`` tox configuration file. Where you
+  need to pass on a ``#`` character you will need to escape it in form of ``\#`` so tox does not handle everything right
+  of the ``#`` character as a comment. Valid in tox 3:
+
+  .. code-block:: ini
+
+      # valid in tox 3
+      commands = bash -c "echo 'foo#bar'"
+
+      # valid in tox 4
+      commands = bash -c "echo 'foo\#bar'"
+
+- Within the ``pass_env`` you can no longer use space as value separator, instead you need to use the ``,`` or the
+  newline character. This is to have the same value separation rules for all tox configuration lines.
+
+  .. code-block:: ini
+
+      # valid in tox 3
+      passenv = ALPHA BETA
+      passenv =
+          ALPHA
+          BETA
+
+      # valid in tox 4
+      passenv = ALPHA, BETA
+      passenv =
+          ALPHA
+          BETA
+
 tox 4 - known regressions
 +++++++++++++++++++++++++
 
@@ -41,23 +72,6 @@ tox 4 - removed tox.ini keys
 +--------------------------+---------------------------------------------+
 | ``isolated_build``       | Isolated builds are now always used.        |
 +--------------------------+---------------------------------------------+
-
-tox 4 - changed behaviour for tox.ini keys
-++++++++++++++++++++++++++++++++++++++++++
-
-- When using any of the ``commands``, ``commands_pre`` or ``commands_post`` keys, you need to escape the ``#`` sign.
-
-Valid in tox 3:
-
-.. code-block:: ini
-
-  commands = bash -c "echo 'foo#bar'"
-
-Valid in tox 4:
-
-.. code-block:: ini
-
-  commands = bash -c "echo 'foo\#bar'"
 
 tox 4 - substitutions removed
 +++++++++++++++++++++++++++++
