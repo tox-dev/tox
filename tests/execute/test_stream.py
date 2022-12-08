@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from colorama import Fore
 from io import BytesIO
+
 import pytest
+from colorama import Fore
 
 from tox.execute.stream import SyncWrite
 

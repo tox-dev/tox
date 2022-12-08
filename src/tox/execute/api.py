@@ -122,7 +122,12 @@ class Execute(ABC):
             out, err = out_err
             out_buffer, err_buffer = out.buffer, err.buffer
             out_sync = SyncWrite(out_buffer.name, out_buffer if show else None, encoding=out.encoding)
-            err_sync = SyncWrite(err_buffer.name, err_buffer if show else None, Fore.RED if self._colored else None, encoding=err.encoding)
+            err_sync = SyncWrite(
+                err_buffer.name,
+                err_buffer if show else None,
+                Fore.RED if self._colored else None,
+                encoding=err.encoding,
+            )
             with out_sync, err_sync:
                 instance = self.build_instance(request, self._option_class(env), out_sync, err_sync)
                 with instance as status:

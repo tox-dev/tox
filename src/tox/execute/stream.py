@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import sys
 from contextlib import contextmanager
 from threading import Event, Lock, Timer
@@ -17,7 +18,9 @@ class SyncWrite:
 
     REFRESH_RATE = 0.1
 
-    def __init__(self, name: str, target: IO[bytes] | None, color: str | None = None, encoding: str | None = None) -> None:
+    def __init__(
+        self, name: str, target: IO[bytes] | None, color: str | None = None, encoding: str | None = None
+    ) -> None:
         self._content = bytearray()
         self._target: IO[bytes] | None = target
         self._target_enabled: bool = target is not None
