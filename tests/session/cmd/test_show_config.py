@@ -98,10 +98,9 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
     pass_env = outcome.env_conf("py")["pass_env"]
     is_win = sys.platform == "win32"
     expected = (
-        (["NUMBER_OF_PROCESSORS"] if is_win else [])
-        + (["COMSPEC"] if is_win else [])
+        (["COMSPEC"] if is_win else [])
         + ["CURL_CA_BUNDLE", "LANG", "LANGUAGE", "LD_LIBRARY_PATH"]
-        + (["MSYSTEM", "PATHEXT"] if is_win else [])
+        + (["MSYSTEM", "NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
         + ["PIP_*"]
         + (["PROCESSOR_ARCHITECTURE"] if is_win else [])
         + (["PROGRAMDATA"] if is_win else [])
