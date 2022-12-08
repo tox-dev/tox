@@ -91,7 +91,7 @@ def legacy(state: State) -> int:
     option = state.conf.options
     if option.show_config:
         option.list_keys_only = []
-        option.show_core = True
+        option.show_core = not bool(option.env)
         return show_config(state)
     if option.list_envs or option.list_envs_all:
         state.envs.on_empty_fallback_py = False

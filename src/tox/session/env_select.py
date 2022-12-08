@@ -33,6 +33,9 @@ class CliEnv:
         if not self.is_all and self._names is not None:  # pragma: no branch
             yield from self._names
 
+    def __bool__(self) -> bool:
+        return bool(self._names)
+
     def __str__(self) -> str:
         return "ALL" if self.is_all else ("<env_list>" if self.is_default_list else ",".join(self))
 

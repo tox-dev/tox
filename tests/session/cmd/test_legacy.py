@@ -18,6 +18,16 @@ def test_legacy_show_config(tox_project: ToxProjectCreator, mocker: MockerFixtur
     assert outcome.state.conf.options.show_core is True
 
 
+def test_legacy_show_config_with_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    show_config = mocker.patch("tox.session.cmd.legacy.show_config")
+
+    outcome = tox_project({"tox.ini": ""}).run("le", "--showconfig", "-e", "py")
+
+    assert show_config.call_count == 1
+    assert outcome.state.conf.options.list_keys_only == []
+    assert outcome.state.conf.options.show_core is False
+
+
 @pytest.mark.parametrize("verbose", range(3))
 def test_legacy_list_default(tox_project: ToxProjectCreator, mocker: MockerFixture, verbose: int) -> None:
     list_env = mocker.patch("tox.session.cmd.legacy.list_env")
