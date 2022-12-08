@@ -160,7 +160,7 @@ def test_show_config_select_only(tox_project: ToxProjectCreator) -> None:
 def test_show_config_alias(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "setenv")
     outcome.assert_success()
-    assert "set_env = " in outcome.out
+    assert "set_env =" in outcome.out
 
 
 def test_show_config_description_normalize(tox_project: ToxProjectCreator) -> None:
