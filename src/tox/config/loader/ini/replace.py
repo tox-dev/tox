@@ -54,14 +54,14 @@ def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs) -
 
 REPLACE_PART = re.compile(
     r"""
-        (?<! \\) {  # Unescaped {
-            ( [^{}] | \\ { | \\ } )*  # Anything except an unescaped { or }
+        (?<!\\) {  # Unescaped {
+            ( [^{},] | \\ { | \\ } )*  # Anything except an unescaped { or }
         (?<! \\) }  # Unescaped }
     |
         (?<! \\) \[ ]  # Unescaped []
     """,
     re.VERBOSE,
-)  # simplified - not verbose version (?<!\\)([^{}]|\\\{|\\\})*(?<!\\)\}|(?<!\\)\[\]
+)
 
 
 def find_replace_part(value: str, end: int) -> tuple[int, int, str | None]:
@@ -70,7 +70,8 @@ def find_replace_part(value: str, end: int) -> tuple[int, int, str | None]:
         return -1, -1, None
     if match.group() == "[]":
         return match.start(), match.end() - 1, "posargs"  # brackets is an alias for positional arguments
-    return match.start(), match.end() - 1, match.group()[1:-1]
+    matched_part = match.group()[1:-1]
+    return match.start(), match.end() - 1, matched_part
 
 
 def _replace_match(conf: Config, loader: IniLoader, value: str, conf_args: ConfigLoadArgs) -> str | None:

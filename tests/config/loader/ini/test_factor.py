@@ -136,6 +136,11 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
             assert "Django>=1.6,<1.7" in deps
 
 
+def test_factor_config_do_not_replace_unescaped_comma(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[tox]\nenv_list = py37-{base,i18n},b")
+    assert list(config) == ["py37-base", "py37-i18n", "b"]
+
+
 def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> None:
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
     config = tox_ini_conf(
