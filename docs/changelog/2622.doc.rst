@@ -1,2 +1,0 @@
-Document that running ``--showconfig```or ``--help-ini`` with the ``-v`` flag will add interleaved debugging
-information, whereas tox v3 added extra lines at the start  - by :user:`jugmac00`.
