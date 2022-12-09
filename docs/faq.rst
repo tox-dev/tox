@@ -15,7 +15,7 @@ tox 4 - Python support
 
 tox 4 - changed INI rules
 +++++++++++++++++++++++++
-- The ``#`` character now always acts as comment within ``tox.ini`` or ``setup.cfg`` tox configuration file. Where you
+- The hash sign (``#``) now always acts as comment within ``tox.ini`` or ``setup.cfg`` tox configuration file. Where you
   need to pass on a ``#`` character you will need to escape it in form of ``\#`` so tox does not handle everything right
   of the ``#`` character as a comment. Valid in tox 3:
 
