@@ -6,7 +6,6 @@ import pytest
 
 from tox.config.cli.parse import get_options
 from tox.pytest import CaptureFixture
-from tox.report import LowerInfoLevel
 
 
 def test_help_does_not_default_cmd(capsys: CaptureFixture) -> None:
@@ -26,11 +25,7 @@ def test_verbosity_guess_miss_match(capsys: CaptureFixture) -> None:
 
     for name in ("distlib.util", "filelock"):
         logger = logging.getLogger(name)
-        for logging_filter in logger.filters:  # pragma: no branch # never empty
-            if isinstance(logging_filter, LowerInfoLevel):  # pragma: no branch # we always find it
-                assert logging_filter.level == logging.INFO
-                break
-
+        assert logger.disabled
     logging.error("E")
     logging.warning("W")
     logging.info("I")

@@ -204,36 +204,16 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
     def update_verbosity(self, verbosity: int) -> None:
         level = _get_level(verbosity)
         LOGGER.setLevel(level)
-        for name in ("distlib.util", "filelock"):
-            logger = logging.getLogger(name)
-            for logging_filter in logger.filters:  # pragma: no branch  # the filters is never empty
-                if isinstance(logging_filter, LowerInfoLevel):  # pragma: no branch # we always find it
-                    logging_filter.level = level
-                    break
         self._setup_level(self._is_colored, level)
-
-
-class LowerInfoLevel(logging.Filter):
-    def __init__(self, level: int) -> None:
-        super().__init__()
-        self.level = level
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        if record.levelname in "INFO":
-            record.levelno = logging.DEBUG
-            record.levelname = "DEBUG"
-        return record.levelno >= self.level
 
 
 def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
-    lower_info_level = LowerInfoLevel(level)
     for name in ("distlib.util", "filelock"):
         logger = logging.getLogger(name)
-        logger.filters.clear()
-        logger.addFilter(lower_info_level)
+        logger.disabled = True
     out_err: OutErr = (sys.stdout, sys.stderr)  # type: ignore[assignment]
     handler = ToxHandler(level, is_colored, out_err)
     LOGGER.addHandler(handler)
