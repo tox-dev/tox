@@ -14,7 +14,7 @@ Bugfixes - 4.0.4
 
 Improved Documentation - 4.0.4
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Document that running ``--showconfig```or ``--help-ini`` with the ``-v`` flag will add interleaved debugging
+- Document that running ``--showconfig`` or ``--help-ini`` with the ``-v`` flag will add interleaved debugging
   information, whereas tox v3 added extra lines at the start  - by :user:`jugmac00`. (:issue:`2622`)
 - Document that tox v4 errors when using ``-U`` when defining dependencies via ``deps``  - by :user:`jugmac00`. (:issue:`2631`)
 
