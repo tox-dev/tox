@@ -4,6 +4,21 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.4 (2022-12-09)
+-------------------
+
+Bugfixes - 4.0.4
+~~~~~~~~~~~~~~~~
+- Disable logging from ``distlib.util`` and ``filelock`` as these log messages are too verbose - by :user:`gaborbernat`. (:issue:`2655`)
+- Use ``!r`` and ``repr()`` to better display erroneous values in exception from ``StrConverter.to_bool()`` - by :user:`ptmcg`. (:issue:`2665`)
+
+Improved Documentation - 4.0.4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document that running ``--showconfig```or ``--help-ini`` with the ``-v`` flag will add interleaved debugging
+  information, whereas tox v3 added extra lines at the start  - by :user:`jugmac00`. (:issue:`2622`)
+- Document that tox v4 errors when using ``-U`` when defining dependencies via ``deps``  - by :user:`jugmac00`. (:issue:`2631`)
+
+
 v4.0.3 (2022-12-08)
 -------------------
 

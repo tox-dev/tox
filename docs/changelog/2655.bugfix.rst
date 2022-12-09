@@ -1,1 +1,0 @@
-Disable logging from ``distlib.util`` and ``filelock`` as these log messages are too verbose - by :user:`gaborbernat`.
