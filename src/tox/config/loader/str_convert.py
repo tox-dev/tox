@@ -87,8 +87,10 @@ class StrConvert(Convert[str]):
         elif norm in StrConvert.FALSE_VALUES:
             return False
         else:
-            raise TypeError(f"value {value!r} cannot be transformed to bool,"
-                            f" valid values: {', '.join(repr(vb) for vb in StrConvert.VALID_BOOL)}")
+            raise TypeError(
+                f"value {value!r} cannot be transformed to bool,"
+                f" valid values: {', '.join(repr(vb) for vb in StrConvert.VALID_BOOL)}",
+            )
 
 
 __all__ = ("StrConvert",)
