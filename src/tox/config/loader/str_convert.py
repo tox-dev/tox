@@ -81,13 +81,15 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_bool(value: str) -> bool:
-        norm = value.strip().lower()
+        norm = str(value).strip().lower()
         if norm in StrConvert.TRUTHFUL_VALUES:
             return True
         elif norm in StrConvert.FALSE_VALUES:
             return False
         else:
-            raise TypeError(f"value {value} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}")
+            raise TypeError(
+                f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}",
+            )
 
 
 __all__ = ("StrConvert",)

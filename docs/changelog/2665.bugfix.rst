@@ -1,0 +1,1 @@
+Use ``!r`` and ``repr()`` to better display erroneous values in exception from ``StrConverter.to_bool()`` - by :user:`ptmcg`.
