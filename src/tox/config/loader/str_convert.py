@@ -88,7 +88,7 @@ class StrConvert(Convert[str]):
             return False
         else:
             raise TypeError(
-                f"value {value!r} cannot be transformed to bool, valid values: {', '.join(StrConvert.VALID_BOOL)}",
+                f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}",
             )
 
 
