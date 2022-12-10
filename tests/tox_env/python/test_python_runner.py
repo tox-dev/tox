@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from tox.journal import EnvJournal
 from tox.pytest import ToxProjectCreator
 from tox.tox_env.package import PathPackage
@@ -99,3 +101,23 @@ def test_package_temp_dir_view(tox_project: ToxProjectCreator, demo_pkg_inline: 
     msg = f" D package {session_path} links to {Path('.pkg') / 'dist'/ wheel_name} ({project.path/ '.tox'}) "
     assert msg in result.out
     assert f" D delete package {project.path / '.tox' / session_path}" in result.out
+
+
+@pytest.mark.parametrize(
+    ("extra", "used_extra"),
+    [
+        ("d_oc", "d-oc"),
+        ("d-oc", "d-oc"),
+        ("d.oc", "d-oc"),
+    ],
+)
+def test_extras_are_normalized(
+    tox_project: ToxProjectCreator,
+    demo_pkg_inline: Path,
+    extra: str,
+    used_extra: str,
+) -> None:
+    project = tox_project({"tox.ini": f"[testenv]\nextras={extra}"})
+    result = project.run("c", "-e", "py", "--root", str(demo_pkg_inline), "-k", "extras")
+    result.assert_success()
+    assert result.out == f"[testenv:py]\nextras = {used_extra}\n"
