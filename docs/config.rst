@@ -589,8 +589,8 @@ Python run
    :keys: package
    :version_added: 4.0
 
-   When option can be one of ``skip``, ``dev-legacy``, ``sdist``, ``wheel`` or ``external``. If :ref:`use_develop` is
-   set this becomes a constant of ``dev-legacy``. If :ref:`skip_install` is set this becomes a constant of ``skip``.
+   When option can be one of ``wheel``, ``sdist``, ``editable``, ``editable-legacy``, ``skip``, or ``external``. If :ref:`use_develop` is
+   set this becomes a constant of ``editable``. If :ref:`skip_install` is set this becomes a constant of ``skip``.
 
 
 .. conf::
