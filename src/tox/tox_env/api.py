@@ -21,7 +21,7 @@ from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
 from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
 from tox.report import OutErr, ToxHandler
-from tox.tox_env.errors import Recreate, Skip
+from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
 from tox.tox_env.installer import Installer
 from tox.util.path import ensure_empty_dir
@@ -131,6 +131,12 @@ class ToxEnv(ABC):
         )
 
         def pass_env_post_process(values: list[str]) -> list[str]:
+            blank_values = [v for v in values if " " in v or "\t" in v]
+            if blank_values:
+                raise Fail(
+                    f"pass_env/passenv variable can't have values containing "
+                    f"blanks like {blank_values}; a comma is possibly missing",
+                )
             values.extend(self._default_pass_env())
             return sorted({k: None for k in values}.keys())
 

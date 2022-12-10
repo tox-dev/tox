@@ -80,6 +80,26 @@ def test_tox_env_pass_env_literal_miss() -> None:
     assert not env
 
 
+def test_tox_env_pass_env_fail(tox_project: ToxProjectCreator) -> None:
+    prj = tox_project(
+        {
+            "tox.ini": """[testenv]
+    passenv = MYENV YOURENV, THEIRENV
+    commands=python -c 'import os; print("MYENV", os.getenv("MYENV"))'""",
+        },
+    )
+
+    result = prj.run("r")
+
+    result.assert_failed(1)
+    out = (
+        r"py: failed with pass_env/passenv variable can't have values "
+        r"containing blanks like \['MYENV YOURENV'\]; "
+        r"a comma is possibly missing.*"
+    )
+    result.assert_out_err(out=out, err="", regex=True)
+
+
 @pytest.mark.parametrize("glob", ["*", "?"])
 @pytest.mark.parametrize("char", ["a", "A"])
 def test_tox_env_pass_env_match_ignore_case(char: str, glob: str) -> None:
