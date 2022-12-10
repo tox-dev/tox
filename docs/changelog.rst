@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.5 (2022-12-09)
+-------------------
+
+Bugfixes - 4.0.5
+~~~~~~~~~~~~~~~~
+- Normalize extra names passed in (fixes extra groups not being picked up during installation) - by :user:`gaborbernat`. (:issue:`2655`)
+
+
 v4.0.4 (2022-12-09)
 -------------------
 
