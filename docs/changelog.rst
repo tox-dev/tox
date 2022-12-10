@@ -363,7 +363,7 @@ Bugfixes - 4.0.0a7
 - Enable setting a different ``upstream`` repository for the coverage diff report.
   This has been hardcoded to ``upstream/rewrite`` until now.
   by :user:`jugmac00`. (:issue:`1972`)
-- Enable replacements (a.k.a section substitions) for section names containing a dash in sections
+- Enable replacements (a.k.a section substitutions) for section names containing a dash in sections
   without the ``testenv:`` prefix - by :user:`jugmac00`, :user:`obestwalter`, :user:`eumiro`. (:issue:`1985`)
 - Fix legacy list env command for empty/missing envlist - by :user:`jugmac00`. (:issue:`1987`)
 - Requirements and constraints files handling got reimplemented, which should fix all open issues related to this area
@@ -413,7 +413,7 @@ Features - 4.0.0a6
   final report will be soon printed and makes the status update redundant) - by :user:`gaborbernat`. (:issue:`1909`)
 - The ``_TOX_SHOW_THREAD`` environment variable can be used to print alive threads when tox exists (useful to debug
   when tox hangs because of some non-finished thread) and also now prints the pid of the local subprocess when reporting
-  the outcome of a execution - by :user:`gaborbernat`. (:pull:`1915`)
+  the outcome of an execution - by :user:`gaborbernat`. (:pull:`1915`)
 
 Bugfixes - 4.0.0a6
 ~~~~~~~~~~~~~~~~~~

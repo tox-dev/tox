@@ -15,8 +15,8 @@ Out of box tox supports three configuration locations prioritized in the followi
 2. ``pyproject.toml``,
 3. ``setup.cfg``.
 
-As far as the configuration format at the moment we only support a *ini-style*. ``tox.ini`` and ``setup.cfg`` are by
-nature such file, while in ``pyprojec.toml`` currently you can only inline the *ini-style* config.
+With regards to the configuration format, at the moment we only support *ini-style*. ``tox.ini`` and ``setup.cfg`` are by
+nature such files, while in ``pyproject.toml`` currently you can only inline the *ini-style* config.
 
 Note that ``setup.cfg`` requires the content to be under the ``tox:tox`` and ``testenv`` sections and is otherwise
 ignored. ``pyproject.toml`` on the other hand is in TOML format. However, one can inline the *ini-style* format under
@@ -72,7 +72,7 @@ to the default value for that setting. For example:
 
 ``pyproject.toml``
 ~~~~~~~~~~~~~~~~~~
-You can inline a ``tox.ini`` style configuration under the ``tool:tox`` section and ``legacy_tox_ini`` key.
+You can inline a ``tox.ini`` style configuration under the ``tool.tox`` section and ``legacy_tox_ini`` key.
 
 Below you find the specification for the *ini-style* format, but you might want to skim some
 examples first and use this page as a reference.
@@ -223,7 +223,7 @@ Python language core options
     tox allows setting the Python version for an environment via the :ref:`basepython` setting. If that's not set tox
     can set a default value from the environment name (e.g. ``py310`` implies Python 3.10). Matching up the Python
     version with the environment name has became expected at this point, leading to surprises when some configs don't
-    do so. To help with sanity of users a error will be raised whenever the environment name version does not matches
+    do so. To help with sanity of users, an error will be raised whenever the environment name version does not match
     up with this expectation.
 
     Furthermore, we allow hard enforcing this rule by setting this flag to ``true``. In such cases we ignore the

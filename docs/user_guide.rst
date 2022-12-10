@@ -60,7 +60,7 @@ Then we define separately what should the formatting environment (``testenv:form
 For testing the project we use the ``py310`` environment, for which we:
 
 - define a text description of the environment,
-- specify that requires ``pytest`` ``7`` ot later together with the :pypi:`pytest-sugar` project,
+- specify that requires ``pytest`` ``7`` or later together with the :pypi:`pytest-sugar` project,
 - and that the tool should be invoked via the ``pytest tests`` CLI command.
 
 ``{posargs}`` is a place holder part for the CLI command that allows us to pass additional flags to the pytest
