@@ -6,6 +6,8 @@ from __future__ import annotations
 from functools import partial
 from typing import Set
 
+from packaging.utils import canonicalize_name
+
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.package import Package
@@ -65,11 +67,18 @@ class PythonRun(Python, RunToxEnv):
         pkg_type = self.pkg_type
         if pkg_type == "skip":
             return False
+
+        def _normalize_extras(values: set[str]) -> set[str]:
+            # although _ and . is allowed this will be normalized during packaging to -
+            # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
+            return {canonicalize_name(v) for v in values}
+
         self.conf.add_config(
             keys=["extras"],
             of_type=Set[str],
             default=set(),
             desc="extras to install of the target package",
+            post_process=_normalize_extras,
         )
         return True
 
