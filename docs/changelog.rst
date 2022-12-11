@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.7 (2022-12-11)
+-------------------
+
+Bugfixes - 4.0.7
+~~~~~~~~~~~~~~~~
+- Support for ``--no-deps`` flag within the :ref:`deps` - by :user:`gaborbernat`. (:issue:`2674`)
+
+
 v4.0.6 (2022-12-10)
 -------------------
 
