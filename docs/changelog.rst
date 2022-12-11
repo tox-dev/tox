@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.6 (2022-12-10)
+-------------------
+
+Features - 4.0.6
+~~~~~~~~~~~~~~~~
+- Fail on :ref:`pass_env`/:ref:`passenv` entries containing whitespace - by :user:`ericzolf`. (:issue:`2658`)
+
+
 v4.0.5 (2022-12-09)
 -------------------
 
