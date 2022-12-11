@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
@@ -16,6 +16,27 @@ class PythonDeps(RequirementsFile):
         super().__init__(root / "tox.ini", constraint=False)
         self._raw = self._normalize_raw(raw)
         self._unroll: tuple[list[str], list[str]] | None = None
+        self._req_parser_: RequirementsFile | None = None
+
+    def _extend_parser(self, parser: ArgumentParser) -> None:
+        parser.add_argument("--no-deps", action="store_true", default=False)
+
+    def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:
+        super()._merge_option_line(base_opt, opt, filename)
+        if opt.no_deps:
+            base_opt.no_deps = True
+
+    def _option_to_args(self, opt: Namespace) -> list[str]:
+        result = super()._option_to_args(opt)
+        if getattr(opt, "no_deps", False):
+            result.append("--no-deps")
+        return result
+
+    @property
+    def _req_parser(self) -> RequirementsFile:
+        if self._req_parser_ is None:
+            self._req_parser_ = RequirementsFile(path=self._path, constraint=False)
+        return self._req_parser_
 
     def _get_file_content(self, url: str) -> str:
         if self._is_url_self(url):
@@ -69,14 +90,13 @@ class PythonDeps(RequirementsFile):
         # check for any invalid options in the deps list
         # (requirements recursively included from other files are not checked)
         requirements = super()._parse_requirements(opt, recurse)
-        for r in requirements:
-            if r.from_file != str(self.path):
+        for req in requirements:
+            if req.from_file != str(self.path):
                 continue
             for illegal_option in self._illegal_options:
-                if r.options.get(illegal_option):
-                    raise ValueError(
-                        f"Cannot use --{illegal_option} in deps list, it must be in requirements file. ({r})",
-                    )
+                if req.options.get(illegal_option):
+                    msg = f"Cannot use --{illegal_option} in deps list, it must be in requirements file. ({req})"
+                    raise ValueError(msg)
         return requirements
 
     def unroll(self) -> tuple[list[str], list[str]]:
