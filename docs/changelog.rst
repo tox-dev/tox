@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.8 (2022-12-11)
+-------------------
+
+Bugfixes - 4.0.8
+~~~~~~~~~~~~~~~~
+- Fix multiple substitution on factor filtering in ``tox.ini`` when multiple factor filters match
+  - by :user:`gaborbernat`. (:issue:`2650`)
+- Fix regression in ``requirements.txt`` parsing - by :user:`gaborbernat`. (:issue:`2682`)
+
+
 v4.0.7 (2022-12-11)
 -------------------
 
