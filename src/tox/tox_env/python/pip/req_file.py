@@ -19,11 +19,11 @@ class PythonDeps(RequirementsFile):
         self._req_parser_: RequirementsFile | None = None
 
     def _extend_parser(self, parser: ArgumentParser) -> None:
-        parser.add_argument("--no-deps", action="store_true", default=False)
+        parser.add_argument("--no-deps", action="store_true", dest="no_deps", default=False)
 
     def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:
         super()._merge_option_line(base_opt, opt, filename)
-        if opt.no_deps:
+        if getattr(opt, "no_deps", False):  # if the option comes from a requirements file this flag is missing there
             base_opt.no_deps = True
 
     def _option_to_args(self, opt: Namespace) -> list[str]:

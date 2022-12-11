@@ -1,0 +1,1 @@
+Fix regression in ``requirements.txt`` parsing - by :user:`gaborbernat`.

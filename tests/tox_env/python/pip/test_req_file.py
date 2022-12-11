@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -58,3 +59,11 @@ def test_req_with_no_deps(tmp_path: Path) -> None:
     python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
     with pytest.raises(ValueError, match="unrecognized arguments: --no-deps"):
         python_deps.requirements
+
+
+def test_opt_only_req_file(tmp_path: Path) -> None:
+    """deps with --hash should raise an exception."""
+    (tmp_path / "r.txt").write_text("--use-feature fast-deps")
+    python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
+    assert not python_deps.requirements
+    assert python_deps.options == Namespace(features_enabled=["fast-deps"])
