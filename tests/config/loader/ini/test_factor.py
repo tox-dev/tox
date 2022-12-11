@@ -203,3 +203,11 @@ def test_generative_section_name(tox_ini_conf: ToxIniCreator) -> None:
     env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps")
     deps = env_config["deps-x"]
     assert deps == ["flake8"]
+
+
+def test_multiple_factor_match(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[testenv]\nconf = a{,-b}: x")
+    env_config = config.get_env("a-b")
+    env_config.add_config(keys="conf", of_type=str, default="", desc="conf")
+    deps = env_config["conf"]
+    assert deps == "x"
