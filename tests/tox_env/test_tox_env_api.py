@@ -80,24 +80,24 @@ def test_tox_env_pass_env_literal_miss() -> None:
     assert not env
 
 
-def test_tox_env_pass_env_fail(tox_project: ToxProjectCreator) -> None:
-    prj = tox_project(
-        {
-            "tox.ini": """[testenv]
-    passenv = MYENV YOURENV, THEIRENV
-    commands=python -c 'import os; print("MYENV", os.getenv("MYENV"))'""",
-        },
+def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) -> None:
+    first, second = "A B", "C D"
+    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\npass_env = {first}\n {second}\n  E"})
+    result = prj.run("c", "-k", "pass_env")
+    result.assert_success()
+    msg = (
+        '[testenv:py]\npass_env = # Exception: Fail("pass_env values cannot contain whitespace, use comma to have '
+        f'multiple values in a single line, invalid values found {first!r}, {second!r}")\n\n[tox]\n'
     )
+    assert result.out == msg
 
     result = prj.run("r")
-
     result.assert_failed(1)
-    out = (
-        r"py: failed with pass_env/passenv variable can't have values "
-        r"containing blanks like \['MYENV YOURENV'\]; "
-        r"a comma is possibly missing.*"
+    msg = (
+        "py: failed with pass_env values cannot contain whitespace, use comma to have multiple values in a single line,"
+        " invalid values found 'A B', 'C D'"
     )
-    result.assert_out_err(out=out, err="", regex=True)
+    assert msg in result.out
 
 
 @pytest.mark.parametrize("glob", ["*", "?"])

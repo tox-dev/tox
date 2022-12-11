@@ -7,6 +7,7 @@ import fnmatch
 import logging
 import os
 import re
+import string
 import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
@@ -131,14 +132,17 @@ class ToxEnv(ABC):
         )
 
         def pass_env_post_process(values: list[str]) -> list[str]:
-            blank_values = [v for v in values if " " in v or "\t" in v]
-            if blank_values:
-                raise Fail(
-                    f"pass_env/passenv variable can't have values containing "
-                    f"blanks like {blank_values}; a comma is possibly missing",
-                )
             values.extend(self._default_pass_env())
-            return sorted({k: None for k in values}.keys())
+            result = sorted({k: None for k in values}.keys())
+            invalid_chars = set(string.whitespace)
+            invalid = [v for v in result if any(c in invalid_chars for c in v)]
+            if invalid:
+                invalid_repr = ", ".join(repr(i) for i in invalid)
+                raise Fail(
+                    f"pass_env values cannot contain whitespace, use comma to have multiple values in a single line, "
+                    f"invalid values found {invalid_repr}",
+                )
+            return result
 
         self.conf.add_config(
             keys=["pass_env", "passenv"],
