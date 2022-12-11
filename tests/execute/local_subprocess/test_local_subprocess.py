@@ -14,7 +14,6 @@ from unittest.mock import MagicMock, create_autospec
 import psutil
 import pytest
 from colorama import Fore
-from flaky import flaky
 from psutil import AccessDenied
 from pytest_mock import MockerFixture
 
@@ -222,8 +221,8 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
     assert not caplog.records
 
 
-@flaky  # type: ignore
 @pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
+@pytest.mark.flaky(max_runs=3, min_passes=1)
 def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, capfd: CaptureFixture) -> None:
     monkeypatch.chdir(tmp_path)
     process_up_signal = tmp_path / "signal"

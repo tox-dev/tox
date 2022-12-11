@@ -115,6 +115,7 @@ def test_parallel_show_output_with_pkg(tox_project: ToxProjectCreator, demo_pkg_
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
+@pytest.mark.flaky(max_runs=3, min_passes=1)
 def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Path, tmp_path: Path) -> None:
     marker = tmp_path / "a"
     ini = f"""
