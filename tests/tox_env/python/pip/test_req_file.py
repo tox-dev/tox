@@ -37,3 +37,24 @@ def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:
     assert str(parsed_req.requirement) == "foo==1"
     assert parsed_req.options == {"hash": [exp_hash]}
     assert parsed_req.from_file == str(requirements)
+
+
+def test_deps_with_no_deps(tmp_path: Path) -> None:
+    """deps with --hash should raise an exception."""
+    (tmp_path / "r.txt").write_text("urrlib3")
+    python_deps = PythonDeps(raw="-rr.txt\n--no-deps", root=tmp_path)
+
+    assert len(python_deps.requirements) == 1
+    parsed_req = python_deps.requirements[0]
+    assert str(parsed_req.requirement) == "urrlib3"
+
+    assert python_deps.options.no_deps is True
+    assert python_deps.as_root_args == ["-r", "r.txt", "--no-deps"]
+
+
+def test_req_with_no_deps(tmp_path: Path) -> None:
+    """deps with --hash should raise an exception."""
+    (tmp_path / "r.txt").write_text("--no-deps")
+    python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
+    with pytest.raises(ValueError, match="unrecognized arguments: --no-deps"):
+        python_deps.requirements

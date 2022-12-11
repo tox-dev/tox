@@ -1,0 +1,1 @@
+Support for ``--no-deps`` flag within the :ref:`deps` - by :user:`gaborbernat`.

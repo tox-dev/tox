@@ -137,6 +137,10 @@ class RequirementsFile:
         self._as_root_args: list[str] | None = None
         self._parser_private: ArgumentParser | None = None
 
+    @property
+    def _req_parser(self) -> RequirementsFile:
+        return self
+
     def __str__(self) -> str:
         return f"{'-c' if self.is_constraint else '-r'} {self.path}"
 
@@ -162,7 +166,11 @@ class RequirementsFile:
     def _parser(self) -> ArgumentParser:
         if self._parser_private is None:
             self._parser_private = build_parser()
+            self._extend_parser(self._parser_private)
         return self._parser_private
+
+    def _extend_parser(self, parser: ArgumentParser) -> None:  # noqa: U100
+        ...
 
     def _ensure_requirements_parsed(self) -> None:
         if self._requirements is None:
@@ -204,7 +212,7 @@ class RequirementsFile:
                     # do a join so relative paths work
                     req_path = os.path.join(os.path.dirname(filename), req_path)
                 if recurse:
-                    yield from self._parse_and_recurse(req_path, nested_constraint, recurse)
+                    yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)
                 else:
                     line.filename = req_path
                     yield line
@@ -278,8 +286,7 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    @staticmethod
-    def _merge_option_line(base_opt: Namespace, opt: Namespace, filename: str) -> None:  # noqa: C901
+    def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:  # noqa: C901
         # percolate options upward
         if opt.requirements:
             if not hasattr(base_opt, "requirements"):
@@ -428,8 +435,7 @@ class RequirementsFile:
             self._as_root_args = result
         return self._as_root_args
 
-    @staticmethod
-    def _option_to_args(opt: Namespace) -> list[str]:
+    def _option_to_args(self, opt: Namespace) -> list[str]:
         result: list[str] = []
         for req in getattr(opt, "requirements", []):
             result.extend(("-r", req))

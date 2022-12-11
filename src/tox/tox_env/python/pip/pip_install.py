@@ -10,8 +10,7 @@ from tox.config.cli.parser import DEFAULT_VERBOSITY
 from tox.config.main import Config
 from tox.config.types import Command
 from tox.execute.request import StdinSource
-from tox.report import HandledError
-from tox.tox_env.errors import Recreate
+from tox.tox_env.errors import Fail, Recreate
 from tox.tox_env.installer import Installer
 from tox.tox_env.package import PathPackage
 from tox.tox_env.python.api import Python
@@ -92,7 +91,7 @@ class Pip(Installer[Python]):
         try:
             new_options, new_reqs = arguments.unroll()
         except ValueError as exception:
-            raise HandledError(f"{exception} for tox env py within deps")
+            raise Fail(f"{exception} for tox env py within deps")
         new_requirements: list[str] = []
         new_constraints: list[str] = []
         for req in new_reqs:
