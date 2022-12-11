@@ -7,6 +7,7 @@ import fnmatch
 import logging
 import os
 import re
+import string
 import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
@@ -21,7 +22,7 @@ from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
 from tox.execute.request import ExecuteRequest
 from tox.journal import EnvJournal
 from tox.report import OutErr, ToxHandler
-from tox.tox_env.errors import Recreate, Skip
+from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
 from tox.tox_env.installer import Installer
 from tox.util.path import ensure_empty_dir
@@ -132,7 +133,16 @@ class ToxEnv(ABC):
 
         def pass_env_post_process(values: list[str]) -> list[str]:
             values.extend(self._default_pass_env())
-            return sorted({k: None for k in values}.keys())
+            result = sorted({k: None for k in values}.keys())
+            invalid_chars = set(string.whitespace)
+            invalid = [v for v in result if any(c in invalid_chars for c in v)]
+            if invalid:
+                invalid_repr = ", ".join(repr(i) for i in invalid)
+                raise Fail(
+                    f"pass_env values cannot contain whitespace, use comma to have multiple values in a single line, "
+                    f"invalid values found {invalid_repr}",
+                )
+            return result
 
         self.conf.add_config(
             keys=["pass_env", "passenv"],
