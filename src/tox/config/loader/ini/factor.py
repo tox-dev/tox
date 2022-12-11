@@ -21,6 +21,7 @@ def filter_for_env(value: str, name: str | None) -> str:
             for group in factors:
                 if all((a_name in current) ^ negate for a_name, negate in group):
                     overall.append(content)
+                    break  # if any match we use it, and then bail
     result = "\n".join(overall)
     return result
 
