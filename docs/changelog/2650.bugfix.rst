@@ -1,2 +1,0 @@
-Fix multiple substitution on factor filtering in ``tox.ini`` when multiple factor filters match
-- by :user:`gaborbernat`.
