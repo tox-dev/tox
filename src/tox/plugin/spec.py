@@ -83,6 +83,27 @@ def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outco
     """
 
 
+@_spec
+def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:  # noqa: U100
+    """
+    Called before executing an installation command.
+
+    :param tox_env: the tox environment where the command runs in
+    :param arguments: installation arguments
+    :param section: section of the installation
+    :param of_type: type of the installation
+    """
+
+
+@_spec
+def tox_env_teardown(tox_env: ToxEnv) -> None:  # noqa: U100
+    """
+    Called before executing an installation command.
+
+    :param tox_env: the tox environment
+    """
+
+
 __all__ = [
     "NAME",
     "tox_register_tox_env",
@@ -91,4 +112,6 @@ __all__ = [
     "tox_add_env_config",
     "tox_before_run_commands",
     "tox_after_run_commands",
+    "tox_on_install",
+    "tox_env_teardown",
 ]

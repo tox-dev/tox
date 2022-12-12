@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -48,6 +49,14 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
         logging.warning("tox_before_run_commands")
 
     @impl
+    def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
+        assert isinstance(tox_env, ToxEnv)
+        assert arguments is not None
+        assert isinstance(section, str)
+        assert isinstance(of_type, str)
+        logging.warning(f"tox_on_install {section} {of_type}")
+
+    @impl
     def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
         assert isinstance(tox_env, ToxEnv)
         assert exit_code == 0
@@ -55,8 +64,13 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
         assert all(isinstance(i, Outcome) for i in outcomes)
         logging.warning("tox_after_run_commands")
 
+    @impl
+    def tox_env_teardown(tox_env: ToxEnv) -> None:
+        assert isinstance(tox_env, ToxEnv)
+        logging.warning("teardown")
+
     plugins = tuple(v for v in locals().values() if callable(v) and hasattr(v, "tox_impl"))
-    assert len(plugins) == 6
+    assert len(plugins) == 8
     register_inline_plugin(mocker, *plugins)
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
     result = project.run("r", "-e", "a,b")
@@ -68,15 +82,19 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
         "ROOT: tox_add_core_config",
         "a: tox_add_env_config",
         "b: tox_add_env_config",
+        "a: tox_on_install PythonRun deps",
         "a: tox_before_run_commands",
         f"a: commands[0]> python -c {cmd}",
         mocker.ANY,  # output a
         "a: tox_after_run_commands",
+        "a: teardown",
         mocker.ANY,  # report finished A
+        "b: tox_on_install PythonRun deps",
         "b: tox_before_run_commands",
         f"b: commands[0]> python -c {cmd}",
         mocker.ANY,  # output b
         "b: tox_after_run_commands",
+        "b: teardown",
         mocker.ANY,  # report a
         mocker.ANY,  # report b
         mocker.ANY,  # overall report

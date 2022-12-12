@@ -148,13 +148,13 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             if not self._frontend.optional_hooks["build_editable"]:
                 raise BuildEditableNotSupported
             build_requires = self._frontend.get_requires_for_build_editable().requires
-            self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
+            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
         if "wheel" in self.builds:
             build_requires = self._frontend.get_requires_for_build_wheel().requires
-            self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_wheel")
+            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_wheel")
         if "sdist" in self.builds or "external" in self.builds:
             build_requires = self._frontend.get_requires_for_build_sdist().requires
-            self.installer.install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_sdist")
+            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_sdist")
 
     def _teardown(self) -> None:
         executor = self._frontend.backend_executor

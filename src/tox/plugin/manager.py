@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import pluggy
 
@@ -75,6 +76,12 @@ class Plugin:
 
     def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
         self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
+
+    def tox_on_install(self, tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
+        self.manager.hook.tox_on_install(tox_env=tox_env, arguments=arguments, section=section, of_type=of_type)
+
+    def tox_env_teardown(self, tox_env: ToxEnv) -> None:
+        self.manager.hook.tox_env_teardown(tox_env=tox_env)
 
     def load_plugins(self, path: Path) -> None:
         for _plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run

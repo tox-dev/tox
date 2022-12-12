@@ -1,0 +1,2 @@
+Add :meth:`tox_on_install <tox.plugin.spec.tox_on_install>` and
+:meth:`tox_env_teardown <tox.plugin.spec.tox_env_teardown>` plugin hooks - by :user:`gaborbernat`.
