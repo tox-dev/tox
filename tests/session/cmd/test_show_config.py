@@ -101,12 +101,12 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
         (["COMSPEC"] if is_win else [])
         + ["CURL_CA_BUNDLE", "LANG", "LANGUAGE", "LD_LIBRARY_PATH"]
         + (["MSYSTEM", "NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
-        + ["PIP_*"]
+        + ["PIP_*", "PKG_CONFIG_PATH"]
         + (["PROCESSOR_ARCHITECTURE"] if is_win else [])
         + (["PROGRAMDATA"] if is_win else [])
         + (["PROGRAMFILES"] if is_win else [])
         + (["PROGRAMFILES(x86)"] if is_win else [])
-        + ["PKG_CONFIG_PATH", "REQUESTS_CA_BUNDLE", "SSL_CERT_FILE"]
+        + ["REQUESTS_CA_BUNDLE", "SSL_CERT_FILE"]
         + (["SYSTEMDRIVE", "SYSTEMROOT", "TEMP"] if is_win else [])
         + (["TERM"] if stdout_is_atty else [])
         + (["TMP", "USERPROFILE"] if is_win else ["TMPDIR"])
