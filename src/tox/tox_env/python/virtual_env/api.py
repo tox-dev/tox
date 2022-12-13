@@ -109,6 +109,9 @@ class VirtualEnv(Python):
 
     def virtualenv_env_vars(self) -> dict[str, str]:
         env = self.environment_variables.copy()
+        # we want to use PATH from environment rather than any PATH
+        # modifications in set_env to find the python executable
+        env["PATH"] = os.environ.get("PATH", "")
         base_python: list[str] = self.conf["base_python"]
         if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
             env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
