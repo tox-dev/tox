@@ -4,6 +4,17 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.9 (2022-12-13)
+-------------------
+
+Features - 4.0.9
+~~~~~~~~~~~~~~~~
+- Add :meth:`tox_on_install <tox.plugin.spec.tox_on_install>` and
+  :meth:`tox_env_teardown <tox.plugin.spec.tox_env_teardown>` plugin hooks - by :user:`gaborbernat`. (:issue:`2687`)
+- Add ``PKG_CONFIG_PATH`` to the default pass through environment list for python tox environments -
+  by :user:`gaborbernat`. (:issue:`2700`)
+
+
 v4.0.8 (2022-12-11)
 -------------------
 

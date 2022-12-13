@@ -1,2 +1,0 @@
-Add ``PKG_CONFIG_PATH`` to the default pass through environment list for python tox environments -
-by :user:`gaborbernat`.
