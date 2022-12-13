@@ -97,6 +97,7 @@ class Python(ToxEnv, ABC):
                     "NUMBER_OF_PROCESSORS",  # multiprocessing.cpu_count()
                 ],
             )
+        env.extend(["PKG_CONFIG_PATH"])  # used by binary extensions during installation
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
