@@ -100,7 +100,7 @@ class PythonRun(Python, RunToxEnv):
 
     def _install_deps(self) -> None:
         requirements_file: PythonDeps = self.conf["deps"]
-        self.installer.install(requirements_file, PythonRun.__name__, "deps")
+        self._install(requirements_file, PythonRun.__name__, "deps")
 
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env

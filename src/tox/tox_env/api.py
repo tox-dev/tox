@@ -89,6 +89,12 @@ class ToxEnv(ABC):
     def installer(self) -> Installer[Any]:
         raise NotImplementedError
 
+    def _install(self, arguments: Any, section: str, of_type: str) -> None:
+        from tox.plugin.manager import MANAGER
+
+        MANAGER.tox_on_install(self, arguments, section, of_type)
+        self.installer.install(arguments, section, of_type)
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
 
@@ -251,6 +257,9 @@ class ToxEnv(ABC):
             try:
                 self._teardown()
             finally:
+                from tox.plugin.manager import MANAGER
+
+                MANAGER.tox_env_teardown(self)
                 self._run_state["teardown"] = True
 
     def _teardown(self) -> None:  # noqa: B027 # empty abstract base class

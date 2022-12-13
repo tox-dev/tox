@@ -55,7 +55,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def _setup_env(self) -> None:
         """setup the tox environment"""
         super()._setup_env()
-        self.installer.install(self.requires(), PythonPackageToxEnv.__name__, "requires")
+        self._install(self.requires(), PythonPackageToxEnv.__name__, "requires")
 
     @abstractmethod
     def requires(self) -> tuple[Requirement, ...] | PythonDeps:
