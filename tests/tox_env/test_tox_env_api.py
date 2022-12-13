@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -113,3 +114,18 @@ def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> N
     result_first = prj.run("r")
     result_first.assert_success()
     assert (prj.path / "a" / "b").exists()
+
+
+def test_path_from_set_env(tox_project: ToxProjectCreator) -> None:
+    tox_ini = """
+        [testenv]
+        package = skip
+        set_env =
+            PATH=/dev/null
+        commands =
+            python -c 'import os; print("PATH", os.environ["PATH"])'
+    """
+    prj = tox_project({"tox.ini": inspect.cleandoc(tox_ini)})  # noqa: SC200
+    result = prj.run("r")
+    result.assert_success()
+    assert "/dev/null" in result.out

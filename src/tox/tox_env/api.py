@@ -59,7 +59,7 @@ class ToxEnv(ABC):
 
         #: encode the run state of various methods (setup/clean/etc)
         self._run_state = {"setup": False, "clean": False, "teardown": False}
-        self._paths_private: list[Path] = []  #: a property holding the PATH environment variables
+        self._paths: list[Path] = []  #: directories to prepend to the PATH environment variable
         self._hidden_outcomes: list[Outcome] | None = []
         self._env_vars: dict[str, str] | None = None
         self._env_vars_pass_env: list[str] = []
@@ -310,19 +310,19 @@ class ToxEnv(ABC):
         pass_env: list[str] = self.conf["pass_env"]
         set_env: SetEnv = self.conf["set_env"]
         if self._env_vars_pass_env == pass_env and not set_env.changed and self._env_vars is not None:
-            return self._env_vars
+            return self._add_prefixed_paths(self._env_vars)
 
         result = self._load_pass_env(pass_env)
         # load/paths_env might trigger a load of the environment variables, set result here, returns current state
         self._env_vars, self._env_vars_pass_env, set_env.changed = result, pass_env, False
         # set PATH here in case setting and environment variable requires access to the environment variable PATH
-        result["PATH"] = self._make_path()
+        result["PATH"] = os.environ.get("PATH", "")
         for key in set_env:
             result[key] = set_env.load(key)
         result["TOX_ENV_NAME"] = self.name
         result["TOX_WORK_DIR"] = str(self.core["work_dir"])
         result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
-        return result
+        return self._add_prefixed_paths(result)
 
     @staticmethod
     def _load_pass_env(pass_env: list[str]) -> dict[str, str]:
@@ -333,29 +333,17 @@ class ToxEnv(ABC):
                 result[env] = value
         return result
 
-    @property
-    def _paths(self) -> list[Path]:
-        return self._paths_private
-
-    @_paths.setter
-    def _paths(self, value: list[Path]) -> None:
-        self._paths_private = value
-        # also update the environment variable with the new value
-        if self._env_vars is not None:  # pragma: no branch
-            # remove duplicates and prepend the tox env paths
-            result = self._make_path()
-            self._env_vars["PATH"] = result
+    def _add_prefixed_paths(self, env_vars: dict[str, str]) -> dict[str, str]:
+        if not self._paths:
+            return env_vars
+        values = dict.fromkeys(str(i) for i in self._paths)
+        values.update(dict.fromkeys(env_vars["PATH"].split(os.pathsep)))
+        return {**env_vars, "PATH": os.pathsep.join(values)}
 
     @property
     def _allow_externals(self) -> list[str]:
         result: list[str] = [f"{i}{os.sep}*" for i in self._paths]
         result.extend(i.strip() for i in self.conf["allowlist_externals"])
-        return result
-
-    def _make_path(self) -> str:
-        values = dict.fromkeys(str(i) for i in self._paths)
-        values.update(dict.fromkeys(os.environ.get("PATH", "").split(os.pathsep)))
-        result = os.pathsep.join(values)
         return result
 
     def execute(
