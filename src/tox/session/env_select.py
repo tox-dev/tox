@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 from argparse import ArgumentParser
@@ -21,6 +22,9 @@ from ..tox_env.package import PackageToxEnv
 
 if TYPE_CHECKING:
     from tox.session.state import State
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CliEnv:
@@ -103,6 +107,9 @@ class _ToxEnvInfo:
 
 
 class EnvSelector:
+
+    _warned_about: set[str] = set()  #: shared set of skipped environments that were already warned about
+
     def __init__(self, state: State) -> None:
         # needs core to load the default tox environment list
         # to load the package environments of a run environments we need the run environment builder
@@ -330,6 +337,9 @@ class EnvSelector:
             if not package and not isinstance(env_info.env, RunToxEnv):
                 continue
             if tox_env_filter_re is not None and tox_env_filter_re.match(name):
+                if name not in self._warned_about:
+                    LOGGER.info("skip environment %s, matches filter %r", name, tox_env_filter_re.pattern)
+                    self._warned_about.add(name)
                 continue
             yield name
 
