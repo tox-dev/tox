@@ -11,6 +11,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+v3.28.0 (2022-12-14)
+--------------------
+
+Features
+^^^^^^^^
+
+- Support provision of tox 4 with the ``min_version`` option - by :user:`hroncok`
+  `#2661 <https://github.com/tox-dev/tox/issues/2661>`_
+
+
 v3.27.1 (2022-11-13)
 --------------------
 
