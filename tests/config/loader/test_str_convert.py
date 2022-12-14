@@ -56,19 +56,13 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
     assert result == value
 
 
-_EMPTY_COMMAND_MESSAGE = (
-    "Attempting to parse '{}' into a command failed: no command was found. "
-    "Check your tox configuration for environments with missing command values."
-)
-
-
 @pytest.mark.parametrize(
     ("raw", "of_type", "exc_type", "msg"),
     [
         ("a", TypeVar, TypeError, r"a cannot cast to .*typing.TypeVar.*"),
         ("3", Literal["1", "2"], ValueError, r"3 must be one of \('1', '2'\)"),
         ("3", Union[str, int], TypeError, r"3 cannot cast to typing.Union\[str, int\]"),
-        ("", Command, TypeError, _EMPTY_COMMAND_MESSAGE.format("")),
+        ("", Command, TypeError, r"attempting to parse '' into a command failed"),
     ],
 )
 def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[Exception]) -> None:
