@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import re
 from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import dataclass
@@ -320,14 +322,16 @@ class EnvSelector:
 
         :return: an iteration of tox environments
         """
-        ignore_envs: set[str] = set()
+        tox_env_filter = os.environ.get("TOX_SKIP_ENV")
+        tox_env_filter_re = re.compile(tox_env_filter) if tox_env_filter is not None else None
         for name, env_info in self._defined_envs.items():
             if only_active and not env_info.is_active:
                 continue
             if not package and not isinstance(env_info.env, RunToxEnv):
                 continue
+            if tox_env_filter_re is not None and tox_env_filter_re.match(name):
+                continue
             yield name
-            ignore_envs.add(name)
 
     def ensure_only_run_env_is_active(self) -> None:
         envs, active = self._defined_envs, self._env_name_to_active()

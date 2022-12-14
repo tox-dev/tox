@@ -70,3 +70,15 @@ def test_factor_select(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("l", "--no-desc", "-f", "cov", "django20")
     outcome.assert_success()
     outcome.assert_out_err("py310-django20-cov\npy39-django20-cov\n", "")
+
+
+def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch) -> None:
+    monkeypatch.setenv("TOX_SKIP_ENV", "m[y]py")
+    ini = """
+        [tox]
+        env_list = py3{10,9},mypy
+        """
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("l", "--no-desc")
+    outcome.assert_success()
+    outcome.assert_out_err("py310\npy39\n", "")
