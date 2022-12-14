@@ -43,6 +43,12 @@ Global settings are defined under the ``tox`` section as:
    When tox is invoked with the ``--no-provision`` flag,
    the provision won't be attempted, tox will fail instead.
 
+   .. versionchanged:: 3.27.2
+
+    ``min_version`` has the same meaning and usage as ``minversion``
+    to support a best effort provision of tox 4.
+
+
 .. conf:: requires ^ LIST of PEP-508
 
     .. versionadded:: 3.2.0

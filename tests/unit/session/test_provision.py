@@ -27,14 +27,21 @@ def next_tox_major():
     return "10.0.0"
 
 
-def test_provision_min_version_is_requires(newconfig, next_tox_major):
+@pytest.fixture(scope="session", params=["minversion", "min_version"])
+def minversion_option(request):
+    """both possible names for the minversion config option"""
+    return request.param
+
+
+def test_provision_min_version_is_requires(newconfig, minversion_option, next_tox_major):
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
             """\
             [tox]
-            minversion = {}
+            {} = {}
             """.format(
+                minversion_option,
                 next_tox_major,
             ),
         )
@@ -49,17 +56,20 @@ def test_provision_min_version_is_requires(newconfig, next_tox_major):
     assert config.ignore_basepython_conflict is False
 
 
-def test_provision_config_has_minversion_and_requires(newconfig, next_tox_major):
+def test_provision_config_has_minversion_and_requires(
+    newconfig, minversion_option, next_tox_major
+):
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
             """\
             [tox]
-            minversion = {}
+            {} = {}
             requires =
                 setuptools > 2
                 pip > 3
             """.format(
+                minversion_option,
                 next_tox_major,
             ),
         )
@@ -89,17 +99,18 @@ def test_provision_tox_change_name(newconfig):
     assert config.provision_tox_env == "magic"
 
 
-def test_provision_basepython_global_only(newconfig, next_tox_major):
+def test_provision_basepython_global_only(newconfig, minversion_option, next_tox_major):
     """we don't want to inherit basepython from global"""
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
             """\
             [tox]
-            minversion = {}
+            {} = {}
             [testenv]
             basepython = what
             """.format(
+                minversion_option,
                 next_tox_major,
             ),
         )
@@ -108,17 +119,18 @@ def test_provision_basepython_global_only(newconfig, next_tox_major):
     assert base_python == sys.executable
 
 
-def test_provision_basepython_local(newconfig, next_tox_major):
+def test_provision_basepython_local(newconfig, minversion_option, next_tox_major):
     """however adhere to basepython when explicitly set"""
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             [],
             """\
             [tox]
-            minversion = {}
+            {} = {}
             [testenv:.tox]
             basepython = what
             """.format(
+                minversion_option,
                 next_tox_major,
             ),
         )
@@ -199,14 +211,17 @@ def test_provision_does_not_fail_with_no_provision_no_reason(cmd, initproj, json
 
 
 @parametrize_json_path
-def test_provision_fails_with_no_provision_next_tox(cmd, initproj, next_tox_major, json_path):
+def test_provision_fails_with_no_provision_next_tox(
+    cmd, initproj, minversion_option, next_tox_major, json_path
+):
     p = initproj(
         "test-0.1",
         {
             "tox.ini": """\
                              [tox]
-                             minversion = {}
+                             {} = {}
                              """.format(
+                minversion_option,
                 next_tox_major,
             )
         },
@@ -238,17 +253,21 @@ def test_provision_fails_with_no_provision_missing_requires(cmd, initproj, json_
 
 
 @parametrize_json_path
-def test_provision_does_not_fail_with_satisfied_requires(cmd, initproj, next_tox_major, json_path):
+def test_provision_does_not_fail_with_satisfied_requires(
+    cmd, initproj, minversion_option, json_path
+):
     p = initproj(
         "test-0.1",
         {
             "tox.ini": """\
                              [tox]
-                             minversion = 0
+                             {} = 0
                              requires =
                                  setuptools > 2
                                  pip > 3
-                             """
+                             """.format(
+                minversion_option
+            )
         },
     )
     result = cmd("--no-provision", *([json_path] if json_path else []))
@@ -257,17 +276,20 @@ def test_provision_does_not_fail_with_satisfied_requires(cmd, initproj, next_tox
 
 
 @parametrize_json_path
-def test_provision_fails_with_no_provision_combined(cmd, initproj, next_tox_major, json_path):
+def test_provision_fails_with_no_provision_combined(
+    cmd, initproj, minversion_option, next_tox_major, json_path
+):
     p = initproj(
         "test-0.1",
         {
             "tox.ini": """\
                              [tox]
-                             minversion = {}
+                             {} = {}
                              requires =
                                  setuptools > 2
                                  pip > 3
                              """.format(
+                minversion_option,
                 next_tox_major,
             )
         },
@@ -389,15 +411,16 @@ def space_path2url(path):
     return urljoin("file:", pathname2url(os.path.abspath(at_path)))
 
 
-def test_provision_does_not_occur_in_devenv(newconfig, next_tox_major):
+def test_provision_does_not_occur_in_devenv(newconfig, minversion_option, next_tox_major):
     """Adding --devenv should not change the directory where provisioning occurs"""
     with pytest.raises(MissingRequirement) as context:
         newconfig(
             ["--devenv", "my_devenv"],
             """\
             [tox]
-            minversion = {}
+            {} = {}
             """.format(
+                minversion_option,
                 next_tox_major,
             ),
         )
