@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tox.pytest import ToxProjectCreator
+from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
 def test_label_core_can_define(tox_project: ToxProjectCreator) -> None:
@@ -72,7 +72,7 @@ def test_factor_select(tox_project: ToxProjectCreator) -> None:
     outcome.assert_out_err("py310-django20-cov\npy39-django20-cov\n", "")
 
 
-def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch) -> None:
+def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("TOX_SKIP_ENV", "m[y]py")
     ini = """
         [tox]
@@ -84,7 +84,7 @@ def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch) -> None:
     outcome.assert_out_err("py310\npy39\n", "")
 
 
-def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch) -> None:
+def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("TOX_SKIP_ENV", "m[y]py")
     ini = """
         [tox]
