@@ -40,6 +40,10 @@ class PythonInfo(NamedTuple):
     def impl_lower(self) -> str:
         return self.implementation.lower()
 
+    @property
+    def version_dot(self) -> str:
+        return f"{self.version_info.major}.{self.version_info.minor}"
+
 
 class Python(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -81,6 +85,14 @@ class Python(ToxEnv, ABC):
             desc="python executable from within the tox environment",
             value=lambda: self.env_python(),
         )
+        self.conf.add_constant("py_dot_ver", "<python major>.<python minor>", value=self.py_dot_ver)
+        self.conf.add_constant("py_impl", "python implementation", value=self.py_impl)
+
+    def py_dot_ver(self) -> str:
+        return self.base_python.version_dot
+
+    def py_impl(self) -> str:
+        return self.base_python.impl_lower
 
     def _default_pass_env(self) -> list[str]:
         env = super()._default_pass_env()

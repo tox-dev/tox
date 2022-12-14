@@ -72,6 +72,15 @@ def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
     assert "\n# !!! unused: magic, magical\n" in outcome.out
 
 
+def test_show_config_py_ver_impl_constants(tox_project: ToxProjectCreator) -> None:
+    tox_ini = "[testenv]\npackage=skip\ndeps= {py_impl}{py_dot_ver}"
+    outcome = tox_project({"tox.ini": tox_ini}).run("c", "-e", "py", "-k", "py_dot_ver", "py_impl", "deps")
+    outcome.assert_success()
+    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
+    impl = sys.implementation.name
+    assert outcome.out == f"[testenv:py]\npy_dot_ver = {py_ver}\npy_impl = {impl}\ndeps = {impl}{py_ver}\n"
+
+
 def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
