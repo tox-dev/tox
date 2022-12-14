@@ -1,8 +1,6 @@
 name: check
 on:
   push:
-    branches: [legacy, 'test-me-*']
-    tags:
   pull_request:
   schedule:
     - cron: "0 8 * * *"
