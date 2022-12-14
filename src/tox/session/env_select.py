@@ -108,13 +108,14 @@ class _ToxEnvInfo:
 
 class EnvSelector:
 
-    _warned_about: set[str] = set()  #: shared set of skipped environments that were already warned about
+    _warned_about: set[str]  #: shared set of skipped environments that were already warned about
 
     def __init__(self, state: State) -> None:
         # needs core to load the default tox environment list
         # to load the package environments of a run environments we need the run environment builder
         # to load labels we need core + the run environment
         self.on_empty_fallback_py = True
+        self._warned_about = set()
         self._state = state
         self._cli_envs: CliEnv | None = getattr(self._state.conf.options, "env", None)
         self._defined_envs_: None | dict[str, _ToxEnvInfo] = None
