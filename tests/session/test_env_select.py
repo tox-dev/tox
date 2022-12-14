@@ -79,7 +79,7 @@ def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) 
         env_list = py3{10,9},mypy
         """
     project = tox_project({"tox.ini": ini})
-    outcome = project.run("l", "--no-desc")
+    outcome = project.run("l", "--no-desc", "-q")
     outcome.assert_success()
     outcome.assert_out_err("py310\npy39\n", "")
 
@@ -91,6 +91,6 @@ def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPa
         env_list = py3{10,9},mypy
         """
     project = tox_project({"tox.ini": ini})
-    outcome = project.run("l", "--no-desc", "-v")
+    outcome = project.run("l", "--no-desc")
     outcome.assert_success()
     outcome.assert_out_err("ROOT: skip environment mypy, matches filter 'm[y]py'\npy310\npy39\n", "")

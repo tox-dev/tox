@@ -338,7 +338,7 @@ class EnvSelector:
                 continue
             if tox_env_filter_re is not None and tox_env_filter_re.match(name):
                 if name not in self._warned_about:
-                    LOGGER.info("skip environment %s, matches filter %r", name, tox_env_filter_re.pattern)
+                    LOGGER.warning("skip environment %s, matches filter %r", name, tox_env_filter_re.pattern)
                     self._warned_about.add(name)
                 continue
             yield name
