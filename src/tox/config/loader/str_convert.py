@@ -63,6 +63,11 @@ class StrConvert(Convert[str]):
                 pos = splitter.instream.tell()
         except ValueError:
             args.append(value[pos:])
+        if len(args) == 0:
+            raise TypeError(
+                f"Attempting to parse {value!r} into a command failed: no command was found. "
+                "Check your tox configuration for environments with missing command values."
+            )
         if args[0] != "-" and args[0].startswith("-"):
             args[0] = args[0][1:]
             args = ["-"] + args
