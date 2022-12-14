@@ -45,6 +45,7 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.integration()
+@pytest.mark.xfail(reason="#2720")
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
     enable_pip_pypi_access: str | None,  # noqa: U100
