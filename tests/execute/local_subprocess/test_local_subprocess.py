@@ -267,6 +267,15 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     tty = tty_mode == "on"
     mocker.patch("sys.stdout.isatty", return_value=tty)
     mocker.patch("sys.stderr.isatty", return_value=tty)
+    try:
+        import termios  # noqa: F401
+    except ImportError:
+        exp_tty = False  # platforms without tty support at all
+    else:
+        # to avoid trying (and failing) to copy mode bits
+        exp_tty = tty
+        mocker.patch("termios.tcgetattr")
+        mocker.patch("termios.tcsetattr")
 
     executor = LocalSubProcessExecutor(colored=False)
     cmd: list[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
@@ -281,8 +290,8 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     assert outcome
     info = json.loads(outcome.out)
     assert info == {
-        "stdout": False,
-        "stderr": False,
+        "stdout": exp_tty,
+        "stderr": exp_tty,
         "stdin": False,
         "terminal": [100, 100],
     }
