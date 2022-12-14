@@ -1344,6 +1344,10 @@ class ParseIni(object):
     def handle_provision(self, config, reader):
         config.requires = reader.getlist("requires")
         config.minversion = reader.getstring("minversion", None)
+        # tox 4 prefers the min_version name of this option.
+        # We check is as well in case the config is intended for tox 4.
+        # This allows to make a *best effort* attempt to provision tox 4 from tox 3.
+        config.minversion = config.minversion or reader.getstring("min_version", None)
         config.provision_tox_env = name = reader.getstring("provision_tox_env", ".tox")
         min_version = "tox >= {}".format(config.minversion or Version(tox.__version__).public)
         deps = self.ensure_requires_satisfied(config, config.requires, min_version)

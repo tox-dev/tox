@@ -1,7 +1,7 @@
 name: check
 on:
   push:
-    branches: [master, 'test-me-*']
+    branches: [legacy, 'test-me-*']
     tags:
   pull_request:
   schedule:

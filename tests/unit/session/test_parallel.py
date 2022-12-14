@@ -272,8 +272,7 @@ def test_parallel_result_json_concurrent(cmd, parallel_project, tmp_path):
             # needs to be process to have it's own stdout
             invoke_result[thread_name] = subprocess.check_output(
                 [sys.executable, "-m", "tox", "-p", "all", "--result-json", str(result_json)],
-                universal_newlines=True,
-            )
+            ).decode("utf-8")
         except subprocess.CalledProcessError as exception:
             invoke_result[thread_name] = exception
 

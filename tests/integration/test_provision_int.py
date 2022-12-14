@@ -25,7 +25,7 @@ def test_provision_missing(initproj, cmd):
             "tox.ini": """\
                 [tox]
                 skipsdist=True
-                minversion = 3.7.0
+                minversion = 3.7.0,<4
                 requires =
                     setuptools == 40.6.3
                 [testenv]
@@ -54,7 +54,7 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
             "tox.ini": """\
                 [tox]
                 skipsdist=True
-                minversion = 3.7.0
+                minversion = 3.7.0,<4
                 requires =
                     setuptools == 40.6.3
                 [testenv]
@@ -66,6 +66,31 @@ def test_provision_from_pyvenv(initproj, cmd, monkeypatch):
     result = cmd("-e", "py", "-vv")
     result.assert_fail()
     assert ".tox/.tox/bin/python -m virtualenv" in result.out
+
+
+@pytest.mark.skipif(
+    "sys.version_info < (3, 7)",
+    reason="tox 4 only supports Python >= 3.7",
+)
+def test_provision_tox_4(initproj, cmd, monkeypatch):
+    initproj(
+        "pkg123-0.7",
+        filedefs={
+            "tox.ini": """\
+                [tox]
+                no_package=True
+                min_version = 4
+                [testenv]
+                commands=python -c "import os; print('assert this')"
+            """,
+        },
+    )
+    result = cmd("-e", "py", "-vvv")
+    # result.assert_success() has some assumptions about output that tox 4 doesn't follow
+    assert result.ret == 0, result.output()
+    assert "assert this" in result.out
+    # this exact line is only in tox 3:
+    assert "  congratulations :)" not in result.out.splitlines()
 
 
 @pytest.mark.skipif(INFO.IS_PYPY, reason="TODO: process numbers work differently on pypy")
@@ -83,7 +108,7 @@ def test_provision_interrupt_child(initproj, monkeypatch, capfd, signal_type):
             "tox.ini": """
                     [tox]
                     skipsdist=True
-                    minversion = 3.7.0
+                    minversion = 3.7.0,<4
                     requires = setuptools == 40.6.3
                                tox == 3.7.0
                     [testenv:b]
@@ -144,7 +169,7 @@ def test_provision_race(initproj, cmd, monkeypatch):
             "tox.ini": """\
                 [tox]
                 skipsdist=True
-                minversion = 3.7.0
+                minversion = 3.7.0,<4
                 requires =
                     setuptools == 40.6.3
                 [testenv]
