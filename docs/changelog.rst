@@ -4,6 +4,20 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.10 (2022-12-14)
+--------------------
+
+Features - 4.0.10
+~~~~~~~~~~~~~~~~~
+- Add ``py_dot_ver`` and ``py_impl`` constants to environments to show the current Python implementation and dot version
+  (e.g. ``3.11``) for the current environment. These can be also used as substitutions in ``tox.ini`` - by
+  :user:`gaborbernat`. (:issue:`2640`)
+
+Bugfixes - 4.0.10
+~~~~~~~~~~~~~~~~~
+- ``--help`` now reports the default verbosity level (which is WARNING) correctly. (:issue:`2707`)
+
+
 v4.0.9 (2022-12-13)
 -------------------
 
