@@ -323,7 +323,7 @@ class ToxEnv(ABC):
 
         result = self._load_pass_env(pass_env)
         # load/paths_env might trigger a load of the environment variables, set result here, returns current state
-        self._env_vars, self._env_vars_pass_env, set_env.changed = result, pass_env, False
+        self._env_vars, self._env_vars_pass_env, set_env.changed = result, pass_env.copy(), False
         # set PATH here in case setting and environment variable requires access to the environment variable PATH
         result["PATH"] = self._make_path()
         for key in set_env:
