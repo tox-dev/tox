@@ -42,9 +42,8 @@ def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None
     result = proj.run("l")
     pip = result.state.envs["py"].installer
 
-    with pytest.raises(Fail) as raised:
+    with pytest.raises(Fail, match="unable to determine pip install command") as raised:
         pip.install([Requirement("name")], "section", "type")
-    assert "unable to determine pip install command" in str(raised)
 
 
 def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
