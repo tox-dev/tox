@@ -1,0 +1,2 @@
+Modified handling of NO_COLOR environment variable, consistent with de facto conventions (see https://no-color.org)
+- by :user:`ptmcg`.

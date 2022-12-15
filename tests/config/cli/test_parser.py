@@ -56,7 +56,7 @@ def test_parser_color(
 
     if tox_color in ("yes", "no"):
         expected = tox_color == "yes"
-    elif no_color == "1":
+    elif bool(no_color):
         expected = False
     elif force_color == "1":
         expected = True
