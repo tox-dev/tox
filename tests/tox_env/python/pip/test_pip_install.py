@@ -259,3 +259,10 @@ def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator) -> None
     assert "py: recreate env because changed constraint(s) added a" in result_second.out, result_second.out
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
+
+
+def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\ninstall_command="})
+    result = proj.run("r")
+    result.assert_failed()
+    assert "unable to determine pip install command" in result.out
