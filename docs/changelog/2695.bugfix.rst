@@ -1,1 +1,1 @@
-Fail more gracefully on empty pip :ref:`install_command` - by :user:`jayaddison`
+Fail more gracefully when pip :ref:`install_command` is empty - by :user:`jayaddison`
