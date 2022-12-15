@@ -107,15 +107,12 @@ class _ToxEnvInfo:
 
 
 class EnvSelector:
-
-    _warned_about: set[str]  #: shared set of skipped environments that were already warned about
-
     def __init__(self, state: State) -> None:
         # needs core to load the default tox environment list
         # to load the package environments of a run environments we need the run environment builder
         # to load labels we need core + the run environment
         self.on_empty_fallback_py = True
-        self._warned_about = set()
+        self._warned_about: set[str] = set()  #: shared set of skipped environments that were already warned about
         self._state = state
         self._cli_envs: CliEnv | None = getattr(self._state.conf.options, "env", None)
         self._defined_envs_: None | dict[str, _ToxEnvInfo] = None
@@ -128,6 +125,8 @@ class EnvSelector:
         self._provision: None | tuple[bool, str, MemoryLoader] = None
 
         self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
+        tox_env_filter_regex = os.environ.get("TOX_SKIP_ENV", "").strip()
+        self._filter_re = re.compile(tox_env_filter_regex) if tox_env_filter_regex else None
 
     def _collect_names(self) -> Iterator[tuple[Iterable[str], bool]]:
         """:return: sources of tox environments defined with name and if is marked as target to run"""
@@ -330,17 +329,15 @@ class EnvSelector:
 
         :return: an iteration of tox environments
         """
-        tox_env_filter = os.environ.get("TOX_SKIP_ENV")
-        tox_env_filter_re = re.compile(tox_env_filter) if tox_env_filter is not None else None
         for name, env_info in self._defined_envs.items():
             if only_active and not env_info.is_active:
                 continue
             if not package and not isinstance(env_info.env, RunToxEnv):
                 continue
-            if tox_env_filter_re is not None and tox_env_filter_re.match(name):
+            if self._filter_re is not None and self._filter_re.match(name):
                 if name not in self._warned_about:
-                    LOGGER.warning("skip environment %s, matches filter %r", name, tox_env_filter_re.pattern)
                     self._warned_about.add(name)
+                    LOGGER.warning("skip environment %s, matches filter %r", name, self._filter_re.pattern)
                 continue
             yield name
 

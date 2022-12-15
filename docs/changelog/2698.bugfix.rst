@@ -1,2 +1,1 @@
-``TOX_SKIP_ENV`` environment variable now works again (it was unintentionally
-broken in the tox 4.0.0 release)
+``TOX_SKIP_ENV`` environment variable now works again - by :user:`mgedmin`.
