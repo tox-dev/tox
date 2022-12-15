@@ -290,7 +290,7 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
 
 def add_color_flags(parser: ArgumentParser) -> None:
     converter = StrConvert()
-    if converter.to_bool(os.environ.get("NO_COLOR", "")):
+    if os.environ.get("NO_COLOR", "") != "":
         color = "no"
     elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
         color = "yes"
