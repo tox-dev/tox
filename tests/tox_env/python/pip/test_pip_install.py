@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
+from packaging.requirements import Requirement
 
 from tox.pytest import CaptureFixture, ToxProjectCreator
 
@@ -41,7 +42,7 @@ def test_pip_install_empty_command_error(tox_project: ToxProjectCreator, capfd: 
     pip = result.state.envs["py"].installer
 
     with pytest.raises(SystemExit, match="1"):
-        pip.install(object, "section", "type")
+        pip.install([Requirement("name")], "section", "type")
     out, err = capfd.readouterr()
     assert not err
     assert f"pip cannot install {object!r}" in out
