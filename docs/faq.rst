@@ -107,6 +107,7 @@ tox 4 - CLI arguments changed
   no longer the case.
 - Running ``--showconfig```or ``--help-ini`` with the ``-v`` flag will add interleaved debugging information, whereas
   tox 3 added additional lines at the start. If you want to generate valid ini files you must not use the ``-v`` flag.
+- The ``--index-url`` is now removed, use ``PIP_INDEX_URL`` in :ref:`set_env` instead.
 
 tox 4 - packaging changes
 +++++++++++++++++++++++++
