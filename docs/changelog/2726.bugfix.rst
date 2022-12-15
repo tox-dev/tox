@@ -1,0 +1,1 @@
+``tox config`` should only show :ref:`env_list` arguments by default instead of ``ALL`` - by :user:`gaborbernat`.

@@ -129,10 +129,9 @@ def test_show_config_pkg_env_once(
     patch_prev_py: Callable[[bool], tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(True)
-    project = tox_project(
-        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""},
-    )
-    result = project.run("c")
+    ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
+    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
+    result = project.run("c", "-e", "ALL")
     result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
@@ -145,10 +144,9 @@ def test_show_config_pkg_env_skip(
     patch_prev_py: Callable[[bool], tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(False)
-    project = tox_project(
-        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""},
-    )
-    result = project.run("c")
+    ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
+    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
+    result = project.run("c", "-e", "ALL")
     result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
