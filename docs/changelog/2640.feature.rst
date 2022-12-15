@@ -1,3 +1,0 @@
-Add ``py_dot_ver`` and ``py_impl`` constants to environments to show the current Python implementation and dot version
-(e.g. ``3.11``) for the current environment. These can be also used as substitutions in ``tox.ini`` - by
-:user:`gaborbernat`.
