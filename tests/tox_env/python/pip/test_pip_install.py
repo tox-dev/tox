@@ -36,16 +36,14 @@ def test_pip_install_empty_list(tox_project: ToxProjectCreator) -> None:
     assert execute_calls.call_count == 0
 
 
-def test_pip_install_empty_command_error(tox_project: ToxProjectCreator, capfd: CaptureFixture) -> None:
+def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ninstall_command="})
     result = proj.run("l")
     pip = result.state.envs["py"].installer
 
     with pytest.raises(SystemExit, match="1"):
         pip.install([Requirement("name")], "section", "type")
-    out, err = capfd.readouterr()
-    assert not err
-    assert f"pip cannot install {object!r}" in out
+    assert False
 
 
 def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
