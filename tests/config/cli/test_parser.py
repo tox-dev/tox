@@ -28,7 +28,7 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.mark.parametrize("is_atty", [True, False])
-@pytest.mark.parametrize("no_color", [None, "0", "1"])
+@pytest.mark.parametrize("no_color", [None, "0", "1", "", "\t", " ", "false", "true"])
 @pytest.mark.parametrize("force_color", [None, "0", "1"])
 @pytest.mark.parametrize("tox_color", [None, "bad", "no", "yes"])
 @pytest.mark.parametrize("term", [None, "xterm", "dumb"])

@@ -1,4 +1,4 @@
 Modified handling of ``NO_COLOR`` environment variable, consistent with
-`de facto conventions <https://no-color.org>`_: any non-empty string will enable ``NO_COLOR`` (disable
-colorized output); no ``NO_COLOR`` variable or ``NO_COLOR`` with an empty string will disable ``NO_COLOR``
-(enable colorized output) - by :user:`ptmcg`.
+`de facto conventions <https://no-color.org>`_: any non-empty string will enable ``NO_COLOR`` (disable colorized
+output); no ``NO_COLOR`` variable or ``NO_COLOR`` with an empty string will disable ``NO_COLOR`` (enable colorized
+output) - by :user:`ptmcg`.
