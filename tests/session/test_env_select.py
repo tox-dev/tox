@@ -80,6 +80,14 @@ def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) 
     outcome.assert_out_err("py310\npy39\n", "")
 
 
+def test_tox_skip_env_cli(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
+    project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})
+    outcome = project.run("l", "--no-desc", "-q", "--skip-env", "m[y]py")
+    outcome.assert_success()
+    outcome.assert_out_err("py310\npy39\n", "")
+
+
 def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("TOX_SKIP_ENV", "m[y]py")
     project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})

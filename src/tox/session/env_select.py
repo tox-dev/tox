@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
 from argparse import ArgumentParser
 from collections import Counter
@@ -94,6 +93,8 @@ def register_env_select_flags(
         add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")
         help_msg = "factors to evaluate"
         add_to.add_argument("-f", dest="factors", metavar="factor", help=help_msg, default=[], type=str, nargs="+")
+    help_msg = "exclude all environments selected that match this regular expression"
+    add_to.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
     return add_to
 
 
@@ -125,7 +126,7 @@ class EnvSelector:
         self._provision: None | tuple[bool, str, MemoryLoader] = None
 
         self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
-        tox_env_filter_regex = os.environ.get("TOX_SKIP_ENV", "").strip()
+        tox_env_filter_regex = getattr(state.conf.options, "skip_env", "").strip()
         self._filter_re = re.compile(tox_env_filter_regex) if tox_env_filter_regex else None
 
     def _collect_names(self) -> Iterator[tuple[Iterable[str], bool]]:

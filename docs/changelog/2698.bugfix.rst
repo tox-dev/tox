@@ -1,1 +1,2 @@
-``TOX_SKIP_ENV`` environment variable now works again - by :user:`mgedmin`.
+``TOX_SKIP_ENV`` environment variable now works again, and can also be set via the CLI argument ``--skip-env``
+for any command where ``-e`` can be set - by :user:`mgedmin`.
