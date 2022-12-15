@@ -9,6 +9,7 @@ import pytest
 from packaging.requirements import Requirement
 
 from tox.pytest import CaptureFixture, ToxProjectCreator
+from tox.tox_env.errors import Fail
 
 
 @pytest.mark.parametrize("arg", [object, [object]])
@@ -41,9 +42,9 @@ def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None
     result = proj.run("l")
     pip = result.state.envs["py"].installer
 
-    with pytest.raises(SystemExit, match="1"):
+    with pytest.raises(Fail) as raised:
         pip.install([Requirement("name")], "section", "type")
-    assert False
+    assert "unable to determine pip install command" in str(raised)
 
 
 def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
