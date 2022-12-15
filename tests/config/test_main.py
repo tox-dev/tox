@@ -88,15 +88,8 @@ def test_args_are_paths_when_with_change_dir(tox_project: ToxProjectCreator) -> 
 
 def test_relative_config_paths_resolve(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[tox]"})
-    result = project.run(
-        "c",
-        "-c",
-        str(Path(project.path.name) / "tox.ini"),
-        "-k",
-        "change_dir",
-        "env_dir",
-        from_cwd=project.path.parent,
-    )
+    ini = str(Path(project.path.name) / "tox.ini")
+    result = project.run("c", "-c", ini, "-k", "change_dir", "env_dir", from_cwd=project.path.parent)
     result.assert_success()
-    expected = f"[testenv:py]\nchange_dir = {project.path}\nenv_dir = {project.path / '.tox' / 'py'}\n\n[tox]\n"
+    expected = f"[testenv:py]\nchange_dir = {project.path}\nenv_dir = {project.path / '.tox' / 'py'}\n"
     assert result.out == expected
