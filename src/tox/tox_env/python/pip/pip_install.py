@@ -166,7 +166,10 @@ class Pip(Installer[Python]):
         outcome.assert_success()
 
     def build_install_cmd(self, args: Sequence[str]) -> list[str]:
-        cmd: Command = self._env.conf["install_command"]
+        try:
+            cmd: Command = self._env.conf["install_command"]
+        except ValueError as exc:
+            raise Fail(f"unable to determine pip install command: {str(exc)}") from exc
         install_command = cmd.args
         try:
             opts_at = install_command.index("{packages}")
