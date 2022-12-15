@@ -53,16 +53,17 @@ def test_legacy_list_env_with_empty_or_missing_env_list(tox_project: ToxProjectC
     outcome = tox_project({"tox.ini": configuration}).run("le", "-l")
 
     outcome.assert_success()
-    outcome.assert_out_err("", "")
+    assert not outcome.err
+    assert not outcome.out
 
 
 def test_legacy_list_env_with_no_tox_file(tox_project: ToxProjectCreator) -> None:
     project = tox_project({})
     outcome = project.run("le", "-l")
-
     outcome.assert_success()
     out = f"ROOT: No tox.ini or setup.cfg or pyproject.toml found, assuming empty tox.ini at {project.path}\n"
-    outcome.assert_out_err(out, "")
+    assert not outcome.err
+    assert outcome.out == out
 
 
 @pytest.mark.parametrize("verbose", range(3))
@@ -106,3 +107,26 @@ def test_legacy_run_sequential(tox_project: ToxProjectCreator, mocker: MockerFix
 def test_legacy_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("le", "-h")
     outcome.assert_success()
+
+
+def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    session = mocker.MagicMock()
+    session.creator.interpreter.system_executable = "I"
+    virtualenv_session = mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", return_value=session)
+    ini = "[testenv]\ndeps = p>6\n c\n -rr.txt\npackage=skip\nset_env = PIP_PRE = 0"
+    proj = tox_project({"tox.ini": ini})
+    (proj.path / "r.txt").write_text("d")
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    args = ["--pre", "--force-dep", "p<1", "--force-dep", "b>2", "--sitepackages", "--alwayscopy"]
+    result = proj.run("le", "-e", "py", *args)
+    result.assert_success()
+
+    calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd[5:]) for i in execute_calls.call_args_list]
+    assert calls[0] == ("py", "install_deps", ["c", "p<1", "-r", "r.txt", "b>2"])
+    for call in execute_calls.call_args_list:
+        if call[0][0].name == "py":
+            assert call[0][3].env["PIP_PRE"] == "1"
+    assert len(virtualenv_session.call_args_list) == 1
+    v_env = virtualenv_session.call_args_list[0][1]["env"]
+    assert v_env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] == "True"
+    assert v_env["VIRTUALENV_COPIES"] == "True"
