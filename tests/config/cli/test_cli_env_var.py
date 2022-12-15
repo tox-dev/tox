@@ -62,6 +62,7 @@ def test_verbose_no_test() -> None:
         "index_url": [],
         "factors": [],
         "labels": [],
+        "skip_env": "",
     }
 
 
@@ -120,6 +121,7 @@ def test_env_var_exhaustive_parallel_values(
         "factors": [],
         "labels": [],
         "exit_and_dump_after": 0,
+        "skip_env": "",
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers

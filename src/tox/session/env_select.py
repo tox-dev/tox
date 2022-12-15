@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import re
 from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import dataclass
@@ -19,6 +21,9 @@ from ..tox_env.package import PackageToxEnv
 
 if TYPE_CHECKING:
     from tox.session.state import State
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CliEnv:
@@ -88,6 +93,8 @@ def register_env_select_flags(
         add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")
         help_msg = "factors to evaluate"
         add_to.add_argument("-f", dest="factors", metavar="factor", help=help_msg, default=[], type=str, nargs="+")
+    help_msg = "exclude all environments selected that match this regular expression"
+    add_to.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
     return add_to
 
 
@@ -106,6 +113,7 @@ class EnvSelector:
         # to load the package environments of a run environments we need the run environment builder
         # to load labels we need core + the run environment
         self.on_empty_fallback_py = True
+        self._warned_about: set[str] = set()  #: shared set of skipped environments that were already warned about
         self._state = state
         self._cli_envs: CliEnv | None = getattr(self._state.conf.options, "env", None)
         self._defined_envs_: None | dict[str, _ToxEnvInfo] = None
@@ -118,6 +126,8 @@ class EnvSelector:
         self._provision: None | tuple[bool, str, MemoryLoader] = None
 
         self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
+        tox_env_filter_regex = getattr(state.conf.options, "skip_env", "").strip()
+        self._filter_re = re.compile(tox_env_filter_regex) if tox_env_filter_regex else None
 
     def _collect_names(self) -> Iterator[tuple[Iterable[str], bool]]:
         """:return: sources of tox environments defined with name and if is marked as target to run"""
@@ -320,14 +330,17 @@ class EnvSelector:
 
         :return: an iteration of tox environments
         """
-        ignore_envs: set[str] = set()
         for name, env_info in self._defined_envs.items():
             if only_active and not env_info.is_active:
                 continue
             if not package and not isinstance(env_info.env, RunToxEnv):
                 continue
+            if self._filter_re is not None and self._filter_re.match(name):
+                if name not in self._warned_about:
+                    self._warned_about.add(name)
+                    LOGGER.warning("skip environment %s, matches filter %r", name, self._filter_re.pattern)
+                continue
             yield name
-            ignore_envs.add(name)
 
     def ensure_only_run_env_is_active(self) -> None:
         envs, active = self._defined_envs, self._env_name_to_active()
