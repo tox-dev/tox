@@ -72,6 +72,15 @@ def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
     assert "\n# !!! unused: magic, magical\n" in outcome.out
 
 
+def test_show_config_py_ver_impl_constants(tox_project: ToxProjectCreator) -> None:
+    tox_ini = "[testenv]\npackage=skip\ndeps= {py_impl}{py_dot_ver}"
+    outcome = tox_project({"tox.ini": tox_ini}).run("c", "-e", "py", "-k", "py_dot_ver", "py_impl", "deps")
+    outcome.assert_success()
+    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
+    impl = sys.implementation.name
+    assert outcome.out == f"[testenv:py]\npy_dot_ver = {py_ver}\npy_impl = {impl}\ndeps = {impl}{py_ver}\n"
+
+
 @pytest.mark.parametrize(
     "ini,key,expected_outcome",
     [
@@ -131,10 +140,9 @@ def test_show_config_pkg_env_once(
     patch_prev_py: Callable[[bool], tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(True)
-    project = tox_project(
-        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""},
-    )
-    result = project.run("c")
+    ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
+    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
+    result = project.run("c", "-e", "ALL")
     result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
@@ -147,10 +155,9 @@ def test_show_config_pkg_env_skip(
     patch_prev_py: Callable[[bool], tuple[str, str]],
 ) -> None:
     prev_ver, impl = patch_prev_py(False)
-    project = tox_project(
-        {"tox.ini": f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel", "pyproject.toml": ""},
-    )
-    result = project.run("c")
+    ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
+    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
+    result = project.run("c", "-e", "ALL")
     result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)

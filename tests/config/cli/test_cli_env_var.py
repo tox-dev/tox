@@ -59,9 +59,9 @@ def test_verbose_no_test() -> None:
         "parallel_live": False,
         "parallel_no_spinner": False,
         "pre": False,
-        "index_url": [],
         "factors": [],
         "labels": [],
+        "skip_env": "",
     }
 
 
@@ -92,7 +92,6 @@ def test_env_var_exhaustive_parallel_values(
         "env": CliEnv(["py37", "py36"]),
         "force_dep": [],
         "hash_seed": "noset",
-        "index_url": [],
         "install_pkg": None,
         "no_provision": False,
         "list_envs": False,
@@ -120,6 +119,7 @@ def test_env_var_exhaustive_parallel_values(
         "factors": [],
         "labels": [],
         "exit_and_dump_after": 0,
+        "skip_env": "",
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers

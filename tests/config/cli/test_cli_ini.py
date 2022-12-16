@@ -99,6 +99,7 @@ def default_options(tmp_path: Path) -> dict[str, Any]:
         "factors": [],
         "labels": [],
         "exit_and_dump_after": 0,
+        "skip_env": "",
     }
 
 
@@ -134,6 +135,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dic
         "factors": [],
         "labels": [],
         "exit_and_dump_after": 0,
+        "skip_env": "",
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers

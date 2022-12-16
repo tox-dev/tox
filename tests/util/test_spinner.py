@@ -72,6 +72,7 @@ def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
 
 
 @time_machine.travel("2012-01-14", tick=False)
+@pytest.mark.flaky(max_runs=3, min_passes=1)
 def test_spinner_report(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
     with spinner.Spinner(refresh_rate=100) as spin:

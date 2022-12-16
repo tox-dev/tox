@@ -87,7 +87,7 @@ def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) ->
     result.assert_success()
     msg = (
         '[testenv:py]\npass_env = # Exception: Fail("pass_env values cannot contain whitespace, use comma to have '
-        f'multiple values in a single line, invalid values found {first!r}, {second!r}")\n\n[tox]\n'
+        f'multiple values in a single line, invalid values found {first!r}, {second!r}")\n'
     )
     assert result.out == msg
 

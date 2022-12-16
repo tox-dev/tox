@@ -274,7 +274,7 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
     verbosity_group = parser.add_argument_group("verbosity")
     verbosity_group.description = (
         f"every -v increases, every -q decreases verbosity level, "
-        f"default {logging.getLevelName(LEVELS[3])}, map {level_map}"
+        f"default {logging.getLevelName(LEVELS[DEFAULT_VERBOSITY])}, map {level_map}"
     )
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument(
@@ -290,7 +290,7 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
 
 def add_color_flags(parser: ArgumentParser) -> None:
     converter = StrConvert()
-    if converter.to_bool(os.environ.get("NO_COLOR", "")):
+    if os.environ.get("NO_COLOR", "") != "":
         color = "no"
     elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
         color = "yes"

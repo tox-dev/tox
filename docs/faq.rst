@@ -79,6 +79,16 @@ tox 4 - removed tox.ini keys
 | ``distdir``              | Use the ``TOX_PACKAGE`` environment variable.|
 +--------------------------+----------------------------------------------+
 
+tox 4 - basepython not resolved
++++++++++++++++++++++++++++++++
+The base python configuration is no longer resolved to ``pythonx.y`` format, instead is kept as ``py39``, and is
+the virtualenv project that handles mapping that to a Python interpreter. If you were using this variable we recommend
+moving to the newly added ``py_impl`` and ``py_dot_ver`` variables, for example:
+
+.. code-block:: ini
+
+   deps = -r{py_impl}{py_dot_ver}-req.txt
+
 tox 4 - substitutions removed
 +++++++++++++++++++++++++++++
 - The ``distshare`` substitution has been removed.
@@ -97,6 +107,7 @@ tox 4 - CLI arguments changed
   no longer the case.
 - Running ``--showconfig```or ``--help-ini`` with the ``-v`` flag will add interleaved debugging information, whereas
   tox 3 added additional lines at the start. If you want to generate valid ini files you must not use the ``-v`` flag.
+- The ``--index-url`` is now removed, use ``PIP_INDEX_URL`` in :ref:`set_env` instead.
 
 tox 4 - packaging changes
 +++++++++++++++++++++++++

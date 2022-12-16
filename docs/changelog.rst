@@ -4,6 +4,37 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.11 (2022-12-14)
+--------------------
+
+Features - 4.0.11
+~~~~~~~~~~~~~~~~~
+- Modified handling of ``NO_COLOR`` environment variable, consistent with
+  `de facto conventions <https://no-color.org>`_: any non-empty string will enable ``NO_COLOR`` (disable colorized
+  output); no ``NO_COLOR`` variable or ``NO_COLOR`` with an empty string will disable ``NO_COLOR`` (enable colorized
+  output) - by :user:`ptmcg`. (:issue:`2719`)
+
+Bugfixes - 4.0.11
+~~~~~~~~~~~~~~~~~
+- ``TOX_SKIP_ENV`` environment variable now works again, and can also be set via the CLI argument ``--skip-env``
+  for any command where ``-e`` can be set - by :user:`mgedmin`. (:issue:`2698`)
+- ``tox config`` should only show :ref:`env_list` arguments by default instead of ``ALL`` - by :user:`gaborbernat`. (:issue:`2726`)
+
+
+v4.0.10 (2022-12-14)
+--------------------
+
+Features - 4.0.10
+~~~~~~~~~~~~~~~~~
+- Add ``py_dot_ver`` and ``py_impl`` constants to environments to show the current Python implementation and dot version
+  (e.g. ``3.11``) for the current environment. These can be also used as substitutions in ``tox.ini`` - by
+  :user:`gaborbernat`. (:issue:`2640`)
+
+Bugfixes - 4.0.10
+~~~~~~~~~~~~~~~~~
+- ``--help`` now reports the default verbosity level (which is WARNING) correctly. (:issue:`2707`)
+
+
 v4.0.9 (2022-12-13)
 -------------------
 

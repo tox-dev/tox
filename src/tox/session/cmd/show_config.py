@@ -32,10 +32,10 @@ def tox_add_option(parser: ToxParser) -> None:
     our.add_argument(
         "--core",
         action="store_true",
-        help="show core options too when selecting an env with -e",
+        help="show core options (by default is hidden unless -e ALL is passed)",
         dest="show_core",
     )
-    register_env_select_flags(our, default=CliEnv("ALL"))
+    register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="config")
 
 
