@@ -755,7 +755,7 @@ User configuration
 ------------------
 
 tox allows creation of user level config-file to modify default values of the CLI commands.
-It is localted in the OS-specific user config directory under ``tox/config.ini`` path, see ``tox --help`` output for exact location.
+It is located in the OS-specific user config directory under ``tox/config.ini`` path, see ``tox --help`` output for exact location.
 It can be changed via ``TOX_CONFIG_FILE`` environment variable.
 Example configuration:
 
