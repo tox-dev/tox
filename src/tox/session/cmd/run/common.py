@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import logging
 import os
+import random
+import sys
 import time
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_completed
@@ -108,14 +110,35 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             help="install package in development mode",
             dest="develop",
         )
-    if mode not in ("config", "depends"):
+    if mode not in ("depends",):
+
+        class SeedAction(Action):
+            def __call__(
+                self,
+                parser: ArgumentParser,  # noqa: U100
+                namespace: Namespace,
+                values: str | Sequence[Any] | None,
+                option_string: str | None = None,  # noqa: U100
+            ) -> None:
+                if values == "notset":
+                    result = None
+                else:
+                    try:
+                        result = int(cast(str, values))
+                        if result <= 0:
+                            raise ValueError("must be greater than zero")
+                    except ValueError as exc:
+                        raise ArgumentError(self, str(exc))
+                setattr(namespace, self.dest, result)
+
         parser.add_argument(
             "--hashseed",
             metavar="SEED",
             help="set PYTHONHASHSEED to SEED before running commands. Defaults to a random integer in the range "
             "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
-            type=str,
-            default="noset",
+            action=SeedAction,
+            of_type=Optional[int],
+            default=random.randint(1, 1024 if sys.platform == "win32" else 4294967295),
             dest="hash_seed",
         )
     parser.add_argument(

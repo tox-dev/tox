@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from typing import Any
+from unittest.mock import ANY
 
 import pytest
 from pytest_mock import MockerFixture
@@ -60,9 +61,9 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
 def test_set_env_default(eval_set_env: EvalSetEnv) -> None:
     set_env = eval_set_env("")
     keys = list(set_env)
-    assert keys == ["PIP_DISABLE_PIP_VERSION_CHECK", "PYTHONIOENCODING"]
+    assert keys == ["PYTHONHASHSEED", "PIP_DISABLE_PIP_VERSION_CHECK", "PYTHONIOENCODING"]
     values = [set_env.load(k) for k in keys]
-    assert values == ["1", "utf-8"]
+    assert values == [ANY, "1", "utf-8"]
 
 
 def test_set_env_self_key(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:
@@ -120,7 +121,13 @@ def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) ->
     monkeypatch.setenv("MAGIC", "\nb=2\n")
     set_env = eval_set_env("[testenv]\npackage=skip\nset_env=a=1\n {env:MAGIC}")
     env = {k: set_env.load(k) for k in set_env}
-    assert env == {"PIP_DISABLE_PIP_VERSION_CHECK": "1", "a": "1", "b": "2", "PYTHONIOENCODING": "utf-8"}
+    assert env == {
+        "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        "a": "1",
+        "b": "2",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONHASHSEED": ANY,
+    }
 
 
 def test_set_env_honor_override(eval_set_env: EvalSetEnv) -> None:
@@ -143,6 +150,7 @@ def test_set_env_environment_file(eval_set_env: EvalSetEnv) -> None:
     content = {k: set_env.load(k) for k in set_env}
     assert content == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        "PYTHONHASHSEED": ANY,
         "A": "1",
         "B": "2",
         "C": "1",

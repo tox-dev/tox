@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable
+from unittest.mock import ANY
 
 import pytest
 
@@ -53,7 +54,7 @@ def test_verbose_no_test() -> None:
         "package_only": False,
         "install_pkg": None,
         "develop": False,
-        "hash_seed": "noset",
+        "hash_seed": ANY,
         "discover": [],
         "parallel": 0,
         "parallel_live": False,
@@ -91,7 +92,7 @@ def test_env_var_exhaustive_parallel_values(
         "discover": [],
         "env": CliEnv(["py37", "py36"]),
         "force_dep": [],
-        "hash_seed": "noset",
+        "hash_seed": ANY,
         "install_pkg": None,
         "no_provision": False,
         "list_envs": False,

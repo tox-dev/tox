@@ -131,3 +131,51 @@ def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, igno
             f" base python py{py_ver_next}'{',' if comma_in_exc else ''})\n"
         )
     result.assert_out_err(out, "")
+
+
+def test_python_set_hash_seed(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
+    prj = tox_project({"tox.ini": ini})
+    result = prj.run("r", "-e", "py", "--hashseed", "10")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "10"
+
+
+def test_python_generate_hash_seed(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
+    prj = tox_project({"tox.ini": ini})
+    result = prj.run("r", "-e", "py")
+    result.assert_success()
+    assert 1 <= int(result.out.splitlines()[1]) <= (1024 if sys.platform == "win32" else 4294967295)
+
+
+def test_python_keep_hash_seed(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [testenv]
+    package=skip
+    set_env=PYTHONHASHSEED=12
+    commands=python -c 'import os; print(os.environ["PYTHONHASHSEED"])'
+    """
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "12"
+
+
+def test_python_disable_hash_seed(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
+    prj = tox_project({"tox.ini": ini})
+    result = prj.run("r", "-e", "py", "--hashseed", "notset")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "None"
+
+
+def test_python_set_hash_seed_negative(tox_project: ToxProjectCreator) -> None:
+    result = tox_project({"tox.ini": ""}).run("r", "-e", "py", "--hashseed", "-1")
+    result.assert_failed(2)
+    assert "tox run: error: argument --hashseed: must be greater than zero" in result.err
+
+
+def test_python_set_hash_seed_incorrect(tox_project: ToxProjectCreator) -> None:
+    result = tox_project({"tox.ini": ""}).run("r", "-e", "py", "--hashseed", "ok")
+    result.assert_failed(2)
+    assert "tox run: error: argument --hashseed: invalid literal for int() with base 10: 'ok'" in result.err
