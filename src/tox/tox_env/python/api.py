@@ -107,6 +107,7 @@ class Python(ToxEnv, ABC):
                     "COMSPEC",  # needed for distutils cygwin compiler
                     "PROCESSOR_ARCHITECTURE",  # platform.machine()
                     "NUMBER_OF_PROCESSORS",  # multiprocessing.cpu_count()
+                    "WINDIR", # needing for matplotlib font_manager
                 ],
             )
         env.extend(["PKG_CONFIG_PATH"])  # used by binary extensions during installation

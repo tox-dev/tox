@@ -109,7 +109,7 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
     expected = (
         (["COMSPEC"] if is_win else [])
         + ["CURL_CA_BUNDLE", "LANG", "LANGUAGE", "LD_LIBRARY_PATH"]
-        + (["MSYSTEM", "NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
+        + (["MSYSTEM", "NUMBER_OF_PROCESSORS", "WINDIR", "PATHEXT"] if is_win else [])
         + ["PIP_*", "PKG_CONFIG_PATH"]
         + (["PROCESSOR_ARCHITECTURE"] if is_win else [])
         + (["PROGRAMDATA"] if is_win else [])
