@@ -80,7 +80,7 @@ def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
         """,
         "env_site_packages_dir",
         "\nenv_site_packages_dir = # Exception: "
-        "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
+        "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'",
     ),
     (
         """
