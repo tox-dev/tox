@@ -88,6 +88,13 @@ class Python(ToxEnv, ABC):
         self.conf.add_constant("py_dot_ver", "<python major>.<python minor>", value=self.py_dot_ver)
         self.conf.add_constant("py_impl", "python implementation", value=self.py_impl)
 
+    def _default_set_env(self) -> dict[str, str]:
+        env = super()._default_set_env()
+        hash_seed: int | None = getattr(self.options, "hash_seed", None)
+        if hash_seed is not None:
+            env["PYTHONHASHSEED"] = str(hash_seed)
+        return env
+
     def py_dot_ver(self) -> str:
         return self.base_python.version_dot
 
