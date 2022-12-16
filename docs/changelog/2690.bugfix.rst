@@ -1,2 +1,0 @@
-Fix legacy CLI flags ``--pre``, ``--force-deps``, ``--sitepackages`` and ``--alwayscopy`` not working, and mark them
-as deprecated - by :user:`gaborbernat`.

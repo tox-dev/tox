@@ -4,6 +4,22 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.12 (2022-12-16)
+--------------------
+
+Bugfixes - 4.0.12
+~~~~~~~~~~~~~~~~~
+- If tox is running in a tty, allocate a pty (pseudo terminal) for commands
+  and copy termios attributes to show colors and improve interactive use - by :user:`masenf`. (:issue:`1773`)
+- Fix python hash seed not being set - by :user:`gaborbernat`. (:issue:`2645`)
+- Fix legacy CLI flags ``--pre``, ``--force-deps``, ``--sitepackages`` and ``--alwayscopy`` not working, and mark them
+  as deprecated - by :user:`gaborbernat`. (:issue:`2690`)
+
+Improved Documentation - 4.0.12
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document user level config. (:issue:`2633`)
+
+
 v4.0.11 (2022-12-14)
 --------------------
 
