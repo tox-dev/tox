@@ -82,7 +82,7 @@ def test_show_config_py_ver_impl_constants(tox_project: ToxProjectCreator) -> No
 
 
 @pytest.mark.parametrize(
-    "ini,key,expected_outcome",
+    ("ini", "key", "expected_outcome"),
     [
         (
             """
