@@ -1,0 +1,2 @@
+If tox is running in a tty, allocate a pty (pseudo terminal) for commands
+and copy termios attributes to show colors and improve interactive use - by :user:`masenf`.

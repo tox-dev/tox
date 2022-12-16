@@ -108,6 +108,7 @@ nonlocal
 notset
 nox
 objtype
+openpty
 ov
 pathname
 pep517
@@ -119,6 +120,7 @@ posix
 prereleases
 prj
 psutil
+pty
 purelib
 py311
 py38
@@ -156,6 +158,11 @@ statemachine
 string2lines
 stringify
 subparsers
+tcgetattr
+TCSANOW
+tcsetattr
+TIOCSWINSZ
+termios
 termux
 testenv
 tmpdir
