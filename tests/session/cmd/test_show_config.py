@@ -72,22 +72,31 @@ def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
     assert "\n# !!! unused: magic, magical\n" in outcome.out
 
 
-def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.ini": """
+@pytest.mark.parametrize("ini,key,expected_outcome", [
+    (
+        """
         [testenv:a]
         base_python = missing-python
         """,
-        },
-    )
-    outcome = project.run("c", "-e", "a", "-k", "env_site_packages_dir")
-    outcome.assert_success()
-    txt = (
+        "env_site_packages_dir",
         "\nenv_site_packages_dir = # Exception: "
         "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
-    )
-    assert txt in outcome.out
+    ),
+    (
+        """
+        [testenv:a]
+        install_command =
+        """,
+        "install_command",
+        "install_command = # Exception: "
+        "ValueError(\"attempting to parse \'\' into a command failed\")",
+    ),
+])
+def test_show_config_exception(tox_project: ToxProjectCreator, ini, key, expected_outcome) -> None:
+    project = tox_project({"tox.ini": dedent(ini)})
+    outcome = project.run("c", "-e", "a", "-k", key)
+    outcome.assert_success()
+    assert expected_outcome in outcome.out
 
 
 @pytest.mark.parametrize("stdout_is_atty", [True, False])
