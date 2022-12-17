@@ -32,6 +32,22 @@ def test_replace_env_set_quad_bs(replace_one: ReplaceOne, monkeypatch: MonkeyPat
     assert result == r"\something good\\something good" + "\\"
 
 
+def test_replace_env_when_value_is_backslash(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+    """When the replacement value is backslash, it shouldn't affect the next replacement."""
+    monkeypatch.setenv("MAGIC", "tragic")
+    monkeypatch.setenv("BS", "\\")
+    result = replace_one(r"{env:BS}{env:MAGIC}")
+    assert result == r"\tragic"
+
+
+def test_replace_env_when_value_is_stuff_then_backslash(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+    """When the replacement value is a string containing backslash, it can affect the next replacement."""
+    monkeypatch.setenv("MAGIC", "tragic")
+    monkeypatch.setenv("BS", "stuff\\")
+    result = replace_one(r"{env:BS}{env:MAGIC}")
+    assert result == r"stuff{env:MAGIC}"
+
+
 def test_replace_env_missing(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
     monkeypatch.delenv("MAGIC", raising=False)
