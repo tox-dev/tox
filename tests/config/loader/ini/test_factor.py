@@ -27,6 +27,7 @@ def complex_example() -> str:
     py: py only
     !py: not py
     {py,!pi}-{a,b}{,-dev},c: complex
+    py, d: space
     extra: extra
     more-default
     """,
@@ -46,6 +47,7 @@ def test_factor_env_discover(complex_example: str) -> None:
         "pi-b",
         "pi-b-dev",
         "c",
+        "d",
         "extra",
     ]
 
