@@ -25,7 +25,9 @@ def pkg_with_extras(pkg_with_extras_project: Path) -> PathDistribution:
 
 
 def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:
-    result = dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], set(), "")
+    requires = pkg_with_extras.requires
+    assert requires is not None
+    result = dependencies_with_extras([Requirement(i) for i in requires], set(), "")
     for left, right in zip_longest(result, (Requirement("platformdirs>=2.1"), Requirement("colorama>=0.4.3"))):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
@@ -33,7 +35,9 @@ def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:
 
 def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
-    result = dependencies_with_extras([Requirement(i) for i in pkg_with_extras.requires], {"docs", "testing"}, "")
+    requires = pkg_with_extras.requires
+    assert requires is not None
+    result = dependencies_with_extras([Requirement(i) for i in requires], {"docs", "testing"}, "")
     exp = [
         Requirement("platformdirs>=2.1"),
         Requirement("colorama>=0.4.3"),

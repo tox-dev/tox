@@ -1,0 +1,2 @@
+A plain section in INI configuration matching a tox environment name shadowed the laters configuration - by
+:user:`gaborbernat`.

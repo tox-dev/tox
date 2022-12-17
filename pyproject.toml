@@ -48,7 +48,7 @@ optional-dependencies.testing = [
   "build[virtualenv]>=0.9",
   "covdefaults>=2.2.2",
   "devpi-process>=0.3",
-  "diff-cover>=7.2",
+  "diff-cover>=7.3",
   "distlib>=0.3.6",
   "flaky>=3.7",
   "hatch-vcs>=0.2.1",
@@ -114,7 +114,7 @@ profile = "black"
 line_length = 120
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.11"
 show_error_codes = true
 strict = true
 overrides = [
