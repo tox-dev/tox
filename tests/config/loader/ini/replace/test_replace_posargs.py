@@ -37,8 +37,8 @@ def test_replace_pos_args(syntax: str, replace_one: ReplaceOne) -> None:
     [
         ("magic", "magic"),
         ("magic:colon", "magic:colon"),
-        ("magic\n b:c", "magic\nb:c"),  # an unescaped newline keeps the newline
-        ("magi\\\n c:d", "magic:d"),  # an escaped newline merges the lines
+        ("magic\n b c", "magic\nb c"),  # an unescaped newline keeps the newline
+        ("magi\\\n c d", "magic d"),  # an escaped newline merges the lines
         ("\\{a\\}", "{a}"),  # escaped curly braces
     ],
 )

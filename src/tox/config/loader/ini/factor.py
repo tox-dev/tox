@@ -46,18 +46,18 @@ def explode_factor(group: list[tuple[str, bool]]) -> str:
     return "-".join([name for name, _ in group])
 
 
-def expand_factors(value: str) -> Iterator[tuple[Iterator[list[tuple[str, bool]]] | None, str]]:
+def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
     for line in value.split("\n"):
-        match = re.match(r"^((?P<factor_expr>[\w {}.!,-]+):\s+)?(?P<content>.*?)$", line)
-        if match is None:  # pragma: no cover
-            raise RuntimeError("for a valid factor regex this cannot happen")
-        groups = match.groupdict()
-        factor_expr, content = groups["factor_expr"], groups["content"]
-        if factor_expr is not None:
-            factors = find_factor_groups(factor_expr)
-            yield factors, content
-        else:
-            yield None, content
+        factors: list[list[tuple[str, bool]]] | None = None
+        marker_at, content = line.find(":"), line
+        if marker_at != -1:
+            try:
+                factors = list(find_factor_groups(line[:marker_at].strip()))
+            except ValueError:
+                pass  # when cannot extract factors keep the entire line
+            else:
+                content = line[marker_at + 1 :].strip()
+        yield factors, content
 
 
 def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
@@ -76,6 +76,8 @@ def expand_env_with_negation(value: str) -> Iterator[str]:
             parts = [re.sub(r"\s+", "", elem).split(",") for elem in elements]
             for variant in product(*parts):
                 variant_str = "".join(variant)
+                if not re.fullmatch(r"!?[\w._][\w._-]*", variant_str):
+                    raise ValueError(variant_str)
                 yield variant_str
 
 
