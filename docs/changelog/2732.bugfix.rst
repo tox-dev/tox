@@ -1,0 +1,6 @@
+For value substitution, ``\\`` is now treated as an escape for literal backslash ``\``, which itself will not act as an
+escape for subsequent substitutions. Any substitution which yields a single backslash, will be treated as a literal
+backslash and also not act as an escape for subsequent substitutions.
+
+As a result of this change, ``{/}``, a substitution for ``os.sep``, yields ``\`` on windows and will now NOT act as an
+escape for subsequent substitutions. - by :user:`masenf`
