@@ -83,6 +83,7 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]
         wheel_cache = ROOT / ".wheel_cache" / f"{sys.version_info.major}.{sys.version_info.minor}"
         wheel_cache.mkdir(parents=True, exist_ok=True)
         cmd = [sys.executable, "-I", "-m", "pip", "download", "-d", str(wheel_cache)]
+        assert distribution.requires is not None
         for req in distribution.requires:
             requirement = Requirement(req)
             if not requirement.extras:  # pragma: no branch  # we don't need to install any extras (tests/docs/etc)

@@ -85,8 +85,8 @@ class IniSource(Source):
         for section in self.sections():
             register_factors(section.names)
             for name in section.names:
-                self._section_mapping[name].append(section.key)
                 if section.is_test_env:
+                    self._section_mapping[name].append(section.key)
                     yield name
         # add all conditional markers that are not part of the explicitly defined sections
         for section in self.sections():

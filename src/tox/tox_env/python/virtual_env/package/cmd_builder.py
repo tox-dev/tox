@@ -134,7 +134,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             yield self._sdist_meta_tox_env
 
 
-class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has type Any
+class WheelDistribution(Distribution):  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None
@@ -160,7 +160,7 @@ class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has ty
             except KeyError:
                 return None
 
-    def locate_file(self, path: str) -> PathLike[str]:
+    def locate_file(self, path: str | PathLike[str]) -> PathLike[str]:
         return self._wheel / path  # pragma: no cover # not used by us, but part of the ABC
 
 
