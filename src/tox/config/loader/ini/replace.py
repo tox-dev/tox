@@ -26,6 +26,10 @@ ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
 
 
 def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs) -> str:
+    value_parts = value.split("\\\\")  # double backslash is always an escape for backslash
+    if len(value_parts) > 1:
+        # recursively handle replacements for values between literal backslash
+        return "\\".join(replace(conf, loader, vp, args) for vp in value_parts)
     # perform all non-escaped replaces
     end = 0
     while True:
