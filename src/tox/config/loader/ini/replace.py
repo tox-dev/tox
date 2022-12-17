@@ -43,6 +43,9 @@ def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs) -
             # want to enforce escaping curly braces, e.g. it should work to write: env_list = {py39,py38}-{,dep}
             end = end + 1
             continue
+        elif replaced == "\\":
+            # a replaced backslash should NOT affect subsequent iterations, so recurse on left and right
+            return replaced.join(replace(conf, loader, vp, args) for vp in [value[:start], value[end + 1 :]])
         new_value = f"{value[:start]}{replaced}{value[end + 1:]}"
         end = 0  # if we performed a replacement start over
         if new_value == value:  # if we're not making progress stop (circular reference?)
