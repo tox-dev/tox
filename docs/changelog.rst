@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.14 (2022-12-18)
+--------------------
+
+Bugfixes - 4.0.14
+~~~~~~~~~~~~~~~~~
+- Do not include non test environment sections or factor filters in INI configuration to factor discovery - by
+  :user:`gaborbernat`. (:issue:`2746`)
+
+
 v4.0.13 (2022-12-17)
 --------------------
 
