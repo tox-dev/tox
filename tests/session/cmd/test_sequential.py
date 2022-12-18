@@ -68,7 +68,7 @@ def test_result_json_sequential(
     with log.open("rt") as file_handler:
         log_report = json.load(file_handler)
 
-    py_info = PythonInfo.current_system()
+    py_info = PythonInfo.current()
     host_python = {
         "executable": py_info.system_executable,
         "extra_version_info": None,
