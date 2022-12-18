@@ -1,0 +1,2 @@
+Do not include non test environment sections or factor filters in INI configuration to factor discovery - by
+:user:`gaborbernat`.

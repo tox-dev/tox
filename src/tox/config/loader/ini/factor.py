@@ -73,7 +73,7 @@ def expand_env_with_negation(value: str) -> Iterator[str]:
         if key:
             group_str = "".join(group).strip()
             elements = re.split(r"{([^}]+)}", group_str)
-            parts = [re.sub(r"\s+", "", elem).split(",") for elem in elements]
+            parts = [[i.strip() for i in elem.split(",")] for elem in elements]
             for variant in product(*parts):
                 variant_str = "".join(variant)
                 if not re.fullmatch(r"!?[\w._][\w._-]*", variant_str):
