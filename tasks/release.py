@@ -27,7 +27,7 @@ def main(version_str: str) -> None:
     finally:
         print("checkout main to new release and delete release branch")
         repo.heads.main.checkout()
-        repo.delete_head(release_branch)
+        repo.delete_head(release_branch, force=True)
         upstream.fetch()
         repo.git.reset("--hard upstream/main")
     print("All done! ✨ 🍰 ✨")
