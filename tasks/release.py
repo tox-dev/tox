@@ -29,7 +29,7 @@ def main(version_str: str) -> None:
         repo.heads.main.checkout()
         repo.delete_head(release_branch, force=True)
         upstream.fetch()
-        repo.git.reset("--hard upstream/main")
+        repo.git.reset("--hard", "upstream/main")
     print("All done! ✨ 🍰 ✨")
 
 
