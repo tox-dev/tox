@@ -1,1 +1,0 @@
-Fix space not accepted in factor filter expression - by :user:`gaborbernat`.

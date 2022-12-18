@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.13 (2022-12-17)
+--------------------
+
+Bugfixes - 4.0.13
+~~~~~~~~~~~~~~~~~
+- A plain section in INI configuration matching a tox environment name shadowed the laters configuration - by
+  :user:`gaborbernat`. (:issue:`2636`)
+- Fix space not accepted in factor filter expression - by :user:`gaborbernat`. (:issue:`2718`)
+
+
 v4.0.12 (2022-12-16)
 --------------------
 
