@@ -83,9 +83,9 @@ class IniSource(Source):
 
         # discover all additional defined environments, including generative section headers
         for section in self.sections():
-            register_factors(section.names)
-            for name in section.names:
-                if section.is_test_env:
+            if section.is_test_env:
+                register_factors(section.names)
+                for name in section.names:
                     self._section_mapping[name].append(section.key)
                     yield name
         # add all conditional markers that are not part of the explicitly defined sections
