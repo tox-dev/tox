@@ -186,4 +186,4 @@ def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
     assert msg in result.out
     with (project.path / "out.json").open() as file_handler:
         requires = json.load(file_handler)
-    assert requires == {"minversion": "4.0", "requires": ["p", "tox>=4.0"]}
+    assert requires == {"minversion": None, "requires": ["p", "tox"]}

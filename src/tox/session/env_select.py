@@ -232,11 +232,9 @@ class EnvSelector:
     def _build_run_env(self, name: str) -> RunToxEnv | None:
         if self._provision is not None and self._provision[0] is False and name == self._provision[1]:
             return None
-        env_conf = self._state.conf.get_env(
-            name,
-            package=False,
-            loaders=[self._provision[2]] if self._provision is not None and self._provision[1] == name else None,
-        )
+        env_conf = self._state.conf.get_env(name, package=False)
+        if self._provision is not None and self._provision[1] == name:
+            env_conf.loaders.insert(0, self._provision[2])
         desc = "the tox execute used to evaluate this environment"
         env_conf.add_config(keys="runner", desc=desc, of_type=str, default=self._state.conf.options.default_runner)
         runner = REGISTER.runner(cast(str, env_conf["runner"]))
