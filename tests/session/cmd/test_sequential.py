@@ -70,7 +70,7 @@ def test_result_json_sequential(
 
     py_info = PythonInfo.current_system()
     host_python = {
-        "executable": py_info.system_executable,
+        "executable": str(Path(py_info.system_executable).resolve()),
         "extra_version_info": None,
         "implementation": py_info.implementation,
         "is_64": py_info.architecture == 64,
