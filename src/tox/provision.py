@@ -62,7 +62,7 @@ def provision(state: State) -> int | bool:
         keys=["min_version", "minversion"],
         of_type=Version,
         # do not include local version specifier (because it's not allowed in version spec per PEP-440)
-        default=Version("4.0"),
+        default=None,  # type: ignore # Optional[Version] translates to object
         desc="Define the minimal tox version required to run",
     )
     state.conf.core.add_config(
@@ -72,10 +72,10 @@ def provision(state: State) -> int | bool:
         desc="Name of the virtual environment used to provision a tox.",
     )
 
-    def add_tox_requires_min_version(requires: list[Requirement]) -> list[Requirement]:
+    def add_tox_requires_min_version(reqs: list[Requirement]) -> list[Requirement]:
         min_version: Version = state.conf.core["min_version"]
-        requires.append(Requirement(f"tox >= {min_version}"))
-        return requires
+        reqs.append(Requirement(f"tox{f'>={min_version}' if min_version else ''}"))
+        return reqs
 
     state.conf.core.add_config(
         keys="requires",
@@ -113,8 +113,9 @@ def provision(state: State) -> int | bool:
         msg = f"provisioning explicitly disabled within {sys.executable}, but {miss_msg}"
         if isinstance(no_provision, str):
             msg += f" and wrote to {no_provision}"
+            min_version = str(next(i.specifier for i in requires if i.name == "tox")).split("=")
             requires_dict = {
-                "minversion": str(next(i.specifier for i in requires if i.name == "tox")).split("=")[1],
+                "minversion": min_version[1] if len(min_version) >= 2 else None,
                 "requires": [str(i) for i in requires],
             }
             Path(no_provision).write_text(json.dumps(requires_dict, indent=4))
