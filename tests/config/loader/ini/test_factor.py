@@ -122,6 +122,8 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
             django15: Django>=1.5,<1.6
             django16: Django>=1.6,<1.7
             py36: unittest2
+            !py37,!django16: negation-or
+            !py37-!django16: negation-and
         """,
     )
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
@@ -132,10 +134,14 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
         assert "pytest" in deps
         if "py36" in env:
             assert "unittest2" in deps
+            assert "negation-or" in deps
         if "django15" in env:
             assert "Django>=1.5,<1.6" in deps
+            assert "negation-or" in deps
         if "django16" in env:
             assert "Django>=1.6,<1.7" in deps
+        if "py36-django15" == env_config.name:
+            assert "negation-and" in deps
 
 
 def test_factor_config_do_not_replace_unescaped_comma(tox_ini_conf: ToxIniCreator) -> None:

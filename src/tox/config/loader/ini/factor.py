@@ -67,6 +67,9 @@ def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
         yield result
 
 
+_FACTOR_RE = re.compile(r"!?[\w._][\w._-]*")
+
+
 def expand_env_with_negation(value: str) -> Iterator[str]:
     """transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']"""
     for key, group in groupby(re.split(r"((?:{[^}]+})+)|,", value), key=bool):
@@ -76,7 +79,7 @@ def expand_env_with_negation(value: str) -> Iterator[str]:
             parts = [[i.strip() for i in elem.split(",")] for elem in elements]
             for variant in product(*parts):
                 variant_str = "".join(variant)
-                if not re.fullmatch(r"!?[\w._][\w._-]*", variant_str):
+                if not all(_FACTOR_RE.fullmatch(i) for i in variant_str.split("-")):
                     raise ValueError(variant_str)
                 yield variant_str
 
