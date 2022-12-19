@@ -1,2 +1,0 @@
-Fix assertion in ``test_result_json_sequential`` when interpreter ``_base_executable`` is a hardlink (macOS homebrew)
-- by user:`masenf`.

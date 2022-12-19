@@ -1,2 +1,0 @@
-Fix tox auto-provisioning not working and relax :ref:`min_version` default from ``4.0`` to no version constraint
-- by user:`gaborbernat`.
