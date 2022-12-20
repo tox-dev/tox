@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.16 (2022-12-20)
+--------------------
+
+Bugfixes - 4.0.16
+~~~~~~~~~~~~~~~~~
+- Fix :ref:`change_dir` is relative to current working directory rather than to the :ref:`tox_root` when using the ``-c``
+  argument to locate the ``tox.ini`` file - by :user:`gaborbernat`. (:issue:`2619`)
+
+
 v4.0.15 (2022-12-19)
 --------------------
 
