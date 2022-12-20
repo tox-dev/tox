@@ -1,0 +1,2 @@
+Fix :ref:`change_dir` is relative to current working directory rather than to the :ref:`tox_root` when using the ``-c``
+argument to locate the ``tox.ini`` file - by :user:`gaborbernat`.

@@ -5,14 +5,14 @@ import os
 import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
-from pathlib import Path
-from typing import Any, Iterable, List, cast
+from typing import Any, Iterable, List
 
 from tox.config.types import Command, EnvList
 from tox.journal import EnvJournal
 
 from .api import ToxEnv, ToxEnvCreateArgs
 from .package import Package, PackageToxEnv, PathPackage
+from .util import add_change_dir_conf
 
 
 class RunToxEnv(ToxEnv, ABC):
@@ -58,12 +58,7 @@ class RunToxEnv(ToxEnv, ABC):
             default=[],
             desc="the commands to be called after testing",
         )
-        self.conf.add_config(
-            keys=["change_dir", "changedir"],
-            of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["tox_root"]),  # noqa: U100
-            desc="change to this working directory when executing the test command",
-        )
+        add_change_dir_conf(self.conf, self.core)
         self.conf.add_config(
             keys=["args_are_paths"],
             of_type=bool,
