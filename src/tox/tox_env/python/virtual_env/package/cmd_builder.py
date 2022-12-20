@@ -26,6 +26,7 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.tox_env.register import ToxEnvRegister
 from tox.tox_env.runner import RunToxEnv
+from tox.tox_env.util import add_change_dir_conf
 
 from .pyproject import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras
@@ -61,12 +62,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             default=[],
             desc="the commands to be called for testing",
         )
-        self.conf.add_config(
-            keys=["change_dir", "changedir"],
-            of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["tox_root"]),  # noqa: U100
-            desc="change to this working directory when executing the test command",
-        )
+        add_change_dir_conf(self.conf, self.core)
         self.conf.add_config(
             keys=["ignore_errors"],
             of_type=bool,
