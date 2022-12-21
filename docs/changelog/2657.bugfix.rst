@@ -1,0 +1,1 @@
+Fix a numeric factor in an environment name can wrongly cause a "conflicting factors" error - by :user:`nsoranzo`.

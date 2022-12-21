@@ -128,6 +128,9 @@ class Python(ToxEnv, ABC):
     def extract_base_python(env_name: str) -> str | None:
         candidates: list[str] = []
         for factor in env_name.split("-"):
+            if not factor[0].isalpha():
+                # This may be considered a valid spec by virtualenv, but not in tox
+                continue
             spec = PythonSpec.from_string_spec(factor)
             impl = spec.implementation or "python"
             if impl.lower() in INTERPRETER_SHORT_NAMES and env_name is not None and spec.path is None:

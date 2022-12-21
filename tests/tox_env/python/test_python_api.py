@@ -35,6 +35,8 @@ def test_conflicting_base_python_factor() -> None:
     name = f"py{major}{minor}-py{major}{minor-1}"
     with pytest.raises(ValueError, match=f"conflicting factors py{major}{minor}, py{major}{minor-1} in {name}"):
         Python.extract_base_python(name)
+    name = f"py{major}{minor}-1234"
+    Python.extract_base_python(name)
 
 
 def test_build_wheel_in_non_base_pkg_env(
