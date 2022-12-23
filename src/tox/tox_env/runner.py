@@ -143,6 +143,9 @@ class RunToxEnv(ToxEnv, ABC):
             else:
                 self._setup_pkg()
 
+    def _done_with_setup(self) -> None:
+        self.installer.installed()
+
     def _register_package_conf(self) -> bool:
         """If this returns True package_env and package_tox_env_type configurations must be defined"""
         self.core.add_config(

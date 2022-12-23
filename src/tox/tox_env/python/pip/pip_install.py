@@ -73,7 +73,8 @@ class Pip(Installer[Python]):
             cmd=cmd.args,
             stdin=StdinSource.OFF,
             run_id="freeze",
-            show=self._env.options.verbosity > DEFAULT_VERBOSITY,
+            show=True,
+            # show=self._env.options.verbosity > DEFAULT_VERBOSITY,
         )
         result.assert_success()
         return result.out.splitlines()
