@@ -163,6 +163,12 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             help="skip package installation for this run",
             action="store_true",
         )
+    parser.add_argument(
+        "--display-dependencies",
+        dest="display_dependencies",
+        help="display the list of the packages installed in the virtual environment",
+        action="store_true",
+    )
 
 
 def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool) -> int:
