@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from argparse import ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
@@ -58,4 +59,4 @@ def test_empty_report(tox_project: ToxProjectCreator) -> None:
     outcome = proj.run("exec", "-qq", "--", "python", "-c", "print('foo')")
 
     outcome.assert_success()
-    outcome.assert_out_err("foo\n", "")
+    outcome.assert_out_err(f"foo{os.linesep}", "")
