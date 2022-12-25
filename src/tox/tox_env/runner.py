@@ -165,7 +165,8 @@ class RunToxEnv(ToxEnv, ABC):
 
     def _setup_pkg(self) -> None:
         self._packages = self._build_packages()
-        self._install(self._packages, RunToxEnv.__name__, "package")
+        if not self.options.package_only:
+            self._install(self._packages, RunToxEnv.__name__, "package")
         self._handle_journal_package(self.journal, self._packages)
 
     @staticmethod

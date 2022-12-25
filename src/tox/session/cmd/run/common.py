@@ -299,7 +299,11 @@ def _queue_and_wait(
 
             def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
                 spinner.add(tox_env.conf.name)
-                return run_one(tox_env, options.parsed.no_test, suspend_display=live is False)
+                return run_one(
+                    tox_env,
+                    options.parsed.no_test or options.parsed.package_only,
+                    suspend_display=live is False,
+                )
 
             try:
                 executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")
