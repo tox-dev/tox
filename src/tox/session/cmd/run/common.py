@@ -165,9 +165,10 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         )
 
 
-def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool) -> int:
+def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosity: int) -> int:
     def _print(color_: int, message: str) -> None:
-        print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
+        if verbosity:
+            print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
     successful, skipped = [], []
     for run in runs:
@@ -250,7 +251,12 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         # write the journal
         write_journal(getattr(state.conf.options, "result_json", None), state._journal)
         # report the outcome
-        exit_code = report(state.conf.options.start, ordered_results, state.conf.options.is_colored)
+        exit_code = report(
+            state.conf.options.start,
+            ordered_results,
+            state.conf.options.is_colored,
+            state.conf.options.verbosity,
+        )
         if has_previous:
             signal(SIGINT, previous)
     return exit_code

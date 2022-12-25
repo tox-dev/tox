@@ -1,0 +1,1 @@
+Suppress a report output when verbosity = 0.

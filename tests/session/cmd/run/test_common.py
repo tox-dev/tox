@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import os
 import re
 from argparse import ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
 
 import pytest
 
+from tox.pytest import ToxProjectCreator
 from tox.session.cmd.run.common import InstallPackageAction, SkipMissingInterpreterAction
 
 
@@ -50,3 +52,11 @@ def test_install_pkg_empty() -> None:
     argument_parser = ArgumentParser()
     with pytest.raises(ArgumentError, match=re.escape("argument --install-pkg: cannot be empty")):
         InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, Namespace(), "")
+
+
+def test_empty_report(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": ""})
+    outcome = proj.run("exec", "-qq", "--", "python", "-c", "print('foo')")
+
+    outcome.assert_success()
+    outcome.assert_out_err(f"foo{os.linesep}", "")
