@@ -176,6 +176,6 @@ def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:
 @pytest.mark.parametrize("work_dir", ["a", ""])
 def test_config_work_dir(tox_project: ToxProjectCreator, work_dir) -> None:
     project = tox_project({"tox.ini": "[tox]\ntoxworkdir=b"})
-    result = project.run("c", "-k", "toxworkdir", "--core", *(["--workdir", work_dir] if work_dir else []))
+    result = project.run("c", *(["--workdir", work_dir] if work_dir else []))
     expected = Path(project.path, work_dir) if work_dir else result.state.conf.core["toxworkdir"]
     assert expected == result.state.conf.core["toxworkdir"]
