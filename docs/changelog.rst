@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.17 (2022-12-25)
+--------------------
+
+Features - 4.0.17
+~~~~~~~~~~~~~~~~~
+- Suppress a report output when verbosity = 0. (:issue:`2697`)
+
+Bugfixes - 4.0.17
+~~~~~~~~~~~~~~~~~
+- Fix ``--sdistonly`` behaviour. (:issue:`2653`)
+- Override toxworkdir with --workdir. (:issue:`2654`)
+
+
 v4.0.16 (2022-12-20)
 --------------------
 
