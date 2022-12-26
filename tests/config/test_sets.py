@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from collections import OrderedDict
 from pathlib import Path
 from typing import Callable, Dict, Optional, Set, TypeVar
@@ -174,8 +173,9 @@ def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:
         assert env_set["set_env"]
 
 
-def test_config_work_dir(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\ntoxworkdir=/tmp/foo"})
-    work_dir_flag = "a"
-    result = project.run("c", "-k", "toxworkdir", "--core", "--workdir", work_dir_flag)
-    assert f"work_dir = {os.path.join(project.path, work_dir_flag,'.tox')}{os.linesep}" in result.out
+@pytest.mark.parametrize("work_dir", ["a", ""])
+def test_config_work_dir(tox_project: ToxProjectCreator, work_dir) -> None:
+    project = tox_project({"tox.ini": "[tox]\ntoxworkdir=b"})
+    result = project.run("c", "-k", "toxworkdir", "--core", *(["--workdir", work_dir] if work_dir else []))
+    expected = Path(project.path, work_dir) if work_dir else result.state.conf.core["toxworkdir"]
+    assert expected == result.state.conf.core["toxworkdir"]
