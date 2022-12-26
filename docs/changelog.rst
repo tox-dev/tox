@@ -43,7 +43,7 @@ Bugfixes - 4.0.15
   - by user:`gaborbernat`. (:issue:`2634`)
 - Fix assertion in ``test_result_json_sequential`` when interpreter ``_base_executable`` is a hardlink (macOS homebrew)
   - by user:`masenf`. (:issue:`2720`)
-- Complex negative factor filters not working  - by user:`gaborbernat`. (:issue:`2747`)
+- Complex negative factor filters not working  - by :user:`gaborbernat`. (:issue:`2747`)
 
 
 v4.0.14 (2022-12-18)
