@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.0.18 (2022-12-26)
+--------------------
+
+Bugfixes - 4.0.18
+~~~~~~~~~~~~~~~~~
+- Strip leading and trailing whitespace when parsing elements in requirement files - by :user:`gaborbernat`. (:issue:`2773`)
+
+
 v4.0.17 (2022-12-25)
 --------------------
 
