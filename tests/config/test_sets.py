@@ -178,4 +178,4 @@ def test_config_work_dir(tox_project: ToxProjectCreator, work_dir: str) -> None:
     project = tox_project({"tox.ini": "[tox]\ntoxworkdir=b"})
     result = project.run("c", *(["--workdir", work_dir] if work_dir else []))
     expected = Path(project.path, work_dir) if work_dir else Path("b")
-    assert expected == result.state.conf.core["toxworkdir"]
+    assert expected == result.state.conf.core["work_dir"]
