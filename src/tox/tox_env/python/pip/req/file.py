@@ -361,7 +361,7 @@ class RequirementsFile:
             else:
                 args.append(token)
                 options.pop(0)
-        return " ".join(args), " ".join(options)
+        return " ".join(args).strip(), " ".join(options)
 
     @staticmethod
     def _join_lines(lines_enum: ReqFileLines) -> ReqFileLines:
