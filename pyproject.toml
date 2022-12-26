@@ -42,7 +42,7 @@ optional-dependencies.docs = [
   "sphinx-copybutton>=0.5.1",
   "sphinx-inline-tabs>=2022.1.2b11",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=22.8",
+  "towncrier>=22.12",
 ]
 optional-dependencies.testing = [
   "build[virtualenv]>=0.9",

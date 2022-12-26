@@ -1,0 +1,1 @@
+Strip leading and trailing whitespace when parsing elements in requirement files - by :user:`gaborbernat`.
