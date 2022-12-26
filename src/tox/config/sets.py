@@ -191,10 +191,14 @@ class CoreConfigSet(ConfigSet):
         def work_dir_builder(conf: Config, env_name: str | None) -> Path:  # noqa: U100
             return (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox"
 
+        def work_dir_post_process(value: Path) -> Path:
+            return self._conf.work_dir / ".tox" if self._conf.work_dir is not None else value
+
         self.add_config(
             keys=["work_dir", "toxworkdir"],
             of_type=Path,
             default=work_dir_builder,
+            post_process=work_dir_post_process,
             desc="working directory",
         )
         self.add_config(
