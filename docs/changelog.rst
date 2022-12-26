@@ -40,9 +40,9 @@ v4.0.15 (2022-12-19)
 Bugfixes - 4.0.15
 ~~~~~~~~~~~~~~~~~
 - Fix tox auto-provisioning not working and relax :ref:`min_version` default from ``4.0`` to no version constraint
-  - by user:`gaborbernat`. (:issue:`2634`)
+  - by :user:`gaborbernat`. (:issue:`2634`)
 - Fix assertion in ``test_result_json_sequential`` when interpreter ``_base_executable`` is a hardlink (macOS homebrew)
-  - by user:`masenf`. (:issue:`2720`)
+  - by :user:`masenf`. (:issue:`2720`)
 - Complex negative factor filters not working  - by :user:`gaborbernat`. (:issue:`2747`)
 
 
