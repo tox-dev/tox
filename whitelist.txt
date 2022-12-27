@@ -67,6 +67,7 @@ fixup
 fromdocname
 fromhex
 fs
+fspath
 fullmatch
 getattribute
 getbasetemp

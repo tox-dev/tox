@@ -18,4 +18,4 @@ def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -
     project = tox_project({"tox.ini": ini})
     result = project.run()
     result.assert_success()
-    assert os.path.exists(os.path.join(result.state.conf.core["temp_dir"], "foo"))
+    assert os.path.exists(os.path.join(os.fspath(result.state.conf.core["temp_dir"]), "foo"))
