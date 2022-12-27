@@ -1,1 +1,1 @@
-Create default temp_dir.
+Create temp_dir if not exists.
