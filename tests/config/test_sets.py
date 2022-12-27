@@ -181,9 +181,11 @@ def test_config_work_dir(tox_project: ToxProjectCreator, work_dir: str) -> None:
     assert expected == result.state.conf.core["work_dir"]
 
 
-def test_config_temp_dir(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\ncommands=python -c 'print(1)'"
+def test_config_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    ini = f"[tox]\ntemp_dir={tmp_path}\n[testenv]\ncommands=python -c 'print(1)'"
+    (tmp_path / "foo").mkdir()
     project = tox_project({"tox.ini": ini})
     result = project.run()
     result.assert_success()
     assert result.state.conf.core["temp_dir"].exists()
+    assert (result.state.conf.core["temp_dir"] / "foo").exists()

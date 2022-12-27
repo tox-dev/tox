@@ -306,9 +306,6 @@ class ToxEnv(ABC):
 
     def _handle_core_tmp_dir(self) -> None:
         core_tmp_dir = self.core["temp_dir"]
-        if core_tmp_dir.exists() and next(core_tmp_dir.iterdir(), None) is not None:
-            LOGGER.debug("clear tox temp folder %s", core_tmp_dir)
-            ensure_empty_dir(core_tmp_dir)
         core_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     def _clean(self, transitive: bool = False) -> None:  # noqa: U100
