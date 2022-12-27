@@ -13,7 +13,7 @@ def test_ensure_temp_dir_exists(tox_project: ToxProjectCreator) -> None:
 
 
 def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
-    ini = f"[tox]\ntemp_dir={str(tmp_path)}\n[testenv]\ncommands=python -c 'print(1)'"
+    ini = f"[tox]\ntemp_dir={tmp_path}\n[testenv]\ncommands=python -c 'print(1)'"
     (tmp_path / "foo").touch()
     project = tox_project({"tox.ini": ini})
     result = project.run()
