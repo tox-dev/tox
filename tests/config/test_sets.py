@@ -182,8 +182,8 @@ def test_config_work_dir(tox_project: ToxProjectCreator, work_dir: str) -> None:
 
 
 def test_config_temp_dir(tox_project: ToxProjectCreator) -> None:
-    ini = '[testenv]\ncommands=python -c \'import os; os.mkdir(os.path.join("{temp_dir}", "foo"))\''
+    ini = "[testenv]\ncommands=python -c 'print(1)'"
     project = tox_project({"tox.ini": ini})
     result = project.run()
     result.assert_success()
-    assert (result.state.conf.core["temp_dir"] / "foo").exists()
+    assert result.state.conf.core["temp_dir"].exists()
