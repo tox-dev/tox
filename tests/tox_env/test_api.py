@@ -1,4 +1,4 @@
-import os.path
+import os
 from pathlib import Path
 
 from tox.pytest import ToxProjectCreator
