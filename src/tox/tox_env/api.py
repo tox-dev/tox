@@ -305,8 +305,7 @@ class ToxEnv(ABC):
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     def _handle_core_tmp_dir(self) -> None:
-        core_tmp_dir = self.core["temp_dir"]
-        core_tmp_dir.mkdir(parents=True, exist_ok=True)
+        self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
 
     def _clean(self, transitive: bool = False) -> None:  # noqa: U100
         if self._run_state["clean"]:  # pragma: no branch
