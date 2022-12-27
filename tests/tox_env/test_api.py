@@ -13,9 +13,11 @@ def test_ensure_temp_dir_exists(tox_project: ToxProjectCreator) -> None:
 
 
 def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
-    ini = f"[tox]\ntemp_dir={os.fspath(tmp_path)}\n[testenv]\ncommands=python -c 'print(1)'"
-    (tmp_path / "foo").touch()
+    temp_dir = tmp_path / "foo"
+    temp_dir.mkdir()
+    ini = f"[tox]\ntemp_dir={temp_dir}\n[testenv]\ncommands=python -c 'print(1)'"
+    (temp_dir / "bar").touch()
     project = tox_project({"tox.ini": ini})
     result = project.run()
     result.assert_success()
-    assert os.path.exists(os.path.join(os.fspath(result.state.conf.core["temp_dir"]), "foo"))
+    assert os.path.exists(os.path.join(os.fspath(result.state.conf.core["temp_dir"]), "bar"))
