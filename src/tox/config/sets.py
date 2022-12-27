@@ -194,10 +194,9 @@ class CoreConfigSet(ConfigSet):
         def work_dir_post_process(value: Path) -> Path:
             return self._conf.work_dir if self._conf.options.work_dir else value
 
-        def temp_dir_builder(conf: Config, env_name: str | None) -> Path:  # noqa: U100
-            temp_dir = cast(Path, self["work_dir"]) / ".tmp"
-            temp_dir.mkdir(parents=True, exist_ok=True)
-            return temp_dir
+        def temp_dir_post_process(value: Path) -> Path:
+            value.mkdir(parents=True, exist_ok=True)
+            return value
 
         self.add_config(
             keys=["work_dir", "toxworkdir"],
@@ -209,7 +208,8 @@ class CoreConfigSet(ConfigSet):
         self.add_config(
             keys=["temp_dir"],
             of_type=Path,
-            default=temp_dir_builder,
+            default=lambda conf, _: cast(Path, self["work_dir"]) / ".tmp",  # noqa: U100, U101
+            post_process=temp_dir_post_process,
             desc="a folder for temporary files (is not cleaned at start)",
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)

@@ -182,7 +182,7 @@ def test_config_work_dir(tox_project: ToxProjectCreator, work_dir: str) -> None:
 
 
 def test_config_temp_dir(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\nallowlist_externals=touch\ncommands=touch {temp_dir}/foo"
+    ini = '[testenv]\ncommands=python -c \'import os; os.mkdir(os.path.join("{temp_dir}", "foo"))\''
     project = tox_project({"tox.ini": ini})
     result = project.run()
     result.assert_success()
