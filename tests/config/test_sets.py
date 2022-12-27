@@ -179,3 +179,11 @@ def test_config_work_dir(tox_project: ToxProjectCreator, work_dir: str) -> None:
     result = project.run("c", *(["--workdir", str(project.path / work_dir)] if work_dir else []))
     expected = project.path / work_dir if work_dir else Path("b")
     assert expected == result.state.conf.core["work_dir"]
+
+
+def test_config_temp_dir(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\nallowlist_externals=touch\ncommands=touch {temp_dir}/foo"
+    project = tox_project({"tox.ini": ini})
+    result = project.run()
+    result.assert_success()
+    assert (result.state.conf.core["temp_dir"] / "foo").exists()
