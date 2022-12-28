@@ -95,7 +95,14 @@ def register_env_select_flags(
             "factors to evaluate (passing multiple factors means 'AND', passing this option multiple times means 'OR')"
         )
         add_to.add_argument(
-            "-f", dest="factors", metavar="factor", help=help_msg, default=[], type=str, nargs="+", action="append"
+            "-f",
+            dest="factors",
+            metavar="factor",
+            help=help_msg,
+            default=[],
+            type=str,
+            nargs="+",
+            action="append",
         )
     help_msg = "exclude all environments selected that match this regular expression"
     add_to.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
@@ -297,7 +304,7 @@ class EnvSelector:
         # also parse hyphenated factors into lists of factors
         # so that `-f foo-bar` and `-f foo bar` are treated equivalently
         raw_factors = getattr(self._state.conf.options, "factors", [])
-        return [set(f for factor in factor_list for f in factor.split("-")) for factor_list in raw_factors]
+        return [{f for factor in factor_list for f in factor.split("-")} for factor_list in raw_factors]
 
     def _mark_active(self) -> None:
         labels = set(getattr(self._state.conf.options, "labels", []))
