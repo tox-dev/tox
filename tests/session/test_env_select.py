@@ -72,6 +72,17 @@ def test_factor_select(tox_project: ToxProjectCreator) -> None:
     outcome.assert_out_err("py310-django20-cov\npy39-django20-cov\n", "")
 
 
+def test_factor_select_containing_hyphenate(tox_project: ToxProjectCreator) -> None:
+    ini = """
+        [tox]
+        env_list = py3{10,9}-{django20,django21}{-cov,}
+        """
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("l", "--no-desc", "-f", "cov-django20")
+    outcome.assert_success()
+    outcome.assert_out_err("py310-django20-cov\npy39-django20-cov\n", "")
+
+
 def test_factor_select_multiple_factors(tox_project: ToxProjectCreator) -> None:
     ini = """
         [tox]
