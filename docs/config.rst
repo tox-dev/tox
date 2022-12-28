@@ -172,7 +172,7 @@ Core
 
 .. conf::
    :keys: temp_dir
-   :default: {tox_root}/.temp
+   :default: {tox_root}/.tmp
 
    Directory where to put tox temporary files. For example: we create a hard link (if possible, otherwise new copy) in
    this directory for the project package. This ensures tox works correctly when having parallel runs (as each session

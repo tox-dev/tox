@@ -288,6 +288,7 @@ class ToxEnv(ABC):
             if eq is False and old is not None:  # pragma: no branch  # recreate if already created and not equals
                 raise Recreate(f"env type changed from {old} to {conf}")
         self._handle_env_tmp_dir()
+        self._handle_core_tmp_dir()
 
     def _setup_with_env(self) -> None:  # noqa: B027 # empty abstract base class
         pass
@@ -302,6 +303,9 @@ class ToxEnv(ABC):
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    def _handle_core_tmp_dir(self) -> None:
+        self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
 
     def _clean(self, transitive: bool = False) -> None:  # noqa: U100
         if self._run_state["clean"]:  # pragma: no branch
