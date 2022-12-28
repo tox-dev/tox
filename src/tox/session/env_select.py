@@ -91,8 +91,8 @@ def register_env_select_flags(
     if multiple:
         help_msg = "labels to evaluate"
         add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")
-        help_msg = "factors to evaluate"
-        add_to.add_argument("-f", dest="factors", metavar="factor", help=help_msg, default=[], type=str, nargs="+")
+        help_msg = "factors to evaluate (passing multiple factors means 'AND', passing this option multiple times means 'OR')"
+        add_to.add_argument("-f", dest="factors", metavar="factor", help=help_msg, default=[], type=str, nargs="+", action="append")
     help_msg = "exclude all environments selected that match this regular expression"
     add_to.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
     return add_to
@@ -290,7 +290,9 @@ class EnvSelector:
 
     def _mark_active(self) -> None:
         labels = set(getattr(self._state.conf.options, "labels", []))
-        factors = set(getattr(self._state.conf.options, "factors", []))
+        # factors is a list of lists, from the combination of nargs="+" and action="append"
+        factors = [set(factor_list) for factor_list in getattr(self._state.conf.options, "factors", [])]
+
         assert self._defined_envs_ is not None
         if labels or factors:
             for env_info in self._defined_envs_.values():
@@ -302,10 +304,11 @@ class EnvSelector:
                 for env_info in self._defined_envs_.values():
                     if labels.intersection(env_info.env.conf["labels"]):
                         env_info.is_active = True
-            if self._state.conf.options.factors:  # if matches mark it active
+            if factors:  # if matches mark it active
                 for name, env_info in self._defined_envs_.items():
-                    if factors.issubset(set(name.split("-"))):
-                        env_info.is_active = True
+                    for factor_set in factors:
+                        if factor_set.issubset(set(name.split("-"))):
+                            env_info.is_active = True
 
     def __getitem__(self, item: str) -> RunToxEnv | PackageToxEnv:
         """
