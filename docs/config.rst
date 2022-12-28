@@ -617,7 +617,7 @@ Python run
 External package builder
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-tox supports operating with externally built packages. External packages might be provided in two wayas:
+tox supports operating with externally built packages. External packages might be provided in two ways:
 
 - explicitly via the :ref:`--installpkg <tox-run---installpkg>` CLI argument,
 - setting the :ref:`package` to ``external`` and using a tox packaging environment named ``<package_env>_external``
