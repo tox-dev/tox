@@ -1,2 +1,1 @@
-* Allow ``-f`` to be used multiple times and to be used on hyphenated factors
-  (e.g. ``-f py311-django -f py39``)
+``-f`` can be used multiple times and on hyphenated factors (e.g. ``-f py311-django -f py39``) - by :user:`sirosen`.
