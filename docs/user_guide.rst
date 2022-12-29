@@ -48,7 +48,7 @@ The configuration is split into two type of configuration: core settings are hos
 environment settings hosted under ``testenv:<env_name>``. Under the core section we define that this project has two
 run environments named ``format`` and ``py310`` respectively (we use the ``envlist`` configuration key to do so).
 
-Then we define separately what should the formatting environment (``testenv:format`` section) and the test environment
+Then we define separately the formatting environment (``testenv:format`` section) and the test environment
 (``testenv:py310`` section). For example to format the project we:
 
 - add a description (visible when you type ``tox list`` into the command line),
