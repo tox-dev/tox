@@ -161,7 +161,7 @@ class ToxProject:
                 at_path.mkdir(exist_ok=True)
                 ToxProject._setup_files(at_path, None, value)
             elif isinstance(value, str):
-                at_path.write_text(textwrap.dedent(value))
+                at_path.write_text(textwrap.dedent(value), encoding="utf-8")
             elif value is None:
                 at_path.mkdir()
             else:
