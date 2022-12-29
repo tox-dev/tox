@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
@@ -61,15 +63,36 @@ def test_label_core_and_trait(tox_project: ToxProjectCreator) -> None:
     outcome.assert_out_err("py310\npy39\nflake8\ntype\n", "")
 
 
-def test_factor_select(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    ("selection_arguments", "expect_envs"),
+    [
+        (
+            ("-f", "cov", "django20"),
+            ("py310-django20-cov", "py39-django20-cov"),
+        ),
+        (
+            ("-f", "cov-django20"),
+            ("py310-django20-cov", "py39-django20-cov"),
+        ),
+        (
+            ("-f", "py39", "django20", "-f", "py310", "django21"),
+            ("py310-django21-cov", "py310-django21", "py39-django20-cov", "py39-django20"),
+        ),
+    ],
+)
+def test_factor_select(
+    tox_project: ToxProjectCreator,
+    selection_arguments: tuple[str, ...],
+    expect_envs: tuple[str, ...],
+) -> None:
     ini = """
         [tox]
         env_list = py3{10,9}-{django20,django21}{-cov,}
         """
     project = tox_project({"tox.ini": ini})
-    outcome = project.run("l", "--no-desc", "-f", "cov", "django20")
+    outcome = project.run("l", "--no-desc", *selection_arguments)
     outcome.assert_success()
-    outcome.assert_out_err("py310-django20-cov\npy39-django20-cov\n", "")
+    outcome.assert_out_err("{}\n".format("\n".join(expect_envs)), "")
 
 
 def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
