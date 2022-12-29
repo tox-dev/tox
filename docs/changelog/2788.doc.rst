@@ -1,1 +1,0 @@
-Add faq entry about re-use of environments - by :user:`jugmac00`.

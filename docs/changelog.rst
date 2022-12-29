@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.1.1 (2022-12-29)
+-------------------
+
+Bugfixes - 4.1.1
+~~~~~~~~~~~~~~~~
+- Fix logging error with emoji in git branch name. (:issue:`2768`)
+
+Improved Documentation - 4.1.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add faq entry about re-use of environments - by :user:`jugmac00`. (:issue:`2788`)
+
+
 v4.1.0 (2022-12-29)
 -------------------
 
