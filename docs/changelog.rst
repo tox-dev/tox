@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.1.0 (2022-12-29)
+-------------------
+
+Features - 4.1.0
+~~~~~~~~~~~~~~~~
+- ``-f`` can be used multiple times and on hyphenated factors (e.g. ``-f py311-django -f py39``) - by :user:`sirosen`. (:issue:`2766`)
+
+Improved Documentation - 4.1.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix a grammatical typo in docs/user_guide.rst. (:issue:`2787`)
+
+
 v4.0.19 (2022-12-28)
 --------------------
 
