@@ -80,7 +80,7 @@ def test_label_core_and_trait(tox_project: ToxProjectCreator) -> None:
         ),
     ],
 )
-def test_factor_select(tox_project: ToxProjectCreator, selection_arguments, expect_envs) -> None:
+def test_factor_select(tox_project: ToxProjectCreator, selection_arguments: list[str], expect_envs: list[str]) -> None:
     ini = """
         [tox]
         env_list = py3{10,9}-{django20,django21}{-cov,}
