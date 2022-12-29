@@ -34,7 +34,8 @@ def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_pa
 
 def test_env_log(tox_project: ToxProjectCreator) -> None:
     cmd = "commands=python -c 'import sys; print(1); print(2); print(3, file=sys.stderr); print(4, file=sys.stderr)'"
-    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})
+    env_vars = "    UNPREDICTABLE = 🪟"
+    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nset_env =\n{env_vars}\n{cmd}"})
     result_first = prj.run("r")
     result_first.assert_success()
 
