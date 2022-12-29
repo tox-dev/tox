@@ -323,8 +323,6 @@ class EnvSelector:
                         env_info.is_active = True
             if factors:  # if matches mark it active
                 for name, env_info in self._defined_envs_.items():
-                    if env_info.is_active:
-                        continue
                     for factor_set in factors:
                         if factor_set.issubset(set(name.split("-"))):
                             env_info.is_active = True
