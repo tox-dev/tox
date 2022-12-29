@@ -299,12 +299,12 @@ class EnvSelector:
         self._manager.tox_add_env_config(pkg_conf, self._state)
         return pkg_env
 
-    def _parse_factors(self) -> list[set[str]]:
+    def _parse_factors(self) -> tuple[set[str], ...]:
         # factors is a list of lists, from the combination of nargs="+" and action="append"
         # also parse hyphenated factors into lists of factors
         # so that `-f foo-bar` and `-f foo bar` are treated equivalently
         raw_factors = getattr(self._state.conf.options, "factors", [])
-        return [{f for factor in factor_list for f in factor.split("-")} for factor_list in raw_factors]
+        return tuple({f for factor in factor_list for f in factor.split("-")} for factor_list in raw_factors)
 
     def _mark_active(self) -> None:
         labels = set(getattr(self._state.conf.options, "labels", []))
@@ -323,9 +323,12 @@ class EnvSelector:
                         env_info.is_active = True
             if factors:  # if matches mark it active
                 for name, env_info in self._defined_envs_.items():
+                    if env_info.is_active:
+                        continue
                     for factor_set in factors:
                         if factor_set.issubset(set(name.split("-"))):
                             env_info.is_active = True
+                            break
 
     def __getitem__(self, item: str) -> RunToxEnv | PackageToxEnv:
         """
