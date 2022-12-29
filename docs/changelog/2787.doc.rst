@@ -1,0 +1,1 @@
+Fix a grammatical typo in docs/user_guide.rst.
