@@ -121,6 +121,23 @@ tox 4 -- output changes
 - We now use colors for reporting, to help make the output easier to read for humans. This can be disabled via the
   ``TERM=dumb`` or ``NO_COLOR=1`` environment variables, or the ``--colored no`` CLI argument.
 
+tox 4 -- re-use of environments
++++++++++++++++++++++++++++++++
+
+- It is no longer possible to re-use environments. While this might have been possible with tox version 3, this
+  behavior was never supported, and possibly caused wrong results as illustrated in the following example.
+
+.. code-block:: ini
+
+    [testenv]
+    envdir = .tox/venv
+
+    [testenv:a]
+    deps = pytest>7
+
+    [testenv:b]
+    deps = pytest<7
+
 New features in tox 4
 ---------------------
 Here is a non-exhaustive list of these.
