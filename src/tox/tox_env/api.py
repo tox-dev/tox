@@ -444,7 +444,7 @@ class ToxEnv(ABC):
 
     @staticmethod
     def _write_execute_log(env_name: str, log_file: Path, request: ExecuteRequest, status: ExecuteStatus) -> None:
-        with log_file.open("wt") as file:
+        with log_file.open("wt", encoding="utf-8") as file:
             file.write(f"name: {env_name}\n")
             file.write(f"run_id: {request.run_id}\n")
             for env_key, env_value in request.env.items():
