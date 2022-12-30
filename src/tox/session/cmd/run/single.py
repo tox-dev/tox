@@ -46,6 +46,7 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
             code, outcomes = run_commands(tox_env, no_test)
         except Skip as exception:
             LOGGER.warning("skipped because %s", exception)
+            code = 0
             skipped = True
         except ToxBackendFailed as exception:
             LOGGER.error("%s", exception)
