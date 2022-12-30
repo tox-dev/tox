@@ -18,7 +18,7 @@ class SetEnv:
         self._env_files: list[str] = []
         self._replacer: Replacer = lambda s, c: s  # noqa: U100
         self._name, self._env_name, self._root = name, env_name, root
-        from .loader.ini.replace import find_replace_part
+        from .loader.ini.replace import MatchExpression, find_replace_expr
 
         for line in raw.splitlines():
             if line.strip():
@@ -30,9 +30,10 @@ class SetEnv:
                         if "{" in key:
                             raise ValueError(f"invalid line {line!r} in set_env")
                     except ValueError:
-                        _, __, match = find_replace_part(line, 0)
-                        if match:
-                            self._needs_replacement.append(line)
+                        for expr in find_replace_expr(line):
+                            if isinstance(expr, MatchExpression):
+                                self._needs_replacement.append(line)
+                                break
                         else:
                             raise
                     else:

@@ -9,7 +9,7 @@ import sys
 from configparser import SectionProxy
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, Pattern
+from typing import TYPE_CHECKING, Any, Iterator, Pattern, Sequence, Union
 
 from tox.config.loader.api import ConfigLoadArgs
 from tox.config.loader.stringify import stringify
@@ -21,74 +21,171 @@ if TYPE_CHECKING:
     from tox.config.loader.ini import IniLoader
     from tox.config.main import Config
 
-# split alongside :, unless it's escaped, or it's preceded by a single capital letter (Windows drive letter in paths)
-ARGS_GROUP = re.compile(r"(?<!\\\\|:[A-Z]):")
+# split alongside :, unless it's preceded by a single capital letter (Windows drive letter in paths)
+ARG_DELIMITER = ":"
+REPLACE_START = "{"
+REPLACE_END = "}"
+BACKSLASH_ESCAPE_CHARS = ["\\", ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]"]
+
+
+MatchArg = Sequence[Union[str, "MatchExpression"]]
+
+
+def find_replace_expr(value: str) -> MatchArg:
+    """Find all replaceable tokens within value."""
+    return MatchExpression.parse_and_split_to_terminator(value)[0][0]
 
 
 def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs) -> str:
-    # perform all non-escaped replaces
-    end = 0
-    while True:
-        start, end, to_replace = find_replace_part(value, end)
-        if to_replace is None:
-            break
-        replaced = _replace_match(conf, loader, to_replace, args.copy())
-        if replaced is None:
-            # if we cannot replace, keep what was there, and continue looking for additional replaces following
-            # note, here we cannot raise because the content may be a factorial expression, and in those case we don't
-            # want to enforce escaping curly braces, e.g. it should work to write: env_list = {py39,py38}-{,dep}
-            end = end + 1
-            continue
-        new_value = f"{value[:start]}{replaced}{value[end + 1:]}"
-        end = 0  # if we performed a replacement start over
-        if new_value == value:  # if we're not making progress stop (circular reference?)
-            break
-        value = new_value
-    # remove escape sequences
-    value = value.replace("\\{", "{")
-    value = value.replace("\\}", "}")
-    value = value.replace("\\[", "[")
-    value = value.replace("\\]", "]")
-    return value
+    """Replace all active tokens within value according to the config."""
+    return Replacer(conf, loader, conf_args=args).join(find_replace_expr(value))
 
 
-REPLACE_PART = re.compile(
-    r"""
-        (?<!\\) {  # Unescaped {
-            ( [^{},] | \\ { | \\ } )*  # Anything except an unescaped { or }
-        (?<! \\) }  # Unescaped }
-    |
-        (?<! \\) \[ ]  # Unescaped []
-    """,
-    re.VERBOSE,
-)
+class MatchError(Exception):
+    pass
 
 
-def find_replace_part(value: str, end: int) -> tuple[int, int, str | None]:
-    match = REPLACE_PART.search(value, end)
-    if match is None:
-        return -1, -1, None
-    if match.group() == "[]":
-        return match.start(), match.end() - 1, "posargs"  # brackets is an alias for positional arguments
-    matched_part = match.group()[1:-1]
-    return match.start(), match.end() - 1, matched_part
+class MatchExpression:
+    """An expression that is handled specially by the Replacer."""
+
+    def __init__(self, expr: Sequence[MatchArg]):
+        self.expr = expr
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, type(self)):
+            return self.expr == other.expr
+        return NotImplemented
+
+    @classmethod
+    def _next_replace_expression(cls, value: str) -> tuple[MatchExpression | None, int]:
+        """Process a curly brace replacement expression."""
+        if value.startswith("[]"):
+            # `[]` is shorthand for `{posargs}`
+            return cls._next_replace_expression(f"{REPLACE_START}posargs{REPLACE_END}")[0], 2
+        if not value.startswith(REPLACE_START):
+            return None, 0
+        try:
+            # recursively handle inner expression
+            rec_expr, term_pos = cls.parse_and_split_to_terminator(
+                value[1:],
+                terminator=REPLACE_END,
+                split=ARG_DELIMITER,
+            )
+        except MatchError:
+            # did NOT find the expected terminator character, so treat `{` as if escaped
+            pass
+        else:
+            return MatchExpression(expr=rec_expr), term_pos + 1
+        return None, 0
+
+    @classmethod
+    def parse_and_split_to_terminator(
+        cls,
+        value: str,
+        terminator: str = "",
+        split: str | None = None,
+    ) -> tuple[Sequence[MatchArg], int]:
+        """
+        Tokenize `value` to up `terminator` character.
+
+        If `split` is given, multiple arguments will be returned.
+
+        Returns list of arguments (list of str or MatchExpression) and final character position examined in value.
+
+        This function recursively calls itself via `_next_replace_expression`.
+        """
+        args = []
+        last_arg: list[str | MatchExpression] = []
+        pos = 0
+
+        while pos < len(value):
+            if len(value) > pos + 1 and value[pos] == "\\" and value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
+                # backslash escapes the next character from a special set
+                last_arg.append(value[pos + 1])
+                pos += 2
+                continue
+            fragment = value[pos:]
+            if terminator and fragment.startswith(terminator):
+                pos += len(terminator)
+                break
+            if split and fragment.startswith(split):
+                # found a new argument
+                args.append(last_arg)
+                last_arg = []
+                pos += len(split)
+                continue
+            expr, expr_end_pos = cls._next_replace_expression(fragment)
+            pos += expr_end_pos
+            if expr:
+                last_arg.append(expr)
+                continue
+            # default case: consume the next character
+            last_arg.append(value[pos])
+            pos += 1
+        else:  # fell out of the loop
+            if terminator:
+                raise MatchError(f"{terminator!r} remains unmatched in {value!r}")
+        args.append(last_arg)
+        return [_flatten_string_fragments(a) for a in args], pos
 
 
-def _replace_match(conf: Config, loader: IniLoader, value: str, conf_args: ConfigLoadArgs) -> str | None:
-    of_type, *args = ARGS_GROUP.split(value)
-    if of_type == "/":
-        replace_value: str | None = os.sep
-    elif of_type == "" and args == [""]:
-        replace_value = os.pathsep
-    elif of_type == "env":
-        replace_value = replace_env(conf, args, conf_args)
-    elif of_type == "tty":
-        replace_value = replace_tty(args)
-    elif of_type == "posargs":
-        replace_value = replace_pos_args(conf, args, conf_args)
-    else:
-        replace_value = replace_reference(conf, loader, value, conf_args)
-    return replace_value
+def _flatten_string_fragments(seq_of_str_or_other: Sequence[str | Any]) -> Sequence[str | Any]:
+    """Join runs of contiguous str values in a sequence; nny non-str items in the sequence are left as-is."""
+    result = []
+    last_str = []
+    for obj in seq_of_str_or_other:
+        if isinstance(obj, str):
+            last_str.append(obj)
+        else:
+            if last_str:
+                result.append("".join(last_str))
+                last_str = []
+            result.append(obj)
+    if last_str:
+        result.append("".join(last_str))
+    return result
+
+
+class Replacer:
+    """Recursively expand MatchExpression against the config and loader."""
+
+    def __init__(self, conf: Config, loader: IniLoader, conf_args: ConfigLoadArgs):
+        self.conf = conf
+        self.loader = loader
+        self.conf_args = conf_args
+
+    def __call__(self, value: MatchArg) -> Sequence[str]:
+        return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
+
+    def join(self, value: MatchArg) -> str:
+        return "".join(self(value))
+
+    def _replace_match(self, value: MatchExpression) -> str:
+        of_type, *args = flattened_args = [self.join(arg) for arg in value.expr]
+        if of_type == "/":
+            replace_value: str | None = os.sep
+        elif of_type == "" and args == [""]:
+            replace_value = os.pathsep
+        elif of_type == "env":
+            replace_value = replace_env(self.conf, args, self.conf_args)
+        elif of_type == "tty":
+            replace_value = replace_tty(args)
+        elif of_type == "posargs":
+            replace_value = replace_pos_args(self.conf, args, self.conf_args)
+        else:
+            replace_value = replace_reference(
+                self.conf,
+                self.loader,
+                ARG_DELIMITER.join(flattened_args),
+                self.conf_args,
+            )
+        if replace_value is not None:
+            return replace_value
+        # else: fall through -- when replacement is not possible, treat `{` as if escaped.
+        #     If we cannot replace, keep what was there, and continue looking for additional replaces
+        #     NOTE: cannot raise because the content may be a factorial expression where we don't
+        #           want to enforce escaping curly braces, e.g. `env_list = {py39,py38}-{,dep}` should work
+        return f"{REPLACE_START}%s{REPLACE_END}" % ARG_DELIMITER.join(flattened_args)
 
 
 @lru_cache(maxsize=None)
@@ -98,6 +195,7 @@ def _replace_ref(env: str | None) -> Pattern[str]:
     (\[(?P<full_env>{re.escape(env or '.*')}(:(?P<env>[^]]+))?|(?P<section>[-\w]+))])? # env/section
     (?P<key>[-a-zA-Z0-9_]+) # key
     (:(?P<default>.*))? # default value
+    $
 """,
         re.VERBOSE,
     )
@@ -179,13 +277,15 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -
             pass
     pos_args = conf.pos_args(to_path)
     if pos_args is None:
-        replace_value = ":".join(args)  # if we use the defaults join back remaining args
+        replace_value = ARG_DELIMITER.join(args)  # if we use the defaults join back remaining args
     else:
         replace_value = shell_cmd(pos_args)
     return replace_value
 
 
 def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
+    if not args or not args[0]:
+        raise MatchError("No variable name was supplied in {env} substitution")
     key = args[0]
     new_key = f"env:{key}"
 
@@ -203,7 +303,7 @@ def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str
     if key in os.environ:
         return os.environ[key]
 
-    return "" if len(args) == 1 else ":".join(args[1:])
+    return "" if len(args) == 1 else ARG_DELIMITER.join(args[1:])
 
 
 def replace_tty(args: list[str]) -> str:
@@ -215,6 +315,9 @@ def replace_tty(args: list[str]) -> str:
 
 
 __all__ = (
+    "find_replace_expr",
+    "MatchArg",
+    "MatchError",
+    "MatchExpression",
     "replace",
-    "find_replace_part",
 )

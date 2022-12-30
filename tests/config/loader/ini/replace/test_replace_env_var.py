@@ -46,11 +46,11 @@ def test_replace_env_when_value_is_backslash(replace_one: ReplaceOne, monkeypatc
 
 
 def test_replace_env_when_value_is_stuff_then_backslash(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """When the replacement value is a string containing backslash, it can affect the next replacement."""
+    """When the replacement value is a string containing backslash, it shouldn't affect the next replacement."""
     monkeypatch.setenv("MAGIC", "tragic")
     monkeypatch.setenv("BS", "stuff\\")
     result = replace_one(r"{env:BS}{env:MAGIC}")
-    assert result == r"stuff{env:MAGIC}"
+    assert result == r"stuff\tragic"
 
 
 def test_replace_env_missing(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:

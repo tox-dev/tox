@@ -1,0 +1,7 @@
+Rewrite substitution replacement parser - by :user:`masenf`
+
+* ``\`` acts as a proper escape for ``\`` in ini-style substitutions
+* The resulting value of a substitution is no longer reprocessed in the context
+  of the broader string. (Prior to this change, ini-values were repeatedly re-substituted until
+  the expression no longer had modifications)
+* Migrate and update "Substitutions" section of Configuration page from v3 docs.
