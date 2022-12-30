@@ -36,8 +36,7 @@ class PythonRun(Python, RunToxEnv):
 
         def skip_missing_interpreters_post_process(value: bool) -> bool:
             if getattr(self.options, "skip_missing_interpreters", "config") != "config":
-                to_skip = StrConvert().to_bool(self.options.skip_missing_interpreters)
-                return to_skip
+                return StrConvert().to_bool(self.options.skip_missing_interpreters)
             return value
 
         self.core.add_config(
