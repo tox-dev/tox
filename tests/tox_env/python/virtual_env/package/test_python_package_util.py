@@ -51,6 +51,15 @@ def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:
         assert str(left) == str(right)
 
 
+def test_load_dependency_poetry_many_extra() -> None:
+    requires = [Requirement('filelock<4.0.0,>=3.9.0; extra == "extras1" or extra == "extras2"')]
+    result = dependencies_with_extras(requires, {"extras1"}, "")
+    exp = [Requirement("filelock<4.0.0,>=3.9.0")]
+    for left, right in zip_longest(result, exp):
+        assert isinstance(right, Requirement)
+        assert str(left) == str(right)
+
+
 def test_loads_deps_recursive_extras() -> None:
     requires = [
         Requirement("no-extra"),
