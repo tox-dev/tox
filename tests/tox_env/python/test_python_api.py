@@ -179,3 +179,13 @@ def test_python_set_hash_seed_incorrect(tox_project: ToxProjectCreator) -> None:
     result = tox_project({"tox.ini": ""}).run("r", "-e", "py", "--hashseed", "ok")
     result.assert_failed(2)
     assert "tox run: error: argument --hashseed: invalid literal for int() with base 10: 'ok'" in result.err
+
+
+@pytest.mark.parametrize("in_ci", [True, False])
+def test_list_installed_deps(in_ci: bool, tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.python.api.is_ci", return_value=in_ci)
+    result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run("r", "-e", "py")
+    if in_ci:
+        assert "py: pip==" in result.out
+    else:
+        assert "py: pip==" not in result.out
