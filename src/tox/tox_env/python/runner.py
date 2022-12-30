@@ -13,6 +13,7 @@ from tox.tox_env.errors import Skip
 from tox.tox_env.package import Package
 from tox.tox_env.python.pip.req_file import PythonDeps
 
+from ...config.loader.str_convert import StrConvert
 from ..api import ToxEnvCreateArgs
 from ..runner import RunToxEnv
 from .api import Python
@@ -32,10 +33,17 @@ class PythonRun(Python, RunToxEnv):
             default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
         )
+
+        def skip_missing_interpreters_post_process(value: bool) -> bool:
+            if getattr(self.options, "skip_missing_interpreters", "config") != "config":
+                return StrConvert().to_bool(self.options.skip_missing_interpreters)
+            return value
+
         self.core.add_config(
             keys=["skip_missing_interpreters"],
             default=True,
             of_type=bool,
+            post_process=skip_missing_interpreters_post_process,
             desc="skip running missing interpreters",
         )
 

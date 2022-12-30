@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -121,3 +122,14 @@ def test_extras_are_normalized(
     result = project.run("c", "-e", "py", "--root", str(demo_pkg_inline), "-k", "extras")
     result.assert_success()
     assert result.out == f"[testenv:py]\nextras = {used_extra}\n"
+
+
+@pytest.mark.parametrize(
+    ("config", "cli", "expected"),
+    [("false", "true", True), ("true", "false", False), ("false", "config", False), ("true", "config", True)],
+)
+def test_config_skip_missing_interpreters(tox_project: ToxProjectCreator, config: str, cli: str, expected: str) -> None:
+    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
+    project = tox_project({"tox.ini": f"[tox]\nenvlist=py4,py{py_ver}\nskip_missing_interpreters={config}"})
+    result = project.run("--skip-missing-interpreters", cli)
+    assert result.code == 0 if expected else 1
