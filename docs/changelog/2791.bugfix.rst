@@ -1,1 +1,0 @@
-Fix extracting extras from markers with many extras - by :user:`q0w`.
