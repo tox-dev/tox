@@ -105,6 +105,22 @@ def test_replace_env_var_circular_flip_flop(replace_one: ReplaceOne, monkeypatch
     assert result == "{env:TRAGIC}"
 
 
+@pytest.mark.parametrize("fallback", [True, False])
+def test_replace_env_var_chase(replace_one: ReplaceOne, monkeypatch: MonkeyPatch, fallback: bool) -> None:
+    """Resolve variable to be replaced and default value via indirection."""
+    monkeypatch.setenv("WALK", "THIS")
+    def_val = "or that one"
+    monkeypatch.setenv("DEF", def_val)
+    if fallback:
+        monkeypatch.delenv("THIS", raising=False)
+        exp_result = def_val
+    else:
+        this_val = "path"
+        monkeypatch.setenv("THIS", this_val)
+        exp_result = this_val
+    result = replace_one("{env:{env:WALK}:{env:DEF}}")
+    assert result == exp_result
+
 
 def test_replace_env_default_with_colon(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
