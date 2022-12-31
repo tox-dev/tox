@@ -1,0 +1,3 @@
+Relax the assertion in ``test_list_installed_deps`` to allow packages
+other than ``pip`` to be present in the fresh venv, to fix tests
+on PyPy.
