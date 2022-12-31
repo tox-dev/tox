@@ -63,3 +63,9 @@ def test_loads_deps_recursive_extras() -> None:
     ]
     result = dependencies_with_extras(requires, {"dev"}, "name")
     assert [str(i) for i in result] == ["no-extra", "dep1[magic]", "dep1", "dep2[a,b]"]
+
+
+def test_load_dependency_requirement_or_extras() -> None:
+    requires = [Requirement('filelock<4.0.0,>=3.9.0; extra == "extras1" or extra == "extras2"')]
+    result = dependencies_with_extras(requires, {"extras1"}, "")
+    assert [str(r) for r in result] == ["filelock<4.0.0,>=3.9.0"]
