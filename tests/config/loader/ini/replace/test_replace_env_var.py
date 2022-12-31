@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import threading
+from typing import Generator
+
+import pytest
+
 from tests.config.loader.ini.replace.conftest import ReplaceOne
 from tox.pytest import MonkeyPatch
 
@@ -71,10 +76,34 @@ def test_replace_env_missing_default_from_env(replace_one: ReplaceOne, monkeypat
 
 
 def test_replace_env_var_circular(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    """Replacement values will not infinitely loop"""
     monkeypatch.setenv("MAGIC", "{env:MAGIC}")
     result = replace_one("{env:MAGIC}")
     assert result == "{env:MAGIC}"
+
+
+@pytest.fixture()
+def reset_env_var_after_delay(monkeypatch: MonkeyPatch) -> Generator[threading.Thread, None, None]:
+    timeout = 2
+
+    def avoid_infinite_loop() -> None:  # pragma: no cover
+        monkeypatch.setenv("TRAGIC", f"envvar forcibly reset after {timeout} sec")
+
+    timer = threading.Timer(2, avoid_infinite_loop)
+    timer.start()
+    yield timer
+    timer.cancel()
+    timer.join()
+
+
+@pytest.mark.usefixtures("reset_env_var_after_delay")
+def test_replace_env_var_circular_flip_flop(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+    """Replacement values will not infinitely loop back and forth"""
+    monkeypatch.setenv("TRAGIC", "{env:MAGIC}")
+    monkeypatch.setenv("MAGIC", "{env:TRAGIC}")
+    result = replace_one("{env:MAGIC}")
+    assert result == "{env:TRAGIC}"
+
 
 
 def test_replace_env_default_with_colon(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
