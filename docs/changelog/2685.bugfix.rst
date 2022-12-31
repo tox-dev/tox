@@ -1,0 +1,2 @@
+Restore tox 3 behaviour of showing the output of pip freeze, however now only active when running inside a CI
+environment - by :user:`gaborbernat`.

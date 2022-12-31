@@ -16,6 +16,7 @@ autouse
 binprm
 buf
 bufsize
+buildkite
 cachetools
 canonicalize
 capfd
@@ -78,7 +79,6 @@ getresult
 getsockname
 getsourcelines
 groupby
-hardlink
 hookimpl
 hookspec
 hookspecs
@@ -92,7 +92,6 @@ isatty
 isnumeric
 isspace
 iterdir
-levelname
 levelno
 libs
 lightred
@@ -159,12 +158,12 @@ string2lines
 stringify
 subparsers
 tcgetattr
-TCSANOW
+tcsanow
 tcsetattr
-TIOCSWINSZ
 termios
 termux
 testenv
+tiocswinsz
 tmpdir
 toml
 tomli
