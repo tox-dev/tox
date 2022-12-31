@@ -111,3 +111,9 @@ def test_replace_env_default_with_colon(replace_one: ReplaceOne, monkeypatch: Mo
     monkeypatch.delenv("MAGIC", raising=False)
     result = replace_one("{env:MAGIC:https://some.url.org}")
     assert result == "https://some.url.org"
+
+
+def test_replace_env_default_deep(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+    """Get the value through a long tree of nested defaults."""
+    monkeypatch.delenv("M", raising=False)
+    assert replace_one("{env:M:{env:M:{env:M:{env:M:{env:M:foo}}}}}") == "foo"
