@@ -89,7 +89,7 @@ def test_show_config_py_ver_impl_constants(tox_project: ToxProjectCreator) -> No
         """,
         "env_site_packages_dir",
         "\nenv_site_packages_dir = # Exception: "
-        "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'",
+        "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
     ),
     (
         """
