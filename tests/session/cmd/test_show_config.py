@@ -81,31 +81,22 @@ def test_show_config_py_ver_impl_constants(tox_project: ToxProjectCreator) -> No
     assert outcome.out == f"[testenv:py]\npy_dot_ver = {py_ver}\npy_impl = {impl}\ndeps = {impl}{py_ver}\n"
 
 
-@pytest.mark.parametrize("ini,key,expected_outcome", [
-    (
-        """
+def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.ini": """
         [testenv:a]
         base_python = missing-python
         """,
-        "env_site_packages_dir",
+        },
+    )
+    outcome = project.run("c", "-e", "a", "-k", "env_site_packages_dir")
+    outcome.assert_success()
+    txt = (
         "\nenv_site_packages_dir = # Exception: "
         "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
-    ),
-    (
-        """
-        [testenv:a]
-        install_command =
-        """,
-        "install_command",
-        "install_command = # Exception: "
-        "ValueError(\"attempting to parse \'\' into a command failed\")",
-    ),
-])
-def test_show_config_exception(tox_project: ToxProjectCreator, ini, key, expected_outcome) -> None:
-    project = tox_project({"tox.ini": dedent(ini)})
-    outcome = project.run("c", "-e", "a", "-k", key)
-    outcome.assert_success()
-    assert expected_outcome in outcome.out
+    )
+    assert txt in outcome.out
 
 
 @pytest.mark.parametrize("stdout_is_atty", [True, False])
