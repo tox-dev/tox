@@ -99,7 +99,7 @@ def test_show_config_py_ver_impl_constants(tox_project: ToxProjectCreator) -> No
             install_command =
             """,
             "install_command",
-            "install_command = # Exception: " "ValueError(\"attempting to parse '' into a command failed\")",
+            "install_command = # Exception: ValueError(\"attempting to parse '' into a command failed\")",
         ),
     ],
 )
