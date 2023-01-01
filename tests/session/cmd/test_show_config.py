@@ -99,6 +99,21 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
     assert txt in outcome.out
 
 
+def test_show_config_empty_install_command_exception(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.ini": """
+        [testenv:a]
+        install_command =
+        """,
+        },
+    )
+    outcome = project.run("c", "-e", "a", "-k", "install_command")
+    outcome.assert_success()
+    txt = "\ninstall_command = # Exception: " "ValueError(\"attempting to parse '' into a command failed\")"
+    assert txt in outcome.out
+
+
 @pytest.mark.parametrize("stdout_is_atty", [True, False])
 def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty: bool, mocker: MockerFixture) -> None:
     mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
