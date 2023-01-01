@@ -103,7 +103,7 @@ def test_show_config_py_ver_impl_constants(tox_project: ToxProjectCreator) -> No
         ),
     ],
 )
-def test_show_config_exception(tox_project: ToxProjectCreator, ini: str, key: str, expected_outcome: str) -> None:
+def test_show_config_exception(tox_project: ToxProjectCreator, ini, key, expected_outcome) -> None:
     project = tox_project({"tox.ini": dedent(ini)})
     outcome = project.run("c", "-e", "a", "-k", key)
     outcome.assert_success()
