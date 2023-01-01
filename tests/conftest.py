@@ -39,6 +39,12 @@ else:  # pragma: no cover (<py38)
     from typing_extensions import Protocol
 
 
+collect_ignore = []
+if sys.implementation.name == "pypy":
+    # time-machine causes segfaults on PyPy
+    collect_ignore.append("util/test_spinner.py")
+
+
 class ToxIniCreator(Protocol):
     def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config:  # noqa: U100
         ...

@@ -272,6 +272,13 @@ _REQ_FILE_TEST_CASES = [
         ["attrs"],
         id="sha512 hash is supported",
     ),
+    pytest.param(
+        "\tp @ https://github.com/a/b/c/d.zip ",
+        {},
+        ["p@ https://github.com/a/b/c/d.zip"],
+        ["p@ https://github.com/a/b/c/d.zip"],
+        id="whitespace around",
+    ),
 ]
 
 

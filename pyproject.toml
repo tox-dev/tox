@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.11.1", "hatch-vcs>=0.2.1"]
+requires = ["hatchling>=1.12", "hatch-vcs>=0.3"]
 
 [project]
 name = "tox"
@@ -25,41 +25,41 @@ dependencies = [
   "chardet>=5.1",
   "colorama>=0.4.6",
   "packaging>=22",
-  "platformdirs>=2.6",
+  "platformdirs>=2.6.2",
   "pluggy>=1",
   "pyproject-api>=1.2.1",
   'tomli>=2.0.1; python_version < "3.11"',
   "virtualenv>=20.17.1",
-  "filelock>=3.8.2",
-  'importlib-metadata>=5.1; python_version < "3.8"',
+  "filelock>=3.9",
+  'importlib-metadata>=5.2; python_version < "3.8"',
   'typing-extensions>=4.4; python_version < "3.8"',
 ]
 optional-dependencies.docs = [
   "furo>=2022.12.7",
-  "sphinx>=5.3",
+  "sphinx>=6",
   "sphinx-argparse-cli>=1.10",
   "sphinx-autodoc-typehints>=1.19.5",
   "sphinx-copybutton>=0.5.1",
   "sphinx-inline-tabs>=2022.1.2b11",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=22.8",
+  "towncrier>=22.12",
 ]
 optional-dependencies.testing = [
   "build[virtualenv]>=0.9",
   "covdefaults>=2.2.2",
   "devpi-process>=0.3",
-  "diff-cover>=7.2",
+  "diff-cover>=7.3",
   "distlib>=0.3.6",
   "flaky>=3.7",
-  "hatch-vcs>=0.2.1",
-  "hatchling>=1.11.1",
+  "hatch-vcs>=0.3",
+  "hatchling>=1.12",
   "psutil>=5.9.4",
   "pytest>=7.2",
   "pytest-cov>=4",
   "pytest-mock>=3.10",
   "pytest-xdist>=3.1",
   "re-assert>=1.1",
-  "time-machine>=2.8.2",
+  "time-machine>=2.8.2; implementation_name != \"pypy\"",
 ]
 scripts.tox = "tox.run:run"
 dynamic = ["version"]
@@ -114,7 +114,7 @@ profile = "black"
 line_length = 120
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.11"
 show_error_codes = true
 strict = true
 overrides = [

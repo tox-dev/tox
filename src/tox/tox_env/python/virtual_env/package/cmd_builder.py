@@ -26,6 +26,7 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.tox_env.register import ToxEnvRegister
 from tox.tox_env.runner import RunToxEnv
+from tox.tox_env.util import add_change_dir_conf
 
 from .pyproject import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras
@@ -61,12 +62,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             default=[],
             desc="the commands to be called for testing",
         )
-        self.conf.add_config(
-            keys=["change_dir", "changedir"],
-            of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["tox_root"]),  # noqa: U100
-            desc="change to this working directory when executing the test command",
-        )
+        add_change_dir_conf(self.conf, self.core)
         self.conf.add_config(
             keys=["ignore_errors"],
             of_type=bool,
@@ -134,7 +130,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             yield self._sdist_meta_tox_env
 
 
-class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has type Any
+class WheelDistribution(Distribution):  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None
@@ -160,7 +156,7 @@ class WheelDistribution(Distribution):  # type: ignore  # cannot subclass has ty
             except KeyError:
                 return None
 
-    def locate_file(self, path: str) -> PathLike[str]:
+    def locate_file(self, path: str | PathLike[str]) -> PathLike[str]:
         return self._wheel / path  # pragma: no cover # not used by us, but part of the ABC
 
 

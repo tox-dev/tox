@@ -36,6 +36,7 @@ def test_list_env(project: ToxProject) -> None:
 
     additional environments:
     fix  -> fix it
+    pypy -> with pypy
     """
     outcome.assert_out_err(expected, "")
 
@@ -62,6 +63,7 @@ def test_list_env_quiet(project: ToxProject) -> None:
     py31
     py
     fix
+    pypy
     """
     outcome.assert_out_err(expected, "")
 

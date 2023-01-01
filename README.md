@@ -3,11 +3,9 @@
 [![PyPI](https://img.shields.io/pypi/v/tox)](https://pypi.org/project/tox/)
 [![Supported Python
 versions](https://img.shields.io/pypi/pyversions/tox.svg)](https://pypi.org/project/tox/)
+[![Downloads](https://pepy.tech/badge/tox/month)](https://pepy.tech/project/tox)
 [![Documentation
 status](https://readthedocs.org/projects/tox/badge/?version=latest)](https://tox.readthedocs.io/en/latest/?badge=latest)
-[![Code style:
-black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Downloads](https://pepy.tech/badge/tox/month)](https://pepy.tech/project/tox/month)
 [![check](https://github.com/tox-dev/tox/actions/workflows/check.yml/badge.svg)](https://github.com/tox-dev/tox/actions/workflows/check.yml)
 
 `tox` aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing

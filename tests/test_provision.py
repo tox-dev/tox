@@ -83,6 +83,7 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]
         wheel_cache = ROOT / ".wheel_cache" / f"{sys.version_info.major}.{sys.version_info.minor}"
         wheel_cache.mkdir(parents=True, exist_ok=True)
         cmd = [sys.executable, "-I", "-m", "pip", "download", "-d", str(wheel_cache)]
+        assert distribution.requires is not None
         for req in distribution.requires:
             requirement = Requirement(req)
             if not requirement.extras:  # pragma: no branch  # we don't need to install any extras (tests/docs/etc)
@@ -185,4 +186,4 @@ def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
     assert msg in result.out
     with (project.path / "out.json").open() as file_handler:
         requires = json.load(file_handler)
-    assert requires == {"minversion": "4.0", "requires": ["p", "tox>=4.0"]}
+    assert requires == {"minversion": None, "requires": ["p", "tox"]}

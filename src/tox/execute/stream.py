@@ -55,12 +55,12 @@ class SyncWrite:
             at = content.rfind(b"\n")
             if at != -1:  # pragma: no branch
                 at = len(self._content) - len(content) + at + 1
-        if at != -1:
-            self._cancel()
-            try:
+        self._cancel()
+        try:
+            if at != -1:
                 self._write(at)
-            finally:
-                self._start()
+        finally:
+            self._start()
 
     def _start(self) -> None:
         self.timer = Timer(self.REFRESH_RATE, self._trigger_timer)

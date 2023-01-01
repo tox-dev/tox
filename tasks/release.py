@@ -17,12 +17,19 @@ def main(version_str: str) -> None:
     if repo.is_dirty():
         raise RuntimeError("Current repository is dirty. Please commit any changes and try again.")
     upstream, release_branch = create_release_branch(repo, version)
-    release_commit = release_changelog(repo, version)
-    tag = tag_release_commit(release_commit, repo, version)
-    print("push release commit")
-    repo.git.push(upstream.name, release_branch)
-    print("push release tag")
-    repo.git.push(upstream.name, tag)
+    try:
+        release_commit = release_changelog(repo, version)
+        tag = tag_release_commit(release_commit, repo, version)
+        print("push release commit")
+        repo.git.push(upstream.name, f"{release_branch}:main", "-f")
+        print("push release tag")
+        repo.git.push(upstream.name, tag, "-f")
+    finally:
+        print("checkout main to new release and delete release branch")
+        repo.heads.main.checkout()
+        repo.delete_head(release_branch, force=True)
+        upstream.fetch()
+        repo.git.reset("--hard", "upstream/main")
     print("All done! ✨ 🍰 ✨")
 
 

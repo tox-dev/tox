@@ -244,3 +244,16 @@ def test_show_config_core_host_python(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("c", "--core", "-e", "py", "-k", "host_python")
     outcome.assert_success()
     assert f"host_python = {sys.executable}" in outcome.out
+
+
+def test_show_config_matching_env_section(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [a]
+    [testenv:a]
+    deps = c>=1
+    [testenv:b]
+    deps = {[testenv:a]deps}"""
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("c", "-e", "a,b", "-k", "deps")
+    outcome.assert_success()
+    assert outcome.out.count("c>=1") == 2, outcome.out

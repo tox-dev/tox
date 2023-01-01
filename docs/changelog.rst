@@ -4,6 +4,126 @@ Release History
 
 .. towncrier release notes start
 
+v4.1.2 (2022-12-30)
+-------------------
+
+Bugfixes - 4.1.2
+~~~~~~~~~~~~~~~~
+- Fix ``--skip-missing-interpreters`` behaviour - by :user:`q0w`. (:issue:`2649`)
+- Restore tox 3 behaviour of showing the output of pip freeze, however now only active when running inside a CI
+  environment - by :user:`gaborbernat`. (:issue:`2685`)
+- Fix extracting extras from markers with many extras - by :user:`q0w`. (:issue:`2791`)
+
+
+v4.1.1 (2022-12-29)
+-------------------
+
+Bugfixes - 4.1.1
+~~~~~~~~~~~~~~~~
+- Fix logging error with emoji in git branch name. (:issue:`2768`)
+
+Improved Documentation - 4.1.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add faq entry about re-use of environments - by :user:`jugmac00`. (:issue:`2788`)
+
+
+v4.1.0 (2022-12-29)
+-------------------
+
+Features - 4.1.0
+~~~~~~~~~~~~~~~~
+- ``-f`` can be used multiple times and on hyphenated factors (e.g. ``-f py311-django -f py39``) - by :user:`sirosen`. (:issue:`2766`)
+
+Improved Documentation - 4.1.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix a grammatical typo in docs/user_guide.rst. (:issue:`2787`)
+
+
+v4.0.19 (2022-12-28)
+--------------------
+
+Bugfixes - 4.0.19
+~~~~~~~~~~~~~~~~~
+- Create temp_dir if not exists - by :user:`q0w`. (:issue:`2770`)
+
+
+v4.0.18 (2022-12-26)
+--------------------
+
+Bugfixes - 4.0.18
+~~~~~~~~~~~~~~~~~
+- Strip leading and trailing whitespace when parsing elements in requirement files - by :user:`gaborbernat`. (:issue:`2773`)
+
+
+v4.0.17 (2022-12-25)
+--------------------
+
+Features - 4.0.17
+~~~~~~~~~~~~~~~~~
+- Suppress a report output when verbosity = 0. (:issue:`2697`)
+
+Bugfixes - 4.0.17
+~~~~~~~~~~~~~~~~~
+- Fix ``--sdistonly`` behaviour. (:issue:`2653`)
+- Override toxworkdir with --workdir. (:issue:`2654`)
+
+
+v4.0.16 (2022-12-20)
+--------------------
+
+Bugfixes - 4.0.16
+~~~~~~~~~~~~~~~~~
+- Fix :ref:`change_dir` is relative to current working directory rather than to the :ref:`tox_root` when using the ``-c``
+  argument to locate the ``tox.ini`` file - by :user:`gaborbernat`. (:issue:`2619`)
+
+
+v4.0.15 (2022-12-19)
+--------------------
+
+Bugfixes - 4.0.15
+~~~~~~~~~~~~~~~~~
+- Fix tox auto-provisioning not working and relax :ref:`min_version` default from ``4.0`` to no version constraint
+  - by :user:`gaborbernat`. (:issue:`2634`)
+- Fix assertion in ``test_result_json_sequential`` when interpreter ``_base_executable`` is a hardlink (macOS homebrew)
+  - by :user:`masenf`. (:issue:`2720`)
+- Complex negative factor filters not working  - by :user:`gaborbernat`. (:issue:`2747`)
+
+
+v4.0.14 (2022-12-18)
+--------------------
+
+Bugfixes - 4.0.14
+~~~~~~~~~~~~~~~~~
+- Do not include non test environment sections or factor filters in INI configuration to factor discovery - by
+  :user:`gaborbernat`. (:issue:`2746`)
+
+
+v4.0.13 (2022-12-17)
+--------------------
+
+Bugfixes - 4.0.13
+~~~~~~~~~~~~~~~~~
+- A plain section in INI configuration matching a tox environment name shadowed the laters configuration - by
+  :user:`gaborbernat`. (:issue:`2636`)
+- Fix space not accepted in factor filter expression - by :user:`gaborbernat`. (:issue:`2718`)
+
+
+v4.0.12 (2022-12-16)
+--------------------
+
+Bugfixes - 4.0.12
+~~~~~~~~~~~~~~~~~
+- If tox is running in a tty, allocate a pty (pseudo terminal) for commands
+  and copy termios attributes to show colors and improve interactive use - by :user:`masenf`. (:issue:`1773`)
+- Fix python hash seed not being set - by :user:`gaborbernat`. (:issue:`2645`)
+- Fix legacy CLI flags ``--pre``, ``--force-deps``, ``--sitepackages`` and ``--alwayscopy`` not working, and mark them
+  as deprecated - by :user:`gaborbernat`. (:issue:`2690`)
+
+Improved Documentation - 4.0.12
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document user level config. (:issue:`2633`)
+
+
 v4.0.11 (2022-12-14)
 --------------------
 
@@ -658,4 +778,4 @@ v4.0.0a1
    The current tox is the second iteration of implementation. From version ``0.5`` all the way to ``3.X``
    we numbered the first iteration. Version ``4.0.0a1`` is a complete rewrite of the package, and as such this release
    history starts from there. The old changelog is still available in the
-   `legacy branch documentation <https://tox.wiki/en/stable/changelog.html>`_.
+   `legacy branch documentation <https://tox.wiki/en/legacy/changelog.html>`_.

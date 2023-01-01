@@ -41,7 +41,6 @@ def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:
 
 
 def test_deps_with_no_deps(tmp_path: Path) -> None:
-    """deps with --hash should raise an exception."""
     (tmp_path / "r.txt").write_text("urrlib3")
     python_deps = PythonDeps(raw="-rr.txt\n--no-deps", root=tmp_path)
 
@@ -54,7 +53,6 @@ def test_deps_with_no_deps(tmp_path: Path) -> None:
 
 
 def test_req_with_no_deps(tmp_path: Path) -> None:
-    """deps with --hash should raise an exception."""
     (tmp_path / "r.txt").write_text("--no-deps")
     python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
     with pytest.raises(ValueError, match="unrecognized arguments: --no-deps"):
@@ -62,7 +60,6 @@ def test_req_with_no_deps(tmp_path: Path) -> None:
 
 
 def test_opt_only_req_file(tmp_path: Path) -> None:
-    """deps with --hash should raise an exception."""
     (tmp_path / "r.txt").write_text("--use-feature fast-deps")
     python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
     assert not python_deps.requirements

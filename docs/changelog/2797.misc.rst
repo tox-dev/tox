@@ -1,0 +1,2 @@
+Skip the ``time-machine`` dependency and spinner tests on PyPy because
+it segfaults on this implementation.

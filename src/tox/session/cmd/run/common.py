@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import logging
 import os
+import random
+import sys
 import time
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_completed
@@ -108,14 +110,35 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             help="install package in development mode",
             dest="develop",
         )
-    if mode not in ("config", "depends"):
+    if mode not in ("depends",):
+
+        class SeedAction(Action):
+            def __call__(
+                self,
+                parser: ArgumentParser,  # noqa: U100
+                namespace: Namespace,
+                values: str | Sequence[Any] | None,
+                option_string: str | None = None,  # noqa: U100
+            ) -> None:
+                if values == "notset":
+                    result = None
+                else:
+                    try:
+                        result = int(cast(str, values))
+                        if result <= 0:
+                            raise ValueError("must be greater than zero")
+                    except ValueError as exc:
+                        raise ArgumentError(self, str(exc))
+                setattr(namespace, self.dest, result)
+
         parser.add_argument(
             "--hashseed",
             metavar="SEED",
             help="set PYTHONHASHSEED to SEED before running commands. Defaults to a random integer in the range "
             "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
-            type=str,
-            default="noset",
+            action=SeedAction,
+            of_type=Optional[int],
+            default=random.randint(1, 1024 if sys.platform == "win32" else 4294967295),
             dest="hash_seed",
         )
     parser.add_argument(
@@ -142,9 +165,10 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         )
 
 
-def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool) -> int:
+def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosity: int) -> int:
     def _print(color_: int, message: str) -> None:
-        print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
+        if verbosity:
+            print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
 
     successful, skipped = [], []
     for run in runs:
@@ -227,7 +251,12 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         # write the journal
         write_journal(getattr(state.conf.options, "result_json", None), state._journal)
         # report the outcome
-        exit_code = report(state.conf.options.start, ordered_results, state.conf.options.is_colored)
+        exit_code = report(
+            state.conf.options.start,
+            ordered_results,
+            state.conf.options.is_colored,
+            state.conf.options.verbosity,
+        )
         if has_previous:
             signal(SIGINT, previous)
     return exit_code
@@ -270,7 +299,11 @@ def _queue_and_wait(
 
             def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
                 spinner.add(tox_env.conf.name)
-                return run_one(tox_env, options.parsed.no_test, suspend_display=live is False)
+                return run_one(
+                    tox_env,
+                    options.parsed.no_test or options.parsed.package_only,
+                    suspend_display=live is False,
+                )
 
             try:
                 executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")

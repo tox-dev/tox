@@ -16,6 +16,7 @@ autouse
 binprm
 buf
 bufsize
+buildkite
 cachetools
 canonicalize
 capfd
@@ -78,7 +79,6 @@ getresult
 getsockname
 getsourcelines
 groupby
-hardlink
 hookimpl
 hookspec
 hookspecs
@@ -92,7 +92,6 @@ isatty
 isnumeric
 isspace
 iterdir
-levelname
 levelno
 libs
 lightred
@@ -108,6 +107,7 @@ nonlocal
 notset
 nox
 objtype
+openpty
 ov
 pathname
 pep517
@@ -119,6 +119,7 @@ posix
 prereleases
 prj
 psutil
+pty
 purelib
 py311
 py38
@@ -156,8 +157,13 @@ statemachine
 string2lines
 stringify
 subparsers
+tcgetattr
+tcsanow
+tcsetattr
+termios
 termux
 testenv
+tiocswinsz
 tmpdir
 toml
 tomli

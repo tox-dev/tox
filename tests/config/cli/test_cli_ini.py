@@ -5,6 +5,7 @@ import sys
 import textwrap
 from pathlib import Path
 from typing import Any, Callable
+from unittest.mock import ANY
 
 import pytest
 from pytest_mock import MockerFixture
@@ -67,6 +68,7 @@ def test_ini_empty(
 
     to.unlink()
     missing_options = get_options("r")
+    missing_options.parsed.hash_seed = ANY
     assert vars(missing_options.parsed) == vars(options.parsed)
 
 
@@ -79,7 +81,7 @@ def default_options(tmp_path: Path) -> dict[str, Any]:
         "develop": False,
         "discover": [],
         "env": CliEnv(),
-        "hash_seed": "noset",
+        "hash_seed": ANY,
         "install_pkg": None,
         "no_test": False,
         "override": [],
@@ -112,7 +114,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dic
         "develop": False,
         "discover": [],
         "env": CliEnv(["py37", "py36"]),
-        "hash_seed": "noset",
+        "hash_seed": ANY,
         "install_pkg": None,
         "no_test": True,
         "override": [Override("a=b"), Override("c=d")],

@@ -172,7 +172,7 @@ Core
 
 .. conf::
    :keys: temp_dir
-   :default: {tox_root}/.temp
+   :default: {tox_root}/.tmp
 
    Directory where to put tox temporary files. For example: we create a hard link (if possible, otherwise new copy) in
    this directory for the project package. This ensures tox works correctly when having parallel runs (as each session
@@ -617,7 +617,7 @@ Python run
 External package builder
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-tox supports operating with externally built packages. External packages might be provided in two wayas:
+tox supports operating with externally built packages. External packages might be provided in two ways:
 
 - explicitly via the :ref:`--installpkg <tox-run---installpkg>` CLI argument,
 - setting the :ref:`package` to ``external`` and using a tox packaging environment named ``<package_env>_external``
@@ -750,3 +750,16 @@ Pip installer
    If ``true``, adds ``--pre`` to the ``opts`` passed to :ref:`install_command`. This will cause it to install the
    latest available pre-release of any dependencies without a specified version. If ``false``, pip will only install
    final releases of unpinned dependencies.
+
+User configuration
+------------------
+
+tox allows creation of user level config-file to modify default values of the CLI commands.
+It is located in the OS-specific user config directory under ``tox/config.ini`` path, see ``tox --help`` output for exact location.
+It can be changed via ``TOX_CONFIG_FILE`` environment variable.
+Example configuration:
+
+.. code-block:: ini
+
+    [tox]
+    skip_missing_interpreters = true

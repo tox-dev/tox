@@ -6,7 +6,6 @@ from typing import Any, Callable, Sequence
 
 from packaging.requirements import Requirement
 
-from tox.config.cli.parser import DEFAULT_VERBOSITY
 from tox.config.main import Config
 from tox.config.types import Command
 from tox.execute.request import StdinSource
@@ -69,12 +68,7 @@ class Pip(Installer[Python]):
 
     def installed(self) -> list[str]:
         cmd: Command = self._env.conf["list_dependencies_command"]
-        result = self._env.execute(
-            cmd=cmd.args,
-            stdin=StdinSource.OFF,
-            run_id="freeze",
-            show=self._env.options.verbosity > DEFAULT_VERBOSITY,
-        )
+        result = self._env.execute(cmd=cmd.args, stdin=StdinSource.OFF, run_id="freeze", show=False)
         result.assert_success()
         return result.out.splitlines()
 

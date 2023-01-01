@@ -45,10 +45,9 @@ def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, se
                 extra_markers.add(marker_value.value)
                 del markers[_at]
                 _at -= 1
-                if _at > 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
+                if _at >= 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
                     del markers[_at]
                 if len(markers) == 0:
                     req.marker = None
-                break
         result.append((req, extra_markers or {None}))
     return result

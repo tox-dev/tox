@@ -34,7 +34,8 @@ def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_pa
 
 def test_env_log(tox_project: ToxProjectCreator) -> None:
     cmd = "commands=python -c 'import sys; print(1); print(2); print(3, file=sys.stderr); print(4, file=sys.stderr)'"
-    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})
+    env_vars = "    UNPREDICTABLE = 🪟"
+    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nset_env =\n{env_vars}\n{cmd}"})
     result_first = prj.run("r")
     result_first.assert_success()
 
@@ -113,3 +114,11 @@ def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> N
     result_first = prj.run("r")
     result_first.assert_success()
     assert (prj.path / "a" / "b").exists()
+
+
+def test_change_dir_is_relative_to_conf(tox_project: ToxProjectCreator) -> None:
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nchange_dir=a"})
+    result = prj.run("c", "-e", "py", "-k", "change_dir", "-c", prj.path.name, from_cwd=prj.path.parent)
+    result.assert_success()
+    lines = result.out.splitlines()
+    assert lines[1] == f"change_dir = {prj.path / 'a'}"

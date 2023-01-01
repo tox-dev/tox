@@ -3,6 +3,7 @@ Declare the abstract base class for tox environments that handle the Python lang
 """
 from __future__ import annotations
 
+import logging
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -14,6 +15,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 from tox.config.main import Config
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
+from tox.util.ci import is_ci
 
 
 class VersionInfo(NamedTuple):
@@ -87,6 +89,13 @@ class Python(ToxEnv, ABC):
         )
         self.conf.add_constant("py_dot_ver", "<python major>.<python minor>", value=self.py_dot_ver)
         self.conf.add_constant("py_impl", "python implementation", value=self.py_impl)
+
+    def _default_set_env(self) -> dict[str, str]:
+        env = super()._default_set_env()
+        hash_seed: int | None = getattr(self.options, "hash_seed", None)
+        if hash_seed is not None:
+            env["PYTHONHASHSEED"] = str(hash_seed)
+        return env
 
     def py_dot_ver(self) -> str:
         return self.base_python.version_dot
@@ -205,9 +214,13 @@ class Python(ToxEnv, ABC):
     def _done_with_setup(self) -> None:
         """called when setup is done"""
         super()._done_with_setup()
-        if self.journal:
+        running_in_ci = is_ci()
+        if self.journal or running_in_ci:
             outcome = self.installer.installed()
-            self.journal["installed_packages"] = outcome
+            if self.journal:
+                self.journal["installed_packages"] = outcome
+            if running_in_ci:
+                logging.warning(",".join(outcome))
 
     def python_cache(self) -> dict[str, Any]:
         return {

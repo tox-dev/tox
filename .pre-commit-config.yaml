@@ -12,7 +12,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.3.0
+    rev: v2.4.0
     hooks:
       - id: add-trailing-comma
         args: [--py36-plus]
@@ -25,7 +25,7 @@ repos:
       - id: pyupgrade
         files: "^(tests/demo_pkg_inline/build.py)$"
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.11.4
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
@@ -37,7 +37,7 @@ repos:
     rev: v1.12.1
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==22.10]
+        additional_dependencies: [black==22.12]
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
     hooks:
@@ -58,10 +58,10 @@ repos:
           - flake8-spellcheck==0.28
           - flake8-unused-arguments==0.0.12
           - flake8-noqa==1.3
-          - pep8-naming==0.13.2
+          - pep8-naming==0.13.3
           - flake8-pyproject==1.2.2
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.0-alpha.4"
+    rev: "v2.7.1"
     hooks:
       - id: prettier
         additional_dependencies:
@@ -78,7 +78,7 @@ repos:
         name: changelog filenames
         language: fail
         entry: "changelog files must be named ####.(feature|bugfix|doc|removal|misc).rst"
-        exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|README.rst|template.jinja2)
+        exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|template.jinja2)
         files: ^docs/changelog/
   - repo: meta
     hooks:
