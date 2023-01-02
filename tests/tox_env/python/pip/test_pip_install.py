@@ -6,8 +6,10 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
+from packaging.requirements import Requirement
 
 from tox.pytest import CaptureFixture, ToxProjectCreator
+from tox.tox_env.errors import Fail
 
 
 @pytest.mark.parametrize("arg", [object, [object]])
@@ -33,6 +35,15 @@ def test_pip_install_empty_list(tox_project: ToxProjectCreator) -> None:
     execute_calls = proj.patch_execute(Mock())
     pip.install([], "section", "type")
     assert execute_calls.call_count == 0
+
+
+def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\ninstall_command="})
+    result = proj.run("l")
+    pip = result.state.envs["py"].installer
+
+    with pytest.raises(Fail, match="unable to determine pip install command"):
+        pip.install([Requirement("name")], "section", "type")
 
 
 def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
