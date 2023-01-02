@@ -147,3 +147,14 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
 
     result.assert_failed()
     assert "failed with no .dist-info inside " in result.out, result.out
+
+
+def test_tox_install_pkg_with_skip_install(
+    tox_project: ToxProjectCreator,
+    demo_pkg_inline: Path,
+    demo_pkg_inline_wheel: Path,
+) -> None:
+    ini = "[testenv:foo]\nskip_install = true"
+    project = tox_project({"tox.ini": ini, "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text()})
+    result = project.run("-e", "py", "--installpkg", str(demo_pkg_inline_wheel))
+    result.assert_success()
