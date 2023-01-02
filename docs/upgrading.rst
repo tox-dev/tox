@@ -149,3 +149,51 @@ Re-use of environments
 
     [testenv:b]
     deps = pytest<7
+
+
+Legacy CLI entry point may result in ambiguous usages
+-----------------------------------------------------
+
+``tox`` 4 introduced dedicated subcommands for various usages.
+However, when no recognized command is given the legacy entry point which imitates ``tox`` 3 is used.
+
+As a result, commands which were previously unambiguous may have become ambiguous.
+
+For example, consider the following tox config:
+
+.. code-block:: ini
+
+    [tox]
+    env_list = py39,py310
+
+    [testenv]
+    commands =
+        python -c 'print("hi")'
+
+    [testenv:list]
+    commands =
+        python -c 'print("a, b, c")'
+
+This defines an environment whose name matches a ``tox`` 4 command, ``list``.
+
+Under ``tox`` 3, ``tox -e list`` specified the ``list`` environment.
+
+Under ``tox`` 4, this usage parses as an invocation of ``tox list``.
+Therefore, attempting that same usage results in an error:
+
+.. code:: bash
+
+    $ tox -e list
+    ...
+    tox: error: unrecognized arguments: -e
+
+It can be run either with an explicit ``tox run`` or an explicit use of the
+legacy command:
+
+.. code:: bash
+
+    $ tox run -e list
+
+    # or...
+
+    $ tox legacy -e list
