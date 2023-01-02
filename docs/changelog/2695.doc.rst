@@ -1,1 +1,1 @@
-Add breaking-change documentation for empty ``install_command`` values
+Add breaking-change documentation for empty ``install_command`` values - by :user:`jayaddison`.
