@@ -4,6 +4,23 @@ Release History
 
 .. towncrier release notes start
 
+v4.1.3 (2023-01-02)
+-------------------
+
+Bugfixes - 4.1.3
+~~~~~~~~~~~~~~~~
+- Reuse package_env with ``--installpkg`` - by :user:`q0w`. (:issue:`2442`)
+- Fail more gracefully when pip :ref:`install_command` is empty - by :user:`jayaddison`. (:issue:`2695`)
+
+Improved Documentation - 4.1.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add breaking-change documentation for empty ``install_command`` values - by :user:`jayaddison`. (:issue:`2695`)
+
+Misc - 4.1.3
+~~~~~~~~~~~~
+- :issue:`2796`, :issue:`2797`
+
+
 v4.1.2 (2022-12-30)
 -------------------
 
