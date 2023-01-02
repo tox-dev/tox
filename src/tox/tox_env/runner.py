@@ -87,9 +87,8 @@ class RunToxEnv(ToxEnv, ABC):
         self._call_pkg_envs("interrupt")
 
     def get_package_env_types(self) -> tuple[str, str] | None:
-        has_external_pkg = getattr(self.options, "install_pkg", None) is not None
-        if self._register_package_conf() or has_external_pkg:
-            has_external_pkg = has_external_pkg or self.conf["package"] == "external"
+        if self._register_package_conf():
+            has_external_pkg = self.conf["package"] == "external"
             self.core.add_config(
                 keys=["package_env", "isolated_build_env"],
                 of_type=str,
