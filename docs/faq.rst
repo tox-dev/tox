@@ -48,6 +48,9 @@ tox 4 - changed INI rules
   this worked in tox 3, it was never supported officially. Additionally, in the context of a new virtual environment
   this flag makes no sense anyway.
 
+- tox 4 requires the ``install_command`` to evaluate to a non-empty value for each target environment.  In tox 3, an
+  empty value would be substituted for the default install command.
+
 tox 4 - known regressions
 +++++++++++++++++++++++++
 
