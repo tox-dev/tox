@@ -76,3 +76,4 @@ you want to do more research, we recommend taking a look at these projects:
    plugins_api
    development
    changelog
+   upgrading
