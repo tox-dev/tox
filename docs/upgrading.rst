@@ -151,13 +151,39 @@ Re-use of environments
     deps = pytest<7
 
 
-Legacy CLI entry point may result in ambiguous usages
------------------------------------------------------
+CLI command compatibility
+-------------------------
 
 ``tox`` 4 introduced dedicated subcommands for various usages.
-However, when no recognized command is given the legacy entry point which imitates ``tox`` 3 is used.
+However, when no subcommand is given the legacy entry point which imitates ``tox`` 3 is used.
 
-As a result, commands which were previously unambiguous may have become ambiguous.
+This compatibility feature makes most ``tox`` 3 commands work in ``tox`` 4, but there are some exceptions.
+
+Updating usage with ``-e``
+++++++++++++++++++++++++++
+
+In ``tox`` 3, environments could be specified to run with the ``-e`` flag.
+In ``tox`` 4, environments should always be specified using the ``-e`` flag to the ``run`` subcommand.
+
+Rewrite usages as follows
+
+.. code:: bash
+
+    # tox 3
+    tox -e py310,style
+
+    # tox 4
+    tox run -e py310,style
+
+    # or, tox 4 with the short alias
+    tox r -e py310,style
+
+Environment names matching commands
++++++++++++++++++++++++++++++++++++
+
+Now that ``tox`` has subcommands, it is possible for arguments to ``tox`` or its options to match those subcommand
+names.
+When that happens, parsing can become ambiguous between the ``tox`` 4 usage and the legacy fallback behavior.
 
 For example, consider the following tox config:
 
@@ -177,8 +203,9 @@ For example, consider the following tox config:
 This defines an environment whose name matches a ``tox`` 4 command, ``list``.
 
 Under ``tox`` 3, ``tox -e list`` specified the ``list`` environment.
+However, under ``tox`` 4, the parse of this usage as an invocation of ``tox list`` takes precedence over the legacy
+behavior.
 
-Under ``tox`` 4, this usage parses as an invocation of ``tox list``.
 Therefore, attempting that same usage results in an error:
 
 .. code:: bash
@@ -187,13 +214,11 @@ Therefore, attempting that same usage results in an error:
     ...
     tox: error: unrecognized arguments: -e
 
-It can be run either with an explicit ``tox run`` or an explicit use of the
-legacy command:
+This is best avoided by updating to non-legacy usage:
 
 .. code:: bash
 
     $ tox run -e list
 
-    # or...
-
-    $ tox legacy -e list
+    # or, equivalently...
+    $ tox r -e list
