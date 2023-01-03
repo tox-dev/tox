@@ -34,20 +34,32 @@ def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, se
     for req in deps:
         req = deepcopy(req)
         markers: list[str | tuple[Variable, Variable, Variable]] = getattr(req.marker, "_markers", []) or []
-        _at: int | None = None
+        new_markers: list[str | tuple[Variable, Variable, Variable]] = []
+
+        def _is_extra_marker(_marker) -> bool:
+            return (
+                isinstance(_marker, tuple)
+                and len(_marker) == 3
+                and _marker[0].value == "extra"
+                and _marker[1].value == "=="
+            )
+
         extra_markers = set()
-        for _at, (marker_key, op, marker_value) in (
-            (_at_marker, marker)
-            for _at_marker, marker in enumerate(markers)
-            if isinstance(marker, tuple) and len(marker) == 3
-        ):
-            if marker_key.value == "extra" and op.value == "==":  # pragma: no branch
-                extra_markers.add(marker_value.value)
-                del markers[_at]
-                _at -= 1
-                if _at >= 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
-                    del markers[_at]
-                if len(markers) == 0:
-                    req.marker = None
+        marker = markers.pop(0) if markers else None
+        while marker:
+            if _is_extra_marker(marker):
+                extra_markers.add(marker[2].value)
+                if new_markers and new_markers[-1] in ("and", "or"):
+                    del new_markers[-1]
+                marker = markers.pop(0) if markers else None
+                if marker in ("and", "or"):
+                    marker = markers.pop(0) if markers else None
+            else:
+                new_markers.append(marker)
+                marker = markers.pop(0) if markers else None
+        if new_markers:
+            req.marker._markers = new_markers
+        else:
+            req.marker = None
         result.append((req, extra_markers or {None}))
     return result
