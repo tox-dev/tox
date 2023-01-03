@@ -36,7 +36,7 @@ def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, se
         markers: list[str | tuple[Variable, Variable, Variable]] = getattr(req.marker, "_markers", []) or []
         new_markers: list[str | tuple[Variable, Variable, Variable]] = []
 
-        def _is_extra_marker(_marker) -> bool:
+        def _is_extra_marker(_marker: str | tuple[Variable, Variable, Variable]) -> bool:
             return (
                 isinstance(_marker, tuple)
                 and len(_marker) == 3
@@ -48,7 +48,7 @@ def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, se
         marker = markers.pop(0) if markers else None
         while marker:
             if _is_extra_marker(marker):
-                extra_markers.add(marker[2].value)
+                extra_markers.add(marker[2].value)  # type: ignore
                 if new_markers and new_markers[-1] in ("and", "or"):
                     del new_markers[-1]
                 marker = markers.pop(0) if markers else None
@@ -58,7 +58,7 @@ def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, se
                 new_markers.append(marker)
                 marker = markers.pop(0) if markers else None
         if new_markers:
-            req.marker._markers = new_markers
+            req.marker._markers = new_markers  # type: ignore
         else:
             req.marker = None
         result.append((req, extra_markers or {None}))
