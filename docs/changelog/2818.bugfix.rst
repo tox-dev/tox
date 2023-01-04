@@ -1,3 +1,0 @@
-Add ``CC``, ``CFLAGS``, ``CCSHARED``, ``CXX``, ``CPPFLAGS``, ``LDFLAGS``, ``PKG_CONFIG`` and ``PKG_CONFIG_SYSROOT_DIR``
-to the default passed through environment variables list as these are needed for building various C-extensions
-- by :user:`gaborbernat`.

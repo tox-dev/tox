@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.2 (2023-01-04)
+-------------------
+
+Bugfixes - 4.2.2
+~~~~~~~~~~~~~~~~
+- Add ``CC``, ``CFLAGS``, ``CCSHARED``, ``CXX``, ``CPPFLAGS``, ``LDFLAGS``, ``PKG_CONFIG`` and ``PKG_CONFIG_SYSROOT_DIR``
+  to the default passed through environment variables list as these are needed for building various C-extensions
+  - by :user:`gaborbernat`. (:issue:`2818`)
+
+
 v4.2.1 (2023-01-03)
 -------------------
 
