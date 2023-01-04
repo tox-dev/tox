@@ -119,14 +119,6 @@ CLI arguments changed
   tox 3 added additional lines at the start. If you want to generate valid ini files you must not use the ``-v`` flag.
 - The ``--index-url`` is now removed, use ``PIP_INDEX_URL`` in :ref:`set_env` instead.
 
-Packaging changes
------------------
-
-- We use isolated builds (always) as specified by :pep:`518` and use :pep:`517` to communicate with the build backend.
-- The ``--develop`` CLI flag or the :ref:`use_develop` settings now enables editable installations via the :pep:`660`
-  mechanism rather than the legacy ``pip install -e`` behaviour. The old functionality can still be forced by setting
-  the :ref:`package` setting for the run environment to ``editable-legacy``.
-
 Output changes
 --------------
 
