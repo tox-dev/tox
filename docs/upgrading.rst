@@ -54,14 +54,6 @@ Changed INI rules
 - tox 4 requires the ``install_command`` to evaluate to a non-empty value for each target environment.  In tox 3, an
   empty value would be substituted for the default install command.
 
-Known regressions
------------------
-
-- With tox 4 the tty trait of the caller environment is no longer passed through. The most notable impact of this is
-  that some tools no longer print colored output. A PR to address this is welcomed, in the meantime you can use the
-  ``tty`` substitution to force color mode for these tools, see for example tox itself with pytest and mypy
-  `here in tox.ini <https://github.com/tox-dev/tox/blob/main/tox.ini#L28>`_.
-
 New plugin system
 -----------------
 
