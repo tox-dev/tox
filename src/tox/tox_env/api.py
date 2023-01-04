@@ -211,7 +211,13 @@ class ToxEnv(ABC):
             "LANGUAGE",  # localization
             "CURL_CA_BUNDLE",  # curl certificates
             "SSL_CERT_FILE",  # https certificates
+            "CC",  # C compiler command
+            "CFLAGS",  # C compiler flags
+            "CCSHARED",  # compiler flags used to build a shared library
+            "CXX",  # C++ compiler command
+            "CPPFLAGS",  # C++ compiler flags
             "LD_LIBRARY_PATH",  # location of libs
+            "LDFLAGS",  # linker flags
         ]
         if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
             env.append("TERM")
