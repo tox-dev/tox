@@ -1,3 +1,0 @@
-Packaging environments now inherit from the ``pkgenv`` section, allowing to set all your packaging options in one place,
-and support the ``deps`` key to set additional dependencies that will be installed after ``pyprojec.toml`` static
-``requires`` but before backends dynamic requires - by :user:`gaborbernat`.

@@ -4,6 +4,21 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.0 (2023-01-03)
+-------------------
+
+Features - 4.2.0
+~~~~~~~~~~~~~~~~
+- Packaging environments now inherit from the ``pkgenv`` section, allowing to set all your packaging options in one place,
+  and support the ``deps`` key to set additional dependencies that will be installed after ``pyprojec.toml`` static
+  ``requires`` but before backends dynamic requires - by :user:`gaborbernat`. (:issue:`2543`)
+
+Improved Documentation - 4.2.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document breaking changes with tox 4 and packaging environments - by :user:`gaborbernat`. (:issue:`2543`)
+- Document how to handle environments whose names match ``tox`` subcommands - by :user:`sirosen`. (:issue:`2728`)
+
+
 v4.1.3 (2023-01-02)
 -------------------
 

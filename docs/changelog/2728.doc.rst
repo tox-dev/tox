@@ -1,1 +1,0 @@
-Document how to handle environments whose names match ``tox`` subcommands - by :user:`sirosen`.
