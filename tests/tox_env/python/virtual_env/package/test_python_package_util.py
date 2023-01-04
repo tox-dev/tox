@@ -67,5 +67,13 @@ def test_loads_deps_recursive_extras() -> None:
 
 def test_load_dependency_requirement_or_extras() -> None:
     requires = [Requirement('filelock<4.0.0,>=3.9.0; extra == "extras1" or extra == "extras2"')]
-    result = dependencies_with_extras(requires, {"extras1"}, "")
+    for extras in ["extras1", "extras2"]:
+        result = dependencies_with_extras(requires, {extras}, "")
+        assert [str(r) for r in result] == ["filelock<4.0.0,>=3.9.0"]
+
+
+@pytest.mark.parametrize("extra", ["extras1", "extras2", "extras3"])
+def test_load_dependency_requirement_many_or_extras(extra: str) -> None:
+    requires = [Requirement('filelock<4.0.0,>=3.9.0; extra == "extras1" or extra == "extras2" or extra == "extras3"')]
+    result = dependencies_with_extras(requires, {extra}, "")
     assert [str(r) for r in result] == ["filelock<4.0.0,>=3.9.0"]

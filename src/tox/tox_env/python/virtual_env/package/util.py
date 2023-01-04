@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Optional, Set, cast
 
-from packaging.markers import Variable  # type: ignore[attr-defined]
+from packaging.markers import Marker, Op, Value, Variable  # type: ignore[attr-defined]
 from packaging.requirements import Requirement
 
 
@@ -29,25 +30,42 @@ def dependencies_with_extras(deps: list[Requirement], extras: set[str], package_
 
 
 def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, set[str | None]]]:
-    # extras might show up as markers, move them into extras property
-    result: list[tuple[Requirement, set[str | None]]] = []
-    for req in deps:
-        req = deepcopy(req)
-        markers: list[str | tuple[Variable, Variable, Variable]] = getattr(req.marker, "_markers", []) or []
-        _at: int | None = None
-        extra_markers = set()
-        for _at, (marker_key, op, marker_value) in (
-            (_at_marker, marker)
-            for _at_marker, marker in enumerate(markers)
-            if isinstance(marker, tuple) and len(marker) == 3
-        ):
-            if marker_key.value == "extra" and op.value == "==":  # pragma: no branch
-                extra_markers.add(marker_value.value)
-                del markers[_at]
-                _at -= 1
-                if _at >= 0 and (isinstance(markers[_at], str) and markers[_at] in ("and", "or")):
-                    del markers[_at]
-                if len(markers) == 0:
-                    req.marker = None
-        result.append((req, extra_markers or {None}))
+    """
+    Extract extra markers from dependencies.
+
+    :param deps: the dependencies
+    :return: a list of requirement, extras set
+    """
+    result = [_extract_extra_markers(d) for d in deps]
     return result
+
+
+def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:
+    req = deepcopy(req)
+    markers: list[str | tuple[Variable, Op, Variable]] = getattr(req.marker, "_markers", []) or []
+    new_markers: list[str | tuple[Variable, Op, Variable]] = []
+    extra_markers: set[str] = set()  # markers that have a key of extra
+    marker = markers.pop(0) if markers else None
+    while marker:
+        extra = _get_extra(marker)
+        if extra is not None:
+            extra_markers.add(extra)
+            if new_markers and new_markers[-1] in ("and", "or"):
+                del new_markers[-1]
+            marker = markers.pop(0) if markers else None
+            if marker in ("and", "or"):
+                marker = markers.pop(0) if markers else None
+        else:
+            new_markers.append(marker)
+            marker = markers.pop(0) if markers else None
+    if new_markers:
+        cast(Marker, req.marker)._markers = new_markers
+    else:
+        req.marker = None
+    return req, cast(Set[Optional[str]], extra_markers) or {None}
+
+
+def _get_extra(_marker: str | tuple[Variable, Op, Value]) -> str | None:
+    if isinstance(_marker, tuple) and len(_marker) == 3 and _marker[0].value == "extra" and _marker[1].value == "==":
+        return cast(str, _marker[2].value)
+    return None
