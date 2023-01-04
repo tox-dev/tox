@@ -14,7 +14,7 @@ def project(tox_project: ToxProjectCreator) -> ToxProject:
     package = wheel
     wheel_build_env = pkg
     description = with {basepython}
-    deps = pypy: # trailing space is now required
+    deps = pypy:
     [testenv:py]
     basepython=py32,py31
     [testenv:fix]
