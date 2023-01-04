@@ -49,7 +49,7 @@ def explode_factor(group: list[tuple[str, bool]]) -> str:
 def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
     for line in value.split("\n"):
         factors: list[list[tuple[str, bool]]] | None = None
-        marker_at, content = line.find(":"), line
+        marker_at, content = line.find(": "), line
         if marker_at != -1:
             try:
                 factors = list(find_factor_groups(line[:marker_at].strip()))
