@@ -10,7 +10,7 @@ v4.2.0 (2023-01-03)
 Features - 4.2.0
 ~~~~~~~~~~~~~~~~
 - Packaging environments now inherit from the ``pkgenv`` section, allowing to set all your packaging options in one place,
-  and support the ``deps`` key to set additional dependencies that will be installed after ``pyprojec.toml`` static
+  and support the ``deps`` key to set additional dependencies that will be installed after ``pyproject.toml`` static
   ``requires`` but before backends dynamic requires - by :user:`gaborbernat`. (:issue:`2543`)
 
 Improved Documentation - 4.2.0
