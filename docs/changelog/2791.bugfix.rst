@@ -1,1 +1,0 @@
-Fix extracting extras from markers with more than 2 extras in an or chain - by :user:`dconathan`.

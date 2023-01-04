@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.1 (2023-01-03)
+-------------------
+
+Bugfixes - 4.2.1
+~~~~~~~~~~~~~~~~
+- Fix extracting extras from markers with more than 2 extras in an or chain - by :user:`dconathan`. (:issue:`2791`)
+
+
 v4.2.0 (2023-01-03)
 -------------------
 
