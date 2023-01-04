@@ -95,6 +95,7 @@ def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_co
         ("py3", ["py2"], ["py2"]),
         ("py38", ["py39"], ["py39"]),
         ("py38", ["py38", "py39"], ["py39"]),
+        ("py38", ["python3"], ["python3"]),
         ("py310", ["py38", "py39"], ["py38", "py39"]),
         ("py3.11.1", ["py3.11.2"], ["py3.11.2"]),
         ("py3-64", ["py3-32"], ["py3-32"]),
