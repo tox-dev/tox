@@ -98,7 +98,7 @@ class Source(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_tox_env_section(self, item: str) -> tuple[Section, list[str]]:
+    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         """:returns: the section for a tox environment"""
         raise NotImplementedError
 

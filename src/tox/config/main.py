@@ -152,10 +152,10 @@ class Config:
         :param loaders: loaders to use for this configuration (only used for creation)
         :return: the tox environments config
         """
-        section, base = self._src.get_tox_env_section(item)
+        section, base_test, base_pkg = self._src.get_tox_env_section(item)
         conf_set = self.get_section_config(
             section,
-            base=None if package else base,
+            base=base_pkg if package else base_test,
             of_type=EnvConfigSet,
             for_env=item,
             loaders=loaders,
@@ -163,7 +163,7 @@ class Config:
         return conf_set
 
     def clear_env(self, name: str) -> None:
-        section, _ = self._src.get_tox_env_section(name)
+        section, _, __ = self._src.get_tox_env_section(name)
         del self._key_to_conf_set[(section.key, name)]
 
 

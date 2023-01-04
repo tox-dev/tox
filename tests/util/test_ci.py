@@ -54,3 +54,12 @@ def test_is_ci_not(monkeypatch: pytest.MonkeyPatch) -> None:
     for var in _ENV_VARS:
         monkeypatch.delenv(var, raising=False)
     assert not is_ci()
+
+
+def test_is_ci_not_teamcity_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    # pycharm sets this
+    for var in _ENV_VARS:
+        monkeypatch.delenv(var, raising=False)
+
+    monkeypatch.setenv("TEAMCITY_VERSION", "LOCAL")
+    assert not is_ci()

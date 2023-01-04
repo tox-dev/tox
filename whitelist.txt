@@ -111,6 +111,7 @@ openpty
 ov
 pathname
 pep517
+pkgenv
 platformdirs
 pluggy
 pos
@@ -124,6 +125,7 @@ purelib
 py311
 py38
 py39
+pycharm
 pygments
 pypa
 pyproject
@@ -160,6 +162,7 @@ subparsers
 tcgetattr
 tcsanow
 tcsetattr
+teamcity
 termios
 termux
 testenv

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, Iterator, Sequence, cast
+from typing import TYPE_CHECKING, Any, Generator, Iterator, List, Sequence, cast
 
 from packaging.requirements import Requirement
 
@@ -56,6 +56,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         """setup the tox environment"""
         super()._setup_env()
         self._install(self.requires(), PythonPackageToxEnv.__name__, "requires")
+        self._install(self.conf["deps"], PythonPackageToxEnv.__name__, "deps")
 
     @abstractmethod
     def requires(self) -> tuple[Requirement, ...] | PythonDeps:
@@ -63,6 +64,14 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
 
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
+        if run_env.conf["package"] != "skip" and "deps" not in self.conf:
+            self.conf.add_config(
+                keys="deps",
+                of_type=List[Requirement],
+                default=[],
+                desc="Name of the python dependencies as specified by PEP-440",
+            )
+
         if (
             not isinstance(run_env, Python)
             or run_env.conf["package"] not in {"wheel", "editable"}
