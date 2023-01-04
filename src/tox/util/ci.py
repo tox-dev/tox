@@ -21,7 +21,12 @@ _ENV_VARS = {  # per https://adamj.eu/tech/2020/03/09/detect-if-your-tests-are-r
 
 def is_ci() -> bool:
     """:return: a flag indicating if running inside a CI env or not"""
-    return any(e in os.environ if v is None else os.environ.get(e) == v for e, v in _ENV_VARS.items())
+    for env_key, value in _ENV_VARS.items():
+        if env_key in os.environ if value is None else os.environ.get(env_key) == value:
+            if env_key == "TEAMCITY_VERSION" and os.environ.get(env_key) == "LOCAL":
+                continue
+            return True
+    return False
 
 
 __all__ = [

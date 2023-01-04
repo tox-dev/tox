@@ -14,7 +14,7 @@ from ..loader.ini import IniLoader
 from ..loader.section import Section
 from ..sets import ConfigSet
 from .api import Source
-from .ini_section import CORE, TEST_ENV_PREFIX, IniSection
+from .ini_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, IniSection
 
 
 class IniSource(Source):
@@ -62,8 +62,8 @@ class IniSource(Source):
             if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
                 yield IniSection(in_section.prefix, a_base)
 
-    def get_tox_env_section(self, item: str) -> tuple[Section, list[str]]:
-        return IniSection.test_env(item), [TEST_ENV_PREFIX]
+    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
+        return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
 
     def envs(self, core_config: ConfigSet) -> Iterator[str]:
         seen = set()

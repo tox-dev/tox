@@ -222,3 +222,96 @@ This is best avoided by updating to non-legacy usage:
 
     # or, equivalently...
     $ tox r -e list
+
+Packaging environments
+----------------------
+
+Isolated environment on by default
+++++++++++++++++++++++++++++++++++
+``tox`` now always uses an isolated build environment when building your projects package. The previous flag to enable
+this called ``isolated_build`` has been removed.
+
+Packaging configuration and inheritance
++++++++++++++++++++++++++++++++++++++++
+Isolated build environments are tox environments themselves and may be configured on their own. Their name is defined
+as follows:
+
+- For source distributions this environment will match a virtual environment with the same python interpreter as tox is
+  using. The name of this environment will by default ``.pkg`` (can be changed via :ref:`package_env` config on a per
+  test environment basis).
+- For wheels (including editable wheels as defined by :pep:`660`) their name will be ``.pkg-<impl><python_version>``, so
+  for example if you're building a wheel for a Python 3.10 environment the packaging environment will be
+  ``.pkg-cpython311``  (can be changed via :ref:`wheel_build_env` config on a per test environment basis).
+
+To change a packaging environments settings you can use:
+
+.. code-block:: ini
+
+    [testenv:.pkg]
+    pass_env =
+        PKG_CONFIG
+        PKG_CONFIG_PATH
+        PKG_CONFIG_SYSROOT_DIR
+
+    [testenv:.pkg-cpython311]
+    pass_env =
+        PKG_CONFIG
+        PKG_CONFIG_PATH
+        PKG_CONFIG_SYSROOT_DIR
+
+Packaging environments no longer inherit their settings from the ``testenv`` section, as this caused issues when
+some test environment settings conflicted with packaging setting. However starting with ``tox>=4.2`` all packaging
+environments inherit from the ``pkgenv`` section, allowing you to define packaging common packaging settings in one
+central place, while still allowing you to override it when needed on a per package environment basis:
+
+.. code-block:: ini
+
+    [pkgenv]
+    pass_env =
+        PKG_CONFIG
+        PKG_CONFIG_PATH
+        PKG_CONFIG_SYSROOT_DIR
+
+    [testenv:.pkg-cpython311]
+    pass_env =
+        {[pkgenv]pass_env}
+        IS_311 = yes
+
+    [testenv:magic]
+    package = sdist
+    pass_env = {[pkgenv]pass_env}  # sdist install builds wheel -> need packaging settings
+
+Note that specific packaging environments are defined under ``testenv:.pkg`` and **not** ``pkgenv:.pkg``, this is due
+backwards compatibility.
+
+Universal wheels
+++++++++++++++++
+If your project builds universal wheels you can avoid using multiple build environments for each targeted python by
+setting :ref:`wheel_build_env` to the same packaging environment via:
+
+.. code-block:: ini
+
+    [testenv]
+    package = wheel
+    wheel_build_env = .pkg
+
+Editable mode
++++++++++++++
+``tox`` now defaults to using editable wheels when develop mode is enabled and the build backend supports it,
+as defined by :pep:`660` by setting :ref:`package` to ``editable``. In case the backend does not support it, will
+fallback to :ref:`package` to ``editable-legacy``, and invoke pip with ``-e``. In the later case will also print a
+message to make this setting explicit in your configuration (explicit better than implicit):
+
+.. code-block:: ini
+
+    [testenv:dev]
+    package = editable-legacy
+
+If you want to use the new standardized method to achieve the editable install effect you should ensure your backend
+version is above the version this feature was added to it, for example for setuptools:
+
+.. code-block:: ini
+
+    [testenv:dev]
+    deps = setuptools>=64
+    package = editable
