@@ -154,7 +154,7 @@ class Python(ToxEnv, ABC):
                 if any(
                     getattr(spec_base, key) != getattr(spec_name, key)
                     for key in ("implementation", "major", "minor", "micro", "architecture")
-                    if getattr(spec_base, key) is not None and getattr(spec_name, key) is not None
+                    if getattr(spec_name, key) is not None
                 ):
                     msg = f"env name {env_name} conflicting with base python {base_python}"
                     if ignore_base_python_conflict:

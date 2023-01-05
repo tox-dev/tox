@@ -1,0 +1,2 @@
+Setting ``[testenv] basepython = python3`` will no longer override the Python interpreter version requested by a factor,
+such as ``py311`` - by :user:`stephenfin`.
