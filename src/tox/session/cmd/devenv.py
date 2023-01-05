@@ -17,31 +17,31 @@ from tox.session.state import State
 def tox_add_option(parser: ToxParser) -> None:
     help_msg = "sets up a development environment at ENVDIR based on the tox configuration specified "
     our = parser.add_command("devenv", ["d"], help_msg, devenv)
-    our.add_argument("devenv_path", metavar="path", default=Path("venv").absolute(), nargs="?")
+    our.add_argument("devenv_path", metavar="path", default=Path("venv"), nargs="?", type=Path)
     register_env_select_flags(our, default=CliEnv("py"), multiple=False)
     env_run_create_flags(our, mode="devenv")
 
 
 def devenv(state: State) -> int:
     opt = state.conf.options
+    opt.devenv_path = opt.devenv_path.absolute()
     opt.skip_missing_interpreters = False  # the target python must exist
     opt.no_test = False  # do not run the test suite
     opt.package_only = False
     opt.install_pkg = None  # no explicit packages to install
     opt.skip_pkg_install = False  # always install a package in this case
     opt.no_test = True  # do not run the test phase
+    loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
+        usedevelop=True,  # dev environments must be of type dev
+        env_dir=opt.devenv_path,  # move it in source
+    )
+    state.conf.memory_seed_loaders[list(opt.env)[0]].append(loader)
 
     state.envs.ensure_only_run_env_is_active()
     envs = list(state.envs.iter())
     if len(envs) != 1:
         raise HandledError(f"exactly one target environment allowed in devenv mode but found {', '.join(envs)}")
-    loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
-        usedevelop=True,  # dev environments must be of type dev
-        env_dir=Path(opt.devenv_path),  # move it in source
-    )
-    tox_env = state.envs[envs[0]]
-    tox_env.conf.loaders.insert(0, loader)
     result = run_sequential(state)
     if result == 0:
-        logging.warning(f"created development environment under {tox_env.conf['env_dir']}")
+        logging.warning(f"created development environment under {opt.devenv_path}")
     return result

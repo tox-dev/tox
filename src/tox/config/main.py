@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Iterator, Sequence, TypeVar
 
 from tox.config.loader.api import Loader, OverrideMap
 
+from .loader.memory import MemoryLoader
 from .loader.section import Section
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 from .source import Source
@@ -41,6 +42,7 @@ class Config:
         self._src = config_source
         self._key_to_conf_set: dict[tuple[str, str], ConfigSet] = OrderedDict()
         self._core_set: CoreConfigSet | None = None
+        self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
 
     def pos_args(self, to_path: Path | None) -> tuple[str, ...] | None:
         """
@@ -132,6 +134,8 @@ class Config:
         except KeyError:
             conf_set = of_type(self, section, for_env)
             self._key_to_conf_set[key] = conf_set
+            if for_env is not None:
+                conf_set.loaders.extend(self.memory_seed_loaders.get(for_env, []))
             for loader in self._src.get_loaders(section, base, self._overrides, conf_set):
                 conf_set.loaders.append(loader)
             if loaders is not None:
