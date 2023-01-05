@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.3 (2023-01-04)
+-------------------
+
+Bugfixes - 4.2.3
+~~~~~~~~~~~~~~~~
+- ``devenv`` does not respect the specified path when the package is a wheel file - by :user:`gaborbernat`. (:issue:`2815`)
+- Require space after colon before factor filter expansion, unless it is the last character of the line - by :user:`pdecat`. (:issue:`2822`)
+
+
 v4.2.2 (2023-01-04)
 -------------------
 

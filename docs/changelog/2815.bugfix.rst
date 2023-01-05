@@ -1,1 +1,0 @@
-``devenv`` does not respect the specified path when the package is a wheel file - by :user:`gaborbernat`.
