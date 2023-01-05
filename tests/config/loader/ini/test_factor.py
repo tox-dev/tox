@@ -31,6 +31,8 @@ def complex_example() -> str:
     extra: extra
     more-default
     no:space
+    trailingcolon:
+    tab:\ttab
     """,
     )
 
@@ -50,6 +52,8 @@ def test_factor_env_discover(complex_example: str) -> None:
         "c",
         "d",
         "extra",
+        "trailingcolon",
+        "tab",
     ]
 
 
@@ -67,6 +71,8 @@ def test_factor_env_discover(complex_example: str) -> None:
         "pi-b-dev",
         "c",
         "extra",
+        "trailingcolon",
+        "tab",
     ],
 )
 def test_factor_env_filter(env: str, complex_example: str) -> None:
