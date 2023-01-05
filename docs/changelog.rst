@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.4 (2023-01-05)
+-------------------
+
+Bugfixes - 4.2.4
+~~~~~~~~~~~~~~~~
+- Setting ``[testenv] basepython = python3`` will no longer override the Python interpreter version requested by a factor,
+  such as ``py311`` - by :user:`stephenfin`. (:issue:`2754`)
+- Also accept tab after colon before factor filter expansion - by :user:`pdecat`. (:issue:`2823`)
+
+
 v4.2.3 (2023-01-04)
 -------------------
 
