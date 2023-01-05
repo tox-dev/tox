@@ -30,6 +30,7 @@ def complex_example() -> str:
     py, d: space
     extra: extra
     more-default
+    no:space
     """,
     )
 
@@ -73,6 +74,7 @@ def test_factor_env_filter(env: str, complex_example: str) -> None:
     assert "default" in result
     assert "lines" in result
     assert "more-default" in result
+    assert "no:space" in result
     if "py" in env:
         assert "py only" in result
         assert "not py" not in result

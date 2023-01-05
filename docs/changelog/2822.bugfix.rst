@@ -1,0 +1,1 @@
+Require space after colon before factor filter expansion, unless it is the last character of the line - by :user:`pdecat`.
