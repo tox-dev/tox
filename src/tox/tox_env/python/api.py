@@ -231,17 +231,20 @@ class Python(ToxEnv, ABC):
     @property
     def base_python(self) -> PythonInfo:
         """Resolve base python"""
+        base_pythons: list[str] = self.conf["base_python"]
+
         if self._base_python_searched is False:
-            base_pythons: list[str] = self.conf["base_python"]
             self._base_python_searched = True
             self._base_python = self._get_python(base_pythons)
-            if self._base_python is None:
-                if self.core["skip_missing_interpreters"]:
-                    raise Skip(f"could not find python interpreter with spec(s): {', '.join(base_pythons)}")
-                raise NoInterpreter(base_pythons)
-            if self.journal:
+            if self._base_python is not None and self.journal:
                 value = self._get_env_journal_python()
                 self.journal["python"] = value
+
+        if self._base_python is None:
+            if self.core["skip_missing_interpreters"]:
+                raise Skip(f"could not find python interpreter with spec(s): {', '.join(base_pythons)}")
+            raise NoInterpreter(base_pythons)
+
         return cast(PythonInfo, self._base_python)
 
     def _get_env_journal_python(self) -> dict[str, Any]:

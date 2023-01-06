@@ -1,0 +1,2 @@
+Fix an attribute error when ``use_develop = true`` is set and an unsupported interpreter version is requested - by
+:user:`stephenfin`.
