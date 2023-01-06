@@ -4,6 +4,8 @@ from __future__ import annotations
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
 
+from packaging.utils import canonicalize_name
+
 VCS = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
 VALID_SCHEMAS = ["http", "https", "file"] + VCS
 
@@ -26,3 +28,21 @@ def url_to_path(url: str) -> str:
         raise ValueError(f"non-local file URIs are not supported on this platform: {url!r}")
     path = url2pathname(netloc + path)
     return path
+
+
+def handle_binary_option(value: str, target: set[str], other: set[str]) -> None:
+    new = value.split(",")
+    while ":all:" in new:
+        other.clear()
+        target.clear()
+        target.add(":all:")
+        del new[: new.index(":all:") + 1]
+        if ":none:" not in new:
+            return
+    for name in new:
+        if name == ":none:":
+            target.clear()
+            continue
+        name = canonicalize_name(name)
+        other.discard(name)
+        target.add(name)

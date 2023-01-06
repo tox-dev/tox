@@ -33,8 +33,8 @@ def _global_options(parser: ArgumentParser) -> None:
     parser.add_argument("-r", "--requirement", action=AddUniqueAction, dest="requirements")
     parser.add_argument("-e", "--editable", action=AddUniqueAction, dest="editables")
     parser.add_argument("-f", "--find-links", action=AddUniqueAction)
-    parser.add_argument("--no-binary", choices=[":all:", ":none:"])  # TODO: colon separated package names
-    parser.add_argument("--only-binary", choices=[":all:", ":none:"])  # TODO: colon separated package names
+    parser.add_argument("--no-binary")
+    parser.add_argument("--only-binary")
     parser.add_argument("--prefer-binary", action="store_true", default=False)
     parser.add_argument("--require-hashes", action="store_true", default=False)
     parser.add_argument("--pre", action="store_true", default=False)

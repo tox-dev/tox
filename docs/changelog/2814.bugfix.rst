@@ -1,0 +1,1 @@
+Handle properly pip ``--no-binary`` / ``--only-binary`` options in requirements.txt format files.
