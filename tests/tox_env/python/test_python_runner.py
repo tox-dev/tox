@@ -135,7 +135,7 @@ def test_config_skip_missing_interpreters(
     expected: bool,
 ) -> None:
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
-    project = tox_project({"tox.ini": f"[tox]\nenvlist=py4,py{py_ver}\nskip_missing_interpreters={config}"})
+    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{py_ver}\nskip_missing_interpreters={config}"})
     result = project.run(f"--skip-missing-interpreters={cli}")
     assert result.code == (0 if expected else -1)
 

@@ -129,6 +129,7 @@ pycharm
 pygments
 pypa
 pyproject
+pythonspec
 quickstart
 readline
 readouterr

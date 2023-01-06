@@ -132,9 +132,25 @@ class Python(ToxEnv, ABC):
         candidates: list[str] = []
         for factor in env_name.split("-"):
             spec = PythonSpec.from_string_spec(factor)
+
+            # The regex used to parse a Python spec in PythonSpec.from_string_spec is extraordinarily loose so we do our
+            # own sanity checks. In short, if the user does not specify an implementation then a major version will
+            # be present and we insist that it must look like a known Python major version number. If they did specify
+            # an implementation then a major version might not be present, but we will verify it if it is (for
+            # consistency).
+            if (
+                factor != "py"
+                and (  # py is a special case where version info can be unset
+                    (spec.implementation and spec.major) or not spec.implementation
+                )
+                and spec.major not in (2, 3)
+            ):
+                continue
+
             impl = spec.implementation or "python"
-            if impl.lower() in INTERPRETER_SHORT_NAMES and env_name is not None and spec.path is None:
+            if impl.lower() in INTERPRETER_SHORT_NAMES and spec.path is None:
                 candidates.append(factor)
+
         if candidates:
             if len(candidates) > 1:
                 raise ValueError(f"conflicting factors {', '.join(candidates)} in {env_name}")
