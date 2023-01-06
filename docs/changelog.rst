@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.6 (2023-01-06)
+-------------------
+
+Bugfixes - 4.2.6
+~~~~~~~~~~~~~~~~
+- Handle properly pip ``--no-binary`` / ``--only-binary`` options in requirements.txt format files. (:issue:`2814`)
+
+
 v4.2.5 (2023-01-06)
 -------------------
 
