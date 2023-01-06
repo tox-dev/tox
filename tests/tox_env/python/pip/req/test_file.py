@@ -140,15 +140,28 @@ _REQ_FILE_TEST_CASES = [
         ["--use-feature", "2020-resolver", "--use-feature", "fast-deps"],
         id="use-feature multiple duplicate different line",
     ),
-    pytest.param("--no-binary :all:", {"no_binary": ":all:"}, [], ["--no-binary", ":all:"], id="no-binary all"),
-    pytest.param("--no-binary :none:", {"no_binary": ":none:"}, [], ["--no-binary", ":none:"], id="no-binary none"),
-    pytest.param("--only-binary :all:", {"only_binary": ":all:"}, [], ["--only-binary", ":all:"], id="only-binary all"),
+    pytest.param("--no-binary :all:", {"no_binary": {":all:"}}, [], ["--no-binary", {":all:"}], id="no-binary all"),
+    pytest.param("--no-binary :none:", {"no_binary": {":none:"}}, [], [], id="no-binary none"),
+    pytest.param(
+        "--only-binary :all:",
+        {"only_binary": {":all:"}},
+        [],
+        ["--only-binary", {":all:"}],
+        id="only-binary all",
+    ),
     pytest.param(
         "--only-binary :none:",
-        {"only_binary": ":none:"},
+        {"only_binary": {":none:"}},
         [],
-        ["--only-binary", ":none:"],
+        [],
         id="only-binary none",
+    ),
+    pytest.param(
+        "--no-binary=foo --only-binary=foo",
+        {"only_binary": {"foo"}},
+        [],
+        ["--only-binary", {"foo"}],
+        id="no-binary-and-only-binary",
     ),
     pytest.param("####### example-requirements.txt #######", {}, [], [], id="comment"),
     pytest.param("\t##### Requirements without Version Specifiers ######", {}, [], [], id="tab and comment"),
@@ -289,7 +302,7 @@ def test_req_file(tmp_path: Path, req: str, opts: dict[str, Any], requirements: 
     req_file = RequirementsFile(requirements_txt, constraint=False)
     assert req_file.as_root_args == as_args
     assert str(req_file) == f"-r {requirements_txt}"
-    assert vars(req_file.options) == opts
+    assert vars(req_file.options) == (opts if {":none:"} not in opts.values() else {})
     found = [str(i) for i in req_file.requirements]
     assert found == requirements
 
