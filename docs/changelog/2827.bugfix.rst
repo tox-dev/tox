@@ -1,2 +1,2 @@
 tox returns a non-zero error code if all envs are skipped. It will now correctly do this if only a single env was
-requested and this was skipped.
+requested and this was skipped - by :user:`stephenfin`.
