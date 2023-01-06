@@ -145,7 +145,7 @@ def test_config_skip_missing_interpreters(
     [
         ("true", f"py{''.join(str(i) for i in sys.version_info[0:2])}", 0),
         ("false", f"py{''.join(str(i) for i in sys.version_info[0:2])}", 0),
-        ("true", "py31", 0),
+        ("true", "py31", -1),
         ("false", "py31", 1),
         ("true", None, 0),
         ("false", None, -1),

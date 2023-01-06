@@ -187,7 +187,9 @@ def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosit
         _print(Fore.GREEN, f"  congratulations :) ({duration:.2f} seconds)")
         return Outcome.OK
     _print(Fore.RED, f"  evaluation failed :( ({duration:.2f} seconds)")
-    return runs[0].code if len(runs) == 1 else -1
+    if len(runs) == 1:
+        return runs[0].code if not runs[0].skipped else -1
+    return -1
 
 
 def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, int]:
