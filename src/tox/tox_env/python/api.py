@@ -248,13 +248,12 @@ class Python(ToxEnv, ABC):
         return cast(PythonInfo, self._base_python)
 
     def _get_env_journal_python(self) -> dict[str, Any]:
-        assert self._base_python is not None
         return {
-            "implementation": self._base_python.implementation,
+            "implementation": self.base_python.implementation,
             "version_info": tuple(self.base_python.version_info),
-            "version": self._base_python.version,
-            "is_64": self._base_python.is_64,
-            "sysplatform": self._base_python.platform,
+            "version": self.base_python.version,
+            "is_64": self.base_python.is_64,
+            "sysplatform": self.base_python.platform,
             "extra_version_info": None,
         }
 
