@@ -1,2 +1,0 @@
-The combination of ``usedevelop = true`` and ``--skip-missing-interpreters=false`` will no longer fail for environments
-that were *not* invoked - by :user:`stephenfin`.

@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.5 (2023-01-06)
+-------------------
+
+Bugfixes - 4.2.5
+~~~~~~~~~~~~~~~~
+- The combination of ``usedevelop = true`` and ``--skip-missing-interpreters=false`` will no longer fail for environments
+  that were *not* invoked - by :user:`stephenfin`. (:issue:`2811`)
+- Fix an attribute error when ``use_develop = true`` is set and an unsupported interpreter version is requested - by
+  :user:`stephenfin`. (:issue:`2826`)
+- tox returns a non-zero error code if all envs are skipped. It will now correctly do this if only a single env was
+  requested and this was skipped - by :user:`stephenfin`. (:issue:`2827`)
+
+
 v4.2.4 (2023-01-05)
 -------------------
 
