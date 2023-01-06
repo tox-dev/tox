@@ -128,8 +128,39 @@ def test_extras_are_normalized(
     ("config", "cli", "expected"),
     [("false", "true", True), ("true", "false", False), ("false", "config", False), ("true", "config", True)],
 )
-def test_config_skip_missing_interpreters(tox_project: ToxProjectCreator, config: str, cli: str, expected: str) -> None:
+def test_config_skip_missing_interpreters(
+    tox_project: ToxProjectCreator,
+    config: str,
+    cli: str,
+    expected: bool,
+) -> None:
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
     project = tox_project({"tox.ini": f"[tox]\nenvlist=py4,py{py_ver}\nskip_missing_interpreters={config}"})
-    result = project.run("--skip-missing-interpreters", cli)
-    assert result.code == 0 if expected else 1
+    result = project.run(f"--skip-missing-interpreters={cli}")
+    assert result.code == (0 if expected else -1)
+
+
+@pytest.mark.parametrize(
+    ("skip", "env", "retcode"),
+    [
+        ("true", f"py{''.join(str(i) for i in sys.version_info[0:2])}", 0),
+        ("false", f"py{''.join(str(i) for i in sys.version_info[0:2])}", 0),
+        ("true", "py31", -1),
+        ("false", "py31", 1),
+        ("true", None, 0),
+        ("false", None, -1),
+    ],
+)
+def test_skip_missing_interpreters_specified_env(
+    tox_project: ToxProjectCreator,
+    skip: str,
+    env: str | None,
+    retcode: int,
+) -> None:
+    py_ver = "".join(str(i) for i in sys.version_info[0:2])
+    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{py_ver}\n[testenv]\nusedevelop=true"})
+    args = [f"--skip-missing-interpreters={skip}"]
+    if env:
+        args += ["-e", env]
+    result = project.run(*args)
+    assert result.code == retcode

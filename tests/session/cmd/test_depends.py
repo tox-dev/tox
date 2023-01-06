@@ -34,18 +34,18 @@ def test_depends(tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool],
        py ~ .pkg
        {py} ~ .pkg
        {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
-       py31 ~ .pkg | ... (could not resolve base python with py31)
+       py31 ~ .pkg | ... (could not find python interpreter with spec(s): py31)
        cov2
           cov
              py ~ .pkg
              {py} ~ .pkg
              {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
-             py31 ~ .pkg | ... (could not resolve base python with py31)
+             py31 ~ .pkg | ... (could not find python interpreter with spec(s): py31)
        cov
           py ~ .pkg
           {py} ~ .pkg
           {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
-          py31 ~ .pkg | ... (could not resolve base python with py31)
+          py31 ~ .pkg | ... (could not find python interpreter with spec(s): py31)
     """
     assert outcome.out == dedent(expected).lstrip()
 

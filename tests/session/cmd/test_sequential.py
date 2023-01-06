@@ -224,7 +224,7 @@ def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": ini})
 
     result = proj.run("r")
-    result.assert_success()
+    result.assert_failed()
     assert "py: SKIP" in result.out
 
 
@@ -367,7 +367,7 @@ def test_platform_does_not_match_run_env(tox_project: ToxProjectCreator) -> None
     proj = tox_project({"tox.ini": ini})
 
     result = proj.run("r")
-    result.assert_success()
+    result.assert_failed()
     exp = f"py: skipped because platform {sys.platform} does not match wrong_platform"
     assert exp in result.out
 

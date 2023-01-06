@@ -88,6 +88,18 @@ moving to the newly added ``py_impl`` and ``py_dot_ver`` variables, for example:
 
    deps = -r{py_impl}{py_dot_ver}-req.txt
 
+Failure when all environments are skipped
+-----------------------------------------
+
+A run that results in all environments being skipped will no longer result in success. Instead, a failure will be
+reported. For example, consider a host that does not support Python 3.5:
+
+.. code-block:: bash
+
+   tox run --skip-missing-interpreters=true -e py35
+
+This will now result in a failure.
+
 Substitutions removed
 ---------------------
 
@@ -133,7 +145,6 @@ Re-use of environments
 
     [testenv:b]
     deps = pytest<7
-
 
 CLI command compatibility
 -------------------------

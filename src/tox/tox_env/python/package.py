@@ -14,7 +14,7 @@ from ..api import ToxEnvCreateArgs
 from ..errors import Skip
 from ..package import Package, PackageToxEnv, PathPackage
 from ..runner import RunToxEnv
-from .api import Python
+from .api import NoInterpreter, Python
 from .pip.req_file import PythonDeps
 
 if TYPE_CHECKING:
@@ -87,7 +87,11 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             # python only code are often compatible at major level (unless universal wheel in which case both 2/3)
             # c-extension codes are trickier, but as of today both poetry/setuptools uses pypa/wheels logic
             # https://github.com/pypa/wheel/blob/master/src/wheel/bdist_wheel.py#L234-L280
-            run_py = cast(Python, run_env).base_python
+            try:
+                run_py = cast(Python, run_env).base_python
+            except NoInterpreter:
+                run_py = None
+
             if run_py is None:
                 base = ",".join(run_env.conf["base_python"])
                 raise Skip(f"could not resolve base python with {base}")

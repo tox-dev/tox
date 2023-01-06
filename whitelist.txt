@@ -142,6 +142,7 @@ replacer
 repo
 reqs
 retann
+retcode
 rfind
 rpartition
 rreq
