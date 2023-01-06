@@ -147,7 +147,22 @@ class Python(ToxEnv, ABC):
             ):
                 continue
 
-            impl = spec.implementation or "python"
+            impl = spec.implementation
+
+            # TODO: Drop in a future version
+            # PythonSpec.from_string_spec set implementation to None for py and python
+            if impl is None and not factor.startswith("py") and not factor.startswith("python"):
+                logging.warning(
+                    "identified the %s factor in the %s testenv as a Python spec but the interpreter implementation "
+                    "was not specified. This will be a ignored in future versions of tox. Please prefix this factor "
+                    "with an interpreter short name (one of: %s)",
+                    factor,
+                    env_name,
+                    ", ".join(INTERPRETER_SHORT_NAMES + ["py"]),
+                )
+
+            impl = impl or "python"
+
             if impl.lower() in INTERPRETER_SHORT_NAMES and spec.path is None:
                 candidates.append(factor)
 
