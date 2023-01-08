@@ -54,6 +54,13 @@ Changed INI rules
 - tox 4 requires the ``install_command`` to evaluate to a non-empty value for each target environment.  In tox 3, an
   empty value would be substituted for the default install command.
 
+Known regressions
+-----------------
+
+- On Windows, the tty trait of the caller environment is no longer passed through. The most notable impact of this
+  change is that some tools no longer show colored output. You may need to force colorization to be for such enabled
+  for such tools. See :issue:`2337` for more details.
+
 New plugin system
 -----------------
 
