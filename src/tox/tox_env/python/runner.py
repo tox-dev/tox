@@ -34,11 +34,11 @@ class PythonRun(Python, RunToxEnv, ABC):
         super().register_config()
         root = self.core["toxinidir"]
         self.conf.add_config(
-            keys="deps",
+            keys=["deps"],
             of_type=PythonDeps,
             factory=partial(PythonDeps.factory, root),
             default=PythonDeps("", root),
-            desc="Name of the python dependencies as specified by PEP-440",
+            desc="python dependencies with optional version specifiers, as specified by PEP-440",
         )
         self.conf.add_config(
             keys=["dependency_groups"],
