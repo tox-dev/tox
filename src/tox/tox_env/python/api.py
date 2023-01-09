@@ -127,8 +127,8 @@ class Python(ToxEnv, ABC):
         base_python = None if env_name is None else self.extract_base_python(env_name)
         return [sys.executable if base_python is None else base_python]
 
-    @staticmethod
-    def extract_base_python(env_name: str) -> str | None:
+    @classmethod
+    def extract_base_python(cls, env_name: str) -> str | None:
         candidates: list[str] = []
         for factor in env_name.split("-"):
             spec = PythonSpec.from_string_spec(factor)
@@ -141,14 +141,16 @@ class Python(ToxEnv, ABC):
             return next(iter(candidates))
         return None
 
-    @staticmethod
-    def _validate_base_python(env_name: str, base_pythons: list[str], ignore_base_python_conflict: bool) -> list[str]:
-        elements = {env_name}  # match with full env-name
-        elements.update(env_name.split("-"))  # and also any factor
-        for candidate in elements:
-            spec_name = PythonSpec.from_string_spec(candidate)
-            if spec_name.implementation and spec_name.implementation.lower() not in INTERPRETER_SHORT_NAMES:
-                continue
+    @classmethod
+    def _validate_base_python(
+        cls,
+        env_name: str,
+        base_pythons: list[str],
+        ignore_base_python_conflict: bool,
+    ) -> list[str]:
+        env_base_python = cls.extract_base_python(env_name)
+        if env_base_python is not None:
+            spec_name = PythonSpec.from_string_spec(env_base_python)
             for base_python in base_pythons:
                 spec_base = PythonSpec.from_string_spec(base_python)
                 if any(
@@ -158,7 +160,8 @@ class Python(ToxEnv, ABC):
                 ):
                     msg = f"env name {env_name} conflicting with base python {base_python}"
                     if ignore_base_python_conflict:
-                        return [env_name]  # ignore the base python settings
+                        # ignore the base python settings and return the thing that looks like a Python version
+                        return [env_base_python]
                     raise Fail(msg)
         return base_pythons
 
