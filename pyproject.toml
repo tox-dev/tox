@@ -60,6 +60,7 @@ optional-dependencies.testing = [
   "pytest-mock>=3.10",
   "pytest-xdist>=3.1",
   "re-assert>=1.1",
+  "wheel>=0.38.4",
   "time-machine>=2.8.2; implementation_name != \"pypy\"",
 ]
 scripts.tox = "tox.run:run"
