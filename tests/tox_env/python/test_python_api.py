@@ -71,6 +71,28 @@ def test_diff_msg_no_diff() -> None:
     assert Python._diff_msg({}, {}) == "python "
 
 
+@pytest.mark.parametrize(
+    ("env", "base_python"),
+    [
+        ("py3", "py3"),
+        ("py311", "py311"),
+        ("pypy2", "pypy2"),
+        ("functional-py310", "py310"),
+        ("bar-pypy2-foo", "pypy2"),
+        ("310", "310"),
+        ("5", None),
+        # TODO: This is acceptable to 'PythonSpec.from_string_spec' but is
+        # clearly not valid :(
+        ("2000", "2000"),
+        ("4000", None),
+    ],
+    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
+)
+def test_extract_base_python(env: str, base_python: str | None):
+    result = Python.extract_base_python(env)
+    assert result == base_python
+
+
 @pytest.mark.parametrize("ignore_conflict", [True, False])
 @pytest.mark.parametrize(
     ("env", "base_python"),

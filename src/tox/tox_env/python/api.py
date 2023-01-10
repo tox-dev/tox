@@ -158,7 +158,7 @@ class Python(ToxEnv, ABC):
                     "with an interpreter short name (one of: %s)",
                     factor,
                     env_name,
-                    ", ".join(INTERPRETER_SHORT_NAMES + ["py"]),
+                    ", ".join(list(INTERPRETER_SHORT_NAMES) + ["py"]),
                 )
 
             impl = impl or "python"
