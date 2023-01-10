@@ -4,18 +4,20 @@ Declare the abstract base class for tox environments that handle the Python lang
 from __future__ import annotations
 
 import logging
+import re
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, List, NamedTuple, cast
 
-from packaging.tags import INTERPRETER_SHORT_NAMES
 from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.main import Config
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.util.ci import is_ci
+
+PY_FACTORS_RE = re.compile("^(?!py$)(?P<impl>py|pypy|jython)(?P<version>[2-9][0-9]?[0-9]?)?$")
 
 
 class VersionInfo(NamedTuple):
@@ -131,9 +133,8 @@ class Python(ToxEnv, ABC):
     def extract_base_python(cls, env_name: str) -> str | None:
         candidates: list[str] = []
         for factor in env_name.split("-"):
-            spec = PythonSpec.from_string_spec(factor)
-            impl = spec.implementation or "python"
-            if impl.lower() in INTERPRETER_SHORT_NAMES and env_name is not None and spec.path is None:
+            match = PY_FACTORS_RE.match(factor)
+            if match:
                 candidates.append(factor)
         if candidates:
             if len(candidates) > 1:

@@ -1,0 +1,5 @@
+tox has reverted support for complex Python factors such as ``py3.10``, ``cpython3.10.1`` or ``pypy3-64``. This was
+initially supported with the release of tox 4.0 but has proven complicated to support. Instead, the simple factors
+supported by tox 3 such as ``py310`` or ``pypy3`` should be used. Users who wish to specify more specific Python version
+information should configure the ``base_python`` setting in the relevant ``[testenv]`` section(s) in ``tox.ini`` - by
+:user:`stephenfin`.
