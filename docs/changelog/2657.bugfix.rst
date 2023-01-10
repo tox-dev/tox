@@ -1,0 +1,2 @@
+Python factors should now be prefixed with ``py`` or a specific interpreter name such as ``pypy``. Simple factors like
+``310`` will not be supported in a future release. This aligns tox 4 closer to tox 3 behavior - by :user:`stephenfin`.
