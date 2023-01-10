@@ -88,7 +88,7 @@ def test_diff_msg_no_diff() -> None:
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
-def test_extract_base_python(env: str, base_python: str | None):
+def test_extract_base_python(env: str, base_python: str | None) -> None:
     result = Python.extract_base_python(env)
     assert result == base_python
 
