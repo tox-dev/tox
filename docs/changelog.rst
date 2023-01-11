@@ -4,6 +4,22 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.7 (2023-01-11)
+-------------------
+
+Bugfixes - 4.2.7
+~~~~~~~~~~~~~~~~
+- A testenv with multiple factors, one of which conflicts with a ``base_python`` setting in ``tox.ini``, will now use the
+  correct Python interpreter version - by :user:`stephenfin`. (:issue:`2838`)
+- Explicitly list ``wheel`` as requirement for the tests, as some of the tests error without it. (:issue:`2843`)
+- tox has reverted support for Python factors that include PATCH release info (e.g. ``py3.10.1``), build architecture
+  (e.g. ``pypy3-64``) or do not define a ``py`` prefix or other supported prefix (e.g. ``3.10``). These complex factors
+  were initially supported with the release of tox 4.0 but has proven complicated to support. Instead, the simple factors
+  supported by tox 3 e.g. (``py310``, ``pypy3``) or period-separated equivalent (``py3.10``) introduced in tox 4 should be
+  used. Users who wish to specify more specific Python version information should configure the :ref:`base_python` setting
+  - by :user:`stephenfin`. (:issue:`2848`)
+
+
 v4.2.6 (2023-01-06)
 -------------------
 

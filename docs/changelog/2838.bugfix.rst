@@ -1,2 +1,0 @@
-A testenv with multiple factors, one of which conflicts with a ``base_python`` setting in ``tox.ini``, will now use the
-correct Python interpreter version - by :user:`stephenfin`.

@@ -1,1 +1,0 @@
-Explicitly list ``wheel`` as requirement for the tests, as some of the tests error without it.
