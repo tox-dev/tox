@@ -17,7 +17,14 @@ from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.util.ci import is_ci
 
-PY_FACTORS_RE = re.compile("^(?!py$)(?P<impl>py|pypy|jython)(?P<version>[2-9][0-9]?[0-9]?)?$")
+PY_FACTORS_RE = re.compile(
+    r"""
+    ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
+    (?P<impl>py|pypy|cpython|jython|rustpython|ironpython) # the interpeter; most users will simply use 'py'
+    (?P<version>[2-9]\.?[0-9]?[0-9]?)?$                    # the version; one of: MAJORMINOR, MAJOR.MINOR
+    """,
+    re.X,
+)
 
 
 class VersionInfo(NamedTuple):
