@@ -17,15 +17,6 @@ from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.util.ci import is_ci
 
-PY_FACTORS_RE = re.compile(
-    r"""
-    ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
-    (?P<impl>py|pypy|cpython|jython|rustpython|ironpython) # the interpeter; most users will simply use 'py'
-    (?P<version>[2-9]\.?[0-9]?[0-9]?)?$                    # the version; one of: MAJORMINOR, MAJOR.MINOR
-    """,
-    re.X,
-)
-
 
 class VersionInfo(NamedTuple):
     major: int
@@ -54,6 +45,16 @@ class PythonInfo(NamedTuple):
     @property
     def version_dot(self) -> str:
         return f"{self.version_info.major}.{self.version_info.minor}"
+
+
+PY_FACTORS_RE = re.compile(
+    r"""
+    ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
+    (?P<impl>py|pypy|cpython|jython|rustpython|ironpython) # the interpeter; most users will simply use 'py'
+    (?P<version>[2-9]\.?[0-9]?[0-9]?)?$                    # the version; one of: MAJORMINOR, MAJOR.MINOR
+    """,
+    re.VERBOSE,
+)
 
 
 class Python(ToxEnv, ABC):
