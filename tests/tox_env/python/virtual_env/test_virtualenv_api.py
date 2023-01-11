@@ -33,10 +33,10 @@ def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEn
 
 def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_opt: VirtualEnvOptions) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    result = proj.run("r", "-e", "py", "--discover", sys.executable, str(proj.path / "a"))
+    result = proj.run("r", "-e", "py3", "--discover", sys.executable, str(proj.path / "a"))
     result.assert_success()
 
-    conf = result.env_conf("py")
+    conf = result.env_conf("py3")
     assert conf["system_site_packages"] is False
     assert conf["always_copy"] is False
     assert conf["download"] is False
@@ -46,7 +46,7 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     assert virtualenv_opt.download is False
     assert virtualenv_opt.copies is False
     assert virtualenv_opt.no_periodic_update is True
-    assert virtualenv_opt.python == ["py"]
+    assert virtualenv_opt.python == ["py3"]
     assert virtualenv_opt.try_first_with == [str(sys.executable), str(proj.path / "a")]
 
 
@@ -60,10 +60,10 @@ def test_virtualenv_flipped_settings(
     )
     monkeypatch.setenv("VIRTUALENV_CLEAR", "0")
 
-    result = proj.run("r", "-e", "py")
+    result = proj.run("r", "-e", "py3")
     result.assert_success()
 
-    conf = result.env_conf("py")
+    conf = result.env_conf("py3")
     assert conf["system_site_packages"] is True
     assert conf["always_copy"] is True
     assert conf["download"] is True
@@ -72,7 +72,7 @@ def test_virtualenv_flipped_settings(
     assert virtualenv_opt.system_site is True
     assert virtualenv_opt.download is True
     assert virtualenv_opt.copies is True
-    assert virtualenv_opt.python == ["py"]
+    assert virtualenv_opt.python == ["py3"]
 
 
 def test_virtualenv_env_ignored_if_set(

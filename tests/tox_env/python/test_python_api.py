@@ -71,6 +71,36 @@ def test_diff_msg_no_diff() -> None:
     assert Python._diff_msg({}, {}) == "python "
 
 
+@pytest.mark.parametrize(
+    ("env", "base_python"),
+    [
+        ("py3", "py3"),
+        ("py311", "py311"),
+        ("py3.12", "py3.12"),
+        ("pypy2", "pypy2"),
+        ("rustpython3", "rustpython3"),
+        ("cpython3.8", "cpython3.8"),
+        ("ironpython2.7", "ironpython2.7"),
+        ("functional-py310", "py310"),
+        ("bar-pypy2-foo", "pypy2"),
+        ("py", None),
+        ("django-32", None),
+        ("eslint-8.3", None),
+        ("py-310", None),
+        ("py3000", None),
+        ("4.foo", None),
+        ("310", None),
+        ("5", None),
+        ("2000", None),
+        ("4000", None),
+    ],
+    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
+)
+def test_extract_base_python(env: str, base_python: str | None) -> None:
+    result = Python.extract_base_python(env)
+    assert result == base_python
+
+
 @pytest.mark.parametrize("ignore_conflict", [True, False])
 @pytest.mark.parametrize(
     ("env", "base_python"),
@@ -89,7 +119,6 @@ def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_co
 @pytest.mark.parametrize(
     ("env", "base_python", "expected", "conflict"),
     [
-        ("cpython", ["pypy"], "cpython", ["pypy"]),
         ("pypy", ["cpython"], "pypy", ["cpython"]),
         ("pypy2", ["pypy3"], "pypy2", ["pypy3"]),
         ("py3", ["py2"], "py3", ["py2"]),
@@ -97,8 +126,7 @@ def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_co
         ("py38", ["py38", "py39"], "py38", ["py39"]),
         ("py38", ["python3"], "py38", ["python3"]),
         ("py310", ["py38", "py39"], "py310", ["py38", "py39"]),
-        ("py3.11.1", ["py3.11.2"], "py3.11.1", ["py3.11.2"]),
-        ("py3-64", ["py3-32"], "py3-64", ["py3-32"]),
+        ("py3.11", ["py310"], "py3.11", ["py310"]),
         ("py310-magic", ["py39"], "py310", ["py39"]),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
@@ -110,9 +138,6 @@ def test_base_python_env_conflict(
     conflict: list[str],
     ignore_conflict: bool,
 ) -> None:
-    if env == "py3-64":
-        raise pytest.skip("bug #2657")
-
     if ignore_conflict:
         result = Python._validate_base_python(env, base_python, ignore_conflict)
         assert result == [expected]
