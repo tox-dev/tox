@@ -1,27 +1,128 @@
 User Guide
 ==========
 
-Basic example
--------------
+Overview
+--------
 
 tox is an environment orchestrator. Use it to define how to setup and execute various tools on your projects. The
-tool can be:
+tool can set up environments for and invoke:
 
-- a test runner (such as :pypi:`pytest`),
-- a linter (e.g., :pypi:`flake8`),
-- a formatter (for example :pypi:`black` or :pypi:`isort`),
-- a documentation generator (e.g., :pypi:`Sphinx`),
-- library builder and publisher (e.g., :pypi:`build` with :pypi:`twine`),
-- or anything else you may need to execute.
+- test runners (such as :pypi:`pytest`),
+- linters (e.g., :pypi:`flake8`),
+- formatters (for example :pypi:`black` or :pypi:`isort`),
+- documentation generators (e.g., :pypi:`Sphinx`),
+- build and publishing tools (e.g., :pypi:`build` with :pypi:`twine`),
+- ...
 
-First, in a configuration file you need to define what tools you need to run and how to provision a test environment for
-these. The canonical file for this is the ``tox.ini`` file, let's take a look at an example of this (this needs to live
-at the root of your project):
+Configuration
+-------------
 
-.. note::
+*tox* needs a configuration file where you define what tools you need to run and how to provision a test environment for
+these. The canonical file for this is the ``tox.ini`` file. For example:
+
+.. code-block:: ini
+
+    [tox]
+    min_version = 4.2
+    env_list = py{38,39,310,311}, lint, type
+
+    [testenv]
+    description = run unit tests
+    deps =
+        pytest>=7
+        pytest-sugar
+    commands =
+        pytest {posargs:tests}
+
+    [testenv:lint]
+    description = run linters
+    skip_install = true
+    deps =
+        black==22.3.0
+    commands = black {posargs:.}
+
+    [testenv:type]
+    description = run type checks
+    deps =
+        mypy>=0.991
+    commands =
+        mypy {posargs:src tests}
+
+.. tip::
 
    You can also generate a ``tox.ini`` file automatically by running ``tox quickstart`` and then answering a few
    questions.
+
+The configuration is split into two type of configuration: core settings are hosted under a core ``tox`` section while
+per run environment settings hosted under ``testenv`` and ``testenv:<env_name>`` sections.
+
+Core settings
+~~~~~~~~~~~~~
+
+Core settings that affect all test environments or configure how tox itself is invoked are defined under the ``tox``
+section.
+
+.. code-block:: ini
+
+    [tox]
+    min_version = 4.2
+    env_list = py{38,39,310,311}, lint, type
+
+We can use it to specify things such as the minimum version of *tox* required or the location of the package under test.
+A list of all supported configuration options for the ``tox`` section can be found in the :ref:`configuration guide
+<conf-core>`.
+
+Test environments
+~~~~~~~~~~~~~~~~~
+
+Test environments are defined under the ``testenv`` section and individual ``testenv:<env_name>`` sections, where
+``<env_name>`` is the name of a specific environment.
+
+.. code-block:: ini
+
+    [testenv]
+    description = run unit tests
+    deps =
+        pytest>=7
+        pytest-sugar
+    commands =
+        pytest {posargs:tests}
+
+    [testenv:lint]
+    description = run linters
+    skip_install = true
+    deps =
+        black==22.3.0
+    commands = black {posargs:.}
+
+    [testenv:type]
+    description = run type checks
+    deps =
+        mypy>=0.991
+    commands =
+        mypy {posargs:src tests}
+
+Settings defined in the top-level ``testenv`` section are automatically inherited by individual environments unless
+overridden. Test environment names can consist of alphanumeric characters and dashes; for example: ``py311-django42``.
+The name will be split on dashes into multiple factors, meaning ``py311-django42`` will be split into two factors:
+``py311`` and ``django42``. *tox* defines a number of default factors, which correspond to various versions and
+implementations of Python and provide default values for ``base_python``:
+
+- ``pyNM``: configures ``basepython = pythonN.M``
+- ``pypyNM``: configures ``basepython = pypyN.M``
+- ``jythonNM``: configures ``basepython = jythonN.M``
+- ``cpythonNM``: configures ``basepython = cpythonN.M``
+- ``ironpythonNM``: configures ``basepython = ironpythonN.M``
+- ``rustpythonNM``: configures ``basepython = rustpythonN.M``
+
+You can also specify these factors with a period between the major and minor versions (e.g. ``pyN.M``), without a minor
+version (e.g. ``pyN``), or without any version information whatsoever (e.g. ``py``)
+
+A list of all supported configuration options for the ``testenv`` and ``testenv:<env_name>`` sections can be found in
+the :ref:`configuration guide <conf-testenv>`.
+
+Basic example
+-------------
 
 .. code-block:: ini
 
@@ -43,25 +144,25 @@ at the root of your project):
         pytest-sugar
     commands = pytest tests {posargs}
 
+This example contains a global ``tox`` section as well as two test environments. Taking the core section first, we use
+the ``envlist`` setting to indicate that this project has two run environments named ``format`` and ``py310`` that
+should be run by default when ``tox run`` is invoked without a specific environment.
 
-The configuration is split into two type of configuration: core settings are hosted under the ``tox`` section and per run
-environment settings hosted under ``testenv:<env_name>``. Under the core section we define that this project has two
-run environments named ``format`` and ``py310`` respectively (we use the ``envlist`` configuration key to do so).
+The formatting environment and test environment are defined separately via the ``testenv:format`` and ``testenv:py310``
+sections, respectively. For example to format the project we:
 
-Then we define separately the formatting environment (``testenv:format`` section) and the test environment
-(``testenv:py310`` section). For example to format the project we:
+- add a description (visible when you type ``tox list`` into the command line) via the ``description`` setting
+- define that it requires the :pypi:`black` dependency with version ``22.3.0`` via the ``deps`` setting
+- disable installation of the project under test into the test environment via the ``skip_install`` setting -
+  ``black`` does not need it installed
+- indicate the commands to be run via the ``commands`` setting
 
-- add a description (visible when you type ``tox list`` into the command line),
-- we define that it requires the ``black`` PyPI dependency with version ``22.3.0``,
-- the black tool does not need the project we are testing to be installed into  the test environment so we disable this
-  default behaviour via the ``skip_install`` configuration,
-- and we define that the tool should be invoked as we'd type ``black .`` into the command line.
+For testing the project we use the ``py310`` environment. For this environment we:
 
-For testing the project we use the ``py310`` environment, for which we:
-
-- define a text description of the environment,
-- specify that requires ``pytest`` ``7`` or later together with the :pypi:`pytest-sugar` project,
-- and that the tool should be invoked via the ``pytest tests`` CLI command.
+- define a text description of the environment via the ``description`` setting
+- specify that we should install :pypi:`pytest` v7.0 or later together with the :pypi:`pytest-sugar` project via the
+  ``deps`` setting
+- indicate the command(s) to be run - in this case ``pytest tests`` - via the ``commands`` setting
 
 ``{posargs}`` is a place holder part for the CLI command that allows us to pass additional flags to the pytest
 invocation, for example if we'd want to run ``pytest tests -v`` as a one off, instead of ``tox run -e py310`` we'd type
@@ -232,8 +333,8 @@ CLI
   have a stale Python environment; e.g. ``tox run -e py310 -r`` would clean the run environment and recreate it from
   scratch.
 
-Configuration
-~~~~~~~~~~~~~
+Config files
+~~~~~~~~~~~~
 
 - Every tox environment has its own configuration section (e.g. in case of ``tox.ini`` configuration method the
   ``py310`` tox environments configuration is read from the ``testenv:py310`` section). If the section is missing or does
@@ -259,7 +360,9 @@ Configuration
   - To view environment variables set and passed down use ``tox c -e py310 -k set_env pass_env``.
   - To pass through additional environment variables use :ref:`pass_env`.
   - To set environment variables use :ref:`set_env`.
+
 - Setup operation can be configured via the :ref:`commands_pre`, while teardown commands via the :ref:`commands_post`.
+
 - Configurations may be set conditionally within the ``tox.ini`` file. If a line starts with an environment name
   or names, separated by a comma, followed by ``:`` the configuration will only be used if the
   environment name(s) matches the executed tox environment. For example:
@@ -279,6 +382,7 @@ Configuration
 
 Parallel mode
 -------------
+
 ``tox`` allows running environments in parallel mode via the ``parallel`` sub-command:
 
 - After the packaging phase completes tox will run the tox environments in parallel processes (multi-thread based).
