@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.2.8 (2023-01-11)
+-------------------
+
+Bugfixes - 4.2.8
+~~~~~~~~~~~~~~~~
+- Allow using package names with env markers for pip's ``--no-binary`` and ``--only-binary`` options - by :user:`q0w`. (:issue:`2814`)
+
+
 v4.2.7 (2023-01-11)
 -------------------
 
