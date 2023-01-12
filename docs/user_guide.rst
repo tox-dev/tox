@@ -23,8 +23,9 @@ these. The canonical file for this is the ``tox.ini`` file. For example:
 .. code-block:: ini
 
     [tox]
-    min_version = 4.2
-    env_list = py{38,39,310,311}, lint, type
+    requires =
+        tox>=4
+    env_list = lint, type, py{38,39,310,311}
 
     [testenv]
     description = run unit tests
@@ -38,7 +39,7 @@ these. The canonical file for this is the ``tox.ini`` file. For example:
     description = run linters
     skip_install = true
     deps =
-        black==22.3.0
+        black==22.12
     commands = black {posargs:.}
 
     [testenv:type]
@@ -65,8 +66,9 @@ section.
 .. code-block:: ini
 
     [tox]
-    min_version = 4.2
-    env_list = py{38,39,310,311}, lint, type
+    requires =
+        tox>=4
+    env_list = lint, type, py{38,39,310,311}
 
 We can use it to specify things such as the minimum version of *tox* required or the location of the package under test.
 A list of all supported configuration options for the ``tox`` section can be found in the :ref:`configuration guide
@@ -92,7 +94,7 @@ Test environments are defined under the ``testenv`` section and individual ``tes
     description = run linters
     skip_install = true
     deps =
-        black==22.3.0
+        black==22.12
     commands = black {posargs:.}
 
     [testenv:type]
@@ -127,7 +129,7 @@ Basic example
 .. code-block:: ini
 
     [tox]
-    envlist =
+    env_list =
         format
         py310
 
@@ -145,24 +147,24 @@ Basic example
     commands = pytest tests {posargs}
 
 This example contains a global ``tox`` section as well as two test environments. Taking the core section first, we use
-the ``envlist`` setting to indicate that this project has two run environments named ``format`` and ``py310`` that
+the :ref:`env_list` setting to indicate that this project has two run environments named ``format`` and ``py310`` that
 should be run by default when ``tox run`` is invoked without a specific environment.
 
 The formatting environment and test environment are defined separately via the ``testenv:format`` and ``testenv:py310``
 sections, respectively. For example to format the project we:
 
-- add a description (visible when you type ``tox list`` into the command line) via the ``description`` setting
-- define that it requires the :pypi:`black` dependency with version ``22.3.0`` via the ``deps`` setting
-- disable installation of the project under test into the test environment via the ``skip_install`` setting -
+- add a description (visible when you type ``tox list`` into the command line) via the :ref:`description` setting
+- define that it requires the :pypi:`black` dependency with version ``22.3.0`` via the :ref:`deps` setting
+- disable installation of the project under test into the test environment via the :ref:`skip_install` setting -
   ``black`` does not need it installed
-- indicate the commands to be run via the ``commands`` setting
+- indicate the commands to be run via the :ref:`commands` setting
 
 For testing the project we use the ``py310`` environment. For this environment we:
 
-- define a text description of the environment via the ``description`` setting
+- define a text description of the environment via the :ref:`description` setting
 - specify that we should install :pypi:`pytest` v7.0 or later together with the :pypi:`pytest-sugar` project via the
-  ``deps`` setting
-- indicate the command(s) to be run - in this case ``pytest tests`` - via the ``commands`` setting
+  :ref:`deps` setting
+- indicate the command(s) to be run - in this case ``pytest tests`` - via the :ref:`commands` setting
 
 ``{posargs}`` is a place holder part for the CLI command that allows us to pass additional flags to the pytest
 invocation, for example if we'd want to run ``pytest tests -v`` as a one off, instead of ``tox run -e py310`` we'd type
