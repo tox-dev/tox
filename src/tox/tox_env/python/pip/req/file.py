@@ -15,7 +15,7 @@ import chardet
 from packaging.requirements import InvalidRequirement, Requirement
 
 from .args import build_parser
-from .util import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
+from .util import VCS, get_url_scheme, is_url, url_to_path
 
 # Matches environment variable-style values in '${MY_VARIABLE_1}' with the variable name consisting of only uppercase
 # letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
@@ -341,17 +341,10 @@ class RequirementsFile:
                 base_opt.trusted_hosts = []
             if host not in base_opt.trusted_hosts:
                 base_opt.trusted_hosts.append(host)
-
-        no_binary = base_opt.no_binary if hasattr(base_opt, "no_binary") else set()
-        only_binary = base_opt.only_binary if hasattr(base_opt, "only_binary") else set()
         if opt.no_binary:
-            handle_binary_option(opt.no_binary, no_binary, only_binary)
+            base_opt.no_binary = opt.no_binary
         if opt.only_binary:
-            handle_binary_option(opt.only_binary, only_binary, no_binary)
-        if no_binary:
-            base_opt.no_binary = no_binary
-        if only_binary:
-            base_opt.only_binary = only_binary
+            base_opt.only_binary = opt.only_binary
 
     @staticmethod
     def _break_args_options(line: str) -> tuple[str, str]:

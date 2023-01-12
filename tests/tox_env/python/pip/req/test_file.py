@@ -177,6 +177,13 @@ _REQ_FILE_TEST_CASES = [
         ["--no-binary", {"foo"}],
         id="no-binary-none-first",
     ),
+    pytest.param(
+        "--only-binary foo; sys_platform == 'aix'",
+        {"only_binary": {"foo;"}},
+        [],
+        ["--only-binary", {"foo;"}],
+        id="only-binary-and-env-marker",
+    ),
     pytest.param("####### example-requirements.txt #######", {}, [], [], id="comment"),
     pytest.param("\t##### Requirements without Version Specifiers ######", {}, [], [], id="tab and comment"),
     pytest.param("  # start", {}, [], [], id="space and comment"),

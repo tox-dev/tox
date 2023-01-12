@@ -5,6 +5,8 @@ import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
 from typing import IO, Any, NoReturn, Sequence
 
+from tox.tox_env.python.pip.req.util import handle_binary_option
+
 
 class _OurArgumentParser(ArgumentParser):
     def print_usage(self, file: IO[str] | None = None) -> None:  # noqa: U100
@@ -33,8 +35,8 @@ def _global_options(parser: ArgumentParser) -> None:
     parser.add_argument("-r", "--requirement", action=AddUniqueAction, dest="requirements")
     parser.add_argument("-e", "--editable", action=AddUniqueAction, dest="editables")
     parser.add_argument("-f", "--find-links", action=AddUniqueAction)
-    parser.add_argument("--no-binary")
-    parser.add_argument("--only-binary")
+    parser.add_argument("--no-binary", action=BinaryAction, nargs="+")
+    parser.add_argument("--only-binary", action=BinaryAction, nargs="+")
     parser.add_argument("--prefer-binary", action="store_true", default=False)
     parser.add_argument("--require-hashes", action="store_true", default=False)
     parser.add_argument("--pre", action="store_true", default=False)
@@ -90,3 +92,25 @@ class AddUniqueAction(Action):
         current = getattr(namespace, self.dest)
         if values not in current:
             current.append(values)
+
+
+class BinaryAction(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,  # noqa: U100
+        namespace: Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,  # noqa: U100
+    ) -> None:
+        if getattr(namespace, "no_binary", None) is None:
+            namespace.no_binary = set()
+        if getattr(namespace, "only_binary", None) is None:
+            namespace.only_binary = set()
+
+        args = (
+            (namespace.no_binary, namespace.only_binary)
+            if self.dest == "no_binary"
+            else (namespace.only_binary, namespace.no_binary)
+        )
+        assert values is not None
+        handle_binary_option(values[0], *args)

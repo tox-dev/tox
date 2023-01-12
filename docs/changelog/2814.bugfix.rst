@@ -1,0 +1,1 @@
+Allow using package names with env markers for pip's ``--no-binary`` and ``--only-binary`` options - by :user:`q0w`.
