@@ -57,7 +57,7 @@ from tox.report import HandledError
         (r"C:\WINDOWS\foo\bar", [r"C:\WINDOWS\foo\bar"]),
     ],
 )
-def test_match(value: str, exp_output: list[str | MatchExpression]) -> None:
+def test_match_expr(value: str, exp_output: list[str | MatchExpression]) -> None:
     assert find_replace_expr(value) == exp_output
 
 
@@ -78,3 +78,16 @@ def test_dont_replace(replace_one: ReplaceOne, value: str, exp_exception: str | 
             replace_one(value)
     else:
         assert replace_one(value) == value
+
+
+@pytest.mark.parametrize(
+    ("match_expression", "exp_repr"),
+    [
+        (MatchExpression([["posargs"]]), "MatchExpression(expr=[['posargs']], term_pos=None)"),
+        (MatchExpression([["posargs"]], 1), "MatchExpression(expr=[['posargs']], term_pos=1)"),
+        (MatchExpression("foo", -42), "MatchExpression(expr='foo', term_pos=-42)"),
+    ],
+)
+def test_match_expression_repr(match_expression: MatchExpression, exp_repr: str) -> None:
+    print(match_expression)
+    assert repr(match_expression) == exp_repr

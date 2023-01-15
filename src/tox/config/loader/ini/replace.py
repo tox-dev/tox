@@ -48,8 +48,12 @@ class MatchError(Exception):
 class MatchExpression:
     """An expression that is handled specially by the Replacer."""
 
-    def __init__(self, expr: Sequence[MatchArg]):
+    def __init__(self, expr: Sequence[MatchArg], term_pos: int | None = None):
         self.expr = expr
+        self.term_pos = term_pos
+
+    def __repr__(self) -> str:
+        return f"MatchExpression(expr={self.expr!r}, term_pos={self.term_pos!r})"
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
@@ -57,13 +61,13 @@ class MatchExpression:
         return NotImplemented
 
     @classmethod
-    def _next_replace_expression(cls, value: str) -> tuple[MatchExpression | None, int]:
+    def _next_replace_expression(cls, value: str) -> MatchExpression | None:
         """Process a curly brace replacement expression."""
         if value.startswith("[]"):
             # `[]` is shorthand for `{posargs}`
-            return cls._next_replace_expression(f"{REPLACE_START}posargs{REPLACE_END}")[0], 2
+            return MatchExpression(expr=[["posargs"]], term_pos=1)
         if not value.startswith(REPLACE_START):
-            return None, 0
+            return None
         try:
             # recursively handle inner expression
             rec_expr, term_pos = cls.parse_and_split_to_terminator(
@@ -75,8 +79,8 @@ class MatchExpression:
             # did NOT find the expected terminator character, so treat `{` as if escaped
             pass
         else:
-            return MatchExpression(expr=rec_expr), term_pos + 1
-        return None, 0
+            return MatchExpression(expr=rec_expr, term_pos=term_pos)
+        return None
 
     @classmethod
     def parse_and_split_to_terminator(
@@ -114,9 +118,9 @@ class MatchExpression:
                 last_arg = []
                 pos += len(split)
                 continue
-            expr, expr_end_pos = cls._next_replace_expression(fragment)
-            pos += expr_end_pos
-            if expr:
+            expr = cls._next_replace_expression(fragment)
+            if expr is not None:
+                pos += (expr.term_pos or 0) + 1
                 last_arg.append(expr)
                 continue
             # default case: consume the next character
