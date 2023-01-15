@@ -42,7 +42,7 @@ def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs) -
 
 
 class MatchError(Exception):
-    pass
+    """Could not find end terminator in MatchExpression."""
 
 
 class MatchExpression:
