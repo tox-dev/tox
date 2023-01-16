@@ -4,6 +4,17 @@ Release History
 
 .. towncrier release notes start
 
+v4.3.3 (2023-01-16)
+-------------------
+
+Bugfixes - 4.3.3
+~~~~~~~~~~~~~~~~
+- The provision environment (``.tox``) will never inherit from ``testenv``.
+  During provisioning, other test environments are not processed, allowing the
+  use of keys and values that may be registered by later tox version or
+  provisioned plugins - by :user:`masenf`. (:issue:`2862`)
+
+
 v4.3.2 (2023-01-16)
 -------------------
 
