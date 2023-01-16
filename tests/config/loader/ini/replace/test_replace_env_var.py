@@ -6,7 +6,7 @@ from typing import Generator
 import pytest
 
 from tests.config.loader.ini.replace.conftest import ReplaceOne
-from tox.pytest import MonkeyPatch
+from tox.pytest import LogCaptureFixture, MonkeyPatch
 
 
 def test_replace_env_set(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
@@ -111,12 +111,34 @@ def reset_env_var_after_delay(monkeypatch: MonkeyPatch) -> Generator[threading.T
 
 
 @pytest.mark.usefixtures("reset_env_var_after_delay")
-def test_replace_env_var_circular_flip_flop(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+def test_replace_env_var_circular_flip_flop(
+    replace_one: ReplaceOne,
+    monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
+) -> None:
     """Replacement values will not infinitely loop back and forth"""
     monkeypatch.setenv("TRAGIC", "{env:MAGIC}")
     monkeypatch.setenv("MAGIC", "{env:TRAGIC}")
     result = replace_one("{env:MAGIC}")
     assert result == "{env:MAGIC}"
+    assert "circular chain between set env MAGIC, TRAGIC" in caplog.messages
+
+
+@pytest.mark.usefixtures("reset_env_var_after_delay")
+def test_replace_env_var_circular_flip_flop_5(
+    replace_one: ReplaceOne,
+    monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
+) -> None:
+    """Replacement values will not infinitely loop back and forth (longer chain)"""
+    monkeypatch.setenv("MAGIC", "{env:TRAGIC}")
+    monkeypatch.setenv("TRAGIC", "{env:RABBIT}")
+    monkeypatch.setenv("RABBIT", "{env:HAT}")
+    monkeypatch.setenv("HAT", "{env:TRICK}")
+    monkeypatch.setenv("TRICK", "{env:MAGIC}")
+    result = replace_one("{env:MAGIC}")
+    assert result == "{env:MAGIC}"
+    assert "circular chain between set env MAGIC, TRAGIC, RABBIT, HAT, TRICK" in caplog.messages
 
 
 @pytest.mark.parametrize("fallback", [True, False])
