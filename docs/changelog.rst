@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.3.1 (2023-01-15)
+-------------------
+
+Bugfixes - 4.3.1
+~~~~~~~~~~~~~~~~
+- Fix regression introduced in 4.3.0 by expanding substitution expressions
+  (``{...}``) that result from a previous subsitution's replacement value (up to
+  100 times). Note that recursive expansion is strictly depth-first; no
+  replacement value will ever affect adjacent characters nor will expansion ever
+  occur over the result of more than one replacement - by :user:`masenf`. (:issue:`2863`)
+
+
 v4.3.0 (2023-01-15)
 -------------------
 
