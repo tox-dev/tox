@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.3.2 (2023-01-16)
+-------------------
+
+Bugfixes - 4.3.2
+~~~~~~~~~~~~~~~~
+- Fix regression introduced in 4.3.0 which occured when a substitution expression
+  for an environment variable that had previously been substituted appears in the
+  ini file after a substitution expression for a different environment variable.
+  This situation erroneously resulted in an exception about "circular chain
+  between set" of those variables - by :user:`masenf`. (:issue:`2869`)
+
+
 v4.3.1 (2023-01-15)
 -------------------
 
