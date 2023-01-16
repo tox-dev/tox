@@ -317,3 +317,10 @@ version is above the version this feature was added to it, for example for setup
     [testenv:dev]
     deps = setuptools>=64
     package = editable
+
+Provisioning environment
+------------------------
+
+The provisioning environment is triggered when ``minversion`` or ``requires`` are specified and the current environment
+does not satisfy the requirement. In tox 4, the provisioning environment (``.tox`` by default) must be explicitly
+configured and will not inherit values from ``[testenv]`` section.
