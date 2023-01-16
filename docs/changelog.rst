@@ -4,6 +4,28 @@ Release History
 
 .. towncrier release notes start
 
+v4.3.0 (2023-01-15)
+-------------------
+
+Features - 4.3.0
+~~~~~~~~~~~~~~~~
+- Rewrite substitution replacement parser - by :user:`masenf`
+
+  * ``\`` acts as a proper escape for ``\`` in ini-style substitutions
+  * The resulting value of a substitution is no longer reprocessed in the context
+    of the broader string. (Prior to this change, ini-values were repeatedly re-substituted until
+    the expression no longer had modifications)
+  * Migrate and update "Substitutions" section of Configuration page from v3 docs.
+  * ```find_replace_part`` is removed from ``tox.config.loader.ini.replace``
+  * New names exported from ``tox.config.loader.ini.replace``:
+      * ``find_replace_expr``
+      * ``MatchArg``
+      * ``MatchError``
+      * ``MatchExpression``
+      * Note: the API for ``replace`` itself is unchanged. (:issue:`2732`)
+- Improved documentation for factors and test env names - by :user:`stephenfin`. (:issue:`2852`)
+
+
 v4.2.8 (2023-01-11)
 -------------------
 
