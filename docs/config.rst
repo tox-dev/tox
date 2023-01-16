@@ -765,3 +765,144 @@ Example configuration:
 
     [tox]
     skip_missing_interpreters = true
+
+Substitutions
+-------------
+
+Any ``key=value`` setting in an ini-file can make use of **value substitution**
+through the ``{...}`` string-substitution pattern.
+
+The string inside the curly braces may reference a global or per-environment config key as described above.
+
+The backslash character ``\`` will act as an escape for a following: ``\``,
+``{``, ``}``, ``:``, ``[``, or ``]``, otherwise the backslash will be
+reproduced literally::
+
+    commands =
+        python -c 'print("\{posargs} = \{}".format("{posargs}"))'
+        python -c 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'
+
+Special substitutions that accept additional colon-delimited ``:`` parameters
+cannot have a space after the ``:`` at the beginning of line (e.g.  ``{posargs:
+magic}`` would be parsed as factorial ``{posargs``, having value magic).
+
+Environment variable substitutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you specify a substitution string like this::
+
+    {env:KEY}
+
+then the value will be retrieved as ``os.environ['KEY']``
+and raise an Error if the environment variable
+does not exist.
+
+
+Environment variable substitutions with default values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you specify a substitution string like this::
+
+    {env:KEY:DEFAULTVALUE}
+
+then the value will be retrieved as ``os.environ['KEY']``
+and replace with DEFAULTVALUE if the environment variable does not
+exist.
+
+If you specify a substitution string like this::
+
+    {env:KEY:}
+
+then the value will be retrieved as ``os.environ['KEY']``
+and replace with an empty string if the environment variable does not
+exist.
+
+Substitutions can also be nested. In that case they are expanded starting
+from the innermost expression::
+
+    {env:KEY:{env:DEFAULT_OF_KEY}}
+
+the above example is roughly equivalent to
+``os.environ.get('KEY', os.environ['DEFAULT_OF_KEY'])``
+
+Interactive shell substitution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.4.0
+
+It's possible to inject a config value only when tox is running in interactive shell (standard input)::
+
+    {tty:ON_VALUE:OFF_VALUE}
+
+The first value is the value to inject when the interactive terminal is
+available, the second value is the value to use when it's not (optiona). A good
+use case for this is e.g. passing in the ``--pdb`` flag for pytest.
+
+.. _`command positional substitution`:
+.. _`positional substitution`:
+
+Substitutions for positional arguments in commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.0
+
+If you specify a substitution string like this::
+
+    {posargs:DEFAULTS}
+
+then the value will be replaced with positional arguments as provided
+to the tox command::
+
+    tox arg1 arg2
+
+In this instance, the positional argument portion will be replaced with
+``arg1 arg2``. If no positional arguments were specified, the value of
+DEFAULTS will be used instead. If DEFAULTS contains other substitution
+strings, such as ``{env:*}``, they will be interpreted.,
+
+Use a double ``--`` if you also want to pass options to an underlying
+test command, for example::
+
+    tox -- --opt1 ARG1
+
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or
+``{posargs}`` was specified.  By default (see ``args_are_paths``
+setting), ``tox`` rewrites each positional argument if it is a relative
+path and exists on the filesystem to become a path relative to the
+``changedir`` setting.
+
+Substitution for values from other sections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.4
+
+Values from other sections can be referred to via::
+
+   {[sectionname]valuename}
+
+which you can use to avoid repetition of config values.
+You can put default values in one section and reference them in others to avoid repeating the same values:
+
+.. code-block:: ini
+
+    [base]
+    deps =
+        pytest
+        mock
+        pytest-xdist
+
+    [testenv:dulwich]
+    deps =
+        dulwich
+        {[base]deps}
+
+    [testenv:mercurial]
+    deps =
+        mercurial
+        {[base]deps}
+
+Other Substitutions
+~~~~~~~~~~~~~~~~~~~
+
+* ``{}`` - replaced as ``os.pathsep``
+* ``{/}`` - replaced as ``os.sep``
