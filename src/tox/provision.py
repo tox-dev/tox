@@ -97,6 +97,7 @@ def provision(state: State) -> int | bool:
         recreate=state.conf.options.recreate and not state.conf.options.no_recreate_provision,
     )
     provision_tox_env: str = state.conf.core["provision_tox_env"]
+    state.conf.memory_seed_loaders[provision_tox_env].append(loader)
     state.envs._mark_provision(bool(missing), provision_tox_env, loader)
 
     from tox.plugin.manager import MANAGER
