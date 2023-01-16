@@ -102,7 +102,7 @@ def test_replace_env_var_circular_flip_flop(replace_one: ReplaceOne, monkeypatch
     monkeypatch.setenv("TRAGIC", "{env:MAGIC}")
     monkeypatch.setenv("MAGIC", "{env:TRAGIC}")
     result = replace_one("{env:MAGIC}")
-    assert result == "{env:TRAGIC}"
+    assert result == "{env:MAGIC}"
 
 
 @pytest.mark.parametrize("fallback", [True, False])

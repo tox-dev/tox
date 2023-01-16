@@ -3,6 +3,7 @@ Apply value substitution (replacement) on tox strings.
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
 import sys
@@ -21,14 +22,27 @@ if TYPE_CHECKING:
     from tox.config.loader.ini import IniLoader
     from tox.config.main import Config
 
+
+LOGGER = logging.getLogger(__name__)
+
+
 # split alongside :, unless it's preceded by a single capital letter (Windows drive letter in paths)
 ARG_DELIMITER = ":"
 REPLACE_START = "{"
 REPLACE_END = "}"
 BACKSLASH_ESCAPE_CHARS = ["\\", ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]"]
+MAX_REPLACE_DEPTH = 100
 
 
 MatchArg = Sequence[Union[str, "MatchExpression"]]
+
+
+class MatchRecursionError(ValueError):
+    """Could not stabalize on replacement value."""
+
+
+class MatchError(Exception):
+    """Could not find end terminator in MatchExpression."""
 
 
 def find_replace_expr(value: str) -> MatchArg:
@@ -36,13 +50,11 @@ def find_replace_expr(value: str) -> MatchArg:
     return MatchExpression.parse_and_split_to_terminator(value)[0][0]
 
 
-def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs) -> str:
+def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs, depth: int = 0) -> str:
     """Replace all active tokens within value according to the config."""
-    return Replacer(conf, loader, conf_args=args).join(find_replace_expr(value))
-
-
-class MatchError(Exception):
-    """Could not find end terminator in MatchExpression."""
+    if depth > MAX_REPLACE_DEPTH:
+        raise MatchRecursionError(f"Could not expand {value} after recursing {depth} frames")
+    return Replacer(conf, loader, conf_args=args, depth=depth).join(find_replace_expr(value))
 
 
 class MatchExpression:
@@ -153,10 +165,11 @@ def _flatten_string_fragments(seq_of_str_or_other: Sequence[str | Any]) -> Seque
 class Replacer:
     """Recursively expand MatchExpression against the config and loader."""
 
-    def __init__(self, conf: Config, loader: IniLoader, conf_args: ConfigLoadArgs):
+    def __init__(self, conf: Config, loader: IniLoader, conf_args: ConfigLoadArgs, depth: int = 0):
         self.conf = conf
         self.loader = loader
         self.conf_args = conf_args
+        self.depth = depth
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
         return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
@@ -184,6 +197,13 @@ class Replacer:
                 self.conf_args,
             )
         if replace_value is not None:
+            needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
+            if needs_expansion:
+                try:
+                    return replace(self.conf, self.loader, replace_value, self.conf_args, self.depth + 1)
+                except MatchRecursionError as err:
+                    LOGGER.warning(str(err))
+                    return replace_value
             return replace_value
         # else: fall through -- when replacement is not possible, treat `{` as if escaped.
         #     If we cannot replace, keep what was there, and continue looking for additional replaces
@@ -302,7 +322,7 @@ def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str
                 return set_env.load(key, conf_args)
         elif conf_args.chain[-1] != new_key:  # if there's a chain but only self-refers than use os.environ
             circular = ", ".join(i[4:] for i in conf_args.chain[conf_args.chain.index(new_key) :])
-            raise ValueError(f"circular chain between set env {circular}")
+            raise MatchRecursionError(f"circular chain between set env {circular}")
 
     if key in os.environ:
         return os.environ[key]

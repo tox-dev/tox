@@ -108,7 +108,7 @@ def test_set_env_circular_use_os_environ(tox_project: ToxProjectCreator) -> None
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=a={env:b}\n b={env:a}"})
     result = prj.run("c", "-e", "py")
     result.assert_success()
-    assert "replace failed in py.set_env with ValueError" in result.out, result.out
+    assert "replace failed in py.set_env with MatchRecursionError" in result.out, result.out
     assert "circular chain between set env a, b" in result.out, result.out
 
 
