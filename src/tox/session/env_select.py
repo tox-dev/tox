@@ -13,7 +13,6 @@ from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
 
-from ..config.loader.memory import MemoryLoader
 from ..config.types import EnvList
 from ..report import HandledError
 from ..tox_env.errors import Skip
@@ -134,7 +133,7 @@ class EnvSelector:
         self._manager = MANAGER
         self._log_handler = self._state._options.log_handler
         self._journal = self._state._journal
-        self._provision: None | tuple[bool, str, MemoryLoader] = None
+        self._provision: None | tuple[bool, str] = None
 
         self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
         tox_env_filter_regex = getattr(state.conf.options, "skip_env", "").strip()
@@ -242,10 +241,12 @@ class EnvSelector:
 
     def _build_run_env(self, name: str) -> RunToxEnv | None:
         if self._provision is not None and self._provision[0] is False and name == self._provision[1]:
+            # ignore provision env unless this is a provision run
+            return None
+        if self._provision is not None and self._provision[0] and name != self._provision[1]:
+            # ignore other envs when this is a provision run
             return None
         env_conf = self._state.conf.get_env(name, package=False)
-        if self._provision is not None and self._provision[1] == name:
-            env_conf.loaders.insert(0, self._provision[2])
         desc = "the tox execute used to evaluate this environment"
         env_conf.add_config(keys="runner", desc=desc, of_type=str, default=self._state.conf.options.default_runner)
         runner = REGISTER.runner(cast(str, env_conf["runner"]))
@@ -367,8 +368,8 @@ class EnvSelector:
         if invalid:
             raise HandledError(f"cannot run packaging environment(s) {','.join(invalid)}")
 
-    def _mark_provision(self, on: bool, provision_tox_env: str, loader: MemoryLoader) -> None:
-        self._provision = on, provision_tox_env, loader
+    def _mark_provision(self, on: bool, provision_tox_env: str) -> None:
+        self._provision = on, provision_tox_env
 
 
 __all__ = [
