@@ -242,6 +242,10 @@ class EnvSelector:
 
     def _build_run_env(self, name: str) -> RunToxEnv | None:
         if self._provision is not None and self._provision[0] is False and name == self._provision[1]:
+            # ignore provision env unless this is a provision run
+            return None
+        if self._provision is not None and self._provision[0] and name != self._provision[1]:
+            # ignore other envs when this is a provision run
             return None
         env_conf = self._state.conf.get_env(name, package=False)
         if self._provision is not None and self._provision[1] == name:
