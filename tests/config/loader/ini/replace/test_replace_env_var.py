@@ -75,6 +75,20 @@ def test_replace_env_missing_default_from_env(replace_one: ReplaceOne, monkeypat
     assert result == "yes"
 
 
+def test_replace_env_var_multiple(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
+    """Multiple env substitutions on a single line."""
+    monkeypatch.setenv("MAGIC", "MAGIC")
+    monkeypatch.setenv("TRAGIC", "TRAGIC")
+    result = replace_one("{env:MAGIC} {env:TRAGIC} {env:MAGIC}")
+    assert result == "MAGIC TRAGIC MAGIC"
+
+
+def test_replace_env_var_multiple_default(replace_one: ReplaceOne) -> None:
+    """Multiple env substitutions on a single line with default values."""
+    result = replace_one("{env:MAGIC:foo} {env:TRAGIC:bar} {env:MAGIC:baz}")
+    assert result == "foo bar baz"
+
+
 def test_replace_env_var_circular(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
     """Replacement values will not infinitely loop"""
     monkeypatch.setenv("MAGIC", "{env:MAGIC}")
