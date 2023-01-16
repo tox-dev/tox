@@ -28,7 +28,7 @@ Features - 4.3.0
     of the broader string. (Prior to this change, ini-values were repeatedly re-substituted until
     the expression no longer had modifications)
   * Migrate and update "Substitutions" section of Configuration page from v3 docs.
-  * ```find_replace_part`` is removed from ``tox.config.loader.ini.replace``
+  * ``find_replace_part`` is removed from ``tox.config.loader.ini.replace``
   * New names exported from ``tox.config.loader.ini.replace``:
       * ``find_replace_expr``
       * ``MatchArg``
