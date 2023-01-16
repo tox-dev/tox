@@ -178,29 +178,32 @@ class Replacer:
         return "".join(self(value))
 
     def _replace_match(self, value: MatchExpression) -> str:
+        # use a copy of conf_args so any changes from this replacement do NOT
+        # affect adjacent substitutions (#2869)
+        conf_args = self.conf_args.copy()
         of_type, *args = flattened_args = [self.join(arg) for arg in value.expr]
         if of_type == "/":
             replace_value: str | None = os.sep
         elif of_type == "" and args == [""]:
             replace_value = os.pathsep
         elif of_type == "env":
-            replace_value = replace_env(self.conf, args, self.conf_args)
+            replace_value = replace_env(self.conf, args, conf_args)
         elif of_type == "tty":
             replace_value = replace_tty(args)
         elif of_type == "posargs":
-            replace_value = replace_pos_args(self.conf, args, self.conf_args)
+            replace_value = replace_pos_args(self.conf, args, conf_args)
         else:
             replace_value = replace_reference(
                 self.conf,
                 self.loader,
                 ARG_DELIMITER.join(flattened_args),
-                self.conf_args,
+                conf_args,
             )
         if replace_value is not None:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
             if needs_expansion:
                 try:
-                    return replace(self.conf, self.loader, replace_value, self.conf_args, self.depth + 1)
+                    return replace(self.conf, self.loader, replace_value, conf_args, self.depth + 1)
                 except MatchRecursionError as err:
                     LOGGER.warning(str(err))
                     return replace_value
