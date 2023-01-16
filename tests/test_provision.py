@@ -187,3 +187,19 @@ def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
     with (project.path / "out.json").open() as file_handler:
         requires = json.load(file_handler)
     assert requires == {"minversion": None, "requires": ["p", "tox"]}
+
+
+@pytest.mark.integration()
+@pytest.mark.usefixtures("_pypi_index_self")
+@pytest.mark.parametrize("plugin_testenv", ["testenv", "testenv:a"])
+def test_provision_plugin_runner(tox_project: ToxProjectCreator, tmp_path: Path, plugin_testenv: str) -> None:
+    """Ensure that testenv runner doesn't affect the provision env."""
+    log = tmp_path / "out.log"
+    proj = tox_project({"tox.ini": f"[tox]\nrequires=demo-pkg-inline\n[{plugin_testenv}]\nrunner=example"})
+    result_first = proj.run("r", "-e", "py", "--result-json", str(log))
+    result_first.assert_success()
+    prov_msg = (
+        f"ROOT: will run in automatically provisioned tox, host {sys.executable} is missing"
+        f" [requires (has)]: demo-pkg-inline"
+    )
+    assert prov_msg in result_first.out

@@ -14,11 +14,38 @@ pkg_name = name.replace("_", "-")
 version = "1.0.0"
 dist_info = "{}-{}.dist-info".format(name, version)
 logic = "{}/__init__.py".format(name)
+plugin = "{}/example_plugin.py".format(name)
+entry_points = "{}/entry_points.txt".format(dist_info)
 metadata = "{}/METADATA".format(dist_info)
 wheel = "{}/WHEEL".format(dist_info)
 record = "{}/RECORD".format(dist_info)
 content = {
     logic: "def do():\n    print('greetings from {}')".format(name),
+    plugin: dedent(
+        """
+        try:
+            from tox.plugin import impl
+            from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
+            from tox.tox_env.register import ToxEnvRegister
+        except ImportError:
+            pass
+        else:
+            class ExampleVirtualEnvRunner(VirtualEnvRunner):
+                @staticmethod
+                def id() -> str:
+                    return "example"
+            @impl
+            def tox_register_tox_env(register: ToxEnvRegister) -> None:
+                register.add_run_env(ExampleVirtualEnvRunner)
+    """,
+    ),
+    entry_points: dedent(
+        """
+        [tox]
+        example = {}.example_plugin""".format(
+            name,
+        ),
+    ),
     metadata: """
         Metadata-Version: 2.1
         Name: {}
