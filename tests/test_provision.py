@@ -203,3 +203,12 @@ def test_provision_plugin_runner(tox_project: ToxProjectCreator, tmp_path: Path,
         f" [requires (has)]: demo-pkg-inline"
     )
     assert prov_msg in result_first.out
+
+
+@pytest.mark.integration()
+def test_provision_plugin_runner_in_provision(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    """Ensure that provision environment can be explicitly configured."""
+    log = tmp_path / "out.log"
+    proj = tox_project({"tox.ini": "[tox]\nrequires=somepkg123xyz\n[testenv:.tox]\nrunner=example"})
+    with pytest.raises(KeyError, match="example"):
+        proj.run("r", "-e", "py", "--result-json", str(log))
