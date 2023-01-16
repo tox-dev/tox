@@ -448,7 +448,7 @@ Run
 
 .. conf::
    :keys: change_dir, changedir
-   :default: {tox root}
+   :default: {tox_root}
 
    Change to this working directory when executing the test command. If the directory does not exist yet, it will be
    created (required for Windows to be able to execute any command).
@@ -653,7 +653,7 @@ tox supports operating with externally built packages. External packages might b
 
 .. conf::
    :keys: change_dir, changedir
-   :default: {tox root}
+   :default: {tox_root}
    :ref_suffix: external
 
    Change to this working directory when executing the package build command. If the directory does not exist yet, it
