@@ -7,7 +7,9 @@ import pytest
 
 from tests.config.loader.ini.replace.conftest import ReplaceOne
 from tests.conftest import ToxIniCreator
+from tox.config.loader.ini.replace import MAX_REPLACE_DEPTH
 from tox.config.sets import ConfigSet
+from tox.pytest import LogCaptureFixture
 from tox.report import HandledError
 
 EnvConfigCreator = Callable[[str], ConfigSet]
@@ -29,6 +31,47 @@ def test_replace_within_tox_env(example: EnvConfigCreator) -> None:
     env_config.add_config(keys="o", of_type=str, default="o", desc="o")
     result = env_config["o"]
     assert result == "1"
+
+
+def test_replace_within_tox_env_chain(example: EnvConfigCreator) -> None:
+    env_config = example("r = 1\no = {r}/2\np = {r} {o}")
+    env_config.add_config(keys="r", of_type=str, default="r", desc="r")
+    env_config.add_config(keys="o", of_type=str, default="o", desc="o")
+    env_config.add_config(keys="p", of_type=str, default="p", desc="p")
+    result = env_config["p"]
+    assert result == "1 1/2"
+
+
+def test_replace_within_section_chain(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[vars]\na = 1\nb = {[vars]a}/2\nc = {[vars]a}/3\n[testenv:a]\nd = {[vars]b} {[vars]c}")
+    env_config = config.get_env("a")
+    env_config.add_config(keys="d", of_type=str, default="d", desc="d")
+    result = env_config["d"]
+    assert result == "1/2 1/3"
+
+
+@pytest.mark.parametrize("depth", [5, 99, 100, 101, 150, 256])
+def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator, depth: int) -> None:
+    config = tox_ini_conf(
+        "\n".join(
+            [
+                "[vars]",
+                "a0 = 1",
+                *(f"a{ix} = {{[vars]a{ix - 1}}}" for ix in range(1, depth + 1)),
+                "[testenv:a]",
+                "b = {[vars]a%s}" % depth,
+            ],
+        ),
+    )
+    env_config = config.get_env("a")
+    env_config.add_config(keys="b", of_type=str, default="b", desc="b")
+    result = env_config["b"]
+    if depth > MAX_REPLACE_DEPTH:
+        exp_stopped_at = "{[vars]a%s}" % (depth - MAX_REPLACE_DEPTH - 1)
+        assert result == exp_stopped_at
+        assert f"Could not expand {exp_stopped_at} after recursing {MAX_REPLACE_DEPTH + 1} frames" in caplog.messages
+    else:
+        assert result == "1"
 
 
 def test_replace_within_tox_env_missing_raises(example: EnvConfigCreator) -> None:
