@@ -1,0 +1,4 @@
+The provision environment (``.tox``) will never inherit from ``testenv``.
+During provisioning, other test environments are not processed, allowing the
+use of keys and values that may be registered by later tox version or
+provisioned plugins - by :user:`masenf`.
