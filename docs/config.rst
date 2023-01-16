@@ -600,7 +600,7 @@ Python run
    :version_added: 4.0
    :default: <package_env>-<python-flavor-lowercase><python-version-no-dot>
 
-   If :ref:`wheel_build_env` is set to ``wheel`` this will be the tox Python environment in which the wheel will be
+   If :ref:`package` is set to ``wheel`` this will be the tox Python environment in which the wheel will be
    built. The value is generated to be unique per Python flavor and version, and prefixed with :ref:`package_env` value.
    This is to ensure the target interpreter and the generated wheel will be compatible. If you have a wheel that can be
    reused across multiple Python versions set this value to the same across them (to avoid building a new wheel for
