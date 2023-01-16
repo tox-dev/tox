@@ -16,6 +16,7 @@ from ..package import Package, PackageToxEnv, PathPackage
 from ..runner import RunToxEnv
 from .api import NoInterpreter, Python
 from .pip.req_file import PythonDeps
+from functools import partial
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -62,8 +63,8 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def requires(self) -> tuple[Requirement, ...] | PythonDeps:
         raise NotImplementedError
 
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
-        yield from super().register_run_env(run_env)
+    def register_run_env(self, run_env: RunToxEnv, is_active: bool=True) -> Generator[tuple[str, str], PackageToxEnv, None]:
+        yield from super().register_run_env(run_env, is_active)
         if run_env.conf["package"] != "skip" and "deps" not in self.conf:
             self.conf.add_config(
                 keys="deps",
@@ -79,7 +80,10 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         ):
             return
 
-        def default_wheel_tag(conf: Config, env_name: str | None) -> str:  # noqa: U100
+        def default_wheel_tag(conf: Config, env_name: str | None, is_active: bool) -> str:  # noqa: U100
+            if not is_active:
+                return self.conf.name
+
             # https://www.python.org/dev/peps/pep-0427/#file-name-convention
             # when building wheels we need to ensure that the built package is compatible with the target env
             # compatibility is documented within https://www.python.org/dev/peps/pep-0427/#file-name-convention
@@ -108,7 +112,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         run_env.conf.add_config(
             keys=["wheel_build_env"],
             of_type=str,
-            default=default_wheel_tag,
+            default=partial(default_wheel_tag, is_active=is_active),
             desc="wheel tag to use for building applications",
         )
         pkg_env = run_env.conf["wheel_build_env"]

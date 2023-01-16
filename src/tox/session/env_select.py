@@ -265,7 +265,8 @@ class EnvSelector:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
                 run_env: RunToxEnv = self._defined_envs_[run_env_name].env  # type: ignore
-                child_package_envs = package_tox_env.register_run_env(run_env)
+                is_active: bool = self._defined_envs_[run_env_name].is_active
+                child_package_envs = package_tox_env.register_run_env(run_env, is_active)
                 try:
                     name_type = next(child_package_envs)
                     while True:

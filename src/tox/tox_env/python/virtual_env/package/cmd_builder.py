@@ -119,8 +119,8 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             package = SdistPackage(path, dependencies_with_extras(deps, extras, name))
         return [package]
 
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
-        yield from super().register_run_env(run_env)
+    def register_run_env(self, run_env: RunToxEnv, is_active:bool=True) -> Generator[tuple[str, str], PackageToxEnv, None]:
+        yield from super().register_run_env(run_env, is_active)
         # in case the outcome is a sdist we'll use this to find out its metadata
         result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
         self._sdist_meta_tox_env = cast(Pep517VirtualEnvPackager, result)
