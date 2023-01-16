@@ -303,7 +303,7 @@ Base options
 .. conf::
    :keys: parallel_show_output
    :default: False
-    :version_added: 3.7
+   :version_added: 3.7
 
    If set to ``True`` the content of the output will always be shown  when running in parallel mode.
 
