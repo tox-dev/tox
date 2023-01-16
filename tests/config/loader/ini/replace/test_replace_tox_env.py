@@ -31,6 +31,23 @@ def test_replace_within_tox_env(example: EnvConfigCreator) -> None:
     assert result == "1"
 
 
+def test_replace_within_tox_env_chain(example: EnvConfigCreator) -> None:
+    env_config = example("r = 1\no = {r}/2\np = {r} {o}")
+    env_config.add_config(keys="r", of_type=str, default="r", desc="r")
+    env_config.add_config(keys="o", of_type=str, default="o", desc="o")
+    env_config.add_config(keys="p", of_type=str, default="p", desc="p")
+    result = env_config["p"]
+    assert result == "1 1/2"
+
+
+def test_replace_within_section_chain(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[vars]\na = 1\nb = {[vars]a}/2\nc = {[vars]a}/3\n[testenv:a]\nd = {[vars]b} {[vars]c}")
+    env_config = config.get_env("a")
+    env_config.add_config(keys="d", of_type=str, default="d", desc="d")
+    result = env_config["d"]
+    assert result == "1/2 1/3"
+
+
 def test_replace_within_tox_env_missing_raises(example: EnvConfigCreator) -> None:
     env_config = example("o = {p}")
     env_config.add_config(keys="o", of_type=str, default="o", desc="o")
