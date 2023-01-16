@@ -97,6 +97,8 @@ examples first and use this page as a reference.
         commands = mypy src
     """
 
+.. _conf-core:
+
 Core
 ----
 
@@ -230,7 +232,7 @@ Python language core options
     :ref:`base_python` and instead always use the base Python implied from the Python name. This allows you to configure
     :ref:`base_python` in the :ref:`base` section without affecting environments that have implied base Python versions.
 
-
+.. _conf-testenv:
 
 tox environment
 ---------------
