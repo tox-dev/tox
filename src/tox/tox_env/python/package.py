@@ -4,6 +4,7 @@ A tox build environment that handles Python packages.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, Iterator, List, Sequence, cast
 
@@ -16,7 +17,6 @@ from ..package import Package, PackageToxEnv, PathPackage
 from ..runner import RunToxEnv
 from .api import NoInterpreter, Python
 from .pip.req_file import PythonDeps
-from functools import partial
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -63,7 +63,9 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def requires(self) -> tuple[Requirement, ...] | PythonDeps:
         raise NotImplementedError
 
-    def register_run_env(self, run_env: RunToxEnv, is_active: bool=True) -> Generator[tuple[str, str], PackageToxEnv, None]:
+    def register_run_env(
+        self, run_env: RunToxEnv, is_active: bool = True
+    ) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env, is_active)
         if run_env.conf["package"] != "skip" and "deps" not in self.conf:
             self.conf.add_config(

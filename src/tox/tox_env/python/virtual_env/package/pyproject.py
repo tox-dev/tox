@@ -137,7 +137,9 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         meta_folder.mkdir(exist_ok=True)
         return meta_folder
 
-    def register_run_env(self, run_env: RunToxEnv, is_active: bool=True) -> Generator[tuple[str, str], PackageToxEnv, None]:
+    def register_run_env(
+        self, run_env: RunToxEnv, is_active: bool = True
+    ) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env, is_active)
         build_type = run_env.conf["package"]
         self.builds[build_type].append(run_env.conf)

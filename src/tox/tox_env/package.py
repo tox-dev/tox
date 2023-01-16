@@ -91,7 +91,9 @@ class PackageToxEnv(ToxEnv, ABC):
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         raise NotImplementedError
 
-    def register_run_env(self, run_env: RunToxEnv, is_active: bool=True) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: U100
+    def register_run_env(
+        self, run_env: RunToxEnv, is_active: bool = True
+    ) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: U100
         yield from ()  # empty generator by default
 
     def mark_active_run_env(self, run_env: RunToxEnv) -> None:
