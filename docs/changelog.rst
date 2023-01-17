@@ -4,6 +4,24 @@ Release History
 
 .. towncrier release notes start
 
+v4.3.4 (2023-01-17)
+-------------------
+
+Bugfixes - 4.3.4
+~~~~~~~~~~~~~~~~
+- When executing via the provisioning environment (``.tox`` by default), run
+  ``tox`` in working directory of the parent process.
+
+  Prior to this change (from tox 4.0.0), the provisioned ``tox`` would execute with
+  ``{tox_root}`` as the working directory, which breaks when a relative path is
+  passed to ``-c`` or ``--conf`` and ``tox`` is executed in a working directory
+  other than ``{tox_root}`` - by :user:`masenf`. (:issue:`2876`)
+
+Misc - 4.3.4
+~~~~~~~~~~~~
+- :issue:`2878`
+
+
 v4.3.3 (2023-01-16)
 -------------------
 
