@@ -150,5 +150,5 @@ def run_provision(name: str, state: State) -> int:
         raise HandledError(f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}")
     args: list[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
-    outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision")
+    outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())
     return cast(int, outcome.exit_code)

@@ -1,0 +1,7 @@
+When executing via the provisioning environment (``.tox`` by default), run
+``tox`` in working directory of the parent process.
+
+Prior to this change (from tox 4.0.0), the provisioned ``tox`` would execute with
+``{tox_root}`` as the working directory, which breaks when a relative path is
+passed to ``-c`` or ``--conf`` and ``tox`` is executed in a working directory
+other than ``{tox_root}`` - by :user:`masenf`.

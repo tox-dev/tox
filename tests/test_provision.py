@@ -212,3 +212,17 @@ def test_provision_plugin_runner_in_provision(tox_project: ToxProjectCreator, tm
     proj = tox_project({"tox.ini": "[tox]\nrequires=somepkg123xyz\n[testenv:.tox]\nrunner=example"})
     with pytest.raises(KeyError, match="example"):
         proj.run("r", "-e", "py", "--result-json", str(log))
+
+
+@pytest.mark.integration()
+@pytest.mark.usefixtures("_pypi_index_self")
+@pytest.mark.parametrize("relative_path", [True, False], ids=["relative", "absolute"])
+def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, relative_path: bool) -> None:
+    ini = "[tox]\nrequires = demo-pkg-inline\nskipsdist=true\n"
+    project = tox_project({"tox.ini": ini}, prj_path=tmp_path / "sub")
+    if relative_path:
+        conf_path = os.path.join(project.path.name, "tox.ini")
+    else:
+        conf_path = str(project.path / "tox.ini")
+    result = project.run("c", "--conf", conf_path, "-e", "py", from_cwd=tmp_path)
+    result.assert_success()
