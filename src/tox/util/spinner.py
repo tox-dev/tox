@@ -138,7 +138,7 @@ class Spinner:
     def skip(self, key: str) -> None:
         self.finalize(key, f"SKIP {self.outcome.skip}", Fore.YELLOW)
 
-    def finalize(self, key: str, status: str, color: int) -> None:
+    def finalize(self, key: str, status: str, color: str) -> None:
         start_at = self._envs.pop(key, None)
         if self.enabled:
             self.clear()
