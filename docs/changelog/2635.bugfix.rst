@@ -1,0 +1,13 @@
+When parsing command lines, use ``shlex(..., posix=True)``, even on windows platforms, since non-POSIX mode does not
+handle escape characters and quoting like a shell would. This improves cross-platform configurations without hacks or
+esoteric quoting.
+
+To make this transition easier, on Windows, the backslash path separator will not treated as an escape character unless
+it preceeds a quote, whitespace, or another backslash chracter. This allows paths to mostly be written in single or
+double backslash style.
+
+Note that **double-backslash will no longer be escaped to a single backslash in substitutions**, instead the double
+backslash will be consumed as part of command splitting, on either posix or windows platforms.
+
+In some instances superfluous double or single quote characters may be stripped from arg arrays in ways that do not
+occur in the default windows ``cmd.exe`` shell - by :user:`masenf`.
