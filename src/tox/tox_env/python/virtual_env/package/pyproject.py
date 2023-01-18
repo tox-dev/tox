@@ -137,6 +137,14 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         meta_folder.mkdir(exist_ok=True)
         return meta_folder
 
+    @property
+    def meta_folder_if_populated(self) -> Path | None:
+        """Return the metadata directory if it contains any files, otherwise None."""
+        meta_folder = self.meta_folder
+        if meta_folder.exists() and tuple(meta_folder.iterdir()):
+            return meta_folder
+        return None
+
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
@@ -210,7 +218,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                 with self._pkg_lock:
                     wheel = getattr(self._frontend, method)(
                         wheel_directory=self.pkg_dir,
-                        metadata_directory=self.meta_folder,
+                        metadata_directory=self.meta_folder_if_populated,
                         config_settings=self._wheel_config_settings,
                     ).wheel
                     wheel = create_session_view(wheel, self._package_temp_path)
