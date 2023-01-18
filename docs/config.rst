@@ -742,7 +742,7 @@ Pip installer
    :version_added: 2.4
 
    The ``list_dependencies_command`` setting is used for listing the packages installed into the virtual environment.
-   This command will be executed only if executing on Contionous Integrations is detected (for example set environment variable `CI=1`)
+   This command will be executed only if executing on Contionous Integrations is detected (for example set environment variable ``CI=1``)
    or if journal is active.
 
 
