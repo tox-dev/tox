@@ -21,8 +21,7 @@ wheel = "{}/WHEEL".format(dist_info)
 record = "{}/RECORD".format(dist_info)
 content = {
     logic: "def do():\n    print('greetings from {}')".format(name),
-    plugin: dedent(
-        """
+    plugin: """
         try:
             from tox.plugin import impl
             from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
@@ -37,14 +36,13 @@ content = {
             @impl
             def tox_register_tox_env(register: ToxEnvRegister) -> None:
                 register.add_run_env(ExampleVirtualEnvRunner)
-    """,
-    ),
-    entry_points: dedent(
-        """
+        """,
+}
+metadata_files = {
+    entry_points: """
         [tox]
         example = {}.example_plugin""".format(
-            name,
-        ),
+        name,
     ),
     metadata: """
         Metadata-Version: 2.1
@@ -88,12 +86,22 @@ content = {
 }
 
 
-def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):  # noqa: U100
+def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):  # noqa: U100
     base_name = "{}-{}-py{}-none-any.whl".format(name, version, sys.version_info[0])
     path = os.path.join(wheel_directory, base_name)
     with ZipFile(path, "w") as zip_file_handler:
         for arc_name, data in content.items():  # pragma: no branch
             zip_file_handler.writestr(arc_name, dedent(data).strip())
+        if metadata_directory is not None:
+            for sub_directory, _, filenames in os.walk(metadata_directory):
+                for filename in filenames:
+                    zip_file_handler.write(
+                        os.path.join(metadata_directory, sub_directory, filename),
+                        os.path.join(sub_directory, filename),
+                    )
+        else:
+            for arc_name, data in metadata_files.items():  # pragma: no branch
+                zip_file_handler.writestr(arc_name, dedent(data).strip())
     print("created wheel {}".format(path))
     return base_name
 
