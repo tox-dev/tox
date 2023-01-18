@@ -46,10 +46,37 @@ class StrConvert(Convert[str]):
                     raise TypeError(f"dictionary lines must be of form key=value, found {row!r}")
 
     @staticmethod
+    def _win32_process_path_backslash(value: str, escape: str, special_chars: str) -> str:
+        """
+        Escape backslash in value that is not followed by a special character.
+
+        This allows windows paths to be written without double backslash, while
+        retaining the POSIX backslash escape semantics for quotes and escapes.
+        """
+        result = []
+        for ix, char in enumerate(value):
+            result.append(char)
+            if char == escape:
+                last_char = value[ix - 1 : ix]
+                if last_char == escape:
+                    continue
+                next_char = value[ix + 1 : ix + 2]
+                if next_char not in (escape, *special_chars):
+                    result.append(escape)  # escape escapes that are not themselves escaping a special character
+        return "".join(result)
+
+    @staticmethod
     def to_command(value: str) -> Command:
         is_win = sys.platform == "win32"
+        if is_win:  # pragma: win32 cover
+            s = shlex.shlex(posix=True)
+            value = StrConvert._win32_process_path_backslash(
+                value,
+                escape=s.escape,
+                special_chars=s.quotes + s.whitespace,
+            )
         value = value.replace(r"\#", "#")
-        splitter = shlex.shlex(value, posix=not is_win)
+        splitter = shlex.shlex(value, posix=True)
         splitter.whitespace_split = True
         splitter.commenters = ""  # comments handled earlier, and the shlex does not know escaped comment characters
         args: list[str] = []
