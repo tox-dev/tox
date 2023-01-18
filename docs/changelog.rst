@@ -4,6 +4,23 @@ Release History
 
 .. towncrier release notes start
 
+v4.3.5 (2023-01-18)
+-------------------
+
+Bugfixes - 4.3.5
+~~~~~~~~~~~~~~~~
+- When building a ``wheel`` or ``editable`` package with a PEP 517 backend, no
+  longer pass an empty ``metadata_directory`` to the backend ``build_wheel`` or
+  ``build_editable`` endpoint.
+
+  Some backends, such as PDM and poetry, will not generate package metadata in
+  the presence of a ``metadata_directory``, even if it is empty.
+
+  Prior to this change, attempting to install a wheel created by tox using PDM or
+  poetry would return an error like "There is no item named
+  'my-package.0.1.dist-info/WHEEL' in the archive" - by :user:`masenf`. (:issue:`2880`)
+
+
 v4.3.4 (2023-01-17)
 -------------------
 
