@@ -1,0 +1,1 @@
+Add infromation when command from ``list_dependencies_command`` configuration option is used.
