@@ -1,0 +1,1 @@
+Update documentation of ``pip_pre`` to point to ``PIP_PRE`` environment variable.
