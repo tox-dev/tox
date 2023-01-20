@@ -726,8 +726,7 @@ Pip installer
 
    Determines the command used for installing packages into the virtual environment; both the package under test and its
    dependencies (defined with :ref:`deps`). Must contain the substitution key ``{packages}`` which will be replaced by
-   the package(s) to install.  You should also accept ``{opts}`` -- it will contain index server options such as
-   ``--pre`` (configured as ``pip_pre``).
+   the package(s) to install.  You should also accept ``{opts}`` -- it will contain index server options.
 
    .. note::
 
@@ -751,9 +750,10 @@ Pip installer
    :default: false
    :version_added: 1.9
 
-   If ``true``, adds ``--pre`` to the ``opts`` passed to :ref:`install_command`. This will cause it to install the
+   If ``true``, adds ``PIP_PRE=1`` to the `environment <https://pip.pypa.io/en/stable/topics/configuration/#environment-variables>`_. This will cause pip it to install the
    latest available pre-release of any dependencies without a specified version. If ``false``, pip will only install
-   final releases of unpinned dependencies.
+   final releases of unpinned dependencies. For other tool than pip there may be need to directly modify ``install_command``
+   to install prerelease packages version.
 
 User configuration
 ------------------
