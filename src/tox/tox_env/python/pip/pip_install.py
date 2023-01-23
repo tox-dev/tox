@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from packaging.requirements import Requirement
@@ -37,6 +38,18 @@ class Pip(Installer[Python]):
             default=self.default_install_command,
             post_process=self.post_process_install_command,
             desc="command used to install packages",
+        )
+        self._env.conf.add_config(
+            keys=["constrain_package_deps"],
+            of_type=bool,
+            default=True,
+            desc="If true, apply constraints during install_package_deps.",
+        )
+        self._env.conf.add_config(
+            keys=["use_frozen_constraints"],
+            of_type=bool,
+            default=False,
+            desc="Use the exact versions of installed deps as constraints, otherwise use the listed deps.",
         )
         if self._with_list_deps:  # pragma: no branch
             self._env.conf.add_config(
@@ -81,6 +94,17 @@ class Pip(Installer[Python]):
             logging.warning(f"pip cannot install {arguments!r}")
             raise SystemExit(1)
 
+    def constraints_file(self) -> Path:
+        return Path(self._env.env_dir) / "constraints.txt"
+
+    @property
+    def constrain_package_deps(self) -> bool:
+        return bool(self._env.conf["constrain_package_deps"])
+
+    @property
+    def use_frozen_constraints(self) -> bool:
+        return bool(self._env.conf["use_frozen_constraints"])
+
     def _install_requirement_file(self, arguments: PythonDeps, section: str, of_type: str) -> None:
         try:
             new_options, new_reqs = arguments.unroll()
@@ -90,7 +114,16 @@ class Pip(Installer[Python]):
         new_constraints: list[str] = []
         for req in new_reqs:
             (new_constraints if req.startswith("-c ") else new_requirements).append(req)
-        new = {"options": new_options, "requirements": new_requirements, "constraints": new_constraints}
+        constraint_options = {
+            "constrain_package_deps": self.constrain_package_deps,
+            "use_frozen_constraints": self.use_frozen_constraints,
+        }
+        new = {
+            "options": new_options,
+            "requirements": new_requirements,
+            "constraints": new_constraints,
+            "constraint_options": constraint_options,
+        }
         # if option or constraint change in any way recreate, if the requirements change only if some are removed
         with self._env.cache.compare(new, section, of_type) as (eq, old):
             if not eq:  # pragma: no branch
@@ -100,9 +133,20 @@ class Pip(Installer[Python]):
                     missing_requirement = set(old["requirements"]) - set(new_requirements)
                     if missing_requirement:
                         raise Recreate(f"requirements removed: {' '.join(missing_requirement)}")
+                    if old.get("constraint_options") != constraint_options:
+                        raise Recreate(
+                            "constraint options changed: old={} new={}".format(
+                                old.get("constraint_options"),
+                                constraint_options,
+                            ),
+                        )
                 args = arguments.as_root_args
                 if args:  # pragma: no branch
                     self._execute_installer(args, of_type)
+                    if self.constrain_package_deps and not self.use_frozen_constraints:
+                        self.constraints_file().write_text(
+                            "\n".join(new_requirements + [c.lstrip("-c ") for c in new_constraints]),
+                        )
 
     @staticmethod
     def _recreate_if_diff(of_type: str, new_opts: list[str], old_opts: list[str], fmt: Callable[[str], str]) -> None:
@@ -155,9 +199,18 @@ class Pip(Installer[Python]):
             self._execute_installer(install_args, of_type)
 
     def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:
+        if of_type == "package_deps" and self.constrain_package_deps:
+            constraints_file = self.constraints_file()
+            if constraints_file.exists():
+                deps = [*deps, f"-c{constraints_file}"]
+
         cmd = self.build_install_cmd(deps)
         outcome = self._env.execute(cmd, stdin=StdinSource.OFF, run_id=f"install_{of_type}")
         outcome.assert_success()
+
+        if of_type == "deps" and self.constrain_package_deps and self.use_frozen_constraints:
+            # freeze installed deps for use as constraints
+            self.constraints_file().write_text("\n".join(self.installed()))
 
     def build_install_cmd(self, args: Sequence[str]) -> list[str]:
         try:

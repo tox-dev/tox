@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pytest
 from packaging.requirements import Requirement
 
-from tox.pytest import CaptureFixture, ToxProjectCreator
+from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator
 from tox.tox_env.errors import Fail
 
 
@@ -270,3 +270,139 @@ def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator) -> None
     assert "py: recreate env because changed constraint(s) added a" in result_second.out, result_second.out
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
+
+
+@pytest.fixture(params=[True, False])
+def constrain_package_deps(request: SubRequest) -> bool:
+    return bool(request.param)
+
+
+@pytest.fixture(params=[True, False])
+def use_frozen_constraints(request: SubRequest) -> bool:
+    return bool(request.param)
+
+
+@pytest.fixture(
+    params=[
+        "explicit",
+        "requirements",
+        "constraints",
+        "explicit+requirements",
+        "requirements_indirect",
+        "requirements_constraints_indirect",
+    ],
+)
+def constrained_mock_project(
+    request: SubRequest,
+    tox_project: ToxProjectCreator,
+    demo_pkg_inline: Path,
+    constrain_package_deps: bool,
+    use_frozen_constraints: bool,
+) -> tuple[ToxProject, list[str]]:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text()
+    files = {
+        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
+        + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
+        "build.py": (demo_pkg_inline / "build.py").read_text(),
+    }
+    exp_constraints: list[str] = []
+    requirement = "foo==1.2.3"
+    constraint = "foo<2"
+    if request.param == "explicit":
+        deps = requirement
+        exp_constraints.append(requirement)
+    elif request.param == "requirements":
+        files["requirements.txt"] = f"--pre\n{requirement}"
+        deps = "-rrequirements.txt"
+        exp_constraints.append(requirement)
+    elif request.param == "constraints":
+        files["constraints.txt"] = constraint
+        deps = "-cconstraints.txt"
+        exp_constraints.append(constraint)
+    elif request.param == "explicit+requirements":
+        files["requirements.txt"] = f"--pre\n{requirement}"
+        deps = "\n\t-rrequirements.txt\n\tfoo"
+        exp_constraints.extend(["foo", requirement])
+    elif request.param == "requirements_indirect":
+        files["foo.requirements.txt"] = f"--pre\n{requirement}"
+        files["requirements.txt"] = "-r foo.requirements.txt"
+        deps = "-rrequirements.txt"
+        exp_constraints.append(requirement)
+    elif request.param == "requirements_constraints_indirect":
+        files["foo.requirements.txt"] = f"--pre\n{requirement}"
+        files["foo.constraints.txt"] = f"{constraint}"
+        files["requirements.txt"] = "-r foo.requirements.txt\n-c foo.constraints.txt"
+        deps = "-rrequirements.txt"
+        exp_constraints.extend([requirement, constraint])
+    else:  # pragma: no cover
+        pytest.fail(f"Missing case: {request.param}")
+    files["tox.ini"] = (
+        "[testenv]\npackage=wheel\n"
+        f"constrain_package_deps = {constrain_package_deps}\n"
+        f"use_frozen_constraints = {use_frozen_constraints}\n"
+        f"deps = {deps}"
+    )
+    return tox_project(files), exp_constraints if constrain_package_deps else []
+
+
+def test_constrain_package_deps(
+    constrained_mock_project: tuple[ToxProject, list[str]],
+    constrain_package_deps: bool,
+    use_frozen_constraints: bool,
+) -> None:
+    proj, exp_constraints = constrained_mock_project
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result_first = proj.run("r")
+    result_first.assert_success()
+    exp_run_ids = ["install_deps"]
+    if constrain_package_deps and use_frozen_constraints:
+        exp_run_ids.append("freeze")
+    exp_run_ids.extend(
+        [
+            "install_requires",
+            "_optional_hooks",
+            "get_requires_for_build_wheel",
+            "build_wheel",
+            "install_package_deps",
+            "install_package",
+            "_exit",
+        ],
+    )
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert run_ids == exp_run_ids
+    constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
+    if constrain_package_deps:
+        constraints = constraints_file.read_text().splitlines()
+        for call in execute_calls.call_args_list:
+            if call[0][3].run_id == "install_package_deps":
+                assert f"-c{constraints_file}" in call[0][3].cmd
+        if use_frozen_constraints:
+            for c in exp_constraints:
+                # when using frozen constraints with this mock, the mock package does NOT
+                # actually end up in the constraints, so assert it's not there
+                assert c not in constraints
+            for c in constraints:
+                assert c.partition("==")[0] in ["pip", "setuptools", "wheel"]
+        else:
+            for c in constraints:
+                assert c in exp_constraints
+            for c in exp_constraints:
+                assert c in constraints
+    else:
+        assert not constraints_file.exists()
+
+
+@pytest.mark.parametrize("conf_key", ["constrain_package_deps", "use_frozen_constraints"])
+def test_change_constraint_options_recreates(tox_project: ToxProjectCreator, conf_key: str) -> None:
+    tox_ini_content = "[testenv:py]\ndeps=a\nskip_install=true"
+    proj = tox_project({"tox.ini": f"{tox_ini_content}\n{conf_key} = true"})
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result = proj.run("r")
+    result.assert_success()
+
+    (proj.path / "tox.ini").write_text(f"{tox_ini_content}\n{conf_key} = false")
+    result_second = proj.run("r")
+    result_second.assert_success()
+    assert "recreate env because constraint options changed" in result_second.out
+    assert conf_key in result_second.out

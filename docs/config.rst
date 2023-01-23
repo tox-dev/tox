@@ -755,6 +755,25 @@ Pip installer
    latest available pre-release of any dependencies without a specified version. If ``false``, pip will only install
    final releases of unpinned dependencies.
 
+.. conf::
+   :keys: constrain_package_deps
+   :default: true
+   :version_added: 4.4.0
+
+   If ``constrain_package_deps`` is true, then tox will create and use ``{env_dir}{/}constraints.txt`` when installing
+   package dependnecies during ``install_package_deps`` stage. When this value is set to false, any conflicting package
+   dependencies will override explicit dependencies and constraints passed to ``deps``.
+
+.. conf::
+   :keys: use_frozen_constraints
+   :default: false
+   :version_added: 4.4.0
+
+   When ``use_frozen_constraints`` is true, then tox will use the ``list_dependencies_command`` to enumerate package
+   versions in order to create ``{env_dir}{/}constraints.txt``. Otherwise the package specifications explicitly listed under
+   ``deps`` (or in requirements / constraints files referenced in ``deps``) will be used as the constraints. If
+   ``constrain_package_deps`` is false, then this setting has no effect.
+
 User configuration
 ------------------
 
