@@ -44,7 +44,7 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
         """,
         ),
     )
-    monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
     return to
 
 
@@ -58,7 +58,7 @@ def test_ini_empty(
     content: str,
 ) -> None:
     to = tmp_path / "tox.ini"
-    monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
     to.write_text(content)
     mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
     options = get_options("r")
@@ -73,7 +73,7 @@ def test_ini_empty(
 
 
 @pytest.fixture()
-def default_options(tmp_path: Path) -> dict[str, Any]:
+def default_options() -> dict[str, Any]:
     return {
         "colored": "no",
         "command": "r",
@@ -97,7 +97,7 @@ def default_options(tmp_path: Path) -> dict[str, Any]:
         "verbose": 2,
         "work_dir": None,
         "root_dir": None,
-        "config_file": (tmp_path / "tox.ini").absolute(),
+        "config_file": None,
         "factors": [],
         "labels": [],
         "exit_and_dump_after": 0,
@@ -105,7 +105,8 @@ def default_options(tmp_path: Path) -> dict[str, Any]:
     }
 
 
-def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dict[str, Callable[[State], int]]) -> None:
+@pytest.mark.usefixtures("exhaustive_ini")
+def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State], int]]) -> None:
     options = get_options("p")
     assert vars(options.parsed) == {
         "colored": "yes",
@@ -133,7 +134,7 @@ def test_ini_exhaustive_parallel_values(exhaustive_ini: Path, core_handlers: dic
         "verbose": 5,
         "work_dir": None,
         "root_dir": None,
-        "config_file": exhaustive_ini,
+        "config_file": None,
         "factors": [],
         "labels": [],
         "exit_and_dump_after": 0,
@@ -149,7 +150,7 @@ def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
     assert context.value.code == 0
     out, err = capsys.readouterr()
     assert not err
-    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_CONFIG_FILE)"
+    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_USER_CONFIG_FILE)"
 
 
 def test_bad_cli_ini(
@@ -161,7 +162,7 @@ def test_bad_cli_ini(
 ) -> None:
     mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
     caplog.set_level(logging.WARNING)
-    monkeypatch.setenv("TOX_CONFIG_FILE", str(tmp_path))
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(tmp_path))
     options = get_options("r")
     msg = (
         "PermissionError(13, 'Permission denied')"
@@ -169,7 +170,6 @@ def test_bad_cli_ini(
         else "IsADirectoryError(21, 'Is a directory')"
     )
     assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
-    default_options["config_file"] = tmp_path
     assert vars(options.parsed) == default_options
 
 
@@ -191,7 +191,7 @@ def test_bad_option_cli_ini(
         """,
         ),
     )
-    monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
     parsed, _, __, ___, ____ = get_options("r")
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
@@ -205,7 +205,7 @@ def test_bad_option_cli_ini(
 def test_cli_ini_with_interpolated(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     to = tmp_path / "tox.ini"
     to.write_text("[tox]\na = %(b)s")
-    monkeypatch.setenv("TOX_CONFIG_FILE", str(to))
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
     conf = IniConfig()
     assert conf.get("a", str)
 
