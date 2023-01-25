@@ -433,6 +433,16 @@ Run
 
    .. note::
 
+       ``shlex`` POSIX-mode quoting rules are used to split the command line into arguments on all
+       supported platforms as of tox 4.4.0.
+
+       The backslash ``\`` character can be used to escape quotes, whitespace, itself, and
+       other characters (except on Windows, where a backslash in a path will not be interpreted as an escape).
+       Unescaped single quote will disable the backslash escape until closed by another unescaped single quote.
+       For more details, please see :doc:`shlex parsing rules <python:library/shlex>`.
+
+   .. note::
+
      Inline scripts can be used, however note these are discovered from the project root directory, and is not
      influenced by :ref:`change_dir` (this only affects the runtime current working directory). To make this behaviour
      explicit we recommend that you make inline scripts absolute paths by prepending ``{tox_root}``, instead of
@@ -795,13 +805,17 @@ through the ``{...}`` string-substitution pattern.
 
 The string inside the curly braces may reference a global or per-environment config key as described above.
 
-The backslash character ``\`` will act as an escape for a following: ``\``,
+In substitutions, the backslash character ``\`` will act as an escape when preceeding
 ``{``, ``}``, ``:``, ``[``, or ``]``, otherwise the backslash will be
 reproduced literally::
 
     commands =
         python -c 'print("\{posargs} = \{}".format("{posargs}"))'
         python -c 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'
+
+Note that any backslashes remaining after substitution may be processed by ``shlex`` during command parsing. On POSIX
+platforms, the backslash will escape any following character; on windows, the backslash will escape any following quote,
+whitespace, or backslash character (since it normally acts as a path delimiter).
 
 Special substitutions that accept additional colon-delimited ``:`` parameters
 cannot have a space after the ``:`` at the beginning of line (e.g.  ``{posargs:

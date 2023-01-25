@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, Dict, List, Optional, Set, TypeVar, Union
 
 import pytest
 
 from tox.config.loader.str_convert import StrConvert
 from tox.config.types import Command, EnvList
+from tox.pytest import MonkeyPatch, SubRequest, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
@@ -80,3 +82,127 @@ def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[
 def test_invalid_shell_expression(value: str, expected: list[str]) -> None:
     result = StrConvert().to_command(value).args
     assert result == expected
+
+
+SIMPLE_ARGS = [
+    ('foo "bar baz"', ["foo", "bar baz"]),
+    ('foo "bar baz"ext', ["foo", "bar bazext"]),
+    ('foo="bar baz"', ["foo=bar baz"]),
+    ("foo 'bar baz'", ["foo", "bar baz"]),
+    ("foo 'bar baz'ext", ["foo", "bar bazext"]),
+    ("foo='bar baz'", ["foo=bar baz"]),
+    (r"foo=\"bar baz\"", ['foo="bar', 'baz"']),
+    (r'foo="bar baz\"', ['foo="bar baz\\"']),
+    ("foo='bar baz' quuc", ["foo=bar baz", "quuc"]),
+    (r"foo='bar baz\' quuc", ["foo=bar baz\\", "quuc"]),
+    (r"foo=\"bar baz\' quuc", ['foo="bar', "baz'", "quuc"]),
+    (r"foo=\\\"bar baz\"", ['foo=\\"bar', 'baz"']),
+    (r'foo=\\"bar baz\"', [r'foo=\\"bar baz\"']),
+]
+NEWLINE_ARGS = [
+    ('foo\n"bar\nbaz"', ["foo", "bar\nbaz"]),
+]
+INI_CONFIG_NEWLINE_ARGS = [
+    ('foo\\\n    "bar\\\n    baz"', ["foobarbaz"]),  # behavior change from tox 3
+    ('foo\\\n    "bar \\\n    baz"', ["foobar baz"]),  # behavior change from tox 3
+    ('foo \\\n    "bar\\\n    baz"', ["foo", "barbaz"]),
+    ('foo \\\n    "bar \\\n    baz"', ["foo", "bar baz"]),
+    ('foo \\\n    \\"bar \\\n    baz"', ["foo", '"bar', 'baz"']),
+    ("foo \\\n    bar \\\n    baz", ["foo", "bar", "baz"]),
+]
+WINDOWS_PATH_ARGS = [
+    (r"SPECIAL:\foo\bar --quuz='baz atan'", [r"SPECIAL:\foo\bar", "--quuz=baz atan"]),
+    (r"X:\\foo\\bar --quuz='baz atan'", [r"X:\foo\bar", "--quuz=baz atan"]),
+    ("/foo/bar --quuz='baz atan'", ["/foo/bar", "--quuz=baz atan"]),
+    ('cc --arg "C:\\\\Users\\""', ["cc", "--arg", 'C:\\Users"']),
+    ('cc --arg "C:\\\\Users\\"', ["cc", "--arg", '"C:\\\\Users\\"']),
+    ('cc --arg "C:\\\\Users"', ["cc", "--arg", "C:\\Users"]),
+    ('cc --arg \\"C:\\\\Users"', ["cc", "--arg", '\\"C:\\\\Users"']),
+    ('cc --arg "C:\\\\Users\\ "', ["cc", "--arg", "C:\\Users\\ "]),
+    # ('cc --arg "C:\\\\Users\\ ', ["cc", "--arg", '"C:\\\\Users\\ ']),
+    ('cc --arg "C:\\\\Users\\\\"', ["cc", "--arg", "C:\\Users\\"]),
+    ('cc --arg "C:\\\\Users\\\\ "', ["cc", "--arg", "C:\\Users\\ "]),
+    # ('cc --arg "C:\\\\Users\\\\ ', ["cc", "--arg", '"C:\\\\Users\\\\ ']),
+    (
+        r'cc --arg C:\\Users\\ --arg2 "SPECIAL:\Temp\f o o" --arg3="\\FOO\share\Path name" --arg4 SPECIAL:\Temp\ '[:-1],
+        [
+            "cc",
+            "--arg",
+            "C:\\Users\\",
+            "--arg2",
+            "SPECIAL:\\Temp\\f o o",
+            "--arg3=\\FOO\\share\\Path name",
+            "--arg4",
+            "SPECIAL:\\Temp\\",
+        ],
+    ),
+]
+WACKY_SLASH_ARGS = [
+    ("\\\\\\", ["\\\\\\"]),
+    (" \\'\\'\\ '", [" \\'\\'\\ '"]),
+    ("\\'\\'\\ ", ["'' "]),
+    ("\\'\\ \\\\", ["' \\"]),
+    ("\\'\\ ", ["' "]),
+    ('''"\\'\\"''', ['"\\\'\\"']),
+    ("'\\' \\\\", ["\\", "\\"]),
+    ('"\\\\" \\\\', ["\\", "\\"]),
+]
+
+
+@pytest.fixture(params=["win32", "linux2"])
+def sys_platform(request: SubRequest, monkeypatch: MonkeyPatch) -> str:
+    monkeypatch.setattr(sys, "platform", request.param)
+    return str(request.param)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        *SIMPLE_ARGS,
+        *NEWLINE_ARGS,
+        *WINDOWS_PATH_ARGS,
+        *WACKY_SLASH_ARGS,
+    ],
+)
+def test_shlex_platform_specific(sys_platform: str, value: str, expected: list[str]) -> None:
+    if sys_platform != "win32" and value.startswith("SPECIAL:"):
+        # on non-windows platform, backslash is always an escape, not path separator
+        expected = [exp.replace("\\", "") for exp in expected]
+    result = StrConvert().to_command(value).args
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        *SIMPLE_ARGS,
+        *INI_CONFIG_NEWLINE_ARGS,
+        *WINDOWS_PATH_ARGS,
+        #        *WACKY_SLASH_ARGS,
+    ],
+)
+def test_shlex_platform_specific_ini(
+    tox_project: ToxProjectCreator,
+    sys_platform: str,
+    value: str,
+    expected: list[str],
+) -> None:
+    if sys_platform != "win32" and value.startswith("SPECIAL:"):
+        # on non-windows platform, backslash is always an escape, not path separator
+        expected = [exp.replace("\\", "") for exp in expected]
+    project = tox_project(
+        {
+            "tox.ini": dedent(
+                """
+                [testenv]
+                commands =
+                    %s""",
+            )
+            % value,
+        },
+    )
+    outcome = project.run("c")
+    outcome.assert_success()
+    env_config = outcome.env_conf("py")
+    result = env_config["commands"]
+    assert result == [Command(args=expected)]
