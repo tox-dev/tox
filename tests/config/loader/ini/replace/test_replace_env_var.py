@@ -17,24 +17,24 @@ def test_replace_env_set(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> N
 
 
 def test_replace_env_set_double_bs(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """Double backslash should escape to single backslash and not affect surrounding replacements."""
+    """Double backslash should remain but not affect surrounding replacements."""
     monkeypatch.setenv("MAGIC", "something good")
     result = replace_one(r"{env:MAGIC}\\{env:MAGIC}")
-    assert result == r"something good\something good"
+    assert result == r"something good\\something good"
 
 
 def test_replace_env_set_triple_bs(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """Triple backslash should escape to single backslash also escape subsequent replacement."""
+    """Triple backslash should retain two slashes with the third escaping subsequent replacement."""
     monkeypatch.setenv("MAGIC", "something good")
     result = replace_one(r"{env:MAGIC}\\\{env:MAGIC}")
-    assert result == r"something good\{env:MAGIC}"
+    assert result == r"something good\\{env:MAGIC}"
 
 
 def test_replace_env_set_quad_bs(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
-    """Quad backslash should escape to two backslashes and not affect surrounding replacements."""
+    """Quad backslash should remain but not affect surrounding replacements."""
     monkeypatch.setenv("MAGIC", "something good")
-    result = replace_one(r"\\{env:MAGIC}\\\\{env:MAGIC}\\")
-    assert result == r"\something good\\something good" + "\\"
+    result = replace_one(r"\\{env:MAGIC}\\\\{env:MAGIC}" + "\\")
+    assert result == r"\\something good\\\\something good" + "\\"
 
 
 def test_replace_env_when_value_is_backslash(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:

@@ -30,7 +30,7 @@ LOGGER = logging.getLogger(__name__)
 ARG_DELIMITER = ":"
 REPLACE_START = "{"
 REPLACE_END = "}"
-BACKSLASH_ESCAPE_CHARS = ["\\", ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]"]
+BACKSLASH_ESCAPE_CHARS = [ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]"]
 MAX_REPLACE_DEPTH = 100
 
 
@@ -115,11 +115,18 @@ class MatchExpression:
         pos = 0
 
         while pos < len(value):
-            if len(value) > pos + 1 and value[pos] == "\\" and value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
-                # backslash escapes the next character from a special set
-                last_arg.append(value[pos + 1])
-                pos += 2
-                continue
+            if len(value) > pos + 1 and value[pos] == "\\":
+                if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
+                    # backslash escapes the next character from a special set
+                    last_arg.append(value[pos + 1])
+                    pos += 2
+                    continue
+                if value[pos + 1] == "\\":
+                    # backlash doesn't escape a backslash, but does prevent it from affecting the next char
+                    # a subsequent `shlex` pass will eat the double backslash during command splitting
+                    last_arg.append(value[pos : pos + 2])
+                    pos += 2
+                    continue
             fragment = value[pos:]
             if terminator and fragment.startswith(terminator):
                 pos += len(terminator)
