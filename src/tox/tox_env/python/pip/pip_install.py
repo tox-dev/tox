@@ -133,10 +133,10 @@ class Pip(Installer[Python]):
                     missing_requirement = set(old["requirements"]) - set(new_requirements)
                     if missing_requirement:
                         raise Recreate(f"requirements removed: {' '.join(missing_requirement)}")
-                    if old.get("constraint_options") != constraint_options:
-                        raise Recreate(
-                            f"constraint options changed: old={old.get('constraint_options')} new={constraint_options}",
-                        )
+                    old_constraint_options = old.get("constraint_options")
+                    if old_constraint_options != constraint_options:
+                        msg = f"constraint options changed: old={old_constraint_options} new={constraint_options}"
+                        raise Recreate(msg)
                 args = arguments.as_root_args
                 if args:  # pragma: no branch
                     self._execute_installer(args, of_type)
