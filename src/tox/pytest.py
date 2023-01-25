@@ -525,6 +525,7 @@ __all__ = (
     "LogCaptureFixture",
     "TempPathFactory",
     "MonkeyPatch",
+    "SubRequest",
     "ToxRunOutcome",
     "ToxProject",
     "ToxProjectCreator",

@@ -150,9 +150,9 @@ WACKY_SLASH_ARGS = [
 
 
 @pytest.fixture(params=["win32", "linux2"])
-def sys_platform(request: SubRequest, monkeypatch: MonkeyPatch):
+def sys_platform(request: SubRequest, monkeypatch: MonkeyPatch) -> str:
     monkeypatch.setattr(sys, "platform", request.param)
-    return request.param
+    return str(request.param)
 
 
 @pytest.mark.parametrize(
