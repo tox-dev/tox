@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.1 (2023-01-25)
+-------------------
+
+Bugfixes - 4.4.1
+~~~~~~~~~~~~~~~~
+- In tox 4.4.0 ``constrain_package_deps`` was introduced with a default value of ``True``. This has been changed back to
+  ``False``, which restores the original behavior of tox 4.3.5 - by :user:`masenf`. (:issue:`2897`)
+
+
 v4.4.0 (2023-01-25)
 -------------------
 
