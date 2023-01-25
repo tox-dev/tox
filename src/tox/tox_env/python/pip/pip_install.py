@@ -42,7 +42,7 @@ class Pip(Installer[Python]):
         self._env.conf.add_config(
             keys=["constrain_package_deps"],
             of_type=bool,
-            default=True,
+            default=False,
             desc="If true, apply constraints during install_package_deps.",
         )
         self._env.conf.add_config(
