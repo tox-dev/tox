@@ -141,9 +141,8 @@ class Pip(Installer[Python]):
                 if args:  # pragma: no branch
                     self._execute_installer(args, of_type)
                     if self.constrain_package_deps and not self.use_frozen_constraints:
-                        self.constraints_file().write_text(
-                            "\n".join(new_requirements + [c.lstrip("-c ") for c in new_constraints]),
-                        )
+                        combined_constraints = new_requirements + [c.lstrip("-c ") for c in new_constraints]
+                        self.constraints_file().write_text("\n".join(combined_constraints))
 
     @staticmethod
     def _recreate_if_diff(of_type: str, new_opts: list[str], old_opts: list[str], fmt: Callable[[str], str]) -> None:
