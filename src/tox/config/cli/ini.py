@@ -19,7 +19,7 @@ DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
 
 
 class IniConfig:
-    TOX_CONFIG_FILE_ENV_VAR = "TOX_CONFIG_FILE"
+    TOX_CONFIG_FILE_ENV_VAR = "TOX_USER_CONFIG_FILE"
     STATE = {None: "failed to parse", True: "active", False: "missing"}
 
     def __init__(self) -> None:

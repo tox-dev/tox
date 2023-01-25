@@ -1,0 +1,4 @@
+Allow the user configuration file (default ``<appdir>/tox/config.ini``) to be overridden via the
+``TOX_USER_CONFIG_FILE`` environment variable. Previously tox was looking at the ``TOX_CONFIG_FILE`` to override the
+user configuration, however that environment variable is already used to override the main configuration - by
+:user:`masenf`.
