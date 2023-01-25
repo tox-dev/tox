@@ -786,13 +786,17 @@ through the ``{...}`` string-substitution pattern.
 
 The string inside the curly braces may reference a global or per-environment config key as described above.
 
-The backslash character ``\`` will act as an escape for a following: ``\``,
+In substitutions, the backslash character ``\`` will act as an escape when preceeding
 ``{``, ``}``, ``:``, ``[``, or ``]``, otherwise the backslash will be
 reproduced literally::
 
     commands =
         python -c 'print("\{posargs} = \{}".format("{posargs}"))'
         python -c 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'
+
+Note that any backslashes remaining after substitution may be processed by ``shlex`` during command parsing. On POSIX
+platforms, the backslash will escape any following character; on windows, the backslash will escape any following quote,
+whitespace, or backslash character (since it normally acts as a path delimiter).
 
 Special substitutions that accept additional colon-delimited ``:`` parameters
 cannot have a space after the ``:`` at the beginning of line (e.g.  ``{posargs:
