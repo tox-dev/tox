@@ -135,10 +135,7 @@ class Pip(Installer[Python]):
                         raise Recreate(f"requirements removed: {' '.join(missing_requirement)}")
                     if old.get("constraint_options") != constraint_options:
                         raise Recreate(
-                            "constraint options changed: old={} new={}".format(
-                                old.get("constraint_options"),
-                                constraint_options,
-                            ),
+                            f"constraint options changed: old={old.get('constraint_options')} new={constraint_options}",
                         )
                 args = arguments.as_root_args
                 if args:  # pragma: no branch
