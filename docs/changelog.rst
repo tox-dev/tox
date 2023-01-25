@@ -4,6 +4,45 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.0 (2023-01-25)
+-------------------
+
+Features - 4.4.0
+~~~~~~~~~~~~~~~~
+- Test environments now recognize boolean config keys ``constrain_package_deps`` (default=true) and ``use_frozen_constraints`` (default=false),
+  which control how tox generates and applies constraints files when performing ``install_package_deps``.
+
+  If ``constrain_package_deps`` is true (default), then tox will write out ``{env_dir}{/}constraints.txt`` and pass it to
+  ``pip`` during ``install_package_deps``. If ``use_frozen_constraints`` is false (default), the constraints will be taken
+  from the specifications listed under ``deps`` (and inside any requirements or constraints file referenced in ``deps``).
+  Otherwise, ``list_dependencies_command`` (``pip freeze``) is used to enumerate exact package specifications which will
+  be written to the constraints file.
+
+  In previous releases, conflicting package dependencies would silently override the ``deps`` named in the configuration,
+  resulting in test runs against unexpected dependency versions, particularly when using tox factors to explicitly test
+  with different versions of dependencies - by :user:`masenf`. (:issue:`2386`)
+
+Bugfixes - 4.4.0
+~~~~~~~~~~~~~~~~
+- When parsing command lines, use ``shlex(..., posix=True)``, even on windows platforms, since non-POSIX mode does not
+  handle escape characters and quoting like a shell would. This improves cross-platform configurations without hacks or
+  esoteric quoting.
+
+  To make this transition easier, on Windows, the backslash path separator will not treated as an escape character unless
+  it preceeds a quote, whitespace, or another backslash chracter. This allows paths to mostly be written in single or
+  double backslash style.
+
+  Note that **double-backslash will no longer be escaped to a single backslash in substitutions**, instead the double
+  backslash will be consumed as part of command splitting, on either posix or windows platforms.
+
+  In some instances superfluous double or single quote characters may be stripped from arg arrays in ways that do not
+  occur in the default windows ``cmd.exe`` shell - by :user:`masenf`. (:issue:`2635`)
+
+Improved Documentation - 4.4.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add infromation when command from ``list_dependencies_command`` configuration option is used. (:issue:`2883`)
+
+
 v4.3.5 (2023-01-18)
 -------------------
 
