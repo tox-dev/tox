@@ -60,7 +60,7 @@ Bugfixes - 4.4.0
 
 Improved Documentation - 4.4.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Add infromation when command from ``list_dependencies_command`` configuration option is used. (:issue:`2883`)
+- Add information when command from ``list_dependencies_command`` configuration option is used. (:issue:`2883`)
 
 
 v4.3.5 (2023-01-18)
