@@ -132,6 +132,18 @@ def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inlin
             ["A", "B", "D"],
             id="deps_with_two_recursive_extra",
         ),
+        pytest.param(
+            dedent(
+                """
+                [project]
+                name='foo'
+                optional-dependencies.alpha=['foo[beta]', 'A']
+                optional-dependencies.beta=['foo[alpha]', 'B']""",
+            ),
+            "alpha",
+            ["A", "B"],
+            id="deps_with_circular_recursive_extra",
+        ),
     ],
 )
 def test_pyproject_deps_from_static(

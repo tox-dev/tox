@@ -8,7 +8,14 @@ from packaging.requirements import Requirement
 
 
 def dependencies_with_extras(deps: list[Requirement], extras: set[str], package_name: str) -> list[Requirement]:
-    deps_with_markers = extract_extra_markers(deps)
+    return dependencies_with_extras_from_markers(extract_extra_markers(deps), extras, package_name)
+
+
+def dependencies_with_extras_from_markers(
+    deps_with_markers: list[tuple[Requirement, set[str | None]]],
+    extras: set[str],
+    package_name: str,
+) -> list[Requirement]:
     result: list[Requirement] = []
     found: set[str] = set()
     todo: set[str | None] = extras | {None}
