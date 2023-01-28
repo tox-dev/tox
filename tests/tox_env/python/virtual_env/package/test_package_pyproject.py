@@ -98,6 +98,18 @@ def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inlin
                 """
                 [project]
                 name='foo'
+                dependencies=['foo[alpha]']
+                optional-dependencies.alpha=['A']""",
+            ),
+            "",
+            ["A"],
+            id="deps_reference_extra",
+        ),
+        pytest.param(
+            dedent(
+                """
+                [project]
+                name='foo'
                 dependencies=['A']
                 optional-dependencies.alpha=['B']
                 optional-dependencies.beta=['foo[alpha]']""",
