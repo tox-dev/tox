@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -91,6 +92,57 @@ def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inlin
             "",
             ["A"],
             id="deps_with_dynamic_optional_no_extra",
+        ),
+        pytest.param(
+            dedent(
+                """
+                [project]
+                name='foo'
+                dependencies=['foo[alpha]']
+                optional-dependencies.alpha=['A']""",
+            ),
+            "",
+            ["A"],
+            id="deps_reference_extra",
+        ),
+        pytest.param(
+            dedent(
+                """
+                [project]
+                name='foo'
+                dependencies=['A']
+                optional-dependencies.alpha=['B']
+                optional-dependencies.beta=['foo[alpha]']""",
+            ),
+            "beta",
+            ["A", "B"],
+            id="deps_with_recursive_extra",
+        ),
+        pytest.param(
+            dedent(
+                """
+                [project]
+                name='foo'
+                dependencies=['A']
+                optional-dependencies.alpha=['B']
+                optional-dependencies.beta=['foo[alpha]']
+                optional-dependencies.delta=['foo[beta]', 'D']""",
+            ),
+            "delta",
+            ["A", "B", "D"],
+            id="deps_with_two_recursive_extra",
+        ),
+        pytest.param(
+            dedent(
+                """
+                [project]
+                name='foo'
+                optional-dependencies.alpha=['foo[beta]', 'A']
+                optional-dependencies.beta=['foo[alpha]', 'B']""",
+            ),
+            "alpha",
+            ["A", "B"],
+            id="deps_with_circular_recursive_extra",
         ),
     ],
 )

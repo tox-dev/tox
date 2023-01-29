@@ -33,7 +33,7 @@ from tox.tox_env.runner import RunToxEnv
 from tox.util.file_view import create_session_view
 
 from ..api import VirtualEnv
-from .util import dependencies_with_extras
+from .util import dependencies_with_extras, dependencies_with_extras_from_markers
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution
@@ -253,11 +253,17 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             if dynamic == "dependencies" or (extras and dynamic == "optional-dependencies"):
                 return None  # if any dependencies are dynamic we can just calculate all dynamically
 
-        deps: list[Requirement] = [Requirement(i) for i in project.get("dependencies", [])]
+        deps_with_markers: list[tuple[Requirement, set[str | None]]] = [
+            (Requirement(i), {None}) for i in project.get("dependencies", [])
+        ]
         optional_deps = project.get("optional-dependencies", {})
-        for extra in extras:
-            deps.extend(Requirement(i) for i in optional_deps.get(extra, []))
-        return deps
+        for extra, reqs in optional_deps.items():
+            deps_with_markers.extend((Requirement(req), {extra}) for req in (reqs or []))
+        return dependencies_with_extras_from_markers(
+            deps_with_markers=deps_with_markers,
+            extras=extras,
+            package_name=project.get("name", "."),
+        )
 
     def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
         # dependencies might depend on the python environment we're running in => if we build a wheel use that env
