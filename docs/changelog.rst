@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.3 (2023-01-30)
+-------------------
+
+Bugfixes - 4.4.3
+~~~~~~~~~~~~~~~~
+- Tox will now expand self-referential extras discovered in package deps to respect local modifications to package
+  metadata. This allows a package extra to explicitly depend on another package extra, which previously only worked with
+  non-static metadata - by :user:`masenf`. (:issue:`2904`)
+
+
 v4.4.2 (2023-01-25)
 -------------------
 
