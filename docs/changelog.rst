@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.4 (2023-01-31)
+-------------------
+
+Bugfixes - 4.4.4
+~~~~~~~~~~~~~~~~
+- Forward ``HOME`` by default - by :user:`gschaffner`. (:issue:`2702`)
+
+
 v4.4.3 (2023-01-30)
 -------------------
 

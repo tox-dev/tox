@@ -1,1 +1,0 @@
-Forward ``HOME`` by default - by :user:`gschaffner`.
