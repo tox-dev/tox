@@ -218,6 +218,7 @@ class ToxEnv(ABC):
             "CPPFLAGS",  # C++ compiler flags
             "LD_LIBRARY_PATH",  # location of libs
             "LDFLAGS",  # linker flags
+            "HOME",  # needed for `os.path.expanduser()` on non-Windows systems
         ]
         if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
             env.append("TERM")
