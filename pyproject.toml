@@ -1,71 +1,30 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.12.2", "hatch-vcs>=0.3"]
+requires = [
+  "hatch-vcs>=0.3",
+  "hatchling>=1.12.2",
+]
 
 [project]
 name = "tox"
 description = "tox is a generic virtualenv management and test command line tool"
-readme.file = "README.md"
 readme.content-type = "text/markdown"
-keywords = ["virtual", "environments", "isolated", "testing"]
+readme.file = "README.md"
+keywords = [
+  "environments",
+  "isolated",
+  "testing",
+  "virtual",
+]
 license = "MIT"
-urls.Homepage = "http://tox.readthedocs.org"
-urls.Documentation = "https://tox.wiki"
-urls.Source = "https://github.com/tox-dev/tox"
-urls.Tracker = "https://github.com/tox-dev/tox/issues"
-urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
-authors = [{ name = "Bernát Gábor", email = "gaborjbernat@gmail.com" }]
 maintainers = [
   { name = "Anthony Sottile", email = "asottile@umich.edu" },
   { name = "Bernát Gábor", email = "gaborjbernat@gmail.com" },
   { name = "Jürgen Gmach", email = "juergen.gmach@googlemail.com" },
   { name = "Oliver Bestwalter", email = "oliver@bestwalter.de" },
 ]
+authors = [{ name = "Bernát Gábor", email = "gaborjbernat@gmail.com" }]
 requires-python = ">=3.7"
-dependencies = [
-  "cachetools>=5.2.1",
-  "chardet>=5.1",
-  "colorama>=0.4.6",
-  "packaging>=23",
-  "platformdirs>=2.6.2",
-  "pluggy>=1",
-  "pyproject-api>=1.5",
-  'tomli>=2.0.1; python_version < "3.11"',
-  "virtualenv>=20.17.1",
-  "filelock>=3.9",
-  'importlib-metadata>=6; python_version < "3.8"',
-  'typing-extensions>=4.4; python_version < "3.8"',
-]
-optional-dependencies.docs = [
-  "furo>=2022.12.7",
-  "sphinx>=6.1.3",
-  "sphinx-argparse-cli>=1.11",
-  "sphinx-autodoc-typehints>=1.20.1",
-  "sphinx-copybutton>=0.5.1",
-  "sphinx-inline-tabs>=2022.1.2b11",
-  "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=22.12",
-]
-optional-dependencies.testing = [
-  "build[virtualenv]>=0.9",
-  "covdefaults>=2.2.2",
-  "devpi-process>=0.3",
-  "diff-cover>=7.3",
-  "distlib>=0.3.6",
-  "flaky>=3.7",
-  "hatch-vcs>=0.3",
-  "hatchling>=1.12.2",
-  "psutil>=5.9.4",
-  "pytest>=7.2",
-  "pytest-cov>=4",
-  "pytest-mock>=3.10",
-  "pytest-xdist>=3.1",
-  "re-assert>=1.1",
-  "wheel>=0.38.4",
-  "time-machine>=2.8.2; implementation_name != \"pypy\"",
-]
-scripts.tox = "tox.run:run"
-dynamic = ["version"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: tox",
@@ -85,6 +44,58 @@ classifiers = [
   "Topic :: Software Development :: Testing",
   "Topic :: Utilities",
 ]
+dynamic = [
+  "version",
+]
+dependencies = [
+  "cachetools>=5.3",
+  "chardet>=5.1",
+  "colorama>=0.4.6",
+  "filelock>=3.9",
+  'importlib-metadata>=6; python_version < "3.8"',
+  "packaging>=23",
+  "platformdirs>=2.6.2",
+  "pluggy>=1",
+  "pyproject-api>=1.5",
+  'tomli>=2.0.1; python_version < "3.11"',
+  'typing-extensions>=4.4; python_version < "3.8"',
+  "virtualenv>=20.17.1",
+]
+optional-dependencies.docs = [
+  "furo>=2022.12.7",
+  "sphinx>=6.1.3",
+  "sphinx-argparse-cli>=1.11",
+  "sphinx-autodoc-typehints!=1.23.4,>=1.22",
+  "sphinx-copybutton>=0.5.1",
+  "sphinx-inline-tabs>=2022.1.2b11",
+  "sphinxcontrib-towncrier>=0.2.1a0",
+  "towncrier>=22.12",
+]
+optional-dependencies.testing = [
+  "build[virtualenv]>=0.10",
+  "covdefaults>=2.2.2",
+  "devpi-process>=0.3",
+  "diff-cover>=7.4",
+  "distlib>=0.3.6",
+  "flaky>=3.7",
+  "hatch-vcs>=0.3",
+  "hatchling>=1.12.2",
+  "psutil>=5.9.4",
+  "pytest>=7.2.1",
+  "pytest-cov>=4",
+  "pytest-mock>=3.10",
+  "pytest-xdist>=3.1",
+  "re-assert>=1.1",
+  'time-machine>=2.8.2; implementation_name != "pypy"',
+  "wheel>=0.38.4",
+]
+urls.Documentation = "https://tox.wiki"
+urls.Homepage = "http://tox.readthedocs.org"
+urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
+urls.Source = "https://github.com/tox-dev/tox"
+urls.Tracker = "https://github.com/tox-dev/tox/issues"
+scripts.tox = "tox.run:run"
+
 
 [tool.hatch]
 build.dev-mode-dirs = ["src"]

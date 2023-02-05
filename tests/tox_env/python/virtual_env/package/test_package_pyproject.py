@@ -198,7 +198,6 @@ def test_pyproject_deps_static_with_dynamic(
     dynamic: str,
     deps: list[str],
 ) -> None:
-
     monkeypatch.setenv("METADATA_EXTRA", metadata)
     toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}[project]\ndynamic={dynamic}"
     ini = "[testenv]\nextras=alpha\n[testenv:.pkg]\npass_env=METADATA_EXTRA"
