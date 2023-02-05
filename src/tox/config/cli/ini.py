@@ -33,7 +33,6 @@ class IniConfig:
         if self.has_config_file:
             self.config_file = self.config_file.absolute()
             try:
-
                 parser = ConfigParser(interpolation=None)
                 with self.config_file.open() as file_handler:
                     parser.read_file(file_handler)

@@ -9,7 +9,6 @@ from tox.plugin import impl
 from .env_select import EnvSelector
 
 if TYPE_CHECKING:
-
     from tox.config.cli.parse import Options
     from tox.config.cli.parser import ToxParser
 

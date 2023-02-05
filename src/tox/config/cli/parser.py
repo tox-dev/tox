@@ -178,13 +178,13 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self.handlers[cmd] = content
         for alias in aliases:
             self.handlers[alias] = content
-        for (args, of_type, kwargs) in self._arguments:
+        for args, of_type, kwargs in self._arguments:
             sub_parser.add_argument(*args, of_type=of_type, **kwargs)
-        for (args, kwargs, excl) in self._groups:
+        for args, kwargs, excl in self._groups:
             group = sub_parser.add_argument_group(*args, **kwargs)
-            for (e_kwargs, arguments) in excl:
+            for e_kwargs, arguments in excl:
                 excl_group = group.add_mutually_exclusive_group(**e_kwargs)
-                for (a_args, _, a_kwargs) in arguments:
+                for a_args, _, a_kwargs in arguments:
                     excl_group.add_argument(*a_args, **a_kwargs)
         return sub_parser
 

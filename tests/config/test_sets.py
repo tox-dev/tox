@@ -142,7 +142,6 @@ def test_config_dynamic_not_equal(conf_builder: ConfBuilder) -> None:
 
 def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     class MagicConfigSet(ConfigSet):
-
         SECTION = Section(None, "magic")
 
         def register_config(self) -> None:
