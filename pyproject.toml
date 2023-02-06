@@ -86,7 +86,7 @@ optional-dependencies.testing = [
   "pytest-mock>=3.10",
   "pytest-xdist>=3.1",
   "re-assert>=1.1",
-  'time-machine>=2.8.2; implementation_name != "pypy"',
+  'time-machine>=2.9; implementation_name != "pypy"',
   "wheel>=0.38.4",
 ]
 urls.Documentation = "https://tox.wiki"
