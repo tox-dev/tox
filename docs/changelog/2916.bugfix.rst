@@ -1,3 +1,0 @@
-Ignore labels when tox will provision a runtime environment (``.tox``) so that environment configurations which depend
-on provisioned plugins or specific tox versions are not accessed in the outer tox process where the configuration would
-be invalid - by :user:`masenf`.

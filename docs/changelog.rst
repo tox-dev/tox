@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.5 (2023-02-07)
+-------------------
+
+Bugfixes - 4.4.5
+~~~~~~~~~~~~~~~~
+- Ignore labels when tox will provision a runtime environment (``.tox``) so that environment configurations which depend
+  on provisioned plugins or specific tox versions are not accessed in the outer tox process where the configuration would
+  be invalid - by :user:`masenf`. (:issue:`2916`)
+
+
 v4.4.4 (2023-01-31)
 -------------------
 
