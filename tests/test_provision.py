@@ -195,14 +195,21 @@ def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
 def test_provision_plugin_runner(tox_project: ToxProjectCreator, tmp_path: Path, plugin_testenv: str) -> None:
     """Ensure that testenv runner doesn't affect the provision env."""
     log = tmp_path / "out.log"
-    proj = tox_project({"tox.ini": f"[tox]\nrequires=demo-pkg-inline\n[{plugin_testenv}]\nrunner=example"})
-    result_first = proj.run("r", "-e", "py", "--result-json", str(log))
-    result_first.assert_success()
+    proj = tox_project(
+        {"tox.ini": f"[tox]\nrequires=demo-pkg-inline\nlabels=l=py\n[{plugin_testenv}]\nrunner=example"},
+    )
     prov_msg = (
         f"ROOT: will run in automatically provisioned tox, host {sys.executable} is missing"
         f" [requires (has)]: demo-pkg-inline"
     )
-    assert prov_msg in result_first.out
+
+    result_env = proj.run("r", "-e", "py", "--result-json", str(log))
+    result_env.assert_success()
+    assert prov_msg in result_env.out
+
+    result_label = proj.run("r", "-m", "l", "--result-json", str(log))
+    result_label.assert_success()
+    assert prov_msg in result_label.out
 
 
 @pytest.mark.integration()
