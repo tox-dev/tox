@@ -315,7 +315,8 @@ class EnvSelector:
         if labels or factors:
             for env_info in self._defined_envs_.values():
                 env_info.is_active = False  # if any was selected reset
-            if labels:
+            # ignore labels when provisioning will occur
+            if labels and (self._provision is None or not self._provision[0]):
                 for label in labels:
                     for env_name in self._state.conf.core["labels"].get(label, []):
                         self._defined_envs_[env_name].is_active = True
