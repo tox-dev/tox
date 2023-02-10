@@ -306,3 +306,45 @@ Access full logs
 
 If you want to access the full logs you need to write ``-q`` and ``-v`` as
 individual tox arguments and avoid combining them into a single one.
+
+Running within a Docker container
+---------------------------------
+
+If you want to run tox within a Docker container you can use `31z4/tox <https://hub.docker.com/r/31z4/tox>`_.
+This Docker image neatly packages tox along with common build dependencies (e.g., ``make``, ``gcc``, etc) and currently
+`active CPython versions <https://devguide.python.org/versions/#status-of-python-versions>`_. See more details in
+its `GitHub repository <https://github.com/31z4/tox-docker>`_.
+
+The recommended way of using the image is to mount the directory that contains your tox configuration files and your
+code as a volume. Assuming your project is within the current directory of the host, use the following command to run
+tox without any flags:
+
+.. code-block:: shell
+
+    docker run -v `pwd`:/home/tox/tests -it --rm 31z4/tox
+
+Because an entry point of the image is ``tox``, you can easily pass subcommands and flags:
+
+.. code-block:: shell
+
+    docker run -v `pwd`:/home/tox/tests -it --rm 31z4/tox run-parallel -e black,py311
+
+Note, that the image is configured with a working directory at ``/home/tox/tests``.
+
+If you want to install additional Python versions/implementations or Ubuntu packages you can create a derivative image.
+Just make sure you switch the user to ``root`` when needed and switch back to ``tox`` afterwards:
+
+.. code-block:: Dockerfile
+
+    FROM 31z4/tox
+
+    USER root
+
+    RUN set -eux; \
+        apt-get update; \
+        DEBIAN_FRONTEND=noninteractive \
+        apt-get install -y --no-install-recommends \
+            python3.12; \
+        rm -rf /var/lib/apt/lists/*
+
+    USER tox
