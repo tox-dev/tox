@@ -40,8 +40,13 @@ class IniSource(Source):
             yield IniSection.from_key(section)
 
     def get_loader(self, section: Section, override_map: OverrideMap) -> IniLoader | None:
-        sections = self._section_mapping.get(section.name)
-        key = sections[0] if sections else section.key
+        # look up requested section name in the generative testenv mapping to find the real config source
+        for key in self._section_mapping.get(section.name) or []:
+            if section.prefix is None or Section.from_key(key).prefix == section.prefix:
+                break
+        else:
+            # if no matching section/prefix is found, use the requested section key as-is (for custom prefixes)
+            key = section.key
         if self._parser.has_section(key):
             return IniLoader(
                 section=section,
