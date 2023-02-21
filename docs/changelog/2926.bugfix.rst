@@ -1,2 +1,0 @@
-Plugins are now able to access tox.ini config sections using a custom prefix with the same suffix / name as a tox
-``testenv`` - by :user:`masenf`

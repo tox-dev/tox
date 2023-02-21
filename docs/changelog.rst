@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.6 (2023-02-21)
+-------------------
+
+Bugfixes - 4.4.6
+~~~~~~~~~~~~~~~~
+- Plugins are now able to access tox.ini config sections using a custom prefix with the same suffix / name as a tox
+  ``testenv`` - by :user:`masenf` (:issue:`2926`)
+
+
 v4.4.5 (2023-02-07)
 -------------------
 
