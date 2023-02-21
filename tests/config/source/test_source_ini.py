@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tests.conftest import ToxIniCreator
 from tox.config.loader.section import Section
+from tox.config.sets import ConfigSet
 from tox.config.source.ini import IniSource
 
 
@@ -22,3 +24,27 @@ def test_source_ini_ignore_invalid_factor_filters(tmp_path: Path) -> None:
     loader = IniSource(tmp_path, content="[a]\nb= if c: d")
     res = list(loader.envs({"env_list": []}))  # type: ignore
     assert not res
+
+
+def test_source_ini_custom_non_testenv_sections(tox_ini_conf: ToxIniCreator) -> None:
+    """Validate that a plugin can load section with custom prefix overlapping testenv name."""
+
+    class CustomConfigSet(ConfigSet):
+        def register_config(self) -> None:
+            self.add_config(
+                keys=["a"],
+                of_type=str,
+                default="",
+                desc="d",
+            )
+
+    config = tox_ini_conf("[testenv:foo]\n[custom:foo]\na = b")
+    known_envs = list(config._src.envs(config.core))
+    assert known_envs
+    custom_section = config.get_section_config(
+        section=Section("custom", "foo"),
+        base=[],
+        of_type=CustomConfigSet,
+        for_env=None,
+    )
+    assert custom_section["a"] == "b"
