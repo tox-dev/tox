@@ -280,7 +280,7 @@ def test_skip_pkg_install(tox_project: ToxProjectCreator, demo_pkg_inline: Path)
 def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\n"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("--root", str(demo_pkg_setuptools), "--develop")
+    result = proj.run("--root", str(demo_pkg_setuptools), "--develop", "--workdir", str(proj.path / ".tox"))
     result.assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     expected = [
@@ -430,7 +430,7 @@ def test_sequential_inserted_env_vars(tox_project: ToxProjectCreator, demo_pkg_i
                         k.startswith("TOX_") or k == "VIRTUAL_ENV"]'
     """
     project = tox_project({"tox.ini": ini})
-    result = project.run("r", "--root", str(demo_pkg_inline))
+    result = project.run("r", "--root", str(demo_pkg_inline), "--workdir", str(project.path / ".tox"))
     result.assert_success()
 
     assert re.search(f"TOX_PACKAGE={re.escape(str(project.path))}.*.tar.gz{os.linesep}", result.out)
