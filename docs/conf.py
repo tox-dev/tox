@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
-from datetime import date, datetime
+from datetime import date
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from subprocess import check_output
@@ -26,7 +26,7 @@ copyright = f"2010-{date.today().year}, {company}"
 master_doc, source_suffix = "index", ".rst"
 
 html_theme = "furo"
-html_title, html_last_updated_fmt = "tox", datetime.now().isoformat()
+html_title, html_last_updated_fmt = "tox", "%Y-%m-%dT%H:%M:%S"
 pygments_style, pygments_dark_style = "sphinx", "monokai"
 html_static_path, html_css_files = ["_static"], ["custom.css"]
 html_logo, html_favicon = "_static/img/tox.svg", "_static/img/toxfavi.ico"
