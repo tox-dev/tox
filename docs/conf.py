@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
-from datetime import date
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from subprocess import check_output
@@ -22,7 +21,7 @@ from tox import __version__
 
 company, name = "tox-dev", "tox"
 release, version = __version__, ".".join(__version__.split(".")[:2])
-copyright = f"2010-{date.today().year}, {company}"
+copyright = f"{company}"
 master_doc, source_suffix = "index", ".rst"
 
 html_theme = "furo"
