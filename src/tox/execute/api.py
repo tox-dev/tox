@@ -121,7 +121,11 @@ class Execute(ABC):
             # collector is what forwards the content from the file streams to the standard streams
             out, err = out_err[0].buffer, out_err[1].buffer
             out_sync = SyncWrite(out.name, out if show else None)
-            err_sync = SyncWrite(err.name, err if show else None, Fore.RED if self._colored else None)
+            err_sync = SyncWrite(
+                err.name,
+                err if show else None,
+                Fore.LIGHTBLACK_EX if self._colored else None,  # noqa: SC200
+            )
             with out_sync, err_sync:
                 instance = self.build_instance(request, self._option_class(env), out_sync, err_sync)
                 with instance as status:
@@ -254,7 +258,7 @@ class Outcome:
                 if not self.out.endswith("\n"):
                     sys.stdout.write("\n")
             if self.err:
-                sys.stderr.write(Fore.RED)
+                sys.stderr.write(Fore.LIGHTBLACK_EX)  # noqa: SC200
                 sys.stderr.write(self.err)
                 sys.stderr.write(Fore.RESET)
                 if not self.err.endswith("\n"):

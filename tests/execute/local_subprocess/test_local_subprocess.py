@@ -67,7 +67,7 @@ def test_local_execute_basic_pass(
     out_got, err_got = out_err.read_out_err()
     if show:
         assert out_got == out
-        expected = (f"{Fore.RED}{err}{Fore.RESET}" if color else err) if err else ""
+        expected = (f"{Fore.LIGHTBLACK_EX}{err}{Fore.RESET}" if color else err) if err else ""
         assert err_got == expected
     else:
         assert not out_got
@@ -179,7 +179,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
 
     out, err = capsys.readouterr()
     assert out == "out\n"
-    expected = f"{Fore.RED}err{Fore.RESET}\n"
+    expected = f"{Fore.LIGHTBLACK_EX}err{Fore.RESET}\n"
     assert err == expected
 
     assert len(caplog.records) == 1
