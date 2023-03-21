@@ -2,7 +2,7 @@
 build-backend = "hatchling.build"
 requires = [
   "hatch-vcs>=0.3",
-  "hatchling>=1.12.2",
+  "hatchling>=1.13",
 ]
 
 [project]
@@ -51,15 +51,15 @@ dependencies = [
   "cachetools>=5.3",
   "chardet>=5.1",
   "colorama>=0.4.6",
-  "filelock>=3.9",
-  'importlib-metadata>=6; python_version < "3.8"',
+  "filelock>=3.10",
+  'importlib-metadata>=6.1; python_version < "3.8"',
   "packaging>=23",
-  "platformdirs>=2.6.2",
+  "platformdirs>=3.1.1",
   "pluggy>=1",
-  "pyproject-api>=1.5",
+  "pyproject-api>=1.5.1",
   'tomli>=2.0.1; python_version < "3.11"',
-  'typing-extensions>=4.4; python_version < "3.8"',
-  "virtualenv>=20.17.1",
+  'typing-extensions>=4.5; python_version < "3.8"',
+  "virtualenv>=20.21",
 ]
 optional-dependencies.docs = [
   "furo>=2022.12.7",
@@ -73,21 +73,21 @@ optional-dependencies.docs = [
 ]
 optional-dependencies.testing = [
   "build[virtualenv]>=0.10",
-  "covdefaults>=2.2.2",
+  "covdefaults>=2.3",
   "devpi-process>=0.3",
-  "diff-cover>=7.4",
+  "diff-cover>=7.5",
   "distlib>=0.3.6",
   "flaky>=3.7",
   "hatch-vcs>=0.3",
-  "hatchling>=1.12.2",
+  "hatchling>=1.13",
   "psutil>=5.9.4",
-  "pytest>=7.2.1",
+  "pytest>=7.2.2",
   "pytest-cov>=4",
   "pytest-mock>=3.10",
-  "pytest-xdist>=3.1",
+  "pytest-xdist>=3.2.1",
   "re-assert>=1.1",
   'time-machine>=2.9; implementation_name != "pypy"',
-  "wheel>=0.38.4",
+  "wheel>=0.40",
 ]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"

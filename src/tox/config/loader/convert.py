@@ -71,13 +71,13 @@ class Convert(ABC, Generic[T]):
         elif origin == Union:  # handle Optional values
             args: list[type[Any]] = of_type.__args__  # type: ignore[attr-defined]
             none = type(None)
-            if len(args) == 2 and none in args:
+            if len(args) == 2 and none in args:  # type: ignore[comparison-overlap]
                 if isinstance(raw, str):
                     raw = raw.strip()  # type: ignore[assignment]
                 if not raw:
                     result = None
                 else:
-                    new_type = next(i for i in args if i != none)  # pragma: no cover # this will always find a element
+                    new_type = next(i for i in args if i != none)  # type: ignore # pragma: no cover
                     result = self.to(raw, new_type, factory)
         elif origin in (Literal, type(Literal)):
             choice = of_type.__args__  # type: ignore[attr-defined]

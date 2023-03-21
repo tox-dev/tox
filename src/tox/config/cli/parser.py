@@ -203,11 +203,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                     excl.append((e_kwargs, arguments))
                     res_excl = prev_excl(**kwargs)
                     prev_add_arg = res_excl.add_argument
-                    res_excl.add_argument = add_argument  # type: ignore[assignment]
+                    res_excl.add_argument = add_argument  # type: ignore[method-assign]
                     return res_excl
 
                 prev_excl = result.add_mutually_exclusive_group
-                result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[assignment]
+                result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[method-assign]
                 excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
                 self._groups.append((args, kwargs, excl))
         return result

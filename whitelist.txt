@@ -156,6 +156,7 @@ signum
 sigterm
 skipif
 splitter
+stacklevel
 statemachine
 string2lines
 stringify

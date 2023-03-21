@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Optional, Set, cast
 
-from packaging.markers import Marker, Op, Value, Variable  # type: ignore[attr-defined]
+from packaging.markers import Marker, Op, Variable  # type: ignore[attr-defined]
 from packaging.requirements import Requirement
 
 
@@ -72,7 +72,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
     return req, cast(Set[Optional[str]], extra_markers) or {None}
 
 
-def _get_extra(_marker: str | tuple[Variable, Op, Value]) -> str | None:
+def _get_extra(_marker: str | tuple[Variable, Op, Variable]) -> str | None:
     if isinstance(_marker, tuple) and len(_marker) == 3 and _marker[0].value == "extra" and _marker[1].value == "==":
-        return cast(str, _marker[2].value)
+        return _marker[2].value
     return None
