@@ -41,11 +41,11 @@ class _LogThreadLocal(local):
             self.parent_ident = current_thread().ident  # type: ignore[attr-defined]
             old_start(self)
 
-        old_start, Thread.start = Thread.start, new_start  # type: ignore[assignment]
+        old_start, Thread.start = Thread.start, new_start  # type: ignore[method-assign]
         try:
             yield
         finally:
-            Thread.start = old_start  # type: ignore[assignment]
+            Thread.start = old_start  # type: ignore[method-assign]
 
     @property
     def name(self) -> str:
