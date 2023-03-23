@@ -110,7 +110,7 @@ This will now result in a failure.
 Substitutions removed
 ---------------------
 
-- The ``distshare`` substitution has been removed.
+- The ``distshare`` and ``homedir`` substitutions have been removed.
 
 Disallowed env names
 --------------------
