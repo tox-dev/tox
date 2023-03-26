@@ -323,14 +323,14 @@ class RequirementsFile:
         if opt.find_links:
             # FIXME: it would be nice to keep track of the source of the find_links: support a find-links local path
             # relative to a requirements file.
-            if not hasattr(base_opt, "index_url"):  # pragma: no branch
+            if not hasattr(base_opt, "find_links"):
                 base_opt.find_links = []
             value = opt.find_links[0]
             req_dir = os.path.dirname(os.path.abspath(filename))
             relative_to_reqs_file = os.path.join(req_dir, value)
             if os.path.exists(relative_to_reqs_file):
                 value = relative_to_reqs_file  # pragma: no cover
-            if value not in base_opt.find_links:  # pragma: no branch
+            if value not in base_opt.find_links:
                 base_opt.find_links.append(value)
         if opt.pre:
             base_opt.pre = True
