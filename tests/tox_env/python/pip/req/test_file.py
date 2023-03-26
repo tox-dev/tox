@@ -59,6 +59,16 @@ _REQ_FILE_TEST_CASES = [
         ["-f", "http://some.archives.com/archives"],
         id="find-links url",
     ),
+    pytest.param(
+        "--index-url a --find-links http://some.archives.com/archives",
+        {
+            "index_url": ["a"],
+            "find_links": ["http://some.archives.com/archives"],
+        },
+        [],
+        ["-i", "a", "-f", "http://some.archives.com/archives"],
+        id="index and find",
+    ),
     pytest.param("-i a", {"index_url": ["a"]}, [], ["-i", "a"], id="index url short"),
     pytest.param("--index-url a", {"index_url": ["a"]}, [], ["-i", "a"], id="index url long"),
     pytest.param("-i a -i b\n-i c", {"index_url": ["c"]}, [], ["-i", "c"], id="index url multiple"),
