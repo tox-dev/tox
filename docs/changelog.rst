@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.8 (2023-03-26)
+-------------------
+
+Bugfixes - 4.4.8
+~~~~~~~~~~~~~~~~
+- ``tox.ini`` is now included in source distributions in order to make all tests pass. (:issue:`2939`)
+- Fix ``--index-url`` and ``--find-links`` being used together in ``requirements.txt`` files. (:issue:`2959`)
+
+
 v4.4.6 (2023-02-21)
 -------------------
 
