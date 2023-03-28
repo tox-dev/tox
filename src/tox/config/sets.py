@@ -188,23 +188,17 @@ class CoreConfigSet(ConfigSet):
             desc="the root directory (where the configuration file is found)",
         )
 
-        def work_dir_builder(conf: Config, env_name: str | None) -> Path:  # noqa: U100
-            return (conf.work_dir if conf.work_dir is not None else cast(Path, self["tox_root"])) / ".tox"
-
-        def work_dir_post_process(value: Path) -> Path:
-            return self._conf.work_dir if self._conf.options.work_dir else value
-
         self.add_config(
             keys=["work_dir", "toxworkdir"],
             of_type=Path,
-            default=work_dir_builder,
-            post_process=work_dir_post_process,
+            default=lambda *_: self["tox_root"] / ".tox",  # noqa: U101
+            post_process=lambda dir: self._conf.work_dir if self._conf.options.work_dir else dir,
             desc="working directory",
         )
         self.add_config(
             keys=["temp_dir"],
             of_type=Path,
-            default=lambda conf, _: cast(Path, self["work_dir"]) / ".tmp",  # noqa: U100, U101
+            default=lambda *_: self["work_dir"] / ".tmp",  # noqa: U101
             desc="a folder for temporary files (is not cleaned at start)",
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)
