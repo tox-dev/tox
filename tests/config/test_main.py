@@ -93,3 +93,11 @@ def test_relative_config_paths_resolve(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     expected = f"[testenv:py]\nchange_dir = {project.path}\nenv_dir = {project.path / '.tox' / 'py'}\n"
     assert result.out == expected
+
+
+def test_tox_root_propagates_to_work_dir(tox_project: ToxProjectCreator) -> None:
+    root_dir = "root"
+    project = tox_project({"tox.ini": "[tox]"})
+    result = project.run("c", "--root", root_dir)
+    result.assert_success()
+    assert result.state.conf.core["work_dir"].parent.name == root_dir
