@@ -179,6 +179,15 @@ class CoreConfigSet(ConfigSet):
         desc = "define environments to automatically run"
         self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
 
+    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: U100
+        return cast(Path, self["tox_root"] / ".tox")
+
+    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: U100
+        return cast(Path, self["work_dir"] / ".tmp")
+
+    def _work_dir_post_process(self, dir: Path) -> Path:
+        return self._conf.work_dir if self._conf.options.work_dir else dir
+
     def register_config(self) -> None:
         self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=self._src_path)
         self.add_config(
@@ -191,14 +200,14 @@ class CoreConfigSet(ConfigSet):
         self.add_config(
             keys=["work_dir", "toxworkdir"],
             of_type=Path,
-            default=lambda *_: self["tox_root"] / ".tox",  # noqa: U101
-            post_process=lambda dir: self._conf.work_dir if self._conf.options.work_dir else dir,
+            default=self._default_work_dir,
+            post_process=self._work_dir_post_process,
             desc="working directory",
         )
         self.add_config(
             keys=["temp_dir"],
             of_type=Path,
-            default=lambda *_: self["work_dir"] / ".tmp",  # noqa: U101
+            default=self._default_temp_dir,
             desc="a folder for temporary files (is not cleaned at start)",
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)
