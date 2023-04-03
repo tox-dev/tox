@@ -100,7 +100,7 @@ class SyncWrite:
     @property
     def text(self) -> str:
         with self._content_lock:
-            return self._content.decode("utf-8")
+            return self._content.decode("utf-8", errors="surrogateescape")
 
     @property
     def content(self) -> bytearray:
