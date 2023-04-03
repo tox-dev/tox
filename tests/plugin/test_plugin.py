@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -100,6 +101,33 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
         mocker.ANY,  # overall report
     ]
     assert result.out.splitlines() == expected, result.out
+
+
+@pytest.mark.parametrize(
+    "dir_name",
+    [
+        "tox_root",
+        "work_dir",
+        "temp_dir",
+    ],
+)
+def test_plugin_can_set_core_conf(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+    dir_name: str,
+    tmp_path: Path,
+) -> None:
+    @impl
+    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: U100
+        core_conf.loaders.insert(0, MemoryLoader(**{dir_name: tmp_path}))
+
+    register_inline_plugin(mocker, tox_add_core_config)
+
+    project = tox_project({})
+    result = project.run("c")
+    result.assert_success()
+
+    assert result.state.conf.core[dir_name] == tmp_path
 
 
 def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
