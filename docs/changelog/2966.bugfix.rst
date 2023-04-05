@@ -1,0 +1,1 @@
+Fixed an issue where a tox plugin couldn't change the value of ``tox_root``.

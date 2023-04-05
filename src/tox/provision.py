@@ -84,6 +84,11 @@ def provision(state: State) -> int | bool:
         desc="Name of the virtual environment used to provision a tox.",
         post_process=add_tox_requires_min_version,
     )
+
+    from tox.plugin.manager import MANAGER
+
+    MANAGER.tox_add_core_config(state.conf.core, state)
+
     requires: list[Requirement] = state.conf.core["requires"]
     missing = _get_missing(requires)
 
@@ -99,10 +104,6 @@ def provision(state: State) -> int | bool:
     provision_tox_env: str = state.conf.core["provision_tox_env"]
     state.conf.memory_seed_loaders[provision_tox_env].append(loader)
     state.envs._mark_provision(bool(missing), provision_tox_env)
-
-    from tox.plugin.manager import MANAGER
-
-    MANAGER.tox_add_core_config(state.conf.core, state)
 
     if not missing:
         return False
