@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.11 (2023-04-05)
+--------------------
+
+Bugfixes - 4.4.11
+~~~~~~~~~~~~~~~~~
+- Fixed an issue where a tox plugin couldn't change the value of ``tox_root``. (:issue:`2966`)
+
+
 v4.4.10 (2023-04-05)
 --------------------
 
