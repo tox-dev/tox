@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
       - id: black
         args: [--safe]
@@ -37,13 +37,13 @@ repos:
     rev: 1.13.0
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==23.1]
+        additional_dependencies: [black==23.3]
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
       - id: rst-backticks
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "0.6.1"
+    rev: "1.0.0"
     hooks:
       - id: tox-ini-fmt
         args: ["-p", "fix"]
@@ -52,7 +52,7 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - flake8-bugbear==23.3.12
+          - flake8-bugbear==23.3.23
           - flake8-comprehensions==3.11.1
           - flake8-pytest-style==1.7.2
           - flake8-spellcheck==0.28
