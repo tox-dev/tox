@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.10 (2023-04-05)
+--------------------
+
+Bugfixes - 4.4.10
+~~~~~~~~~~~~~~~~~
+- Fix issue where ``work_dir`` was not correctly including ``tox_root`` for test runs. (:issue:`2933`)
+
+
 v4.4.9 (2023-04-05)
 -------------------
 
