@@ -1,1 +1,1 @@
-Fix issue where ``work_dir`` was not correctly including ``tox_root`` for test runs
+Fix issue where ``work_dir`` was not correctly including ``tox_root`` for test runs.
