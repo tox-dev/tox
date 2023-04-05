@@ -1,1 +1,0 @@
-Added python version 3.11 to ``installation.rst``.

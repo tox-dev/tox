@@ -4,6 +4,21 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.9 (2023-04-05)
+-------------------
+
+Bugfixes - 4.4.9
+~~~~~~~~~~~~~~~~
+- Instead of raising ``UnicodeDecodeError`` when command output includes non-utf-8 bytes,
+  ``tox`` will now use ``surrogateescape`` error handling to convert the unrecognized bytes
+  to escape sequences according to :pep:`383` - by :user:`masenf`. (:issue:`2969`)
+
+Improved Documentation - 4.4.9
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document running tox within a Docker container. (:issue:`1035`)
+- Added python version 3.11 to ``installation.rst``. (:issue:`2964`)
+
+
 v4.4.8 (2023-03-26)
 -------------------
 

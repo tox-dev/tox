@@ -1,1 +1,0 @@
-Document running tox within a Docker container.
