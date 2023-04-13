@@ -1,1 +1,0 @@
-Avoid race conditions in tests using the ``demo_pkg_inline`` fixture.

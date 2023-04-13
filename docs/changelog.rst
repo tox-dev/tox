@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.4.12 (2023-04-13)
+--------------------
+
+Bugfixes - 4.4.12
+~~~~~~~~~~~~~~~~~
+- Avoid race conditions in tests using the ``demo_pkg_inline`` fixture. (:issue:`2985`)
+
+
 v4.4.11 (2023-04-05)
 --------------------
 
