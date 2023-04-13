@@ -11,6 +11,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch  # cannot import from tox.pytest yet
 from _pytest.tmpdir import TempPathFactory
 from distlib.scripts import ScriptMaker
+from filelock import FileLock
 from pytest_mock import MockerFixture
 from virtualenv import cli_run
 
@@ -77,8 +78,10 @@ def demo_pkg_setuptools() -> Path:
 
 
 @pytest.fixture(scope="session")
-def demo_pkg_inline() -> Path:
-    return HERE / "demo_pkg_inline"
+def demo_pkg_inline() -> Iterator[Path]:
+    demo_path = HERE / "demo_pkg_inline"
+    with FileLock(f"{demo_path}.lock"):
+        yield demo_path
 
 
 @pytest.fixture()
