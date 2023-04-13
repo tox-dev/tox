@@ -2,7 +2,7 @@
 build-backend = "hatchling.build"
 requires = [
   "hatch-vcs>=0.3",
-  "hatchling>=1.13",
+  "hatchling>=1.14",
 ]
 
 [project]
@@ -51,8 +51,8 @@ dependencies = [
   "cachetools>=5.3",
   "chardet>=5.1",
   "colorama>=0.4.6",
-  "filelock>=3.10.7",
-  'importlib-metadata>=6.1; python_version < "3.8"',
+  "filelock>=3.11",
+  'importlib-metadata>=6.2; python_version < "3.8"',
   "packaging>=23",
   "platformdirs>=3.2",
   "pluggy>=1",
@@ -79,7 +79,7 @@ optional-dependencies.testing = [
   "distlib>=0.3.6",
   "flaky>=3.7",
   "hatch-vcs>=0.3",
-  "hatchling>=1.13",
+  "hatchling>=1.14",
   "psutil>=5.9.4",
   "pytest>=7.2.2",
   "pytest-cov>=4",
