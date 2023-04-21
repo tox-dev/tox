@@ -348,3 +348,23 @@ Just make sure you switch the user to ``root`` when needed and switch back to ``
         rm -rf /var/lib/apt/lists/*
 
     USER tox
+
+
+Testing end-of-life Python versions
+-----------------------------------
+
+``tox`` uses ``virtualenv`` under its hood for managing virtual environments.
+
+`Virtualenv 20.22.0 <https://virtualenv.pypa.io/en/latest/changelog.html#v20-22-0-2023-04-19>`_
+dropped support for all Python versions smaller or equal to Python 3.6.
+
+If you need to test against e.g. Python 2.7, 3.5 or 3.6, you need to add the
+following ``requires`` statement to your ``tox.ini`` configuration files.
+
+.. code-block:: ini
+
+    [tox]
+    requires = virtualenv<20.22.0
+
+In case you need to do this for many repositories, we recommend to use
+`all-repos <https://github.com/asottile/all-repos>`_.
