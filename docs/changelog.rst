@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.5.0 (2023-04-24)
+-------------------
+
+Features - 4.5.0
+~~~~~~~~~~~~~~~~
+- When run with verbosity=1, the per-step timing summaries are suppressed at the
+  end of the run.  Thanks to :user:`nedbat` at the PyCon 2023 sprints. (:issue:`2891`)
+
+Improved Documentation - 4.5.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add FAQ entry on how to test EOL Python versions by :user:`jugmac00`. (:issue:`2989`)
+
+
 v4.4.12 (2023-04-13)
 --------------------
 

@@ -1,1 +1,0 @@
-Add FAQ entry on how to test EOL Python versions by :user:`jugmac00`.

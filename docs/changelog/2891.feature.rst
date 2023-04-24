@@ -1,2 +1,0 @@
-When run with verbosity=1, the per-step timing summaries are suppressed at the
-end of the run.  Thanks to :user:`nedbat` at the PyCon 2023 sprints.
