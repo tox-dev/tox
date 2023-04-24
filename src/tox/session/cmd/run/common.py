@@ -174,7 +174,7 @@ def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosit
     for run in runs:
         successful.append(run.code == Outcome.OK or run.ignore_outcome)
         skipped.append(run.skipped)
-        duration_individual = [o.elapsed for o in run.outcomes]
+        duration_individual = [o.elapsed for o in run.outcomes] if verbosity >= 2 else []
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if duration_individual else ""
         setup = run.duration - sum(duration_individual)
         msg, color = _get_outcome_message(run)
