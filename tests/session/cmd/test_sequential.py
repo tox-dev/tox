@@ -44,6 +44,16 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  a: FAIL code 1 \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-3]
 
 
+def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nenv_list=a\nno_package=true\n[testenv]\ncommands=python -V"
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("r", "-q", "-e", "a")
+    outcome.assert_success()
+    reports = outcome.out.splitlines()[-3:]
+    assert Matches(r"  congratulations :\) \(.* seconds\)") == reports[-1]
+    assert Matches(r"  a: OK \([\d.]+ seconds\)") == reports[-2]
+
+
 @pytest.mark.integration()
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
