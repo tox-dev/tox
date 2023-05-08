@@ -226,5 +226,5 @@ Current maintainers
 -  :user:`Anthony Sottile <asottile>`
 -  :user:`Bernát Gábor <gaborbernat>`
 -  :user:`Jürgen Gmach <jugmac00>`
--  :user:`Miroslav Šedivý <eumiro>`
+-  :user:`Masen Furer <masenf>`
 -  :user:`Oliver Bestwalter <obestwalter>`
