@@ -105,6 +105,7 @@ def legacy(state: State) -> int:
         return list_env(state)
     if option.devenv_path:
         option.devenv_path = Path(option.devenv_path)
+        option.env = option.env or CliEnv("py")
         return devenv(state)
     if option.parallel != 0:  # only 0 means sequential
         return run_parallel(state)

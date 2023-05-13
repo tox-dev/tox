@@ -78,13 +78,22 @@ def test_legacy_list_all(tox_project: ToxProjectCreator, mocker: MockerFixture, 
     assert outcome.state.conf.options.show_core is False
 
 
-def test_legacy_devenv(tox_project: ToxProjectCreator, mocker: MockerFixture, tmp_path: Path) -> None:
+@pytest.mark.parametrize("args", [(), ("-e", "py")])
+def test_legacy_devenv(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+    tmp_path: Path,
+    args: tuple[str, ...],
+) -> None:
     devenv = mocker.patch("tox.session.cmd.legacy.devenv")
     into = tmp_path / "b"
 
-    outcome = tox_project({"tox.ini": ""}).run("le", "--devenv", str(into), "-e", "py")
+    outcome = tox_project({"tox.ini": ""}).run("le", "--devenv", str(into), *args)
+
+    outcome.state.envs.ensure_only_run_env_is_active()
 
     assert devenv.call_count == 1
+    assert set(outcome.state.conf.options.env) == {"py"}
     assert outcome.state.conf.options.devenv_path == into
 
 
