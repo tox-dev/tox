@@ -78,14 +78,27 @@ def test_legacy_list_all(tox_project: ToxProjectCreator, mocker: MockerFixture, 
     assert outcome.state.conf.options.show_core is False
 
 
-def test_legacy_devenv(tox_project: ToxProjectCreator, mocker: MockerFixture, tmp_path: Path) -> None:
-    devenv = mocker.patch("tox.session.cmd.legacy.devenv")
+@pytest.mark.parametrize(
+    "args",
+    [
+        pytest.param((), id="empty"),
+        pytest.param(("-e", "py"), id="select"),
+    ],
+)
+def test_legacy_devenv(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+    tmp_path: Path,
+    args: tuple[str, ...],
+) -> None:
+    run_sequential = mocker.patch("tox.session.cmd.devenv.run_sequential")
     into = tmp_path / "b"
 
-    outcome = tox_project({"tox.ini": ""}).run("le", "--devenv", str(into), "-e", "py")
+    outcome = tox_project({"tox.ini": ""}).run("le", "--devenv", str(into), *args)
 
-    assert devenv.call_count == 1
+    assert run_sequential.call_count == 1
     assert outcome.state.conf.options.devenv_path == into
+    assert set(outcome.state.conf.options.env) == {"py"}
 
 
 def test_legacy_run_parallel(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:

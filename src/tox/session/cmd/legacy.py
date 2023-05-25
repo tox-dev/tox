@@ -104,6 +104,8 @@ def legacy(state: State) -> int:
     if option.list_envs or option.list_envs_all:
         return list_env(state)
     if option.devenv_path:
+        if option.env.is_default_list:
+            option.env = CliEnv(["py"])
         option.devenv_path = Path(option.devenv_path)
         return devenv(state)
     if option.parallel != 0:  # only 0 means sequential
