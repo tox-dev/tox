@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.5.1 (2023-05-25)
+-------------------
+
+Bugfixes - 4.5.1
+~~~~~~~~~~~~~~~~
+- Fix ``tox --devenv venv`` invocation without ``-e`` - by :user:`asottile`. (:issue:`2925`)
+
+
 v4.5.0 (2023-04-24)
 -------------------
 
