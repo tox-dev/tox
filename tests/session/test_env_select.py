@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
+from tox.config.cli.parse import get_options
 from tox.pytest import MonkeyPatch, ToxProjectCreator
+from tox.session.env_select import CliEnv, EnvSelector
+from tox.session.state import State
 
 
 def test_label_core_can_define(tox_project: ToxProjectCreator) -> None:
@@ -117,3 +120,11 @@ def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPa
     outcome = project.run("l", "--no-desc")
     outcome.assert_success()
     outcome.assert_out_err("ROOT: skip environment mypy, matches filter 'm[y]py'\npy310\npy39\n", "")
+
+
+def test_env_select_lazily_looks_at_envs() -> None:
+    state = State(get_options(), [])
+    env_selector = EnvSelector(state)
+    # late-assigning env should be reflected in env_selector
+    state.conf.options.env = CliEnv("py")
+    assert set(env_selector.iter()) == {"py"}
