@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import inspect
 import re
-from concurrent.futures import Future
 from configparser import ConfigParser, SectionProxy
-from contextlib import contextmanager
-from typing import TYPE_CHECKING, Generator, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
+from tox.config.loader.convert import Factory
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import replace
 from tox.config.loader.section import Section
@@ -57,16 +56,15 @@ class IniLoader(StrConvert, Loader[str]):
         collapsed = factor_filtered.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
         return collapsed
 
-    @contextmanager
     def build(
         self,
-        future: Future[V],
         key: str,
         of_type: type[V],
+        factory: Factory[V],
         conf: Config | None,
         raw: str,
         args: ConfigLoadArgs,
-    ) -> Generator[str, None, None]:
+    ) -> V:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
 
         def replacer(raw_: str, args_: ConfigLoadArgs) -> str:
@@ -83,12 +81,11 @@ class IniLoader(StrConvert, Loader[str]):
                     raise HandledError(msg) from exception
             return replaced
 
-        if not delay_replace:
-            raw = replacer(raw, args)
-        yield raw
+        prepared = replacer(raw, args) if not delay_replace else raw
+        converted = self.to(prepared, of_type, factory)
         if delay_replace:
-            converted = future.result()
             converted.use_replacer(replacer, args)  # type: ignore[attr-defined] # this can be only set_env that has it
+        return converted
 
     def found_keys(self) -> set[str]:
         return set(self._section_proxy.keys())

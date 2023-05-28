@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from argparse import ArgumentTypeError
-from concurrent.futures import Future
-from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Generator, List, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, List, Mapping, TypeVar
 
 from tox.plugin import impl
 
@@ -122,22 +120,17 @@ class Loader(Convert[T]):
         if key in self.overrides:
             return _STR_CONVERT.to(self.overrides[key].value, of_type, factory)
         raw = self.load_raw(key, conf, args.env_name)
-        future: Future[V] = Future()
-        with self.build(future, key, of_type, conf, raw, args) as prepared:
-            converted = self.to(prepared, of_type, factory)
-            future.set_result(converted)
-        return converted
+        return self.build(key, of_type, factory, conf, raw, args)
 
-    @contextmanager
     def build(
         self,
-        future: Future[V],  # noqa: U100
         key: str,  # noqa: U100
-        of_type: type[V],  # noqa: U100
+        of_type: type[V],
+        factory: Factory[V],
         conf: Config | None,  # noqa: U100
         raw: T,
         args: ConfigLoadArgs,  # noqa: U100
-    ) -> Generator[T, None, None]:
+    ) -> V:
         """
         Materialize the raw configuration value from the loader.
 
@@ -148,7 +141,7 @@ class Loader(Convert[T]):
         :param raw: the raw value
         :param args: env args
         """
-        yield raw
+        return self.to(raw, of_type, factory)
 
 
 @impl
