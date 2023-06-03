@@ -10,6 +10,7 @@ from tox.config.loader.api import Override
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.env_select import CliEnv
 from tox.session.state import State
+from tox.util.ci import is_ci
 
 
 def test_verbose() -> None:
@@ -63,6 +64,7 @@ def test_verbose_no_test() -> None:
         "factors": [],
         "labels": [],
         "skip_env": "",
+        "list_dependencies": is_ci(),
     }
 
 
@@ -121,6 +123,7 @@ def test_env_var_exhaustive_parallel_values(
         "labels": [],
         "exit_and_dump_after": 0,
         "skip_env": "",
+        "list_dependencies": is_ci(),
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers

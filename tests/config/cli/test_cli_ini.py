@@ -19,6 +19,7 @@ from tox.config.source import discover_source
 from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.env_select import CliEnv
 from tox.session.state import State
+from tox.util.ci import is_ci
 
 
 @pytest.fixture()
@@ -102,6 +103,7 @@ def default_options() -> dict[str, Any]:
         "labels": [],
         "exit_and_dump_after": 0,
         "skip_env": "",
+        "list_dependencies": is_ci(),
     }
 
 
@@ -139,6 +141,7 @@ def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State
         "labels": [],
         "exit_and_dump_after": 0,
         "skip_env": "",
+        "list_dependencies": is_ci(),
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers
