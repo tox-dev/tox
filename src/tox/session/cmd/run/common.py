@@ -163,6 +163,19 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             help="skip package installation for this run",
             action="store_true",
         )
+        list_deps = parser.add_mutually_exclusive_group()
+        list_deps.add_argument(
+            "--list-dependencies",
+            action="store_true",
+            default="auto",
+            help="list the dependencies installed during environment setup",
+        )
+        list_deps.add_argument(
+            "--no-list-dependencies",
+            action="store_false",
+            dest="list_dependencies",
+            help="never list the dependencies installed during environment setup",
+        )
 
 
 def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosity: int) -> int:
