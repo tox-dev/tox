@@ -227,14 +227,11 @@ class Python(ToxEnv, ABC):
     def _done_with_setup(self) -> None:
         """called when setup is done"""
         super()._done_with_setup()
-        list_deps = self.options.list_dependencies
-        if list_deps == "auto":
-            list_deps = is_ci()
-        if self.journal or list_deps:
+        if self.journal or self.options.list_dependencies:
             outcome = self.installer.installed()
             if self.journal:
                 self.journal["installed_packages"] = outcome
-            if list_deps:
+            if self.options.list_dependencies:
                 logging.warning(",".join(outcome))
 
     def python_cache(self) -> dict[str, Any]:

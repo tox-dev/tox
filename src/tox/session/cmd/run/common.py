@@ -22,6 +22,7 @@ from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.runner import RunToxEnv
+from tox.util.ci import is_ci
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 
@@ -167,7 +168,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         list_deps.add_argument(
             "--list-dependencies",
             action="store_true",
-            default="auto",
+            default=is_ci(),
             help="list the dependencies installed during environment setup",
         )
         list_deps.add_argument(
