@@ -15,7 +15,6 @@ from virtualenv.discovery.py_spec import PythonSpec
 from tox.config.main import Config
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
-from tox.util.ci import is_ci
 
 
 class VersionInfo(NamedTuple):
