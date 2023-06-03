@@ -70,19 +70,6 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             default=None,
             help="write a JSON file with detailed information about all commands and results involved",
         )
-        list_deps = parser.add_mutually_exclusive_group()
-        list_deps.add_argument(
-            "--list-dependencies",
-            action="store_true",
-            default=is_ci(),
-            help="list the dependencies installed during environment setup",
-        )
-        list_deps.add_argument(
-            "--no-list-dependencies",
-            action="store_false",
-            dest="list_dependencies",
-            help="never list the dependencies installed during environment setup",
-        )
     if mode not in ("devenv", "depends"):
         parser.add_argument(
             "-s",
@@ -169,6 +156,19 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             dest="no_recreate_pkg",
             help="if recreate is set do not recreate packaging tox environment(s)",
             action="store_true",
+        )
+        list_deps = parser.add_mutually_exclusive_group()
+        list_deps.add_argument(
+            "--list-dependencies",
+            action="store_true",
+            default=is_ci(),
+            help="list the dependencies installed during environment setup",
+        )
+        list_deps.add_argument(
+            "--no-list-dependencies",
+            action="store_false",
+            dest="list_dependencies",
+            help="never list the dependencies installed during environment setup",
         )
     if mode not in ("devenv", "config", "depends"):
         parser.add_argument(
