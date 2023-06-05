@@ -594,17 +594,17 @@ Python run
    :default: false
    :version_added: 1.6
 
-   Install the current package in development mode using `PEP-660 <https://peps.python.org/pep-0660/>`. This means that the
-   package will be installed in-place and editable.
+   Install the current package in development mode using :pep:`660`. This means that the package will
+   be installed in-place and editable.
 
    .. note::
 
-      `package = editable` is the preferred way to enable development/editable mode. See the details in :ref:`package`.
+      ``package = editable`` is the preferred way to enable development/editable mode. See the details in :ref:`package`.
 
    .. note::
 
       PEP-660 introduced a standardized way of installing a package in development mode, providing the same effect as if
-      `pip install -e` was used.
+      ``pip install -e`` was used.
 
 .. conf::
    :keys: package
