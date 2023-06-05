@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.6.0 (2023-06-05)
+-------------------
+
+Features - 4.6.0
+~~~~~~~~~~~~~~~~
+- Addded ``--list-dependencies`` and ``--no-list-dependencies`` CLI parameters.
+  If unspecified, defaults to listing when in CI, but not otherwise. (:issue:`3024`)
+
+Misc - 4.6.0
+~~~~~~~~~~~~
+- :issue:`3020`
+
+
 v4.5.1 (2023-05-25)
 -------------------
 

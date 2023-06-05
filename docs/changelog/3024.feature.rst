@@ -1,2 +1,0 @@
-Addded ``--list-dependencies`` and ``--no-list-dependencies`` CLI parameters.
-If unspecified, defaults to listing when in CI, but not otherwise.

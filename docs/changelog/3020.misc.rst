@@ -1,1 +1,0 @@
-Remove unnecessary usage of ``Future`` from ``tox.config.api.Loader.load()``.
