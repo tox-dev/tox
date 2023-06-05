@@ -594,8 +594,8 @@ Python run
    :default: false
    :version_added: 1.6
 
-   Install the current package in development mode with develop mode. For pip this uses ``-e`` option, so should be
-   avoided if you've specified a custom :ref:`install_command` that does not support ``-e``.
+   Install the current package in development mode using `PEP-660 <https://peps.python.org/pep-0660/>`. This means that the
+   package will be installed in-place and editable. (Note that this has the same effect as the `pip install -e` command.)
 
 .. conf::
    :keys: package
