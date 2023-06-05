@@ -15,7 +15,6 @@ from virtualenv.discovery.py_spec import PythonSpec
 from tox.config.main import Config
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
-from tox.util.ci import is_ci
 
 
 class VersionInfo(NamedTuple):
@@ -227,12 +226,11 @@ class Python(ToxEnv, ABC):
     def _done_with_setup(self) -> None:
         """called when setup is done"""
         super()._done_with_setup()
-        running_in_ci = is_ci()
-        if self.journal or running_in_ci:
+        if self.journal or self.options.list_dependencies:
             outcome = self.installer.installed()
             if self.journal:
                 self.journal["installed_packages"] = outcome
-            if running_in_ci:
+            if self.options.list_dependencies:
                 logging.warning(",".join(outcome))
 
     def python_cache(self) -> dict[str, Any]:
