@@ -116,7 +116,9 @@ def test_ini_help(exhaustive_ini: Path, capfd: CaptureFixture) -> None:
     assert context.value.code == 0
     out, err = capfd.readouterr()
     assert not err
-    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_USER_CONFIG_FILE)" in out, out
+    res = out.splitlines()[-1]
+    msg = f"config file {str(exhaustive_ini)!r} active (changed via env var TOX_USER_CONFIG_FILE)"
+    assert res == msg
 
 
 @pytest.mark.usefixtures("exhaustive_ini")

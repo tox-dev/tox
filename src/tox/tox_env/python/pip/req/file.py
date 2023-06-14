@@ -344,7 +344,7 @@ class RequirementsFile:
             value = opt.find_links[0]
             req_dir = Path(filename).absolute().parent
             relative_to_reqs_file = req_dir / value
-            if relative_to_reqs_file.exists():
+            if os.path.exists(str(relative_to_reqs_file)):  # noqa: PTH110 # Path.exists fails on win32 <=3.7 with URI
                 value = str(relative_to_reqs_file)  # pragma: no cover
             if value not in base_opt.find_links:
                 base_opt.find_links.append(value)

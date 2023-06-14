@@ -10,7 +10,7 @@ from pathlib import Path
 from threading import Thread, current_thread, enumerate, local
 from typing import IO, Iterator, Tuple
 
-from colorama import Fore, Style, deinit, init
+from colorama import Fore, Style, init
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -102,7 +102,6 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         self._local = _LogThreadLocal(out_err)
         super().__init__(stream=self.stdout)
         if is_colored:
-            deinit()
             init()
         self._is_colored = is_colored
         self._setup_level(is_colored, level)
@@ -217,7 +216,6 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # noqa: FBT00
     out_err: OutErr = (sys.stdout, sys.stderr)  # type: ignore[assignment]
     handler = ToxHandler(level, is_colored, out_err)
     LOGGER.addHandler(handler)
-
     logging.debug("setup logging to %s on pid %s", logging.getLevelName(level), os.getpid())
     return handler
 
