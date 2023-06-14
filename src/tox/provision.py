@@ -1,12 +1,9 @@
-"""
-This package handles provisioning an appropriate tox version per requirements.
-"""
+"""This package handles provisioning an appropriate tox version per requirements."""
 from __future__ import annotations
 
 import json
 import logging
 import sys
-from argparse import ArgumentParser
 from pathlib import Path
 from typing import TYPE_CHECKING, List, cast
 
@@ -28,6 +25,8 @@ else:  # pragma: no cover (py38+)
     from importlib_metadata import PackageNotFoundError, distribution
 
 if TYPE_CHECKING:
+    from argparse import ArgumentParser
+
     from tox.session.state import State
 
 
@@ -148,7 +147,8 @@ def run_provision(name: str, state: State) -> int:
     try:
         tox_env.setup()
     except Skip as exception:
-        raise HandledError(f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}")
+        msg = f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}"
+        raise HandledError(msg)
     args: list[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())

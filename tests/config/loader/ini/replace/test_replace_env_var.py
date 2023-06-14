@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import threading
-from typing import Generator
+from typing import TYPE_CHECKING, Generator
 
 import pytest
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
-from tox.pytest import LogCaptureFixture, MonkeyPatch
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tox.pytest import LogCaptureFixture, MonkeyPatch
 
 
 def test_replace_env_set(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:

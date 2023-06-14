@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import logging
 from functools import partial
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.config.loader.section import Section
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.plugin import impl
 from tox.pytest import ToxProjectCreator, register_inline_plugin
-from tox.session.state import State
-from tox.tox_env.api import ToxEnv
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
 
 
 @pytest.fixture(autouse=True)

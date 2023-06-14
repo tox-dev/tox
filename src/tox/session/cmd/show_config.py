@@ -1,21 +1,21 @@
-"""
-Show materialized configuration of tox environments.
-"""
+"""Show materialized configuration of tox environments."""
 from __future__ import annotations
 
 from textwrap import indent
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from colorama import Fore
 
-from tox.config.cli.parser import ToxParser
 from tox.config.loader.stringify import stringify
-from tox.config.sets import ConfigSet
 from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.env_select import CliEnv, register_env_select_flags
-from tox.session.state import State
-from tox.tox_env.api import ToxEnv
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.config.sets import ConfigSet
+    from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
 
 
 @impl

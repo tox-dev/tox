@@ -2,22 +2,25 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from tox.pytest import ToxProjectCreator
 from tox.tox_env.python.package import WheelPackage
 from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager
 from tox.tox_env.runner import RunToxEnv
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.integration()
 def test_setuptools_package(
     tox_project: ToxProjectCreator,
     demo_pkg_setuptools: Path,
-    enable_pip_pypi_access: str | None,  # noqa: U100
+    enable_pip_pypi_access: str | None,
 ) -> None:
     tox_ini = """
         [testenv]

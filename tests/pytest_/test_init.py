@@ -3,15 +3,18 @@ from __future__ import annotations
 import os
 import sys
 from itertools import chain, combinations
-from pathlib import Path
 from textwrap import dedent
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.pytest import MonkeyPatch, ToxProjectCreator, check_os_environ
 from tox.report import HandledError
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
 
 def test_tox_project_no_base(tox_project: ToxProjectCreator) -> None:
@@ -111,7 +114,7 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
 def test_tox_run_assert_out_err_no_dedent(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
 
-    def _main(args: Sequence[str]) -> int:  # noqa: U100
+    def _main(args: Sequence[str]) -> int:
         print(" goes on out", file=sys.stdout)
         print(" goes on err", file=sys.stderr)
         return 0

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.pytest import CaptureFixture
+
+if TYPE_CHECKING:
+    from tox.pytest import CaptureFixture
 
 
 def test_help_does_not_default_cmd(capsys: CaptureFixture) -> None:

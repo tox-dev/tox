@@ -1,14 +1,15 @@
-"""
-Print available tox environments.
-"""
+"""Print available tox environments."""
 from __future__ import annotations
 
 from itertools import chain
+from typing import TYPE_CHECKING
 
-from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
 from tox.session.env_select import register_env_select_flags
-from tox.session.state import State
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl

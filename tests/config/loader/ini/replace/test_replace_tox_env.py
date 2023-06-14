@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
-from tests.conftest import ToxIniCreator
 from tox.config.loader.ini.replace import MAX_REPLACE_DEPTH
 from tox.config.sets import ConfigSet
-from tox.pytest import LogCaptureFixture
 from tox.report import HandledError
+
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tests.conftest import ToxIniCreator
+    from tox.pytest import LogCaptureFixture
 
 EnvConfigCreator = Callable[[str], ConfigSet]
 

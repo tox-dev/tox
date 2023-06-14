@@ -5,15 +5,15 @@ from collections import OrderedDict, defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator, Sequence, TypeVar
 
-from tox.config.loader.api import Loader, OverrideMap
-
-from .loader.memory import MemoryLoader
-from .loader.section import Section
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
-from .source import Source
 
 if TYPE_CHECKING:
+    from tox.config.loader.api import Loader, OverrideMap
+
     from .cli.parser import Parsed
+    from .loader.memory import MemoryLoader
+    from .loader.section import Section
+    from .source import Source
 
 
 T = TypeVar("T", bound=ConfigSet)

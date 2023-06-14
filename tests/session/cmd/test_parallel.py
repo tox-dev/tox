@@ -2,18 +2,23 @@ from __future__ import annotations
 
 import sys
 from argparse import ArgumentTypeError
-from pathlib import Path
 from signal import SIGINT
 from subprocess import PIPE, Popen
 from time import sleep
+from typing import TYPE_CHECKING
 
 import pytest
-from pytest_mock import MockerFixture
 
-from tox.pytest import MonkeyPatch, ToxProjectCreator
 from tox.session.cmd.run.parallel import parse_num_processes
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
 def test_parse_num_processes_all() -> None:
@@ -43,7 +48,8 @@ def test_parse_num_processes_minus_one() -> None:
 def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
     def setup(self: ToxEnv) -> None:
         if self.name == "f":
-            raise Fail("something bad happened")
+            msg = "something bad happened"
+            raise Fail(msg)
         return prev_setup(self)
 
     prev_setup = ToxEnv._setup_env
@@ -122,7 +128,7 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
     [testenv]
     package=wheel
     commands=python -c 'from time import sleep; from pathlib import Path; \
-                        p = Path("{str(marker)}"); p.write_text(""); sleep(100)'
+                        p = Path("{marker!s}"); p.write_text(""); sleep(100)'
     [testenv:dep]
     depends=py
     """
@@ -134,7 +140,7 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
         },
     )
     cmd = ["-c", str(proj.path / "tox.ini"), "p", "-p", "1", "-e", f"py,py{sys.version_info[0]},dep"]
-    process = Popen([sys.executable, "-m", "tox"] + cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker.exists():
         sleep(0.05)
     process.send_signal(SIGINT)

@@ -1,6 +1,4 @@
-"""
-On UNIX we use select.select to ensure we drain in a non-blocking fashion.
-"""
+"""On UNIX we use select.select to ensure we drain in a non-blocking fashion."""
 from __future__ import annotations
 
 import errno  # pragma: win32 no cover

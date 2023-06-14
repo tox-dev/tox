@@ -2,23 +2,23 @@ from __future__ import annotations
 
 import logging
 import re
-from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import dataclass
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, cast
 
 from tox.config.loader.str_convert import StrConvert
+from tox.config.types import EnvList
+from tox.report import HandledError
 from tox.tox_env.api import ToxEnvCreateArgs
+from tox.tox_env.errors import Skip
+from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
 
-from ..config.types import EnvList
-from ..report import HandledError
-from ..tox_env.errors import Skip
-from ..tox_env.package import PackageToxEnv
-
 if TYPE_CHECKING:
+    from argparse import ArgumentParser
+
     from tox.session.state import State
 
 
@@ -26,9 +26,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CliEnv:
-    """CLI tox env selection"""
+    """CLI tox env selection."""
 
-    def __init__(self, value: None | list[str] | str = None):
+    def __init__(self, value: None | list[str] | str = None) -> None:
         if isinstance(value, str):
             value = StrConvert().to(value, of_type=List[str], factory=None)
         self._names: list[str] | None = value
@@ -110,7 +110,7 @@ def register_env_select_flags(
 
 @dataclass
 class _ToxEnvInfo:
-    """tox environment information"""
+    """tox environment information."""
 
     env: PackageToxEnv | RunToxEnv  #: the tox environment
     is_active: bool  #: a flag indicating if the environment is marked as active in the current run
@@ -263,7 +263,8 @@ class EnvSelector:
         name, core_type = name_type
         with self._log_handler.with_context(name):
             if run_env_name == name:
-                raise HandledError(f"{run_env_name} cannot self-package")
+                msg = f"{run_env_name} cannot self-package"
+                raise HandledError(msg)
             missing_active = self._cli_envs is not None and self._cli_envs.is_all
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
@@ -370,7 +371,8 @@ class EnvSelector:
         envs, active = self._defined_envs, self._env_name_to_active()
         invalid = [n for n, a in active.items() if a and isinstance(envs[n].env, PackageToxEnv)]
         if invalid:
-            raise HandledError(f"cannot run packaging environment(s) {','.join(invalid)}")
+            msg = f"cannot run packaging environment(s) {','.join(invalid)}"
+            raise HandledError(msg)
 
     def _mark_provision(self, on: bool, provision_tox_env: str) -> None:
         self._provision = on, provision_tox_env

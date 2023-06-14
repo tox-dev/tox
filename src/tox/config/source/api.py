@@ -2,19 +2,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any, Iterator, List
+from typing import TYPE_CHECKING, Any, Iterator, List
 
-from tox.config.loader.api import Loader, OverrideMap
+from tox.config.loader.section import Section
 
-from ..loader.section import Section
-from ..sets import ConfigSet, CoreConfigSet
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.config.loader.api import Loader, OverrideMap
+    from tox.config.sets import ConfigSet, CoreConfigSet
 
 
 class Source(ABC):
-    """
-    Source is able to return a configuration value (for either the core or per environment source).
-    """
+    """Source is able to return a configuration value (for either the core or per environment source)."""
 
     FILENAME = ""
 

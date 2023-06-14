@@ -9,20 +9,24 @@ import subprocess
 import sys
 from io import TextIOWrapper
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, create_autospec
 
 import psutil
 import pytest
 from colorama import Fore
 from psutil import AccessDenied
-from pytest_mock import MockerFixture
 
 from tox.execute.api import ExecuteOptions, Outcome
 from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecuteInstance, LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.stream import SyncWrite
-from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.report import NamedBytesIO
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 
 
 class FakeOutErr:

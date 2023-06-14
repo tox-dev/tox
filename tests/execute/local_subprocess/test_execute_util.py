@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from tox.execute.util import shebang
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_shebang_found(tmp_path: Path) -> None:

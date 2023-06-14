@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 from zipfile import ZipFile
 
 import pytest
 
-from tox.pytest import ToxProjectCreator
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.fixture(scope="session")

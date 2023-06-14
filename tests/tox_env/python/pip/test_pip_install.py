@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
 from packaging.requirements import Requirement
 
-from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator
 from tox.tox_env.errors import Fail
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator
 
 
 @pytest.mark.parametrize("arg", [object, [object]])
@@ -101,7 +104,7 @@ def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: 
     result.assert_success()
 
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install"] + args
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", *args]
 
     # check that adding a new dependency correctly finds the previous one
     (proj.path / "tox.ini").write_text(f"[testenv:py]\ndeps={content}\n a\nskip_install=true")
@@ -110,7 +113,7 @@ def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: 
     result_second = proj.run("r")
     result_second.assert_success()
     assert execute_calls.call_count == 1
-    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a"] + args
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", *args]
 
 
 def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
@@ -126,7 +129,7 @@ def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
 
 def test_deps_remove_recreate(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n setuptools"})
-    execute_calls = proj.patch_execute(lambda request: 0)  # noqa: U100
+    execute_calls = proj.patch_execute(lambda request: 0)
     result_first = proj.run("r")
     result_first.assert_success()
     assert execute_calls.call_count == 1
@@ -176,7 +179,7 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
     proj = tox_project(
         {
             "tox.ini": "[testenv]\npackage=wheel",
-            "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]'),
+            "pyproject.toml": toml.replace("requires = [\n]", 'requires = ["setuptools"]'),
             "build.py": (demo_pkg_inline / "build.py").read_text(),
         },
     )
@@ -301,7 +304,7 @@ def constrained_mock_project(
 ) -> tuple[ToxProject, list[str]]:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     files = {
-        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
+        "pyproject.toml": toml.replace("requires = [\n]", 'requires = ["setuptools"]')
         + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
         "build.py": (demo_pkg_inline / "build.py").read_text(),
     }

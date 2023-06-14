@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
-from tox.pytest import CaptureFixture
+
+if TYPE_CHECKING:
+    from tox.pytest import CaptureFixture
 
 
 @pytest.mark.parametrize("flag", ["-x", "--override"])

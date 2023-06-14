@@ -1,4 +1,4 @@
-"""Generate json report of a tox run"""
+"""Generate json report of a tox run."""
 from __future__ import annotations
 
 import socket
@@ -11,7 +11,7 @@ from .env import EnvJournal
 
 
 class Journal:
-    """The result of a tox session"""
+    """The result of a tox session."""
 
     def __init__(self, enabled: bool) -> None:
         self._enabled = enabled
@@ -29,7 +29,7 @@ class Journal:
             )
 
     def get_env_journal(self, name: str) -> EnvJournal:
-        """Return the env log of an environment (create on first call)"""
+        """Return the env log of an environment (create on first call)."""
         if name not in self._env:
             env = EnvJournal(self._enabled, name)
             self._env[name] = env

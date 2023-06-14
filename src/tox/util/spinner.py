@@ -1,4 +1,4 @@
-"""A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
+"""A minimal non-colored version of https://pypi.org/project/halo, to track list progress."""
 from __future__ import annotations
 
 import os
@@ -7,10 +7,12 @@ import textwrap
 import threading
 import time
 from collections import OrderedDict
-from types import TracebackType
-from typing import IO, NamedTuple, Sequence, TypeVar
+from typing import IO, TYPE_CHECKING, NamedTuple, Sequence, TypeVar
 
 from colorama import Fore
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 if sys.platform == "win32":  # pragma: win32 cover
     import ctypes
@@ -112,9 +114,9 @@ class Spinner:
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,  # noqa: U100
-        exc_val: BaseException | None,  # noqa: U100
-        exc_tb: TracebackType | None,  # noqa: U100
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if not self._stop_spinner.is_set():  # pragma: no branch
             if self._spinner_thread:  # pragma: no branch # hard to test

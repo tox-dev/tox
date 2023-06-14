@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from tox.pytest import ToxProjectCreator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.pytest import ToxProjectCreator
 
 
 def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
         import logging
 
-        from tox.config.cli.parser import ToxParser
         from tox.plugin import impl
 
         @impl

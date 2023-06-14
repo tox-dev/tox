@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
@@ -81,4 +83,4 @@ def test_replace_mixed_brackets_and_braces(replace_one: ReplaceOne, value: str, 
 def test_half_escaped_braces(replace_one: ReplaceOne) -> None:
     """See https://github.com/tox-dev/tox/issues/1956"""
     outcome = replace_one(r"\{posargs} {posargs}", ["foo"])
-    assert "{posargs} foo" == outcome
+    assert outcome == "{posargs} foo"

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
-from tox.pytest import MonkeyPatch
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tox.pytest import MonkeyPatch
 
 
 def test_replace_os_sep(replace_one: ReplaceOne) -> None:

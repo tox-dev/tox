@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from configparser import ConfigParser
-from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture()

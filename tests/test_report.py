@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import TYPE_CHECKING
 
 import pytest
 from colorama import Style, deinit
-from pytest_mock import MockerFixture
 
-from tox.pytest import CaptureFixture
 from tox.report import setup_report
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import CaptureFixture
 
 
 @pytest.mark.parametrize("color", [True, False], ids=["on", "off"])

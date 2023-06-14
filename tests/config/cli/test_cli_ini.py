@@ -4,11 +4,10 @@ import logging
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from unittest.mock import ANY
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.config.cli.ini import IniConfig
 from tox.config.cli.parse import get_options
@@ -16,10 +15,14 @@ from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.config.source import discover_source
-from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.env_select import CliEnv
-from tox.session.state import State
 from tox.util.ci import is_ci
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+    from tox.session.state import State
 
 
 @pytest.fixture()

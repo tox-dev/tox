@@ -1,6 +1,4 @@
-"""
-On Windows we use overlapped mechanism, borrowing it from asyncio (but without the event loop).
-"""
+"""On Windows we use overlapped mechanism, borrowing it from asyncio (but without the event loop)."""
 from __future__ import annotations  # pragma: win32 cover
 
 import logging  # pragma: win32 cover

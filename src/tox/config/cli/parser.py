@@ -1,6 +1,4 @@
-"""
-Customize argparse logic for tox (also contains the base options).
-"""
+"""Customize argparse logic for tox (also contains the base options)."""
 from __future__ import annotations
 
 import argparse
@@ -27,9 +25,7 @@ if TYPE_CHECKING:
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
-    """
-    Argument parser which updates its defaults by checking the configuration files and environmental variables.
-    """
+    """Argument parser which updates its defaults by checking the configuration files and environmental variables."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # sub-parsers also construct an instance of the parser, but they don't get their own file config, but inherit
@@ -54,7 +50,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         if isinstance(action, argparse._SubParsersAction):
             for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
-                    raise RuntimeError("detected sub-parser added without using our own add command")
+                    msg = "detected sub-parser added without using our own add command"
+                    raise RuntimeError(msg)
                 values.fix_defaults()
 
     @staticmethod
@@ -91,9 +88,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    """
-    A help formatter that provides the default value and the source it comes from.
-    """
+    """A help formatter that provides the default value and the source it comes from."""
 
     def __init__(self, prog: str) -> None:
         super().__init__(prog, max_help_position=30, width=240)
@@ -119,7 +114,7 @@ DEFAULT_VERBOSITY = 2
 
 
 class Parsed(Namespace):
-    """CLI options"""
+    """CLI options."""
 
     @property
     def verbosity(self) -> int:
@@ -165,7 +160,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         handler: Callable[[State], int],
     ) -> ArgumentParser:
         if self._cmd is None:
-            raise RuntimeError("no sub-command group allowed")
+            msg = "no sub-command group allowed"
+            raise RuntimeError(msg)
         sub_parser: ToxParser = self._cmd.add_parser(
             cmd,
             help=help_msg,
@@ -190,26 +186,25 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def add_argument_group(self, *args: Any, **kwargs: Any) -> Any:
         result = super().add_argument_group(*args, **kwargs)
-        if self.of_cmd is None:
-            if args not in (("positional arguments",), ("optional arguments",)):
+        if self.of_cmd is None and args not in (("positional arguments",), ("optional arguments",)):
 
-                def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
-                    def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
-                        res_args: Action = prev_add_arg(*a_args, **a_kwargs)  # type: ignore[has-type]
-                        arguments.append((a_args, of_type, a_kwargs))
-                        return res_args
+            def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
+                def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
+                    res_args: Action = prev_add_arg(*a_args, **a_kwargs)  # type: ignore[has-type]
+                    arguments.append((a_args, of_type, a_kwargs))
+                    return res_args
 
-                    arguments: list[ArgumentArgs] = []
-                    excl.append((e_kwargs, arguments))
-                    res_excl = prev_excl(**kwargs)
-                    prev_add_arg = res_excl.add_argument
-                    res_excl.add_argument = add_argument  # type: ignore[method-assign]
-                    return res_excl
+                arguments: list[ArgumentArgs] = []
+                excl.append((e_kwargs, arguments))
+                res_excl = prev_excl(**kwargs)
+                prev_add_arg = res_excl.add_argument
+                res_excl.add_argument = add_argument  # type: ignore[method-assign]
+                return res_excl
 
-                prev_excl = result.add_mutually_exclusive_group
-                result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[method-assign]
-                excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
-                self._groups.append((args, kwargs, excl))
+            prev_excl = result.add_mutually_exclusive_group
+            result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[method-assign]
+            excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
+            self._groups.append((args, kwargs, excl))
         return result
 
     def add_argument(self, *args: str, of_type: type[Any] | None = None, **kwargs: Any) -> Action:

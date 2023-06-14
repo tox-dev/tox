@@ -2,19 +2,20 @@ from __future__ import annotations
 
 import inspect
 import re
-from configparser import ConfigParser, SectionProxy
 from typing import TYPE_CHECKING, TypeVar
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.convert import Factory
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import replace
-from tox.config.loader.section import Section
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.report import HandledError
 
 if TYPE_CHECKING:
+    from configparser import ConfigParser, SectionProxy
+
+    from tox.config.loader.convert import Factory
+    from tox.config.loader.section import Section
     from tox.config.main import Config
 
 V = TypeVar("V")
@@ -22,7 +23,7 @@ _COMMENTS = re.compile(r"(\s)*(?<!\\)#.*")
 
 
 class IniLoader(StrConvert, Loader[str]):
-    """Load configuration from an ini section (ini file is a string to string dictionary)"""
+    """Load configuration from an ini section (ini file is a string to string dictionary)."""
 
     def __init__(
         self,

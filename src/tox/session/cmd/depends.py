@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags, run_order
-from tox.session.state import State
 from tox.tox_env.runner import RunToxEnv
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl

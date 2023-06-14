@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
 from shutil import rmtree
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:

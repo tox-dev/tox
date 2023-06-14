@@ -16,7 +16,7 @@ class SetEnv:
         self._raw: dict[str, str] = {}  # could still need replacement
         self._needs_replacement: list[str] = []  # env vars that need replacement
         self._env_files: list[str] = []
-        self._replacer: Replacer = lambda s, c: s  # noqa: U100
+        self._replacer: Replacer = lambda s, c: s
         self._name, self._env_name, self._root = name, env_name, root
         from .loader.ini.replace import MatchExpression, find_replace_expr
 
@@ -28,7 +28,8 @@ class SetEnv:
                     try:
                         key, value = self._extract_key_value(line)
                         if "{" in key:
-                            raise ValueError(f"invalid line {line!r} in set_env")
+                            msg = f"invalid line {line!r} in set_env"
+                            raise ValueError(msg)
                     except ValueError:
                         for expr in find_replace_expr(line):
                             if isinstance(expr, MatchExpression):
@@ -51,7 +52,8 @@ class SetEnv:
         env_file = Path(self._replacer(filename, args.copy()))  # apply any replace options
         env_file = env_file if env_file.is_absolute() else self._root / env_file
         if not env_file.exists():
-            raise Fail(f"{env_file} does not exist for set_env")
+            msg = f"{env_file} does not exist for set_env"
+            raise Fail(msg)
         for env_line in env_file.read_text().splitlines():
             env_line = env_line.strip()
             if not env_line or env_line.startswith("#"):
@@ -65,7 +67,8 @@ class SetEnv:
         if sep:
             return key.strip(), value.strip()
         else:
-            raise ValueError(f"invalid line {line!r} in set_env")
+            msg = f"invalid line {line!r} in set_env"
+            raise ValueError(msg)
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         if item in self._materialized:

@@ -19,7 +19,7 @@ class StdinSource(Enum):
 
 
 class ExecuteRequest:
-    """Defines a commands execution request"""
+    """Defines a commands execution request."""
 
     def __init__(
         self,
@@ -40,7 +40,8 @@ class ExecuteRequest:
         :param run_id: an id to identify this run
         """
         if len(cmd) == 0:
-            raise ValueError("cannot execute an empty command")
+            msg = "cannot execute an empty command"
+            raise ValueError(msg)
         self.cmd: list[str] = [str(i) for i in cmd]  #: the command to run
         self.cwd = cwd  #: the working directory to use
         self.env = env  #: the environment variables to use

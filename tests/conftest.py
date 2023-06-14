@@ -3,24 +3,27 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Callable, Iterator, Sequence
+from typing import TYPE_CHECKING, Callable, Iterator, Sequence
 from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch  # cannot import from tox.pytest yet
-from _pytest.tmpdir import TempPathFactory
 from distlib.scripts import ScriptMaker
 from filelock import FileLock
-from pytest_mock import MockerFixture
 from virtualenv import cli_run
 
 from tox.config.cli.parser import Parsed
-from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.config.source import discover_source
 from tox.tox_env.python.api import PythonInfo, VersionInfo
 from tox.tox_env.python.virtual_env.api import VirtualEnv
+
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
+    from _pytest.tmpdir import TempPathFactory
+    from pytest_mock import MockerFixture
+
+    from tox.config.loader.api import Override
 
 pytest_plugins = "tox.pytest"
 HERE = Path(__file__).absolute().parent
@@ -47,7 +50,7 @@ if sys.implementation.name == "pypy":
 
 
 class ToxIniCreator(Protocol):
-    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config:  # noqa: U100
+    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config:
         ...
 
 

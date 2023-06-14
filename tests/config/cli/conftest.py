@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
@@ -13,7 +13,9 @@ from tox.session.cmd.quickstart import quickstart
 from tox.session.cmd.run.parallel import run_parallel
 from tox.session.cmd.run.sequential import run_sequential
 from tox.session.cmd.show_config import show_config
-from tox.session.state import State
+
+if TYPE_CHECKING:
+    from tox.session.state import State
 
 
 @pytest.fixture()

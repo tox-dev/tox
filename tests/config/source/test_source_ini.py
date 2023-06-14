@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from tests.conftest import ToxIniCreator
 from tox.config.loader.section import Section
 from tox.config.sets import ConfigSet
 from tox.config.source.ini import IniSource
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tests.conftest import ToxIniCreator
 
 
 def test_source_ini_with_interpolated(tmp_path: Path) -> None:

@@ -1,6 +1,4 @@
-"""
-Provides configuration values from the environment variables.
-"""
+"""Provides configuration values from the environment variables."""
 from __future__ import annotations
 
 import logging
@@ -13,7 +11,8 @@ CONVERT = StrConvert()
 
 
 def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
-    """Get the environment variable option.
+    """
+    Get the environment variable option.
 
     :param key: the config key requested
     :param of_type: the type we would like to convert it to

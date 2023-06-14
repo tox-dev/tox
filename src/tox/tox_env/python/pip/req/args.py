@@ -9,10 +9,10 @@ from tox.tox_env.python.pip.req.util import handle_binary_option
 
 
 class _OurArgumentParser(ArgumentParser):
-    def print_usage(self, file: IO[str] | None = None) -> None:  # noqa: U100
+    def print_usage(self, file: IO[str] | None = None) -> None:
         """ """
 
-    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: U100
+    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
         if msg.startswith("error: "):
@@ -67,10 +67,10 @@ def _validate_hash(value: str) -> str:
 class AddSortedUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: U100
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: U100
+        option_string: str | None = None,
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -82,10 +82,10 @@ class AddSortedUniqueAction(Action):
 class AddUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: U100
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: U100
+        option_string: str | None = None,
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -97,10 +97,10 @@ class AddUniqueAction(Action):
 class BinaryAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: U100
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: U100
+        option_string: str | None = None,
     ) -> None:
         if getattr(namespace, "no_binary", None) is None:
             namespace.no_binary = set()

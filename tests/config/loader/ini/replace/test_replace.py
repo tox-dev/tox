@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
 from tox.config.loader.ini.replace import MatchExpression, find_replace_expr
 from tox.report import HandledError
+
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
 @pytest.mark.parametrize(

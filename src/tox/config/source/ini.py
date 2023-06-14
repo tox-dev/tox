@@ -1,24 +1,27 @@
-"""Load """
+"""Load."""
 from __future__ import annotations
 
 from collections import defaultdict
 from configparser import ConfigParser
 from itertools import chain
-from pathlib import Path
-from typing import DefaultDict, Iterable, Iterator
+from typing import TYPE_CHECKING, Iterable, Iterator
 
+from tox.config.loader.ini import IniLoader
 from tox.config.loader.ini.factor import find_envs
+from tox.config.loader.section import Section
 
-from ..loader.api import OverrideMap
-from ..loader.ini import IniLoader
-from ..loader.section import Section
-from ..sets import ConfigSet
 from .api import Source
 from .ini_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, IniSection
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.config.loader.api import OverrideMap
+    from tox.config.sets import ConfigSet
+
 
 class IniSource(Source):
-    """Configuration sourced from a ini file (such as tox.ini)"""
+    """Configuration sourced from a ini file (such as tox.ini)."""
 
     CORE_SECTION = CORE
 
@@ -30,7 +33,7 @@ class IniSource(Source):
                 raise ValueError
             content = path.read_text()
         self._parser.read_string(content, str(path))
-        self._section_mapping: DefaultDict[str, list[str]] = defaultdict(list)
+        self._section_mapping: defaultdict[str, list[str]] = defaultdict(list)
 
     def transform_section(self, section: Section) -> Section:
         return IniSection(section.prefix, section.name)

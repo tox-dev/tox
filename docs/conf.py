@@ -6,18 +6,20 @@ import sys
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from subprocess import check_output
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from docutils.nodes import Element, reference
-from sphinx.addnodes import pending_xref
-from sphinx.application import Sphinx
-from sphinx.builders import Builder
 from sphinx.domains.python import PythonDomain
-from sphinx.environment import BuildEnvironment
-from sphinx.ext.autodoc import Options
 from sphinx.ext.extlinks import ExternalLinksChecker
 
 from tox import __version__
+
+if TYPE_CHECKING:
+    from docutils.nodes import Element, reference
+    from sphinx.addnodes import pending_xref
+    from sphinx.application import Sphinx
+    from sphinx.builders import Builder
+    from sphinx.environment import BuildEnvironment
+    from sphinx.ext.autodoc import Options
 
 company, name = "tox-dev", "tox"
 release, version = __version__, ".".join(__version__.split(".")[:2])
@@ -77,13 +79,13 @@ extlinks_detect_hardcoded_links = True
 
 
 def process_signature(
-    app: Sphinx,  # noqa: U100
+    app: Sphinx,
     objtype: str,
-    name: str,  # noqa: U100
-    obj: Any,  # noqa: U100
+    name: str,
+    obj: Any,
     options: Options,
-    args: str,  # noqa: U100
-    retann: str | None,  # noqa: U100
+    args: str,
+    retann: str | None,
 ) -> None | tuple[None, None]:
     # skip-member is not checked for class level docs, so disable via signature processing
     return (None, None) if objtype == "class" and "__init__" in options.get("exclude-members", set()) else None
@@ -120,7 +122,6 @@ def setup(app: Sphinx) -> None:
             }
             if target in mapping:
                 target = node["reftarget"] = mapping[target]
-                # node.children[0].children[0] = Text(target, target)
             return super().resolve_xref(env, fromdocname, builder, type, target, node, contnode)
 
     app.connect("autodoc-process-signature", process_signature, priority=400)
@@ -130,7 +131,7 @@ def setup(app: Sphinx) -> None:
 
     def check_uri(self, refnode: reference) -> None:
         if refnode.document.attributes["source"].endswith("index.rst"):
-            return  # do not use for the index file
+            return None  # do not use for the index file
         return prev_check(self, refnode)
 
     prev_check, ExternalLinksChecker.check_uri = ExternalLinksChecker.check_uri, check_uri

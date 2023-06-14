@@ -2,18 +2,21 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
-from typing import Callable, Dict, Optional, Set, TypeVar
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Set, TypeVar
 
 import pytest
-from pytest_mock import MockerFixture
 
-from tests.conftest import ToxIniCreator
 from tox.config.cli.parser import Parsed
 from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.config.source.api import Section
-from tox.pytest import ToxProjectCreator
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tests.conftest import ToxIniCreator
+    from tox.pytest import ToxProjectCreator
 
 ConfBuilder = Callable[[str], ConfigSet]
 

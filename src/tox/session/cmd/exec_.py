@@ -1,11 +1,8 @@
-"""
-Execute a command in a tox environment.
-"""
+"""Execute a command in a tox environment."""
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from tox.config.cli.parser import ToxParser
 from tox.config.loader.memory import MemoryLoader
 from tox.config.types import Command
 from tox.plugin import impl
@@ -13,7 +10,12 @@ from tox.report import HandledError
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.sequential import run_sequential
 from tox.session.env_select import CliEnv, register_env_select_flags
-from tox.session.state import State
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl
@@ -27,7 +29,8 @@ def tox_add_option(parser: ToxParser) -> None:
 def exec_(state: State) -> int:
     envs = list(state.envs.iter())
     if len(envs) != 1:
-        raise HandledError(f"exactly one target environment allowed in exec mode but found {', '.join(envs)}")
+        msg = f"exactly one target environment allowed in exec mode but found {', '.join(envs)}"
+        raise HandledError(msg)
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         commands_pre=[],
         commands=[],
@@ -38,6 +41,7 @@ def exec_(state: State) -> int:
     to_path: Path | None = conf["change_dir"] if conf["args_are_paths"] else None
     pos_args = state.conf.pos_args(to_path)
     if not pos_args:
-        raise HandledError("You must specify a command as positional arguments, use -- <command>")
+        msg = "You must specify a command as positional arguments, use -- <command>"
+        raise HandledError(msg)
     loader.raw["commands"] = [Command(list(pos_args))]
     return run_sequential(state)

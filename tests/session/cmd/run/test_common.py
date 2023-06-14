@@ -3,12 +3,16 @@ from __future__ import annotations
 import os
 import re
 from argparse import ArgumentError, ArgumentParser, Namespace
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.pytest import ToxProjectCreator
 from tox.session.cmd.run.common import InstallPackageAction, SkipMissingInterpreterAction
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("values", ["config", None, "true", "false"])

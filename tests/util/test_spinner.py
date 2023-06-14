@@ -3,14 +3,18 @@ from __future__ import annotations
 import os
 import sys
 import time
+from typing import TYPE_CHECKING
 
 import pytest
 import time_machine
 from colorama import Fore
-from pytest_mock import MockerFixture
 
-from tox.pytest import CaptureFixture, MonkeyPatch
 from tox.util import spinner
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import CaptureFixture, MonkeyPatch
 
 
 @time_machine.travel("2012-01-14", tick=False)

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 
-from tox.pytest import ToxProjectCreator
 from tox.tox_env.api import ToxEnv
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 def test_recreate(tox_project: ToxProjectCreator) -> None:

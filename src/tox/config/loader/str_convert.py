@@ -12,7 +12,7 @@ from tox.config.types import Command, EnvList
 
 
 class StrConvert(Convert[str]):
-    """A class converting string values to tox types"""
+    """A class converting string values to tox types."""
 
     @staticmethod
     def to_str(value: str) -> str:
@@ -36,14 +36,15 @@ class StrConvert(Convert[str]):
         yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
-    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # noqa: U100
+    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:
         for row in value.split("\n"):
             if row.strip():
                 key, sep, value = row.partition("=")
                 if sep:
                     yield key.strip(), value.strip()
                 else:
-                    raise TypeError(f"dictionary lines must be of form key=value, found {row!r}")
+                    msg = f"dictionary lines must be of form key=value, found {row!r}"
+                    raise TypeError(msg)
 
     @staticmethod
     def _win32_process_path_backslash(value: str, escape: str, special_chars: str) -> str:
@@ -96,10 +97,11 @@ class StrConvert(Convert[str]):
         except ValueError:
             args.append(value[pos:])
         if len(args) == 0:
-            raise ValueError(f"attempting to parse {value!r} into a command failed")
+            msg = f"attempting to parse {value!r} into a command failed"
+            raise ValueError(msg)
         if args[0] != "-" and args[0].startswith("-"):
             args[0] = args[0][1:]
-            args = ["-"] + args
+            args = ["-", *args]
         return Command(args)
 
     @staticmethod
@@ -121,8 +123,9 @@ class StrConvert(Convert[str]):
         elif norm in StrConvert.FALSE_VALUES:
             return False
         else:
+            msg = f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}"
             raise TypeError(
-                f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}",
+                msg,
             )
 
 

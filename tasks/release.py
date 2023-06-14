@@ -1,4 +1,4 @@
-"""Handles creating a release PR"""
+"""Handles creating a release PR."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,7 +15,8 @@ def main(version_str: str) -> None:
     repo = Repo(str(ROOT_SRC_DIR))
 
     if repo.is_dirty():
-        raise RuntimeError("Current repository is dirty. Please commit any changes and try again.")
+        msg = "Current repository is dirty. Please commit any changes and try again."
+        raise RuntimeError(msg)
     upstream, release_branch = create_release_branch(repo, version)
     try:
         release_commit = release_changelog(repo, version)
@@ -49,7 +50,8 @@ def get_upstream(repo: Repo) -> Remote:
     for remote in repo.remotes:
         if any(url.endswith("tox-dev/tox.git") for url in remote.urls):
             return remote
-    raise RuntimeError("could not find tox-dev/tox.git remote")
+    msg = "could not find tox-dev/tox.git remote"
+    raise RuntimeError(msg)
 
 
 def release_changelog(repo: Repo, version: Version) -> Commit:

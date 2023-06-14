@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tox.journal import EnvJournal
-from tox.pytest import ToxProjectCreator
 from tox.tox_env.package import PathPackage
 from tox.tox_env.python.runner import PythonRun
+
+if TYPE_CHECKING:
+    from tox.pytest import ToxProjectCreator
 
 
 def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:

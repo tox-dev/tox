@@ -1,13 +1,14 @@
-"""Record information about tox environments"""
+"""Record information about tox environments."""
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from tox.execute import Outcome
+if TYPE_CHECKING:
+    from tox.execute import Outcome
 
 
 class EnvJournal:
-    """Report the status of a tox environment"""
+    """Report the status of a tox environment."""
 
     def __init__(self, enabled: bool, name: str) -> None:
         self._enabled = enabled
@@ -54,7 +55,7 @@ class EnvJournal:
                 "start": outcome.start,
                 "end": outcome.end,
             }
-            if run_id.startswith("commands") or run_id.startswith("build"):
+            if run_id.startswith(("commands", "build")):
                 tests.append(one)
             else:
                 setup.append(one)

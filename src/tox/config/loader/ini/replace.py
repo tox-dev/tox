@@ -1,6 +1,4 @@
-"""
-Apply value substitution (replacement) on tox strings.
-"""
+"""Apply value substitution (replacement) on tox strings."""
 from __future__ import annotations
 
 import logging
@@ -9,18 +7,19 @@ import re
 import sys
 from configparser import SectionProxy
 from functools import lru_cache
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator, Pattern, Sequence, Union
 
-from tox.config.loader.api import ConfigLoadArgs
 from tox.config.loader.stringify import stringify
-from tox.config.set_env import SetEnv
-from tox.config.sets import ConfigSet
 from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.config.loader.api import ConfigLoadArgs
     from tox.config.loader.ini import IniLoader
     from tox.config.main import Config
+    from tox.config.set_env import SetEnv
+    from tox.config.sets import ConfigSet
 
 
 LOGGER = logging.getLogger(__name__)
@@ -53,14 +52,15 @@ def find_replace_expr(value: str) -> MatchArg:
 def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs, depth: int = 0) -> str:
     """Replace all active tokens within value according to the config."""
     if depth > MAX_REPLACE_DEPTH:
-        raise MatchRecursionError(f"Could not expand {value} after recursing {depth} frames")
+        msg = f"Could not expand {value} after recursing {depth} frames"
+        raise MatchRecursionError(msg)
     return Replacer(conf, loader, conf_args=args, depth=depth).join(find_replace_expr(value))
 
 
 class MatchExpression:
     """An expression that is handled specially by the Replacer."""
 
-    def __init__(self, expr: Sequence[MatchArg], term_pos: int | None = None):
+    def __init__(self, expr: Sequence[MatchArg], term_pos: int | None = None) -> None:
         self.expr = expr
         self.term_pos = term_pos
 
@@ -147,7 +147,8 @@ class MatchExpression:
             pos += 1
         else:  # fell out of the loop
             if terminator:
-                raise MatchError(f"{terminator!r} remains unmatched in {value!r}")
+                msg = f"{terminator!r} remains unmatched in {value!r}"
+                raise MatchError(msg)
         args.append(last_arg)
         return [_flatten_string_fragments(a) for a in args], pos
 
@@ -172,7 +173,7 @@ def _flatten_string_fragments(seq_of_str_or_other: Sequence[str | Any]) -> Seque
 class Replacer:
     """Recursively expand MatchExpression against the config and loader."""
 
-    def __init__(self, conf: Config, loader: IniLoader, conf_args: ConfigLoadArgs, depth: int = 0):
+    def __init__(self, conf: Config, loader: IniLoader, conf_args: ConfigLoadArgs, depth: int = 0) -> None:
         self.conf = conf
         self.loader = loader
         self.conf_args = conf_args
@@ -185,10 +186,10 @@ class Replacer:
         return "".join(self(value))
 
     def _replace_match(self, value: MatchExpression) -> str:
-        # use a copy of conf_args so any changes from this replacement do NOT
-        # affect adjacent substitutions (#2869)
+        # use a copy of conf_args so any changes from this replacement do NOT, affect adjacent substitutions (#2869)
         conf_args = self.conf_args.copy()
-        of_type, *args = flattened_args = [self.join(arg) for arg in value.expr]
+        flattened_args = [self.join(arg) for arg in value.expr]
+        of_type, *args = flattened_args
         if of_type == "/":
             replace_value: str | None = os.sep
         elif of_type == "" and args == [""]:
@@ -200,12 +201,8 @@ class Replacer:
         elif of_type == "posargs":
             replace_value = replace_pos_args(self.conf, args, conf_args)
         else:
-            replace_value = replace_reference(
-                self.conf,
-                self.loader,
-                ARG_DELIMITER.join(flattened_args),
-                conf_args,
-            )
+            arg_value = ARG_DELIMITER.join(flattened_args)
+            replace_value = replace_reference(self.conf, self.loader, arg_value, conf_args)
         if replace_value is not None:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
             if needs_expansion:
@@ -279,9 +276,8 @@ def _config_value_sources(
     loader: IniLoader,
 ) -> Iterator[SectionProxy | ConfigSet]:
     # if we have an env name specified take only from there
-    if env is not None:
-        if env in conf:
-            yield conf.get_env(env)
+    if env is not None and env in conf:
+        yield conf.get_env(env)
 
     if section is None:
         # if no section specified perhaps it's an unregistered config:
@@ -319,7 +315,8 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -
 
 def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
     if not args or not args[0]:
-        raise MatchError("No variable name was supplied in {env} substitution")
+        msg = "No variable name was supplied in {env} substitution"
+        raise MatchError(msg)
     key = args[0]
     new_key = f"env:{key}"
 
@@ -332,7 +329,8 @@ def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str
                 return set_env.load(key, conf_args)
         elif conf_args.chain[-1] != new_key:  # if there's a chain but only self-refers than use os.environ
             circular = ", ".join(i[4:] for i in conf_args.chain[conf_args.chain.index(new_key) :])
-            raise MatchRecursionError(f"circular chain between set env {circular}")
+            msg = f"circular chain between set env {circular}"
+            raise MatchRecursionError(msg)
 
     if key in os.environ:
         return os.environ[key]
@@ -341,10 +339,7 @@ def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str
 
 
 def replace_tty(args: list[str]) -> str:
-    if sys.stdout.isatty():
-        result = args[0] if len(args) > 0 else ""
-    else:
-        result = args[1] if len(args) > 1 else ""
+    result = (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
     return result
 
 

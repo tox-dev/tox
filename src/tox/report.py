@@ -1,4 +1,4 @@
-"""Handle reporting from within tox"""
+"""Handle reporting from within tox."""
 from __future__ import annotations
 
 import logging
@@ -26,7 +26,7 @@ OutErr = Tuple[TextIOWrapper, TextIOWrapper]
 
 
 class _LogThreadLocal(local):
-    """A thread local variable that inherits values from its parent"""
+    """A thread local variable that inherits values from its parent."""
 
     _ident_to_data: dict[int | None, str] = {}
 
@@ -115,7 +115,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
     @contextmanager
     def with_context(self, name: str) -> Iterator[None]:
         """
-        Set a new tox environment context
+        Set a new tox environment context.
 
         :param name: the name of the tox environment
         """
@@ -143,8 +143,8 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         return self.stdout
 
     @stream.setter
-    def stream(self, value: IO[str]) -> None:  # noqa: U100
-        """ignore anyone changing this"""
+    def stream(self, value: IO[str]) -> None:
+        """Ignore anyone changing this."""
 
     @contextmanager
     def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:
@@ -235,4 +235,4 @@ def _clean_handlers(log: logging.Logger) -> None:
 
 
 class HandledError(RuntimeError):
-    """Error that has been handled so no need for stack trace"""
+    """Error that has been handled so no need for stack trace."""

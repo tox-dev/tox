@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from tests.conftest import ToxIniCreator
-from tox.config.main import Config
+if TYPE_CHECKING:
+    from tests.conftest import ToxIniCreator
+    from tox.config.main import Config
 
 
 @pytest.fixture()

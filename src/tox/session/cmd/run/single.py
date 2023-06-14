@@ -1,19 +1,20 @@
-"""
-Defines how to run a single tox environment.
-"""
+"""Defines how to run a single tox environment."""
 from __future__ import annotations
 
 import logging
 import time
-from pathlib import Path
-from typing import NamedTuple, cast
+from typing import TYPE_CHECKING, NamedTuple, cast
 
-from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
-from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail, Skip
 from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed
-from tox.tox_env.runner import RunToxEnv
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.config.types import Command
+    from tox.tox_env.api import ToxEnv
+    from tox.tox_env.runner import RunToxEnv
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.pytest import ToxProjectCreator
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize(
@@ -167,7 +170,7 @@ def test_pyproject_deps_from_static(
     assert found_calls == expected_calls
 
     if deps:
-        expected_args = ["python", "-I", "-m", "pip", "install"] + deps
+        expected_args = ["python", "-I", "-m", "pip", "install", *deps]
         args = execute_calls.call_args_list[-3][0][3].cmd
         assert expected_args == args
 

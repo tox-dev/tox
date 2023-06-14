@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
-from pytest_mock import MockerFixture
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
 
-from tox.execute import ExecuteRequest
-from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.execute import ExecuteRequest
+    from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator
 
 
 @pytest.fixture()
@@ -21,7 +24,7 @@ def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEn
     opts = VirtualEnvOptions()
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.session_via_cli",
-        side_effect=lambda args, options, setup_logging, env: session_via_cli(  # noqa: U100
+        side_effect=lambda args, options, setup_logging, env: session_via_cli(
             args,
             opts,
             setup_logging,

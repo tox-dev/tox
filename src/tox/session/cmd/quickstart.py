@@ -3,13 +3,16 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
-from tox.session.state import State
 from tox.version import version as __version__
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl

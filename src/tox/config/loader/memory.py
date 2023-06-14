@@ -18,7 +18,7 @@ class MemoryLoader(Loader[Any]):
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
         self.raw: dict[str, Any] = {**kwargs}
 
-    def load_raw(self, key: Any, conf: Config | None, env_name: str | None) -> Any:  # noqa: U100
+    def load_raw(self, key: Any, conf: Config | None, env_name: str | None) -> Any:
         return self.raw[key]
 
     def found_keys(self) -> set[str]:
@@ -33,15 +33,15 @@ class MemoryLoader(Loader[Any]):
         return str(value)
 
     @staticmethod
-    def to_list(value: Any, of_type: type[Any]) -> Iterator[Any]:  # noqa: U100
+    def to_list(value: Any, of_type: type[Any]) -> Iterator[Any]:
         return iter(value)
 
     @staticmethod
-    def to_set(value: Any, of_type: type[Any]) -> Iterator[Any]:  # noqa: U100
+    def to_set(value: Any, of_type: type[Any]) -> Iterator[Any]:
         return iter(value)
 
     @staticmethod
-    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:  # noqa: U100
+    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:
         return value.items()  # type: ignore[no-any-return]
 
     @staticmethod

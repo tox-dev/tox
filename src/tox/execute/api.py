@@ -1,6 +1,4 @@
-"""
-Abstract base API for executing commands within tox environments.
-"""
+"""Abstract base API for executing commands within tox environments."""
 from __future__ import annotations
 
 import logging
@@ -8,17 +6,17 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Iterator, NoReturn, Sequence, cast
 
 from colorama import Fore
-
-from tox.report import OutErr
 
 from .request import ExecuteRequest, StdinSource
 from .stream import SyncWrite
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
+    from tox.report import OutErr
     from tox.tox_env.api import ToxEnv
 
 ContentHandler = Callable[[bytes], None]
@@ -107,7 +105,7 @@ class ExecuteStatus(ABC):
 
 
 class Execute(ABC):
-    """Abstract API for execution of a tox environment"""
+    """Abstract API for execution of a tox environment."""
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
 
@@ -157,7 +155,7 @@ class Execute(ABC):
 
 
 class ExecuteInstance(ABC):
-    """An instance of a command execution"""
+    """An instance of a command execution."""
 
     def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.request = request
@@ -193,7 +191,7 @@ class ExecuteInstance(ABC):
 
 
 class Outcome:
-    """Result of a command execution"""
+    """Result of a command execution."""
 
     OK = 0
 
@@ -208,7 +206,7 @@ class Outcome:
         end: float,
         cmd: Sequence[str],
         metadata: dict[str, Any],
-    ):
+    ) -> None:
         """
         Create a new execution outcome.
 
@@ -242,7 +240,7 @@ class Outcome:
         )
 
     def assert_success(self) -> None:
-        """Assert that the execution succeeded"""
+        """Assert that the execution succeeded."""
         if self.exit_code is not None and self.exit_code != self.OK:
             self._assert_fail()
         self.log_run_done(logging.INFO)

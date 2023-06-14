@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import re
-from argparse import ArgumentParser, Namespace
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
+
+if TYPE_CHECKING:
+    from argparse import ArgumentParser, Namespace
+    from pathlib import Path
 
 
 class PythonDeps(RequirementsFile):
@@ -12,7 +15,7 @@ class PythonDeps(RequirementsFile):
     # thus cannot be used in the testenv `deps` list
     _illegal_options = ["hash"]
 
-    def __init__(self, raw: str, root: Path):
+    def __init__(self, raw: str, root: Path) -> None:
         super().__init__(root / "tox.ini", constraint=False)
         self._raw = self._normalize_raw(raw)
         self._unroll: tuple[list[str], list[str]] | None = None
@@ -103,7 +106,8 @@ class PythonDeps(RequirementsFile):
         if self._unroll is None:
             opts_dict = vars(self.options)
             if not self.requirements and opts_dict:
-                raise ValueError("no dependencies")
+                msg = "no dependencies"
+                raise ValueError(msg)
             result_opts: list[str] = [f"{key}={value}" for key, value in opts_dict.items()]
             result_req = [str(req) for req in self.requirements]
             self._unroll = result_opts, result_req

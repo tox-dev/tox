@@ -1,6 +1,4 @@
-"""
-Display the version information about tox.
-"""
+"""Display the version information about tox."""
 from __future__ import annotations
 
 import sys
@@ -25,9 +23,9 @@ def tox_add_option(parser: ToxParser) -> None:
         def __call__(
             self,
             parser: ArgumentParser,
-            namespace: Namespace,  # noqa: U100
-            values: str | Sequence[Any] | None,  # noqa: U100
-            option_string: str | None = None,  # noqa: U100
+            namespace: Namespace,
+            values: str | Sequence[Any] | None,
+            option_string: str | None = None,
         ) -> None:
             formatter = cast(HelpFormatter, parser._get_formatter())
             formatter.add_raw_text(get_version_info())

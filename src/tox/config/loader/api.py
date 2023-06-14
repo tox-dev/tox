@@ -7,23 +7,23 @@ from typing import TYPE_CHECKING, Any, List, Mapping, TypeVar
 from tox.plugin import impl
 
 from .convert import Convert, Factory
-from .section import Section
 from .str_convert import StrConvert
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.config.main import Config
 
+    from .section import Section
+
 
 class Override:
-    """
-    An override for config definitions.
-    """
+    """An override for config definitions."""
 
     def __init__(self, value: str) -> None:
         key, equal, self.value = value.partition("=")
         if not equal:
-            raise ArgumentTypeError(f"override {value} has no = sign in it")
+            msg = f"override {value} has no = sign in it"
+            raise ArgumentTypeError(msg)
         self.namespace, _, self.key = key.rpartition(".")
 
     def __repr__(self) -> str:
@@ -44,7 +44,7 @@ class Override:
 class ConfigLoadArgs:
     """Arguments that help loading a configuration value."""
 
-    def __init__(self, chain: list[str] | None, name: str | None, env_name: str | None):
+    def __init__(self, chain: list[str] | None, name: str | None, env_name: str | None) -> None:
         """
         :param chain: the configuration chain (useful to detect circular references)
         :param name: the name of the configuration
@@ -124,12 +124,12 @@ class Loader(Convert[T]):
 
     def build(
         self,
-        key: str,  # noqa: U100
+        key: str,
         of_type: type[V],
         factory: Factory[V],
-        conf: Config | None,  # noqa: U100
+        conf: Config | None,
         raw: T,
-        args: ConfigLoadArgs,  # noqa: U100
+        args: ConfigLoadArgs,
     ) -> V:
         """
         Materialize the raw configuration value from the loader.

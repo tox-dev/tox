@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from tox.pytest import ToxProject, ToxProjectCreator
+if TYPE_CHECKING:
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 
 @pytest.fixture()

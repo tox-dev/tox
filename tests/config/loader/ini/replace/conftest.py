@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,6 +10,9 @@ from tox.config.loader.api import ConfigLoadArgs
 from tox.config.main import Config
 from tox.config.source.tox_ini import ToxIni
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
 else:  # pragma: no cover (<py38)
@@ -17,7 +20,7 @@ else:  # pragma: no cover (<py38)
 
 
 class ReplaceOne(Protocol):
-    def __call__(self, conf: str, pos_args: list[str] | None = None) -> str:  # noqa: U100
+    def __call__(self, conf: str, pos_args: list[str] | None = None) -> str:
         ...
 
 

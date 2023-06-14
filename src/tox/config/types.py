@@ -11,7 +11,7 @@ class Command:
 
     def __init__(self, args: list[str]) -> None:
         """
-        Create a new command to execute
+        Create a new command to execute.
 
         :param args: the command line arguments (first value can be ``-`` to indicate ignore the exit code)
         """
@@ -34,7 +34,7 @@ class Command:
 
 
 class EnvList:
-    """A tox environment list"""
+    """A tox environment list."""
 
     def __init__(self, envs: Sequence[str]) -> None:
         """

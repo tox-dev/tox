@@ -1,4 +1,4 @@
-"""Common functionality shared across multiple type of runs"""
+"""Common functionality shared across multiple type of runs."""
 from __future__ import annotations
 
 import logging
@@ -11,7 +11,7 @@ from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_co
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
-from typing import Any, Iterator, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Iterator, Optional, Sequence, cast
 
 from colorama import Fore
 
@@ -19,21 +19,23 @@ from tox.config.types import EnvList
 from tox.execute import Outcome
 from tox.journal import write_journal
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
-from tox.session.state import State
-from tox.tox_env.api import ToxEnv
 from tox.tox_env.runner import RunToxEnv
 from tox.util.ci import is_ci
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 
+if TYPE_CHECKING:
+    from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
+
 
 class SkipMissingInterpreterAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: U100
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: U100
+        option_string: str | None = None,
     ) -> None:
         value = "true" if values is None else values
         if value not in ("config", "true", "false"):
@@ -44,10 +46,10 @@ class SkipMissingInterpreterAction(Action):
 class InstallPackageAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: U100
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: U100
+        option_string: str | None = None,
     ) -> None:
         if not values:
             raise ArgumentError(self, "cannot be empty")
@@ -116,10 +118,10 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         class SeedAction(Action):
             def __call__(
                 self,
-                parser: ArgumentParser,  # noqa: U100
+                parser: ArgumentParser,
                 namespace: Namespace,
                 values: str | Sequence[Any] | None,
-                option_string: str | None = None,  # noqa: U100
+                option_string: str | None = None,
             ) -> None:
                 if values == "notset":
                     result = None
@@ -127,7 +129,8 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
                     try:
                         result = int(cast(str, values))
                         if result <= 0:
-                            raise ValueError("must be greater than zero")
+                            msg = "must be greater than zero"
+                            raise ValueError(msg)
                     except ValueError as exc:
                         raise ArgumentError(self, str(exc))
                 setattr(namespace, self.dest, result)
@@ -288,10 +291,7 @@ class ToxSpinner(Spinner):
         )
 
     def update_spinner(self, result: ToxEnvRunResult, success: bool) -> None:
-        if success:
-            done = self.skip if result.skipped else self.succeed
-        else:
-            done = self.fail
+        done = (self.skip if result.skipped else self.succeed) if success else self.fail
         done(result.name)
 
 
@@ -405,7 +405,7 @@ def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: St
 
 
 def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
-    """Generate tox environments ready to run"""
+    """Generate tox environments ready to run."""
     order, todo = run_order(state, to_run)
     while order:
         ready_to_run: list[str] = []

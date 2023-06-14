@@ -21,7 +21,7 @@ def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:
     topology = []
     degree = {k: len(v) for k, v in graph.items()}
     ready_to_visit = {n for n, d in degree.items() if not d}
-    need_to_visit = OrderedDict((i, None) for i in graph.keys())
+    need_to_visit = OrderedDict((i, None) for i in graph)
     while need_to_visit:
         # to keep stable, pick the first node ready to visit in the original order
         for node in need_to_visit:
@@ -66,4 +66,5 @@ def identify_cycle(graph: dict[str, set[str]]) -> None:
     for node in graph:  # pragma: no branch # we never get here if the graph is empty
         result = visit(node)
         if result is not None:
-            raise ValueError(f"{' | '.join(result.keys())}")
+            msg = f"{' | '.join(result.keys())}"
+            raise ValueError(msg)

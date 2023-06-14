@@ -1,27 +1,30 @@
-"""Contains the plugin manager object"""
+"""Contains the plugin manager object."""
 from __future__ import annotations
 
-from pathlib import Path
-from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pluggy
 
 from tox import provision
-from tox.config.cli.parser import ToxParser
 from tox.config.loader import api as loader_api
-from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
 from tox.tox_env.python.virtual_env import runner
 from tox.tox_env.python.virtual_env.package import cmd_builder, pyproject
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
-from ..execute import Outcome
-from ..session.state import State
-from ..tox_env.api import ToxEnv
 from . import NAME, spec
 from .inline import load_inline
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from types import ModuleType
+
+    from tox.config.cli.parser import ToxParser
+    from tox.config.sets import ConfigSet, EnvConfigSet
+    from tox.execute import Outcome
+    from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
 
 
 class Plugin:

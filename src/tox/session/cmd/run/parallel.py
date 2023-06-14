@@ -1,18 +1,19 @@
-"""
-Run tox environments in parallel.
-"""
+"""Run tox environments in parallel."""
 from __future__ import annotations
 
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
+from typing import TYPE_CHECKING
 
-from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
-from tox.session.state import State
+from tox.session.env_select import CliEnv, register_env_select_flags
 from tox.util.cpu import auto_detect_cpus
 
-from ...env_select import CliEnv, register_env_select_flags
 from .common import env_run_create_flags, execute
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,11 @@ def parse_num_processes(str_value: str) -> int | None:
     try:
         value = int(str_value)
     except ValueError as exc:
-        raise ArgumentTypeError(f"value must be a positive number, is {str_value!r}") from exc
+        msg = f"value must be a positive number, is {str_value!r}"
+        raise ArgumentTypeError(msg) from exc
     if value < 0:
-        raise ArgumentTypeError(f"value must be positive, is {value!r}")
+        msg = f"value must be positive, is {value!r}"
+        raise ArgumentTypeError(msg)
     return value
 
 
@@ -72,7 +75,7 @@ def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = F
 
 
 def run_parallel(state: State) -> int:
-    """here we'll just start parallel sub-processes"""
+    """Here we'll just start parallel sub-processes."""
     option = state.conf.options
     return execute(
         state,

@@ -1,4 +1,4 @@
-"""Adapted from the pip code base"""
+"""Adapted from the pip code base."""
 from __future__ import annotations
 
 import os
@@ -169,7 +169,7 @@ class RequirementsFile:
             self._extend_parser(self._parser_private)
         return self._parser_private
 
-    def _extend_parser(self, parser: ArgumentParser) -> None:  # noqa: U100
+    def _extend_parser(self, parser: ArgumentParser) -> None:
         ...
 
     def _ensure_requirements_parsed(self) -> None:
@@ -243,7 +243,8 @@ class RequirementsFile:
             with open(url, "rb") as file_handler:
                 text = self._read_decode(file_handler)
         except OSError as exc:
-            raise ValueError(f"Could not open requirements file {url}: {exc}") from exc
+            msg = f"Could not open requirements file {url}: {exc}"
+            raise ValueError(msg) from exc
         return text
 
     @staticmethod
@@ -256,7 +257,8 @@ class RequirementsFile:
         return text
 
     def _pre_process(self, content: str) -> ReqFileLines:
-        """Split, filter, and join lines, and return a line iterator
+        """
+        Split, filter, and join lines, and return a line iterator.
 
         :param content: the content of the requirements file
         """
@@ -402,7 +404,8 @@ class RequirementsFile:
 
     @staticmethod
     def _expand_env_variables(lines_enum: ReqFileLines) -> ReqFileLines:
-        """Replace all environment variables that can be retrieved via `os.getenv`.
+        """
+        Replace all environment variables that can be retrieved via `os.getenv`.
 
         The only allowed format for environment variables defined in the requirement file is `${MY_VARIABLE_1}` to
         ensure two things:

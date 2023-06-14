@@ -1,6 +1,4 @@
-"""
-A pytest plugin useful to test tox itself (and its plugins).
-"""
+"""A pytest plugin useful to test tox itself (and its plugins)."""
 from __future__ import annotations
 
 import inspect
@@ -15,32 +13,24 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from types import ModuleType, TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence, cast
-from unittest.mock import MagicMock
 
 import pytest
 from _pytest.capture import CaptureFixture as _CaptureFixture
-from _pytest.config import Config as PyTestConfig
-from _pytest.config.argparsing import Parser
 from _pytest.fixtures import SubRequest
 from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.python import Function
 from _pytest.tmpdir import TempPathFactory
 from devpi_process import IndexServer
-from pytest_mock import MockerFixture
 from virtualenv.info import fs_supports_symlink
 
 import tox.run
-from tox.config.sets import EnvConfigSet
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, Outcome
 from tox.execute.request import ExecuteRequest, shell_cmd
-from tox.execute.stream import SyncWrite
 from tox.plugin import manager
 from tox.report import LOGGER, OutErr
 from tox.run import run as tox_run
 from tox.run import setup_state as previous_setup_state
 from tox.session.cmd.run.parallel import ENV_VAR_KEY
-from tox.session.state import State
 from tox.tox_env import api as tox_env_api
 from tox.tox_env.api import ToxEnv
 
@@ -50,6 +40,17 @@ else:  # pragma: no cover (<py38)
     from typing_extensions import Protocol
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
+    from _pytest.config import Config as PyTestConfig
+    from _pytest.config.argparsing import Parser
+    from _pytest.python import Function
+    from pytest_mock import MockerFixture
+
+    from tox.config.sets import EnvConfigSet
+    from tox.execute.stream import SyncWrite
+    from tox.session.state import State
+
     CaptureFixture = _CaptureFixture[str]
 else:
     CaptureFixture = _CaptureFixture
@@ -71,7 +72,7 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:  # noqa: PT004
 
 @pytest.fixture(autouse=True)
 def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator[None]:
-    """unless this is a plugin test do not allow loading toxfile.py"""
+    """Unless this is a plugin test do not allow loading toxfile.py."""
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
         module, load_inline = None, manager._load_inline
 
@@ -126,7 +127,7 @@ def check_os_environ_stable(monkeypatch: MonkeyPatch) -> Iterator[None]:  # noqa
 
 
 @pytest.fixture(autouse=True)
-def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: PT004, U100
+def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: PT004
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
@@ -153,10 +154,12 @@ class ToxProject:
         dest.mkdir(exist_ok=True)
         for key, value in content.items():
             if not isinstance(key, str):
-                raise TypeError(f"{key!r} at {dest}")  # pragma: no cover
+                msg = f"{key!r} at {dest}"
+                raise TypeError(msg)  # pragma: no cover
             at_path = dest / key
             if callable(value):
                 value = textwrap.dedent("\n".join(inspect.getsourcelines(value)[0][1:]))
+                value = f"from __future__ import annotations\n{value}"
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
                 ToxProject._setup_files(at_path, None, value)
@@ -192,10 +195,10 @@ class ToxProject:
             def exit_code(self) -> int | None:
                 return self._exit_code
 
-            def wait(self, timeout: float | None = None) -> int | None:  # noqa: U100
+            def wait(self, timeout: float | None = None) -> int | None:
                 return self._exit_code
 
-            def write_stdin(self, content: str) -> None:  # noqa: U100
+            def write_stdin(self, content: str) -> None:
                 return None  # pragma: no cover
 
             def interrupt(self) -> None:
@@ -218,9 +221,9 @@ class ToxProject:
 
             def __exit__(
                 self,
-                exc_type: type[BaseException] | None,  # noqa: U100
-                exc_val: BaseException | None,  # noqa: U100
-                exc_tb: TracebackType | None,  # noqa: U100
+                exc_type: type[BaseException] | None,
+                exc_val: BaseException | None,
+                exc_tb: TracebackType | None,
             ) -> None:
                 pass
 
@@ -283,7 +286,7 @@ class ToxProject:
             with self.monkeypatch.context() as m:
                 m.setattr(tox_env_api, "_CWD", self.path)
                 m.setattr(tox.run, "setup_state", our_setup_state)
-                m.setattr(sys, "argv", [sys.executable, "-m", "tox"] + list(args))
+                m.setattr(sys, "argv", [sys.executable, "-m", "tox", *list(args)])
                 m.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")
                 m.setenv("VIRTUALENV_SYMLINKS", "1")
                 m.setenv("VIRTUALENV_PIP", "embed")
@@ -294,7 +297,8 @@ class ToxProject:
                 except SystemExit as exception:
                     code = exception.code
                 if code is None:  # pragma: no branch
-                    raise RuntimeError("exit code not set")
+                    msg = "exit code not set"
+                    raise RuntimeError(msg)
             out, err = self._capfd.readouterr()
             return ToxRunOutcome(args, self.path, cast(int, code), out, err, state)
 
@@ -339,7 +343,8 @@ class ToxRunOutcome:
     @property
     def state(self) -> State:
         if self._state is None:
-            raise RuntimeError("no state")
+            msg = "no state"
+            raise RuntimeError(msg)
         return self._state
 
     def env_conf(self, name: str) -> EnvConfigSet:
@@ -403,9 +408,9 @@ class ToxRunOutcome:
 class ToxProjectCreator(Protocol):
     def __call__(
         self,
-        files: dict[str, Any],  # noqa: U100
-        base: Path | None = None,  # noqa: U100
-        prj_path: Path | None = None,  # noqa: U100
+        files: dict[str, Any],
+        base: Path | None = None,
+        prj_path: Path | None = None,
     ) -> ToxProject:
         ...
 
@@ -418,7 +423,7 @@ def init_fixture(
     mocker: MockerFixture,
 ) -> ToxProjectCreator:
     def _init(files: dict[str, Any], base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
-        """create tox  projects"""
+        """Create tox  projects."""
         return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
 
     return _init
@@ -490,7 +495,7 @@ def _invalid_index_fake_port() -> int:  # noqa: PT005
 
 @pytest.fixture(autouse=True)
 def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPatch) -> tuple[str, str | None]:
-    """set a fake pip index url, tests that want to use a pypi server should create and overwrite this"""
+    """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
     previous_url = os.environ.get("PIP_INDEX_URL")
     new_url = f"http://localhost:{_invalid_index_fake_port}/bad-pypi-server"
     monkeypatch.setenv("PIP_INDEX_URL", new_url)
@@ -504,7 +509,7 @@ def enable_pip_pypi_access_fixture(
     disable_pip_pypi_access: tuple[str, str | None],
     monkeypatch: MonkeyPatch,
 ) -> str | None:
-    """set a fake pip index url, tests that want to use a pypi server should create and overwrite this"""
+    """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
     _, previous_url = disable_pip_pypi_access
     enable_pypi_server(monkeypatch, previous_url)
     return previous_url

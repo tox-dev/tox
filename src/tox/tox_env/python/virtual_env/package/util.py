@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Optional, Set, cast
+from typing import TYPE_CHECKING, Optional, Set, cast
 
 from packaging.markers import Marker, Op, Variable  # type: ignore[attr-defined]
-from packaging.requirements import Requirement
+
+if TYPE_CHECKING:
+    from packaging.requirements import Requirement
 
 
 def dependencies_with_extras(deps: list[Requirement], extras: set[str], package_name: str) -> list[Requirement]:

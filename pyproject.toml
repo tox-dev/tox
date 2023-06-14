@@ -2,7 +2,7 @@
 build-backend = "hatchling.build"
 requires = [
   "hatch-vcs>=0.3",
-  "hatchling>=1.17",
+  "hatchling>=1.17.1",
 ]
 
 [project]
@@ -33,13 +33,13 @@ classifiers = [
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
-  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Libraries",
   "Topic :: Software Development :: Testing",
   "Topic :: Utilities",
@@ -48,17 +48,17 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=5.3",
+  "cachetools>=5.3.1",
   "chardet>=5.1",
   "colorama>=0.4.6",
-  "filelock>=3.12",
+  "filelock>=3.12.2",
   'importlib-metadata>=6.6; python_version < "3.8"',
   "packaging>=23.1",
-  "platformdirs>=3.5.1",
+  "platformdirs>=3.5.3",
   "pluggy>=1",
   "pyproject-api>=1.5.1",
   'tomli>=2.0.1; python_version < "3.11"',
-  'typing-extensions>=4.6.2; python_version < "3.8"',
+  'typing-extensions>=4.6.3; python_version < "3.8"',
   "virtualenv>=20.23",
 ]
 optional-dependencies.docs = [
@@ -69,19 +69,19 @@ optional-dependencies.docs = [
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=22.12",
+  "towncrier>=23.6",
 ]
 optional-dependencies.testing = [
   "build[virtualenv]>=0.10",
   "covdefaults>=2.3",
   "devpi-process>=0.3",
-  "diff-cover>=7.5",
+  "diff-cover>=7.6",
   "distlib>=0.3.6",
   "flaky>=3.7",
   "hatch-vcs>=0.3",
-  "hatchling>=1.17",
+  "hatchling>=1.17.1",
   "psutil>=5.9.5",
-  "pytest>=7.3.1",
+  "pytest>=7.3.2",
   "pytest-cov>=4.1",
   "pytest-mock>=3.10",
   "pytest-xdist>=3.3.1",
@@ -96,7 +96,6 @@ urls.Source = "https://github.com/tox-dev/tox"
 urls.Tracker = "https://github.com/tox-dev/tox/issues"
 scripts.tox = "tox.run:run"
 
-
 [tool.hatch]
 build.dev-mode-dirs = ["src"]
 build.hooks.vcs.version-file = "src/tox/version.py"
@@ -105,6 +104,10 @@ version.source = "vcs"
 
 [tool.black]
 line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
 
 [tool.coverage]
 html.show_contexts = true
@@ -121,11 +124,6 @@ report.fail_under = 88
 report.omit = ["src/tox/config/cli/for_docs.py", "tests/execute/local_subprocess/bad_process.py", "tests/type_check/*"]
 run.parallel = true
 run.plugins = ["covdefaults"]
-
-[tool.isort]
-known_first_party = ["tox", "tests"]
-profile = "black"
-line_length = 120
 
 [tool.mypy]
 python_version = "3.11"
@@ -145,24 +143,6 @@ overrides = [
   ], ignore_missing_imports = true },
 ]
 
-[tool.pep8]
-max-line-length = "120"
-
-[tool.flake8]
-max-complexity = 22
-max-line-length = 120
-unused-arguments-ignore-abstract-functions = true
-noqa-require-code = true
-dictionaries = ["en_US", "python", "technical", "django"]
-ignore = [
-  "E203", # whitespace before ':'
-  "W503", #  line break before binary operator
-]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
-
 [tool.towncrier]
 name = "tox"
 filename = "docs/changelog.rst"
@@ -171,3 +151,23 @@ title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 # possible types, all default: feature, bugfix, doc, removal, misc
+
+[tool.ruff]
+select = ["ALL"]
+line-length = 120
+target-version = "py37"
+isort = {known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"]}
+ignore = [
+    "D203",  # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+    "D212",  # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+    "S104",  # Possible binding to all interface
+]
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",  # asserts allowed in tests...
+    "FBT",  # don"t care about booleans as positional arguments in tests
+    "INP001", # no implicit namespace
+    "D",  # don"t care about documentation in tests
+    "S603",  # `subprocess` call: check for execution of untrusted input
+    "PLR2004",  # Magic value used in comparison, consider replacing with a constant variable
+]

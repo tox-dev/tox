@@ -6,8 +6,10 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from pathlib import Path
-from typing import Any, Iterator
+from typing import TYPE_CHECKING, Any, Iterator
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Info:

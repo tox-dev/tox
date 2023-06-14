@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from threading import Event, Lock, Timer
-from types import TracebackType
-from typing import IO, Iterator
+from typing import IO, TYPE_CHECKING, Iterator
 
 from colorama import Fore
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 
 class SyncWrite:
@@ -38,16 +40,16 @@ class SyncWrite:
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,  # noqa: U100
-        exc_val: BaseException | None,  # noqa: U100
-        exc_tb: TracebackType | None,  # noqa: U100
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if self._target_enabled:
             self._cancel()
             self._write(len(self._content))
 
     def handler(self, content: bytes) -> None:
-        """A callback called whenever content is written"""
+        """A callback called whenever content is written."""
         with self._content_lock:
             self._content.extend(content)
             if self._target_enabled is False:

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from argparse import Namespace
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tox.tox_env.python.pip.req_file import PythonDeps
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.mark.parametrize("legacy_flag", ["-r", "-c"])

@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.config.cli.parser import ToxParser
 from tox.config.loader.memory import MemoryLoader
@@ -19,6 +17,11 @@ from tox.pytest import ToxProjectCreator, register_inline_plugin
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.register import ToxEnvRegister
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
 
 def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
@@ -118,7 +121,7 @@ def test_plugin_can_set_core_conf(
     tmp_path: Path,
 ) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: U100
+    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:
         core_conf.loaders.insert(0, MemoryLoader(**{dir_name: tmp_path}))
 
     register_inline_plugin(mocker, tox_add_core_config)
@@ -132,7 +135,7 @@ def test_plugin_can_set_core_conf(
 
 def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: U100
+    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:
         logging.warning("All envs: %s", ", ".join(state.envs.iter(only_active=False)))
         logging.warning("Default envs: %s", ", ".join(state.envs.iter(only_active=True)))
 
@@ -154,7 +157,7 @@ def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: Mocker
 
 def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: U100
+    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:
         logging.warning("Sections: %s", ", ".join(i.key for i in state.conf.sections()))
 
     register_inline_plugin(mocker, tox_add_core_config)
@@ -173,7 +176,7 @@ def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: Mocker
 
 def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: U100
+    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
         env_conf.loaders.insert(0, MemoryLoader(deps=[1]))
         with pytest.raises(TypeError, match="1"):
             assert env_conf["deps"]
@@ -187,7 +190,7 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
 
 def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: U100
+    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
         env_conf["pass_env"].append("MAGIC_*")
 
     register_inline_plugin(mocker, tox_add_env_config)
@@ -210,7 +213,7 @@ def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFi
 
 def test_plugin_extend_set_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: U100
+    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
         env_conf["set_env"].update({"MAGI_CAL": "magi_cal"})
 
     register_inline_plugin(mocker, tox_add_env_config)
@@ -247,7 +250,7 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
         _cannot_extend_config(tox_env.core)
 
     @impl
-    def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # noqa: U100
+    def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
         _cannot_extend_config(tox_env.conf)
         _cannot_extend_config(tox_env.core)
 

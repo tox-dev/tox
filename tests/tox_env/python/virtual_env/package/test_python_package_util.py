@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import sys
 from itertools import zip_longest
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from packaging.requirements import Requirement
 from pyproject_api import SubprocessFrontend
 
 from tox.tox_env.python.virtual_env.package.util import dependencies_with_extras
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution

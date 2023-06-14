@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pluggy
 
-from tox.config.sets import ConfigSet, EnvConfigSet
-from tox.tox_env.register import ToxEnvRegister
-
-from ..config.cli.parser import ToxParser
-from ..execute import Outcome
-from ..session.state import State
-from ..tox_env.api import ToxEnv
 from . import NAME
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.config.sets import ConfigSet, EnvConfigSet
+    from tox.execute import Outcome
+    from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
+    from tox.tox_env.register import ToxEnvRegister
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 _spec_marker = pluggy.HookspecMarker(NAME)
@@ -22,7 +23,7 @@ def _spec(func: _F) -> _F:
 
 
 @_spec
-def tox_register_tox_env(register: ToxEnvRegister) -> None:  # noqa: U100
+def tox_register_tox_env(register: ToxEnvRegister) -> None:
     """
     Register new tox environment type. You can register:
 
@@ -34,7 +35,7 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:  # noqa: U100
 
 
 @_spec
-def tox_add_option(parser: ToxParser) -> None:  # noqa: U100
+def tox_add_option(parser: ToxParser) -> None:
     """
     Add a command line argument. This is the first hook to be called, right after the logging setup and config source
     discovery.
@@ -44,7 +45,7 @@ def tox_add_option(parser: ToxParser) -> None:  # noqa: U100
 
 
 @_spec
-def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: U100
+def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:
     """
     Called when the core configuration is built for a tox environment.
 
@@ -54,7 +55,7 @@ def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: U1
 
 
 @_spec
-def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: U100
+def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
     """
     Called when configuration is built for a tox environment.
 
@@ -64,7 +65,7 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: U
 
 
 @_spec
-def tox_before_run_commands(tox_env: ToxEnv) -> None:  # noqa: U100
+def tox_before_run_commands(tox_env: ToxEnv) -> None:
     """
     Called before the commands set is executed.
 
@@ -73,7 +74,7 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:  # noqa: U100
 
 
 @_spec
-def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # noqa: U100
+def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
     """
     Called after the commands set is executed.
 
@@ -84,7 +85,7 @@ def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outco
 
 
 @_spec
-def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:  # noqa: U100
+def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
     """
     Called before executing an installation command.
 
@@ -96,7 +97,7 @@ def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) 
 
 
 @_spec
-def tox_env_teardown(tox_env: ToxEnv) -> None:  # noqa: U100
+def tox_env_teardown(tox_env: ToxEnv) -> None:
     """
     Called before executing an installation command.
 

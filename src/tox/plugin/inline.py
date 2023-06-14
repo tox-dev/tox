@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import importlib
 import sys
-from pathlib import Path
-from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from types import ModuleType
 
 
 def load_inline(path: Path) -> ModuleType | None:

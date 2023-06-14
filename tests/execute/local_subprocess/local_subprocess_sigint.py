@@ -6,13 +6,17 @@ import signal
 import sys
 from io import TextIOWrapper
 from pathlib import Path
-from types import FrameType
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-from tox.execute import Outcome
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.report import NamedBytesIO
+
+if TYPE_CHECKING:
+    from types import FrameType
+
+    from tox.execute import Outcome
 
 logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
 bad_process = Path(__file__).parent / "bad_process.py"

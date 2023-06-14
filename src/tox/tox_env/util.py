@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from tox.config.sets import CoreConfigSet, EnvConfigSet
+if TYPE_CHECKING:
+    from tox.config.sets import CoreConfigSet, EnvConfigSet
 
 
 def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
@@ -15,7 +16,7 @@ def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
     config.add_config(
         keys=["change_dir", "changedir"],
         of_type=Path,
-        default=lambda conf, name: cast(Path, conf.core["tox_root"]),  # noqa: U100
+        default=lambda conf, name: cast(Path, conf.core["tox_root"]),
         desc="change to this working directory when executing the test command",
         post_process=_post_process_change_dir,
     )
