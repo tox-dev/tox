@@ -50,12 +50,11 @@ class IniLoader(StrConvert, Loader[str]):
                 part = _COMMENTS.sub("", line)
                 elements.append(part.replace("\\#", "#"))
         strip_comments = "\n".join(elements)
-        if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
+        if conf is None:  # noqa: SIM108 # conf is None when we're loading the global tox configuration file for the CLI
             factor_filtered = strip_comments  # we don't support factor and replace functionality there
         else:
             factor_filtered = filter_for_env(strip_comments, env_name)  # select matching factors
-        collapsed = factor_filtered.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
-        return collapsed
+        return factor_filtered.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
 
     def build(  # noqa: PLR0913
         self,

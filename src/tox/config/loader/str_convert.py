@@ -91,7 +91,7 @@ class StrConvert(Convert[str]):
             for arg in splitter:
                 if is_win and len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):  # pragma: win32 cover
                     # on Windows quoted arguments will remain quoted, strip it
-                    arg = arg[1:-1]
+                    arg = arg[1:-1]  # noqa: PLW2901
                 args.append(arg)
                 pos = splitter.instream.tell()
         except ValueError:
@@ -120,13 +120,11 @@ class StrConvert(Convert[str]):
         norm = str(value).strip().lower()
         if norm in StrConvert.TRUTHFUL_VALUES:
             return True
-        elif norm in StrConvert.FALSE_VALUES:
+        if norm in StrConvert.FALSE_VALUES:
             return False
-        else:
-            msg = f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}"
-            raise TypeError(
-                msg,
-            )
+
+        msg = f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}"
+        raise TypeError(msg)
 
 
 __all__ = ("StrConvert",)

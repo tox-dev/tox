@@ -116,7 +116,7 @@ class Execute(ABC):
     def call(
         self,
         request: ExecuteRequest,
-        show: bool,
+        show: bool,  # noqa: FBT001
         out_err: OutErr,
         env: ToxEnv,
     ) -> Iterator[ExecuteStatus]:

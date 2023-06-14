@@ -52,11 +52,10 @@ class Info:
             # if no exception thrown update
             if sub_section is None:
                 self._content[section] = value
+            elif self._content.get(section) is None:
+                self._content[section] = {sub_section: value}
             else:
-                if self._content.get(section) is None:
-                    self._content[section] = {sub_section: value}
-                else:
-                    self._content[section][sub_section] = value
+                self._content[section][sub_section] = value
             self._write()
 
     def reset(self) -> None:

@@ -15,8 +15,7 @@ class IniSection(Section):
 
     @property
     def names(self) -> list[str]:
-        elements = list(extend_factors(self.name))
-        return elements
+        return list(extend_factors(self.name))
 
 
 TEST_ENV_PREFIX = "testenv"

@@ -44,6 +44,6 @@ def handle_binary_option(value: str, target: set[str], other: set[str]) -> None:
         if name == ":none:":
             target.clear()
             continue
-        name = canonicalize_name(name)
-        other.discard(name)
-        target.add(name)
+        normalized_name = canonicalize_name(name)
+        other.discard(normalized_name)
+        target.add(normalized_name)

@@ -26,8 +26,8 @@ class LegacyToml(IniSource):
             toml_content = tomllib.load(file_handler)
         try:
             content = toml_content["tool"]["tox"]["legacy_tox_ini"]
-        except KeyError:
-            raise ValueError
+        except KeyError as exc:
+            raise ValueError(path) from exc
         super().__init__(path, content=content)
 
 

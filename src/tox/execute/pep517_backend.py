@@ -38,8 +38,7 @@ class LocalSubProcessPep517Executor(Execute):
         out: SyncWrite,
         err: SyncWrite,
     ) -> ExecuteInstance:
-        result = LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
-        return result
+        return LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
 
     def local_execute(self, options: ExecuteOptions) -> tuple[LocalSubProcessExecuteInstance, ExecuteStatus]:
         if self._exc is not None:
@@ -86,12 +85,11 @@ class LocalSubProcessPep517Executor(Execute):
         if self._local_execute is not None:  # pragma: no branch
             execute, status = self._local_execute
             execute.__exit__(None, None, None)
-            if execute.process is not None:  # pragma: no branch
-                if execute.process.returncode is None:  # pragma: no cover
-                    try:  # pragma: no cover
-                        execute.process.wait(timeout=0.1)  # pragma: no cover
-                    except TimeoutExpired:  # pragma: no cover
-                        execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
+            if execute.process is not None and execute.process.returncode is None:  # pragma: no cover
+                try:  # pragma: no cover
+                    execute.process.wait(timeout=0.1)  # pragma: no cover
+                except TimeoutExpired:  # pragma: no cover
+                    execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
         self.is_alive = False
 
 

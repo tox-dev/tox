@@ -19,7 +19,7 @@ def run(args: Sequence[str] | None = None) -> None:
             result = main(sys.argv[1:] if args is None else args)
     except Exception as exception:  # noqa: BLE001
         if isinstance(exception, HandledError):
-            logging.error("%s| %s", type(exception).__name__, str(exception))
+            logging.error("%s| %s", type(exception).__name__, str(exception))  # noqa: TRY400
             result = -2
         else:
             raise
@@ -55,5 +55,4 @@ def setup_state(args: Sequence[str]) -> State:
     if options.parsed.exit_and_dump_after:
         faulthandler.dump_traceback_later(timeout=options.parsed.exit_and_dump_after, exit=True)  # pragma: no cover
     # build tox environment config objects
-    state = State(options, args)
-    return state
+    return State(options, args)

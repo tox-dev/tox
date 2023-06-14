@@ -28,6 +28,23 @@ repos:
     hooks:
       - id: prettier
         args: ["--print-width=120", "--prose-wrap=always"]
+  - repo: https://github.com/asottile/blacken-docs
+    rev: 1.13.0
+    hooks:
+      - id: blacken-docs
+        additional_dependencies: [black==23.3]
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: rst-backticks
+  - repo: local
+    hooks:
+      - id: changelogs-rst
+        name: changelog filenames
+        language: fail
+        entry: "changelog files must be named ####.(feature|bugfix|doc|removal|misc).rst"
+        exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|template.jinja2)
+        files: ^docs/changelog/
   - repo: meta
     hooks:
       - id: check-hooks-apply

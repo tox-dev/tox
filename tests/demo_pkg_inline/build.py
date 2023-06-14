@@ -7,8 +7,9 @@ from __future__ import annotations
 import os
 import sys
 import tarfile
+from pathlib import Path
 from textwrap import dedent
-from zipfile import Path, ZipFile
+from zipfile import ZipFile
 
 name = "demo_pkg_inline"
 pkg_name = name.replace("_", "-")

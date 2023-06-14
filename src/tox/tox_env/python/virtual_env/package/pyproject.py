@@ -66,7 +66,7 @@ class ToxBackendFailed(Fail, BackendFailed):
         )
 
 
-class BuildEditableNotSupported(RuntimeError):
+class BuildEditableNotSupportedError(RuntimeError):
     """raised when build editable is not supported."""
 
 
@@ -156,7 +156,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         super()._setup_env()
         if "editable" in self.builds:
             if not self._frontend.optional_hooks["build_editable"]:
-                raise BuildEditableNotSupported
+                raise BuildEditableNotSupportedError
             build_requires = self._frontend.get_requires_for_build_editable().requires
             self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
         if "wheel" in self.builds:
@@ -186,12 +186,15 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         """Build the package to install."""
         try:
             deps = self._load_deps(for_env)
-        except BuildEditableNotSupported:
+        except BuildEditableNotSupportedError:
             targets = [e for e in self.builds.pop("editable") if e["package"] == "editable"]
             names = ", ".join(sorted({t.env_name for t in targets if t.env_name}))
-            logging.error(
-                f"package config for {names} is editable, however the build backend {self._frontend.backend}"
-                f" does not support PEP-660, falling back to editable-legacy - change your configuration to it",
+
+            logging.error(  # noqa: TRY400
+                "package config for %s is editable, however the build backend %s does not support PEP-660, falling "
+                "back to editable-legacy - change your configuration to it",
+                names,
+                cast(Pep517VirtualEnvFrontend, self._frontend_).backend,
             )
             for env in targets:
                 env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]  # noqa: SLF001
@@ -286,8 +289,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             reqs = self.get_package_dependencies(for_env)
             name = self.get_package_name(for_env)
         extras: set[str] = for_env["extras"]
-        deps = dependencies_with_extras(reqs, extras, name)
-        return deps
+        return dependencies_with_extras(reqs, extras, name)
 
     def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
         with self._pkg_lock:
@@ -343,10 +345,12 @@ class Pep517VirtualEnvFrontend(Frontend):
 
     def _send(self, cmd: str, **kwargs: Any) -> tuple[Any, str, str]:
         try:
-            if cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable"):
+            if (
+                cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable")
                 # given we'll build a wheel we might skip the prepare step
-                if "wheel" in self._tox_env.builds or "editable" in self._tox_env.builds:
-                    return None, "", ""  # will need to build wheel either way, avoid prepare
+                and ("wheel" in self._tox_env.builds or "editable" in self._tox_env.builds)
+            ):
+                return None, "", ""  # will need to build wheel either way, avoid prepare
             return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
             raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception

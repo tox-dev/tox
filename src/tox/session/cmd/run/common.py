@@ -132,7 +132,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
                             msg = "must be greater than zero"
                             raise ValueError(msg)  # noqa: TRY301
                     except ValueError as exc:
-                        raise ArgumentError(self, str(exc))
+                        raise ArgumentError(self, str(exc)) from exc
                 setattr(namespace, self.dest, result)
 
         parser.add_argument(
@@ -142,7 +142,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
             "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
             action=SeedAction,
             of_type=Optional[int],
-            default=random.randint(1, 1024 if sys.platform == "win32" else 4294967295),
+            default=random.randint(1, 1024 if sys.platform == "win32" else 4294967295),  # noqa: S311
             dest="hash_seed",
         )
     parser.add_argument(
@@ -214,11 +214,10 @@ def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, int]:
         msg, color = "SKIP", Fore.YELLOW
     elif run.code == Outcome.OK:
         msg, color = "OK", Fore.GREEN
+    elif run.ignore_outcome:
+        msg, color = f"IGNORED FAIL code {run.code}", Fore.YELLOW
     else:
-        if run.ignore_outcome:
-            msg, color = f"IGNORED FAIL code {run.code}", Fore.YELLOW
-        else:
-            msg, color = f"FAIL code {run.code}", Fore.RED
+        msg, color = f"FAIL code {run.code}", Fore.RED
     return msg, color
 
 
@@ -247,7 +246,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         except KeyboardInterrupt:
             previous, has_previous = signal(SIGINT, Handlers.SIG_IGN), True
             spinner.print_report = False  # no need to print reports at this point, final report coming up
-            logger.error(f"[{os.getpid()}] KeyboardInterrupt - teardown started")
+            logger.error("[%s] KeyboardInterrupt - teardown started", os.getpid())  # noqa: TRY400
             interrupt.set()
             # cancel in reverse order to not allow submitting new jobs as we cancel running ones
             for future, tox_env in reversed(list(future_to_env.items())):
@@ -260,7 +259,8 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
             lock = getattr(thread, "_tstate_lock", None)
             if lock is not None and lock.locked():  # pragma: no branch
                 lock.release()  # pragma: no cover
-                thread._stop()  # type: ignore[attr-defined] # pragma: no cover # calling private method to fix thread state  # noqa: SLF001
+                # calling private method to fix thread state
+                thread._stop()  # type: ignore[attr-defined] # pragma: no cover # noqa: SLF001
             thread.join()
     finally:
         ordered_results: list[ToxEnvRunResult] = []
@@ -384,7 +384,7 @@ def _handle_one_run_done(
     result: ToxEnvRunResult,
     spinner: ToxSpinner,
     state: State,
-    live: bool,
+    live: bool,  # noqa: FBT001
 ) -> None:
     success = result.code == Outcome.OK
     spinner.update_spinner(result, success)

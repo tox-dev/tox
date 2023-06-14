@@ -46,17 +46,16 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 self.closed = True
                 return None
         try:  # wait=False to not block and give chance for the stop check
-            data = self._ov.getresult(False)  # type: ignore[union-attr]
+            data = self._ov.getresult(False)  # type: ignore[union-attr]  # noqa: FBT003
         except OSError as exception:
             # 996 (0x3E4) Overlapped I/O event is not in a signaled state.
             # 995 (0x3E3) The I/O operation has been aborted because of either a thread exit or an application request.
             win_error = getattr(exception, "winerror", None)
             if win_error == 996:  # noqa: PLR2004
                 return True
-            else:
-                if win_error != 995:  # noqa: PLR2004
-                    logging.error("failed to read %r", exception)
-                return None
+            if win_error != 995:  # noqa: PLR2004
+                logging.error("failed to read %r", exception)  # noqa: TRY400
+            return None
         else:
             self._ov = None
             self._waiting_for_read = False

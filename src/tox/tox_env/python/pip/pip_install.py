@@ -93,7 +93,7 @@ class Pip(Installer[Python]):
         elif isinstance(arguments, Sequence):
             self._install_list_of_deps(arguments, section, of_type)
         else:
-            logging.warning(f"pip cannot install {arguments!r}")
+            logging.warning("pip cannot install %r", arguments)
             raise SystemExit(1)
 
     def constraints_file(self) -> Path:
@@ -112,7 +112,7 @@ class Pip(Installer[Python]):
             new_options, new_reqs = arguments.unroll()
         except ValueError as exception:
             msg = f"{exception} for tox env py within deps"
-            raise Fail(msg)
+            raise Fail(msg) from exception
         new_requirements: list[str] = []
         new_constraints: list[str] = []
         for req in new_reqs:
@@ -178,7 +178,7 @@ class Pip(Installer[Python]):
                 groups["req"].extend(str(i) for i in arg.deps)
                 groups["dev_pkg"].append(str(arg.path))
             else:
-                logging.warning(f"pip cannot install {arg!r}")
+                logging.warning("pip cannot install %r", arg)
                 raise SystemExit(1)
         req_of_type = f"{of_type}_deps" if groups["pkg"] or groups["dev_pkg"] else of_type
         for value in groups.values():
@@ -225,8 +225,7 @@ class Pip(Installer[Python]):
             opts_at = install_command.index("{packages}")
         except ValueError:
             opts_at = len(install_command)
-        result = install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
-        return result
+        return install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
 
 
 __all__ = ("Pip",)

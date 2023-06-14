@@ -55,7 +55,7 @@ class SetEnv:
             msg = f"{env_file} does not exist for set_env"
             raise Fail(msg)
         for env_line in env_file.read_text().splitlines():
-            env_line = env_line.strip()
+            env_line = env_line.strip()  # noqa: PLW2901
             if not env_line or env_line.startswith("#"):
                 continue
             key, value = self._extract_key_value(env_line)
@@ -66,9 +66,8 @@ class SetEnv:
         key, sep, value = line.partition("=")
         if sep:
             return key.strip(), value.strip()
-        else:
-            msg = f"invalid line {line!r} in set_env"
-            raise ValueError(msg)
+        msg = f"invalid line {line!r} in set_env"
+        raise ValueError(msg)
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         if item in self._materialized:

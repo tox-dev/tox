@@ -1,4 +1,4 @@
-"""Group together configuration values that belong together (such as base tox configuration, tox environment configs)."""
+"""Group together configuration values (such as base tox configuration, tox environment configs)."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -52,8 +52,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
         loaders: list[Loader[T]],  # noqa: ARG002
         args: ConfigLoadArgs,  # noqa: ARG002
     ) -> T:
-        value = self.value() if callable(self.value) else self.value
-        return value
+        return self.value() if callable(self.value) else self.value
 
     def __eq__(self, o: Any) -> bool:
         return type(self) == type(o) and super().__eq__(o) and self.value == o.value

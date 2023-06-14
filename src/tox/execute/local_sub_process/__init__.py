@@ -181,7 +181,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                             break
                     else:
                         msg = f"{base} (resolves to {executable})" if base == executable else base
-                        raise Fail(f"{msg} is not allowed, use allowlist_externals to allow it")
+                        msg = f"{msg} is not allowed, use allowlist_externals to allow it"
+                        raise Fail(msg)
                 cmd = [executable]
                 if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
                     shebang_line = shebang(executable)
@@ -202,7 +203,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         try:
             self.process = process = Popen(
-                self.cmd,
+                self.cmd,  # noqa: S603
                 stdout=next(stdout),
                 stderr=next(stderr),
                 stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],

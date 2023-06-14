@@ -51,7 +51,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
             for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
                     msg = "detected sub-parser added without using our own add command"
-                    raise RuntimeError(msg)
+                    raise RuntimeError(msg)  # noqa: TRY004
                 values.fix_defaults()
 
     @staticmethod
@@ -64,7 +64,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 loc = locals()
                 loc["Literal"] = Literal
                 as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
-                of_type = eval(as_literal, globals(), loc)
+                of_type = eval(as_literal, globals(), loc)  # noqa: PGH001
             elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa: SLF001
@@ -265,7 +265,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 def add_verbosity_flags(parser: ArgumentParser) -> None:
     from tox.report import LEVELS
 
-    level_map = "|".join(f"{c}={logging.getLevelName(l)}" for c, l in sorted(LEVELS.items()))
+    level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
     verbosity_group = parser.add_argument_group("verbosity")
     verbosity_group.description = (
         f"every -v increases, every -q decreases verbosity level, "
@@ -285,7 +285,7 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
 
 def add_color_flags(parser: ArgumentParser) -> None:
     converter = StrConvert()
-    if os.environ.get("NO_COLOR", "") != "":
+    if os.environ.get("NO_COLOR", ""):
         color = "no"
     elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
         color = "yes"

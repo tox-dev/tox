@@ -97,7 +97,7 @@ def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None: 
     for key in keys if keys else conf:
         if key not in conf:
             continue
-        key = conf.primary_key(key)
+        key = conf.primary_key(key)  # noqa: PLW2901
         try:
             value = conf[key]
             as_str, multi_line = stringify(value)

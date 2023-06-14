@@ -189,8 +189,8 @@ class CoreConfigSet(ConfigSet):
     def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
         return cast(Path, self["work_dir"] / ".tmp")
 
-    def _work_dir_post_process(self, dir: Path) -> Path:
-        return self._conf.work_dir if self._conf.options.work_dir else dir
+    def _work_dir_post_process(self, folder: Path) -> Path:
+        return self._conf.work_dir if self._conf.options.work_dir else folder
 
     def register_config(self) -> None:
         self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=self._src_path)

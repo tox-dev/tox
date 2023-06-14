@@ -71,10 +71,10 @@ def shell_cmd(cmd: Sequence[str]) -> str:
         from subprocess import list2cmdline
 
         return list2cmdline(tuple(str(x) for x in cmd))
-    else:  # pragma: win32 no cover
-        from shlex import quote as shlex_quote
+    # pragma: win32 no cover
+    from shlex import quote as shlex_quote
 
-        return " ".join(shlex_quote(str(x)) for x in cmd)
+    return " ".join(shlex_quote(str(x)) for x in cmd)
 
 
 __all__ = (

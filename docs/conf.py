@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 company, name = "tox-dev", "tox"
 release, version = __version__, ".".join(__version__.split(".")[:2])
-copyright = f"{company}"
+copyright = f"{company}"  # noqa: A001
 master_doc, source_suffix = "index", ".rst"
 
 html_theme = "furo"
@@ -97,7 +97,7 @@ def setup(app: Sphinx) -> None:
     root, exe = here.parent, Path(sys.executable)
     towncrier = exe.with_name(f"towncrier{exe.suffix}")
     cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
-    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)
+    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)  # noqa: S603
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
 
     class PatchedPythonDomain(PythonDomain):
@@ -106,7 +106,7 @@ def setup(app: Sphinx) -> None:
             env: BuildEnvironment,
             fromdocname: str,
             builder: Builder,
-            type: str,
+            type: str,  # noqa: A002
             target: str,
             node: pending_xref,
             contnode: Element,
@@ -129,7 +129,7 @@ def setup(app: Sphinx) -> None:
     tox_cfg = SourceFileLoader("tox_conf", str(here / "tox_conf.py")).load_module().ToxConfig
     app.add_directive(tox_cfg.name, tox_cfg)
 
-    def check_uri(self, refnode: reference) -> None:
+    def check_uri(self: ExternalLinksChecker, refnode: reference) -> None:  #
         if refnode.document.attributes["source"].endswith("index.rst"):
             return None  # do not use for the index file
         return prev_check(self, refnode)

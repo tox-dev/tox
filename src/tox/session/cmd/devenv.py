@@ -47,5 +47,5 @@ def devenv(state: State) -> int:
         raise HandledError(msg)
     result = run_sequential(state)
     if result == 0:
-        logging.warning(f"created development environment under {opt.devenv_path}")
+        logging.warning("created development environment under %s", opt.devenv_path)
     return result

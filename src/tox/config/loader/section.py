@@ -52,7 +52,7 @@ class Section:
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and (self._prefix, self._name) == (
-            other._prefix,
+            other._prefix,  # noqa: SLF001
             other.name,
         )
 

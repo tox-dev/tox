@@ -143,10 +143,11 @@ class ToxEnv(ABC):
             invalid = [v for v in result if any(c in invalid_chars for c in v)]
             if invalid:
                 invalid_repr = ", ".join(repr(i) for i in invalid)
-                msg = f"pass_env values cannot contain whitespace, use comma to have multiple values in a single line, invalid values found {invalid_repr}"
-                raise Fail(
-                    msg,
+                msg = (
+                    f"pass_env values cannot contain whitespace, use comma to have multiple values in a single line,"
+                    f" invalid values found {invalid_repr}"
                 )
+                raise Fail(msg)
             return result
 
         self.conf.add_config(
@@ -174,7 +175,7 @@ class ToxEnv(ABC):
             default=[],
             desc="external command glob to allow calling",
         )
-        assert self.installer is not None  # trigger installer creation to allow configuration registration
+        assert self.installer is not None  # noqa: S101 # trigger installer creation to allow config registration
 
     def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: ARG002
         return cast(bool, self.options.recreate)
@@ -247,7 +248,7 @@ class ToxEnv(ABC):
                 self._setup_with_env()
             except Recreate as exception:  # once we might try over
                 if not recreate:  # pragma: no cover
-                    logging.warning(f"recreate env because {exception.args[0]}")
+                    logging.warning("recreate env because %s", exception.args[0])
                     self._clean(transitive=False)
                     self._setup_env()
                     self._setup_with_env()
@@ -374,8 +375,7 @@ class ToxEnv(ABC):
     def _make_path(self) -> str:
         values = dict.fromkeys(str(i) for i in self._paths)
         values.update(dict.fromkeys(os.environ.get("PATH", "").split(os.pathsep)))
-        result = os.pathsep.join(values)
-        return result
+        return os.pathsep.join(values)
 
     def execute(  # noqa: PLR0913
         self,
@@ -435,9 +435,9 @@ class ToxEnv(ABC):
                 yield execute_status
             finally:
                 self._execute_statuses.pop(execute_id)
-        if show and self._hidden_outcomes is not None:
-            if execute_status.outcome is not None:  # pragma: no cover # if it gets cancelled before even starting
-                self._hidden_outcomes.append(execute_status.outcome)
+        if show and self._hidden_outcomes is not None and execute_status.outcome is not None:
+            # if it gets cancelled before even starting
+            self._hidden_outcomes.append(execute_status.outcome)
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)
         self._log_execute(request, execute_status)

@@ -52,8 +52,10 @@ class PythonDeps(RequirementsFile):
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
             if line.startswith("-r") or line.startswith("-c") and line[2].isalpha():
-                line = f"{line[0:2]} {line[2:]}"
-            yield at, line
+                found_line = f"{line[0:2]} {line[2:]}"
+            else:
+                found_line = line
+            yield at, found_line
 
     def lines(self) -> list[str]:
         return self._raw.splitlines()
@@ -66,28 +68,32 @@ class PythonDeps(RequirementsFile):
         lines: list[str] = []
         for line in raw.splitlines():
             # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
-            arg_match = next(
-                (
-                    arg
-                    for arg in ONE_ARG
-                    if line.startswith(arg)
-                    and len(line) > len(arg)
-                    and not (line[len(arg)].isspace() or line[len(arg)] == "=")
-                ),
-                None,
-            )
-            if arg_match is not None:
-                line = f"{arg_match} {line[len(arg_match):]}"
-            # escape spaces
-            escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
-            if escape_match is not None:
-                # escape not already escaped spaces
-                escaped = re.sub(r"(?<!\\)(\s)", r"\\\1", line[len(escape_match) + 1 :])
-                line = f"{line[:len(escape_match)]} {escaped}"
-            lines.append(line)
+            lines.append(PythonDeps._normalize_line(line))
         adjusted = "\n".join(lines)
         raw = f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
         return raw
+
+    @staticmethod
+    def _normalize_line(line: str) -> str:
+        arg_match = next(
+            (
+                arg
+                for arg in ONE_ARG
+                if line.startswith(arg)
+                and len(line) > len(arg)
+                and not (line[len(arg)].isspace() or line[len(arg)] == "=")
+            ),
+            None,
+        )
+        if arg_match is not None:
+            line = f"{arg_match} {line[len(arg_match):]}"
+        # escape spaces
+        escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
+        if escape_match is not None:
+            # escape not already escaped spaces
+            escaped = re.sub(r"(?<!\\)(\s)", r"\\\1", line[len(escape_match) + 1 :])
+            line = f"{line[:len(escape_match)]} {escaped}"
+        return line
 
     def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # noqa: FBT001
         # check for any invalid options in the deps list

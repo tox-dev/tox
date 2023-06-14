@@ -37,9 +37,10 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
                 if data:
                     self.handler(data)
                     return True
-            return False
         except OSError as exception:  # pragma: no cover
             # Bad file descriptor or Input/output error
             if exception.errno in (errno.EBADF, errno.EIO):
                 return None
             raise
+        else:
+            return False

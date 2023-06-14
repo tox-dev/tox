@@ -6,6 +6,7 @@ import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO, TextIOWrapper
+from pathlib import Path
 from threading import Thread, current_thread, enumerate, local
 from typing import IO, Iterator, Tuple
 
@@ -177,13 +178,12 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
                 f" [%(pathname)s:%(lineno)d]{_c(Style.RESET_ALL)}"
             )
         fmt = f"{_c(Style.BRIGHT)}{_c(Fore.MAGENTA)}%(env_name)s:{_c(Style.RESET_ALL)}" + fmt
-        formatter = logging.Formatter(fmt)
-        return formatter
+        return logging.Formatter(fmt)
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: A003
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name
-        basename = os.path.dirname(record.pathname)
+        basename = str(Path(record.pathname).parent)
         len_sys_path_match = max((len(p) for p in sys.path if basename.startswith(p)), default=-1)
         record.pathname = record.pathname[len_sys_path_match + 1 :]
 
@@ -223,10 +223,7 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # noqa: FBT00
 
 
 def _get_level(verbosity: int) -> int:
-    if verbosity > MAX_LEVEL:
-        verbosity = MAX_LEVEL
-    level = LEVELS[verbosity]
-    return level
+    return LEVELS[min(verbosity, MAX_LEVEL)]
 
 
 def _clean_handlers(log: logging.Logger) -> None:

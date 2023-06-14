@@ -44,7 +44,7 @@ class ParsedRequirement:
                 match = _EXTRA_PATH.fullmatch(Path(req).name)
                 if match:
                     for extra in match.group(2).split(","):
-                        extra = extra.strip()
+                        extra = extra.strip()  # noqa: PLW2901
                         if not extra:
                             continue
                         if not _EXTRA_ELEMENT.fullmatch(extra):
@@ -209,8 +209,8 @@ class RequirementsFile:
     def _parse_and_recurse(
         self,
         filename: str,
-        constraint: bool,
-        recurse: bool,
+        constraint: bool,  # noqa: FBT001
+        recurse: bool,  # noqa: FBT001
     ) -> Iterator[ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
@@ -221,8 +221,7 @@ class RequirementsFile:
                 if _SCHEME_RE.search(filename):  # original file is over http
                     req_path = urllib.parse.urljoin(filename, req_path)  # do a url join so relative paths work
                 elif not _SCHEME_RE.search(req_path):  # original file and nested file are paths
-                    # do a join so relative paths work
-                    req_path = os.path.join(os.path.dirname(filename), req_path)
+                    req_path = str(Path(filename).parent / req_path)  # do a join so relative paths work
                 if recurse:
                     yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)  # noqa: SLF001
                 else:
@@ -246,13 +245,13 @@ class RequirementsFile:
         """
         scheme = get_url_scheme(url)
         if scheme in ["http", "https"]:
-            with urlopen(url) as response:
+            with urlopen(url) as response:  # noqa: S310
                 text = self._read_decode(response)
                 return text
         elif scheme == "file":
             url = url_to_path(url)
         try:
-            with open(url, "rb") as file_handler:
+            with Path(url).open("rb") as file_handler:
                 text = self._read_decode(file_handler)
         except OSError as exc:
             msg = f"Could not open requirements file {url}: {exc}"
@@ -265,8 +264,7 @@ class RequirementsFile:
         if not raw:
             return ""
         codec = chardet.detect(raw)["encoding"]
-        text = raw.decode(codec)
-        return text
+        return raw.decode(codec)
 
     def _pre_process(self, content: str) -> ReqFileLines:
         """
@@ -300,7 +298,7 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(
+    def _merge_option_line(  # noqa: C901, PLR0912, PLR0915
         self,
         base_opt: Namespace,
         opt: Namespace,
@@ -340,15 +338,14 @@ class RequirementsFile:
                 if url not in base_opt.index_url:
                     base_opt.index_url.extend(opt.extra_index_url)
         if opt.find_links:
-            # FIXME: it would be nice to keep track of the source of the find_links: support a find-links local path
             # relative to a requirements file.
             if not hasattr(base_opt, "find_links"):
                 base_opt.find_links = []
             value = opt.find_links[0]
-            req_dir = os.path.dirname(os.path.abspath(filename))
-            relative_to_reqs_file = os.path.join(req_dir, value)
-            if os.path.exists(relative_to_reqs_file):
-                value = relative_to_reqs_file  # pragma: no cover
+            req_dir = Path(filename).absolute().parent
+            relative_to_reqs_file = req_dir / value
+            if relative_to_reqs_file.exists():
+                value = str(relative_to_reqs_file)  # pragma: no cover
             if value not in base_opt.find_links:
                 base_opt.find_links.append(value)
         if opt.pre:
@@ -377,9 +374,8 @@ class RequirementsFile:
         for token in tokens:
             if token.startswith("-"):  # both `-` and `--` accepted
                 break
-            else:
-                args.append(token)
-                options.pop(0)
+            args.append(token)
+            options.pop(0)
         return " ".join(args).strip(), " ".join(options)
 
     @staticmethod
@@ -393,7 +389,7 @@ class RequirementsFile:
         for line_number, line in lines_enum:
             if not line.endswith("\\") or _COMMENT_RE.match(line):
                 if _COMMENT_RE.match(line):
-                    line = f" {line}"  # this ensures comments are always matched later
+                    line = f" {line}"  # noqa: PLW2901 # this ensures comments are always matched later
                 if new_line:
                     new_line.append(line)
                     assert primary_line_number is not None  # noqa: S101
@@ -414,10 +410,9 @@ class RequirementsFile:
     def _ignore_comments(lines_enum: ReqFileLines) -> ReqFileLines:
         """Strips comments and filter empty lines."""
         for line_number, line in lines_enum:
-            line = _COMMENT_RE.sub("", line)
-            line = line.strip()
-            if line:
-                yield line_number, line
+            processed_line = _COMMENT_RE.sub("", line).strip()
+            if processed_line:
+                yield line_number, processed_line
 
     @staticmethod
     def _expand_env_variables(lines_enum: ReqFileLines) -> ReqFileLines:
@@ -435,12 +430,13 @@ class RequirementsFile:
         <http://pubs.opengroup.org/onlinepubs/9699919799/>`_ and are limited to uppercase letter, digits and the `_`.
         """
         for line_number, line in lines_enum:
-            for env_var, var_name in _ENV_VAR_RE.findall(line):
+            expanded_line = line
+            for env_var, var_name in _ENV_VAR_RE.findall(expanded_line):
                 value = os.getenv(var_name)
                 if not value:
                     continue
-                line = line.replace(env_var, value)
-            yield line_number, line
+                expanded_line = expanded_line.replace(env_var, value)
+            yield line_number, expanded_line
 
     @property
     def as_root_args(self) -> list[str]:

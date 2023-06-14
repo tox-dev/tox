@@ -97,7 +97,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             if not found:
                 msg = f"no package found in {package_glob}"
                 raise Fail(msg)
-            elif len(found) != 1:
+            if len(found) != 1:
                 msg = f"found more than one package {', '.join(sorted(found))}"
                 raise Fail(msg)
             path = Path(found[0])
@@ -117,7 +117,8 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
                 tar.extractall(path=str(work_dir))
-            assert self._sdist_meta_tox_env is not None  # the register run env is guaranteed to be called before this
+            # the register run env is guaranteed to be called before this
+            assert self._sdist_meta_tox_env is not None  # noqa: S101
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
                 self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
                 deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)

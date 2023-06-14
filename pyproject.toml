@@ -74,6 +74,7 @@ optional-dependencies.docs = [
 optional-dependencies.testing = [
   "build[virtualenv]>=0.10",
   "covdefaults>=2.3",
+  "detect-test-pollution>=1.1.1",
   "devpi-process>=0.3",
   "diff-cover>=7.6",
   "distlib>=0.3.6",
@@ -84,6 +85,7 @@ optional-dependencies.testing = [
   "pytest>=7.3.2",
   "pytest-cov>=4.1",
   "pytest-mock>=3.10",
+  "pytest-timeout>=2.1",
   "pytest-xdist>=3.3.1",
   "re-assert>=1.1",
   'time-machine>=2.9; implementation_name != "pypy"',
@@ -106,6 +108,7 @@ version.source = "vcs"
 line-length = 120
 
 [tool.pytest.ini_options]
+timeout = 60
 testpaths = ["tests"]
 addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
 

@@ -79,9 +79,8 @@ def _create_default_source(root_dir: Path | None) -> Source:
                 break
     else:  # if not set use where we find pyproject.toml in the tree or cwd
         empty = root_dir
-    logging.warning(f"No {' or '.join(i.FILENAME for i in SOURCE_TYPES)} found, assuming empty tox.ini at {empty}")
-    src = ToxIni(empty / "tox.ini", content="")
-    return src
+    logging.warning("No %s found, assuming empty tox.ini at %s", " or ".join(i.FILENAME for i in SOURCE_TYPES), empty)
+    return ToxIni(empty / "tox.ini", content="")
 
 
 __all__ = ("discover_source",)

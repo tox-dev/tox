@@ -148,7 +148,7 @@ def run_provision(name: str, state: State) -> int:
         tox_env.setup()
     except Skip as exception:
         msg = f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}"
-        raise HandledError(msg)
+        raise HandledError(msg) from exception
     args: list[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())

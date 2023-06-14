@@ -51,12 +51,15 @@ class Config:
         """
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             args = []
-            to_path_str = os.path.abspath(str(to_path))  # we use os.path to unroll .. in path without resolve
+            # we use os.path to unroll .. in path without resolve
+            to_path_str = os.path.abspath(str(to_path))  # noqa: PTH100
             for arg in self._pos_args:
                 path_arg = Path(arg)
                 if path_arg.exists() and not path_arg.is_absolute():
-                    path_arg_str = os.path.abspath(str(path_arg))  # we use os.path to unroll .. in path without resolve
-                    relative = os.path.relpath(path_arg_str, to_path_str)  # we use os.path to not fail when not within
+                    # we use os.path to unroll .. in path without resolve
+                    path_arg_str = os.path.abspath(str(path_arg))  # noqa: PTH100
+                    # we use os.path to not fail when not within
+                    relative = os.path.relpath(path_arg_str, to_path_str)
                     args.append(relative)
                 else:
                     args.append(arg)
@@ -157,14 +160,13 @@ class Config:
         :return: the tox environments config
         """
         section, base_test, base_pkg = self._src.get_tox_env_section(item)
-        conf_set = self.get_section_config(
+        return self.get_section_config(
             section,
             base=base_pkg if package else base_test,
             of_type=EnvConfigSet,
             for_env=item,
             loaders=loaders,
         )
-        return conf_set
 
     def clear_env(self, name: str) -> None:
         section, _, __ = self._src.get_tox_env_section(name)

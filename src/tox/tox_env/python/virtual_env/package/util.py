@@ -45,8 +45,7 @@ def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, se
     :param deps: the dependencies
     :return: a list of requirement, extras set
     """
-    result = [_extract_extra_markers(d) for d in deps]
-    return result
+    return [_extract_extra_markers(d) for d in deps]
 
 
 def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:
@@ -75,6 +74,11 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
 
 
 def _get_extra(_marker: str | tuple[Variable, Op, Variable]) -> str | None:
-    if isinstance(_marker, tuple) and len(_marker) == 3 and _marker[0].value == "extra" and _marker[1].value == "==":
+    if (
+        isinstance(_marker, tuple)
+        and len(_marker) == 3  # noqa: PLR2004
+        and _marker[0].value == "extra"
+        and _marker[1].value == "=="
+    ):
         return _marker[2].value
     return None

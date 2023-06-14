@@ -93,7 +93,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
 @contextmanager
 def check_os_environ() -> Iterator[None]:
     old = os.environ.copy()
-    to_clean = {k: os.environ.pop(k, None) for k in {ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT"}}
+    to_clean = {k: os.environ.pop(k, None) for k in (ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT")}
 
     yield
 
@@ -158,8 +158,8 @@ class ToxProject:
                 raise TypeError(msg)  # pragma: no cover
             at_path = dest / key
             if callable(value):
-                value = textwrap.dedent("\n".join(inspect.getsourcelines(value)[0][1:]))
-                value = f"from __future__ import annotations\n{value}"
+                value = textwrap.dedent("\n".join(inspect.getsourcelines(value)[0][1:]))  # noqa: PLW2901
+                value = f"from __future__ import annotations\n{value}"  # noqa: PLW2901
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
                 ToxProject._setup_files(at_path, None, value)  # noqa: SLF001
@@ -246,8 +246,7 @@ class ToxProject:
                 yield status
 
         original_execute_call = ToxEnv._execute_call  # noqa: SLF001
-        result = self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
-        return result
+        return self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
 
     @property
     def structure(self) -> dict[str, Any]:
@@ -264,8 +263,8 @@ class ToxProject:
 
     @contextmanager
     def chdir(self, to: Path | None = None) -> Iterator[None]:
-        cur_dir = os.getcwd()
-        os.chdir(str(to or self.path))
+        cur_dir = Path.cwd()
+        os.chdir(to or self.path)
         try:
             yield
         finally:

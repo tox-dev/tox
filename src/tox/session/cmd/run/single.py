@@ -51,7 +51,7 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
             skipped = True
         except ToxBackendFailed as exception:
             LOGGER.error("%s", exception)
-            raise SystemExit(exception.code)
+            raise SystemExit(exception.code)  # noqa: B904, TRY200
         except Fail as exception:
             LOGGER.error("failed with %s", exception)
             code = 1
@@ -96,7 +96,7 @@ def run_command_set(
     tox_env: ToxEnv,
     key: str,
     cwd: Path,
-    ignore_errors: bool,
+    ignore_errors: bool,  # noqa: FBT001
     outcomes: list[Outcome],
 ) -> int:
     exit_code = Outcome.OK

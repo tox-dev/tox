@@ -165,10 +165,13 @@ class EnvSelector:
                 if name not in env_name_to_active_map:
                     env_name_to_active_map[name] = is_active
         # for factor/label selection update the active flag
-        if not (getattr(self._state.conf.options, "labels", []) or getattr(self._state.conf.options, "factors", [])):
+        if (
+            not (getattr(self._state.conf.options, "labels", []) or getattr(self._state.conf.options, "factors", []))
             # if no active environment is defined fallback to py
-            if self.on_empty_fallback_py and not any(env_name_to_active_map.values()):
-                env_name_to_active_map["py"] = True
+            and self.on_empty_fallback_py
+            and not any(env_name_to_active_map.values())
+        ):
+            env_name_to_active_map["py"] = True
         return env_name_to_active_map
 
     @property
@@ -293,8 +296,7 @@ class EnvSelector:
                     msg = f"{name} is already defined as a {env.id()}, cannot be {packager} too"  # pragma: no cover
                     raise HandledError(msg)  # pragma: no cover
                 return env
-            else:
-                self._state.conf.clear_env(name)
+            self._state.conf.clear_env(name)
         package_type = REGISTER.package(packager)
         pkg_conf = self._state.conf.get_env(name, package=True)
         journal = self._journal.get_env_journal(name)

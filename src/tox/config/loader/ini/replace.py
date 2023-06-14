@@ -192,7 +192,7 @@ class Replacer:
         of_type, *args = flattened_args
         if of_type == "/":
             replace_value: str | None = os.sep
-        elif of_type == "" and args == [""]:
+        elif not of_type and args == [""]:
             replace_value = os.pathsep
         elif of_type == "env":
             replace_value = replace_env(self.conf, args, conf_args)
@@ -232,7 +232,12 @@ def _replace_ref(env: str | None) -> Pattern[str]:
     )
 
 
-def replace_reference(conf: Config, loader: IniLoader, value: str, conf_args: ConfigLoadArgs) -> str | None:
+def replace_reference(  # noqa: PLR0912, C901
+    conf: Config,
+    loader: IniLoader,
+    value: str,
+    conf_args: ConfigLoadArgs,
+) -> str | None:
     # a return value of None indicates could not replace
     pattern = _replace_ref(loader.section.prefix or loader.section.name)
     match = pattern.match(value)
@@ -250,11 +255,12 @@ def replace_reference(conf: Config, loader: IniLoader, value: str, conf_args: Co
                     if isinstance(src, SectionProxy):
                         return loader.process_raw(conf, conf_args.env_name, src[key])
                     value = src.load(key, conf_args.chain)
+                except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
+                    exception = exc
+                else:
                     as_str, _ = stringify(value)
                     as_str = as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
                     return as_str
-                except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
-                    exception = exc
         except Exception as exc:  # noqa: BLE001
             exception = exc
         if exception is not None:
@@ -306,11 +312,8 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -
         except KeyError:
             pass
     pos_args = conf.pos_args(to_path)
-    if pos_args is None:
-        replace_value = ARG_DELIMITER.join(args)  # if we use the defaults join back remaining args
-    else:
-        replace_value = shell_cmd(pos_args)
-    return replace_value
+    # if we use the defaults join back remaining args else take shell cmd
+    return ARG_DELIMITER.join(args) if pos_args is None else shell_cmd(pos_args)
 
 
 def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
@@ -339,8 +342,7 @@ def replace_env(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str
 
 
 def replace_tty(args: list[str]) -> str:
-    result = (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
-    return result
+    return (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
 
 
 __all__ = (

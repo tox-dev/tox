@@ -119,5 +119,5 @@ class PythonRun(Python, RunToxEnv):
                 packages = package_env.perform_packaging(self.conf)
             except Skip as exception:
                 msg = f"{exception.args[0]} for package environment {package_env.conf['env_name']}"
-                raise Skip(msg)
+                raise Skip(msg) from exception
         return packages

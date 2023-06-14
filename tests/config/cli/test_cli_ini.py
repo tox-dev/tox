@@ -110,6 +110,15 @@ def default_options() -> dict[str, Any]:
     }
 
 
+def test_ini_help(exhaustive_ini: Path, capfd: CaptureFixture) -> None:
+    with pytest.raises(SystemExit) as context:
+        get_options("-h")
+    assert context.value.code == 0
+    out, err = capfd.readouterr()
+    assert not err
+    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_USER_CONFIG_FILE)" in out, out
+
+
 @pytest.mark.usefixtures("exhaustive_ini")
 def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State], int]]) -> None:
     options = get_options("p")
@@ -148,15 +157,6 @@ def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers
-
-
-def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
-    with pytest.raises(SystemExit) as context:
-        get_options("-h")
-    assert context.value.code == 0
-    out, err = capsys.readouterr()
-    assert not err
-    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_USER_CONFIG_FILE)" in out
 
 
 def test_bad_cli_ini(
