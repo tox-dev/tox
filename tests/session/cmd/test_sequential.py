@@ -191,7 +191,7 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
 
     # new deps are picked up
     (proj.path / "pyproject.toml").write_text(toml.replace("requires = [\n]", 'requires = ["wheel"]'))
-    (proj.path / "build.py").write_text(build.replace("return [tox ]", "return ['setuptools']"))
+    (proj.path / "build.py").write_text(build.replace("return []", "return ['setuptools']"))
 
     result_rerun = proj.run("r")
     result_rerun.assert_success()

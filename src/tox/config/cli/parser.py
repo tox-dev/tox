@@ -73,7 +73,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 raise TypeError(action)
         return of_type
 
-    def parse_args(  # type: ignore # avoid defining all overloads
+    def parse_args(  # type: ignore[override] # avoid defining all overloads
         self,
         args: Sequence[str] | None = None,
         namespace: Namespace | None = None,

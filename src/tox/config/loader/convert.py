@@ -77,7 +77,7 @@ class Convert(ABC, Generic[T]):
                 if not raw:
                     result = None
                 else:
-                    new_type = next(i for i in args if i != none)  # type: ignore # pragma: no cover
+                    new_type = next(i for i in args if i != none)  # type: ignore[comparison-overlap] # pragma: no cover
                     result = self.to(raw, new_type, factory)
         elif origin in (Literal, type(Literal)):
             choice = of_type.__args__  # type: ignore[attr-defined]

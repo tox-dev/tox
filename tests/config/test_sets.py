@@ -165,7 +165,7 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
 
 def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
     with pytest.raises(TypeError, match="Can't instantiate"):
-        ConfigSet(mocker.create_autospec(Config))  # type: ignore # the type checker also warns that ABC
+        ConfigSet(mocker.create_autospec(Config))  # type: ignore[abstract,call-arg]
 
 
 def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:

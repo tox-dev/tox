@@ -54,10 +54,10 @@ def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = F
         help="run tox environments in parallel, the argument controls limit: all,"
         " auto - cpu count, some positive number, zero is turn off",
         action="store",
-        type=parse_num_processes,  # type: ignore # nargs confuses it
+        type=parse_num_processes,  # type: ignore[arg-type]  # nargs confuses it
         default=default_parallel,
         metavar="VAL",
-        **({"nargs": "?"} if no_args else {}),  # type: ignore # type checker can't unroll it
+        **({"nargs": "?"} if no_args else {}),  # type: ignore[arg-type] # type checker can't unroll it
     )
     our.add_argument(
         "-o",

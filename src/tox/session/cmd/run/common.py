@@ -260,7 +260,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
             lock = getattr(thread, "_tstate_lock", None)
             if lock is not None and lock.locked():  # pragma: no branch
                 lock.release()  # pragma: no cover
-                thread._stop()  # type: ignore  # pragma: no cover # calling private method to fix thread state
+                thread._stop()  # type: ignore[attr-defined] # pragma: no cover # calling private method to fix thread state
             thread.join()
     finally:
         ordered_results: list[ToxEnvRunResult] = []

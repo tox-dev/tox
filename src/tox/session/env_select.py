@@ -78,7 +78,7 @@ def register_env_select_flags(
     """
     if multiple:
         group = parser.add_argument_group("select target environment(s)")
-        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # type: ignore
+        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # type: ignore[assignment]
     else:
         add_to = parser
     if not group_only:
@@ -269,7 +269,7 @@ class EnvSelector:
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
-                run_env: RunToxEnv = self._defined_envs_[run_env_name].env  # type: ignore
+                run_env: RunToxEnv = self._defined_envs_[run_env_name].env  # type: ignore[index,assignment]
                 child_package_envs = package_tox_env.register_run_env(run_env)
                 try:
                     name_type = next(child_package_envs)

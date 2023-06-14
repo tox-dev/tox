@@ -2,7 +2,7 @@
 from __future__ import annotations  # pragma: win32 cover
 
 import logging  # pragma: win32 cover
-from asyncio.windows_utils import BUFSIZE  # type: ignore # pragma: win32 cover
+from asyncio.windows_utils import BUFSIZE  # type: ignore[attr-defined] # pragma: win32 cover
 from time import sleep  # pragma: win32 cover
 from typing import Callable  # pragma: win32 cover
 

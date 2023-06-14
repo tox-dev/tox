@@ -239,7 +239,7 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
             lambda c: c.add_config("c", of_type=str, default="c", desc="d"),
         ):
             try:
-                _conf(config_set)  # type: ignore # call to not typed function
+                _conf(config_set)  # type: ignore[no-untyped-call] # call to not typed function
                 raise NotImplementedError
             except RuntimeError as exc:
                 assert str(exc) == "config set has been marked final and cannot be extended"

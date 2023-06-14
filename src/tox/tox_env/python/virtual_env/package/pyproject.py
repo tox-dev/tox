@@ -194,7 +194,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                 f" does not support PEP-660, falling back to editable-legacy - change your configuration to it",
             )
             for env in targets:
-                env._defined["package"].value = "editable-legacy"  # type: ignore
+                env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]
                 self.builds["editable-legacy"].append(env)
             deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
@@ -333,9 +333,9 @@ class Pep517VirtualEnvFrontend(Frontend):
             into,
             key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist",
         )
-        self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore
-        self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore
-        self.build_editable = pkg_cache(self.build_editable)  # type: ignore
+        self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore[method-assign]
+        self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore[method-assign]
+        self.build_editable = pkg_cache(self.build_editable)  # type: ignore[method-assign]
 
     @property
     def backend_cmd(self) -> Sequence[str]:
