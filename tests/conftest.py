@@ -65,12 +65,11 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
             context.chdir(tmp_path)
         source = discover_source(config_file, None)
 
-        config = Config.make(
+        return Config.make(
             Parsed(work_dir=dest, override=override or [], config_file=config_file, root_dir=None),
             pos_args=[],
             source=source,
         )
-        return config
 
     return func
 
@@ -95,7 +94,7 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
         prev_py = f"py{prev_ver}"
         impl = sys.implementation.name.lower()
 
-        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:
+        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG001
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
             raw = list(sys.version_info)
@@ -149,8 +148,7 @@ def build_pkg(dist_dir: Path, of: Path, distributions: list[str], isolation: boo
     from build.__main__ import build_package
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
-    package = next(dist_dir.iterdir())
-    return package
+    return next(dist_dir.iterdir())
 
 
 @pytest.fixture(scope="session")

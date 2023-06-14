@@ -21,8 +21,7 @@ EnvConfigCreator = Callable[[str], ConfigSet]
 def example(tox_ini_conf: ToxIniCreator) -> EnvConfigCreator:
     def func(conf: str) -> ConfigSet:
         config = tox_ini_conf(f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n""")
-        env_config = config.get_env("a")
-        return env_config
+        return config.get_env("a")
 
     return func
 

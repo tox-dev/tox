@@ -23,13 +23,13 @@ def tox_add_option(parser: ToxParser) -> None:
         def __call__(
             self,
             parser: ArgumentParser,
-            namespace: Namespace,
-            values: str | Sequence[Any] | None,
-            option_string: str | None = None,
+            namespace: Namespace,  # noqa: ARG002
+            values: str | Sequence[Any] | None,  # noqa: ARG002
+            option_string: str | None = None,  # noqa: ARG002
         ) -> None:
-            formatter = cast(HelpFormatter, parser._get_formatter())
+            formatter = cast(HelpFormatter, parser._get_formatter())  # noqa: SLF001
             formatter.add_raw_text(get_version_info())
-            parser._print_message(formatter.format_help(), sys.stdout)
+            parser._print_message(formatter.format_help(), sys.stdout)  # noqa: SLF001
             parser.exit()
 
     parser.add_argument("--version", action=_V)

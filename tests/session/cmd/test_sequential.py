@@ -59,7 +59,7 @@ def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.integration()
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
-    enable_pip_pypi_access: str | None,
+    enable_pip_pypi_access: str | None,  # noqa: ARG001
 ) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",

@@ -105,7 +105,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self._package_paths: set[Path] = set()
 
     @staticmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         return "virtualenv-pep-517"
 
     @property
@@ -119,13 +119,13 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self.conf.add_config(
             keys=["meta_dir"],
             of_type=Path,
-            default=lambda conf, name: self.env_dir / ".meta",
+            default=lambda conf, name: self.env_dir / ".meta",  # noqa: ARG005
             desc="directory where to put the project metadata files",
         )
         self.conf.add_config(
             keys=["pkg_dir"],
             of_type=Path,
-            default=lambda conf, name: self.env_dir / "dist",
+            default=lambda conf, name: self.env_dir / "dist",  # noqa: ARG005
             desc="directory where to put project packages",
         )
 
@@ -171,7 +171,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         if executor is not None:  # pragma: no branch
             try:
                 if executor.is_alive:
-                    self._frontend._send("_exit")  # try first on amicable shutdown
+                    self._frontend._send("_exit")  # try first on amicable shutdown  # noqa: SLF001
             except SystemExit:  # pragma: no cover  # if already has been interrupted ignore
                 pass
             finally:
@@ -194,7 +194,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                 f" does not support PEP-660, falling back to editable-legacy - change your configuration to it",
             )
             for env in targets:
-                env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]
+                env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]  # noqa: SLF001
                 self.builds["editable-legacy"].append(env)
             deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
@@ -331,7 +331,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         into: dict[str, Any] = {}
         pkg_cache = cached(
             into,
-            key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist",
+            key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist",  # noqa: ARG005
         )
         self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore[method-assign]
         self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore[method-assign]
@@ -355,7 +355,7 @@ class Pep517VirtualEnvFrontend(Frontend):
     def _send_msg(
         self,
         cmd: str,
-        result_file: Path,
+        result_file: Path,  # noqa: ARG002
         msg: str,
     ) -> Iterator[ToxCmdStatus]:
         with self._tox_env.execute_async(
@@ -372,7 +372,14 @@ class Pep517VirtualEnvFrontend(Frontend):
         if outcome is not None:  # pragma: no branch
             outcome.assert_success()
 
-    def _unexpected_response(self, cmd: str, got: Any, expected_type: Any, out: str, err: str) -> NoReturn:
+    def _unexpected_response(  # noqa: PLR0913
+        self,
+        cmd: str,
+        got: Any,
+        expected_type: Any,
+        out: str,
+        err: str,
+    ) -> NoReturn:
         try:
             super()._unexpected_response(cmd, got, expected_type, out, err)
         except BackendFailed as exception:

@@ -18,7 +18,7 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     """local file system python virtual environment via the virtualenv package."""
 
     @staticmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         return "virtualenv"
 
     @property

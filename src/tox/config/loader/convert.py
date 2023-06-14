@@ -24,7 +24,7 @@ Factory = Optional[Callable[[object], T]]  # note the argument is anything, due 
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type."""
 
-    def to(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:
+    def to(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: PLR0911
         """
         Convert given raw type to python type.
 
@@ -53,7 +53,7 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return of_type(raw)  # type: ignore[call-arg]
 
-    def _to_typing(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:
+    def _to_typing(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: C901
         origin = getattr(of_type, "__origin__", of_type.__class__)
         result: Any = _NO_MAPPING
         if origin in (list, List):
@@ -71,7 +71,7 @@ class Convert(ABC, Generic[T]):
         elif origin == Union:  # handle Optional values
             args: list[type[Any]] = of_type.__args__  # type: ignore[attr-defined]
             none = type(None)
-            if len(args) == 2 and none in args:  # type: ignore[comparison-overlap]
+            if len(args) == 2 and none in args:  # type: ignore[comparison-overlap]  # noqa: PLR2004
                 if isinstance(raw, str):
                     raw = raw.strip()  # type: ignore[assignment]
                 if not raw:

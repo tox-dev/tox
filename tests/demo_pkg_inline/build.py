@@ -8,7 +8,7 @@ import os
 import sys
 import tarfile
 from textwrap import dedent
-from zipfile import ZipFile
+from zipfile import Path, ZipFile
 
 name = "demo_pkg_inline"
 pkg_name = name.replace("_", "-")
@@ -88,38 +88,42 @@ metadata_files = {
 }
 
 
-def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+def build_wheel(
+    wheel_directory: str,
+    config_settings: dict[str, str] | None = None,  # noqa: ARG001
+    metadata_directory: str | None = None,
+) -> str:
     base_name = f"{name}-{version}-py{sys.version_info[0]}-none-any.whl"
-    path = os.path.join(wheel_directory, base_name)
-    with ZipFile(path, "w") as zip_file_handler:
+    path = Path(wheel_directory) / base_name
+    with ZipFile(str(path), "w") as zip_file_handler:
         for arc_name, data in content.items():  # pragma: no branch
             zip_file_handler.writestr(arc_name, dedent(data).strip())
         if metadata_directory is not None:
             for sub_directory, _, filenames in os.walk(metadata_directory):
                 for filename in filenames:
                     zip_file_handler.write(
-                        os.path.join(metadata_directory, sub_directory, filename),
-                        os.path.join(sub_directory, filename),
+                        str(Path(metadata_directory) / sub_directory / filename),
+                        str(Path(sub_directory) / filename),
                     )
         else:
             for arc_name, data in metadata_files.items():  # pragma: no branch
                 zip_file_handler.writestr(arc_name, dedent(data).strip())
-    print(f"created wheel {path}")
+    print(f"created wheel {path}")  # noqa: T201
     return base_name
 
 
-def get_requires_for_build_wheel(config_settings=None):
+def get_requires_for_build_wheel(config_settings: dict[str, str] | None = None) -> list[str]:  # noqa: ARG001
     return []  # pragma: no cover # only executed in non-host pythons
 
 
-def build_sdist(sdist_directory, config_settings=None):
+def build_sdist(sdist_directory: str, config_settings: dict[str, str] | None = None) -> str:  # noqa: ARG001
     result = f"{name}-{version}.tar.gz"  # pragma: win32 cover
-    with tarfile.open(os.path.join(sdist_directory, result), "w:gz") as tar:  # pragma: win32 cover
-        root = os.path.dirname(os.path.abspath(__file__))  # pragma: win32 cover
-        tar.add(os.path.join(root, "build.py"), "build.py")  # pragma: win32 cover
-        tar.add(os.path.join(root, "pyproject.toml"), "pyproject.toml")  # pragma: win32 cover
+    with tarfile.open(str(Path(sdist_directory) / result), "w:gz") as tar:  # pragma: win32 cover
+        root = Path(__file__).parent  # pragma: win32 cover
+        tar.add(str(root / "build.py"), "build.py")  # pragma: win32 cover
+        tar.add(str(root / "pyproject.toml"), "pyproject.toml")  # pragma: win32 cover
     return result  # pragma: win32 cover
 
 
-def get_requires_for_build_sdist(config_settings=None):
+def get_requires_for_build_sdist(config_settings: dict[str, str] | None = None) -> list[str]:  # noqa: ARG001
     return []  # pragma: no cover # only executed in non-host pythons

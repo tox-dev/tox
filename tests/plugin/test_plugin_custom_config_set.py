@@ -29,8 +29,7 @@ def _custom_config_set(mocker: MockerFixture) -> None:
         def factory(for_env: str, raw: object) -> DockerConfigSet:
             assert isinstance(raw, str)
             section = Section("docker", raw)
-            conf_set = state.conf.get_section_config(section, base=["docker"], of_type=DockerConfigSet, for_env=for_env)
-            return conf_set
+            return state.conf.get_section_config(section, base=["docker"], of_type=DockerConfigSet, for_env=for_env)
 
         env_conf.add_config(
             "docker",

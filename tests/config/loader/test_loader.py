@@ -27,7 +27,7 @@ def test_override_add(flag: str) -> None:
     value = parsed.override[0]
     assert value.key == "magic"
     assert value.value == "true"
-    assert value.namespace == ""
+    assert not value.namespace
 
 
 def test_override_equals() -> None:

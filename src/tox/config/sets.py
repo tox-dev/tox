@@ -40,7 +40,7 @@ class ConfigSet(ABC):
     def mark_finalized(self) -> None:
         self._final = True
 
-    def add_config(
+    def add_config(  # noqa: PLR0913
         self,
         keys: str | Sequence[str],
         of_type: type[V],
@@ -183,10 +183,10 @@ class CoreConfigSet(ConfigSet):
         desc = "define environments to automatically run"
         self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
 
-    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:
+    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
         return cast(Path, self["tox_root"] / ".tox")
 
-    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:
+    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
         return cast(Path, self["work_dir"] / ".tmp")
 
     def _work_dir_post_process(self, dir: Path) -> Path:

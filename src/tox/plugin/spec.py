@@ -23,7 +23,7 @@ def _spec(func: _F) -> _F:
 
 
 @_spec
-def tox_register_tox_env(register: ToxEnvRegister) -> None:
+def tox_register_tox_env(register: ToxEnvRegister) -> None:  # noqa: ARG001
     """
     Register new tox environment type. You can register:
 
@@ -35,7 +35,7 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
 
 
 @_spec
-def tox_add_option(parser: ToxParser) -> None:
+def tox_add_option(parser: ToxParser) -> None:  # noqa: ARG001
     """
     Add a command line argument. This is the first hook to be called, right after the logging setup and config source
     discovery.
@@ -45,7 +45,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 @_spec
-def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:
+def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: ARG001
     """
     Called when the core configuration is built for a tox environment.
 
@@ -55,7 +55,7 @@ def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:
 
 
 @_spec
-def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
+def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
     """
     Called when configuration is built for a tox environment.
 
@@ -65,7 +65,7 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
 
 
 @_spec
-def tox_before_run_commands(tox_env: ToxEnv) -> None:
+def tox_before_run_commands(tox_env: ToxEnv) -> None:  # noqa: ARG001
     """
     Called before the commands set is executed.
 
@@ -74,7 +74,7 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
 
 
 @_spec
-def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
+def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # noqa: ARG001
     """
     Called after the commands set is executed.
 
@@ -85,7 +85,7 @@ def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outco
 
 
 @_spec
-def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
+def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:  # noqa: ARG001
     """
     Called before executing an installation command.
 
@@ -97,7 +97,7 @@ def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) 
 
 
 @_spec
-def tox_env_teardown(tox_env: ToxEnv) -> None:
+def tox_env_teardown(tox_env: ToxEnv) -> None:  # noqa: ARG001
     """
     Called before executing an installation command.
 

@@ -32,10 +32,10 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
         disabled = "distlib.util", "filelock"
         for name in disabled:
             logger = logging.getLogger(name)
-            logger.warning(f"{name}-warn")
-            logger.info(f"{name}-info")
-            logger.debug(f"{name}-debug")
-            logger.log(logging.NOTSET, f"{name}-notset")
+            logger.warning("%s-warn", name)
+            logger.info("%s-info", name)
+            logger.debug("%s-debug", name)
+            logger.log(logging.NOTSET, "%s-notset", name)
     finally:
         deinit()
 

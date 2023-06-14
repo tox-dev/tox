@@ -34,7 +34,7 @@ class PythonRun(Python, RunToxEnv):
             desc="Name of the python dependencies as specified by PEP-440",
         )
 
-        def skip_missing_interpreters_post_process(value: bool) -> bool:
+        def skip_missing_interpreters_post_process(value: bool) -> bool:  # noqa: FBT001
             if getattr(self.options, "skip_missing_interpreters", "config") != "config":
                 return StrConvert().to_bool(self.options.skip_missing_interpreters)
             return value
@@ -113,7 +113,7 @@ class PythonRun(Python, RunToxEnv):
 
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
-        assert package_env is not None
+        assert package_env is not None  # noqa: S101
         with package_env.display_context(self._has_display_suspended):
             try:
                 packages = package_env.perform_packaging(self.conf)

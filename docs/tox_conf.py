@@ -28,7 +28,7 @@ class ToxConfig(SphinxDirective):
         "ref_suffix": unchanged,
     }
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         name: str,
         arguments: list[str],

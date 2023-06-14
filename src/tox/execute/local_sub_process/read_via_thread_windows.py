@@ -14,7 +14,7 @@ from .read_via_thread import ReadViaThread  # pragma: win32 cover
 
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:
+    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:  # noqa: FBT001
         super().__init__(file_no, handler, name, drain)
         self.closed = False
         self._ov: _overlapped.Overlapped | None = None
@@ -51,10 +51,10 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
             # 996 (0x3E4) Overlapped I/O event is not in a signaled state.
             # 995 (0x3E3) The I/O operation has been aborted because of either a thread exit or an application request.
             win_error = getattr(exception, "winerror", None)
-            if win_error == 996:
+            if win_error == 996:  # noqa: PLR2004
                 return True
             else:
-                if win_error != 995:
+                if win_error != 995:  # noqa: PLR2004
                     logging.error("failed to read %r", exception)
                 return None
         else:

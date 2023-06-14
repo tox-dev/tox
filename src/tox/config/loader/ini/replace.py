@@ -255,7 +255,7 @@ def replace_reference(conf: Config, loader: IniLoader, value: str, conf_args: Co
                     return as_str
                 except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                     exception = exc
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             exception = exc
         if exception is not None:
             if isinstance(exception, KeyError):  # if the lookup failed replace - else keep

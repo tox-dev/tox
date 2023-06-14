@@ -47,7 +47,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
             if outcome is not None:
                 action.default, default_value = outcome
                 action.default_source = default_value  # type: ignore[attr-defined]
-        if isinstance(action, argparse._SubParsersAction):
+        if isinstance(action, argparse._SubParsersAction):  # noqa: SLF001
             for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
                     msg = "detected sub-parser added without using our own add command"
@@ -58,16 +58,16 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     def get_type(action: Action) -> type[Any]:
         of_type: type[Any] | None = getattr(action, "of_type", None)
         if of_type is None:
-            if isinstance(action, argparse._AppendAction):
+            if isinstance(action, argparse._AppendAction):  # noqa: SLF001
                 of_type = List[action.type]  # type: ignore[name-defined]
-            elif isinstance(action, argparse._StoreAction) and action.choices:
+            elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa: SLF001
                 loc = locals()
                 loc["Literal"] = Literal
                 as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
                 of_type = eval(as_literal, globals(), loc)
             elif action.default is not None:
                 of_type = type(action.default)
-            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:
+            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa: SLF001
                 of_type = type(action.const)
             else:
                 raise TypeError(action)

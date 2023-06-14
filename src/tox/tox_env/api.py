@@ -75,7 +75,7 @@ class ToxEnv(ABC):
 
     @staticmethod
     @abstractmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         raise NotImplementedError
 
     @property
@@ -112,19 +112,19 @@ class ToxEnv(ABC):
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,  # noqa: ARG005
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",  # noqa: ARG005
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",  # noqa: ARG005
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)
@@ -176,7 +176,7 @@ class ToxEnv(ABC):
         )
         assert self.installer is not None  # trigger installer creation to allow configuration registration
 
-    def _recreate_default(self, conf: Config, value: str | None) -> bool:
+    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: ARG002
         return cast(bool, self.options.recreate)
 
     @property
@@ -313,7 +313,7 @@ class ToxEnv(ABC):
     def _handle_core_tmp_dir(self) -> None:
         self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
 
-    def _clean(self, transitive: bool = False) -> None:
+    def _clean(self, transitive: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
         if self._run_state["clean"]:  # pragma: no branch
             return  # pragma: no cover
         env_dir = self.env_dir
@@ -377,7 +377,7 @@ class ToxEnv(ABC):
         result = os.pathsep.join(values)
         return result
 
-    def execute(
+    def execute(  # noqa: PLR0913
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
@@ -401,7 +401,7 @@ class ToxEnv(ABC):
             status.interrupt()
 
     @contextmanager
-    def execute_async(
+    def execute_async(  # noqa: PLR0913
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
@@ -415,7 +415,7 @@ class ToxEnv(ABC):
         if cwd is None:
             cwd = self.core["tox_root"]
         if show is None:
-            show = self.options.verbosity > 3
+            show = self.options.verbosity > 3  # noqa: PLR2004
         request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals)
         if request.cwd == _CWD:
             repr_cwd = ""
@@ -477,7 +477,7 @@ class ToxEnv(ABC):
         executor: Execute,
         out_err: OutErr,
         request: ExecuteRequest,
-        show: bool,
+        show: bool,  # noqa: FBT001
     ) -> Iterator[ExecuteStatus]:
         with executor.call(
             request=request,
@@ -488,7 +488,7 @@ class ToxEnv(ABC):
             yield execute_status
 
     @contextmanager
-    def display_context(self, suspend: bool) -> Iterator[None]:
+    def display_context(self, suspend: bool) -> Iterator[None]:  # noqa: FBT001
         with self._log_context(), self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
             if suspend:  # only set if suspended
                 self._suspended_out_err = out_err

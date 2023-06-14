@@ -114,9 +114,9 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
 def test_tox_run_assert_out_err_no_dedent(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
 
-    def _main(args: Sequence[str]) -> int:
-        print(" goes on out", file=sys.stdout)
-        print(" goes on err", file=sys.stderr)
+    def _main(args: Sequence[str]) -> int:  # noqa: ARG001
+        print(" goes on out", file=sys.stdout)  # noqa: T201
+        print(" goes on err", file=sys.stderr)  # noqa: T201
         return 0
 
     mocker.patch("tox.run.main", side_effect=_main)

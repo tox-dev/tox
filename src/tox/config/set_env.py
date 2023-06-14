@@ -16,7 +16,7 @@ class SetEnv:
         self._raw: dict[str, str] = {}  # could still need replacement
         self._needs_replacement: list[str] = []  # env vars that need replacement
         self._env_files: list[str] = []
-        self._replacer: Replacer = lambda s, c: s
+        self._replacer: Replacer = lambda s, c: s  # noqa: ARG005
         self._name, self._env_name, self._root = name, env_name, root
         from .loader.ini.replace import MatchExpression, find_replace_expr
 
@@ -29,7 +29,7 @@ class SetEnv:
                         key, value = self._extract_key_value(line)
                         if "{" in key:
                             msg = f"invalid line {line!r} in set_env"
-                            raise ValueError(msg)
+                            raise ValueError(msg)  # noqa: TRY301
                     except ValueError:
                         for expr in find_replace_expr(line):
                             if isinstance(expr, MatchExpression):

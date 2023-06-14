@@ -75,13 +75,13 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
 
 def test_tox_env_pass_env_literal_exist() -> None:
     with patch("os.environ", {"A": "1"}):
-        env = ToxEnv._load_pass_env(["A"])
+        env = ToxEnv._load_pass_env(["A"])  # noqa: SLF001
     assert env == {"A": "1"}
 
 
 def test_tox_env_pass_env_literal_miss() -> None:
     with patch("os.environ", {}):
-        env = ToxEnv._load_pass_env(["A"])
+        env = ToxEnv._load_pass_env(["A"])  # noqa: SLF001
     assert not env
 
 
@@ -109,7 +109,7 @@ def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) ->
 @pytest.mark.parametrize("char", ["a", "A"])
 def test_tox_env_pass_env_match_ignore_case(char: str, glob: str) -> None:
     with patch("os.environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"}):
-        env = ToxEnv._load_pass_env([f"{char}{glob}"])
+        env = ToxEnv._load_pass_env([f"{char}{glob}"])  # noqa: SLF001
     assert env == {"A1": "1", "a2": "2", "A2": "3"}
 
 

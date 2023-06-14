@@ -157,10 +157,10 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     conf = result.state.conf.get_section_config(section, base=["A"], of_type=MagicConfigSet, for_env=None)
     assert conf["a"] == 1
     assert conf["b"] == "ok"
-    exp = "MagicConfigSet(loaders=[IniLoader(section=magic, overrides={}), " "IniLoader(section=A, overrides={})])"
+    exp = "MagicConfigSet(loaders=[IniLoader(section=magic, overrides={}), IniLoader(section=A, overrides={})])"
     assert repr(conf) == exp
 
-    assert isinstance(result.state.conf._options, Parsed)
+    assert isinstance(result.state.conf._options, Parsed)  # noqa: SLF001
 
 
 def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:

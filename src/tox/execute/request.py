@@ -21,7 +21,7 @@ class StdinSource(Enum):
 class ExecuteRequest:
     """Defines a commands execution request."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         cmd: Sequence[str | Path],
         cwd: Path,

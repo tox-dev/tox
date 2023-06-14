@@ -46,7 +46,7 @@ def parse_num_processes(str_value: str) -> int | None:
     return value
 
 
-def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = False) -> None:
+def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = False) -> None:  # noqa: FBT001, FBT002
     our.add_argument(
         "-p",
         "--parallel",

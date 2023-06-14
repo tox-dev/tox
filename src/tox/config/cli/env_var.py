@@ -26,7 +26,7 @@ def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
                 source = f"env var {environ_key}"
                 result = CONVERT.to(raw=value, of_type=of_type, factory=None)
                 return result, source
-            except Exception as exception:
+            except Exception as exception:  # noqa: BLE001
                 logging.warning(
                     "env var %s=%r cannot be transformed to %r because %r",
                     environ_key,

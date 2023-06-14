@@ -34,7 +34,7 @@ def elapsed(msg: str) -> Iterator[None]:
     try:
         yield
     finally:
-        print(f"done in {time.monotonic() - start}s {msg}")
+        print(f"done in {time.monotonic() - start}s {msg}")  # noqa: T201
 
 
 @pytest.fixture(scope="session")
@@ -67,8 +67,7 @@ def _make_tox_wheel(
 
         version = f"{version_tuple[0]}.{version_tuple[1]}.{version_tuple[2] +1}"
         with mock.patch.dict(os.environ, {"SETUPTOOLS_SCM_PRETEND_VERSION": version}):
-            package = pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
-        return package
+            return pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
 
 
 @pytest.fixture(scope="session")
@@ -230,6 +229,6 @@ def test_provision_plugin_runner_in_provision(tox_project: ToxProjectCreator, tm
 def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, relative_path: bool) -> None:
     ini = "[tox]\nrequires = demo-pkg-inline\nskipsdist=true\n"
     project = tox_project({"tox.ini": ini}, prj_path=tmp_path / "sub")
-    conf_path = os.path.join(project.path.name, "tox.ini") if relative_path else str(project.path / "tox.ini")
+    conf_path = str(Path(project.path.name) / "tox.ini") if relative_path else str(project.path / "tox.ini")
     result = project.run("c", "--conf", conf_path, "-e", "py", from_cwd=tmp_path)
     result.assert_success()

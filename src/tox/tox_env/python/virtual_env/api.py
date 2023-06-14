@@ -36,7 +36,7 @@ class VirtualEnv(Python):
         self.conf.add_config(
             keys=["system_site_packages", "sitepackages"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
                 self.environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False"),
             ),
             desc="create virtual environments that also have access to globally installed packages.",
@@ -44,7 +44,7 @@ class VirtualEnv(Python):
         self.conf.add_config(
             keys=["always_copy", "alwayscopy"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
                 self.environment_variables.get(
                     "VIRTUALENV_COPIES",
                     self.environment_variables.get("VIRTUALENV_ALWAYS_COPY", "False"),
@@ -55,7 +55,7 @@ class VirtualEnv(Python):
         self.conf.add_config(
             keys=["download"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
                 self.environment_variables.get("VIRTUALENV_DOWNLOAD", "False"),
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
@@ -128,7 +128,7 @@ class VirtualEnv(Python):
     def create_python_env(self) -> None:
         self.session.run()
 
-    def _get_python(self, base_python: list[str]) -> PythonInfo | None:
+    def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG002
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter
@@ -138,7 +138,7 @@ class VirtualEnv(Python):
             implementation=interpreter.implementation,
             version_info=interpreter.version_info,
             version=interpreter.version,
-            is_64=(interpreter.architecture == 64),
+            is_64=(interpreter.architecture == 64),  # noqa: PLR2004
             platform=interpreter.platform,
             extra={"executable": Path(interpreter.system_executable).resolve()},
         )

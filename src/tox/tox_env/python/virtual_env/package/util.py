@@ -68,7 +68,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
             new_markers.append(marker)
             marker = markers.pop(0) if markers else None
     if new_markers:
-        cast(Marker, req.marker)._markers = new_markers
+        cast(Marker, req.marker)._markers = new_markers  # noqa: SLF001
     else:
         req.marker = None
     return req, cast(Set[Optional[str]], extra_markers) or {None}

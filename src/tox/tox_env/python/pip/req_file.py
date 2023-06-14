@@ -89,7 +89,7 @@ class PythonDeps(RequirementsFile):
         raw = f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
         return raw
 
-    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:
+    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # noqa: FBT001
         # check for any invalid options in the deps list
         # (requirements recursively included from other files are not checked)
         requirements = super()._parse_requirements(opt, recurse)

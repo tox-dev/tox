@@ -31,7 +31,7 @@ DEFAULT_INDEX_URL = "https://pypi.org/simple"
 
 
 class ParsedRequirement:
-    def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:
+    def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:  # noqa: PLR0912
         req = req.encode("utf-8").decode("utf-8")
         try:
             self._requirement: Requirement | Path | str = Requirement(req)
@@ -110,7 +110,14 @@ class ParsedRequirement:
 
 
 class ParsedLine:
-    def __init__(self, filename: str, lineno: int, args: str, opts: Namespace, constraint: bool) -> None:
+    def __init__(  # noqa: PLR0913
+        self,
+        filename: str,
+        lineno: int,
+        args: str,
+        opts: Namespace,
+        constraint: bool,  # noqa: FBT001
+    ) -> None:
         self.filename = filename
         self.lineno = lineno
         self.opts = opts
@@ -129,7 +136,7 @@ class ParsedLine:
 
 
 class RequirementsFile:
-    def __init__(self, path: Path, constraint: bool) -> None:
+    def __init__(self, path: Path, constraint: bool) -> None:  # noqa: FBT001
         self._path = path
         self._is_constraint: bool = constraint
         self._opt = Namespace()
@@ -176,7 +183,7 @@ class RequirementsFile:
         if self._requirements is None:
             self._requirements = self._parse_requirements(opt=self._opt, recurse=True)
 
-    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:
+    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # noqa: FBT001
         result, found = [], set()
         for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint, recurse):
             if parsed_line.is_requirement:
@@ -199,7 +206,12 @@ class RequirementsFile:
             return 1, between
         return 0, between
 
-    def _parse_and_recurse(self, filename: str, constraint: bool, recurse: bool) -> Iterator[ParsedLine]:
+    def _parse_and_recurse(
+        self,
+        filename: str,
+        constraint: bool,
+        recurse: bool,
+    ) -> Iterator[ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
                 if line.opts.requirements:  # parse a nested requirements file
@@ -212,14 +224,14 @@ class RequirementsFile:
                     # do a join so relative paths work
                     req_path = os.path.join(os.path.dirname(filename), req_path)
                 if recurse:
-                    yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)
+                    yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)  # noqa: SLF001
                 else:
                     line.filename = req_path
                     yield line
             else:
                 yield line
 
-    def _parse_file(self, url: str, constraint: bool) -> Iterator[ParsedLine]:
+    def _parse_file(self, url: str, constraint: bool) -> Iterator[ParsedLine]:  # noqa: FBT001
         content = self._get_file_content(url)
         for line_number, line in self._pre_process(content):
             args_str, opts = self._parse_line(line)
@@ -288,7 +300,12 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:  # noqa: C901
+    def _merge_option_line(
+        self,
+        base_opt: Namespace,
+        opt: Namespace,
+        filename: str,
+    ) -> None:
         # percolate options upward
         if opt.requirements:
             if not hasattr(base_opt, "requirements"):
@@ -379,7 +396,7 @@ class RequirementsFile:
                     line = f" {line}"  # this ensures comments are always matched later
                 if new_line:
                     new_line.append(line)
-                    assert primary_line_number is not None
+                    assert primary_line_number is not None  # noqa: S101
                     yield primary_line_number, "".join(new_line)
                     new_line = []
                 else:
@@ -390,7 +407,7 @@ class RequirementsFile:
                 new_line.append(line.strip("\\"))
         # last line contains \
         if new_line:
-            assert primary_line_number is not None
+            assert primary_line_number is not None  # noqa: S101
             yield primary_line_number, "".join(new_line)
 
     @staticmethod
@@ -438,7 +455,7 @@ class RequirementsFile:
             self._as_root_args = result
         return self._as_root_args
 
-    def _option_to_args(self, opt: Namespace) -> list[str]:
+    def _option_to_args(self, opt: Namespace) -> list[str]:  # noqa: C901, PLR0912
         result: list[str] = []
         for req in getattr(opt, "requirements", []):
             result.extend(("-r", req))

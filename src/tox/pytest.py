@@ -74,7 +74,7 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:  # noqa: PT004
 def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator[None]:
     """Unless this is a plugin test do not allow loading toxfile.py."""
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
-        module, load_inline = None, manager._load_inline
+        module, load_inline = None, manager._load_inline  # noqa: SLF001
 
         def _load_inline(path: Path) -> ModuleType | None:  # register only on first run, and unregister at end
             nonlocal module
@@ -127,12 +127,12 @@ def check_os_environ_stable(monkeypatch: MonkeyPatch) -> Iterator[None]:  # noqa
 
 
 @pytest.fixture(autouse=True)
-def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: PT004
+def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: ARG001, PT004
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
 class ToxProject:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         files: dict[str, Any],
         base: Path | None,
@@ -162,7 +162,7 @@ class ToxProject:
                 value = f"from __future__ import annotations\n{value}"
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
-                ToxProject._setup_files(at_path, None, value)
+                ToxProject._setup_files(at_path, None, value)  # noqa: SLF001
             elif isinstance(value, str):
                 at_path.write_text(textwrap.dedent(value), encoding="utf-8")
             elif value is None:
@@ -171,9 +171,9 @@ class ToxProject:
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
 
-    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None]) -> MagicMock:
+    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None]) -> MagicMock:  # noqa: C901
         class MockExecute(Execute):
-            def __init__(self, colored: bool, exit_code: int) -> None:
+            def __init__(self, colored: bool, exit_code: int) -> None:  # noqa: FBT001
                 self.exit_code = exit_code
                 super().__init__(colored)
 
@@ -195,17 +195,17 @@ class ToxProject:
             def exit_code(self) -> int | None:
                 return self._exit_code
 
-            def wait(self, timeout: float | None = None) -> int | None:
+            def wait(self, timeout: float | None = None) -> int | None:  # noqa: ARG002
                 return self._exit_code
 
-            def write_stdin(self, content: str) -> None:
+            def write_stdin(self, content: str) -> None:  # noqa: ARG002
                 return None  # pragma: no cover
 
             def interrupt(self) -> None:
                 return None  # pragma: no cover
 
         class MockExecuteInstance(ExecuteInstance):
-            def __init__(
+            def __init__(  # noqa: PLR0913
                 self,
                 request: ExecuteRequest,
                 options: ExecuteOptions,
@@ -237,15 +237,15 @@ class ToxProject:
             executor: Execute,
             out_err: OutErr,
             request: ExecuteRequest,
-            show: bool,
+            show: bool,  # noqa: FBT001
         ) -> Iterator[ExecuteStatus]:
             exit_code = handle(request)
             if exit_code is not None:
-                executor = MockExecute(colored=executor._colored, exit_code=exit_code)
+                executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # noqa: SLF001
             with original_execute_call(self, executor, out_err, request, show) as status:
                 yield status
 
-        original_execute_call = ToxEnv._execute_call
+        original_execute_call = ToxEnv._execute_call  # noqa: SLF001
         result = self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
         return result
 
@@ -321,16 +321,24 @@ def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
         result.append("COV_*")
         return result
 
-    previous = Pep517VirtualEnvPackager._default_pass_env
+    previous = Pep517VirtualEnvPackager._default_pass_env  # noqa: SLF001
     try:
-        Pep517VirtualEnvPackager._default_pass_env = default_pass_env  # type: ignore[assignment]
+        Pep517VirtualEnvPackager._default_pass_env = default_pass_env  # type: ignore[assignment]  # noqa: SLF001
         yield
     finally:
-        Pep517VirtualEnvPackager._default_pass_env = previous  # type: ignore[method-assign]
+        Pep517VirtualEnvPackager._default_pass_env = previous  # type: ignore[method-assign]  # noqa: SLF001
 
 
 class ToxRunOutcome:
-    def __init__(self, cmd: Sequence[str], cwd: Path, code: int, out: str, err: str, state: State | None) -> None:
+    def __init__(  # noqa: PLR0913
+        self,
+        cmd: Sequence[str],
+        cwd: Path,
+        code: int,
+        out: str,
+        err: str,
+        state: State | None,
+    ) -> None:
         extended_cmd = [sys.executable, "-m", "tox"]
         extended_cmd.extend(cmd)
         self.cmd: list[str] = extended_cmd
@@ -355,11 +363,11 @@ class ToxRunOutcome:
         return self.code == Outcome.OK
 
     def assert_success(self) -> None:
-        assert self.success, repr(self)
+        assert self.success, repr(self)  # noqa: S101
 
     def assert_failed(self, code: int | None = None) -> None:
         status_match = self.code != 0 if code is None else self.code == code
-        assert status_match, f"should be {code}, got {self}"
+        assert status_match, f"should be {code}, got {self}"  # noqa: S101
 
     def __repr__(self) -> str:
         return "\n".join(
@@ -384,13 +392,13 @@ class ToxRunOutcome:
         if regex:
             self.matches(out, self.out, re.MULTILINE | re.DOTALL)
         else:
-            assert self.out == out
+            assert self.out == out  # noqa: S101
         if dedent:
             err = textwrap.dedent(err).lstrip()
         if regex:
             self.matches(err, self.err, re.MULTILINE | re.DOTALL)
         else:
-            assert self.err == err
+            assert self.err == err  # noqa: S101
 
     @staticmethod
     def matches(pattern: str, text: str, flags: int = 0) -> None:
@@ -400,9 +408,9 @@ class ToxRunOutcome:
             match = re.match(pattern, text, flags)
             if match is None:
                 warnings.warn("install the re-assert PyPI package for bette error message", UserWarning, stacklevel=1)
-            assert match
+            assert match  # noqa: S101
         else:
-            assert Matches(pattern, flags=flags) == text
+            assert Matches(pattern, flags=flags) == text  # noqa: S101
 
 
 class ToxProjectCreator(Protocol):
@@ -518,7 +526,7 @@ def enable_pip_pypi_access_fixture(
 def register_inline_plugin(mocker: MockerFixture, *args: Callable[..., Any]) -> None:
     frame_info = inspect.stack()[1]
     caller_module = inspect.getmodule(frame_info[0])
-    assert caller_module is not None
+    assert caller_module is not None  # noqa: S101
     plugin = ModuleType(f"{caller_module.__name__}|{frame_info[3]}")
     plugin.__file__ = caller_module.__file__
     plugin.__dict__.update({f.__name__: f for f in args})

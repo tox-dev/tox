@@ -53,7 +53,7 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 @pytest.mark.parametrize("content", ["[tox]", ""])
-def test_ini_empty(
+def test_ini_empty(  # noqa: PLR0913
     tmp_path: Path,
     core_handlers: dict[str, Callable[[State], int]],
     default_options: dict[str, Any],
@@ -156,7 +156,7 @@ def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
     assert context.value.code == 0
     out, err = capsys.readouterr()
     assert not err
-    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_USER_CONFIG_FILE)"
+    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_USER_CONFIG_FILE)" in out
 
 
 def test_bad_cli_ini(

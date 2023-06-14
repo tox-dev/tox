@@ -12,7 +12,7 @@ class _OurArgumentParser(ArgumentParser):
     def print_usage(self, file: IO[str] | None = None) -> None:
         """ """
 
-    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:
+    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: A003, ARG002
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
         if msg.startswith("error: "):
@@ -67,10 +67,10 @@ def _validate_hash(value: str) -> str:
 class AddSortedUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,
+        parser: ArgumentParser,  # noqa: ARG002
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,
+        option_string: str | None = None,  # noqa: ARG002
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -82,10 +82,10 @@ class AddSortedUniqueAction(Action):
 class AddUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,
+        parser: ArgumentParser,  # noqa: ARG002
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,
+        option_string: str | None = None,  # noqa: ARG002
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -97,10 +97,10 @@ class AddUniqueAction(Action):
 class BinaryAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,
+        parser: ArgumentParser,  # noqa: ARG002
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,
+        option_string: str | None = None,  # noqa: ARG002
     ) -> None:
         if getattr(namespace, "no_binary", None) is None:
             namespace.no_binary = set()
@@ -112,5 +112,5 @@ class BinaryAction(Action):
             if self.dest == "no_binary"
             else (namespace.only_binary, namespace.no_binary)
         )
-        assert values is not None
+        assert values is not None  # noqa: S101
         handle_binary_option(values[0], *args)

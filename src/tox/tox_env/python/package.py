@@ -80,7 +80,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         ):
             return
 
-        def default_wheel_tag(conf: Config, env_name: str | None) -> str:
+        def default_wheel_tag(conf: Config, env_name: str | None) -> str:  # noqa: ARG001
             # https://www.python.org/dev/peps/pep-0427/#file-name-convention
             # when building wheels we need to ensure that the built package is compatible with the target env
             # compatibility is documented within https://www.python.org/dev/peps/pep-0427/#file-name-convention

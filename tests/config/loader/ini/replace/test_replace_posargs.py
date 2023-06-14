@@ -12,13 +12,13 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
 def test_replace_pos_args_none_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, None)
-    assert result == ""
+    assert not result
 
 
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
 def test_replace_pos_args_empty_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, [])
-    assert result == ""
+    assert not result
 
 
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])

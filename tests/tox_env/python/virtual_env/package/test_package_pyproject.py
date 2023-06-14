@@ -193,7 +193,7 @@ def test_pyproject_deps_from_static(
         ),
     ],
 )
-def test_pyproject_deps_static_with_dynamic(
+def test_pyproject_deps_static_with_dynamic(  # noqa: PLR0913
     tox_project: ToxProjectCreator,
     demo_pkg_inline: Path,
     monkeypatch: pytest.MonkeyPatch,

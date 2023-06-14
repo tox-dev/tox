@@ -99,7 +99,7 @@ class Loader(Convert[T]):
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()
 
-    def load(
+    def load(  # noqa: PLR0913
         self,
         key: str,
         of_type: type[V],
@@ -122,14 +122,14 @@ class Loader(Convert[T]):
         raw = self.load_raw(key, conf, args.env_name)
         return self.build(key, of_type, factory, conf, raw, args)
 
-    def build(
+    def build(  # noqa: PLR0913
         self,
-        key: str,
+        key: str,  # noqa: ARG002
         of_type: type[V],
         factory: Factory[V],
-        conf: Config | None,
+        conf: Config | None,  # noqa: ARG002
         raw: T,
-        args: ConfigLoadArgs,
+        args: ConfigLoadArgs,  # noqa: ARG002
     ) -> V:
         """
         Materialize the raw configuration value from the loader.

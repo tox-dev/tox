@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 class Pip(Installer[Python]):
     """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517."""
 
-    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:
+    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # noqa: FBT001, FBT002
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
 
@@ -61,8 +61,8 @@ class Pip(Installer[Python]):
                 desc="command used to list isntalled packages",
             )
 
-    def default_install_command(self, conf: Config, env_name: str | None) -> Command:
-        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"
+    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # noqa: ARG002
+        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # noqa: PLR2004
         cmd = Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
         return self.post_process_install_command(cmd)
 
@@ -159,7 +159,7 @@ class Pip(Installer[Python]):
         msg = f"changed {of_type}{removed}{added}"
         raise Recreate(msg)
 
-    def _install_list_of_deps(
+    def _install_list_of_deps(  # noqa: C901
         self,
         arguments: Sequence[
             Requirement | WheelPackage | SdistPackage | EditableLegacyPackage | EditablePackage | PathPackage

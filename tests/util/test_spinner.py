@@ -44,7 +44,7 @@ def test_spinner_disabled(capfd: CaptureFixture) -> None:
         spin.clear()
     out, err = capfd.readouterr()
     assert out == f"{Fore.GREEN}x: done in 0 seconds{Fore.RESET}{os.linesep}", out
-    assert err == ""
+    assert not err
 
 
 @time_machine.travel("2012-01-14", tick=False)

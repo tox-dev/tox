@@ -78,14 +78,14 @@ linkcheck_ignore = [
 extlinks_detect_hardcoded_links = True
 
 
-def process_signature(
-    app: Sphinx,
+def process_signature(  # noqa: PLR0913
+    app: Sphinx,  # noqa: ARG001
     objtype: str,
-    name: str,
-    obj: Any,
+    name: str,  # noqa: ARG001
+    obj: Any,  # noqa: ARG001
     options: Options,
-    args: str,
-    retann: str | None,
+    args: str,  # noqa: ARG001
+    retann: str | None,  # noqa: ARG001
 ) -> None | tuple[None, None]:
     # skip-member is not checked for class level docs, so disable via signature processing
     return (None, None) if objtype == "class" and "__init__" in options.get("exclude-members", set()) else None
@@ -101,7 +101,7 @@ def setup(app: Sphinx) -> None:
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
 
     class PatchedPythonDomain(PythonDomain):
-        def resolve_xref(
+        def resolve_xref(  # noqa: PLR0913
             self,
             env: BuildEnvironment,
             fromdocname: str,

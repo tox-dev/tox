@@ -102,7 +102,7 @@ def provision(state: State) -> int | bool:
     )
     provision_tox_env: str = state.conf.core["provision_tox_env"]
     state.conf.memory_seed_loaders[provision_tox_env].append(loader)
-    state.envs._mark_provision(bool(missing), provision_tox_env)
+    state.envs._mark_provision(bool(missing), provision_tox_env)  # noqa: SLF001
 
     if not missing:
         return False
@@ -116,7 +116,7 @@ def provision(state: State) -> int | bool:
             msg += f" and wrote to {no_provision}"
             min_version = str(next(i.specifier for i in requires if i.name == "tox")).split("=")
             requires_dict = {
-                "minversion": min_version[1] if len(min_version) >= 2 else None,
+                "minversion": min_version[1] if len(min_version) >= 2 else None,  # noqa: PLR2004
                 "requires": [str(i) for i in requires],
             }
             Path(no_provision).write_text(json.dumps(requires_dict, indent=4))

@@ -109,11 +109,17 @@ class Execute(ABC):
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
 
-    def __init__(self, colored: bool) -> None:
+    def __init__(self, colored: bool) -> None:  # noqa: FBT001
         self._colored = colored
 
     @contextmanager
-    def call(self, request: ExecuteRequest, show: bool, out_err: OutErr, env: ToxEnv) -> Iterator[ExecuteStatus]:
+    def call(
+        self,
+        request: ExecuteRequest,
+        show: bool,
+        out_err: OutErr,
+        env: ToxEnv,
+    ) -> Iterator[ExecuteStatus]:
         start = time.monotonic()
         try:
             # collector is what forwards the content from the file streams to the standard streams
@@ -195,10 +201,10 @@ class Outcome:
 
     OK = 0
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         request: ExecuteRequest,
-        show_on_standard: bool,
+        show_on_standard: bool,  # noqa: FBT001
         exit_code: int | None,
         out: str,
         err: str,

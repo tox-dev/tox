@@ -117,7 +117,7 @@ class RunToxEnv(ToxEnv, ABC):
             with package_env.display_context(suspend=self._has_display_suspended):
                 getattr(package_env, method_name)(*args)
 
-    def _clean(self, transitive: bool = False) -> None:
+    def _clean(self, transitive: bool = False) -> None:  # noqa: FBT001, FBT002
         super()._clean(transitive)
         if transitive:
             self._call_pkg_envs("_clean")

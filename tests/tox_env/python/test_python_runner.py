@@ -33,7 +33,7 @@ def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
 def test_journal_package_empty() -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [])
+    PythonRun._handle_journal_package(journal, [])  # noqa: SLF001
 
     content = journal.content
     assert content == {}
@@ -44,7 +44,7 @@ def test_journal_one_wheel_file(tmp_path: Path) -> None:
     wheel.write_bytes(b"magical")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(wheel)])
+    PythonRun._handle_journal_package(journal, [PathPackage(wheel)])  # noqa: SLF001
 
     content = journal.content
     assert content == {
@@ -63,7 +63,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
     wheel_2.write_bytes(b"magic")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(wheel_1), PathPackage(wheel_2)])
+    PythonRun._handle_journal_package(journal, [PathPackage(wheel_1), PathPackage(wheel_2)])  # noqa: SLF001
 
     content = journal.content
     assert content == {
@@ -85,7 +85,7 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
 def test_journal_package_dir(tmp_path: Path) -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(tmp_path)])
+    PythonRun._handle_journal_package(journal, [PathPackage(tmp_path)])  # noqa: SLF001
 
     content = journal.content
     assert content == {

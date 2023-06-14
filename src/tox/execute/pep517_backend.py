@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 class LocalSubProcessPep517Executor(Execute):
     """Executor holding the backend process."""
 
-    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:
+    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:  # noqa: FBT001
         super().__init__(colored)
         self.cmd = cmd
         self.env = env
@@ -98,7 +98,7 @@ class LocalSubProcessPep517Executor(Execute):
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
     """A backend invocation."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,

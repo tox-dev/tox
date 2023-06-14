@@ -25,7 +25,7 @@ _COMMENTS = re.compile(r"(\s)*(?<!\\)#.*")
 class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary)."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         section: Section,
         parser: ConfigParser,
@@ -57,7 +57,7 @@ class IniLoader(StrConvert, Loader[str]):
         collapsed = factor_filtered.replace("\r", "").replace("\\\n", "")  # collapse explicit new-line escape
         return collapsed
 
-    def build(
+    def build(  # noqa: PLR0913
         self,
         key: str,
         of_type: type[V],
@@ -74,7 +74,7 @@ class IniLoader(StrConvert, Loader[str]):
             else:
                 try:
                     replaced = replace(conf, self, raw_, args_)  # do replacements
-                except Exception as exception:
+                except Exception as exception:  # noqa: BLE001
                     if isinstance(exception, HandledError):
                         raise
                     name = self.core_section.key if args_.env_name is None else args_.env_name

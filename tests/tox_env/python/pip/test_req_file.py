@@ -59,7 +59,7 @@ def test_req_with_no_deps(tmp_path: Path) -> None:
     (tmp_path / "r.txt").write_text("--no-deps")
     python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
     with pytest.raises(ValueError, match="unrecognized arguments: --no-deps"):
-        python_deps.requirements
+        python_deps.requirements  # noqa: B018
 
 
 def test_opt_only_req_file(tmp_path: Path) -> None:

@@ -113,7 +113,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                 result = ov.getresult(10)  # wait up to 10ms to perform the operation
                 if result != len(bytes_content):
                     msg = f"failed to write to {stdin!r}"
-                    raise RuntimeError(msg)
+                    raise RuntimeError(msg)  # noqa: TRY301
             else:
                 stdin.write(bytes_content)
                 stdin.flush()
@@ -139,7 +139,7 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
     def exit_code(self) -> int | None:
         return self._exit_code
 
-    def wait(self, timeout: float | None = None) -> int | None:
+    def wait(self, timeout: float | None = None) -> int | None:  # noqa: ARG002
         return self._exit_code  # pragma: no cover
 
     def write_stdin(self, content: str) -> None:
@@ -150,13 +150,13 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
-        on_exit_drain: bool = True,
+        on_exit_drain: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         super().__init__(request, options, out, err)
         self.process: Popen[bytes] | None = None
@@ -220,8 +220,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._read_stdout.__enter__()
 
         if sys.platform == "win32":  # explicit check for mypy:  # pragma: win32 cover
-            process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]
-            process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]
+            process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
+            process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
         return status
 
     def __exit__(

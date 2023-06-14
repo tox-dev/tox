@@ -22,7 +22,7 @@ T = TypeVar("T", bound=ConfigSet)
 class Config:
     """Main configuration object for tox."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         config_source: Source,
         options: Parsed,
@@ -120,7 +120,7 @@ class Config:
         self._core_set = core
         return core
 
-    def get_section_config(
+    def get_section_config(  # noqa: PLR0913
         self,
         section: Section,
         base: list[str] | None,
@@ -145,7 +145,7 @@ class Config:
     def get_env(
         self,
         item: str,
-        package: bool = False,
+        package: bool = False,  # noqa: FBT001, FBT002
         loaders: Sequence[Loader[Any]] | None = None,
     ) -> EnvConfigSet:
         """

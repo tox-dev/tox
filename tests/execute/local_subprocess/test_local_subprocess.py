@@ -42,7 +42,7 @@ class FakeOutErr:
 @pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
 @pytest.mark.parametrize(("out", "err"), [("out", "err"), ("", "")], ids=["simple", "nothing"])
 @pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
-def test_local_execute_basic_pass(
+def test_local_execute_basic_pass(  # noqa: PLR0913
     caplog: LogCaptureFixture,
     os_env: dict[str, str],
     out: str,
@@ -220,8 +220,8 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
 
     assert bool(outcome) is False, outcome
     assert outcome.exit_code != Outcome.OK
-    assert outcome.out == ""
-    assert outcome.err == ""
+    assert not outcome.out
+    assert not outcome.err
     assert not caplog.records
 
 
@@ -241,7 +241,7 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
         pytest.skip(str(exc))  # pragma: no cover
         raise  # pragma: no cover
 
-    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)
+    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)  # noqa: T201
     process.send_signal(SIG_INTERRUPT)
     try:
         process.communicate(timeout=3)

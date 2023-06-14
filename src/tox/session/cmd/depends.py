@@ -25,26 +25,26 @@ def tox_add_option(parser: ToxParser) -> None:
 def depends(state: State) -> int:
     to_run_list = list(state.envs.iter(only_active=False))
     order, todo = run_order(state, to_run_list)
-    print(f"Execution order: {', '.join(order)}")
+    print(f"Execution order: {', '.join(order)}")  # noqa: T201
 
     deps: dict[str, list[str]] = {k: [o for o in order if o in v] for k, v in todo.items()}
     deps["ALL"] = to_run_list
 
     def _handle(at: int, env: str) -> None:
-        print("   " * at, end="")
-        print(env, end="")
+        print("   " * at, end="")  # noqa: T201
+        print(env, end="")  # noqa: T201
         if env != "ALL":
             run_env = cast(RunToxEnv, state.envs[env])
             packager_list: list[str] = []
             try:
                 for pkg_env in run_env.package_envs:
                     packager_list.append(pkg_env.name)
-            except Exception as exception:
+            except Exception as exception:  # noqa: BLE001
                 packager_list.append(f"... ({exception})")
             names = " | ".join(packager_list)
             if names:
-                print(f" ~ {names}", end="")
-        print("")
+                print(f" ~ {names}", end="")  # noqa: T201
+        print("")  # noqa: T201
         at += 1
         for dep in deps[env]:
             _handle(at, dep)

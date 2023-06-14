@@ -46,7 +46,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
 
     @staticmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         return "virtualenv-cmd-builder"
 
     def register_config(self) -> None:
@@ -131,7 +131,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
         self._sdist_meta_tox_env = cast(Pep517VirtualEnvPackager, result)
 
-    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
+    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # noqa: ARG002
         if self._sdist_meta_tox_env is not None:  # pragma: no branch
             yield self._sdist_meta_tox_env
 

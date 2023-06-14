@@ -91,7 +91,7 @@ class Plugin:
             self.manager.unregister(_plugin)
         inline = _load_inline(path)
         self._register_plugins(inline)
-        REGISTER._register_tox_env_types(self)
+        REGISTER._register_tox_env_types(self)  # noqa: SLF001
 
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests

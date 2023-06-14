@@ -12,7 +12,7 @@ STOP_EVENT_CHECK_PERIODICITY_IN_MS = 0.01  # pragma: win32 no cover
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:
+    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:  # noqa: FBT001
         super().__init__(file_no, handler, name, drain)
 
     def _read_stream(self) -> None:

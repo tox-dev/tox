@@ -51,7 +51,10 @@ class Section:
         return f"{self.__class__.__name__}(prefix={self._prefix!r}, name={self._name!r})"
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, self.__class__) and (self._prefix, self._name) == (other._prefix, other.name)
+        return isinstance(other, self.__class__) and (self._prefix, self._name) == (
+            other._prefix,
+            other.name,
+        )
 
 
 __all__ = [

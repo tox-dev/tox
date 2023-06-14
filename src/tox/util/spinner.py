@@ -52,11 +52,11 @@ class Spinner:
     UNICODE_OUTCOME = Outcome(ok="✔", fail="✖", skip="⚠")
     ASCII_OUTCOME = Outcome(ok="+", fail="!", skip="?")
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
-        enabled: bool = True,
+        enabled: bool = True,  # noqa: FBT001, FBT002
         refresh_rate: float = 0.1,
-        colored: bool = True,
+        colored: bool = True,  # noqa: FBT001, FBT002
         stream: IO[str] | None = None,
         total: int | None = None,
     ) -> None:
@@ -187,7 +187,7 @@ def td_human_readable(seconds: float) -> str:
     texts: list[str] = []
     for period_name, period_seconds in _PERIODS:
         period_str = None
-        if period_name == "second" and (seconds >= 0.01 or not texts):
+        if period_name == "second" and (seconds >= 0.01 or not texts):  # noqa: PLR2004
             period_str = f"{seconds:.2f}".rstrip("0").rstrip(".")
         elif seconds >= period_seconds:
             period_value, seconds = divmod(seconds, period_seconds)

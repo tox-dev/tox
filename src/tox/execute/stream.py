@@ -78,7 +78,7 @@ class SyncWrite:
         self._write(at)
 
     def _write(self, at: int) -> None:
-        assert self._target is not None  # because _do_print is guarding the call of this method
+        assert self._target is not None  # because _do_print is guarding the call of this method  # noqa: S101
         with self._lock:
             if at > self._at:  # pragma: no branch
                 try:

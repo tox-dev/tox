@@ -15,7 +15,7 @@ def test_register_set_new_default_no_register() -> None:
 def test_register_set_new_default_with_register() -> None:
     class B(VirtualEnvRunner):
         @staticmethod
-        def id() -> str:
+        def id() -> str:  # noqa: A003
             return "B"
 
     register = ToxEnvRegister()

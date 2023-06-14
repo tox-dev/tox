@@ -36,7 +36,7 @@ class StrConvert(Convert[str]):
         yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
-    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:
+    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # noqa: ARG004
         for row in value.split("\n"):
             if row.strip():
                 key, sep, value = row.partition("=")

@@ -48,9 +48,9 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
 
     def __call__(
         self,
-        conf: Config,
-        loaders: list[Loader[T]],
-        args: ConfigLoadArgs,
+        conf: Config,  # noqa: ARG002
+        loaders: list[Loader[T]],  # noqa: ARG002
+        args: ConfigLoadArgs,  # noqa: ARG002
     ) -> T:
         value = self.value() if callable(self.value) else self.value
         return value
@@ -65,7 +65,7 @@ _PLACE_HOLDER = object()
 class ConfigDynamicDefinition(ConfigDefinition[T]):
     """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.)."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         keys: Iterable[str],
         desc: str,

@@ -133,7 +133,7 @@ class Python(ToxEnv, ABC):
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
-    def default_base_python(self, conf: Config, env_name: str | None) -> list[str]:
+    def default_base_python(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: ARG002
         base_python = None if env_name is None else self.extract_base_python(env_name)
         return [sys.executable if base_python is None else base_python]
 
@@ -156,7 +156,7 @@ class Python(ToxEnv, ABC):
         cls,
         env_name: str,
         base_pythons: list[str],
-        ignore_base_python_conflict: bool,
+        ignore_base_python_conflict: bool,  # noqa: FBT001
     ) -> list[str]:
         env_base_python = cls.extract_base_python(env_name)
         if env_base_python is not None:

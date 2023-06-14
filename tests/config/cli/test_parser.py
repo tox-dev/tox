@@ -36,7 +36,7 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
 @pytest.mark.parametrize("force_color", [None, "0", "1"])
 @pytest.mark.parametrize("tox_color", [None, "bad", "no", "yes"])
 @pytest.mark.parametrize("term", [None, "xterm", "dumb"])
-def test_parser_color(
+def test_parser_color(  # noqa: PLR0913
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
     no_color: str | None,
@@ -86,7 +86,12 @@ def test_parser_unsupported_type() -> None:
 def test_sub_sub_command() -> None:
     parser = ToxParser.base()
     with pytest.raises(RuntimeError, match="no sub-command group allowed"):
-        parser.add_command("c", [], "help", lambda s: 0)  # pragma: no cover - the lambda will never be run
+        parser.add_command(
+            "c",
+            [],
+            "help",
+            lambda s: 0,  # noqa: ARG005
+        )  # pragma: no cover - the lambda will never be run
 
 
 def test_parse_known_args_not_set(mocker: MockerFixture) -> None:
