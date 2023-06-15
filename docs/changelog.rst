@@ -4,6 +4,12 @@ Release History
 
 .. towncrier release notes start
 
+v4.6.1 (2023-06-15)
+-------------------
+
+No significant changes.
+
+
 v4.6.0 (2023-06-05)
 -------------------
 
