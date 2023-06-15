@@ -7,20 +7,16 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
-from typing import Any, Dict, Generator, Iterator, NoReturn, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, NoReturn, Optional, Sequence, cast
 
 from cachetools import cached
 from packaging.requirements import Requirement
 from pyproject_api import BackendFailed, CmdStatus, Frontend
 
-from tox.config.sets import EnvConfigSet
-from tox.execute.api import ExecuteStatus
 from tox.execute.pep517_backend import LocalSubProcessPep517Executor
 from tox.execute.request import StdinSource
 from tox.plugin import impl
-from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.errors import Fail
-from tox.tox_env.package import Package, PackageToxEnv
 from tox.tox_env.python.package import (
     EditableLegacyPackage,
     EditablePackage,
@@ -28,12 +24,18 @@ from tox.tox_env.python.package import (
     SdistPackage,
     WheelPackage,
 )
-from tox.tox_env.register import ToxEnvRegister
-from tox.tox_env.runner import RunToxEnv
+from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.util.file_view import create_session_view
 
-from ..api import VirtualEnv
 from .util import dependencies_with_extras, dependencies_with_extras_from_markers
+
+if TYPE_CHECKING:
+    from tox.config.sets import EnvConfigSet
+    from tox.execute.api import ExecuteStatus
+    from tox.tox_env.api import ToxEnvCreateArgs
+    from tox.tox_env.package import Package, PackageToxEnv
+    from tox.tox_env.register import ToxEnvRegister
+    from tox.tox_env.runner import RunToxEnv
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution, PathDistribution
@@ -64,8 +66,8 @@ class ToxBackendFailed(Fail, BackendFailed):
         )
 
 
-class BuildEditableNotSupported(RuntimeError):
-    """raised when build editable is not supported"""
+class BuildEditableNotSupportedError(RuntimeError):
+    """raised when build editable is not supported."""
 
 
 class ToxCmdStatus(CmdStatus):
@@ -89,7 +91,7 @@ class ToxCmdStatus(CmdStatus):
 
 
 class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
-    """local file system python virtual environment via the virtualenv package"""
+    """local file system python virtual environment via the virtualenv package."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
@@ -103,7 +105,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self._package_paths: set[Path] = set()
 
     @staticmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         return "virtualenv-pep-517"
 
     @property
@@ -117,13 +119,13 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self.conf.add_config(
             keys=["meta_dir"],
             of_type=Path,
-            default=lambda conf, name: self.env_dir / ".meta",  # noqa: U100
+            default=lambda conf, name: self.env_dir / ".meta",  # noqa: ARG005
             desc="directory where to put the project metadata files",
         )
         self.conf.add_config(
             keys=["pkg_dir"],
             of_type=Path,
-            default=lambda conf, name: self.env_dir / "dist",  # noqa: U100
+            default=lambda conf, name: self.env_dir / "dist",  # noqa: ARG005
             desc="directory where to put project packages",
         )
 
@@ -154,7 +156,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         super()._setup_env()
         if "editable" in self.builds:
             if not self._frontend.optional_hooks["build_editable"]:
-                raise BuildEditableNotSupported
+                raise BuildEditableNotSupportedError
             build_requires = self._frontend.get_requires_for_build_editable().requires
             self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
         if "wheel" in self.builds:
@@ -169,7 +171,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         if executor is not None:  # pragma: no branch
             try:
                 if executor.is_alive:
-                    self._frontend._send("_exit")  # try first on amicable shutdown
+                    self._frontend._send("_exit")  # try first on amicable shutdown  # noqa: SLF001
             except SystemExit:  # pragma: no cover  # if already has been interrupted ignore
                 pass
             finally:
@@ -181,24 +183,27 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         super()._teardown()
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
-        """build the package to install"""
+        """Build the package to install."""
         try:
             deps = self._load_deps(for_env)
-        except BuildEditableNotSupported:
+        except BuildEditableNotSupportedError:
             targets = [e for e in self.builds.pop("editable") if e["package"] == "editable"]
             names = ", ".join(sorted({t.env_name for t in targets if t.env_name}))
-            logging.error(
-                f"package config for {names} is editable, however the build backend {self._frontend.backend}"
-                f" does not support PEP-660, falling back to editable-legacy - change your configuration to it",
+
+            logging.error(  # noqa: TRY400
+                "package config for %s is editable, however the build backend %s does not support PEP-660, falling "
+                "back to editable-legacy - change your configuration to it",
+                names,
+                cast(Pep517VirtualEnvFrontend, self._frontend_).backend,
             )
             for env in targets:
-                env._defined["package"].value = "editable-legacy"  # type: ignore
+                env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]  # noqa: SLF001
                 self.builds["editable-legacy"].append(env)
             deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
         if of_type == "editable-legacy":
             self.setup()
-            deps = [*self.requires(), *self._frontend.get_requires_for_build_sdist().requires] + deps
+            deps = [*self.requires(), *self._frontend.get_requires_for_build_sdist().requires, *deps]
             package: Package = EditableLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
         elif of_type == "sdist":
             self.setup()
@@ -225,7 +230,8 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
                     self._package_paths.add(wheel)
                 package = (EditablePackage if of_type == "editable" else WheelPackage)(wheel, deps)
         else:  # pragma: no cover # for when we introduce new packaging types and don't implement
-            raise TypeError(f"cannot handle package type {of_type}")  # pragma: no cover
+            msg = f"cannot handle package type {of_type}"
+            raise TypeError(msg)  # pragma: no cover
         return [package]
 
     @property
@@ -283,8 +289,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             reqs = self.get_package_dependencies(for_env)
             name = self.get_package_name(for_env)
         extras: set[str] = for_env["extras"]
-        deps = dependencies_with_extras(reqs, extras, name)
-        return deps
+        return dependencies_with_extras(reqs, extras, name)
 
     def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
         with self._pkg_lock:
@@ -328,22 +333,24 @@ class Pep517VirtualEnvFrontend(Frontend):
         into: dict[str, Any] = {}
         pkg_cache = cached(
             into,
-            key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist",  # noqa: U100
+            key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist",  # noqa: ARG005
         )
-        self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore
-        self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore
-        self.build_editable = pkg_cache(self.build_editable)  # type: ignore
+        self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore[method-assign]
+        self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore[method-assign]
+        self.build_editable = pkg_cache(self.build_editable)  # type: ignore[method-assign]
 
     @property
     def backend_cmd(self) -> Sequence[str]:
-        return ["python"] + self.backend_args
+        return ["python", *self.backend_args]
 
     def _send(self, cmd: str, **kwargs: Any) -> tuple[Any, str, str]:
         try:
-            if cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable"):
+            if (
+                cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable")
                 # given we'll build a wheel we might skip the prepare step
-                if "wheel" in self._tox_env.builds or "editable" in self._tox_env.builds:
-                    return None, "", ""  # will need to build wheel either way, avoid prepare
+                and ("wheel" in self._tox_env.builds or "editable" in self._tox_env.builds)
+            ):
+                return None, "", ""  # will need to build wheel either way, avoid prepare
             return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
             raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
@@ -352,7 +359,7 @@ class Pep517VirtualEnvFrontend(Frontend):
     def _send_msg(
         self,
         cmd: str,
-        result_file: Path,  # noqa: U100
+        result_file: Path,  # noqa: ARG002
         msg: str,
     ) -> Iterator[ToxCmdStatus]:
         with self._tox_env.execute_async(
@@ -369,7 +376,14 @@ class Pep517VirtualEnvFrontend(Frontend):
         if outcome is not None:  # pragma: no branch
             outcome.assert_success()
 
-    def _unexpected_response(self, cmd: str, got: Any, expected_type: Any, out: str, err: str) -> NoReturn:
+    def _unexpected_response(  # noqa: PLR0913
+        self,
+        cmd: str,
+        got: Any,
+        expected_type: Any,
+        out: str,
+        err: str,
+    ) -> NoReturn:
         try:
             super()._unexpected_response(cmd, got, expected_type, out, err)
         except BackendFailed as exception:

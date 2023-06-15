@@ -3,15 +3,19 @@ from __future__ import annotations
 import platform
 import sys
 from configparser import ConfigParser
-from pathlib import Path
 from textwrap import dedent
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.config.types import Command
-from tox.pytest import MonkeyPatch, ToxProjectCreator
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
 def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
@@ -103,7 +107,7 @@ def test_show_config_empty_install_command_exception(tox_project: ToxProjectCrea
     project = tox_project({"tox.ini": "[testenv:a]\ninstall_command="})
     outcome = project.run("c", "-e", "a", "-k", "install_command")
     outcome.assert_success()
-    txt = "\ninstall_command = # Exception: " "ValueError(\"attempting to parse '' into a command failed\")"
+    txt = "\ninstall_command = # Exception: ValueError(\"attempting to parse '' into a command failed\")"
     assert txt in outcome.out
 
 

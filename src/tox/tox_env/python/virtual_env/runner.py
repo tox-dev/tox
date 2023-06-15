@@ -1,22 +1,24 @@
-"""
-A tox python environment runner that uses the virtualenv project.
-"""
+"""A tox python environment runner that uses the virtualenv project."""
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from tox.plugin import impl
-from tox.tox_env.register import ToxEnvRegister
+from tox.tox_env.python.runner import PythonRun
 
-from ..runner import PythonRun
 from .api import VirtualEnv
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.tox_env.register import ToxEnvRegister
 
 
 class VirtualEnvRunner(VirtualEnv, PythonRun):
-    """local file system python virtual environment via the virtualenv package"""
+    """local file system python virtual environment via the virtualenv package."""
 
     @staticmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         return "virtualenv"
 
     @property

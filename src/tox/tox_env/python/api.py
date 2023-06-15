@@ -1,20 +1,21 @@
-"""
-Declare the abstract base class for tox environments that handle the Python language.
-"""
+"""Declare the abstract base class for tox environments that handle the Python language."""
 from __future__ import annotations
 
 import logging
 import re
 import sys
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any, List, NamedTuple, cast
+from typing import TYPE_CHECKING, Any, List, NamedTuple, cast
 
 from virtualenv.discovery.py_spec import PythonSpec
 
-from tox.config.main import Config
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.config.main import Config
 
 
 class VersionInfo(NamedTuple):
@@ -132,7 +133,7 @@ class Python(ToxEnv, ABC):
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
-    def default_base_python(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: U100
+    def default_base_python(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: ARG002
         base_python = None if env_name is None else self.extract_base_python(env_name)
         return [sys.executable if base_python is None else base_python]
 
@@ -145,7 +146,8 @@ class Python(ToxEnv, ABC):
                 candidates.append(factor)
         if candidates:
             if len(candidates) > 1:
-                raise ValueError(f"conflicting factors {', '.join(candidates)} in {env_name}")
+                msg = f"conflicting factors {', '.join(candidates)} in {env_name}"
+                raise ValueError(msg)
             return next(iter(candidates))
         return None
 
@@ -154,7 +156,7 @@ class Python(ToxEnv, ABC):
         cls,
         env_name: str,
         base_pythons: list[str],
-        ignore_base_python_conflict: bool,
+        ignore_base_python_conflict: bool,  # noqa: FBT001
     ) -> list[str]:
         env_base_python = cls.extract_base_python(env_name)
         if env_base_python is not None:
@@ -183,16 +185,16 @@ class Python(ToxEnv, ABC):
 
     @abstractmethod
     def env_python(self) -> Path:
-        """The python executable within the tox environment"""
+        """The python executable within the tox environment."""
         raise NotImplementedError
 
     @abstractmethod
     def env_bin_dir(self) -> Path:
-        """The binary folder within the tox environment"""
+        """The binary folder within the tox environment."""
         raise NotImplementedError
 
     def _setup_env(self) -> None:
-        """setup a virtual python environment"""
+        """Setup a virtual python environment."""
         super()._setup_env()
         self.ensure_python_env()
         self._paths = self.prepend_env_var_path()  # now that the environment exist we can add them to the path
@@ -224,7 +226,7 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     def _done_with_setup(self) -> None:
-        """called when setup is done"""
+        """Called when setup is done."""
         super()._done_with_setup()
         if self.journal or self.options.list_dependencies:
             outcome = self.installer.installed()
@@ -240,7 +242,7 @@ class Python(ToxEnv, ABC):
 
     @property
     def base_python(self) -> PythonInfo:
-        """Resolve base python"""
+        """Resolve base python."""
         base_pythons: list[str] = self.conf["base_python"]
 
         if self._base_python_searched is False:
@@ -252,7 +254,8 @@ class Python(ToxEnv, ABC):
 
         if self._base_python is None:
             if self.core["skip_missing_interpreters"]:
-                raise Skip(f"could not find python interpreter with spec(s): {', '.join(base_pythons)}")
+                msg = f"could not find python interpreter with spec(s): {', '.join(base_pythons)}"
+                raise Skip(msg)
             raise NoInterpreter(base_pythons)
 
         return cast(PythonInfo, self._base_python)
@@ -277,7 +280,7 @@ class Python(ToxEnv, ABC):
 
 
 class NoInterpreter(Fail):
-    """could not find interpreter"""
+    """could not find interpreter."""
 
     def __init__(self, base_pythons: list[str]) -> None:
         self.base_pythons = base_pythons

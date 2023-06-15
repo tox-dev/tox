@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 from unittest.mock import ANY
 
 import pytest
 
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
-from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.env_select import CliEnv
-from tox.session.state import State
 from tox.util.ci import is_ci
+
+if TYPE_CHECKING:
+    from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+    from tox.session.state import State
 
 
 def test_verbose() -> None:

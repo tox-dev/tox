@@ -1,19 +1,20 @@
-"""
-Defines how to run a single tox environment.
-"""
+"""Defines how to run a single tox environment."""
 from __future__ import annotations
 
 import logging
 import time
-from pathlib import Path
-from typing import NamedTuple, cast
+from typing import TYPE_CHECKING, NamedTuple, cast
 
-from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
-from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail, Skip
 from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed
-from tox.tox_env.runner import RunToxEnv
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.config.types import Command
+    from tox.tox_env.api import ToxEnv
+    from tox.tox_env.runner import RunToxEnv
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class ToxEnvRunResult(NamedTuple):
     ignore_outcome: bool = False
 
 
-def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:
+def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:  # noqa: FBT001
     start_one = time.monotonic()
     name = tox_env.conf.name
     with tox_env.display_context(suspend_display):
@@ -36,7 +37,7 @@ def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvR
     return ToxEnvRunResult(name, skipped, code, outcomes, duration, tox_env.conf["ignore_outcome"])
 
 
-def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:
+def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # noqa: FBT001
     skipped = False
     code: int = 0
     outcomes: list[Outcome] = []
@@ -50,11 +51,11 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
             skipped = True
         except ToxBackendFailed as exception:
             LOGGER.error("%s", exception)
-            raise SystemExit(exception.code)
+            raise SystemExit(exception.code)  # noqa: B904, TRY200
         except Fail as exception:
             LOGGER.error("failed with %s", exception)
             code = 1
-        except Exception:  # pragma: no cover
+        except Exception:  # pragma: no cover  # noqa: BLE001
             LOGGER.exception("internal error")  # pragma: no cover
             code = 2  # pragma: no cover
         finally:
@@ -64,7 +65,7 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
     return skipped, code, outcomes
 
 
-def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:
+def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # noqa: FBT001
     outcomes: list[Outcome] = []
     if no_test:
         exit_code = Outcome.OK
@@ -91,7 +92,13 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
     return exit_code, outcomes
 
 
-def run_command_set(tox_env: ToxEnv, key: str, cwd: Path, ignore_errors: bool, outcomes: list[Outcome]) -> int:
+def run_command_set(
+    tox_env: ToxEnv,
+    key: str,
+    cwd: Path,
+    ignore_errors: bool,  # noqa: FBT001
+    outcomes: list[Outcome],
+) -> int:
     exit_code = Outcome.OK
     command_set: list[Command] = tox_env.conf[key]
     for at, cmd in enumerate(command_set):

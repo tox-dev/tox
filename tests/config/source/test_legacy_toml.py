@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from tox.pytest import ToxProjectCreator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tox.pytest import ToxProjectCreator
 
 
 def test_conf_in_legacy_toml(tox_project: ToxProjectCreator) -> None:

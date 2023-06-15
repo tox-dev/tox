@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import sys
 from textwrap import dedent
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
-from tox.pytest import ToxProjectCreator
+if TYPE_CHECKING:
+    from tox.pytest import ToxProjectCreator
 
 
 def test_depends(tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], tuple[str, str]]) -> None:

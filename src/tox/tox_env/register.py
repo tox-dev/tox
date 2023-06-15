@@ -1,19 +1,17 @@
-"""
-Manages the tox environment registry.
-"""
+"""Manages the tox environment registry."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable
 
-from .package import PackageToxEnv
-from .runner import RunToxEnv
-
 if TYPE_CHECKING:
     from tox.plugin.manager import Plugin
 
+    from .package import PackageToxEnv
+    from .runner import RunToxEnv
+
 
 class ToxEnvRegister:
-    """tox environment registry"""
+    """tox environment registry."""
 
     def __init__(self) -> None:
         self._run_envs: dict[str, type[RunToxEnv]] = {}
@@ -59,7 +57,8 @@ class ToxEnvRegister:
         :param value: the new run environment type by name
         """
         if value not in self._run_envs:
-            raise ValueError("run env must be registered before setting it as default")
+            msg = "run env must be registered before setting it as default"
+            raise ValueError(msg)
         self._default_run_env = value
 
     def runner(self, name: str) -> type[RunToxEnv]:

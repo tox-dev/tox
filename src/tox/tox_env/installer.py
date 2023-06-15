@@ -16,7 +16,7 @@ class Installer(ABC, Generic[T]):
 
     @abstractmethod
     def _register_config(self) -> None:
-        """Register configurations for the installer"""
+        """Register configurations for the installer."""
         raise NotImplementedError
 
     @abstractmethod

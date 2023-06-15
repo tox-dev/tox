@@ -5,11 +5,14 @@ import os
 import shutil
 from itertools import chain
 from os.path import commonpath
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def create_session_view(package: Path, temp_path: Path) -> Path:
-    """Allows using the file after you no longer holding a lock to it by moving it into a temp folder"""
+    """Allows using the file after you no longer holding a lock to it by moving it into a temp folder."""
     # we'll number the active instances, and use the max value as session folder for a new build
     # note we cannot change package names as PEP-491 (wheel binary format)
     # is strict about file name structure

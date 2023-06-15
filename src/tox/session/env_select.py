@@ -2,23 +2,23 @@ from __future__ import annotations
 
 import logging
 import re
-from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import dataclass
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, cast
 
 from tox.config.loader.str_convert import StrConvert
+from tox.config.types import EnvList
+from tox.report import HandledError
 from tox.tox_env.api import ToxEnvCreateArgs
+from tox.tox_env.errors import Skip
+from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
 
-from ..config.types import EnvList
-from ..report import HandledError
-from ..tox_env.errors import Skip
-from ..tox_env.package import PackageToxEnv
-
 if TYPE_CHECKING:
+    from argparse import ArgumentParser
+
     from tox.session.state import State
 
 
@@ -26,9 +26,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CliEnv:
-    """CLI tox env selection"""
+    """CLI tox env selection."""
 
-    def __init__(self, value: None | list[str] | str = None):
+    def __init__(self, value: None | list[str] | str = None) -> None:
         if isinstance(value, str):
             value = StrConvert().to(value, of_type=List[str], factory=None)
         self._names: list[str] | None = value
@@ -47,7 +47,7 @@ class CliEnv:
         return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
 
     def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and self._names == other._names
+        return type(self) == type(other) and self._names == other._names  # noqa: SLF001
 
     def __ne__(self, other: Any) -> bool:
         return not (self == other)
@@ -64,8 +64,8 @@ class CliEnv:
 def register_env_select_flags(
     parser: ArgumentParser,
     default: CliEnv | None,
-    multiple: bool = True,
-    group_only: bool = False,
+    multiple: bool = True,  # noqa: FBT001, FBT002
+    group_only: bool = False,  # noqa: FBT001, FBT002
 ) -> ArgumentParser:
     """
     Register environment selection flags.
@@ -78,7 +78,7 @@ def register_env_select_flags(
     """
     if multiple:
         group = parser.add_argument_group("select target environment(s)")
-        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # type: ignore
+        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # type: ignore[assignment]
     else:
         add_to = parser
     if not group_only:
@@ -110,7 +110,7 @@ def register_env_select_flags(
 
 @dataclass
 class _ToxEnvInfo:
-    """tox environment information"""
+    """tox environment information."""
 
     env: PackageToxEnv | RunToxEnv  #: the tox environment
     is_active: bool  #: a flag indicating if the environment is marked as active in the current run
@@ -130,8 +130,8 @@ class EnvSelector:
         from tox.plugin.manager import MANAGER
 
         self._manager = MANAGER
-        self._log_handler = self._state._options.log_handler
-        self._journal = self._state._journal
+        self._log_handler = self._state._options.log_handler  # noqa: SLF001
+        self._journal = self._state._journal  # noqa: SLF001
         self._provision: None | tuple[bool, str] = None
 
         self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
@@ -165,14 +165,17 @@ class EnvSelector:
                 if name not in env_name_to_active_map:
                     env_name_to_active_map[name] = is_active
         # for factor/label selection update the active flag
-        if not (getattr(self._state.conf.options, "labels", []) or getattr(self._state.conf.options, "factors", [])):
+        if (
+            not (getattr(self._state.conf.options, "labels", []) or getattr(self._state.conf.options, "factors", []))
             # if no active environment is defined fallback to py
-            if self.on_empty_fallback_py and not any(env_name_to_active_map.values()):
-                env_name_to_active_map["py"] = True
+            and self.on_empty_fallback_py
+            and not any(env_name_to_active_map.values())
+        ):
+            env_name_to_active_map["py"] = True
         return env_name_to_active_map
 
     @property
-    def _defined_envs(self) -> dict[str, _ToxEnvInfo]:
+    def _defined_envs(self) -> dict[str, _ToxEnvInfo]:  # noqa: C901, PLR0912
         # The problem of classifying run/package environments:
         # There can be two type of tox environments: run or package. Given a tox environment name there's no easy way to
         # find out which it is.  Intuitively a run environment is any environment that's not used for packaging by
@@ -202,7 +205,7 @@ class EnvSelector:
                     start_package_env_use_counter = self._pkg_env_counter.copy()
                     try:
                         run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
-                    except Exception as exception:
+                    except Exception as exception:  # noqa: BLE001
                         # if it's not a run environment,  wait to see if ends up being a packaging one -> rollback
                         failed[name] = exception
                         for key in self._pkg_env_counter - start_package_env_use_counter:
@@ -220,8 +223,8 @@ class EnvSelector:
                                     del self._defined_envs_[env.name]  # pragma: no cover
                                     for _pkg_env in other_env_info.env.package_envs:  # pragma: no cover
                                         self._pkg_env_counter[_pkg_env.name] -= 1  # pragma: no cover
-                        except Exception:
-                            assert self._defined_envs_[name].package_skip is not None
+                        except Exception:  # noqa: BLE001
+                            assert self._defined_envs_[name].package_skip is not None  # noqa: S101
             failed_to_create = failed.keys() - self._defined_envs_.keys()
             if failed_to_create:
                 raise failed[next(iter(failed_to_create))]
@@ -237,7 +240,7 @@ class EnvSelector:
         return self._defined_envs_
 
     def _finalize_config(self) -> None:
-        assert self._defined_envs_ is not None
+        assert self._defined_envs_ is not None  # noqa: S101
         for tox_env in self._defined_envs_.values():
             tox_env.env.conf.mark_finalized()
         self._state.conf.core.mark_finalized()
@@ -263,12 +266,13 @@ class EnvSelector:
         name, core_type = name_type
         with self._log_handler.with_context(name):
             if run_env_name == name:
-                raise HandledError(f"{run_env_name} cannot self-package")
+                msg = f"{run_env_name} cannot self-package"
+                raise HandledError(msg)
             missing_active = self._cli_envs is not None and self._cli_envs.is_all
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
-                run_env: RunToxEnv = self._defined_envs_[run_env_name].env  # type: ignore
+                run_env: RunToxEnv = self._defined_envs_[run_env_name].env  # type: ignore[index,assignment]
                 child_package_envs = package_tox_env.register_run_env(run_env)
                 try:
                     name_type = next(child_package_envs)
@@ -279,12 +283,12 @@ class EnvSelector:
                 except StopIteration:
                     pass
             except Skip as exception:
-                assert self._defined_envs_ is not None
+                assert self._defined_envs_ is not None  # noqa: S101
                 self._defined_envs_[run_env_name].package_skip = (name_type[0], exception)
             return package_tox_env
 
-    def _get_package_env(self, packager: str, name: str, is_active: bool) -> PackageToxEnv:
-        assert self._defined_envs_ is not None
+    def _get_package_env(self, packager: str, name: str, is_active: bool) -> PackageToxEnv:  # noqa: FBT001
+        assert self._defined_envs_ is not None  # noqa: S101
         if name in self._defined_envs_:
             env = self._defined_envs_[name].env
             if isinstance(env, PackageToxEnv):
@@ -292,8 +296,7 @@ class EnvSelector:
                     msg = f"{name} is already defined as a {env.id()}, cannot be {packager} too"  # pragma: no cover
                     raise HandledError(msg)  # pragma: no cover
                 return env
-            else:
-                self._state.conf.clear_env(name)
+            self._state.conf.clear_env(name)
         package_type = REGISTER.package(packager)
         pkg_conf = self._state.conf.get_env(name, package=True)
         journal = self._journal.get_env_journal(name)
@@ -310,11 +313,11 @@ class EnvSelector:
         raw_factors = getattr(self._state.conf.options, "factors", [])
         return tuple({f for factor in factor_list for f in factor.split("-")} for factor_list in raw_factors)
 
-    def _mark_active(self) -> None:
+    def _mark_active(self) -> None:  # noqa: C901
         labels = set(getattr(self._state.conf.options, "labels", []))
         factors = self._parse_factors()
 
-        assert self._defined_envs_ is not None
+        assert self._defined_envs_ is not None  # noqa: S101
         if labels or factors:
             for env_info in self._defined_envs_.values():
                 env_info.is_active = False  # if any was selected reset
@@ -340,7 +343,7 @@ class EnvSelector:
         """
         return self._defined_envs[item].env
 
-    def iter(
+    def iter(  # noqa: A003
         self,
         *,
         only_active: bool = True,
@@ -370,9 +373,10 @@ class EnvSelector:
         envs, active = self._defined_envs, self._env_name_to_active()
         invalid = [n for n, a in active.items() if a and isinstance(envs[n].env, PackageToxEnv)]
         if invalid:
-            raise HandledError(f"cannot run packaging environment(s) {','.join(invalid)}")
+            msg = f"cannot run packaging environment(s) {','.join(invalid)}"
+            raise HandledError(msg)
 
-    def _mark_provision(self, on: bool, provision_tox_env: str) -> None:
+    def _mark_provision(self, on: bool, provision_tox_env: str) -> None:  # noqa: FBT001
         self._provision = on, provision_tox_env
 
 

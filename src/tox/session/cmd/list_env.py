@@ -1,14 +1,15 @@
-"""
-Print available tox environments.
-"""
+"""Print available tox environments."""
 from __future__ import annotations
 
 from itertools import chain
+from typing import TYPE_CHECKING
 
-from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
 from tox.session.env_select import register_env_select_flags
-from tox.session.state import State
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl
@@ -28,7 +29,7 @@ def list_env(state: State) -> int:
     inactive = {} if active_only else {env: None for env in state.envs.iter(only_active=False) if env not in active}
 
     if not has_group_select and not option.list_no_description and active:
-        print("default environments:")
+        print("default environments:")  # noqa: T201
     max_length = max((len(env) for env in chain(active, inactive)), default=0)
 
     def report_env(name: str) -> None:
@@ -41,7 +42,7 @@ def list_env(state: State) -> int:
             msg = f"{env.ljust(max_length)} -> {text}".strip()
         else:
             msg = env
-        print(msg)
+        print(msg)  # noqa: T201
 
     for env in active:
         report_env(env)
@@ -49,8 +50,8 @@ def list_env(state: State) -> int:
     if not has_group_select and not option.list_default_only and inactive:
         if not option.list_no_description:
             if active:  # pragma: no branch
-                print("")
-            print("additional environments:")
+                print("")  # noqa: T201
+            print("additional environments:")  # noqa: T201
         for env in inactive:
             report_env(env)
     return 0

@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from tests.conftest import ToxIniCreator
 from tox.config.loader.api import Override
 from tox.config.loader.memory import MemoryLoader
-from tox.config.main import Config
 from tox.config.sets import ConfigSet
-from tox.pytest import ToxProjectCreator
+
+if TYPE_CHECKING:
+    from tests.conftest import ToxIniCreator
+    from tox.config.main import Config
+    from tox.pytest import ToxProjectCreator
 
 
 def test_empty_config_repr(empty_config: Config) -> None:

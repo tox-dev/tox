@@ -7,16 +7,18 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import check_call
-from typing import Callable, Iterator
+from typing import TYPE_CHECKING, Callable, Iterator
 from unittest import mock
 from zipfile import ZipFile
 
 import pytest
-from devpi_process import Index, IndexServer
 from filelock import FileLock
 from packaging.requirements import Requirement
 
-from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
+if TYPE_CHECKING:
+    from devpi_process import Index, IndexServer
+
+    from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution
@@ -32,7 +34,7 @@ def elapsed(msg: str) -> Iterator[None]:
     try:
         yield
     finally:
-        print(f"done in {time.monotonic() - start}s {msg}")
+        print(f"done in {time.monotonic() - start}s {msg}")  # noqa: T201
 
 
 @pytest.fixture(scope="session")
@@ -65,8 +67,7 @@ def _make_tox_wheel(
 
         version = f"{version_tuple[0]}.{version_tuple[1]}.{version_tuple[2] +1}"
         with mock.patch.dict(os.environ, {"SETUPTOOLS_SCM_PRETEND_VERSION": version}):
-            package = pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
-        return package
+            return pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
 
 
 @pytest.fixture(scope="session")
@@ -78,7 +79,8 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]
             zip_file.extractall(path=info)
         dist_info = next((i for i in info.iterdir() if i.suffix == ".dist-info"), None)
         if dist_info is None:  # pragma: no cover
-            raise RuntimeError(f"no tox.dist-info inside {tox_wheel}")
+            msg = f"no tox.dist-info inside {tox_wheel}"
+            raise RuntimeError(msg)
         distribution = Distribution.at(dist_info)
         wheel_cache = ROOT / ".wheel_cache" / f"{sys.version_info.major}.{sys.version_info.minor}"
         wheel_cache.mkdir(parents=True, exist_ok=True)
@@ -227,9 +229,6 @@ def test_provision_plugin_runner_in_provision(tox_project: ToxProjectCreator, tm
 def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, relative_path: bool) -> None:
     ini = "[tox]\nrequires = demo-pkg-inline\nskipsdist=true\n"
     project = tox_project({"tox.ini": ini}, prj_path=tmp_path / "sub")
-    if relative_path:
-        conf_path = os.path.join(project.path.name, "tox.ini")
-    else:
-        conf_path = str(project.path / "tox.ini")
+    conf_path = str(Path(project.path.name) / "tox.ini") if relative_path else str(project.path / "tox.ini")
     result = project.run("c", "--conf", conf_path, "-e", "py", from_cwd=tmp_path)
     result.assert_success()

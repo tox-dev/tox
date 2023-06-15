@@ -1,6 +1,4 @@
-"""
-Expand tox factor expressions to tox environment list.
-"""
+"""Expand tox factor expressions to tox environment list."""
 from __future__ import annotations
 
 import re
@@ -22,8 +20,7 @@ def filter_for_env(value: str, name: str | None) -> str:
                 if all((a_name in current) ^ negate for a_name, negate in group):
                     overall.append(content)
                     break  # if any match we use it, and then bail
-    result = "\n".join(overall)
-    return result
+    return "\n".join(overall)
 
 
 def find_envs(value: str) -> Iterator[str]:
@@ -62,7 +59,7 @@ def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | 
 
 
 def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
-    """transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}]"""
+    """Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}]."""
     for env in expand_env_with_negation(value):
         result = [name_with_negate(f) for f in env.split("-")]
         yield result
@@ -72,7 +69,7 @@ _FACTOR_RE = re.compile(r"!?[\w._][\w._-]*")
 
 
 def expand_env_with_negation(value: str) -> Iterator[str]:
-    """transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']"""
+    """Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']."""
     for key, group in groupby(re.split(r"((?:{[^}]+})+)|,", value), key=bool):
         if key:
             group_str = "".join(group).strip()

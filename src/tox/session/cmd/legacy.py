@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from packaging.requirements import InvalidRequirement, Requirement
 
@@ -12,13 +12,15 @@ from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.parallel import OFF_VALUE, parallel_flags, run_parallel
 from tox.session.cmd.run.sequential import run_sequential
-from tox.session.state import State
+from tox.session.env_select import CliEnv, EnvSelector, register_env_select_flags
 from tox.tox_env.python.pip.req_file import PythonDeps
 
-from ..env_select import CliEnv, EnvSelector, register_env_select_flags
 from .devenv import devenv
 from .list_env import list_env
 from .show_config import show_config
+
+if TYPE_CHECKING:
+    from tox.session.state import State
 
 
 @impl
@@ -113,7 +115,7 @@ def legacy(state: State) -> int:
     return run_sequential(state)
 
 
-def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:
+def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # noqa: C901
     override = {}
     if getattr(option, "site_packages", False):
         override["system_site_packages"] = True

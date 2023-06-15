@@ -5,16 +5,18 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from re_assert import Matches
 from virtualenv.discovery.py_info import PythonInfo
 
 from tox import __version__
-from tox.pytest import ToxProjectCreator
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.info import Info
+
+if TYPE_CHECKING:
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("prefix", ["-", "- "])
@@ -57,7 +59,7 @@ def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.integration()
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
-    enable_pip_pypi_access: str | None,  # noqa: U100
+    enable_pip_pypi_access: str | None,  # noqa: ARG001
 ) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
@@ -188,7 +190,7 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
     assert ".pkg: install" not in result_first.out  # no deps initially
 
     # new deps are picked up
-    (proj.path / "pyproject.toml").write_text(toml.replace("requires = []", 'requires = ["wheel"]'))
+    (proj.path / "pyproject.toml").write_text(toml.replace("requires = [\n]", 'requires = ["wheel"]'))
     (proj.path / "build.py").write_text(build.replace("return []", "return ['setuptools']"))
 
     result_rerun = proj.run("r")

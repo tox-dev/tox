@@ -1,18 +1,19 @@
-"""
-Run tox environments in parallel.
-"""
+"""Run tox environments in parallel."""
 from __future__ import annotations
 
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
+from typing import TYPE_CHECKING
 
-from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
-from tox.session.state import State
+from tox.session.env_select import CliEnv, register_env_select_flags
 from tox.util.cpu import auto_detect_cpus
 
-from ...env_select import CliEnv, register_env_select_flags
 from .common import env_run_create_flags, execute
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +38,15 @@ def parse_num_processes(str_value: str) -> int | None:
     try:
         value = int(str_value)
     except ValueError as exc:
-        raise ArgumentTypeError(f"value must be a positive number, is {str_value!r}") from exc
+        msg = f"value must be a positive number, is {str_value!r}"
+        raise ArgumentTypeError(msg) from exc
     if value < 0:
-        raise ArgumentTypeError(f"value must be positive, is {value!r}")
+        msg = f"value must be positive, is {value!r}"
+        raise ArgumentTypeError(msg)
     return value
 
 
-def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = False) -> None:
+def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = False) -> None:  # noqa: FBT001, FBT002
     our.add_argument(
         "-p",
         "--parallel",
@@ -51,10 +54,10 @@ def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = F
         help="run tox environments in parallel, the argument controls limit: all,"
         " auto - cpu count, some positive number, zero is turn off",
         action="store",
-        type=parse_num_processes,  # type: ignore # nargs confuses it
+        type=parse_num_processes,  # type: ignore[arg-type]  # nargs confuses it
         default=default_parallel,
         metavar="VAL",
-        **({"nargs": "?"} if no_args else {}),  # type: ignore # type checker can't unroll it
+        **({"nargs": "?"} if no_args else {}),  # type: ignore[arg-type] # type checker can't unroll it
     )
     our.add_argument(
         "-o",
@@ -72,7 +75,7 @@ def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = F
 
 
 def run_parallel(state: State) -> int:
-    """here we'll just start parallel sub-processes"""
+    """Here we'll just start parallel sub-processes."""
     option = state.conf.options
     return execute(
         state,

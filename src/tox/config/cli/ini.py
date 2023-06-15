@@ -1,6 +1,4 @@
-"""
-Provides configuration values from tox.ini files.
-"""
+"""Provides configuration values from tox.ini files."""
 from __future__ import annotations
 
 import logging
@@ -39,8 +37,8 @@ class IniConfig:
                 self.has_tox_section = parser.has_section(CORE.key)
                 if self.has_tox_section:
                     self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
-            except Exception as exception:
-                logging.error("failed to read config file %s because %r", config_file, exception)
+            except Exception as exception:  # noqa: BLE001
+                logging.error("failed to read config file %s because %r", config_file, exception)  # noqa: TRY400
                 self.has_config_file = None
 
     def get(self, key: str, of_type: type[Any]) -> Any:
@@ -58,7 +56,7 @@ class IniConfig:
                     result = value, source
             except KeyError:  # just not found
                 result = None
-            except Exception as exception:
+            except Exception as exception:  # noqa: BLE001
                 logging.warning("%s key %s as type %r failed with %r", self.config_file, key, of_type, exception)
                 result = None
         self._cache[cache_key] = result

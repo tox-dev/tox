@@ -1,4 +1,4 @@
-"""Borrowed from the pip code base"""
+"""Borrowed from the pip code base."""
 from __future__ import annotations
 
 from urllib.parse import urlsplit
@@ -7,7 +7,7 @@ from urllib.request import url2pathname
 from packaging.utils import canonicalize_name
 
 VCS = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
-VALID_SCHEMAS = ["http", "https", "file"] + VCS
+VALID_SCHEMAS = ["http", "https", "file", *VCS]
 
 
 def is_url(name: str) -> bool:
@@ -25,7 +25,8 @@ def url_to_path(url: str) -> str:
     if not netloc or netloc == "localhost":  # According to RFC 8089, same as empty authority.
         netloc = ""
     else:
-        raise ValueError(f"non-local file URIs are not supported on this platform: {url!r}")
+        msg = f"non-local file URIs are not supported on this platform: {url!r}"
+        raise ValueError(msg)
     path = url2pathname(netloc + path)
     return path
 
@@ -43,6 +44,6 @@ def handle_binary_option(value: str, target: set[str], other: set[str]) -> None:
         if name == ":none:":
             target.clear()
             continue
-        name = canonicalize_name(name)
-        other.discard(name)
-        target.add(name)
+        normalized_name = canonicalize_name(name)
+        other.discard(normalized_name)
+        target.add(normalized_name)

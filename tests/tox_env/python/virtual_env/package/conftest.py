@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 import pytest
-from _pytest.tmpdir import TempPathFactory
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from _pytest.tmpdir import TempPathFactory
 
 
 @pytest.fixture(scope="session")

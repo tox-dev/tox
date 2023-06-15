@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-from pytest_mock import MockerFixture
 
-from tox.pytest import ToxProjectCreator
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import ToxProjectCreator
 
 
 def test_legacy_show_config(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:

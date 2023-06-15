@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.pytest import MonkeyPatch, ToxProjectCreator
 from tox.session.env_select import CliEnv, EnvSelector
 from tox.session.state import State
+
+if TYPE_CHECKING:
+    from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
 def test_label_core_can_define(tox_project: ToxProjectCreator) -> None:

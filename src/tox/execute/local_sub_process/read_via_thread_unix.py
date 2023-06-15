@@ -1,6 +1,4 @@
-"""
-On UNIX we use select.select to ensure we drain in a non-blocking fashion.
-"""
+"""On UNIX we use select.select to ensure we drain in a non-blocking fashion."""
 from __future__ import annotations
 
 import errno  # pragma: win32 no cover
@@ -14,7 +12,7 @@ STOP_EVENT_CHECK_PERIODICITY_IN_MS = 0.01  # pragma: win32 no cover
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:
+    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:  # noqa: FBT001
         super().__init__(file_no, handler, name, drain)
 
     def _read_stream(self) -> None:
@@ -39,9 +37,10 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
                 if data:
                     self.handler(data)
                     return True
-            return False
         except OSError as exception:  # pragma: no cover
             # Bad file descriptor or Input/output error
             if exception.errno in (errno.EBADF, errno.EIO):
                 return None
             raise
+        else:
+            return False

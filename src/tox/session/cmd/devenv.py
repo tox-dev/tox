@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from tox.config.cli.parser import ToxParser
 from tox.config.loader.memory import MemoryLoader
 from tox.plugin import impl
 from tox.report import HandledError
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.sequential import run_sequential
 from tox.session.env_select import CliEnv, register_env_select_flags
-from tox.session.state import State
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl
@@ -40,8 +43,9 @@ def devenv(state: State) -> int:
     state.envs.ensure_only_run_env_is_active()
     envs = list(state.envs.iter())
     if len(envs) != 1:
-        raise HandledError(f"exactly one target environment allowed in devenv mode but found {', '.join(envs)}")
+        msg = f"exactly one target environment allowed in devenv mode but found {', '.join(envs)}"
+        raise HandledError(msg)
     result = run_sequential(state)
     if result == 0:
-        logging.warning(f"created development environment under {opt.devenv_path}")
+        logging.warning("created development environment under %s", opt.devenv_path)
     return result

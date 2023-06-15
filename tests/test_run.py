@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-from pytest_mock import MockerFixture
 
-from tox.pytest import ToxProjectCreator
 from tox.report import HandledError
 from tox.run import run
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("exception", [HandledError, KeyboardInterrupt])

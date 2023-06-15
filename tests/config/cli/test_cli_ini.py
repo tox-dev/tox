@@ -4,11 +4,10 @@ import logging
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from unittest.mock import ANY
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.config.cli.ini import IniConfig
 from tox.config.cli.parse import get_options
@@ -16,10 +15,14 @@ from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.config.source import discover_source
-from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
 from tox.session.env_select import CliEnv
-from tox.session.state import State
 from tox.util.ci import is_ci
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+    from tox.session.state import State
 
 
 @pytest.fixture()
@@ -50,7 +53,7 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 @pytest.mark.parametrize("content", ["[tox]", ""])
-def test_ini_empty(
+def test_ini_empty(  # noqa: PLR0913
     tmp_path: Path,
     core_handlers: dict[str, Callable[[State], int]],
     default_options: dict[str, Any],
@@ -107,6 +110,17 @@ def default_options() -> dict[str, Any]:
     }
 
 
+def test_ini_help(exhaustive_ini: Path, capfd: CaptureFixture) -> None:
+    with pytest.raises(SystemExit) as context:
+        get_options("-h")
+    assert context.value.code == 0
+    out, err = capfd.readouterr()
+    assert not err
+    res = out.splitlines()[-1]
+    msg = f"config file {str(exhaustive_ini)!r} active (changed via env var TOX_USER_CONFIG_FILE)"
+    assert res == msg
+
+
 @pytest.mark.usefixtures("exhaustive_ini")
 def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State], int]]) -> None:
     options = get_options("p")
@@ -145,15 +159,6 @@ def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers
-
-
-def test_ini_help(exhaustive_ini: Path, capsys: CaptureFixture) -> None:
-    with pytest.raises(SystemExit) as context:
-        get_options("-h")
-    assert context.value.code == 0
-    out, err = capsys.readouterr()
-    assert not err
-    assert f"config file '{exhaustive_ini}' active (changed via env var TOX_USER_CONFIG_FILE)"
 
 
 def test_bad_cli_ini(

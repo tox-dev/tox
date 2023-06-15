@@ -11,4 +11,4 @@ args = {
     "terminal": shutil.get_terminal_size(fallback=(-1, -1)),
 }
 result = json.dumps(args)
-print(result)
+print(result)  # noqa: T201

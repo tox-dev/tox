@@ -5,8 +5,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterator, Mapping, Sequence, TypeVar, cast
 
-from .loader.convert import Factory
-from .loader.section import Section
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
 from .set_env import SetEnv
 from .types import EnvList
@@ -15,13 +13,16 @@ if TYPE_CHECKING:
     from tox.config.loader.api import Loader
     from tox.config.main import Config
 
+    from .loader.convert import Factory
+    from .loader.section import Section
+
 V = TypeVar("V")
 
 
 class ConfigSet(ABC):
-    """A set of configuration that belong together (such as a tox environment settings, core tox settings)"""
+    """A set of configuration that belong together (such as a tox environment settings, core tox settings)."""
 
-    def __init__(self, conf: Config, section: Section, env_name: str | None):
+    def __init__(self, conf: Config, section: Section, env_name: str | None) -> None:
         self._section = section
         self._env_name = env_name
         self._conf = conf
@@ -39,7 +40,7 @@ class ConfigSet(ABC):
     def mark_finalized(self) -> None:
         self._final = True
 
-    def add_config(
+    def add_config(  # noqa: PLR0913
         self,
         keys: str | Sequence[str],
         of_type: type[V],
@@ -61,7 +62,8 @@ class ConfigSet(ABC):
         :return: the new dynamic config definition
         """
         if self._final:
-            raise RuntimeError("config set has been marked final and cannot be extended")
+            msg = "config set has been marked final and cannot be extended"
+            raise RuntimeError(msg)
         keys_ = self._make_keys(keys)
         definition = ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory)
         result = self._add_conf(keys_, definition)
@@ -77,7 +79,8 @@ class ConfigSet(ABC):
         :return: the new constant config value
         """
         if self._final:
-            raise RuntimeError("config set has been marked final and cannot be extended")
+            msg = "config set has been marked final and cannot be extended"
+            raise RuntimeError(msg)
         keys_ = self._make_keys(keys)
         definition = ConfigConstantDefinition(keys_, desc, value)
         result = self._add_conf(keys_, definition)
@@ -102,7 +105,8 @@ class ConfigSet(ABC):
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
         earlier = self._defined[key]
         if definition != earlier:  # pragma: no branch
-            raise ValueError(f"config {key} already defined")
+            msg = f"config {key} already defined"
+            raise ValueError(msg)
 
     def __getitem__(self, item: str) -> Any:
         """
@@ -170,7 +174,7 @@ class ConfigSet(ABC):
 
 
 class CoreConfigSet(ConfigSet):
-    """Configuration set for the core tox config"""
+    """Configuration set for the core tox config."""
 
     def __init__(self, conf: Config, section: Section, root: Path, src_path: Path) -> None:
         self._root = root
@@ -179,14 +183,14 @@ class CoreConfigSet(ConfigSet):
         desc = "define environments to automatically run"
         self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
 
-    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: U100
+    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
         return cast(Path, self["tox_root"] / ".tox")
 
-    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: U100
+    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
         return cast(Path, self["work_dir"] / ".tmp")
 
-    def _work_dir_post_process(self, dir: Path) -> Path:
-        return self._conf.work_dir if self._conf.options.work_dir else dir
+    def _work_dir_post_process(self, folder: Path) -> Path:
+        return self._conf.work_dir if self._conf.options.work_dir else folder
 
     def register_config(self) -> None:
         self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=self._src_path)
@@ -212,12 +216,12 @@ class CoreConfigSet(ConfigSet):
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)
 
-    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:  # noqa: U100
+    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
 
 
 class EnvConfigSet(ConfigSet):
-    """Configuration set for a tox environment"""
+    """Configuration set for a tox environment."""
 
     def __init__(self, conf: Config, section: Section, env_name: str) -> None:
         super().__init__(conf, section, env_name)

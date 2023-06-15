@@ -5,15 +5,15 @@ from collections import OrderedDict, defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator, Sequence, TypeVar
 
-from tox.config.loader.api import Loader, OverrideMap
-
-from .loader.memory import MemoryLoader
-from .loader.section import Section
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
-from .source import Source
 
 if TYPE_CHECKING:
+    from tox.config.loader.api import Loader, OverrideMap
+
     from .cli.parser import Parsed
+    from .loader.memory import MemoryLoader
+    from .loader.section import Section
+    from .source import Source
 
 
 T = TypeVar("T", bound=ConfigSet)
@@ -22,7 +22,7 @@ T = TypeVar("T", bound=ConfigSet)
 class Config:
     """Main configuration object for tox."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         config_source: Source,
         options: Parsed,
@@ -51,12 +51,15 @@ class Config:
         """
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             args = []
-            to_path_str = os.path.abspath(str(to_path))  # we use os.path to unroll .. in path without resolve
+            # we use os.path to unroll .. in path without resolve
+            to_path_str = os.path.abspath(str(to_path))  # noqa: PTH100
             for arg in self._pos_args:
                 path_arg = Path(arg)
                 if path_arg.exists() and not path_arg.is_absolute():
-                    path_arg_str = os.path.abspath(str(path_arg))  # we use os.path to unroll .. in path without resolve
-                    relative = os.path.relpath(path_arg_str, to_path_str)  # we use os.path to not fail when not within
+                    # we use os.path to unroll .. in path without resolve
+                    path_arg_str = os.path.abspath(str(path_arg))  # noqa: PTH100
+                    # we use os.path to not fail when not within
+                    relative = os.path.relpath(path_arg_str, to_path_str)
                     args.append(relative)
                 else:
                     args.append(arg)
@@ -120,7 +123,7 @@ class Config:
         self._core_set = core
         return core
 
-    def get_section_config(
+    def get_section_config(  # noqa: PLR0913
         self,
         section: Section,
         base: list[str] | None,
@@ -145,7 +148,7 @@ class Config:
     def get_env(
         self,
         item: str,
-        package: bool = False,
+        package: bool = False,  # noqa: FBT001, FBT002
         loaders: Sequence[Loader[Any]] | None = None,
     ) -> EnvConfigSet:
         """
@@ -157,14 +160,13 @@ class Config:
         :return: the tox environments config
         """
         section, base_test, base_pkg = self._src.get_tox_env_section(item)
-        conf_set = self.get_section_config(
+        return self.get_section_config(
             section,
             base=base_pkg if package else base_test,
             of_type=EnvConfigSet,
             for_env=item,
             loaders=loaders,
         )
-        return conf_set
 
     def clear_env(self, name: str) -> None:
         section, _, __ = self._src.get_tox_env_section(name)

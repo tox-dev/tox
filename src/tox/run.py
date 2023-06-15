@@ -17,9 +17,9 @@ def run(args: Sequence[str] | None = None) -> None:
     try:
         with ToxHandler.patch_thread():
             result = main(sys.argv[1:] if args is None else args)
-    except Exception as exception:
+    except Exception as exception:  # noqa: BLE001
         if isinstance(exception, HandledError):
-            logging.error("%s| %s", type(exception).__name__, str(exception))
+            logging.error("%s| %s", type(exception).__name__, str(exception))  # noqa: TRY400
             result = -2
         else:
             raise
@@ -30,7 +30,7 @@ def run(args: Sequence[str] | None = None) -> None:
             import threading  # pragma: no cover
 
             for thread in threading.enumerate():  # pragma: no cover
-                print(thread)  # pragma: no cover
+                print(thread)  # pragma: no cover  # noqa: T201
     raise SystemExit(result)
 
 
@@ -41,7 +41,7 @@ def main(args: Sequence[str]) -> int:
     result = provision(state)
     if result is not False:
         return result
-    handler = state._options.cmd_handlers[state.conf.options.command]
+    handler = state._options.cmd_handlers[state.conf.options.command]  # noqa: SLF001
     result = handler(state)
     return result
 
@@ -55,5 +55,4 @@ def setup_state(args: Sequence[str]) -> State:
     if options.parsed.exit_and_dump_after:
         faulthandler.dump_traceback_later(timeout=options.parsed.exit_and_dump_after, exit=True)  # pragma: no cover
     # build tox environment config objects
-    state = State(options, args)
-    return state
+    return State(options, args)

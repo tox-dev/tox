@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import sys
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from tox.pytest import ToxProjectCreator
 from tox.version import version as __version__
+
+if TYPE_CHECKING:
+    from tox.pytest import ToxProjectCreator
 
 
 def test_quickstart_ok(tox_project: ToxProjectCreator) -> None:

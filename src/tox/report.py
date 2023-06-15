@@ -1,4 +1,4 @@
-"""Handle reporting from within tox"""
+"""Handle reporting from within tox."""
 from __future__ import annotations
 
 import logging
@@ -6,10 +6,11 @@ import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO, TextIOWrapper
+from pathlib import Path
 from threading import Thread, current_thread, enumerate, local
 from typing import IO, Iterator, Tuple
 
-from colorama import Fore, Style, deinit, init
+from colorama import Fore, Style, init
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -26,7 +27,7 @@ OutErr = Tuple[TextIOWrapper, TextIOWrapper]
 
 
 class _LogThreadLocal(local):
-    """A thread local variable that inherits values from its parent"""
+    """A thread local variable that inherits values from its parent."""
 
     _ident_to_data: dict[int | None, str] = {}
 
@@ -68,7 +69,7 @@ class _LogThreadLocal(local):
             self.name = previous
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # noqa: FBT001
         previous_out, previous_err = self.out_err
         try:
             if yes:
@@ -97,16 +98,15 @@ class NamedBytesIO(BytesIO):
 class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic but at runtime doesn't take a type arg
     # """Controls tox output."""
 
-    def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:
+    def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # noqa: FBT001
         self._local = _LogThreadLocal(out_err)
         super().__init__(stream=self.stdout)
         if is_colored:
-            deinit()
             init()
         self._is_colored = is_colored
         self._setup_level(is_colored, level)
 
-    def _setup_level(self, is_colored: bool, level: int) -> None:
+    def _setup_level(self, is_colored: bool, level: int) -> None:  # noqa: FBT001
         self.setLevel(level)
         self._error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
         self._warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
@@ -115,7 +115,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
     @contextmanager
     def with_context(self, name: str) -> Iterator[None]:
         """
-        Set a new tox environment context
+        Set a new tox environment context.
 
         :param name: the name of the tox environment
         """
@@ -143,11 +143,11 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         return self.stdout
 
     @stream.setter
-    def stream(self, value: IO[str]) -> None:  # noqa: U100
-        """ignore anyone changing this"""
+    def stream(self, value: IO[str]) -> None:
+        """Ignore anyone changing this."""
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # noqa: FBT001
         with self._local.suspend_out_err(yes, out_err) as out_err_res:
             yield out_err_res
 
@@ -157,7 +157,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         self.stderr.buffer.write(out_err[1])
 
     @staticmethod
-    def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:
+    def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:  # noqa: FBT001
         color: int | str = ""
         if is_colored:
             if level >= logging.ERROR:
@@ -177,13 +177,12 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
                 f" [%(pathname)s:%(lineno)d]{_c(Style.RESET_ALL)}"
             )
         fmt = f"{_c(Style.BRIGHT)}{_c(Fore.MAGENTA)}%(env_name)s:{_c(Style.RESET_ALL)}" + fmt
-        formatter = logging.Formatter(fmt)
-        return formatter
+        return logging.Formatter(fmt)
 
-    def format(self, record: logging.LogRecord) -> str:
+    def format(self, record: logging.LogRecord) -> str:  # noqa: A003
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name
-        basename = os.path.dirname(record.pathname)
+        basename = str(Path(record.pathname).parent)
         len_sys_path_match = max((len(p) for p in sys.path if basename.startswith(p)), default=-1)
         record.pathname = record.pathname[len_sys_path_match + 1 :]
 
@@ -207,7 +206,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         self._setup_level(self._is_colored, level)
 
 
-def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:
+def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # noqa: FBT001
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
@@ -217,16 +216,12 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:
     out_err: OutErr = (sys.stdout, sys.stderr)  # type: ignore[assignment]
     handler = ToxHandler(level, is_colored, out_err)
     LOGGER.addHandler(handler)
-
     logging.debug("setup logging to %s on pid %s", logging.getLevelName(level), os.getpid())
     return handler
 
 
 def _get_level(verbosity: int) -> int:
-    if verbosity > MAX_LEVEL:
-        verbosity = MAX_LEVEL
-    level = LEVELS[verbosity]
-    return level
+    return LEVELS[min(verbosity, MAX_LEVEL)]
 
 
 def _clean_handlers(log: logging.Logger) -> None:
@@ -235,4 +230,4 @@ def _clean_handlers(log: logging.Logger) -> None:
 
 
 class HandledError(RuntimeError):
-    """Error that has been handled so no need for stack trace"""
+    """Error that has been handled so no need for stack trace."""

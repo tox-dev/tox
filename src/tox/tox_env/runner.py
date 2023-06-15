@@ -5,14 +5,16 @@ import os
 import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
-from typing import Any, Iterable, List
+from typing import TYPE_CHECKING, Any, Iterable, List
 
 from tox.config.types import Command, EnvList
-from tox.journal import EnvJournal
 
 from .api import ToxEnv, ToxEnvCreateArgs
 from .package import Package, PackageToxEnv, PathPackage
 from .util import add_change_dir_conf
+
+if TYPE_CHECKING:
+    from tox.journal import EnvJournal
 
 
 class RunToxEnv(ToxEnv, ABC):
@@ -115,7 +117,7 @@ class RunToxEnv(ToxEnv, ABC):
             with package_env.display_context(suspend=self._has_display_suspended):
                 getattr(package_env, method_name)(*args)
 
-    def _clean(self, transitive: bool = False) -> None:
+    def _clean(self, transitive: bool = False) -> None:  # noqa: FBT001, FBT002
         super()._clean(transitive)
         if transitive:
             self._call_pkg_envs("_clean")
@@ -143,7 +145,7 @@ class RunToxEnv(ToxEnv, ABC):
                 self._setup_pkg()
 
     def _register_package_conf(self) -> bool:
-        """If this returns True package_env and package_tox_env_type configurations must be defined"""
+        """If this returns True package_env and package_tox_env_type configurations must be defined."""
         self.core.add_config(
             keys=["no_package", "skipsdist"],
             of_type=bool,

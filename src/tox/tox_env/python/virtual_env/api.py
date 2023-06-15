@@ -1,29 +1,29 @@
-"""
-Declare the abstract base class for tox environments that handle the Python language via the virtualenv project.
-"""
+"""Declare the abstract base class for tox environments that handle the Python language via the virtualenv project."""
 from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
-from virtualenv.create.creator import Creator
-from virtualenv.run.session import Session
 
 from tox.config.loader.str_convert import StrConvert
-from tox.execute.api import Execute
 from tox.execute.local_sub_process import LocalSubProcessExecutor
+from tox.tox_env.python.api import Python, PythonInfo
 from tox.tox_env.python.pip.pip_install import Pip
 
-from ...api import ToxEnvCreateArgs
-from ..api import Python, PythonInfo
+if TYPE_CHECKING:
+    from virtualenv.create.creator import Creator
+    from virtualenv.run.session import Session
+
+    from tox.execute.api import Execute
+    from tox.tox_env.api import ToxEnvCreateArgs
 
 
 class VirtualEnv(Python):
-    """A python executor that uses the virtualenv project with pip"""
+    """A python executor that uses the virtualenv project with pip."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._virtualenv_session: Session | None = None
@@ -36,7 +36,7 @@ class VirtualEnv(Python):
         self.conf.add_config(
             keys=["system_site_packages", "sitepackages"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(  # noqa: U100
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
                 self.environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False"),
             ),
             desc="create virtual environments that also have access to globally installed packages.",
@@ -44,7 +44,7 @@ class VirtualEnv(Python):
         self.conf.add_config(
             keys=["always_copy", "alwayscopy"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(  # noqa: U100
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
                 self.environment_variables.get(
                     "VIRTUALENV_COPIES",
                     self.environment_variables.get("VIRTUALENV_ALWAYS_COPY", "False"),
@@ -55,7 +55,7 @@ class VirtualEnv(Python):
         self.conf.add_config(
             keys=["download"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(  # noqa: U100
+            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
                 self.environment_variables.get("VIRTUALENV_DOWNLOAD", "False"),
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
@@ -128,7 +128,7 @@ class VirtualEnv(Python):
     def create_python_env(self) -> None:
         self.session.run()
 
-    def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # noqa: U100
+    def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG002
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter
@@ -138,13 +138,13 @@ class VirtualEnv(Python):
             implementation=interpreter.implementation,
             version_info=interpreter.version_info,
             version=interpreter.version,
-            is_64=(interpreter.architecture == 64),
+            is_64=(interpreter.architecture == 64),  # noqa: PLR2004
             platform=interpreter.platform,
             extra={"executable": Path(interpreter.system_executable).resolve()},
         )
 
     def prepend_env_var_path(self) -> list[Path]:
-        """Paths to add to the executable"""
+        """Paths to add to the executable."""
         # we use the original executable as shims may be somewhere else
         return list(dict.fromkeys((self.creator.bin_dir, self.creator.script_dir)))
 

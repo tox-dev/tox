@@ -6,13 +6,17 @@ import signal
 import sys
 from io import TextIOWrapper
 from pathlib import Path
-from types import FrameType
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-from tox.execute import Outcome
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.report import NamedBytesIO
+
+if TYPE_CHECKING:
+    from types import FrameType
+
+    from tox.execute import Outcome
 
 logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
 bad_process = Path(__file__).parent / "bad_process.py"
@@ -30,21 +34,21 @@ out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
 
 def show_outcome(outcome: Outcome | None) -> None:
     if outcome is not None:  # pragma: no branch
-        print(outcome.exit_code)
-        print(repr(outcome.out))
-        print(repr(outcome.err))
-        print(outcome.elapsed, end="")
-        print("done show outcome", file=sys.stderr)
+        print(outcome.exit_code)  # noqa: T201
+        print(repr(outcome.out))  # noqa: T201
+        print(repr(outcome.err))  # noqa: T201
+        print(outcome.elapsed, end="")  # noqa: T201
+        print("done show outcome", file=sys.stderr)  # noqa: T201
 
 
 def handler(s: int, f: FrameType | None) -> None:
-    logging.info(f"signal {s} at {f}")
-    global interrupt_done
+    logging.info("signal %s at %s", s, f)
+    global interrupt_done  # noqa: PLW0603
     if interrupt_done is False:  # pragma: no branch
         interrupt_done = True
-        logging.info(f"interrupt via {status}")
+        logging.info("interrupt via %s", status)
         status.interrupt()
-        logging.info(f"interrupt finished via {status}")
+        logging.info("interrupt finished via %s", status)
 
 
 interrupt_done = False
@@ -59,7 +63,7 @@ try:
         logging.info("wait over on %r", status)
     show_outcome(status.outcome)
 except Exception as exception:  # pragma: no cover
-    logging.exception(exception)  # pragma: no cover
+    logging.exception(exception)  # noqa: TRY401 # pragma: no cover
 finally:
     logging.info("done")
     logging.shutdown()

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.pytest import ToxProjectCreator
+if TYPE_CHECKING:
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("trail", [[], ["--"]], ids=["no_posargs", "empty_posargs"])

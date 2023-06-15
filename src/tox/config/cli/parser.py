@@ -1,6 +1,4 @@
-"""
-Customize argparse logic for tox (also contains the base options).
-"""
+"""Customize argparse logic for tox (also contains the base options)."""
 from __future__ import annotations
 
 import argparse
@@ -27,9 +25,7 @@ if TYPE_CHECKING:
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
-    """
-    Argument parser which updates its defaults by checking the configuration files and environmental variables.
-    """
+    """Argument parser which updates its defaults by checking the configuration files and environmental variables."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # sub-parsers also construct an instance of the parser, but they don't get their own file config, but inherit
@@ -51,32 +47,33 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
             if outcome is not None:
                 action.default, default_value = outcome
                 action.default_source = default_value  # type: ignore[attr-defined]
-        if isinstance(action, argparse._SubParsersAction):
+        if isinstance(action, argparse._SubParsersAction):  # noqa: SLF001
             for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
-                    raise RuntimeError("detected sub-parser added without using our own add command")
+                    msg = "detected sub-parser added without using our own add command"
+                    raise RuntimeError(msg)  # noqa: TRY004
                 values.fix_defaults()
 
     @staticmethod
     def get_type(action: Action) -> type[Any]:
         of_type: type[Any] | None = getattr(action, "of_type", None)
         if of_type is None:
-            if isinstance(action, argparse._AppendAction):
+            if isinstance(action, argparse._AppendAction):  # noqa: SLF001
                 of_type = List[action.type]  # type: ignore[name-defined]
-            elif isinstance(action, argparse._StoreAction) and action.choices:
+            elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa: SLF001
                 loc = locals()
                 loc["Literal"] = Literal
                 as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
-                of_type = eval(as_literal, globals(), loc)
+                of_type = eval(as_literal, globals(), loc)  # noqa: PGH001
             elif action.default is not None:
                 of_type = type(action.default)
-            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:
+            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa: SLF001
                 of_type = type(action.const)
             else:
                 raise TypeError(action)
         return of_type
 
-    def parse_args(  # type: ignore # avoid defining all overloads
+    def parse_args(  # type: ignore[override] # avoid defining all overloads
         self,
         args: Sequence[str] | None = None,
         namespace: Namespace | None = None,
@@ -91,9 +88,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    """
-    A help formatter that provides the default value and the source it comes from.
-    """
+    """A help formatter that provides the default value and the source it comes from."""
 
     def __init__(self, prog: str) -> None:
         super().__init__(prog, max_help_position=30, width=240)
@@ -119,7 +114,7 @@ DEFAULT_VERBOSITY = 2
 
 
 class Parsed(Namespace):
-    """CLI options"""
+    """CLI options."""
 
     @property
     def verbosity(self) -> int:
@@ -165,7 +160,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         handler: Callable[[State], int],
     ) -> ArgumentParser:
         if self._cmd is None:
-            raise RuntimeError("no sub-command group allowed")
+            msg = "no sub-command group allowed"
+            raise RuntimeError(msg)
         sub_parser: ToxParser = self._cmd.add_parser(
             cmd,
             help=help_msg,
@@ -190,26 +186,25 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def add_argument_group(self, *args: Any, **kwargs: Any) -> Any:
         result = super().add_argument_group(*args, **kwargs)
-        if self.of_cmd is None:
-            if args not in (("positional arguments",), ("optional arguments",)):
+        if self.of_cmd is None and args not in (("positional arguments",), ("optional arguments",)):
 
-                def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
-                    def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
-                        res_args: Action = prev_add_arg(*a_args, **a_kwargs)  # type: ignore[has-type]
-                        arguments.append((a_args, of_type, a_kwargs))
-                        return res_args
+            def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
+                def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
+                    res_args: Action = prev_add_arg(*a_args, **a_kwargs)  # type: ignore[has-type]
+                    arguments.append((a_args, of_type, a_kwargs))
+                    return res_args
 
-                    arguments: list[ArgumentArgs] = []
-                    excl.append((e_kwargs, arguments))
-                    res_excl = prev_excl(**kwargs)
-                    prev_add_arg = res_excl.add_argument
-                    res_excl.add_argument = add_argument  # type: ignore[method-assign]
-                    return res_excl
+                arguments: list[ArgumentArgs] = []
+                excl.append((e_kwargs, arguments))
+                res_excl = prev_excl(**kwargs)
+                prev_add_arg = res_excl.add_argument
+                res_excl.add_argument = add_argument  # type: ignore[method-assign]
+                return res_excl
 
-                prev_excl = result.add_mutually_exclusive_group
-                result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[method-assign]
-                excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
-                self._groups.append((args, kwargs, excl))
+            prev_excl = result.add_mutually_exclusive_group
+            result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[method-assign]
+            excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
+            self._groups.append((args, kwargs, excl))
         return result
 
     def add_argument(self, *args: str, of_type: type[Any] | None = None, **kwargs: Any) -> Action:
@@ -270,7 +265,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 def add_verbosity_flags(parser: ArgumentParser) -> None:
     from tox.report import LEVELS
 
-    level_map = "|".join(f"{c}={logging.getLevelName(l)}" for c, l in sorted(LEVELS.items()))
+    level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
     verbosity_group = parser.add_argument_group("verbosity")
     verbosity_group.description = (
         f"every -v increases, every -q decreases verbosity level, "
@@ -290,7 +285,7 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
 
 def add_color_flags(parser: ArgumentParser) -> None:
     converter = StrConvert()
-    if os.environ.get("NO_COLOR", "") != "":
+    if os.environ.get("NO_COLOR", ""):
         color = "no"
     elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
         color = "yes"

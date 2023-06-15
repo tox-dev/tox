@@ -45,14 +45,14 @@ def test_memory_loader_override() -> None:
         ({1}, Set[str], {"1"}),
         ({"1"}, List[int], [1]),
         ({"1": "2"}, Dict[int, int], {1: 2}),
-        (os.getcwd(), Path, Path.cwd()),
+        (os.getcwd(), Path, Path.cwd()),  # noqa: PTH109
         ("pip list", Command, Command(["pip", "list"])),
         ("a\nb", EnvList, EnvList(["a", "b"])),
         ("1", Optional[int], 1),
     ],
 )
 def test_memory_loader(value: Any, of_type: type[Any], outcome: Any) -> None:
-    loader = MemoryLoader(**{"a": value}, kwargs={})
+    loader = MemoryLoader(a=value, kwargs={})
     args = ConfigLoadArgs([], "name", None)
     loaded = loader.load("a", of_type=of_type, conf=None, factory=None, args=args)
     assert loaded == outcome
@@ -72,7 +72,7 @@ def test_memory_loader(value: Any, of_type: type[Any], outcome: Any) -> None:
     ],
 )
 def test_memory_loader_fails_invalid(value: Any, of_type: type[Any], exception: Exception, msg: str) -> None:
-    loader = MemoryLoader(**{"a": value}, kwargs={})
+    loader = MemoryLoader(a=value, kwargs={})
     args = ConfigLoadArgs([], "name", None)
     with pytest.raises(exception, match=msg):  # type: ignore[call-overload]
         loader.load("a", of_type=of_type, conf=None, factory=None, args=args)

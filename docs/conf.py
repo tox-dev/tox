@@ -6,22 +6,24 @@ import sys
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from subprocess import check_output
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from docutils.nodes import Element, reference
-from sphinx.addnodes import pending_xref
-from sphinx.application import Sphinx
-from sphinx.builders import Builder
 from sphinx.domains.python import PythonDomain
-from sphinx.environment import BuildEnvironment
-from sphinx.ext.autodoc import Options
 from sphinx.ext.extlinks import ExternalLinksChecker
 
 from tox import __version__
 
+if TYPE_CHECKING:
+    from docutils.nodes import Element, reference
+    from sphinx.addnodes import pending_xref
+    from sphinx.application import Sphinx
+    from sphinx.builders import Builder
+    from sphinx.environment import BuildEnvironment
+    from sphinx.ext.autodoc import Options
+
 company, name = "tox-dev", "tox"
 release, version = __version__, ".".join(__version__.split(".")[:2])
-copyright = f"{company}"
+copyright = f"{company}"  # noqa: A001
 master_doc, source_suffix = "index", ".rst"
 
 html_theme = "furo"
@@ -76,14 +78,14 @@ linkcheck_ignore = [
 extlinks_detect_hardcoded_links = True
 
 
-def process_signature(
-    app: Sphinx,  # noqa: U100
+def process_signature(  # noqa: PLR0913
+    app: Sphinx,  # noqa: ARG001
     objtype: str,
-    name: str,  # noqa: U100
-    obj: Any,  # noqa: U100
+    name: str,  # noqa: ARG001
+    obj: Any,  # noqa: ARG001
     options: Options,
-    args: str,  # noqa: U100
-    retann: str | None,  # noqa: U100
+    args: str,  # noqa: ARG001
+    retann: str | None,  # noqa: ARG001
 ) -> None | tuple[None, None]:
     # skip-member is not checked for class level docs, so disable via signature processing
     return (None, None) if objtype == "class" and "__init__" in options.get("exclude-members", set()) else None
@@ -95,16 +97,16 @@ def setup(app: Sphinx) -> None:
     root, exe = here.parent, Path(sys.executable)
     towncrier = exe.with_name(f"towncrier{exe.suffix}")
     cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
-    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)
+    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)  # noqa: S603
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
 
     class PatchedPythonDomain(PythonDomain):
-        def resolve_xref(
+        def resolve_xref(  # noqa: PLR0913
             self,
             env: BuildEnvironment,
             fromdocname: str,
             builder: Builder,
-            type: str,
+            type: str,  # noqa: A002
             target: str,
             node: pending_xref,
             contnode: Element,
@@ -120,7 +122,6 @@ def setup(app: Sphinx) -> None:
             }
             if target in mapping:
                 target = node["reftarget"] = mapping[target]
-                # node.children[0].children[0] = Text(target, target)
             return super().resolve_xref(env, fromdocname, builder, type, target, node, contnode)
 
     app.connect("autodoc-process-signature", process_signature, priority=400)
@@ -128,9 +129,9 @@ def setup(app: Sphinx) -> None:
     tox_cfg = SourceFileLoader("tox_conf", str(here / "tox_conf.py")).load_module().ToxConfig
     app.add_directive(tox_cfg.name, tox_cfg)
 
-    def check_uri(self, refnode: reference) -> None:
+    def check_uri(self: ExternalLinksChecker, refnode: reference) -> None:  #
         if refnode.document.attributes["source"].endswith("index.rst"):
-            return  # do not use for the index file
+            return None  # do not use for the index file
         return prev_check(self, refnode)
 
     prev_check, ExternalLinksChecker.check_uri = ExternalLinksChecker.check_uri, check_uri

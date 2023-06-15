@@ -3,24 +3,27 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Callable, Iterator, Sequence
+from typing import TYPE_CHECKING, Callable, Iterator, Sequence
 from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch  # cannot import from tox.pytest yet
-from _pytest.tmpdir import TempPathFactory
 from distlib.scripts import ScriptMaker
 from filelock import FileLock
-from pytest_mock import MockerFixture
 from virtualenv import cli_run
 
 from tox.config.cli.parser import Parsed
-from tox.config.loader.api import Override
 from tox.config.main import Config
 from tox.config.source import discover_source
 from tox.tox_env.python.api import PythonInfo, VersionInfo
 from tox.tox_env.python.virtual_env.api import VirtualEnv
+
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
+    from _pytest.tmpdir import TempPathFactory
+    from pytest_mock import MockerFixture
+
+    from tox.config.loader.api import Override
 
 pytest_plugins = "tox.pytest"
 HERE = Path(__file__).absolute().parent
@@ -47,7 +50,7 @@ if sys.implementation.name == "pypy":
 
 
 class ToxIniCreator(Protocol):
-    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config:  # noqa: U100
+    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config:
         ...
 
 
@@ -62,12 +65,11 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
             context.chdir(tmp_path)
         source = discover_source(config_file, None)
 
-        config = Config.make(
+        return Config.make(
             Parsed(work_dir=dest, override=override or [], config_file=config_file, root_dir=None),
             pos_args=[],
             source=source,
         )
-        return config
 
     return func
 
@@ -92,7 +94,7 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
         prev_py = f"py{prev_ver}"
         impl = sys.implementation.name.lower()
 
-        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:
+        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG001
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
             raw = list(sys.version_info)
@@ -146,8 +148,7 @@ def build_pkg(dist_dir: Path, of: Path, distributions: list[str], isolation: boo
     from build.__main__ import build_package
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
-    package = next(dist_dir.iterdir())
-    return package
+    return next(dist_dir.iterdir())
 
 
 @pytest.fixture(scope="session")

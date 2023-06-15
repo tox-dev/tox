@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
 def test_replace_os_pathsep(replace_one: ReplaceOne) -> None:

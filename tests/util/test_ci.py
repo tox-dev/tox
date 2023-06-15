@@ -22,7 +22,7 @@ from tox.util.ci import _ENV_VARS, is_ci
         "TEAMCITY_VERSION": None,  # TeamCity
         "TRAVIS": "true",  # Travis CI
     }.items(),
-    ids=lambda v: v[0],  # type: ignore
+    ids=lambda v: v[0],  # type: ignore[no-any-return]
 )
 def test_is_ci(env_var: tuple[str, str | None], monkeypatch: pytest.MonkeyPatch) -> None:
     for var in _ENV_VARS:
@@ -41,7 +41,7 @@ def test_is_ci(env_var: tuple[str, str | None], monkeypatch: pytest.MonkeyPatch)
         "GITHUB_ACTIONS": "",  # GitHub Actions
         "TRAVIS": "",  # Travis CI
     }.items(),
-    ids=lambda v: v[0],  # type: ignore
+    ids=lambda v: v[0],  # type: ignore[no-any-return]
 )
 def test_is_ci_bad_set(env_var: tuple[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
     for var in _ENV_VARS:

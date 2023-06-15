@@ -1,22 +1,24 @@
-"""Execute that runs on local file system via subprocess-es"""
+"""Execute that runs on local file system via subprocess-es."""
 from __future__ import annotations
 
 import fnmatch
-import io
 import logging
 import os
 import shutil
 import sys
 from subprocess import DEVNULL, PIPE, TimeoutExpired
-from types import TracebackType
 from typing import TYPE_CHECKING, Any, Generator, Sequence
 
+from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
+from tox.execute.request import ExecuteRequest, StdinSource
+from tox.execute.util import shebang
 from tox.tox_env.errors import Fail
 
-from ..api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
-from ..request import ExecuteRequest, StdinSource
-from ..stream import SyncWrite
-from ..util import shebang
+if TYPE_CHECKING:
+    import io
+    from types import TracebackType
+
+    from tox.execute.stream import SyncWrite
 
 # mypy: warn-unused-ignores=false
 
@@ -54,7 +56,7 @@ class LocalSubProcessExecutor(Execute):
 
 
 class LocalSubprocessExecuteStatus(ExecuteStatus):
-    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: Popen[bytes]):
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: Popen[bytes]) -> None:
         self._process: Popen[bytes] = process
         super().__init__(options, out, err)
         self._interrupted = False
@@ -110,7 +112,8 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                 ov.WriteFile(stdin.handle, bytes_content)  # type: ignore[attr-defined]
                 result = ov.getresult(10)  # wait up to 10ms to perform the operation
                 if result != len(bytes_content):
-                    raise RuntimeError(f"failed to write to {stdin!r}")
+                    msg = f"failed to write to {stdin!r}"
+                    raise RuntimeError(msg)  # noqa: TRY301
             else:
                 stdin.write(bytes_content)
                 stdin.flush()
@@ -136,24 +139,24 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
     def exit_code(self) -> int | None:
         return self._exit_code
 
-    def wait(self, timeout: float | None = None) -> int | None:  # noqa: U100
+    def wait(self, timeout: float | None = None) -> int | None:  # noqa: ARG002
         return self._exit_code  # pragma: no cover
 
-    def write_stdin(self, content: str) -> None:  # noqa: U100
-        """cannot write"""
+    def write_stdin(self, content: str) -> None:
+        """Cannot write."""
 
     def interrupt(self) -> None:
         return None  # pragma: no cover # nothing running so nothing to interrupt
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
-        on_exit_drain: bool = True,
+        on_exit_drain: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         super().__init__(request, options, out, err)
         self.process: Popen[bytes] | None = None
@@ -178,7 +181,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                             break
                     else:
                         msg = f"{base} (resolves to {executable})" if base == executable else base
-                        raise Fail(f"{msg} is not allowed, use allowlist_externals to allow it")
+                        msg = f"{msg} is not allowed, use allowlist_externals to allow it"
+                        raise Fail(msg)
                 cmd = [executable]
                 if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
                     shebang_line = shebang(executable)
@@ -199,7 +203,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         try:
             self.process = process = Popen(
-                self.cmd,
+                self.cmd,  # noqa: S603
                 stdout=next(stdout),
                 stderr=next(stderr),
                 stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
@@ -217,8 +221,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._read_stdout.__enter__()
 
         if sys.platform == "win32":  # explicit check for mypy:  # pragma: win32 cover
-            process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]
-            process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]
+            process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
+            process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
         return status
 
     def __exit__(

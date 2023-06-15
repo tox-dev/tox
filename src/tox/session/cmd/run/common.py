@@ -1,4 +1,4 @@
-"""Common functionality shared across multiple type of runs"""
+"""Common functionality shared across multiple type of runs."""
 from __future__ import annotations
 
 import logging
@@ -11,7 +11,7 @@ from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_co
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
-from typing import Any, Iterator, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Iterator, Optional, Sequence, cast
 
 from colorama import Fore
 
@@ -19,21 +19,23 @@ from tox.config.types import EnvList
 from tox.execute import Outcome
 from tox.journal import write_journal
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
-from tox.session.state import State
-from tox.tox_env.api import ToxEnv
 from tox.tox_env.runner import RunToxEnv
 from tox.util.ci import is_ci
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 
+if TYPE_CHECKING:
+    from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
+
 
 class SkipMissingInterpreterAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: U100
+        parser: ArgumentParser,  # noqa: ARG002
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: U100
+        option_string: str | None = None,  # noqa: ARG002
     ) -> None:
         value = "true" if values is None else values
         if value not in ("config", "true", "false"):
@@ -44,10 +46,10 @@ class SkipMissingInterpreterAction(Action):
 class InstallPackageAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: U100
+        parser: ArgumentParser,  # noqa: ARG002
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: U100
+        option_string: str | None = None,  # noqa: ARG002
     ) -> None:
         if not values:
             raise ArgumentError(self, "cannot be empty")
@@ -59,7 +61,7 @@ class InstallPackageAction(Action):
         setattr(namespace, self.dest, path)
 
 
-def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
+def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C901
     # mode can be one of: run, run-parallel, legacy, devenv, config
     if mode not in ("config", "depends"):
         parser.add_argument(
@@ -116,10 +118,10 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         class SeedAction(Action):
             def __call__(
                 self,
-                parser: ArgumentParser,  # noqa: U100
+                parser: ArgumentParser,  # noqa: ARG002
                 namespace: Namespace,
                 values: str | Sequence[Any] | None,
-                option_string: str | None = None,  # noqa: U100
+                option_string: str | None = None,  # noqa: ARG002
             ) -> None:
                 if values == "notset":
                     result = None
@@ -127,9 +129,10 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
                     try:
                         result = int(cast(str, values))
                         if result <= 0:
-                            raise ValueError("must be greater than zero")
+                            msg = "must be greater than zero"
+                            raise ValueError(msg)  # noqa: TRY301
                     except ValueError as exc:
-                        raise ArgumentError(self, str(exc))
+                        raise ArgumentError(self, str(exc)) from exc
                 setattr(namespace, self.dest, result)
 
         parser.add_argument(
@@ -139,7 +142,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
             action=SeedAction,
             of_type=Optional[int],
-            default=random.randint(1, 1024 if sys.platform == "win32" else 4294967295),
+            default=random.randint(1, 1024 if sys.platform == "win32" else 4294967295),  # noqa: S311
             dest="hash_seed",
         )
     parser.add_argument(
@@ -179,16 +182,16 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         )
 
 
-def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosity: int) -> int:
+def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosity: int) -> int:  # noqa: FBT001
     def _print(color_: int, message: str) -> None:
         if verbosity:
-            print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")
+            print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")  # noqa: T201
 
     successful, skipped = [], []
     for run in runs:
         successful.append(run.code == Outcome.OK or run.ignore_outcome)
         skipped.append(run.skipped)
-        duration_individual = [o.elapsed for o in run.outcomes] if verbosity >= 2 else []
+        duration_individual = [o.elapsed for o in run.outcomes] if verbosity >= 2 else []  # noqa: PLR2004
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if duration_individual else ""
         setup = run.duration - sum(duration_individual)
         msg, color = _get_outcome_message(run)
@@ -211,18 +214,17 @@ def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, int]:
         msg, color = "SKIP", Fore.YELLOW
     elif run.code == Outcome.OK:
         msg, color = "OK", Fore.GREEN
+    elif run.ignore_outcome:
+        msg, color = f"IGNORED FAIL code {run.code}", Fore.YELLOW
     else:
-        if run.ignore_outcome:
-            msg, color = f"IGNORED FAIL code {run.code}", Fore.YELLOW
-        else:
-            msg, color = f"FAIL code {run.code}", Fore.RED
+        msg, color = f"FAIL code {run.code}", Fore.RED
     return msg, color
 
 
 logger = logging.getLogger(__name__)
 
 
-def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool) -> int:
+def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool) -> int:  # noqa: FBT001
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
     future_to_env: dict[Future[ToxEnvRunResult], ToxEnv] = {}
@@ -244,7 +246,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         except KeyboardInterrupt:
             previous, has_previous = signal(SIGINT, Handlers.SIG_IGN), True
             spinner.print_report = False  # no need to print reports at this point, final report coming up
-            logger.error(f"[{os.getpid()}] KeyboardInterrupt - teardown started")
+            logger.error("[%s] KeyboardInterrupt - teardown started", os.getpid())  # noqa: TRY400
             interrupt.set()
             # cancel in reverse order to not allow submitting new jobs as we cancel running ones
             for future, tox_env in reversed(list(future_to_env.items())):
@@ -257,7 +259,8 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
             lock = getattr(thread, "_tstate_lock", None)
             if lock is not None and lock.locked():  # pragma: no branch
                 lock.release()  # pragma: no cover
-                thread._stop()  # type: ignore  # pragma: no cover # calling private method to fix thread state
+                # calling private method to fix thread state
+                thread._stop()  # type: ignore[attr-defined] # pragma: no cover # noqa: SLF001
             thread.join()
     finally:
         ordered_results: list[ToxEnvRunResult] = []
@@ -265,7 +268,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         for env in to_run_list:
             ordered_results.append(name_to_run[env])
         # write the journal
-        write_journal(getattr(state.conf.options, "result_json", None), state._journal)
+        write_journal(getattr(state.conf.options, "result_json", None), state._journal)  # noqa: SLF001
         # report the outcome
         exit_code = report(
             state.conf.options.start,
@@ -279,23 +282,20 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
 
 
 class ToxSpinner(Spinner):
-    def __init__(self, enabled: bool, state: State, total: int) -> None:
+    def __init__(self, enabled: bool, state: State, total: int) -> None:  # noqa: FBT001
         super().__init__(
             enabled=enabled,
             colored=state.conf.options.is_colored,
-            stream=state._options.log_handler.stdout,
+            stream=state._options.log_handler.stdout,  # noqa: SLF001
             total=total,
         )
 
-    def update_spinner(self, result: ToxEnvRunResult, success: bool) -> None:
-        if success:
-            done = self.skip if result.skipped else self.succeed
-        else:
-            done = self.fail
+    def update_spinner(self, result: ToxEnvRunResult, success: bool) -> None:  # noqa: FBT001
+        done = (self.skip if result.skipped else self.succeed) if success else self.fail
         done(result.name)
 
 
-def _queue_and_wait(
+def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915
     state: State,
     to_run_list: list[str],
     results: list[ToxEnvRunResult],
@@ -304,10 +304,10 @@ def _queue_and_wait(
     done: Event,
     max_workers: int | None,
     spinner: ToxSpinner,
-    live: bool,
+    live: bool,  # noqa: FBT001
 ) -> None:
     try:
-        options = state._options
+        options = state._options  # noqa: SLF001
         with spinner:
             max_workers = len(to_run_list) if max_workers is None else max_workers
             completed: set[str] = set()
@@ -380,7 +380,12 @@ def _queue_and_wait(
             done.set()
 
 
-def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: State, live: bool) -> None:
+def _handle_one_run_done(
+    result: ToxEnvRunResult,
+    spinner: ToxSpinner,
+    state: State,
+    live: bool,  # noqa: FBT001
+) -> None:
     success = result.code == Outcome.OK
     spinner.update_spinner(result, success)
     tox_env = cast(RunToxEnv, state.envs[result.name])
@@ -399,13 +404,13 @@ def _handle_one_run_done(result: ToxEnvRunResult, spinner: ToxSpinner, state: St
                 pkg_out_err_list.append(pkg_out_err)
         if not success or tox_env.conf["parallel_show_output"]:
             for pkg_out_err in pkg_out_err_list:
-                state._options.log_handler.write_out_err(pkg_out_err)  # pragma: no cover
+                state._options.log_handler.write_out_err(pkg_out_err)  # pragma: no cover  # noqa: SLF001
             if out_err is not None:  # pragma: no branch # first show package build
-                state._options.log_handler.write_out_err(out_err)
+                state._options.log_handler.write_out_err(out_err)  # noqa: SLF001
 
 
 def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
-    """Generate tox environments ready to run"""
+    """Generate tox environments ready to run."""
     order, todo = run_order(state, to_run)
     while order:
         ready_to_run: list[str] = []

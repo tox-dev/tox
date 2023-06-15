@@ -1,6 +1,4 @@
-"""
-A tox environment that can build packages.
-"""
+"""A tox environment that can build packages."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -11,17 +9,17 @@ from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator, cast
 
 from filelock import FileLock
 
-from tox.config.main import Config
-from tox.config.sets import EnvConfigSet
-
 from .api import ToxEnv, ToxEnvCreateArgs
 
 if TYPE_CHECKING:
+    from tox.config.main import Config
+    from tox.config.sets import EnvConfigSet
+
     from .runner import RunToxEnv
 
 
 class Package:
-    """package"""
+    """package."""
 
 
 class PathPackage(Package):
@@ -91,7 +89,7 @@ class PackageToxEnv(ToxEnv, ABC):
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         raise NotImplementedError
 
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: U100
+    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: ARG002
         yield from ()  # empty generator by default
 
     def mark_active_run_env(self, run_env: RunToxEnv) -> None:

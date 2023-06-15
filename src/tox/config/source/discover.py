@@ -3,13 +3,16 @@ from __future__ import annotations
 import logging
 from itertools import chain
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from tox.report import HandledError
 
-from .api import Source
 from .legacy_toml import LegacyToml
 from .setup_cfg import SetupCfg
 from .tox_ini import ToxIni
+
+if TYPE_CHECKING:
+    from .api import Source
 
 SOURCE_TYPES: tuple[type[Source], ...] = (ToxIni, SetupCfg, LegacyToml)
 
@@ -36,7 +39,8 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
             except ValueError:
                 continue
         if src is None:
-            raise HandledError(f"could not find any config file in {config_file}")
+            msg = f"could not find any config file in {config_file}"
+            raise HandledError(msg)
     else:
         src = _load_exact_source(config_file)
     return src
@@ -62,7 +66,8 @@ def _load_exact_source(config_file: Path) -> Source:
             return src_type(config_file)
         except ValueError:
             pass
-    raise HandledError(f"could not recognize config file {config_file}")
+    msg = f"could not recognize config file {config_file}"
+    raise HandledError(msg)
 
 
 def _create_default_source(root_dir: Path | None) -> Source:
@@ -74,9 +79,8 @@ def _create_default_source(root_dir: Path | None) -> Source:
                 break
     else:  # if not set use where we find pyproject.toml in the tree or cwd
         empty = root_dir
-    logging.warning(f"No {' or '.join(i.FILENAME for i in SOURCE_TYPES)} found, assuming empty tox.ini at {empty}")
-    src = ToxIni(empty / "tox.ini", content="")
-    return src
+    logging.warning("No %s found, assuming empty tox.ini at %s", " or ".join(i.FILENAME for i in SOURCE_TYPES), empty)
+    return ToxIni(empty / "tox.ini", content="")
 
 
 __all__ = ("discover_source",)

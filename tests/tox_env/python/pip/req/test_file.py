@@ -4,14 +4,18 @@ import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO
-from pathlib import Path
-from typing import IO, Any, Iterator
+from typing import IO, TYPE_CHECKING, Any, Iterator
 
 import pytest
-from pytest_mock import MockerFixture
 
-from tox.pytest import CaptureFixture, MonkeyPatch
 from tox.tox_env.python.pip.req.file import ParsedRequirement, RequirementsFile
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import CaptureFixture, MonkeyPatch
 
 _REQ_FILE_TEST_CASES = [
     pytest.param("--pre", {"pre": True}, [], ["--pre"], id="pre"),
@@ -418,7 +422,7 @@ def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
 def test_req_path_with_space_escape(tmp_path: Path) -> None:
     dep_requirements_file = tmp_path / "a b"
     dep_requirements_file.write_text("c")
-    path = f"-r {str(dep_requirements_file)}"
+    path = f"-r {dep_requirements_file!s}"
     path = f'{path[:-len("a b")]}a\\ b'
 
     requirements_file = tmp_path / "req.txt"

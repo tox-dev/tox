@@ -6,30 +6,33 @@ import sys
 import tarfile
 from functools import partial
 from io import TextIOWrapper
-from os import PathLike
 from pathlib import Path
-from typing import Generator, Iterator, List, cast
+from typing import TYPE_CHECKING, Generator, Iterator, List, cast
 from zipfile import ZipFile
 
 from packaging.requirements import Requirement
 
-from tox.config.sets import EnvConfigSet
 from tox.config.types import Command
 from tox.execute import Outcome
 from tox.plugin import impl
 from tox.session.cmd.run.single import run_command_set
-from tox.tox_env.api import ToxEnvCreateArgs
 from tox.tox_env.errors import Fail
-from tox.tox_env.package import Package, PackageToxEnv
 from tox.tox_env.python.package import PythonPackageToxEnv, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
-from tox.tox_env.register import ToxEnvRegister
-from tox.tox_env.runner import RunToxEnv
 from tox.tox_env.util import add_change_dir_conf
 
 from .pyproject import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras
+
+if TYPE_CHECKING:
+    from os import PathLike
+
+    from tox.config.sets import EnvConfigSet
+    from tox.tox_env.api import ToxEnvCreateArgs
+    from tox.tox_env.package import Package, PackageToxEnv
+    from tox.tox_env.register import ToxEnvRegister
+    from tox.tox_env.runner import RunToxEnv
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from importlib.metadata import Distribution
@@ -43,7 +46,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
 
     @staticmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         return "virtualenv-cmd-builder"
 
     def register_config(self) -> None:
@@ -87,13 +90,16 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             ignore_errors: bool = self.conf["ignore_errors"]
             status = run_command_set(self, "commands", chdir, ignore_errors, [])
             if status != Outcome.OK:
-                raise Fail("stopping as failed to build package")
+                msg = "stopping as failed to build package"
+                raise Fail(msg)
             package_glob = self.conf["package_glob"]
             found = glob.glob(package_glob)
             if not found:
-                raise Fail(f"no package found in {package_glob}")
-            elif len(found) != 1:
-                raise Fail(f"found more than one package {', '.join(sorted(found))}")
+                msg = f"no package found in {package_glob}"
+                raise Fail(msg)
+            if len(found) != 1:
+                msg = f"found more than one package {', '.join(sorted(found))}"
+                raise Fail(msg)
             path = Path(found[0])
         return self.extract_install_info(for_env, path)
 
@@ -111,7 +117,8 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
                 tar.extractall(path=str(work_dir))
-            assert self._sdist_meta_tox_env is not None  # the register run env is guaranteed to be called before this
+            # the register run env is guaranteed to be called before this
+            assert self._sdist_meta_tox_env is not None  # noqa: S101
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
                 self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
                 deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
@@ -125,7 +132,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
         self._sdist_meta_tox_env = cast(Pep517VirtualEnvPackager, result)
 
-    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # noqa: U100
+    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # noqa: ARG002
         if self._sdist_meta_tox_env is not None:  # pragma: no branch
             yield self._sdist_meta_tox_env
 
@@ -145,7 +152,8 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
                         self._dist_name = root
                         break
                 else:
-                    raise Fail(f"no .dist-info inside {self._wheel}")
+                    msg = f"no .dist-info inside {self._wheel}"
+                    raise Fail(msg)
         return self._dist_name
 
     def read_text(self, filename: str) -> str | None:

@@ -2,9 +2,12 @@
 Please keep this file Python 2.7 compatible.
 See https://tox.readthedocs.io/en/rewrite/development.html#code-style-guide
 """
+from __future__ import annotations
+
 import os
 import sys
 import tarfile
+from pathlib import Path
 from textwrap import dedent
 from zipfile import ZipFile
 
@@ -12,15 +15,15 @@ name = "demo_pkg_inline"
 pkg_name = name.replace("_", "-")
 
 version = "1.0.0"
-dist_info = "{}-{}.dist-info".format(name, version)
-logic = "{}/__init__.py".format(name)
-plugin = "{}/example_plugin.py".format(name)
-entry_points = "{}/entry_points.txt".format(dist_info)
-metadata = "{}/METADATA".format(dist_info)
-wheel = "{}/WHEEL".format(dist_info)
-record = "{}/RECORD".format(dist_info)
+dist_info = f"{name}-{version}.dist-info"
+logic = f"{name}/__init__.py"
+plugin = f"{name}/example_plugin.py"
+entry_points = f"{dist_info}/entry_points.txt"
+metadata = f"{dist_info}/METADATA"
+wheel = f"{dist_info}/WHEEL"
+record = f"{dist_info}/RECORD"
 content = {
-    logic: "def do():\n    print('greetings from {}')".format(name),
+    logic: f"def do():\n    print('greetings from {name}')",
     plugin: """
         try:
             from tox.plugin import impl
@@ -72,7 +75,7 @@ metadata_files = {
         version,
         sys.version_info[0],
     ),
-    "{}/top_level.txt".format(dist_info): name,
+    f"{dist_info}/top_level.txt": name,
     record: """
         {0}/__init__.py,,
         {1}/METADATA,,
@@ -86,38 +89,42 @@ metadata_files = {
 }
 
 
-def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):  # noqa: U100
-    base_name = "{}-{}-py{}-none-any.whl".format(name, version, sys.version_info[0])
-    path = os.path.join(wheel_directory, base_name)
-    with ZipFile(path, "w") as zip_file_handler:
+def build_wheel(
+    wheel_directory: str,
+    config_settings: dict[str, str] | None = None,  # noqa: ARG001
+    metadata_directory: str | None = None,
+) -> str:
+    base_name = f"{name}-{version}-py{sys.version_info[0]}-none-any.whl"
+    path = Path(wheel_directory) / base_name
+    with ZipFile(str(path), "w") as zip_file_handler:
         for arc_name, data in content.items():  # pragma: no branch
             zip_file_handler.writestr(arc_name, dedent(data).strip())
         if metadata_directory is not None:
             for sub_directory, _, filenames in os.walk(metadata_directory):
                 for filename in filenames:
                     zip_file_handler.write(
-                        os.path.join(metadata_directory, sub_directory, filename),
-                        os.path.join(sub_directory, filename),
+                        str(Path(metadata_directory) / sub_directory / filename),
+                        str(Path(sub_directory) / filename),
                     )
         else:
             for arc_name, data in metadata_files.items():  # pragma: no branch
                 zip_file_handler.writestr(arc_name, dedent(data).strip())
-    print("created wheel {}".format(path))
+    print(f"created wheel {path}")  # noqa: T201
     return base_name
 
 
-def get_requires_for_build_wheel(config_settings=None):  # noqa: U100
+def get_requires_for_build_wheel(config_settings: dict[str, str] | None = None) -> list[str]:  # noqa: ARG001
     return []  # pragma: no cover # only executed in non-host pythons
 
 
-def build_sdist(sdist_directory, config_settings=None):  # noqa: U100
-    result = "{}-{}.tar.gz".format(name, version)  # pragma: win32 cover
-    with tarfile.open(os.path.join(sdist_directory, result), "w:gz") as tar:  # pragma: win32 cover
-        root = os.path.dirname(os.path.abspath(__file__))  # pragma: win32 cover
-        tar.add(os.path.join(root, "build.py"), "build.py")  # pragma: win32 cover
-        tar.add(os.path.join(root, "pyproject.toml"), "pyproject.toml")  # pragma: win32 cover
+def build_sdist(sdist_directory: str, config_settings: dict[str, str] | None = None) -> str:  # noqa: ARG001
+    result = f"{name}-{version}.tar.gz"  # pragma: win32 cover
+    with tarfile.open(str(Path(sdist_directory) / result), "w:gz") as tar:  # pragma: win32 cover
+        root = Path(__file__).parent  # pragma: win32 cover
+        tar.add(str(root / "build.py"), "build.py")  # pragma: win32 cover
+        tar.add(str(root / "pyproject.toml"), "pyproject.toml")  # pragma: win32 cover
     return result  # pragma: win32 cover
 
 
-def get_requires_for_build_sdist(config_settings=None):  # noqa: U100
+def get_requires_for_build_sdist(config_settings: dict[str, str] | None = None) -> list[str]:  # noqa: ARG001
     return []  # pragma: no cover # only executed in non-host pythons

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
-from pytest_mock import MockFixture
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
+if TYPE_CHECKING:
+    from pytest_mock import MockFixture
+
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
 @pytest.mark.parametrize("is_atty", [True, False])

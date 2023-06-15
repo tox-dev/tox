@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 from zipfile import ZipFile
 
 import pytest
 
-from tox.pytest import ToxProjectCreator
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.fixture(scope="session")
@@ -89,7 +91,7 @@ def test_build_wheel_external(tox_project: ToxProjectCreator, demo_pkg_inline: P
         pyproject-build -w . -o {envtmpdir}{/}dist
     """
     project = tox_project({"tox.ini": ini})
-    result = project.run("r", "--root", str(demo_pkg_inline))
+    result = project.run("r", "--root", str(demo_pkg_inline), "--workdir", str(project.path))
 
     result.assert_success()
     assert "greetings from demo_pkg_inline" in result.out

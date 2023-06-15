@@ -1,6 +1,4 @@
-"""
-Defines the abstract base traits of a tox environment.
-"""
+"""Defines the abstract base traits of a tox environment."""
 from __future__ import annotations
 
 import fnmatch
@@ -15,26 +13,26 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Sequence, Set, cast
 
-from tox.config.main import Config
-from tox.config.set_env import SetEnv
-from tox.config.sets import CoreConfigSet, EnvConfigSet
-from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
 from tox.execute.request import ExecuteRequest
-from tox.journal import EnvJournal
-from tox.report import OutErr, ToxHandler
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
-from tox.tox_env.installer import Installer
 from tox.util.path import ensure_empty_dir
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
+    from tox.config.main import Config
+    from tox.config.set_env import SetEnv
+    from tox.config.sets import CoreConfigSet, EnvConfigSet
+    from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
+    from tox.journal import EnvJournal
+    from tox.report import OutErr, ToxHandler
+    from tox.tox_env.installer import Installer
 
 LOGGER = logging.getLogger(__name__)
 
 
 class ToxEnvCreateArgs(NamedTuple):
-    """Arguments to pass on when creating a tox environment"""
+    """Arguments to pass on when creating a tox environment."""
 
     conf: EnvConfigSet
     core: CoreConfigSet
@@ -47,7 +45,8 @@ class ToxEnv(ABC):
     """A tox environment."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        """Create a new tox environment.
+        """
+        Create a new tox environment.
 
         :param create_args: tox env create args
         """
@@ -76,7 +75,7 @@ class ToxEnv(ABC):
 
     @staticmethod
     @abstractmethod
-    def id() -> str:
+    def id() -> str:  # noqa: A003
         raise NotImplementedError
 
     @property
@@ -113,19 +112,19 @@ class ToxEnv(ABC):
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,  # noqa: U100
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,  # noqa: ARG005
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",  # noqa: U100
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",  # noqa: ARG005
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",  # noqa: U100
+            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",  # noqa: ARG005
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)
@@ -144,10 +143,11 @@ class ToxEnv(ABC):
             invalid = [v for v in result if any(c in invalid_chars for c in v)]
             if invalid:
                 invalid_repr = ", ".join(repr(i) for i in invalid)
-                raise Fail(
-                    f"pass_env values cannot contain whitespace, use comma to have multiple values in a single line, "
-                    f"invalid values found {invalid_repr}",
+                msg = (
+                    f"pass_env values cannot contain whitespace, use comma to have multiple values in a single line,"
+                    f" invalid values found {invalid_repr}"
                 )
+                raise Fail(msg)
             return result
 
         self.conf.add_config(
@@ -175,9 +175,9 @@ class ToxEnv(ABC):
             default=[],
             desc="external command glob to allow calling",
         )
-        assert self.installer is not None  # trigger installer creation to allow configuration registration
+        assert self.installer is not None  # noqa: S101 # trigger installer creation to allow config registration
 
-    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: U100
+    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: ARG002
         return cast(bool, self.options.recreate)
 
     @property
@@ -237,9 +237,7 @@ class ToxEnv(ABC):
         return env
 
     def setup(self) -> None:
-        """
-        Setup the tox environment.
-        """
+        """Setup the tox environment."""
         if self._run_state["setup"] is False:  # pragma: no branch
             self._platform_check()
             recreate = cast(bool, self.conf["recreate"])
@@ -250,7 +248,7 @@ class ToxEnv(ABC):
                 self._setup_with_env()
             except Recreate as exception:  # once we might try over
                 if not recreate:  # pragma: no cover
-                    logging.warning(f"recreate env because {exception.args[0]}")
+                    logging.warning("recreate env because %s", exception.args[0])
                     self._clean(transitive=False)
                     self._setup_env()
                     self._setup_with_env()
@@ -273,12 +271,13 @@ class ToxEnv(ABC):
         pass
 
     def _platform_check(self) -> None:
-        """skip env when platform does not match"""
+        """Skip env when platform does not match."""
         platform_str: str = self.conf["platform"]
         if platform_str:
             match = re.fullmatch(platform_str, self.runs_on_platform)
             if match is None:
-                raise Skip(f"platform {self.runs_on_platform} does not match {platform_str}")
+                msg = f"platform {self.runs_on_platform} does not match {platform_str}"
+                raise Skip(msg)
 
     @property
     @abstractmethod
@@ -293,7 +292,8 @@ class ToxEnv(ABC):
         conf = {"name": self.conf.name, "type": type(self).__name__}
         with self.cache.compare(conf, ToxEnv.__name__) as (eq, old):
             if eq is False and old is not None:  # pragma: no branch  # recreate if already created and not equals
-                raise Recreate(f"env type changed from {old} to {conf}")
+                msg = f"env type changed from {old} to {conf}"
+                raise Recreate(msg)
         self._handle_env_tmp_dir()
         self._handle_core_tmp_dir()
 
@@ -301,10 +301,10 @@ class ToxEnv(ABC):
         pass
 
     def _done_with_setup(self) -> None:  # noqa: B027 # empty abstract base class
-        """called when setup is done"""
+        """Called when setup is done."""
 
     def _handle_env_tmp_dir(self) -> None:
-        """Ensure exists and empty"""
+        """Ensure exists and empty."""
         env_tmp_dir = self.env_tmp_dir
         if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
@@ -314,7 +314,7 @@ class ToxEnv(ABC):
     def _handle_core_tmp_dir(self) -> None:
         self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
 
-    def _clean(self, transitive: bool = False) -> None:  # noqa: U100
+    def _clean(self, transitive: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
         if self._run_state["clean"]:  # pragma: no branch
             return  # pragma: no cover
         env_dir = self.env_dir
@@ -375,10 +375,9 @@ class ToxEnv(ABC):
     def _make_path(self) -> str:
         values = dict.fromkeys(str(i) for i in self._paths)
         values.update(dict.fromkeys(os.environ.get("PATH", "").split(os.pathsep)))
-        result = os.pathsep.join(values)
-        return result
+        return os.pathsep.join(values)
 
-    def execute(
+    def execute(  # noqa: PLR0913
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
@@ -402,7 +401,7 @@ class ToxEnv(ABC):
             status.interrupt()
 
     @contextmanager
-    def execute_async(
+    def execute_async(  # noqa: PLR0913
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
@@ -416,9 +415,9 @@ class ToxEnv(ABC):
         if cwd is None:
             cwd = self.core["tox_root"]
         if show is None:
-            show = self.options.verbosity > 3
+            show = self.options.verbosity > 3  # noqa: PLR2004
         request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals)
-        if _CWD == request.cwd:
+        if request.cwd == _CWD:
             repr_cwd = ""
         else:
             try:
@@ -436,9 +435,9 @@ class ToxEnv(ABC):
                 yield execute_status
             finally:
                 self._execute_statuses.pop(execute_id)
-        if show and self._hidden_outcomes is not None:
-            if execute_status.outcome is not None:  # pragma: no cover # if it gets cancelled before even starting
-                self._hidden_outcomes.append(execute_status.outcome)
+        if show and self._hidden_outcomes is not None and execute_status.outcome is not None:
+            # if it gets cancelled before even starting
+            self._hidden_outcomes.append(execute_status.outcome)
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)
         self._log_execute(request, execute_status)
@@ -478,7 +477,7 @@ class ToxEnv(ABC):
         executor: Execute,
         out_err: OutErr,
         request: ExecuteRequest,
-        show: bool,
+        show: bool,  # noqa: FBT001
     ) -> Iterator[ExecuteStatus]:
         with executor.call(
             request=request,
@@ -489,12 +488,11 @@ class ToxEnv(ABC):
             yield execute_status
 
     @contextmanager
-    def display_context(self, suspend: bool) -> Iterator[None]:
-        with self._log_context():
-            with self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
-                if suspend:  # only set if suspended
-                    self._suspended_out_err = out_err
-                yield
+    def display_context(self, suspend: bool) -> Iterator[None]:  # noqa: FBT001
+        with self._log_context(), self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
+            if suspend:  # only set if suspended
+                self._suspended_out_err = out_err
+            yield
 
     def close_and_read_out_err(self) -> tuple[bytes, bytes] | None:
         if self._suspended_out_err is None:  # pragma: no branch

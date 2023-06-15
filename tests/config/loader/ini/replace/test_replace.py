@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
 from tox.config.loader.ini.replace import MatchExpression, find_replace_expr
 from tox.report import HandledError
+
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
 
 
 @pytest.mark.parametrize(
@@ -89,5 +93,5 @@ def test_dont_replace(replace_one: ReplaceOne, value: str, exp_exception: str | 
     ],
 )
 def test_match_expression_repr(match_expression: MatchExpression, exp_repr: str) -> None:
-    print(match_expression)
+    print(match_expression)  # noqa: T201
     assert repr(match_expression) == exp_repr

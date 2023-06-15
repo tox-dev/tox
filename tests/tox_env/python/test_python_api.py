@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
-from pytest_mock import MockerFixture
 
-from tox.pytest import ToxProjectCreator
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import ToxProjectCreator
 
 
 def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
@@ -64,11 +68,11 @@ def test_diff_msg_added_removed_changed() -> None:
     before = {"A": "1", "F": "8", "C": "3", "D": "4", "E": "6"}
     after = {"G": "9", "B": "2", "C": "3", "D": "5", "E": "7"}
     expected = "python added A='1' | F='8', removed G='9' | B='2', changed D='5'->'4' | E='7'->'6'"
-    assert Python._diff_msg(before, after) == expected
+    assert Python._diff_msg(before, after) == expected  # noqa: SLF001
 
 
 def test_diff_msg_no_diff() -> None:
-    assert Python._diff_msg({}, {}) == "python "
+    assert Python._diff_msg({}, {}) == "python "  # noqa: SLF001
 
 
 @pytest.mark.parametrize(
@@ -111,7 +115,7 @@ def test_extract_base_python(env: str, base_python: str | None) -> None:
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
 def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_conflict: bool) -> None:
-    result = Python._validate_base_python(env, base_python, ignore_conflict)
+    result = Python._validate_base_python(env, base_python, ignore_conflict)  # noqa: SLF001
     assert result is base_python
 
 
@@ -139,12 +143,12 @@ def test_base_python_env_conflict(
     ignore_conflict: bool,
 ) -> None:
     if ignore_conflict:
-        result = Python._validate_base_python(env, base_python, ignore_conflict)
+        result = Python._validate_base_python(env, base_python, ignore_conflict)  # noqa: SLF001
         assert result == [expected]
     else:
         msg = f"env name {env} conflicting with base python {conflict[0]}"
         with pytest.raises(Fail, match=msg):
-            Python._validate_base_python(env, base_python, ignore_conflict)
+            Python._validate_base_python(env, base_python, ignore_conflict)  # noqa: SLF001
 
 
 @pytest.mark.parametrize("ignore_conflict", [True, False, None])

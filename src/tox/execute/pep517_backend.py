@@ -1,12 +1,10 @@
-"""A executor that reuses a single subprocess for all backend calls (saving on python startup/import overhead)"""
+"""A executor that reuses a single subprocess for all backend calls (saving on python startup/import overhead)."""
 from __future__ import annotations
 
 import time
-from pathlib import Path
 from subprocess import TimeoutExpired
 from threading import Lock
-from types import TracebackType
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from pyproject_api import BackendFailed
 
@@ -16,11 +14,15 @@ from tox.execute.local_sub_process import LocalSubProcessExecuteInstance
 from tox.execute.request import StdinSource
 from tox.execute.stream import SyncWrite
 
+if TYPE_CHECKING:
+    from pathlib import Path
+    from types import TracebackType
+
 
 class LocalSubProcessPep517Executor(Execute):
-    """Executor holding the backend process"""
+    """Executor holding the backend process."""
 
-    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path):
+    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:  # noqa: FBT001
         super().__init__(colored)
         self.cmd = cmd
         self.env = env
@@ -36,8 +38,7 @@ class LocalSubProcessPep517Executor(Execute):
         out: SyncWrite,
         err: SyncWrite,
     ) -> ExecuteInstance:
-        result = LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
-        return result
+        return LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
 
     def local_execute(self, options: ExecuteOptions) -> tuple[LocalSubProcessExecuteInstance, ExecuteStatus]:
         if self._exc is not None:
@@ -77,33 +78,32 @@ class LocalSubProcessPep517Executor(Execute):
 
     @staticmethod
     def _handler(into: bytearray, content: bytes) -> None:
-        """ignore content generated"""
+        """Ignore content generated."""
         into.extend(content)  # pragma: no cover
 
     def close(self) -> None:
         if self._local_execute is not None:  # pragma: no branch
             execute, status = self._local_execute
             execute.__exit__(None, None, None)
-            if execute.process is not None:  # pragma: no branch
-                if execute.process.returncode is None:  # pragma: no cover
-                    try:  # pragma: no cover
-                        execute.process.wait(timeout=0.1)  # pragma: no cover
-                    except TimeoutExpired:  # pragma: no cover
-                        execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
+            if execute.process is not None and execute.process.returncode is None:  # pragma: no cover
+                try:  # pragma: no cover
+                    execute.process.wait(timeout=0.1)  # pragma: no cover
+                except TimeoutExpired:  # pragma: no cover
+                    execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
         self.is_alive = False
 
 
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
-    """A backend invocation"""
+    """A backend invocation."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
         instance_status: tuple[LocalSubProcessExecuteInstance, ExecuteStatus],
-    ):
+    ) -> None:
         super().__init__(request, options, out, err)
         self._instance, self._status = instance_status
         self._lock = Lock()
@@ -119,9 +119,9 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,  # noqa: U100
-        exc_val: BaseException | None,  # noqa: U100
-        exc_tb: TracebackType | None,  # noqa: U100
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         self._swap_out_err()
         self._lock.release()

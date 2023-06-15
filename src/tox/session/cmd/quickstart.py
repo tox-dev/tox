@@ -3,13 +3,16 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from tox.config.cli.parser import ToxParser
 from tox.plugin import impl
-from tox.session.state import State
 from tox.version import version as __version__
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl
@@ -33,7 +36,7 @@ def quickstart(state: State) -> int:
     root = state.conf.options.quickstart_root.absolute()
     tox_ini = root / "tox.ini"
     if tox_ini.exists():
-        print(f"{tox_ini} already exist, refusing to overwrite")
+        print(f"{tox_ini} already exist, refusing to overwrite")  # noqa: T201
         return 1
     version = str(Version(__version__.split("+")[0]))
     text = f"""
@@ -53,8 +56,8 @@ def quickstart(state: State) -> int:
     """
     content = dedent(text).lstrip()
 
-    print(f"tox {__version__} quickstart utility, will create {tox_ini}:")
-    print(content, end="")
+    print(f"tox {__version__} quickstart utility, will create {tox_ini}:")  # noqa: T201
+    print(content, end="")  # noqa: T201
 
     root.mkdir(parents=True, exist_ok=True)
     tox_ini.write_text(content)

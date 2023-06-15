@@ -6,7 +6,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Set, TypeVar, Union, cast
 
-from ..types import Command, EnvList
+from tox.config.types import Command, EnvList
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
@@ -22,11 +22,11 @@ Factory = Optional[Callable[[object], T]]  # note the argument is anything, due 
 
 
 class Convert(ABC, Generic[T]):
-    """A class that converts a raw type to a given tox (python) type"""
+    """A class that converts a raw type to a given tox (python) type."""
 
-    def to(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:
+    def to(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: PLR0911
         """
-        Convert given raw type to python type
+        Convert given raw type to python type.
 
         :param raw: the raw type
         :param of_type: python type
@@ -53,7 +53,7 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return of_type(raw)  # type: ignore[call-arg]
 
-    def _to_typing(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:
+    def _to_typing(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: C901
         origin = getattr(of_type, "__origin__", of_type.__class__)
         result: Any = _NO_MAPPING
         if origin in (list, List):
@@ -71,22 +71,24 @@ class Convert(ABC, Generic[T]):
         elif origin == Union:  # handle Optional values
             args: list[type[Any]] = of_type.__args__  # type: ignore[attr-defined]
             none = type(None)
-            if len(args) == 2 and none in args:  # type: ignore[comparison-overlap]
+            if len(args) == 2 and none in args:  # type: ignore[comparison-overlap]  # noqa: PLR2004
                 if isinstance(raw, str):
                     raw = raw.strip()  # type: ignore[assignment]
                 if not raw:
                     result = None
                 else:
-                    new_type = next(i for i in args if i != none)  # type: ignore # pragma: no cover
+                    new_type = next(i for i in args if i != none)  # type: ignore[comparison-overlap] # pragma: no cover
                     result = self.to(raw, new_type, factory)
         elif origin in (Literal, type(Literal)):
             choice = of_type.__args__  # type: ignore[attr-defined]
             if raw not in choice:
-                raise ValueError(f"{raw} must be one of {choice}")
+                msg = f"{raw} must be one of {choice}"
+                raise ValueError(msg)
             result = raw
         if result is not _NO_MAPPING:
             return cast(V, result)
-        raise TypeError(f"{raw} cannot cast to {of_type!r}")
+        msg = f"{raw} cannot cast to {of_type!r}"
+        raise TypeError(msg)
 
     @staticmethod
     @abstractmethod

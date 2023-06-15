@@ -3,25 +3,27 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Sequence
 
 from packaging.requirements import Requirement
 
-from tox.config.main import Config
 from tox.config.types import Command
 from tox.execute.request import StdinSource
 from tox.tox_env.errors import Fail, Recreate
 from tox.tox_env.installer import Installer
-from tox.tox_env.package import PathPackage
 from tox.tox_env.python.api import Python
 from tox.tox_env.python.package import EditableLegacyPackage, EditablePackage, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonDeps
 
+if TYPE_CHECKING:
+    from tox.config.main import Config
+    from tox.tox_env.package import PathPackage
+
 
 class Pip(Installer[Python]):
-    """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517"""
+    """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517."""
 
-    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:
+    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # noqa: FBT001, FBT002
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
 
@@ -59,8 +61,8 @@ class Pip(Installer[Python]):
                 desc="command used to list isntalled packages",
             )
 
-    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # noqa: U100
-        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"
+    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # noqa: ARG002
+        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # noqa: PLR2004
         cmd = Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
         return self.post_process_install_command(cmd)
 
@@ -91,7 +93,7 @@ class Pip(Installer[Python]):
         elif isinstance(arguments, Sequence):
             self._install_list_of_deps(arguments, section, of_type)
         else:
-            logging.warning(f"pip cannot install {arguments!r}")
+            logging.warning("pip cannot install %r", arguments)
             raise SystemExit(1)
 
     def constraints_file(self) -> Path:
@@ -109,7 +111,8 @@ class Pip(Installer[Python]):
         try:
             new_options, new_reqs = arguments.unroll()
         except ValueError as exception:
-            raise Fail(f"{exception} for tox env py within deps")
+            msg = f"{exception} for tox env py within deps"
+            raise Fail(msg) from exception
         new_requirements: list[str] = []
         new_constraints: list[str] = []
         for req in new_reqs:
@@ -132,7 +135,8 @@ class Pip(Installer[Python]):
                     self._recreate_if_diff("constraint(s)", new_constraints, old["constraints"], lambda i: i[3:])
                     missing_requirement = set(old["requirements"]) - set(new_requirements)
                     if missing_requirement:
-                        raise Recreate(f"requirements removed: {' '.join(missing_requirement)}")
+                        msg = f"requirements removed: {' '.join(missing_requirement)}"
+                        raise Recreate(msg)
                     old_constraint_options = old.get("constraint_options")
                     if old_constraint_options != constraint_options:
                         msg = f"constraint options changed: old={old_constraint_options} new={constraint_options}"
@@ -152,9 +156,10 @@ class Pip(Installer[Python]):
         removed = f" removed {', '.join(sorted(fmt(i) for i in removed_opts))}" if removed_opts else ""
         added_opts = set(new_opts) - set(old_opts)
         added = f" added {', '.join(sorted(fmt(i) for i in added_opts))}" if added_opts else ""
-        raise Recreate(f"changed {of_type}{removed}{added}")
+        msg = f"changed {of_type}{removed}{added}"
+        raise Recreate(msg)
 
-    def _install_list_of_deps(
+    def _install_list_of_deps(  # noqa: C901
         self,
         arguments: Sequence[
             Requirement | WheelPackage | SdistPackage | EditableLegacyPackage | EditablePackage | PathPackage
@@ -173,7 +178,7 @@ class Pip(Installer[Python]):
                 groups["req"].extend(str(i) for i in arg.deps)
                 groups["dev_pkg"].append(str(arg.path))
             else:
-                logging.warning(f"pip cannot install {arg!r}")
+                logging.warning("pip cannot install %r", arg)
                 raise SystemExit(1)
         req_of_type = f"{of_type}_deps" if groups["pkg"] or groups["dev_pkg"] else of_type
         for value in groups.values():
@@ -182,7 +187,8 @@ class Pip(Installer[Python]):
             if not eq:  # pragma: no branch
                 miss = sorted(set(old or []) - set(groups["req"]))
                 if miss:  # no way yet to know what to uninstall here (transitive dependencies?)
-                    raise Recreate(f"dependencies removed: {', '.join(str(i) for i in miss)}")  # pragma: no branch
+                    msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
+                    raise Recreate(msg)  # pragma: no branch
                 new_deps = sorted(set(groups["req"]) - set(old or []))
                 if new_deps:  # pragma: no branch
                     self._execute_installer(new_deps, req_of_type)
@@ -212,14 +218,14 @@ class Pip(Installer[Python]):
         try:
             cmd: Command = self._env.conf["install_command"]
         except ValueError as exc:
-            raise Fail(f"unable to determine pip install command: {str(exc)}") from exc
+            msg = f"unable to determine pip install command: {exc!s}"
+            raise Fail(msg) from exc
         install_command = cmd.args
         try:
             opts_at = install_command.index("{packages}")
         except ValueError:
             opts_at = len(install_command)
-        result = install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
-        return result
+        return install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
 
 
 __all__ = ("Pip",)

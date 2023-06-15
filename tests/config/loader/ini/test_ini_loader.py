@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from configparser import ConfigParser
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
 from tox.config.loader.api import ConfigLoadArgs, Override
 from tox.config.loader.ini import IniLoader
 from tox.config.source.ini_section import IniSection
+
+if TYPE_CHECKING:
+    from configparser import ConfigParser
 
 
 def test_ini_loader_keys(mk_ini_conf: Callable[[str], ConfigParser]) -> None:

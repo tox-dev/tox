@@ -1,12 +1,9 @@
-"""
-This package handles provisioning an appropriate tox version per requirements.
-"""
+"""This package handles provisioning an appropriate tox version per requirements."""
 from __future__ import annotations
 
 import json
 import logging
 import sys
-from argparse import ArgumentParser
 from pathlib import Path
 from typing import TYPE_CHECKING, List, cast
 
@@ -28,6 +25,8 @@ else:  # pragma: no cover (py38+)
     from importlib_metadata import PackageNotFoundError, distribution
 
 if TYPE_CHECKING:
+    from argparse import ArgumentParser
+
     from tox.session.state import State
 
 
@@ -62,7 +61,7 @@ def provision(state: State) -> int | bool:
         keys=["min_version", "minversion"],
         of_type=Version,
         # do not include local version specifier (because it's not allowed in version spec per PEP-440)
-        default=None,  # type: ignore # Optional[Version] translates to object
+        default=None,  # type: ignore[arg-type] # Optional[Version] translates to object
         desc="Define the minimal tox version required to run",
     )
     state.conf.core.add_config(
@@ -103,7 +102,7 @@ def provision(state: State) -> int | bool:
     )
     provision_tox_env: str = state.conf.core["provision_tox_env"]
     state.conf.memory_seed_loaders[provision_tox_env].append(loader)
-    state.envs._mark_provision(bool(missing), provision_tox_env)
+    state.envs._mark_provision(bool(missing), provision_tox_env)  # noqa: SLF001
 
     if not missing:
         return False
@@ -117,7 +116,7 @@ def provision(state: State) -> int | bool:
             msg += f" and wrote to {no_provision}"
             min_version = str(next(i.specifier for i in requires if i.name == "tox")).split("=")
             requires_dict = {
-                "minversion": min_version[1] if len(min_version) >= 2 else None,
+                "minversion": min_version[1] if len(min_version) >= 2 else None,  # noqa: PLR2004
                 "requires": [str(i) for i in requires],
             }
             Path(no_provision).write_text(json.dumps(requires_dict, indent=4))
@@ -148,7 +147,8 @@ def run_provision(name: str, state: State) -> int:
     try:
         tox_env.setup()
     except Skip as exception:
-        raise HandledError(f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}")
+        msg = f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}"
+        raise HandledError(msg) from exception
     args: list[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())

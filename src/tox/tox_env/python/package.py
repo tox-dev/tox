@@ -1,28 +1,29 @@
-"""
-A tox build environment that handles Python packages.
-"""
+"""A tox build environment that handles Python packages."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, Iterator, List, Sequence, cast
 
 from packaging.requirements import Requirement
 
-from ...config.sets import EnvConfigSet
-from ..api import ToxEnvCreateArgs
-from ..errors import Skip
-from ..package import Package, PackageToxEnv, PathPackage
-from ..runner import RunToxEnv
+from tox.tox_env.errors import Skip
+from tox.tox_env.package import Package, PackageToxEnv, PathPackage
+
 from .api import NoInterpreter, Python
-from .pip.req_file import PythonDeps
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from tox.config.main import Config
+    from tox.config.sets import EnvConfigSet
+    from tox.tox_env.api import ToxEnvCreateArgs
+    from tox.tox_env.runner import RunToxEnv
+
+    from .pip.req_file import PythonDeps
 
 
 class PythonPackage(Package):
-    """python package"""
+    """python package."""
 
 
 class PythonPathPackageWithDeps(PathPackage):
@@ -32,19 +33,19 @@ class PythonPathPackageWithDeps(PathPackage):
 
 
 class WheelPackage(PythonPathPackageWithDeps):
-    """wheel package"""
+    """wheel package."""
 
 
 class SdistPackage(PythonPathPackageWithDeps):
-    """sdist package"""
+    """sdist package."""
 
 
 class EditableLegacyPackage(PythonPathPackageWithDeps):
-    """legacy editable package"""
+    """legacy editable package."""
 
 
 class EditablePackage(PythonPathPackageWithDeps):
-    """PEP-660 editable package"""
+    """PEP-660 editable package."""
 
 
 class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
@@ -53,7 +54,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         super().__init__(create_args)
 
     def _setup_env(self) -> None:
-        """setup the tox environment"""
+        """Setup the tox environment."""
         super()._setup_env()
         self._install(self.requires(), PythonPackageToxEnv.__name__, "requires")
         self._install(self.conf["deps"], PythonPackageToxEnv.__name__, "deps")
@@ -79,7 +80,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         ):
             return
 
-        def default_wheel_tag(conf: Config, env_name: str | None) -> str:  # noqa: U100
+        def default_wheel_tag(conf: Config, env_name: str | None) -> str:  # noqa: ARG001
             # https://www.python.org/dev/peps/pep-0427/#file-name-convention
             # when building wheels we need to ensure that the built package is compatible with the target env
             # compatibility is documented within https://www.python.org/dev/peps/pep-0427/#file-name-convention
@@ -94,7 +95,8 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
 
             if run_py is None:
                 base = ",".join(run_env.conf["base_python"])
-                raise Skip(f"could not resolve base python with {base}")
+                msg = f"could not resolve base python with {base}"
+                raise Skip(msg)
 
             default_pkg_py = self.base_python
             if (

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import multiprocessing
-
-from pytest_mock import MockerFixture
+from typing import TYPE_CHECKING
 
 from tox.util.cpu import auto_detect_cpus
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_auto_detect_cpus() -> None:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 
 def shebang(exe: str) -> list[str] | None:
     """
@@ -11,7 +13,7 @@ def shebang(exe: str) -> list[str] | None:
     # explicit invocation.
     # see https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/fs/binfmt_script.c#n34
     try:
-        with open(exe, "rb") as file_handler:
+        with Path(exe).open("rb") as file_handler:
             marker = file_handler.read(2)
             if marker != b"#!":
                 return None

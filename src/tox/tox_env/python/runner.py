@@ -1,22 +1,22 @@
-"""
-A tox run environment that handles the Python language.
-"""
+"""A tox run environment that handles the Python language."""
 from __future__ import annotations
 
 from functools import partial
-from typing import Set
+from typing import TYPE_CHECKING, Set
 
 from packaging.utils import canonicalize_name
 
+from tox.config.loader.str_convert import StrConvert
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
-from tox.tox_env.package import Package
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.tox_env.runner import RunToxEnv
 
-from ...config.loader.str_convert import StrConvert
-from ..api import ToxEnvCreateArgs
-from ..runner import RunToxEnv
 from .api import Python
+
+if TYPE_CHECKING:
+    from tox.tox_env.api import ToxEnvCreateArgs
+    from tox.tox_env.package import Package
 
 
 class PythonRun(Python, RunToxEnv):
@@ -34,7 +34,7 @@ class PythonRun(Python, RunToxEnv):
             desc="Name of the python dependencies as specified by PEP-440",
         )
 
-        def skip_missing_interpreters_post_process(value: bool) -> bool:
+        def skip_missing_interpreters_post_process(value: bool) -> bool:  # noqa: FBT001
             if getattr(self.options, "skip_missing_interpreters", "config") != "config":
                 return StrConvert().to_bool(self.options.skip_missing_interpreters)
             return value
@@ -99,7 +99,8 @@ class PythonRun(Python, RunToxEnv):
         pkg_type: str = self.conf["package"]
         if pkg_type not in self._package_types:
             values = ", ".join(self._package_types)
-            raise HandledError(f"invalid package config type {pkg_type} requested, must be one of {values}")
+            msg = f"invalid package config type {pkg_type} requested, must be one of {values}"
+            raise HandledError(msg)
         return pkg_type
 
     def _setup_env(self) -> None:
@@ -112,10 +113,11 @@ class PythonRun(Python, RunToxEnv):
 
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
-        assert package_env is not None
+        assert package_env is not None  # noqa: S101
         with package_env.display_context(self._has_display_suspended):
             try:
                 packages = package_env.perform_packaging(self.conf)
             except Skip as exception:
-                raise Skip(f"{exception.args[0]} for package environment {package_env.conf['env_name']}")
+                msg = f"{exception.args[0]} for package environment {package_env.conf['env_name']}"
+                raise Skip(msg) from exception
         return packages

@@ -1,14 +1,16 @@
-"""
-Run tox environments in sequential order.
-"""
+"""Run tox environments in sequential order."""
 from __future__ import annotations
 
-from tox.config.cli.parser import ToxParser
-from tox.plugin import impl
-from tox.session.state import State
+from typing import TYPE_CHECKING
 
-from ...env_select import CliEnv, register_env_select_flags
+from tox.plugin import impl
+from tox.session.env_select import CliEnv, register_env_select_flags
+
 from .common import env_run_create_flags, execute
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
 
 
 @impl

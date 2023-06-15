@@ -3,13 +3,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, List, Optional, Set, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
 
 import pytest
 
 from tox.config.loader.str_convert import StrConvert
 from tox.config.types import Command, EnvList
-from tox.pytest import MonkeyPatch, SubRequest, ToxProjectCreator
+
+if TYPE_CHECKING:
+    from tox.pytest import MonkeyPatch, SubRequest, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Literal
@@ -119,10 +121,8 @@ WINDOWS_PATH_ARGS = [
     ('cc --arg "C:\\\\Users"', ["cc", "--arg", "C:\\Users"]),
     ('cc --arg \\"C:\\\\Users"', ["cc", "--arg", '\\"C:\\\\Users"']),
     ('cc --arg "C:\\\\Users\\ "', ["cc", "--arg", "C:\\Users\\ "]),
-    # ('cc --arg "C:\\\\Users\\ ', ["cc", "--arg", '"C:\\\\Users\\ ']),
     ('cc --arg "C:\\\\Users\\\\"', ["cc", "--arg", "C:\\Users\\"]),
     ('cc --arg "C:\\\\Users\\\\ "', ["cc", "--arg", "C:\\Users\\ "]),
-    # ('cc --arg "C:\\\\Users\\\\ ', ["cc", "--arg", '"C:\\\\Users\\\\ ']),
     (
         r'cc --arg C:\\Users\\ --arg2 "SPECIAL:\Temp\f o o" --arg3="\\FOO\share\Path name" --arg4 SPECIAL:\Temp\ '[:-1],
         [

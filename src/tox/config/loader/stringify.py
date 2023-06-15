@@ -8,7 +8,7 @@ from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 
-def stringify(value: Any) -> tuple[str, bool]:
+def stringify(value: Any) -> tuple[str, bool]:  # noqa: PLR0911
     """
     Transform a value into a string representation.
 

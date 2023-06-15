@@ -1,4 +1,4 @@
-"""A minimal non-colored version of https://pypi.org/project/halo, to track list progress"""
+"""A minimal non-colored version of https://pypi.org/project/halo, to track list progress."""
 from __future__ import annotations
 
 import os
@@ -7,10 +7,12 @@ import textwrap
 import threading
 import time
 from collections import OrderedDict
-from types import TracebackType
-from typing import IO, NamedTuple, Sequence, TypeVar
+from typing import IO, TYPE_CHECKING, NamedTuple, Sequence, TypeVar
 
 from colorama import Fore
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 if sys.platform == "win32":  # pragma: win32 cover
     import ctypes
@@ -50,11 +52,11 @@ class Spinner:
     UNICODE_OUTCOME = Outcome(ok="✔", fail="✖", skip="⚠")
     ASCII_OUTCOME = Outcome(ok="+", fail="!", skip="?")
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
-        enabled: bool = True,
+        enabled: bool = True,  # noqa: FBT001, FBT002
         refresh_rate: float = 0.1,
-        colored: bool = True,
+        colored: bool = True,  # noqa: FBT001, FBT002
         stream: IO[str] | None = None,
         total: int | None = None,
     ) -> None:
@@ -112,9 +114,9 @@ class Spinner:
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,  # noqa: U100
-        exc_val: BaseException | None,  # noqa: U100
-        exc_tb: TracebackType | None,  # noqa: U100
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if not self._stop_spinner.is_set():  # pragma: no branch
             if self._spinner_thread:  # pragma: no branch # hard to test
@@ -185,7 +187,7 @@ def td_human_readable(seconds: float) -> str:
     texts: list[str] = []
     for period_name, period_seconds in _PERIODS:
         period_str = None
-        if period_name == "second" and (seconds >= 0.01 or not texts):
+        if period_name == "second" and (seconds >= 0.01 or not texts):  # noqa: PLR2004
             period_str = f"{seconds:.2f}".rstrip("0").rstrip(".")
         elif seconds >= period_seconds:
             period_value, seconds = divmod(seconds, period_seconds)

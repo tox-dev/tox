@@ -12,7 +12,7 @@ from tox.config.types import Command, EnvList
 
 
 class StrConvert(Convert[str]):
-    """A class converting string values to tox types"""
+    """A class converting string values to tox types."""
 
     @staticmethod
     def to_str(value: str) -> str:
@@ -36,14 +36,15 @@ class StrConvert(Convert[str]):
         yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
-    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # noqa: U100
+    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # noqa: ARG004
         for row in value.split("\n"):
             if row.strip():
                 key, sep, value = row.partition("=")
                 if sep:
                     yield key.strip(), value.strip()
                 else:
-                    raise TypeError(f"dictionary lines must be of form key=value, found {row!r}")
+                    msg = f"dictionary lines must be of form key=value, found {row!r}"
+                    raise TypeError(msg)
 
     @staticmethod
     def _win32_process_path_backslash(value: str, escape: str, special_chars: str) -> str:
@@ -90,16 +91,17 @@ class StrConvert(Convert[str]):
             for arg in splitter:
                 if is_win and len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):  # pragma: win32 cover
                     # on Windows quoted arguments will remain quoted, strip it
-                    arg = arg[1:-1]
+                    arg = arg[1:-1]  # noqa: PLW2901
                 args.append(arg)
                 pos = splitter.instream.tell()
         except ValueError:
             args.append(value[pos:])
         if len(args) == 0:
-            raise ValueError(f"attempting to parse {value!r} into a command failed")
+            msg = f"attempting to parse {value!r} into a command failed"
+            raise ValueError(msg)
         if args[0] != "-" and args[0].startswith("-"):
             args[0] = args[0][1:]
-            args = ["-"] + args
+            args = ["-", *args]
         return Command(args)
 
     @staticmethod
@@ -118,12 +120,11 @@ class StrConvert(Convert[str]):
         norm = str(value).strip().lower()
         if norm in StrConvert.TRUTHFUL_VALUES:
             return True
-        elif norm in StrConvert.FALSE_VALUES:
+        if norm in StrConvert.FALSE_VALUES:
             return False
-        else:
-            raise TypeError(
-                f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}",
-            )
+
+        msg = f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}"
+        raise TypeError(msg)
 
 
 __all__ = ("StrConvert",)

@@ -1,16 +1,19 @@
 from __future__ import annotations
 
-from configparser import ConfigParser
 from textwrap import dedent
-from typing import Callable, List
+from typing import TYPE_CHECKING, Callable, List
 
 import pytest
 
-from tests.conftest import ToxIniCreator
 from tox.config.loader.ini import IniLoader
 from tox.config.loader.ini.factor import filter_for_env, find_envs
-from tox.config.main import Config
 from tox.config.source.ini_section import IniSection
+
+if TYPE_CHECKING:
+    from configparser import ConfigParser
+
+    from tests.conftest import ToxIniCreator
+    from tox.config.main import Config
 
 
 def test_factor_env_discover_empty() -> None:
@@ -87,7 +90,7 @@ def test_factor_env_filter(env: str, complex_example: str) -> None:
     else:
         assert "py only" not in result
         assert "not py" in result
-    if "extra" == env:
+    if env == "extra":
         assert "extra" in result
     else:
         assert "extra" not in result
@@ -148,7 +151,7 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
             assert "negation-or" in deps
         if "django16" in env:
             assert "Django>=1.6,<1.7" in deps
-        if "py36-django15" == env_config.name:
+        if env_config.name == "py36-django15":
             assert "negation-and" in deps
 
 

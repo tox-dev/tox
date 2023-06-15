@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-
-from pytest_mock import MockFixture
+from typing import TYPE_CHECKING
 
 from tox import __version__
 from tox.plugin.manager import MANAGER
-from tox.pytest import ToxProjectCreator
+
+if TYPE_CHECKING:
+    from pytest_mock import MockFixture
+
+    from tox.pytest import ToxProjectCreator
 
 
 def test_version() -> None:

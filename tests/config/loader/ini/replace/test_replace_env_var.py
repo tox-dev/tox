@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import threading
-from typing import Generator
+from typing import TYPE_CHECKING, Generator
 
 import pytest
 
-from tests.config.loader.ini.replace.conftest import ReplaceOne
-from tox.pytest import LogCaptureFixture, MonkeyPatch
+if TYPE_CHECKING:
+    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tox.pytest import LogCaptureFixture, MonkeyPatch
 
 
 def test_replace_env_set(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
@@ -33,8 +34,8 @@ def test_replace_env_set_triple_bs(replace_one: ReplaceOne, monkeypatch: MonkeyP
 def test_replace_env_set_quad_bs(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
     """Quad backslash should remain but not affect surrounding replacements."""
     monkeypatch.setenv("MAGIC", "something good")
-    result = replace_one(r"\\{env:MAGIC}\\\\{env:MAGIC}" + "\\")
-    assert result == r"\\something good\\\\something good" + "\\"
+    result = replace_one(r"\\{env:MAGIC}\\\\{env:MAGIC}" + "\\")  # noqa: ISC003
+    assert result == r"\\something good\\\\something good" + "\\"  # noqa: ISC003
 
 
 def test_replace_env_when_value_is_backslash(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
@@ -57,7 +58,7 @@ def test_replace_env_missing(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) 
     """If we have a factor that is not specified within the core env-list then that's also an environment"""
     monkeypatch.delenv("MAGIC", raising=False)
     result = replace_one("{env:MAGIC}")
-    assert result == ""
+    assert not result
 
 
 def test_replace_env_missing_default(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:

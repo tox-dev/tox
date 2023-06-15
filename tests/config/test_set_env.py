@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import ANY
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.config.set_env import SetEnv
-from tox.pytest import MonkeyPatch, ToxProjectCreator
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
     from typing import Protocol
@@ -39,9 +42,9 @@ def test_set_env_bad_line() -> None:
 class EvalSetEnv(Protocol):
     def __call__(
         self,
-        tox_ini: str,  # noqa: U100
-        extra_files: dict[str, Any] | None = ...,  # noqa: U100
-        from_cwd: Path | None = ...,  # noqa: U100
+        tox_ini: str,
+        extra_files: dict[str, Any] | None = ...,
+        from_cwd: Path | None = ...,
     ) -> SetEnv:
         ...
 

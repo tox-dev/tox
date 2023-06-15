@@ -2,18 +2,21 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
-from typing import Callable, Dict, Optional, Set, TypeVar
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Set, TypeVar
 
 import pytest
-from pytest_mock import MockerFixture
 
-from tests.conftest import ToxIniCreator
 from tox.config.cli.parser import Parsed
 from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.config.source.api import Section
-from tox.pytest import ToxProjectCreator
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tests.conftest import ToxIniCreator
+    from tox.pytest import ToxProjectCreator
 
 ConfBuilder = Callable[[str], ConfigSet]
 
@@ -154,15 +157,15 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     conf = result.state.conf.get_section_config(section, base=["A"], of_type=MagicConfigSet, for_env=None)
     assert conf["a"] == 1
     assert conf["b"] == "ok"
-    exp = "MagicConfigSet(loaders=[IniLoader(section=magic, overrides={}), " "IniLoader(section=A, overrides={})])"
+    exp = "MagicConfigSet(loaders=[IniLoader(section=magic, overrides={}), IniLoader(section=A, overrides={})])"
     assert repr(conf) == exp
 
-    assert isinstance(result.state.conf._options, Parsed)
+    assert isinstance(result.state.conf._options, Parsed)  # noqa: SLF001
 
 
 def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
     with pytest.raises(TypeError, match="Can't instantiate"):
-        ConfigSet(mocker.create_autospec(Config))  # type: ignore # the type checker also warns that ABC
+        ConfigSet(mocker.create_autospec(Config))  # type: ignore[abstract,call-arg]
 
 
 def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:

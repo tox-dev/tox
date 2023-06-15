@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import logging
 from functools import partial
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import pytest
-from pytest_mock import MockerFixture
 
 from tox.config.loader.section import Section
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.plugin import impl
 from tox.pytest import ToxProjectCreator, register_inline_plugin
-from tox.session.state import State
-from tox.tox_env.api import ToxEnv
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
 
 
 @pytest.fixture(autouse=True)
@@ -26,8 +29,7 @@ def _custom_config_set(mocker: MockerFixture) -> None:
         def factory(for_env: str, raw: object) -> DockerConfigSet:
             assert isinstance(raw, str)
             section = Section("docker", raw)
-            conf_set = state.conf.get_section_config(section, base=["docker"], of_type=DockerConfigSet, for_env=for_env)
-            return conf_set
+            return state.conf.get_section_config(section, base=["docker"], of_type=DockerConfigSet, for_env=for_env)
 
         env_conf.add_config(
             "docker",
