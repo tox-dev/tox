@@ -331,13 +331,9 @@ class Pep517VirtualEnvFrontend(Frontend):
         self._tox_env = env
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
-        pkg_cache = cached(
-            into,
-            key=lambda *args, **kwargs: "wheel" if "wheel_directory" in kwargs else "sdist",  # noqa: ARG005
-        )
-        self.build_wheel = pkg_cache(self.build_wheel)  # type: ignore[method-assign]
-        self.build_sdist = pkg_cache(self.build_sdist)  # type: ignore[method-assign]
-        self.build_editable = pkg_cache(self.build_editable)  # type: ignore[method-assign]
+        self.build_wheel = cached(into, key=lambda *args, **kwargs: "wheel")(self.build_wheel)  # type: ignore[method-assign]
+        self.build_sdist = cached(into, key=lambda *args, **kwargs: "sdist")(self.build_sdist)  # type: ignore[method-assign]
+        self.build_editable = cached(into, key=lambda *args, **kwargs: "editable")(self.build_editable)  # type: ignore[method-assign]
 
     @property
     def backend_cmd(self) -> Sequence[str]:
