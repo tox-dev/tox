@@ -339,8 +339,8 @@ class Pep517VirtualEnvFrontend(Frontend):
                 method_name,
                 cached(
                     into,
-                    key=lambda *args, bound_return=build_type, **kwargs: bound_return  # noqa: ARG005
-                )(getattr(self, method_name))
+                    key=lambda *args, bound_return=build_type, **kwargs: bound_return,  # noqa: ARG005
+                )(getattr(self, method_name)),
             )
 
     @property
