@@ -332,9 +332,12 @@ class Pep517VirtualEnvFrontend(Frontend):
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
         for build_type in ["editable", "sdist", "wheel"]:
-            build_method = getattr(self, f'build_{build_type}')
-            key = lambda *args, **kwargs: build_type  #noqa: ARG005
-            setattr(self, f'build_{build_type}', cached(into, key)(build_method))
+            build_method = getattr(self, f"build_{build_type}")
+
+            def key(*args, **kwargs):
+                return build_type  # noqa: ARG005
+
+            setattr(self, f"build_{build_type}", cached(into, key)(build_method))
 
     @property
     def backend_cmd(self) -> Sequence[str]:
