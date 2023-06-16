@@ -331,13 +331,17 @@ class Pep517VirtualEnvFrontend(Frontend):
         self._tox_env = env
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
+        # wrap build methods in a cache wrapper
         for build_type in ["editable", "sdist", "wheel"]:
-            build_method = getattr(self, f"build_{build_type}")
-
-            def key(*args, **kwargs):
-                return build_type  # noqa: ARG005
-
-            setattr(self, f"build_{build_type}", cached(into, key)(build_method))
+            method_name = f"build_{build_type}"
+            setattr(
+                self,
+                method_name,
+                cached(
+                    into,
+                    key=lambda *args, bound_return=build_type, **kwargs: bound_return  # noqa: ARG005
+                )(getattr(self, method_name))
+            )
 
     @property
     def backend_cmd(self) -> Sequence[str]:
