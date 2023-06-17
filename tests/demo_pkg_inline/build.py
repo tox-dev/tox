@@ -117,6 +117,16 @@ def get_requires_for_build_wheel(config_settings: dict[str, str] | None = None) 
     return []  # pragma: no cover # only executed in non-host pythons
 
 
+if os.environ.get("BACKEND_HAS_EDITABLE"):
+
+    def build_editable(
+        wheel_directory: str,
+        config_settings: dict[str, str] | None = None,
+        metadata_directory: str | None = None,
+    ) -> str:
+        return build_wheel(wheel_directory, config_settings, metadata_directory)
+
+
 def build_sdist(sdist_directory: str, config_settings: dict[str, str] | None = None) -> str:  # noqa: ARG001
     result = f"{name}-{version}.tar.gz"  # pragma: win32 cover
     with tarfile.open(str(Path(sdist_directory) / result), "w:gz") as tar:  # pragma: win32 cover
