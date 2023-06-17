@@ -1,1 +1,0 @@
-Avoid cache collision between editable wheel build and normal wheel build -- by :user:`f3flight`.

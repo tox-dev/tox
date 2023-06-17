@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.6.2 (2023-06-16)
+-------------------
+
+Bugfixes - 4.6.2
+~~~~~~~~~~~~~~~~
+- Avoid cache collision between editable wheel build and normal wheel build -- by :user:`f3flight`. (:issue:`3035`)
+
+
 v4.6.1 (2023-06-15)
 -------------------
 
