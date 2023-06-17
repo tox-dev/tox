@@ -15,10 +15,9 @@ assignees: ""
 Provide at least:
 
 - OS:
-- `pip list` of the host Python where `tox` is installed in the dropdown below
 
 <details open>
-<summary>Output of <code>pip list</code></summary>
+<summary>Output of <code>pip list</code> of the host Python, where <code>tox</code> is installed</summary>
 
 ```console
 
