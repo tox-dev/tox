@@ -300,6 +300,9 @@ Base options
        - each line is in KEY=VALUE format; both the key and the value are stripped,
        - there is no special handling of quotation marks, they are part of the key or value.
 
+   Also read `environment variable substitutions`_
+   for extended information on working with environment variables.
+
 .. conf::
    :keys: parallel_show_output
    :default: False
@@ -829,6 +832,8 @@ whitespace, or backslash character (since it normally acts as a path delimiter).
 Special substitutions that accept additional colon-delimited ``:`` parameters
 cannot have a space after the ``:`` at the beginning of line (e.g.  ``{posargs:
 magic}`` would be parsed as factorial ``{posargs``, having value magic).
+
+.. _`environment variable substitutions`:
 
 Environment variable substitutions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
