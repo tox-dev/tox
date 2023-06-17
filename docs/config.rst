@@ -285,6 +285,9 @@ Base options
    tox invocation environment it is ignored. The list of environment variable names is not case sensitive, for example:
    passing ``A`` or ``a`` will pass through both ``A`` and ``a``.
 
+   More environment variable-related information
+   can be found in `environment variable substitutions`_.
+
 .. conf::
    :keys: set_env, setenv
 
@@ -300,8 +303,8 @@ Base options
        - each line is in KEY=VALUE format; both the key and the value are stripped,
        - there is no special handling of quotation marks, they are part of the key or value.
 
-   Also read `environment variable substitutions`_
-   for extended information on working with environment variables.
+   More environment variable-related information
+   can be found in `environment variable substitutions`_.
 
 .. conf::
    :keys: parallel_show_output
