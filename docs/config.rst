@@ -285,6 +285,9 @@ Base options
    tox invocation environment it is ignored. The list of environment variable names is not case sensitive, for example:
    passing ``A`` or ``a`` will pass through both ``A`` and ``a``.
 
+   More environment variable-related information
+   can be found in :ref:`environment variable substitutions`.
+
 .. conf::
    :keys: set_env, setenv
 
@@ -299,6 +302,9 @@ Base options
        - lines starting with the ``#`` character are ignored,
        - each line is in KEY=VALUE format; both the key and the value are stripped,
        - there is no special handling of quotation marks, they are part of the key or value.
+
+   More environment variable-related information
+   can be found in :ref:`environment variable substitutions`.
 
 .. conf::
    :keys: parallel_show_output
@@ -829,6 +835,8 @@ whitespace, or backslash character (since it normally acts as a path delimiter).
 Special substitutions that accept additional colon-delimited ``:`` parameters
 cannot have a space after the ``:`` at the beginning of line (e.g.  ``{posargs:
 magic}`` would be parsed as factorial ``{posargs``, having value magic).
+
+.. _`environment variable substitutions`:
 
 Environment variable substitutions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
