@@ -286,7 +286,7 @@ Base options
    passing ``A`` or ``a`` will pass through both ``A`` and ``a``.
 
    More environment variable-related information
-   can be found in `environment variable substitutions`_.
+   can be found in :ref:`environment variable substitutions`.
 
 .. conf::
    :keys: set_env, setenv
@@ -304,7 +304,7 @@ Base options
        - there is no special handling of quotation marks, they are part of the key or value.
 
    More environment variable-related information
-   can be found in `environment variable substitutions`_.
+   can be found in :ref:`environment variable substitutions`.
 
 .. conf::
    :keys: parallel_show_output
