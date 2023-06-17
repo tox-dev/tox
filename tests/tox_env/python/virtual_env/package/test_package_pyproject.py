@@ -263,3 +263,34 @@ def test_project_package_with_deps(tox_project: ToxProjectCreator, demo_pkg_setu
     else:
         assert found_calls[0] == (".pkg", "install_requires")
         assert found_calls[1] == (".pkg", "install_deps")
+
+
+def test_pyproject_build_editable_and_wheel(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    # test that build wheel and build editable are cached separately
+
+    ini = """
+    [testenv:.pkg]
+    set_env= BACKEND_HAS_EDITABLE=1
+    [testenv:a,b]
+    package = editable
+    [testenv:c,d]
+    package = wheel
+    """
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result = proj.run("r", "-e", "a,b,c,d", "--notest", "--workdir", str(proj.path / ".tox"))
+
+    result.assert_success()
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        (".pkg", "_optional_hooks"),
+        (".pkg", "get_requires_for_build_wheel"),
+        (".pkg", "build_editable"),
+        ("a", "install_package"),
+        ("b", "install_package"),
+        (".pkg", "build_wheel"),
+        ("c", "install_package"),
+        ("d", "install_package"),
+        (".pkg", "_exit"),
+    ]

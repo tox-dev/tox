@@ -56,16 +56,16 @@ dependencies = [
   "packaging>=23.1",
   "platformdirs>=3.5.3",
   "pluggy>=1",
-  "pyproject-api>=1.5.1",
+  "pyproject-api>=1.5.2",
   'tomli>=2.0.1; python_version < "3.11"',
   'typing-extensions>=4.6.3; python_version < "3.8"',
-  "virtualenv>=20.23",
+  "virtualenv>=20.23.1",
 ]
 optional-dependencies.docs = [
   "furo>=2023.5.20",
   "sphinx>=7.0.1",
-  "sphinx-argparse-cli>=1.11",
-  "sphinx-autodoc-typehints!=1.23.4,>=1.23",
+  "sphinx-argparse-cli>=1.11.1",
+  "sphinx-autodoc-typehints!=1.23.4,>=1.23.2",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
@@ -75,7 +75,7 @@ optional-dependencies.testing = [
   "build[virtualenv]>=0.10",
   "covdefaults>=2.3",
   "detect-test-pollution>=1.1.1",
-  "devpi-process>=0.3",
+  "devpi-process>=0.3.1",
   "diff-cover>=7.6",
   "distlib>=0.3.6",
   "flaky>=3.7",
@@ -84,10 +84,10 @@ optional-dependencies.testing = [
   "psutil>=5.9.5",
   "pytest>=7.3.2",
   "pytest-cov>=4.1",
-  "pytest-mock>=3.10",
+  "pytest-mock>=3.11.1",
   "pytest-xdist>=3.3.1",
   "re-assert>=1.1",
-  'time-machine>=2.9; implementation_name != "pypy"',
+  'time-machine>=2.10; implementation_name != "pypy"',
   "wheel>=0.40",
 ]
 urls.Documentation = "https://tox.wiki"
@@ -105,6 +105,31 @@ version.source = "vcs"
 
 [tool.black]
 line-length = 120
+
+[tool.ruff]
+select = ["ALL"]
+line-length = 120
+target-version = "py37"
+isort = {known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"]}
+ignore = [
+  "INP001",  # no implicit namespaces here
+  "D",  # ignore documentation for now
+  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
+  "ANN101",  # Missing type annotation for `self` in method
+  "ANN102",  # Missing type annotation for `cls` in classmethod"
+  "D203",  # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+  "D212",  # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+  "S104",  # Possible binding to all interface
+]
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = [
+  "S101",  # asserts allowed in tests...
+  "FBT",  # don"t care about booleans as positional arguments in tests
+  "INP001", # no implicit namespace
+  "D",  # don"t care about documentation in tests
+  "S603",  # `subprocess` call: check for execution of untrusted input
+  "PLR2004",  # Magic value used in comparison, consider replacing with a constant variable
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -152,28 +177,3 @@ title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 # possible types, all default: feature, bugfix, doc, removal, misc
-
-[tool.ruff]
-select = ["ALL"]
-line-length = 120
-target-version = "py37"
-isort = {known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"]}
-ignore = [
-  "INP001",  # no implicit namespaces here
-  "D",  # ignore documentation for now
-  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
-  "ANN101",  # Missing type annotation for `self` in method
-  "ANN102",  # Missing type annotation for `cls` in classmethod"
-  "D203",  # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
-  "D212",  # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
-  "S104",  # Possible binding to all interface
-]
-[tool.ruff.per-file-ignores]
-"tests/**/*.py" = [
-  "S101",  # asserts allowed in tests...
-  "FBT",  # don"t care about booleans as positional arguments in tests
-  "INP001", # no implicit namespace
-  "D",  # don"t care about documentation in tests
-  "S603",  # `subprocess` call: check for execution of untrusted input
-  "PLR2004",  # Magic value used in comparison, consider replacing with a constant variable
-]
