@@ -1,0 +1,2 @@
+Linked environment variable substitutions docs in
+``set_env`` and ``pass_env`` config docs.
