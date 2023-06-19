@@ -1,0 +1,1 @@
+Ensure that ``get_requires*`` build hooks are called before ``prepare_metadata*``
