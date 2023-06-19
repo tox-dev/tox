@@ -321,8 +321,10 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self.setup()
         end = self._frontend
         if for_env["package"] == "editable":
+            self._setup_build_requires("editable")
             dist_info = end.prepare_metadata_for_build_editable(self.meta_folder, self._wheel_config_settings).metadata
         else:
+            self._setup_build_requires("wheel")
             dist_info = end.prepare_metadata_for_build_wheel(self.meta_folder, self._wheel_config_settings).metadata
         self._distribution_meta = Distribution.at(str(dist_info))
 
