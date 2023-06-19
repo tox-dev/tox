@@ -165,12 +165,10 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         if "sdist" in self.builds or "external" in self.builds:
             self._setup_build_requires("sdist")
 
-    def _setup_build_requires(self, of_type: str):
+    def _setup_build_requires(self, of_type: str) -> None:
         hook = getattr(self._frontend, f"get_requires_for_build_{of_type}")
         build_requires = hook().requires  # already cached via Pep517VirtualEnvFrontend
-        pending = [
-            req for req in build_requires if req not in self._installed_build_requirements
-        ]
+        pending = [req for req in build_requires if req not in self._installed_build_requirements]
         if pending:
             self._install(pending, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
             self._installed_build_requirements.update(pending)
@@ -347,7 +345,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         for hook in chain(
             (f"build_{build_type}" for build_type in build_types),
             (f"get_requires_for_build_{build_type}" for build_type in build_types),
-            (f"prepare_metadata_for_build_{build_type}" for build_type in build_types)
+            (f"prepare_metadata_for_build_{build_type}" for build_type in build_types),
         ):  # wrap build methods in a cache wrapper
             if not hasattr(self, hook):
                 continue
