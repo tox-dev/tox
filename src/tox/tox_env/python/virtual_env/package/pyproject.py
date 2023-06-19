@@ -104,6 +104,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self._pkg_lock = RLock()  # can build only one package at a time
         self.root = self.conf["package_root"]
         self._package_paths: set[Path] = set()
+        self._installed_build_requirements: set[Requirement] = set()
 
     @staticmethod
     def id() -> str:  # noqa: A003
@@ -158,14 +159,21 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         if "editable" in self.builds:
             if not self._frontend.optional_hooks["build_editable"]:
                 raise BuildEditableNotSupportedError
-            build_requires = self._frontend.get_requires_for_build_editable().requires
-            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
+            self._setup_build_requires("editable")
         if "wheel" in self.builds:
-            build_requires = self._frontend.get_requires_for_build_wheel().requires
-            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_wheel")
+            self._setup_build_requires("wheel")
         if "sdist" in self.builds or "external" in self.builds:
-            build_requires = self._frontend.get_requires_for_build_sdist().requires
-            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_sdist")
+            self._setup_build_requires("sdist")
+
+    def _setup_build_requires(self, of_type: str):
+        hook = getattr(self._frontend, f"get_requires_for_build_{of_type}")
+        build_requires = hook().requires  # already cached via Pep517VirtualEnvFrontend
+        pending = [
+            req for req in build_requires if req not in self._installed_build_requirements
+        ]
+        if pending:
+            self._install(pending, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
+            self._installed_build_requirements.update(pending)
 
     def _teardown(self) -> None:
         executor = self._frontend.backend_executor
