@@ -5,6 +5,7 @@ import os
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
+from itertools import chain
 from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, NoReturn, Optional, Sequence, cast
@@ -332,12 +333,19 @@ class Pep517VirtualEnvFrontend(Frontend):
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
 
-        for build_type in ("editable", "sdist", "wheel"):  # wrap build methods in a cache wrapper
+        build_types = ["editable", "sdist", "wheel"]
+        for hook in chain(
+            (f"build_{build_type}" for build_type in build_types),
+            (f"get_requires_for_build_{build_type}" for build_type in build_types),
+            (f"prepare_metadata_for_build_{build_type}" for build_type in build_types)
+        ):  # wrap build methods in a cache wrapper
+            if not hasattr(self, hook):
+                continue
 
-            def key(*args: Any, bound_return: str = build_type, **kwargs: Any) -> str:  # noqa: ARG001
+            def key(*args: Any, bound_return: str = hook, **kwargs: Any) -> str:  # noqa: ARG001
                 return bound_return
 
-            setattr(self, f"build_{build_type}", cached(into, key=key)(getattr(self, f"build_{build_type}")))
+            setattr(self, hook, cached(into, key=key)(getattr(self, hook)))
 
     @property
     def backend_cmd(self) -> Sequence[str]:
