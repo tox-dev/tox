@@ -104,7 +104,6 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self._pkg_lock = RLock()  # can build only one package at a time
         self.root = self.conf["package_root"]
         self._package_paths: set[Path] = set()
-        self._installed_build_requirements: set[Requirement] = set()
 
     @staticmethod
     def id() -> str:  # noqa: A003
@@ -156,22 +155,18 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
 
     def _setup_env(self) -> None:
         super()._setup_env()
+        if "sdist" in self.builds or "external" in self.builds:
+            self._setup_build_requires("sdist")
+        if "wheel" in self.builds:
+            self._setup_build_requires("wheel")
         if "editable" in self.builds:
             if not self._frontend.optional_hooks["build_editable"]:
                 raise BuildEditableNotSupportedError
             self._setup_build_requires("editable")
-        if "wheel" in self.builds:
-            self._setup_build_requires("wheel")
-        if "sdist" in self.builds or "external" in self.builds:
-            self._setup_build_requires("sdist")
 
     def _setup_build_requires(self, of_type: str) -> None:
-        hook = getattr(self._frontend, f"get_requires_for_build_{of_type}")
-        build_requires = hook().requires  # already cached via Pep517VirtualEnvFrontend
-        pending = [req for req in build_requires if req not in self._installed_build_requirements]
-        if pending:
-            self._install(pending, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
-            self._installed_build_requirements.update(pending)
+        requires = getattr(self._frontend, f"get_requires_for_build_{of_type}")().requires
+        self._install(requires, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
 
     def _teardown(self) -> None:
         executor = self._frontend.backend_executor
@@ -316,13 +311,14 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
         if self._distribution_meta is not None:  # pragma: no branch
             return  # pragma: no cover
+        # even if we don't build a wheel we need the requires for it should we want to build its metadata
+        if for_env["package"] not in self.builds:
+            self.builds[for_env["package"]].append(for_env)
         self.setup()
         end = self._frontend
         if for_env["package"] == "editable":
-            self._setup_build_requires("editable")
             dist_info = end.prepare_metadata_for_build_editable(self.meta_folder, self._wheel_config_settings).metadata
         else:
-            self._setup_build_requires("wheel")
             dist_info = end.prepare_metadata_for_build_wheel(self.meta_folder, self._wheel_config_settings).metadata
         self._distribution_meta = Distribution.at(str(dist_info))
 
@@ -341,14 +337,11 @@ class Pep517VirtualEnvFrontend(Frontend):
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
 
-        build_types = ["editable", "sdist", "wheel"]
         for hook in chain(
-            (f"build_{build_type}" for build_type in build_types),
-            (f"get_requires_for_build_{build_type}" for build_type in build_types),
-            (f"prepare_metadata_for_build_{build_type}" for build_type in build_types),
+            (f"get_requires_for_build_{build_type}" for build_type in ["editable", "wheel"]),
+            (f"prepare_metadata_for_build_{build_type}" for build_type in ["editable", "wheel"]),
+            (f"build_{build_type}" for build_type in ["editable", "sdist", "wheel"]),
         ):  # wrap build methods in a cache wrapper
-            if not hasattr(self, hook):
-                continue
 
             def key(*args: Any, bound_return: str = hook, **kwargs: Any) -> str:  # noqa: ARG001
                 return bound_return
