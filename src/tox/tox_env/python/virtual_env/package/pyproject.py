@@ -191,6 +191,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         try:
             deps = self._load_deps(for_env)
         except BuildEditableNotSupportedError:
+            self.call_require_hooks.remove("editable")
             targets = [e for e in self.builds.pop("editable") if e["package"] == "editable"]
             names = ", ".join(sorted({t.env_name for t in targets if t.env_name}))
 
@@ -203,6 +204,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             for env in targets:
                 env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]  # noqa: SLF001
                 self.builds["editable-legacy"].append(env)
+            self._run_state["setup"] = False  # force setup again as we need to provision wheel to get dependencies
             deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
         if of_type == "editable-legacy":
@@ -338,9 +340,9 @@ class Pep517VirtualEnvFrontend(Frontend):
         into: dict[str, Any] = {}
 
         for hook in chain(
-            (f"get_requires_for_build_{build_type}" for build_type in ["editable", "wheel"]),
+            (f"get_requires_for_build_{build_type}" for build_type in ["editable", "wheel", "sdist"]),
             (f"prepare_metadata_for_build_{build_type}" for build_type in ["editable", "wheel"]),
-            (f"build_{build_type}" for build_type in ["editable", "sdist", "wheel"]),
+            (f"build_{build_type}" for build_type in ["editable", "wheel", "sdist"]),
         ):  # wrap build methods in a cache wrapper
 
             def key(*args: Any, bound_return: str = hook, **kwargs: Any) -> str:  # noqa: ARG001
