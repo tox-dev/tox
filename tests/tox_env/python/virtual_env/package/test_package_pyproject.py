@@ -213,6 +213,7 @@ def test_pyproject_deps_static_with_dynamic(  # noqa: PLR0913
     expected_calls = [
         (".pkg", "_optional_hooks"),
         (".pkg", "get_requires_for_build_sdist"),
+        (".pkg", "get_requires_for_build_wheel"),
         (".pkg", "build_wheel"),
         (".pkg", "build_sdist"),
         ("py", "install_package_deps"),
@@ -239,10 +240,10 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
 
     expected_calls = [
         (".pkg", "_optional_hooks"),
+        (".pkg", "get_requires_for_build_wheel"),
         (".pkg", "build_wheel"),
         (".pkg", "get_requires_for_build_sdist"),
         ("a", "install_package"),
-        (".pkg", "get_requires_for_build_sdist"),
         ("b", "install_package"),
         (".pkg", "_exit"),
     ]

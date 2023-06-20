@@ -5,6 +5,7 @@ import os
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
+from itertools import chain
 from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, NoReturn, Optional, Sequence, cast
@@ -97,6 +98,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         super().__init__(create_args)
         self._frontend_: Pep517VirtualEnvFrontend | None = None
         self.builds: defaultdict[str, list[EnvConfigSet]] = defaultdict(list)
+        self.call_require_hooks: set[str] = set()
         self._distribution_meta: PathDistribution | None = None
         self._package_dependencies: list[Requirement] | None = None
         self._package_name: str | None = None
@@ -150,21 +152,23 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
+        self.call_require_hooks.add(build_type)
         self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
         super()._setup_env()
-        if "editable" in self.builds:
+        if "sdist" in self.call_require_hooks or "external" in self.call_require_hooks:
+            self._setup_build_requires("sdist")
+        if "wheel" in self.call_require_hooks:
+            self._setup_build_requires("wheel")
+        if "editable" in self.call_require_hooks:
             if not self._frontend.optional_hooks["build_editable"]:
                 raise BuildEditableNotSupportedError
-            build_requires = self._frontend.get_requires_for_build_editable().requires
-            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_editable")
-        if "wheel" in self.builds:
-            build_requires = self._frontend.get_requires_for_build_wheel().requires
-            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_wheel")
-        if "sdist" in self.builds or "external" in self.builds:
-            build_requires = self._frontend.get_requires_for_build_sdist().requires
-            self._install(build_requires, PythonPackageToxEnv.__name__, "requires_for_build_sdist")
+            self._setup_build_requires("editable")
+
+    def _setup_build_requires(self, of_type: str) -> None:
+        requires = getattr(self._frontend, f"get_requires_for_build_{of_type}")().requires
+        self._install(requires, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
 
     def _teardown(self) -> None:
         executor = self._frontend.backend_executor
@@ -187,6 +191,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         try:
             deps = self._load_deps(for_env)
         except BuildEditableNotSupportedError:
+            self.call_require_hooks.remove("editable")
             targets = [e for e in self.builds.pop("editable") if e["package"] == "editable"]
             names = ", ".join(sorted({t.env_name for t in targets if t.env_name}))
 
@@ -199,6 +204,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             for env in targets:
                 env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]  # noqa: SLF001
                 self.builds["editable-legacy"].append(env)
+            self._run_state["setup"] = False  # force setup again as we need to provision wheel to get dependencies
             deps = self._load_deps(for_env)
         of_type: str = for_env["package"]
         if of_type == "editable-legacy":
@@ -309,12 +315,13 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
         if self._distribution_meta is not None:  # pragma: no branch
             return  # pragma: no cover
+        # even if we don't build a wheel we need the requirements for it should we want to build its metadata
+        target = "editable" if for_env["package"] == "editable" else "wheel"
+        self.call_require_hooks.add(target)
+
         self.setup()
-        end = self._frontend
-        if for_env["package"] == "editable":
-            dist_info = end.prepare_metadata_for_build_editable(self.meta_folder, self._wheel_config_settings).metadata
-        else:
-            dist_info = end.prepare_metadata_for_build_wheel(self.meta_folder, self._wheel_config_settings).metadata
+        hook = getattr(self._frontend, f"prepare_metadata_for_build_{target}")
+        dist_info = hook(self.meta_folder, self._wheel_config_settings).metadata
         self._distribution_meta = Distribution.at(str(dist_info))
 
     @property
@@ -332,12 +339,16 @@ class Pep517VirtualEnvFrontend(Frontend):
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
 
-        for build_type in ("editable", "sdist", "wheel"):  # wrap build methods in a cache wrapper
+        for hook in chain(
+            (f"get_requires_for_build_{build_type}" for build_type in ["editable", "wheel", "sdist"]),
+            (f"prepare_metadata_for_build_{build_type}" for build_type in ["editable", "wheel"]),
+            (f"build_{build_type}" for build_type in ["editable", "wheel", "sdist"]),
+        ):  # wrap build methods in a cache wrapper
 
-            def key(*args: Any, bound_return: str = build_type, **kwargs: Any) -> str:  # noqa: ARG001
+            def key(*args: Any, bound_return: str = hook, **kwargs: Any) -> str:  # noqa: ARG001
                 return bound_return
 
-            setattr(self, f"build_{build_type}", cached(into, key=key)(getattr(self, f"build_{build_type}")))
+            setattr(self, hook, cached(into, key=key)(getattr(self, hook)))
 
     @property
     def backend_cmd(self) -> Sequence[str]:

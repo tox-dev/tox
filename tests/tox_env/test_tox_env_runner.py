@@ -24,6 +24,7 @@ def test_package_only(
     expected_calls = [
         (".pkg", "_optional_hooks"),
         (".pkg", "get_requires_for_build_sdist"),
+        (".pkg", "get_requires_for_build_wheel"),
         (".pkg", "build_wheel"),
         (".pkg", "build_sdist"),
         (".pkg", "_exit"),

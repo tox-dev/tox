@@ -1,0 +1,2 @@
+Ensure that ``get_requires_for_build_wheel`` is called before ``prepare_metadata_for_build_wheel``, and
+``get_requires_for_build_editable`` is called before ``prepare_metadata_for_build_editable`` - by :user:`abravalheri`.
