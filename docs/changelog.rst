@@ -4,6 +4,20 @@ Release History
 
 .. towncrier release notes start
 
+v4.6.3 (2023-06-19)
+-------------------
+
+Bugfixes - 4.6.3
+~~~~~~~~~~~~~~~~
+- Ensure that ``get_requires_for_build_wheel`` is called before ``prepare_metadata_for_build_wheel``, and
+  ``get_requires_for_build_editable`` is called before ``prepare_metadata_for_build_editable`` - by :user:`abravalheri`. (:issue:`3043`)
+
+Improved Documentation - 4.6.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Linked environment variable substitutions docs in
+  ``set_env`` and ``pass_env`` config docs. (:issue:`3039`)
+
+
 v4.6.2 (2023-06-16)
 -------------------
 
