@@ -98,6 +98,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         super().__init__(create_args)
         self._frontend_: Pep517VirtualEnvFrontend | None = None
         self.builds: defaultdict[str, list[EnvConfigSet]] = defaultdict(list)
+        self.call_require_hooks: set[str] = set()
         self._distribution_meta: PathDistribution | None = None
         self._package_dependencies: list[Requirement] | None = None
         self._package_name: str | None = None
@@ -151,15 +152,16 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
+        self.call_require_hooks.add(build_type)
         self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
         super()._setup_env()
-        if "sdist" in self.builds or "external" in self.builds:
+        if "sdist" in self.call_require_hooks or "external" in self.call_require_hooks:
             self._setup_build_requires("sdist")
-        if "wheel" in self.builds:
+        if "wheel" in self.call_require_hooks:
             self._setup_build_requires("wheel")
-        if "editable" in self.builds:
+        if "editable" in self.call_require_hooks:
             if not self._frontend.optional_hooks["build_editable"]:
                 raise BuildEditableNotSupportedError
             self._setup_build_requires("editable")
@@ -311,15 +313,13 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
     def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
         if self._distribution_meta is not None:  # pragma: no branch
             return  # pragma: no cover
-        # even if we don't build a wheel we need the requires for it should we want to build its metadata
-        if for_env["package"] not in self.builds:
-            self.builds[for_env["package"]].append(for_env)
+        # even if we don't build a wheel we need the requirements for it should we want to build its metadata
+        target = "editable" if for_env["package"] == "editable" else "wheel"
+        self.call_require_hooks.add(target)
+
         self.setup()
-        end = self._frontend
-        if for_env["package"] == "editable":
-            dist_info = end.prepare_metadata_for_build_editable(self.meta_folder, self._wheel_config_settings).metadata
-        else:
-            dist_info = end.prepare_metadata_for_build_wheel(self.meta_folder, self._wheel_config_settings).metadata
+        hook = getattr(self._frontend, f"prepare_metadata_for_build_{target}")
+        dist_info = hook(self.meta_folder, self._wheel_config_settings).metadata
         self._distribution_meta = Distribution.at(str(dist_info))
 
     @property
