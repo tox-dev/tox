@@ -246,8 +246,7 @@ class RequirementsFile:
         scheme = get_url_scheme(url)
         if scheme in ["http", "https"]:
             with urlopen(url) as response:  # noqa: S310
-                text = self._read_decode(response)
-                return text
+                return self._read_decode(response)
         elif scheme == "file":
             url = url_to_path(url)
         try:
@@ -275,8 +274,7 @@ class RequirementsFile:
         lines_enum: ReqFileLines = enumerate(content.splitlines(), start=1)
         lines_enum = self._join_lines(lines_enum)
         lines_enum = self._ignore_comments(lines_enum)
-        lines_enum = self._expand_env_variables(lines_enum)
-        return lines_enum
+        return self._expand_env_variables(lines_enum)
 
     def _parse_line(self, line: str) -> tuple[str, Namespace]:
         args_str, options_str = self._break_args_options(line)

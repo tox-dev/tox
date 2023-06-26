@@ -42,8 +42,7 @@ def main(args: Sequence[str]) -> int:
     if result is not False:
         return result
     handler = state._options.cmd_handlers[state.conf.options.command]  # noqa: SLF001
-    result = handler(state)
-    return result
+    return handler(state)
 
 
 def setup_state(args: Sequence[str]) -> State:

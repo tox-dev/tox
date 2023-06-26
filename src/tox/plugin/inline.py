@@ -27,7 +27,6 @@ def _load_plugin(path: Path) -> ModuleType:
     try:
         if module_name in sys.modules:
             del sys.modules[module_name]  # pragma: no cover
-        module = importlib.import_module(module_name)
-        return module
+        return importlib.import_module(module_name)
     finally:
         del sys.path[0]

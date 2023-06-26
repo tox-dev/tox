@@ -71,7 +71,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         of_type: type[T],
         default: Callable[[Config, str | None], T] | T,
         post_process: Callable[[T], T] | None = None,
-        factory: Factory[T] = None,
+        factory: Factory[T] | None = None,
     ) -> None:
         super().__init__(keys, desc)
         self.of_type = of_type

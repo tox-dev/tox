@@ -70,8 +70,7 @@ class PythonDeps(RequirementsFile):
             # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
             lines.append(PythonDeps._normalize_line(line))
         adjusted = "\n".join(lines)
-        raw = f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
-        return raw
+        return f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
 
     @staticmethod
     def _normalize_line(line: str) -> str:
