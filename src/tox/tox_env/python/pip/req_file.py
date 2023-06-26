@@ -8,12 +8,13 @@ from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
     from pathlib import Path
+    from typing import Final
 
 
 class PythonDeps(RequirementsFile):
     # these options are valid in requirements.txt, but not via pip cli and
     # thus cannot be used in the testenv `deps` list
-    _illegal_options = ["hash"]
+    _illegal_options: Final[list[str]] = ["hash"]
 
     def __init__(self, raw: str, root: Path) -> None:
         super().__init__(root / "tox.ini", constraint=False)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from docutils.nodes import Element, Node, Text, container, fully_normalize_name, literal, paragraph, reference, strong
 from docutils.parsers.rst.directives import flag, unchanged, unchanged_required
@@ -11,6 +11,8 @@ from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
 
 if TYPE_CHECKING:
+    from typing import Final
+
     from docutils.parsers.rst.states import RSTState, RSTStateMachine
 
 LOGGER = getLogger(__name__)
@@ -19,7 +21,7 @@ LOGGER = getLogger(__name__)
 class ToxConfig(SphinxDirective):
     name = "conf"
     has_content = True
-    option_spec = {
+    option_spec: Final[ClassVar[dict[str, Any]]] = {
         "keys": unchanged_required,
         "version_added": unchanged,
         "version_changed": unchanged,

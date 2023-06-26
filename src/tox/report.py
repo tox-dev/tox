@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from io import BytesIO, TextIOWrapper
 from pathlib import Path
 from threading import Thread, current_thread, enumerate, local
-from typing import IO, Iterator, Tuple
+from typing import IO, ClassVar, Iterator, Tuple
 
 from colorama import Fore, Style, init
 
@@ -29,7 +29,7 @@ OutErr = Tuple[TextIOWrapper, TextIOWrapper]
 class _LogThreadLocal(local):
     """A thread local variable that inherits values from its parent."""
 
-    _ident_to_data: dict[int | None, str] = {}
+    _ident_to_data: ClassVar[dict[int | None, str]] = {}
 
     def __init__(self, out_err: OutErr) -> None:
         self.name = self._ident_to_data.get(getattr(current_thread(), "parent_ident", None), "ROOT")
