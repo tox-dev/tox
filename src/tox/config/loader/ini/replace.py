@@ -259,8 +259,7 @@ def replace_reference(  # noqa: PLR0912, C901
                     exception = exc
                 else:
                     as_str, _ = stringify(value)
-                    as_str = as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
-                    return as_str
+                    return as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
         except Exception as exc:  # noqa: BLE001
             exception = exc
         if exception is not None:

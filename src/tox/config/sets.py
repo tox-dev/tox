@@ -47,7 +47,7 @@ class ConfigSet(ABC):
         default: Callable[[Config, str | None], V] | V,
         desc: str,
         post_process: Callable[[V], V] | None = None,
-        factory: Factory[Any] = None,
+        factory: Factory[Any] | None = None,
     ) -> ConfigDynamicDefinition[V]:
         """
         Add configuration value.

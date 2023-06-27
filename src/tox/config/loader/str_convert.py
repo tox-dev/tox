@@ -5,10 +5,13 @@ import shlex
 import sys
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterator
+from typing import TYPE_CHECKING, Any, Iterator
 
 from tox.config.loader.convert import Convert
 from tox.config.types import Command, EnvList
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class StrConvert(Convert[str]):
@@ -111,8 +114,8 @@ class StrConvert(Convert[str]):
         elements = list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n")))
         return EnvList(elements)
 
-    TRUTHFUL_VALUES = {"true", "1", "yes", "on"}
-    FALSE_VALUES = {"false", "0", "no", "off", ""}
+    TRUTHFUL_VALUES: Final[set[str]] = {"true", "1", "yes", "on"}
+    FALSE_VALUES: Final[set[str]] = {"false", "0", "no", "off", ""}
     VALID_BOOL = sorted(TRUTHFUL_VALUES | FALSE_VALUES)
 
     @staticmethod

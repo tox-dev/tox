@@ -47,7 +47,7 @@ class CliEnv:
         return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
 
     def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and self._names == other._names  # noqa: SLF001
+        return type(self) == type(other) and self._names == other._names
 
     def __ne__(self, other: Any) -> bool:
         return not (self == other)

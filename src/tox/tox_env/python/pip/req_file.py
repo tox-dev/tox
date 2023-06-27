@@ -8,12 +8,13 @@ from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
     from pathlib import Path
+    from typing import Final
 
 
 class PythonDeps(RequirementsFile):
     # these options are valid in requirements.txt, but not via pip cli and
     # thus cannot be used in the testenv `deps` list
-    _illegal_options = ["hash"]
+    _illegal_options: Final[list[str]] = ["hash"]
 
     def __init__(self, raw: str, root: Path) -> None:
         super().__init__(root / "tox.ini", constraint=False)
@@ -70,8 +71,7 @@ class PythonDeps(RequirementsFile):
             # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
             lines.append(PythonDeps._normalize_line(line))
         adjusted = "\n".join(lines)
-        raw = f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
-        return raw
+        return f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
 
     @staticmethod
     def _normalize_line(line: str) -> str:

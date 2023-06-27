@@ -27,8 +27,7 @@ def url_to_path(url: str) -> str:
     else:
         msg = f"non-local file URIs are not supported on this platform: {url!r}"
         raise ValueError(msg)
-    path = url2pathname(netloc + path)
-    return path
+    return url2pathname(netloc + path)
 
 
 def handle_binary_option(value: str, target: set[str], other: set[str]) -> None:
