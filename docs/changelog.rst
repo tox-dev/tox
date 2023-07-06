@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.6.4 (2023-07-06)
+-------------------
+
+Bugfixes - 4.6.4
+~~~~~~~~~~~~~~~~
+- Fix hang and zombie process on interrupt (CTRL-C). (:issue:`3056`)
+
+
 v4.6.3 (2023-06-19)
 -------------------
 
