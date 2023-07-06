@@ -99,7 +99,6 @@ Code style guide
   with Python 2.7 to allow and test for running Python 2 envs from tox. They are listed in ``.pre-commit-config.yaml``
   under ``repo: https://github.com/asottile/pyupgrade`` under ``hooks/exclude``.
   Please do not attempt to modernize them to Python 3.x.
-- Packaging options should be specified within ``pyproject.toml``.
 - All code (tests too) must be type annotated as much as required by ``mypy``.
 - We use a line length of 120.
 - Exception messages should only be capitalized (and ended with a period/exclamation mark) if they are multi-sentenced,
