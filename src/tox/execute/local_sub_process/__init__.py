@@ -63,6 +63,8 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
     @property
     def exit_code(self) -> int | None:
+        # need to poll here, to make sure the returncode we get is current
+        self._process.poll()
         return self._process.returncode
 
     def interrupt(self) -> None:
