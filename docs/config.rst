@@ -15,8 +15,8 @@ Out of box tox supports three configuration locations prioritized in the followi
 2. ``pyproject.toml``,
 3. ``setup.cfg``.
 
-With regards to the configuration format, at the moment we only support *ini-style*. ``tox.ini`` and ``setup.cfg`` are by
-nature such files, while in ``pyproject.toml`` currently you can only inline the *ini-style* config.
+With regards to the configuration format, at the moment we only support *ini-style*. ``tox.ini`` and ``setup.cfg`` are
+by nature such files, while in ``pyproject.toml`` currently you can only inline the *ini-style* config.
 
 Note that ``setup.cfg`` requires the content to be under the ``tox:tox`` and ``testenv`` sections and is otherwise
 ignored. ``pyproject.toml`` on the other hand is in TOML format. However, one can inline the *ini-style* format under
@@ -616,8 +616,9 @@ Python run
    :keys: package
    :version_added: 4.0
 
-   When option can be one of ``wheel``, ``sdist``, ``editable``, ``editable-legacy``, ``skip``, or ``external``. If :ref:`use_develop` is
-   set this becomes a constant of ``editable``. If :ref:`skip_install` is set this becomes a constant of ``skip``.
+   When option can be one of ``wheel``, ``sdist``, ``editable``, ``editable-legacy``, ``skip``, or ``external``. If
+   :ref:`use_develop` is set this becomes a constant of ``editable``. If :ref:`skip_install` is set this becomes a
+   constant of ``skip``.
 
 
 .. conf::
@@ -767,8 +768,8 @@ Pip installer
    :version_added: 2.4
 
    The ``list_dependencies_command`` setting is used for listing the packages installed into the virtual environment.
-   This command will be executed only if executing on Contionous Integrations is detected (for example set environment variable ``CI=1``)
-   or if journal is active.
+   This command will be executed only if executing on Continuous Integrations is detected (for example set environment
+   variable ``CI=1``) or if journal is active.
 
 
 .. conf::
@@ -786,7 +787,7 @@ Pip installer
    :version_added: 4.4.0
 
    If ``constrain_package_deps`` is true, then tox will create and use ``{env_dir}{/}constraints.txt`` when installing
-   package dependnecies during ``install_package_deps`` stage. When this value is set to false, any conflicting package
+   package dependencies during ``install_package_deps`` stage. When this value is set to false, any conflicting package
    dependencies will override explicit dependencies and constraints passed to ``deps``.
 
 .. conf::
@@ -795,17 +796,16 @@ Pip installer
    :version_added: 4.4.0
 
    When ``use_frozen_constraints`` is true, then tox will use the ``list_dependencies_command`` to enumerate package
-   versions in order to create ``{env_dir}{/}constraints.txt``. Otherwise the package specifications explicitly listed under
-   ``deps`` (or in requirements / constraints files referenced in ``deps``) will be used as the constraints. If
+   versions in order to create ``{env_dir}{/}constraints.txt``. Otherwise the package specifications explicitly listed
+   under ``deps`` (or in requirements / constraints files referenced in ``deps``) will be used as the constraints. If
    ``constrain_package_deps`` is false, then this setting has no effect.
 
 User configuration
 ------------------
 
-tox allows creation of user level config-file to modify default values of the CLI commands.
-It is located in the OS-specific user config directory under ``tox/config.ini`` path, see ``tox --help`` output for exact location.
-It can be changed via ``TOX_USER_CONFIG_FILE`` environment variable.
-Example configuration:
+tox allows creation of user level config-file to modify default values of the CLI commands. It is located in the
+OS-specific user config directory under ``tox/config.ini`` path, see ``tox --help`` output for exact location. It can be
+changed via ``TOX_USER_CONFIG_FILE`` environment variable. Example configuration:
 
 .. code-block:: ini
 
@@ -820,7 +820,7 @@ through the ``{...}`` string-substitution pattern.
 
 The string inside the curly braces may reference a global or per-environment config key as described above.
 
-In substitutions, the backslash character ``\`` will act as an escape when preceeding
+In substitutions, the backslash character ``\`` will act as an escape when preceding
 ``{``, ``}``, ``:``, ``[``, or ``]``, otherwise the backslash will be
 reproduced literally::
 
