@@ -5,10 +5,10 @@ Getting started
 ---------------
 
 
-``tox`` is a volunteer maintained open source project and we welcome contributions of all forms. The sections
-below will help you get started with development, testing, and documentation. We’re pleased that you are interested in
-working on tox. This document is meant to get you setup to work on tox and to act as a guide and reference
-to the development setup. If you face any issues during this process, please
+``tox`` is a volunteer maintained open source project and we welcome contributions of all forms. The sections below will
+help you get started with development, testing, and documentation. We’re pleased that you are interested in working on
+tox. This document is meant to get you setup to work on tox and to act as a guide and reference to the development
+setup. If you face any issues during this process, please
 :issue:`new?title=Trouble+with+development+environment` about it on the issue tracker.
 
 Setup
@@ -44,8 +44,8 @@ The easiest way to do this is to generate the development tox environment, and t
 Running tests
 ~~~~~~~~~~~~~
 
-tox's tests are written using the :pypi:`pytest` test framework. :pypi:`tox` is used to automate the setup
-and execution of tox's tests.
+tox's tests are written using the :pypi:`pytest` test framework. :pypi:`tox` is used to automate the setup and execution
+of tox's tests.
 
 To run tests locally execute:
 
@@ -56,10 +56,9 @@ To run tests locally execute:
 This will run the test suite for the same Python version as under which ``tox`` is installed. Alternatively you can
 specify a specific version of Python by using the ``pyNN`` format, such as: ``py38``, ``pypy3``, etc.
 
-``tox`` has been configured to forward any additional arguments it is given to ``pytest``.
-This enables the use of pytest's
-`rich CLI <https://docs.pytest.org/en/latest/how-to/usage.html#specifying-which-tests-to-run>`_. As an example, you can
-select tests using the various ways that pytest provides:
+``tox`` has been configured to forward any additional arguments it is given to ``pytest``. This enables the use of
+pytest's `rich CLI <https://docs.pytest.org/en/latest/how-to/usage.html#specifying-which-tests-to-run>`_. As an example,
+you can select tests using the various ways that pytest provides:
 
 .. code-block:: shell
 
@@ -69,8 +68,8 @@ select tests using the various ways that pytest provides:
     tox -e py -- -k "test_extra"
 
 Some tests require additional dependencies to be run, such is the various shell activators (``bash``, ``fish``,
-``powershell``, etc). The tests will be skipped automatically if the dependencies are not present. Please note however that in CI
-all tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
+``powershell``, etc). The tests will be skipped automatically if the dependencies are not present. Please note however
+that in CI all tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
 
 Running linters
 ~~~~~~~~~~~~~~~
@@ -128,11 +127,10 @@ Contributing
 Submitting pull requests
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Submit pull requests (PRs) against the ``main`` branch, providing a good description of what you're doing and why. You must
-have legal permission to distribute any code you contribute to tox and it must be available under the MIT
-License. Provide tests that cover your changes and run the tests locally first. tox
-:ref:`supports <compatibility-requirements>` multiple Python versions and operating systems. Any pull request must
-consider and work on all these platforms.
+Submit pull requests (PRs) against the ``main`` branch, providing a good description of what you're doing and why. You
+must have legal permission to distribute any code you contribute to tox and it must be available under the MIT License.
+Provide tests that cover your changes and run the tests locally first. tox :ref:`supports <compatibility-requirements>`
+multiple Python versions and operating systems. Any pull request must consider and work on all these platforms.
 
 Pull requests should be small to facilitate review. Keep them self-contained, and limited in scope. `Studies have shown
 <https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality falls off as patch size
@@ -158,10 +156,10 @@ pull request. If needed, project maintainers can manually trigger a restart of a
 Changelog entries
 ~~~~~~~~~~~~~~~~~
 
-The ``changelog.rst`` file is managed using :pypi:`towncrier` and all changes must be accompanied by a
-changelog entry. To add an entry to the changelog, first you need to have created an issue describing the
-change you want to make. A  pull request itself *may* function as such, but it is preferred to have a dedicated issue
-(for example, in case the PR ends up rejected due to code quality reasons).
+The ``changelog.rst`` file is managed using :pypi:`towncrier` and all changes must be accompanied by a changelog entry.
+To add an entry to the changelog, first you need to have created an issue describing the change you want to make. A pull
+request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case the PR ends
+up rejected due to code quality reasons).
 
 There is no need to create an issue for trivial changes, e.g. for typo fixes.
 
@@ -184,30 +182,30 @@ Contents of a changelog entry
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The content of this file is reStructuredText formatted text that will be used as the content of the changelog entry.
-You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of
-the affected issues when rendering the changelog.
+You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
+affected issues when rendering the changelog.
 
 In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the entries to the
 point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
 ``This change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
-by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped
-at 120 characters. Remember that a changelog entry is meant for end users and should only contain details relevant to an
-end user.
+by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
+characters. Remember that a changelog entry is meant for end users and should only contain details relevant to an end
+user.
 
 
 Becoming a maintainer
 ~~~~~~~~~~~~~~~~~~~~~
 
 If you want to become an official maintainer, start by helping out. As a first step, we welcome you to triage issues on
-tox's issue tracker. tox maintainers provide triage abilities to contributors once they have been around
-for some time and contributed positively to the project. This is optional and highly recommended for becoming a
-tox maintainer. Later, when you think you're ready, get in touch with one of the maintainers and they will
-initiate a vote among the existing maintainers.
+tox's issue tracker. tox maintainers provide triage abilities to contributors once they have been around for some time
+and contributed positively to the project. This is optional and highly recommended for becoming a tox maintainer. Later,
+when you think you're ready, get in touch with one of the maintainers and they will initiate a vote among the existing
+maintainers.
 
 .. note::
 
-    Upon becoming a maintainer, a person should be given access to various tox-related tooling across
-    multiple platforms. These are noted here for future reference by the maintainers:
+    Upon becoming a maintainer, a person should be given access to various tox-related tooling across multiple
+    platforms. These are noted here for future reference by the maintainers:
 
     - GitHub Push Access (provides also CI administration capabilities)
     - PyPI Publishing Access
