@@ -139,7 +139,7 @@ def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # noq
                 for at, entry in enumerate(as_root_args):
                     try:
                         req = Requirement(entry)
-                    except InvalidRequirement:
+                    except InvalidRequirement:  # noqa: PERF203
                         continue
                     if req.name in to_force:
                         as_root_args[at] = str(to_force[req.name])

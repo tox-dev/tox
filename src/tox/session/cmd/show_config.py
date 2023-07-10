@@ -101,7 +101,7 @@ def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None: 
         try:
             value = conf[key]
             as_str, multi_line = stringify(value)
-        except Exception as exception:  # because e.g. the interpreter cannot be found  # noqa: BLE001
+        except Exception as exception:  # because e.g. the interpreter cannot be found  # noqa: BLE001, PERF203
             as_str, multi_line = _colored(is_colored, Fore.LIGHTRED_EX, f"# Exception: {exception!r}"), False
         if multi_line and "\n" not in as_str:
             multi_line = False

@@ -64,7 +64,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 loc = locals()
                 loc["Literal"] = Literal
                 as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
-                of_type = eval(as_literal, globals(), loc)  # noqa: PGH001
+                of_type = eval(as_literal, globals(), loc)  # noqa: PGH001, S307
             elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa: SLF001

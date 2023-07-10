@@ -66,10 +66,8 @@ class PythonDeps(RequirementsFile):
         # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively
         # ignored
         raw = "".join(raw.replace("\r", "").split("\\\n"))
-        lines: list[str] = []
-        for line in raw.splitlines():
-            # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
-            lines.append(PythonDeps._normalize_line(line))
+        # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
+        lines: list[str] = [PythonDeps._normalize_line(line) for line in raw.splitlines()]
         adjusted = "\n".join(lines)
         return f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
 

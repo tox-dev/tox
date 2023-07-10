@@ -255,7 +255,7 @@ def replace_reference(  # noqa: PLR0912, C901
                     if isinstance(src, SectionProxy):
                         return loader.process_raw(conf, conf_args.env_name, src[key])
                     value = src.load(key, conf_args.chain)
-                except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
+                except KeyError as exc:  # if fails, keep trying maybe another source can satisfy  # noqa: PERF203
                     exception = exc
                 else:
                     as_str, _ = stringify(value)
