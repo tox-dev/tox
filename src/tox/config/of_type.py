@@ -95,7 +95,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
                 args.chain.append(chain_key)
                 try:
                     value = loader.load(key, self.of_type, self.factory, conf, args)
-                except KeyError:
+                except KeyError:  # noqa: PERF203
                     continue
                 else:
                     break

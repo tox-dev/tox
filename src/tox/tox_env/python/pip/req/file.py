@@ -320,7 +320,7 @@ class RequirementsFile:
                 base_opt.features_enabled = []
             for feature in opt.features_enabled:
                 if feature not in base_opt.features_enabled:
-                    base_opt.features_enabled.append(feature)
+                    base_opt.features_enabled.append(feature)  # noqa: PERF401
             base_opt.features_enabled.sort()
         if opt.index_url:
             if getattr(base_opt, "index_url", []):

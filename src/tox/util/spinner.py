@@ -25,11 +25,11 @@ if sys.platform == "win32":  # pragma: win32 cover
 def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
     encoding = getattr(file, "encoding", None)
     if encoding is not None:  # pragma: no branch  # this should be always set, unless someone passes in something bad
-        for char in chars:
-            try:
+        try:
+            for char in chars:
                 char.encode(encoding)
-            except UnicodeEncodeError:
-                break
+        except UnicodeEncodeError:
+            pass
         else:
             return True
     return False

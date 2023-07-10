@@ -38,7 +38,7 @@ def depends(state: State) -> int:
             packager_list: list[str] = []
             try:
                 for pkg_env in run_env.package_envs:
-                    packager_list.append(pkg_env.name)
+                    packager_list.append(pkg_env.name)  # noqa: PERF401
             except Exception as exception:  # noqa: BLE001
                 packager_list.append(f"... ({exception})")
             names = " | ".join(packager_list)

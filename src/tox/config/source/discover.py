@@ -36,7 +36,7 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
             try:
                 src = src_type(candidate)
                 break
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 continue
         if src is None:
             msg = f"could not find any config file in {config_file}"
@@ -53,7 +53,7 @@ def _locate_source() -> Source | None:
             candidate: Path = base / src_type.FILENAME
             try:
                 return src_type(candidate)
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 pass
     return None
 
@@ -64,7 +64,7 @@ def _load_exact_source(config_file: Path) -> Source:
     for src_type in (exact_match,) if exact_match is not None else SOURCE_TYPES:  # pragma: no branch
         try:
             return src_type(config_file)
-        except ValueError:
+        except ValueError:  # noqa: PERF203
             pass
     msg = f"could not recognize config file {config_file}"
     raise HandledError(msg)

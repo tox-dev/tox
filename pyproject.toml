@@ -54,11 +54,11 @@ dependencies = [
   "filelock>=3.12.2",
   'importlib-metadata>=6.7; python_version < "3.8"',
   "packaging>=23.1",
-  "platformdirs>=3.8",
+  "platformdirs>=3.8.1",
   "pluggy>=1.2",
-  "pyproject-api>=1.5.2",
+  "pyproject-api>=1.5.3",
   'tomli>=2.0.1; python_version < "3.11"',
-  'typing-extensions>=4.6.3; python_version < "3.8"',
+  'typing-extensions>=4.7.1; python_version < "3.8"',
   "virtualenv>=20.23.1",
 ]
 optional-dependencies.docs = [
