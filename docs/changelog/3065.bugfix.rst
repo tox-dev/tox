@@ -1,0 +1,1 @@
+Update a regular expression in tests to match the exception message in both Python 3.12 and older.
