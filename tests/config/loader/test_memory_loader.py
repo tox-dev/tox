@@ -66,7 +66,7 @@ def test_memory_loader(value: Any, of_type: type[Any], outcome: Any) -> None:
         (["m"], List[int], ValueError, "invalid literal for int"),
         ({"m": 1}, Dict[int, int], ValueError, "invalid literal for int"),
         ({1: "m"}, Dict[int, int], ValueError, "invalid literal for int"),
-        (object, Path, TypeError, "expected str, bytes or os.PathLike object"),
+        (object, Path, TypeError, r"str(, bytes)? or (an )?os\.PathLike object"),
         (1, Command, TypeError, "1"),
         (1, EnvList, TypeError, "1"),
     ],
