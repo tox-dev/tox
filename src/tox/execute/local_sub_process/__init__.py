@@ -115,7 +115,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                 result = ov.getresult(10)  # wait up to 10ms to perform the operation
                 if result != len(bytes_content):
                     msg = f"failed to write to {stdin!r}"
-                    raise RuntimeError(msg)  # noqa: TRY301
+                    raise RuntimeError(msg)
             else:
                 stdin.write(bytes_content)
                 stdin.flush()

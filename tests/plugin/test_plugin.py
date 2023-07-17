@@ -240,7 +240,7 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
         ):
             try:
                 _conf(config_set)  # type: ignore[no-untyped-call] # call to not typed function
-                raise NotImplementedError  # noqa: TRY301
+                raise NotImplementedError
             except RuntimeError as exc:  # noqa: PERF203
                 assert str(exc) == "config set has been marked final and cannot be extended"  # noqa: PT017
 
