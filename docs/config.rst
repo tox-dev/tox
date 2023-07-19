@@ -783,7 +783,7 @@ Pip installer
 
 .. conf::
    :keys: constrain_package_deps
-   :default: true
+   :default: false
    :version_added: 4.4.0
 
    If ``constrain_package_deps`` is true, then tox will create and use ``{env_dir}{/}constraints.txt`` when installing
