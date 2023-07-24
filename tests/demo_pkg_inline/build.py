@@ -42,11 +42,9 @@ content = {
         """,
 }
 metadata_files = {
-    entry_points: """
+    entry_points: f"""
         [tox]
-        example = {}.example_plugin""".format(
-        name,
-    ),
+        example = {name}.example_plugin""",
     metadata: """
         Metadata-Version: 2.1
         Name: {}
@@ -65,16 +63,12 @@ metadata_files = {
         version,
         "\n        ".join(os.environ.get("METADATA_EXTRA", "").split("\n")),
     ),
-    wheel: """
+    wheel: f"""
         Wheel-Version: 1.0
-        Generator: {}-{}
+        Generator: {name}-{version}
         Root-Is-Purelib: true
-        Tag: py{}-none-any
-       """.format(
-        name,
-        version,
-        sys.version_info[0],
-    ),
+        Tag: py{sys.version_info[0]}-none-any
+       """,
     f"{dist_info}/top_level.txt": name,
     record: """
         {0}/__init__.py,,
