@@ -38,7 +38,7 @@ def devenv(state: State) -> int:
         usedevelop=True,  # dev environments must be of type dev
         env_dir=opt.devenv_path,  # move it in source
     )
-    state.conf.memory_seed_loaders[list(opt.env)[0]].append(loader)
+    state.conf.memory_seed_loaders[next(iter(opt.env))].append(loader)
 
     state.envs.ensure_only_run_env_is_active()
     envs = list(state.envs.iter())
