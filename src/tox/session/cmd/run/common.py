@@ -135,6 +135,11 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
                         raise ArgumentError(self, str(exc)) from exc
                 setattr(namespace, self.dest, result)
 
+        if os.environ.get("PYTHONHASHSEED", "random") != "random":
+            hashseed_default = int(os.environ["PYTHONHASHSEED"])
+        else:
+            hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # noqa: S311
+
         parser.add_argument(
             "--hashseed",
             metavar="SEED",
@@ -142,7 +147,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
             "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
             action=SeedAction,
             of_type=Optional[int],
-            default=random.randint(1, 1024 if sys.platform == "win32" else 4294967295),  # noqa: S311
+            default=hashseed_default,
             dest="hash_seed",
         )
     parser.add_argument(

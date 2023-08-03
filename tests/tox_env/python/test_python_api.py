@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from typing import TYPE_CHECKING, Callable
+from unittest.mock import patch
 
 import pytest
 
@@ -218,6 +219,38 @@ def test_python_set_hash_seed_incorrect(tox_project: ToxProjectCreator) -> None:
     result = tox_project({"tox.ini": ""}).run("r", "-e", "py", "--hashseed", "ok")
     result.assert_failed(2)
     assert "tox run: error: argument --hashseed: invalid literal for int() with base 10: 'ok'" in result.err
+
+
+def test_python_use_hash_seed_from_env(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip"
+    with patch.dict("os.environ", {"PYTHONHASHSEED": "13"}):
+        result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
+        result.assert_success()
+        assert "PYTHONHASHSEED=13" in result.out
+
+
+def test_python_hash_seed_from_env_random(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip"
+    with patch.dict("os.environ", {"PYTHONHASHSEED": "random"}):
+        result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
+        result.assert_success()
+        assert "PYTHONHASHSEED=" in result.out
+
+
+def test_python_hash_seed_from_env_and_override(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
+    with patch.dict("os.environ", {"PYTHONHASHSEED": "14"}):
+        result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "15")
+        result.assert_success()
+        assert result.out.splitlines()[1] == "15"
+
+
+def test_python_hash_seed_from_env_and_disable(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
+    with patch.dict("os.environ", {"PYTHONHASHSEED": "16"}):
+        result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "notset")
+        result.assert_success()
+        assert result.out.splitlines()[1] == "None"
 
 
 @pytest.mark.parametrize("in_ci", [True, False])
