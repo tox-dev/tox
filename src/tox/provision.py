@@ -132,7 +132,7 @@ def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | N
         package_name = canonicalize_name(package.name)
         try:
             dist = distribution(package_name)
-        except PackageNotFoundError:  # noqa: PERF203
+        except PackageNotFoundError:
             missing.append((package, None))
         else:
             if not package.specifier.contains(dist.version, prereleases=True):

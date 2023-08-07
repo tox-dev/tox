@@ -93,7 +93,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
                 msg = "stopping as failed to build package"
                 raise Fail(msg)
             package_glob = self.conf["package_glob"]
-            found = glob.glob(package_glob)
+            found = glob.glob(package_glob)  # noqa: PTH207
             if not found:
                 msg = f"no package found in {package_glob}"
                 raise Fail(msg)
