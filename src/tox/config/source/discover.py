@@ -36,7 +36,7 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
             try:
                 src = src_type(candidate)
                 break
-            except ValueError:  # noqa: PERF203
+            except ValueError:
                 continue
         if src is None:
             msg = f"could not find any config file in {config_file}"
@@ -53,7 +53,7 @@ def _locate_source() -> Source | None:
             candidate: Path = base / src_type.FILENAME
             try:
                 return src_type(candidate)
-            except ValueError:  # noqa: PERF203
+            except ValueError:
                 pass
     return None
 

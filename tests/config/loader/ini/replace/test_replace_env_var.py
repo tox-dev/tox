@@ -34,8 +34,8 @@ def test_replace_env_set_triple_bs(replace_one: ReplaceOne, monkeypatch: MonkeyP
 def test_replace_env_set_quad_bs(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
     """Quad backslash should remain but not affect surrounding replacements."""
     monkeypatch.setenv("MAGIC", "something good")
-    result = replace_one(r"\\{env:MAGIC}\\\\{env:MAGIC}" + "\\")  # noqa: ISC003
-    assert result == r"\\something good\\\\something good" + "\\"  # noqa: ISC003
+    result = replace_one(r"\\{env:MAGIC}\\\\{env:MAGIC}" + "\\")
+    assert result == r"\\something good\\\\something good" + "\\"
 
 
 def test_replace_env_when_value_is_backslash(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:
