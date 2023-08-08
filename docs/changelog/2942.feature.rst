@@ -1,5 +1,0 @@
-Make --hashseed default to PYTHONHASHSEED, if defined - by :user:`paravoid`.
-The main motivation for this is to able to set the hash seed when building the
-documentation with "tox -e docs", and thus avoid embedding a random value in
-the tox documentation for --help. This caused documentation builds to fail to
-build reproducibly.

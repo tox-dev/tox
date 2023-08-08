@@ -4,6 +4,26 @@ Release History
 
 .. towncrier release notes start
 
+v4.7.0 (2023-08-08)
+-------------------
+
+Features - 4.7.0
+~~~~~~~~~~~~~~~~
+- Make --hashseed default to PYTHONHASHSEED, if defined - by :user:`paravoid`.
+  The main motivation for this is to able to set the hash seed when building the
+  documentation with "tox -e docs", and thus avoid embedding a random value in
+  the tox documentation for --help. This caused documentation builds to fail to
+  build reproducibly. (:issue:`2942`)
+
+Bugfixes - 4.7.0
+~~~~~~~~~~~~~~~~
+- Update a regular expression in tests to match the exception message in both Python 3.12 and older. (:issue:`3065`)
+
+Improved Documentation - 4.7.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix broken links - by :user:`gaborbernat`. (:issue:`3072`)
+
+
 v4.6.4 (2023-07-06)
 -------------------
 
