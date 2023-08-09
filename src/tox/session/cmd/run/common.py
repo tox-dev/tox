@@ -144,7 +144,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
             "--hashseed",
             metavar="SEED",
             help="set PYTHONHASHSEED to SEED before running commands. Defaults to a random integer in the range "
-            "[1, 4294967295] ([1, 1024] on Windows). Passing 'noset' suppresses this behavior.",
+            "[1, 4294967295] ([1, 1024] on Windows). Passing 'notset' suppresses this behavior.",
             action=SeedAction,
             of_type=Optional[int],
             default=hashseed_default,
