@@ -152,6 +152,14 @@ class EnvSelector:
         elif self._cli_envs.is_all:
             everything_active = True
         else:
+            if cli_envs_not_in_config := (set(self._cli_envs) - set(self._state.conf)):
+                # allow cli_envs matching ".pkg" and starting with "py" to be implicitly created.
+                cli_envs_not_in_config = [
+                    env for env in cli_envs_not_in_config if not env.startswith("py") and env not in (".pkg",)
+                ]
+                if cli_envs_not_in_config:
+                    msg = f"provided environments not found in configuration file: {cli_envs_not_in_config}"
+                    raise HandledError(msg)
             yield self._cli_envs, True
         yield self._state.conf, everything_active
         label_envs = dict.fromkeys(chain.from_iterable(self._state.conf.core["labels"].values()))

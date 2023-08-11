@@ -132,3 +132,35 @@ def test_env_select_lazily_looks_at_envs() -> None:
     # late-assigning env should be reflected in env_selector
     state.conf.options.env = CliEnv("py")
     assert set(env_selector.iter()) == {"py"}
+
+
+def test_cli_env_can_be_specified_in_default(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[tox]\nenv_list=exists"})
+    outcome = proj.run("r", "-e", "exists")
+    outcome.assert_success()
+    assert "exists" in outcome.out
+    assert not outcome.err
+
+
+def test_cli_env_can_be_specified_in_additional_environments(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv:exists]"})
+    outcome = proj.run("r", "-e", "exists")
+    outcome.assert_success()
+    assert "exists" in outcome.out
+    assert not outcome.err
+
+
+def test_cli_env_not_in_tox_config_fails(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": ""})
+    outcome = proj.run("r", "-e", "does_not_exist")
+    outcome.assert_failed(code=-2)
+    assert "provided environments not found in configuration file: ['does_not_exist']" in outcome.out, outcome.out
+
+
+@pytest.mark.parametrize("env_name", ["py", "py310", ".pkg"])
+def test_allowed_implicit_cli_envs(env_name: str, tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": ""})
+    outcome = proj.run("r", "-e", env_name)
+    outcome.assert_success()
+    assert env_name in outcome.out
+    assert not outcome.err
