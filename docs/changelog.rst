@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.8.0 (2023-08-12)
+-------------------
+
+Features - 4.8.0
+~~~~~~~~~~~~~~~~
+- ``--override`` can now take options in the form of ``foo+=bar`` which
+  will append ``bar`` to the end of an existing list/dict, rather than
+  replacing it. (:issue:`3087`)
+
+
 v4.7.0 (2023-08-08)
 -------------------
 
