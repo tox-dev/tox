@@ -95,10 +95,11 @@ class SetEnv:
             self._raw.update(sub_raw)
             yield from sub_raw.keys()
 
-    def update(self, param: Mapping[str, str], *, override: bool = True) -> None:
-        for key, value in param.items():
+    def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
+        for key in param:
             # do not override something already set explicitly
             if override or (key not in self._raw and key not in self._materialized):
+                value = param.load(key) if isinstance(param, SetEnv) else param[key]
                 self._materialized[key] = value
                 self.changed = True
 
