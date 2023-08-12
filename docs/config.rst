@@ -958,3 +958,31 @@ Other Substitutions
 
 * ``{}`` - replaced as ``os.pathsep``
 * ``{/}`` - replaced as ``os.sep``
+
+Overriding configuration from the command line
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can override options in the configuration file, from the command
+line.
+
+For example, given this config:
+
+.. code-block:: ini
+
+    [testenv]
+    deps = pytest
+    setenv =
+      foo=bar
+    commands = pytest tests
+
+You could enable ``ignore_errors`` by running::
+
+    tox --override testenv.ignore_errors=True
+
+You could add additional dependencies by running::
+
+    tox --override testenv.deps+=pytest-xdist,pytest-cov
+
+You could set additional environment variables by running::
+
+    tox --override testenv.setenv+=baz=quux
