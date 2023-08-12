@@ -28,6 +28,18 @@ def test_override_add(flag: str) -> None:
     assert value.key == "magic"
     assert value.value == "true"
     assert not value.namespace
+    assert value.append is False
+
+
+@pytest.mark.parametrize("flag", ["-x", "--override"])
+def test_override_append(flag: str) -> None:
+    parsed, _, __, ___, ____ = get_options(flag, "magic+=true")
+    assert len(parsed.override) == 1
+    value = parsed.override[0]
+    assert value.key == "magic"
+    assert value.value == "true"
+    assert not value.namespace
+    assert value.append is True
 
 
 def test_override_equals() -> None:

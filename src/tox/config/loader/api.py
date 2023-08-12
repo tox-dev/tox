@@ -24,6 +24,12 @@ class Override:
         if not equal:
             msg = f"override {value} has no = sign in it"
             raise ArgumentTypeError(msg)
+
+        self.append = False
+        if key.endswith("+"):  # key += value appends to a list
+            key = key[:-1]
+            self.append = True
+
         self.namespace, _, self.key = key.rpartition(".")
 
     def __repr__(self) -> str:
@@ -117,10 +123,19 @@ class Loader(Convert[T]):
         :param args: the config load arguments
         :return: the converted type
         """
-        if key in self.overrides:
-            return _STR_CONVERT.to(self.overrides[key].value, of_type, factory)
+        override = self.overrides.get(key)
+        if override and not override.append:
+            return _STR_CONVERT.to(override.value, of_type, factory)
         raw = self.load_raw(key, conf, args.env_name)
-        return self.build(key, of_type, factory, conf, raw, args)
+        converted = self.build(key, of_type, factory, conf, raw, args)
+        if override and override.append:
+            appends = _STR_CONVERT.to(override.value, of_type, factory)
+            if isinstance(converted, list) and isinstance(appends, list):
+                converted += appends
+            else:
+                msg = "Only able to append to lists"
+                raise ValueError(msg)
+        return converted
 
     def build(  # noqa: PLR0913
         self,
