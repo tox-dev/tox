@@ -971,6 +971,8 @@ For example, given this config:
 
     [testenv]
     deps = pytest
+    setenv =
+      foo=bar
     commands = pytest tests
 
 You could enable ``ignore_errors`` by running::
@@ -980,3 +982,7 @@ You could enable ``ignore_errors`` by running::
 You could add additional dependencies by running::
 
     tox --override testenv.deps+=pytest-xdist,pytest-cov
+
+You could set additional environment variables by running::
+
+    tox --override testenv.setenv+=baz=quux

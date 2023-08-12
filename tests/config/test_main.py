@@ -66,7 +66,7 @@ def test_config_override_wins_memory_loader(tox_ini_conf: ToxIniCreator) -> None
     assert conf["c"] == "ok"
 
 
-def test_config_override_appends(tox_ini_conf: ToxIniCreator) -> None:
+def test_config_override_appends_to_list(tox_ini_conf: ToxIniCreator) -> None:
     example = """
     [testenv]
     passenv = foo
@@ -76,6 +76,17 @@ def test_config_override_appends(tox_ini_conf: ToxIniCreator) -> None:
     assert conf["passenv"] == ["foo", "bar"]
 
 
+def test_config_override_appends_to_setenv(tox_ini_conf: ToxIniCreator) -> None:
+    example = """
+    [testenv]
+    setenv =
+      foo = bar
+    """
+    conf = tox_ini_conf(example, override=[Override("testenv.setenv+=baz=quux")]).get_env("testenv")
+    assert conf["setenv"].load("foo") == "bar"
+    assert conf["setenv"].load("baz") == "quux"
+
+
 def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
     example = """
     [testenv]
@@ -83,7 +94,7 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
     """
     conf = tox_ini_conf(example, override=[Override("testenv.foo+=2")]).get_env("testenv")
     conf.add_config("foo", of_type=int, default=0, desc="desc")
-    with pytest.raises(ValueError, match="Only able to append to lists"):
+    with pytest.raises(ValueError, match="Only able to append to lists and dicts"):
         conf["foo"]
 
 

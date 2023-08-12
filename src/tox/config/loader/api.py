@@ -123,6 +123,8 @@ class Loader(Convert[T]):
         :param args: the config load arguments
         :return: the converted type
         """
+        from tox.config.set_env import SetEnv
+
         override = self.overrides.get(key)
         if override and not override.append:
             return _STR_CONVERT.to(override.value, of_type, factory)
@@ -132,8 +134,12 @@ class Loader(Convert[T]):
             appends = _STR_CONVERT.to(override.value, of_type, factory)
             if isinstance(converted, list) and isinstance(appends, list):
                 converted += appends
+            elif isinstance(converted, dict) and isinstance(appends, dict):
+                converted.update(appends)
+            elif isinstance(converted, SetEnv) and isinstance(appends, SetEnv):
+                converted.update(appends, override=True)
             else:
-                msg = "Only able to append to lists"
+                msg = "Only able to append to lists and dicts"
                 raise ValueError(msg)
         return converted
 
