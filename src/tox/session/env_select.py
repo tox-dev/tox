@@ -155,11 +155,11 @@ class EnvSelector:
             cli_envs_not_in_config = set(self._cli_envs) - set(self._state.conf)
             if cli_envs_not_in_config:
                 # allow cli_envs matching ".pkg" and starting with "py" to be implicitly created.
-                cli_envs_not_in_config = [
+                disallowed_cli_envs = [
                     env for env in cli_envs_not_in_config if not env.startswith("py") and env not in (".pkg",)
                 ]
-                if cli_envs_not_in_config:
-                    msg = f"provided environments not found in configuration file: {cli_envs_not_in_config}"
+                if disallowed_cli_envs:
+                    msg = f"provided environments not found in configuration file: {disallowed_cli_envs}"
                     raise HandledError(msg)
             yield self._cli_envs, True
         yield self._state.conf, everything_active
