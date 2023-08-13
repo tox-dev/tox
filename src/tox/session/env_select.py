@@ -152,7 +152,8 @@ class EnvSelector:
         elif self._cli_envs.is_all:
             everything_active = True
         else:
-            if cli_envs_not_in_config := (set(self._cli_envs) - set(self._state.conf)):
+            cli_envs_not_in_config = set(self._cli_envs) - set(self._state.conf)
+            if cli_envs_not_in_config:
                 # allow cli_envs matching ".pkg" and starting with "py" to be implicitly created.
                 cli_envs_not_in_config = [
                     env for env in cli_envs_not_in_config if not env.startswith("py") and env not in (".pkg",)
