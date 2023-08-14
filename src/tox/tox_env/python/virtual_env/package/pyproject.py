@@ -38,10 +38,7 @@ if TYPE_CHECKING:
     from tox.tox_env.register import ToxEnvRegister
     from tox.tox_env.runner import RunToxEnv
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from importlib.metadata import Distribution, PathDistribution
-else:  # pragma: no cover (<py38)
-    from importlib_metadata import Distribution, PathDistribution
+from importlib.metadata import Distribution, PathDistribution
 
 if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
     import tomllib

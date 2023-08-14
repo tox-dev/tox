@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -13,10 +12,7 @@ from tox.config.source.tox_ini import ToxIni
 if TYPE_CHECKING:
     from pathlib import Path
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from typing import Protocol
-else:  # pragma: no cover (<py38)
-    from typing_extensions import Protocol
+from typing import Protocol
 
 
 class ReplaceOne(Protocol):

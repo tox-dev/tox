@@ -6,7 +6,14 @@ from threading import Event, Thread
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
+    import sys
     from types import TracebackType
+
+    if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+        from typing import Self
+    else:  # pragma: no cover (<py311)
+        from typing_extensions import Self
+
 
 WAIT_GENERAL = 0.05  # stop thread join every so often (give chance to a signal interrupt)
 
@@ -19,7 +26,7 @@ class ReadViaThread(ABC):
         self.handler = handler
         self._on_exit_drain = drain
 
-    def __enter__(self) -> ReadViaThread:
+    def __enter__(self) -> Self:
         self.thread.start()
         return self
 

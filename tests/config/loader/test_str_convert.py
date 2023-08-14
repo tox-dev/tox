@@ -13,10 +13,7 @@ from tox.config.types import Command, EnvList
 if TYPE_CHECKING:
     from tox.pytest import MonkeyPatch, SubRequest, ToxProjectCreator
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from typing import Literal
-else:  # pragma: no cover (py38+)
-    from typing_extensions import Literal
+from typing import Literal
 
 
 @pytest.mark.parametrize(

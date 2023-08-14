@@ -70,16 +70,13 @@ metadata_files = {
         Tag: py{sys.version_info[0]}-none-any
        """,
     f"{dist_info}/top_level.txt": name,
-    record: """
-        {0}/__init__.py,,
-        {1}/METADATA,,
-        {1}/WHEEL,,
-        {1}/top_level.txt,,
-        {1}/RECORD,,
-       """.format(
-        name,
-        dist_info,
-    ),
+    record: f"""
+        {name}/__init__.py,,
+        {dist_info}/METADATA,,
+        {dist_info}/WHEEL,,
+        {dist_info}/top_level.txt,,
+        {dist_info}/RECORD,,
+       """,
 }
 
 

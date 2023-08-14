@@ -20,10 +20,7 @@ if TYPE_CHECKING:
 
     from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from importlib.metadata import Distribution
-else:  # pragma: no cover (<py38)
-    from importlib_metadata import Distribution
+from importlib.metadata import Distribution
 
 ROOT = Path(__file__).parents[1]
 

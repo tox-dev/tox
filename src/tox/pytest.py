@@ -12,14 +12,10 @@ import warnings
 from contextlib import closing, contextmanager
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence, cast
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Protocol, Sequence, cast
 
 import pytest
-from _pytest.capture import CaptureFixture as _CaptureFixture
 from _pytest.fixtures import SubRequest
-from _pytest.logging import LogCaptureFixture
-from _pytest.monkeypatch import MonkeyPatch
-from _pytest.tmpdir import TempPathFactory
 from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 
@@ -34,26 +30,18 @@ from tox.session.cmd.run.parallel import ENV_VAR_KEY
 from tox.tox_env import api as tox_env_api
 from tox.tox_env.api import ToxEnv
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from typing import Protocol
-else:  # pragma: no cover (<py38)
-    from typing_extensions import Protocol
-
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
-    from _pytest.config import Config as PyTestConfig
-    from _pytest.config.argparsing import Parser
-    from _pytest.python import Function
     from pytest_mock import MockerFixture
 
     from tox.config.sets import EnvConfigSet
     from tox.execute.stream import SyncWrite
     from tox.session.state import State
 
-    CaptureFixture = _CaptureFixture[str]
+    CaptureFixture = pytest.CaptureFixture[str]
 else:
-    CaptureFixture = _CaptureFixture
+    CaptureFixture = pytest.CaptureFixture
 
 os.environ["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
 os.environ["PIP_NO_PYTHON_VERSION_WARNING"] = "1"
@@ -120,14 +108,14 @@ def check_os_environ() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def check_os_environ_stable(monkeypatch: MonkeyPatch) -> Iterator[None]:  # noqa: PT004
+def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:  # noqa: PT004
     with check_os_environ():
         yield
         monkeypatch.undo()
 
 
 @pytest.fixture(autouse=True)
-def no_color(monkeypatch: MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: ARG001, PT004
+def no_color(monkeypatch: pytest.MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: ARG001, PT004
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
@@ -138,11 +126,11 @@ class ToxProject:
         base: Path | None,
         path: Path,
         capfd: CaptureFixture,
-        monkeypatch: MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
         mocker: MockerFixture,
     ) -> None:
         self.path: Path = path
-        self.monkeypatch: MonkeyPatch = monkeypatch
+        self.monkeypatch: pytest.MonkeyPatch = monkeypatch
         self.mocker = mocker
         self._capfd = capfd
         self._setup_files(self.path, base, files)
@@ -426,7 +414,7 @@ class ToxProjectCreator(Protocol):
 def init_fixture(
     tmp_path: Path,
     capfd: CaptureFixture,
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
     mocker: MockerFixture,
 ) -> ToxProjectCreator:
     def _init(files: dict[str, Any], base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
@@ -437,7 +425,7 @@ def init_fixture(
 
 
 @pytest.fixture()
-def empty_project(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> ToxProject:
+def empty_project(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> ToxProject:
     project = tox_project({"tox.ini": ""})
     monkeypatch.chdir(project.path)
     return project
@@ -446,24 +434,24 @@ def empty_project(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> T
 _RUN_INTEGRATION_TEST_FLAG = "--run-integration"
 
 
-def pytest_addoption(parser: Parser) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(_RUN_INTEGRATION_TEST_FLAG, action="store_true", help="run the integration tests")
 
 
-def pytest_configure(config: PyTestConfig) -> None:
+def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "integration")
     config.addinivalue_line("markers", "plugin_test")
 
 
 @pytest.hookimpl(trylast=True)  # type: ignore[misc] # not typed decorator
-def pytest_collection_modifyitems(config: PyTestConfig, items: list[Function]) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Function]) -> None:
     # do not require flags if called directly
     if len(items) == 1:  # pragma: no cover # hard to test
         return
 
     skip_int = pytest.mark.skip(reason=f"integration tests not run (no {_RUN_INTEGRATION_TEST_FLAG} flag)")
 
-    def is_integration(test_item: Function) -> bool:
+    def is_integration(test_item: pytest.Function) -> bool:
         return test_item.get_closest_marker("integration") is not None
 
     integration_enabled = config.getoption(_RUN_INTEGRATION_TEST_FLAG)
@@ -475,7 +463,7 @@ def pytest_collection_modifyitems(config: PyTestConfig, items: list[Function]) -
     items.sort(key=is_integration)
 
 
-def enable_pypi_server(monkeypatch: MonkeyPatch, url: str | None) -> None:
+def enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
     if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
         monkeypatch.delenv("PIP_INDEX_URL", raising=False)
     else:  # pragma: no cover
@@ -485,7 +473,7 @@ def enable_pypi_server(monkeypatch: MonkeyPatch, url: str | None) -> None:
 
 
 @pytest.fixture(scope="session")
-def pypi_server(tmp_path_factory: TempPathFactory) -> Iterator[IndexServer]:
+def pypi_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[IndexServer]:
     # takes around 2.5s
     path = tmp_path_factory.mktemp("pypi")
     with IndexServer(path) as server:
@@ -501,7 +489,7 @@ def _invalid_index_fake_port() -> int:  # noqa: PT005
 
 
 @pytest.fixture(autouse=True)
-def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPatch) -> tuple[str, str | None]:
+def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: pytest.MonkeyPatch) -> tuple[str, str | None]:
     """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
     previous_url = os.environ.get("PIP_INDEX_URL")
     new_url = f"http://localhost:{_invalid_index_fake_port}/bad-pypi-server"
@@ -514,7 +502,7 @@ def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: MonkeyPa
 @pytest.fixture(name="enable_pip_pypi_access")
 def enable_pip_pypi_access_fixture(
     disable_pip_pypi_access: tuple[str, str | None],
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> str | None:
     """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
     _, previous_url = disable_pip_pypi_access
@@ -531,6 +519,10 @@ def register_inline_plugin(mocker: MockerFixture, *args: Callable[..., Any]) -> 
     plugin.__dict__.update({f.__name__: f for f in args})
     mocker.patch("tox.plugin.manager.load_inline", return_value=plugin)
 
+
+LogCaptureFixture = pytest.LogCaptureFixture
+TempPathFactory = pytest.TempPathFactory
+MonkeyPatch = pytest.MonkeyPatch
 
 __all__ = (
     "CaptureFixture",

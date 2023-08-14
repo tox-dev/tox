@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING
 
-_Section = TypeVar("_Section", bound="Section")
+if TYPE_CHECKING:
+    import sys
+
+    if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+        from typing import Self
+    else:  # pragma: no cover (<py311)
+        from typing_extensions import Self
 
 
 class Section:
@@ -15,7 +21,7 @@ class Section:
         self._name = name
 
     @classmethod
-    def from_key(cls: type[_Section], key: str) -> _Section:
+    def from_key(cls: type[Self], key: str) -> Self:
         """
         Create a section from a section key.
 
@@ -50,7 +56,7 @@ class Section:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(prefix={self._prefix!r}, name={self._name!r})"
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, self.__class__) and (self._prefix, self._name) == (
             other._prefix,
             other.name,

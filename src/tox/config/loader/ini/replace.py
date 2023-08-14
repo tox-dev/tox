@@ -67,7 +67,7 @@ class MatchExpression:
     def __repr__(self) -> str:
         return f"MatchExpression(expr={self.expr!r}, term_pos={self.term_pos!r})"
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
             return self.expr == other.expr
         return NotImplemented

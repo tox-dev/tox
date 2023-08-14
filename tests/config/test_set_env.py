@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from unittest.mock import ANY
@@ -14,10 +13,7 @@ if TYPE_CHECKING:
 
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from typing import Protocol
-else:  # pragma: no cover (<py38)
-    from typing_extensions import Protocol
+from typing import Protocol
 
 
 def test_set_env_explicit() -> None:

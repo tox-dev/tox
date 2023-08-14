@@ -7,18 +7,13 @@ import os
 import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, cast
 
 from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
 
 from .env_var import get_env_var
 from .ini import IniConfig
-
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from typing import Literal
-else:  # pragma: no cover (py38+)
-    from typing_extensions import Literal
 
 if TYPE_CHECKING:
     from tox.session.state import State

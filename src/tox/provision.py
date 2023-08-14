@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from typing import TYPE_CHECKING, List, cast
 
@@ -18,11 +19,6 @@ from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.runner import PythonRun
-
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from importlib.metadata import PackageNotFoundError, distribution
-else:  # pragma: no cover (py38+)
-    from importlib_metadata import PackageNotFoundError, distribution
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
