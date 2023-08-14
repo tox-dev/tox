@@ -394,7 +394,7 @@ def test_platform_matches_run_env(tox_project: ToxProjectCreator) -> None:
 def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     build = (demo_pkg_inline / "build.py").read_text()
-    ini = "[testenv]\npackage=wheel\n[testenv:.pkg]\nplatform=wrong_platform"
+    ini = "[tox]\nenv_list=a,b\n[testenv]\npackage=wheel\n[testenv:.pkg]\nplatform=wrong_platform"
     proj = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build})
     result = proj.run("r", "-e", "a,b")
     result.assert_failed()  # tox run fails as all envs are skipped
@@ -430,7 +430,7 @@ def test_sequential_help(tox_project: ToxProjectCreator) -> None:
 
 
 def test_sequential_clears_pkg_at_most_once(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    project = tox_project({"tox.ini": ""})
+    project = tox_project({"tox.ini": "[tox]\nenv_list=a,b"})
     result = project.run("r", "--root", str(demo_pkg_inline), "-e", "a,b", "-r")
     result.assert_success()
 

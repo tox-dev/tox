@@ -228,7 +228,7 @@ def test_pyproject_deps_static_with_dynamic(  # noqa: PLR0913
 
 
 def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    proj = tox_project({"tox.ini": ""}, base=demo_pkg_inline)
+    proj = tox_project({"tox.ini": "[tox]\nenv_list=a,b"}, base=demo_pkg_inline)
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "-e", "a,b", "--notest", "--develop")
     result.assert_success()

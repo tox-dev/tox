@@ -541,3 +541,19 @@ create your virtual env for the developers.
     py310-lint  -> [no description]
     py311-black -> [no description]
     py311-lint  -> [no description]
+
+Disallow command line environments which are not explicitly specified in the config file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, any environment would be implicitly created even if no such environment was specified in the configuration
+file.For example, given this config:
+
+.. code-block:: ini
+
+    [testenv:unit]
+    deps = pytest
+    commands = pytest
+
+Running ``tox -e unit`` would run our tests but running ``tox -e unt`` or ``tox -e unti`` would ultimately succeed
+without running any tests. A special exception is made for environments starting in ``py*``. In the above example
+running ``tox -e py310`` would still function as intended.

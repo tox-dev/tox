@@ -1,0 +1,1 @@
+Disallow command line environments which are not explicitly specified in the config file - by :user:`tjsmart`.

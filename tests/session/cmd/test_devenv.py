@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 def test_devenv_fail_multiple_target(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("d", "-e", "a,b")
+    outcome = tox_project({"tox.ini": "[tox]\nenv_list=a,b"}).run("d", "-e", "a,b")
     outcome.assert_failed()
     msg = "ROOT: HandledError| exactly one target environment allowed in devenv mode but found a, b\n"
     outcome.assert_out_err(msg, "")
