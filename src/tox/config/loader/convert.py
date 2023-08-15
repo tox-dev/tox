@@ -1,18 +1,11 @@
 from __future__ import annotations
 
-import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Set, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Generic, Iterator, List, Literal, Optional, Set, TypeVar, Union, cast
 
 from tox.config.types import Command, EnvList
-
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from typing import Literal
-else:  # pragma: no cover (py38+)
-    from typing_extensions import Literal
-
 
 _NO_MAPPING = object()
 T = TypeVar("T")

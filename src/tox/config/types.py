@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Any, Iterator, Sequence
+from typing import Iterator, Sequence
 
 from tox.execute.request import shell_cmd
 
@@ -21,10 +21,13 @@ class Command:
     def __repr__(self) -> str:
         return f"{type(self).__name__}(args={(['-'] if self.ignore_exit_code else [])+ self.args!r})"
 
-    def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and (self.args, self.ignore_exit_code) == (other.args, other.ignore_exit_code)
+    def __eq__(self, other: object) -> bool:
+        return type(self) == type(other) and (self.args, self.ignore_exit_code) == (
+            other.args,  # type: ignore[attr-defined]
+            other.ignore_exit_code,  # type: ignore[attr-defined]
+        )
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: object) -> bool:
         return not (self == other)
 
     @property
@@ -47,10 +50,10 @@ class EnvList:
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.envs!r})"
 
-    def __eq__(self, other: Any) -> bool:
-        return type(self) == type(other) and self.envs == other.envs
+    def __eq__(self, other: object) -> bool:
+        return type(self) == type(other) and self.envs == other.envs  # type: ignore[attr-defined]
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: object) -> bool:
         return not (self == other)
 
     def __iter__(self) -> Iterator[str]:

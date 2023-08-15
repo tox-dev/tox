@@ -38,12 +38,16 @@ class Override:
     def __str__(self) -> str:
         return f"{self.namespace}{'.' if self.namespace else ''}{self.key}={self.value}"
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if type(self) != type(other):
             return False
-        return (self.namespace, self.key, self.value) == (other.namespace, other.key, other.value)
+        return (self.namespace, self.key, self.value) == (
+            other.namespace,  # type: ignore[attr-defined]
+            other.key,  # type: ignore[attr-defined]
+            other.value,  # type: ignore[attr-defined]
+        )
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: object) -> bool:
         return not (self == other)
 
 

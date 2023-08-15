@@ -9,11 +9,9 @@ import pytest
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from _pytest.tmpdir import TempPathFactory
-
 
 @pytest.fixture(scope="session")
-def pkg_with_extras_project(tmp_path_factory: TempPathFactory) -> Path:
+def pkg_with_extras_project(tmp_path_factory: pytest.TempPathFactory) -> Path:
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
     setup_cfg = f"""
     [metadata]

@@ -7,7 +7,13 @@ from typing import IO, TYPE_CHECKING, Iterator
 from colorama import Fore
 
 if TYPE_CHECKING:
+    import sys
     from types import TracebackType
+
+    if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+        from typing import Self
+    else:  # pragma: no cover (<py311)
+        from typing_extensions import Self
 
 
 class SyncWrite:
@@ -33,7 +39,7 @@ class SyncWrite:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name!r}, target={self._target!r}, color={self._color!r})"
 
-    def __enter__(self) -> SyncWrite:
+    def __enter__(self) -> Self:
         if self._target_enabled:
             self._start()
         return self

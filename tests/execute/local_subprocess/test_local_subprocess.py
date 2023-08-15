@@ -115,12 +115,12 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
             "-c",
             (
                 "import sys; import time; from datetime import datetime; import os;"
-                "print('e' * {0}, file=sys.stderr);"
-                "print('o' * {0}, file=sys.stdout);"
+                f"print('e' * {count}, file=sys.stderr);"
+                f"print('o' * {count}, file=sys.stdout);"
                 "time.sleep(0.5);"
-                "print('a' * {0}, file=sys.stderr);"
-                "print('b' * {0}, file=sys.stdout);"
-            ).format(count),
+                f"print('a' * {count}, file=sys.stderr);"
+                f"print('b' * {count}, file=sys.stdout);"
+            ),
         ],
         cwd=Path(),
         env=os_env,

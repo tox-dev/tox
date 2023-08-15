@@ -50,12 +50,12 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
             code = 0
             skipped = True
         except ToxBackendFailed as exception:
-            LOGGER.error("%s", exception)
+            LOGGER.error("%s", exception)  # noqa: TRY400
             raise SystemExit(exception.code)  # noqa: B904, TRY200
         except Fail as exception:
-            LOGGER.error("failed with %s", exception)
+            LOGGER.error("failed with %s", exception)  # noqa: TRY400
             code = 1
-        except Exception:  # pragma: no cover  # noqa: BLE001
+        except Exception:  # pragma: no cover
             LOGGER.exception("internal error")  # pragma: no cover
             code = 2  # pragma: no cover
         finally:

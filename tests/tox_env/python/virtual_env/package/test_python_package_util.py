@@ -13,10 +13,7 @@ from tox.tox_env.python.virtual_env.package.util import dependencies_with_extras
 if TYPE_CHECKING:
     from pathlib import Path
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from importlib.metadata import Distribution, PathDistribution
-else:  # pragma: no cover (<py38)
-    from importlib_metadata import Distribution, PathDistribution
+from importlib.metadata import Distribution, PathDistribution
 
 
 @pytest.fixture(scope="session")

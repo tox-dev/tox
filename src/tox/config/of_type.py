@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from itertools import product
-from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, Generic, Iterable, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader
 
@@ -27,10 +27,10 @@ class ConfigDefinition(ABC, Generic[T]):
     def __call__(self, conf: Config, loaders: list[Loader[T]], args: ConfigLoadArgs) -> T:
         raise NotImplementedError
 
-    def __eq__(self, o: Any) -> bool:
-        return type(self) == type(o) and (self.keys, self.desc) == (o.keys, o.desc)
+    def __eq__(self, o: object) -> bool:
+        return type(self) == type(o) and (self.keys, self.desc) == (o.keys, o.desc)  # type: ignore[attr-defined]
 
-    def __ne__(self, o: Any) -> bool:
+    def __ne__(self, o: object) -> bool:
         return not (self == o)
 
 
@@ -54,8 +54,8 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
     ) -> T:
         return self.value() if callable(self.value) else self.value
 
-    def __eq__(self, o: Any) -> bool:
-        return type(self) == type(o) and super().__eq__(o) and self.value == o.value
+    def __eq__(self, o: object) -> bool:
+        return type(self) == type(o) and super().__eq__(o) and self.value == o.value  # type: ignore[attr-defined]
 
 
 _PLACE_HOLDER = object()
@@ -112,11 +112,12 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         values = ((k, v) for k, v in vars(self).items() if k != "post_process" and v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
-    def __eq__(self, o: Any) -> bool:
+    def __eq__(self, o: object) -> bool:
         return (
             type(self) == type(o)
             and super().__eq__(o)
-            and (self.of_type, self.default, self.post_process) == (o.of_type, o.default, o.post_process)
+            and (self.of_type, self.default, self.post_process)
+            == (o.of_type, o.default, o.post_process)  # type: ignore[attr-defined]
         )
 
 

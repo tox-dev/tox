@@ -2,7 +2,7 @@
 build-backend = "hatchling.build"
 requires = [
   "hatch-vcs>=0.3",
-  "hatchling>=1.17.1",
+  "hatchling>=1.18",
 ]
 
 [project]
@@ -24,7 +24,7 @@ maintainers = [
   { name = "Oliver Bestwalter", email = "oliver@bestwalter.de" },
 ]
 authors = [{ name = "Bernát Gábor", email = "gaborjbernat@gmail.com" }]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: tox",
@@ -34,7 +34,6 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -49,23 +48,23 @@ dynamic = [
 ]
 dependencies = [
   "cachetools>=5.3.1",
-  "chardet>=5.1",
+  "chardet>=5.2",
   "colorama>=0.4.6",
   "filelock>=3.12.2",
-  'importlib-metadata>=6.7; python_version < "3.8"',
+  'importlib-metadata>=6.8; python_version < "3.8"',
   "packaging>=23.1",
-  "platformdirs>=3.9.1",
+  "platformdirs>=3.10",
   "pluggy>=1.2",
   "pyproject-api>=1.5.3",
   'tomli>=2.0.1; python_version < "3.11"',
   'typing-extensions>=4.7.1; python_version < "3.8"',
-  "virtualenv>=20.24.1",
+  "virtualenv>=20.24.3",
 ]
 optional-dependencies.docs = [
-  "furo>=2023.5.20",
-  "sphinx>=7.0.1",
+  "furo>=2023.7.26",
+  "sphinx>=7.1.2",
   "sphinx-argparse-cli>=1.11.1",
-  "sphinx-autodoc-typehints!=1.23.4,>=1.23.3",
+  "sphinx-autodoc-typehints!=1.23.4,>=1.24",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
@@ -80,15 +79,15 @@ optional-dependencies.testing = [
   "distlib>=0.3.7",
   "flaky>=3.7",
   "hatch-vcs>=0.3",
-  "hatchling>=1.17.1",
+  "hatchling>=1.18",
   "psutil>=5.9.5",
   "pytest>=7.4",
   "pytest-cov>=4.1",
   "pytest-mock>=3.11.1",
   "pytest-xdist>=3.3.1",
   "re-assert>=1.1",
-  'time-machine>=2.10; implementation_name != "pypy"',
-  "wheel>=0.40",
+  'time-machine>=2.12; implementation_name != "pypy"',
+  "wheel>=0.41.1",
 ]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
@@ -109,7 +108,7 @@ line-length = 120
 [tool.ruff]
 select = ["ALL"]
 line-length = 120
-target-version = "py37"
+target-version = "py38"
 isort = {known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"]}
 ignore = [
   "INP001",  # no implicit namespaces here

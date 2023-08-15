@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterator, Sequence
+from typing import TYPE_CHECKING, Callable, Iterator, Protocol, Sequence
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -19,8 +19,6 @@ from tox.tox_env.python.api import PythonInfo, VersionInfo
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
-    from _pytest.monkeypatch import MonkeyPatch
-    from _pytest.tmpdir import TempPathFactory
     from pytest_mock import MockerFixture
 
     from tox.config.loader.api import Override
@@ -37,12 +35,6 @@ def value_error() -> Callable[[str], str]:
     return _fmt
 
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from typing import Protocol
-else:  # pragma: no cover (<py38)
-    from typing_extensions import Protocol
-
-
 collect_ignore = []
 if sys.implementation.name == "pypy":
     # time-machine causes segfaults on PyPy
@@ -55,7 +47,7 @@ class ToxIniCreator(Protocol):
 
 
 @pytest.fixture()
-def tox_ini_conf(tmp_path: Path, monkeypatch: MonkeyPatch) -> ToxIniCreator:
+def tox_ini_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxIniCreator:
     def func(conf: str, override: Sequence[Override] | None = None) -> Config:
         dest = tmp_path / "c"
         dest.mkdir()
@@ -117,7 +109,7 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _do_not_share_virtualenv_for_parallel_runs(tmp_path_factory: TempPathFactory, worker_id: str) -> None:
+def _do_not_share_virtualenv_for_parallel_runs(tmp_path_factory: pytest.TempPathFactory, worker_id: str) -> None:
     # virtualenv uses locks to manage access to its cache, when running with xdist this may throw off test timings
     if worker_id != "master":  # pragma: no branch
         temp_app_data = str(tmp_path_factory.mktemp(f"virtualenv-app-{worker_id}"))  # pragma: no cover
@@ -128,7 +120,7 @@ def _do_not_share_virtualenv_for_parallel_runs(tmp_path_factory: TempPathFactory
 
 
 @pytest.fixture(scope="session")
-def fake_exe_on_path(tmp_path_factory: TempPathFactory) -> Iterator[Path]:
+def fake_exe_on_path(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
     tmp_path = Path(tmp_path_factory.mktemp("a"))
     cmd_name = uuid4().hex
     maker = ScriptMaker(None, str(tmp_path))
@@ -140,7 +132,7 @@ def fake_exe_on_path(tmp_path_factory: TempPathFactory) -> Iterator[Path]:
 
 
 @pytest.fixture(scope="session")
-def demo_pkg_inline_wheel(tmp_path_factory: TempPathFactory, demo_pkg_inline: Path) -> Path:
+def demo_pkg_inline_wheel(tmp_path_factory: pytest.TempPathFactory, demo_pkg_inline: Path) -> Path:
     return build_pkg(tmp_path_factory.mktemp("dist"), demo_pkg_inline, ["wheel"])
 
 

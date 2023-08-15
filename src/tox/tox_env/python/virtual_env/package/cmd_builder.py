@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import glob
 import shutil
-import sys
 import tarfile
 from functools import partial
 from io import TextIOWrapper
@@ -34,10 +33,7 @@ if TYPE_CHECKING:
     from tox.tox_env.register import ToxEnvRegister
     from tox.tox_env.runner import RunToxEnv
 
-if sys.version_info >= (3, 8):  # pragma: no cover (py38+)
-    from importlib.metadata import Distribution
-else:  # pragma: no cover (py38+)
-    from importlib_metadata import Distribution
+from importlib.metadata import Distribution
 
 
 class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
