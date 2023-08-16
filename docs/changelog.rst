@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.9.0 (2023-08-16)
+-------------------
+
+Features - 4.9.0
+~~~~~~~~~~~~~~~~
+- Disallow command line environments which are not explicitly specified in the config file - by :user:`tjsmart`. (:issue:`2858`)
+
+
 v4.8.0 (2023-08-12)
 -------------------
 
