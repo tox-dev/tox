@@ -213,6 +213,23 @@ maintainers.
       `Porkbun <https://porkbun.com/>`_
       -- reach out to him directly for any changes).
 
+Creating a new release
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    The following process assumes that you call the ``remote`` for the main repository for tox ``upstream``.
+
+    .. code:: shell
+
+        git remote add upstream git@github.com:tox-dev/tox.git
+
+In order to create a new release, a maintainer needs to run the following command::
+
+    tox r -e release -- <version>
+
+You need to replace ``<version>`` with an actual version number according to
+`Semantic Versioning <https://semver.org/>`_.
 
 .. _current-maintainers:
 
