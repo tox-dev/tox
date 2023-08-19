@@ -164,3 +164,40 @@ def test_allowed_implicit_cli_envs(env_name: str, tox_project: ToxProjectCreator
     outcome.assert_success()
     assert env_name in outcome.out
     assert not outcome.err
+
+
+@pytest.mark.parametrize("env_name", ["a", "b", "a-b"])
+def test_matches_hyphenated_env(env_name: str, tox_project: ToxProjectCreator) -> None:
+    tox_ini = """
+        [tox]
+        env_list=a-b
+        [testenv]
+        package=skip
+        commands_pre =
+            a: python -c 'print("a")'
+            b: python -c 'print("b")'
+        commands=python -c 'print("ok")'
+    """
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", env_name)
+    outcome.assert_success()
+    assert env_name in outcome.out
+    assert not outcome.err
+
+
+@pytest.mark.parametrize("env_name", ["3.9", "3.9-cov"])
+def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> None:
+    tox_ini = """
+        [tox]
+        env_list=3.9
+        [testenv]
+        package=skip
+        commands =
+            !cov: python -c 'print("without cov")'
+            cov: python -c 'print("with cov")'
+    """
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", env_name)
+    outcome.assert_success()
+    assert env_name in outcome.out
+    assert not outcome.err

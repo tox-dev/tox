@@ -1,0 +1,1 @@
+Fix regression introduced in ``4.9.0`` affecting hyphenated and combined environments.

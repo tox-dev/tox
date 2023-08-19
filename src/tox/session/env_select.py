@@ -4,7 +4,7 @@ import logging
 import re
 from collections import Counter
 from dataclasses import dataclass
-from itertools import chain
+from itertools import chain, permutations
 from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, cast
 
 from tox.config.loader.str_convert import StrConvert
@@ -155,10 +155,12 @@ class EnvSelector:
             cli_envs_not_in_config = set(self._cli_envs) - set(self._state.conf)
             if cli_envs_not_in_config:
                 # allow cli_envs matching ".pkg" and starting with "py" to be implicitly created.
-                disallowed_cli_envs = [
-                    env for env in cli_envs_not_in_config if not env.startswith("py") and env not in (".pkg",)
-                ]
-                if disallowed_cli_envs:
+                disallowed_cli_envs = [env for env in cli_envs_not_in_config if not _is_valid_exception(env)]
+
+                # allow disallowed cli envs that match hyphenated combinations
+                has_match = any(_find_env_match(cli_env, set(self._state.conf)) for cli_env in disallowed_cli_envs)
+
+                if disallowed_cli_envs and not has_match:
                     msg = f"provided environments not found in configuration file: {disallowed_cli_envs}"
                     raise HandledError(msg)
             yield self._cli_envs, True
@@ -387,6 +389,16 @@ class EnvSelector:
 
     def _mark_provision(self, on: bool, provision_tox_env: str) -> None:  # noqa: FBT001
         self._provision = on, provision_tox_env
+
+
+def _find_env_match(value: str, state_conf: set[str]) -> bool:
+    return any(value in conf.split("-") for conf in state_conf) or any(
+        value == "-".join(combo) for combo in permutations(state_conf, 2)
+    )
+
+
+def _is_valid_exception(env: str) -> bool:
+    return env.startswith("py") or env in (".pkg",)
 
 
 __all__ = [
