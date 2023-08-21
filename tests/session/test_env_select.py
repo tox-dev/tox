@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.session.env_select import CliEnv, EnvSelector
+from tox.session.env_select import _DYNAMIC_ENV_FACTORS, CliEnv, EnvSelector
 from tox.session.state import State
 
 if TYPE_CHECKING:
@@ -150,13 +151,6 @@ def test_cli_env_can_be_specified_in_additional_environments(tox_project: ToxPro
     assert not outcome.err
 
 
-def test_cli_env_not_in_tox_config_fails(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": ""})
-    outcome = proj.run("r", "-e", "does_not_exist")
-    outcome.assert_failed(code=-2)
-    assert "provided environments not found in configuration file: ['does_not_exist']" in outcome.out, outcome.out
-
-
 @pytest.mark.parametrize("env_name", ["py", "py310", ".pkg"])
 def test_allowed_implicit_cli_envs(env_name: str, tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": ""})
@@ -164,3 +158,91 @@ def test_allowed_implicit_cli_envs(env_name: str, tox_project: ToxProjectCreator
     outcome.assert_success()
     assert env_name in outcome.out
     assert not outcome.err
+
+
+@pytest.mark.parametrize("env_name", ["a", "b", "a-b", "b-a"])
+def test_matches_hyphenated_env(env_name: str, tox_project: ToxProjectCreator) -> None:
+    tox_ini = """
+        [tox]
+        env_list=a-b
+        [testenv]
+        package=skip
+        commands_pre =
+            a: python -c 'print("a")'
+            b: python -c 'print("b")'
+        commands=python -c 'print("ok")'
+    """
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", env_name)
+    outcome.assert_success()
+    assert env_name in outcome.out
+    assert not outcome.err
+
+
+_MINOR = sys.version_info.minor
+
+
+@pytest.mark.parametrize(
+    "env_name",
+    [f"3.{_MINOR}", f"3.{_MINOR}-cov", "3-cov", "3", f"3.{_MINOR}", f"py3{_MINOR}-cov", f"py3.{_MINOR}-cov"],
+)
+def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> None:
+    tox_ini = """
+        [testenv]
+        package=skip
+        commands =
+            !cov: python -c 'print("without cov")'
+            cov: python -c 'print("with cov")'
+    """
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", env_name)
+    outcome.assert_success()
+    assert env_name in outcome.out
+    assert not outcome.err
+
+
+@pytest.mark.parametrize(
+    "env",
+    [
+        "py",
+        "pypy",
+        "pypy3",
+        "pypy3.12",
+        "pypy312",
+        "py3",
+        "py3.12",
+        "py312",
+        "3",
+        "3.12",
+        "3.12.0",
+    ],
+)
+def test_dynamic_env_factors_match(env: str) -> None:
+    assert _DYNAMIC_ENV_FACTORS.fullmatch(env)
+
+
+@pytest.mark.parametrize(
+    "env",
+    [
+        "cy3",
+        "cov",
+        "py10.1",
+    ],
+)
+def test_dynamic_env_factors_not_match(env: str) -> None:
+    assert not _DYNAMIC_ENV_FACTORS.fullmatch(env)
+
+
+def test_suggest_env(tox_project: ToxProjectCreator) -> None:
+    tox_ini = f"[testenv:release]\n[testenv:py3{_MINOR}]\n[testenv:alpha-py3{_MINOR}]\n"
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", f"releas,p3{_MINOR},magic,alph-p{_MINOR}")
+    outcome.assert_failed(code=-2)
+
+    assert not outcome.err
+    msg = (
+        "ROOT: HandledError| provided environments not found in configuration file:\n"
+        f"releas - did you mean release?\np3{_MINOR} - did you mean py3{_MINOR}?\nmagic\n"
+        f"alph-p{_MINOR} - did you mean alpha-py3{_MINOR}?\n"
+    )
+    assert outcome.out == msg

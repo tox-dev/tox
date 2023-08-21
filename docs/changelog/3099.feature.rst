@@ -1,0 +1,3 @@
+Change accepted environment name rule: must be made up of factors defined in configuration or match regex
+``(pypy|py|cython|)((\d(\.\d+(\.\d+)?)?)|\d+)?``. If an environment name does not match this fail, and if a close match
+found suggest that to the user.
