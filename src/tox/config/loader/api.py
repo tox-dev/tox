@@ -80,7 +80,7 @@ class Loader(Convert[T]):
 
     def __init__(self, section: Section, overrides: list[Override]) -> None:
         self._section = section
-        self.overrides = {o.key: o for o in overrides}
+        self.overrides: dict[str, Override] = {o.key: o for o in overrides}
         self.parent: Loader[Any] | None = None
 
     @property
@@ -130,18 +130,24 @@ class Loader(Convert[T]):
         from tox.config.set_env import SetEnv
 
         override = self.overrides.get(key)
-        if override and not override.append:
-            return _STR_CONVERT.to(override.value, of_type, factory)
-        raw = self.load_raw(key, conf, args.env_name)
+        if override:
+            converted_override = _STR_CONVERT.to(override.value, of_type, factory)
+            if not override.append:
+                return converted_override
+        try:
+            raw = self.load_raw(key, conf, args.env_name)
+        except KeyError:
+            if override:
+                return converted_override
+            raise
         converted = self.build(key, of_type, factory, conf, raw, args)
         if override and override.append:
-            appends = _STR_CONVERT.to(override.value, of_type, factory)
-            if isinstance(converted, list) and isinstance(appends, list):
-                converted += appends
-            elif isinstance(converted, dict) and isinstance(appends, dict):
-                converted.update(appends)
-            elif isinstance(converted, SetEnv) and isinstance(appends, SetEnv):
-                converted.update(appends, override=True)
+            if isinstance(converted, list) and isinstance(converted_override, list):
+                converted += converted_override
+            elif isinstance(converted, dict) and isinstance(converted_override, dict):
+                converted.update(converted_override)
+            elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
+                converted.update(converted_override, override=True)
             else:
                 msg = "Only able to append to lists and dicts"
                 raise ValueError(msg)

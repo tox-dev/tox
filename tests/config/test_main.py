@@ -76,6 +76,12 @@ def test_config_override_appends_to_list(tox_ini_conf: ToxIniCreator) -> None:
     assert conf["passenv"] == ["foo", "bar"]
 
 
+def test_config_override_appends_to_empty_list(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]", override=[Override("testenv.passenv+=bar")]).get_env("testenv")
+    conf.add_config("passenv", of_type=List[str], default=[], desc="desc")
+    assert conf["passenv"] == ["bar"]
+
+
 def test_config_override_appends_to_setenv(tox_ini_conf: ToxIniCreator) -> None:
     example = """
     [testenv]
@@ -85,6 +91,11 @@ def test_config_override_appends_to_setenv(tox_ini_conf: ToxIniCreator) -> None:
     conf = tox_ini_conf(example, override=[Override("testenv.setenv+=baz=quux")]).get_env("testenv")
     assert conf["setenv"].load("foo") == "bar"
     assert conf["setenv"].load("baz") == "quux"
+
+
+def test_config_override_appends_to_empty_setenv(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]", override=[Override("testenv.setenv+=foo=bar")]).get_env("testenv")
+    assert conf["setenv"].load("foo") == "bar"
 
 
 def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:

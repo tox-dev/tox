@@ -1,0 +1,1 @@
+``--override foo+=bar`` appending syntax will now work correctly when ``foo`` wasn't defined in ``tox.ini``.
