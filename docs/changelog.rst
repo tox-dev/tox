@@ -4,6 +4,20 @@ Release History
 
 .. towncrier release notes start
 
+v4.10.0 (2023-08-21)
+--------------------
+
+Features - 4.10.0
+~~~~~~~~~~~~~~~~~
+- Change accepted environment name rule: must be made up of factors defined in configuration or match regex
+  ``(pypy|py|cython|)((\d(\.\d+(\.\d+)?)?)|\d+)?``. If an environment name does not match this fail, and if a close match
+  found suggest that to the user. (:issue:`3099`)
+
+Bugfixes - 4.10.0
+~~~~~~~~~~~~~~~~~
+- ``--override foo+=bar`` appending syntax will now work correctly when ``foo`` wasn't defined in ``tox.ini``. (:issue:`3100`)
+
+
 v4.9.0 (2023-08-16)
 -------------------
 
