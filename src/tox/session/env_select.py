@@ -4,7 +4,8 @@ import logging
 import re
 from collections import Counter
 from dataclasses import dataclass
-from itertools import chain, permutations
+from difflib import get_close_matches
+from itertools import chain
 from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, cast
 
 from tox.config.loader.str_convert import StrConvert
@@ -117,6 +118,10 @@ class _ToxEnvInfo:
     package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
+_DYNAMIC_ENV_FACTORS = re.compile(r"(pypy|py|cython|)((\d(\.\d+(\.\d+)?)?)|\d+)?")
+_PY_PRE_RELEASE_FACTOR = re.compile(r"alpha|beta|rc\.\d+")
+
+
 class EnvSelector:
     def __init__(self, state: State) -> None:
         # needs core to load the default tox environment list
@@ -152,22 +157,49 @@ class EnvSelector:
         elif self._cli_envs.is_all:
             everything_active = True
         else:
-            cli_envs_not_in_config = set(self._cli_envs) - set(self._state.conf)
-            if cli_envs_not_in_config:
-                # allow cli_envs matching ".pkg" and starting with "py" to be implicitly created.
-                disallowed_cli_envs = [env for env in cli_envs_not_in_config if not _is_valid_exception(env)]
-
-                # allow disallowed cli envs that match hyphenated combinations
-                has_match = any(_find_env_match(cli_env, set(self._state.conf)) for cli_env in disallowed_cli_envs)
-
-                if disallowed_cli_envs and not has_match:
-                    msg = f"provided environments not found in configuration file: {disallowed_cli_envs}"
-                    raise HandledError(msg)
+            self._ensure_envs_valid()
             yield self._cli_envs, True
         yield self._state.conf, everything_active
         label_envs = dict.fromkeys(chain.from_iterable(self._state.conf.core["labels"].values()))
         if label_envs:
             yield label_envs.keys(), False
+
+    def _ensure_envs_valid(self) -> None:
+        valid_factors = set(chain.from_iterable(env.split("-") for env in self._state.conf))
+        valid_factors.add(".pkg")  # packaging factor
+        invalid_envs: dict[str, str | None] = {}
+        for env in self._cli_envs or []:
+            if env.startswith(".pkg_external"):  # external package
+                continue
+            factors: dict[str, str | None] = {k: None for k in env.split("-")}
+            found_factors: set[str] = set()
+            for factor in factors:
+                if (
+                    _DYNAMIC_ENV_FACTORS.fullmatch(factor)
+                    or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
+                    or factor in valid_factors
+                ):
+                    found_factors.add(factor)
+                else:
+                    closest = get_close_matches(factor, valid_factors, n=1)
+                    factors[factor] = closest[0] if closest else None
+            if set(factors) - found_factors:
+                invalid_envs[env] = (
+                    None
+                    if any(i is None for i in factors.values())
+                    else "-".join(cast(Iterable[str], factors.values()))
+                )
+        if invalid_envs:
+            msg = "provided environments not found in configuration file:\n"
+            first = True
+            for env, suggestion in invalid_envs.items():
+                if not first:
+                    msg += "\n"
+                first = False
+                msg += env
+                if suggestion:
+                    msg += f" - did you mean {suggestion}?"
+            raise HandledError(msg)
 
     def _env_name_to_active(self) -> dict[str, bool]:
         env_name_to_active_map = {}
@@ -389,16 +421,6 @@ class EnvSelector:
 
     def _mark_provision(self, on: bool, provision_tox_env: str) -> None:  # noqa: FBT001
         self._provision = on, provision_tox_env
-
-
-def _find_env_match(value: str, state_conf: set[str]) -> bool:
-    return any(value in conf.split("-") for conf in state_conf) or any(
-        value == "-".join(combo) for combo in permutations(state_conf, 2)
-    )
-
-
-def _is_valid_exception(env: str) -> bool:
-    return env.startswith("py") or env in (".pkg",)
 
 
 __all__ = [
