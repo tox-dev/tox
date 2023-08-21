@@ -150,7 +150,7 @@ class ToxProject:
                 value = f"from __future__ import annotations\n{value}"  # noqa: PLW2901
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
-                ToxProject._setup_files(at_path, None, value)  # noqa: SLF001
+                ToxProject._setup_files(at_path, None, value)
             elif isinstance(value, str):
                 at_path.write_text(textwrap.dedent(value), encoding="utf-8")
             elif value is None:

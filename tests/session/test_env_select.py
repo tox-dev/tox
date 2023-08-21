@@ -184,7 +184,15 @@ _MINOR = sys.version_info.minor
 
 @pytest.mark.parametrize(
     "env_name",
-    [f"3.{_MINOR}", f"3.{_MINOR}-cov", "3-cov", "3", f"3.{_MINOR}", f"py3{_MINOR}-cov", f"py3.{_MINOR}-cov"],
+    [
+        f"3.{_MINOR}",
+        f"3.{_MINOR}-cov",
+        "3-cov",
+        "3",
+        f"py3.{_MINOR}",
+        f"py3{_MINOR}-cov",
+        f"py3.{_MINOR}-cov",
+    ],
 )
 def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> None:
     tox_ini = """
