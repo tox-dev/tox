@@ -80,7 +80,7 @@ class Loader(Convert[T]):
 
     def __init__(self, section: Section, overrides: list[Override]) -> None:
         self._section = section
-        self.overrides = {o.key: o for o in overrides}
+        self.overrides: dict[str, Override] = {o.key: o for o in overrides}
         self.parent: Loader[Any] | None = None
 
     @property
