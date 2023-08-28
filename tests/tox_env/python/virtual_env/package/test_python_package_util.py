@@ -21,6 +21,7 @@ def pkg_with_extras(pkg_with_extras_project: Path) -> PathDistribution:
     frontend = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(pkg_with_extras_project)[:-1])
     meta = pkg_with_extras_project / "meta"
     result = frontend.prepare_metadata_for_build_wheel(meta)
+    assert result is not None
     return Distribution.at(result.metadata)
 
 

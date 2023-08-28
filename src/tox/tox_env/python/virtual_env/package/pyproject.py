@@ -8,11 +8,17 @@ from contextlib import contextmanager
 from itertools import chain
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, NoReturn, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, Literal, NoReturn, Optional, Sequence, cast
 
 from cachetools import cached
 from packaging.requirements import Requirement
-from pyproject_api import BackendFailed, CmdStatus, Frontend
+from pyproject_api import (
+    BackendFailed,
+    CmdStatus,
+    Frontend,
+    MetadataForBuildEditableResult,
+    MetadataForBuildWheelResult,
+)
 
 from tox.execute.pep517_backend import LocalSubProcessPep517Executor
 from tox.execute.request import StdinSource
@@ -127,6 +133,23 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             default=lambda conf, name: self.env_dir / "dist",  # noqa: ARG005
             desc="directory where to put project packages",
         )
+        for key in ("sdist", "wheel", "editable"):
+            self._add_config_settings(key)
+
+    def _add_config_settings(self, build_type: str) -> None:
+        # config settings passed to PEP-517-compliant build backend https://peps.python.org/pep-0517/#config-settings
+        keys = {
+            "sdist": ["get_requires_for_build_sdist", "build_sdist"],
+            "wheel": ["get_requires_for_build_wheel", "prepare_metadata_for_build_wheel", "build_wheel"],
+            "editable": ["get_requires_for_build_editable", "prepare_metadata_for_build_editable", "build_editable"],
+        }
+        for key in keys.get(build_type, []):
+            self.conf.add_config(
+                keys=[f"config_settings_{key}"],
+                of_type=Dict[str, str],
+                default=None,  # type: ignore[arg-type]
+                desc=f"config settings passed to the {key} backend API endpoint",
+            )
 
     @property
     def pkg_dir(self) -> Path:
@@ -164,7 +187,8 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             self._setup_build_requires("editable")
 
     def _setup_build_requires(self, of_type: str) -> None:
-        requires = getattr(self._frontend, f"get_requires_for_build_{of_type}")().requires
+        settings: ConfigSettings = self.conf[f"config_settings_get_requires_for_build_{of_type}"]
+        requires = getattr(self._frontend, f"get_requires_for_build_{of_type}")(config_settings=settings).requires
         self._install(requires, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
 
     def _teardown(self) -> None:
@@ -206,12 +230,15 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         of_type: str = for_env["package"]
         if of_type == "editable-legacy":
             self.setup()
-            deps = [*self.requires(), *self._frontend.get_requires_for_build_sdist().requires, *deps]
+            config_settings: ConfigSettings = self.conf["config_settings_get_requires_for_build_sdist"]
+            sdist_requires = self._frontend.get_requires_for_build_sdist(config_settings=config_settings).requires
+            deps = [*self.requires(), *sdist_requires, *deps]
             package: Package = EditableLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
         elif of_type == "sdist":
             self.setup()
             with self._pkg_lock:
-                sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir).sdist
+                config_settings = self.conf["config_settings_build_sdist"]
+                sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir, config_settings=config_settings).sdist
                 sdist = create_session_view(sdist, self._package_temp_path)
                 self._package_paths.add(sdist)
                 package = SdistPackage(sdist, deps)
@@ -223,11 +250,12 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
             else:
                 self.setup()
                 method = "build_editable" if of_type == "editable" else "build_wheel"
+                config_settings = self.conf[f"config_settings_{method}"]
                 with self._pkg_lock:
                     wheel = getattr(self._frontend, method)(
                         wheel_directory=self.pkg_dir,
                         metadata_directory=self.meta_folder_if_populated,
-                        config_settings=self._wheel_config_settings,
+                        config_settings=config_settings,
                     ).wheel
                     wheel = create_session_view(wheel, self._package_temp_path)
                     self._package_paths.add(wheel)
@@ -313,17 +341,20 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         if self._distribution_meta is not None:  # pragma: no branch
             return  # pragma: no cover
         # even if we don't build a wheel we need the requirements for it should we want to build its metadata
-        target = "editable" if for_env["package"] == "editable" else "wheel"
+        target: Literal["editable", "wheel"] = "editable" if for_env["package"] == "editable" else "wheel"
         self.call_require_hooks.add(target)
 
         self.setup()
         hook = getattr(self._frontend, f"prepare_metadata_for_build_{target}")
-        dist_info = hook(self.meta_folder, self._wheel_config_settings).metadata
-        self._distribution_meta = Distribution.at(str(dist_info))
-
-    @property
-    def _wheel_config_settings(self) -> ConfigSettings | None:
-        return {"--build-option": []}
+        config: ConfigSettings = self.conf[f"config_settings_prepare_metadata_for_build_{target}"]
+        result: MetadataForBuildWheelResult | MetadataForBuildEditableResult | None = hook(self.meta_folder, config)
+        if result is None:
+            config = self.conf[f"config_settings_build_{target}"]
+            dist_info_path, _, __ = self._frontend.metadata_from_built(self.meta_folder, target, config)
+            dist_info = str(dist_info_path)
+        else:
+            dist_info = str(result.metadata)
+        self._distribution_meta = Distribution.at(dist_info)
 
     def requires(self) -> tuple[Requirement, ...]:
         return self._frontend.requires
@@ -353,15 +384,17 @@ class Pep517VirtualEnvFrontend(Frontend):
 
     def _send(self, cmd: str, **kwargs: Any) -> tuple[Any, str, str]:
         try:
-            if (
-                cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable")
-                # given we'll build a wheel we might skip the prepare step
-                and ("wheel" in self._tox_env.builds or "editable" in self._tox_env.builds)
-            ):
+            if self._can_skip_prepare(cmd):
                 return None, "", ""  # will need to build wheel either way, avoid prepare
             return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
             raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
+
+    def _can_skip_prepare(self, cmd: str) -> bool:
+        # given we'll build a wheel we might skip the prepare step
+        return cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable") and (
+            "wheel" in self._tox_env.builds or "editable" in self._tox_env.builds
+        )
 
     @contextmanager
     def _send_msg(

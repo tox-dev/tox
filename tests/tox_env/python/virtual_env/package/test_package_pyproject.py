@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+import json
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.execute.local_sub_process import LocalSubprocessExecuteStatus
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvFrontend
+
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProjectCreator
 
@@ -295,3 +301,160 @@ def test_pyproject_build_editable_and_wheel(tox_project: ToxProjectCreator, demo
         ("d", "install_package"),
         (".pkg", "_exit"),
     ]
+
+
+def test_pyproject_config_settings_sdist(
+    tox_project: ToxProjectCreator,
+    demo_pkg_setuptools: Path,
+    mocker: MockerFixture,
+) -> None:
+    ini = """
+    [tox]
+    env_list = sdist
+
+    [testenv]
+    wheel_build_env = .pkg
+    package = sdist
+
+    [testenv:.pkg]
+    config_settings_get_requires_for_build_sdist = A = 1
+    config_settings_build_sdist = B = 2
+    config_settings_get_requires_for_build_wheel = C = 3
+    config_settings_prepare_metadata_for_build_wheel = D = 4
+    """
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
+
+    result = proj.run("r", "--notest", from_cwd=proj.path)
+    result.assert_success()
+
+    found = {
+        message["cmd"]: message["kwargs"]["config_settings"]
+        for message in [json.loads(call[0][1]) for call in write_stdin.call_args_list]
+        if not message["cmd"].startswith("_")
+    }
+    assert found == {
+        "build_sdist": {"B": "2"},
+        "get_requires_for_build_sdist": {"A": "1"},
+        "get_requires_for_build_wheel": {"C": "3"},
+        "prepare_metadata_for_build_wheel": {"D": "4"},
+    }
+
+
+def test_pyproject_config_settings_wheel(
+    tox_project: ToxProjectCreator,
+    demo_pkg_setuptools: Path,
+    mocker: MockerFixture,
+) -> None:
+    ini = """
+    [tox]
+    env_list = wheel
+
+    [testenv]
+    wheel_build_env = .pkg
+    package = wheel
+
+    [testenv:.pkg]
+    config_settings_get_requires_for_build_wheel = C = 3
+    config_settings_prepare_metadata_for_build_wheel = D = 4
+    config_settings_build_wheel = E = 5
+    """
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
+    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", return_value=False)
+
+    result = proj.run("r", "--notest", from_cwd=proj.path)
+    result.assert_success()
+
+    found = {
+        message["cmd"]: message["kwargs"]["config_settings"]
+        for message in [json.loads(call[0][1]) for call in write_stdin.call_args_list]
+        if not message["cmd"].startswith("_")
+    }
+    assert found == {
+        "get_requires_for_build_wheel": {"C": "3"},
+        "prepare_metadata_for_build_wheel": {"D": "4"},
+        "build_wheel": {"E": "5"},
+    }
+
+
+def test_pyproject_config_settings_editable(
+    tox_project: ToxProjectCreator,
+    demo_pkg_setuptools: Path,
+    mocker: MockerFixture,
+) -> None:
+    ini = """
+    [tox]
+    env_list = editable
+
+    [testenv:.pkg]
+    config_settings_get_requires_for_build_editable = F = 6
+    config_settings_prepare_metadata_for_build_editable = G = 7
+    config_settings_build_editable = H = 8
+
+    [testenv]
+    wheel_build_env = .pkg
+    package = editable
+    """
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
+    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", return_value=False)
+
+    result = proj.run("r", "--notest", from_cwd=proj.path)
+    result.assert_success()
+
+    found = {
+        message["cmd"]: message["kwargs"]["config_settings"]
+        for message in [json.loads(call[0][1]) for call in write_stdin.call_args_list]
+        if not message["cmd"].startswith("_")
+    }
+    assert found == {
+        "get_requires_for_build_editable": {"F": "6"},
+        "prepare_metadata_for_build_editable": {"G": "7"},
+        "build_editable": {"H": "8"},
+    }
+
+
+def test_pyproject_config_settings_editable_legacy(
+    tox_project: ToxProjectCreator,
+    demo_pkg_setuptools: Path,
+    mocker: MockerFixture,
+) -> None:
+    ini = """
+    [tox]
+    env_list = editable
+
+    [testenv:.pkg]
+    config_settings_get_requires_for_build_sdist = A = 1
+    config_settings_get_requires_for_build_wheel = C = 3
+    config_settings_prepare_metadata_for_build_wheel = D = 4
+
+    [testenv]
+    wheel_build_env = .pkg
+    package = editable-legacy
+    """
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
+    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", return_value=False)
+
+    result = proj.run("r", "--notest", from_cwd=proj.path)
+    result.assert_success()
+
+    found = {
+        message["cmd"]: message["kwargs"]["config_settings"]
+        for message in [json.loads(call[0][1]) for call in write_stdin.call_args_list]
+        if not message["cmd"].startswith("_")
+    }
+    assert found == {
+        "get_requires_for_build_sdist": {"A": "1"},
+        "get_requires_for_build_wheel": {"C": "3"},
+        "prepare_metadata_for_build_wheel": {"D": "4"},
+    }
