@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any
 
 import pluggy
 
@@ -14,12 +14,7 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.register import ToxEnvRegister
 
-_F = TypeVar("_F", bound=Callable[..., Any])
-_spec_marker = pluggy.HookspecMarker(NAME)
-
-
-def _spec(func: _F) -> _F:
-    return cast(_F, _spec_marker(func))
+_spec = pluggy.HookspecMarker(NAME)
 
 
 @_spec
