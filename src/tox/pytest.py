@@ -443,7 +443,7 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "plugin_test")
 
 
-@pytest.hookimpl(trylast=True)  # type: ignore[misc] # not typed decorator
+@pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Function]) -> None:
     # do not require flags if called directly
     if len(items) == 1:  # pragma: no cover # hard to test
