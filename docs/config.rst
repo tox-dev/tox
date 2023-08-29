@@ -742,6 +742,54 @@ Python virtual environment packaging
 
    Directory where to put project packages.
 
+.. conf::
+   :keys: config_settings_get_requires_for_build_sdist
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``get_requires_for_build_sdist`` backend API endpoint.
+
+.. conf::
+   :keys: config_settings_build_sdist
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``build_sdist`` backend API endpoint.
+
+.. conf::
+   :keys: config_settings_get_requires_for_build_wheel
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``get_requires_for_build_wheel`` backend API endpoint.
+
+.. conf::
+   :keys: config_settings_prepare_metadata_for_build_wheel
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``prepare_metadata_for_build_wheel`` backend API endpoint.
+
+.. conf::
+   :keys: config_settings_build_wheel
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``build_wheel`` backend API endpoint.
+
+.. conf::
+   :keys: config_settings_get_requires_for_build_editable
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``get_requires_for_build_editable`` backend API endpoint.
+
+.. conf::
+   :keys: config_settings_prepare_metadata_for_build_editable
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``prepare_metadata_for_build_editable`` backend API endpoint.
+
+.. conf::
+   :keys: config_settings_build_editable
+   :version_added: 4.11
+
+   Config settings (``dict[str, str]``) passed to the ``build_editable`` backend API endpoint.
+
 Pip installer
 ~~~~~~~~~~~~~
 

@@ -98,7 +98,7 @@ def build_wheel(
                         str(Path(sub_directory) / filename),
                     )
         else:
-            for arc_name, data in metadata_files.items():  # pragma: no branch
+            for arc_name, data in metadata_files.items():
                 zip_file_handler.writestr(arc_name, dedent(data).strip())
     print(f"created wheel {path}")  # noqa: T201
     return base_name
