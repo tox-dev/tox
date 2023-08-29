@@ -1,1 +1,0 @@
-Add support for setting build backend ``config_settings`` in the configuration file - by :user:`gaborbernat`.

@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.11.0 (2023-08-29)
+--------------------
+
+Features - 4.11.0
+~~~~~~~~~~~~~~~~~
+- Add support for setting build backend ``config_settings`` in the configuration file - by :user:`gaborbernat`. (:issue:`3090`)
+
+
 v4.10.0 (2023-08-21)
 --------------------
 
