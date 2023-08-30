@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
+CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
+
+
 def test_label_core_can_define(tox_project: ToxProjectCreator) -> None:
     ini = """
         [tox]
@@ -151,7 +154,7 @@ def test_cli_env_can_be_specified_in_additional_environments(tox_project: ToxPro
     assert not outcome.err
 
 
-@pytest.mark.parametrize("env_name", ["py", "py310", ".pkg"])
+@pytest.mark.parametrize("env_name", ["py", CURRENT_PY_ENV, ".pkg"])
 def test_allowed_implicit_cli_envs(env_name: str, tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": ""})
     outcome = proj.run("r", "-e", env_name)
