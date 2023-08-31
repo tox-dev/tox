@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 ENV_VAR_KEY = "TOX_PARALLEL_ENV"
 OFF_VALUE = 0
-DEFAULT_PARALLEL = OFF_VALUE
+DEFAULT_PARALLEL = "auto"
 
 
 @impl
@@ -27,7 +27,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel=auto_detect_cpus())
+    parallel_flags(our, default_parallel=DEFAULT_PARALLEL)
 
 
 def parse_num_processes(str_value: str) -> int | None:
@@ -46,7 +46,11 @@ def parse_num_processes(str_value: str) -> int | None:
     return value
 
 
-def parallel_flags(our: ArgumentParser, default_parallel: int, no_args: bool = False) -> None:  # noqa: FBT001, FBT002
+def parallel_flags(
+    our: ArgumentParser,
+    default_parallel: int | str,
+    no_args: bool = False,  # noqa: FBT001, FBT002
+) -> None:
     our.add_argument(
         "-p",
         "--parallel",
