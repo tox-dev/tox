@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.11.1 (2023-09-01)
+--------------------
+
+Bugfixes - 4.11.1
+~~~~~~~~~~~~~~~~~
+- Allow passing in multiple overrides using the ``;`` character and fix ``,`` being used as splitting values -
+  by :user:`gaborbernat`. (:issue:`3112`)
+
+
 v4.11.0 (2023-08-29)
 --------------------
 
