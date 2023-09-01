@@ -19,7 +19,7 @@ repos:
       - id: pyproject-fmt
         additional_dependencies: ["tox>=4.10"]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.2"
+    rev: "v3.0.3"
     hooks:
       - id: prettier
         args: ["--print-width=120", "--prose-wrap=always"]
@@ -29,7 +29,7 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==23.7]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.0.286"
+    rev: "v0.0.287"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]

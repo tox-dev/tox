@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
+from typing import Any, List
 
 from tox.config.loader.str_convert import StrConvert
 
@@ -22,8 +22,13 @@ def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
     for environ_key in (f"TOX_{key_upper}", f"TOX{key_upper}"):
         if environ_key in os.environ:
             value = os.environ[environ_key]
+            origin = getattr(of_type, "__origin__", of_type.__class__)
             try:
-                result = CONVERT.to(raw=value, of_type=of_type, factory=None)
+                if origin in (list, List):
+                    entry_type = of_type.__args__[0]
+                    result = [CONVERT.to(raw=v, of_type=entry_type, factory=None) for v in value.split(";")]
+                else:
+                    result = CONVERT.to(raw=value, of_type=of_type, factory=None)
             except Exception as exception:  # noqa: BLE001
                 logging.warning(
                     "env var %s=%r cannot be transformed to %r because %r",

@@ -78,12 +78,12 @@ def test_env_var_exhaustive_parallel_values(
     monkeypatch.setenv("TOX_VERBOSE", "5")
     monkeypatch.setenv("TOX_QUIET", "1")
     monkeypatch.setenv("TOX_ENV", "py37,py36")
-    monkeypatch.setenv("TOX_DEFAULT_RUNNER", "magic")
+    monkeypatch.setenv("TOX_DEFAULT_RUNNER", "virtualenv")
     monkeypatch.setenv("TOX_RECREATE", "yes")
     monkeypatch.setenv("TOX_NO_TEST", "yes")
     monkeypatch.setenv("TOX_PARALLEL", "3")
     monkeypatch.setenv("TOX_PARALLEL_LIVE", "no")
-    monkeypatch.setenv("TOX_OVERRIDE", "a=b\nc=d")
+    monkeypatch.setenv("TOX_OVERRIDE", "a=b;c=d")
 
     options = get_options()
     assert vars(options.parsed) == {

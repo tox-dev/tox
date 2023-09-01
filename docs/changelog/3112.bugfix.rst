@@ -1,0 +1,2 @@
+Allow passing in multiple overrides using the ``;`` character and fix ``,`` being used as splitting values -
+by :user:`gaborbernat`.

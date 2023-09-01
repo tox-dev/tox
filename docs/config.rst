@@ -1025,12 +1025,51 @@ For example, given this config:
 
 You could enable ``ignore_errors`` by running::
 
-    tox --override testenv.ignore_errors=True
+.. code-block:: bash
+
+   tox --override testenv.ignore_errors=True
 
 You could add additional dependencies by running::
 
-    tox --override testenv.deps+=pytest-xdist,pytest-cov
+.. code-block:: bash
+
+   tox --override testenv.deps+=pytest-xdist,pytest-cov
 
 You could set additional environment variables by running::
 
-    tox --override testenv.setenv+=baz=quux
+.. code-block:: bash
+
+   tox --override testenv.setenv+=baz=quux
+
+Set CLI flags via environment variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All CLI flags can be set via environment variables too, the naming convention here is ``TOX_<option>``. E.g.
+``TOX_WORKDIR`` sets the ``--workdir`` flag, or ``TOX_OVERRIDE`` sets the ``--override`` flag. For flags accepting more
+than one arguments (such as override) use the ``;`` character to separate these values:
+
+.. code-block:: bash
+
+   # set FOO and bar as passed environment variable
+   $ env 'TOX_OVERRIDE=testenv.pass_env=FOO,BAR' tox c -k pass_env -e py
+   [testenv:py]
+   pass_env =
+     BAR
+     FOO
+     <default pass_envs>
+
+   # append FOO and bar as passed environment variable to the list already defined in
+   # the tox configuration
+   $ env 'TOX_OVERRIDE=testenv.pass_env+=FOO,BAR' tox c -k pass_env -e py
+   [testenv:py]
+   pass_env =
+     BAR
+     FOO
+     <pass_envs defined in configuration>
+     <default pass_envs>
+
+   # set httpx and deps to and 3.12 as base_python
+   $ env 'TOX_OVERRIDE=testenv.deps=httpx;testenv.base_python=3.12' .tox/dev/bin/tox c \
+         -k deps base_python -e py
+   [testenv:py]
+   deps = httpx
+   base_python = 3.12
