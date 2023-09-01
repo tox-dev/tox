@@ -140,7 +140,7 @@ class Config:
             if for_env is not None:
                 conf_set.loaders.extend(self.memory_seed_loaders.get(for_env, []))
             for loader in self._src.get_loaders(section, base, self._overrides, conf_set):
-                conf_set.loaders.append(loader)  # noqa: PERF402
+                conf_set.loaders.append(loader)
             if loaders is not None:
                 conf_set.loaders.extend(loaders)
             return conf_set
