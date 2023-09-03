@@ -935,7 +935,7 @@ It's possible to inject a config value only when tox is running in interactive s
     {tty:ON_VALUE:OFF_VALUE}
 
 The first value is the value to inject when the interactive terminal is
-available, the second value is the value to use when it's not (optiona). A good
+available, the second value is the value to use when it's not (optional). A good
 use case for this is e.g. passing in the ``--pdb`` flag for pytest.
 
 .. _`command positional substitution`:

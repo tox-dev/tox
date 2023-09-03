@@ -114,7 +114,7 @@ v4.6.0 (2023-06-05)
 
 Features - 4.6.0
 ~~~~~~~~~~~~~~~~
-- Addded ``--list-dependencies`` and ``--no-list-dependencies`` CLI parameters.
+- Added ``--list-dependencies`` and ``--no-list-dependencies`` CLI parameters.
   If unspecified, defaults to listing when in CI, but not otherwise. (:issue:`3024`)
 
 Misc - 4.6.0
@@ -273,7 +273,7 @@ Bugfixes - 4.4.0
   esoteric quoting.
 
   To make this transition easier, on Windows, the backslash path separator will not treated as an escape character unless
-  it preceeds a quote, whitespace, or another backslash chracter. This allows paths to mostly be written in single or
+  it precedes a quote, whitespace, or another backslash character. This allows paths to mostly be written in single or
   double backslash style.
 
   Note that **double-backslash will no longer be escaped to a single backslash in substitutions**, instead the double
@@ -338,7 +338,7 @@ v4.3.2 (2023-01-16)
 
 Bugfixes - 4.3.2
 ~~~~~~~~~~~~~~~~
-- Fix regression introduced in 4.3.0 which occured when a substitution expression
+- Fix regression introduced in 4.3.0 which occurred when a substitution expression
   for an environment variable that had previously been substituted appears in the
   ini file after a substitution expression for a different environment variable.
   This situation erroneously resulted in an exception about "circular chain
