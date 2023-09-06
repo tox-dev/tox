@@ -58,7 +58,7 @@ class Pip(Installer[Python]):
                 keys=["list_dependencies_command"],
                 of_type=Command,
                 default=Command(["python", "-m", "pip", "freeze", "--all"]),
-                desc="command used to list isntalled packages",
+                desc="command used to list installed packages",
             )
 
     def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # noqa: ARG002
