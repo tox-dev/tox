@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install self-tox
@@ -67,7 +67,7 @@ jobs:
         exclude:
           - { os: windows-latest, tox_env: pkg_meta }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Python 3.11
