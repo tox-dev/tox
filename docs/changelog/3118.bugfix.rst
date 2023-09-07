@@ -1,1 +1,1 @@
-Fix bug in ``config.rst`` by removing stray colons left over from (:issue:`3111`) - by :user:`posita`. (:issue:`3118`)
+Fix bug in ``config.rst`` by removing stray colons left over from (:issue:`3111`) - by :user:`posita`.
