@@ -1023,19 +1023,19 @@ For example, given this config:
       foo=bar
     commands = pytest tests
 
-You could enable ``ignore_errors`` by running::
+You could enable ``ignore_errors`` by running:
 
 .. code-block:: bash
 
    tox --override testenv.ignore_errors=True
 
-You could add additional dependencies by running::
+You could add additional dependencies by running:
 
 .. code-block:: bash
 
    tox --override testenv.deps+=pytest-xdist,pytest-cov
 
-You could set additional environment variables by running::
+You could set additional environment variables by running:
 
 .. code-block:: bash
 
