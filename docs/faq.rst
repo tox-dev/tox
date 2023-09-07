@@ -55,8 +55,8 @@ Here is a non-exhaustive list of these.
   changed via ``TOX_CONFIG_FILE`` environment variable).
 - All tox defaults can now be changed via an environment variable: ``TOX_`` prefix followed by the settings key,
   e.g. ``TOX_PACKAGE=wheel``.
-- Any configuration can be overwritten via the CLI ``-x`` or ``--override`` flag, e.g.
-  ``tox run -e py311  -x testenv:py310.package=editable`` would force the packaging of environment ``py311`` to be an
+- Any configuration can be overridden via the CLI ``-x`` or ``--override`` flag, e.g.
+  ``tox run -e py311 -x testenv:py311.package=editable`` would force the packaging of environment ``py311`` to be an
   editable install independent what's in the configuration file.
 - :ref:`basepython` is now a list, the first successfully detected python will be used to generate python environment.
 - We now have support for inline tox plugins via the ``toxfile.py`` at the root of your project. At a later time this

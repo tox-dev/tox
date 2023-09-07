@@ -177,14 +177,15 @@ class Loader(Convert[T]):
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    override_short_option = "-x"
     parser.add_argument(
-        "-x",
+        override_short_option,
         "--override",
         action="append",
         type=Override,
         default=[],
         dest="override",
-        help="configuration override(s)",
+        help=f"configuration override(s), e.g., {override_short_option} testenv:pypy3.ignore_errors=True",
     )
 
 
