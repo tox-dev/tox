@@ -1,0 +1,1 @@
+Explain how plugins are registered and discovered - by :user:`hashar`.

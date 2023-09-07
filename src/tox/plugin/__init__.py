@@ -1,6 +1,19 @@
 """
-tox uses `pluggy <https://pluggy.readthedocs.io/en/stable/>`_ to customize the default behaviour. For example the
-following code snippet would define a new ``--magic`` command line interface flag the user can specify:
+tox uses `pluggy <https://pluggy.readthedocs.io/en/stable/>`_ to customize the default behaviour. It provides an
+extension mechanism for plugin management an calling hooks.
+
+Pluggy discovers a plugin by looking up for entry-points named ``tox``, for example in a pyproject.toml:
+
+.. code-block:: toml
+
+    [project.entry-points.tox]
+    your_plugin = "your_plugin.hooks"
+
+Therefore, to start using a plugin, you solely need to install it in the same environment tox is running in and it will
+be discovered via the defined entry-point (in the example above, tox will load ``your_plugin.hooks``).
+
+A plugin is created by implementing extension points in the form of hooks. For example the following code snippet would
+define a new ``--magic`` command line interface flag the user can specify:
 
 .. code-block:: python
 
