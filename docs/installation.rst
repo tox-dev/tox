@@ -55,7 +55,7 @@ Installing an unreleased version is discouraged and should be only done for test
 a pip version of at least ``18.0.0`` and use the following command:
 
 
-.. code-block:: console
+.. code-block:: bash
 
     pip install git+https://github.com/tox-dev/tox.git@rewrite
 
