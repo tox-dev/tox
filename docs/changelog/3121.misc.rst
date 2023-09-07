@@ -1,0 +1,1 @@
+Add ``/tests/demo_pkg_inline/.tox`` to ``.gitignore`` - by :user:`posita`. (:issue:`3121`)
