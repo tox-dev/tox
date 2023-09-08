@@ -1,1 +1,0 @@
-Fix typos discovered by codespell - by :user:`cclauss`.

@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.11.2 (2023-09-07)
+--------------------
+
+Bugfixes - 4.11.2
+~~~~~~~~~~~~~~~~~
+- Fix bug in ``config.rst`` by removing stray colons left over from (:issue:`3111`) - by :user:`posita`. (:issue:`3118`)
+- Provide example to make CLI help more helpful for ``-x`/``--override`` - by :user:`posita`. (:issue:`3119`)
+
+Improved Documentation - 4.11.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix typos discovered by codespell - by :user:`cclauss`. (:issue:`3113`)
+
+
 v4.11.1 (2023-09-01)
 --------------------
 
