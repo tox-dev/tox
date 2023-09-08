@@ -280,10 +280,7 @@ def test_list_installed_deps_explicit_cli(
 
 
 def test_usedevelop_with_nonexistent_basepython(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.ini": "[testenv]\nusedevelop = true\n[testenv:unused]\nbasepython = /nonexistent/bin/python",
-        },
-    )
+    ini = "[testenv]\nusedevelop = true\n[testenv:unused]\nbasepython = /nonexistent/bin/python"
+    project = tox_project({"tox.ini": ini})
     result = project.run()
     assert result.code == 0
