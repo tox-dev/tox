@@ -132,7 +132,7 @@ class VirtualEnv(Python):
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter
-        except RuntimeError:  # if can't find
+        except (FileNotFoundError, RuntimeError):  # Unable to find the interpreter
             return None
         return PythonInfo(
             implementation=interpreter.implementation,
