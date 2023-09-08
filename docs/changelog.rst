@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.11.3 (2023-09-08)
+--------------------
+
+Bugfixes - 4.11.3
+~~~~~~~~~~~~~~~~~
+- Handle ``FileNotFoundError`` when the ``base_python`` interpreter doesn't exist (:issue:`3105`)
+
+Improved Documentation - 4.11.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Explain how plugins are registered and discovered - by :user:`hashar`. (:issue:`3116`)
+
+
 v4.11.2 (2023-09-07)
 --------------------
 
