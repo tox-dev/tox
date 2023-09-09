@@ -27,6 +27,7 @@ def tox_add_option(parser: ToxParser) -> None:
         "quickstart_root",
         metavar="root",
         default=Path().absolute(),
+        nargs="?",
         help="folder to create the tox.ini file",
         type=Path,
     )

@@ -1,0 +1,1 @@
+Fix ``quickstart`` command from requiring ``root`` positional argument
