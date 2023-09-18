@@ -795,7 +795,7 @@ Pip installer
 
 .. conf::
    :keys: install_command
-   :default: python -I -m pip install <opts> <packages>
+   :default: python -I -m pip install {opts} {packages}
    :version_added: 1.6
 
    Determines the command used for installing packages into the virtual environment; both the package under test and its
