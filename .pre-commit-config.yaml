@@ -36,7 +36,7 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==23.7]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.287
+    rev: v0.0.291
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
