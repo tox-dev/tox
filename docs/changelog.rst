@@ -538,7 +538,7 @@ Bugfixes - 4.1.1
 
 Improved Documentation - 4.1.1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Add faq entry about re-use of environments - by :user:`jugmac00`. (:issue:`2788`)
+- Add faq entry about reuse of environments - by :user:`jugmac00`. (:issue:`2788`)
 
 
 v4.1.0 (2022-12-29)

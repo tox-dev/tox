@@ -37,7 +37,7 @@ MatchArg = Sequence[Union[str, "MatchExpression"]]
 
 
 class MatchRecursionError(ValueError):
-    """Could not stabalize on replacement value."""
+    """Could not stabilize on replacement value."""
 
 
 class MatchError(Exception):
