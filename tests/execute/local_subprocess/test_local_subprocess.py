@@ -19,6 +19,7 @@ from psutil import AccessDenied
 
 from tox.execute.api import ExecuteOptions, Outcome
 from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecuteInstance, LocalSubProcessExecutor
+from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.stream import SyncWrite
 from tox.report import NamedBytesIO
@@ -138,6 +139,41 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
     assert outcome.out == expected_out, expected_out[len(outcome.out) :]
     expected_err = f"{'e' * count}{os.linesep}{'a' * count}{os.linesep}"
     assert outcome.err == expected_err, expected_err[len(outcome.err) :]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix terminal size test")
+def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: MonkeyPatch) -> None:
+    """Regression test for #2999 - check terminal size is set correctly in tox subprocess."""
+    import pty
+
+    terminal_size = os.terminal_size((84, 42))
+    main, child = pty.openpty()  # type: ignore[attr-defined, unused-ignore]
+    # Use ReadViaThreadUnix to help with debugging the test itself.
+    pipe_out = ReadViaThreadUnix(main, sys.stdout.buffer.write, name="testout", drain=True)  # type: ignore[arg-type]
+    with pipe_out, monkeypatch.context() as monkey, open(child, "w") as stdout_mock:  # noqa: PTH123
+        # Switch stdout with test pty
+        monkey.setattr(sys, "stdout", stdout_mock)
+        monkey.setenv("COLUMNS", "84")
+        monkey.setenv("LINES", "42")
+
+        executor = LocalSubProcessExecutor(colored=False)
+        request = ExecuteRequest(
+            cmd=[sys.executable, "-c", "import os; print(os.get_terminal_size())"],
+            cwd=Path(),
+            env=os_env,
+            stdin=StdinSource.OFF,
+            run_id="",
+        )
+        out_err = FakeOutErr()
+        with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+            while status.exit_code is None:  # pragma: no branch
+                status.wait()
+    outcome = status.outcome
+    assert outcome is not None
+    assert bool(outcome), outcome
+    expected_out = f"{terminal_size!r}\r\n"
+    assert outcome.out == expected_out, expected_out[len(outcome.out) :]
+    assert not outcome.err
 
 
 def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixture, monkeypatch: MonkeyPatch) -> None:
