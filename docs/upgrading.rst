@@ -136,10 +136,10 @@ Output changes
 - We now use colors for reporting, to help make the output easier to read for humans. This can be disabled via the
   ``TERM=dumb`` or ``NO_COLOR=1`` environment variables, or the ``--colored no`` CLI argument.
 
-Re-use of environments
+Reuse of environments
 ----------------------
 
-- It is no longer possible to re-use environments. While this might have been possible with tox version 3, this
+- It is no longer possible to reuse environments. While this might have been possible with tox version 3, this
   behavior was never supported, and possibly caused wrong results as illustrated in the following example.
 
 .. code-block:: ini
