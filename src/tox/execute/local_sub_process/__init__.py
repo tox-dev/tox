@@ -314,7 +314,7 @@ def _pty(key: str) -> tuple[int, int] | None:
     # adjust sub-process terminal size
     columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
     if columns != -1 and lines != -1:
-        size = struct.pack("HHHH", columns, lines, 0, 0)
+        size = struct.pack("HHHH", lines, columns, 0, 0)
         fcntl.ioctl(child, termios.TIOCSWINSZ, size)
 
     return main, child
