@@ -116,8 +116,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):
         return (
             type(self) == type(o)
             and super().__eq__(o)
-            and (self.of_type, self.default, self.post_process)
-            == (o.of_type, o.default, o.post_process)  # type: ignore[attr-defined]
+            and (self.of_type, self.default, self.post_process) == (o.of_type, o.default, o.post_process)  # type: ignore[attr-defined]
         )
 
 
