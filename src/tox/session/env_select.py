@@ -413,6 +413,9 @@ class EnvSelector:
             yield name
 
     def ensure_only_run_env_is_active(self) -> None:
+        if not self._state.conf.core["work_dir"].exists():
+            self._state.conf.core["work_dir"].mkdir()
+            (self._state.conf.core["work_dir"] / ".gitignore").write_text("*", encoding="utf-8")
         envs, active = self._defined_envs, self._env_name_to_active()
         invalid = [n for n, a in active.items() if a and isinstance(envs[n].env, PackageToxEnv)]
         if invalid:

@@ -63,6 +63,8 @@ class Info:
 
     def _write(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
+        if not (self._path.parent / ".gitignore").exists():
+            (self._path.parent / ".gitignore").write_text("*", encoding="utf-8")
         self._path.write_text(json.dumps(self._content, indent=2))
 
 
