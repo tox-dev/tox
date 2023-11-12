@@ -119,7 +119,13 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
 
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
         if run_conf["package"] == "wheel":
-            env = self._wheel_build_envs.get(run_conf["wheel_build_env"])
+            try:
+                env = self._wheel_build_envs.get(run_conf["wheel_build_env"])
+            except Skip:
+                if self.core["skip_missing_interpreters"]:
+                    return
+                else:
+                    raise
             if env is not None and env.name != self.name:
                 yield env
 

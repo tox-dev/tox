@@ -152,6 +152,17 @@ def test_config_skip_missing_interpreters(
     assert result.code == (0 if expected else -1)
 
 
+def test_config_skip_missing_interpreters_package_wheel(
+    tox_project: ToxProjectCreator,
+) -> None:
+    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
+    project = tox_project(
+        {"tox.ini": f"[tox]\nenvlist=py4,py{py_ver}\nskip_missing_interpreters=true\n[testenv]\npackage=wheel"}
+    )
+    result = project.run()
+    assert result.code == 0
+
+
 @pytest.mark.parametrize(
     ("skip", "env", "retcode"),
     [

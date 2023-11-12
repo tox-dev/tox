@@ -16,6 +16,7 @@ def test_depends(tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool],
     ini = f"""
     [tox]
     env_list = py,{py},{prev_py},py31,cov2,cov
+    skip_missing_interpreters = false
     [testenv]
     package = wheel
     [testenv:cov]
