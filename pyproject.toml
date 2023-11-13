@@ -156,6 +156,15 @@ report.omit = ["src/tox/config/cli/for_docs.py", "tests/execute/local_subprocess
 run.parallel = true
 run.plugins = ["covdefaults"]
 
+[tool.towncrier]
+name = "tox"
+filename = "docs/changelog.rst"
+directory = "docs/changelog"
+title_format = false
+issue_format = ":issue:`{issue}`"
+template = "docs/changelog/template.jinja2"
+# possible types, all default: feature, bugfix, doc, removal, misc
+
 [tool.mypy]
 python_version = "3.11"
 show_error_codes = true
@@ -173,12 +182,3 @@ overrides = [
     "virtualenv.*",
   ], ignore_missing_imports = true },
 ]
-
-[tool.towncrier]
-name = "tox"
-filename = "docs/changelog.rst"
-directory = "docs/changelog"
-title_format = false
-issue_format = ":issue:`{issue}`"
-template = "docs/changelog/template.jinja2"
-# possible types, all default: feature, bugfix, doc, removal, misc
