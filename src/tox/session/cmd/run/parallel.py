@@ -74,8 +74,7 @@ def parallel_flags(
         "--parallel-no-spinner",
         action="store_true",
         dest="parallel_no_spinner",
-        help="run tox environments in parallel, but don't show the spinner,"
-        " implies --parallel",
+        help="run tox environments in parallel, but don't show the spinner, implies --parallel",
     )
 
 
