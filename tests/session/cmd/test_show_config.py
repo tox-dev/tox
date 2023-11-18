@@ -119,7 +119,9 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
     pass_env = outcome.env_conf("py")["pass_env"]
     is_win = sys.platform == "win32"
     expected = (
-        ["CC", "CCSHARED", "CFLAGS"]
+        []
+        + (["APPDATA"] if is_win else [])
+        + ["CC", "CCSHARED", "CFLAGS"]
         + (["COMSPEC"] if is_win else [])
         + ["CPPFLAGS", "CURL_CA_BUNDLE", "CXX", "HOME", "LANG", "LANGUAGE", "LDFLAGS", "LD_LIBRARY_PATH"]
         + (["MSYSTEM", "NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
