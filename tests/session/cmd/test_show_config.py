@@ -264,7 +264,7 @@ def test_show_config_matching_env_section(tox_project: ToxProjectCreator) -> Non
 
 
 def test_package_env_inherits_from_pkgenv(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    project = tox_project({"tox.ini": "[pkgenv]\npass_env = A, B\ndeps=C\n D"})
+    project = tox_project({"tox.ini": "[pkgenv]\npass_env = A, AA\ndeps=C\n D"})
     outcome = project.run("c", "--root", str(demo_pkg_inline), "-k", "deps", "pass_env", "-e", "py,.pkg")
     outcome.assert_success()
     exp = """
@@ -274,7 +274,7 @@ def test_package_env_inherits_from_pkgenv(tox_project: ToxProjectCreator, demo_p
       D
     pass_env =
       A
-      B
+      AA
     """
     exp = dedent(exp)
     assert exp in outcome.out
