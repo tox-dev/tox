@@ -119,7 +119,9 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
     pass_env = outcome.env_conf("py")["pass_env"]
     is_win = sys.platform == "win32"
     expected = (
-        ["CC", "CCSHARED", "CFLAGS"]
+        []
+        + (["APPDATA"] if is_win else [])
+        + ["CC", "CCSHARED", "CFLAGS"]
         + (["COMSPEC"] if is_win else [])
         + ["CPPFLAGS", "CURL_CA_BUNDLE", "CXX", "HOME", "LANG", "LANGUAGE", "LDFLAGS", "LD_LIBRARY_PATH"]
         + (["MSYSTEM", "NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
@@ -262,7 +264,7 @@ def test_show_config_matching_env_section(tox_project: ToxProjectCreator) -> Non
 
 
 def test_package_env_inherits_from_pkgenv(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    project = tox_project({"tox.ini": "[pkgenv]\npass_env = A, B\ndeps=C\n D"})
+    project = tox_project({"tox.ini": "[pkgenv]\npass_env = A, AA\ndeps=C\n D"})
     outcome = project.run("c", "--root", str(demo_pkg_inline), "-k", "deps", "pass_env", "-e", "py,.pkg")
     outcome.assert_success()
     exp = """
@@ -272,7 +274,7 @@ def test_package_env_inherits_from_pkgenv(tox_project: ToxProjectCreator, demo_p
       D
     pass_env =
       A
-      B
+      AA
     """
     exp = dedent(exp)
     assert exp in outcome.out
