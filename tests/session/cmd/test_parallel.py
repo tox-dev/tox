@@ -185,7 +185,8 @@ def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
         live=False,
     )
 
-    # Test legacy parser
+
+def test_parallel_no_spinner_legacy(tox_project: ToxProjectCreator) -> None:
     with mock.patch.object(parallel, "execute") as mocked:
         tox_project({"tox.ini": ""}).run("--parallel-no-spinner")
 
