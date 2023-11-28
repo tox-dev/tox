@@ -118,6 +118,7 @@ class Python(ToxEnv, ABC):
         if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [
+                    "APPDATA",  # Needed for PIP platformsdirs.windows
                     "PROGRAMDATA",  # needed for discovering the VS compiler
                     "PROGRAMFILES(x86)",  # needed for discovering the VS compiler
                     "PROGRAMFILES",  # needed for discovering the VS compiler
