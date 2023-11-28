@@ -6,9 +6,11 @@ from signal import SIGINT
 from subprocess import PIPE, Popen
 from time import sleep
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import pytest
 
+from tox.session.cmd.run import parallel
 from tox.session.cmd.run.parallel import parse_num_processes
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail
@@ -169,3 +171,27 @@ def test_parallel_requires_arg(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("p", "-p", "-h")
     outcome.assert_failed()
     assert "argument -p/--parallel: expected one argument" in outcome.err
+
+
+def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
+    """Ensure passing `--parallel-no-spinner` implies `--parallel`."""
+    with mock.patch.object(parallel, "execute") as mocked:
+        tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner")
+
+    mocked.assert_called_once_with(
+        state=mock.ANY,
+        max_workers=None,
+        has_spinner=False,
+        live=False,
+    )
+
+    # Test legacy parser
+    with mock.patch.object(parallel, "execute") as mocked:
+        tox_project({"tox.ini": ""}).run("--parallel-no-spinner")
+
+    mocked.assert_called_once_with(
+        state=mock.ANY,
+        max_workers=None,
+        has_spinner=False,
+        live=False,
+    )
