@@ -179,7 +179,7 @@ def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
         tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner")
 
     mocked.assert_called_once_with(
-        state=mock.ANY,
+        mock.ANY,
         max_workers=None,
         has_spinner=False,
         live=False,
@@ -190,7 +190,7 @@ def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
         tox_project({"tox.ini": ""}).run("--parallel-no-spinner")
 
     mocked.assert_called_once_with(
-        state=mock.ANY,
+        mock.ANY,
         max_workers=None,
         has_spinner=False,
         live=False,
