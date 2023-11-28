@@ -4,6 +4,20 @@ Release History
 
 .. towncrier release notes start
 
+v4.11.4 (2023-11-27)
+--------------------
+
+Bugfixes - 4.11.4
+~~~~~~~~~~~~~~~~~
+- Fix terminal size of tox subcommands (fixes ipython, ipdb, prompt_toolkit, ...). (:issue:`2999`)
+- Fix ``quickstart`` command from requiring ``root`` positional argument (:issue:`3084`)
+- Added 'AppData' to the default passed environment variables on Windows. (:issue:`3151`)
+
+Improved Documentation - 4.11.4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix default value for ``install_command`` - by :user:`hashar`. (:issue:`3126`)
+- Fix default value for ``base_python`` - by :user:`rpatterson`. (:issue:`3156`)
+
 v4.11.3 (2023-09-08)
 --------------------
 

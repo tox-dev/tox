@@ -1,1 +1,0 @@
-Fix terminal size of tox subcommands (fixes ipython, ipdb, prompt_toolkit, ...).

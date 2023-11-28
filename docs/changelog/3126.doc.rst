@@ -1,1 +1,0 @@
-Fix default value for ``install_command`` - by :user:`hashar`.
