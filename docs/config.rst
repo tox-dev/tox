@@ -530,7 +530,7 @@ Python options
 ~~~~~~~~~~~~~~
 .. conf::
    :keys: base_python, basepython
-   :default: {package_root}
+   :default: <{env_name} python factor> or <python version of tox>
 
    Name or path to a Python interpreter which will be used for creating the virtual environment, first one found wins.
    This determines in practice the Python for what we'll create a virtual isolated environment. Use this to specify the
