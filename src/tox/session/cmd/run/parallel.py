@@ -74,7 +74,7 @@ def parallel_flags(
         "--parallel-no-spinner",
         action="store_true",
         dest="parallel_no_spinner",
-        help="do not show the spinner",
+        help="run tox environments in parallel, but don't show the spinner, implies --parallel",
     )
 
 
@@ -83,7 +83,7 @@ def run_parallel(state: State) -> int:
     option = state.conf.options
     return execute(
         state,
-        max_workers=option.parallel,
+        max_workers=None if option.parallel_no_spinner is True else option.parallel,
         has_spinner=option.parallel_no_spinner is False and option.parallel_live is False,
         live=option.parallel_live,
     )
