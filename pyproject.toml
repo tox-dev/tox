@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
-  "hatch-vcs>=0.3",
+  "hatch-vcs>=0.4",
   "hatchling>=1.18",
 ]
 
@@ -47,47 +47,47 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=5.3.1",
+  "cachetools>=5.3.2",
   "chardet>=5.2",
   "colorama>=0.4.6",
-  "filelock>=3.12.3",
-  'importlib-metadata>=6.8; python_version < "3.8"',
-  "packaging>=23.1",
-  "platformdirs>=3.10",
+  "filelock>=3.13.1",
+  'importlib-metadata>=7; python_version < "3.8"',
+  "packaging>=23.2",
+  "platformdirs>=4.1",
   "pluggy>=1.3",
   "pyproject-api>=1.6.1",
   'tomli>=2.0.1; python_version < "3.11"',
-  'typing-extensions>=4.7.1; python_version < "3.8"',
-  "virtualenv>=20.24.3",
+  'typing-extensions>=4.8; python_version < "3.8"',
+  "virtualenv>=20.25",
 ]
 optional-dependencies.docs = [
-  "furo>=2023.8.19",
-  "sphinx>=7.2.4",
+  "furo>=2023.9.10",
+  "sphinx>=7.2.6",
   "sphinx-argparse-cli>=1.11.1",
-  "sphinx-autodoc-typehints!=1.23.4,>=1.24",
+  "sphinx-autodoc-typehints!=1.23.4,>=1.25.2",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=23.6",
+  "towncrier>=23.11",
 ]
 optional-dependencies.testing = [
-  "build[virtualenv]>=0.10",
+  "build[virtualenv]>=1.0.3",
   "covdefaults>=2.3",
-  "detect-test-pollution>=1.1.1",
+  "detect-test-pollution>=1.2",
   "devpi-process>=1",
-  "diff-cover>=7.7",
+  "diff-cover>=8.0.1",
   "distlib>=0.3.7",
   "flaky>=3.7",
-  "hatch-vcs>=0.3",
+  "hatch-vcs>=0.4",
   "hatchling>=1.18",
-  "psutil>=5.9.5",
-  "pytest>=7.4",
+  "psutil>=5.9.6",
+  "pytest>=7.4.3",
   "pytest-cov>=4.1",
-  "pytest-mock>=3.11.1",
-  "pytest-xdist>=3.3.1",
+  "pytest-mock>=3.12",
+  "pytest-xdist>=3.5",
   "re-assert>=1.1",
-  'time-machine>=2.12; implementation_name != "pypy"',
-  "wheel>=0.41.2",
+  'time-machine>=2.13; implementation_name != "pypy"',
+  "wheel>=0.42",
 ]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
