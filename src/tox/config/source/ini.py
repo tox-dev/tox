@@ -54,7 +54,11 @@ class IniSource(Source):
             return IniLoader(
                 section=section,
                 parser=self._parser,
-                overrides=override_map.get(section.key, []),
+                overrides=override_map.get(
+                    section.key,
+                    # Fallback to overrides from the prefix
+                    override_map.get(section.prefix, []),
+                ),
                 core_section=self.CORE_SECTION,
                 section_key=key,
             )
