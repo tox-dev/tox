@@ -219,6 +219,8 @@ class ToxEnv(ABC):
             "LD_LIBRARY_PATH",  # location of libs
             "LDFLAGS",  # linker flags
             "HOME",  # needed for `os.path.expanduser()` on non-Windows systems
+            "FORCE_COLOR",  # force color output
+            "NO_COLOR",  # disable color output
         ]
         if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
             env.append("TERM")
