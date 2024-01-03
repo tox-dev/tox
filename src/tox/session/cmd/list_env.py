@@ -4,6 +4,8 @@ from __future__ import annotations
 from itertools import chain
 from typing import TYPE_CHECKING
 
+from colorama import Fore, Style
+
 from tox.plugin import impl
 from tox.session.env_select import register_env_select_flags
 
@@ -20,7 +22,7 @@ def tox_add_option(parser: ToxParser) -> None:
     d.add_argument("-d", action="store_true", help="list just default envs", dest="list_default_only")
 
 
-def list_env(state: State) -> int:
+def list_env(state: State) -> int:  # noqa: C901
     option = state.conf.options
     has_group_select = bool(option.factors or option.labels)
     active_only = has_group_select or option.list_default_only
@@ -39,7 +41,12 @@ def list_env(state: State) -> int:
             if not text.strip():
                 text = "[no description]"
             text = text.replace("\n", " ")
-            msg = f"{env.ljust(max_length)} -> {text}".strip()
+            color: int | str = Fore.CYAN if state.conf.options.is_colored else ""
+
+            def _c(val: int) -> str:
+                return str(val) if color else ""
+
+            msg = f"{color}{env.ljust(max_length)}{_c(Style.RESET_ALL)} -> {text}".strip()
         else:
             msg = env
         print(msg)  # noqa: T201

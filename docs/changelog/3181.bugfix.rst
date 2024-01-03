@@ -1,0 +1,1 @@
+environment names are colored when running ``tox list``
