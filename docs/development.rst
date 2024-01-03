@@ -9,7 +9,7 @@ Getting started
 help you get started with development, testing, and documentation. We’re pleased that you are interested in working on
 tox. This document is meant to get you setup to work on tox and to act as a guide and reference to the development
 setup. If you face any issues during this process, please
-:issue:`new?title=Trouble+with+development+environment` about it on the issue tracker.
+:issue:`open an issue <new?title=Trouble+with+development+environment>` about it on the issue tracker.
 
 Setup
 ~~~~~
