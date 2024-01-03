@@ -1,0 +1,1 @@
+-Fix ``open an issue`` link in development.rst
