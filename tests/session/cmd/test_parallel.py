@@ -80,7 +80,7 @@ def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPat
     oks, skips, fails = {"a", "b", "c"}, {"d"}, {"e", "f"}
     missing = set()
     for env in "a", "b", "c", "d", "e", "f":
-        if env in ("c", "e"):
+        if env in {"c", "e"}:
             assert "run c" in out, out
         elif env == "f":
             assert "f: failed with something bad happened" in out, out

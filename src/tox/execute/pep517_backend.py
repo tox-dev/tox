@@ -1,4 +1,5 @@
 """A executor that reuses a single subprocess for all backend calls (saving on python startup/import overhead)."""
+
 from __future__ import annotations
 
 import time
@@ -53,14 +54,14 @@ class LocalSubProcessPep517Executor(Execute):
                 err=SyncWrite(name="pep517-err", target=None, color=None),  # not enabled no need to enter/exit
                 on_exit_drain=False,
             )
-            status = instance.__enter__()
+            status = instance.__enter__()  # noqa: PLC2801
             self._local_execute = instance, status
             while True:
                 if b"started backend " in status.out:
                     self.is_alive = True
                     break
                 if b"failed to start backend" in status.err:
-                    from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed
+                    from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed  # noqa: PLC0415
 
                     failure = BackendFailed(
                         result={
@@ -83,7 +84,7 @@ class LocalSubProcessPep517Executor(Execute):
 
     def close(self) -> None:
         if self._local_execute is not None:  # pragma: no branch
-            execute, status = self._local_execute
+            execute, _status = self._local_execute
             execute.__exit__(None, None, None)
             if execute.process is not None and execute.process.returncode is None:  # pragma: no cover
                 try:  # pragma: no cover

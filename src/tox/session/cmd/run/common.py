@@ -1,4 +1,5 @@
 """Common functionality shared across multiple type of runs."""
+
 from __future__ import annotations
 
 import logging
@@ -38,7 +39,7 @@ class SkipMissingInterpreterAction(Action):
         option_string: str | None = None,  # noqa: ARG002
     ) -> None:
         value = "true" if values is None else values
-        if value not in ("config", "true", "false"):
+        if value not in {"config", "true", "false"}:
             raise ArgumentError(self, f"value must be 'config', 'true', or 'false' (got {value!r})")
         setattr(namespace, self.dest, value)
 
@@ -63,7 +64,7 @@ class InstallPackageAction(Action):
 
 def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C901
     # mode can be one of: run, run-parallel, legacy, devenv, config
-    if mode not in ("config", "depends"):
+    if mode not in {"config", "depends"}:
         parser.add_argument(
             "--result-json",
             dest="result_json",
@@ -72,7 +73,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
             default=None,
             help="write a JSON file with detailed information about all commands and results involved",
         )
-    if mode not in ("devenv", "depends"):
+    if mode not in {"devenv", "depends"}:
         parser.add_argument(
             "-s",
             "--skip-missing-interpreters",
@@ -82,7 +83,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
             action=SkipMissingInterpreterAction,
             help="don't fail tests for missing interpreters: {config,true,false} choice",
         )
-    if mode not in ("devenv", "config", "depends"):
+    if mode not in {"devenv", "config", "depends"}:
         parser.add_argument(
             "-n",
             "--notest",
@@ -106,14 +107,14 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
             action=InstallPackageAction,
             dest="install_pkg",
         )
-    if mode not in ("devenv", "depends"):
+    if mode not in {"devenv", "depends"}:
         parser.add_argument(
             "--develop",
             action="store_true",
             help="install package in development mode",
             dest="develop",
         )
-    if mode not in ("depends",):
+    if mode != "depends":
 
         class SeedAction(Action):
             def __call__(
@@ -158,7 +159,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
         help="for Python discovery first try the Python executables under these paths",
         default=[],
     )
-    if mode not in ("depends",):
+    if mode != "depends":
         parser.add_argument(
             "--no-recreate-pkg",
             dest="no_recreate_pkg",
@@ -178,7 +179,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:  # noqa: C9
             dest="list_dependencies",
             help="never list the dependencies installed during environment setup",
         )
-    if mode not in ("devenv", "config", "depends"):
+    if mode not in {"devenv", "config", "depends"}:
         parser.add_argument(
             "--skip-pkg-install",
             dest="skip_pkg_install",

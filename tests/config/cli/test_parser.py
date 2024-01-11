@@ -58,7 +58,7 @@ def test_parser_color(  # noqa: PLR0913
     stdout_mock = mocker.patch("tox.config.cli.parser.sys.stdout")
     stdout_mock.isatty.return_value = is_atty
 
-    if tox_color in ("yes", "no"):
+    if tox_color in {"yes", "no"}:
         expected = tox_color == "yes"
     elif bool(no_color):
         expected = False
@@ -105,5 +105,5 @@ def test_parser_hint(capsys: CaptureFixture) -> None:
     parser = ToxParser.base()
     with pytest.raises(SystemExit):
         parser.parse_args("foo")
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert err.endswith("hint: if you tried to pass arguments to a command use -- to separate them from tox ones\n")

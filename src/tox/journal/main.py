@@ -1,4 +1,5 @@
 """Generate json report of a tox run."""
+
 from __future__ import annotations
 
 import socket

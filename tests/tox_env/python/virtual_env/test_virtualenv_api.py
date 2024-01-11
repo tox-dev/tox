@@ -132,7 +132,7 @@ def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     proj.run("r")
 
-    from tox.tox_env.python.virtual_env import api
+    from tox.tox_env.python.virtual_env import api  # noqa: PLC0415
 
     mocker.patch.object(api, "virtualenv_version", "1.0")
     result = proj.run("r")

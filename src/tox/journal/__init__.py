@@ -1,4 +1,5 @@
 """This module handles collecting and persisting in json format a tox session."""
+
 from __future__ import annotations
 
 import json

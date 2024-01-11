@@ -1,4 +1,5 @@
 """Apply value substitution (replacement) on tox strings."""
+
 from __future__ import annotations
 
 import logging
@@ -57,7 +58,7 @@ def replace(conf: Config, loader: IniLoader, value: str, args: ConfigLoadArgs, d
     return Replacer(conf, loader, conf_args=args, depth=depth).join(find_replace_expr(value))
 
 
-class MatchExpression:
+class MatchExpression:  # noqa: PLW1641
     """An expression that is handled specially by the Replacer."""
 
     def __init__(self, expr: Sequence[MatchArg], term_pos: int | None = None) -> None:

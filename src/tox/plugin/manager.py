@@ -1,4 +1,5 @@
 """Contains the plugin manager object."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -33,8 +34,17 @@ class Plugin:
         self.manager.add_hookspecs(spec)
 
     def _register_plugins(self, inline: ModuleType | None) -> None:
-        from tox.session import state
-        from tox.session.cmd import depends, devenv, exec_, legacy, list_env, quickstart, show_config, version_flag
+        from tox.session import state  # noqa: PLC0415
+        from tox.session.cmd import (  # noqa: PLC0415
+            depends,
+            devenv,
+            exec_,
+            legacy,
+            list_env,
+            quickstart,
+            show_config,
+            version_flag,
+        )
 
         if inline is not None:
             self.manager.register(inline)

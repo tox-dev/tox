@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-class CliEnv:
+class CliEnv:  # noqa: PLW1641
     """CLI tox env selection."""
 
     def __init__(self, value: None | list[str] | str = None) -> None:
@@ -132,7 +132,7 @@ class EnvSelector:
         self._state = state
         self._defined_envs_: None | dict[str, _ToxEnvInfo] = None
         self._pkg_env_counter: Counter[str] = Counter()
-        from tox.plugin.manager import MANAGER
+        from tox.plugin.manager import MANAGER  # noqa: PLC0415
 
         self._manager = MANAGER
         self._log_handler = self._state._options.log_handler  # noqa: SLF001
@@ -386,7 +386,7 @@ class EnvSelector:
         """
         return self._defined_envs[item].env
 
-    def iter(  # noqa: A003
+    def iter(
         self,
         *,
         only_active: bool = True,

@@ -1,4 +1,5 @@
 """Helper methods related to graph theory."""
+
 from __future__ import annotations
 
 from collections import OrderedDict, defaultdict

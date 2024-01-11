@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .section import Section
 
 
-class Override:
+class Override:  # noqa: PLW1641
     """An override for config definitions."""
 
     def __init__(self, value: str) -> None:
@@ -127,7 +127,7 @@ class Loader(Convert[T]):
         :param args: the config load arguments
         :return: the converted type
         """
-        from tox.config.set_env import SetEnv
+        from tox.config.set_env import SetEnv  # noqa: PLC0415
 
         override = self.overrides.get(key)
         if override:

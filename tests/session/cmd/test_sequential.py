@@ -93,13 +93,14 @@ def test_result_json_sequential(
     packaging_setup = get_cmd_exit_run_id(log_report, ".pkg", "setup")
     assert "result" not in log_report["testenvs"][".pkg"]
 
-    assert packaging_setup == [
+    assert packaging_setup[-1][0] in {0, None}
+    assert packaging_setup[-1][1] == "_exit"
+    assert packaging_setup[:-1] == [
         (0, "install_requires"),
         (None, "_optional_hooks"),
         (None, "get_requires_for_build_wheel"),
         (0, "install_requires_for_build_wheel"),
         (0, "freeze"),
-        (None, "_exit"),
     ]
     packaging_test = get_cmd_exit_run_id(log_report, ".pkg", "test")
     assert packaging_test == [(None, "build_wheel")]

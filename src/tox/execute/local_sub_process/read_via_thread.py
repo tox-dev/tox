@@ -1,4 +1,5 @@
 """A reader that drain a stream via its file no on a background thread."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

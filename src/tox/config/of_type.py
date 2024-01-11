@@ -1,4 +1,5 @@
 """Group together configuration values (such as base tox configuration, tox environment configs)."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -16,7 +17,7 @@ T = TypeVar("T")
 V = TypeVar("V")
 
 
-class ConfigDefinition(ABC, Generic[T]):
+class ConfigDefinition(ABC, Generic[T]):  # noqa: PLW1641
     """Abstract base class for configuration definitions."""
 
     def __init__(self, keys: Iterable[str], desc: str) -> None:
@@ -34,7 +35,7 @@ class ConfigDefinition(ABC, Generic[T]):
         return not (self == o)
 
 
-class ConfigConstantDefinition(ConfigDefinition[T]):
+class ConfigConstantDefinition(ConfigDefinition[T]):  # noqa: PLW1641
     """A configuration definition whose value is defined upfront (such as the tox environment name)."""
 
     def __init__(
@@ -61,7 +62,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):
 _PLACE_HOLDER = object()
 
 
-class ConfigDynamicDefinition(ConfigDefinition[T]):
+class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
     """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.)."""
 
     def __init__(  # noqa: PLR0913

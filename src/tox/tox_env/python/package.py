@@ -1,4 +1,5 @@
 """A tox build environment that handles Python packages."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

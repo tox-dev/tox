@@ -28,6 +28,7 @@ define a new ``--magic`` command line interface flag the user can specify:
 You can define such hooks either in a package installed alongside tox or within a ``toxfile.py`` found alongside your
 tox configuration file (root of your project).
 """
+
 from __future__ import annotations
 
 from typing import Any, Callable, TypeVar

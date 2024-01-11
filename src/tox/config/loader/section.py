@@ -11,7 +11,7 @@ if TYPE_CHECKING:
         from typing_extensions import Self
 
 
-class Section:
+class Section:  # noqa: PLW1641
     """tox configuration section."""
 
     SEP = ":"  #: string used to separate the prefix and the section in the key

@@ -6,7 +6,7 @@ from typing import Iterator, Sequence
 from tox.execute.request import shell_cmd
 
 
-class Command:
+class Command:  # noqa: PLW1641
     """A command to execute."""
 
     def __init__(self, args: list[str]) -> None:
@@ -19,7 +19,7 @@ class Command:
         self.args: list[str] = args[1:] if self.ignore_exit_code else args  #: the command line arguments
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(args={(['-'] if self.ignore_exit_code else [])+ self.args!r})"
+        return f"{type(self).__name__}(args={(['-'] if self.ignore_exit_code else []) + self.args!r})"
 
     def __eq__(self, other: object) -> bool:
         return type(self) == type(other) and (self.args, self.ignore_exit_code) == (
@@ -36,7 +36,7 @@ class Command:
         return shell_cmd(self.args)
 
 
-class EnvList:
+class EnvList:  # noqa: PLW1641
     """A tox environment list."""
 
     def __init__(self, envs: Sequence[str]) -> None:

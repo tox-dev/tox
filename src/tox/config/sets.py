@@ -126,7 +126,7 @@ class ConfigSet(ABC):
         :return: the configuration value
         """
         config_definition = self._defined[item]
-        return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))
+        return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # noqa: PLC2801
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(loaders={self.loaders!r})"
@@ -225,7 +225,7 @@ class EnvConfigSet(ConfigSet):
 
     def __init__(self, conf: Config, section: Section, env_name: str) -> None:
         super().__init__(conf, section, env_name)
-        self.default_set_env_loader: Callable[[], Mapping[str, str]] = lambda: {}
+        self.default_set_env_loader: Callable[[], Mapping[str, str]] = dict
 
     def register_config(self) -> None:
         def set_env_post_process(values: SetEnv) -> SetEnv:

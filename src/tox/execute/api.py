@@ -1,4 +1,5 @@
 """Abstract base API for executing commands within tox environments."""
+
 from __future__ import annotations
 
 import logging

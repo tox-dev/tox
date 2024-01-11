@@ -1,4 +1,5 @@
 """Customize argparse logic for tox (also contains the base options)."""
+
 from __future__ import annotations
 
 import argparse
@@ -181,7 +182,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def add_argument_group(self, *args: Any, **kwargs: Any) -> Any:
         result = super().add_argument_group(*args, **kwargs)
-        if self.of_cmd is None and args not in (("positional arguments",), ("optional arguments",)):
+        if self.of_cmd is None and args not in {("positional arguments",), ("optional arguments",)}:
 
             def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
                 def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
@@ -249,7 +250,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 cmd_at = None
         if cmd_at is not None:  # if we found a command move it to the start
             args = args[cmd_at], *args[:cmd_at], *args[cmd_at + 1 :]
-        elif args not in (("--help",), ("-h",)) and (self._cmd is not None and "legacy" in self._cmd.choices):
+        elif tuple(args) not in {("--help",), ("-h",)} and (self._cmd is not None and "legacy" in self._cmd.choices):
             # on help no mangling needed, and we also want to insert once we have legacy to insert
             args = "legacy", *args
         result = Parsed() if namespace is None else namespace
@@ -258,7 +259,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
 
 def add_verbosity_flags(parser: ArgumentParser) -> None:
-    from tox.report import LEVELS
+    from tox.report import LEVELS  # noqa: PLC0415
 
     level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
     verbosity_group = parser.add_argument_group("verbosity")

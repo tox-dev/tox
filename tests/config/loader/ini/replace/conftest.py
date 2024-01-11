@@ -16,8 +16,7 @@ from typing import Protocol
 
 
 class ReplaceOne(Protocol):
-    def __call__(self, conf: str, pos_args: list[str] | None = None) -> str:
-        ...
+    def __call__(self, conf: str, pos_args: list[str] | None = None) -> str: ...
 
 
 @pytest.fixture()

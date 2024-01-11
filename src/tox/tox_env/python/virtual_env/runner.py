@@ -1,4 +1,5 @@
 """A tox python environment runner that uses the virtualenv project."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -18,7 +19,7 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     """local file system python virtual environment via the virtualenv package."""
 
     @staticmethod
-    def id() -> str:  # noqa: A003
+    def id() -> str:
         return "virtualenv"
 
     @property

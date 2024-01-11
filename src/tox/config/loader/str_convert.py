@@ -1,4 +1,5 @@
 """Convert string configuration values to tox python configuration objects."""
+
 from __future__ import annotations
 
 import shlex
@@ -65,7 +66,7 @@ class StrConvert(Convert[str]):
                 if last_char == escape:
                     continue
                 next_char = value[ix + 1 : ix + 2]
-                if next_char not in (escape, *special_chars):
+                if next_char not in {escape, *special_chars}:
                     result.append(escape)  # escape escapes that are not themselves escaping a special character
         return "".join(result)
 
@@ -109,7 +110,7 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_env_list(value: str) -> EnvList:
-        from tox.config.loader.ini.factor import extend_factors
+        from tox.config.loader.ini.factor import extend_factors  # noqa: PLC0415
 
         elements = list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n")))
         return EnvList(elements)
