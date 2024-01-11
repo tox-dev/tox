@@ -1,4 +1,5 @@
 """Main entry point for tox."""
+
 from __future__ import annotations
 
 import faulthandler
@@ -27,7 +28,7 @@ def run(args: Sequence[str] | None = None) -> None:
         result = -2
     finally:
         if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover
-            import threading  # pragma: no cover
+            import threading  # pragma: no cover  # noqa: PLC0415
 
             for thread in threading.enumerate():  # pragma: no cover
                 print(thread)  # pragma: no cover  # noqa: T201
@@ -36,7 +37,7 @@ def run(args: Sequence[str] | None = None) -> None:
 
 def main(args: Sequence[str]) -> int:
     state = setup_state(args)
-    from tox.provision import provision
+    from tox.provision import provision  # noqa: PLC0415
 
     result = provision(state)
     if result is not False:

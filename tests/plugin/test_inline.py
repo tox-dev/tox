@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 
 def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        import logging
+        import logging  # noqa: PLC0415
 
-        from tox.plugin import impl
+        from tox.plugin import impl  # noqa: PLC0415
 
         @impl
         def tox_add_option(parser: ToxParser) -> None:

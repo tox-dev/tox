@@ -1,4 +1,5 @@
 """Provides configuration values from tox.ini files."""
+
 from __future__ import annotations
 
 import logging

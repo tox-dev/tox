@@ -1,4 +1,5 @@
 """A minimal non-colored version of https://pypi.org/project/halo, to track list progress."""
+
 from __future__ import annotations
 
 import os

@@ -1,4 +1,5 @@
 """A pytest plugin useful to test tox itself (and its plugins)."""
+
 from __future__ import annotations
 
 import inspect
@@ -186,10 +187,10 @@ class ToxProject:
             def wait(self, timeout: float | None = None) -> int | None:  # noqa: ARG002
                 return self._exit_code
 
-            def write_stdin(self, content: str) -> None:  # noqa: ARG002
+            def write_stdin(self, content: str) -> None:  # noqa: ARG002, PLR6301
                 return None  # pragma: no cover
 
-            def interrupt(self) -> None:
+            def interrupt(self) -> None:  # noqa: PLR6301
                 return None  # pragma: no cover
 
         class MockExecuteInstance(ExecuteInstance):
@@ -296,12 +297,12 @@ class ToxProject:
 @pytest.fixture(autouse=True, scope="session")
 def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
     try:
-        import coverage  # noqa: F401
+        import coverage  # noqa: F401, PLC0415
     except ImportError:  # pragma: no cover
         yield  # pragma: no cover
         return  # pragma: no cover
     # the COV_ env variables needs to be passed on for the PEP-517 backend
-    from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager
+    from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager  # noqa: PLC0415
 
     def default_pass_env(self: Pep517VirtualEnvPackager) -> list[str]:
         result = previous(self)
@@ -390,7 +391,7 @@ class ToxRunOutcome:
     @staticmethod
     def matches(pattern: str, text: str, flags: int = 0) -> None:
         try:
-            from re_assert import Matches
+            from re_assert import Matches  # noqa: PLC0415
         except ImportError:  # pragma: no cover # hard to test
             match = re.match(pattern, text, flags)
             if match is None:
@@ -406,8 +407,7 @@ class ToxProjectCreator(Protocol):
         files: dict[str, Any],
         base: Path | None = None,
         prj_path: Path | None = None,
-    ) -> ToxProject:
-        ...
+    ) -> ToxProject: ...
 
 
 @pytest.fixture(name="tox_project")

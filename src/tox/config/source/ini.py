@@ -1,4 +1,5 @@
 """Load."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -35,7 +36,7 @@ class IniSource(Source):
         self._parser.read_string(content, str(path))
         self._section_mapping: defaultdict[str, list[str]] = defaultdict(list)
 
-    def transform_section(self, section: Section) -> Section:
+    def transform_section(self, section: Section) -> Section:  # noqa: PLR6301
         return IniSection(section.prefix, section.name)
 
     def sections(self) -> Iterator[IniSection]:
@@ -63,14 +64,14 @@ class IniSource(Source):
     def get_core_section(self) -> Section:
         return self.CORE_SECTION
 
-    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
+    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: PLR6301
         for a_base in base:
             section = IniSection.from_key(a_base)
             yield section  # the base specifier is explicit
             if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
                 yield IniSection(in_section.prefix, a_base)
 
-    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
+    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:  # noqa: PLR6301
         return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
 
     def envs(self, core_config: ConfigSet) -> Iterator[str]:

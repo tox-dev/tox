@@ -2,6 +2,7 @@
 Declare and handle the tox env info file (a file at the root of every tox environment that contains information about
 the status of the tox environment - python version of the environment, installed packages, etc.).
 """
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
 """Print available tox environments."""
+
 from __future__ import annotations
 
 from itertools import chain
@@ -50,7 +51,7 @@ def list_env(state: State) -> int:
     if not has_group_select and not option.list_default_only and inactive:
         if not option.list_no_description:
             if active:  # pragma: no branch
-                print("")  # noqa: T201
+                print()  # noqa: T201
             print("additional environments:")  # noqa: T201
         for env in inactive:
             report_env(env)

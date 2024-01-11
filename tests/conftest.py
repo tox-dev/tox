@@ -42,8 +42,7 @@ if sys.implementation.name == "pypy":
 
 
 class ToxIniCreator(Protocol):
-    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config:
-        ...
+    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config: ...
 
 
 @pytest.fixture()
@@ -137,7 +136,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: pytest.TempPathFactory, demo_pkg_inl
 
 
 def build_pkg(dist_dir: Path, of: Path, distributions: list[str], isolation: bool = True) -> Path:
-    from build.__main__ import build_package
+    from build.__main__ import build_package  # noqa: PLC0415
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
     return next(dist_dir.iterdir())

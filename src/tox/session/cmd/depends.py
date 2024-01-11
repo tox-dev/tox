@@ -44,7 +44,7 @@ def depends(state: State) -> int:
             names = " | ".join(packager_list)
             if names:
                 print(f" ~ {names}", end="")  # noqa: T201
-        print("")  # noqa: T201
+        print()  # noqa: T201
         at += 1
         for dep in deps[env]:
             _handle(at, dep)

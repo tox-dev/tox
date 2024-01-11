@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import locale
 import logging
 import os
 import shutil
@@ -32,7 +33,10 @@ if TYPE_CHECKING:
 
 class FakeOutErr:
     def __init__(self) -> None:
-        self.out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
+        self.out_err = (
+            TextIOWrapper(NamedBytesIO("out"), encoding=locale.getpreferredencoding(False)),
+            TextIOWrapper(NamedBytesIO("err"), encoding=locale.getpreferredencoding(False)),
+        )
 
     def read_out_err(self) -> tuple[str, str]:
         out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)  # type: ignore[attr-defined]
@@ -144,13 +148,15 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix terminal size test")
 def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: MonkeyPatch) -> None:
     """Regression test for #2999 - check terminal size is set correctly in tox subprocess."""
-    import pty
+    import pty  # noqa: PLC0415
 
     terminal_size = os.terminal_size((84, 42))
     main, child = pty.openpty()  # type: ignore[attr-defined, unused-ignore]
     # Use ReadViaThreadUnix to help with debugging the test itself.
     pipe_out = ReadViaThreadUnix(main, sys.stdout.buffer.write, name="testout", drain=True)  # type: ignore[arg-type]
-    with pipe_out, monkeypatch.context() as monkey, open(child, "w") as stdout_mock:  # noqa: PTH123
+    with pipe_out, monkeypatch.context() as monkey, open(  # noqa: PTH123
+        child, "w", encoding=locale.getpreferredencoding(False)
+    ) as stdout_mock:
         # Switch stdout with test pty
         monkey.setattr(sys, "stdout", stdout_mock)
         monkey.setenv("COLUMNS", "84")
@@ -308,7 +314,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     mocker.patch("sys.stdout.isatty", return_value=tty)
     mocker.patch("sys.stderr.isatty", return_value=tty)
     try:
-        import termios  # noqa: F401
+        import termios  # noqa: F401, PLC0415
     except ImportError:
         exp_tty = False  # platforms without tty support at all
     else:

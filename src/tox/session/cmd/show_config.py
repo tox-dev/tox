@@ -1,4 +1,5 @@
 """Show materialized configuration of tox environments."""
+
 from __future__ import annotations
 
 from textwrap import indent
@@ -49,7 +50,7 @@ def show_config(state: State) -> int:
         if is_first:
             is_first = False
         else:
-            print("")  # noqa: T201
+            print()  # noqa: T201
         print_section_header(is_colored, f"[testenv:{tox_env.conf.name}]")
         if not keys:
             print_key_value(is_colored, "type", type(tox_env).__name__)
@@ -63,7 +64,7 @@ def show_config(state: State) -> int:
 
     # environments may define core configuration flags, so we must exhaust first the environments to tell the core part
     if show_everything or state.conf.options.show_core:
-        print("")  # noqa: T201
+        print()  # noqa: T201
         print_section_header(is_colored, "[tox]")
         print_conf(is_colored, state.conf.core, keys)
     return 0
@@ -85,7 +86,7 @@ def print_key_value(is_colored: bool, key: str, value: str, multi_line: bool = F
     print(_colored(is_colored, Fore.GREEN, key), end="")  # noqa: T201
     print(" =", end="")  # noqa: T201
     if multi_line:
-        print("")  # noqa: T201
+        print()  # noqa: T201
         value_str = indent(value, prefix="  ")
     else:
         print(" ", end="")  # noqa: T201

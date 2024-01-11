@@ -42,7 +42,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
 
     @staticmethod
-    def id() -> str:  # noqa: A003
+    def id() -> str:
         return "virtualenv-cmd-builder"
 
     def register_config(self) -> None:
@@ -112,7 +112,7 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
                 shutil.rmtree(work_dir)  # pragma: no cover
             work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
-                tar.extractall(path=str(work_dir))
+                tar.extractall(path=str(work_dir))  # noqa: S202
             # the register run env is guaranteed to be called before this
             assert self._sdist_meta_tox_env is not None  # noqa: S101
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):

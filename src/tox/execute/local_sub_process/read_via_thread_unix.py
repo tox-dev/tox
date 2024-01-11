@@ -1,4 +1,5 @@
 """On UNIX we use select.select to ensure we drain in a non-blocking fashion."""
+
 from __future__ import annotations
 
 import errno  # pragma: win32 no cover
@@ -39,7 +40,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
                     return True
         except OSError as exception:  # pragma: no cover
             # Bad file descriptor or Input/output error
-            if exception.errno in (errno.EBADF, errno.EIO):
+            if exception.errno in {errno.EBADF, errno.EIO}:
                 return None
             raise
         else:

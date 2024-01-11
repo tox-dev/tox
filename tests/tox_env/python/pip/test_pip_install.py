@@ -385,7 +385,7 @@ def test_constrain_package_deps(
                 # actually end up in the constraints, so assert it's not there
                 assert c not in constraints
             for c in constraints:
-                assert c.partition("==")[0] in ["pip", "setuptools", "wheel"]
+                assert c.partition("==")[0] in {"pip", "setuptools", "wheel"}
         else:
             for c in constraints:
                 assert c in exp_constraints

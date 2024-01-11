@@ -12,7 +12,7 @@ class _OurArgumentParser(ArgumentParser):
     def print_usage(self, file: IO[str] | None = None) -> None:
         """ """
 
-    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: A003, ARG002
+    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: ARG002, PLR6301
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
         if msg.startswith("error: "):

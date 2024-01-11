@@ -1,4 +1,5 @@
 """Expand tox factor expressions to tox environment list."""
+
 from __future__ import annotations
 
 import re
