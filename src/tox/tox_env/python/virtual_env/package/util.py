@@ -58,10 +58,10 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
         extra = _get_extra(marker)
         if extra is not None:
             extra_markers.add(extra)
-            if new_markers and new_markers[-1] in ("and", "or"):
+            if new_markers and new_markers[-1] in {"and", "or"}:
                 del new_markers[-1]
             marker = markers.pop(0) if markers else None
-            if marker in ("and", "or"):
+            if marker in {"and", "or"}:
                 marker = markers.pop(0) if markers else None
         else:
             new_markers.append(marker)

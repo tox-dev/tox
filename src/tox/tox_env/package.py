@@ -1,4 +1,5 @@
 """A tox environment that can build packages."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -59,7 +60,7 @@ class PackageToxEnv(ToxEnv, ABC):
 
     def __getattribute__(self, name: str) -> Any:
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
-        obj = object.__getattribute__(self, name)
+        obj = object.__getattribute__(self, name)  # noqa: PLC2801
         if isinstance(obj, MethodType):
             obj = _lock_method(self._thread_lock, self._file_lock, obj)
         return obj
@@ -89,7 +90,7 @@ class PackageToxEnv(ToxEnv, ABC):
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         raise NotImplementedError
 
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: ARG002
+    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: ARG002, PLR6301
         yield from ()  # empty generator by default
 
     def mark_active_run_env(self, run_env: RunToxEnv) -> None:

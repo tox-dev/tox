@@ -1,4 +1,5 @@
 """Defines how to run a single tox environment."""
+
 from __future__ import annotations
 
 import logging
@@ -70,7 +71,7 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
     if no_test:
         exit_code = Outcome.OK
     else:
-        from tox.plugin.manager import MANAGER  # importing this here to avoid circular import
+        from tox.plugin.manager import MANAGER  # importing this here to avoid circular import  # noqa: PLC0415
 
         chdir: Path = tox_env.conf["change_dir"]
         chdir.mkdir(exist_ok=True, parents=True)

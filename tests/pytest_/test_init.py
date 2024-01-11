@@ -62,7 +62,7 @@ def test_env_var(monkeypatch: MonkeyPatch, ops: list[str]) -> None:
             if "MISS" in ops:
                 m.delenv("MISS")
 
-            from tox.pytest import pytest as tox_pytest  # type: ignore[attr-defined]
+            from tox.pytest import pytest as tox_pytest  # type: ignore[attr-defined]  # noqa: PLC0415
 
             exp = "test changed environ"
             if "EXTRA" in ops:

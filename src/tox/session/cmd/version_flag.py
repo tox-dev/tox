@@ -1,4 +1,5 @@
 """Display the version information about tox."""
+
 from __future__ import annotations
 
 import sys

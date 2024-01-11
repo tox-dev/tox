@@ -1,4 +1,5 @@
 """Declare the abstract base class for tox environments that handle the Python language."""
+
 from __future__ import annotations
 
 import logging
@@ -85,17 +86,17 @@ class Python(ToxEnv, ABC):
         self.conf.add_constant(
             keys=["env_site_packages_dir", "envsitepackagesdir"],
             desc="the python environments site package",
-            value=lambda: self.env_site_package_dir(),
+            value=self.env_site_package_dir,
         )
         self.conf.add_constant(
             keys=["env_bin_dir", "envbindir"],
             desc="the python environments binary folder",
-            value=lambda: self.env_bin_dir(),
+            value=self.env_bin_dir,
         )
         self.conf.add_constant(
             ["env_python", "envpython"],
             desc="python executable from within the tox environment",
-            value=lambda: self.env_python(),
+            value=self.env_python,
         )
         self.conf.add_constant("py_dot_ver", "<python major>.<python minor>", value=self.py_dot_ver)
         self.conf.add_constant("py_impl", "python implementation", value=self.py_impl)

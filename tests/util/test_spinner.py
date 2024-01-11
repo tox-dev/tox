@@ -25,7 +25,7 @@ def test_spinner(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
             spin.stream.write("\n")
             spin.render_frame()
         spin.stream.write("\n")
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     lines = out.split("\n")
     expected = [f"\r{spin.CLEAR_LINE}\r{i} [0]" for i in spin.frames] + [
         f"\r{spin.CLEAR_LINE}\r{spin.frames[0]} [0]",
@@ -65,7 +65,7 @@ def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     with spinner.Spinner(refresh_rate=100) as spin:
         spin.stream.write("\n")
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     lines = out.split("\n")
     posix = os.name == "posix"
     expected = [

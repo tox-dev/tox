@@ -1,4 +1,5 @@
 """Helper methods related to the CPU."""
+
 from __future__ import annotations
 
 import multiprocessing

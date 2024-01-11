@@ -34,7 +34,7 @@ def test_verbosity_guess_miss_match(capsys: CaptureFixture) -> None:
     logging.info("I")
     logging.debug("D")
 
-    out, err = capsys.readouterr()
+    out, _err = capsys.readouterr()
     assert out == "ROOT: E\nROOT: W\nROOT: I\n"
 
 

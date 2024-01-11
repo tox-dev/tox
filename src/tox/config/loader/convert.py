@@ -27,7 +27,7 @@ class Convert(ABC, Generic[T]):
         :return: the converted type
         """
         from_module = getattr(of_type, "__module__", None)
-        if from_module in ("typing", "typing_extensions"):
+        if from_module in {"typing", "typing_extensions"}:
             return self._to_typing(raw, of_type, factory)
         if issubclass(of_type, Path):
             return self.to_path(raw)  # type: ignore[return-value]
@@ -49,13 +49,13 @@ class Convert(ABC, Generic[T]):
     def _to_typing(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: C901
         origin = getattr(of_type, "__origin__", of_type.__class__)
         result: Any = _NO_MAPPING
-        if origin in (list, List):
+        if origin in {list, List}:
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
             result = [self.to(i, entry_type, factory) for i in self.to_list(raw, entry_type)]
-        elif origin in (set, Set):
+        elif origin in {set, Set}:
             entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
             result = {self.to(i, entry_type, factory) for i in self.to_set(raw, entry_type)}
-        elif origin in (dict, Dict):
+        elif origin in {dict, Dict}:
             key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
             result = OrderedDict(
                 (self.to(k, key_type, factory), self.to(v, value_type, factory))
@@ -72,7 +72,7 @@ class Convert(ABC, Generic[T]):
                 else:
                     new_type = next(i for i in args if i != none)  # type: ignore[comparison-overlap] # pragma: no cover
                     result = self.to(raw, new_type, factory)
-        elif origin in (Literal, type(Literal)):
+        elif origin in {Literal, type(Literal)}:
             choice = of_type.__args__  # type: ignore[attr-defined]
             if raw not in choice:
                 msg = f"{raw} must be one of {choice}"

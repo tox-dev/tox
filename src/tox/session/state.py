@@ -33,7 +33,7 @@ class State:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    from tox.tox_env.register import REGISTER
+    from tox.tox_env.register import REGISTER  # noqa: PLC0415
 
     parser.add_argument(
         "--runner",

@@ -1,4 +1,5 @@
 """Defines the abstract base traits of a tox environment."""
+
 from __future__ import annotations
 
 import fnmatch
@@ -75,7 +76,7 @@ class ToxEnv(ABC):
 
     @staticmethod
     @abstractmethod
-    def id() -> str:  # noqa: A003
+    def id() -> str:
         raise NotImplementedError
 
     @property
@@ -89,7 +90,7 @@ class ToxEnv(ABC):
         raise NotImplementedError
 
     def _install(self, arguments: Any, section: str, of_type: str) -> None:
-        from tox.plugin.manager import MANAGER
+        from tox.plugin.manager import MANAGER  # noqa: PLC0415
 
         MANAGER.tox_on_install(self, arguments, section, of_type)
         self.installer.install(arguments, section, of_type)
@@ -199,10 +200,10 @@ class ToxEnv(ABC):
     def name(self) -> str:
         return cast(str, self.conf["env_name"])
 
-    def _default_set_env(self) -> dict[str, str]:
+    def _default_set_env(self) -> dict[str, str]:  # noqa: PLR6301
         return {}
 
-    def _default_pass_env(self) -> list[str]:
+    def _default_pass_env(self) -> list[str]:  # noqa: PLR6301
         env = [
             "https_proxy",  # HTTP proxy configuration
             "http_proxy",  # HTTP proxy configuration
@@ -262,7 +263,7 @@ class ToxEnv(ABC):
             try:
                 self._teardown()
             finally:
-                from tox.plugin.manager import MANAGER
+                from tox.plugin.manager import MANAGER  # noqa: PLC0415
 
                 MANAGER.tox_env_teardown(self)
                 self._run_state["teardown"] = True
@@ -346,11 +347,8 @@ class ToxEnv(ABC):
 
     @staticmethod
     def _load_pass_env(pass_env: list[str]) -> dict[str, str]:
-        result: dict[str, str] = {}
         patterns = [re.compile(fnmatch.translate(e), re.IGNORECASE) for e in pass_env]
-        for env, value in os.environ.items():
-            if any(p.match(env) for p in patterns):
-                result[env] = value
+        result: dict[str, str] = {e: v for e, v in os.environ.items() if any(p.match(e) for p in patterns)}
         return result
 
     @property
@@ -381,7 +379,7 @@ class ToxEnv(ABC):
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: bool | None = None,
+        show: bool | None = None,  # noqa: FBT001
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
@@ -405,7 +403,7 @@ class ToxEnv(ABC):
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: bool | None = None,
+        show: bool | None = None,  # noqa: FBT001
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,

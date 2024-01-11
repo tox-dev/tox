@@ -1,4 +1,5 @@
 """Module declaring a command execution request."""
+
 from __future__ import annotations
 
 import sys
@@ -68,11 +69,11 @@ class ExecuteRequest:
 
 def shell_cmd(cmd: Sequence[str]) -> str:
     if sys.platform == "win32":  # pragma: win32 cover
-        from subprocess import list2cmdline
+        from subprocess import list2cmdline  # noqa: PLC0415
 
         return list2cmdline(tuple(str(x) for x in cmd))
     # pragma: win32 no cover
-    from shlex import quote as shlex_quote
+    from shlex import quote as shlex_quote  # noqa: PLC0415
 
     return " ".join(shlex_quote(str(x)) for x in cmd)
 

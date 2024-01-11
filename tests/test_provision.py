@@ -60,9 +60,9 @@ def _make_tox_wheel(
 ) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
         into = tmp_path_factory.mktemp("dist")  # pragma: no cover
-        from tox.version import version_tuple
+        from tox.version import version_tuple  # noqa: PLC0415
 
-        version = f"{version_tuple[0]}.{version_tuple[1]}.{int(version_tuple[2]) +1}"
+        version = f"{version_tuple[0]}.{version_tuple[1]}.{int(version_tuple[2]) + 1}"
         with mock.patch.dict(os.environ, {"SETUPTOOLS_SCM_PRETEND_VERSION": version}):
             return pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
 

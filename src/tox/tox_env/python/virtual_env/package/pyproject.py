@@ -56,13 +56,13 @@ ConfigSettings = Optional[Dict[str, Any]]
 
 class ToxBackendFailed(Fail, BackendFailed):
     def __init__(self, backend_failed: BackendFailed) -> None:
-        Fail.__init__(self)
+        Fail.__init__(self)  # noqa: PLC2801
         result: dict[str, Any] = {
             "code": backend_failed.code,
             "exc_type": backend_failed.exc_type,
             "exc_msg": backend_failed.exc_msg,
         }
-        BackendFailed.__init__(
+        BackendFailed.__init__(  # noqa: PLC2801
             self,
             result,
             backend_failed.out,
@@ -110,7 +110,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         self._package_paths: set[Path] = set()
 
     @staticmethod
-    def id() -> str:  # noqa: A003
+    def id() -> str:
         return "virtualenv-pep-517"
 
     @property
@@ -308,7 +308,7 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         of_type: str = for_env["package"]
         reqs: list[Requirement] | None = None
         name = ""
-        if of_type in ("wheel", "editable"):  # wheel packages
+        if of_type in {"wheel", "editable"}:  # wheel packages
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):
@@ -392,7 +392,7 @@ class Pep517VirtualEnvFrontend(Frontend):
 
     def _can_skip_prepare(self, cmd: str) -> bool:
         # given we'll build a wheel we might skip the prepare step
-        return cmd in ("prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable") and (
+        return cmd in {"prepare_metadata_for_build_wheel", "prepare_metadata_for_build_editable"} and (
             "wheel" in self._tox_env.builds or "editable" in self._tox_env.builds
         )
 
