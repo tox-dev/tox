@@ -1,4 +1,5 @@
 """Declare the abstract base class for tox environments that handle the Python language via the virtualenv project."""
+
 from __future__ import annotations
 
 import os

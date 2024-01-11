@@ -1,4 +1,5 @@
 """Provides configuration values from the environment variables."""
+
 from __future__ import annotations
 
 import logging
@@ -24,7 +25,7 @@ def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
             value = os.environ[environ_key]
             origin = getattr(of_type, "__origin__", of_type.__class__)
             try:
-                if origin in (list, List):
+                if origin in {list, List}:
                     entry_type = of_type.__args__[0]
                     result = [CONVERT.to(raw=v, of_type=entry_type, factory=None) for v in value.split(";")]
                 else:

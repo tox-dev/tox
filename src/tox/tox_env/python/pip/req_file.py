@@ -22,7 +22,7 @@ class PythonDeps(RequirementsFile):
         self._unroll: tuple[list[str], list[str]] | None = None
         self._req_parser_: RequirementsFile | None = None
 
-    def _extend_parser(self, parser: ArgumentParser) -> None:
+    def _extend_parser(self, parser: ArgumentParser) -> None:  # noqa: PLR6301
         parser.add_argument("--no-deps", action="store_true", dest="no_deps", default=False)
 
     def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:
@@ -52,7 +52,7 @@ class PythonDeps(RequirementsFile):
 
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
-            if line.startswith("-r") or line.startswith("-c") and line[2].isalpha():
+            if line.startswith("-r") or (line.startswith("-c") and line[2].isalpha()):
                 found_line = f"{line[0:2]} {line[2:]}"
             else:
                 found_line = line

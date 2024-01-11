@@ -1,6 +1,8 @@
 """Handle reporting from within tox."""
+
 from __future__ import annotations
 
+import locale
 import logging
 import os
 import sys
@@ -86,7 +88,7 @@ class _LogThreadLocal(local):
 
     @staticmethod
     def _make(prefix: str, based_of: TextIOWrapper) -> TextIOWrapper:
-        return TextIOWrapper(NamedBytesIO(f"{prefix}-{based_of.name}"))
+        return TextIOWrapper(NamedBytesIO(f"{prefix}-{based_of.name}"), encoding=locale.getpreferredencoding(False))  # noqa: FBT003
 
 
 class NamedBytesIO(BytesIO):
@@ -179,7 +181,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
         fmt = f"{_c(Style.BRIGHT)}{_c(Fore.MAGENTA)}%(env_name)s:{_c(Style.RESET_ALL)}" + fmt
         return logging.Formatter(fmt)
 
-    def format(self, record: logging.LogRecord) -> str:  # noqa: A003
+    def format(self, record: logging.LogRecord) -> str:
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name
         basename = str(Path(record.pathname).parent)

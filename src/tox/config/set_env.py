@@ -18,7 +18,7 @@ class SetEnv:
         self._env_files: list[str] = []
         self._replacer: Replacer = lambda s, c: s  # noqa: ARG005
         self._name, self._env_name, self._root = name, env_name, root
-        from .loader.ini.replace import MatchExpression, find_replace_expr
+        from .loader.ini.replace import MatchExpression, find_replace_expr  # noqa: PLC0415
 
         for line in raw.splitlines():
             if line.strip():
@@ -82,7 +82,7 @@ class SetEnv:
         return result
 
     def __contains__(self, item: object) -> bool:
-        return isinstance(item, str) and item in self.__iter__()
+        return isinstance(item, str) and item in iter(self)
 
     def __iter__(self) -> Iterator[str]:
         # start with the materialized ones, maybe we don't need to materialize the raw ones

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import locale
 import logging
 import os
 import signal
@@ -29,7 +30,10 @@ request = ExecuteRequest(
     stdin=StdinSource.API,
     run_id="",
 )
-out_err = TextIOWrapper(NamedBytesIO("out")), TextIOWrapper(NamedBytesIO("err"))
+out_err = (
+    TextIOWrapper(NamedBytesIO("out"), encoding=locale.getpreferredencoding(False)),
+    TextIOWrapper(NamedBytesIO("err"), encoding=locale.getpreferredencoding(False)),
+)
 
 
 def show_outcome(outcome: Outcome | None) -> None:

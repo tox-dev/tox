@@ -1,4 +1,5 @@
 """Adapted from the pip code base."""
+
 from __future__ import annotations
 
 import os
@@ -176,8 +177,7 @@ class RequirementsFile:
             self._extend_parser(self._parser_private)
         return self._parser_private
 
-    def _extend_parser(self, parser: ArgumentParser) -> None:
-        ...
+    def _extend_parser(self, parser: ArgumentParser) -> None: ...
 
     def _ensure_requirements_parsed(self) -> None:
         if self._requirements is None:
@@ -197,7 +197,7 @@ class RequirementsFile:
         result.sort(key=self._key_func)
         return result
 
-    def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:
+    def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:  # noqa: PLR6301
         of_type = {Requirement: 0, Path: 1, str: 2}[type(line.requirement)]
         between = of_type, str(line.requirement).lower(), str(line.options)
         if "is_constraint" in line.options:
@@ -244,7 +244,7 @@ class RequirementsFile:
         :param url:         File path or url.
         """
         scheme = get_url_scheme(url)
-        if scheme in ["http", "https"]:
+        if scheme in {"http", "https"}:
             with urlopen(url) as response:  # noqa: S310
                 return self._read_decode(response)
         elif scheme == "file":
@@ -296,7 +296,7 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(  # noqa: C901, PLR0912, PLR0915
+    def _merge_option_line(  # noqa: C901, PLR0912, PLR0915, PLR6301
         self,
         base_opt: Namespace,
         opt: Namespace,
@@ -449,7 +449,7 @@ class RequirementsFile:
             self._as_root_args = result
         return self._as_root_args
 
-    def _option_to_args(self, opt: Namespace) -> list[str]:  # noqa: C901, PLR0912
+    def _option_to_args(self, opt: Namespace) -> list[str]:  # noqa: C901, PLR0912, PLR6301
         result: list[str] = []
         for req in getattr(opt, "requirements", []):
             result.extend(("-r", req))

@@ -37,8 +37,8 @@ def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
 
 def test_conflicting_base_python_factor() -> None:
     major, minor = sys.version_info[0:2]
-    name = f"py{major}{minor}-py{major}{minor-1}"
-    with pytest.raises(ValueError, match=f"conflicting factors py{major}{minor}, py{major}{minor-1} in {name}"):
+    name = f"py{major}{minor}-py{major}{minor - 1}"
+    with pytest.raises(ValueError, match=f"conflicting factors py{major}{minor}, py{major}{minor - 1} in {name}"):
         Python.extract_base_python(name)
 
 

@@ -161,7 +161,7 @@ def test_show_config_pkg_env_skip(
     tox_project: ToxProjectCreator,
     patch_prev_py: Callable[[bool], tuple[str, str]],
 ) -> None:
-    prev_ver, impl = patch_prev_py(False)
+    prev_ver, _impl = patch_prev_py(False)
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     result = project.run("c", "-e", "ALL")

@@ -1,4 +1,5 @@
 """Run tox environments in parallel."""
+
 from __future__ import annotations
 
 import logging

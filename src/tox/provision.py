@@ -1,4 +1,5 @@
 """This package handles provisioning an appropriate tox version per requirements."""
+
 from __future__ import annotations
 
 import json
@@ -80,7 +81,7 @@ def provision(state: State) -> int | bool:
         post_process=add_tox_requires_min_version,
     )
 
-    from tox.plugin.manager import MANAGER
+    from tox.plugin.manager import MANAGER  # noqa: PLC0415
 
     MANAGER.tox_add_core_config(state.conf.core, state)
 

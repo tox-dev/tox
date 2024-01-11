@@ -1,4 +1,5 @@
 """Execute that runs on local file system via subprocess-es."""
+
 from __future__ import annotations
 
 import fnmatch
@@ -45,7 +46,7 @@ IS_WIN = sys.platform == "win32"
 
 
 class LocalSubProcessExecutor(Execute):
-    def build_instance(
+    def build_instance(  # noqa: PLR6301
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,
@@ -108,7 +109,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         try:
             if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
                 # on Windows we have a PipeHandle object here rather than a file stream
-                import _overlapped  # type: ignore[import]
+                import _overlapped  # type: ignore[import]  # noqa: PLC0415
 
                 ov = _overlapped.Overlapped(0)
                 ov.WriteFile(stdin.handle, bytes_content)  # type: ignore[attr-defined]
@@ -147,7 +148,7 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
     def write_stdin(self, content: str) -> None:
         """Cannot write."""
 
-    def interrupt(self) -> None:
+    def interrupt(self) -> None:  # noqa: PLR6301
         return None  # pragma: no cover # nothing running so nothing to interrupt
 
 
@@ -218,9 +219,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
         drain, pid = self._on_exit_drain, self.process.pid
         self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
-        self._read_stderr.__enter__()
+        self._read_stderr.__enter__()  # noqa: PLC2801
         self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
-        self._read_stdout.__enter__()
+        self._read_stdout.__enter__()  # noqa: PLC2801
 
         if sys.platform == "win32":  # explicit check for mypy:  # pragma: win32 cover
             process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
@@ -293,10 +294,10 @@ def _pty(key: str) -> tuple[int, int] | None:
         return None
 
     try:
-        import fcntl
-        import pty
-        import struct
-        import termios
+        import fcntl  # noqa: PLC0415
+        import pty  # noqa: PLC0415
+        import struct  # noqa: PLC0415
+        import termios  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         return None  # cannot proceed on platforms without pty support
 

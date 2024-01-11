@@ -57,8 +57,7 @@ class EvalSetEnv(Protocol):
         tox_ini: str,
         extra_files: dict[str, Any] | None = ...,
         from_cwd: Path | None = ...,
-    ) -> SetEnv:
-        ...
+    ) -> SetEnv: ...
 
 
 @pytest.fixture()
