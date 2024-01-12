@@ -1,1 +1,0 @@
-Always pass ``FORCE_COLOR`` and ``NO_COLOR`` to the environment

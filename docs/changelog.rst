@@ -4,6 +4,21 @@ Release History
 
 .. towncrier release notes start
 
+v4.12.0 (2024-01-11)
+--------------------
+
+Features - 4.12.0
+~~~~~~~~~~~~~~~~~
+- Always pass ``FORCE_COLOR`` and ``NO_COLOR`` to the environment (:issue:`3171`)
+
+Bugfixes - 4.12.0
+~~~~~~~~~~~~~~~~~
+- ``--parallel-no-spinner`` flag now implies ``--parallel`` (:issue:`3158`)
+
+Improved Documentation - 4.12.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- -Fix ``open an issue`` link in development.rst (:issue:`3179`)
+
 v4.11.4 (2023-11-27)
 --------------------
 
