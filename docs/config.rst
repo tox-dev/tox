@@ -116,7 +116,7 @@ Core
 
         [tox]
         requires =
-            tox>4
+            tox>=4
             virtualenv>20.2
 
 .. conf::
