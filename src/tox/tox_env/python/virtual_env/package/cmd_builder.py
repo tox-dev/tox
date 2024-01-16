@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import glob
-import shutil
 import tarfile
 from functools import partial
 from io import TextIOWrapper

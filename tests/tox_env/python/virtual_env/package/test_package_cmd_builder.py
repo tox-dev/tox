@@ -174,17 +174,20 @@ def test_tox_install_pkg_with_skip_install(
     result.assert_success()
 
 
-def test_run_installpkg_targz(tox_project: ToxProjectCreator,
-                              pkg_with_sdist: Path,
-                              enable_pip_pypi_access: str | None,  # noqa: ARG001
-                              ) -> None:
-    project = tox_project({"tox.ini": """
+def test_run_installpkg_targz(
+    tox_project: ToxProjectCreator,
+    pkg_with_sdist: Path,
+    enable_pip_pypi_access: str | None,  # noqa: ARG001
+) -> None:
+    project = tox_project({
+        "tox.ini": """
      [tox]
     envlist = base, flake8
     [testenv]
     package = sdist
     [testenv:base]
     [testenv:flake8]
-    """})
+    """
+    })
     outcome = project.run(f"--installpkg={pkg_with_sdist}")
     outcome.assert_success()
