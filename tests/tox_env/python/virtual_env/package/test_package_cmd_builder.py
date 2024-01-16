@@ -35,6 +35,16 @@ def test_tox_install_pkg_wheel(tox_project: ToxProjectCreator, pkg_with_extras_p
     assert calls == expected
 
 
+@pytest.fixture(scope="session")
+def pkg_with_sdist(
+    pkg_with_extras_project: Path,
+    pkg_builder: Callable[[Path, Path, list[str], bool], Path],
+) -> Path:
+    dist = pkg_with_extras_project / "dist"
+    pkg_builder(dist, pkg_with_extras_project, ["sdist"], False)
+    return next(dist.iterdir())
+
+
 @pytest.fixture()
 def pkg_with_extras_project_sdist(
     pkg_with_extras_project: Path,
@@ -162,3 +172,19 @@ def test_tox_install_pkg_with_skip_install(
     project = tox_project({"tox.ini": ini, "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text()})
     result = project.run("-e", "py", "--installpkg", str(demo_pkg_inline_wheel))
     result.assert_success()
+
+
+def test_run_installpkg_targz(tox_project: ToxProjectCreator,
+                              pkg_with_sdist: Path,
+                              enable_pip_pypi_access: str | None,  # noqa: ARG001
+                              ) -> None:
+    project = tox_project({"tox.ini": """
+     [tox]
+    envlist = base, flake8
+    [testenv]
+    package = sdist
+    [testenv:base]
+    [testenv:flake8]
+    """})
+    outcome = project.run(f"--installpkg={pkg_with_sdist}")
+    outcome.assert_success()

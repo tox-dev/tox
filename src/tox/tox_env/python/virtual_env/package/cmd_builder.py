@@ -108,9 +108,8 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             package: Package = WheelPackage(path, deps)
         else:  # must be source distribution
             work_dir = self.env_tmp_dir / "sdist-extract"
-            if work_dir.exists():  # pragma: no branch
-                shutil.rmtree(work_dir)  # pragma: no cover
-            work_dir.mkdir()
+            if not work_dir.exists():  # pragma: no branch
+                work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
                 tar.extractall(path=str(work_dir))  # noqa: S202
             # the register run env is guaranteed to be called before this
