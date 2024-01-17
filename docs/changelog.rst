@@ -4,6 +4,13 @@ Release History
 
 .. towncrier release notes start
 
+v4.12.1 (2024-01-16)
+--------------------
+
+Bugfixes - 4.12.1
+~~~~~~~~~~~~~~~~~
+- Fixed bug where running with --installpkg and multiple envs could not clean up between tests (:issue:`3165`)
+
 v4.12.0 (2024-01-11)
 --------------------
 
