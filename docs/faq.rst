@@ -406,7 +406,7 @@ after the tests are completed. To restore the default ``pytest`` behavior to ret
 .. code-block:: ini
 
     [tox]
-    setenv =
+    set_env =
       TEMP = {env_tmp_dir}
 
     [testenv]
