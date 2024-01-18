@@ -366,3 +366,48 @@ If you need to test against e.g. Python 2.7, 3.5 or 3.6, you need to add the fol
 
 In case you need to do this for many repositories, we recommend to use
 `all-repos <https://github.com/asottile/all-repos>`_.
+
+
+Testing with Pytest
+-------------------
+
+Running ``pytest`` from ``tox`` can be configured like this:
+
+.. code-block:: ini
+
+    [tox]
+    envlist = py311, py312
+
+    [testenv]
+    commands = pytest
+
+If required, ``tox`` positional arguments can be passed through to ``pytest``:
+
+.. code-block:: ini
+
+    [testenv]
+    commands = pytest {posargs}
+
+When running ``tox`` in parallel mode (:ref:`tox-run-parallel-(p)`), care should be taken to ensure concurrent
+``pytest`` invocations are fully isolated.
+
+This can be achieved by setting ``pytest``'s base temporary directory to a unique temporary directory for each virtual
+environment as provided by ``tox``:
+
+.. code-block:: ini
+
+    [testenv]
+    commands = pytest --basetemp="{env_tmp_dir}"
+
+Setting the ``pytest`` ``--basetemp`` argument also causes all temporary ``pytest`` files to be deleted immediately
+after the tests are completed. To restore the default ``pytest`` behavior to retain temporary files for the most recent
+``pytest`` invocations, the system's temporary directory location could be configured like this instead:
+
+.. code-block:: ini
+
+    [tox]
+    set_env =
+      TEMP = {env_tmp_dir}
+
+    [testenv]
+    commands = pytest
