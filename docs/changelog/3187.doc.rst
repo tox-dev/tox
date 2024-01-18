@@ -1,0 +1,1 @@
+Documented usage of ``pytest`` with ``tox run-parallel`` - by :user:`faph`.
