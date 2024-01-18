@@ -399,7 +399,7 @@ environment as provided by ``tox``:
     [testenv]
     commands = pytest --basetemp="{env_tmp_dir}"
 
-Setting the ``pytest`` ``--basetemp`` arguments also causes all temporary ``pytest`` files to be deleted immediately
+Setting the ``pytest`` ``--basetemp`` argument also causes all temporary ``pytest`` files to be deleted immediately
 after the tests are completed. To restore the default ``pytest`` behavior to retain temporary files for the most recent
 ``pytest`` invocations, the system's temporary directory location could be configured like this instead:
 
