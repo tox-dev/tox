@@ -56,13 +56,13 @@ ConfigSettings = Optional[Dict[str, Any]]
 
 class ToxBackendFailed(Fail, BackendFailed):
     def __init__(self, backend_failed: BackendFailed) -> None:
-        Fail.__init__(self)  # noqa: PLC2801
+        Fail.__init__(self)
         result: dict[str, Any] = {
             "code": backend_failed.code,
             "exc_type": backend_failed.exc_type,
             "exc_msg": backend_failed.exc_msg,
         }
-        BackendFailed.__init__(  # noqa: PLC2801
+        BackendFailed.__init__(
             self,
             result,
             backend_failed.out,

@@ -345,7 +345,7 @@ def add_core_arguments(parser: ArgumentParser) -> None:
 
 __all__ = (
     "DEFAULT_VERBOSITY",
+    "HelpFormatter",
     "Parsed",
     "ToxParser",
-    "HelpFormatter",
 )

@@ -527,12 +527,12 @@ MonkeyPatch = pytest.MonkeyPatch
 __all__ = (
     "CaptureFixture",
     "LogCaptureFixture",
-    "TempPathFactory",
     "MonkeyPatch",
     "SubRequest",
-    "ToxRunOutcome",
+    "TempPathFactory",
     "ToxProject",
     "ToxProjectCreator",
+    "ToxRunOutcome",
     "check_os_environ",
     "register_inline_plugin",
 )

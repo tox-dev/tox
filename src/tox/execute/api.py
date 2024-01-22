@@ -299,10 +299,10 @@ class Outcome:
 
 __all__ = (
     "ContentHandler",
-    "Outcome",
     "Execute",
     "ExecuteInstance",
     "ExecuteOptions",
     "ExecuteStatus",
+    "Outcome",
     "StdinSource",
 )

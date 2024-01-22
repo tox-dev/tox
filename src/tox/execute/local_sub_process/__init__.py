@@ -219,9 +219,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
         drain, pid = self._on_exit_drain, self.process.pid
         self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
-        self._read_stderr.__enter__()  # noqa: PLC2801
+        self._read_stderr.__enter__()
         self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
-        self._read_stdout.__enter__()  # noqa: PLC2801
+        self._read_stdout.__enter__()
 
         if sys.platform == "win32":  # explicit check for mypy:  # pragma: win32 cover
             process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
@@ -322,10 +322,10 @@ def _pty(key: str) -> tuple[int, int] | None:
 
 
 __all__ = (
-    "SIG_INTERRUPT",
     "CREATION_FLAGS",
+    "SIG_INTERRUPT",
     "LocalSubProcessExecuteInstance",
     "LocalSubProcessExecutor",
-    "LocalSubprocessExecuteStatus",
     "LocalSubprocessExecuteFailedStatus",
+    "LocalSubprocessExecuteStatus",
 )

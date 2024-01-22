@@ -424,7 +424,7 @@ class EnvSelector:
 
 
 __all__ = [
-    "register_env_select_flags",
-    "EnvSelector",
     "CliEnv",
+    "EnvSelector",
+    "register_env_select_flags",
 ]

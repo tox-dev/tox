@@ -89,6 +89,6 @@ def _get_parser_doc() -> ToxParser:
 
 
 __all__ = (
-    "get_options",
     "Options",
+    "get_options",
 )

@@ -60,7 +60,7 @@ class PackageToxEnv(ToxEnv, ABC):
 
     def __getattribute__(self, name: str) -> Any:
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
-        obj = object.__getattribute__(self, name)  # noqa: PLC2801
+        obj = object.__getattribute__(self, name)
         if isinstance(obj, MethodType):
             obj = _lock_method(self._thread_lock, self._file_lock, obj)
         return obj
