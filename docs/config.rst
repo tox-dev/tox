@@ -102,6 +102,8 @@ examples first and use this page as a reference.
 Core
 ----
 
+The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[tox:tox]`` section of ``setup.cfg``.
+
 .. conf::
    :keys: requires
    :default: <empty list>
@@ -236,6 +238,8 @@ Python language core options
 
 tox environment
 ---------------
+
+The following options are set in the ``[testenv]`` or ``[testenv:*]`` sections of ``tox.ini`` or ``setup.cfg``.
 
 Base options
 ~~~~~~~~~~~~
