@@ -12,3 +12,4 @@ __pycache__
 *.egg-info
 /tests/demo_pkg_setuptools/build/lib/demo_pkg_setuptools/__init__.py
 /tests/demo_pkg_inline.lock
+/tests/demo_pkg_inline/.tox/
