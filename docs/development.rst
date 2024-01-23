@@ -211,7 +211,8 @@ Contents of a changelog entry
 
 The content of this file is reStructuredText formatted text that will be used as the content of the changelog entry.
 You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
-affected issues when rendering the changelog.
+affected issues when rendering the changelog. You may append ``- by :user:USERNAME``, with a GitHub username in
+backticks, if you wish.
 
 In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the entries to the
 point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
@@ -219,6 +220,14 @@ point, in sentence case, shorter than 120 characters and in an imperative tone -
 by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
 characters. Remember that a changelog entry is meant for end users and should only contain details relevant to an end
 user.
+
+An example of ``docs/changelog/####.bugfix.rst`` contents is:
+
+.. code-block::
+
+    Instead of raising ``UnicodeDecodeError`` when command output includes non-utf-8 bytes, ``tox`` will now use
+    ``surrogateescape`` error handling to convert the unrecognized bytes to escape sequences according to :pep:`383`
+    - by :user:`masenf`
 
 
 Becoming a maintainer
