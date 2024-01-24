@@ -23,8 +23,8 @@ PKG_ENV_PREFIX = "pkgenv"
 CORE = IniSection(None, "tox")
 
 __all__ = [
-    "IniSection",
     "CORE",
-    "TEST_ENV_PREFIX",
     "PKG_ENV_PREFIX",
+    "TEST_ENV_PREFIX",
+    "IniSection",
 ]

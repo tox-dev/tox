@@ -17,7 +17,7 @@ repos:
       - id: tox-ini-fmt
         args: ["-p", "fix"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: 1.6.0
+    rev: 1.7.0
     hooks:
       - id: pyproject-fmt
         additional_dependencies: ["tox>=4.11.4"]
@@ -27,7 +27,7 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==23.12.1]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.13
+    rev: v0.1.14
     hooks:
       - id: ruff-format
       - id: ruff

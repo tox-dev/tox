@@ -153,6 +153,6 @@ ONE_ARG_ESCAPE = {
 }
 
 __all__ = (
-    "PythonDeps",
     "ONE_ARG",
+    "PythonDeps",
 )

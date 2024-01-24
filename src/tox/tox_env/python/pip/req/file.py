@@ -21,7 +21,7 @@ from .util import VCS, get_url_scheme, is_url, url_to_path
 # Matches environment variable-style values in '${MY_VARIABLE_1}' with the variable name consisting of only uppercase
 # letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
 _ENV_VAR_RE = re.compile(r"(?P<var>\${(?P<name>[A-Z0-9_]+)})")
-_SCHEME_RE = re.compile(r"^(http|https|file):", re.I)
+_SCHEME_RE = re.compile(r"^(http|https|file):", re.IGNORECASE)
 _COMMENT_RE = re.compile(r"(^|\s+)#.*$")
 # https://www.python.org/dev/peps/pep-0508/#extras
 _EXTRA_PATH = re.compile(r"(.*)\[([-._,\sa-zA-Z0-9]*)]")
@@ -484,7 +484,7 @@ class RequirementsFile:
 
 
 __all__ = (
-    "RequirementsFile",
-    "ReqFileLines",
     "ParsedRequirement",
+    "ReqFileLines",
+    "RequirementsFile",
 )

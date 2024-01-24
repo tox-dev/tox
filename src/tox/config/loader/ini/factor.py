@@ -94,8 +94,8 @@ def is_negated(factor: str) -> bool:
 
 
 __all__ = (
-    "filter_for_env",
-    "find_envs",
     "expand_factors",
     "extend_factors",
+    "filter_for_env",
+    "find_envs",
 )

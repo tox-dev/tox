@@ -79,7 +79,7 @@ def shell_cmd(cmd: Sequence[str]) -> str:
 
 
 __all__ = (
-    "StdinSource",
     "ExecuteRequest",
+    "StdinSource",
     "shell_cmd",
 )

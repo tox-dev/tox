@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from tox.util.ci import _ENV_VARS, is_ci
+from tox.util.ci import _ENV_VARS, is_ci  # noqa: PLC2701
 
 
 @pytest.mark.parametrize(

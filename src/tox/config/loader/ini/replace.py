@@ -346,9 +346,9 @@ def replace_tty(args: list[str]) -> str:
 
 
 __all__ = (
-    "find_replace_expr",
     "MatchArg",
     "MatchError",
     "MatchExpression",
+    "find_replace_expr",
     "replace",
 )

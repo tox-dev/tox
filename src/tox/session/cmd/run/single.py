@@ -126,7 +126,7 @@ def run_command_set(
 
 
 __all__ = (
-    "run_one",
-    "run_command_set",
     "ToxEnvRunResult",
+    "run_command_set",
+    "run_one",
 )

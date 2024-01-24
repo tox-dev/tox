@@ -102,12 +102,12 @@ def tox_env_teardown(tox_env: ToxEnv) -> None:  # noqa: ARG001
 
 __all__ = [
     "NAME",
-    "tox_register_tox_env",
-    "tox_add_option",
     "tox_add_core_config",
     "tox_add_env_config",
-    "tox_before_run_commands",
+    "tox_add_option",
     "tox_after_run_commands",
-    "tox_on_install",
+    "tox_before_run_commands",
     "tox_env_teardown",
+    "tox_on_install",
+    "tox_register_tox_env",
 ]

@@ -16,7 +16,7 @@ from types import ModuleType, TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Iterator, Protocol, Sequence, cast
 
 import pytest
-from _pytest.fixtures import SubRequest
+from _pytest.fixtures import SubRequest  # noqa: PLC2701
 from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 
@@ -527,12 +527,12 @@ MonkeyPatch = pytest.MonkeyPatch
 __all__ = (
     "CaptureFixture",
     "LogCaptureFixture",
-    "TempPathFactory",
     "MonkeyPatch",
     "SubRequest",
-    "ToxRunOutcome",
+    "TempPathFactory",
     "ToxProject",
     "ToxProjectCreator",
+    "ToxRunOutcome",
     "check_os_environ",
     "register_inline_plugin",
 )

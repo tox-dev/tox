@@ -122,8 +122,8 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
 
 
 __all__ = [
-    "ConfigLoadArgs",
+    "ConfigConstantDefinition",
     "ConfigDefinition",
     "ConfigDynamicDefinition",
-    "ConfigConstantDefinition",
+    "ConfigLoadArgs",
 ]

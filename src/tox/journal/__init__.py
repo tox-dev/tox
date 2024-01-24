@@ -17,7 +17,7 @@ def write_journal(path: Path | None, journal: Journal) -> None:
 
 
 __all__ = (
-    "Journal",
     "EnvJournal",
+    "Journal",
     "write_journal",
 )
