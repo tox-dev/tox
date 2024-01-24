@@ -7,7 +7,7 @@ from asyncio.windows_utils import BUFSIZE  # type: ignore[attr-defined] # pragma
 from time import sleep  # pragma: win32 cover
 from typing import Callable  # pragma: win32 cover
 
-import _overlapped  # type: ignore[import]  # pragma: win32 cover
+import _overlapped  # type: ignore[import]  # pragma: win32 cover # noqa: PLC2701
 
 from .read_via_thread import ReadViaThread  # pragma: win32 cover
 

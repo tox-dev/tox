@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.session.env_select import _DYNAMIC_ENV_FACTORS, CliEnv, EnvSelector
+from tox.session.env_select import _DYNAMIC_ENV_FACTORS, CliEnv, EnvSelector  # noqa: PLC2701
 from tox.session.state import State
 
 if TYPE_CHECKING:
