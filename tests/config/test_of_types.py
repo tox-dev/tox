@@ -3,10 +3,11 @@ from __future__ import annotations
 from tox.config.of_type import ConfigConstantDefinition, ConfigDynamicDefinition
 
 
-def test_unused_function():
-    ''' Temporary addition to test coverage. '''
+def test_unused_function() -> None:
+    """Temporary addition to test coverage."""
     from tox.config.of_type import unused_function
-    assert 5 == unused_function(2,3)
+
+    assert unused_function(2, 3) == 5
 
 
 def test_config_constant_eq() -> None:
