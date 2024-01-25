@@ -16,6 +16,10 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 V = TypeVar("V")
 
+def unused_function(x: int, y: int) -> int:
+    ''' Temporary addition to test coverage. '''
+    z = x + y
+    return z
 
 class ConfigDefinition(ABC, Generic[T]):  # noqa: PLW1641
     """Abstract base class for configuration definitions."""
