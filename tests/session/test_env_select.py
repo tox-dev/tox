@@ -16,6 +16,50 @@ if TYPE_CHECKING:
 CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
 
 
+@pytest.mark.parametrize(
+    ("user_input", "env_names", "is_all", "is_default"),
+    [
+        (None, (), False, True),
+        ("", (), False, True),
+        ("a1", ("a1",), False, False),
+        ("a1,b2,c3", ("a1", "b2", "c3"), False, False),
+        #   If the user gives "ALL" as any envname, this becomes an "is_all" and other envnames are ignored.
+        ("ALL", (), True, False),
+        ("a1,ALL,b2", (), True, False),
+        #   Zero-length envnames are ignored as being not present. This is not intentional.
+        (",,a1,,,b2,,", ("a1", "b2"), False, False),
+        (",,", (), False, True),
+        #   Environment names with "invalid" characters are accepted here; the client is expected to deal with this.
+        ("\x01.-@\x02,xxx", ("\x01.-@\x02", "xxx"), False, False),
+    ],
+)
+def test_clienv(user_input: str, env_names: tuple[str], is_all: bool, is_default: bool) -> None:
+    ce = CliEnv(user_input)
+    assert (ce.is_all, ce.is_default_list, tuple(ce)) == (is_all, is_default, tuple(env_names))
+
+
+@pytest.mark.parametrize(
+    ("user_input", "expected"),
+    [
+        ("", False),
+        ("all", False),
+        ("All", False),
+        ("ALL", True),
+        ("a,ALL,b", True),
+    ],
+)
+def test_clienv_is_all(user_input: str, expected: bool) -> None:
+    assert CliEnv(user_input).is_all is expected
+
+
+def test_env_select_lazily_looks_at_envs() -> None:
+    state = State(get_options(), [])
+    env_selector = EnvSelector(state)
+    # late-assigning env should be reflected in env_selector
+    state.conf.options.env = CliEnv("py")
+    assert set(env_selector.iter()) == {"py"}
+
+
 def test_label_core_can_define(tox_project: ToxProjectCreator) -> None:
     ini = """
         [tox]
@@ -128,14 +172,6 @@ def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPa
     outcome = project.run("l", "--no-desc")
     outcome.assert_success()
     outcome.assert_out_err("ROOT: skip environment mypy, matches filter 'm[y]py'\npy310\npy39\n", "")
-
-
-def test_env_select_lazily_looks_at_envs() -> None:
-    state = State(get_options(), [])
-    env_selector = EnvSelector(state)
-    # late-assigning env should be reflected in env_selector
-    state.conf.options.env = CliEnv("py")
-    assert set(env_selector.iter()) == {"py"}
 
 
 def test_cli_env_can_be_specified_in_default(tox_project: ToxProjectCreator) -> None:
