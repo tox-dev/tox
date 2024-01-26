@@ -16,6 +16,14 @@ if TYPE_CHECKING:
 CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
 
 
+def test_env_select_lazily_looks_at_envs() -> None:
+    state = State(get_options(), [])
+    env_selector = EnvSelector(state)
+    # late-assigning env should be reflected in env_selector
+    state.conf.options.env = CliEnv("py")
+    assert set(env_selector.iter()) == {"py"}
+
+
 def test_label_core_can_define(tox_project: ToxProjectCreator) -> None:
     ini = """
         [tox]
@@ -128,14 +136,6 @@ def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPa
     outcome = project.run("l", "--no-desc")
     outcome.assert_success()
     outcome.assert_out_err("ROOT: skip environment mypy, matches filter 'm[y]py'\npy310\npy39\n", "")
-
-
-def test_env_select_lazily_looks_at_envs() -> None:
-    state = State(get_options(), [])
-    env_selector = EnvSelector(state)
-    # late-assigning env should be reflected in env_selector
-    state.conf.options.env = CliEnv("py")
-    assert set(env_selector.iter()) == {"py"}
 
 
 def test_cli_env_can_be_specified_in_default(tox_project: ToxProjectCreator) -> None:
