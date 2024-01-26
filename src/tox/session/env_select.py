@@ -27,7 +27,22 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CliEnv:  # noqa: PLW1641
-    """CLI tox env selection."""
+    """A `CliEnv` is the user's selection of tox test environments, usually supplied via the ``-e`` command-line
+    option. It may be treated as a sequence if it's not a "default" or "all" selection.
+
+    It is in one of three forms:
+
+    - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
+      names. As a sequence this will be a sequence of those names.
+
+    - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either
+      alone or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be
+      true and as a sequence it will be empty. This prints in string representation as ``ALL``.
+
+    - The default environments as chosen by tox configuration. This is instantiated with `None` as the parameter,
+      `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation
+      as ``<env_list>``.
+    """
 
     def __init__(self, value: None | list[str] | str = None) -> None:
         if isinstance(value, str):
@@ -39,6 +54,7 @@ class CliEnv:  # noqa: PLW1641
             yield from self._names
 
     def __bool__(self) -> bool:
+        """A `CliEnv` is `True` if it's not the default set of environments."""
         return bool(self._names)
 
     def __str__(self) -> str:
