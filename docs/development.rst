@@ -8,31 +8,34 @@ If you're already experienced with submitting GitHub PRs to open-source Python p
 points you need to know about this project. (If you're not, you should carefully read all the documentation after this
 section. This section contains only highlights; it's not a substitute for reading this entire file.)
 
-- Check the `style guide <#style-guide>`_ below. Particularly note that lines should be wrapped at 120 characters, not
-  the PEP-8 standard of 79. The linter will not catch short lines, but most other formatting details should be caught by
-  the tests and linting below.
+- Check the `style guide <#style-guide>`_ below. Note that ``tox -e fix`` will not catch the following:
+
+  - Lines wrapped at less than 120 characters. Lines should be wrapped at 120 characters, not the PEP-8 standard of 79.
+  - Variable names should be at least two characters long.
+
 - Documentation is in `RST <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`_ format; beware the
   differences from GitHub Markdown. The tox ``docs`` and ``fix`` targets will catch only some RST errors; documentation
   changes *must* be checked visually (see below).
-- All PRs require a changelog entry. This should reference an issue if it closes that issue, otherwise reference the PR.
-  Create one or more (if there's more than one issue) ``docs/changelog/####.{feature,bugfix,doc,removal,misc}.rst`` per
-  the `changelog entry <#changelog-entries>`_ section below.
+- All PRs that make changes visible to an end user require a changelog entry. This should reference an issue if it
+  closes that issue, otherwise reference the PR. Create one or more (if there's more than one issue)
+  ``docs/changelog/####.{feature,bugfix,doc,removal,misc}.rst`` per the `changelog entry <#changelog-entries>`_ section
+  below.
 - GitHub Actions will do a full set of `tests and checks <#automated-testing>`_ when the PR is submitted. For local
-  testing you'll need to install your own "top-level" tox; (using `pipx`_ or similar is fine)
-  and the following targets.
+  testing you'll need to install your own "top-level" tox (using `pipx`_ or similar is fine) and use the following
+  targets (tox environments):
 
   - :samp:`tox -e py [-- {pytest-arg ...}]`  to `test code changes <#running-tests>`_. This will skip tests for which
     you are missing dependencies, but those tests will still be run by GitHub Actions.
-  - ``tox -e type`` to typecheck changes. (All new code should have type annotations.)
+  - ``tox -e type`` to typecheck changes. (All new code should have complete type annotations.)
   - ``tox -e docs`` to build documentation changes and update the changelog, followed by viewing (with a browser) the
     generated HTML files under :file:`.tox/docs_out/`. The required changelog entry can be viewed at the "Release
     History" link at the left.
-  - ``tox -e fix`` to lint code, documentation and any other changes to the repo.
+  - ``tox -e fix`` to lint code, documentation and any other changes to the repo. This will also fix the code and
+    write out the changed files; you can update your commit with `git commit --amend`.
 
 
 Getting started
 ---------------
-
 
 ``tox`` is a volunteer maintained open source project and we welcome contributions of all forms. The sections below will
 help you get started with development, testing, and documentation. We’re pleased that you are interested in working on
