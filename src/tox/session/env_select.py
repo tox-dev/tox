@@ -27,13 +27,15 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CliEnv:  # noqa: PLW1641
-    """A `CliEnv` is the user's selection of tox test environments, usually supplied via the ``-e`` command-line
-    option. It may be treated as a sequence if it's not a "default" or "all" selection.
+    """A `CliEnv` is the user's selection of tox test environments, usually supplied via the ``-e`` command-line option
+    or in a TOML file (typically ``env_list`` in ``tox.ini``). It may be treated as a sequence if it's not a "default"
+    or "all" selection.
 
     It is in one of three forms:
 
     - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
-      names. As a sequence this will be a sequence of those names.
+      names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
+      sequence of those names.
 
     - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either
       alone or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be

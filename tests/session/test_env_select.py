@@ -23,6 +23,7 @@ CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
         ("", (), False, True),
         ("a1", ("a1",), False, False),
         ("a1,b2,c3", ("a1", "b2", "c3"), False, False),
+        (" a1, b2 ,  c3  ", ("a1", "b2", "c3"), False, False),
         #   If the user gives "ALL" as any envname, this becomes an "is_all" and other envnames are ignored.
         ("ALL", (), True, False),
         ("a1,ALL,b2", (), True, False),
