@@ -12,6 +12,8 @@ section. This section contains only highlights; it's not a substitute for readin
 
   - Lines wrapped at less than 120 characters. Lines should be wrapped at 120 characters, not the PEP-8 standard of 79.
   - Variable names should be at least two characters long.
+  - If a commit references an issue, this should be noted in parentheses at the end of the summary line, e.g.
+    ``(#1234)``. (It may still also be mentioned again in the commit body text.)
 
 - Documentation is in `RST <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`_ format; beware the
   differences from GitHub Markdown. The tox ``docs`` and ``fix`` targets will catch only some RST errors; documentation
