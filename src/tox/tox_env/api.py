@@ -139,7 +139,7 @@ class ToxEnv(ABC):
 
         def pass_env_post_process(values: list[str]) -> list[str]:
             values.extend(self._default_pass_env())
-            result = sorted({k: None for k in values}.keys())
+            result = sorted(dict.fromkeys(values).keys())
             invalid_chars = set(string.whitespace)
             invalid = [v for v in result if any(c in invalid_chars for c in v)]
             if invalid:
