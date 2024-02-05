@@ -189,7 +189,7 @@ class EnvSelector:
         for env in self._cli_envs or []:
             if env.startswith(".pkg_external"):  # external package
                 continue
-            factors: dict[str, str | None] = {k: None for k in env.split("-")}
+            factors: dict[str, str | None] = dict.fromkeys(env.split("-"))
             found_factors: set[str] = set()
             for factor in factors:
                 if (
