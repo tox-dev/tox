@@ -103,11 +103,11 @@ build.targets.sdist.include = ["/src", "/tests", "/tox.ini"]
 version.source = "vcs"
 
 [tool.ruff]
-select = ["ALL"]
+lint.select = ["ALL"]
 line-length = 120
 target-version = "py38"
-isort = { known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"] }
-ignore = [
+lint.isort = { known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"] }
+lint.ignore = [
   "CPY",     # No copyright header
   "INP001",  # no implicit namespaces here
   "D",       # ignore documentation for now
@@ -132,7 +132,7 @@ ignore = [
 ]
 format.preview = true
 lint.preview = true
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
   "S101",    # asserts allowed in tests...
   "FBT",     # don"t care about booleans as positional arguments in tests
