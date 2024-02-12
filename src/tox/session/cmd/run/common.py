@@ -256,9 +256,9 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
             interrupt.set()
             # cancel in reverse order to not allow submitting new jobs as we cancel running ones
             for future, tox_env in reversed(list(future_to_env.items())):
-                cancelled = future.cancel()
-                # if cannot be cancelled and not done -> still runs
-                if cancelled is False and not future.done():  # pragma: no branch
+                canceled = future.cancel()
+                # if cannot be canceled and not done -> still runs
+                if canceled is False and not future.done():  # pragma: no branch
                     tox_env.interrupt()
             done.wait()
             # workaround for https://bugs.python.org/issue45274
@@ -310,7 +310,7 @@ def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915
     spinner: ToxSpinner,
     live: bool,  # noqa: FBT001
 ) -> None:
-    try:
+    try:  # noqa: PLR1702
         options = state._options  # noqa: SLF001
         with spinner:
             max_workers = len(to_run_list) if max_workers is None else max_workers

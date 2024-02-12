@@ -103,11 +103,11 @@ build.targets.sdist.include = ["/src", "/tests", "/tox.ini"]
 version.source = "vcs"
 
 [tool.ruff]
-select = ["ALL"]
 line-length = 120
 target-version = "py38"
-isort = { known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"] }
-ignore = [
+lint.isort = { known-first-party = ["tox", "tests"], required-imports = ["from __future__ import annotations"] }
+lint.select = ["ALL"]
+lint.ignore = [
   "CPY",     # No copyright header
   "INP001",  # no implicit namespaces here
   "D",       # ignore documentation for now
@@ -118,21 +118,16 @@ ignore = [
   "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
   "S104",    # Possible binding to all interfaces
   "COM812",  # conflicts with formatter
-  "COM819",  # conflicts with formatter
-  "E501",    # conflicts with formatter
   "ISC001",  # conflicts with formatter
-  "Q000",    # conflicts with formatter
-  "Q001",    # conflicts with formatter
-  "Q002",    # conflicts with formatter
-  "Q003",    # conflicts with formatter
-  "W191",    # conflicts with formatter
   "S404",    # Using subprocess is alright.
   "PLR0914", ## Too many local variables
   "PLR0917", ## Too many positional arguments
 ]
 format.preview = true
 lint.preview = true
-[tool.ruff.per-file-ignores]
+format.docstring-code-format = true
+format.docstring-code-line-length = 100
+[tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
   "S101",    # asserts allowed in tests...
   "FBT",     # don"t care about booleans as positional arguments in tests
@@ -141,6 +136,13 @@ lint.preview = true
   "S603",    # `subprocess` call: check for execution of untrusted input
   "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
 ]
+
+[tool.codespell]
+builtin = "clear,usage,en-GB_to_en-US"
+write-changes = true
+skip = "*.svg"
+ignore-words = "ignore-words.txt"
+count = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

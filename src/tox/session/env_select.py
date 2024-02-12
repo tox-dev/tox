@@ -189,7 +189,7 @@ class EnvSelector:
         for env in self._cli_envs or []:
             if env.startswith(".pkg_external"):  # external package
                 continue
-            factors: dict[str, str | None] = {k: None for k in env.split("-")}
+            factors: dict[str, str | None] = dict.fromkeys(env.split("-"))
             found_factors: set[str] = set()
             for factor in factors:
                 if (
@@ -247,7 +247,7 @@ class EnvSelector:
         # we need to redefine it, e.g. when it shows up in config as [testenv:.package] and afterwards by a run env is
         # marked as package_env.
 
-        if self._defined_envs_ is None:
+        if self._defined_envs_ is None:  # noqa: PLR1702
             self._defined_envs_ = {}
             failed: dict[str, Exception] = {}
             env_name_to_active = self._env_name_to_active()
