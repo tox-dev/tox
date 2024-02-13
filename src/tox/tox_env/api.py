@@ -139,7 +139,7 @@ class ToxEnv(ABC):
 
         def pass_env_post_process(values: list[str]) -> list[str]:
             values.extend(self._default_pass_env())
-            result = sorted({k: None for k in values}.keys())
+            result = sorted(dict.fromkeys(values).keys())
             invalid_chars = set(string.whitespace)
             invalid = [v for v in result if any(c in invalid_chars for c in v)]
             if invalid:
@@ -436,7 +436,7 @@ class ToxEnv(ABC):
             finally:
                 self._execute_statuses.pop(execute_id)
         if show and self._hidden_outcomes is not None and execute_status.outcome is not None:
-            # if it gets cancelled before even starting
+            # if it gets canceled before even starting
             self._hidden_outcomes.append(execute_status.outcome)
         if self.journal and execute_status.outcome is not None:
             self.journal.add_execute(execute_status.outcome, run_id)

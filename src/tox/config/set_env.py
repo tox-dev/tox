@@ -20,7 +20,7 @@ class SetEnv:
         self._name, self._env_name, self._root = name, env_name, root
         from .loader.ini.replace import MatchExpression, find_replace_expr  # noqa: PLC0415
 
-        for line in raw.splitlines():
+        for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():
                 if line.startswith("file|"):
                     self._env_files.append(line[len("file|") :])

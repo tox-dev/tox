@@ -559,8 +559,8 @@ v4.1.2 (2022-12-30)
 
 Bugfixes - 4.1.2
 ~~~~~~~~~~~~~~~~
-- Fix ``--skip-missing-interpreters`` behaviour - by :user:`q0w`. (:issue:`2649`)
-- Restore tox 3 behaviour of showing the output of pip freeze, however now only active when running inside a CI
+- Fix ``--skip-missing-interpreters`` behavior - by :user:`q0w`. (:issue:`2649`)
+- Restore tox 3 behavior of showing the output of pip freeze, however now only active when running inside a CI
   environment - by :user:`gaborbernat`. (:issue:`2685`)
 - Fix extracting extras from markers with many extras - by :user:`q0w`. (:issue:`2791`)
 
@@ -614,7 +614,7 @@ Features - 4.0.17
 
 Bugfixes - 4.0.17
 ~~~~~~~~~~~~~~~~~
-- Fix ``--sdistonly`` behaviour. (:issue:`2653`)
+- Fix ``--sdistonly`` behavior. (:issue:`2653`)
 - Override toxworkdir with --workdir. (:issue:`2654`)
 
 

@@ -454,7 +454,7 @@ Run
    .. note::
 
      Inline scripts can be used, however note these are discovered from the project root directory, and is not
-     influenced by :ref:`change_dir` (this only affects the runtime current working directory). To make this behaviour
+     influenced by :ref:`change_dir` (this only affects the runtime current working directory). To make this behavior
      explicit we recommend that you make inline scripts absolute paths by prepending ``{tox_root}``, instead of
      ``path/to/my_script`` prefer ``{tox_root}{/}path{/}to{/}my_script``. If your inline script is platform dependent
      refer to :ref:`platform-specification` on how to select different script per platform.
