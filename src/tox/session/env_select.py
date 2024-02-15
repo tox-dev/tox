@@ -136,8 +136,20 @@ class _ToxEnvInfo:
     package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
-_DYNAMIC_ENV_FACTORS = re.compile(r"(pypy|py|cython|)((\d(\.\d+(\.\d+)?)?)|\d+)?")
-_PY_PRE_RELEASE_FACTOR = re.compile(r"alpha|beta|rc\.\d+")
+_DYNAMIC_ENV_FACTORS = re.compile(
+    r"""
+    (pypy|py|cython|)             # interpreter
+    (
+        (
+            (\d(\.\d+(\.\d+)?)?)  # major[.minor[.patch]] version
+            |
+            \d+                   # major[minor[patch]] version
+        )
+        (-(alpha|beta|rc\.\d+))?  # pre-release tag
+    )?
+    """,
+    re.VERBOSE,
+)
 
 
 class EnvSelector:
@@ -183,30 +195,21 @@ class EnvSelector:
             yield label_envs.keys(), False
 
     def _ensure_envs_valid(self) -> None:
-        valid_factors = set(chain.from_iterable(env.split("-") for env in self._state.conf))
-        valid_factors.add(".pkg")  # packaging factor
+        conf_envs = set(self._state.conf)
+        conf_envs.add(".pkg")  # packaging factor
+        valid_envs: set[str] = set()
         invalid_envs: dict[str, str | None] = {}
         for env in self._cli_envs or []:
             if env.startswith(".pkg_external"):  # external package
                 continue
-            factors: dict[str, str | None] = dict.fromkeys(env.split("-"))
-            found_factors: set[str] = set()
-            for factor in factors:
-                if (
-                    _DYNAMIC_ENV_FACTORS.fullmatch(factor)
-                    or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
-                    or factor in valid_factors
-                ):
-                    found_factors.add(factor)
-                else:
-                    closest = get_close_matches(factor, valid_factors, n=1)
-                    factors[factor] = closest[0] if closest else None
-            if set(factors) - found_factors:
-                invalid_envs[env] = (
-                    None
-                    if any(i is None for i in factors.values())
-                    else "-".join(cast(Iterable[str], factors.values()))
-                )
+
+            if _DYNAMIC_ENV_FACTORS.fullmatch(env) or env in conf_envs:
+                valid_envs.add(env)
+                continue
+
+            closest = get_close_matches(env, conf_envs, n=1)
+            invalid_envs[env] = closest[0] if closest else None
+
         if invalid_envs:
             msg = "provided environments not found in configuration file:\n"
             first = True
