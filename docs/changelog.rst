@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.13.0 (2024-02-16)
+--------------------
+
+Features - 4.13.0
+~~~~~~~~~~~~~~~~~
+- Extract virtual environment packaging code to its own base class not tied to ``virtualenv`` - by :user:`gaborbernat`. (:issue:`3200`)
+
+Improved Documentation - 4.13.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Documented usage of ``pytest`` with ``tox run-parallel`` - by :user:`faph`. (:issue:`3187`)
+- Configuration: state in config directive sections their ini file sections - by :user:`0cjs`. (:issue:`3194`)
+- Development: summarize important points experienced developers need to know - by :user:`0cjs`. (:issue:`3197`)
+
 v4.12.1 (2024-01-16)
 --------------------
 

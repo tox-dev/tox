@@ -1,1 +1,0 @@
-Extract virtual environment packaging code to its own base class not tied to ``virtualenv`` - by :user:`gaborbernat`.
